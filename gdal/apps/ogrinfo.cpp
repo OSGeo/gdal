@@ -221,7 +221,8 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( STARTS_WITH_CI(papszArgv[iArg], "-fields=") )
         {
-            char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
+            char* pszTemp =
+                static_cast<char *>(CPLMalloc(32 + strlen(papszArgv[iArg])));
             snprintf(pszTemp,
                     32 + strlen(papszArgv[iArg]),
                     "DISPLAY_FIELDS=%s", papszArgv[iArg] + strlen("-fields="));
@@ -230,7 +231,8 @@ int main( int nArgc, char ** papszArgv )
         }
         else if( STARTS_WITH_CI(papszArgv[iArg], "-geom=") )
         {
-            char* pszTemp = (char*)CPLMalloc(32 + strlen(papszArgv[iArg]));
+            char* pszTemp =
+                static_cast<char *>(CPLMalloc(32 + strlen(papszArgv[iArg])));
             snprintf(pszTemp,
                     32 + strlen(papszArgv[iArg]),
                     "DISPLAY_GEOMETRY=%s", papszArgv[iArg] + strlen("-geom="));

@@ -93,7 +93,8 @@ static void Usage(const char* pszErrorMsg, int bShort)
 
 static GDALTranslateOptionsForBinary *GDALTranslateOptionsForBinaryNew(void)
 {
-    return (GDALTranslateOptionsForBinary*) CPLCalloc(  1, sizeof(GDALTranslateOptionsForBinary) );
+    return static_cast<GDALTranslateOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALTranslateOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -270,7 +271,8 @@ int main( int argc, char ** argv )
         CSLCount(GDALGetMetadata( hDataset, "SUBDATASETS" )) > 0 )
     {
         char **papszSubdatasets = GDALGetMetadata(hDataset,"SUBDATASETS");
-        char *pszSubDest = (char *) CPLMalloc(strlen(psOptionsForBinary->pszDest)+32);
+        char *pszSubDest = static_cast<char *>(
+            CPLMalloc(strlen(psOptionsForBinary->pszDest) + 32));
         int i;
 
         CPLString osPath = CPLGetPath(psOptionsForBinary->pszDest);

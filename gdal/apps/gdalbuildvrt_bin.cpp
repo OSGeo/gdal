@@ -90,7 +90,8 @@ static void Usage(const char* pszErrorMsg)
 
 static GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
 {
-    return (GDALBuildVRTOptionsForBinary*) CPLCalloc(  1, sizeof(GDALBuildVRTOptionsForBinary) );
+    return static_cast<GDALBuildVRTOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
 }
 
 /************************************************************************/

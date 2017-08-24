@@ -932,7 +932,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         }
         else if( i < argc-1 && EQUAL(papszArgv[i],"-optim") )
         {
-            psOptions->papszRasterizeOptions = 
+            psOptions->papszRasterizeOptions =
                 CSLSetNameValue( psOptions->papszRasterizeOptions, "OPTIM", papszArgv[++i] );
         }
         else if( i < argc-1 && EQUAL(papszArgv[i],"-burn") )

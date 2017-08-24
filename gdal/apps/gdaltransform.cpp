@@ -188,8 +188,8 @@ int main( int argc, char ** argv )
             /* -gcp pixel line easting northing [elev] */
 
             nGCPCount++;
-            pasGCPs = (GDAL_GCP *)
-                CPLRealloc( pasGCPs, sizeof(GDAL_GCP) * nGCPCount );
+            pasGCPs = static_cast<GDAL_GCP *>(
+                CPLRealloc(pasGCPs, sizeof(GDAL_GCP) * nGCPCount));
             GDALInitGCPs( 1, pasGCPs + nGCPCount - 1 );
 
             pasGCPs[nGCPCount-1].dfGCPPixel = CPLAtof(argv[++i]);

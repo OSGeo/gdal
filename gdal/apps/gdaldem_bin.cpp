@@ -101,7 +101,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 static GDALDEMProcessingOptionsForBinary *GDALDEMProcessingOptionsForBinaryNew(void)
 {
     return static_cast<GDALDEMProcessingOptionsForBinary *>(
-        CPLCalloc(  1, sizeof(GDALDEMProcessingOptionsForBinary) ));
+        CPLCalloc(1, sizeof(GDALDEMProcessingOptionsForBinary)));
 }
 
 /************************************************************************/

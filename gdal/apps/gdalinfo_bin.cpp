@@ -59,7 +59,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALInfoOptionsForBinary *GDALInfoOptionsForBinaryNew(void)
 {
-    return (GDALInfoOptionsForBinary*) CPLCalloc(  1, sizeof(GDALInfoOptionsForBinary) );
+    return static_cast<GDALInfoOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALInfoOptionsForBinary)));
 }
 
 /************************************************************************/

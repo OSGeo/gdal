@@ -311,17 +311,14 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Allocate a line buffer.                                         */
 /* -------------------------------------------------------------------- */
-    GByte *pabyLine;
     GByte *pabyMask=NULL;
 
-    int   *panLastLineCounts;
-
-    pabyLine = (GByte *) CPLMalloc(nXSize * nDstBands);
+    GByte *pabyLine = static_cast<GByte *>(CPLMalloc(nXSize * nDstBands));
 
     if (bSetMask)
-        pabyMask = (GByte *) CPLMalloc(nXSize);
+        pabyMask = static_cast<GByte *>(CPLMalloc(nXSize));
 
-    panLastLineCounts = (int *) CPLCalloc(sizeof(int),nXSize);
+    int *panLastLineCounts = static_cast<int *>(CPLCalloc(sizeof(int), nXSize));
 
 /* -------------------------------------------------------------------- */
 /*      Processing data one line at a time.                             */

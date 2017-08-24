@@ -645,8 +645,8 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     OGRFeatureDefn* poSrcFieldDefn = poSrcLayer->GetLayerDefn();
 
     int nSrcFields = poSrcFieldDefn->GetFieldCount();
-    pasListFields =
-            (ListFieldDesc*)CPLCalloc(sizeof(ListFieldDesc), nSrcFields);
+    pasListFields = static_cast<ListFieldDesc *>(
+        CPLCalloc(sizeof(ListFieldDesc), nSrcFields));
     nListFieldCount = 0;
 
     /* Establish the list of fields of list type */
@@ -967,7 +967,7 @@ public:
     virtual int Transform( int nCount,
                            double *x, double *y, double *z = NULL ) override
     {
-        int *pabSuccess = (int *) CPLMalloc(sizeof(int) * nCount );
+        int *pabSuccess = static_cast<int *>(CPLMalloc(sizeof(int) * nCount));
 
         bool bOverallSuccess = CPL_TO_BOOL(TransformEx( nCount, x, y, z, pabSuccess ));
 
@@ -1169,7 +1169,9 @@ static bool IsFieldType(const char* pszArg)
 static
 GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTranslateOptions *psOptionsIn)
 {
-    GDALVectorTranslateOptions* psOptions = (GDALVectorTranslateOptions*) CPLMalloc(sizeof(GDALVectorTranslateOptions));
+    GDALVectorTranslateOptions* psOptions =
+        static_cast<GDALVectorTranslateOptions *>(
+            CPLMalloc(sizeof(GDALVectorTranslateOptions)));
     memcpy(psOptions, psOptionsIn, sizeof(GDALVectorTranslateOptions));
 
     psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
@@ -2567,8 +2569,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
 
         int nSrcLayerCount = poDS->GetLayerCount();
-        AssociatedLayers* pasAssocLayers =
-            (AssociatedLayers* ) CPLCalloc(nSrcLayerCount, sizeof(AssociatedLayers));
+        AssociatedLayers* pasAssocLayers = static_cast<AssociatedLayers *>(
+            CPLCalloc(nSrcLayerCount, sizeof(AssociatedLayers)));
 
 /* -------------------------------------------------------------------- */
 /*      Special case to improve user experience when translating into   */
@@ -2596,7 +2598,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
         if ( CSLCount(psOptions->papszLayers) == 0)
         {
-            psOptions->papszLayers = (char**) CPLCalloc(sizeof(char*), nSrcLayerCount + 1);
+            psOptions->papszLayers = static_cast<char **>(
+                CPLCalloc(sizeof(char*), nSrcLayerCount + 1));
             for( int iLayer = 0; iLayer < nSrcLayerCount; iLayer++ )
             {
                 OGRLayer        *poLayer = poDS->GetLayer(iLayer);
@@ -2812,7 +2815,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         if ( CSLCount(psOptions->papszLayers) == 0)
         {
             nLayerCount = poDS->GetLayerCount();
-            papoLayers = (OGRLayer**)CPLMalloc(sizeof(OGRLayer*) * nLayerCount);
+            papoLayers = static_cast<OGRLayer **>(
+                CPLMalloc(sizeof(OGRLayer*) * nLayerCount));
 
             for( int iLayer = 0;
                  iLayer < nLayerCount;
@@ -2839,7 +2843,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         else
         {
             nLayerCount = CSLCount(psOptions->papszLayers);
-            papoLayers = (OGRLayer**)CPLMalloc(sizeof(OGRLayer*) * nLayerCount);
+            papoLayers = static_cast<OGRLayer **>(
+              CPLMalloc(sizeof(OGRLayer*) * nLayerCount));
 
             for( int iLayer = 0;
                 psOptions->papszLayers[iLayer] != NULL;
@@ -2877,7 +2882,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
 
-        GIntBig* panLayerCountFeatures = (GIntBig*) CPLCalloc(sizeof(GIntBig), nLayerCount);
+        GIntBig* panLayerCountFeatures =
+            static_cast<GIntBig *>(CPLCalloc(sizeof(GIntBig), nLayerCount));
         GIntBig nCountLayersFeatures = 0;
         GIntBig nAccCountFeatures = 0;
         int iLayer;
@@ -3706,7 +3712,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
     int         iSrcFIDField = -1;
 
     // Initialize the index-to-index map to -1's
-    int *panMap = (int *) VSIMalloc( sizeof(int) * nSrcFieldCount );
+    int *panMap = static_cast<int *>(VSIMalloc(sizeof(int) * nSrcFieldCount));
     for( int iField=0; iField < nSrcFieldCount; iField++)
         panMap[iField] = -1;
 
@@ -3993,18 +3999,18 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         nTotalEventsDone = 0;
     }
 
-    TargetLayerInfo* psInfo = (TargetLayerInfo*)
-                                            CPLMalloc(sizeof(TargetLayerInfo));
+    TargetLayerInfo* psInfo = static_cast<TargetLayerInfo *>(
+        CPLMalloc(sizeof(TargetLayerInfo)));
     psInfo->nFeaturesRead = 0;
     psInfo->bPerFeatureCT = false;
     psInfo->poSrcLayer = poSrcLayer;
     psInfo->poDstLayer = poDstLayer;
-    psInfo->papoCT = (OGRCoordinateTransformation**)
+    psInfo->papoCT = static_cast<OGRCoordinateTransformation **>(
         CPLCalloc(poDstLayer->GetLayerDefn()->GetGeomFieldCount(),
-                  sizeof(OGRCoordinateTransformation*));
-    psInfo->papapszTransformOptions = (char***)
+                  sizeof(OGRCoordinateTransformation*)));
+    psInfo->papapszTransformOptions = static_cast<char ***>(
         CPLCalloc(poDstLayer->GetLayerDefn()->GetGeomFieldCount(),
-                  sizeof(char**));
+                  sizeof(char**)));
     psInfo->panMap = panMap;
     psInfo->iSrcZField = iSrcZField;
     psInfo->iSrcFIDField = iSrcFIDField;
@@ -4680,7 +4686,9 @@ static void RemoveBOM(GByte* pabyData)
 GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                                                       GDALVectorTranslateOptionsForBinary* psOptionsForBinary)
 {
-    GDALVectorTranslateOptions *psOptions = (GDALVectorTranslateOptions *) CPLCalloc( 1, sizeof(GDALVectorTranslateOptions) );
+    GDALVectorTranslateOptions *psOptions =
+        static_cast<GDALVectorTranslateOptions *>(
+            CPLCalloc( 1, sizeof(GDALVectorTranslateOptions)));
 
     psOptions->eAccessMode = ACCESS_CREATION;
     psOptions->bSkipFailures = false;
@@ -5266,8 +5274,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             /* -gcp pixel line easting northing [elev] */
 
             psOptions->nGCPCount++;
-            psOptions->pasGCPs = (GDAL_GCP *)
-                CPLRealloc( psOptions->pasGCPs, sizeof(GDAL_GCP) * psOptions->nGCPCount );
+            psOptions->pasGCPs = static_cast<GDAL_GCP *>(
+                CPLRealloc(psOptions->pasGCPs,
+                           sizeof(GDAL_GCP) * psOptions->nGCPCount));
             GDALInitGCPs( 1, psOptions->pasGCPs + psOptions->nGCPCount - 1 );
 
             psOptions->pasGCPs[psOptions->nGCPCount-1].dfGCPPixel = CPLAtof(papszArgv[++i]);

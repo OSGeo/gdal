@@ -423,25 +423,30 @@ static int FixSrcDstWindow( double* padfSrcWin, double* padfDstWin,
 static
 GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOptionsIn)
 {
-    GDALTranslateOptions* psOptions = (GDALTranslateOptions*) CPLMalloc(sizeof(GDALTranslateOptions));
+    GDALTranslateOptions* psOptions = static_cast<GDALTranslateOptions*>(
+        CPLMalloc(sizeof(GDALTranslateOptions)));
     memcpy(psOptions, psOptionsIn, sizeof(GDALTranslateOptions));
     psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
     if( psOptionsIn->panBandList )
     {
-        psOptions->panBandList = (int*)CPLMalloc(sizeof(int) * psOptions->nBandCount);
+        psOptions->panBandList =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nBandCount));
         memcpy(psOptions->panBandList, psOptionsIn->panBandList,
                sizeof(int) * psOptions->nBandCount);
     }
     psOptions->papszCreateOptions = CSLDuplicate(psOptionsIn->papszCreateOptions);
     if( psOptionsIn->pasScaleParams )
     {
-        psOptions->pasScaleParams = (GDALTranslateScaleParams*)CPLMalloc(sizeof(GDALTranslateScaleParams) * psOptions->nScaleRepeat);
+        psOptions->pasScaleParams = static_cast<GDALTranslateScaleParams *>(
+            CPLMalloc(sizeof(GDALTranslateScaleParams) *
+                      psOptions->nScaleRepeat));
         memcpy(psOptions->pasScaleParams, psOptionsIn->pasScaleParams,
                sizeof(GDALTranslateScaleParams) * psOptions->nScaleRepeat);
     }
     if( psOptionsIn->padfExponent )
     {
-        psOptions->padfExponent = (double*)CPLMalloc(sizeof(double) * psOptions->nExponentRepeat);
+        psOptions->padfExponent = static_cast<double *>(
+            CPLMalloc(sizeof(double) * psOptions->nExponentRepeat));
         memcpy(psOptions->padfExponent, psOptionsIn->padfExponent,
                sizeof(double) * psOptions->nExponentRepeat);
     }
@@ -636,7 +641,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             return NULL;
         }
 
-        psOptions->panBandList = (int *) CPLMalloc(sizeof(int)*psOptions->nBandCount);
+        psOptions->panBandList = static_cast<int *>(
+            CPLMalloc(sizeof(int) * psOptions->nBandCount));
         for( i = 0; i < psOptions->nBandCount; i++ )
             psOptions->panBandList[i] = i+1;
     }
@@ -1564,12 +1570,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if ( bSuccess )
             {
                 poSource->SetNoDataValue(dfNoData);
-            } 
+            }
 
             poSimpleSource = poSource;
         }
         else
+        {
             poSimpleSource = new VRTSimpleSource();
+        }
 
         poSimpleSource->SetResampling(psOptions->pszResampling);
         poVRTBand->ConfigureSource( poSimpleSource,
@@ -1877,7 +1885,8 @@ int ArgIsNumeric( const char *pszArg )
 
 GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOptionsForBinary* psOptionsForBinary)
 {
-    GDALTranslateOptions *psOptions = (GDALTranslateOptions *) CPLCalloc( 1, sizeof(GDALTranslateOptions) );
+    GDALTranslateOptions *psOptions = static_cast<GDALTranslateOptions *>(
+        CPLCalloc( 1, sizeof(GDALTranslateOptions)));
 
     psOptions->pszFormat = CPLStrdup("GTiff");
     psOptions->bQuiet = TRUE;
@@ -2006,8 +2015,9 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             i++;
 
             psOptions->nBandCount++;
-            psOptions->panBandList = (int *)
-                CPLRealloc(psOptions->panBandList, sizeof(int) * psOptions->nBandCount);
+            psOptions->panBandList = static_cast<int *>(
+                CPLRealloc(psOptions->panBandList,
+                           sizeof(int) * psOptions->nBandCount));
             psOptions->panBandList[psOptions->nBandCount-1] = nBand;
             if (bMask)
                 psOptions->panBandList[psOptions->nBandCount-1] *= -1;
@@ -2066,8 +2076,9 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             /* -gcp pixel line easting northing [elev] */
 
             psOptions->nGCPCount++;
-            psOptions->pasGCPs = (GDAL_GCP *)
-                CPLRealloc( psOptions->pasGCPs, sizeof(GDAL_GCP) * psOptions->nGCPCount );
+            psOptions->pasGCPs = static_cast<GDAL_GCP *>(
+                CPLRealloc(psOptions->pasGCPs,
+                           sizeof(GDAL_GCP) * psOptions->nGCPCount));
             GDALInitGCPs( 1, psOptions->pasGCPs + psOptions->nGCPCount - 1 );
 
             psOptions->pasGCPs[psOptions->nGCPCount-1].dfGCPPixel = CPLAtofM(papszArgv[++i]);
@@ -2149,8 +2160,11 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
             if( nIndex >= psOptions->nScaleRepeat )
             {
-                psOptions->pasScaleParams = (GDALTranslateScaleParams*)CPLRealloc(psOptions->pasScaleParams,
-                    (nIndex + 1) * sizeof(GDALTranslateScaleParams));
+                psOptions->pasScaleParams =
+                    static_cast<GDALTranslateScaleParams*>(
+                        CPLRealloc(psOptions->pasScaleParams,
+                                   (nIndex + 1) *
+                                   sizeof(GDALTranslateScaleParams)));
                 memset(psOptions->pasScaleParams + psOptions->nScaleRepeat, 0,
                         sizeof(GDALTranslateScaleParams) * (nIndex - psOptions->nScaleRepeat + 1));
                 psOptions->nScaleRepeat = nIndex + 1;
@@ -2212,8 +2226,9 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
             if( nIndex >= psOptions->nExponentRepeat )
             {
-                psOptions->padfExponent = (double*)CPLRealloc(psOptions->padfExponent,
-                    (nIndex + 1) * sizeof(double));
+              psOptions->padfExponent = static_cast<double *>(
+                  CPLRealloc(psOptions->padfExponent,
+                             (nIndex + 1) * sizeof(double)));
                 if( nIndex > psOptions->nExponentRepeat )
                     memset(psOptions->padfExponent + psOptions->nExponentRepeat, 0,
                         sizeof(double) * (nIndex - psOptions->nExponentRepeat));
