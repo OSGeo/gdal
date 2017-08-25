@@ -13867,8 +13867,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
             const char *pszKey = CPLGetXMLValue( psItem, "name", NULL );
             const char *pszValue = CPLGetXMLValue( psItem, NULL, NULL );
-            const int nBand =
-                atoi(CPLGetXMLValue( psItem, "sample", "-1" )) + 1;
+            int nBand =
+                atoi(CPLGetXMLValue( psItem, "sample", "-1" ));
+            if( nBand < -1 || nBand > 65535 )
+                continue;
+            nBand ++;
             const char *pszRole = CPLGetXMLValue( psItem, "role", "" );
             const char *pszDomain = CPLGetXMLValue( psItem, "domain", "" );
 
