@@ -153,7 +153,7 @@ int main( int argc, char ** argv )
                                  argv[i]));
             while( i < argc-1
                    && nFixedLevelCount
-                             < (int)(sizeof(adfFixedLevels)/sizeof(double))
+                   < static_cast<int>(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
                 adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
         }

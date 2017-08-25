@@ -261,7 +261,7 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
     /***** does the number of bands match the number of color values? *****/
 
-    if ( (int)oColors.front().size() != nBands ) {
+    if ( static_cast<int>(oColors.front().size()) != nBands ) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "-color args must have the same number of values as the non alpha input band count.\n" );
         GDALNearblackOptionsFree(psOptionsToFree);
@@ -547,8 +547,8 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
             /***** loop over the colors *****/
 
-            int iColor;
-            for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+            for (int iColor = 0; iColor < static_cast<int>(poColors->size());
+                 iColor++) {
 
                 Color oColor = (*poColors)[iColor];
 
@@ -556,8 +556,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
                 /***** loop over the bands *****/
 
-                int iBand;
-                for( iBand = 0; iBand < nSrcBands; iBand++ )
+                for( int iBand = 0; iBand < nSrcBands; iBand++ )
                 {
                     int nPix = pabyLine[i * nDstBands + iBand];
 
@@ -632,8 +631,8 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
                 /***** loop over the colors *****/
 
-                int iColor;
-                for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+                for( int iColor = 0;
+                     iColor < static_cast<int>(poColors->size()); iColor++ ) {
 
                     Color oColor = (*poColors)[iColor];
 

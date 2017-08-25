@@ -1144,7 +1144,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
 //                     poDstLayer->CommitTransaction();
 //
 //                 printf( "Failed to transform feature %d.\n",
-//                         (int) poFeature->GetFID() );
+//                         static_cast<int>(poFeature->GetFID()) );
 //                 if( !bSkipFailures )
 //                 {
 //                     OGRFeature::DestroyFeature( poFeature );

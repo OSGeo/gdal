@@ -879,7 +879,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
             nCount++;
         }
 
-        for (int j = 0; j < (int)astSubLines.size(); j++)
+        for (int j = 0; j < static_cast<int>(astSubLines.size()); j++)
         {
             if (astSubLines[j].IsInside(dfDist))
             {
@@ -893,7 +893,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
         }
     }
 
-    for (int i = 0; i < (int)astSubLines.size(); i++)
+    for (int i = 0; i < static_cast<int>(astSubLines.size()); i++)
     {
         delete astSubLines[i].pPart;
     }

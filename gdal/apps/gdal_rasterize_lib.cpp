@@ -475,8 +475,10 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (nXSize == 0 && nYSize == 0)
     {
-        nXSize = (int)(0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes);
-        nYSize = (int)(0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes);
+        nXSize =
+            static_cast<int>(0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes);
+        nYSize =
+            static_cast<int>(0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes);
     }
 
     hDstDS = GDALCreate(hDriver, pszDest, nXSize, nYSize,
@@ -495,7 +497,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         GDALSetProjection(hDstDS, pszWKT);
     CPLFree(pszWKT);
 
-    int iBand;
+    int iBand = 0;  // Used after for.
     /*if( nBandCount == 3 || nBandCount == 4 )
     {
         for(iBand = 0; iBand < nBandCount; iBand++)
@@ -516,7 +518,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (!adfInitVals.empty())
     {
-        for( iBand = 0;
+        for( int iBand = 0;
              iBand < std::min(nBandCount, static_cast<int>(adfInitVals.size()));
              iBand++ )
         {
@@ -1178,7 +1180,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         if (!psOptions->adfBurnValues.empty())
             nBandCount = static_cast<int>(psOptions->adfBurnValues.size());
 
-        if ((int)psOptions->adfInitVals.size() > nBandCount)
+        if( static_cast<int>(psOptions->adfInitVals.size()) > nBandCount )
             nBandCount = static_cast<int>(psOptions->adfInitVals.size());
 
         if (psOptions->adfInitVals.size() == 1)

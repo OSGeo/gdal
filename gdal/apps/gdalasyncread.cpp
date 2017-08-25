@@ -288,9 +288,9 @@ int main( int argc, char ** argv )
     }
     else
     {
-        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%'
+        nOXSize = static_cast<int>((pszOXSize[strlen(pszOXSize)-1]=='%'
                           ? CPLAtof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
-        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%'
+        nOYSize = static_cast<int>((pszOYSize[strlen(pszOYSize)-1]=='%'
                           ? CPLAtof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
 
