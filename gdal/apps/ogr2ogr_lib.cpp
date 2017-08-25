@@ -1109,7 +1109,7 @@ static int GetFieldType(const char* pszArg, int* pnSubFieldType)
     const char* pszOpenParenthesis = strchr(pszArg, '(');
     if( pszOpenParenthesis )
         nLengthBeforeParenthesis = static_cast<int>(pszOpenParenthesis - pszArg);
-    for( int iType = 0; iType <= (int) OFTMaxType; iType++ )
+    for( int iType = 0; iType <= static_cast<int>(OFTMaxType); iType++ )
     {
          const char* pszFieldTypeName = OGRFieldDefn::GetFieldTypeName(
                                                        (OGRFieldType)iType);
@@ -1122,7 +1122,8 @@ static int GetFieldType(const char* pszArg, int* pnSubFieldType)
                  CPLString osArgSubType = pszOpenParenthesis + 1;
                  if( !osArgSubType.empty() && osArgSubType.back() == ')' )
                      osArgSubType.resize(osArgSubType.size()-1);
-                 for( int iSubType = 0; iSubType <= (int) OFSTMaxSubType; iSubType++ )
+                 for( int iSubType = 0;
+                      iSubType <= static_cast<int>(OFSTMaxSubType); iSubType++ )
                  {
                      const char* pszFieldSubTypeName = OGRFieldDefn::GetFieldSubTypeName(
                                                        (OGRFieldSubType)iSubType);
@@ -3649,9 +3650,10 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             (anRequestedGeomFields.size() == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer)) )
         {
-            for(int i = 0; i < (int)anRequestedGeomFields.size(); i ++)
+          for( int i = 0; i < static_cast<int>(anRequestedGeomFields.size());
+               i++ )
             {
-                int iSrcGeomField = anRequestedGeomFields[i];
+                const int iSrcGeomField = anRequestedGeomFields[i];
                 OGRGeomFieldDefn oGFldDefn
                     (poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
                 if( m_poOutputSRS != NULL )

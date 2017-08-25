@@ -1173,8 +1173,8 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
             maxY = ceil(maxY / -ns_res) * -ns_res;
         }
 
-        nRasterXSize = (int)(0.5 + (maxX - minX) / we_res);
-        nRasterYSize = (int)(0.5 + (maxY - minY) / -ns_res);
+        nRasterXSize = static_cast<int>(0.5 + (maxX - minX) / we_res);
+        nRasterYSize = static_cast<int>(0.5 + (maxY - minY) / -ns_res);
     }
 
     if (nRasterXSize == 0 || nRasterYSize == 0)
@@ -1274,7 +1274,8 @@ static bool add_file_to_list(const char* filename, const char* tile_index,
         }
 
         /* Load in memory existing file names in SHP */
-        int nTileIndexFiles = (int)OGR_L_GetFeatureCount(hLayer, TRUE);
+        const int nTileIndexFiles =
+            static_cast<int>(OGR_L_GetFeatureCount(hLayer, TRUE));
         if (nTileIndexFiles == 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,

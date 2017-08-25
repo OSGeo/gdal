@@ -331,7 +331,8 @@ int main( int argc, char *argv[] )
             {
                 hFieldDefn = OGR_Fld_Create( pszSrcSRSName, OFTString );
                 if( nMaxFieldSize )
-                    OGR_Fld_SetWidth( hFieldDefn, (int)nMaxFieldSize);
+                    OGR_Fld_SetWidth(hFieldDefn,
+                                     static_cast<int>(nMaxFieldSize));
                 OGR_L_CreateField( hLayer, hFieldDefn, TRUE );
                 OGR_Fld_Destroy(hFieldDefn);
             }

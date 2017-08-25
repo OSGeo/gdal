@@ -2265,8 +2265,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         adfDstGeoTransform[4] = 0.0;
         adfDstGeoTransform[5] = -1 * dfWrkResY;
 
-        nPixels = (int) ((dfWrkMaxX - dfWrkMinX) / dfWrkResX + 0.5);
-        nLines = (int) ((dfWrkMaxY - dfWrkMinY) / dfWrkResY + 0.5);
+        nPixels = static_cast<int>((dfWrkMaxX - dfWrkMinX) / dfWrkResX + 0.5);
+        nLines = static_cast<int>((dfWrkMaxY - dfWrkMinY) / dfWrkResY + 0.5);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2290,8 +2290,12 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             psOptions->dfMaxY = ceil(psOptions->dfMaxY / psOptions->dfYRes) * psOptions->dfYRes;
         }
 
-        nPixels = (int) ((psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) / psOptions->dfXRes);
-        nLines = (int) ((psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) / psOptions->dfYRes);
+        nPixels = static_cast<int>(
+            (psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) /
+            psOptions->dfXRes);
+        nLines = static_cast<int>(
+            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            psOptions->dfYRes);
         adfDstGeoTransform[0] = psOptions->dfMinX;
         adfDstGeoTransform[3] = psOptions->dfMaxY;
         adfDstGeoTransform[1] = psOptions->dfXRes;
@@ -2339,7 +2343,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         adfDstGeoTransform[5] = -psOptions->dfYRes;
 
         nPixels = psOptions->nForcePixels;
-        nLines = (int) ((psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) / psOptions->dfYRes);
+        nLines = static_cast<int>(
+            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            psOptions->dfYRes);
     }
 
     else if( psOptions->nForceLines != 0 )
@@ -2360,7 +2366,9 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         adfDstGeoTransform[1] = psOptions->dfXRes;
         adfDstGeoTransform[5] = -psOptions->dfYRes;
 
-        nPixels = (int) ((psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) / psOptions->dfXRes);
+        nPixels = static_cast<int>(
+            (psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) /
+            psOptions->dfXRes);
         nLines = psOptions->nForceLines;
     }
 
@@ -2369,8 +2377,12 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         psOptions->dfXRes = adfDstGeoTransform[1];
         psOptions->dfYRes = fabs(adfDstGeoTransform[5]);
 
-        nPixels = (int) ((psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) / psOptions->dfXRes);
-        nLines = (int) ((psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) / psOptions->dfYRes);
+        nPixels = static_cast<int>(
+            (psOptions->dfMaxX - psOptions->dfMinX + (psOptions->dfXRes/2.0)) /
+            psOptions->dfXRes);
+        nLines = static_cast<int>(
+            (psOptions->dfMaxY - psOptions->dfMinY + (psOptions->dfYRes/2.0)) /
+            psOptions->dfYRes);
 
         psOptions->dfXRes = (psOptions->dfMaxX - psOptions->dfMinX) / nPixels;
         psOptions->dfYRes = (psOptions->dfMaxY - psOptions->dfMinY) / nLines;
@@ -2459,7 +2471,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
 /* -------------------------------------------------------------------- */
     if( bVRT || bSetColorInterpretation )
     {
-        int nBandsToCopy = (int)apeColorInterpretations.size();
+        int nBandsToCopy = static_cast<int>(apeColorInterpretations.size());
         if ( psOptions->bEnableSrcAlpha )
             nBandsToCopy --;
         for(int iBand = 0; iBand < nBandsToCopy; iBand++)
