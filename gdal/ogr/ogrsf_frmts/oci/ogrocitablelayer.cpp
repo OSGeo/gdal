@@ -200,8 +200,8 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
 
         nStatus =
             OCIDescribeAny(poSession->hSvcCtx, poSession->hError,
-                           (dvoid *) osQuotedTableName.c_str(),
-                           static_cast<ub4>(osQuotedTableName.length()), OCI_OTYPE_NAME,
+                           (dvoid *) osUnquotedTableName.c_str(),
+                           static_cast<ub4>(osUnquotedTableName.length()), OCI_OTYPE_NAME,
                            OCI_DEFAULT, OCI_PTYPE_VIEW, poSession->hDescribe );
 
         if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
