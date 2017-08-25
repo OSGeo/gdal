@@ -3095,7 +3095,13 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 
     m_pOGRFilterGeometry = pOGRGeom->clone();
 
-    m_pOGRFilterGeometry->transformTo(m_pSRS);
+    // NOTE: This is really special behaviour: no other driver, nor core, does
+    // reprojection of filter geometry to source layer SRS. Should perhaps
+    // be removed for consistency
+    if( m_pOGRFilterGeometry->getSpatialReference() != NULL )
+    {
+        m_pOGRFilterGeometry->transformTo(m_pSRS);
+    }
 
     m_bFilterDirty = true;
 }
