@@ -497,10 +497,9 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         GDALSetProjection(hDstDS, pszWKT);
     CPLFree(pszWKT);
 
-    int iBand = 0;  // Used after for.
     /*if( nBandCount == 3 || nBandCount == 4 )
     {
-        for(iBand = 0; iBand < nBandCount; iBand++)
+        for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
             GDALSetRasterColorInterpretation(hBand, (GDALColorInterp)(GCI_RedBand + iBand));
@@ -509,7 +508,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (bNoDataSet)
     {
-        for(iBand = 0; iBand < nBandCount; iBand++)
+        for( int iBand = 0; iBand < nBandCount; iBand++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, iBand + 1);
             GDALSetRasterNoDataValue(hBand, dfNoData);
@@ -518,7 +517,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
     if (!adfInitVals.empty())
     {
-        for( iBand = 0;
+        for( int iBand = 0;
              iBand < std::min(nBandCount, static_cast<int>(adfInitVals.size()));
              iBand++ )
         {
