@@ -994,6 +994,9 @@ def create_base_tile(tile_job_info, tile_detail, queue=None):
                                 tilefilename=tilefilename)
             del dsquery
 
+    # Force freeing the memory to make sure the C++ destructor is called and the memory as well as
+    # the file locks are released
+    del ds
     del data
 
     if options.resampling != 'antialias':
