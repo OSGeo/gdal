@@ -396,7 +396,7 @@ bool CntZImage::read(Byte** ppByte,
   if (width <= 0 || width > 20000 || height <= 0 || height > 20000)
     return false;
   // To avoid excessive memory allocation attempts
-  if (width * height > INT_MAX / static_cast<int>(sizeof(CntZ)))
+  if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(CntZ)))
     return false;
 
   if (maxZErrorInFile > maxZError)
