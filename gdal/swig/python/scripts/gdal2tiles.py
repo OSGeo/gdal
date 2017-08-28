@@ -43,7 +43,9 @@ import math
 from multiprocessing import Pipe, Pool, Process, Manager
 import os
 import tempfile
+import shutil
 import sys
+from uuid import uuid4
 from xml.etree import ElementTree
 
 from osgeo import gdal
@@ -1386,7 +1388,8 @@ class GDAL2Tiles(object):
         self.tilesize = 256
         self.tiledriver = 'PNG'
         self.tileext = 'png'
-        _, self.temp_vrt = tempfile.mkstemp()
+        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_vrt_filename = os.path.join(self.tmp_dir, str(uuid4()) + '.vrt')
 
         # Should we read bigger window of the input raster and scale it down?
         # Note: Modified later by open_input()
@@ -1526,7 +1529,8 @@ class GDAL2Tiles(object):
         if not self.warped_input_dataset:
             self.warped_input_dataset = input_dataset
 
-        self.warped_input_dataset.GetDriver().CreateCopy(self.temp_vrt, self.warped_input_dataset)
+        self.warped_input_dataset.GetDriver().CreateCopy(self.tmp_vrt_filename,
+                                                         self.warped_input_dataset)
 
         # Get alpha band (either directly or from NODATA value)
         self.alphaband = self.warped_input_dataset.GetRasterBand(1).GetMaskBand()
@@ -1895,7 +1899,7 @@ class GDAL2Tiles(object):
                 )
 
         conf = TileJobInfo(
-            src_file=self.temp_vrt,
+            src_file=self.tmp_vrt_filename,
             nb_data_bands=self.dataBandsCount,
             output_file_path=self.output_folder,
             tile_extension=self.tileext,
@@ -2873,7 +2877,7 @@ def single_threaded_tiling(input_file, output_folder, options):
 
     create_overview_tiles(conf, output_folder, options)
 
-    os.unlink(conf.src_file)
+    shutil.rmtree(os.path.dirname(conf.src_file))
 
 
 def multi_threaded_tiling(input_file, output_folder, options):
@@ -2915,7 +2919,7 @@ def multi_threaded_tiling(input_file, output_folder, options):
 
     create_overview_tiles(conf, output_folder, options)
 
-    os.unlink(conf.src_file)
+    shutil.rmtree(os.path.dirname(conf.src_file))
 
 
 def main():
