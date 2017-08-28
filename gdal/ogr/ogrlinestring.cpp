@@ -507,11 +507,11 @@ void OGRSimpleCurve::setPoint( int iPoint, OGRPoint * poPoint )
 
 {
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
-        setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
-    else if( flags & OGR_G_MEASURED )
-        setPointM( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
+        setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ(), poPoint->getM() );
     else if( flags & OGR_G_3D )
         setPoint( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
+    else if( flags & OGR_G_MEASURED )
+        setPointM( iPoint, poPoint->getX(), poPoint->getY(), poPoint->getM() );
     else
         setPoint( iPoint, poPoint->getX(), poPoint->getY() );
 }
@@ -763,10 +763,14 @@ void OGRSimpleCurve::setM( int iPoint, double mIn )
 void OGRSimpleCurve::addPoint( const OGRPoint * poPoint )
 
 {
-    if( poPoint->getCoordinateDimension() < 3 )
-        setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
-    else
+    if( poPoint->Is3D() && poPoint->IsMeasured() )
+        setPoint( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getZ(), poPoint->getM() );
+    else if( poPoint->Is3D() )
         setPoint( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getZ() );
+    else if( poPoint->IsMeasured() )
+        setPointM( nPointCount, poPoint->getX(), poPoint->getY(), poPoint->getM() );
+    else
+        setPoint( nPointCount, poPoint->getX(), poPoint->getY() );
 }
 
 /************************************************************************/
