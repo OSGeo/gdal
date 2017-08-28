@@ -50,6 +50,23 @@ Setting it to "PAM,WORLDFILE,GEOJP2" will use the mentioned sources and
 ignore GMLJP2 boxes.
 </p>
 
+<h2>Thread support</h2>
+
+<p>By default, if the JPEG2000 file has internal tiling, GDAL will try to
+decode several tiles in multiple threads if the RasterIO() request it receives
+intersect several tiles. This behaviour can be controlled with the
+GDAL_NUM_THREADS configuration option that defaults to ALL_CPUS in that context.
+In case RAM is limited, it can be needed to set this configuration option to 1
+to disable multi-threading</p>
+
+<p>Starting with OpenJPEG 2.2.0, multi-threading decoding can also be enabld
+at the code-block level. This must be enabled with the OPJ_NUM_THREADS environment
+variable (note: this is a system environment variable, not a GDAL configuration
+option), which can be set to a numeric value or NUM_CPUS. Its default value is
+1.</p>
+
+<p>Both multi-threading mechanism can be combined together.</p>
+
 <h2>Option Options</h2>
 
 (GDAL &gt;= 2.0 )
