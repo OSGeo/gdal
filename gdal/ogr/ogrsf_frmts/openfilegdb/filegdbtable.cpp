@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 #include "ogr_api.h" // for OGR_RawField_xxxxx()
 #include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
+#include <limits>
 
 CPL_CVSID("$Id$");
 
@@ -2502,6 +2503,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     if( bHasM ) nShapeType |= EXT_SHAPE_M_FLAG;
     GUInt32 nTmp;
     nTmp = CPL_LSBWORD32(nShapeType);
+    GByte* pabyShapeTypePtr = pabyExtShapeBuffer;
     memcpy( pabyExtShapeBuffer, &nTmp, 4 );
     memset( pabyExtShapeBuffer + 4, 0, 32 ); /* bbox: unused */
     nTmp = CPL_LSBWORD32(nParts);
@@ -2541,19 +2543,47 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
         }
         nOffset += 8 * nPoints;
     }
+
     if( bHasM )
     {
-        memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
-        nOffset += 16;
-        ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
-        GIntBig dm = 0;
-        if( !ReadMArray<ZOrMBufferSetter>(arraymSetter,
-                        pabyCur, pabyEnd, nPoints, dm) )
+        // It seems that absence of M is marked with a single byte
+        // with value 66.
+        if( *pabyCur == 66 )
         {
-            VSIFree(pabyExtShapeBuffer);
-            returnError();
+            pabyCur ++;
+#if 1
+            // In other code paths of this file, we drop the M component when
+            // it is at null. The disabled code path would fill it with NaN
+            // instead.
+            nShapeType &= ~EXT_SHAPE_M_FLAG;
+            nTmp = CPL_LSBWORD32(nShapeType);
+            memcpy( pabyShapeTypePtr, &nTmp, 4 );
+#else
+            memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+            nOffset += 16;
+            const double myNan = std::numeric_limits<double>::quiet_NaN();
+            for( i = 0; i < nPoints; i++ )
+            {
+                memcpy(pabyExtShapeBuffer + nOffset + 8 * i, &myNan, 8);
+                CPL_LSBPTR64(pabyExtShapeBuffer + nOffset + 8 * i);
+            }
+            nOffset += 8 * nPoints;
+#endif
         }
-        nOffset += 8 * nPoints;
+        else
+        {
+            memset( pabyExtShapeBuffer + nOffset, 0, 16 ); /* bbox: unused */
+            nOffset += 16;
+            ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
+            GIntBig dm = 0;
+            if( !ReadMArray<ZOrMBufferSetter>(arraymSetter,
+                            pabyCur, pabyEnd, nPoints, dm) )
+            {
+                VSIFree(pabyExtShapeBuffer);
+                returnError();
+            }
+            nOffset += 8 * nPoints;
+        }
     }
 
     nTmp = CPL_LSBWORD32(nCurves);
