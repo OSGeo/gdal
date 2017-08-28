@@ -1362,7 +1362,6 @@ class GDAL2Tiles(object):
         """Constructor function - initialization"""
         self.out_drv = None
         self.mem_drv = None
-        self.input_dataset = None
         self.warped_input_dataset = None
         self.out_srs = None
         self.nativezoom = None
@@ -1447,25 +1446,25 @@ class GDAL2Tiles(object):
         # Open the input file
 
         if self.input_file:
-            self.input_dataset = gdal.Open(self.input_file, gdal.GA_ReadOnly)
+            input_dataset = gdal.Open(self.input_file, gdal.GA_ReadOnly)
         else:
             raise Exception("No input file was specified")
 
         if self.options.verbose:
             print("Input file:",
-                  "( %sP x %sL - %s bands)" % (self.input_dataset.RasterXSize,
-                                               self.input_dataset.RasterYSize,
-                                               self.input_dataset.RasterCount))
+                  "( %sP x %sL - %s bands)" % (input_dataset.RasterXSize,
+                                               input_dataset.RasterYSize,
+                                               input_dataset.RasterCount))
 
-        if not self.input_dataset:
+        if not input_dataset:
             # Note: GDAL prints the ERROR message too
             exit_with_error("It is not possible to open the input file '%s'." % self.input_file)
 
         # Read metadata from the input file
-        if self.input_dataset.RasterCount == 0:
+        if input_dataset.RasterCount == 0:
             exit_with_error("Input file '%s' has no raster band" % self.input_file)
 
-        if self.input_dataset.GetRasterBand(1).GetRasterColorTable():
+        if input_dataset.GetRasterBand(1).GetRasterColorTable():
             exit_with_error(
                 "Please convert this file to RGB/RGBA and run gdal2tiles on the result.",
                 "From paletted file you can create RGBA file (temp.vrt) by:\n"
@@ -1474,15 +1473,15 @@ class GDAL2Tiles(object):
                 "gdal2tiles temp.vrt" % self.input_file
             )
 
-        in_nodata = setup_no_data_values(self.input_dataset, self.options)
+        in_nodata = setup_no_data_values(input_dataset, self.options)
 
         if self.options.verbose:
             print("Preprocessed file:",
-                  "( %sP x %sL - %s bands)" % (self.input_dataset.RasterXSize,
-                                               self.input_dataset.RasterYSize,
-                                               self.input_dataset.RasterCount))
+                  "( %sP x %sL - %s bands)" % (input_dataset.RasterXSize,
+                                               input_dataset.RasterYSize,
+                                               input_dataset.RasterCount))
 
-        in_srs, self.in_srs_wkt = setup_input_srs(self.input_dataset, self.options)
+        in_srs, self.in_srs_wkt = setup_input_srs(input_dataset, self.options)
 
         self.out_srs = setup_output_srs(in_srs, self.options)
 
@@ -1498,7 +1497,7 @@ class GDAL2Tiles(object):
                     "Input file has unknown SRS.",
                     "Use --s_srs ESPG:xyz (or similar) to provide source reference system.")
 
-            if not has_georeference(self.input_dataset):
+            if not has_georeference(input_dataset):
                 exit_with_error(
                     "There is no georeference - neither affine transformation (worldfile) "
                     "nor GCPs. You can generate only 'raster' profile tiles.",
@@ -1507,9 +1506,9 @@ class GDAL2Tiles(object):
                 )
 
             if ((in_srs.ExportToProj4() != self.out_srs.ExportToProj4()) or
-                    (self.input_dataset.GetGCPCount() != 0)):
+                    (input_dataset.GetGCPCount() != 0)):
                 self.warped_input_dataset = reproject_dataset(
-                    self.input_dataset, in_srs, self.out_srs)
+                    input_dataset, in_srs, self.out_srs)
 
                 if in_nodata:
                     self.warped_input_dataset = update_no_data_values(
@@ -1525,7 +1524,7 @@ class GDAL2Tiles(object):
                     self.warped_input_dataset.RasterCount))
 
         if not self.warped_input_dataset:
-            self.warped_input_dataset = self.input_dataset
+            self.warped_input_dataset = input_dataset
 
         self.warped_input_dataset.GetDriver().CreateCopy(self.temp_vrt, self.warped_input_dataset)
 
