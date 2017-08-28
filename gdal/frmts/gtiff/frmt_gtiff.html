@@ -497,6 +497,7 @@ Can help reading partially corrupted TIFF files</li>
 regarding how PixelIsPoint is interpreted w.r.t geotransform. See <a href="http://trac.osgeo.org/gdal/wiki/rfc33_gtiff_pixelispoint">
 RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default value : FALSE</li>
 <li>GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid stripping the vertical CS of compound CS when reading the SRS of a file. Does not affect the writing side. Default value : FALSE</li>
+<li>REPORT_COMPD_CS: (GDAL > 2.2.2). An alias for GTIFF_REPORT_COMPD_CS. Can be set to TRUE to avoid stripping the vertical CS of compound CS when reading the SRS of a file. Does not affect the writing side. Default value : FALSE</li>
 <li>GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid all-in-one-strip files being presented as having. Default value : TRUE</li>
 <!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->

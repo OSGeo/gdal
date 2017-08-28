@@ -12297,6 +12297,8 @@ void GTiffDataset::LookForProjection()
 
                 // Should we simplify away vertical CS stuff?
                 if( !CPLTestBool( CPLGetConfigOption("GTIFF_REPORT_COMPD_CS",
+                                                    "NO") ) ||
+                    !CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS",
                                                     "NO") ) )
                 {
                     CPLDebug( "GTiff", "Got COMPD_CS, but stripping it." );
