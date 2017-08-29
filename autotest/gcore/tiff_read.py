@@ -3452,6 +3452,35 @@ def tiff_read_mmap_interface():
 
     return 'success'
 
+
+###############################################################################
+# Test reading JPEG compressed file whole last strip height is the full
+# strip height, instead of just the number of lines needed to reach the
+# image height.
+
+def tiff_read_jpeg_too_big_last_stripe():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4557:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open('data/tif_jpeg_ycbcr_too_big_last_stripe.tif')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4557:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -3571,6 +3600,7 @@ gdaltest_list.append( (tiff_read_stripoffset_types) )
 gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
 gdaltest_list.append( (tiff_read_old_style_lzw) )
 gdaltest_list.append( (tiff_read_mmap_interface) )
+gdaltest_list.append( (tiff_read_jpeg_too_big_last_stripe) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
