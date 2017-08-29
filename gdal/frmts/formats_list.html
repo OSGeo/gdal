@@ -13,10 +13,10 @@
 <tr>
 <th>Long Format Name</th>
 <th>Code</th>
-<th>Creation</th>
-<th>Copy</th>
+<th>Creation<sup><a href="#footnote1">1</th>
+<th>Copy<sup><a href="#footnote2">2</th>
 <th>Georeferencing</th>
-<th>Maximum file size<sup><a href="#footnote1">1</a></sup></th>
+<th>Maximum file size<sup><a href="#footnote3">3</a></sup></th>
 <th>Compiled by<br/>default</th>
 </tr>
 
@@ -193,7 +193,7 @@
 
 <tr><td> <a href="drv_db2_raster.html">DB2</a>
 </td><td> DB2
-</td><td> --
+</td><td> Yes
 </td><td> Yes
 </td><td> Yes
 </td><td> No limits
@@ -409,7 +409,7 @@
 
 <tr><td> <a href="drv_geopackage_raster.html">GeoPackage</a>
 </td><td> GPKG
-</td><td> --
+</td><td> Yes
 </td><td> Yes
 </td><td> Yes
 </td><td> No limits
@@ -583,7 +583,7 @@
 </td><td> Yes
 </td><td> Yes
 </td><td> Yes
-</td><td> No limits<sup><a href="#footnote2">2</a></sup>
+</td><td> No limits<sup><a href="#footnote4">4</a></sup>
 </td><td> Yes
 </td></tr>
 
@@ -1391,14 +1391,22 @@
 </table>
 
 <p>
-<a name="footnote1"><sup>1</sup></a>Maximum file size is not only determined by
+<a name="footnote1"><sup>1</sup></a>Creation of a new dataset from scratch
+</p>
+
+<p>
+<a name="footnote2"><sup>2</sup></a>Copy from an existing source dataset
+</p>
+
+<p>
+<a name="footnote3"><sup>3</sup></a>Maximum file size is not only determined by
 	the file format itself, but operating system/file system capabilities
 	as well. Look <a href="gdal_building.html#gdal_building_lfs">here</a>
 	for details.
 </p>
 
 <p>
-<a name="footnote2"><sup>2</sup></a>ERDAS Imagine has different file format for
+<a name="footnote4"><sup>4</sup></a>ERDAS Imagine has different file format for
 	large files, where 32-bit pointers cannot be used. Look for details
 	<a href="frmt_hfa.html">here</a>.
 </p>
