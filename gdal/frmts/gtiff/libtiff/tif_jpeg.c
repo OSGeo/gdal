@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.132 2017-08-29 07:30:07 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.133 2017-08-29 08:08:10 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1511,7 +1511,7 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
         /* For last strip, limit number of rows to its truncated height */
         /* even if the codestream height is larger (which is not compliant, */
         /* but that we tolerate) */
-        if( nrows > td->td_imagelength - tif->tif_row && !isTiled(tif) )
+        if( (uint32)nrows > td->td_imagelength - tif->tif_row && !isTiled(tif) )
             nrows = td->td_imagelength - tif->tif_row;
 
 	/* data is expected to be read in multiples of a scanline */
