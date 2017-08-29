@@ -81,7 +81,7 @@ def validate(ds, check_tiled=True):
     if main_band.XSize >= 512 or main_band.YSize >= 512:
         if check_tiled:
             block_size = main_band.GetBlockSize()
-            if block_size[0] == main_band.XSize:
+            if block_size[0] == main_band.XSize and block_size[0] > 1024:
                 errors += ["The file is greater than 512xH or Wx512," +
                            "but is not tiled"]
 
@@ -116,7 +116,7 @@ def validate(ds, check_tiled=True):
 
         if check_tiled:
             block_size = ovr_band.GetBlockSize()
-            if block_size[0] == ovr_band.XSize:
+            if block_size[0] == ovr_band.XSize and block_size[0] > 1024:
                 errors += [
                     "Overview of index %d is not tiled" % i]
 
