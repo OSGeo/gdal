@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.131 2017-06-29 07:37:12 erouault Exp $ */
+/* $Id: tif_jpeg.c,v 1.132 2017-08-29 07:30:07 erouault Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1153,9 +1153,23 @@ JPEGPreDecode(TIFF* tif, uint16 s)
 			       segment_width, segment_height,
 			       sp->cinfo.d.image_width,
 			       sp->cinfo.d.image_height);
-	} 
-	if (sp->cinfo.d.image_width > segment_width ||
-	    sp->cinfo.d.image_height > segment_height) {
+	}
+	if( sp->cinfo.d.image_width == segment_width &&
+	    sp->cinfo.d.image_height > segment_height &&
+	    tif->tif_row + segment_height == td->td_imagelength &&
+	    !isTiled(tif) ) {
+		/* Some files have a last strip, that should be truncated, */
+		/* but their JPEG codestream has still the maximum strip */
+		/* height. Warn about this as this is non compliant, but */
+		/* we can safely recover from that. */
+		TIFFWarningExt(tif->tif_clientdata, module,
+			     "JPEG strip size exceeds expected dimensions,"
+			     " expected %dx%d, got %dx%d",
+			     segment_width, segment_height,
+			     sp->cinfo.d.image_width, sp->cinfo.d.image_height);
+	}
+	else if (sp->cinfo.d.image_width > segment_width ||
+		 sp->cinfo.d.image_height > segment_height) {
 		/*
 		 * This case could be dangerous, if the strip or tile size has
 		 * been reported as less than the amount of data jpeg will
@@ -1490,10 +1504,18 @@ JPEGDecodeRaw(TIFF* tif, uint8* buf, tmsize_t cc, uint16 s)
 {
 	JPEGState *sp = JState(tif);
 	tmsize_t nrows;
+        TIFFDirectory *td = &tif->tif_dir;
 	(void) s;
 
+        nrows = sp->cinfo.d.image_height;
+        /* For last strip, limit number of rows to its truncated height */
+        /* even if the codestream height is larger (which is not compliant, */
+        /* but that we tolerate) */
+        if( nrows > td->td_imagelength - tif->tif_row && !isTiled(tif) )
+            nrows = td->td_imagelength - tif->tif_row;
+
 	/* data is expected to be read in multiples of a scanline */
-	if ( (nrows = sp->cinfo.d.image_height) != 0 ) {
+	if ( nrows != 0 ) {
 
 		/* Cb,Cr both have sampling factors 1, so this is correct */
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;            
