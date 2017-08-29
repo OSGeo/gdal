@@ -206,7 +206,7 @@ def dted_9():
 
     driver = gdal.GetDriverByName( "GTiff" )
     dsDst = driver.Create( 'tmp/n53.dt1.tif', 601, 1201, 1, gdal.GDT_Int16 )
-    dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+    dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
     dsDst.SetGeoTransform((-80.0008333333333333, 0.001666666666667, 0, 54.0004166666666670, 0, -0.0008333333333333))
 
     bandDst = dsDst.GetRasterBand(1)
@@ -263,7 +263,7 @@ def dted_11():
         return 'fail'
 
     prj = ds.GetProjection()
-    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]]':
+    if prj != 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]':
         gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
         return 'fail'
 
