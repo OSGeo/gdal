@@ -543,7 +543,6 @@ protected:
     // The info about the current image, to enable R-sets
     ILImage img;
     std::vector<GDALMRFRasterBand *> overviews;
-    int overview;
 
     VSILFILE *IdxFP() { return poDS->IdxFP(); }
     GDALRWFlag IdxMode() { return poDS->IdxMode(); }

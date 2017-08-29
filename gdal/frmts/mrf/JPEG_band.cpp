@@ -46,7 +46,7 @@
 
 CPL_C_START
 #include <jpeglib.h>
-#include "jerror.h"
+#include <jerror.h>
 CPL_C_END
 
 CPL_CVSID("$Id$")
@@ -465,6 +465,7 @@ JPEG_Band::JPEG_Band( GDALMRFDataset *pDS, const ILImage &image,
     else
         codec.optimize = true; // Required for 12bit
 }
+
 #endif
 
 NAMESPACE_MRF_END
