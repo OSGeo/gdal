@@ -91,10 +91,10 @@ def validate(ds, check_tiled=True):
 
     ifd_offset = int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
     ifd_offsets = [ifd_offset]
-    if ifd_offset != 8:
+    if ifd_offset not in (8, 16):
         errors += [
-            "The offset of the main IFD should be 8. It is %d instead" %
-            ifd_offsets[0]]
+            "The offset of the main IFD should be 8 for ClassicTIFF " +
+            "or 16 for BigTIFF. It is %d instead" % ifd_offsets[0]]
     details['ifd_offsets'] = {}
     details['ifd_offsets']['main'] = ifd_offset
 
