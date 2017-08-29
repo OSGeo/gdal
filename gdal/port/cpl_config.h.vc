@@ -13,10 +13,15 @@
 #undef HAVE_DOPRNT
 
 /* Define if you have the vprintf function.  */
-#define HAVE_VPRINTF 1
-#define HAVE_VSNPRINTF 1
-#define HAVE_SNPRINTF 1
-
+#ifndef HAVE_VPRINTF
+  #define HAVE_VPRINTF 1
+#endif
+#ifndef HAVE_VSNPRINTF
+  #define HAVE_VSNPRINTF 1
+#endif
+#ifndef HAVE_SNPRINTF
+  #define HAVE_SNPRINTF 1
+#endif
 #ifdef GDAL_COMPILATION
 
 #if defined(_MSC_VER) && (_MSC_VER < 1900)
@@ -110,7 +115,9 @@ __inline int CPL_safer_snprintf(char* str, size_t size, const char* format, ...)
 #define HAVE_SEARCH_H 1
 
 /* Define to 1 if you have the <direct.h> header file. */
-#define HAVE_DIRECT_H
+#ifndef HAVE_DIRECT_H
+  #define HAVE_DIRECT_H 1
+#endif
 
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
