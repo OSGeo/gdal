@@ -116,7 +116,7 @@ __inline int CPL_safer_snprintf(char* str, size_t size, const char* format, ...)
 
 /* Define to 1 if you have the <direct.h> header file. */
 #ifndef HAVE_DIRECT_H
-  #define HAVE_DIRECT_H
+  #define HAVE_DIRECT_H 1
 #endif
 
 /* Define to 1 if you have the `localtime_r' function. */
