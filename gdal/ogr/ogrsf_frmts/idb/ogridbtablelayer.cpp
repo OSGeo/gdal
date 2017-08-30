@@ -256,7 +256,7 @@ OGRErr OGRIDBTableLayer::ResetQuery()
         osFields += poFeatureDefn->GetFieldDefn(i)->GetNameRef();
     }
 
-    CPLString sql, sqlExec;    
+    CPLString sql;
 
     sql += "SELECT ";
     sql += osFields;
@@ -278,11 +278,13 @@ OGRErr OGRIDBTableLayer::ResetQuery()
         else
             sql += " AND";
 
-        sqlExec.Printf( "%s XMAX > %.8f AND XMIN < %.8f"
+        CPLString sqlTmp;
+        sqlTmp.Printf( "%s XMAX > %.8f AND XMIN < %.8f"
                     " AND YMAX > %.8f AND YMIN < %.8f",
                     sql.c_str(),
                     m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxX,
                     m_sFilterEnvelope.MinY, m_sFilterEnvelope.MaxY );
+        sql = sqlTmp;
     }
     /* If we have a spatial filter and GeomColum, query using st_intersects function */
     else if( m_poFilterGeom != NULL && pszGeomColumn )
@@ -291,9 +293,9 @@ OGRErr OGRIDBTableLayer::ResetQuery()
             sql += " WHERE";
         else
             sql += " AND";
-        
-        
-        sqlExec.Printf(
+
+        CPLString sqlTmp;
+        sqlTmp.Printf(
                 "%s st_intersects(st_geomfromtext('POLYGON((%.8f %.8f, %.8f %.8f, %.8f %.8f, %.8f %.8f, %.8f %.8f))',0),%s)",
                 sql.c_str(),
                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
@@ -301,11 +303,11 @@ OGRErr OGRIDBTableLayer::ResetQuery()
                 m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
                 m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, pszGeomColumn );
-
+        sql = sqlTmp;
     }
 
-    CPLDebug( "OGR_IDB", "Exec(%s)", sqlExec.c_str() );
-    if( poCurr->Prepare( sqlExec.c_str() ) &&
+    CPLDebug( "OGR_IDB", "Exec(%s)", sql.c_str() );
+    if( poCurr->Prepare( sql.c_str() ) &&
         poCurr->Open(ITCursor::ReadOnly) )
     {
         return OGRERR_NONE;
