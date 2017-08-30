@@ -13877,6 +13877,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
 
             if( pszKey == NULL || pszValue == NULL )
                 continue;
+            if( EQUAL(pszDomain, "IMAGE_STRUCTURE") )
+                continue;
 
             bool bIsXML = false;
 
