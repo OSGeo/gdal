@@ -526,6 +526,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_JPEGLS();
 #endif
 
+#ifdef FRMT_jpegxr
+    GDALRegister_JPEGXR();
+#endif
+
 #ifdef FRMT_ozi
     GDALRegister_OZI();
 #endif
