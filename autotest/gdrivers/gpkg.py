@@ -3662,6 +3662,38 @@ def gpkg_46():
 
 
 ###############################################################################
+# Test fix for https://issues.qgis.org/issues/16997 (opening a file with
+# subdatasets on Windows)
+
+def gpkg_48():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    if sys.platform == 'win32':
+        filename = os.path.join(os.getcwd(), 'tmp', 'byte.gpkg')
+    else:
+        # Test Windows code path in a weird way...
+        filename = 'C:\\byte.gpkg'
+
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG', creationOptions = ['RASTER_TABLE=foo'])
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG', creationOptions = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=bar'])
+    ds = gdal.Open( 'GPKG:' + filename + ':foo')
+    if ds is None:
+        gdal.Unlink(filename)
+        return 'fail'
+    ds = None
+    ds = gdal.Open( 'GPKG:' + filename + ':bar')
+    if ds is None:
+        gdal.Unlink(filename)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3727,6 +3759,7 @@ gdaltest_list = [
     gpkg_42,
     gpkg_43,
     gpkg_46,
+    gpkg_48,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_39, gpkg_cleanup ]
