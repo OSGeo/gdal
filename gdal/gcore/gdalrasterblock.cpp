@@ -52,6 +52,8 @@ static volatile GIntBig nCacheUsed = 0;
 static GDALRasterBlock *poOldest = NULL;  // Tail.
 static GDALRasterBlock *poNewest = NULL;  // Head.
 
+static int nDisableDirtyBlockFlushCounter = 0;
+
 #if 0
 static CPLMutex *hRBLock = NULL;
 #define INITIALIZE_LOCK CPLMutexHolderD( &hRBLock )
@@ -436,7 +438,8 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
 
         while( poTarget != NULL )
         {
-            if( !bDirtyBlocksOnly || poTarget->GetDirty() )
+            if( !bDirtyBlocksOnly ||
+                (poTarget->GetDirty() && nDisableDirtyBlockFlushCounter == 0) )
             {
                 if( CPLAtomicCompareAndExchange(
                         &(poTarget->nLockCount), 0, -1) )
@@ -504,6 +507,47 @@ void GDALRasterBlock::FlushDirtyBlocks()
     {
         /* go on */
     }
+}
+
+/************************************************************************/
+/*                      EnterDisableDirtyBlockFlush()                   */
+/************************************************************************/
+
+/**
+ * \brief Starts preventing dirty blocks from being flushed
+ *
+ * This static method is used to prevent dirty blocks from being flushed.
+ * This might be useful when in a IWriteBlock() method, whose implementation
+ * can directly/indirectly cause the block cache to evict new blocks, to
+ * be recursively called on the same dataset.
+ *
+ * This method implements a reference counter and is thread-safe.
+ * 
+ * This call must be paired with a corresponding LeaveDisableDirtyBlockFlush().
+ *
+ * @since GDAL 2.2.2
+ */
+
+void GDALRasterBlock::EnterDisableDirtyBlockFlush()
+{
+    CPLAtomicInc(&nDisableDirtyBlockFlushCounter);
+}
+
+/************************************************************************/
+/*                      LeaveDisableDirtyBlockFlush()                   */
+/************************************************************************/
+
+/**
+ * \brief Ends preventing dirty blocks from being flushed.
+ *
+ * Undoes the effect of EnterDisableDirtyBlockFlush().
+ *
+ * @since GDAL 2.2.2
+ */
+
+void GDALRasterBlock::LeaveDisableDirtyBlockFlush()
+{
+    CPLAtomicDec(&nDisableDirtyBlockFlushCounter);
 }
 
 /************************************************************************/
@@ -906,9 +950,13 @@ CPLErr GDALRasterBlock::Internalize()
             {
                 while( poTarget != NULL )
                 {
-                    if( CPLAtomicCompareAndExchange(
-                            &(poTarget->nLockCount), 0, -1) )
-                        break;
+                    if( !poTarget->GetDirty() ||
+                        nDisableDirtyBlockFlushCounter == 0 )
+                    {
+                        if( CPLAtomicCompareAndExchange(
+                                &(poTarget->nLockCount), 0, -1) )
+                            break;
+                    }
                     poTarget = poTarget->poPrevious;
                 }
 
