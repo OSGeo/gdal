@@ -1582,8 +1582,8 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             data[newIndex] = UNDEFINED;
          } else {
             if (numBits != 0) {
-               if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
-                   return -1;
+                if( ((int)bdsRemainingSize - 1) * 8 + bufLoc < (int)numBits )
+                    return -1;
                memBitRead (&uli_temp, sizeof (sInt4), bds, numBits,
                            &bufLoc, &numUsed);
                assert( numUsed <= bdsRemainingSize );
@@ -1659,7 +1659,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                newIndex = i;
             }
 
-            if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
+            if( ((int)bdsRemainingSize - 1) * 8 + bufLoc < (int)numBits )
                 return -1;
             memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc,
                         &numUsed);
