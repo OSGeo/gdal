@@ -404,7 +404,10 @@ void GDALRegister_PNM()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Portable Pixmap Format (netpbm)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PNM" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+    // pgm : grey
+    // ppm : RGB
+    // pnm : ??
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "pgm ppm pnm" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-portable-anymap" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
