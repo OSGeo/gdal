@@ -3160,6 +3160,17 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             }
 
 
+            // If the data is bottom up then flip the y - coords
+            // this is significantly faster than reading row by row
+            if (poDS->bBottomUp)
+            {
+                double temp = yMinMax[0];
+                yMinMax[0] = yMinMax[1];
+                yMinMax[1] = temp;
+                poDS->bBottomUp = false;
+             }
+
+
             // Geostationary satellites can specify units in (micro)radians
             // So we check if they do, and if so convert to linear units (meters)
             const char *pszProjName = oSRS.GetAttrValue( "PROJECTION" );
