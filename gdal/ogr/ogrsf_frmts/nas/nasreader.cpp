@@ -294,7 +294,7 @@ void NASReader::PushFeature( const char *pszElement,
     int iClass = 0;
     for( ; iClass < GetClassCount(); iClass++ )
     {
-        if( EQUAL(pszElement,GetClass(iClass)->GetElementName()) )
+        if( strcmp(pszElement,GetClass(iClass)->GetElementName()) == 0 )
             break;
     }
 
@@ -500,7 +500,7 @@ GMLFeatureClass *NASReader::GetClass( const char *pszName ) const
 {
     for( int iClass = 0; iClass < m_nClassCount; iClass++ )
     {
-        if( EQUAL(GetClass(iClass)->GetName(),pszName) )
+        if( strcmp(GetClass(iClass)->GetName(),pszName) == 0 )
             return GetClass(iClass);
     }
 
