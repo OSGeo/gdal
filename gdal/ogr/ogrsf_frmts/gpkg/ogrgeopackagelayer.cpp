@@ -333,6 +333,29 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
     const bool bPromoteToInteger64 =
         CPLTestBool(CPLGetConfigOption("OGR_PROMOTE_TO_INTEGER64", "FALSE"));
 
+#ifdef SQLITE_HAS_COLUMN_METADATA
+    // Check that there are not several FID fields referenced.
+    // This is not a sufficient condition to ensure that we can get a true FID,
+    // but when this occurs, we are (almost) sure that this cannot be a FID.
+    int nFIDCandidates = 0;
+    for( int iCol = 0; iCol < nRawColumns; iCol++ )
+    {
+        const char* pszTableName = sqlite3_column_table_name( hStmt, iCol );
+        const char* pszOriginName = sqlite3_column_origin_name( hStmt, iCol );
+        if( pszTableName != NULL && pszOriginName != NULL )
+        {
+            OGRLayer* poLayer = m_poDS->GetLayerByName(pszTableName);
+            if( poLayer != NULL )
+            {
+                if( EQUAL(pszOriginName, poLayer->GetFIDColumn()) )
+                {
+                    nFIDCandidates ++;
+                }
+            }
+        }
+    }
+#endif
+
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
         OGRFieldDefn    oField(
@@ -381,9 +404,9 @@ void OGRGeoPackageLayer::BuildFeatureDefn( const char *pszLayerName,
                     iGeomCol = iCol;
                     continue;
                 }
-                else if( EQUAL(pszOriginName, poLayer->GetFIDColumn()) )
+                else if( EQUAL(pszOriginName, poLayer->GetFIDColumn()) &&
+                         m_pszFidColumn == NULL && nFIDCandidates == 1 )
                 {
-                    CPLFree(m_pszFidColumn);
                     m_pszFidColumn = CPLStrdup(oField.GetNameRef());
                     iFIDCol = iCol;
                     continue;
