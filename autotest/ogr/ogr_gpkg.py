@@ -4319,6 +4319,27 @@ def ogr_gpkg_50():
     return 'success'
 
 ###############################################################################
+# Test FID identification on SQL result layer
+
+def ogr_gpkg_56():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    ds = gdal.VectorTranslate('/vsimem/ogr_gpkg_56.gpkg', 'data/poly.shp', format = 'GPKG')
+    lyr = ds.ExecuteSQL('select a.fid as fid1, b.fid as fid2 from poly a, poly b order by fid1, fid2')
+    lyr.GetNextFeature()
+    f = lyr.GetNextFeature()
+    if f.GetField('fid1') != 1 or f.GetField('fid2') != 2:
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(lyr)
+    ds = None
+    gdal.Unlink('/vsimem/ogr_gpkg_56.gpkg')
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4393,6 +4414,7 @@ gdaltest_list = [
     ogr_gpkg_48,
     ogr_gpkg_49,
     ogr_gpkg_50,
+    ogr_gpkg_56,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
