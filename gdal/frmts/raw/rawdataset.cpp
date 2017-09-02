@@ -593,9 +593,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
         CPLGetConfigOption("GDAL_ONE_BIG_READ", NULL);
     if ( pszGDAL_ONE_BIG_READ == NULL )
     {
-        const int nBytesToRW = nPixelOffset * nXSize;
         if ( nLineSize < 50000
-             || nBytesToRW > nLineSize / 5 * 2
+             || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
         {
             return FALSE;
