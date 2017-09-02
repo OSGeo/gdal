@@ -550,6 +550,7 @@ void OGRGenSQLResultsLayer::ClearFilters()
 /* -------------------------------------------------------------------- */
     if( poSrcLayer != NULL )
     {
+        poSrcLayer->ResetReading();
         poSrcLayer->SetAttributeFilter( "" );
         poSrcLayer->SetSpatialFilter( NULL );
     }
