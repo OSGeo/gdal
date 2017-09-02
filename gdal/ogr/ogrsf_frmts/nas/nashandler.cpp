@@ -139,6 +139,11 @@ void NASHandler::startElement( const XMLCh* const /* uri */,
     GMLReadState *poState = m_poReader->GetState();
 
     transcode( localname, m_osElementName );
+#ifdef DEBUG_TRACE_ELEMENTS
+    for(int k=0;k<m_nDepth;k++)
+        printf(" ");
+    printf(">%s\n", m_osElementName.c_str());
+#endif
 
     if ( m_bIgnoreFeature && m_nDepth >= m_nDepthFeature )
     {
@@ -479,6 +484,11 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
     transcode( localname, m_osElementName );
 
     m_nDepth --;
+#ifdef DEBUG_TRACE_ELEMENTS
+    for(int k=0;k<m_nDepth;k++)
+        printf(" ");
+    printf("<%s\n", m_osElementName.c_str());
+#endif
 
     if (m_bIgnoreFeature && m_nDepth >= m_nDepthFeature)
     {
