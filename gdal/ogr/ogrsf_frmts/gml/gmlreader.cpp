@@ -1097,7 +1097,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
 /* -------------------------------------------------------------------- */
-    if( !poClass->IsSchemaLocked() )
+    if( !poClass->IsSchemaLocked() && !EQUAL(pszValue, OGR_GML_NULL) )
     {
         poClass->GetProperty(iProperty)->AnalysePropertyValue(
             poFeature->GetProperty(iProperty), m_bSetWidthFlag );
