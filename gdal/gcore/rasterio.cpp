@@ -3756,8 +3756,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
         {
             const int nChunkYOff = iBufYOff + nYOff;
             nChunkYSize = nBlockYSize - (nChunkYOff % nBlockYSize);
-            if( nChunkYSize == 0 )
-                nChunkYSize = nBlockYSize;
             if( nChunkYOff + nChunkYSize > nYOff + nYSize )
                 nChunkYSize = (nYOff + nYSize) - nChunkYOff;
 
@@ -3765,8 +3763,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
             {
                 const int nChunkXOff = iBufXOff + nXOff;
                 nChunkXSize = nBlockXSize - (nChunkXOff % nBlockXSize);
-                if( nChunkXSize == 0 )
-                    nChunkXSize = nBlockXSize;
                 if( nChunkXOff + nChunkXSize > nXOff + nXSize )
                     nChunkXSize = (nXOff + nXSize) - nChunkXOff;
 
