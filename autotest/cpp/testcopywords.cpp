@@ -500,6 +500,111 @@ void check_GDT_CFloat32and64()
     }
 }
 
+template<class Tin, class Tout> 
+void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
+{
+    const int N = 64+7;
+    Tin arrayIn[N];
+    Tout arrayOut[N];
+    for(int i=0;i<N;i++)
+    {
+        arrayIn[i] = i + 1;
+        arrayOut[i] = 0;
+    }
+    GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn),
+                  arrayOut, eOut, GDALGetDataTypeSizeBytes(eOut),
+                  N);
+    int numLine = 0;
+    for(int i=0;i<N;i++)
+    {
+        ASSERT(eIn, i+1, eOut, i+1, arrayOut[i] );
+    }
+}
+
+template<class Tin, class Tout> 
+void CheckPacked(GDALDataType eIn, GDALDataType eOut)
+{
+    CheckPackedGeneric<Tin,Tout>(eIn, eOut);
+}
+
+template<> void CheckPacked<GUInt16,GByte>(GDALDataType eIn, GDALDataType eOut)
+{
+    CheckPackedGeneric<GUInt16,GByte>(eIn, eOut);
+
+    const int N = 64+7;
+    GUInt16 arrayIn[N] = { 0 };
+    GByte arrayOut[N] = { 0 };
+    for(int i=0;i<N;i++)
+    {
+        arrayIn[i] = (i % 6) == 0 ? 254 : (i % 6) == 1 ? 255 : (i % 4) == 2 ? 256 :
+                     (i % 6) == 3 ? 32767 : (i % 6) == 4 ? 32768 : 65535;
+    }
+    GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn),
+                  arrayOut, eOut, GDALGetDataTypeSizeBytes(eOut),
+                  N);
+    int numLine = 0;
+    for(int i=0;i<N;i++)
+    {
+        ASSERT(eIn, (int)arrayIn[i], eOut, (i%6) == 0 ? 254 : 255, arrayOut[i] );
+    }
+}
+template<> void CheckPacked<GUInt16,GInt16>(GDALDataType eIn, GDALDataType eOut)
+{
+    CheckPackedGeneric<GUInt16,GInt16>(eIn, eOut);
+
+    const int N = 64+7;
+    GUInt16 arrayIn[N] = { 0 };
+    GInt16 arrayOut[N] = { 0 };
+    for(int i=0;i<N;i++)
+    {
+        arrayIn[i] = 32766 + (i % 4);
+    }
+    GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn),
+                  arrayOut, eOut, GDALGetDataTypeSizeBytes(eOut),
+                  N);
+    int numLine = 0;
+    for(int i=0;i<N;i++)
+    {
+        ASSERT(eIn, (int)arrayIn[i], eOut, (i%4) == 0 ? 32766 : 32767, arrayOut[i] );
+    }
+}
+
+template<class Tin> 
+void CheckPacked(GDALDataType eIn, GDALDataType eOut)
+{
+    switch(eOut)
+    {
+        case GDT_Byte: CheckPacked<Tin, GByte>(eIn, eOut); break;
+        case GDT_UInt16: CheckPacked<Tin, GUInt16>(eIn, eOut); break;
+        case GDT_Int16: CheckPacked<Tin, GInt16>(eIn, eOut); break;
+        case GDT_UInt32: CheckPacked<Tin, GUInt32>(eIn, eOut); break;
+        case GDT_Int32: CheckPacked<Tin, GInt32>(eIn, eOut); break;
+        case GDT_Float32: CheckPacked<Tin, float>(eIn, eOut); break;
+        case GDT_Float64: CheckPacked<Tin, double>(eIn, eOut); break;
+        default:
+            CPLAssert(false);
+    }
+}
+
+
+
+void CheckPacked(GDALDataType eIn, GDALDataType eOut)
+{
+    switch(eIn)
+    {
+        case GDT_Byte: CheckPacked<GByte>(eIn, eOut); break;
+        case GDT_UInt16: CheckPacked<GUInt16>(eIn, eOut); break;
+        case GDT_Int16: CheckPacked<GInt16>(eIn, eOut); break;
+        case GDT_UInt32: CheckPacked<GUInt32>(eIn, eOut); break;
+        case GDT_Int32: CheckPacked<GInt32>(eIn, eOut); break;
+        case GDT_Float32: CheckPacked<float>(eIn, eOut); break;
+        case GDT_Float64: CheckPacked<double>(eIn, eOut); break;
+        default:
+            CPLAssert(false);
+    }
+}
+
+
 int main(int /* argc */, char* /* argv */ [])
 {
     pIn = (GByte*)malloc(256);
@@ -598,6 +703,14 @@ int main(int /* argc */, char* /* argv */ [])
 
     free(pIn);
     free(pOut);
+
+    for( GDALDataType eIn = GDT_Byte; eIn <= GDT_Float64; eIn = static_cast<GDALDataType>(eIn + 1) )
+    {
+        for( GDALDataType eOut = GDT_Byte; eOut <= GDT_Float64; eOut = static_cast<GDALDataType>(eOut + 1) )
+        {
+            CheckPacked(eIn, eOut);
+        }
+    }
 
     if (bErr == FALSE)
         printf("success !\n");
