@@ -335,12 +335,18 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 
     pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
                               anEntityNum + iLink, anMSLink + iLink, NULL );
-    while( pabyData && nLinkCount < MAX_LINK )
+    while( pabyData )
     {
         iLink++;
 
         if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )
+        {
             nLinkCount++;
+            if( nLinkCount == MAX_LINK )
+            {
+                break;
+            }
+        }
 
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
