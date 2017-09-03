@@ -119,8 +119,11 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
         }
       }
       else if (idrsnum == 50) {            // Spectral Simple
-        simunpack(cgrib+ipos,cgrib_length-ipos,idrstmpl,ndpts-1,lfld+1);
-        rdieee(idrstmpl+4,lfld+0,1);
+        if( ndpts > 0 )
+        {
+            simunpack(cgrib+ipos,cgrib_length-ipos,idrstmpl,ndpts-1,lfld+1);
+            rdieee(idrstmpl+4,lfld+0,1);
+        }
       }
       else if (idrsnum == 51)              //  Spectral complex
         if ( igdsnum>=50 && igdsnum <=53 )
