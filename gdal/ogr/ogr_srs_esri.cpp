@@ -778,7 +778,19 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
     else if( EQUAL(osProj, "STATEPLANE") )
     {
+        const double dfZone = OSR_GDV(papszPrj, "zone", 0.0);
+
+        if( dfZone < std::numeric_limits<int>::min() ||
+            dfZone > std::numeric_limits<int>::max() ||
+            CPLIsNan(dfZone) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "zone out of range: %ld", dfZone);
+            return OGRERR_CORRUPT_DATA;
+        }
+
         int nZone = static_cast<int>( OSR_GDV( papszPrj, "zone", 0.0 ) );
+
         if( nZone != 0 )
             nZone = ESRIToUSGSZone( nZone );
         else
