@@ -1349,16 +1349,20 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
 /* -------------------------------------------------------------------- */
+        GDALRasterBand* poRealSrcBand =
+                (nSrcBand < 0) ? poSrcBand->GetMaskBand(): poSrcBand;
         if( psOptions->eOutputType == GDT_Unknown )
-            eBandType = poSrcBand->GetRasterDataType();
+        {
+            eBandType = poRealSrcBand->GetRasterDataType();
+        }
         else
         {
             eBandType = psOptions->eOutputType;
 
             // Check that we can copy existing statistics
-            GDALDataType eSrcBandType = poSrcBand->GetRasterDataType();
-            const char* pszMin = poSrcBand->GetMetadataItem("STATISTICS_MINIMUM");
-            const char* pszMax = poSrcBand->GetMetadataItem("STATISTICS_MAXIMUM");
+            GDALDataType eSrcBandType = poRealSrcBand->GetRasterDataType();
+            const char* pszMin = poRealSrcBand->GetMetadataItem("STATISTICS_MINIMUM");
+            const char* pszMax = poRealSrcBand->GetMetadataItem("STATISTICS_MAXIMUM");
             if( !bFilterOutStatsMetadata && eBandType != eSrcBandType &&
                 pszMin != NULL && pszMax != NULL )
             {
