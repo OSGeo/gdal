@@ -785,16 +785,29 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
             CPLIsNan(dfZone) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "zone out of range: %ld", dfZone);
+                     "zone out of range: %f", dfZone);
             return OGRERR_CORRUPT_DATA;
         }
 
-        int nZone = static_cast<int>( OSR_GDV( papszPrj, "zone", 0.0 ) );
+        int nZone = static_cast<int>( dfZone );
 
         if( nZone != 0 )
             nZone = ESRIToUSGSZone( nZone );
         else
-            nZone = static_cast<int>( OSR_GDV( papszPrj, "fipszone", 0.0 ) );
+        {
+            const double dfFipszone = OSR_GDV(papszPrj, "fipszone", 0.0);
+
+            if( dfFipszone < std::numeric_limits<int>::min() ||
+                dfFipszone > std::numeric_limits<int>::max() ||
+                CPLIsNan(dfFipszone) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "fipszone out of range: %f", dfFipszone);
+                return OGRERR_CORRUPT_DATA;
+            }
+
+            nZone = static_cast<int>( dfFipszone );
+        }
 
         if( nZone != 0 )
         {
