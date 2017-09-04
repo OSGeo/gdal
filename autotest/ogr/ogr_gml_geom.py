@@ -1242,6 +1242,7 @@ def gml_invalid_geoms():
         ("<gml:ArcByBulge><gml:posList>2 0</gml:posList><gml:bulge>2</gml:bulge><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
         ("<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
         ("<gml:ArcByBulge><gml:posList>2 0 -2 0</gml:posList><gml:normal>-1</gml:normal></gml:ArcByBulge>", None),
+        ("<ArcByBulge><bulge/></ArcByBulge>", None),
         ("<gml:ArcByCenterPoint><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
         ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:startAngle>90</gml:startAngle><gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
         ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius<gml:endAngle>270</gml:endAngle></gml:ArcByCenterPoint>", None),
