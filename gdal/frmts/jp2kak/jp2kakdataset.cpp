@@ -992,6 +992,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             else
                 family->open(poOpenInfo->pszFilename, true);
             jp2_source *jp2_src = new jp2_source;
+            poInput = jp2_src;
             if( !jp2_src->open(family) || !jp2_src->read_header() )
             {
                 CPLDebug("JP2KAK", "Cannot read JP2 boxes");
@@ -1000,8 +1001,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 delete poRawInput;
                 return NULL;
             }
-
-            poInput = jp2_src;
 
             oJP2Palette = jp2_src->access_palette();
             oJP2Channels = jp2_src->access_channels();
