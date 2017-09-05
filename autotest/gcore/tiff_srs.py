@@ -490,8 +490,8 @@ tiff_srs_list = [ 2758, #tmerc
                   32730, # UTM WGS84 south special case
                   22700, # unknown datum 'Deir_ez_Zor'
                   31491, # Germany Zone projection
-                  3857, # Web Mercator
-                  102113, # ESRI WGS_1984_Web_Mercator
+                  [3857, False, True], # Web Mercator
+                  [102113, False, True], # ESRI WGS_1984_Web_Mercator
 ]
 
 for item in tiff_srs_list:

@@ -6654,7 +6654,7 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
         (pszThisProj4Ext != NULL && pszOtherProj4Ext == NULL) ||
         (pszThisProj4Ext != NULL && pszOtherProj4Ext != NULL &&
          !EQUAL(CPLString(pszThisProj4Ext).Trim().replaceAll("  "," "),
-                CPLString(pszOtherProj4Ext).Trim().replaceAll(" "," "))) )
+                CPLString(pszOtherProj4Ext).Trim().replaceAll("  "," "))) )
     {
         return FALSE;
     }
