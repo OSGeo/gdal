@@ -86,7 +86,7 @@ def ogr_gml_fgd_1():
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, 'POINT (34.123456789 133.123456789)'):
+    if ogrtest.check_feature_geometry(feat, 'POINT (133.123456789 34.123456789)'):
         gdaltest.post_reason('Wrong geometry')
         return 'fail'
 
