@@ -6659,6 +6659,20 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Compare proj.4 extensions.                                      */
+/* -------------------------------------------------------------------- */
+    const char* pszThisProj4Ext = GetExtension(NULL, "PROJ4", NULL);
+    const char* pszOtherProj4Ext = poOtherSRS->GetExtension(NULL, "PROJ4", NULL);
+    if( (pszThisProj4Ext == NULL && pszOtherProj4Ext != NULL) ||
+        (pszThisProj4Ext != NULL && pszOtherProj4Ext == NULL) ||
+        (pszThisProj4Ext != NULL && pszOtherProj4Ext != NULL &&
+         !EQUAL(CPLString(pszThisProj4Ext).Trim().replaceAll("  "," "),
+                CPLString(pszOtherProj4Ext).Trim().replaceAll(" "," "))) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Compare geographic coordinate system.                           */
 /* -------------------------------------------------------------------- */
     if( !IsSameGeogCS( poOtherSRS ) )
