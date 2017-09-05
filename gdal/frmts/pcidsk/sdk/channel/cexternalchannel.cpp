@@ -115,7 +115,7 @@ void CExternalChannel::AccessDB() const
 /* -------------------------------------------------------------------- */
     writable = file->GetEDBFileDetails( &db, &mutex, filename );
 
-    if( echannel > db->GetChannels() )
+    if( echannel < 0 || echannel > db->GetChannels() )
     {
         ThrowPCIDSKException( 0,
             "Invalid channel number: %d", echannel );
