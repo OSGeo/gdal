@@ -288,6 +288,22 @@ def osr_epsg_11():
     return 'success'
 
 ###############################################################################
+# Test IsSame() on SRS that differs only by their PROJ4 EXTENSION (besides
+# different EPSG codes)
+
+def osr_epsg_12():
+
+    sr1 = osr.SpatialReference()
+    sr1.ImportFromEPSG(3857)
+
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(3395)
+
+    if sr1.IsSame(sr2):
+        return 'fail'
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_epsg_1,
@@ -301,6 +317,7 @@ gdaltest_list = [
     osr_epsg_9,
     osr_epsg_10,
     osr_epsg_11,
+    osr_epsg_12,
     None ]
 
 if __name__ == '__main__':
