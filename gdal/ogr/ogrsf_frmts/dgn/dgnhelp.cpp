@@ -369,7 +369,7 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
         if( pabyData == NULL )
             return FALSE;
 
-        if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 7 )
+        if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 9 )
         {
             *pnColor = pabyData[8];
             return TRUE;
@@ -1256,6 +1256,12 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             if( nLinkSize <= 4 )
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed, "nLinkSize <= 4");
+                return NULL;
+            }
+            if( nLinkSize + nAttrOffset > psElement->attr_bytes )
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "nLinkSize + nAttrOffset > psElement->attr_bytes");
                 return NULL;
             }
 
