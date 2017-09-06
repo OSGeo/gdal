@@ -85,24 +85,6 @@ static void RemoveBOM(GByte* pabyData)
 int main( int nArgc, char ** papszArgv )
 
 {
-    char *pszWHERE = NULL;
-    const char  *pszDataSource = NULL;
-    char        **papszLayers = NULL;
-    OGRGeometry *poSpatialFilter = NULL;
-    int nRepeatCount = 1;
-    bool bAllLayers = false;
-    char  *pszSQLStatement = NULL;
-    const char  *pszDialect = NULL;
-    int          nRet = 0;
-    const char* pszGeomField = NULL;
-    char      **papszOpenOptions = NULL;
-    char      **papszExtraMDDomains = NULL;
-    bool bListMDD = false;
-    bool bShowMetadata = true;
-    bool bFeatureCount = true;
-    bool bExtent = true;
-    bool bDatasetGetNextFeature = false;
-
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
@@ -122,6 +104,24 @@ int main( int nArgc, char ** papszArgv )
     if( nArgc < 1 )
         exit( -nArgc );
 
+    char *pszWHERE = NULL;
+    const char *pszDataSource = NULL;
+    char **papszLayers = NULL;
+    OGRGeometry *poSpatialFilter = NULL;
+    int nRepeatCount = 1;
+    bool bAllLayers = false;
+    char *pszSQLStatement = NULL;
+    const char *pszDialect = NULL;
+    int nRet = 0;
+    const char* pszGeomField = NULL;
+    char **papszOpenOptions = NULL;
+    char **papszExtraMDDomains = NULL;
+    bool bListMDD = false;
+    bool bShowMetadata = true;
+    bool bFeatureCount = true;
+    bool bExtent = true;
+    bool bDatasetGetNextFeature = false;
+
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg], "--utility_version") )
@@ -132,11 +132,17 @@ int main( int nArgc, char ** papszArgv )
             return 0;
         }
         else if( EQUAL(papszArgv[iArg],"--help") )
+        {
             Usage();
-       else if( EQUAL(papszArgv[iArg],"-ro") )
+        }
+        else if( EQUAL(papszArgv[iArg],"-ro") )
+        {
             bReadOnly = true;
+        }
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
+        {
             bVerbose = false;
+        }
         else if( EQUAL(papszArgv[iArg],"-qq") )
         {
             /* Undocumented: mainly only useful for AFL testing */
@@ -293,14 +299,15 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    GDALDataset *poDS
-        = (GDALDataset*) GDALOpenEx( pszDataSource,
-            (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
-            NULL, papszOpenOptions, NULL );
+    GDALDataset *poDS = static_cast<GDALDataset *>(GDALOpenEx(
+        pszDataSource,
+        (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
+        NULL, papszOpenOptions, NULL));
     if( poDS == NULL && !bReadOnly )
     {
-        poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
-            GDAL_OF_READONLY | GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL );
+        poDS = static_cast<GDALDataset *>(GDALOpenEx(
+            pszDataSource,
+            GDAL_OF_READONLY | GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL));
         if( poDS != NULL && bVerbose )
         {
             printf( "Had to open data source read-only.\n" );
@@ -398,7 +405,9 @@ int main( int nArgc, char ** papszArgv )
                                 pszGeomField);
                     }
                     else
+                    {
                         poLayer->SetSpatialFilter( poSpatialFilter );
+                    }
                 }
             }
         }
@@ -643,7 +652,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     {
         if( pszGeomField != NULL )
         {
-            int iGeomField = poDefn->GetGeomFieldIndex(pszGeomField);
+            const int iGeomField = poDefn->GetGeomFieldIndex(pszGeomField);
             if( iGeomField >= 0 )
                 poLayer->SetSpatialFilter( iGeomField, poSpatialFilter );
             else
@@ -651,7 +660,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                        pszGeomField);
         }
         else
+        {
             poLayer->SetSpatialFilter( poSpatialFilter );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -671,7 +682,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
     if( bVerbose )
     {
-        int nGeomFieldCount =
+        const int nGeomFieldCount =
             poLayer->GetLayerDefn()->GetGeomFieldCount();
         if( nGeomFieldCount > 1 )
         {
@@ -713,8 +724,6 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                    oExt.MinX, oExt.MinY, oExt.MaxX, oExt.MaxY);
         }
 
-        char *pszWKT = NULL;
-
         if( nGeomFieldCount > 1 )
         {
             for(int iGeom = 0;iGeom < nGeomFieldCount; iGeom ++ )
@@ -722,8 +731,11 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
                 OGRGeomFieldDefn* poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
                 OGRSpatialReference* poSRS = poGFldDefn->GetSpatialRef();
+                char *pszWKT = NULL;
                 if( poSRS == NULL )
+                {
                     pszWKT = CPLStrdup( "(unknown)" );
+                }
                 else
                 {
                     poSRS->exportToPrettyWkt( &pszWKT );
@@ -736,8 +748,11 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         }
         else
         {
+            char *pszWKT = NULL;
             if( poLayer->GetSpatialRef() == NULL )
+            {
                 pszWKT = CPLStrdup( "(unknown)" );
+            }
             else
             {
                 poLayer->GetSpatialRef()->exportToPrettyWkt( &pszWKT );
@@ -790,10 +805,10 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = NULL;
 
     if( nFetchFID == OGRNullFID && !bSummaryOnly )
     {
+        OGRFeature *poFeature = NULL;
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
             if( !bSuperQuiet )
@@ -803,7 +818,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
     }
     else if( nFetchFID != OGRNullFID )
     {
-        poFeature = poLayer->GetFeature( nFetchFID );
+        OGRFeature *poFeature = poLayer->GetFeature(nFetchFID);
         if( poFeature == NULL )
         {
             printf( "Unable to locate feature id " CPL_FRMT_GIB " on this layer.\n",
