@@ -5125,6 +5125,130 @@ def ogr_shape_106():
     return 'success'
 
 ###############################################################################
+# Compare to VSI*L file
+
+def is_same(filename1, filename2, verbose = True):
+    f1 = gdal.VSIFOpenL(filename1, "rb")
+    if f1 is None:
+        if verbose:
+            print('%s does not exist' % filename1)
+        return False
+    f2 = gdal.VSIFOpenL(filename2, "rb")
+    if f2 is None:
+        if verbose:
+            print('%s does not exist' % filename2)
+        gdal.VSIFCloseL(f1)
+        return False
+
+    ret = True
+    size1 = gdal.VSIStatL(filename1).size
+    size2 = gdal.VSIStatL(filename2).size
+    if size1 != size2:
+        if verbose:
+            print('%s size is %d, whereas %s size is %d' % (filename1, size1, filename2, size2))
+        ret = False
+    if ret:
+        data1 = gdal.VSIFReadL(1, size1, f1)
+        data2 = gdal.VSIFReadL(1, size2, f2)
+        if data1 != data2:
+            if verbose:
+                print('File content of %s and %s are different' % (filename1, filename2))
+                print(struct.unpack('B' * len(data1), data1))
+                print(struct.unpack('B' * len(data2), data2))
+            ret = False
+
+    gdal.VSIFCloseL(f1)
+    gdal.VSIFCloseL(f2)
+    return ret
+
+###############################################################################
+# Test that multiple edition of the last shape works properly (#7031)
+
+def ogr_shape_107():
+
+    layer_name = 'ogr_shape_107'
+    filename = '/vsimem/' + layer_name + '.shp'
+    copy_filename = '/vsimem/' + layer_name + '_copy.shp'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2.5 3.5)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be larger
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
+    lyr.SetFeature(f)
+
+    # Insert new feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (5 6)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 6)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,1.5 2.5,3 4)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be smaller
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 2,3 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+    return 'success'
+
+###############################################################################
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -5274,9 +5398,10 @@ gdaltest_list = [
     ogr_shape_104,
     ogr_shape_105,
     ogr_shape_106,
+    ogr_shape_107,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_106 ]
+# gdaltest_list = [ ogr_shape_107 ]
 
 if __name__ == '__main__':
 
