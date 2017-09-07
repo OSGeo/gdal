@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.94 2017-07-04 13:28:42 erouault Exp $ */
+/* $Id: tiffiop.h,v 1.95 2017-09-07 14:02:52 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -238,8 +238,7 @@ struct tiff {
 	(TIFFReadFile((tif),(buf),(size))==(size))
 #endif
 #ifndef SeekOK
-#define SeekOK(tif, off) \
-	(TIFFSeekFile((tif),(off),SEEK_SET)==(off))
+#define SeekOK(tif, off) _TIFFSeekOK(tif, off)
 #endif
 #ifndef WriteOK
 #define WriteOK(tif, buf, size) \
@@ -384,6 +383,7 @@ extern tmsize_t
 _TIFFReadTileAndAllocBuffer(TIFF* tif,
                             void **buf, tmsize_t bufsizetoalloc,
                             uint32 x, uint32 y, uint32 z, uint16 s);
+extern int _TIFFSeekOK(TIFF* tif, toff_t off);
 
 extern int TIFFInitDumpMode(TIFF*, int);
 #ifdef PACKBITS_SUPPORT
