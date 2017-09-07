@@ -32,15 +32,17 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-import sys
 import csv
 import gzip
+import os
+import sys
 
 sys.path.append( '../pymod' )
 
 import gdaltest
-from osgeo import gdal, osr
+from osgeo import gdal
+from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 # This test verifies that morphToESRI() translates idiosyncratic datum names
@@ -1120,12 +1122,14 @@ def osr_esri_23():
     result = 'success'
 
     # Test GEOGCSCS defs
-    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'), 'epsg_gcs2', 'GEOGCS', True)
+    result1 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','gcs.csv'),
+                                         'epsg_gcs2', 'GEOGCS', True)
     if result1 == 'fail':
         result = 'expected_fail'
 
     # Test PROJCS defs
-    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'), 'epsg_pcs2', 'DATUM', False)
+    result2 = osr_esri_test_ogc_esri_ogc(gdal.FindFile('gdal','pcs.csv'),
+                                         'epsg_pcs2', 'DATUM', False)
     if result2 == 'fail':
         result = 'fail'
 
@@ -1511,6 +1515,25 @@ def osr_esri_31():
     return 'success'
 
 ###############################################################################
+# Bad Equidistant Conic
+
+def osr_esri_32():
+    # Autofuzz POC from b/65416453
+    prj = [
+        'PROJECTIONLOCA?L_CSw?(  EQUIDISTANT_CONIC',
+        'Paramet',
+        '55555555555555']
+
+    srs_prj = osr.SpatialReference()
+    with gdaltest.error_handler('CPLQuietErrorHandler'):
+        result = srs_prj.ImportFromESRI( prj )
+        if result != ogr.OGRERR_CORRUPT_DATA:
+            gdaltest.post_reason('Corrupt EQUIDISTANT_CONIC not marked corrupt')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1545,9 +1568,9 @@ gdaltest_list = [
     osr_esri_29,
     osr_esri_30,
     osr_esri_31,
-   None ]
+    osr_esri_32,
+    None ]
 
-#gdaltest_list = [osr_esri_30]
 
 if __name__ == '__main__':
 
