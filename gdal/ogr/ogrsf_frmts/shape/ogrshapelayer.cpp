@@ -932,10 +932,12 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     unsigned int nOffset = 0;
     unsigned int nSize = 0;
+    bool bIsLastRecord = false;
     if( hSHP != NULL )
     {
         nOffset = hSHP->panRecOffset[nFID];
         nSize = hSHP->panRecSize[nFID];
+        bIsLastRecord = (nOffset + nSize + 8 == hSHP->nFileSize );
     }
 
     OGRErr eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
@@ -944,7 +946,18 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     if( hSHP != NULL )
     {
-        if( nOffset != hSHP->panRecOffset[nFID] ||
+        if( bIsLastRecord )
+        {
+            // Optimization: we don't need repacking if this is the last
+            // record of the file. Just potential truncation
+            CPLAssert( nOffset == hSHP->panRecOffset[nFID] );
+            CPLAssert( hSHP->panRecOffset[nFID] + hSHP->panRecSize[nFID] + 8 == hSHP->nFileSize );
+            if( hSHP->panRecSize[nFID] < nSize )
+            {
+                VSIFTruncateL(VSI_SHP_GetVSIL(hSHP->fpSHP), hSHP->nFileSize);
+            }
+        }
+        else if( nOffset != hSHP->panRecOffset[nFID] ||
             nSize != hSHP->panRecSize[nFID] )
         {
             bSHPNeedsRepack = true;
