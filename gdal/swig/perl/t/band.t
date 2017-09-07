@@ -21,6 +21,12 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
         }
     }
     $band->WriteTile($tile);
+
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
     
     $c = $band->ClassCounts;
     is_deeply($c, \%counts, "$datatype: ClassCounts");
@@ -59,8 +65,9 @@ for my $datatype (qw/Float32 Float64/) {
     $tile->[1] = [5,6];
     $band->WriteTile($tile);
 
-    # 1   2   3
-    #   3   5
+    # x < 3       => x = 1
+    # 3 <= x < 5  => x = 2
+    # x >= 5      => x = 3
     my $classifier = ['<', [5.0, [3.0, 1.0, 2.0], 3.0]];
     my $counts = $band->ClassCounts($classifier);
     #say STDERR $counts;
@@ -70,17 +77,46 @@ for my $datatype (qw/Float32 Float64/) {
         push @counts, $key => $counts->{$key};
     }
     is_deeply(\@counts, [0=>1,1=>1,2=>2], "Class counts $datatype");
+    
     $band->Reclassify($classifier);
-    $tile = $band->ReadTile;
-    #for my $y (0..$#$tile) {
-    #    say STDERR "@{$tile->[$y]}";
+    my $tile2 = $band->ReadTile;
+    #print STDERR "\n";
+    #for my $row (@$tile2) {
+    #    print STDERR "@$row\n";
     #}
-    is_deeply($tile, [[1,2],[3,3]], "Reclassify $datatype");
+    #print STDERR "\n";
+    is_deeply($tile2, [[1,2],[3,3]], "Reclassify $datatype");
 
     eval {
         $band->Reclassify($classifier, sub {return 1});
     };
     ok(!$@, "Reclassify overload test $datatype: $@");
+
+    # test the effect of set no data value
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
+    $band->WriteTile($tile);
+    $band->NoDataValue(6);
+    $counts = $band->ClassCounts($classifier);
+    @counts = ();
+    for my $key (sort {$a<=>$b} keys %$counts) {
+        #say STDERR "$key => $counts->{$key}";
+        push @counts, $key => $counts->{$key};
+    }
+    is_deeply(\@counts, [0=>1,1=>1,2=>1], "No data cells are not counted in class counts for $datatype");
+
+    $band->Reclassify($classifier);
+    $tile = $band->ReadTile;
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
+    is_deeply($tile, [[1,2],[3,6]], "No data value is not reclassified for $datatype");
+    
 }
     
 my $band = Geo::GDAL::Driver('MEM')->Create(Type => 'CFloat32', Width => 5, Height => 5)->Band;

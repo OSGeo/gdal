@@ -9,7 +9,7 @@
      SV** f = av_fetch(classifier, 0, 0);
      SV** s = av_fetch(classifier, 1, 0);
      SV** t = av_fetch(classifier, 2, 0);
-     if (f && SvNOK(*f)) {
+     if (f && (SvNOK(*f) || SvIOK(*f))) {
          switch(comparison) {
          case 0: /* lt */
          if (nv < SvNV(*f))
@@ -28,7 +28,7 @@
              t = s;
          break;
          }
-         if (t && SvNOK(*t))
+         if (t && (SvNOK(*t) || SvIOK(*t)))
              return SvNV(*t);
          else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
              return NVClassify(comparison, nv, (AV*)(SvRV(*t)), error);
@@ -109,7 +109,7 @@
 %}
 
 %extend GDALRasterBandShadow {
-  
+
     %apply (int nList, double* pList) {(int nFixedLevelCount, double *padfFixedLevels)};
     %apply (int defined, double value) {(int bUseNoData, double dfNoDataValue)};
     CPLErr ContourGenerate(double dfContourInterval, double dfContourBase,
@@ -201,7 +201,7 @@
     SV *ClassCounts(SV* classifier,
                     GDALProgressFunc callback = NULL,
                     void* callback_data = NULL) {
-                    
+
         const char *error = NULL;
         GDALDataType dt = GDALGetRasterDataType(self);
         if (!(dt == GDT_Float32 || dt == GDT_Float64)) {
@@ -215,6 +215,8 @@
         if (error) do_confess(error, 1);
 
         HV* hash = newHV();
+        int has_no_data;
+        double no_data = GDALGetRasterNoDataValue(self, &has_no_data);
         int XBlockSize, YBlockSize;
         GDALGetBlockSize( self, &XBlockSize, &YBlockSize );
         int XBlocks = (GDALGetRasterBandXSize(self) + XBlockSize - 1) / XBlockSize;
@@ -246,6 +248,9 @@
                           nv = ((double*)(data))[iX + iY * XBlockSize];
                           break;
                         }
+                        if (has_no_data && nv == no_data) {
+                            continue;
+                        }
                         int k = 0;
                         NVClass(comparison, nv, array_classifier, &k, &error);
                         if (error) goto fail;
@@ -266,7 +271,7 @@
                 }
             }
         }
-        
+
         CPLFree(data);
         if (hash)
             return newRV_noinc((SV*)hash);
@@ -281,11 +286,11 @@
     void Reclassify(SV* classifier,
                     GDALProgressFunc callback = NULL,
                     void* callback_data = NULL) {
-                    
+
         const char *error = NULL;
-        
+
         GDALDataType dt = GDALGetRasterDataType(self);
-        
+
         bool is_integer_raster = true;
         HV* hash_classifier = NULL;
         bool has_default = false;
@@ -293,7 +298,7 @@
 
         AV* array_classifier = NULL;
         int comparison = 0;
-        
+
         if (dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_Int16 || dt == GDT_UInt32 || dt == GDT_Int32) {
             if (SvROK(classifier) && (SvTYPE(SvRV(classifier)) == SVt_PVHV)) {
                 hash_classifier = (HV*)SvRV(classifier);
@@ -312,7 +317,7 @@
         } else {
             do_confess("Only integer and float rasters can be reclassified.", 1);
         }
-        
+
         int has_no_data;
         double no_data = GDALGetRasterNoDataValue(self, &has_no_data);
         int XBlockSize, YBlockSize;
@@ -374,8 +379,10 @@
                                     continue;
                             }
                         } else {
-                            nv = NVClassify(comparison, nv, array_classifier, &error);
-                            if (error) goto fail;
+                            if (!(has_no_data && nv == no_data)) {
+                                nv = NVClassify(comparison, nv, array_classifier, &error);
+                                if (error) goto fail;
+                            }
                         }
 
                         switch(dt) {
@@ -410,7 +417,7 @@
         return;
         fail:
         CPLFree(data);
-        do_confess(error, 1);        
+        do_confess(error, 1);
         return;
     }
 
