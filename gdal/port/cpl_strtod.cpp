@@ -235,8 +235,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 
     if( nptr[0] == '-' )
     {
-        if( strcmp(nptr, "-1.#QNAN") == 0 ||
-            strcmp(nptr, "-1.#IND") == 0 )
+        if( STARTS_WITH(nptr, "-1.#QNAN") ||
+            STARTS_WITH(nptr, "-1.#IND") )
         {
             if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             // While it is possible on some platforms to flip the sign
@@ -254,7 +254,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     }
     else if( nptr[0] == '1' )
     {
-        if( strcmp(nptr, "1.#QNAN") == 0 )
+        if( STARTS_WITH(nptr, "1.#QNAN") )
         {
             if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();
