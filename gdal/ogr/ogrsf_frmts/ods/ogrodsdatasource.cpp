@@ -794,6 +794,16 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
 
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
+        if (nCellsRepeated < 0 || nCellsRepeated > 65536)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid value for number-columns-repeated = %d",
+                     nCellsRepeated);
+            bEndTableParsing = true;
+            nCellsRepeated = 0;
+            return;
+        }
+
     }
     else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {
