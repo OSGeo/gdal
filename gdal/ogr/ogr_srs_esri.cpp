@@ -861,8 +861,16 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
     else if( EQUAL(osProj, "EQUIDISTANT_CONIC") )
     {
-        const int nStdPCount = static_cast<int>(
-            OSR_GDV( papszPrj, "PARAM_1", 0.0 ) );
+        const double dfStdPCount = OSR_GDV( papszPrj, "PARAM_1", 0.0 );
+        // TODO(schwehr): What is a reasonable range for StdPCount?
+        if( dfStdPCount < 0 || dfStdPCount > std::numeric_limits<int>::max() ||
+            CPLIsNan(dfStdPCount) )
+        {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "StdPCount out of range: %lf", dfStdPCount);
+                return OGRERR_CORRUPT_DATA;
+        }
+        const int nStdPCount = static_cast<int>(dfStdPCount);
 
         if( nStdPCount == 1 )
         {
