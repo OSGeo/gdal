@@ -5672,10 +5672,11 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
         GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0);
     const double dfZone = (dfCentralMeridian + 186.0) / 6.0;
 
-    if( std::abs(dfZone - static_cast<int>(dfZone) - 0.5 ) > 0.00001
-        || dfCentralMeridian < -177.00001
-        || dfCentralMeridian > 177.000001 )
-        return 0;
+    if( dfCentralMeridian < -177.00001 ||
+        dfCentralMeridian > 177.000001 ||
+        CPLIsNan(dfZone) ||
+        std::abs(dfZone - static_cast<int>(dfZone) - 0.5 ) > 0.00001 )
+      return 0;
 
     return static_cast<int>(dfZone);
 }
