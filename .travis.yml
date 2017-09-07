@@ -1,6 +1,7 @@
 # This is the config file for building GDAL and running its autotest suite
 # with Travis-ci.org
 
+dist: precise
 language: cpp
 
 # We use clang, --without-libtool and --with-debug for faster build
