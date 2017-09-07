@@ -655,8 +655,11 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (nRowsRepeated > 65536)
+        if (nRowsRepeated < 0 || nRowsRepeated > 65536)
         {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid value for number-rows-repeated = %d",
+                     nRowsRepeated);
             bEndTableParsing = true;
             return;
         }
