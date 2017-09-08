@@ -31,6 +31,10 @@ ifeq ($(POPPLER_0_23_OR_LATER),yes)
 CPPFLAGS +=  -DPOPPLER_0_23_OR_LATER
 endif
 
+ifeq ($(POPPLER_0_58_OR_LATER),yes)
+CPPFLAGS +=  -DPOPPLER_0_58_OR_LATER
+endif
+
 ifeq ($(HAVE_PODOFO),yes)
 CPPFLAGS +=  -DHAVE_PODOFO
 endif
