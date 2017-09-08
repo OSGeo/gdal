@@ -52,13 +52,21 @@
 #define moveStart_delta_type int
 #endif
 
+#ifdef POPPLER_0_58_OR_LATER
+#define makeSubStream_object_type Object&&
+#else
+#define makeSubStream_object_type Object*
+#endif
+
 class VSIPDFFileStream: public BaseStream
 {
     public:
-        VSIPDFFileStream(VSILFILE* f, const char* pszFilename, Object *dictA);
+        VSIPDFFileStream(VSILFILE* f, const char* pszFilename,
+                         makeSubStream_object_type dictA);
         VSIPDFFileStream(VSIPDFFileStream* poParent,
                          vsi_l_offset startA, GBool limitedA,
-                         vsi_l_offset lengthA, Object *dictA);
+                         vsi_l_offset lengthA,
+                         makeSubStream_object_type dictA);
         virtual ~VSIPDFFileStream();
 
 #ifdef POPPLER_0_23_OR_LATER
@@ -66,7 +74,7 @@ class VSIPDFFileStream: public BaseStream
 #endif
 
         virtual Stream *   makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
-                                         makeSubStream_offset_type lengthA, Object *dictA) override;
+                                         makeSubStream_offset_type lengthA, makeSubStream_object_type dictA) override;
         virtual getPos_ret_type      getPos() override;
         virtual getStart_ret_type    getStart() override;
 
