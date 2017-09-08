@@ -662,6 +662,7 @@ PODOFO_INC
 HAVE_PODOFO
 POPPLER_PLUGIN_LIB
 POPPLER_INC
+POPPLER_0_58_OR_LATER
 POPPLER_0_23_OR_LATER
 POPPLER_0_20_OR_LATER
 POPPLER_BASE_STREAM_HAS_TWO_ARGS
@@ -32322,6 +32323,8 @@ HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
 POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
+POPPLER_0_23_OR_LATER=no
+POPPLER_0_58_OR_LATER=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
@@ -32362,17 +32365,21 @@ $as_echo "yes" >&6; }
         POPPLER_INC=$TEST_POPPLER_INC
         POPPLER_PLUGIN_LIB="${TEST_POPPLER_LIB}"
 
-        # And now try another dirty thing, but this one is
-        # optional.
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Catalog::optContent exists" >&5
-$as_echo_n "checking if Catalog::optContent exists... " >&6; }
+        CHECK_OTHER_POPPLER_VERSION=yes
+
+        # And now we check if we have Poppler >= 0.58.0
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
+$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
         rm -f testpoppler.*
-        echo '#define private public' > testpoppler.cpp
-        echo '#include <poppler/Object.h>' >> testpoppler.cpp
-        echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
+        echo '#include <poppler/Object.h>' > testpoppler.cpp
+        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
         if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            POPPLER_0_58_OR_LATER=yes
+            POPPLER_0_23_OR_LATER=yes
+            POPPLER_0_20_OR_LATER=yes
+            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
             POPPLER_HAS_OPTCONTENT=yes
+            CHECK_OTHER_POPPLER_VERSION=no
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         else
@@ -32380,50 +32387,75 @@ $as_echo "yes" >&6; }
 $as_echo "no" >&6; }
         fi
 
-        # And now we check if we have Poppler >= 0.16.0
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if BaseStream constructor needs 2 arguments" >&5
-$as_echo_n "checking if BaseStream constructor needs 2 arguments... " >&6; }
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-        echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-        echo 'public:' >> testpoppler.cpp
-        echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-        echo '};' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
 
-            # And now we check if we have Poppler >= 0.20.0
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.20.0" >&5
-$as_echo_n "checking if we have Poppler >= 0.20.0... " >&6; }
+            # And now try another dirty thing, but this one is
+            # optional.
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Catalog::optContent exists" >&5
+$as_echo_n "checking if Catalog::optContent exists... " >&6; }
             rm -f testpoppler.*
-            echo '#include <poppler/Error.h>' > testpoppler.cpp
-            echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
+            echo '#define private public' > testpoppler.cpp
+            echo '#include <poppler/Object.h>' >> testpoppler.cpp
+            echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
             if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_0_20_OR_LATER=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            fi
+
+            # And now we check if we have Poppler >= 0.16.0
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if BaseStream constructor needs 2 arguments" >&5
+$as_echo_n "checking if BaseStream constructor needs 2 arguments... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+            echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+            echo 'public:' >> testpoppler.cpp
+            echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+            echo '};' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-                # And now we check if we have Poppler >= 0.23.0
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.23.0" >&5
-$as_echo_n "checking if we have Poppler >= 0.23.0... " >&6; }
+                # And now we check if we have Poppler >= 0.20.0
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.20.0" >&5
+$as_echo_n "checking if we have Poppler >= 0.20.0... " >&6; }
                 rm -f testpoppler.*
-                echo '#include <poppler/Object.h>' > testpoppler.cpp
-                echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-                echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-                echo 'public:' >> testpoppler.cpp
-                echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-                echo '  ~TestStream() {}' >> testpoppler.cpp
-                echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
-                echo '};' >> testpoppler.cpp
-                echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                echo '#include <poppler/Error.h>' > testpoppler.cpp
+                echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
                 if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                    POPPLER_0_23_OR_LATER=yes
+                    POPPLER_0_20_OR_LATER=yes
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
+                    # And now we check if we have Poppler >= 0.23.0
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.23.0" >&5
+$as_echo_n "checking if we have Poppler >= 0.23.0... " >&6; }
+                    rm -f testpoppler.*
+                    echo '#include <poppler/Object.h>' > testpoppler.cpp
+                    echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+                    echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+                    echo 'public:' >> testpoppler.cpp
+                    echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+                    echo '  ~TestStream() {}' >> testpoppler.cpp
+                    echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
+                    echo '};' >> testpoppler.cpp
+                    echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                    if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                        POPPLER_0_23_OR_LATER=yes
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                    else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                    fi
+
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -32433,10 +32465,6 @@ $as_echo "no" >&6; }
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
             fi
-
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
         fi
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -32458,6 +32486,8 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=$POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_0_20_OR_LATER=$POPPLER_0_20_OR_LATER
 
 POPPLER_0_23_OR_LATER=$POPPLER_0_23_OR_LATER
+
+POPPLER_0_58_OR_LATER=$POPPLER_0_58_OR_LATER
 
 POPPLER_INC=$POPPLER_INC
 

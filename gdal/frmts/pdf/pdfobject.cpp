@@ -971,7 +971,9 @@ class GDALPDFStreamPoppler : public GDALPDFStream
 
 GDALPDFObjectPoppler::~GDALPDFObjectPoppler()
 {
+#ifndef POPPLER_0_58_OR_LATER
     m_po->free();
+#endif
     if (m_bDestroy)
         delete m_po;
     delete m_poDict;
@@ -1182,6 +1184,35 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
     if (oIter != m_map.end())
         return oIter->second;
 
+#ifdef POPPLER_0_58_OR_LATER
+    Object o = m_poDict->lookupNF(((char*)pszKey));
+    if (!o.isNull())
+    {
+        int nRefNum = 0;
+        int nRefGen = 0;
+        if( o.isRef())
+        {
+            nRefNum = o.getRefNum();
+            nRefGen = o.getRefGen();
+            Object o2 = m_poDict->lookup((char*)pszKey);
+            if( !o2.isNull() )
+            {
+                GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o2)), TRUE);
+                poObj->SetRefNumAndGen(nRefNum, nRefGen);
+                m_map[pszKey] = poObj;
+                return poObj;
+            }
+        }
+        else
+        {
+            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o)), TRUE);
+            poObj->SetRefNumAndGen(nRefNum, nRefGen);
+            m_map[pszKey] = poObj;
+            return poObj;
+        }
+    }
+    return NULL;
+#else
     Object* po = new Object;
     if (m_poDict->lookupNF((char*)pszKey, po) && !po->isNull())
     {
@@ -1210,6 +1241,7 @@ GDALPDFObject* GDALPDFDictionaryPoppler::Get(const char* pszKey)
         delete po;
         return NULL;
     }
+#endif
 }
 
 /************************************************************************/
@@ -1286,6 +1318,35 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
     if (m_v[nIndex] != NULL)
         return m_v[nIndex];
 
+#ifdef POPPLER_0_58_OR_LATER
+    Object o = m_poArray->getNF(nIndex);
+    if( !o.isNull() )
+    {
+        int nRefNum = 0;
+        int nRefGen = 0;
+        if( o.isRef())
+        {
+            nRefNum = o.getRefNum();
+            nRefGen = o.getRefGen();
+            Object o2 = m_poArray->get(nIndex);
+            if( !o2.isNull() )
+            {
+                GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o2)), TRUE);
+                poObj->SetRefNumAndGen(nRefNum, nRefGen);
+                m_v[nIndex] = poObj;
+                return poObj;
+            }
+        }
+        else
+        {
+            GDALPDFObjectPoppler* poObj = new GDALPDFObjectPoppler(new Object(std::move(o)), TRUE);
+            poObj->SetRefNumAndGen(nRefNum, nRefGen);
+            m_v[nIndex] = poObj;
+            return poObj;
+        }
+    }
+    return NULL;
+#else
     Object* po = new Object;
     if (m_poArray->getNF(nIndex, po))
     {
@@ -1314,6 +1375,7 @@ GDALPDFObject* GDALPDFArrayPoppler::Get(int nIndex)
         delete po;
         return NULL;
     }
+#endif
 }
 
 /************************************************************************/

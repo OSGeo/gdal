@@ -52,8 +52,12 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE* f)
 /************************************************************************/
 
 VSIPDFFileStream::VSIPDFFileStream(
-    VSILFILE* fIn, const char* pszFilename, Object *dictA) :
-#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
+    VSILFILE* fIn, const char* pszFilename,
+    makeSubStream_object_type dictA
+) :
+#ifdef POPPLER_0_58_OR_LATER
+    BaseStream(std::move(dictA), (Goffset)VSIPDFFileStreamGetSize(fIn)),
+#elif defined(POPPLER_BASE_STREAM_HAS_TWO_ARGS)
     BaseStream(dictA, (setPos_offset_type)VSIPDFFileStreamGetSize(fIn)),
 #else
     BaseStream(dictA),
@@ -77,8 +81,11 @@ VSIPDFFileStream::VSIPDFFileStream(
 
 VSIPDFFileStream::VSIPDFFileStream( VSIPDFFileStream* poParentIn,
                                     vsi_l_offset startA, GBool limitedA,
-                                    vsi_l_offset lengthA, Object *dictA ) :
-#ifdef POPPLER_BASE_STREAM_HAS_TWO_ARGS
+                                    vsi_l_offset lengthA,
+                                    makeSubStream_object_type dictA) :
+#ifdef POPPLER_0_58_OR_LATER
+    BaseStream(std::move(dictA), (Goffset)lengthA),
+#elif defined(POPPLER_BASE_STREAM_HAS_TWO_ARGS)
     BaseStream(dictA, (makeSubStream_offset_type)lengthA),
 #else
     BaseStream(dictA),
@@ -115,7 +122,13 @@ VSIPDFFileStream::~VSIPDFFileStream()
 /*                                  copy()                              */
 /************************************************************************/
 
-#ifdef POPPLER_0_23_OR_LATER
+#ifdef POPPLER_0_58_OR_LATER
+BaseStream* VSIPDFFileStream::copy()
+{
+    return new VSIPDFFileStream(poParent, nStart, bLimited,
+                                nLength, dict.copy());
+}
+#elif defined(POPPLER_0_23_OR_LATER)
 BaseStream* VSIPDFFileStream::copy()
 {
     return new VSIPDFFileStream(poParent, nStart, bLimited,
@@ -126,13 +139,18 @@ BaseStream* VSIPDFFileStream::copy()
 /************************************************************************/
 /*                             makeSubStream()                          */
 /************************************************************************/
-
 Stream *VSIPDFFileStream::makeSubStream(makeSubStream_offset_type startA, GBool limitedA,
-                                        makeSubStream_offset_type lengthA, Object *dictA)
+                                        makeSubStream_offset_type lengthA, makeSubStream_object_type dictA)
 {
+#ifdef POPPLER_0_58_OR_LATER
+    return new VSIPDFFileStream(this,
+                                startA, limitedA,
+                                lengthA, std::move(dictA));
+#else
     return new VSIPDFFileStream(this,
                                 startA, limitedA,
                                 lengthA, dictA);
+#endif
 }
 
 /************************************************************************/
