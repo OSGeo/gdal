@@ -883,7 +883,7 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
         json_object_object_foreachC( poObjProps, it )
         {
             int nFldIndex = poDefn->GetFieldIndex( it.key );
-            if( -1 == nFldIndex )
+            if( -1 == nFldIndex && !bIsGeocouchSpatiallistFormat )
             {
                 // Detect the special kind of GeoJSON output by a spatiallist of
                 // GeoCouch such as:
