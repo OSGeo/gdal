@@ -684,7 +684,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         const double dfZone = OSR_GDV(papszNV, "zone", 0.0);
         const double dfSouth = OSR_GDV(papszNV, "south", 1.0);
         if( dfZone > 60.0 || dfZone < 0.0 || CPLIsNan(dfZone) ||
-            dfSouth < 0.0 || dfSouth > 1.0 )
+            dfSouth < 0.0 || dfSouth > 1.0 || CPLIsNan(dfSouth) )
         {
             CSLDestroy(papszNV);
             return OGRERR_CORRUPT_DATA;
