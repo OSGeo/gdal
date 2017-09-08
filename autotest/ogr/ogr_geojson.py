@@ -925,7 +925,7 @@ def ogr_geojson_21():
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[1,2]},
  "properties": {"_id":"aid", "_rev":"arev", "type":"Feature",
-                "properties":{"intvalue" : 2, "floatvalue" : 3.2, "strvalue" : "foo"}}}]}""")
+                "properties":{"intvalue" : 2, "floatvalue" : 3.2, "strvalue" : "foo", "properties": { "foo": "bar"}}}}]}""")
     if ds is None:
         gdaltest.post_reason('Failed to open datasource')
         return 'fail'
