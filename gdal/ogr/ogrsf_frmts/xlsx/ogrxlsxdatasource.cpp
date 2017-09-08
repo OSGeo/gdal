@@ -646,11 +646,14 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
         }
         for(;nCurLine<nNewCurLine;)
         {
+            const int nCurLineBefore = nCurLine;
             endElementRow("row");
 
             nCurCol = 0;
             apoCurLineValues.clear();
             apoCurLineTypes.clear();
+            if( nCurLineBefore == nCurLine )
+                break;
         }
 
     }
