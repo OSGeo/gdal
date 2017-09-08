@@ -681,8 +681,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
     else if( EQUAL(pszProj, "utm") )
     {
-        SetUTM(static_cast<int>(OSR_GDV( papszNV, "zone", 0.0)),
-               static_cast<int>(OSR_GDV( papszNV, "south", 1.0)) );
+        const double dfZone = OSR_GDV(papszNV, "zone", 0.0);
+        const double dfSouth = OSR_GDV(papszNV, "south", 1.0);
+        if( dfZone > 60.0 || dfZone < 0.0 || CPLIsNan(dfZone) ||
+            dfSouth < 0.0 || dfSouth > 1.0 )
+        {
+            CSLDestroy(papszNV);
+            return OGRERR_CORRUPT_DATA;
+        }
+        SetUTM(static_cast<int>(dfZone), static_cast<int>(dfSouth));
     }
     else if( EQUAL(pszProj, "merc")  // 2SP form.
              && OSR_GDV(papszNV, "lat_ts", 1000.0) < 999.0 )
