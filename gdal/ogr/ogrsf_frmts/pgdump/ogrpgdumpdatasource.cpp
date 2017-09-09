@@ -86,6 +86,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
 OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 {
+    EndCopy();
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
 
