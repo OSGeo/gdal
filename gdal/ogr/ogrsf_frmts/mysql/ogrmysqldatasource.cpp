@@ -34,6 +34,7 @@
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4201 ) /* nonstandard extension used : nameless struct/union */
+#pragma warning( disable : 4005 ) /* warning C4005: 'HAVE_STRUCT_TIMESPEC': macro redefinition */
 #endif
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic push
