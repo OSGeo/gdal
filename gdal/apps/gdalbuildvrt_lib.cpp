@@ -797,7 +797,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 {
     int iBand = 1;
-    for(int i=0;i<nInputFiles;i++)
+    for(int i=0; ppszInputFilenames != NULL && i<nInputFiles;i++)
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
@@ -911,7 +911,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
     }
 
-    for( int i = 0; i < nInputFiles; i++ )
+    for( int i = 0; ppszInputFilenames != NULL && i < nInputFiles; i++ )
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
