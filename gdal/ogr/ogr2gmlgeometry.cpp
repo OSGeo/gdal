@@ -218,8 +218,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeometry);
         if( poPoint == NULL )
         {
-            CPLError(CE_Fatal, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return false;
         }
 
         char szCoordinate[256] = {};
@@ -244,8 +245,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeometry);
         if( poPoint == NULL )
         {
-            CPLError(CE_Fatal, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
+            return false;
         }
 
         char szCoordinate[256] = {};
@@ -322,8 +324,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         OGRPolygon *poPolygon = dynamic_cast<OGRPolygon *>(poGeometry);
         if( poPolygon == NULL )
         {
-            CPLError(CE_Fatal, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPolygon.");
+            return false;
         }
 
         // Buffer for polygon tag name + srsName attribute if set.
@@ -390,8 +393,9 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
             dynamic_cast<OGRGeometryCollection *>(poGeometry);
         if( poGC == NULL )
         {
-            CPLError(CE_Fatal, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRGeometryCollection.");
+            return false;
         }
         const char *pszElemClose = NULL;
         const char *pszMemberElem = NULL;

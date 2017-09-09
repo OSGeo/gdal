@@ -1390,7 +1390,7 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
     {
         CPLStringList osNewMetadata;
         char** papszIter = papszMetadata;
-        while(*papszIter)
+        while(papszIter && *papszIter)
         {
             if (STARTS_WITH(*papszIter, "PROJ=") ||
                 STARTS_WITH(*papszIter, "DATUM=") ||

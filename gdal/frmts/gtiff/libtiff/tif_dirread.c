@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.217 2017-07-15 14:27:50 erouault Exp $ */
+/* $Id: tif_dirread.c,v 1.218 2017-09-09 21:44:42 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -2832,7 +2832,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleShort(TIFF* tif, TIFFDi
 	if (direntry->tdir_count<(uint64)tif->tif_dir.td_samplesperpixel)
 		return(TIFFReadDirEntryErrCount);
 	err=TIFFReadDirEntryShortArray(tif,direntry,&m);
-	if (err!=TIFFReadDirEntryErrOk)
+	if (err!=TIFFReadDirEntryErrOk || m == NULL)
 		return(err);
 	na=m;
 	nb=tif->tif_dir.td_samplesperpixel;
