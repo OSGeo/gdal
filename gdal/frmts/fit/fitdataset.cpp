@@ -1195,8 +1195,12 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     unsigned long pageBytes = blockX * blockY * bytesPerPixel;
     char *output = (char *) malloc(pageBytes);
     if (! output)
-        CPLError(CE_Fatal, CPLE_NotSupported,
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
                  "FITRasterBand couldn't allocate %lu bytes", pageBytes);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+        return NULL;
+    }
     FreeGuard<char> guardOutput( output );
 
     long maxx = (long) ceil(poSrcDS->GetRasterXSize() / (double) blockX);

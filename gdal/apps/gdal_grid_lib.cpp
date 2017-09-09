@@ -1085,7 +1085,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 
         else if( EQUAL(papszArgv[i],"-clipsrc") )
         {
-            if (i + 1 >= argc)
+            if (i + 1 >= argc || papszArgv[i+1] == NULL)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg, "%s option requires 1 or 4 arguments", papszArgv[i]);
                 GDALGridOptionsFree(psOptions);

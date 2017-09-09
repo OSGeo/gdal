@@ -2261,7 +2261,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
                 static_cast<OGRGeometryCollection*>(poGeom);
         OdDgCellHeader2dPtr pCell = OdDgCellHeader2d::createObject(); 
         element = pCell;
-        for( int i = 0; i < poGC->getNumGeometries(); ++i )
+        for( int i = 0; !pCell.isNull() && i < poGC->getNumGeometries(); ++i )
         {
             pCell->add(CreateGraphicsElement( poFeature,
                                               poGC->getGeometryRef(i) ));

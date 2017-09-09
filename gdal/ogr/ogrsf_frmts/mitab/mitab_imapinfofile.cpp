@@ -306,7 +306,8 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
           OGRFeature *poTmpFeature = poFeature->Clone();
 
           for( int i = 0;
-               eStatus==OGRERR_NONE && i<poColl->getNumGeometries();
+               eStatus==OGRERR_NONE && poColl != NULL &&
+               i<poColl->getNumGeometries();
                i++)
           {
               poTmpFeature->SetFID(OGRNullFID);

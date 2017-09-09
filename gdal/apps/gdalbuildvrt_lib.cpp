@@ -348,9 +348,12 @@ VRTBuilder::~VRTBuilder()
     CPLFree(pszVRTNoData);
     CPLFree(panBandList);
 
-    for(int i=0;i<nInputFiles;i++)
+    if( ppszInputFilenames )
     {
-        CPLFree(ppszInputFilenames[i]);
+        for(int i=0;i<nInputFiles;i++)
+        {
+            CPLFree(ppszInputFilenames[i]);
+        }
     }
     CPLFree(ppszInputFilenames);
     CPLFree(pahSrcDS);
@@ -1120,7 +1123,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
     }
 
     int nCountValid = 0;
-    for(int i=0;i<nInputFiles;i++)
+    for(int i=0; ppszInputFilenames != NULL && i<nInputFiles;i++)
     {
         const char* dsFileName = ppszInputFilenames[i];
 

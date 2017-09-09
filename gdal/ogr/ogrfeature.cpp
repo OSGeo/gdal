@@ -888,15 +888,18 @@ OGRFeature *OGRFeature::Clone()
             return NULL;
         }
     }
-    for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
+    if( poNew->papoGeometries )
     {
-        if( papoGeometries[i] != NULL )
+        for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
         {
-            poNew->papoGeometries[i] = papoGeometries[i]->clone();
-            if( poNew->papoGeometries[i] == NULL )
+            if( papoGeometries[i] != NULL )
             {
-                delete poNew;
-                return NULL;
+                poNew->papoGeometries[i] = papoGeometries[i]->clone();
+                if( poNew->papoGeometries[i] == NULL )
+                {
+                    delete poNew;
+                    return NULL;
+                }
             }
         }
     }
