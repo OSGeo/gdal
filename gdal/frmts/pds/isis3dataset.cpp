@@ -2483,6 +2483,9 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
                             osQubeFile.c_str() );
                     }
                 }
+                // to please Clang Static Analyzer
+                nBlockXSize = std::max(1, nBlockXSize);
+                nBlockYSize = std::max(1, nBlockYSize);
 
                 // Check that blocks are effectively written in expected order.
                 const int nBlockSizeBytes = nBlockXSize * nBlockYSize *
