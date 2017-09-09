@@ -345,7 +345,7 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
     NGSGEOIDDataset *poDS = new NGSGEOIDDataset();
     poDS->fp = fp;
 
-    int nRows, nCols;
+    int nRows = 0, nCols = 0;
     GetHeaderInfo( poOpenInfo->pabyHeader,
                    poDS->adfGeoTransform,
                    &nRows,
