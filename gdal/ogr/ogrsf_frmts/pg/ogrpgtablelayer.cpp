@@ -154,6 +154,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bInResetReading(FALSE),
     bAutoFIDOnCreateViaCopy(FALSE),
     bUseCopyByDefault(FALSE),
+    bNeedToUpdateSequence(false),
     bDeferredCreation(FALSE),
     iFIDAsRegularColumnIndex(-1)
 {
@@ -205,6 +206,8 @@ OGRPGTableLayer::~OGRPGTableLayer()
 {
     if( bDeferredCreation ) RunDeferredCreationIfNecessary();
     if( bCopyActive ) EndCopy();
+    UpdateSequenceIfNeeded();
+
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
@@ -1560,6 +1563,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
                     /* try to copy FID values from features. Otherwise, we will not */
                     /* do and assume that the FID column is an autoincremented column. */
                     bFIDColumnInCopyFields = bFIDSet;
+                    bNeedToUpdateSequence = bFIDSet;
                 }
 
                 eErr = CreateFeatureViaCopy( poFeature );
@@ -1702,11 +1706,17 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     /* Use case of ogr_pg_60 test */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
+        bNeedToUpdateSequence = true;
+
         if( bNeedComma )
             osCommand += ", ";
 
         osCommand = osCommand + OGRPGEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = TRUE;
+    }
+    else
+    {
+        UpdateSequenceIfNeeded();
     }
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -2942,7 +2952,31 @@ OGRErr OGRPGTableLayer::EndCopy()
     if( !bUseCopyByDefault )
         bUseCopy = USE_COPY_UNSET;
 
+    UpdateSequenceIfNeeded();
+
     return result;
+}
+
+/************************************************************************/
+/*                       UpdateSequenceIfNeeded()                       */
+/************************************************************************/
+
+void OGRPGTableLayer::UpdateSequenceIfNeeded()
+{
+    if( bNeedToUpdateSequence )
+    {
+        PGconn *hPGConn = poDS->GetPGConn();
+        CPLString osCommand;
+        osCommand.Printf(
+            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s",
+            OGRPGEscapeString(hPGConn, pszSqlTableName).c_str(),
+            OGRPGEscapeString(hPGConn, pszFIDColumn).c_str(),
+            OGRPGEscapeColumnName(pszFIDColumn).c_str(),
+            pszSqlTableName);
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+        OGRPGClearResult( hResult );
+        bNeedToUpdateSequence = false;
+    }
 }
 
 /************************************************************************/

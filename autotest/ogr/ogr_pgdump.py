@@ -979,6 +979,37 @@ def ogr_pgdump_15():
     return 'success'
 
 ###############################################################################
+# Test sequence updating 
+
+def ogr_pgdump_16():
+
+    for pg_use_copy in ('YES', 'NO'):
+
+        gdal.SetConfigOption( 'PG_USE_COPY', pg_use_copy )
+        ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_16.sql', options = [ 'LINEFORMAT=LF' ] )
+        lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(1)
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        f = gdal.VSIFOpenL('/vsimem/ogr_pgdump_16.sql', 'rb')
+        sql = gdal.VSIFReadL(1, 10000, f).decode('utf8')
+        gdal.VSIFCloseL(f)
+
+        gdal.Unlink('/vsimem/ogr_pgdump_16.sql')
+
+        if sql.find("""SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";""") < 0:
+            print(sql)
+            return 'fail'
+
+    gdal.SetConfigOption( 'PG_USE_COPY', None )
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_pgdump_cleanup():
@@ -1009,6 +1040,7 @@ gdaltest_list = [
     ogr_pgdump_13,
     ogr_pgdump_14,
     ogr_pgdump_15,
+    ogr_pgdump_16,
     ogr_pgdump_cleanup ]
 
 

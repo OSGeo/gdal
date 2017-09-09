@@ -5449,6 +5449,40 @@ def ogr_pg_86():
     return 'success'
 
 ###############################################################################
+# Test sequence updating (#7032)
+
+def ogr_pg_87():
+
+    if gdaltest.pg_ds is None or gdaltest.ogr_pg_second_run :
+        return 'skip'
+
+    lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_87')
+    lyr.CreateField(ogr.FieldDefn('test', ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    lyr.CreateFeature(f)
+
+    # Test updating of sequence after CreateFeatureViaCopy
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_87')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    if f.GetFID() != 11:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test updating of sequence after CreateFeatureViaInsert
+    gdaltest.pg_ds = ogr.Open( 'PG:' + gdaltest.pg_connection_string, update = 1 )
+    lyr = gdaltest.pg_ds.GetLayerByName('ogr_pg_87')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    if f.GetFID() != 12:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_pg_table_cleanup():
@@ -5515,6 +5549,7 @@ def ogr_pg_table_cleanup():
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_1' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_85_2' )
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_86' )
+    gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:ogr_pg_87' )
 
     # Drop second 'tpoly' from schema 'AutoTest-schema' (do NOT quote names here)
     gdaltest.pg_ds.ExecuteSQL( 'DELLAYER:AutoTest-schema.tpoly' )
@@ -5635,6 +5670,7 @@ gdaltest_list_internal = [
     ogr_pg_84,
     ogr_pg_85,
     ogr_pg_86,
+    ogr_pg_87,
     ogr_pg_cleanup
 ]
 
