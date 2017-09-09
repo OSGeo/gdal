@@ -822,7 +822,8 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         if( hLayer == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.",
-                     psOptions->papszLayers[i] ? psOptions->papszLayers[i] : "null" );
+                     psOptions->papszLayers && psOptions->papszLayers[i] ?
+                            psOptions->papszLayers[i] : "null" );
             continue;
         }
 
