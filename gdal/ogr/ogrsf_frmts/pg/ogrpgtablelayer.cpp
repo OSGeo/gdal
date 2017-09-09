@@ -140,7 +140,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bPreservePrecision(TRUE),
     bUseCopy(USE_COPY_UNSET),  // unknown
     bCopyActive(FALSE),
-    bFIDColumnInCopyFields(FALSE),
+    bFIDColumnInCopyFields(false),
     bFirstInsertion(TRUE),
     bHasWarnedIncompatibleGeom(FALSE),
     // Just in provision for people yelling about broken backward compatibility.
@@ -1544,7 +1544,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            int bFIDSet = (pszFIDColumn != NULL && poFeature->GetFID() != OGRNullFID);
+            bool bFIDSet = (pszFIDColumn != NULL && poFeature->GetFID() != OGRNullFID);
             if( bCopyActive && bFIDSet != bFIDColumnInCopyFields )
             {
                 eErr = CreateFeatureViaInsert( poFeature );
