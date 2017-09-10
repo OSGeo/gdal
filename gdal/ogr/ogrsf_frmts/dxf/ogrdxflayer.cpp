@@ -200,8 +200,8 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Is the layer disabled/hidden/frozen/off?                        */
 /* -------------------------------------------------------------------- */
-    int bHidden =
-        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+    const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
+    const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
