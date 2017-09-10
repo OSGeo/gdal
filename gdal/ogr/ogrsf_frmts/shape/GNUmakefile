@@ -5,7 +5,7 @@ include ../../../GDALmake.opt
 OBJ	=	shape2ogr.o shpopen.o dbfopen.o shptree.o sbnsearch.o shp_vsi.o \
 		ogrshapedriver.o ogrshapedatasource.o ogrshapelayer.o
 
-CPPFLAGS :=	-DSAOffset=vsi_l_offset -DUSE_CPL \
+CPPFLAGS :=	-DSAOffset=vsi_l_offset -DUSE_CPL -DSHPAPI_CALL= \
 		-I.. -I../.. -I../generic  $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
