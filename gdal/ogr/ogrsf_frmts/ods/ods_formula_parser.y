@@ -244,7 +244,9 @@ value_expr:
 
     | '-' value_expr %prec ODST_UMINUS
         {
-            if ($2->eNodeType == SNT_CONSTANT)
+            if ($2->eNodeType == SNT_CONSTANT &&
+                !($2->field_type == ODS_FIELD_TYPE_INTEGER &&
+                  $2->int_value == INT_MIN))
             {
                 $$ = $2;
                 $$->int_value *= -1;
