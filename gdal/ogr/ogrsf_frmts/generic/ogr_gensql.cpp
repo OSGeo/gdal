@@ -1374,9 +1374,6 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         {
           case SWQ_BOOLEAN:
           case SWQ_INTEGER:
-            poDstFeat->SetField( iRegularField++, (int)poResult->int_value );
-            break;
-
           case SWQ_INTEGER64:
             poDstFeat->SetField( iRegularField++, poResult->int_value );
             break;
