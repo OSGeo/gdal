@@ -33,6 +33,7 @@
 #include "ogr_api.h"
 
 #include <cmath>
+#include <algorithm>
 
 CPL_CVSID("$Id$")
 
@@ -2056,46 +2057,62 @@ OGRFeature *OGRDXFLayer::Translate3DFACE()
 }
 
 /* -------------------------------------------------------------------- */
-/*      Distance                                                        */
+/*      PointXAxisComparer                                              */
 /*                                                                      */
-/*      Calculate distance between two points                           */
+/*      Returns true if oP1 is to the left of oP2, or they have the     */
+/*      same x-coordinate and oP1 is below oP2.                         */
 /* -------------------------------------------------------------------- */
 
-static double Distance(double dX0, double dY0, double dX1, double dY1) {
-    return sqrt((dX1 - dX0) * (dX1 - dX0) + (dY1 - dY0) * (dY1 - dY0));
+static bool PointXAxisComparer(const OGRPoint& oP1, const OGRPoint& oP2)
+{
+    return oP1.getX() == oP2.getX() ?
+        oP1.getY() < oP2.getY() :
+        oP1.getX() < oP2.getX();
 }
 
 /* -------------------------------------------------------------------- */
-/*      AddEdgesByNearest                                               */
+/*      PointXYEqualityComparer                                         */
 /*                                                                      */
-/*      Order and add SOLID edges to geometry collection                */
+/*      Returns true if oP1 is equal to oP2 in the X and Y directions.  */
 /* -------------------------------------------------------------------- */
 
-static void AddEdgesByNearest(OGRGeometryCollection* poCollection, OGRLineString *poLS,
-        OGRLineString *poLS4, double dfX2, double dfY2, double dfX3,
-        double dfY3, double dfX4, double dfY4) {
-    OGRLineString *poLS2 = new OGRLineString();
-    OGRLineString *poLS3 = new OGRLineString();
-    poLS->addPoint(dfX2, dfY2);
-    poCollection->addGeometryDirectly(poLS);
-    poLS2->addPoint(dfX2, dfY2);
-    double dTo3 = Distance(dfX2, dfY2, dfX3, dfY3);
-    double dTo4 = Distance(dfX2, dfY2, dfX4, dfY4);
-    if (dTo3 <= dTo4) {
-        poLS2->addPoint(dfX3, dfY3);
-        poCollection->addGeometryDirectly(poLS2);
-        poLS3->addPoint(dfX3, dfY3);
-        poLS3->addPoint(dfX4, dfY4);
-        poCollection->addGeometryDirectly(poLS3);
-        poLS4->addPoint(dfX4, dfY4);
-    } else {
-        poLS2->addPoint(dfX4, dfY4);
-        poCollection->addGeometryDirectly(poLS2);
-        poLS3->addPoint(dfX4, dfY4);
-        poLS3->addPoint(dfX3, dfY3);
-        poCollection->addGeometryDirectly(poLS3);
-        poLS4->addPoint(dfX3, dfY3);
+static bool PointXYEqualityComparer(const OGRPoint& oP1, const OGRPoint& oP2)
+{
+    return oP1.getX() == oP2.getX() && oP1.getY() == oP2.getY();
+}
+
+/* -------------------------------------------------------------------- */
+/*      OrderSolidVertices                                              */
+/*                                                                      */
+/*      Order vertices of a SOLID using Jarvis march                    */
+/* -------------------------------------------------------------------- */
+
+static void OrderSolidVertices(OGRPoint poCorners[], const int nCount)
+{
+    if( nCount <= 1 ) {
+        return;
     }
+
+    double dfX1 = poCorners[0].getX();
+    double dfY1 = poCorners[0].getY();
+
+    double dfMinAngle = 10.0;
+    int iMinAngleIndex = 0;
+    for( int i = 1; i < nCount; i++ ) {
+        double dfAngle = atan2( poCorners[i].getX() - dfX1,
+            poCorners[i].getY() - dfY1 );
+        if( dfAngle < 0 ) dfAngle += 2 * M_PI;
+        if( dfAngle < dfMinAngle ) {
+            dfMinAngle = dfAngle;
+            iMinAngleIndex = i;
+        }
+    }
+
+    OGRPoint poTmp = poCorners[1];
+    poCorners[1] = poCorners[iMinAngleIndex];
+    poCorners[iMinAngleIndex] = poTmp;
+
+    OrderSolidVertices( poCorners + 1, nCount - 1 );
 }
 
 /************************************************************************/
@@ -2179,39 +2196,63 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
     CPLDebug("Corner coordinates are", "%f,%f,%f,%f,%f,%f,%f,%f", dfX1, dfY1,
             dfX2, dfY2, dfX3, dfY3, dfX4, dfY4);
 
-    OGRGeometryCollection* poCollection = NULL;
-    poCollection = new OGRGeometryCollection();
+    OGRPoint* poCorners = new OGRPoint[4];
+    poCorners[0].setX(dfX1);
+    poCorners[0].setY(dfY1);
+    poCorners[1].setX(dfX2);
+    poCorners[1].setY(dfY2);
+    poCorners[2].setX(dfX3);
+    poCorners[2].setY(dfY3);
+    poCorners[3].setX(dfX4);
+    poCorners[3].setY(dfY4);
 
-    OGRLineString *poLS = new OGRLineString();
-    poLS->addPoint(dfX1, dfY1);
+    // corners in SOLID can be in any order, so we need to order them into
+    // a sensible order. First sort them to remove duplicates. Then run a
+    // Jarvis march to form the convex hull of the points.
 
-    // corners in SOLID can be in any order, so we need to order them for
-    // creating edges for polygon
-
-    double dTo2 = Distance(dfX1, dfY1, dfX2, dfY2);
-    double dTo3 = Distance(dfX1, dfY1, dfX3, dfY3);
-    double dTo4 = Distance(dfX1, dfY1, dfX4, dfY4);
-
-    OGRLineString *poLS4 = new OGRLineString();
-
-    if (dTo2 <= dTo3 && dTo2 <= dTo4) {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX2, dfY2, dfX3, dfY3,
-                dfX4, dfY4);
-    } else if (dTo3 <= dTo2 && dTo3 <= dTo4) {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX3, dfY3, dfX2, dfY2,
-                dfX4, dfY4);
-    } else /* if (dTo4 <= dTo2 && dTo4 <= dTo3) */ {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX4, dfY4, dfX3, dfY3,
-                dfX2, dfY2);
+    std::sort(poCorners, poCorners + 4, PointXAxisComparer);
+    int nCornerCount = static_cast<int>(std::unique(poCorners, poCorners + 4,
+        PointXYEqualityComparer) - poCorners);
+    if( nCornerCount < 1 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        delete[] poCorners;
+        return NULL;
     }
-    poLS4->addPoint(dfX1, dfY1);
-    poCollection->addGeometryDirectly(poLS4);
-    OGRErr eErr;
 
-    OGRGeometry* poFinalGeom = (OGRGeometry *) OGRBuildPolygonFromEdges(
-            (OGRGeometryH) poCollection, TRUE, TRUE, 0, &eErr);
+    OrderSolidVertices(poCorners, nCornerCount);
 
-    delete poCollection;
+    OGRGeometry* poFinalGeom;
+
+    // what kind of object do we need?
+    if( nCornerCount == 1 )
+    {
+        poFinalGeom = poCorners[0].clone();
+    }
+    else if( nCornerCount == 2 )
+    {
+        OGRLineString* poLS = new OGRLineString();
+        poLS->setPoint( 0, &poCorners[0] );
+        poLS->setPoint( 1, &poCorners[1] );
+        poFinalGeom = poLS;
+    }
+    else
+    {
+        OGRLinearRing* poLinearRing = new OGRLinearRing();
+        poLinearRing->setPoint( 0, &poCorners[0] );
+        poLinearRing->setPoint( 1, &poCorners[1] );
+        poLinearRing->setPoint( 2, &poCorners[2] );
+        if( nCornerCount == 4 )
+            poLinearRing->setPoint( 3, &poCorners[3] );
+        poLinearRing->closeRings();
+
+        OGRPolygon* poPoly = new OGRPolygon();
+        poPoly->addRingDirectly( poLinearRing );
+        poFinalGeom = poPoly;
+    }
+
+    delete[] poCorners;
 
     ApplyOCSTransformer(poFinalGeom);
 
