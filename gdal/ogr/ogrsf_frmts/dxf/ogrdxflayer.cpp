@@ -808,8 +808,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /* -------------------------------------------------------------------- */
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
-    int bHidden =
-        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+    const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
+    const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
