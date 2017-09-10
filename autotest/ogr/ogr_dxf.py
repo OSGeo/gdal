@@ -1236,7 +1236,7 @@ def ogr_dxf_26():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((2.716846 2.762514,2.393674 1.647962,4.391042 1.06881,4.714214 2.183362,2.716846 2.762514))' ):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((4.714214 2.183362,2.716846 2.762514,2.393674 1.647962,4.391042 1.06881,4.714214 2.183362))' ):
         feat.DumpReadable()
         return 'fail'
 
@@ -1411,9 +1411,9 @@ def ogr_dxf_31():
 
 # OGRFeature(entities):8
 #   EntityHandle (String) = 1FB
-#   POLYGON ((3 4,4 4,4 3,3 3,3 4))
+#   POLYGON ((3 3,3 4,4 4,4 3,3 3))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((3 4,4 4,4 3,3 3,3 4))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((3 3,3 4,4 4,4 3,3 3))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -1520,9 +1520,9 @@ def ogr_dxf_31():
 
 # OGRFeature(entities):21
 #   EntityHandle (String) = 20F
-#   POLYGON ((-3 4,-4 4,-4 3,-3 3,-3 4))
+#   POLYGON ((-3 3,-3 4,-4 4,-4 3,-3 3))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-3 4,-4 4,-4 3,-3 3,-3 4))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-3 3,-3 4,-4 4,-4 3,-3 3))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -1626,9 +1626,9 @@ def ogr_dxf_31():
 
 # OGRFeature(entities):34
 #   EntityHandle (String) = 221
-#   POLYGON ((-3 -4,-4 -4,-4 -3,-3 -3,-3 -4))
+#   POLYGON ((-4 -4,-4 -3,-3 -3,-3 -4,-4 -4))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-3 -4,-4 -4,-4 -3,-3 -3,-3 -4))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-4 -4,-4 -3,-3 -3,-3 -4,-4 -4))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -1734,9 +1734,9 @@ def ogr_dxf_31():
 
 # OGRFeature(entities):47
 #   EntityHandle (String) = 233
-#   POLYGON ((3 -4,4 -4,4 -3,3 -3,3 -4))
+#   POLYGON ((4 -4,4 -3,3 -3,3 -4,4 -4))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((3 -4,4 -4,4 -3,3 -3,3 -4))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((4 -4,4 -3,3 -3,3 -4,4 -4))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -1882,9 +1882,9 @@ def ogr_dxf_32():
 
 # OGRFeature(entities):12
 #   EntityHandle (String) = 1C1
-#   POLYGON ((3 4,4 4,4 3,3 3,3 4))
+#   POLYGON ((3 3,3 4,4 4,4 3,3 3))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((3 4,4 4,4 3,3 3,3 4))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((3 3,3 4,4 4,4 3,3 3))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -2022,9 +2022,9 @@ def ogr_dxf_32():
 
 # OGRFeature(entities):29
 #   EntityHandle (String) = 1D9
-#   POLYGON ((-1.5 4.0,-2.0 4.0,-2.0 3.0,-1.5 3.0,-1.5 4.0))
+#   POLYGON ((-2.0 3.0,-1.5 3.0,-1.5 4.0,-2.0 4.0,-2.0 3.0))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-1.5 4.0,-2.0 4.0,-2.0 3.0,-1.5 3.0,-1.5 4.0))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((-2.0 3.0,-1.5 3.0,-1.5 4.0,-2.0 4.0,-2.0 3.0))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -2162,9 +2162,9 @@ def ogr_dxf_32():
 
 # OGRFeature(entities):46
 #   EntityHandle (String) = 1EF
-#   POLYGON ((1.5 -2.0,0.75 -1.5,0.25 -1.5,1.0 -2.0,1.5 -2.0))
+#   POLYGON ((0.25 -1.5,0.75 -1.5,1.5 -2.0,1.0 -2.0,0.25 -1.5))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((1.5 -2.0,0.75 -1.5,0.25 -1.5,1.0 -2.0,1.5 -2.0))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((0.25 -1.5,0.75 -1.5,1.5 -2.0,1.0 -2.0,0.25 -1.5))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -2302,9 +2302,9 @@ def ogr_dxf_32():
 
 # OGRFeature(entities):63
 #   EntityHandle (String) = 205
-#   POLYGON ((4.875 0.25,5.5 1.0,4.75 1.5,4.125 0.75,4.875 0.25))
+#   POLYGON ((5.5 1.0,4.75 1.5,4.125 0.75,4.875 0.25,5.5 1.0))
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'POLYGON ((4.875 0.25,5.5 1.0,4.75 1.5,4.125 0.75,4.875 0.25))'):
+    if ogrtest.check_feature_geometry( feat, 'POLYGON ((5.5 1.0,4.75 1.5,4.125 0.75,4.875 0.25,5.5 1.0))'):
         feat.DumpReadable()
         return 'fail'
 
@@ -2558,6 +2558,41 @@ def ogr_dxf_37():
 
     return 'success'
 
+###############################################################################
+# Test degenerated cases of SOLID (#7038)
+
+def ogr_dxf_38():
+
+    ds = ogr.Open('data/solid-less-than-4-vertices.dxf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test correct reordering of vertices in SOLID (#7038)
+
+def ogr_dxf_39():
+
+    ds = ogr.Open('data/solid-parallelogram.dxf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'POLYGON ((0.0 2.5,0 5,1.5 2.5,1.5 0.0,0.0 2.5))':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # cleanup
@@ -2609,6 +2644,8 @@ gdaltest_list = [
     ogr_dxf_35,
     ogr_dxf_36,
     ogr_dxf_37,
+    ogr_dxf_38,
+    ogr_dxf_39,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
