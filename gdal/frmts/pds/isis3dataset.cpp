@@ -760,6 +760,7 @@ class ISIS3WrapperRasterBand : public GDALProxyRasterBand
 
         void    InitFile();
 
+        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0) override;
         virtual CPLErr          IWriteBlock( int, int, void * ) override;
 
         virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
@@ -1486,6 +1487,25 @@ void ISIS3WrapperRasterBand::InitFile()
 }
 
 /************************************************************************/
+/*                               Fill()                                 */
+/************************************************************************/
+
+CPLErr ISIS3WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
+{
+    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
+    if( poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData == dfRealValue )
+    {
+        dfRealValue = m_dfNoData;
+    }
+    if( poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone )
+    {
+        InitFile();
+    }
+
+    return GDALProxyRasterBand::Fill( dfRealValue, dfImaginaryValue );
+}
+
+/************************************************************************/
 /*                             IWriteBlock()                             */
 /************************************************************************/
 
@@ -1499,7 +1519,7 @@ CPLErr ISIS3WrapperRasterBand::IWriteBlock( int nXBlock, int nYBlock,
         RemapNoData( eDataType, pImage, nBlockXSize * nBlockYSize,
                      poGDS->m_dfSrcNoData, m_dfNoData );
     }
-    if( poGDS->m_bGeoTIFFAsRegularExternal && poGDS->m_bGeoTIFFInitDone )
+    if( poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone )
     {
         InitFile();
     }
