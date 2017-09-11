@@ -313,7 +313,28 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
                         (const char * pszName, const char * pszValue, const char * pszDomain),
                         (pszName, pszValue, pszDomain))
 
-RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, FlushCache, (), ())
+
+CPLErr GDALProxyRasterBand::FlushCache()
+{
+    // We need to make sure that all cached bocks at the proxy level are
+    // first flushed
+    CPLErr ret = GDALRasterBand::FlushCache();
+    if( ret == CE_None )
+    {
+        GDALRasterBand* poSrcBand = RefUnderlyingRasterBand();
+        if (poSrcBand)
+        {
+            ret = poSrcBand->FlushCache();
+            UnrefUnderlyingRasterBand(poSrcBand);
+        }
+        else
+        {
+            ret = CE_Failure;
+        }
+    }
+    return ret;
+}
+
 RB_PROXY_METHOD_WITH_RET(char**, NULL, GetCategoryNames, (), ())
 RB_PROXY_METHOD_WITH_RET(double, 0, GetNoDataValue, (int *pbSuccess), (pbSuccess))
 RB_PROXY_METHOD_WITH_RET(double, 0, GetMinimum, (int *pbSuccess), (pbSuccess))
