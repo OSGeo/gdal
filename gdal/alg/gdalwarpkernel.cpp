@@ -432,9 +432,21 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         return GWKGenericMonoThread(poWK, pfnFunc);
     }
 
-    int nThreads = psThreadData->poThreadPool->GetThreadCount();
-    if (nThreads >= nDstYSize / 2)
-        nThreads = nDstYSize / 2;
+    int nThreads =
+        std::min(psThreadData->poThreadPool->GetThreadCount(), nDstYSize / 2);
+    // Config option mostly useful for tests to be able to test multithreading
+    // with small rasters
+    const int nWarpChunkSize = atoi(
+        CPLGetConfigOption("WARP_THREAD_CHUNK_SIZE", "65536"));
+    if( nWarpChunkSize > 0 )
+    {
+        GIntBig nChunks =
+            static_cast<GIntBig>(nDstYSize) * poWK->nDstXSize / nWarpChunkSize;
+        if( nThreads > nChunks )
+            nThreads = static_cast<int>(nChunks);
+    }
+    if( nThreads <= 0 )
+        nThreads = 1;
 
     CPLDebug("WARP", "Using %d threads", nThreads);
 
