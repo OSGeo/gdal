@@ -32,6 +32,8 @@
 #include "cpl_time.h"
 #include "cpl_vsi_error.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 namespace OGRXLSX {
@@ -637,7 +639,13 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
             return;
         }
         nNewCurLine --;
-        if( nNewCurLine > nCurLine && nNewCurLine - nCurLine > 10000 )
+        const int nFields = std::max(
+            static_cast<int>(apoFirstLineValues.size()),
+            poCurLayer != NULL ?
+                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+        if( nNewCurLine > nCurLine &&
+            (nNewCurLine - nCurLine > 10000 ||
+             (nFields > 0 && nNewCurLine - nCurLine > 100000 / nFields)) )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid row: %d. Too big gap with previous valid row",
@@ -728,11 +736,17 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             */
             int nNewCurCol = (pszR[0] - 'A');
             int i = 1;
-            while(pszR[i] >= 'A' && pszR[i] <= 'Z' && nNewCurCol < 10000)
+            while(pszR[i] >= 'A' && pszR[i] <= 'Z' && nNewCurCol <= 2000)
             {
                 // We wouldn't need the +1 if this was a proper base 26
                 nNewCurCol = (nNewCurCol + 1) * 26 + (pszR[i] - 'A');
                 i ++;
+            }
+            if( nNewCurCol > 2000 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Limiting number of columns to 2000");
+                nNewCurCol = 2000;
             }
             for(;nCurCol<nNewCurCol;nCurCol++)
             {
