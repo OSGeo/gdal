@@ -2963,7 +2963,7 @@ OGRErr OGRPGTableLayer::EndCopy()
 
 void OGRPGTableLayer::UpdateSequenceIfNeeded()
 {
-    if( bNeedToUpdateSequence )
+    if( bNeedToUpdateSequence && pszFIDColumn != NULL )
     {
         PGconn *hPGConn = poDS->GetPGConn();
         CPLString osCommand;
