@@ -621,11 +621,11 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
 
 
 /************************************************************************/
-/*                      UpdateAndWarnIfInconsistant()                   */
+/*                      UpdateAndWarnIfInconsistent()                   */
 /************************************************************************/
 
 static
-void UpdateAndWarnIfInconsistant(const char* pszKeyword,
+void UpdateAndWarnIfInconsistent(const char* pszKeyword,
                                  CPLString& osVal,
                                  const CPLString& osNewVal,
                                  const CPLString& osCredentials,
@@ -746,7 +746,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                 {
                     if( EQUAL(pszKey, "aws_access_key_id") )
                     {
-                        UpdateAndWarnIfInconsistant(pszKey,
+                        UpdateAndWarnIfInconsistent(pszKey,
                                                     osAccessKeyId,
                                                     pszValue,
                                                     osCredentials,
@@ -754,7 +754,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     }
                     else if( EQUAL(pszKey, "aws_secret_access_key") )
                     {
-                        UpdateAndWarnIfInconsistant(pszKey,
+                        UpdateAndWarnIfInconsistent(pszKey,
                                                     osSecretAccessKey,
                                                     pszValue,
                                                     osCredentials,
@@ -762,7 +762,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
                     }
                     else if( EQUAL(pszKey, "aws_session_token") )
                     {
-                        UpdateAndWarnIfInconsistant(pszKey,
+                        UpdateAndWarnIfInconsistent(pszKey,
                                                     osSessionToken,
                                                     pszValue,
                                                     osCredentials,

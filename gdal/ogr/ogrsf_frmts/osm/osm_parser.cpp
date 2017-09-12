@@ -1945,7 +1945,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
         if( eType == BLOB_OSMDATA && psCtxt->poWTP != NULL )
         {
             // Accumulate BLOB_OSMDATA until we reach either the maximum
-            // number of jobs or a theshold in bytes
+            // number of jobs or a threshold in bytes
             if( nBlobCount == N_MAX_JOBS || nBlobSizeAcc > MAX_ACC_BLOB_SIZE )
             {
                 break;

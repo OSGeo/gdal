@@ -37,7 +37,7 @@ __inline int CPL_safer_vsnprintf(char *str, size_t size, const char *format, va_
 {
     int ret = _vsnprintf(str, size, format, ap);
     /* CPLsprintf() call CPLvsnprintf() with a fake size of INT_MAX, and */
-    /* later may substract offset. So basically do not do anything if */
+    /* later may subtract offset. So basically do not do anything if */
     /* the buffer is bigger than INT_MAX/2 */
     if(size > 0 && size < 0x3FFFFFFF)
         str[size-1] = '\0';

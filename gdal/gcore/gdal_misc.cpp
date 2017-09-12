@@ -2290,7 +2290,7 @@ double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
  * 
  * Starting with GDAL 2.2.2, if bApproxOK = FALSE, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK configuration option will be read. If
- * set to YES, then bApproxOK will be overriden with TRUE.
+ * set to YES, then bApproxOK will be overridden with TRUE.
  * Starting with GDAL 2.2.2, when exact fit is asked, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD configuration option can be set to
  * give the maximum error threshold in pixel. The default is 0.25.

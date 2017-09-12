@@ -162,7 +162,7 @@ public:
     CADVector ReadRAWVector();
 
     void Seek(size_t offset, enum SeekPosition position = SeekPosition::CURRENT);
-    size_t PostionBit() const { return m_nBitOffsetFromStart; }
+    size_t PositionBit() const { return m_nBitOffsetFromStart; }
 private:
     char* m_pBuffer;
     size_t m_nBitOffsetFromStart;

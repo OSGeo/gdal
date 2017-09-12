@@ -286,7 +286,7 @@ OGRErr OGRIDBTableLayer::ResetQuery()
                     m_sFilterEnvelope.MinY, m_sFilterEnvelope.MaxY );
         sql = sqlTmp;
     }
-    /* If we have a spatial filter and GeomColum, query using st_intersects function */
+    /* If we have a spatial filter and GeomColumn, query using st_intersects function */
     else if( m_poFilterGeom != NULL && pszGeomColumn )
     {
         if( pszQuery == NULL )
