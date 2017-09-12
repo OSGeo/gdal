@@ -929,6 +929,20 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                     OSR_GDV( papszNV, "x_0", 0.0 ),
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
+        else if( CSLFetchNameValue(papszNV, "lat_1") &&
+                 CSLFetchNameValue(papszNV, "lon_1") &&
+                 CSLFetchNameValue(papszNV, "lat_2") &&
+                 CSLFetchNameValue(papszNV, "lon_2") )
+        {
+            SetHOM2PNO( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                        OSR_GDV( papszNV, "lat_1", 0.0 ),
+                        OSR_GDV( papszNV, "lon_1", 0.0 ),
+                        OSR_GDV( papszNV, "lat_2", 0.0 ),
+                        OSR_GDV( papszNV, "lon_2", 0.0 ),
+                        OSR_GDV( papszNV, "k", 1.0 ),
+                        OSR_GDV( papszNV, "x_0", 0.0 ),
+                        OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
         else
         {
             SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ),
