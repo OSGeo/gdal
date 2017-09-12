@@ -2837,11 +2837,11 @@ void PDS4Dataset::WriteHeader()
                                       CXT_Element, "cart:Cartography");
             if( CPLGetXMLNode(psProduct, "xmlns:cart") == NULL )
             {
-                CPLAddXMLChild(psProduct,
-                    CPLCreateXMLNode(
-                        CPLCreateXMLNode( NULL, CXT_Attribute,
-                                    "http://pds.nasa.gov/pds4/cart/v1" ),
-                        CXT_Text, "xmlns:cart" ));
+                CPLXMLNode* psNS = CPLCreateXMLNode( NULL, CXT_Attribute,
+                                                     "xmlns:cart" );
+                CPLCreateXMLNode(psNS, CXT_Text,
+                                 "http://pds.nasa.gov/pds4/cart/v1");
+                CPLAddXMLChild(psProduct, psNS);
                 CPLXMLNode* psSchemaLoc =
                     CPLGetXMLNode(psProduct, "xsi:schemaLocation");
                 if( psSchemaLoc != NULL && psSchemaLoc->psChild != NULL &&
