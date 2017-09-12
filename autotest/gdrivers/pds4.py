@@ -289,28 +289,37 @@ def pds4_9():
 
     filename = '/vsimem/out.xml'
     # Test copy of all specialConstants and overide noData
-    with hide_substitution_warnings_error_handler():
-        gdal.Translate(filename, 'data/byte_pds4.xml', format = 'PDS4', noData = 75)
+    for format in [ 'RAW', 'GEOTIFF' ]:
+        with hide_substitution_warnings_error_handler():
+            gdal.Translate(filename, 'data/byte_pds4.xml', format = 'PDS4',
+                           noData = 75,
+                           creationOptions = [ 'IMAGE_FORMAT='+format ] )
 
-    ret = validate_xml(filename)
-    if ret == 'fail':
-        gdaltest.post_reason('validation failed')
-        return 'fail'
+        ret = validate_xml(filename)
+        if ret == 'fail':
+            gdaltest.post_reason('validation failed')
+            return 'fail'
 
-    ds = gdal.Open(filename)
-    ndv = ds.GetRasterBand(1).GetNoDataValue()
-    if ndv != 75:
-        gdaltest.post_reason('fail')
-        print(ndv)
-        return 'fail'
+        ds = gdal.Open(filename)
+        ndv = ds.GetRasterBand(1).GetNoDataValue()
+        if ndv != 75:
+            gdaltest.post_reason('fail')
+            print(ndv)
+            return 'fail'
 
-    cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
-    if cs != 4833:
-        gdaltest.post_reason('fail')
-        print(cs)
-        return 'fail'
+        flag = ds.GetRasterBand(1).GetMaskFlags()
+        if flag != 0:
+            gdaltest.post_reason('fail')
+            print(flag)
+            return 'fail'
 
-    ds = None
+        cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
+        if cs != 4833:
+            gdaltest.post_reason('fail')
+            print(cs)
+            return 'fail'
+
+        ds = None
 
     # Test just setting noData
     for format in [ 'RAW', 'GEOTIFF' ]:
@@ -328,9 +337,43 @@ def pds4_9():
         ndv = ds.GetRasterBand(1).GetNoDataValue()
         if ndv != 74:
             gdaltest.post_reason('fail')
+            print(format)
             print(ndv)
             return 'fail'
 
+        ds = None
+
+        # Test filling with nodata
+        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'IMAGE_FORMAT=' + format ])
+        ds.GetRasterBand(1).SetNoDataValue(1)
+        with hide_substitution_warnings_error_handler():
+            ds = None
+
+        ds = gdal.Open(filename)
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 1:
+            gdaltest.post_reason('fail')
+            print(format)
+            print(cs)
+            return 'fail'
+        ds = None
+
+        # Test setting nodata and then explicit Fill()
+        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'IMAGE_FORMAT=' + format ])
+        ds.GetRasterBand(1).SetNoDataValue(10)
+        ds.GetRasterBand(1).Fill(1)
+        with hide_substitution_warnings_error_handler():
+            ds = None
+
+        ds = gdal.Open(filename)
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 1:
+            gdaltest.post_reason('fail')
+            print(format)
+            print(cs)
+            return 'fail'
         ds = None
 
     gdal.GetDriverByName('PDS4').Delete(filename)
@@ -779,6 +822,122 @@ def pds4_14():
 
     return 'success'
 
+###############################################################################
+# Test Create() without geospatial info but from a geospatial enabled template
+
+def pds4_15():
+
+    filename = '/vsimem/out.xml'
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+        options = ['TEMPLATE=data/byte_pds4.xml'])
+    with hide_substitution_warnings_error_handler():
+        ds = None
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    if data.find('<cart:Cartography>') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+    return 'success'
+
+###############################################################################
+# Test Create() with geospatial info but from a template without Discipline_Area
+
+def pds4_16():
+
+    template = '/vsimem/template.xml'
+    filename = '/vsimem/out.xml'
+
+    gdal.FileFromMemBuffer(template,
+"""<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+    http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+  <Identification_Area>
+    <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
+    <version_id>1.0</version_id>
+    <title>${TITLE}</title>
+    <information_model_version>1.8.0.0</information_model_version>
+    <product_class>Product_Observational</product_class>
+  </Identification_Area>
+  <Observation_Area>
+    <Time_Coordinates>
+      <start_date_time xsi:nil="true" />
+      <stop_date_time xsi:nil="true" />
+    </Time_Coordinates>
+    <Investigation_Area>
+      <name>${INVESTIGATION_AREA_NAME}</name>
+      <type>Mission</type>
+      <Internal_Reference>
+        <lid_reference>${INVESTIGATION_AREA_LID_REFERENCE}</lid_reference>
+        <reference_type>data_to_investigation</reference_type>
+      </Internal_Reference>
+    </Investigation_Area>
+    <Observing_System>
+      <Observing_System_Component>
+        <name>${OBSERVING_SYSTEM_NAME}</name>
+        <type>Spacecraft</type>
+      </Observing_System_Component>
+    </Observing_System>
+    <Target_Identification>
+      <name>Earth</name>
+      <type>Planet</type>
+      <Internal_Reference>
+        <lid_reference>urn:nasa:pds:context:target:planet.earth</lid_reference>
+        <reference_type>data_to_target</reference_type>
+      </Internal_Reference>
+    </Target_Identification>
+  </Observation_Area>
+  <File_Area_Observational>
+  </File_Area_Observational>
+</Product_Observational>""")
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+        options = ['TEMPLATE=' + template])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2,1,0,49,0,-2])
+    with hide_substitution_warnings_error_handler():
+        ds = None
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    if data.find('http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd http://pds.nasa.gov/pds4/cart/v1 https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.xsd"') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('xmlns:cart="http://pds.nasa.gov/pds4/cart/v1"') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('<cart:Cartography>') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+    gdal.Unlink(template)
+
+    return 'success'
+
 gdaltest_list = [
     pds4_1,
     pds4_2,
@@ -793,7 +952,9 @@ gdaltest_list = [
     pds4_11,
     pds4_12,
     pds4_13,
-    pds4_14 ]
+    pds4_14,
+    pds4_15,
+    pds4_16 ]
 
 if __name__ == '__main__':
 
