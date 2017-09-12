@@ -2509,7 +2509,7 @@ bool PDS4Dataset::InitImageFile()
                 if( m_poExternalDS->GetRasterBand(i+1)->Fill(dfNoData) !=
                                                                     CE_None )
                 {
-                    return CE_Failure;
+                    return false;
                 }
             }
             m_poExternalDS->FlushCache();
@@ -2566,7 +2566,7 @@ bool PDS4Dataset::InitImageFile()
                                 WriteBlock(0, y, pBlockData) != CE_None )
                     {
                         VSIFree(pBlockData);
-                        return CE_Failure;
+                        return false;
                     }
                 }
             }
