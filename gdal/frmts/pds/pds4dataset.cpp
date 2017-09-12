@@ -33,6 +33,7 @@
 #include "ogr_spatialref.h"
 #include "gdal_priv_templates.hpp"
 
+#include <cstdlib>
 #include <vector>
 #include <algorithm>
 
@@ -52,6 +53,7 @@ class PDS4Dataset : public RawDataset
     CPLString       m_osWKT;
     bool            m_bGotTransform;
     double          m_adfGeoTransform[6];
+    CPLString       m_osXMLFilename;
     CPLString       m_osImageFilename;
 
     // Write dedicated parameters
@@ -557,7 +559,7 @@ static void FillMask      (void* pvBuffer,
                            GByte* pabyDst,
                            int nReqXSize, int nReqYSize,
                            int nBlockXSize,
-                           const std::vector<double> adfConstants)
+                           const std::vector<double>& adfConstants)
 {
     const T* pSrc = static_cast<T*>(pvBuffer);
     std::vector<T> aConstants;
@@ -818,6 +820,11 @@ CPLErr PDS4Dataset::SetMetadata( char** papszMD, const char* pszDomain )
 char** PDS4Dataset::GetFileList()
 {
     char** papszFileList = GDALPamDataset::GetFileList();
+    if( !m_osXMLFilename.empty() &&
+        CSLFindString(papszFileList, m_osXMLFilename) < 0 )
+    {
+        papszFileList = CSLAddString(papszFileList, m_osXMLFilename);
+    }
     if(  !m_osImageFilename.empty() )
     {
         papszFileList = CSLAddString(papszFileList, m_osImageFilename);
@@ -1795,7 +1802,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             const int nSDSIdx = 1 + aosSubdatasets.size() / 2;
             aosSubdatasets.SetNameValue(
                 CPLSPrintf("SUBDATASET_%d_NAME", nSDSIdx),
-                CPLSPrintf("PDS4:\"%s\":%d:%d",
+                CPLSPrintf("PDS4:%s:%d:%d",
                             osXMLFilename.c_str(),
                             nFAOIdx,
                             nArrayIdx));
@@ -1822,8 +1829,11 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                          VSIGetLastErrorMsg());
                 continue;
             }
+            if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "PDS4:") )
+                poDS->eAccess = poOpenInfo->eAccess;
             poDS->nRasterXSize = nSamples;
             poDS->nRasterYSize = nLines;
+            poDS->m_osXMLFilename = osXMLFilename;
             poDS->m_osImageFilename = pszImageFullFilename;
             poDS->m_fpImage = fp;
 
@@ -2982,13 +2992,13 @@ void PDS4Dataset::WriteHeader()
             CPLCreateXMLElementAndValue(psAxis,
                                     (osPrefix + "axis_name").c_str(),
                                     EQUAL(m_osInterleave, "BSQ") ? "Band" :
-                                    EQUAL(m_osInterleave, "BIL") ? "Line" :
+                                    /* EQUAL(m_osInterleave, "BIL") ? "Line" : */
                                                                    "Line");
             CPLCreateXMLElementAndValue(psAxis,
                             (osPrefix + "elements").c_str(),
                             CPLSPrintf("%d",
                                 EQUAL(m_osInterleave, "BSQ") ? nBands :
-                                EQUAL(m_osInterleave, "BIL") ? nRasterYSize :
+                                /* EQUAL(m_osInterleave, "BIL") ? nRasterYSize : */
                                                                nRasterYSize
                             ));
             CPLCreateXMLElementAndValue(psAxis,
