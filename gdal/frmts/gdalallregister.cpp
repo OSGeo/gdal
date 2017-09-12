@@ -237,6 +237,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ISIS3();
     GDALRegister_ISIS2();
     GDALRegister_PDS();
+    GDALRegister_PDS4();
     GDALRegister_VICAR();
 #endif
 
