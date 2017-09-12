@@ -29,6 +29,7 @@
 ###############################################################################
 
 import contextlib
+import os
 import struct
 import sys
 
@@ -342,6 +343,7 @@ def pds4_9():
 def pds4_10():
 
     filename = '/vsimem/out.xml'
+    filename2 = '/vsimem/out2.xml'
     for format in [ 'RAW', 'GEOTIFF' ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                                  options = ['IMAGE_FORMAT='+format])
@@ -349,8 +351,9 @@ def pds4_10():
         ds.GetRasterBand(1).SetOffset(3)
         with hide_substitution_warnings_error_handler():
             ds = None
+            gdal.Translate(filename2, filename, format = 'PDS4')
 
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename2)
         scale = ds.GetRasterBand(1).GetScale()
         if scale != 2:
             gdaltest.post_reason('fail')
@@ -364,6 +367,7 @@ def pds4_10():
         ds = None
 
         gdal.GetDriverByName('PDS4').Delete(filename)
+        gdal.GetDriverByName('PDS4').Delete(filename2)
 
     return 'success'
 
@@ -476,6 +480,305 @@ def pds4_12():
 
     return 'success'
 
+###############################################################################
+# Test subdatasets
+
+def pds4_13():
+
+    ds = gdal.Open('data/byte_pds4_multi_sds.xml')
+    subds = ds.GetSubDatasets()
+    expected_subds = [('PDS4:data/byte_pds4_multi_sds.xml:1:1',
+                       'Image file byte_pds4.bin, array first_sds'),
+                      ('PDS4:data/byte_pds4_multi_sds.xml:1:2',
+                       'Image file byte_pds4.bin, array second_sds'),
+                      ('PDS4:data/byte_pds4_multi_sds.xml:2:1',
+                       'Image file byte_pds4.bin, array third_sds')]
+    if subds != expected_subds:
+        gdaltest.post_reason('fail')
+        print(subds)
+        return 'fail'
+
+    ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:1')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 2315:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 2302:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:2:1')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 3496:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open(os.path.join(os.getcwd(), 'data', 'byte_pds4_multi_sds.xml'))
+    subds_name = ds.GetSubDatasets()[0][0]
+    ds = gdal.Open(subds_name)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDS4:c:\dont\exist.xml:1:1')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDS4:i_dont_exist.xml')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDS4:i_dont_exist.xml:1:1')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:3:1')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('PDS4:data/byte_pds4_multi_sds.xml:1:3')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test error cases
+
+def pds4_14():
+
+    filename = '/vsimem/test.xml'
+
+    gdal.FileFromMemBuffer(filename, "Product_Observational http://pds.nasa.gov/pds4/pds/v1")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(filename, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational/>
+    <File_Area_Observational>
+        <File/>
+    </File_Area_Observational>
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array>
+            <axes>3</axes>
+        </Array>
+    </File_Area_Observational>
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array>
+            <axes>3</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+        </Array>
+    </File_Area_Observational>
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array>
+            <axes>3</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>SignedByte</data_type>
+            </Element_Array>
+            <Axis_Array>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>x</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>0</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>1</elements>
+                <sequence_number>0</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>1</elements>
+                <sequence_number>4</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+        </Array>
+    </File_Area_Observational>
+</Product_Observational>""")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(filename, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array_3D>
+            <axes>3</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>UnsignedByte</data_type>
+            </Element_Array>
+            <Axis_Array>
+                <axis_name>Band</axis_name>
+                <elements>65537</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Line</axis_name>
+                <elements>1</elements>
+                <sequence_number>2</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Sample</axis_name>
+                <elements>1</elements>
+                <sequence_number>3</sequence_number>
+            </Axis_Array>
+        </Array_3D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(filename, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array_2D>
+            <axes>2</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>SignedByte</data_type>
+            </Element_Array>
+            <Axis_Array>
+                <axis_name>Line</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Sample</axis_name>
+                <elements>1</elements>
+                <sequence_number>2</sequence_number>
+            </Axis_Array>
+        </Array_2D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(filename, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array_2D>
+            <axes>2</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>ComplexMSB16</data_type>
+            </Element_Array>
+            <Axis_Array>
+                <axis_name>Line</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Sample</axis_name>
+                <elements>2000000000</elements>
+                <sequence_number>2</sequence_number>
+            </Axis_Array>
+        </Array_2D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.FileFromMemBuffer(filename, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
+    <File_Area_Observational>
+        <File>
+            <file_name>i_dont_exist.bin</file_name>
+        </File>
+        <Array_2D>
+            <axes>2</axes>
+            <axis_index_order>Last Index Fastest</axis_index_order>
+            <Element_Array>
+                <data_type>ComplexMSB16</data_type>
+            </Element_Array>
+            <Axis_Array>
+                <axis_name>Sample</axis_name>
+                <elements>1</elements>
+                <sequence_number>1</sequence_number>
+            </Axis_Array>
+            <Axis_Array>
+                <axis_name>Line</axis_name>
+                <elements>2000000000</elements>
+                <sequence_number>2</sequence_number>
+            </Axis_Array>
+        </Array_2D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    with gdaltest.error_handler():
+        ds = gdal.Open(filename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
 gdaltest_list = [
     pds4_1,
     pds4_2,
@@ -488,7 +791,9 @@ gdaltest_list = [
     pds4_9,
     pds4_10,
     pds4_11,
-    pds4_12 ]
+    pds4_12,
+    pds4_13,
+    pds4_14 ]
 
 if __name__ == '__main__':
 
