@@ -73,7 +73,7 @@ static const char OGRLIBKMLSRSWKT[] =
 
 static ElementPtr OGRLIBKMLParse(std::string oKml, std::string *posError)
 {
-    // To allow reading files using an explict namespace prefix like <kml:kml>
+    // To allow reading files using an explicit namespace prefix like <kml:kml>
     // we need to use ParseNS (see #6981). But if we use ParseNS, we have
     // issues reading gx: elements. So use ParseNS only when we have errors
     // with Parse. This is not completely satisfactory...
