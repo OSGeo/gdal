@@ -736,7 +736,7 @@ OGRErr OGRPGDumpLayer::EndCopy()
 
 void OGRPGDumpLayer::UpdateSequenceIfNeeded()
 {
-    if( bNeedToUpdateSequence )
+    if( bNeedToUpdateSequence && pszFIDColumn != NULL )
     {
         CPLString osCommand;
         osCommand.Printf(
