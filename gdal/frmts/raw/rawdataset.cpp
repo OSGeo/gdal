@@ -1160,9 +1160,10 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
         int iBandIndex = 0;
         for( ; iBandIndex < nBandCount; iBandIndex++ )
         {
-            RawRasterBand *poBand = static_cast<RawRasterBand *>(
+            RawRasterBand *poBand = dynamic_cast<RawRasterBand *>(
                 GetRasterBand(panBandMap[iBandIndex]));
-            if( !poBand->CanUseDirectIO(nXOff, nYOff,
+            if( poBand == NULL ||
+                !poBand->CanUseDirectIO(nXOff, nYOff,
                                         nXSize, nYSize, eBufType) )
             {
                 break;
