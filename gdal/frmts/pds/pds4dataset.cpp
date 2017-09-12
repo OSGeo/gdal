@@ -1343,7 +1343,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         }
 
         //(if stereographic with center lat ==90) or (polar stereographic )
-        if ( ( EQUAL(osProjName, "STEREOGRAPHIC" ) && fabs(dfCenterLat == 90)) ||
+        if ( ( EQUAL(osProjName, "STEREOGRAPHIC" ) && fabs(dfCenterLat) == 90) ||
             (EQUAL(osProjName, "POLAR STEREOGRAPHIC") )){
             if (bIsOgraphic)
             {
