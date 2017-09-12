@@ -828,10 +828,9 @@ def pds4_14():
 def pds4_15():
 
     filename = '/vsimem/out.xml'
-    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-        options = ['TEMPLATE=data/byte_pds4.xml'])
     with hide_substitution_warnings_error_handler():
-        ds = None
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = ['TEMPLATE=data/byte_pds4.xml'])
 
     ret = validate_xml(filename)
     if ret == 'fail':
