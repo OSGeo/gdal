@@ -6388,42 +6388,48 @@ static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 
 GDALDriver* GDALGetAPIPROXYDriver()
 {
+    // Call CPLGetConfigOption before holding DM mutex to avoid confusing at
+    // least one deadlock detector.
+    const char* pszConnPool =
+        CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
+
     CPLMutexHolderD(GDALGetphDMMutex());
-    if( poAPIPROXYDriver == NULL )
-    {
+    if( poAPIPROXYDriver != NULL )
+        return poAPIPROXYDriver;
+
 #ifdef DEBUG_VERBOSE
-        CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
+    CPL_STATIC_ASSERT(
+        INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
-        /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
-        // cppcheck-suppress duplicateExpression
-        CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
+    // If asserted, change
+    // GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR
+    // cppcheck-suppress duplicateExpression
+    CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
-        const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
-        if( atoi(pszConnPool) > 0 )
-        {
-            bRecycleChild = TRUE;
-            nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
-        }
-        else if( CPLTestBool(pszConnPool) )
-        {
-            bRecycleChild = TRUE;
-            nMaxRecycled = DEFAULT_RECYCLED;
-        }
-        memset(aspRecycled, 0, sizeof(aspRecycled));
-
-        poAPIPROXYDriver = new GDALDriver();
-
-        poAPIPROXYDriver->SetDescription( "API_PROXY" );
-        poAPIPROXYDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "API_PROXY" );
-
-        poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;
-        poAPIPROXYDriver->pfnIdentify = GDALClientDataset::Identify;
-        poAPIPROXYDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
-        poAPIPROXYDriver->pfnCreate = GDALClientDataset::Create;
-        poAPIPROXYDriver->pfnDelete = GDALClientDataset::Delete;
-        poAPIPROXYDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
+    if( atoi(pszConnPool) > 0 )
+    {
+        bRecycleChild = TRUE;
+        nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
     }
+    else if( CPLTestBool(pszConnPool) )
+    {
+        bRecycleChild = TRUE;
+        nMaxRecycled = DEFAULT_RECYCLED;
+    }
+    memset(aspRecycled, 0, sizeof(aspRecycled));
+
+    poAPIPROXYDriver = new GDALDriver();
+
+    poAPIPROXYDriver->SetDescription("API_PROXY");
+    poAPIPROXYDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poAPIPROXYDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "API_PROXY");
+
+    poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;
+    poAPIPROXYDriver->pfnIdentify = GDALClientDataset::Identify;
+    poAPIPROXYDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
+    poAPIPROXYDriver->pfnCreate = GDALClientDataset::Create;
+    poAPIPROXYDriver->pfnDelete = GDALClientDataset::Delete;
+    poAPIPROXYDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
+
     return poAPIPROXYDriver;
 }
