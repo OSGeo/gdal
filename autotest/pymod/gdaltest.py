@@ -570,7 +570,7 @@ class GDALTest:
                        vsimem = 0, new_filename = None, strict_in = 0,
                        skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
                        check_checksum_not_null = None, interrupt_during_copy = False,
-                       dest_open_options = None):
+                       dest_open_options = None, quiet_error_handler = True):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -597,7 +597,8 @@ class GDALTest:
             else:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
-        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        if quiet_error_handler:
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         if interrupt_during_copy:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                          strict = strict_in,
@@ -607,7 +608,8 @@ class GDALTest:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                             strict = strict_in,
                                             options = self.options )
-        gdal.PopErrorHandler()
+        if quiet_error_handler:
+            gdal.PopErrorHandler()
 
         if interrupt_during_copy:
             if new_ds is None:
@@ -1924,6 +1926,18 @@ def SetCacheMax(val):
     yield
   finally:
     gdal.SetCacheMax(oldval)
+
+###############################################################################
+# Temporarily define a configuration option
+
+@contextlib.contextmanager
+def config_option(key, val):
+  oldval = gdal.GetConfigOption(key)
+  gdal.SetConfigOption(key, val)
+  try:
+    yield
+  finally:
+    gdal.SetConfigOption(key, oldval)
 
 ###############################################################################
 run_func = gdaltestaux.run_func

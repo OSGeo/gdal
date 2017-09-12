@@ -1223,6 +1223,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if( papszMD_ISIS3 != NULL)
             poVDS->SetMetadata( papszMD_ISIS3, "json:ISIS3" );
     }
+    else if( EQUAL(psOptions->pszFormat, "PDS4") )
+    {
+        char** papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
+        if( papszMD_PDS4 != NULL)
+            poVDS->SetMetadata( papszMD_PDS4, "xml:PDS4" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transfer metadata that remains valid if the spatial             */

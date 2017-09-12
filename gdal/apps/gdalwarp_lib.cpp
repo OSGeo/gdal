@@ -1095,6 +1095,12 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                     if( papszMD_ISIS3 != NULL)
                         GDALSetMetadata(hDstDS, papszMD_ISIS3, "json:ISIS3");
                 }
+                else if( EQUAL(psOptions->pszFormat, "PDS4") )
+                {
+                    char** papszMD_PDS4 = GDALGetMetadata( hSrcDS, "xml:PDS4");
+                    if( papszMD_PDS4 != NULL)
+                        GDALSetMetadata(hDstDS, papszMD_PDS4, "xml:PDS4");
+                }
 
                 /* copy band-level metadata and other info */
                 if ( GDALGetRasterCount( hSrcDS ) == GDALGetRasterCount( hDstDS ) )
