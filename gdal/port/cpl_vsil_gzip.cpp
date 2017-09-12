@@ -2149,7 +2149,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     if( strchr(pszAccess, '+') != NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Random access not supported for /vsizip");
+                 "Read-write random access not supported for /vsizip");
         return NULL;
     }
 
