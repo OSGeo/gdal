@@ -437,6 +437,7 @@ def osr_proj4_11():
                      '+proj=lcc +lat_1=-10 +lat_2=30 +lat_0=60 +lon_0=2 +x_0=3 +y_0=4',
                      '+proj=lcc +lat_1=-10 +lat_2=30 +lat_0=-10 +lon_0=2 +x_0=3 +y_0=4',
                      '+proj=omerc +lat_0=1 +lonc=2 +alpha=-1 +k=-3 +x_0=3 +y_0=4 +gamma=-2',
+                     '+proj=omerc +lat_0=1 +lon_1=2 +lat_1=3 +lon_2=4 +lat_2=5 +k=-3 +x_0=3 +y_0=4',
                      '+proj=somerc +lat_0=1 +lon_0=2 +k_0=2 +x_0=3 +y_0=4',
                      '+proj=krovak +lat_0=1 +lon_0=2 +alpha=0 +k=2 +x_0=3 +y_0=4',
                      '+proj=iwm_p +lat_1=-2 +lat_2=-1 +lon_0=2 +x_0=3 +y_0=4',
