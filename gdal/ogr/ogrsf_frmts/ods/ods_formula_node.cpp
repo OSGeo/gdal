@@ -1271,11 +1271,24 @@ static bool GetRowCol(const char* pszCell, int& nRow, int& nCol)
 
     nCol = 0;
     int i = 1;
-    for( ; pszCell[i]>='A' && pszCell[i]<='Z'; i++ )
+    for( ; pszCell[i]>='A' && pszCell[i]<='Z' && nCol < 1000000; i++ )
     {
         nCol = nCol * 26 + (pszCell[i] - 'A');
     }
-    nRow = atoi(pszCell + i) - 1;
+    if( nCol >= 1000000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid cell %s", pszCell);
+        return false;
+    }
+    nRow = atoi(pszCell + i);
+    if( nRow <= 1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid cell %s", pszCell);
+        return false;
+    }
+    nRow --;
 
     return true;
 }
