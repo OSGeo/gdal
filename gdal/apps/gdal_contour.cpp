@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /*                            ArgIsNumeric()                            */
 /************************************************************************/
 
-static int ArgIsNumeric( const char *pszArg )
+static bool ArgIsNumeric( const char *pszArg )
 
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
@@ -79,11 +79,9 @@ static void Usage(const char* pszErrorMsg = NULL)
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH hSrcDS;
-    int i;
-    int b3D = FALSE;
+    bool b3D = false;
     int bNoDataSet = FALSE;
-    int bIgnoreNoData = FALSE;
+    bool bIgnoreNoData = false;
     int nBandIn = 1;
     double dfInterval = 0.0;
     double dfNoData = 0.0;
@@ -97,7 +95,7 @@ int main( int argc, char ** argv )
     double adfFixedLevels[1000];
     int nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
-    int bQuiet = FALSE;
+    bool bQuiet = false;
     GDALProgressFunc pfnProgress = NULL;
 
     // Check that we are running against at least GDAL 1.4.
@@ -119,7 +117,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
+    for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -179,7 +177,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
-            b3D = TRUE;
+            b3D = true;
         }
         else if( EQUAL(argv[i],"-snodata") )
         {
@@ -194,7 +192,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-inodata") )
         {
-            bIgnoreNoData = TRUE;
+            bIgnoreNoData = true;
         }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
@@ -233,13 +231,11 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
-    GDALRasterBandH hBand;
-
-    hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
+    GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
     if( hSrcDS == NULL )
         exit( 2 );
 
-    hBand = GDALGetRasterBand( hSrcDS, nBandIn );
+    GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nBandIn );
     if( hBand == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -264,10 +260,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                          */
 /* -------------------------------------------------------------------- */
-    OGRDataSourceH hDS;
     OGRSFDriverH hDriver = OGRGetDriverByName( pszFormat );
-    OGRFieldDefnH hFld;
-    OGRLayerH hLayer;
 
     if( hDriver == NULL )
     {
@@ -276,17 +269,19 @@ int main( int argc, char ** argv )
         exit( 10 );
     }
 
-    hDS = OGR_Dr_CreateDataSource( hDriver, pszDstFilename, papszDSCO );
+    OGRDataSourceH hDS =
+        OGR_Dr_CreateDataSource(hDriver, pszDstFilename, papszDSCO);
     if( hDS == NULL )
-        exit( 1 );
+        exit(1);
 
-    hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS,
-                                 b3D ? wkbLineString25D : wkbLineString,
-                                 papszLCO );
+    OGRLayerH hLayer =
+        OGR_DS_CreateLayer(hDS, pszNewLayerName, hSRS,
+                           b3D ? wkbLineString25D : wkbLineString,
+                           papszLCO);
     if( hLayer == NULL )
         exit( 1 );
 
-    hFld = OGR_Fld_Create( "ID", OFTInteger );
+    OGRFieldDefnH hFld = OGR_Fld_Create("ID", OFTInteger);
     OGR_Fld_SetWidth( hFld, 8 );
     OGR_L_CreateField( hLayer, hFld, FALSE );
     OGR_Fld_Destroy( hFld );
