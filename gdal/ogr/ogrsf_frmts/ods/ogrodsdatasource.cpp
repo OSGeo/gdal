@@ -663,6 +663,17 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
             bEndTableParsing = true;
             return;
         }
+        const int nFields = std::max(
+            static_cast<int>(apoFirstLineValues.size()),
+            poCurLayer != NULL ?
+                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big gap with previous valid row");
+            bEndTableParsing = true;
+            return;
+        }
 
         nCurCol = 0;
 
