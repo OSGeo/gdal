@@ -1154,8 +1154,8 @@ OGRErr OGRMSSQLSpatialTableLayer::DeleteFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oStatement( poDS->GetSession() );
 
-    oStatement.Appendf("DELETE FROM [%s] WHERE [%s] = " CPL_FRMT_GIB,
-            poFeatureDefn->GetName(), pszFIDColumn, nFID);
+    oStatement.Appendf("DELETE FROM [%s].[%s] WHERE [%s] = " CPL_FRMT_GIB,
+            pszSchemaName, pszTableName, pszFIDColumn, nFID);
 
     if( !oStatement.ExecuteSQL() )
     {
