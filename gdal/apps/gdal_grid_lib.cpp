@@ -64,7 +64,6 @@ CPL_CVSID("$Id$")
  */
 struct GDALGridOptions
 {
-
     /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
     char *pszFormat;
 
@@ -118,128 +117,175 @@ static void PrintAlgorithmAndOptions( GDALGridAlgorithm eAlgorithm,
 {
     switch ( eAlgorithm )
     {
-        case GGA_InverseDistanceToAPower:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameInvDist );
-            CPLprintf( "Options are "
-                    "\"power=%f:smoothing=%f:radius1=%f:radius2=%f:angle=%f"
-                    ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfPower,
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfSmoothing,
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfRadius1,
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfRadius2,
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMaxPoints,
-                (unsigned long)((GDALGridInverseDistanceToAPowerOptions *)pOptions)->nMinPoints,
-                ((GDALGridInverseDistanceToAPowerOptions *)pOptions)->dfNoDataValue);
+    case GGA_InverseDistanceToAPower:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameInvDist);
+        GDALGridInverseDistanceToAPowerOptions *pOptions2 =
+            static_cast<GDALGridInverseDistanceToAPowerOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"power=%f:smoothing=%f:radius1=%f:radius2=%f:angle=%f"
+                  ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                  pOptions2->dfPower,
+                  pOptions2->dfSmoothing,
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMaxPoints),
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_InverseDistanceToAPowerNearestNeighbor:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameInvDistNearestNeighbor);
+        GDALGridInverseDistanceToAPowerNearestNeighborOptions *pOptions2 =
+            static_cast<GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
+                pOptions);
+        CPLprintf("Options are "
+                  "\"power=%f:smoothing=%f:radius=%f"
+                  ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
+                  pOptions2->dfPower,
+                  pOptions2->dfSmoothing,
+                  pOptions2->dfRadius,
+                  static_cast<unsigned long>(pOptions2->nMaxPoints),
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MovingAverage:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameAverage);
+        GDALGridMovingAverageOptions *pOptions2 =
+            static_cast<GDALGridMovingAverageOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_NearestNeighbor:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameNearest);
+        GDALGridNearestNeighborOptions *pOptions2 =
+            static_cast<GDALGridNearestNeighborOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MetricMinimum:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameMinimum);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
             break;
-        case GGA_InverseDistanceToAPowerNearestNeighbor:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameInvDistNearestNeighbor );
-            CPLprintf( "Options are "
-                        "\"power=%f:smoothing=%f:radius=%f"
-                    ":max_points=%lu:min_points=%lu:nodata=%f\"\n",
-                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfPower,
-                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfSmoothing,
-                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfRadius,
-                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMaxPoints,
-                (unsigned long)((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->nMinPoints,
-                ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MovingAverage:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameAverage );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridMovingAverageOptions *)pOptions)->dfRadius1,
-                ((GDALGridMovingAverageOptions *)pOptions)->dfRadius2,
-                ((GDALGridMovingAverageOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridMovingAverageOptions *)pOptions)->nMinPoints,
-                ((GDALGridMovingAverageOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_NearestNeighbor:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameNearest );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:nodata=%f\"\n",
-                ((GDALGridNearestNeighborOptions *)pOptions)->dfRadius1,
-                ((GDALGridNearestNeighborOptions *)pOptions)->dfRadius2,
-                ((GDALGridNearestNeighborOptions *)pOptions)->dfAngle,
-                ((GDALGridNearestNeighborOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricMinimum:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameMinimum );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricMaximum:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameMaximum );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricRange:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameRange );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricCount:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameCount );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricAverageDistance:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistance );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_MetricAverageDistancePts:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameAverageDistancePts );
-            CPLprintf( "Options are "
-                    "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
-                    ":nodata=%f\"\n",
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius1,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfRadius2,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfAngle,
-                (unsigned long)((GDALGridDataMetricsOptions *)pOptions)->nMinPoints,
-                ((GDALGridDataMetricsOptions *)pOptions)->dfNoDataValue);
-            break;
-        case GGA_Linear:
-            printf( "Algorithm name: \"%s\".\n", szAlgNameLinear );
-            CPLprintf( "Options are "
-                    "\"radius=%f:nodata=%f\"\n",
-                ((GDALGridLinearOptions *)pOptions)->dfRadius,
-                ((GDALGridLinearOptions *)pOptions)->dfNoDataValue);
-            break;
-        default:
-            printf( "Algorithm is unknown.\n" );
-            break;
+    }
+    case GGA_MetricMaximum:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameMaximum);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MetricRange:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameRange);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MetricCount:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameCount);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MetricAverageDistance:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameAverageDistance);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_MetricAverageDistancePts:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameAverageDistancePts);
+        GDALGridDataMetricsOptions *pOptions2 =
+            static_cast<GDALGridDataMetricsOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius1=%f:radius2=%f:angle=%f:min_points=%lu"
+                  ":nodata=%f\"\n",
+                  pOptions2->dfRadius1,
+                  pOptions2->dfRadius2,
+                  pOptions2->dfAngle,
+                  static_cast<unsigned long>(pOptions2->nMinPoints),
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    case GGA_Linear:
+    {
+        printf("Algorithm name: \"%s\".\n", szAlgNameLinear );
+        GDALGridLinearOptions *pOptions2 =
+            static_cast<GDALGridLinearOptions *>(pOptions);
+        CPLprintf("Options are "
+                  "\"radius=%f:nodata=%f\"\n",
+                  pOptions2->dfRadius,
+                  pOptions2->dfNoDataValue);
+        break;
+    }
+    default:
+    {
+        printf("Algorithm is unknown.\n");
+        break;
+    }
     }
 }
 
@@ -443,8 +489,8 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 /*      Perform gridding.                                               */
 /* -------------------------------------------------------------------- */
 
-    const double    dfDeltaX = ( dfXMax - dfXMin ) / nXSize;
-    const double    dfDeltaY = ( dfYMax - dfYMin ) / nYSize;
+    const double dfDeltaX = (dfXMax - dfXMin) / nXSize;
+    const double dfDeltaY = (dfYMax - dfYMin) / nYSize;
 
     if ( !bQuiet )
     {
@@ -456,7 +502,8 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
                 dfXMin - dfDeltaX / 2, dfYMax + dfDeltaY / 2,
                 dfXMax + dfDeltaX / 2, dfYMin - dfDeltaY / 2 );
         CPLprintf( "Grid cell size = (%f %f).\n", dfDeltaX, dfDeltaY );
-        printf( "Source point count = %lu.\n", (unsigned long)adfX.size() );
+        printf("Source point count = %lu.\n",
+               static_cast<unsigned long>(adfX.size()));
         PrintAlgorithmAndOptions( eAlgorithm, pOptions );
         printf("\n");
     }
@@ -519,13 +566,14 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
         return CE_Failure;
     }
 
-    int nXOffset = 0;
-    int nYOffset = 0;
-
     CPLErr eErr = CE_None;
-    for ( nYOffset = 0; nYOffset < nYSize && eErr == CE_None; nYOffset += nBlockYSize )
+    for ( int nYOffset = 0;
+          nYOffset < nYSize && eErr == CE_None;
+          nYOffset += nBlockYSize )
     {
-        for ( nXOffset = 0; nXOffset < nXSize && eErr == CE_None; nXOffset += nBlockXSize )
+        for ( int nXOffset = 0;
+              nXOffset < nXSize && eErr == CE_None;
+              nXOffset += nBlockXSize )
         {
             void *pScaledProgress = GDALCreateScaledProgress(
                 static_cast<double>(nBlock) / nBlockCount,
@@ -576,8 +624,6 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                                             const char* pszLyr,
                                             const char* pszWhere )
 {
-    OGRGeometryCollection *poGeom = NULL;
-
     GDALDataset *poDS = (GDALDataset*) GDALOpen(pszDS, GA_ReadOnly);
     if ( poDS == NULL )
         return NULL;
@@ -601,34 +647,40 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
     if ( pszWhere )
         poLyr->SetAttributeFilter( pszWhere );
 
+    OGRGeometryCollection *poGeom = NULL;
     OGRFeature *poFeat = NULL;
     while ( (poFeat = poLyr->GetNextFeature()) != NULL )
     {
         OGRGeometry* poSrcGeom = poFeat->GetGeometryRef();
         if ( poSrcGeom )
         {
-            OGRwkbGeometryType eType =
-                wkbFlatten( poSrcGeom->getGeometryType() );
+            const OGRwkbGeometryType eType =
+                wkbFlatten(poSrcGeom->getGeometryType());
 
             if ( poGeom == NULL )
                 poGeom = new OGRMultiPolygon();
 
             if ( eType == wkbPolygon )
+            {
                 poGeom->addGeometry( poSrcGeom );
+            }
             else if ( eType == wkbMultiPolygon )
             {
                 const int nGeomCount =
-                    ((OGRMultiPolygon *)poSrcGeom)->getNumGeometries();
+                    static_cast<OGRMultiPolygon *>(poSrcGeom)->
+                        getNumGeometries();
 
                 for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
                 {
                     poGeom->addGeometry(
-                        ((OGRMultiPolygon *)poSrcGeom)->getGeometryRef(iGeom) );
+                        static_cast<OGRMultiPolygon *>(poSrcGeom)->
+                            getGeometryRef(iGeom) );
                 }
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Geometry not of polygon type." );
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Geometry not of polygon type.");
                 OGRGeometryFactory::destroyGeometry( poGeom );
                 OGRFeature::DestroyFeature( poFeat );
                 if ( pszSQL != NULL )
@@ -966,7 +1018,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
-    int argc = CSLCount(papszArgv);
+    const int argc = CSLCount(papszArgv);
     for( int i = 0; papszArgv != NULL && i < argc; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
@@ -1294,24 +1346,24 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 
 void GDALGridOptionsFree(GDALGridOptions *psOptions)
 {
-    if( psOptions )
-    {
-        CPLFree(psOptions->pszFormat);
-        CSLDestroy(psOptions->papszLayers);
-        CPLFree(psOptions->pszBurnAttribute);
-        CPLFree(psOptions->pszWHERE);
-        CPLFree(psOptions->pszSQL);
-        CSLDestroy(psOptions->papszCreateOptions);
-        CPLFree(psOptions->pOptions);
-        CPLFree(psOptions->pszOutputSRS);
-        delete psOptions->poSpatialFilter;
-        delete psOptions->poClipSrc;
-        CPLFree(psOptions->pszClipSrcDS);
-        CPLFree(psOptions->pszClipSrcSQL);
-        CPLFree(psOptions->pszClipSrcLayer);
-        CPLFree(psOptions->pszClipSrcWhere);
-        CPLFree(psOptions);
-    }
+    if( psOptions == NULL )
+        return;
+
+    CPLFree(psOptions->pszFormat);
+    CSLDestroy(psOptions->papszLayers);
+    CPLFree(psOptions->pszBurnAttribute);
+    CPLFree(psOptions->pszWHERE);
+    CPLFree(psOptions->pszSQL);
+    CSLDestroy(psOptions->papszCreateOptions);
+    CPLFree(psOptions->pOptions);
+    CPLFree(psOptions->pszOutputSRS);
+    delete psOptions->poSpatialFilter;
+    delete psOptions->poClipSrc;
+    CPLFree(psOptions->pszClipSrcDS);
+    CPLFree(psOptions->pszClipSrcSQL);
+    CPLFree(psOptions->pszClipSrcLayer);
+    CPLFree(psOptions->pszClipSrcWhere);
+    CPLFree(psOptions);
 }
 
 /************************************************************************/
@@ -1329,7 +1381,8 @@ void GDALGridOptionsFree(GDALGridOptions *psOptions)
  */
 
 void GDALGridOptionsSetProgress( GDALGridOptions *psOptions,
-                                      GDALProgressFunc pfnProgress, void *pProgressData )
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressData )
 {
     psOptions->pfnProgress = pfnProgress;
     psOptions->pProgressData = pProgressData;
