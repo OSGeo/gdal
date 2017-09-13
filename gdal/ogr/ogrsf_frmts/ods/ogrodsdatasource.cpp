@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"
 #include "ods_formula.h"
+
+#include <algorithm>
 #include <set>
 
 CPL_CVSID("$Id$")
