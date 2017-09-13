@@ -674,6 +674,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
     const bool bWriteSpaceIndentation = poDS->WriteSpaceIndentation();
     const char *pszPrefix = poDS->GetAppPrefix();
     const bool bRemoveAppPrefix = poDS->RemoveAppPrefix();
+    const bool bGMLFeatureCollection = poDS->GMLFeatureCollection();
 
     if( !bWriter )
         return OGRERR_FAILURE;
@@ -686,7 +687,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
 
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "  ");
-    if (bIsGML3Output)
+    if (bIsGML3Output && !bGMLFeatureCollection)
     {
         if( bRemoveAppPrefix )
             poDS->PrintLine(fp, "<featureMember>");
@@ -1064,7 +1065,7 @@ OGRErr OGRGMLLayer::ICreateFeature( OGRFeature *poFeature )
         poDS->PrintLine(fp, "</%s:%s>", pszPrefix, poFeatureDefn->GetName());
     if (bWriteSpaceIndentation)
         VSIFPrintfL(fp, "  ");
-    if (bIsGML3Output)
+    if (bIsGML3Output && !bGMLFeatureCollection)
     {
         if( bRemoveAppPrefix )
             poDS->PrintLine(fp, "</featureMember>");

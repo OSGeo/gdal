@@ -4161,6 +4161,53 @@ def ogr_gml_81():
     return 'success'
 
 ###############################################################################
+# Test GML_FEATURE_COLLECTION=YES
+
+def ogr_gml_82():
+
+    if not gdaltest.have_gml_reader:
+        return 'skip'
+
+    gdal.VectorTranslate('/vsimem/ogr_gml_82.gml', 'data/poly.shp',
+            format = 'GML',
+            datasetCreationOptions = ['FORMAT=GML3',
+                                      'GML_FEATURE_COLLECTION=YES'])
+
+    ds = ogr.Open('/vsimem/ogr_gml_82.gml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 10:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_gml_82.gml", "rb")
+    if f is not None:
+        data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+        gdal.VSIFCloseL(f)
+    if data.find('gml:FeatureCollection') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    f = gdal.VSIFOpenL("/vsimem/ogr_gml_82.xsd", "rb")
+    if f is not None:
+        data = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+        gdal.VSIFCloseL(f)
+    if data.find('name = "FeatureCollection"') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+    if data.find('gmlsf') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gml_82.gml')
+    gdal.Unlink('/vsimem/ogr_gml_82.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4378,12 +4425,13 @@ gdaltest_list = [
     ogr_gml_79,
     ogr_gml_80,
     ogr_gml_81,
+    ogr_gml_82,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [
     ogr_gml_clean_files,
     ogr_gml_1,
-    ogr_gml_79,
+    ogr_gml_82,
     ogr_gml_cleanup ]
 
 if __name__ == '__main__':

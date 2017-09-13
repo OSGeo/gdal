@@ -201,6 +201,7 @@ void RegisterOGRGML()
 "    <Value>GML3.2</Value>"
 "    <Value>GML3Deegree</Value>"
 "  </Option>"
+"  <Option name='GML_FEATURE_COLLECTION' type='boolean' description='Whether to use the gml:FeatureCollection. Only valid for FORMAT=GML3/GML3.2' default='NO'/>"
 "  <Option name='GML3_LONGSRS' type='boolean' description='Whether to write SRS with \"urn:ogc:def:crs:EPSG::\" prefix with GML3* versions' default='YES'/>"
 "  <Option name='SRSNAME_FORMAT' type='string-select' description='Format of srsName (for GML3* versions)' default='OGC_URL'>"
 "    <Value>SHORT</Value>"

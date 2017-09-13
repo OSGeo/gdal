@@ -126,7 +126,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
             WriteTopElements();
 
         const char *pszPrefix = GetAppPrefix();
-        if( RemoveAppPrefix() )
+        if( GMLFeatureCollection() )
+            PrintLine(fpOutput, "</gml:FeatureCollection>");
+        else if( RemoveAppPrefix() )
             PrintLine(fpOutput, "</FeatureCollection>");
         else
             PrintLine(fpOutput, "</%s:FeatureCollection>", pszPrefix);
@@ -1750,7 +1752,9 @@ bool OGRGMLDataSource::Create( const char *pszFilename,
     const char *pszTargetNameSpace = CSLFetchNameValueDef(
         papszOptions, "TARGET_NAMESPACE", "http://ogr.maptools.org/");
 
-    if( RemoveAppPrefix() )
+    if( GMLFeatureCollection() )
+        PrintLine(fpOutput, "<gml:FeatureCollection");
+    else if( RemoveAppPrefix() )
         PrintLine(fpOutput, "<FeatureCollection");
     else
         PrintLine(fpOutput, "<%s:FeatureCollection", pszPrefix);
@@ -2012,6 +2016,8 @@ void OGRGMLDataSource::InsertHeader()
     const char *pszSchemaOpt =
         CSLFetchNameValue(papszCreateOptions, "XSISCHEMA");
 
+    const bool bGMLFeatureCollection = GMLFeatureCollection();
+
     if( pszSchemaURI != NULL )
         return;
 
@@ -2086,13 +2092,16 @@ void OGRGMLDataSource::InsertHeader()
         {
             PrintLine(fpSchema,
                       "    xmlns:gml=\"http://www.opengis.net/gml/3.2\"");
-            PrintLine(fpSchema,
+            if( !bGMLFeatureCollection )
+            {
+                PrintLine(fpSchema,
                       "    xmlns:gmlsf=\"http://www.opengis.net/gmlsf/2.0\"");
+            }
         }
         else
         {
             PrintLine(fpSchema, "    xmlns:gml=\"http://www.opengis.net/gml\"");
-            if (!IsGML3DeegreeOutput())
+            if (!IsGML3DeegreeOutput() && !bGMLFeatureCollection)
             {
                 PrintLine(fpSchema,
                           "    xmlns:gmlsf=\"http://www.opengis.net/gmlsf\"");
@@ -2103,24 +2112,30 @@ void OGRGMLDataSource::InsertHeader()
 
         if (IsGML32Output())
         {
-            PrintLine(fpSchema, "<xs:annotation>");
-            PrintLine(fpSchema,
-                "  <xs:appinfo source=\"http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd\">");
-            PrintLine(fpSchema,
-                "    <gmlsf:ComplianceLevel>%d</gmlsf:ComplianceLevel>", (bHasListFields) ? 1 : 0);
-            PrintLine(fpSchema, "  </xs:appinfo>");
-            PrintLine(fpSchema, "</xs:annotation>");
+            if( !bGMLFeatureCollection )
+            {
+                PrintLine(fpSchema, "<xs:annotation>");
+                PrintLine(fpSchema,
+                    "  <xs:appinfo source=\"http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd\">");
+                PrintLine(fpSchema,
+                    "    <gmlsf:ComplianceLevel>%d</gmlsf:ComplianceLevel>", (bHasListFields) ? 1 : 0);
+                PrintLine(fpSchema, "  </xs:appinfo>");
+                PrintLine(fpSchema, "</xs:annotation>");
+            }
 
             PrintLine(
                 fpSchema,
                 "<xs:import namespace=\"http://www.opengis.net/gml/3.2\" schemaLocation=\"http://schemas.opengis.net/gml/3.2.1/gml.xsd\"/>");
-            PrintLine(
-                fpSchema,
-                "<xs:import namespace=\"http://www.opengis.net/gmlsf/2.0\" schemaLocation=\"http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd\"/>");
+            if( !bGMLFeatureCollection )
+            {
+                PrintLine(
+                    fpSchema,
+                    "<xs:import namespace=\"http://www.opengis.net/gmlsf/2.0\" schemaLocation=\"http://schemas.opengis.net/gmlsfProfile/2.0/gmlsfLevels.xsd\"/>");
+            }
         }
         else
         {
-            if (!IsGML3DeegreeOutput())
+            if (!IsGML3DeegreeOutput() && !bGMLFeatureCollection)
             {
                 PrintLine(fpSchema, "<xs:annotation>");
                 PrintLine(
@@ -2136,7 +2151,7 @@ void OGRGMLDataSource::InsertHeader()
 
             PrintLine(fpSchema,
                       "<xs:import namespace=\"http://www.opengis.net/gml\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/base/gml.xsd\"/>");
-            if (!IsGML3DeegreeOutput())
+            if (!IsGML3DeegreeOutput() && !bGMLFeatureCollection)
             {
                 PrintLine(fpSchema,
                           "<xs:import namespace=\"http://www.opengis.net/gmlsf\" schemaLocation=\"http://schemas.opengis.net/gml/3.1.1/profiles/gmlsfProfile/1.0.0/gmlsfLevels.xsd\"/>");
@@ -2154,7 +2169,7 @@ void OGRGMLDataSource::InsertHeader()
     }
 
     // Define the FeatureCollection.
-    if (IsGML3Output())
+    if (IsGML3Output() && !bGMLFeatureCollection)
     {
         if (IsGML32Output())
         {
@@ -2217,7 +2232,7 @@ void OGRGMLDataSource::InsertHeader()
         PrintLine(fpSchema, "  </xs:complexContent>");
         PrintLine(fpSchema, "</xs:complexType>");
     }
-    else
+    else if( !bGMLFeatureCollection )
     {
         PrintLine(fpSchema,
                   "<xs:element name=\"FeatureCollection\" type=\"%s:FeatureCollectionType\" substitutionGroup=\"gml:_FeatureCollection\"/>",
@@ -2855,7 +2870,7 @@ void OGRGMLDataSource::SetExtents(double dfMinX, double dfMinY,
 /*                             GetAppPrefix()                           */
 /************************************************************************/
 
-const char *OGRGMLDataSource::GetAppPrefix()
+const char *OGRGMLDataSource::GetAppPrefix() const
 {
     return CSLFetchNameValueDef(papszCreateOptions, "PREFIX", "ogr");
 }
@@ -2864,7 +2879,7 @@ const char *OGRGMLDataSource::GetAppPrefix()
 /*                            RemoveAppPrefix()                         */
 /************************************************************************/
 
-bool OGRGMLDataSource::RemoveAppPrefix()
+bool OGRGMLDataSource::RemoveAppPrefix() const
 {
     if( CPLTestBool(
             CSLFetchNameValueDef(papszCreateOptions, "STRIP_PREFIX", "FALSE")))
@@ -2877,7 +2892,7 @@ bool OGRGMLDataSource::RemoveAppPrefix()
 /*                        WriteFeatureBoundedBy()                       */
 /************************************************************************/
 
-bool OGRGMLDataSource::WriteFeatureBoundedBy()
+bool OGRGMLDataSource::WriteFeatureBoundedBy() const
 {
     return CPLTestBool(CSLFetchNameValueDef(
         papszCreateOptions, "WRITE_FEATURE_BOUNDED_BY", "TRUE"));
@@ -2887,7 +2902,17 @@ bool OGRGMLDataSource::WriteFeatureBoundedBy()
 /*                          GetSRSDimensionLoc()                        */
 /************************************************************************/
 
-const char *OGRGMLDataSource::GetSRSDimensionLoc()
+const char *OGRGMLDataSource::GetSRSDimensionLoc() const
 {
     return CSLFetchNameValue(papszCreateOptions, "SRSDIMENSION_LOC");
+}
+
+/************************************************************************/
+/*                        GMLFeatureCollection()                     */
+/************************************************************************/
+
+bool OGRGMLDataSource::GMLFeatureCollection() const
+{
+    return IsGML3Output() &&
+           CPLFetchBool(papszCreateOptions, "GML_FEATURE_COLLECTION", false);
 }
