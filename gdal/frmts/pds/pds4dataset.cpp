@@ -2869,7 +2869,7 @@ void PDS4Dataset::WriteHeader()
     if( m_bStripFileAreaObservationalFromTemplate )
     {
         m_bStripFileAreaObservationalFromTemplate = false;
-        CPLXMLNode* psInsertionPoint = NULL;
+        CPLXMLNode* psObservationArea = NULL;
         CPLXMLNode* psPrev = NULL;
         CPLXMLNode* psTemplateSpecialConstants = NULL;
         for( CPLXMLNode* psIter = psProduct->psChild; psIter != NULL; )
@@ -2877,7 +2877,7 @@ void PDS4Dataset::WriteHeader()
             if( psIter->eType == CXT_Element &&
                 psIter->pszValue == osPrefix + "Observation_Area" )
             {
-                psInsertionPoint = psIter;
+                psObservationArea = psIter;
                 psPrev = psIter;
                 psIter = psIter->psNext;
             }
@@ -2908,14 +2908,20 @@ void PDS4Dataset::WriteHeader()
                 psIter = psIter->psNext;
             }
         }
-        if( psInsertionPoint == NULL )
+        if( psObservationArea == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find Observation_Area in template");
             CPLDestroyXMLNode( psTemplateSpecialConstants );
             return;
         }
-        if( psInsertionPoint->psNext != NULL )
+        CPLXMLNode* psFAOPrev = psObservationArea;
+        while( psFAOPrev->psNext != NULL &&
+               psFAOPrev->psNext->eType == CXT_Comment )
+        {
+            psFAOPrev = psFAOPrev->psNext;
+        }
+        if( psFAOPrev->psNext != NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected content found after Observation_Area in template");
@@ -2925,7 +2931,7 @@ void PDS4Dataset::WriteHeader()
 
         CPLXMLNode* psFAO = CPLCreateXMLNode(NULL, CXT_Element,
                             (osPrefix + "File_Area_Observational").c_str());
-        psInsertionPoint->psNext = psFAO;
+        psFAOPrev->psNext = psFAO;
         CPLXMLNode* psFile = CPLCreateXMLNode(psFAO, CXT_Element,
                                               (osPrefix + "File").c_str());
         CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),

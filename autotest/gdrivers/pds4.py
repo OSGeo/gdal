@@ -376,7 +376,143 @@ def pds4_9():
             return 'fail'
         ds = None
 
+
+    template = '/vsimem/template.xml'
+
+    # Empty Special_Constants
+    gdal.FileFromMemBuffer(template, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+    <Identification_Area>
+        <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
+        <version_id>1.0</version_id>
+        <title>${TITLE}</title>
+        <information_model_version>1.8.0.0</information_model_version>
+        <product_class>Product_Observational</product_class>
+    </Identification_Area>
+    <Observation_Area>
+        <Time_Coordinates>
+        <start_date_time xsi:nil="true" />
+        <stop_date_time xsi:nil="true" />
+        </Time_Coordinates>
+        <Investigation_Area>
+        <name>${INVESTIGATION_AREA_NAME}</name>
+        <type>Mission</type>
+        <Internal_Reference>
+            <lid_reference>${INVESTIGATION_AREA_LID_REFERENCE}</lid_reference>
+            <reference_type>data_to_investigation</reference_type>
+        </Internal_Reference>
+        </Investigation_Area>
+        <Observing_System>
+        <Observing_System_Component>
+            <name>${OBSERVING_SYSTEM_NAME}</name>
+            <type>Spacecraft</type>
+        </Observing_System_Component>
+        </Observing_System>
+        <Target_Identification>
+        <name>Earth</name>
+        <type>Planet</type>
+        <Internal_Reference>
+            <lid_reference>urn:nasa:pds:context:target:planet.earth</lid_reference>
+            <reference_type>data_to_target</reference_type>
+        </Internal_Reference>
+        </Target_Identification>
+    </Observation_Area>
+    <File_Area_Observational>
+        <Array_2D>
+            <Special_Constants />
+        </Array_2D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    ds.GetRasterBand(1).SetNoDataValue(10)
+    with hide_substitution_warnings_error_handler():
+        ds = None
+
+    ds = gdal.Open(filename)
+    ndv = ds.GetRasterBand(1).GetNoDataValue()
+    if ndv != 10:
+        gdaltest.post_reason('fail')
+        print(ndv)
+        return 'fail'
+    ds = None
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    # Special_Constants with just saturated_constant
+    gdal.FileFromMemBuffer(template, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+    <Identification_Area>
+        <logical_identifier>${LOGICAL_IDENTIFIER}</logical_identifier>
+        <version_id>1.0</version_id>
+        <title>${TITLE}</title>
+        <information_model_version>1.8.0.0</information_model_version>
+        <product_class>Product_Observational</product_class>
+    </Identification_Area>
+    <Observation_Area>
+        <Time_Coordinates>
+        <start_date_time xsi:nil="true" />
+        <stop_date_time xsi:nil="true" />
+        </Time_Coordinates>
+        <Investigation_Area>
+        <name>${INVESTIGATION_AREA_NAME}</name>
+        <type>Mission</type>
+        <Internal_Reference>
+            <lid_reference>${INVESTIGATION_AREA_LID_REFERENCE}</lid_reference>
+            <reference_type>data_to_investigation</reference_type>
+        </Internal_Reference>
+        </Investigation_Area>
+        <Observing_System>
+        <Observing_System_Component>
+            <name>${OBSERVING_SYSTEM_NAME}</name>
+            <type>Spacecraft</type>
+        </Observing_System_Component>
+        </Observing_System>
+        <Target_Identification>
+        <name>Earth</name>
+        <type>Planet</type>
+        <Internal_Reference>
+            <lid_reference>urn:nasa:pds:context:target:planet.earth</lid_reference>
+            <reference_type>data_to_target</reference_type>
+        </Internal_Reference>
+        </Target_Identification>
+    </Observation_Area>
+    <File_Area_Observational>
+        <Array_2D>
+            <Special_Constants>
+                <saturated_constant>255</saturated_constant>
+            </Special_Constants>
+        </Array_2D>
+    </File_Area_Observational>
+</Product_Observational>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    ds.GetRasterBand(1).SetNoDataValue(10)
+    with hide_substitution_warnings_error_handler():
+        ds = None
+
+    ds = gdal.Open(filename)
+    ndv = ds.GetRasterBand(1).GetNoDataValue()
+    if ndv != 10:
+        gdaltest.post_reason('fail')
+        print(ndv)
+        return 'fail'
+    ds = None
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
     gdal.GetDriverByName('PDS4').Delete(filename)
+    gdal.Unlink(template)
 
     return 'success'
 
@@ -818,6 +954,114 @@ def pds4_14():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gdal.Unlink(filename)
+
+    # Invalid value for INTERLEAVE
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
+                                        options = ['INTERLEAVE=INVALID'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # INTERLEAVE=BIL not supported for GeoTIFF in PDS4
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('PDS4').Create('/vsimem/out.xml', 1, 1,
+                                        options = ['INTERLEAVE=BIL',
+                                                   'IMAGE_FORMAT=GEOTIFF'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Cannot create GeoTIFF file
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('PDS4').Create('/i/dont/exist.xml', 1, 1,
+                                        options = ['IMAGE_FORMAT=GEOTIFF'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif')
+    # Output file has same name as input file
+    with gdaltest.error_handler():
+        ds = gdal.Translate('/vsimem/test.xml', '/vsimem/test.tif',
+                   format = 'PDS4', creationOptions = ['IMAGE_FORMAT=GEOTIFF'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/test.tif')
+
+
+    template = '/vsimem/template.xml'
+
+    # Missing Product_Observational root
+    gdal.FileFromMemBuffer(template, """<foo/>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() != 'Cannot find Product_Observational element in template':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Missing Target_Identification
+    gdal.FileFromMemBuffer(template, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+</Product_Observational>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2,1,0,49,0,-2])
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() != 'Cannot find Target_Identification element in template':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Missing Observation_Area
+    gdal.FileFromMemBuffer(template, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+</Product_Observational>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() != 'Cannot find Observation_Area in template':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    # Unexpected content found after Observation_Area in template
+    gdal.FileFromMemBuffer(template, """
+<Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
+    <Observation_Area/>
+    <!-- -->
+    <foo/>
+</Product_Observational>""")
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
+                                    options = [ 'TEMPLATE=' + template ])
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() != 'Unexpected content found after Observation_Area in template':
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    gdal.Unlink(template)
     gdal.Unlink(filename)
 
     return 'success'
