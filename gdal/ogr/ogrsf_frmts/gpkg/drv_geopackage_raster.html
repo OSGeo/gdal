@@ -310,14 +310,14 @@ Defaults to NO.</li>
 <li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
 See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</li>
 <li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
-Only used for TILING_SCHEME is different from CUSTOM. LOWER will select the
+Only used by CreateCopy() for TILING_SCHEME different from CUSTOM. LOWER will select the
 zoom level immediately below the theoretical computed non-integral zoom level,
 leading to subsampling. On the contrary, UPPER will select the immediately above
 zoom level, leading to oversampling. Defaults to AUTO which selects the closest
 zoom level.</li>
 <li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
-Resampling algorithm. Only used for TILING_SCHEME is different from CUSTOM. Defaults
-to BILINEAR.</li>
+Resampling algorithm. Only used by CreateCopy() for TILING_SCHEME different from
+CUSTOM. Defaults to BILINEAR.</li>
 <li><b>PRECISION</b>=floating_point_value_in_vertical_units: Smallest significant value.
 Only used for tile gridded elevation data. Defaults to 1.</li>
 <li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
