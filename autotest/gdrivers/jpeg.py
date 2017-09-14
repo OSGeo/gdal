@@ -1235,6 +1235,33 @@ def jpeg_28():
         return 'fail'
     ds = None
 
+    # EXIF and other metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
+    src_ds.SetMetadataItem('EXIF_invalid', 'foo')
+    src_ds.SetMetadataItem('FOO', 'BAR')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_invalid': 'foo', 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    ds = None
+
+    # Too much content for EXIF
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_UserComment', ''.join(['x' for i in range(65535)]))
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    ds = None
+
     # EXIF and GPS tags and EXIF overview
     src_ds = gdal.GetDriverByName('MEM').Create('',1024,1024)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
