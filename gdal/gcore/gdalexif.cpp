@@ -43,6 +43,7 @@
 #endif
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "cpl_conv.h"
@@ -893,26 +894,28 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
         {
             return false;
         }
-        else if (dfVal <= 0xFFFFFFFFU &&
-                    dfVal == static_cast<GUInt32>(dfVal))
+        else if (dfVal <= std::numeric_limits<unsigned int>::max() &&
+                 dfVal == static_cast<GUInt32>(dfVal))
         {
             nNum = static_cast<GUInt32>(dfVal);
             nDenom = 1;
         }
         else if (dfVal<1.0)
         {
-            nNum = static_cast<GUInt32>(dfVal*0xFFFFFFFFU);
-            nDenom = 0xFFFFFFFFU;
+            nNum = static_cast<GUInt32>(
+                        dfVal*std::numeric_limits<unsigned int>::max());
+            nDenom = std::numeric_limits<unsigned int>::max();
         }
         else
         {
-            nNum = 0xFFFFFFFFU;
-            nDenom = static_cast<GUInt32>(0xFFFFFFFFU/dfVal);
+            nNum = std::numeric_limits<unsigned int>::max();
+            nDenom = static_cast<GUInt32>(
+                        std::numeric_limits<unsigned int>::max()/dfVal);
         }
     }
     else if (dfVal < 0.0)
     {
-        if( dfVal >= -0x80000000 &&
+        if( dfVal >= std::numeric_limits<int>::min() &&
             dfVal == static_cast<GInt32>(dfVal))
         {
             nNum = static_cast<GInt32>(dfVal);
@@ -920,18 +923,20 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
         }
         else if (dfVal>-1.0)
         {
-            nNum = -static_cast<GInt32>((-dfVal)*0x7FFFFFFF);
-            nDenom = 0x7FFFFFFF;
+            nNum = -static_cast<GInt32>(
+                        (-dfVal)*std::numeric_limits<int>::max());
+            nDenom = std::numeric_limits<int>::max();
         }
         else
         {
-            nNum = -0x7FFFFFFF;
-            nDenom = static_cast<GInt32>(0x7FFFFFFF/(-dfVal));
+            nNum = -std::numeric_limits<int>::max();
+            nDenom = static_cast<GInt32>(
+                        std::numeric_limits<int>::max()/(-dfVal));
         }
     }
     else
     {
-        if (dfVal <= 0x7FFFFFFF &&
+        if (dfVal <= std::numeric_limits<int>::max() &&
                 dfVal == static_cast<GInt32>(dfVal))
         {
             nNum = static_cast<GInt32>(dfVal);
@@ -939,13 +944,13 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
         }
         else if (dfVal<1.0)
         {
-            nNum = static_cast<GInt32>(dfVal*0x7FFFFFFF);
-            nDenom = 0x7FFFFFFF;
+            nNum = static_cast<GInt32>(dfVal*std::numeric_limits<int>::max());
+            nDenom = std::numeric_limits<int>::max();
         }
         else
         {
-            nNum = 0x7FFFFFFF;
-            nDenom = static_cast<GInt32>(0x7FFFFFFF/dfVal);
+            nNum = std::numeric_limits<int>::max();
+            nDenom = static_cast<GInt32>(std::numeric_limits<int>::max()/dfVal);
         }
     }
     return true;
