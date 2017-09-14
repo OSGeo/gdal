@@ -826,6 +826,7 @@ LIBLZMA_SETTING
 LTLIBICONV
 LIBICONV
 LIBZ_SETTING
+RENAME_INTERNAL_SHAPELIB_SYMBOLS
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
@@ -954,6 +955,7 @@ enable_lto
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
+with_rename_internal_shapelib_symbols
 with_local
 with_threads
 with_libz
@@ -1728,6 +1730,7 @@ Optional Packages:
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
   --with-rename-internal-libgeotiff-symbols=ARG Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)
+  --with-rename-internal-shapelib-symbols=ARG Prefix internal shapelib symbols with gdal_ (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
@@ -20014,9 +20017,19 @@ if test "${with_rename_internal_libtiff_symbols+set}" = set; then :
   withval=$with_rename_internal_libtiff_symbols;
 fi
 
-if test "$with_rename_internal_libtiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libtiff_symbols=yes
+    if test "x$with_rename_internal_libtiff_symbols" = "x$no"; then
+        with_rename_internal_libtiff_symbols=no
+    fi
+else
     with_rename_internal_libtiff_symbols=no
+    if test "x$with_rename_internal_libtiff_symbols" = "x$yes" -o "x$with_rename_internal_libtiff_symbols" = "x"; then
+        with_rename_internal_libtiff_symbols=yes
+    fi
 fi
+
 RENAME_INTERNAL_LIBTIFF_SYMBOLS=$with_rename_internal_libtiff_symbols
 
 
@@ -20027,10 +20040,42 @@ if test "${with_rename_internal_libgeotiff_symbols+set}" = set; then :
   withval=$with_rename_internal_libgeotiff_symbols;
 fi
 
-if test "$with_rename_internal_libgeotiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libgeotiff_symbols=yes
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$no"; then
+        with_rename_internal_libgeotiff_symbols=no
+    fi
+else
     with_rename_internal_libgeotiff_symbols=no
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$yes" -o "x$with_rename_internal_libgeotiff_symbols" = "x"; then
+        with_rename_internal_libgeotiff_symbols=yes
+    fi
 fi
+
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS=$with_rename_internal_libgeotiff_symbols
+
+
+
+
+# Check whether --with-rename_internal_shapelib_symbols was given.
+if test "${with_rename_internal_shapelib_symbols+set}" = set; then :
+  withval=$with_rename_internal_shapelib_symbols;
+fi
+
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_shapelib_symbols=yes
+    if test "x$with_rename_internal_shapelib_symbols" = "x$no"; then
+        with_rename_internal_shapelib_symbols=no
+    fi
+else
+    with_rename_internal_shapelib_symbols=no
+    if test "x$with_rename_internal_shapelib_symbols" = "x$yes" -o "x$with_rename_internal_shapelib_symbols" = "x"; then
+        with_rename_internal_shapelib_symbols=yes
+    fi
+fi
+RENAME_INTERNAL_SHAPELIB_SYMBOLS=$with_rename_internal_shapelib_symbols
 
 
 
