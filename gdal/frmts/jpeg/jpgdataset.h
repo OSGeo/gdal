@@ -118,7 +118,7 @@ typedef void (*my_jpeg_write_m_byte)(void *cinfo, int val);
 
 CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
                       GDALProgressFunc pfnProgress, void *pProgressData );
-void   JPGAddEXIFOverview( GDALDataType eWorkDT,
+void   JPGAddEXIF        ( GDALDataType eWorkDT,
                            GDALDataset *poSrcDS, char** papszOptions,
                            void *cinfo,
                            my_jpeg_write_m_header p_jpeg_write_m_header,
