@@ -851,7 +851,7 @@ static GByte* ParseUndefined(const char* pszVal, GUInt32* pnLength)
 
     // Otherwise take the string value as a byte value
     memcpy(pabyData, pszVal, strlen(pszVal) + 1);
-    *pnLength = strlen(pszVal);
+    *pnLength = static_cast<GUInt32>(strlen(pszVal));
     return pabyData;
 }
 
@@ -1530,14 +1530,14 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
 
 int main()
 {
-    printf("<table border=\"1\">\n");
-    printf("<tr><th>Metadata item name</th><th>Hex code</th>"
+    printf("<table border=\"1\">\n"); /* ok */
+    printf("<tr><th>Metadata item name</th><th>Hex code</th>" /* ok */
            "<th>Type</th><th>Number of values</th><th>Optionality</th></tr>\n");
     for(size_t i = 0; exiftags[i].name[0] != '\0'; i++ )
     {
         if( exiftags[i].datatype == TIFF_NOTYPE )
             continue;
-        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", /* ok */
                exiftags[i].name,
                exiftags[i].tag,
                exiftags[i].datatype == TIFF_BYTE ?      "BYTE" :
@@ -1557,16 +1557,16 @@ int main()
                                                            "?????"
         );
     }
-    printf("</table>\n");
+    printf("</table>\n"); /* ok */
 
-    printf("<table border=\"1\">\n");
-    printf("<tr><th>Metadata item name</th><th>Hex code</th>"
+    printf("<table border=\"1\">\n"); /* ok */
+    printf("<tr><th>Metadata item name</th><th>Hex code</th>" /* ok */
            "<th>Type</th><th>Number of values</th><th>Optionality</th></tr>\n");
     for(size_t i = 0; gpstags[i].name[0] != '\0'; i++ )
     {
         if( gpstags[i].datatype == TIFF_NOTYPE )
             continue;
-        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+        printf("<tr><td>%s</td><td>0x%04X</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", /* ok */
                gpstags[i].name,
                gpstags[i].tag,
                gpstags[i].datatype == TIFF_BYTE ?      "BYTE" :
@@ -1586,7 +1586,7 @@ int main()
                                                            "?????"
         );
     }
-    printf("</table>\n");
+    printf("</table>\n"); /* ok */
 
     return 0;
 }
