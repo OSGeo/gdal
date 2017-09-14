@@ -696,7 +696,7 @@ PDS4Dataset::PDS4Dataset() :
 PDS4Dataset::~PDS4Dataset()
 {
     if( m_bMustInitImageFile)
-        InitImageFile();
+        CPL_IGNORE_RET_VAL(InitImageFile());
     FlushCache();
     if( m_bWriteHeader )
         WriteHeader();
