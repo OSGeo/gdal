@@ -223,9 +223,6 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce )
 OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce )
 
 {
-    OGREnvelope oEnv;
-    GBool       bExtentSet = FALSE;
-
     psExtent->MinX = 0.0;
     psExtent->MaxX = 0.0;
     psExtent->MinY = 0.0;
@@ -257,6 +254,9 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
 /*      OK, we hate to do this, but go ahead and read through all       */
 /*      the features to collect geometries and build extents.           */
 /* -------------------------------------------------------------------- */
+    OGREnvelope oEnv;
+    bool bExtentSet = false;
+
     ResetReading();
     OGRFeature *poFeature = NULL;
     while( (poFeature = GetNextFeature()) != NULL )
@@ -272,7 +272,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
             if( !(CPLIsNan(psExtent->MinX) || CPLIsNan(psExtent->MinY) ||
                   CPLIsNan(psExtent->MaxX) || CPLIsNan(psExtent->MaxY)) )
             {
-                bExtentSet = TRUE;
+                bExtentSet = true;
             }
         }
         else
