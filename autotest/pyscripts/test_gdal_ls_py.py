@@ -277,16 +277,16 @@ def test_gdal_ls_py_8():
     if len(d) == 0:
         return 'skip'
 
-    ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://ftp.remotesensing.org/gdal/data/aig'])
+    ret, ret_str = run_gdal_ls(['', '-l', '-R', '-Rzip', 'ftp://download.osgeo.org/gdal/data/aig'])
 
     if ret != 'success':
         return ret
 
-    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://ftp.remotesensing.org/gdal/data/aig/nzdem/info/arc0002r.001') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 00:00 /vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem/info/arc0002r.001') == -1:
         print(ret_str)
         return 'fail'
 
-    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://ftp.remotesensing.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown        24576 2007-03-29 12:20 /vsizip//vsicurl/ftp://download.osgeo.org/gdal/data/aig/nzdem.zip/nzdem/info/arc0002r.001') == -1:
         print(ret_str)
         return 'fail'
 
