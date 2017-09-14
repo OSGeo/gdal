@@ -1519,7 +1519,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
     }
 
     CPLAssert( nBufferOff + nThumbnailSize == nBufferSize );
-    if( nThumbnailSize )
+    if( pabyThumbnail != NULL && nThumbnailSize )
         memcpy(pabyData + nBufferOff, pabyThumbnail, nThumbnailSize );
 
     FreeTags(mainTags);
