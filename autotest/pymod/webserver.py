@@ -28,19 +28,133 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 except:
     from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 
+import contextlib
 import time
 import sys
 import gdaltest
 from sys import version_info
 
 do_log = False
+custom_handler = None
+
+@contextlib.contextmanager
+def install_http_handler(handler_class):
+    global custom_handler
+    custom_handler = handler_class
+    try:
+        yield
+    finally:
+        custom_handler = None
+
+class RequestResponse:
+    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None):
+        self.method = method
+        self.path = path
+        self.code = code
+        self.headers = headers
+        self.body = body
+        self.custom_method = custom_method
+
+class SequentialHandler:
+    def __init__(self):
+        self.req_count = 0
+        self.req_resp = []
+
+    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None):
+        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method) )
+
+    def process(self, method, request):
+        if self.req_count < len(self.req_resp):
+            req_resp = self.req_resp[self.req_count]
+            if method == req_resp.method and request.path == req_resp.path:
+                self.req_count += 1
+
+                if req_resp.custom_method:
+                    req_resp.custom_method(request)
+                else:
+                    request.send_response(req_resp.code)
+                    for k in req_resp.headers:
+                        request.send_header(k, req_resp.headers[k])
+                    if req_resp.body:
+                        request.send_header('Content-Length', len(req_resp.body))
+                    request.end_headers()
+                    if req_resp.body:
+                        request.wfile.write(req_resp.body.encode('ascii'))
+
+                return
+
+        request.send_error(500,'Unexpected %s request for %s, req_count = %d' % (method, request.path, self.req_count))
+
+    def do_HEAD(self, request):
+        self.process('HEAD', request)
+
+    def do_GET(self, request):
+        self.process('GET', request)
+
+    def do_POST(self, request):
+        self.process('POST', request)
+
+    def do_PUT(self, request):
+        self.process('PUT', request)
+
+    def do_DELETE(self, request):
+        self.process('DELETE', request)
+
+class DispatcherHttpHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_HEAD(self):
+
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('HEAD %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_HEAD(self)
+
+    def do_DELETE(self):
+
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('DELETE %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_DELETE(self)
+
+    def do_POST(self):
+
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('POST %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_POST(self)
+
+    def do_PUT(self):
+
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PUT %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_PUT(self)
+
+    def do_GET(self):
+
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('GET %s\n' % self.path)
+            f.close()
+
+        custom_handler.do_GET(self)
 
 class GDAL_Handler(BaseHTTPRequestHandler):
 
