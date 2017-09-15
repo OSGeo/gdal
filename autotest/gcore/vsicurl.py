@@ -28,6 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import sys
 from osgeo import gdal
 from osgeo import ogr
@@ -37,6 +42,156 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import webserver
+
+
+do_log = False
+test_retry_attempt = 0
+
+class VSICurlHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_HEAD(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('HEAD %s\n' % self.path)
+            f.close()
+
+        # Simulate a redirect to a S3 signed URL
+        if self.path == '/test_redirect/test.bin':
+            import time
+            # Simulate a big time difference between server and local machine
+            current_time = 1500
+            response = 'HTTP/1.1 302 FOUND\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += 'Location: http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d\r\n' % (self.server.port, current_time + 30)
+            response += '\r\n'
+            self.wfile.write(response.encode('ascii'))
+            return
+
+        # Simulate that we don't accept HEAD on signed URLs. The client should retry with a GET
+        if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
+            import time
+            # Simulate a big time difference between server and local machine
+            current_time = 1500
+            response = 'HTTP/1.1 403\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += '\r\n'
+            self.wfile.write(response.encode('ascii'))
+            return
+
+        if self.path == '/test_retry/test.txt':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-Length', 3)
+            self.end_headers()
+            return
+
+        if self.path == '/test_retry_reset_counter':
+            global test_retry_attempt
+            test_retry_attempt = 0
+            self.send_response(200)
+            self.end_headers()
+            return
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            # First signed URL
+            if self.path.startswith('/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires='):
+                if 'Range' in self.headers:
+                    if self.headers['Range'] == 'bytes=0-16383':
+                        self.protocol_version = 'HTTP/1.1'
+                        self.send_response(200)
+                        self.send_header('Content-type', 'text/plain')
+                        self.send_header('Content-Range', 'bytes 0-16383/1000000')
+                        self.end_headers()
+                        self.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
+                    elif self.headers['Range'] == 'bytes=16384-49151':
+                        # Test expiration of the signed URL
+                        self.protocol_version = 'HTTP/1.1'
+                        self.send_response(403)
+                        self.end_headers()
+                    else:
+                        self.send_response(404)
+                        self.end_headers()
+                else:
+                    # After a failed attempt on a HEAD, the client should go there
+                    import time
+                    # Simulate a big time difference between server and local machine
+                    current_time = 1500
+                    response = 'HTTP/1.1 200\r\n'
+                    response += 'Server: foo\r\n'
+                    response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+                    response += 'Content-type: text/plain\r\n'
+                    response += 'Content-Length: 1000000\r\n'
+                    response += '\r\n'
+                    self.wfile.write(response.encode('ascii'))
+                return
+
+            # Second signed URL
+            if self.path.startswith('/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=') and 'Range' in self.headers and \
+               self.headers['Range'] == 'bytes=16384-49151':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Range', 'bytes 16384-16384/1000000')
+                self.end_headers()
+                self.wfile.write('y'.encode('ascii'))
+                return
+
+            # We should go there after expiration of the first signed URL
+            if self.path == '/test_redirect/test.bin' and 'Range' in self.headers and \
+               self.headers['Range'] == 'bytes=16384-49151':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(302)
+                # Return a new signed URL
+                import time
+                current_time = int(time.time())
+                self.send_header('Location', 'http://localhost:%d/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=%d' % (self.server.port, current_time + 30))
+                self.end_headers()
+                self.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
+                return
+
+            global test_retry_attempt
+            if self.path == '/test_retry/test.txt':
+                if test_retry_attempt == 0:
+                    self.protocol_version = 'HTTP/1.1'
+                    self.send_response(502)
+                    self.end_headers()
+                else:
+                    content = """foo""".encode('ascii')
+                    self.protocol_version = 'HTTP/1.1'
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.send_header('Content-Length', len(content))
+                    self.end_headers()
+                    self.wfile.write(content)
+                test_retry_attempt += 1
+                return
+
+            if self.path == '/test_retry_reset_counter':
+                test_retry_attempt = 0
+                self.send_response(200)
+                self.end_headers()
+                return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
 
 ###############################################################################
 #
@@ -300,7 +455,7 @@ def vsicurl_start_webserver():
     if drv is None:
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch()
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = VSICurlHTTPHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 

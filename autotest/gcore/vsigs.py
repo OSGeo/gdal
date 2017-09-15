@@ -28,6 +28,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import sys
 from osgeo import gdal
 
@@ -35,6 +40,144 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import webserver
+
+do_log = False
+
+class VSIGSHttpHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_HEAD(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('HEAD %s\n' % self.path)
+            f.close()
+
+        if self.path == '/gs_fake_bucket/resource2.bin':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.send_header('Content-Length', 1000000)
+            self.end_headers()
+            return
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_DELETE(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('DELETE %s\n' % self.path)
+            f.close()
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_POST(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('POST %s\n' % self.path)
+            f.close()
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_PUT(self):
+        if do_log:
+            f = open('/tmp/log.txt', 'a')
+            f.write('PUT %s\n' % self.path)
+            f.close()
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path == '/gs_fake_bucket_http_header_file/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'foo' not in self.headers or self.headers['foo'] != 'bar':
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 1)
+                self.end_headers()
+                self.wfile.write("""Y""".encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket/resource':
+                self.protocol_version = 'HTTP/1.1'
+
+                if 'Authorization' not in self.headers:
+                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
+                    self.send_response(403)
+                    return
+                expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
+                if self.headers['Authorization'] != expected_authorization :
+                    sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
+                    self.send_response(403)
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.send_header('Content-Length', 3)
+                self.end_headers()
+                self.wfile.write("""foo""".encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket2?delimiter=/&prefix=a_dir/':
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                response = """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <NextMarker>bla</NextMarker>
+                        <Contents>
+                            <Key>a_dir/resource3.bin</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>123456</Size>
+                        </Contents>
+                    </ListBucketResult>
+                """
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            if self.path == '/gs_fake_bucket2?delimiter=/&marker=bla&prefix=a_dir/':
+
+                self.protocol_version = 'HTTP/1.1'
+                self.send_response(200)
+                self.send_header('Content-type', 'application/xml')
+                response = """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <Contents>
+                            <Key>a_dir/resource4.bin</Key>
+                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                            <Size>456789</Size>
+                        </Contents>
+                        <CommonPrefixes>
+                            <Prefix>a_dir/subdir/</Prefix>
+                        </CommonPrefixes>
+                    </ListBucketResult>
+                """
+                self.send_header('Content-Length', len(response))
+                self.end_headers()
+                self.wfile.write(response.encode('ascii'))
+                return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
 
 def open_for_read(uri):
     """
@@ -171,7 +314,7 @@ def vsigs_start_webserver():
     if drv is None:
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch()
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = VSIGSHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
 

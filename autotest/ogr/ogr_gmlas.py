@@ -32,6 +32,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
 import os.path
 import sys
@@ -1320,6 +1325,46 @@ def ogr_gmlas_conf_ignored_xpath():
     return 'success'
 
 ###############################################################################
+
+do_log = False
+class GMLASHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.startswith('/vsimem/'):
+                from osgeo import gdal
+                f = gdal.VSIFOpenL(self.path, "rb")
+                if f is None:
+                    self.send_response(404)
+                    self.end_headers()
+                else:
+                    gdal.VSIFSeekL(f, 0, 2)
+                    size = gdal.VSIFTellL(f)
+                    gdal.VSIFSeekL(f, 0, 0)
+                    content = gdal.VSIFReadL(1, size, f)
+                    gdal.VSIFCloseL(f)
+                    self.protocol_version = 'HTTP/1.0'
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(content)
+                return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+###############################################################################
 # Test schema caching
 
 def ogr_gmlas_cache():
@@ -1335,7 +1380,7 @@ def ogr_gmlas_cache():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
@@ -2230,7 +2275,7 @@ def ogr_gmlas_xlink_resolver():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
