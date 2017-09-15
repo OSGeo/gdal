@@ -1065,7 +1065,6 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
 %pythoncode %{
 import numpy
-from . import _gdal_array
 
 import gdalconst
 import gdal
