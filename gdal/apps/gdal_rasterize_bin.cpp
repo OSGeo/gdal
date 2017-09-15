@@ -73,13 +73,13 @@ static GDALRasterizeOptionsForBinary *GDALRasterizeOptionsForBinaryNew(void)
 static void GDALRasterizeOptionsForBinaryFree(
     GDALRasterizeOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszSource);
-        CPLFree(psOptionsForBinary->pszDest);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
+    if( psOptionsForBinary == NULL )
+        return;
+
+    CPLFree(psOptionsForBinary->pszSource);
+    CPLFree(psOptionsForBinary->pszDest);
+    CPLFree(psOptionsForBinary->pszFormat);
+    CPLFree(psOptionsForBinary);
 }
 /************************************************************************/
 /*                                main()                                */
