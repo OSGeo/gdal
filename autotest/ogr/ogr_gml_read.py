@@ -3862,11 +3862,46 @@ def ogr_gml_74():
     if not gdaltest.have_gml_reader:
         return 'skip'
 
+    # With .xsd
     ds = gdal.OpenEx('data/expected_gml_gml32.gml', open_options = ['FORCE_SRS_DETECTION=YES'] )
     lyr = ds.GetLayer(0)
     if lyr.GetSpatialRef() is None:
         gdaltest.post_reason('did not get expected SRS')
         return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('did not get expected feature count')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    shutil.copy('data/expected_gml_gml32.gml', 'tmp/ogr_gml_74.gml')
+    if os.path.exists('tmp/ogr_gml_74.gfs'):
+        os.unlink('tmp/ogr_gml_74.gfs')
+
+    # Without .xsd or .gfs
+    ds = gdal.OpenEx('tmp/ogr_gml_74.gml', open_options = ['FORCE_SRS_DETECTION=YES'] )
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('did not get expected feature count')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+
+    # With .gfs
+    ds = gdal.OpenEx('tmp/ogr_gml_74.gml', open_options = ['FORCE_SRS_DETECTION=YES'] )
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef() is None:
+        gdaltest.post_reason('did not get expected SRS')
+        return 'fail'
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('did not get expected feature count')
+        print(lyr.GetFeatureCount())
+        return 'fail'
+    ds = None
+
+    os.unlink('tmp/ogr_gml_74.gml')
+    os.unlink('tmp/ogr_gml_74.gfs')
 
     return 'success'
 

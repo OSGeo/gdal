@@ -1302,6 +1302,12 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
 
     std::string osWork;
 
+    for( int i = 0; i < m_nClassCount; i++ )
+    {
+        m_papoClass[i]->SetFeatureCount(-1);
+        m_papoClass[i]->SetSRSName(NULL);
+    }
+
     GMLFeature *poFeature = NULL;
     while( (poFeature = NextFeature()) != NULL )
     {
