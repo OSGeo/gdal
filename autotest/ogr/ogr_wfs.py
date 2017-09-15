@@ -29,6 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
 import sys
 
@@ -500,13 +505,68 @@ def ogr_wfs_test_ogrsf():
     return 'success'
 
 ###############################################################################
+do_log = False
+
+class WFSHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.find('/fakewfs') != -1:
+
+                if self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities' or \
+                self.path == '/fakewfs?SERVICE=WFS&REQUEST=GetCapabilities&ACCEPTVERSIONS=1.1.0,1.0.0':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/get_capabilities.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=DescribeFeatureType&TYPENAME=rijkswegen':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/describe_feature_type.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+                if self.path == '/fakewfs?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=rijkswegen':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    f = open('data/get_feature.xml', 'rb')
+                    content = f.read()
+                    f.close()
+                    self.wfile.write(content)
+                    return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+###############################################################################
 # Test reading a local fake WFS server
 
 def ogr_wfs_fake_wfs_server():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    (process, port) = webserver.launch()
+    (process, port) = webserver.launch(handler = WFSHTTPHandler)
     if port == 0:
         return 'skip'
 
