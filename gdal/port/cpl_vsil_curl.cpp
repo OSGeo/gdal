@@ -310,6 +310,8 @@ public:
         override;
     virtual int      Mkdir( const char *pszDirname, long nMode ) override;
     virtual int      Rmdir( const char *pszDirname ) override;
+    virtual char   **ReadDir( const char *pszDirname ) override
+                      { return ReadDirEx(pszDirname, 0); }
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles )
         override;
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles,
