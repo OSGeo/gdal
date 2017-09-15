@@ -289,6 +289,8 @@ public:
     virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
+    virtual char   **ReadDir( const char *pszDirname )
+                       { return ReadDirEx(pszDirname, 0); }
     virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles );
             char   **ReadDirInternal( const char *pszDirname, int nMaxFiles, bool* pbGotFileList );
             void     InvalidateDirContent( const char *pszDirname );
