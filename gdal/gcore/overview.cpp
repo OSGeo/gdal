@@ -1317,9 +1317,8 @@ template<class T> static inline double GDALResampleConvolutionHorizontalSSE2(
     }
 
     v_acc1 += v_acc2;
-    v_acc1.AddLowAndHigh();
 
-    double dfVal = static_cast<double>(v_acc1.GetLow());
+    double dfVal = v_acc1.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfVal += pChunk[i] * padfWeightsAligned[i];
@@ -1369,10 +1368,9 @@ GDALResampleConvolutionHorizontalWithMaskSSE2(
         v_acc += v_pixels * v_weight;
         v_acc_weight += v_weight;
     }
-    v_acc.AddLowAndHigh();
-    v_acc_weight.AddLowAndHigh();
-    dfVal = static_cast<double>(v_acc.GetLow());
-    dfWeightSum = static_cast<double>(v_acc_weight.GetLow());
+
+    dfVal = v_acc.GetHorizSum();
+    dfWeightSum = v_acc_weight.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         const double dfWeight = padfWeightsAligned[i] * pabyMask[i];
@@ -1445,13 +1443,9 @@ GDALResampleConvolutionHorizontal_3rows_SSE2(
         v_acc3 += v_pixels2 * v_weight2;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfRes1 += pChunkRow1[i] * padfWeightsAligned[i];
@@ -1515,13 +1509,9 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
         v_acc3 += v_pixels3 * v_weight;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
 
     for( ; i < nSrcPixelCount; ++i )
     {

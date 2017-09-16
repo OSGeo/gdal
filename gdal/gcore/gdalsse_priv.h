@@ -170,13 +170,16 @@ class XMMReg2Double
         xmm = _mm_load_pd(pval);
     }
 
-    inline void nsLoad2Val(const float* pval)
+    inline void nsLoad2Val(const float* ptr)
     {
-        __m128 temp1 = _mm_load_ss(pval);
-        __m128 temp2 = _mm_load_ss(pval + 1);
-        temp1 = _mm_shuffle_ps(temp1, temp2, _MM_SHUFFLE(1,0,1,0));
-        temp1 = _mm_shuffle_ps(temp1, temp1, _MM_SHUFFLE(3,3,2,0));
-        xmm = _mm_cvtps_pd(temp1);
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        GInt64 i;
+        memcpy(&i, ptr, 8);
+        __m128i xmm_i = _mm_cvtsi64_si128(i);
+#else
+        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
+#endif
+        xmm = _mm_cvtps_pd(_mm_castsi128_ps(xmm_i));
     }
 
     inline void nsLoad2Val(const unsigned char* ptr)
@@ -679,6 +682,258 @@ class XMMReg2Double
 
 #endif /*  defined(__x86_64) || defined(_M_X64) */
 
+#ifdef __AVX__
+
+#include <immintrin.h>
+
+class XMMReg4Double
+{
+  public:
+    __m256d ymm;
+
+    XMMReg4Double() {}
+    XMMReg4Double(const XMMReg4Double& other) : ymm(other.ymm) {}
+
+    static inline XMMReg4Double Zero()
+    {
+        XMMReg4Double reg;
+        reg.Zeroize();
+        return reg;
+    }
+
+    inline void Zeroize()
+    {
+        ymm = _mm256_setzero_pd();
+    }
+
+    static inline XMMReg4Double Load1ValHighAndLow(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad1ValHighAndLow(ptr);
+        return reg;
+    }
+
+    inline void nsLoad1ValHighAndLow(const double* ptr)
+    {
+        ymm = _mm256_set1_pd(*ptr);
+    }
+
+    static inline XMMReg4Double Load4Val(const unsigned char* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const unsigned char* ptr)
+    {
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        int i;
+        memcpy(&i, ptr, 4);
+        __m128i xmm_i = _mm_cvtsi32_si128(i);
+#else
+        __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
+#endif
+        xmm_i = _mm_cvtepu8_epi32(xmm_i);
+        ymm = _mm256_cvtepi32_pd(xmm_i);
+    }
+
+    static inline XMMReg4Double Load4Val(const short* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const short* ptr)
+    {
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        GInt64 i;
+        memcpy(&i, ptr, 8);
+        __m128i xmm_i = _mm_cvtsi64_si128(i);
+#else
+        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
+#endif
+        xmm_i = _mm_cvtepi16_epi32(xmm_i);
+        ymm = _mm256_cvtepi32_pd(xmm_i);
+    }
+
+    static inline XMMReg4Double Load4Val(const unsigned short* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const unsigned short* ptr)
+    {
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        GInt64 i;
+        memcpy(&i, ptr, 8);
+        __m128i xmm_i = _mm_cvtsi64_si128(i);
+#else
+        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
+#endif
+        xmm_i = _mm_cvtepu16_epi32(xmm_i);
+        ymm = _mm256_cvtepi32_pd(xmm_i); // ok to use signed conversion since we are in the ushort range, so cannot be interpreted as negative int32
+    }
+
+    static inline XMMReg4Double Load4Val(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const double* ptr)
+    {
+        ymm = _mm256_loadu_pd(ptr);
+    }
+
+    static inline XMMReg4Double Load4ValAligned(const double* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4ValAligned(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4ValAligned(const double* ptr)
+    {
+        ymm = _mm256_load_pd(ptr);
+    }
+
+    static inline XMMReg4Double Load4Val(const float* ptr)
+    {
+        XMMReg4Double reg;
+        reg.nsLoad4Val(ptr);
+        return reg;
+    }
+
+    inline void nsLoad4Val(const float* ptr)
+    {
+        ymm = _mm256_cvtps_pd( _mm_loadu_ps(ptr) );
+    }
+
+    static inline XMMReg4Double Equals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.ymm =  _mm256_cmp_pd(expr1.ymm, expr2.ymm, _CMP_EQ_OQ);
+        return reg;
+    }
+
+    static inline XMMReg4Double NotEquals(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.ymm =  _mm256_cmp_pd(expr1.ymm, expr2.ymm, _CMP_NEQ_OQ);
+        return reg;
+    }
+
+    static inline XMMReg4Double Greater(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.ymm =  _mm256_cmp_pd(expr1.ymm, expr2.ymm, _CMP_GT_OQ);
+        return reg;
+    }
+
+    static inline XMMReg4Double And(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.ymm = _mm256_and_pd(expr1.ymm, expr2.ymm);
+        return reg;
+    }
+
+    static inline XMMReg4Double Ternary(const XMMReg4Double& cond, const XMMReg4Double& true_expr, const XMMReg4Double& false_expr)
+    {
+        XMMReg4Double reg;
+        reg.ymm = _mm256_or_pd(_mm256_and_pd (cond.ymm, true_expr.ymm), _mm256_andnot_pd(cond.ymm, false_expr.ymm));
+        return reg;
+    }
+
+    static inline XMMReg4Double Min(const XMMReg4Double& expr1, const XMMReg4Double& expr2)
+    {
+        XMMReg4Double reg;
+        reg.ymm = _mm256_min_pd(expr1.ymm, expr2.ymm);
+        return reg;
+    }
+
+    inline XMMReg4Double& operator= (const XMMReg4Double& other)
+    {
+        ymm = other.ymm;
+        return *this;
+    }
+
+    inline XMMReg4Double& operator+= (const XMMReg4Double& other)
+    {
+        ymm = _mm256_add_pd(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg4Double& operator*= (const XMMReg4Double& other)
+    {
+        ymm = _mm256_mul_pd(ymm, other.ymm);
+        return *this;
+    }
+
+    inline XMMReg4Double operator+ (const XMMReg4Double& other) const
+    {
+        XMMReg4Double ret;
+        ret.ymm = _mm256_add_pd(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg4Double operator- (const XMMReg4Double& other) const
+    {
+        XMMReg4Double ret;
+        ret.ymm = _mm256_sub_pd(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg4Double operator* (const XMMReg4Double& other) const
+    {
+        XMMReg4Double ret;
+        ret.ymm = _mm256_mul_pd(ymm, other.ymm);
+        return ret;
+    }
+
+    inline XMMReg4Double operator/ (const XMMReg4Double& other) const
+    {
+        XMMReg4Double ret;
+        ret.ymm = _mm256_div_pd(ymm, other.ymm);
+        return ret;
+    }
+
+    void AddToLow( const XMMReg2Double& other )
+    {
+         __m256d ymm2 = _mm256_setzero_pd();
+         ymm2 = _mm256_insertf128_pd( ymm2, other.xmm, 0);
+        ymm = _mm256_add_pd(ymm, ymm2);
+    }
+
+    inline double GetHorizSum() const
+    {
+        __m256d ymm_tmp1, ymm_tmp2;
+        ymm_tmp2 = _mm256_hadd_pd(ymm, ymm);
+        ymm_tmp1 = _mm256_permute2f128_pd(ymm_tmp2, ymm_tmp2, 1); 
+        ymm_tmp1 = _mm256_add_pd(ymm_tmp1, ymm_tmp2);
+        return _mm_cvtsd_f64(_mm256_castpd256_pd128(ymm_tmp1));
+    }
+
+
+    void Store4Val(unsigned short* ptr) const
+    {
+        __m128i xmm_i = _mm256_cvtpd_epi32 (ymm);
+        xmm_i = _mm_packus_epi32(xmm_i, xmm_i);   // Pack uint32 to uint16
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+        GInt64 n64 = _mm_cvtsi128_si64 (xmm_i);   // Extract lower 64 bit word
+        memcpy(ptr, &n64, sizeof(n64));
+#else
+        *(GInt64*)ptr = _mm_cvtsi128_si64 (xmm_i);
+#endif
+    }
+};
+
+#else
+
 class XMMReg4Double
 {
   public:
@@ -850,20 +1105,17 @@ class XMMReg4Double
         return ret;
     }
 
-    inline void AddLowAndHigh()
+    void AddToLow( const XMMReg2Double& other )
     {
-        low = low + high;
-        low.AddLowAndHigh();
+        low += other;
     }
 
-    inline XMMReg2Double& GetLow()
+    inline double GetHorizSum() const
     {
-        return low;
-    }
-
-    inline XMMReg2Double& GetHigh()
-    {
-        return high;
+        XMMReg2Double tmp;
+        tmp = low + high;
+        tmp.AddLowAndHigh();
+        return static_cast<double>(tmp);
     }
 
     void Store4Val(unsigned short* ptr) const
@@ -872,6 +1124,8 @@ class XMMReg4Double
         high.Store2Val(ptr+2);
     }
 };
+
+#endif
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
