@@ -165,7 +165,7 @@ def misc_5_internal(drv, datatype, nBands):
         ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.01745329251994328]]')
 
         # PNM and MFF have no SetGeoTransform() method implemented
-        if drv.ShortName not in ['PNM', 'MFF']:
+        if drv.ShortName not in ['PNM', 'MFF', 'NULL']:
             got_gt = ds.GetGeoTransform()
             for i in range(6):
                 if abs(got_gt[i] - set_gt[i]) > 1e-10:
