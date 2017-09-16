@@ -68,7 +68,7 @@ class GDALNullDataset: public GDALDataset
 class GDALNullRasterBand: public GDALRasterBand
 {
     public:
-            GDALNullRasterBand(GDALDataType eDT);
+            explicit GDALNullRasterBand(GDALDataType eDT);
 
             virtual CPLErr IReadBlock(int, int, void*) override;
             virtual CPLErr IWriteBlock(int, int, void*) override;
@@ -147,7 +147,7 @@ CPLErr GDALNullRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             double dfZero = 0;
             GDALCopyWords(&dfZero, GDT_Float64, 0,
                         reinterpret_cast<GByte*>(pData) + iY * nLineSpace,
-                        eBufType, nPixelSpace,
+                        eBufType, static_cast<int>(nPixelSpace),
                         nBufXSize);
         }
     }
