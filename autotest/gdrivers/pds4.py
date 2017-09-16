@@ -97,7 +97,7 @@ def pds4_1():
 # hide_substitution_warnings_error_handler()
 
 def hide_substitution_warnings_error_handler_cbk(type, errno, msg):
-    if msg.find('substituted') < 0:
+    if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
         print(msg)
 
 @contextlib.contextmanager
@@ -667,11 +667,11 @@ def pds4_13():
     ds = gdal.Open('data/byte_pds4_multi_sds.xml')
     subds = ds.GetSubDatasets()
     expected_subds = [('PDS4:data/byte_pds4_multi_sds.xml:1:1',
-                       'Image file byte_pds4.bin, array first_sds'),
+                       'Image file byte_pds4.img, array first_sds'),
                       ('PDS4:data/byte_pds4_multi_sds.xml:1:2',
-                       'Image file byte_pds4.bin, array second_sds'),
+                       'Image file byte_pds4.img, array second_sds'),
                       ('PDS4:data/byte_pds4_multi_sds.xml:2:1',
-                       'Image file byte_pds4.bin, array third_sds')]
+                       'Image file byte_pds4.img, array third_sds')]
     if subds != expected_subds:
         gdaltest.post_reason('fail')
         print(subds)
@@ -759,7 +759,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -767,7 +767,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -776,7 +776,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -829,7 +829,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array_3D>
             <axes>3</axes>
@@ -865,7 +865,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>
@@ -896,7 +896,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>
@@ -927,7 +927,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.bin</file_name>
+            <file_name>i_dont_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>

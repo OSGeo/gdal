@@ -70,6 +70,9 @@ class PDS4Dataset : public RawDataset
     void            ReadGeoreferencing(CPLXMLNode* psProduct);
     bool            InitImageFile();
 
+    void            SubstituteVariables(CPLXMLNode* psNode,
+                                            char** papszDict);
+
 public:
     PDS4Dataset();
     virtual ~PDS4Dataset();
@@ -2448,15 +2451,26 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
 }
 
 /************************************************************************/
-/*                       PDS4SubstituteVariables()                      */
+/*                         SubstituteVariables()                        */
 /************************************************************************/
 
-static void PDS4SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
+void PDS4Dataset::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
 {
     if( psNode->eType == CXT_Text && psNode->pszValue &&
         strstr(psNode->pszValue, "${") )
     {
         CPLString osVal(psNode->pszValue);
+
+        if( strstr(psNode->pszValue, "${TITLE}") != NULL && 
+            CSLFetchNameValue(papszDict, "VAR_TITLE") == NULL )
+        {
+            const CPLString osTitle(CPLGetFilename(GetDescription()));
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "VAR_TITLE not defined. Using %s by default",
+                     osTitle.c_str());
+            osVal.replaceAll("${TITLE}", osTitle);
+        }
+
         for( char** papszIter = papszDict; papszIter && *papszIter; papszIter++ )
         {
             if( STARTS_WITH_CI(*papszIter, "VAR_") )
@@ -2485,7 +2499,7 @@ static void PDS4SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
 
     for(CPLXMLNode* psIter = psNode->psChild; psIter; psIter = psIter->psNext)
     {
-        PDS4SubstituteVariables(psIter, papszDict);
+        SubstituteVariables(psIter, papszDict);
     }
 }
 
@@ -2776,7 +2790,7 @@ void PDS4Dataset::WriteHeader()
                 m_papszCreationOptions, "VAR_TARGET", pszTarget);
         }
     }
-    PDS4SubstituteVariables(psProduct, m_papszCreationOptions);
+    SubstituteVariables(psProduct, m_papszCreationOptions);
 
     CPLXMLNode* psDisciplineArea = CPLGetXMLNode(psProduct,
         (osPrefix + "Observation_Area." + osPrefix + "Discipline_Area").c_str());
@@ -3179,7 +3193,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
                                                        "IMAGE_FORMAT",
                                                        "RAW");
     const char* pszImageExtension = CSLFetchNameValueDef(papszOptions,
-        "IMAGE_EXTENSION", EQUAL(pszImageFormat, "RAW") ? "bin" : "tif");
+        "IMAGE_EXTENSION", EQUAL(pszImageFormat, "RAW") ? "img" : "tif");
     CPLString osImageFilename(CSLFetchNameValueDef(papszOptions,
         "IMAGE_FILENAME", CPLResetExtension(pszFilename, pszImageExtension)));
 
