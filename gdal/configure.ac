@@ -5466,7 +5466,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH([null],
 	    AS_HELP_STRING([--with-null],
-	       [Enable NULL driver (only useful for development purposs]),,)
+	       [Enable NULL driver (only useful for development purposes]),,)
 
 AC_MSG_CHECKING([for NULL])
 if test "$with_null" = "yes" ; then
