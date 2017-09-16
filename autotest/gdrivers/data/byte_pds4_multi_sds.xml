@@ -88,7 +88,7 @@
   </Observation_Area>
   <File_Area_Observational>
     <File>
-      <file_name>byte_pds4.bin</file_name>
+      <file_name>byte_pds4.img</file_name>
     </File>
     <Array_3D>
       <local_identifier>first_sds</local_identifier>
@@ -151,7 +151,7 @@
   </File_Area_Observational>
   <File_Area_Observational>
     <File>
-      <file_name>byte_pds4.bin</file_name>
+      <file_name>byte_pds4.img</file_name>
     </File>
     <Array_3D>
       <local_identifier>third_sds</local_identifier>

@@ -88,7 +88,7 @@
   </Observation_Area>
   <File_Area_Observational>
     <File>
-      <file_name>byte_pds4.bin</file_name>
+      <file_name>byte_pds4.img</file_name>
     </File>
     <Array_3D>
       <offset unit="byte">0</offset>
