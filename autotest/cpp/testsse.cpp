@@ -193,5 +193,17 @@ int main()
         MY_ASSERT(res[3] == diff[3]);
     }
 
+#ifndef USE_SSE2_EMULATION
+    {
+        float input[] = { -1.3f, 1.7f, 40000.3f, 65537.0f };
+        GUInt16 output[4];
+        GDALCopy4Words(input, output);
+        MY_ASSERT(output[0] == 0);
+        MY_ASSERT(output[1] == 2);
+        MY_ASSERT(output[2] == 40000);
+        MY_ASSERT(output[3] == 65535);
+    }
+#endif
+
     return 0;
 }
