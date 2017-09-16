@@ -1144,7 +1144,7 @@ class XMMReg4Double
         low.Store2Val(ptr);
         high.Store2Val(ptr+2);
 #else
-        __m128i xmm0 = _mm_cvttpd_epi32 (low.xmm); // zero upper 64 bits
+        __m128i xmm0 = _mm_cvtpd_epi32 (low.xmm);
         __m128i xmm1 = _mm_cvtpd_epi32 (high.xmm);
         xmm0 = _mm_or_si128(xmm0, _mm_slli_si128(xmm1, 8));
 #if __SSE4_1__
