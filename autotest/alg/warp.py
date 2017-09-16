@@ -270,7 +270,7 @@ def warp_3_float_downsize():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/utmsmall_cubic_2.vrt' )
+    ds = gdal.Open( 'data/utmsmall_cubic_2_float.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_cubic_2.tif' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
