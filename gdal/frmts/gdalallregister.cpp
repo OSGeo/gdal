@@ -555,6 +555,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PRF();
 #endif
 
+#ifdef FRMT_null
+    GDALRegister_NULL();
+#endif
+
 #ifdef GNM_ENABLED
     GNMRegisterAllInternal();
 #endif
