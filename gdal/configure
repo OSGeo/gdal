@@ -1846,7 +1846,7 @@ Optional Packages:
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
   --without-mrf           Disable MRF driver
   --with-null             Enable NULL driver (only useful for development
-                          purposs
+                          purposes
 
 Some influential environment variables:
   CC          C compiler command
