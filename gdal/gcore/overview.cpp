@@ -43,9 +43,15 @@
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
-// TODO(schwehr): Fix warning: Software emulation of SSE2.
-// #include "gdalsse_priv.h"
 #include "gdalwarper.h"
+
+// Restrict to 64bit processors because they are guaranteed to have SSE2.
+// Could possibly be used too on 32bit, but we would need to check at runtime.
+#if defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+
+#include <gdalsse_priv.h>
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -1282,15 +1288,101 @@ template<class T> static inline void GDALResampleConvolutionVertical_2cols(
     dfRes2 = dfVal3 + dfVal4;
 }
 
-// TODO(schwehr): Move define of USE_SSE2 and include to the top of the file.
-// Restrict to 64bit processors because they are guaranteed to have SSE2.
-// Could possibly be used too on 32bit, but we would need to check at runtime.
-#if defined(__x86_64) || defined(_M_X64)
-#define USE_SSE2
-#endif
-
 #ifdef USE_SSE2
-#include <gdalsse_priv.h>
+
+#ifdef __AVX__
+/************************************************************************/
+/*             GDALResampleConvolutionVertical_16cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_16cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc2 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc3 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+0*nStride) * w0; 
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+0*nStride) * w0;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+0*nStride) * w0;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+1*nStride) * w1;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+1*nStride) * w1;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+2*nStride) * w2;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+2*nStride) * w2;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+3*nStride) * w3;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+3*nStride) * w3;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4) * w;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8) * w;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+    v_acc2.Store4Val(afDest+8);
+    v_acc3.Store4Val(afDest+12);
+}
+
+#else
+
+
+/************************************************************************/
+/*              GDALResampleConvolutionVertical_8cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_8cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+0*nStride) * w0; 
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+}
+
+#endif // __AVX__
 
 /************************************************************************/
 /*              GDALResampleConvolutionHorizontalSSE2<T>                */
@@ -1847,6 +1939,37 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             int iFilteredPixelOff = 0;  // Used after for.
             // j used after for.
             int j = (nSrcLineStart - nChunkYOff) * nDstXSize;
+#ifdef USE_SSE2
+
+#ifdef __AVX__
+            for( ;
+                 iFilteredPixelOff+15 < nDstXSize;
+                 iFilteredPixelOff += 16, j += 16 )
+            {
+                GDALResampleConvolutionVertical_16cols(
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+            }
+#else
+            for( ;
+                 iFilteredPixelOff+7 < nDstXSize;
+                 iFilteredPixelOff += 8, j += 8 )
+            {
+                GDALResampleConvolutionVertical_8cols(
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+            }
+#endif
+
+            for( ; iFilteredPixelOff < nDstXSize; iFilteredPixelOff++, j++ )
+            {
+                const double dfVal =
+                    GDALResampleConvolutionVertical(
+                        padfHorizontalFilteredBand + j,
+                        nDstXSize, padfWeights, nSrcLineCount );
+                pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal);
+            }
+#else
             for( ;
                  iFilteredPixelOff+1 < nDstXSize;
                  iFilteredPixelOff += 2, j += 2 )
@@ -1868,6 +1991,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         nDstXSize, padfWeights, nSrcLineCount );
                 pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal);
             }
+#endif
         }
         else
         {

@@ -543,7 +543,8 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                                                      int nBandValues,
                                                      GUInt16 nMaxValue) const
 {
-    CPLAssert( NINPUT == 3 || NINPUT == 4 );
+    CPL_STATIC_ASSERT( NINPUT == 3 || NINPUT == 4 );
+    CPL_STATIC_ASSERT( NOUTPUT == 3 || NOUTPUT == 4 );
     const XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 0);
     const XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 1);
     const XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(psOptions->padfWeights + 2);
@@ -560,22 +561,39 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
     {
         XMMReg4Double pseudoPanchro = zero;
 
-        pseudoPanchro += w0 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + j);
-        pseudoPanchro += w1 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + nBandValues + j);
-        pseudoPanchro += w2 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 2 * nBandValues + j);
+        XMMReg4Double val0 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 0 * nBandValues + j);
+        XMMReg4Double val1 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 1 * nBandValues + j);
+        XMMReg4Double val2 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 2 * nBandValues + j);
+        XMMReg4Double val3;
+        if( NINPUT == 4 || NOUTPUT == 4 )
+        {
+            val3 = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 3 * nBandValues + j);
+        }
+
+        pseudoPanchro += w0 * val0;
+        pseudoPanchro += w1 * val1;
+        pseudoPanchro += w2 * val2;
         if( NINPUT == 4 )
-            pseudoPanchro += w3 * XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + 3 * nBandValues + j);
+            pseudoPanchro += w3 * val3;
 
         /* Little trick to avoid use of ternary operator due to one of the branch being zero */
         XMMReg4Double factor = XMMReg4Double::And(
             XMMReg4Double::NotEquals(pseudoPanchro, zero),
             XMMReg4Double::Load4Val(pPanBuffer + j) / pseudoPanchro );
 
-        for( int i = 0; i < NOUTPUT; i++ )
+        val0 = XMMReg4Double::Min(val0 * factor, maxValue);
+        val1 = XMMReg4Double::Min(val1 * factor, maxValue);
+        val2 = XMMReg4Double::Min(val2 * factor, maxValue);
+        if( NOUTPUT == 4 )
         {
-            XMMReg4Double rawValue = XMMReg4Double::Load4Val(pUpsampledSpectralBuffer + i * nBandValues + j);
-            XMMReg4Double tmp = XMMReg4Double::Min(rawValue * factor, maxValue);
-            tmp.Store4Val(pDataBuf + i * nBandValues + j);
+            val3 = XMMReg4Double::Min(val3 * factor, maxValue);
+        }
+        val0.Store4Val(pDataBuf + 0 * nBandValues + j);
+        val1.Store4Val(pDataBuf + 1 * nBandValues + j);
+        val2.Store4Val(pDataBuf + 2 * nBandValues + j);
+        if( NOUTPUT == 4 )
+        {
+            val3.Store4Val(pDataBuf + 3 * nBandValues + j);
         }
     }
     return j;
