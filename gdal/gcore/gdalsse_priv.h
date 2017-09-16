@@ -46,6 +46,30 @@
 #include <smmintrin.h>
 #endif
 
+#include "gdal_priv_templates.hpp"
+
+static inline __m128i GDALCopyInt32ToXMM(const void* ptr)
+{
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    GInt32 i;
+    memcpy(&i, ptr, 4);
+    return _mm_cvtsi32_si128(i);
+#else
+    return _mm_cvtsi32_si128(*(GInt32*)(ptr));
+#endif
+}
+
+static inline __m128i GDALCopyInt64ToXMM(const void* ptr)
+{
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    GInt64 i;
+    memcpy(&i, ptr, 8);
+    return _mm_cvtsi64_si128(i);
+#else
+    return _mm_cvtsi64_si128(*(GInt64*)(ptr));
+#endif
+}
+
 class XMMReg2Double
 {
   public:
@@ -165,32 +189,19 @@ class XMMReg2Double
         xmm = _mm_loadu_pd(ptr);
     }
 
-    inline void nsLoad2ValAligned(const double* pval)
+    inline void nsLoad2ValAligned(const double* ptr)
     {
-        xmm = _mm_load_pd(pval);
+        xmm = _mm_load_pd(ptr);
     }
 
     inline void nsLoad2Val(const float* ptr)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        GInt64 i;
-        memcpy(&i, ptr, 8);
-        __m128i xmm_i = _mm_cvtsi64_si128(i);
-#else
-        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
-#endif
-        xmm = _mm_cvtps_pd(_mm_castsi128_ps(xmm_i));
+        xmm = _mm_cvtps_pd(_mm_castsi128_ps(GDALCopyInt64ToXMM(ptr)));
     }
 
     inline void nsLoad2Val(const unsigned char* ptr)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        unsigned short s;
-        memcpy(&s, ptr, 2);
-        __m128i xmm_i = _mm_cvtsi32_si128(s);
-#else
-        __m128i xmm_i = _mm_cvtsi32_si128(*(unsigned short*)(ptr));
-#endif
+        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
 #ifdef __SSE4_1__
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
@@ -202,9 +213,7 @@ class XMMReg2Double
 
     inline void nsLoad2Val(const short* ptr)
     {
-        int i;
-        memcpy(&i, ptr, 4);
-        __m128i xmm_i = _mm_cvtsi32_si128(i);
+        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
 #ifdef __SSE4_1__
         xmm_i = _mm_cvtepi16_epi32(xmm_i);
 #else
@@ -216,9 +225,7 @@ class XMMReg2Double
 
     inline void nsLoad2Val(const unsigned short* ptr)
     {
-        int i;
-        memcpy(&i, ptr, 4);
-        __m128i xmm_i = _mm_cvtsi32_si128(i);
+        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
 #ifdef __SSE4_1__
         xmm_i = _mm_cvtepu16_epi32(xmm_i);
 #else
@@ -229,13 +236,7 @@ class XMMReg2Double
 
     static inline void Load4Val(const unsigned char* ptr, XMMReg2Double& low, XMMReg2Double& high)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        int i;
-        memcpy(&i, ptr, 4);
-        __m128i xmm_i = _mm_cvtsi32_si128(i);
-#else
-        __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
-#endif
+        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
 #ifdef __SSE4_1__
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
@@ -330,21 +331,37 @@ class XMMReg2Double
         xmm = _mm_add_pd(xmm, xmm2);
     }
 
-    inline void Store2Double(double* pval) const
+    inline void Store2Val(double* ptr) const
     {
-        _mm_storeu_pd(pval, xmm);
+        _mm_storeu_pd(ptr, xmm);
     }
 
-    inline void Store2DoubleAligned(double* pval) const
+    inline void Store2ValAligned(double* ptr) const
     {
-        _mm_store_pd(pval, xmm);
+        _mm_store_pd(ptr, xmm);
     }
 
-    void Store2Val(unsigned short* ptr) const
+    inline void Store2Val(float* ptr) const
+    {
+        __m128i xmm_i = _mm_castps_si128( _mm_cvtpd_ps(xmm) );
+        GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
+    }
+
+    inline void Store2Val(unsigned short* ptr) const
     {
         __m128i tmp = _mm_cvtpd_epi32(xmm); /* Convert the 2 double values to 2 integers */
-        ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
-        ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
+        // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
+        //                  or X X X X 0 B 0 A
+        tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
+        GDALCopyXMMToInt32(tmp, (GInt32*)ptr);
+
+        //ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
+        //ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
+    }
+
+    inline void StoreMask(unsigned char* ptr) const
+    {
+        _mm_storeu_si128( (__m128i*)ptr, _mm_castpd_si128(xmm) );
     }
 
     inline operator double () const
@@ -516,28 +533,28 @@ class XMMReg2Double
         return reg;
     }
 
-    inline void nsLoad1ValHighAndLow(const double* pval)
+    inline void nsLoad1ValHighAndLow(const double* ptr)
     {
-        low = pval[0];
-        high = pval[0];
+        low = ptr[0];
+        high = ptr[0];
     }
 
-    inline void nsLoad2Val(const double* pval)
+    inline void nsLoad2Val(const double* ptr)
     {
-        low = pval[0];
-        high = pval[1];
+        low = ptr[0];
+        high = ptr[1];
     }
 
-    inline void nsLoad2ValAligned(const double* pval)
+    inline void nsLoad2ValAligned(const double* ptr)
     {
-        low = pval[0];
-        high = pval[1];
+        low = ptr[0];
+        high = ptr[1];
     }
 
-    inline void nsLoad2Val(const float* pval)
+    inline void nsLoad2Val(const float* ptr)
     {
-        low = pval[0];
-        high = pval[1];
+        low = ptr[0];
+        high = ptr[1];
     }
 
     inline void nsLoad2Val(const unsigned char* ptr)
@@ -656,22 +673,34 @@ class XMMReg2Double
         high = add;
     }
 
-    inline void Store2Double(double* pval) const
+    inline void Store2Val(double* ptr) const
     {
-        pval[0] = low;
-        pval[1] = high;
+        ptr[0] = low;
+        ptr[1] = high;
     }
 
-    inline void Store2DoubleAligned(double* pval) const
+    inline void Store2ValAligned(double* ptr) const
     {
-        pval[0] = low;
-        pval[1] = high;
+        ptr[0] = low;
+        ptr[1] = high;
+    }
+
+    inline void Store2Val(float* ptr) const
+    {
+        ptr[0] = low;
+        ptr[1] = high;
     }
 
     void Store2Val(unsigned short* ptr) const
     {
         ptr[0] = (GUInt16)low;
         ptr[1] = (GUInt16)high;
+    }
+
+    inline void StoreMask(unsigned char* ptr) const
+    {
+        memcpy(ptr, &low, 8);
+        memcpy(ptr + 8, &high, 8);
     }
 
     inline operator double () const
@@ -727,13 +756,7 @@ class XMMReg4Double
 
     inline void nsLoad4Val(const unsigned char* ptr)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        int i;
-        memcpy(&i, ptr, 4);
-        __m128i xmm_i = _mm_cvtsi32_si128(i);
-#else
-        __m128i xmm_i = _mm_cvtsi32_si128(*(int*)(ptr));
-#endif
+        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
         ymm = _mm256_cvtepi32_pd(xmm_i);
     }
@@ -747,13 +770,7 @@ class XMMReg4Double
 
     inline void nsLoad4Val(const short* ptr)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        GInt64 i;
-        memcpy(&i, ptr, 8);
-        __m128i xmm_i = _mm_cvtsi64_si128(i);
-#else
-        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
-#endif
+        __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
         xmm_i = _mm_cvtepi16_epi32(xmm_i);
         ymm = _mm256_cvtepi32_pd(xmm_i);
     }
@@ -767,13 +784,7 @@ class XMMReg4Double
 
     inline void nsLoad4Val(const unsigned short* ptr)
     {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        GInt64 i;
-        memcpy(&i, ptr, 8);
-        __m128i xmm_i = _mm_cvtsi64_si128(i);
-#else
-        __m128i xmm_i = _mm_cvtsi64_si128(*(GInt64*)(ptr));
-#endif
+        __m128i xmm_i = GDALCopyInt64ToXMM(ptr);
         xmm_i = _mm_cvtepu16_epi32(xmm_i);
         ymm = _mm256_cvtepi32_pd(xmm_i); // ok to use signed conversion since we are in the ushort range, so cannot be interpreted as negative int32
     }
@@ -918,17 +929,26 @@ class XMMReg4Double
         return _mm_cvtsd_f64(_mm256_castpd256_pd128(ymm_tmp1));
     }
 
-
-    void Store4Val(unsigned short* ptr) const
+    inline void Store4Val(unsigned short* ptr) const
     {
         __m128i xmm_i = _mm256_cvtpd_epi32 (ymm);
         xmm_i = _mm_packus_epi32(xmm_i, xmm_i);   // Pack uint32 to uint16
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
-        GInt64 n64 = _mm_cvtsi128_si64 (xmm_i);   // Extract lower 64 bit word
-        memcpy(ptr, &n64, sizeof(n64));
-#else
-        *(GInt64*)ptr = _mm_cvtsi128_si64 (xmm_i);
-#endif
+        GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
+    }
+
+    inline void Store4Val(float* ptr) const
+    {
+        _mm_storeu_ps(ptr, _mm256_cvtpd_ps (ymm));
+    }
+
+    inline void Store4Val(double* ptr) const
+    {
+        _mm256_storeu_pd(ptr, ymm);
+    }
+
+    inline void StoreMask(unsigned char* ptr) const
+    {
+        _mm256_storeu_si256( (__m256i*)ptr, _mm256_castpd_si256(ymm) );
     }
 };
 
@@ -1118,11 +1138,44 @@ class XMMReg4Double
         return static_cast<double>(tmp);
     }
 
-    void Store4Val(unsigned short* ptr) const
+    inline void Store4Val(unsigned short* ptr) const
+    {
+#if 1
+        low.Store2Val(ptr);
+        high.Store2Val(ptr+2);
+#else
+        __m128i xmm0 = _mm_cvttpd_epi32 (low.xmm); // zero upper 64 bits
+        __m128i xmm1 = _mm_cvtpd_epi32 (high.xmm);
+        xmm0 = _mm_or_si128(xmm0, _mm_slli_si128(xmm1, 8));
+#if __SSE4_1__
+        xmm0 = _mm_packus_epi32(xmm0, xmm0);   // Pack uint32 to uint16
+#else
+        xmm0 = _mm_add_epi32( xmm0, _mm_set1_epi32(-32768) );
+        xmm0 = _mm_packs_epi32( xmm0, xmm0 );
+        xmm0 = _mm_sub_epi16( xmm0, _mm_set1_epi16(-32768) );
+#endif
+        GDALCopyXMMToInt64(xmm0, (GInt64*)ptr);
+#endif
+    }
+
+    inline void Store4Val(float* ptr) const
     {
         low.Store2Val(ptr);
         high.Store2Val(ptr+2);
     }
+
+    inline void Store4Val(double* ptr) const
+    {
+        low.Store2Val(ptr);
+        high.Store2Val(ptr+2);
+    }
+
+    inline void StoreMask(unsigned char* ptr) const
+    {
+        low.StoreMask(ptr);
+        high.StoreMask(ptr+16);
+    }
+
 };
 
 #endif
