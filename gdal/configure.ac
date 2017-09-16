@@ -5459,6 +5459,23 @@ else
     AC_MSG_RESULT([disabled by user])
 fi
 
+
+dnl ---------------------------------------------------------------------------
+dnl Whether to include NULL driver in the build
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([null],
+	    AS_HELP_STRING([--with-null],
+	       [Enable NULL driver (only useful for development purposs]),,)
+
+AC_MSG_CHECKING([for NULL])
+if test "$with_null" = "yes" ; then
+    OPT_GDAL_FORMATS="null $OPT_GDAL_FORMATS"
+    AC_MSG_RESULT([enabled])
+else
+    AC_MSG_RESULT([disabled])
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl Test if sprintf can be overloaded with _XOPEN_SOURCE being defined or other,
 dnl includes being included before, which mingw64 4.8 doesn't like (#6390)
