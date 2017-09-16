@@ -52,6 +52,7 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <limits>
 #include <new>
 #include <utility>
 #include <vector>
