@@ -469,8 +469,8 @@ class XMMReg2Double
     static inline XMMReg2Double Min(const XMMReg2Double& expr1, const XMMReg2Double& expr2)
     {
         XMMReg2Double reg;
-        reg.low = (expr1.low < expr2.low) ? expr1.low : expr2.high;
-        reg.high = (expr1.high < expr2.high) ? expr1.high : expr2.low;
+        reg.low = (expr1.low < expr2.low) ? expr1.low : expr2.low;
+        reg.high = (expr1.high < expr2.high) ? expr1.high : expr2.high;
         return reg;
     }
 
