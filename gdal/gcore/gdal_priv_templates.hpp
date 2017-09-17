@@ -294,6 +294,24 @@ inline void GDALCopy4Words(const Tin* pValueIn, Tout* const &pValueOut)
     GDALCopyWord(pValueIn[3], pValueOut[3]);
 }
 
+/************************************************************************/
+/*                         GDALCopy8Words()                             */
+/************************************************************************/
+/**
+ * Copy 8 packed words to 8 packed words, optionally rounding if appropriate
+ * (i.e. going from the float to the integer case).
+ *
+ * @param pValueIn pointer to 8 input values of type Tin.
+ * @param pValueOut pointer to 8 output values of type Tout.
+ */
+
+template<class Tin, class Tout>
+inline void GDALCopy8Words(const Tin* pValueIn, Tout* const &pValueOut)
+{
+    GDALCopy4Words(pValueIn, pValueOut);
+    GDALCopy4Words(pValueIn+4, pValueOut+4);
+}
+
 // Needs SSE2
 // _mm_cvtsi128_si64 doesn't work gcc 3.4
 #if (defined(__x86_64) || defined(_M_X64)) && !(defined(__GNUC__) && __GNUC__ < 4)
@@ -387,23 +405,6 @@ inline void GDALCopy4Words(const float* pValueIn, GUInt16* const &pValueOut)
     xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
 #endif
     GDALCopyXMMToInt64(xmm_i, pValueOut);
-}
-
-/************************************************************************/
-/*                         GDALCopy8Words()                             */
-/************************************************************************/
-/**
- * Copy 8 packed words to 8 packed words, optionally rounding if appropriate
- * (i.e. going from the float to the integer case).
- *
- * @param pValueIn pointer to 8 input values of type Tin.
- * @param pValueOut pointer to 8 output values of type Tout.
- */
-
-template<class Tin, class Tout> inline void GDALCopy8Words(const Tin* pValueIn, Tout* const &pValueOut)
-{
-    GDALCopy4Words(pValueIn, pValueOut);
-    GDALCopy4Words(pValueIn+4, pValueOut+4);
 }
 
 #ifdef __AVX2__
