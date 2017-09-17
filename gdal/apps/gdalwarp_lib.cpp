@@ -2469,6 +2469,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         {
             if( hCT != NULL )
                 GDALDestroyColorTable( hCT );
+            GDALClose(hDstDS);
             return NULL;
         }
     }
