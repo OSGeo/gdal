@@ -1942,7 +1942,7 @@ static void inline GDALCopyWordsT( const Tin* const CPL_RESTRICT pSrcData,
 }
 
 template <class Tin, class Tout>
-static void inline GDALCopyWordsT_4atatime( const Tin* const CPL_RESTRICT pSrcData,
+static void inline GDALCopyWordsT_8atatime( const Tin* const CPL_RESTRICT pSrcData,
                                      int nSrcPixelStride,
                                      Tout* const CPL_RESTRICT pDstData,
                                      int nDstPixelStride,
@@ -1956,16 +1956,16 @@ static void inline GDALCopyWordsT_4atatime( const Tin* const CPL_RESTRICT pSrcDa
     if( nSrcPixelStride == static_cast<int>(sizeof(Tin)) &&
         nDstPixelStride == static_cast<int>(sizeof(Tout)) )
     {
-        for (; n < nWordCount-3; n+=4)
+        for (; n < nWordCount-7; n+=8)
         {
             const Tin* pInValues =
                 reinterpret_cast<const Tin*>(pSrcDataPtr + (n * nSrcPixelStride));
             Tout* const pOutPixels =
                 reinterpret_cast<Tout*>(pDstDataPtr + nDstOffset);
 
-            GDALCopy4Words(pInValues, pOutPixels);
+            GDALCopy8Words(pInValues, pOutPixels);
 
-            nDstOffset += 4 * nDstPixelStride;
+            nDstOffset += 8 * nDstPixelStride;
         }
     }
     for( ; n < nWordCount; n++  )
@@ -2389,7 +2389,7 @@ template<> void GDALCopyWordsT( const double* const CPL_RESTRICT pSrcData,
                                 int nDstPixelStride,
                                 int nWordCount )
 {
-    GDALCopyWordsT_4atatime( pSrcData, nSrcPixelStride,
+    GDALCopyWordsT_8atatime( pSrcData, nSrcPixelStride,
                              pDstData, nDstPixelStride, nWordCount );
 }
 
@@ -2401,7 +2401,7 @@ template<> void GDALCopyWordsT( const float* const CPL_RESTRICT pSrcData,
                                 int nDstPixelStride,
                                 int nWordCount )
 {
-    GDALCopyWordsT_4atatime( pSrcData, nSrcPixelStride,
+    GDALCopyWordsT_8atatime( pSrcData, nSrcPixelStride,
                              pDstData, nDstPixelStride, nWordCount );
 }
 
@@ -2411,7 +2411,7 @@ template<> void GDALCopyWordsT( const float* const CPL_RESTRICT pSrcData,
                                 int nDstPixelStride,
                                 int nWordCount )
 {
-    GDALCopyWordsT_4atatime( pSrcData, nSrcPixelStride,
+    GDALCopyWordsT_8atatime( pSrcData, nSrcPixelStride,
                              pDstData, nDstPixelStride, nWordCount );
 }
 
@@ -2421,7 +2421,7 @@ template<> void GDALCopyWordsT( const float* const CPL_RESTRICT pSrcData,
                                 int nDstPixelStride,
                                 int nWordCount )
 {
-    GDALCopyWordsT_4atatime( pSrcData, nSrcPixelStride,
+    GDALCopyWordsT_8atatime( pSrcData, nSrcPixelStride,
                              pDstData, nDstPixelStride, nWordCount );
 }
 

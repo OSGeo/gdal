@@ -205,5 +205,23 @@ int main()
     }
 #endif
 
+
+#ifndef USE_SSE2_EMULATION
+    {
+        float input[] = { -1.3f, 1.7f, 40000.3f, 65537.0f, 40000.3f, 1.7f, 65537.0f, -1.3f };
+        GUInt16 output[8];
+        GDALCopy8Words(input, output);
+        MY_ASSERT(output[0] == 0);
+        MY_ASSERT(output[1] == 2);
+        MY_ASSERT(output[2] == 40000);
+        MY_ASSERT(output[3] == 65535);
+        MY_ASSERT(output[4] == 40000);
+        MY_ASSERT(output[5] == 2);
+        MY_ASSERT(output[6] == 65535);
+        MY_ASSERT(output[7] == 0);
+    }
+
+#endif
+
     return 0;
 }
