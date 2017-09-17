@@ -35,11 +35,13 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 /*                           ACTextUnescape()                           */
 /*                                                                      */
-/*      Unexcape DXF/DWG style escape sequences such as \P for newline  */
-/*      and \~ for space, and do the recoding to UTF8.                  */
+/*      Unexcape DXF/DWG style escape sequences such as %%d for the     */
+/*      degree sign, and do the recoding to UTF8.  Set bIsMText to      */
+/*      true to translate MTEXT-specific sequences like \P and \~.      */
 /************************************************************************/
 
-CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
+CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
+    bool bIsMText )
 
 {
     CPLString osResult;
@@ -62,17 +64,17 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 /* -------------------------------------------------------------------- */
     while( *pszInput != '\0' )
     {
-        if( pszInput[0] == '\\' && pszInput[1] == 'P' )
+        if( bIsMText && pszInput[0] == '\\' && pszInput[1] == 'P' )
         {
             osResult += '\n';
             pszInput++;
         }
-        else if( pszInput[0] == '\\' && pszInput[1] == '~' )
+        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == '~' )
         {
             osResult += ' ';
             pszInput++;
         }
-        else if( pszInput[0] == '\\' && pszInput[1] == 'U'
+        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == 'U'
                  && pszInput[2] == '+' && CPLStrnlen(pszInput, 7) >= 7 )
         {
             CPLString osHex;
@@ -94,7 +96,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 
             pszInput += 6;
         }
-        else if( pszInput[0] == '\\'
+        else if( bIsMText && pszInput[0] == '\\'
                  && (pszInput[1] == 'W'
                      || pszInput[1] == 'T'
                      || pszInput[1] == 'A' ) )
@@ -110,7 +112,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
             if( *pszInput == '\0' )
                 break;
         }
-        else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
+        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == '\\' )
         {
             osResult += '\\';
             pszInput++;
@@ -123,7 +125,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
 
             anWCharString[1] = 0;
 
-            // These are especial symbol representations for autocad.
+            // These are special symbol representations for AutoCAD.
             if( STARTS_WITH_CI(pszInput, "%%c") )
                 anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
             else if( STARTS_WITH_CI(pszInput, "%%d") )

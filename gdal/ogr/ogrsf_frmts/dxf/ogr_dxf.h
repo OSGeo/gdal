@@ -128,7 +128,8 @@ class OGRDXFLayer : public OGRLayer
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
     OGRErr              CollectPolylinePath( OGRGeometryCollection * );
 
-    CPLString           TextUnescape( const char * );
+    CPLString           TextRecode( const char * );
+    CPLString           TextUnescape( const char *, bool );
 
   public:
     explicit OGRDXFLayer( OGRDXFDataSource *poDS );

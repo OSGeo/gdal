@@ -121,7 +121,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
     switch( nCode )
     {
       case 8:
-        poFeature->SetField( "Layer", TextUnescape(pszValue) );
+        poFeature->SetField( "Layer", TextRecode(pszValue) );
         break;
 
       case 100:
@@ -139,7 +139,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         break;
 
       case 6:
-        poFeature->SetField( "Linetype", TextUnescape(pszValue) );
+        poFeature->SetField( "Linetype", TextRecode(pszValue) );
         break;
 
       case 370:
@@ -447,16 +447,26 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 }
 
 /************************************************************************/
+/*                             TextRecode()                             */
+/************************************************************************/
+
+CPLString OGRDXFLayer::TextRecode( const char *pszInput )
+
+{
+    return CPLString( pszInput ).Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
+}
+
+/************************************************************************/
 /*                            TextUnescape()                            */
 /*                                                                      */
 /*      Unexcape DXF style escape sequences such as \P for newline      */
 /*      and \~ for space, and do the recoding to UTF8.                  */
 /************************************************************************/
 
-CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
+CPLString OGRDXFLayer::TextUnescape( const char *pszInput, bool bIsMText )
 
 {
-    return ACTextUnescape( pszInput, poDS->GetEncoding() );
+    return ACTextUnescape( pszInput, poDS->GetEncoding(), bIsMText );
 }
 
 /************************************************************************/
@@ -519,7 +529,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
           case 3:
             if( osText != "" )
                 osText += "\n";
-            osText += TextUnescape(szLineBuf);
+            osText += TextUnescape(szLineBuf, true);
             break;
 
           case 50:
@@ -527,7 +537,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
 
           case 7:
-            osStyleName = TextUnescape(szLineBuf);
+            osStyleName = TextRecode(szLineBuf);
             break;
 
           default:
@@ -709,7 +719,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
           case 1:
           // case 3:  // we used to capture prompt, but it should not be displayed as text.
-            osText += szLineBuf;
+            osText += TextUnescape(szLineBuf, false);
             break;
 
           case 50:
@@ -725,7 +735,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 7:
-            osStyleName = TextUnescape(szLineBuf);
+            osStyleName = TextRecode(szLineBuf);
             break;
           
           default:

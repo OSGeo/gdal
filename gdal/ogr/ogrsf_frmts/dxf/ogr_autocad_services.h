@@ -38,7 +38,8 @@
 /* -------------------------------------------------------------------- */
 /*      Various Functions.                                              */
 /* -------------------------------------------------------------------- */
-CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding );
+CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding,
+    bool bIsMText );
 
 const unsigned char *ACGetColorTable( void );
 
