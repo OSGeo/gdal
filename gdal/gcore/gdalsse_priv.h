@@ -81,6 +81,11 @@ static inline __m128i GDALCopyInt64ToXMM(const void* ptr)
 #endif
 }
 
+static inline void GDALCopyXMMToInt16(const __m128i xmm, void* pDest)
+{
+    *(GInt16*)pDest =_mm_extract_epi16(xmm, 0);
+}
+
 class XMMReg2Double
 {
   public:
@@ -358,9 +363,19 @@ class XMMReg2Double
         GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
     }
 
+    inline void Store2Val(unsigned char* ptr) const
+    {
+        __m128i tmp = _mm_cvttpd_epi32(_mm_add_pd(xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
+        // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
+        //                  or X X X X 0 B 0 A
+        tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
+        tmp = _mm_packus_epi16(tmp, tmp);
+        GDALCopyXMMToInt16(tmp, (GInt16*)ptr);
+    }
+
     inline void Store2Val(unsigned short* ptr) const
     {
-        __m128i tmp = _mm_cvtpd_epi32(xmm); /* Convert the 2 double values to 2 integers */
+        __m128i tmp = _mm_cvttpd_epi32(_mm_add_pd(xmm, _mm_set1_pd(0.5))); /* Convert the 2 double values to 2 integers */
         // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
         //                  or X X X X 0 B 0 A
         tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
@@ -702,10 +717,16 @@ class XMMReg2Double
         ptr[1] = high;
     }
 
+    void Store2Val(unsigned char* ptr) const
+    {
+        ptr[0] = (unsigned char)(low + 0.5);
+        ptr[1] = (unsigned char)(high + 0.5);
+    }
+
     void Store2Val(unsigned short* ptr) const
     {
-        ptr[0] = (GUInt16)low;
-        ptr[1] = (GUInt16)high;
+        ptr[0] = (GUInt16)(low + 0.5);
+        ptr[1] = (GUInt16)(high + 0.5);
     }
 
     inline void StoreMask(unsigned char* ptr) const
@@ -940,9 +961,18 @@ class XMMReg4Double
         return _mm_cvtsd_f64(_mm256_castpd256_pd128(ymm_tmp1));
     }
 
+    inline void Store4Val(unsigned char* ptr) const
+    {
+        __m128i xmm_i = _mm256_cvttpd_epi32 (_mm256_add_pd(ymm, _mm256_set1_pd(0.5)));
+        //xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
+        //xmm_i = _mm_packus_epi16(xmm_i, xmm_i);  // Pack int16 to uint8
+        xmm_i = _mm_shuffle_epi8(xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24))); //  SSSE3
+        GDALCopyXMMToInt32(xmm_i, (GInt32*)ptr);
+    }
+
     inline void Store4Val(unsigned short* ptr) const
     {
-        __m128i xmm_i = _mm256_cvtpd_epi32 (ymm);
+        __m128i xmm_i = _mm256_cvttpd_epi32 (_mm256_add_pd(ymm, _mm256_set1_pd(0.5)));
         xmm_i = _mm_packus_epi32(xmm_i, xmm_i);   // Pack uint32 to uint16
         GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
     }
@@ -1147,6 +1177,12 @@ class XMMReg4Double
         tmp = low + high;
         tmp.AddLowAndHigh();
         return static_cast<double>(tmp);
+    }
+
+    inline void Store4Val(unsigned char* ptr) const
+    {
+        low.Store2Val(ptr);
+        high.Store2Val(ptr+2);
     }
 
     inline void Store4Val(unsigned short* ptr) const

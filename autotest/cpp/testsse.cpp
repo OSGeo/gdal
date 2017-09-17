@@ -26,6 +26,13 @@ int main()
         MY_ASSERT(res[1] == input[1]);
         MY_ASSERT(res[2] == input[2]);
         MY_ASSERT(res[3] == input[3]);
+
+        unsigned char output[4];
+        reg.Store4Val(output);
+        MY_ASSERT(output[0] == input[0]);
+        MY_ASSERT(output[1] == input[1]);
+        MY_ASSERT(output[2] == input[2]);
+        MY_ASSERT(output[3] == input[3]);
     }
 
     {
@@ -195,7 +202,7 @@ int main()
 
 #ifndef USE_SSE2_EMULATION
     {
-        float input[] = { -1.3f, 1.7f, 40000.3f, 65537.0f };
+        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f };
         GUInt16 output[4];
         GDALCopy4Words(input, output);
         MY_ASSERT(output[0] == 0);
@@ -208,7 +215,7 @@ int main()
 
 #ifndef USE_SSE2_EMULATION
     {
-        float input[] = { -1.3f, 1.7f, 40000.3f, 65537.0f, 40000.3f, 1.7f, 65537.0f, -1.3f };
+        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f, 40000.3f, 1.3f, 65537.0f, -1.3f };
         GUInt16 output[8];
         GDALCopy8Words(input, output);
         MY_ASSERT(output[0] == 0);
@@ -216,8 +223,22 @@ int main()
         MY_ASSERT(output[2] == 40000);
         MY_ASSERT(output[3] == 65535);
         MY_ASSERT(output[4] == 40000);
-        MY_ASSERT(output[5] == 2);
+        MY_ASSERT(output[5] == 1);
         MY_ASSERT(output[6] == 65535);
+        MY_ASSERT(output[7] == 0);
+    }
+
+    {
+        float input[] = { -1.3f, 1.5f, 40000.3f, 65537.0f, 40000.3f, 1.3f, 65537.0f, -1.3f };
+        unsigned char output[8];
+        GDALCopy8Words<float, unsigned char>(input, output);
+        MY_ASSERT(output[0] == 0);
+        MY_ASSERT(output[1] == 2);
+        MY_ASSERT(output[2] == 255);
+        MY_ASSERT(output[3] == 255);
+        MY_ASSERT(output[4] == 255);
+        MY_ASSERT(output[5] == 1);
+        MY_ASSERT(output[6] == 255);
         MY_ASSERT(output[7] == 0);
     }
 
