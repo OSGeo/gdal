@@ -48,6 +48,17 @@
 
 #include "gdal_priv_templates.hpp"
 
+static inline __m128i GDALCopyInt16ToXMM(const void* ptr)
+{
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    unsigned short s;
+    memcpy(&s, ptr, 2);
+    return _mm_cvtsi32_si128(s);
+#else
+    return _mm_cvtsi32_si128(*(unsigned short*)(ptr));
+#endif
+}
+
 static inline __m128i GDALCopyInt32ToXMM(const void* ptr)
 {
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
@@ -201,7 +212,7 @@ class XMMReg2Double
 
     inline void nsLoad2Val(const unsigned char* ptr)
     {
-        __m128i xmm_i = GDALCopyInt32ToXMM(ptr);
+        __m128i xmm_i = GDALCopyInt16ToXMM(ptr);
 #ifdef __SSE4_1__
         xmm_i = _mm_cvtepu8_epi32(xmm_i);
 #else
