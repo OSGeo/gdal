@@ -478,6 +478,31 @@ template<class WorkDataType, class OutDataType>
 }
 
 /************************************************************************/
+/*                           ComputeFactor()                            */
+/************************************************************************/
+
+template<class T> static inline double ComputeFactor(T panValue,
+                                                     double dfPseudoPanchro)
+{
+    if( dfPseudoPanchro != 0.0 )
+        return panValue / dfPseudoPanchro;
+    else
+        return 0.0;
+}
+
+/************************************************************************/
+/*                           ClampAndRound()                            */
+/************************************************************************/
+
+template<class T> static inline T ClampAndRound(double dfVal, T nMaxValue)
+{
+    if( dfVal > nMaxValue )
+        return nMaxValue;
+    else
+        return static_cast<T>(dfVal + 0.5);
+}
+
+/************************************************************************/
 /*                         WeightedBrovey()                             */
 /************************************************************************/
 
@@ -509,10 +534,7 @@ void GDALPansharpenOperation::WeightedBrovey3(
             for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
                 dfPseudoPanchro += psOptions->padfWeights[i] *
                                 pUpsampledSpectralBuffer[i * nBandValues + j];
-            if( dfPseudoPanchro != 0.0 )
-                dfFactor = pPanBuffer[j] / dfPseudoPanchro;
-            else
-                dfFactor = 0.0;
+            dfFactor = ComputeFactor(pPanBuffer[j], dfPseudoPanchro);
         }
 
         for( int i = 0; i < psOptions->nOutPansharpenedBands; i++ )
@@ -648,32 +670,20 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
                             pUpsampledSpectralBuffer[3 * nBandValues + j + 1];
         }
 
-        if( dfPseudoPanchro != 0.0 )
-            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
-        else
-            dfFactor = 0.0;
-        if( dfPseudoPanchro2 != 0.0 )
-            dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
-        else
-            dfFactor2 = 0.0;
+        dfFactor = ComputeFactor(pPanBuffer[j], dfPseudoPanchro);
+        dfFactor2 = ComputeFactor(pPanBuffer[j+1], dfPseudoPanchro2);
 
         for( int i = 0; i < NOUTPUT; i++ )
         {
             T nRawValue =
                 pUpsampledSpectralBuffer[i * nBandValues + j];
             double dfTmp = nRawValue * dfFactor;
-            if( dfTmp > nMaxValue )
-                pDataBuf[i * nBandValues + j] = nMaxValue;
-            else
-                pDataBuf[i * nBandValues + j] = static_cast<T>(dfTmp + 0.5);
+            pDataBuf[i * nBandValues + j] = ClampAndRound(dfTmp, nMaxValue);
 
             T nRawValue2 =
                 pUpsampledSpectralBuffer[i * nBandValues + j + 1];
             double dfTmp2 = nRawValue2 * dfFactor2;
-            if( dfTmp2 > nMaxValue )
-                pDataBuf[i * nBandValues + j + 1] = nMaxValue;
-            else
-                pDataBuf[i * nBandValues + j + 1] = static_cast<T>(dfTmp2 + 0.5);
+            pDataBuf[i * nBandValues + j + 1] = ClampAndRound(dfTmp2, nMaxValue);
         }
     }
     return j;
@@ -748,34 +758,21 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
                     psOptions->padfWeights[i] *
                     pUpsampledSpectralBuffer[i * nBandValues + j + 1];
             }
-            if( dfPseudoPanchro != 0.0 )
-                dfFactor = pPanBuffer[j] / dfPseudoPanchro;
-            else
-                dfFactor = 0.0;
-            if( dfPseudoPanchro2 != 0.0 )
-                dfFactor2 = pPanBuffer[j+1] / dfPseudoPanchro2;
-            else
-                dfFactor2 = 0.0;
+
+            dfFactor = ComputeFactor(pPanBuffer[j], dfPseudoPanchro);
+            dfFactor2 = ComputeFactor(pPanBuffer[j+1], dfPseudoPanchro2);
 
             for( int i = 0; i < psOptions->nOutPansharpenedBands; i++ )
             {
                 const T nRawValue =
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nBandValues + j];
                 const double dfTmp = nRawValue * dfFactor;
-                if( dfTmp > nMaxValue )
-                    pDataBuf[i * nBandValues + j] = nMaxValue;
-                else
-                    pDataBuf[i * nBandValues + j] =
-                        static_cast<T>(dfTmp + 0.5);
+                pDataBuf[i * nBandValues + j] = ClampAndRound(dfTmp, nMaxValue);
 
                 const T nRawValue2 =
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nBandValues + j + 1];
                 const double dfTmp2 = nRawValue2 * dfFactor2;
-                if( dfTmp2 > nMaxValue )
-                    pDataBuf[i * nBandValues + j + 1] = nMaxValue;
-                else
-                    pDataBuf[i * nBandValues + j + 1] =
-                        static_cast<T>(dfTmp2 + 0.5);
+                pDataBuf[i * nBandValues + j + 1] = ClampAndRound(dfTmp2, nMaxValue);
             }
         }
     }
@@ -786,10 +783,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
             dfPseudoPanchro += psOptions->padfWeights[i] *
                             pUpsampledSpectralBuffer[i * nBandValues + j];
-        if( dfPseudoPanchro != 0.0 )
-            dfFactor = pPanBuffer[j] / dfPseudoPanchro;
-        else
-            dfFactor = 0.0;
+        dfFactor = ComputeFactor(pPanBuffer[j], dfPseudoPanchro);
 
         for( int i = 0; i < psOptions->nOutPansharpenedBands; i++ )
         {
@@ -797,10 +791,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
                 pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] *
                                          nBandValues + j];
             double dfTmp = nRawValue * dfFactor;
-            if( dfTmp > nMaxValue )
-                pDataBuf[i * nBandValues + j] = nMaxValue;
-            else
-                pDataBuf[i * nBandValues + j] = static_cast<T>(dfTmp + 0.5);
+            pDataBuf[i * nBandValues + j] = ClampAndRound(dfTmp, nMaxValue);
         }
     }
 }
