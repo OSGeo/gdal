@@ -374,13 +374,14 @@ bool OGRDXFDataSource::ReadLayerDefinition()
         switch( nCode )
         {
           case 2:
-            osLayerName = ACTextUnescape(szLineBuf,GetEncoding());
+            osLayerName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 );
             oLayerProperties["Exists"] = "1";
             break;
 
           case 6:
-            oLayerProperties["Linetype"] = ACTextUnescape(szLineBuf,
-                                                          GetEncoding());
+            oLayerProperties["Linetype"] = CPLString(szLineBuf).Recode(
+                GetEncoding(), CPL_ENC_UTF8 );
             break;
 
           case 62:
@@ -454,7 +455,8 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         switch( nCode )
         {
           case 2:
-            osLineTypeName = ACTextUnescape(szLineBuf,GetEncoding());
+            osLineTypeName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 );
             break;
 
           case 49:
