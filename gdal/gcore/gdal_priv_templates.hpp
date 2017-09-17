@@ -389,6 +389,73 @@ inline void GDALCopy4Words(const float* pValueIn, GUInt16* const &pValueOut)
     GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 
+/************************************************************************/
+/*                         GDALCopy8Words()                             */
+/************************************************************************/
+/**
+ * Copy 8 packed words to 8 packed words, optionally rounding if appropriate
+ * (i.e. going from the float to the integer case).
+ *
+ * @param pValueIn pointer to 8 input values of type Tin.
+ * @param pValueOut pointer to 8 output values of type Tout.
+ */
+
+template<class Tin, class Tout> inline void GDALCopy8Words(const Tin* pValueIn, Tout* const &pValueOut)
+{
+    GDALCopy4Words(pValueIn, pValueOut);
+    GDALCopy4Words(pValueIn+4, pValueOut+4);
+}
+
+#ifdef __AVX2__
+inline void GDALCopy8Words(const float* pValueIn, GUInt16* const &pValueOut)
+{
+    __m256 xmm = _mm256_loadu_ps(pValueIn);
+
+    const __m256 xmm_min = _mm256_set1_ps(0);
+    const __m256 xmm_max = _mm256_set1_ps(65535);
+    xmm = _mm256_min_ps(_mm256_max_ps(xmm, xmm_min), xmm_max);
+
+    xmm = _mm256_add_ps(xmm, _mm256_set1_ps(0.5f));
+
+    __m256i xmm_i = _mm256_cvttps_epi32 (xmm);
+
+    xmm_i = _mm256_packus_epi32(xmm_i, xmm_i);   // Pack int32 to uint16
+    xmm_i = _mm256_permute4x64_epi64(xmm_i, 0 | (2 << 2)); // AVX2
+
+    _mm_storeu_si128( (__m128i*) pValueOut, _mm256_castsi256_si128(xmm_i) );
+}
+#else
+inline void GDALCopy8Words(const float* pValueIn, GUInt16* const &pValueOut)
+{
+    __m128 xmm = _mm_loadu_ps(pValueIn);
+    __m128 xmm1 = _mm_loadu_ps(pValueIn+4);
+
+    const __m128 xmm_min = _mm_set1_ps(0);
+    const __m128 xmm_max = _mm_set1_ps(65535);
+    xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
+    xmm1 = _mm_min_ps(_mm_max_ps(xmm1, xmm_min), xmm_max);
+
+    xmm = _mm_add_ps(xmm, _mm_set1_ps(0.5f));
+    xmm1 = _mm_add_ps(xmm1, _mm_set1_ps(0.5f));
+
+    __m128i xmm_i = _mm_cvttps_epi32 (xmm);
+    __m128i xmm1_i = _mm_cvttps_epi32 (xmm1);
+
+#if __SSE4_1__
+    xmm_i = _mm_packus_epi32(xmm_i, xmm1_i);   // Pack int32 to uint16
+#else
+    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
+    xmm_i = _mm_add_epi32(xmm_i, _mm_set1_epi32(-32768));
+    xmm1_i = _mm_add_epi32(xmm1_i, _mm_set1_epi32(-32768));
+    xmm_i = _mm_packs_epi32(xmm_i, xmm1_i);   // Pack int32 to int16
+    // Translate back to uint16 range (actually -32768==32768 in int16)
+    xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
+#endif
+    _mm_storeu_si128( (__m128i*) pValueOut, xmm_i );
+}
+#endif
+
+
 #ifdef notdef_because_slightly_slower_than_default_implementation
 inline void GDALCopy4Words(const double* pValueIn, float* const &pValueOut)
 {
