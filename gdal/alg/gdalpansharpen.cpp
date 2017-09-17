@@ -534,14 +534,14 @@ void GDALPansharpenOperation::WeightedBrovey3(
 
 #include <gdalsse_priv.h>
 
-template<int NINPUT, int NOUTPUT>
+template<class T, int NINPUT, int NOUTPUT>
 int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
-                                                     const GUInt16* pPanBuffer,
-                                                     const GUInt16* pUpsampledSpectralBuffer,
-                                                     GUInt16* pDataBuf,
+                                                     const T* pPanBuffer,
+                                                     const T* pUpsampledSpectralBuffer,
+                                                     T* pDataBuf,
                                                      int nValues,
                                                      int nBandValues,
-                                                     GUInt16 nMaxValue) const
+                                                     T nMaxValue) const
 {
     CPL_STATIC_ASSERT( NINPUT == 3 || NINPUT == 4 );
     CPL_STATIC_ASSERT( NOUTPUT == 3 || NOUTPUT == 4 );
@@ -601,14 +601,14 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
 
 #else
 
-template<int NINPUT, int NOUTPUT>
+template<class T, int NINPUT, int NOUTPUT>
 int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
-    const GUInt16* pPanBuffer,
-    const GUInt16* pUpsampledSpectralBuffer,
-    GUInt16* pDataBuf,
+    const T* pPanBuffer,
+    const T* pUpsampledSpectralBuffer,
+    T* pDataBuf,
     int nValues,
     int nBandValues,
-    GUInt16 nMaxValue) const
+    T nMaxValue) const
 {
     // cppcheck-suppress knownConditionTrueFalse
     CPLAssert( NINPUT == 3 || NINPUT == 4 );
@@ -659,45 +659,46 @@ int GDALPansharpenOperation::WeightedBroveyPositiveWeightsInternal(
 
         for( int i = 0; i < NOUTPUT; i++ )
         {
-            GUInt16 nRawValue =
+            T nRawValue =
                 pUpsampledSpectralBuffer[i * nBandValues + j];
             double dfTmp = nRawValue * dfFactor;
             if( dfTmp > nMaxValue )
                 pDataBuf[i * nBandValues + j] = nMaxValue;
             else
-                pDataBuf[i * nBandValues + j] = (GUInt16)(dfTmp + 0.5);
+                pDataBuf[i * nBandValues + j] = static_cast<T>(dfTmp + 0.5);
 
-            GUInt16 nRawValue2 =
+            T nRawValue2 =
                 pUpsampledSpectralBuffer[i * nBandValues + j + 1];
             double dfTmp2 = nRawValue2 * dfFactor2;
             if( dfTmp2 > nMaxValue )
                 pDataBuf[i * nBandValues + j + 1] = nMaxValue;
             else
-                pDataBuf[i * nBandValues + j + 1] = (GUInt16)(dfTmp2 + 0.5);
+                pDataBuf[i * nBandValues + j + 1] = static_cast<T>(dfTmp2 + 0.5);
         }
     }
     return j;
 }
 #endif
 
+template <class T>
 void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
-    const GUInt16* pPanBuffer,
-    const GUInt16* pUpsampledSpectralBuffer,
-    GUInt16* pDataBuf,
+    const T* pPanBuffer,
+    const T* pUpsampledSpectralBuffer,
+    T* pDataBuf,
     int nValues,
     int nBandValues,
-    GUInt16 nMaxValue) const
+    T nMaxValue) const
 {
     if( psOptions->bHasNoData )
     {
-        WeightedBroveyWithNoData<GUInt16, GUInt16>
+        WeightedBroveyWithNoData<T, T>
                                 (pPanBuffer, pUpsampledSpectralBuffer,
                                  pDataBuf, nValues, nBandValues, nMaxValue);
         return;
     }
 
     if( nMaxValue == 0 )
-        nMaxValue = std::numeric_limits<GUInt16>::max();
+        nMaxValue = std::numeric_limits<T>::max();
     int j;
     if( psOptions->nInputSpectralBands == 3 &&
         psOptions->nOutPansharpenedBands == 3 &&
@@ -705,7 +706,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<3, 3>(
+        j = WeightedBroveyPositiveWeightsInternal<T, 3, 3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -716,7 +717,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[2] == 2 &&
         psOptions->panOutPansharpenedBands[3] == 3 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<4, 4>(
+        j = WeightedBroveyPositiveWeightsInternal<T, 4, 4>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -726,7 +727,7 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
         psOptions->panOutPansharpenedBands[1] == 1 &&
         psOptions->panOutPansharpenedBands[2] == 2 )
     {
-        j = WeightedBroveyPositiveWeightsInternal<4, 3>(
+        j = WeightedBroveyPositiveWeightsInternal<T, 4, 3>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
@@ -758,23 +759,23 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
 
             for( int i = 0; i < psOptions->nOutPansharpenedBands; i++ )
             {
-                const GUInt16 nRawValue =
+                const T nRawValue =
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nBandValues + j];
                 const double dfTmp = nRawValue * dfFactor;
                 if( dfTmp > nMaxValue )
                     pDataBuf[i * nBandValues + j] = nMaxValue;
                 else
                     pDataBuf[i * nBandValues + j] =
-                        static_cast<GUInt16>(dfTmp + 0.5);
+                        static_cast<T>(dfTmp + 0.5);
 
-                const GUInt16 nRawValue2 =
+                const T nRawValue2 =
                     pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] * nBandValues + j + 1];
                 const double dfTmp2 = nRawValue2 * dfFactor2;
                 if( dfTmp2 > nMaxValue )
                     pDataBuf[i * nBandValues + j + 1] = nMaxValue;
                 else
                     pDataBuf[i * nBandValues + j + 1] =
-                        static_cast<GUInt16>(dfTmp2 + 0.5);
+                        static_cast<T>(dfTmp2 + 0.5);
             }
         }
     }
@@ -792,14 +793,14 @@ void GDALPansharpenOperation::WeightedBroveyPositiveWeights(
 
         for( int i = 0; i < psOptions->nOutPansharpenedBands; i++ )
         {
-            GUInt16 nRawValue =
+            T nRawValue =
                 pUpsampledSpectralBuffer[psOptions->panOutPansharpenedBands[i] *
                                          nBandValues + j];
             double dfTmp = nRawValue * dfFactor;
             if( dfTmp > nMaxValue )
                 pDataBuf[i * nBandValues + j] = nMaxValue;
             else
-                pDataBuf[i * nBandValues + j] = (GUInt16)(dfTmp + 0.5);
+                pDataBuf[i * nBandValues + j] = static_cast<T>(dfTmp + 0.5);
         }
     }
 }
@@ -825,14 +826,14 @@ GDALPansharpenOperation::WeightedBrovey(
     }
 }
 
-template<>
-void GDALPansharpenOperation::WeightedBrovey<GUInt16, GUInt16>(
-    const GUInt16* pPanBuffer,
-    const GUInt16* pUpsampledSpectralBuffer,
-    GUInt16* pDataBuf,
+template<class T>
+void GDALPansharpenOperation::WeightedBroveyGByteOrUInt16(
+    const T* pPanBuffer,
+    const T* pUpsampledSpectralBuffer,
+    T* pDataBuf,
     int nValues,
     int nBandValues,
-    GUInt16 nMaxValue ) const
+    T nMaxValue ) const
 {
     if( bPositiveWeights )
     {
@@ -842,16 +843,45 @@ void GDALPansharpenOperation::WeightedBrovey<GUInt16, GUInt16>(
     }
     else if( nMaxValue == 0 )
     {
-        WeightedBrovey3<GUInt16, GUInt16, FALSE>(
+        WeightedBrovey3<T, T, FALSE>(
                 pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
                 nBandValues, 0);
     }
     else
     {
-        WeightedBrovey3<GUInt16, GUInt16, TRUE>(
+        WeightedBrovey3<T, T, TRUE>(
             pPanBuffer, pUpsampledSpectralBuffer, pDataBuf, nValues,
             nBandValues, nMaxValue);
     }
+}
+
+
+template<>
+void GDALPansharpenOperation::WeightedBrovey<GByte, GByte>(
+    const GByte* pPanBuffer,
+    const GByte* pUpsampledSpectralBuffer,
+    GByte* pDataBuf,
+    int nValues,
+    int nBandValues,
+    GByte nMaxValue ) const
+{
+    WeightedBroveyGByteOrUInt16(pPanBuffer, pUpsampledSpectralBuffer,
+                                pDataBuf, nValues,
+                                nBandValues, nMaxValue);
+}
+
+template<>
+void GDALPansharpenOperation::WeightedBrovey<GUInt16, GUInt16>(
+    const GUInt16* pPanBuffer,
+    const GUInt16* pUpsampledSpectralBuffer,
+    GUInt16* pDataBuf,
+    int nValues,
+    int nBandValues,
+    GUInt16 nMaxValue ) const
+{
+    WeightedBroveyGByteOrUInt16(pPanBuffer, pUpsampledSpectralBuffer,
+                                pDataBuf, nValues,
+                                nBandValues, nMaxValue);
 }
 
 template<class WorkDataType> CPLErr GDALPansharpenOperation::WeightedBrovey(
