@@ -54,6 +54,9 @@ class GDALNullDataset: public GDALDataset
 
             virtual int         TestCapability( const char * ) override;
 
+            virtual CPLErr      SetProjection(const char*) override;
+            virtual CPLErr      SetGeoTransform(double*) override;
+
             static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
             static GDALDataset* Create(const char *pszFilename,
                                      int nXSize, int nYSize, int nBands,
@@ -237,6 +240,26 @@ OGRLayer *GDALNullDataset::GetLayer( int iLayer )
         return NULL;
     else
         return m_papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr GDALNullDataset::SetProjection(const char*)
+
+{
+    return CE_None;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr GDALNullDataset::SetGeoTransform(double *)
+
+{
+    return CE_None;
 }
 
 /************************************************************************/
