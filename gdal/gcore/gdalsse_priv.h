@@ -345,11 +345,11 @@ class XMMReg2Double
         return ret;
     }
 
-    inline void AddLowAndHigh()
+    inline double GetHorizSum() const
     {
         __m128d xmm2;
         xmm2 = _mm_shuffle_pd(xmm,xmm,_MM_SHUFFLE2(0,1)); /* transfer high word into low word of xmm2 */
-        xmm = _mm_add_pd(xmm, xmm2);
+        return _mm_cvtsd_f64(_mm_add_sd(xmm, xmm2));
     }
 
     inline void Store2Val(double* ptr) const
@@ -397,9 +397,7 @@ class XMMReg2Double
 
     inline operator double () const
     {
-        double val;
-        _mm_store_sd(&val, xmm);
-        return val;
+        return _mm_cvtsd_f64(xmm);
     }
 };
 
@@ -697,11 +695,9 @@ class XMMReg2Double
         return ret;
     }
 
-    inline void AddLowAndHigh()
+    inline double GetHorizSum() const
     {
-        double add = low + high;
-        low = add;
-        high = add;
+        return low + high;
     }
 
     inline void Store2Val(double* ptr) const
@@ -1178,10 +1174,7 @@ class XMMReg4Double
 
     inline double GetHorizSum() const
     {
-        XMMReg2Double tmp;
-        tmp = low + high;
-        tmp.AddLowAndHigh();
-        return static_cast<double>(tmp);
+        return (low + high).GetHorizSum();
     }
 
     inline void Store4Val(unsigned char* ptr) const
