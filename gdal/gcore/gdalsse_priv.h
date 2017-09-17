@@ -83,7 +83,12 @@ static inline __m128i GDALCopyInt64ToXMM(const void* ptr)
 
 static inline void GDALCopyXMMToInt16(const __m128i xmm, void* pDest)
 {
-    *(GInt16*)pDest =_mm_extract_epi16(xmm, 0);
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+    GInt16 i = static_cast<GInt16>(_mm_extract_epi16(xmm, 0));
+    memcpy(pDest, &i, 2);
+#else
+    *static_cast<GInt16*>(pDest) = static_cast<GInt16>(_mm_extract_epi16(xmm, 0));
+#endif
 }
 
 class XMMReg2Double
