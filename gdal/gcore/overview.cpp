@@ -1233,6 +1233,18 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows(
         dfRes1, dfRes2, dfRes3 );
 }
 
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeights,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontal_3rows(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeights, 4,
+        dfRes1, dfRes2, dfRes3 );
+}
+
 /************************************************************************/
 /*                  GDALResampleConvolutionVertical()                   */
 /************************************************************************/
@@ -1642,6 +1654,62 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
         dfRes1, dfRes2, dfRes3 );
 }
 
+/************************************************************************/
+/*     GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2<T>       */
+/************************************************************************/
+
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    const XMMReg4Double v_weight =
+        XMMReg4Double::Load4ValAligned(padfWeightsAligned);
+
+    // Retrieve the pixel & accumulate.
+    const XMMReg4Double v_pixels1 = XMMReg4Double::Load4Val(pChunkRow1);
+    const XMMReg4Double v_pixels2 = XMMReg4Double::Load4Val(pChunkRow2);
+    const XMMReg4Double v_pixels3 = XMMReg4Double::Load4Val(pChunkRow3);
+
+    XMMReg4Double v_acc1 = v_pixels1 * v_weight;
+    XMMReg4Double v_acc2 = v_pixels2 * v_weight;
+    XMMReg4Double v_acc3 = v_pixels3 * v_weight;
+
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
+}
+
+/************************************************************************/
+/*       GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>      */
+/************************************************************************/
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>(
+    const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
+        dfRes1, dfRes2, dfRes3 );
+}
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
+    const GUInt16* pChunkRow1, const GUInt16* pChunkRow2,
+    const GUInt16* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
+        dfRes1, dfRes2, dfRes3 );
+}
+
 #endif  // USE_SSE2
 
 /************************************************************************/
@@ -1783,7 +1851,29 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
             int iSrcLineOff = 0;
 #ifdef USE_SSE2
-            if( bSrcPixelCountLess8 )
+            if( nSrcPixelCount == 4 )
+            {
+                for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
+                {
+                    const int j =
+                        iSrcLineOff * nChunkXSize +
+                        (nSrcPixelStart - nChunkXOff);
+                    double dfVal1 = 0.0;
+                    double dfVal2 = 0.0;
+                    double dfVal3 = 0.0;
+                    GDALResampleConvolutionHorizontalPixelCount4_3rows(
+                        pChunk + j, pChunk + j + nChunkXSize,
+                        pChunk + j + 2 * nChunkXSize,
+                        padfWeights, dfVal1, dfVal2, dfVal3);
+                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal1;
+                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal2;
+                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal3;
+                }
+            }
+            else if( bSrcPixelCountLess8 )
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
