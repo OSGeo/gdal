@@ -5525,6 +5525,13 @@ void VSIInstallS3FileHandler( void )
  * Alternatively, it is possible to set the GDAL_HTTP_HEADER_FILE configuration
  * option to point to a filename of a text file with "key: value" headers.
  * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
+* 
+ * Starting with GDAL 2.3, an alteranly way of providing credentials similar to
+ * what the "gsutil" command line utility or Boto3 support can be used. If the
+ * above mentioned environment variables are not provided, the ~/.boto
+ * or %UserProfile%/.boto file will be read (or the file pointed by
+ * CPL_GS_CREDENTIALS_FILE) for the gs_secret_access_key and gs_access_key_id
+ * entries.
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
  * options can be used to define a proxy server. The syntax to use is the one of

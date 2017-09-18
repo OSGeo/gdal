@@ -46,20 +46,6 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
                                  const CPLString& osSecretAccessKey,
                                  const CPLString& osAccessKeyId )
 {
-    if( osSecretAccessKey.empty() )
-    {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "GS_SECRET_ACCESS_KEY configuration option not defined");
-        return NULL;
-    }
-
-    if( osAccessKeyId.empty() )
-    {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "GS_ACCESS_KEY_ID configuration option not defined");
-        return NULL;
-    }
-
     CPLString osDate = CPLGetConfigOption("CPL_GS_TIMESTAMP", "");
     if( osDate.empty() )
     {
@@ -126,6 +112,111 @@ VSIGSHandleHelper::~VSIGSHandleHelper()
 {
 }
 
+
+/************************************************************************/
+/*                GetConfigurationFromAWSConfigFiles()                  */
+/************************************************************************/
+
+bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
+                                                CPLString& osSecretAccessKey,
+                                                CPLString& osAccessKeyId,
+                                                CPLString& osCredentials)
+{
+#ifdef WIN32
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+#else
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+#endif
+
+    osCredentials =
+        // GDAL specific config option (mostly for testing purpose, but also
+        // used in production in some cases)
+        CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE",
+                        CPLFormFilename( pszHome, ".boto", NULL ) );
+    VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
+    if( fp != NULL )
+    {
+        const char* pszLine;
+        bool bInProfile = false;
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        {
+            if( pszLine[0] == '[' )
+            {
+                if( bInProfile )
+                    break;
+                if( CPLString(pszLine) == "[Credentials]" )
+                    bInProfile = true;
+            }
+            else if( bInProfile )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "gs_access_key_id") )
+                        osAccessKeyId = pszValue;
+                    else if( EQUAL(pszKey, "gs_secret_access_key") )
+                        osSecretAccessKey = pszValue;
+                }
+                CPLFree(pszKey);
+            }
+        }
+        VSIFCloseL(fp);
+    }
+
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+}
+
+/************************************************************************/
+/*                        GetConfiguration()                            */
+/************************************************************************/
+
+bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osHeaderFile)
+{
+    osSecretAccessKey.clear();
+    osAccessKeyId.clear();
+    osHeaderFile.clear();
+
+    osSecretAccessKey =
+        CPLGetConfigOption("GS_SECRET_ACCESS_KEY", "");
+    if( !osSecretAccessKey.empty() )
+    {
+        osAccessKeyId =
+            CPLGetConfigOption("GS_ACCESS_KEY_ID", "");
+        if( osAccessKeyId.empty() )
+        {
+            VSIError(VSIE_AWSInvalidCredentials,
+                    "GS_ACCESS_KEY_ID configuration option not defined");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Next try reading from ~/.boto
+    CPLString osCredentials;
+    if( GetConfigurationFromConfigFile(osSecretAccessKey, osAccessKeyId,
+                                       osCredentials) )
+    {
+        return true;
+    }
+
+    osHeaderFile =
+        CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "");
+    if( !osHeaderFile.empty() )
+    {
+        return true;
+    }
+
+    VSIError(VSIE_AWSInvalidCredentials,
+                "GS_SECRET_ACCESS_KEY configuration option and %s not defined",
+                osCredentials.c_str());
+    return false;
+}
+
+
 /************************************************************************/
 /*                          BuildFromURI()                              */
 /************************************************************************/
@@ -137,21 +228,14 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     const CPLString osBucketObject( pszURI );
     const CPLString osEndpoint( CPLGetConfigOption("CPL_GS_ENDPOINT",
                                     "https://storage.googleapis.com/") );
-    const CPLString osSecretAccessKey(
-        CPLGetConfigOption("GS_SECRET_ACCESS_KEY", ""));
-    const CPLString osAccessKeyId(
-        CPLGetConfigOption("GS_ACCESS_KEY_ID", ""));
-    const CPLString osHeaderFile(
-        CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "") );
 
-    if( osHeaderFile.empty() )
+    CPLString osSecretAccessKey;
+    CPLString osAccessKeyId;
+    CPLString osHeaderFile;
+
+    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId, osHeaderFile) )
     {
-        // coverity[tainted_data]
-        struct curl_slist* headers = 
-            GetGSHeaders( "GET", "",  osSecretAccessKey, osAccessKeyId );
-        if( headers == NULL )
-            return NULL;
-        curl_slist_free_all(headers);
+        return NULL;
     }
 
     return new VSIGSHandleHelper( osEndpoint,
