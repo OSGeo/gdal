@@ -1089,7 +1089,8 @@ retry:
                 }
             }
         }
-        else if ( IsDirectoryFromExists(osVerb, response_code) )
+        else if ( IsDirectoryFromExists(osVerb,
+                                        static_cast<int>(response_code)) )
         {
             eExists = EXIST_YES;
             fileSize = 0;
