@@ -1903,6 +1903,12 @@ def is_file_open(filename):
     return False
 
 ###############################################################################
+# built_against_curl()
+
+def built_against_curl():
+    return gdal.GetDriverByName('HTTP') is not None
+
+###############################################################################
 # error_handler()
 # Allow use of "with" for an ErrorHandler that always pops at the scope close.
 # Defaults to suppressing errors and warnings.

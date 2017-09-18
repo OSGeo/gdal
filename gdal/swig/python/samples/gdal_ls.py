@@ -49,25 +49,30 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open = False
     statBuf = None
     filename_displayed = prefix + filename
 
+    if dirname.endswith('/'):
+        dirname_with_slash = dirname
+    else:
+        dirname_with_slash = dirname + '/'
+
     version_num = int(gdal.VersionInfo('VERSION_NUM'))
     if longformat:
         if version_num >= 1900:
-            statBuf = gdal.VSIStatL(dirname + '/' + filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+            statBuf = gdal.VSIStatL(dirname_with_slash + filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
     else:
         if version_num >= 1900:
-            statBuf = gdal.VSIStatL(dirname + '/' + filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
+            statBuf = gdal.VSIStatL(dirname_with_slash + filename, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
 
     if statBuf is None and check_open:
         if version_num >= 1900:
             f = None
         else:
-            f = gdal.VSIFOpenL(dirname + '/' + filename, "rb")
+            f = gdal.VSIFOpenL(dirname_with_slash + filename, "rb")
         if f is None:
-            sys.stderr.write('Cannot open %s\n' % (dirname + '/' + filename))
+            sys.stderr.write('Cannot open %s\n' % (dirname_with_slash + filename))
             return
         gdal.VSIFCloseL(f)
 
-    if statBuf is not None and statBuf.IsDirectory():
+    if statBuf is not None and statBuf.IsDirectory() and not filename_displayed.endswith('/'):
         filename_displayed = filename_displayed + "/"
 
     if longformat and statBuf is not None:
@@ -126,7 +131,10 @@ def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, rec
             display_file(fout, dirname, prefix, filename, longformat)
 
             if recurse:
-                readDir(fout, dirname + '/' + filename, prefix + filename + '/', \
+                new_prefix = prefix + filename
+                if not new_prefix.endswith('/'):
+                    new_prefix += '/'
+                readDir(fout, dirname + '/' + filename, new_prefix, \
                         longformat, recurse, depth - 1, recurseInZip, recurseInTGZ)
 
 def Usage():

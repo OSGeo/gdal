@@ -47,12 +47,7 @@ def vsicurl_1():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://publicfiles.dep.state.fl.us/dear/BWR_GIS/2007NWFLULC/NWFWMD2007LULC.zip')
@@ -68,12 +63,7 @@ def vsicurl_2():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = gdal.Open('/vsizip//vsicurl/http://eros.usgs.gov/archive/nslrsda/GeoTowns/HongKong/srtm/n22e113.zip/n22e113.bil')
@@ -89,12 +79,7 @@ def vsicurl_3():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://www.iucnredlist.org/spatial-data/MAMMALS_TERRESTRIAL.zip')
@@ -110,12 +95,7 @@ def vsicurl_4():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = ogr.Open('/vsizip/vsicurl/http://lelserver.env.duke.edu:8080/LandscapeTools/export/49/Downloads/1_Habitats.zip')
@@ -131,12 +111,7 @@ def vsicurl_5():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = gdal.Open('/vsicurl/http://dds.cr.usgs.gov/srtm/SRTM_image_sample/picture%20examples/N34W119_DEM.tif')
@@ -152,12 +127,7 @@ def vsicurl_6():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/ftp://ftp2.cits.rncan.gc.ca/pub/cantopo/250k_tif')
@@ -174,12 +144,7 @@ def vsicurl_7():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     fl = gdal.ReadDir('/vsicurl/http://ortho.linz.govt.nz/tifs/2005_06')
@@ -195,12 +160,7 @@ def vsicurl_8():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds1 = gdal.Open('/vsigzip//vsicurl/http://dds.cr.usgs.gov/pub/data/DEM/250/notavail/C/chipicoten-w.gz')
@@ -219,12 +179,7 @@ def vsicurl_9():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     if version_info >= (3,0,0):
@@ -246,12 +201,7 @@ def vsicurl_10():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/xx%E4%B8%AD%E6%96%87.%E4%B8%AD%E6%96%87')
@@ -267,12 +217,7 @@ def vsicurl_11():
     if not gdaltest.run_slow_tests():
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     f = gdal.VSIFOpenL('/vsicurl/http://download.osgeo.org/gdal/data/bmp/Bug2236.bmp', 'rb')
@@ -294,12 +239,7 @@ def vsicurl_start_webserver():
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
@@ -317,6 +257,8 @@ def vsicurl_test_redirect():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/test_redirect/', 404)

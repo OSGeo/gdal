@@ -30,6 +30,8 @@
 #include "cpl_vsil_curl_priv.h"
 
 #include <algorithm>
+#include <set>
+#include <map>
 
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
@@ -393,6 +395,7 @@ class VSICurlHandle : public VSIVirtualHandle
         { return CanRestartOnError(pszErrorMsg, false); }
     virtual bool CanRestartOnError( const char*, bool ) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
+    virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
     void SetURL(const char* pszURL);
 
@@ -1085,6 +1088,12 @@ retry:
                         CPLAtoGIntBig(pszContentRange + 1));
                 }
             }
+        }
+        else if ( IsDirectoryFromExists(osVerb, response_code) )
+        {
+            eExists = EXIST_YES;
+            fileSize = 0;
+            bIsDirectory = true;
         }
         else if( response_code != 200 )
         {
@@ -3027,32 +3036,34 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
     if( psTree == NULL )
         return;
     CPLXMLNode* psListBucketResult = CPLGetXMLNode(psTree, "=ListBucketResult");
+
+    std::vector< std::pair<CPLString, CachedFileProp> > aoProps;
+    // Count the number of occurences of a path. Can be 1 or 2. 2 in the case
+    // that both a filename and directory exist
+    std::map<CPLString, int> aoNameCount;
+
     if( psListBucketResult )
     {
         CPLString osPrefix = CPLGetXMLValue(psListBucketResult, "Prefix", "");
         CPLXMLNode* psIter = psListBucketResult->psChild;
+        bool bNonEmpty = false;
         for( ; psIter != NULL; psIter = psIter->psNext )
         {
             if( psIter->eType != CXT_Element )
                 continue;
             if( strcmp(psIter->pszValue, "Contents") == 0 )
             {
+                bNonEmpty = true;
                 const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
                 if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
-                    CPLString osCachedFilename = osBaseURL + pszKey;
-#if DEBUG_VERBOSE
-                    CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
-#endif
-
-                    CachedFileProp* cachedFileProp =
-                        GetCachedFileProp(osCachedFilename);
-                    cachedFileProp->eExists = EXIST_YES;
-                    cachedFileProp->bHasComputedFileSize = true;
-                    cachedFileProp->fileSize = static_cast<GUIntBig>(
+                    CachedFileProp prop;
+                    prop.eExists = EXIST_YES;
+                    prop.bHasComputedFileSize = true;
+                    prop.fileSize = static_cast<GUIntBig>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0")));
-                    cachedFileProp->bIsDirectory = false;
-                    cachedFileProp->mTime = 0;
+                    prop.bIsDirectory = false;
+                    prop.mTime = 0;
 
                     int nYear = 0;
                     int nMonth = 0;
@@ -3072,12 +3083,15 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         brokendowntime.tm_hour = nHour;
                         brokendowntime.tm_min = nMin;
                         brokendowntime.tm_sec = nSec;
-                        cachedFileProp->mTime =
+                        prop.mTime =
                             static_cast<time_t>(
                                 CPLYMDHMSToUnixTime(&brokendowntime));
                     }
 
-                    osFileList.AddString(pszKey + osPrefix.size());
+                    aoProps.push_back(
+                        std::pair<CPLString, CachedFileProp>
+                            (pszKey + osPrefix.size(), prop));
+                    aoNameCount[pszKey + osPrefix.size()] ++;
                 }
             }
             else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
@@ -3090,32 +3104,57 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
-                        CPLString osCachedFilename = osBaseURL + osKey;
-#if DEBUG_VERBOSE
-                        CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
-#endif
+                        CachedFileProp prop;
+                        prop.eExists = EXIST_YES;
+                        prop.bIsDirectory = true;
+                        prop.bHasComputedFileSize = true;
+                        prop.fileSize = 0;
+                        prop.mTime = 0;
 
-                        CachedFileProp* cachedFileProp =
-                            GetCachedFileProp(osCachedFilename);
-                        cachedFileProp->eExists = EXIST_YES;
-                        cachedFileProp->bIsDirectory = true;
-                        cachedFileProp->mTime = 0;
-
-                        osFileList.AddString(osKey.c_str() + osPrefix.size());
+                        aoProps.push_back(
+                            std::pair<CPLString, CachedFileProp>
+                                (osKey.c_str() + osPrefix.size(), prop));
+                        aoNameCount[osKey.c_str() + osPrefix.size()] ++;
                     }
                 }
             }
 
-            if( nMaxFiles > 0 && osFileList.Count() > nMaxFiles )
+            if( nMaxFiles > 0 && aoProps.size() > static_cast<unsigned>(nMaxFiles) )
                 break;
         }
 
-        if( !(nMaxFiles > 0 && osFileList.Count() > nMaxFiles) )
+        if( !(nMaxFiles > 0 && aoProps.size() > static_cast<unsigned>(nMaxFiles)) )
         {
             osNextMarker = CPLGetXMLValue(psListBucketResult, "NextMarker", "");
             bIsTruncated =
                 CPLTestBool(CPLGetXMLValue(psListBucketResult,
                                            "IsTruncated", "false"));
+        }
+
+        for( size_t i = 0; i < aoProps.size(); i++ )
+        {
+            CPLString osSuffix;
+            if( aoNameCount[aoProps[i].first] == 2 &&
+                    aoProps[i].second.bIsDirectory )
+            {
+                // Add a / suffix to disambiguish the situation
+                // Normally we don't suffix directories with /, but we have
+                // no alternative here
+                osSuffix = "/";
+            }
+            CPLString osCachedFilename =
+                        osBaseURL + osPrefix + aoProps[i].first + osSuffix;
+#if DEBUG_VERBOSE
+            CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
+#endif
+            *GetCachedFileProp(osCachedFilename) = aoProps[i].second;
+            osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
+        }
+
+        if( osFileList.size() == 0 && bNonEmpty )
+        {
+            // To avoid an error to be reported
+            osFileList.AddString(".");
         }
     }
     CPLDestroyXMLNode(psTree);
@@ -3666,6 +3705,7 @@ int VSICurlFilesystemHandler::Mkdir( const char * /* pszDirname */,
 {
     return -1;
 }
+
 /************************************************************************/
 /*                               Rmdir()                                */
 /************************************************************************/
@@ -3684,8 +3724,6 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
                                                   bool* pbGotFileList )
 {
     CPLString osDirname(pszDirname);
-    while( osDirname.back() == '/' )
-        osDirname.erase(osDirname.size() - 1);
 
     const char* pszUpDir = strstr(osDirname, "/..");
     if( pszUpDir != NULL )
@@ -3708,15 +3746,33 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
 
     CPLMutexHolder oHolder( &hMutex );
 
+    CPLString osDirnameOri(osDirname);
+    while( !osDirname.empty() && osDirname.back() == '/' )
+        osDirname.erase(osDirname.size() - 1);
+
     // If we know the file exists and is not a directory,
     // then don't try to list its content.
     CachedFileProp* cachedFileProp =
         GetCachedFileProp(GetURLFromDirname(osDirname));
     if( cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory )
     {
-        if( pbGotFileList )
-            *pbGotFileList = true;
-        return NULL;
+        if( osDirnameOri != osDirname )
+        {
+            cachedFileProp =
+                    GetCachedFileProp((GetURLFromDirname(osDirname) + "/").c_str());
+            if( cachedFileProp->eExists == EXIST_YES && !cachedFileProp->bIsDirectory )
+            {
+                if( pbGotFileList )
+                    *pbGotFileList = true;
+                return NULL;
+            }
+        }
+        else
+        {
+            if( pbGotFileList )
+                *pbGotFileList = true;
+            return NULL;
+        }
     }
 
     CachedDirList* psCachedDirList = cacheDirList[osDirname];
@@ -3785,6 +3841,9 @@ public:
         virtual VSIVirtualHandle *Open( const char *pszFilename,
                                         const char *pszAccess,
                                         bool bSetError ) override;
+
+        virtual int      Mkdir( const char *pszDirname, long nMode ) override;
+        virtual int      Rmdir( const char *pszDirname ) override;
         virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                                int nFlags ) override;
         virtual int      Unlink( const char *pszFilename ) override;
@@ -3810,6 +3869,13 @@ class VSIS3Handle CPL_FINAL : public VSICurlHandle
             override;
         virtual bool CanRestartOnError( const char*, bool ) override;
         virtual bool UseLimitRangeGetInsteadOfHead() override { return true; }
+        virtual bool IsDirectoryFromExists( const char* pszVerb,
+                                            int response_code ) override
+        {
+            // A bit dirty, but on S3, a GET on a existing directory returns a 416 
+            return response_code == 416 && EQUAL(pszVerb, "GET") &&
+                   CPLString(m_pszURL).back() == '/';
+        }
         virtual void ProcessGetFileSizeResult( const char* pszContent )
             override;
 
@@ -4269,7 +4335,11 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         {
             m_poFS->InvalidateCachedData(
                 m_poS3HandleHelper->GetURL().c_str() );
-            m_poFS->InvalidateDirContent( CPLGetDirname(m_osFilename) );
+
+            CPLString osFilenameWithoutSlash(m_osFilename);
+            if( !osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/' )
+                osFilenameWithoutSlash.resize( osFilenameWithoutSlash.size() - 1 );
+            m_poFS->InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
 
         CPLFree(sWriteFuncData.pBuffer);
@@ -4509,6 +4579,76 @@ void VSIS3FSHandler::ClearCache()
 }
 
 /************************************************************************/
+/*                               Mkdir()                                */
+/************************************************************************/
+
+int VSIS3FSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
+{
+    CPLString osDirname(pszDirname);
+    if( !osDirname.empty() && osDirname.back() != '/' )
+        osDirname += "/";
+
+    VSIStatBufL sStat;
+    if( VSIStatL(osDirname, &sStat) == 0 &&
+        sStat.st_mode == S_IFDIR )
+    {
+        CPLDebug("VSIS3", "Directory %s already exists", osDirname.c_str());
+        errno = EEXIST;
+        return -1;
+    }
+
+    VSILFILE* fp = VSIFOpenL(osDirname, "wb");
+    if( fp != NULL )
+    {
+        CPLErrorReset();
+        VSIFCloseL(fp);
+        return CPLGetLastErrorType() == CPLE_None ? 0 : -1;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+/************************************************************************/
+/*                               Rmdir()                                */
+/************************************************************************/
+
+int VSIS3FSHandler::Rmdir( const char * pszDirname )
+{
+    CPLString osDirname(pszDirname);
+    if( !osDirname.empty() && osDirname.back() != '/' )
+        osDirname += "/";
+
+    VSIStatBufL sStat;
+    if( VSIStatL(osDirname, &sStat) != 0 )
+    {
+        CPLDebug("VSIS3", "%s is not a object", pszDirname);
+        errno = ENOENT;
+        return -1;
+    }
+    else if( sStat.st_mode != S_IFDIR )
+    {
+        CPLDebug("VSIS3", "%s is not a directory", pszDirname);
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    char** papszFileList = ReadDirEx(osDirname, 2);
+    bool bEmptyDir = (papszFileList != NULL && EQUAL(papszFileList[0], ".") &&
+                      papszFileList[1] == NULL);
+    CSLDestroy(papszFileList);
+    if( !bEmptyDir )
+    {
+        CPLDebug("VSIS3", "%s is not empty", pszDirname);
+        errno = ENOTEMPTY;
+        return -1;
+    }
+
+    return Unlink(osDirname);
+}
+
+/************************************************************************/
 /*                                Stat()                                */
 /************************************************************************/
 
@@ -4630,7 +4770,12 @@ int VSIS3FSHandler::Unlink( const char *pszFilename )
         else
         {
             InvalidateCachedData(poS3HandleHelper->GetURL().c_str());
-            InvalidateDirContent( CPLGetDirname(pszFilename) );
+
+            CPLString osFilenameWithoutSlash(pszFilename);
+            if( !osFilenameWithoutSlash.empty() && osFilenameWithoutSlash.back() == '/' )
+                osFilenameWithoutSlash.resize( osFilenameWithoutSlash.size() - 1 );
+
+            InvalidateDirContent( CPLGetDirname(osFilenameWithoutSlash) );
         }
 
         CPLFree(sWriteFuncData.pBuffer);
@@ -4655,6 +4800,11 @@ char** VSIS3FSHandler::GetFileList( const char *pszDirname,
         CPLDebug("S3", "GetFileList(%s)" , pszDirname);
     *pbGotFileList = false;
     CPLString osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
+    if( !osDirnameWithoutPrefix.empty() &&
+                                osDirnameWithoutPrefix.back() == '/' )
+    {
+        osDirnameWithoutPrefix.resize(osDirnameWithoutPrefix.size()-1);
+    }
 
     VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(osDirnameWithoutPrefix,

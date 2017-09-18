@@ -29,6 +29,7 @@
 ###############################################################################
 
 import os.path
+import stat
 import sys
 from osgeo import gdal
 
@@ -64,15 +65,9 @@ def vsis3_init():
 # Error cases
 
 def vsis3_1():
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
 
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
-
-        # RETODO: Bind to swig, change test
 
     # Missing AWS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
@@ -133,12 +128,7 @@ def vsis3_start_webserver():
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
@@ -713,23 +703,24 @@ def vsis3_3():
       with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
         handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/?delimiter=/', 200, { 'Content-type': 'application/xml' },
-                    """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>/</Prefix>
-                        <Contents>
-                            <Key>/test.txt</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>40</Size>
-                        </Contents>
-                        <Contents>
-                            <Key>/test2.txt</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>40</Size>
-                        </Contents>
-                    </ListBucketResult>
-                """)
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
+        if config_option_value is None:
+            handler.add('GET', '/s3_non_cached/?delimiter=/', 200, { 'Content-type': 'application/xml' },
+                        """<?xml version="1.0" encoding="UTF-8"?>
+                        <ListBucketResult>
+                            <Prefix>/</Prefix>
+                            <Contents>
+                                <Key>/test.txt</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>40</Size>
+                            </Contents>
+                            <Contents>
+                                <Key>/test2.txt</Key>
+                                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                                <Size>40</Size>
+                            </Contents>
+                        </ListBucketResult>
+                    """)
+            handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'foo')
 
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsis3/s3_non_cached/test.txt')
@@ -746,19 +737,6 @@ def vsis3_3():
                 return 'fail'
 
         handler = webserver.SequentialHandler()
-        handler.add('GET', '/s3_non_cached/?delimiter=/', 200, { 'Content-type': 'application/xml' },
-                    """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>/</Prefix>
-                        <Contents>
-                            <Key>/test.txt</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>30</Size>
-                        </Contents>
-                    </ListBucketResult>
-                """)
-        handler.add('GET', '/s3_non_cached/test.txt', 200, {}, 'bar2')
-
         with webserver.install_http_handler(handler):
             f = open_for_read('/vsis3/s3_non_cached/test.txt')
             if f is None:
@@ -1064,6 +1042,7 @@ def vsis3_6():
         gdaltest.post_reason('fail')
         return 'fail'
     size = 1024*1024+1
+    big_buffer = ''.join('a' for i in range(size))
 
     handler = webserver.SequentialHandler()
 
@@ -1103,7 +1082,7 @@ def vsis3_6():
     handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method = method)
 
     with webserver.install_http_handler(handler):
-        ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+        ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
     if ret != size:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1166,9 +1145,8 @@ def vsis3_6():
         if f is None:
             gdaltest.post_reason('fail')
             return 'fail'
-        size = 1024*1024+1
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
             print(ret)
@@ -1192,22 +1170,206 @@ def vsis3_6():
 
     with webserver.install_http_handler(handler):
       for filename in [ '/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
-                      '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
+                        '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
         with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
             gdaltest.post_reason('fail')
+            print(filename)
             return 'fail'
-        size = 1024*1024+1
         with gdaltest.error_handler():
-            ret = gdal.VSIFWriteL(''.join('a' for i in range(size)), 1,size, f)
+            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
         if ret != 0:
             gdaltest.post_reason('fail')
+            print(filename)
             print(ret)
             return 'fail'
         gdal.ErrorReset()
         gdal.VSIFCloseL(f)
         if gdal.GetLastErrorMsg() != '':
+            gdaltest.post_reason('fail')
+            print(filename)
+            return 'fail'
+
+    # Simulate failure in AbortMultipart stage
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploads', 200, {},
+                '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
+    handler.add('PUT', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?partNumber=1&uploadId=my_id', 403)
+    handler.add('DELETE', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploadId=my_id', 403)
+
+    filename = '/vsis3/s3_fake_bucket4/large_file_abortmultipart_403_error.bin'
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+            f = gdal.VSIFOpenL(filename, 'wb')
+        if f is None:
+            gdaltest.post_reason('fail')
+            print(filename)
+            return 'fail'
+        with gdaltest.error_handler():
+            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(filename)
+            print(ret)
+            return 'fail'
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            gdal.VSIFCloseL(f)
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            print(filename)
+            return 'fail'
+
+    # Simulate failure in CompleteMultipartUpload stage
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploads', 200, {},
+                '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
+    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, { 'ETag': 'first_etag' }, '')
+    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, { 'ETag': 'second_etag' }, '')
+    handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 403)
+    #handler.add('DELETE', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
+
+    filename = '/vsis3/s3_fake_bucket4/large_file_completemultipart_403_error.bin'
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
+            f = gdal.VSIFOpenL(filename, 'wb')
+            if f is None:
+                gdaltest.post_reason('fail')
+                print(filename)
+                return 'fail'
+            ret = gdal.VSIFWriteL(big_buffer, 1,size, f)
+            if ret != size:
+                gdaltest.post_reason('fail')
+                print(filename)
+                print(ret)
+                return 'fail'
+            gdal.ErrorReset()
+            with gdaltest.error_handler():
+                gdal.VSIFCloseL(f)
+            if gdal.GetLastErrorMsg() == '':
+                gdaltest.post_reason('fail')
+                print(filename)
+                return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Mkdir() / Rmdir()
+
+def vsis3_7():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404)
+    handler.add('PUT', '/s3_bucket_test_mkdir/dir/', 200)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Mkdir('/vsis3/s3_bucket_test_mkdir/dir', 0)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Try creating already existing directory
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 416)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Mkdir('/vsis3/s3_bucket_test_mkdir/dir', 0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&prefix=dir/', 200,
+                 { 'Content-type': 'application/xml' },
+                 """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>dir/</Prefix>
+                        <Contents>
+                        </Contents>
+                    </ListBucketResult>
+                """)
+    handler.add('DELETE', '/s3_bucket_test_mkdir/dir/', 204)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Rmdir('/vsis3/s3_bucket_test_mkdir/dir')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Try deleting already deleted directory
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Rmdir('/vsis3/s3_bucket_test_mkdir/dir')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Try deleting non-empty directory
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_bucket_test_mkdir/dir_nonempty/', 416)
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&prefix=dir_nonempty/', 200,
+                 { 'Content-type': 'application/xml' },
+                 """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>dir_nonempty/</Prefix>
+                        <Contents>
+                            <Key>dir_nonempty/test.txt</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>40</Size>
+                        </Contents>
+                    </ListBucketResult>
+                """)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Rmdir('/vsis3/s3_bucket_test_mkdir/dir_nonempty')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test handling of file and directory with same name
+
+def vsis3_8():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/vsis3_8/?delimiter=/', 200,
+                 { 'Content-type': 'application/xml' },
+                 """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix></Prefix>
+                        <Contents>
+                            <Key>test</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>40</Size>
+                        </Contents>
+                        <CommonPrefixes>
+                            <Prefix>test/</Prefix>
+                        </CommonPrefixes>
+                    </ListBucketResult>
+                """)
+
+    with webserver.install_http_handler(handler):
+        listdir = gdal.ReadDir('/vsis3/vsis3_8', 0)
+    if listdir != [ 'test', 'test/' ]:
+        gdaltest.post_reason('fail')
+        print(listdir)
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        if stat.S_ISDIR(gdal.VSIStatL('/vsis3/vsis3_8/test').mode):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    handler = webserver.SequentialHandler()
+    with webserver.install_http_handler(handler):
+        if not stat.S_ISDIR(gdal.VSIStatL('/vsis3/vsis3_8/test/').mode):
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -1647,12 +1809,8 @@ def vsis3_stop_webserver():
 # Nominal cases (require valid credentials)
 
 def vsis3_extra_1():
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
 
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     credentials_filename = gdal.GetConfigOption('HOME',
@@ -1671,6 +1829,112 @@ def vsis3_extra_1():
     elif s3_resource is None:
         print('Missing S3_RESOURCE for running gdaltest_list_extra')
         return 'skip'
+
+    if s3_resource.find('/') < 0:
+        path = '/vsis3/' + s3_resource
+        statres = gdal.VSIStatL(path)
+        if statres is None or not stat.S_ISDIR(statres.mode):
+            gdaltest.post_reason('fail')
+            print('%s is not a valid bucket' % path)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if readdir is None:
+            gdaltest.post_reason('fail')
+            print('ReadDir() should not return empty list')
+            return 'fail'
+        for filename in readdir:
+            subpath = path + '/' + filename
+            if gdal.VSIStatL(subpath) is None:
+                gdaltest.post_reason('fail')
+                print('Stat(%s) should not return an error' % subpath)
+                return 'fail'
+
+        unique_id = 'vsis3_test'
+        subpath = path + '/' + unique_id
+        ret = gdal.Mkdir(subpath, 0)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if unique_id not in readdir:
+            gdaltest.post_reason('fail')
+            print('ReadDir(%s) should contain %s' % (path, unique_id))
+            print(readdir)
+            return 'fail'
+
+        ret = gdal.Mkdir(subpath, 0)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) repeated should return an error' % subpath)
+            return 'fail'
+
+        ret = gdal.Rmdir(subpath)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if unique_id in readdir:
+            gdaltest.post_reason('fail')
+            print('ReadDir(%s) should not contain %s' % (path, unique_id))
+            print(readdir)
+            return 'fail'
+
+        ret = gdal.Rmdir(subpath)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) repeated should return an error' % subpath)
+            return 'fail'
+
+        ret = gdal.Mkdir(subpath, 0)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.VSIFWriteL('hello', 1, 5, f)
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Rmdir(subpath)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) on non empty directory should return an error' % subpath)
+            return 'fail'
+
+        f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
+        if data != 'hello':
+            gdaltest.post_reason('fail')
+            print(data)
+            return 'fail'
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Unlink(subpath + '/test.txt')
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
+            return 'fail'
+
+
+        ret = gdal.Rmdir(subpath)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+
+        return 'success'
 
     f = open_for_read('/vsis3/' + s3_resource)
     if f is None:
@@ -1739,6 +2003,8 @@ gdaltest_list = [ vsis3_init,
                   vsis3_4,
                   vsis3_5,
                   vsis3_6,
+                  vsis3_7,
+                  vsis3_8,
                   vsis3_read_credentials_file,
                   vsis3_read_config_file,
                   vsis3_read_credentials_config_file,
@@ -1748,6 +2014,8 @@ gdaltest_list = [ vsis3_init,
                   vsis3_read_credentials_ec2_expiration,
                   vsis3_stop_webserver,
                   vsis3_cleanup ]
+
+# gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_8, vsis3_stop_webserver, vsis3_cleanup ]
 
 gdaltest_list_extra = [ vsis3_extra_1 ]
 

@@ -44,12 +44,13 @@ do_log = False
 custom_handler = None
 
 @contextlib.contextmanager
-def install_http_handler(handler_class):
+def install_http_handler(handler_instance):
     global custom_handler
-    custom_handler = handler_class
+    custom_handler = handler_instance
     try:
         yield
     finally:
+        handler_instance.final_check()
         custom_handler = None
 
 class RequestResponse:
@@ -65,6 +66,9 @@ class SequentialHandler:
     def __init__(self):
         self.req_count = 0
         self.req_resp = []
+
+    def final_check(self):
+        assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
 
     def add(self, method, path, code = None, headers = {}, body = None, custom_method = None):
         self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method) )
