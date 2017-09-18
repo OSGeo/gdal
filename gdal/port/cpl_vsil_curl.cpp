@@ -3152,7 +3152,11 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             osFileList.AddString( (aoProps[i].first + osSuffix).c_str() );
         }
 
-        if( osFileList.size() == 0 && bNonEmpty )
+        // In the case of an empty directory, bNonEmpty will be set since
+        // there will be a <Contents> entry with the directory entry
+        // In the case of an empty bucket, then we should get an empty
+        // Prefix element.
+        if( osFileList.size() == 0 && (bNonEmpty || osPrefix.empty()) )
         {
             // To avoid an error to be reported
             osFileList.AddString(".");
