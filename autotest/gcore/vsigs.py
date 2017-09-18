@@ -28,11 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-try:
-    from BaseHTTPServer import BaseHTTPRequestHandler
-except:
-    from http.server import BaseHTTPRequestHandler
-
 import sys
 from osgeo import gdal
 
@@ -40,144 +35,6 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import webserver
-
-do_log = False
-
-class VSIGSHttpHandler(BaseHTTPRequestHandler):
-
-    def log_request(self, code='-', size='-'):
-        return
-
-    def do_HEAD(self):
-        if do_log:
-            f = open('/tmp/log.txt', 'a')
-            f.write('HEAD %s\n' % self.path)
-            f.close()
-
-        if self.path == '/gs_fake_bucket/resource2.bin':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.send_header('Content-Length', 1000000)
-            self.end_headers()
-            return
-
-        self.send_error(404,'File Not Found: %s' % self.path)
-
-    def do_DELETE(self):
-        if do_log:
-            f = open('/tmp/log.txt', 'a')
-            f.write('DELETE %s\n' % self.path)
-            f.close()
-
-        self.send_error(404,'File Not Found: %s' % self.path)
-
-    def do_POST(self):
-        if do_log:
-            f = open('/tmp/log.txt', 'a')
-            f.write('POST %s\n' % self.path)
-            f.close()
-
-        self.send_error(404,'File Not Found: %s' % self.path)
-
-    def do_PUT(self):
-        if do_log:
-            f = open('/tmp/log.txt', 'a')
-            f.write('PUT %s\n' % self.path)
-            f.close()
-
-        self.send_error(404,'File Not Found: %s' % self.path)
-
-    def do_GET(self):
-
-        try:
-            if do_log:
-                f = open('/tmp/log.txt', 'a')
-                f.write('GET %s\n' % self.path)
-                f.close()
-
-            if self.path == '/gs_fake_bucket_http_header_file/resource':
-                self.protocol_version = 'HTTP/1.1'
-
-                if 'foo' not in self.headers or self.headers['foo'] != 'bar':
-                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
-                    self.send_response(403)
-                    return
-
-                self.send_response(200)
-                self.send_header('Content-type', 'text/plain')
-                self.send_header('Content-Length', 1)
-                self.end_headers()
-                self.wfile.write("""Y""".encode('ascii'))
-                return
-
-            if self.path == '/gs_fake_bucket/resource':
-                self.protocol_version = 'HTTP/1.1'
-
-                if 'Authorization' not in self.headers:
-                    sys.stderr.write('Bad headers: %s\n' % str(self.headers))
-                    self.send_response(403)
-                    return
-                expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
-                if self.headers['Authorization'] != expected_authorization :
-                    sys.stderr.write("Bad Authorization: '%s'\n" % str(self.headers['Authorization']))
-                    self.send_response(403)
-                    return
-
-                self.send_response(200)
-                self.send_header('Content-type', 'text/plain')
-                self.send_header('Content-Length', 3)
-                self.end_headers()
-                self.wfile.write("""foo""".encode('ascii'))
-                return
-
-            if self.path == '/gs_fake_bucket2?delimiter=/&prefix=a_dir/':
-                self.protocol_version = 'HTTP/1.1'
-                self.send_response(200)
-                self.send_header('Content-type', 'application/xml')
-                response = """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>a_dir/</Prefix>
-                        <NextMarker>bla</NextMarker>
-                        <Contents>
-                            <Key>a_dir/resource3.bin</Key>
-                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                            <Size>123456</Size>
-                        </Contents>
-                    </ListBucketResult>
-                """
-                self.send_header('Content-Length', len(response))
-                self.end_headers()
-                self.wfile.write(response.encode('ascii'))
-                return
-
-            if self.path == '/gs_fake_bucket2?delimiter=/&marker=bla&prefix=a_dir/':
-
-                self.protocol_version = 'HTTP/1.1'
-                self.send_response(200)
-                self.send_header('Content-type', 'application/xml')
-                response = """<?xml version="1.0" encoding="UTF-8"?>
-                    <ListBucketResult>
-                        <Prefix>a_dir/</Prefix>
-                        <Contents>
-                            <Key>a_dir/resource4.bin</Key>
-                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
-                            <Size>456789</Size>
-                        </Contents>
-                        <CommonPrefixes>
-                            <Prefix>a_dir/subdir/</Prefix>
-                        </CommonPrefixes>
-                    </ListBucketResult>
-                """
-                self.send_header('Content-Length', len(response))
-                self.end_headers()
-                self.wfile.write(response.encode('ascii'))
-                return
-
-            return
-        except IOError:
-            pass
-
-        self.send_error(404,'File Not Found: %s' % self.path)
 
 def open_for_read(uri):
     """
@@ -196,21 +53,19 @@ def vsigs_init():
         if gdaltest.gs_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
+    # To avoid user credentials in ~/.boto
+    # to mess up our tests
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+
     return 'success'
 
 ###############################################################################
 # Error cases
 
 def vsigs_1():
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
 
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
-
-        # RETODO: Bind to swig, change test
 
     # Invalid header filename
     gdal.ErrorReset()
@@ -306,17 +161,14 @@ def vsigs_start_webserver():
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = VSIGSHttpHandler)
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
 
     return 'success'
 
@@ -328,74 +180,115 @@ def vsigs_2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
-
     # header file 
     gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt')
-    f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
-    if f is None:
-        gdal.Unlink('/vsimem/my_headers.txt')
-        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 1, f)
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
+
+
+    def method(request):
+        if 'foo' not in request.headers or request.headers['foo'] != 'bar':
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 1)
+        request.end_headers()
+        request.wfile.write("""Y""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket_http_header_file/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt'):
+            f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
+            if f is None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            if len(data) != 1:
+                gdaltest.post_reason('fail')
+                return 'fail'
     gdal.Unlink('/vsimem/my_headers.txt')
-    gdal.VSIFCloseL(f)
-    if len(data) != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
 
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
     gdal.SetConfigOption('CPL_GS_TIMESTAMP', 'my_timestamp')
 
-    f = open_for_read('/vsigs/gs_fake_bucket/resource')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-    gdal.VSIFCloseL(f)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
 
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
 
-    f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
-    if f is None:
-        gdaltest.post_reason('fail')
-        return 'fail'
-    data = gdal.VSIFReadL(1, 4, f).decode('ascii')
-    gdal.VSIFCloseL(f)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
 
-    if data != 'foo':
-        gdaltest.post_reason('fail')
-        print(data)
-        return 'fail'
+        if data != 'foo':
+            gdaltest.post_reason('fail')
+            print(data)
+            return 'fail'
 
-    #old_val = gdal.GetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN')
-    #gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', 'EMPTY_DIR')
-    stat_res = gdal.VSIStatL('/vsigs/gs_fake_bucket/resource2.bin')
-    #gdal.SetConfigOption('GDAL_DISABLE_READDIR_ON_OPEN', old_val)
-    if stat_res is None or stat_res.size != 1000000:
-        gdaltest.post_reason('fail')
-        if stat_res is not None:
-            print(stat_res.size)
-        else:
-            print(stat_res)
-        return 'fail'
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
+                {'Content-Length': 1000000})
+    with webserver.install_http_handler(handler):
+        stat_res = gdal.VSIStatL('/vsigs/gs_fake_bucket/resource2.bin')
+        if stat_res is None or stat_res.size != 1000000:
+            gdaltest.post_reason('fail')
+            if stat_res is not None:
+                print(stat_res.size)
+            else:
+                print(stat_res)
+            return 'fail'
 
-    stat_res = gdal.VSIStatL('/vsigs_streaming/gs_fake_bucket/resource2.bin')
-    if stat_res is None or stat_res.size != 1000000:
-        gdaltest.post_reason('fail')
-        if stat_res is not None:
-            print(stat_res.size)
-        else:
-            print(stat_res)
-        return 'fail'
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
+                {'Content-Length': 1000000})
+    with webserver.install_http_handler(handler):
+        stat_res = gdal.VSIStatL('/vsigs_streaming/gs_fake_bucket/resource2.bin')
+        if stat_res is None or stat_res.size != 1000000:
+            gdaltest.post_reason('fail')
+            if stat_res is not None:
+                print(stat_res.size)
+            else:
+                print(stat_res)
+            return 'fail'
 
     return 'success'
 
@@ -406,7 +299,39 @@ def vsigs_3():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
-    f = open_for_read('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket2?delimiter=/&prefix=a_dir/', 200,
+                { 'Content-type': 'application/xml' },
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <NextMarker>bla</NextMarker>
+                        <Contents>
+                            <Key>a_dir/resource3.bin</Key>
+                            <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                            <Size>123456</Size>
+                        </Contents>
+                    </ListBucketResult>
+                """)
+    handler.add('GET', '/gs_fake_bucket2?delimiter=/&marker=bla&prefix=a_dir/', 200,
+                { 'Content-type': 'application/xml' },
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <ListBucketResult>
+                        <Prefix>a_dir/</Prefix>
+                        <Contents>
+                            <Key>a_dir/resource4.bin</Key>
+                            <LastModified>2015-10-16T12:34:56.000Z</LastModified>
+                            <Size>456789</Size>
+                        </Contents>
+                        <CommonPrefixes>
+                            <Prefix>a_dir/subdir/</Prefix>
+                        </CommonPrefixes>
+                    </ListBucketResult>
+                """)
+
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
     if f is None:
 
         if gdaltest.is_travis_branch('trusty'):
@@ -416,6 +341,7 @@ def vsigs_3():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(f)
+
     dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir')
     if dir_contents != ['resource3.bin', 'resource4.bin', 'subdir']:
         gdaltest.post_reason('fail')
@@ -427,6 +353,70 @@ def vsigs_3():
     if gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').mtime != 1:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Read credentials from simulated ~/.boto
+
+def vsigs_read_credentials_file():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '/vsimem/.boto')
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer('/vsimem/.boto', """
+[unrelated]
+gs_access_key_id = foo
+gs_secret_access_key = bar
+[Credentials]
+gs_access_key_id = GS_ACCESS_KEY_ID
+gs_secret_access_key = GS_SECRET_ACCESS_KEY
+[unrelated]
+gs_access_key_id = foo
+gs_secret_access_key = bar
+""")
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+    gdal.Unlink('/vsimem/.boto')
 
     return 'success'
 
@@ -444,12 +434,8 @@ def vsigs_stop_webserver():
 # Nominal cases (require valid credentials)
 
 def vsigs_extra_1():
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
 
-    if drv is None:
+    if not gdaltest.built_against_curl():
         return 'skip'
 
     if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
@@ -521,8 +507,12 @@ gdaltest_list = [ vsigs_init,
                   vsigs_start_webserver,
                   vsigs_2,
                   vsigs_3,
+                  vsigs_read_credentials_file,
                   vsigs_stop_webserver,
                   vsigs_cleanup ]
+
+# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_2, vsigs_read_credentials_file, vsigs_stop_webserver, vsigs_cleanup ]
+
 gdaltest_list_extra = [ vsigs_extra_1, vsigs_cleanup ]
 
 if __name__ == '__main__':

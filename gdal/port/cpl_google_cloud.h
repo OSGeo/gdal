@@ -47,6 +47,15 @@ class VSIGSHandleHelper
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
 
+        static bool     GetConfiguration(CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osHeaderFile);
+
+        static bool     GetConfigurationFromConfigFile(
+                                         CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osCredentials);
+
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
                           const CPLString& osBucketObjectKey,
