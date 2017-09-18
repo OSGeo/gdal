@@ -183,7 +183,7 @@ typedef struct
 /*! Types of color interpretation for raster bands. */
 typedef enum
 {
-    GCI_Undefined=0,
+    /*! Undefined */                                      GCI_Undefined=0,
     /*! Greyscale */                                      GCI_GrayIndex=1,
     /*! Paletted (see associated color table) */          GCI_PaletteIndex=2,
     /*! Red band of RGBA image */                         GCI_RedBand=3,
@@ -200,7 +200,7 @@ typedef enum
     /*! Y Luminance */                                    GCI_YCbCr_YBand=14,
     /*! Cb Chroma */                                      GCI_YCbCr_CbBand=15,
     /*! Cr Chroma */                                      GCI_YCbCr_CrBand=16,
-    /*! Max current value */                              GCI_Max=16
+    /*! Max current value (equals to GCI_YCbCr_CrBand currently) */ GCI_Max=16
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
@@ -1076,7 +1076,7 @@ typedef enum {
     /*! Color Range Green Maximum */       GFU_GreenMax = 15,
     /*! Color Range Blue Maximum */        GFU_BlueMax = 16,
     /*! Color Range Alpha Maximum */       GFU_AlphaMax = 17,
-    /*! Maximum GFU value */               GFU_MaxCount
+    /*! Maximum GFU value (equals to GFU_AlphaMax+1 currently) */ GFU_MaxCount
 } GDALRATFieldUsage;
 
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL
