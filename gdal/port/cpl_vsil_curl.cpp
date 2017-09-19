@@ -3742,6 +3742,10 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
         }
     }
 
+    CPLString osDirnameOri(osDirname);
+    while( !osDirname.empty() && osDirname.back() == '/' )
+        osDirname.erase(osDirname.size() - 1);
+
     if( osDirname.size() <= GetFSPrefix().size() )
     {
         if( pbGotFileList )
@@ -3750,10 +3754,6 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
     }
 
     CPLMutexHolder oHolder( &hMutex );
-
-    CPLString osDirnameOri(osDirname);
-    while( !osDirname.empty() && osDirname.back() == '/' )
-        osDirname.erase(osDirname.size() - 1);
 
     // If we know the file exists and is not a directory,
     // then don't try to list its content.
