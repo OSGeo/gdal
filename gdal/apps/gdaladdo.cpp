@@ -243,12 +243,14 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Clean overviews.                                                */
 /* -------------------------------------------------------------------- */
-    if ( bClean &&
-        GDALBuildOverviews( hDataset,pszResampling, 0, NULL,
-                             0, NULL, pfnProgress, NULL ) != CE_None )
+    if ( bClean )
     {
-        printf( "Cleaning overviews failed.\n" );
-        nResultStatus = 200;
+        if( GDALBuildOverviews( hDataset,pszResampling, 0, NULL,
+                             0, NULL, pfnProgress, NULL ) != CE_None )
+        {
+            printf( "Cleaning overviews failed.\n" );
+            nResultStatus = 200;
+        }
     }
     else
     {
