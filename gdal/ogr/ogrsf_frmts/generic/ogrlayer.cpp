@@ -362,7 +362,7 @@ OGRErr OGRLayer::SetAttributeFilter( const char *pszQuery )
     if( !m_poAttrQuery )
         m_poAttrQuery = new OGRFeatureQuery();
 
-    eErr = m_poAttrQuery->Compile( GetLayerDefn(), pszQuery );
+    eErr = m_poAttrQuery->Compile( this, pszQuery );
     if( eErr != OGRERR_NONE )
     {
         delete m_poAttrQuery;

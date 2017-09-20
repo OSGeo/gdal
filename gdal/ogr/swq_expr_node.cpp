@@ -489,7 +489,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
             && table_index < field_list->table_count
             && table_index > 0 )
         {
-            for( int i = 0; i < field_list->count; i++ )
+            // We deliberately browse through the list starting from the end
+            // This is for the case where the FID column exists both as
+            // FID and then real_fid_name. We want real_fid_name to be used
+            for( int i = field_list->count - 1; i >= 0; i-- )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
@@ -503,7 +506,10 @@ char *swq_expr_node::Unparse( swq_field_list *field_list, char chColumnQuote )
         }
         else if( field_index != -1 )
         {
-            for( int i = 0; i < field_list->count; i++ )
+            // We deliberately browse through the list starting from the end
+            // This is for the case where the FID column exists both as
+            // FID and then real_fid_name. We want real_fid_name to be used
+            for( int i = field_list->count - 1; i >= 0; i-- )
             {
                 if( field_list->table_ids[i] == table_index &&
                     field_list->ids[i] == field_index )
