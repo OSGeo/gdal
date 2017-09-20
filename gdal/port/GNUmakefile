@@ -57,6 +57,10 @@ ifeq ($(USE_ONLY_CRYPTODLL_ALG),yes)
 CPPFLAGS	:=	$(CPPFLAGS) -DUSE_ONLY_CRYPTODLL_ALG
 endif
 
+ifeq ($(HAVE_OPENSSL_CRYPTO),yes)
+CPPFLAGS	:=	$(CPPFLAGS) -DHAVE_OPENSSL_CRYPTO
+endif
+
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 $(OBJ): cpl_vsi_virtual.h
