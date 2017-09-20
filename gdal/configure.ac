@@ -5440,6 +5440,34 @@ fi
 AC_SUBST(HAVE_CRYPTOPP,$HAVE_CRYPTOPP)
 AC_SUBST(USE_ONLY_CRYPTODLL_ALG,$USE_ONLY_CRYPTODLL_ALG)
 
+dnl ---------------------------------------------------------------------------
+dnl crypto
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(crypto,[  --with-crypto[=ARG]       Include crypto (from openssl) support (ARG=yes, no or path)],,)
+
+HAVE_OPENSSL_CRYPTO=no
+
+AC_MSG_CHECKING([for crypto])
+
+if test "$with_crypto" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+
+elif test "$with_crypto" = "yes" -o \( "$with_crypto" = "" -a "$HAVE_CRYPTOPP" = "no" \) ; then
+
+    AC_CHECK_LIB(crypto,EVP_sha256,HAVE_OPENSSL_CRYPTO=yes)
+    if test "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+        AC_CHECK_HEADERS([openssl/bio.h])
+        if test "$ac_cv_header_openssl_bio_h" = "no"; then
+            HAVE_OPENSSL_CRYPTO=no
+        else
+            LIBS="-lcrypto $LIBS"
+        fi
+    fi
+fi
+
+AC_SUBST(HAVE_OPENSSL_CRYPTO,$HAVE_OPENSSL_CRYPTO)
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include MRF in the build
@@ -5519,6 +5547,7 @@ LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
+LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
@@ -5627,4 +5656,8 @@ fi
 dnl FileGDB v1.5
 if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
     AC_MSG_WARN([--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI])
+fi
+
+if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+    AC_MSG_WARN([--with-crypto and --with-cryptopp available. This is unusual setup, but will work.])
 fi

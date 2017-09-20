@@ -631,6 +631,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
 HAVE_ARMADILLO
@@ -1058,6 +1059,7 @@ with_jvm_lib_add_rpath
 with_rasdaman
 with_armadillo
 with_cryptopp
+with_crypto
 with_mrf
 with_null
 '
@@ -1844,6 +1846,7 @@ Optional Packages:
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
+  --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
   --without-mrf           Disable MRF driver
   --with-null             Enable NULL driver (only useful for development
                           purposes
@@ -34142,6 +34145,89 @@ USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
 
 
 
+# Check whether --with-crypto was given.
+if test "${with_crypto+set}" = set; then :
+  withval=$with_crypto;
+fi
+
+
+HAVE_OPENSSL_CRYPTO=no
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for crypto" >&5
+$as_echo_n "checking for crypto... " >&6; }
+
+if test "$with_crypto" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+
+elif test "$with_crypto" = "yes" -o \( "$with_crypto" = "" -a "$HAVE_CRYPTOPP" = "no" \) ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_sha256 in -lcrypto" >&5
+$as_echo_n "checking for EVP_sha256 in -lcrypto... " >&6; }
+if ${ac_cv_lib_crypto_EVP_sha256+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_sha256 ();
+int
+main ()
+{
+return EVP_sha256 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_crypto_EVP_sha256=yes
+else
+  ac_cv_lib_crypto_EVP_sha256=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_sha256" >&5
+$as_echo "$ac_cv_lib_crypto_EVP_sha256" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_sha256" = xyes; then :
+  HAVE_OPENSSL_CRYPTO=yes
+fi
+
+    if test "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+        for ac_header in openssl/bio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "openssl/bio.h" "ac_cv_header_openssl_bio_h" "$ac_includes_default"
+if test "x$ac_cv_header_openssl_bio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENSSL_BIO_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_openssl_bio_h" = "no"; then
+            HAVE_OPENSSL_CRYPTO=no
+        else
+            LIBS="-lcrypto $LIBS"
+        fi
+    fi
+fi
+
+HAVE_OPENSSL_CRYPTO=$HAVE_OPENSSL_CRYPTO
+
+
+
 
 # Check whether --with-mrf was given.
 if test "${with_mrf+set}" = set; then :
@@ -36639,6 +36725,9 @@ echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
 echo "  cryptopp support:          ${HAVE_CRYPTOPP}"
 
 
+echo "  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}"
+
+
 echo "  GRASS support:             ${GRASS_SETTING}"
 
 
@@ -36907,4 +36996,9 @@ fi
 if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" >&5
 $as_echo "$as_me: WARNING: --without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" >&2;}
+fi
+
+if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-crypto and --with-cryptopp available. This is unusual setup, but will work." >&5
+$as_echo "$as_me: WARNING: --with-crypto and --with-cryptopp available. This is unusual setup, but will work." >&2;}
 fi
