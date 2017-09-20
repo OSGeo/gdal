@@ -56,6 +56,10 @@ def vsigs_init():
     # To avoid user credentials in ~/.boto
     # to mess up our tests
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', '')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
 
     return 'success'
 
@@ -357,6 +361,277 @@ def vsigs_3():
     return 'success'
 
 ###############################################################################
+# Read credentials with OAuth2 refresh_token
+
+def vsigs_read_credentials_refresh_token_default_gdal_app():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
+                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+
+    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', 'REFRESH_TOKEN')
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != 'refresh_token=REFRESH_TOKEN&client_id=265656308688.apps.googleusercontent.com&client_secret=0IbTUDOYzaL6vnIdWTuQnvLz&grant_type=refresh_token':
+            sys.stderr.write('Bad POST content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        content = """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }"""
+        request.send_header('Content-Length', len(content))
+        request.end_headers()
+        request.wfile.write(content.encode('ascii'))
+
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
+    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
+
+    return 'success'
+
+###############################################################################
+# Read credentials with OAuth2 refresh_token
+
+def vsigs_read_credentials_refresh_token_custom_app():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
+                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+
+    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', 'REFRESH_TOKEN')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', 'CLIENT_ID')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', 'CLIENT_SECRET')
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+            sys.stderr.write('Bad POST content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        content = """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }"""
+        request.send_header('Content-Length', len(content))
+        request.end_headers()
+        request.wfile.write(content.encode('ascii'))
+
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
+    gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', '')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
+    gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
+
+    return 'success'
+
+###############################################################################
+# Read credentials with OAuth2 service account
+
+def vsigs_read_credentials_oauth2_service_account():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    # Generated with 'openssl genrsa -out rsa-openssl.pem 1024' and
+    # 'openssl pkcs8 -nocrypt -in rsa-openssl.pem -inform PEM -topk8 -outform PEM -out rsa-openssl.pkcs8.pem'
+    # DO NOT USE in production !!!!
+    key = """-----BEGIN PRIVATE KEY-----
+MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk
+VNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm
+i2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ
+DVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy
+TabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I
+2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd
+DrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+
+bpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg
+Wz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3
+4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5
+Kvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj
+j+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI
+yzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq
+gwE6fxOLyJDxuWRf
+-----END PRIVATE KEY-----
+"""
+
+    for i in range(2):
+
+        gdal.SetConfigOption('GO2A_AUD',
+                            'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
+        gdal.SetConfigOption('GOA2_NOW', '123456')
+
+        if i == 0:
+            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY', key)
+        else:
+            gdal.FileFromMemBuffer('/vsimem/pkey', key)
+            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY_FILE', '/vsimem/pkey')
+
+        gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', 'CLIENT_EMAIL')
+
+        gdal.VSICurlClearCache()
+
+        handler = webserver.SequentialHandler()
+
+        def method(request):
+            content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+            if content != 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D':
+                sys.stderr.write('Bad POST content: %s\n' % content)
+                request.send_response(403)
+                return
+
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            content = """{
+                    "access_token" : "ACCESS_TOKEN",
+                    "token_type" : "Bearer",
+                    "expires_in" : 3600,
+                    }"""
+            request.send_header('Content-Length', len(content))
+            request.end_headers()
+            request.wfile.write(content.encode('ascii'))
+
+        handler.add('POST', '/oauth2/v4/token', custom_method = method)
+
+        def method(request):
+            if 'Authorization' not in request.headers:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            expected_authorization = 'Bearer ACCESS_TOKEN'
+            if request.headers['Authorization'] != expected_authorization :
+                sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+                request.send_response(403)
+                return
+
+            request.send_response(200)
+            request.send_header('Content-type', 'text/plain')
+            request.send_header('Content-Length', 3)
+            request.end_headers()
+            request.wfile.write("""foo""".encode('ascii'))
+
+        handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+        try:
+            with webserver.install_http_handler(handler):
+                f = open_for_read('/vsigs/gs_fake_bucket/resource')
+                if f is None:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+                data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+                gdal.VSIFCloseL(f)
+        except:
+            if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
+                return 'skip'
+        finally:
+            gdal.SetConfigOption('GO2A_AUD', None)
+            gdal.SetConfigOption('GO2A_NOW', None)
+            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY', '')
+            gdal.SetConfigOption('GS_OAUTH2_PRIVATE_KEY_FILE', '')
+            gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', '')
+
+        if data != 'foo':
+            gdaltest.post_reason('fail')
+            print(data)
+            return 'fail'
+
+    gdal.Unlink('/vsimem/pkey')
+
+    return 'success'
+
+###############################################################################
 # Read credentials from simulated ~/.boto
 
 def vsigs_read_credentials_file():
@@ -417,6 +692,248 @@ gs_secret_access_key = bar
 
     gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
     gdal.Unlink('/vsimem/.boto')
+
+    return 'success'
+
+###############################################################################
+# Read credentials from simulated ~/.boto
+
+def vsigs_read_credentials_file_refresh_token():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '/vsimem/.boto')
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN',
+                         'http://localhost:%d/accounts.google.com/o/oauth2/token' % gdaltest.webserver_port)
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer('/vsimem/.boto', """
+[Credentials]
+gs_oauth2_refresh_token = REFRESH_TOKEN
+[OAuth2]
+client_id = CLIENT_ID
+client_secret = CLIENT_SECRET
+""")
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        if content != 'refresh_token=REFRESH_TOKEN&client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=refresh_token':
+            sys.stderr.write('Bad POST content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        content = """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }"""
+        request.send_header('Content-Length', len(content))
+        request.end_headers()
+        request.wfile.write(content.encode('ascii'))
+
+    handler.add('POST', '/accounts.google.com/o/oauth2/token', custom_method = method)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+    gdal.SetConfigOption('GOA2_AUTH_URL_TOKEN', None)
+    gdal.Unlink('/vsimem/.boto')
+
+    return 'success'
+
+###############################################################################
+# Read credentials from simulated GCE instance
+
+def vsigs_read_credentials_gce():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    if sys.platform not in ('linux', 'linux2', 'win32'):
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
+                         'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
+    # Disable hypervisor related check to test if we are really on EC2
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+
+    gdal.VSICurlClearCache()
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }""")
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # Set a fake URL to check that credentials re-use works
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL', '')
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/gs_fake_bucket/bar', 200, {}, 'bar')
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/bar')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'bar':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
+
+    return 'success'
+
+###############################################################################
+# Read credentials from simulated GCE instance with expiration of the
+# cached credentials
+
+def vsigs_read_credentials_gce_expiration():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    if sys.platform not in ('linux', 'linux2', 'win32'):
+        return 'skip'
+
+    gdal.SetConfigOption('CPL_GS_CREDENTIALS_FILE', '')
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL',
+                         'http://localhost:%d/computeMetadata/v1/instance/service-accounts/default/token' % gdaltest.webserver_port)
+    # Disable hypervisor related check to test if we are really on EC2
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
+
+    gdal.VSICurlClearCache()
+
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler = webserver.SequentialHandler()
+    # First time is used when trying to establish if GCE authentication is available
+    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 0,
+                }""")
+    # Second time is needed because f the access to th file
+    handler.add('GET', '/computeMetadata/v1/instance/service-accounts/default/token', 200, {},
+                """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 0,
+                }""")
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsigs/gs_fake_bucket/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL','')
+    gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
 
     return 'success'
 
@@ -507,11 +1024,17 @@ gdaltest_list = [ vsigs_init,
                   vsigs_start_webserver,
                   vsigs_2,
                   vsigs_3,
+                  vsigs_read_credentials_refresh_token_default_gdal_app,
+                  vsigs_read_credentials_refresh_token_custom_app,
+                  vsigs_read_credentials_oauth2_service_account,
                   vsigs_read_credentials_file,
+                  vsigs_read_credentials_file_refresh_token,
+                  vsigs_read_credentials_gce,
+                  vsigs_read_credentials_gce_expiration,
                   vsigs_stop_webserver,
                   vsigs_cleanup ]
 
-# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_2, vsigs_read_credentials_file, vsigs_stop_webserver, vsigs_cleanup ]
+# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_2, vsigs_read_credentials_oauth2_service_account, vsigs_stop_webserver, vsigs_cleanup ]
 
 gdaltest_list_extra = [ vsigs_extra_1, vsigs_cleanup ]
 

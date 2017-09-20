@@ -38,6 +38,8 @@ from osgeo import gdal
 
 SCOPES = {
     'ft' : 'https://www.googleapis.com/auth/fusiontables',
+    'storage': 'https://www.googleapis.com/auth/devstorage.read_only',
+    'storage-rw': 'https://www.googleapis.com/auth/devstorage.read_write'
     }
 
 # =============================================================================
@@ -53,7 +55,7 @@ def Usage():
     print('Usage: gdal_auth.py auth2refresh [-s scope] auth_token')
     print('Usage: gdal_auth.py refresh2access [-s scope] refresh_token')
     print('')
-    print('scopes: ft/full_url')
+    print('scopes: ft/storage/storage-rw/full_url')
     print('')
     sys.exit(1)
 
@@ -129,5 +131,9 @@ else:
 
     print('Refresh Token:'+refresh_token)
     print('')
-    print('Consider setting a configuration option like:')
-    print('GFT_REFRESH_TOKEN='+refresh_token)
+    if scope == SCOPES['ft']:
+        print('Consider setting a configuration option like:')
+        print('GFT_REFRESH_TOKEN='+refresh_token)
+    elif scope in (SCOPES['storage'], SCOPES['storage-rw']):
+        print('Consider setting a configuration option like:')
+        print('GS_OAUTH2_REFRESH_TOKEN='+refresh_token)
