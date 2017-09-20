@@ -657,7 +657,7 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (nRowsRepeated < 0 || nRowsRepeated > 65536)
+        if (nRowsRepeated < 0 || nRowsRepeated > 10000)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid value for number-rows-repeated = %d",
@@ -807,7 +807,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
 
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
-        if (nCellsRepeated < 0 || nCellsRepeated > 65536)
+        if (nCellsRepeated < 0 || nCellsRepeated > 10000)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid value for number-columns-repeated = %d",
