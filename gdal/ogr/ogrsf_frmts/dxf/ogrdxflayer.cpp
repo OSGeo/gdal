@@ -560,7 +560,10 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
         poGeom = new OGRPoint( dfX, dfY );
-    ApplyOCSTransformer( poGeom );
+
+    /* We do NOT apply the OCS for MTEXT. See https://trac.osgeo.org/gdal/ticket/7049 */
+    /* ApplyOCSTransformer( poGeom ); */
+
     poFeature->SetGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */

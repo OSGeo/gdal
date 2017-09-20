@@ -2595,6 +2595,21 @@ def ogr_dxf_39():
     return 'success'
 
 ###############################################################################
+# Test handing of OCS vs WCS for MTEXT (#7049)
+
+def ogr_dxf_40():
+
+    ds = ogr.Open('data/mtext-ocs-reduced.dxf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(5)
+    if ogrtest.check_feature_geometry(f, 'POINT (320000.0 5815007.5 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2646,6 +2661,7 @@ gdaltest_list = [
     ogr_dxf_37,
     ogr_dxf_38,
     ogr_dxf_39,
+    ogr_dxf_40,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
