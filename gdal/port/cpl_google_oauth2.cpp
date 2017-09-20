@@ -945,12 +945,20 @@ const char* GOA2Manager::GetBearer() const
                                                         m_aosOptions.List());
     }
 
+    m_nExpirationTime = 0;
+    m_osCurrentBearer.clear();
     const char* pszAccessToken = CSLFetchNameValue(papszRet, "access_token");
+    if( pszAccessToken == NULL )
+    {
+        CSLDestroy(papszRet);
+        return NULL;
+    }
     const char* pszExpires = CSLFetchNameValue(papszRet, "expires_in");
-    if( pszAccessToken && pszExpires )
+    if( pszExpires )
     {
         m_nExpirationTime = nCurTime + atoi(pszExpires);
-        m_osCurrentBearer = pszAccessToken;
     }
-    return pszAccessToken;
+    m_osCurrentBearer = pszAccessToken;
+    CSLDestroy(papszRet);
+    return m_osCurrentBearer.c_str();
 }
