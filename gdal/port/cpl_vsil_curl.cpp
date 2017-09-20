@@ -5027,9 +5027,12 @@ protected:
 
 public:
         VSIGSFSHandler() {}
+       ~VSIGSFSHandler();
 
         virtual CPLString GetFSPrefix() override { return "/vsigs/"; }
         virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+
+        virtual void        ClearCache() override;
 };
 
 /************************************************************************/
@@ -5049,6 +5052,26 @@ class VSIGSHandle CPL_FINAL : public VSICurlHandle
                      VSIGSHandleHelper* poHandleHelper);
         virtual ~VSIGSHandle();
 };
+
+/************************************************************************/
+/*                          ~VSIGSFSHandler()                           */
+/************************************************************************/
+
+VSIGSFSHandler::~VSIGSFSHandler()
+{
+    VSIGSHandleHelper::CleanMutex();
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIGSFSHandler::ClearCache()
+{
+    VSICurlFilesystemHandler::ClearCache();
+
+    VSIGSHandleHelper::ClearCache();
+}
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -5186,6 +5209,10 @@ char** VSIGSFSHandler::GetFileList( const char *pszDirname,
         }
         else
         {
+            CPLDebug("GS", "%s",
+                         sWriteFuncData.pBuffer
+                         ? sWriteFuncData.pBuffer
+                         : "(null)");
             CPLFree(sWriteFuncData.pBuffer);
             delete poHandleHelper;
             return NULL;
@@ -5519,19 +5546,51 @@ void VSIInstallS3FileHandler( void )
  * it will progressively increase the chunk size up to 2 MB to improve download
  * performance.
  *
- * The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options must be
- * set to use the AWS S3 authentication compatibility method.
- * 
- * Alternatively, it is possible to set the GDAL_HTTP_HEADER_FILE configuration
+ * The AWS S3 authentication compatibility method is used ("simple migration").
+ *
+ * Several authentication methods are possible. In order of priorities (first
+ * mentionned is the most prioritary)
+ * <ol>
+ *  <li>The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options can be
+ * set for AWS style authentication</li>
+ *  <li>The GDAL_HTTP_HEADER_FILE configuration
  * option to point to a filename of a text file with "key: value" headers.
- * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
-* 
- * Starting with GDAL 2.3, an alteranly way of providing credentials similar to
+ * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.</li>
+ *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_REFRESH_TOKEN
+ * configuration option can be set to use OAuth2 client authentication.
+ * See http://code.google.com/apis/accounts/docs/OAuth2.html
+ * This refresh token can be obtained with the "gdal_auth.py -s storage" or
+ * "gdal_auth.py -s storage-rw" script
+ * Note: instead of using the default GDAL application credentials, you may
+ * define the GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET configuration
+ * options (need to be defined both for gdal_auth.py and later execution of /vsigs)
+ * </li>
+ *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_PRIVATE_KEY (or GS_OAUTH2_PRIVATE_KEY_FILE)
+ * and GS_OAUTH2_CLIENT_EMAIL can be set to use OAuth2 service account authentication.
+ * See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
+ * for more details on this authentication method.
+ * The GS_OAUTH2_PRIVATE_KEY configuration option must contain the private key
+ * as a inline string, starting with "-----BEGIN PRIVATE KEY-----"
+ * Alternatively the GS_OAUTH2_PRIVATE_KEY_FILE configuration option can be set
+ * to indicate a filename that contains such a private key.
+ * The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader"
+ * permissions to the service account. The GS_OAUTH2_SCOPE configuration option
+ * can be set to change the default permission scope from
+ * "https://www.googleapis.com/auth/devstorage.read_write"
+ * to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+ *  <li>(GDAL &gt;= 2.3) An alternate way of providing credentials similar to
  * what the "gsutil" command line utility or Boto3 support can be used. If the
  * above mentioned environment variables are not provided, the ~/.boto
  * or %UserProfile%/.boto file will be read (or the file pointed by
  * CPL_GS_CREDENTIALS_FILE) for the gs_secret_access_key and gs_access_key_id
- * entries.
+ * entries for AWS style authentication. If not found, it will look for the
+ * gs_oauth2_refresh_token (and optionally client_id and client_secret) entry
+ * for OAuth2 client authentication.</li>
+ *  <li>(GDAL &gt;= 2.3) Finally if none of the above method succeeds, the code
+ * will check if the current machine is a Google Compute Engine instance, and
+ * if so will use the permissions associated to it (using the default service
+ * account associated with the VM)</li>
+ * </ol>
  *
  * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
  * options can be used to define a proxy server. The syntax to use is the one of

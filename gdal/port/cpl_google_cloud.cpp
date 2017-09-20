@@ -25,16 +25,78 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-//! @cond Doxygen_Suppress
-
 #include "cpl_google_cloud.h"
 #include "cpl_vsi_error.h"
 #include "cpl_sha1.h"
 #include "cpl_time.h"
+#include "cpl_http.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
+
+static CPLMutex *hMutex = NULL;
+static bool bFirstTimeForDebugMessage = true;
+static GOA2Manager oStaticManager;
+
+
+/************************************************************************/
+/*                 CPLIsMachinePotentiallyGCEInstance()                 */
+/************************************************************************/
+
+/** Returns whether the current machine is potentially a Google Compute Engine instance.
+ * 
+ * This does a very quick check without network access. To confirm if the
+ * machine is effectively a GCE instance, metadata.google.internal must be
+ * queried.
+ * 
+ * @return true if the current machine is potentially a GCE instance.
+ * @since GDAL 2.3
+ */
+bool CPLIsMachinePotentiallyGCEInstance()
+{
+#ifdef __linux
+    // If /var/log/kern.log exists, it should contain a string like
+    // DMI: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+    bool bIsMachinePotentialGCEInstance = true;
+    if( CPLTestBool(CPLGetConfigOption(
+                        "CPL_GCE_CHECK_LOCAL_FILES", "YES")) )
+    {
+        VSILFILE* fp = VSIFOpenL("/var/log/kern.log", "rb"); // Ubuntu 16.04
+        if( fp == NULL )
+            fp = VSIFOpenL("/var/log/dmesg", "rb"); // CentOS 6
+        if( fp != NULL )
+        {
+            const char* pszLine;
+            bIsMachinePotentialGCEInstance = false;
+            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            {
+                if( strstr(pszLine, "DMI:") != NULL )
+                {
+                    bIsMachinePotentialGCEInstance =
+                                strstr(pszLine, "Google Compute") != NULL;
+                    break;
+                }
+            }
+            VSIFCloseL(fp);
+        }
+    }
+    return bIsMachinePotentialGCEInstance;
+#elif defined(WIN32)
+    // We might add later a way of detecting if we run on GCE using WMI
+    // See https://cloud.google.com/compute/docs/instances/managing-instances
+    // For now, unconditionnaly try
+    return true;
+#else
+    // At time of writing GCE instances can be only Linux or Windows
+    return false;
+#endif
+}
+
+
+//! @cond Doxygen_Suppress
+
 
 /************************************************************************/
 /*                            GetGSHeaders()                            */
@@ -95,13 +157,15 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osBucketObjectKey,
                                       const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
-                                      bool bUseHeaderFile ) :
+                                      bool bUseHeaderFile,
+                                      const GOA2Manager& oManager ) :
     m_osURL(osEndpoint + osBucketObjectKey),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
     m_osAccessKeyId(osAccessKeyId),
-    m_bUseHeaderFile(bUseHeaderFile)
+    m_bUseHeaderFile(bUseHeaderFile),
+    m_oManager(oManager)
 {}
 
 /************************************************************************/
@@ -120,6 +184,9 @@ VSIGSHandleHelper::~VSIGSHandleHelper()
 bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
                                                 CPLString& osSecretAccessKey,
                                                 CPLString& osAccessKeyId,
+                                                CPLString& osOAuth2RefreshToken,
+                                                CPLString& osOAuth2ClientId,
+                                                CPLString& osOAuth2ClientSecret,
                                                 CPLString& osCredentials)
 {
 #ifdef WIN32
@@ -137,26 +204,45 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
     if( fp != NULL )
     {
         const char* pszLine;
-        bool bInProfile = false;
+        bool bInCredentials = false;
+        bool bInOAuth2 = false;
         while( (pszLine = CPLReadLineL(fp)) != NULL )
         {
             if( pszLine[0] == '[' )
             {
-                if( bInProfile )
-                    break;
+                bInCredentials = false;
+                bInOAuth2 = false;
+
                 if( CPLString(pszLine) == "[Credentials]" )
-                    bInProfile = true;
+                    bInCredentials = true;
+                else if( CPLString(pszLine) == "[OAuth2]" )
+                    bInOAuth2 = true;
             }
-            else if( bInProfile )
+            else if( bInCredentials )
             {
                 char* pszKey = NULL;
                 const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if( pszKey && pszValue )
                 {
                     if( EQUAL(pszKey, "gs_access_key_id") )
-                        osAccessKeyId = pszValue;
+                        osAccessKeyId = CPLString(pszValue).Trim();
                     else if( EQUAL(pszKey, "gs_secret_access_key") )
-                        osSecretAccessKey = pszValue;
+                        osSecretAccessKey = CPLString(pszValue).Trim();
+                    else if( EQUAL(pszKey, "gs_oauth2_refresh_token") )
+                        osOAuth2RefreshToken = CPLString(pszValue).Trim();
+                }
+                CPLFree(pszKey);
+            }
+            else if( bInOAuth2 )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "client_id") )
+                        osOAuth2ClientId = CPLString(pszValue).Trim();
+                    else if( EQUAL(pszKey, "client_secret") )
+                        osOAuth2ClientSecret = CPLString(pszValue).Trim();
                 }
                 CPLFree(pszKey);
             }
@@ -164,7 +250,8 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
         VSIFCloseL(fp);
     }
 
-    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+    return (!osAccessKeyId.empty() && !osSecretAccessKey.empty()) ||
+            !osOAuth2RefreshToken.empty();
 }
 
 /************************************************************************/
@@ -173,7 +260,8 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 
 bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
-                                         CPLString& osHeaderFile)
+                                         CPLString& osHeaderFile,
+                                         GOA2Manager& oManager)
 {
     osSecretAccessKey.clear();
     osAccessKeyId.clear();
@@ -189,17 +277,17 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         {
             VSIError(VSIE_AWSInvalidCredentials,
                     "GS_ACCESS_KEY_ID configuration option not defined");
+            bFirstTimeForDebugMessage = false;
             return false;
         }
 
-        return true;
-    }
-
-    // Next try reading from ~/.boto
-    CPLString osCredentials;
-    if( GetConfigurationFromConfigFile(osSecretAccessKey, osAccessKeyId,
-                                       osCredentials) )
-    {
+        if( bFirstTimeForDebugMessage )
+        {
+            CPLDebug("GS", 
+                     "Using GS_SECRET_ACCESS_KEY and "
+                     "GS_ACCESS_KEY_ID configuration options");
+        }
+        bFirstTimeForDebugMessage = false;
         return true;
     }
 
@@ -207,12 +295,235 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "");
     if( !osHeaderFile.empty() )
     {
+        if( bFirstTimeForDebugMessage )
+        {
+            CPLDebug("GS", "Using GDAL_HTTP_HEADER_FILE=%s",
+                     osHeaderFile.c_str());
+        }
+        bFirstTimeForDebugMessage = false;
         return true;
     }
 
-    VSIError(VSIE_AWSInvalidCredentials,
-                "GS_SECRET_ACCESS_KEY configuration option and %s not defined",
-                osCredentials.c_str());
+    CPLString osRefreshToken( CPLGetConfigOption("GS_OAUTH2_REFRESH_TOKEN",
+                                                 "") );
+    if( !osRefreshToken.empty() )
+    {
+        if( oStaticManager.GetAuthMethod() ==
+                                GOA2Manager::ACCESS_TOKEN_FROM_REFRESH )
+        {
+            CPLMutexHolder oHolder( &hMutex );
+            oManager = oStaticManager;
+            return true;
+        }
+
+        CPLString osClientId =
+            CPLGetConfigOption("GS_OAUTH2_CLIENT_ID", "");
+        CPLString osClientSecret =
+            CPLGetConfigOption("GS_OAUTH2_CLIENT_SECRET", "");
+
+        int nCount = (!osClientId.empty() ? 1 : 0) +
+                     (!osClientSecret.empty() ? 1 : 0);
+        if( nCount == 1 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Either both or none of GS_OAUTH2_CLIENT_ID and "
+                     "GS_OAUTH2_CLIENT_SECRET must be set");
+            return false;
+        }
+
+        if( bFirstTimeForDebugMessage )
+        {
+            CPLString osMsg(
+                        "Using GS_OAUTH2_REFRESH_TOKEN configuration option");
+            if( osClientId.empty() )
+                osMsg += " and GDAL default client_id/client_secret";
+            else
+                osMsg += " and GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET";
+            CPLDebug("GS", "%s", osMsg.c_str());
+        }
+        bFirstTimeForDebugMessage = false;
+
+        return oManager.SetAuthFromRefreshToken(
+            osRefreshToken, osClientId, osClientSecret, NULL);
+    }
+
+    CPLString osPrivateKey =
+        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY", "");
+    CPLString osPrivateKeyFile =
+        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", "");
+    if( !osPrivateKey.empty() || !osPrivateKeyFile.empty() )
+    {
+        if( !osPrivateKeyFile.empty() )
+        {
+            VSILFILE* fp = VSIFOpenL(osPrivateKeyFile, "rb");
+            if( fp == NULL )
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                        "Cannot open %s", osPrivateKeyFile.c_str());
+                bFirstTimeForDebugMessage = false;
+                return false;
+            }
+            else
+            {
+                char* pabyBuffer = static_cast<char*>(CPLMalloc(32768));
+                size_t nRead = VSIFReadL(pabyBuffer, 1, 32768, fp);
+                osPrivateKey.assign(pabyBuffer, nRead);
+                VSIFCloseL(fp);
+                CPLFree(pabyBuffer);
+            }
+        }
+        osPrivateKey.replaceAll("\\n", "\n");
+
+        CPLString osClientEmail =
+            CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", "");
+        if( osClientEmail.empty() )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GS_OAUTH2_CLIENT_EMAIL not defined");
+            bFirstTimeForDebugMessage = false;
+            return false;
+        }
+        const char* pszScope =
+            CPLGetConfigOption("GS_OAUTH2_SCOPE",
+                "https://www.googleapis.com/auth/devstorage.read_write");
+
+        if( bFirstTimeForDebugMessage )
+        {
+            CPLDebug("GS",
+                     "Using %s, GS_OAUTH2_CLIENT_EMAIL and GS_OAUTH2_SCOPE=%s "
+                     "configuration options",
+                     !osPrivateKeyFile.empty() ?
+                        "GS_OAUTH2_PRIVATE_KEY_FILE" : "GS_OAUTH2_PRIVATE_KEY",
+                     pszScope);
+        }
+        bFirstTimeForDebugMessage = false;
+
+        return oManager.SetAuthFromServiceAccount(
+                osPrivateKey,
+                osClientEmail,
+                pszScope,
+                NULL,
+                NULL);
+    }
+
+    // Next try reading from ~/.boto
+    CPLString osCredentials;
+    CPLString osOAuth2RefreshToken;
+    CPLString osOAuth2ClientId;
+    CPLString osOAuth2ClientSecret;
+    if( GetConfigurationFromConfigFile(osSecretAccessKey,
+                                       osAccessKeyId,
+                                       osOAuth2RefreshToken,
+                                       osOAuth2ClientId,
+                                       osOAuth2ClientSecret,
+                                       osCredentials) )
+    {
+        if( !osOAuth2RefreshToken.empty() )
+        {
+            if( oStaticManager.GetAuthMethod() ==
+                                    GOA2Manager::ACCESS_TOKEN_FROM_REFRESH )
+            {
+                CPLMutexHolder oHolder( &hMutex );
+                oManager = oStaticManager;
+                return true;
+            }
+
+            CPLString osClientId =
+                CPLGetConfigOption("GS_OAUTH2_CLIENT_ID", "");
+            CPLString osClientSecret =
+                CPLGetConfigOption("GS_OAUTH2_CLIENT_SECRET", "");
+            bool bClientInfoFromEnv = false;
+            bool bClientInfoFromFile = false;
+
+            int nCount = (!osClientId.empty() ? 1 : 0) +
+                         (!osClientSecret.empty() ? 1 : 0);
+            if( nCount == 1 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Either both or none of GS_OAUTH2_CLIENT_ID and "
+                        "GS_OAUTH2_CLIENT_SECRET must be set");
+                return false;
+            }
+            else if( nCount == 2)
+            {
+                bClientInfoFromEnv = true;
+            }
+            else if( nCount == 0 )
+            {
+                nCount = (!osOAuth2ClientId.empty() ? 1 : 0) +
+                         (!osOAuth2ClientSecret.empty() ? 1 : 0);
+                if( nCount == 1 )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "Either both or none of client_id and "
+                            "client_secret from %s must be set",
+                            osCredentials.c_str());
+                    return false;
+                }
+                else if( nCount == 2)
+                {
+                    osClientId = osOAuth2ClientId;
+                    osClientSecret = osOAuth2ClientSecret;
+                    bClientInfoFromFile = true;
+                }
+            }
+
+            if( bFirstTimeForDebugMessage )
+            {
+                CPLString osMsg;
+                osMsg.Printf("Using gs_oauth2_refresh_token from %s",
+                             osCredentials.c_str());
+                if( bClientInfoFromEnv )
+                    osMsg += " and GS_OAUTH2_CLIENT_ID and "
+                             "GS_OAUTH2_CLIENT_SECRET configuration options";
+                else if( bClientInfoFromFile )
+                    osMsg += CPLSPrintf(" and client_id and client_secret from %s",
+                                        osCredentials.c_str());
+                else
+                    osMsg += " and GDAL default client_id/client_secret";
+                CPLDebug("GS", "%s", osMsg.c_str());
+            }
+            bFirstTimeForDebugMessage = false;
+            return oManager.SetAuthFromRefreshToken(
+                osOAuth2RefreshToken.c_str(), osClientId, osClientSecret,
+                NULL);
+        }
+        else
+        {
+            CPLDebug("GS",
+                     "Using gs_access_key_id and gs_secret_access_key from %s",
+                     osCredentials.c_str());
+            bFirstTimeForDebugMessage = false;
+            return true;
+        }
+    }
+
+    if( oStaticManager.GetAuthMethod() == GOA2Manager::GCE )
+    {
+        CPLMutexHolder oHolder( &hMutex );
+        oManager = oStaticManager;
+        return true;
+    }
+    else if( CPLIsMachinePotentiallyGCEInstance() )
+    {
+        oManager.SetAuthFromGCE(NULL);
+        if( oManager.GetBearer() != NULL )
+        {
+            CPLDebug("GS", "Using GCE inherited permissions");
+            bFirstTimeForDebugMessage = false;
+            return true;
+        }
+    }
+
+    CPLString osMsg;
+    osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
+                 "GS_OAUTH2_REFRESH_TOKEN or "
+                 "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL configuration "
+                 "options and %s not defined",
+                 osCredentials.c_str());
+
+    CPLDebug("GS", "%s", osMsg.c_str());
+    VSIError(VSIE_AWSInvalidCredentials, "%s", osMsg.c_str());
     return false;
 }
 
@@ -232,8 +543,10 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
     CPLString osHeaderFile;
+    GOA2Manager oManager;
 
-    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId, osHeaderFile) )
+    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId, osHeaderFile,
+                          oManager) )
     {
         return NULL;
     }
@@ -242,7 +555,8 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
                                   osBucketObject,
                                   osSecretAccessKey,
                                   osAccessKeyId,
-                                  !osHeaderFile.empty() );
+                                  !osHeaderFile.empty(),
+                                  oManager );
 }
 
 /************************************************************************/
@@ -254,10 +568,50 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb ) const
 {
     if( m_bUseHeaderFile )
         return NULL;
+
+    if( m_oManager.GetAuthMethod() != GOA2Manager::NONE )
+    {
+        const char* pszBearer = m_oManager.GetBearer();
+        if( pszBearer == NULL )
+            return NULL;
+
+        {
+            CPLMutexHolder oHolder( &hMutex );
+            oStaticManager = m_oManager;
+        }
+
+        struct curl_slist *headers=NULL;
+        headers = curl_slist_append(
+            headers, CPLSPrintf("Authorization: Bearer %s", pszBearer));
+        return headers;
+    }
+
     return GetGSHeaders( osVerb,
                          "/" + m_osBucketObjectKey,
                          m_osSecretAccessKey,
                          m_osAccessKeyId );
+}
+
+/************************************************************************/
+/*                          CleanMutex()                                */
+/************************************************************************/
+
+void VSIGSHandleHelper::CleanMutex()
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex( hMutex );
+    hMutex = NULL;
+}
+/************************************************************************/
+/*                          ClearCache()                                */
+/************************************************************************/
+
+void VSIGSHandleHelper::ClearCache()
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    oStaticManager = GOA2Manager();
+    bFirstTimeForDebugMessage = true;
 }
 
 #endif

@@ -124,6 +124,8 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
 char** CPLHTTPGetOptionsFromEnv();
 /*! @endcond */
 
+bool CPLIsMachinePotentiallyGCEInstance();
+
 /** Manager of Google OAuth2 authentication.
  * 
  * This class handles different authentication methods and handles renewal

@@ -520,6 +520,8 @@ class CPL_DLL CPLStringList
 
     /** Return list. Ownership remains to the object */
     char **List() { return papszList; }
+    /** Return list. Ownership remains to the object */
+    char **List() const { return papszList; }
     char **StealList();
 
     CPLStringList &Sort();

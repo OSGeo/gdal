@@ -858,6 +858,8 @@ void VSIS3HandleHelper::CleanMutex()
 
 void VSIS3HandleHelper::ClearCache()
 {
+    CPLMutexHolder oHolder( &hMutex );
+
     osIAMRole.clear();
     osGlobalAccessKeyId.clear();
     osGlobalSecretAccessKey.clear();
