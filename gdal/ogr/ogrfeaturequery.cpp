@@ -124,11 +124,18 @@ OGRFeatureQuery::Compile( OGRLayer *poLayer,
     }
 
     const char* pszFIDColumn = NULL;
-    const bool bMustAddFID =
-        (poLayer != NULL &&
-         (pszFIDColumn = poLayer->GetFIDColumn()) != NULL &&
-         !EQUAL(pszFIDColumn, "") &&
-         !EQUAL(pszFIDColumn, "FID"));
+    bool bMustAddFID = false;
+    if( poLayer != NULL )
+    {
+        pszFIDColumn = poLayer->GetFIDColumn();
+        if( pszFIDColumn != NULL )
+        {
+            if( !EQUAL(pszFIDColumn, "") && !EQUAL(pszFIDColumn, "FID") )
+            {
+                bMustAddFID = true;
+            }
+        }
+    }
 
     // Build list of fields.
     const int nFieldCount =
