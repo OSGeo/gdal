@@ -30,6 +30,7 @@
 
 import fnmatch
 import os
+import stat
 import sys
 
 from osgeo import gdal
@@ -85,12 +86,13 @@ class ScaledProgress:
                                                  message )
 
 def gdal_cp_single(srcfile, targetfile, progress):
-    try:
-        if os.path.isdir(targetfile):
-            (head, tail) = os.path.split(srcfile)
-            targetfile = targetfile + '/' + tail
-    except:
-        pass
+    if targetfile.endswith('/'):
+        stat_res = gdal.VSIStatL(targetfile)
+    else:
+        stat_res = gdal.VSIStatL(targetfile + '/')
+    if stat_res and stat.S_ISDIR(stat_res.mode):
+        (head, tail) = os.path.split(srcfile)
+        targetfile = targetfile + '/' + tail
 
     fin = gdal.VSIFOpenL(srcfile, "rb")
     if fin is None:
