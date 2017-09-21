@@ -65,7 +65,7 @@ CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 class IVSIS3LikeHandleHelper
 {
 public:
-        virtual ~IVSIS3LikeHandleHelper() {};
+        virtual ~IVSIS3LikeHandleHelper() {}
 
         virtual void ResetQueryParameters() = 0;
         virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) = 0;
