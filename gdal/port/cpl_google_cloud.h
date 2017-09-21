@@ -79,14 +79,14 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix);
 
-        virtual void ResetQueryParameters() override;
-        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) override;
+        virtual void ResetQueryParameters() CPL_OVERRIDE;
+        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
                                           const void *pabyDataContent = NULL,
-                                          size_t nBytesContent = 0) const override;
+                                          size_t nBytesContent = 0) const CPL_OVERRIDE;
 
-        const CPLString& GetURL() const override { return m_osURL; }
+        const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
 
         static void CleanMutex();
         static void ClearCache();
