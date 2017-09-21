@@ -138,13 +138,13 @@ def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, rec
                         longformat, recurse, depth - 1, recurseInZip, recurseInTGZ)
 
 def Usage():
-    print('Usage: gdal_ls [-l] [-R] [-depth d] [-Rzip] [-Rtgz] name_of_virtual_directory')
+    print('Usage: gdal_ls [-l] [-r] [-depth d] [-Rzip] [-Rtgz] name_of_virtual_directory')
     print('')
     print('Display the list of files in a virtual directory, like /vsicurl or /vsizip')
     print('')
     print('Options :')
     print(' -l : use a long listing format (same as ls -l)')
-    print(' -R : list subdirectories recursively')
+    print(' -r : list subdirectories recursively')
     print(' -depth d : recurse until depth d')
     print(' -Rzip : list content of .zip archives')
     print(' -Rtgz : list content of .tar.gz/.tgz archives (potentially slow on /vsicurl/)')
@@ -168,7 +168,10 @@ def gdal_ls(argv, fout = sys.stdout):
     while i < argc:
         if argv[i] == '-l':
             longformat = True
-        elif argv[i] == '-R':
+        elif argv[i] == '-lr':
+            longformat = True
+            recurse = True
+        elif argv[i] == '-R' or argv[i] == '-r':
             recurse = True
         elif argv[i] == '-Rzip':
             recurseInZip = True
