@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import stat
 import sys
 from osgeo import gdal
 
@@ -173,6 +174,8 @@ def vsigs_start_webserver():
         return 'skip'
 
     gdal.SetConfigOption('CPL_GS_ENDPOINT', 'http://127.0.0.1:%d/' % gdaltest.webserver_port)
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
 
     return 'success'
 
@@ -192,6 +195,8 @@ def vsigs_2():
         if 'foo' not in request.headers or request.headers['foo'] != 'bar':
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
 
         request.send_response(200)
@@ -222,6 +227,8 @@ def vsigs_2():
 
 
     def method(request):
+
+        request.protocol_version = 'HTTP/1.1'
         if 'Authorization' not in request.headers:
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
@@ -235,6 +242,7 @@ def vsigs_2():
         request.send_response(200)
         request.send_header('Content-type', 'text/plain')
         request.send_header('Content-Length', 3)
+        request.send_header('Connection', 'close')
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
@@ -269,8 +277,8 @@ def vsigs_2():
             return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/gs_fake_bucket/resource2.bin', 200,
-                {'Content-Length': 1000000})
+    handler.add('GET', '/gs_fake_bucket/resource2.bin', 206,
+                {'Content-Range': 'bytes 0-0/1000000'} , 'x')
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsigs/gs_fake_bucket/resource2.bin')
         if stat_res is None or stat_res.size != 1000000:
@@ -299,13 +307,13 @@ def vsigs_2():
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
 
-def vsigs_3():
+def vsigs_readdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket2?delimiter=/&prefix=a_dir/', 200,
+    handler.add('GET', '/gs_fake_bucket2/?delimiter=/&prefix=a_dir/', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -318,7 +326,7 @@ def vsigs_3():
                         </Contents>
                     </ListBucketResult>
                 """)
-    handler.add('GET', '/gs_fake_bucket2?delimiter=/&marker=bla&prefix=a_dir/', 200,
+    handler.add('GET', '/gs_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -357,6 +365,128 @@ def vsigs_3():
     if gdal.VSIStatL('/vsigs/gs_fake_bucket2/a_dir/resource3.bin').mtime != 1:
         gdaltest.post_reason('fail')
         return 'fail'
+
+    # ReadDir on something known to be a file shouldn't cause network access
+    dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
+    if dir_contents is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test write
+
+def vsigs_write():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.VSICurlClearCache()
+
+    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = 'HTTP/1.1'
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        content = ''
+        while True:
+            numchars = int(request.rfile.readline().strip(), 16)
+            content += request.rfile.read(numchars).decode('ascii')
+            request.rfile.read(2)
+            if numchars == 0:
+                break
+        if len(content) != 40000:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
+            return
+        request.send_response(200)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+
+    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    with webserver.install_http_handler(handler):
+        ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
+        ret += gdal.VSIFWriteL('x' * 5000, 1, 5000, f)
+        if ret != 40000:
+            gdaltest.post_reason('fail')
+            print(ret)
+            gdal.VSIFCloseL(f)
+            return 'fail'
+        gdal.VSIFCloseL(f)
+
+
+    # Simulate failure while transmitting
+    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = 'HTTP/1.1'
+        request.send_response(403)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+
+    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(ret)
+            gdal.VSIFCloseL(f)
+            return 'fail'
+    gdal.VSIFCloseL(f)
+
+
+    # Simulate failure at end of transfer
+    f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = 'HTTP/1.1'
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+        content = ''
+        while True:
+            numchars = int(request.rfile.readline().strip(), 16)
+            content += request.rfile.read(numchars).decode('ascii')
+            request.rfile.read(2)
+            if numchars == 0:
+                break
+        request.send_response(403)
+        request.send_header('Content-Length', 0)
+        request.end_headers()
+
+
+    handler.add('PUT', '/test_copy/file.bin', custom_method = method)
+    with webserver.install_http_handler(handler):
+        ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
+        if ret != 35000:
+            gdaltest.post_reason('fail')
+            print(ret)
+            gdal.VSIFCloseL(f)
+            return 'fail'
+        with gdaltest.error_handler():
+            ret = gdal.VSIFCloseL(f)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -943,6 +1073,10 @@ def vsigs_stop_webserver():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
+
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
@@ -955,17 +1089,125 @@ def vsigs_extra_1():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
-        print('Missing GS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
-        return 'skip'
-    elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
-        print('Missing GS_ACCESS_KEY_ID for running gdaltest_list_extra')
-        return 'skip'
-    elif gdal.GetConfigOption('GS_RESOURCE') is None:
+    #if gdal.GetConfigOption('GS_SECRET_ACCESS_KEY') is None:
+    #    print('Missing GS_SECRET_ACCESS_KEY for running gdaltest_list_extra')
+    #    return 'skip'
+    #elif gdal.GetConfigOption('GS_ACCESS_KEY_ID') is None:
+    #    print('Missing GS_ACCESS_KEY_ID for running gdaltest_list_extra')
+    #    return 'skip'
+
+    gs_resource = gdal.GetConfigOption('GS_RESOURCE')
+    if gs_resource is None:
         print('Missing GS_RESOURCE for running gdaltest_list_extra')
         return 'skip'
 
-    f = open_for_read('/vsigs/' + gdal.GetConfigOption('GS_RESOURCE'))
+    if gs_resource.find('/') < 0:
+        path = '/vsigs/' + gs_resource
+        statres = gdal.VSIStatL(path)
+        if statres is None or not stat.S_ISDIR(statres.mode):
+            gdaltest.post_reason('fail')
+            print('%s is not a valid bucket' % path)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if readdir is None:
+            gdaltest.post_reason('fail')
+            print('ReadDir() should not return empty list')
+            return 'fail'
+        for filename in readdir:
+            subpath = path + '/' + filename
+            if gdal.VSIStatL(subpath) is None:
+                gdaltest.post_reason('fail')
+                print('Stat(%s) should not return an error' % subpath)
+                return 'fail'
+
+        unique_id = 'vsigs_test'
+        subpath = path + '/' + unique_id
+        ret = gdal.Mkdir(subpath, 0)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if unique_id not in readdir:
+            gdaltest.post_reason('fail')
+            print('ReadDir(%s) should contain %s' % (path, unique_id))
+            print(readdir)
+            return 'fail'
+
+        ret = gdal.Mkdir(subpath, 0)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) repeated should return an error' % subpath)
+            return 'fail'
+
+        ret = gdal.Rmdir(subpath)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        readdir = gdal.ReadDir(path)
+        if unique_id in readdir:
+            gdaltest.post_reason('fail')
+            print('ReadDir(%s) should not contain %s' % (path, unique_id))
+            print(readdir)
+            return 'fail'
+
+        ret = gdal.Rmdir(subpath)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) repeated should return an error' % subpath)
+            return 'fail'
+
+        ret = gdal.Mkdir(subpath, 0)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Mkdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+        f = gdal.VSIFOpenL(subpath + '/test.txt', 'wb')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.VSIFWriteL('hello', 1, 5, f)
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Rmdir(subpath)
+        if ret == 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) on non empty directory should return an error' % subpath)
+            return 'fail'
+
+        f = gdal.VSIFOpenL(subpath + '/test.txt', 'rb')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 5, f).decode('utf-8')
+        if data != 'hello':
+            gdaltest.post_reason('fail')
+            print(data)
+            return 'fail'
+        gdal.VSIFCloseL(f)
+
+        ret = gdal.Unlink(subpath + '/test.txt')
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
+            return 'fail'
+
+
+        ret = gdal.Rmdir(subpath)
+        if ret < 0:
+            gdaltest.post_reason('fail')
+            print('Rmdir(%s) should not return an error' % subpath)
+            return 'fail'
+
+
+        return 'success'
+
+    f = open_for_read('/vsigs/' + gs_resource)
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -978,7 +1220,7 @@ def vsigs_extra_1():
         return 'fail'
 
     # Same with /vsigs_streaming/
-    f = open_for_read('/vsigs_streaming/' + gdal.GetConfigOption('GS_RESOURCE'))
+    f = open_for_read('/vsigs_streaming/' + gs_resource)
     if f is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1003,7 +1245,7 @@ def vsigs_extra_1():
 
     # Invalid resource
     gdal.ErrorReset()
-    f = open_for_read('/vsigs_streaming/' + gdal.GetConfigOption('GS_RESOURCE') + '/invalid_resource.baz')
+    f = open_for_read('/vsigs_streaming/' + gs_resource + '/invalid_resource.baz')
     if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
@@ -1023,7 +1265,8 @@ gdaltest_list = [ vsigs_init,
                   vsigs_1,
                   vsigs_start_webserver,
                   vsigs_2,
-                  vsigs_3,
+                  vsigs_readdir,
+                  vsigs_write,
                   vsigs_read_credentials_refresh_token_default_gdal_app,
                   vsigs_read_credentials_refresh_token_custom_app,
                   vsigs_read_credentials_oauth2_service_account,
@@ -1034,14 +1277,17 @@ gdaltest_list = [ vsigs_init,
                   vsigs_stop_webserver,
                   vsigs_cleanup ]
 
-# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_2, vsigs_read_credentials_oauth2_service_account, vsigs_stop_webserver, vsigs_cleanup ]
+# gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 
-gdaltest_list_extra = [ vsigs_extra_1, vsigs_cleanup ]
+gdaltest_list_extra = [ vsigs_extra_1 ]
 
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'vsigs' )
 
-    gdaltest.run_tests( gdaltest_list + gdaltest_list_extra )
+    if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
+        gdaltest.run_tests( gdaltest_list_extra )
+    else:
+        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ vsigs_cleanup ] )
 
     gdaltest.summarize()

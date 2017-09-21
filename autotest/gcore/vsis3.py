@@ -161,6 +161,7 @@ def get_s3_fake_bucket_resource_method(request):
     request.send_response(200)
     request.send_header('Content-type', 'text/plain')
     request.send_header('Content-Length', 3)
+    request.send_header('Connection', 'close')
     request.end_headers()
     request.wfile.write("""foo""".encode('ascii'))
 
@@ -250,12 +251,14 @@ def vsis3_2():
             request.send_header('Content-type', 'text/plain')
             request.send_header('Content-Range', 'bytes 0-4095/1000000')
             request.send_header('Content-Length', 4096)
+            request.send_header('Connection', 'close')
             request.end_headers()
             request.wfile.write(''.join('a' for i in range(4096)).encode('ascii'))
         else:
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')
             request.send_header('Content-Length', 1000000)
+            request.send_header('Connection', 'close')
             request.end_headers()
             request.wfile.write(''.join('a' for i in range(1000000)).encode('ascii'))
 
@@ -277,7 +280,8 @@ def vsis3_2():
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/s3_fake_bucket/resource2.bin', 200,
                 { 'Content-type': 'text/plain',
-                  'Content-Length': 1000000 })
+                  'Content-Length': 1000000,
+                  'Connection': 'close'})
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsis3_streaming/s3_fake_bucket/resource2.bin')
     if stat_res is None or stat_res.size != 1000000:
@@ -296,9 +300,10 @@ def vsis3_2():
         if request.headers['Authorization'].find('us-east-1') >= 0:
             request.send_response(400)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
+            request.send_header('Connection', 'close')
             request.end_headers()
             request.wfile.write(response.encode('ascii'))
         else:
@@ -312,9 +317,10 @@ def vsis3_2():
         if request.headers['Authorization'].find('us-west-2') >= 0 and request.headers['Host'].startswith('127.0.0.1'):
             request.send_response(301)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>PermanentRedirect</Code><Endpoint>localhost:%d</Endpoint></Error>' % request.server.port
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
+            request.send_header('Connection', 'close')
             request.end_headers()
             request.wfile.write(response.encode('ascii'))
         else:
@@ -329,6 +335,7 @@ def vsis3_2():
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')
             request.send_header('Content-Length', 3)
+            request.send_header('Connection', 'close')
             request.end_headers()
             request.wfile.write("""foo""".encode('ascii'))
         else:
@@ -384,9 +391,10 @@ def vsis3_2():
         request.protocol_version = 'HTTP/1.1'
         request.send_response(400)
         response = 'bla'
-        response = '%x\r\n%s' % (len(response), response)
+        response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
         request.send_header('Content-type', 'application/xml')
         request.send_header('Transfer-Encoding', 'chunked')
+        request.send_header('Connection', 'close')
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
@@ -404,10 +412,11 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
-    response = '%x\r\n%s' % (len(response), response)
+    response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/invalid_xml_error', 400,
                 { 'Content-type': 'application/xml',
-                  'Transfer-Encoding': 'chunked' }, response)
+                  'Transfer-Encoding': 'chunked',
+                  'Connection': 'close' }, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -420,10 +429,11 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
-    response = '%x\r\n%s' % (len(response), response)
+    response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_code_in_error', 400,
                 { 'Content-type': 'application/xml',
-                  'Transfer-Encoding': 'chunked' }, response)
+                  'Transfer-Encoding': 'chunked',
+                  'Connection': 'close' }, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -436,10 +446,11 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
-    response = '%x\r\n%s' % (len(response), response)
+    response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error', 400,
                 { 'Content-type': 'application/xml',
-                  'Transfer-Encoding': 'chunked' }, response)
+                  'Transfer-Encoding': 'chunked',
+                  'Connection': 'close' }, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -451,10 +462,11 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
-    response = '%x\r\n%s' % (len(response), response)
+    response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error', 400,
                 { 'Content-type': 'application/xml',
-                  'Transfer-Encoding': 'chunked' }, response)
+                  'Transfer-Encoding': 'chunked',
+                  'Connection': 'close' }, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -466,10 +478,11 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
-    response = '%x\r\n%s' % (len(response), response)
+    response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_message_in_error', 400,
                 { 'Content-type': 'application/xml',
-                  'Transfer-Encoding': 'chunked' }, response)
+                  'Transfer-Encoding': 'chunked',
+                  'Connection': 'close' }, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -501,6 +514,7 @@ def vsis3_2():
         request.send_response(200)
         request.send_header('Content-type', 'text/plain')
         request.send_header('Content-Length', 3)
+        request.send_header('Connection', 'close')
         request.end_headers()
         request.wfile.write("""foo""".encode('ascii'))
 
@@ -537,7 +551,7 @@ def vsis3_3():
         if request.headers['Authorization'].find('us-east-1') >= 0:
             request.send_response(400)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
             request.end_headers()
@@ -546,7 +560,7 @@ def vsis3_3():
             if request.headers['Host'].startswith('127.0.0.1'):
                 request.send_response(301)
                 response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>PermanentRedirect</Code><Endpoint>localhost:%d</Endpoint></Error>' % request.server.port
-                response = '%x\r\n%s' % (len(response), response)
+                response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
                 request.send_header('Content-type', 'application/xml')
                 request.send_header('Transfer-Encoding', 'chunked')
                 request.end_headers()
@@ -630,6 +644,12 @@ def vsis3_3():
         gdaltest.post_reason('fail')
         return 'fail'
     if gdal.VSIStatL('/vsis3/s3_fake_bucket2/a_dir/resource3.bin').mtime != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # ReadDir on something known to be a file shouldn't cause network access
+    dir_contents = gdal.ReadDir('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
+    if dir_contents is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -770,7 +790,7 @@ def vsis3_4():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket3/empty_file.bin', 200, {}, 'foo')
+    handler.add('GET', '/s3_fake_bucket3/empty_file.bin', 200, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size != 3:
             gdaltest.post_reason('fail')
@@ -786,6 +806,7 @@ def vsis3_4():
             return
 
         request.send_response(200)
+        request.send_header('Content-Length', 0)
         request.end_headers()
 
     handler.add('PUT', '/s3_fake_bucket3/empty_file.bin', custom_method = method)
@@ -802,7 +823,7 @@ def vsis3_4():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_fake_bucket3/empty_file.bin', 200, {}, '')
+    handler.add('GET', '/s3_fake_bucket3/empty_file.bin', 200, {'Connection': 'close'}, '')
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsis3/s3_fake_bucket3/empty_file.bin').size != 0:
             gdaltest.post_reason('fail')
@@ -879,15 +900,22 @@ def vsis3_4():
         if request.headers['Content-Length'] != '6':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
+
+        request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
 
         content = request.rfile.read(6).decode('ascii')
         if content != 'foobar':
             sys.stderr.write('Did not get expected content: %s\n' % content)
             request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
 
         request.send_response(200)
+        request.send_header('Content-Length', 0)
         request.end_headers()
 
     handler.add('PUT', '/s3_fake_bucket3/another_file.bin', custom_method = method)
@@ -916,7 +944,7 @@ def vsis3_4():
         if request.headers['Authorization'].find('us-east-1') >= 0:
             request.send_response(400)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
             request.end_headers()
@@ -925,12 +953,25 @@ def vsis3_4():
             if request.headers['Content-Length'] != '6':
                 sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
                 request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
+                return
+            request.wfile.write('HTTP/1.1 100 Continue\r\n\r\n'.encode('ascii'))
+            content = request.rfile.read(6).decode('ascii')
+            if content != 'foobar':
+                sys.stderr.write('Did not get expected content: %s\n' % content)
+                request.send_response(400)
+                request.send_header('Content-Length', 0)
+                request.end_headers()
                 return
             request.send_response(200)
+            request.send_header('Content-Length', 0)
             request.end_headers()
         else:
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
 
     handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method = method)
     handler.add('PUT', '/s3_fake_bucket3/redirect', custom_method = method)
@@ -960,7 +1001,7 @@ def vsis3_5():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_delete_bucket/delete_file', 200, {}, 'foo')
+    handler.add('GET', '/s3_delete_bucket/delete_file', 200, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file').size != 3:
             gdaltest.post_reason('fail')
@@ -981,13 +1022,14 @@ def vsis3_5():
 
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_delete_bucket/delete_file', 404, {}, 'foo')
+    handler.add('GET', '/s3_delete_bucket/delete_file', 404, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
         if gdal.VSIStatL('/vsis3/s3_delete_bucket/delete_file') is not None:
             gdaltest.post_reason('fail')
             return 'fail'
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/s3_delete_bucket/delete_file_error', 200)
     handler.add('DELETE', '/s3_delete_bucket/delete_file_error', 403)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -999,22 +1041,27 @@ def vsis3_5():
 
     handler = webserver.SequentialHandler()
 
+    handler.add('GET', '/s3_delete_bucket/redirect', 200)
+
     def method(request):
         request.protocol_version = 'HTTP/1.1'
         if request.headers['Authorization'].find('us-east-1') >= 0:
             request.send_response(400)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
             request.end_headers()
             request.wfile.write(response.encode('ascii'))
         elif request.headers['Authorization'].find('us-west-2') >= 0:
             request.send_response(204)
+            request.send_header('Content-Length', 0)
             request.end_headers()
         else:
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
 
     handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method = method)
     handler.add('DELETE', '/s3_delete_bucket/redirect', custom_method = method)
@@ -1051,7 +1098,7 @@ def vsis3_6():
         if request.headers['Authorization'].find('us-east-1') >= 0:
             request.send_response(400)
             response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>AuthorizationHeaderMalformed</Code><Region>us-west-2</Region></Error>'
-            response = '%x\r\n%s' % (len(response), response)
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
             request.send_header('Content-type', 'application/xml')
             request.send_header('Transfer-Encoding', 'chunked')
             request.end_headers()
@@ -1066,6 +1113,8 @@ def vsis3_6():
         else:
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
 
     handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
     handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
@@ -1074,9 +1123,12 @@ def vsis3_6():
         if request.headers['Content-Length'] != '1048576':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
         request.send_response(200)
         request.send_header('ETag', '"first_etag"')
+        request.send_header('Content-Length', 0)
         request.end_headers()
 
     handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=1&uploadId=my_id', custom_method = method)
@@ -1095,6 +1147,7 @@ def vsis3_6():
             return
         request.send_response(200)
         request.send_header('ETag', '"second_etag"')
+        request.send_header('Content-Length', 0)
         request.end_headers()
 
     handler.add('PUT', '/s3_fake_bucket4/large_file.bin?partNumber=2&uploadId=my_id', custom_method = method)
@@ -1104,6 +1157,8 @@ def vsis3_6():
         if request.headers['Content-Length'] != '186':
             sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
             request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
 
         content = request.rfile.read(186).decode('ascii')
@@ -1116,9 +1171,12 @@ def vsis3_6():
 """:
             sys.stderr.write('Did not get expected content: %s\n' % content)
             request.send_response(400)
+            request.send_header('Content-Length', 0)
+            request.end_headers()
             return
 
         request.send_response(200)
+        request.send_header('Content-Length', 0)
         request.end_headers()
 
     handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploadId=my_id', custom_method = method)
@@ -1263,7 +1321,7 @@ def vsis3_7():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404)
+    handler.add('GET', '/s3_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
     handler.add('PUT', '/s3_bucket_test_mkdir/dir/', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsis3/s3_bucket_test_mkdir/dir', 0)
@@ -1282,7 +1340,7 @@ def vsis3_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&prefix=dir/', 200,
-                 { 'Content-type': 'application/xml' },
+                 { 'Content-type': 'application/xml', 'Connection':'close' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir/</Prefix>
@@ -1800,6 +1858,10 @@ def vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 

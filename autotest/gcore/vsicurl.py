@@ -264,10 +264,16 @@ def vsicurl_test_redirect():
     handler.add('GET', '/test_redirect/', 404)
     # Simulate a big time difference between server and local machine
     current_time = 1500
-    handler.add('HEAD', '/test_redirect/test.bin', 302,
-                {'Server' : 'foo',
-                 'Date': time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)),
-                 'Location': 'http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d\r\n' % (gdaltest.webserver_port, current_time + 30)}, '')
+
+    def method(request):
+            response = 'HTTP/1.1 302\r\n'
+            response += 'Server: foo\r\n'
+            response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
+            response += 'Location: %s\r\n' %  ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (gdaltest.webserver_port, current_time + 30))
+            response += '\r\n'
+            request.wfile.write(response.encode('ascii'))
+
+    handler.add('HEAD', '/test_redirect/test.bin', custom_method = method)
     handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), 403,
                 {'Server' : 'foo' }, '')
 
@@ -278,15 +284,19 @@ def vsicurl_test_redirect():
                 request.send_response(200)
                 request.send_header('Content-type', 'text/plain')
                 request.send_header('Content-Range', 'bytes 0-16383/1000000')
+                request.send_header('Content-Length', 16384)
+                request.send_header('Connection', 'close')
                 request.end_headers()
-                request.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
+                request.wfile.write(('x' * 16384).encode('ascii'))
             elif request.headers['Range'] == 'bytes=16384-49151':
                 # Test expiration of the signed URL
                 request.protocol_version = 'HTTP/1.1'
                 request.send_response(403)
+                request.send_header('Content-Length', 0)
                 request.end_headers()
             else:
                 request.send_response(404)
+                request.send_header('Content-Length', 0)
                 request.end_headers()
         else:
             # After a failed attempt on a HEAD, the client should go there
@@ -295,6 +305,7 @@ def vsicurl_test_redirect():
             response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
             response += 'Content-type: text/plain\r\n'
             response += 'Content-Length: 1000000\r\n'
+            response += 'Connection: close\r\n'
             response += '\r\n'
             request.wfile.write(response.encode('ascii'))
 
@@ -327,8 +338,9 @@ def vsicurl_test_redirect():
             request.send_response(302)
             # Return a new signed URL
             request.send_header('Location', 'http://localhost:%d/foo.s3.amazonaws.com/test_redirected2/test.bin?Signature=foo&Expires=%d' % (request.server.port, current_time + 30))
+            request.send_header('Content-Length', 16384)
             request.end_headers()
-            request.wfile.write(''.join(['x' for i in range(16384)]).encode('ascii'))
+            request.wfile.write(('x' * 16384).encode('ascii'))
 
     handler.add('GET', '/test_redirect/test.bin', custom_method = method)
 
@@ -340,6 +352,7 @@ def vsicurl_test_redirect():
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')
             request.send_header('Content-Range', 'bytes 16384-16384/1000000')
+            request.send_header('Content-Length', 1)
             request.end_headers()
             request.wfile.write('y'.encode('ascii'))
 
@@ -428,6 +441,10 @@ def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    # Clearcache needed to close all connections, since the Python server
+    # can only handle one connection at a time
+    gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 

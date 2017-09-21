@@ -38,8 +38,10 @@
 
 #include <curl/curl.h>
 #include "cpl_http.h"
+#include "cpl_aws.h"
+#include <map>
 
-class VSIGSHandleHelper
+class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osEndpoint;
@@ -48,6 +50,7 @@ class VSIGSHandleHelper
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
         GOA2Manager m_oManager;
+        std::map<CPLString, CPLString> m_oMapQueryParameters;
 
         static bool     GetConfiguration(CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
@@ -62,6 +65,8 @@ class VSIGSHandleHelper
                                          CPLString& osOAuth2ClientSecret,
                                          CPLString& osCredentials);
 
+        void RebuildURL();
+
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
                           const CPLString& osBucketObjectKey,
@@ -74,9 +79,14 @@ class VSIGSHandleHelper
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix);
 
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerb) const;
+        virtual void ResetQueryParameters() override;
+        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) override;
 
-        const CPLString& GetURL() const { return m_osURL; }
+        struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
+                                          const void *pabyDataContent = NULL,
+                                          size_t nBytesContent = 0) const override;
+
+        const CPLString& GetURL() const override { return m_osURL; }
 
         static void CleanMutex();
         static void ClearCache();
