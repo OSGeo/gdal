@@ -129,15 +129,15 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                                   const CPLString& osObjectKey,
                                   bool bUseHTTPS, bool bUseVirtualHosting);
 
-        void ResetQueryParameters() override;
-        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) override;
+        void ResetQueryParameters() CPL_OVERRIDE;
+        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const void *pabyDataContent = NULL,
-                                          size_t nBytesContent = 0) const override;
+                                          size_t nBytesContent = 0) const CPL_OVERRIDE;
 
-        bool CanRestartOnError(const char*, bool bSetError = false) override;
+        bool CanRestartOnError(const char*, bool bSetError = false) CPL_OVERRIDE;
 
-        const CPLString& GetURL() const override { return m_osURL; }
+        const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
         const CPLString& GetObjectKey() const { return m_osObjectKey; }
         const CPLString& GetAWSS3Endpoint()const  { return m_osAWSS3Endpoint; }
