@@ -5933,7 +5933,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
             }
             else
             {
-                psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER64;
+                psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER;
             }
             psParseInfo->sFieldList.table_ids[iOutField] = iTable;
             psParseInfo->sFieldList.ids[iOutField] =
