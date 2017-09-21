@@ -87,7 +87,9 @@ def gdal_rm(argv, progress = None):
 
     if filename == '/':
         try:
-            user_input = raw_input('Please confirm with YES your action: ')
+            user_input_local = ''
+            exec("""user_input_local = raw_input('Please confirm with YES your action: ')""")
+            user_input = user_input_local
         except:
             user_input = input('Please confirm with YES your action: ')
         if user_input != 'YES':
