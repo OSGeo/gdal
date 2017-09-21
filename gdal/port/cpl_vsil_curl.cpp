@@ -3976,6 +3976,8 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
     CURL               *m_hCurl;
     const void         *m_pBuffer;
     CPLString           m_osCurlErrBuf;
+    size_t              m_nChunkedBufferOff;
+    size_t              m_nChunkedBufferSize;
 
     static size_t       ReadCallBackBuffer( char *buffer, size_t size,
                                             size_t nitems, void *instream );
@@ -4036,7 +4038,9 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
         m_bError(false),
         m_hCurlMulti(NULL),
         m_hCurl(NULL),
-        m_pBuffer(NULL)
+        m_pBuffer(NULL),
+        m_nChunkedBufferOff(0),
+        m_nChunkedBufferSize(0)
 {
     // AWS S3 does not support chunked PUT in a convenient way, since you must
     // know in advance the total size... See
@@ -4336,19 +4340,21 @@ size_t VSIS3WriteHandle::ReadCallBackBufferChunked( char *buffer, size_t size,
                                              size_t nitems, void *instream )
 {
     VSIS3WriteHandle* poThis = static_cast<VSIS3WriteHandle *>(instream);
-    if( poThis->m_nBufferOff == 0 )
+    if( poThis->m_nChunkedBufferSize == 0 )
     {
         //CPLDebug("VSIS3WriteHandle", "Writing 0 byte (finish)");
         return 0;
     }
-    const int nSizeMax = static_cast<int>(size * nitems);
-    const int nSizeToWrite =
-        std::min(nSizeMax,
-                 poThis->m_nBufferOff - poThis->m_nBufferOffReadCallback);
+    const size_t nSizeMax = size * nitems;
+    size_t nSizeToWrite = nSizeMax;
+    size_t nChunckedBufferRemainingSize =
+                poThis->m_nChunkedBufferSize - poThis->m_nChunkedBufferOff;
+    if( nChunckedBufferRemainingSize < nSizeToWrite )
+        nSizeToWrite = nChunckedBufferRemainingSize;
     memcpy(buffer,
-           static_cast<const GByte*>(poThis->m_pBuffer) + poThis->m_nBufferOffReadCallback,
+           static_cast<const GByte*>(poThis->m_pBuffer) + poThis->m_nChunkedBufferOff,
            nSizeToWrite);
-    poThis->m_nBufferOffReadCallback += nSizeToWrite;
+    poThis->m_nChunkedBufferOff += nSizeToWrite;
     //CPLDebug("VSIS3WriteHandle", "Writing %d bytes", nSizeToWrite);
     return nSizeToWrite;
 }
@@ -4391,19 +4397,19 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
     }
 
     m_pBuffer = pBuffer;
-    m_nBufferOffReadCallback = 0;
-    m_nBufferOff = nBytesToWrite;
+    m_nChunkedBufferOff = 0;
+    m_nChunkedBufferSize = nBytesToWrite;
 
-    while( m_nBufferOffReadCallback <  m_nBufferOff)
+    while( m_nChunkedBufferOff <  m_nChunkedBufferSize)
     {
         int still_running;
         while (curl_multi_perform(m_hCurlMulti, &still_running) ==
                                         CURLM_CALL_MULTI_PERFORM &&
-            m_nBufferOffReadCallback <  m_nBufferOff)
+            m_nChunkedBufferOff <  m_nChunkedBufferSize)
         {
             // loop
         }
-        if( !still_running || m_nBufferOffReadCallback == m_nBufferOff )
+        if( !still_running || m_nChunkedBufferOff == m_nChunkedBufferSize )
             break;
 
         CURLMsg *msg;
@@ -4488,8 +4494,8 @@ int VSIS3WriteHandle::FinishChunkedTransfer()
         return -1;
 
     m_pBuffer = NULL;
-    m_nBufferOffReadCallback = 0;
-    m_nBufferOff = 0;
+    m_nChunkedBufferOff = 0;
+    m_nChunkedBufferSize = 0;
 
     while(true)
     {
