@@ -62,7 +62,23 @@ CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 #include <curl/curl.h>
 #include <map>
 
-class VSIS3HandleHelper
+class IVSIS3LikeHandleHelper
+{
+public:
+        virtual ~IVSIS3LikeHandleHelper() {};
+
+        virtual void ResetQueryParameters() = 0;
+        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) = 0;
+        virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
+                                          const void *pabyDataContent = NULL,
+                                          size_t nBytesContent = 0) const = 0;
+
+        virtual bool CanRestartOnError(const char*, bool /*bSetError*/ = false) { return false;}
+
+        virtual const CPLString& GetURL() const = 0;
+};
+
+class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osSecretAccessKey;
@@ -113,15 +129,15 @@ class VSIS3HandleHelper
                                   const CPLString& osObjectKey,
                                   bool bUseHTTPS, bool bUseVirtualHosting);
 
-        void ResetQueryParameters();
-        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue);
+        void ResetQueryParameters() override;
+        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) override;
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const void *pabyDataContent = NULL,
-                                          size_t nBytesContent = 0);
-        bool CanRestartOnError(const char* pszErrorMsg) { return CanRestartOnError(pszErrorMsg, false); }
-        bool CanRestartOnError(const char*, bool bSetError);
+                                          size_t nBytesContent = 0) const override;
 
-        const CPLString& GetURL() const { return m_osURL; }
+        bool CanRestartOnError(const char*, bool bSetError = false) override;
+
+        const CPLString& GetURL() const override { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
         const CPLString& GetObjectKey() const { return m_osObjectKey; }
         const CPLString& GetAWSS3Endpoint()const  { return m_osAWSS3Endpoint; }

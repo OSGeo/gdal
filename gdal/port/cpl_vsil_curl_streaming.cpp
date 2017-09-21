@@ -71,7 +71,7 @@ struct curl_slist* VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
 
-#define ENABLE_DEBUG        0
+#define ENABLE_DEBUG        1
 
 #define N_MAX_REGIONS       10
 
@@ -2003,8 +2003,6 @@ void VSIInstallS3StreamingFileHandler(void)
  * If the driver detects sequential reading
  * it will progressively increase the chunk size up to 2 MB to improve download
  * performance.
- *
- * The AWS S3 authentication compatibility method is used ("simple migration").
  *
  * Several authentication methods are possible. In order of priorities (first
  * mentionned is the most prioritary)

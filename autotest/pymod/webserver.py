@@ -87,6 +87,8 @@ class SequentialHandler:
                         request.send_header(k, req_resp.headers[k])
                     if req_resp.body:
                         request.send_header('Content-Length', len(req_resp.body))
+                    elif not 'Content-Length' in req_resp.headers:
+                        request.send_header('Content-Length', '0')
                     request.end_headers()
                     if req_resp.body:
                         request.wfile.write(req_resp.body.encode('ascii'))
@@ -111,6 +113,8 @@ class SequentialHandler:
         self.process('DELETE', request)
 
 class DispatcherHttpHandler(BaseHTTPRequestHandler):
+
+    # protocol_version = 'HTTP/1.1'
 
     def log_request(self, code='-', size='-'):
         return

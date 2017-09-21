@@ -31,6 +31,7 @@
 #include "cpl_time.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
+#include "cpl_aws.h"
 
 CPL_CVSID("$Id$")
 
@@ -166,7 +167,10 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
     m_osAccessKeyId(osAccessKeyId),
     m_bUseHeaderFile(bUseHeaderFile),
     m_oManager(oManager)
-{}
+{
+    if( m_osBucketObjectKey.find('/') == std::string::npos )
+        m_osURL += "/";
+}
 
 /************************************************************************/
 /*                        ~VSIGSHandleHelper()                          */
@@ -490,9 +494,12 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         }
         else
         {
-            CPLDebug("GS",
-                     "Using gs_access_key_id and gs_secret_access_key from %s",
-                     osCredentials.c_str());
+            if( bFirstTimeForDebugMessage )
+            {
+                CPLDebug("GS",
+                        "Using gs_access_key_id and gs_secret_access_key from %s",
+                        osCredentials.c_str());
+            }
             bFirstTimeForDebugMessage = false;
             return true;
         }
@@ -560,11 +567,60 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 }
 
 /************************************************************************/
+/*                           RebuildURL()                               */
+/************************************************************************/
+
+void VSIGSHandleHelper::RebuildURL()
+{
+    m_osURL = m_osEndpoint + m_osBucketObjectKey;
+    if( m_osBucketObjectKey.find('/') == std::string::npos )
+        m_osURL += "/";
+    std::map<CPLString, CPLString>::iterator oIter =
+        m_oMapQueryParameters.begin();
+    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
+    {
+        if( oIter == m_oMapQueryParameters.begin() )
+            m_osURL += "?";
+        else
+            m_osURL += "&";
+        m_osURL += oIter->first;
+        if( !oIter->second.empty() )
+        {
+            m_osURL += "=";
+            m_osURL += oIter->second;
+        }
+    }
+}
+
+/************************************************************************/
+/*                       ResetQueryParameters()                         */
+/************************************************************************/
+
+void VSIGSHandleHelper::ResetQueryParameters()
+{
+    m_oMapQueryParameters.clear();
+    RebuildURL();
+}
+
+/************************************************************************/
+/*                         AddQueryParameter()                          */
+/************************************************************************/
+
+void VSIGSHandleHelper::AddQueryParameter( const CPLString& osKey,
+                                           const CPLString& osValue )
+{
+    m_oMapQueryParameters[osKey] = osValue;
+    RebuildURL();
+}
+
+/************************************************************************/
 /*                           GetCurlHeaders()                           */
 /************************************************************************/
 
 struct curl_slist *
-VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb ) const
+VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
+                                   const void *,
+                                   size_t ) const
 {
     if( m_bUseHeaderFile )
         return NULL;
@@ -586,8 +642,12 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb ) const
         return headers;
     }
 
+    CPLString osCanonicalResource("/" + m_osBucketObjectKey);
+    if( m_osBucketObjectKey.find('/') == std::string::npos )
+        osCanonicalResource += "/";
+
     return GetGSHeaders( osVerb,
-                         "/" + m_osBucketObjectKey,
+                         osCanonicalResource,
                          m_osSecretAccessKey,
                          m_osAccessKeyId );
 }

@@ -946,7 +946,7 @@ void VSIS3HandleHelper::AddQueryParameter( const CPLString& osKey,
 struct curl_slist *
 VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                    const void *pabyDataContent,
-                                   size_t nBytesContent )
+                                   size_t nBytesContent ) const
 {
     CPLString osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
     if( osXAMZDate.empty() )
@@ -956,7 +956,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
 
     CPLString osCanonicalQueryString;
-    std::map<CPLString, CPLString>::iterator oIter =
+    std::map<CPLString, CPLString>::const_iterator oIter =
         m_oMapQueryParameters.begin();
     for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
     {
