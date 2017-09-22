@@ -96,6 +96,8 @@ int VSICurlUninstallReadCbk( VSILFILE* /* fp */ )
 
 #include <curl/curl.h>
 
+void VSICurlStreamingClearCache( void ); // from cpl_vsil_curl_streaming.cpp
+
 struct curl_slist* VSICurlSetOptions(CURL* hCurlHandle, const char* pszURL,
                        const char * const* papszOptions);
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
@@ -5963,8 +5965,6 @@ void VSIInstallGSFileHandler( void )
  *
  * @since GDAL 2.2.1
  */
-
-void VSICurlStreamingClearCache( void );
 
 void VSICurlClearCache( void )
 {
