@@ -165,7 +165,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
 
           if( !osAggregate.empty() )
               osAggregate += " ";
-          osAggregate += pszValue;
+          osAggregate += TextRecode(pszValue);
 
           poFeature->SetField( "ExtendedEntity", osAggregate );
       }
