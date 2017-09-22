@@ -76,7 +76,7 @@ def test_gdal2tiles_py_zoom_option():
     if script_path is None:
         return 'skip'
 
-    shutil.rmtree('tmp/out_gdal2tiles_smallworld')
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
     test_py_scripts.run_py_script(
         script_path,
@@ -254,6 +254,7 @@ def _test_utf8(should_raise_unicode=False,
 
     try:
         ret = test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
+        print(ret)
     except UnicodeEncodeError:
         if should_raise_unicode:
             return 'success'
