@@ -78,10 +78,11 @@ def test_gdal2tiles_py_zoom_option():
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
+    # --processes=2 commented out as unreliable on Travis
     test_py_scripts.run_py_script(
         script_path,
         'gdal2tiles',
-        '-q -z 0-1 --processes=2 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+        '-q -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 
