@@ -551,18 +551,10 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     int _nBands = GDALGetRasterCount(hDS);
 
     //if provided band list
-    if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands >= nMaxBandNo)
+    if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands > nMaxBandNo)
     {
-        if(_nBands < nMaxBandNo)
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Skipping %s as it has no such bands", dsFileName);
-            return FALSE;
-        }
-        else
-        {
-            _nBands = nMaxBandNo;
-        }
+        // Limit number of bands used to nMaxBandNo
+        _nBands = nMaxBandNo;
     }
 
     if (_nBands == 0)
