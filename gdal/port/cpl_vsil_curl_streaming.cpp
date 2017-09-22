@@ -77,7 +77,7 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
 
-void VSICurlStreamingClearCache( void );
+void VSICurlStreamingClearCache( void );  // used in cpl_vsil_curl.cpp
 
 /************************************************************************/
 /*                               RingBuffer                             */
@@ -2087,6 +2087,8 @@ void VSIInstallGSStreamingFileHandler( void )
 }
 
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                      VSICurlStreamingClearCache()                    */
 /************************************************************************/
@@ -2108,5 +2110,7 @@ void VSICurlStreamingClearCache( void )
             poFSHandler->ClearCache();
     }
 }
+
+//! @endcond
 
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)
