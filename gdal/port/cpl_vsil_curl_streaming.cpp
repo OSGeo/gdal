@@ -77,6 +77,8 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
 
+void VSICurlStreamingClearCache( void );
+
 /************************************************************************/
 /*                               RingBuffer                             */
 /************************************************************************/
@@ -209,6 +211,8 @@ public:
     void                ReleaseMutex();
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
+
+    virtual void    ClearCache();
 };
 
 /************************************************************************/
@@ -1513,6 +1517,20 @@ VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 
 VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 {
+    ClearCache();
+
+    CPLDestroyMutex( hMutex );
+    hMutex = NULL;
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSICurlStreamingFSHandler::ClearCache()
+{
+    CPLMutexHolder oHolder( &hMutex );
+
     for( std::map<CPLString, CachedFileProp*>::const_iterator
              iterCacheFileSize = cacheFileSize.begin();
          iterCacheFileSize != cacheFileSize.end();
@@ -1520,9 +1538,7 @@ VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
     {
         CPLFree(iterCacheFileSize->second);
     }
-
-    CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    cacheFileSize.clear();  
 }
 
 /************************************************************************/
@@ -2068,6 +2084,29 @@ void VSIInstallS3StreamingFileHandler(void)
 void VSIInstallGSStreamingFileHandler( void )
 {
     VSIFileManager::InstallHandler( "/vsigs_streaming/", new VSIGSStreamingFSHandler );
+}
+
+
+/************************************************************************/
+/*                      VSICurlStreamingClearCache()                    */
+/************************************************************************/
+
+void VSICurlStreamingClearCache( void )
+{
+    // FIXME ? Currently we have different filesystem instances for
+    // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
+    // file size, etc.
+    const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
+                                   "/vsigs_streaming/" };
+    for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
+    {
+        VSICurlStreamingFSHandler *poFSHandler =
+            dynamic_cast<VSICurlStreamingFSHandler*>(
+                VSIFileManager::GetHandler( apszFS[i] ));
+
+        if( poFSHandler )
+            poFSHandler->ClearCache();
+    }
 }
 
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)

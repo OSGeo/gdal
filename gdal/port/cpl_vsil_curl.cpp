@@ -5964,6 +5964,8 @@ void VSIInstallGSFileHandler( void )
  * @since GDAL 2.2.1
  */
 
+void VSICurlStreamingClearCache( void );
+
 void VSICurlClearCache( void )
 {
     // FIXME ? Currently we have different filesystem instances for
@@ -5979,6 +5981,8 @@ void VSICurlClearCache( void )
         if( poFSHandler )
             poFSHandler->ClearCache();
     }
+
+    VSICurlStreamingClearCache();
 }
 
 #endif /* HAVE_CURL */
