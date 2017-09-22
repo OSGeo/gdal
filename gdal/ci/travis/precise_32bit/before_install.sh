@@ -12,7 +12,7 @@ sudo mount --rbind "$PWD" "$chroot$PWD"
 sudo mount --rbind /dev/pts "$chroot/dev/pts"
 sudo mount --rbind /proc "$chroot/proc"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu precise universe" >> buildroot.i386/etc/apt/sources.list'
-sudo echo "en_US.UTF-8 UTF-8" >> "$chroot/etc/locale.gen"
+sudo su -c 'echo "en_US.UTF-8 UTF-8" >> buildroot.i386/etc/locale.gen'
 sudo i386 chroot "$chroot" locale-gen
 sudo i386 chroot "$chroot" apt-get update
 sudo i386 chroot "$chroot" apt-get install -y clang
