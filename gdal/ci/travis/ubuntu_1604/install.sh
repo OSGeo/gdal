@@ -3,7 +3,7 @@
 set -e
 
 export chroot="$PWD"/xenial
-export LC_ALL=en_US
+export LC_ALL=en_US.utf8
 
 sudo chroot "$chroot" sh -c "fossil clone https://www.gaia-gis.it/fossil/librasterlite2 librasterlite2.fossil && mkdir rl2 && cd rl2 && fossil open ../librasterlite2.fossil && ./configure --prefix=/usr && make -j3 && make -j3 install"
 
