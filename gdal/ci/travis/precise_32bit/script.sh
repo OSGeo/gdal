@@ -3,7 +3,7 @@
 set -e
 
 export chroot="$PWD"/buildroot.i386
-export LC_ALL=en_US
+export LC_ALL=en_US.utf8
 
 sudo i386 chroot "$chroot" sh -c "cd $PWD/autotest/cpp && make quick_test"
 # Compile and test vsipreload
