@@ -90,9 +90,13 @@ def gdal_cp_single(srcfile, targetfile, progress):
         stat_res = gdal.VSIStatL(targetfile)
     else:
         stat_res = gdal.VSIStatL(targetfile + '/')
+
     if stat_res and stat.S_ISDIR(stat_res.mode):
         (head, tail) = os.path.split(srcfile)
-        targetfile = targetfile + '/' + tail
+        if targetfile.endswith('/'):
+            targetfile = targetfile + tail
+        else:
+            targetfile = targetfile + '/' + tail
 
     fin = gdal.VSIFOpenL(srcfile, "rb")
     if fin is None:
