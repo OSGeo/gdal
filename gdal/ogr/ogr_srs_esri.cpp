@@ -1995,6 +1995,15 @@ OGRErr OGRSpatialReference::morphFromESRI()
             poDatum->SetValue( pszNewValue );
             CPLFree( pszNewValue );
         }
+
+        // Manual hack. D_S_JTSK is used both for the Ferro and non Ferro datum
+        const char* pszPrimeName = GetAttrValue("PRIMEM");
+        if( pszPrimeName && EQUAL(pszPrimeName, "Ferro") &&
+            EQUAL(poDatum->GetValue(), "System_Jednotne_Trigonometricke_Site_Katastralni") )
+        {
+            poDatum->SetValue( "System_Jednotne_Trigonometricke_Site_Katastralni_Ferro" );
+        }
+
     }
 
 /* -------------------------------------------------------------------- */
