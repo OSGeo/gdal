@@ -5332,6 +5332,9 @@ void VSIS3FSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelpe
 
     VSIS3HandleHelper * poS3HandleHelper =
         dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
     oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
         VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
                       poS3HandleHelper->GetAWSS3Endpoint(),
@@ -5349,6 +5352,9 @@ void VSIS3FSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelpe
 
     VSIS3HandleHelper * poS3HandleHelper =
         dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
