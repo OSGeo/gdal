@@ -17,6 +17,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include <limits>
+
 #include "degrib2.h"
 #include "myerror.h"
 #include "myassert.h"
@@ -1936,7 +1939,16 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 */
    Clock_Print (meta->validTime, 20, meta->pds1.validTime, "%Y%m%d%H%M", 0);
 
-   meta->deltTime = (sInt4) (meta->pds1.validTime - meta->pds1.refTime);
+   double deltaTime = meta->pds1.validTime - meta->pds1.refTime;
+   if (deltaTime >= std::numeric_limits<sInt4>::max()) {
+       printf ("Clamped deltaTime.  Was %lf\n", deltaTime);
+       deltaTime = std::numeric_limits<sInt4>::max();
+   }
+   if (deltaTime <= std::numeric_limits<sInt4>::min()) {
+       printf ("Clamped deltaTime.  Was %lf\n", deltaTime);
+       deltaTime = std::numeric_limits<sInt4>::min();
+   }
+   meta->deltTime = static_cast<sInt4>(deltaTime);
 
    /* Read section 5.  If it is "7777" == 926365495 we are done. */
    if (curLoc == gribLen) {
