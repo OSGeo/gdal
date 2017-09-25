@@ -151,9 +151,11 @@ def test_ogrtindex_3():
 
     srs_4326 = osr.SpatialReference()
     srs_4326.ImportFromEPSG(4326)
+    wkt_epsg_4326 = srs_4326.ExportToWkt()
 
     srs_32631 = osr.SpatialReference()
     srs_32631.ImportFromEPSG(32631)
+    wkt_epsg_32631 = srs_32631.ExportToWkt()
 
     shape_lyr = shape_ds.CreateLayer( 'point1', srs = srs_4326)
     dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
@@ -171,21 +173,32 @@ def test_ogrtindex_3():
         ('-src_srs_format AUTO', [ 'EPSG:4326', 'EPSG:32631' ]),
         ('-src_srs_format EPSG', [ 'EPSG:4326', 'EPSG:32631' ]),
         ('-src_srs_format PROJ', [ '+proj=longlat +datum=WGS84 +no_defs', '+proj=utm +zone=31 +datum=WGS84 +units=m +no_defs' ]),
-        ('-src_srs_format WKT', [ 'GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295],AUTHORITY["EPSG","4326"]]', None ])
+        ('-src_srs_format WKT', [ wkt_epsg_4326, wkt_epsg_32631 ])
         ]:
 
         if os.path.exists('tmp/tileindex.shp'):
             shape_drv.DeleteDataSource('tmp/tileindex.shp')
+        if os.path.exists('tmp/tileindex.db'):
+            os.unlink('tmp/tileindex.db')
+
+        output_filename = 'tmp/tileindex.shp'
+        output_format = ''
+        if src_srs_format == '-src_srs_format WKT':
+            if ogr.GetDriverByName('SQLite') is None:
+                continue
+            output_filename = 'tmp/tileindex.db'
+            output_format = ' -f SQLite'
 
         (ret, err) = gdaltest.runexternal_out_and_err(
             test_cli_utilities.get_ogrtindex_path() +
-            ' -src_srs_name src_srs -t_srs EPSG:4326 tmp/tileindex.shp tmp/point1.shp tmp/point2.shp ' + src_srs_format)
+            ' -src_srs_name src_srs -t_srs EPSG:4326 ' + output_filename + ' tmp/point1.shp tmp/point2.shp ' + src_srs_format + output_format)
+
         if src_srs_format != '-src_srs_format WKT' and not (err is None or err == '') :
             gdaltest.post_reason('got error/warning')
             print(err)
             return 'fail'
 
-        ds = ogr.Open('tmp/tileindex.shp')
+        ds = ogr.Open(output_filename)
         if ds.GetLayer(0).GetFeatureCount() != 2:
             gdaltest.post_reason('did not get expected feature count')
             return 'fail'
@@ -210,6 +223,11 @@ def test_ogrtindex_3():
             i = i + 1
             feat = ds.GetLayer(0).GetNextFeature()
         ds = None
+
+    if os.path.exists('tmp/tileindex.shp'):
+        shape_drv.DeleteDataSource('tmp/tileindex.shp')
+    if os.path.exists('tmp/tileindex.db'):
+        os.unlink('tmp/tileindex.db')
 
     return 'success'
 

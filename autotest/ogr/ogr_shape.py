@@ -643,7 +643,7 @@ def ogr_shape_18():
     # data/poly.shp has arbitrarily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 27700 )
-    srs.StripCTParms()
+    #srs.StripCTParms()
 
     if not srs_lyr.IsSame(srs):
         print('')
@@ -1511,7 +1511,7 @@ def ogr_shape_35():
     ds = ogr.Open('/vsimem/test35.shp')
     lyr = ds.GetLayer(0)
     srs_read = lyr.GetSpatialRef()
-    if srs_read.ExportToWkt().find('GCS_WGS_1984') == -1:
+    if srs_read.ExportToWkt() != srs.ExportToWkt():
         gdaltest.post_reason('did not get expected SRS')
         print(srs_read)
         return 'fail'
@@ -3671,7 +3671,7 @@ def ogr_shape_76():
     ds = ogr.Open('data/prjwithutf8bom.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    if sr.ExportToWkt().find('GEOGCS["GCS_North_American_1983"') != 0:
+    if sr.ExportToWkt().find('GEOGCS["NAD83"') != 0:
         return 'fail'
 
     return 'success'
@@ -4531,22 +4531,30 @@ def ogr_shape_99():
     ds = ogr.Open('/vsimem/ogr_shape_99.shp')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToPrettyWkt()
-    expected_wkt = """PROJCS["CH1903_LV03",
-    GEOGCS["GCS_CH1903",
+    expected_wkt = """PROJCS["CH1903 / LV03",
+    GEOGCS["CH1903",
         DATUM["CH1903",
-            SPHEROID["Bessel_1841",6377397.155,299.1528128],
-            TOWGS84[674.374,15.056,405.346,0,0,0,0]],
-        PRIMEM["Greenwich",0.0],
-        UNIT["Degree",0.0174532925199433]],
+            SPHEROID["Bessel 1841",6377397.155,299.1528128,
+                AUTHORITY["EPSG","7004"]],
+            TOWGS84[674.374,15.056,405.346,0,0,0,0],
+            AUTHORITY["EPSG","6149"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4149"]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
-    PARAMETER["False_Easting",600000.0],
-    PARAMETER["False_Northing",200000.0],
-    PARAMETER["Scale_Factor",1.0],
-    PARAMETER["Azimuth",90.0],
-    PARAMETER["Longitude_Of_Center",7.439583333333333],
-    PARAMETER["Latitude_Of_Center",46.95240555555556],
+    PARAMETER["latitude_of_center",46.95240555555556],
+    PARAMETER["longitude_of_center",7.439583333333333],
+    PARAMETER["azimuth",90],
     PARAMETER["rectified_grid_angle",90],
-    UNIT["Meter",1.0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",600000],
+    PARAMETER["false_northing",200000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Y",EAST],
+    AXIS["X",NORTH],
     AUTHORITY["EPSG","21781"]]"""
     ds = None
 

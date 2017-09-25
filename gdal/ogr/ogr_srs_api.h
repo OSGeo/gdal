@@ -630,6 +630,12 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                           double dfOverrideUnit );
 OGRErr CPL_DLL OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS );
 
+OGRSpatialReferenceH CPL_DLL *OSRFindMatches( OGRSpatialReferenceH hSRS,
+                                          char** papszOptions,
+                                          int* pnEntries,
+                                          int** ppanMatchConfidence );
+void CPL_DLL OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS);
+
 int    CPL_DLL OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS );
 int    CPL_DLL OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS );
 const char CPL_DLL *OSRGetAxis( OGRSpatialReferenceH hSRS,

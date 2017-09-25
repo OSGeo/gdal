@@ -2058,7 +2058,7 @@ def ogr_vrt_30():
         if check == 0:
             sr = lyr.GetSpatialRef()
             got_wkt = sr.ExportToWkt()
-            if got_wkt.find('GEOGCS["GCS_WGS_1984"') == -1:
+            if got_wkt.find('GEOGCS["WGS 84"') == -1:
                 gdaltest.post_reason('did not get expected WKT')
                 print(got_wkt)
                 return 'fail'

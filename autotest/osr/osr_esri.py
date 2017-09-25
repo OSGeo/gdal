@@ -1335,7 +1335,7 @@ def osr_esri_28():
     # Do not do exact test because of subtle difference of precision among compilers
     if got_wkt.find("""PROJCS["Segara_Jakarta_NEIEZ_deprecated",
     GEOGCS["GCS_Segara (Jakarta)",
-        DATUM["Gunung_Segara",
+        DATUM["Gunung_Segara_Jakarta",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
         PRIMEM["Jakarta",106.8077194444444],
         UNIT["Degree",0.017453292519943295]],

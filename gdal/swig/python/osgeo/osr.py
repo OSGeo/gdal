@@ -808,6 +808,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_AutoIdentifyEPSG(self, *args)
 
 
+    def FindMatches(self, *args):
+        """FindMatches(SpatialReference self, char ** options=None)"""
+        return _osr.SpatialReference_FindMatches(self, *args)
+
+
     def SetProjection(self, *args):
         """SetProjection(SpatialReference self, char const * arg) -> OGRErr"""
         return _osr.SpatialReference_SetProjection(self, *args)

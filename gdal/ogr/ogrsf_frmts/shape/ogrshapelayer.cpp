@@ -2136,7 +2136,30 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
         }
 
         if( poSRS )
-            poSRS->AutoIdentifyEPSG();
+        {
+            if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+            {
+                int nEntries = 0;
+                int* panConfidence = NULL;
+                OGRSpatialReferenceH* pahSRS =
+                    poSRS->FindMatches(NULL, &nEntries, &panConfidence);
+                if( nEntries == 1 && panConfidence[0] == 100 )
+                {
+                    poSRS->Release();
+                    poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                    CPLFree(pahSRS);
+                }
+                else
+                {
+                    OSRFreeSRSArray(pahSRS);
+                }
+                CPLFree(panConfidence);
+            }
+            else
+            {
+                poSRS->AutoIdentifyEPSG();
+            }
+        }
     }
 
     return poSRS;
