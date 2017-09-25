@@ -1722,6 +1722,32 @@ if test "$JPEG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
 fi
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check for CharLS
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(charls,
+            AS_HELP_STRING([--with-charls],[Include JPEG-Lossless support]),,)
+
+HAVE_CHARLS=no
+CHARLS_INC=
+
+if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
+
+  AC_CHECK_HEADERS([CharLS/interface.h])
+  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+    AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+    if test "$HAVE_CHARLS" = "yes"; then
+        LIBS="-lCharLS $LIBS"
+        CHARLS_INC="-DCHARLS_INTERFACE_H"
+    fi
+  fi
+fi
+
+AC_SUBST(HAVE_CHARLS,$HAVE_CHARLS)
+AC_SUBST(CHARLS_INC,$CHARLS_INC)
+
 dnl ---------------------------------------------------------------------------
 dnl Check for BSB in the local tree.
 dnl ---------------------------------------------------------------------------
@@ -5560,6 +5586,7 @@ LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  12 bit JPEG:               ${JPEG12_ENABLED}])
 LOC_MSG([  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
+LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])

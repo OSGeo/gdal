@@ -801,6 +801,8 @@ HAVE_OGDI
 GIF_SETTING
 TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
+CHARLS_INC
+HAVE_CHARLS
 JPEG_SETTING
 GEOTIFF_INCLUDE
 GEOTIFF_SETTING
@@ -975,6 +977,7 @@ with_pcidsk
 with_libtiff
 with_geotiff
 with_jpeg
+with_charls
 with_jpeg12
 with_gif
 with_ogdi
@@ -1754,6 +1757,7 @@ Optional Packages:
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
+  --with-charls           Include JPEG-Lossless support
   --without-jpeg12        Disable JPEG 8/12bit TIFF support
   --with-gif=ARG        Include GIF support (ARG=internal, no or path)
   --with-ogdi=ARG       Include OGDI support (ARG=path)
@@ -23054,6 +23058,85 @@ fi
 
 
 
+
+# Check whether --with-charls was given.
+if test "${with_charls+set}" = set; then :
+  withval=$with_charls;
+fi
+
+
+HAVE_CHARLS=no
+CHARLS_INC=
+
+if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
+
+  for ac_header in CharLS/interface.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
+if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CHARLS_INTERFACE_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lCharLS" >&5
+$as_echo_n "checking for JpegLsDecode in -lCharLS... " >&6; }
+if ${ac_cv_lib_CharLS_JpegLsDecode+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lCharLS  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JpegLsDecode ();
+int
+main ()
+{
+return JpegLsDecode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_CharLS_JpegLsDecode=yes
+else
+  ac_cv_lib_CharLS_JpegLsDecode=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_CharLS_JpegLsDecode" >&5
+$as_echo "$ac_cv_lib_CharLS_JpegLsDecode" >&6; }
+if test "x$ac_cv_lib_CharLS_JpegLsDecode" = xyes; then :
+  HAVE_CHARLS=yes
+fi
+
+    if test "$HAVE_CHARLS" = "yes"; then
+        LIBS="-lCharLS $LIBS"
+        CHARLS_INC="-DCHARLS_INTERFACE"
+    fi
+  fi
+fi
+
+HAVE_CHARLS=$HAVE_CHARLS
+
+CHARLS_INC=$CHARLS_INC
+
+
+
+
 # Check whether --with-jpeg12 was given.
 if test "${with_jpeg12+set}" = set; then :
   withval=$with_jpeg12;
@@ -36762,6 +36845,9 @@ echo "  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}"
 
 
 echo "  LIBGIF support:            ${GIF_SETTING}"
+
+
+echo "  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}"
 
 
 echo "  OGDI support:              ${HAVE_OGDI}"

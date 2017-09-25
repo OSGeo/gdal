@@ -35,7 +35,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
 LIBS	=	$(SDE_LIB) @LIBS@ $(KAK_LIBS) $(DWG_LIBS) $(CURL_LIB) \
 		$(MRSID_LIBS) $(MRSID_LIDAR_LIBS) $(ECW_LIBS) $(INGRES_LIB) \
-		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(CHARLS_LIB) $(SOSI_LIB) \
+		$(PCIDSK_LIB) $(RASDAMAN_LIB) $(SOSI_LIB) \
 		$(OPENCL_LIB) $(JVM_LIB) $(LIBICONV) $(FGDB_LIB) $(LIBXML2_LIB) $(MONGODB_LIB)
 
 SSEFLAGS = @SSEFLAGS@
@@ -498,11 +498,9 @@ PDFIUM_PLUGIN_LIB = @PDFIUM_PLUGIN_LIB@
 
 #
 # CharLs stuff
-# Uncomment and adapt paths to enable JPEGLS driver
 #
-#HAVE_CHARLS = yes
-#CHARLS_INC = -I/path/to/charls_include
-#CHARLS_LIB = -L/path/to/charls_lib -lCharLS
+HAVE_CHARLS = @HAVE_CHARLS@
+CHARLS_INC = @CHARLS_INC@
 
 #
 # Teigha stuff
