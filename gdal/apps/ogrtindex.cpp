@@ -309,7 +309,8 @@ int main( int nArgc, char **papszArgv )
                 poDstLayer->CreateField( &oSrcSRSNameField );
             }
 
-            OGRSpatialReference::DestroySpatialReference( poSrcSpatialRef );
+            if( poSrcSpatialRef )
+                poSrcSpatialRef->Release();
         }
     }
 
@@ -738,8 +739,7 @@ int main( int nArgc, char **papszArgv )
     OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
 
     if( alreadyExistingSpatialRef != NULL )
-        OGRSpatialReference::DestroySpatialReference(
-            alreadyExistingSpatialRef );
+        alreadyExistingSpatialRef->Release();
     delete poTargetSRS;
 
     CPLFree(current_path);
