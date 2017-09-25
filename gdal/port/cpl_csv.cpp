@@ -173,7 +173,8 @@ static CSVTable *CSVAccess( const char * pszFilename )
         CPLMalloc(sizeof(int) * psTable->nFields));
     for(int i = 0; i < psTable->nFields; i++ )
     {
-        psTable->panFieldNamesLength[i] = strlen(psTable->papszFieldNames[i]);
+        psTable->panFieldNamesLength[i] = static_cast<int>(
+            strlen(psTable->papszFieldNames[i]));
     }
 
     return psTable;
