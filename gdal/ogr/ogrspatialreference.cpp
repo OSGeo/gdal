@@ -37,6 +37,7 @@
 #include <cstring>
 #include <limits>
 #include <string>
+#include <vector>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
@@ -448,6 +449,15 @@ void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
 OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
 
 {
+    if( strchr(pszNodePath, '|') == NULL )
+    {
+        // Fast path
+        OGR_SRSNode *poNode = GetRoot();
+        if( poNode )
+            poNode = poNode->GetNode( pszNodePath );
+        return poNode;
+    }
+
     char **papszPathTokens =
         CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
@@ -6465,6 +6475,15 @@ OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 }
 
 /************************************************************************/
+/*                      IsRelativeErrorSmaller()                        */
+/************************************************************************/
+
+static bool IsRelativeErrorSmaller(double dfA, double dfB, double dfRelError)
+{
+    return fabs(dfA - dfB) <= dfRelError * fabs(dfA);
+}
+
+/************************************************************************/
 /*                            IsSameGeogCS()                            */
 /************************************************************************/
 
@@ -6481,6 +6500,25 @@ OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) const
 
 {
+    return IsSameGeogCS( poOther, NULL );
+}
+
+/**
+ * \brief Do the GeogCS'es match?
+ *
+ * This method is the same as the C function OSRIsSameGeogCS().
+ *
+ * @param poOther the SRS being compared against.
+ * @param papszOptions options. DATUM=STRICT/IGNORE. TOWGS84=STRICT/ONLY_IF_IN_BOTH/IGNORE
+ *
+ * @return TRUE if they are the same or FALSE otherwise.
+ */
+
+int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther,
+                                       const char* const * papszOptions ) const
+
+{
+
     const char *pszThisValue, *pszOtherValue;
 
 /* -------------------------------------------------------------------- */
@@ -6490,23 +6528,42 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszThisValue = this->GetAttrValue( "DATUM" );
     pszOtherValue = poOther->GetAttrValue( "DATUM" );
 
+    const char* pszDatumRule =
+        CSLFetchNameValueDef( papszOptions, "DATUM", "STRICT");
     if( pszThisValue != NULL && pszOtherValue != NULL
-        && !EQUAL(pszThisValue, pszOtherValue) )
+        && !EQUAL(pszThisValue, pszOtherValue)
+        && EQUAL(pszDatumRule, "STRICT") )
+    {
+#if DEBUG_VERBOSE
+        CPLDebug("OSR", "DATUM names do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do the datum TOWGS84 values match if present?                   */
 /* -------------------------------------------------------------------- */
+    const char* pszTOWGS84Rule =
+        CSLFetchNameValueDef( papszOptions, "TOWGS84", "STRICT" );
     double adfTOWGS84[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double adfOtherTOWGS84[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    this->GetTOWGS84( adfTOWGS84, 7 );
-    poOther->GetTOWGS84( adfOtherTOWGS84, 7 );
-
-    for( int i = 0; i < 7; i++ )
+    bool bThisHasTOWGS84 = this->GetTOWGS84( adfTOWGS84, 7 ) == OGRERR_NONE;
+    bool bOtherHasTOWGS84 = poOther->GetTOWGS84( adfOtherTOWGS84, 7 ) == OGRERR_NONE;
+    if( EQUAL(pszTOWGS84Rule, "STRICT" ) ||
+        (bThisHasTOWGS84 && bOtherHasTOWGS84 &&
+         EQUAL(pszTOWGS84Rule, "ONLY_IF_IN_BOTH")) )
     {
-        if( fabs(adfTOWGS84[i] - adfOtherTOWGS84[i]) > 0.00001 )
-            return FALSE;
+        for( int i = 0; i < 7; i++ )
+        {
+            if( fabs(adfTOWGS84[i] - adfOtherTOWGS84[i]) > 0.00001 )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "TOWGS84 do not match");
+#endif
+                return FALSE;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -6520,8 +6577,14 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = "0.0";
 
-    if( CPLAtof(pszOtherValue) != CPLAtof(pszThisValue) )
+    if( !IsRelativeErrorSmaller(CPLAtof(pszOtherValue),
+                                CPLAtof(pszThisValue), 1e-8) )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "PRIMEM do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do the units match?                                             */
@@ -6534,8 +6597,14 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = SRS_UA_DEGREE_CONV;
 
-    if( std::abs(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
+    if( !IsRelativeErrorSmaller(CPLAtof(pszOtherValue),
+                                CPLAtof(pszThisValue), 1e-8) )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "GEOGCS|UNIT do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Does the spheroid match.  Check semi major, and inverse         */
@@ -6545,13 +6614,23 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 1 );
     if( pszThisValue != NULL && pszOtherValue != NULL
         && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.01 )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "SPHEROID major do not match");
+#endif
         return FALSE;
+    }
 
     pszThisValue = this->GetAttrValue( "SPHEROID", 2 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 2 );
     if( pszThisValue != NULL && pszOtherValue != NULL
         && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.0001 )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "SPHEROID inverse flattening do not match");
+#endif
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -6639,6 +6718,18 @@ int OSRIsSameVertCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 }
 
 /************************************************************************/
+/*                        IsDefaultParameter()                          */
+/************************************************************************/
+
+static bool IsDefaultParameter(const char* pszParamName, double dfVal)
+{
+    if( STARTS_WITH_CI(pszParamName, "scale") )
+        return dfVal == 1.0;
+    else
+        return dfVal == 0.0;
+}
+
+/************************************************************************/
 /*                               IsSame()                               */
 /************************************************************************/
 
@@ -6653,10 +6744,34 @@ int OSRIsSameVertCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 
 {
+    return IsSame(poOtherSRS, NULL);
+}
+
+
+/**
+ * \brief Do these two spatial references describe the same system ?
+ *
+ * @param poOtherSRS the SRS being compared to.
+ * @param papszOptions options. DATUM=STRICT/IGNORE. TOWGS84=STRICT/ONLY_IF_IN_BOTH/IGNORE
+ *
+ * @return TRUE if equivalent or FALSE otherwise.
+ */
+
+int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
+                                 const char* const * papszOptions ) const
+
+{
     if( GetRoot() == NULL && poOtherSRS->GetRoot() == NULL )
         return TRUE;
 
     if( GetRoot() == NULL || poOtherSRS->GetRoot() == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do the have the same root types?  i.e. is one PROJCS and one    */
+/*      GEOGCS or perhaps LOCALCS?                                      */
+/* -------------------------------------------------------------------- */
+    if( !EQUAL(GetRoot()->GetValue(), poOtherSRS->GetRoot()->GetValue()) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -6670,20 +6785,16 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
          !EQUAL(CPLString(pszThisProj4Ext).Trim().replaceAll("  "," "),
                 CPLString(pszOtherProj4Ext).Trim().replaceAll("  "," "))) )
     {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "Different EXTENSION");
+#endif
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Compare geographic coordinate system.                           */
 /* -------------------------------------------------------------------- */
-    if( !IsSameGeogCS( poOtherSRS ) )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Do the have the same root types?  i.e. is one PROJCS and one    */
-/*      GEOGCS or perhaps LOCALCS?                                      */
-/* -------------------------------------------------------------------- */
-    if( !EQUAL(GetRoot()->GetValue(), poOtherSRS->GetRoot()->GetValue()) )
+    if( !IsSameGeogCS( poOtherSRS, papszOptions ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -6694,10 +6805,90 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
     {
         const char *pszValue1 = this->GetAttrValue( "PROJECTION" );
         const char *pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
-        if( pszValue1 == NULL || pszValue2 == NULL
-            || !EQUAL(pszValue1, pszValue2) )
-            return FALSE;
 
+        bool bIgnoreScaleFactor = false;
+        bool bIgnoreStdParallel12 = false;
+
+        if( pszValue1 && EQUAL(pszValue1, SRS_PT_MERCATOR_1SP) &&
+            pszValue2 && EQUAL(pszValue2, SRS_PT_MERCATOR_2SP) )
+        {
+            // Try to find if Mercator_1SP and Mercator_2SP are equivalent
+            const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+
+            const double dfInvFlattening = GetInvFlattening();
+            double e2 = 0.0;
+            if( dfInvFlattening != 0.0 )
+            {
+                const double f = 1.0 / dfInvFlattening;
+                e2 = 2 * f - f * f;
+            }
+            const double dfStdP1Lat =
+                acos( sqrt( (1.0 - e2) / ((1.0 / (dfK0 * dfK0)) - e2)) ) /
+                M_PI * 180.0;
+
+            double dfOtherVal = poOtherSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_1 );
+            if( !IsRelativeErrorSmaller(dfStdP1Lat, dfOtherVal, 1e-8) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for %s too big",
+                         SRS_PP_STANDARD_PARALLEL_1);
+#endif
+                return FALSE;
+            }
+            bIgnoreScaleFactor = true;
+            bIgnoreStdParallel12 = true;
+        }
+        else if(  pszValue1 && EQUAL(pszValue1, SRS_PT_MERCATOR_2SP) &&
+                  pszValue2 && EQUAL(pszValue2, SRS_PT_MERCATOR_1SP) )
+        {
+            // go to above case
+            return poOtherSRS->IsSame(this, papszOptions);
+        }
+        else if( pszValue1 == NULL || pszValue2 == NULL
+            || !EQUAL(pszValue1, pszValue2) )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different PROJECTION");
+#endif
+            return FALSE;
+        }
+
+        bool bIgnoreRectifiedGridAngle = false;
+        if( EQUAL(pszValue1, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+        {
+            double dfThis1 = GetProjParm(SRS_PP_STANDARD_PARALLEL_1);
+            double dfOther1 = poOtherSRS->GetProjParm(SRS_PP_STANDARD_PARALLEL_1);
+            double dfThis2 = GetProjParm(SRS_PP_STANDARD_PARALLEL_2);
+            double dfOther2 = poOtherSRS->GetProjParm(SRS_PP_STANDARD_PARALLEL_2);
+            if( !((IsRelativeErrorSmaller(dfThis1, dfOther1, 1e-8) &&
+                   IsRelativeErrorSmaller(dfThis2, dfOther2, 1e-8)) ||
+                  (IsRelativeErrorSmaller(dfThis1, dfOther2, 1e-8) &&
+                   IsRelativeErrorSmaller(dfThis2, dfOther1, 1e-8))) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for StdParallel1/2 too big");
+#endif
+                return FALSE;
+            }
+            bIgnoreStdParallel12 = true;
+        }
+        else if( EQUAL(pszValue1, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+        {
+            double dfAz = fmod(GetProjParm(SRS_PP_AZIMUTH) + 360.0, 360.0);
+            double dfRectToSkew = fmod(GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, dfAz) + 360.0, 360.0);
+            double dfAz2 = fmod(poOtherSRS->GetProjParm(SRS_PP_AZIMUTH) + 360.0, 360.0 );
+            double dfRectToSkew2 = fmod(poOtherSRS->GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, dfAz2) + 360.0, 360.0);
+            if( !IsRelativeErrorSmaller(dfRectToSkew, dfRectToSkew2, 1e-8) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for rectified_grid_angle too big");
+#endif
+                return FALSE;
+            }
+            bIgnoreRectifiedGridAngle = true;
+        }
+
+        int nCountNonDefaultParameters = 0;
         for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
         {
             const OGR_SRSNode *poNode = poPROJCS->GetChild( iChild );
@@ -6705,10 +6896,97 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
                 || poNode->GetChildCount() != 2 )
                 continue;
 
-            // This this eventually test within some epsilon?
-            if( this->GetProjParm( poNode->GetChild(0)->GetValue() )
-                != poOtherSRS->GetProjParm( poNode->GetChild(0)->GetValue() ) )
+            const char* pszParamName = poNode->GetChild(0)->GetValue();
+            if( bIgnoreScaleFactor &&
+                EQUAL( pszParamName, SRS_PP_SCALE_FACTOR ) )
+            {
+                continue;
+            }
+
+            if( bIgnoreStdParallel12 &&
+                (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
+                 EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
+            {
+                continue;
+            }
+
+            if( bIgnoreRectifiedGridAngle &&
+                EQUAL( pszParamName, SRS_PP_RECTIFIED_GRID_ANGLE ) )
+            {
+                continue;
+            }
+
+            double dfVal = GetProjParm( pszParamName );
+            if( !IsDefaultParameter(pszParamName, dfVal) )
+            {
+                nCountNonDefaultParameters ++;
+            }
+
+            double dfOtherVal = poOtherSRS->GetProjParm( pszParamName,
+                STARTS_WITH_CI(pszParamName, "Scale") ? 1.0 : 0.0 );
+
+            if( EQUAL(pszParamName, SRS_PP_AZIMUTH) )
+            {
+                dfVal = fmod(dfVal + 360.0, 360.0);
+                dfOtherVal = fmod(dfOtherVal + 360.0, 360.0);
+            }
+
+            if( !IsRelativeErrorSmaller(dfVal, dfOtherVal, 1e-8) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for %s too big",
+                         pszParamName);
+#endif
                 return FALSE;
+            }
+        }
+
+        const OGR_SRSNode *poOtherPROJCS = poOtherSRS->GetAttrNode( "PROJCS" );
+        if( poOtherPROJCS == NULL )
+        {
+            return FALSE;
+        }
+        int nCounterOtherNonDefaultParameters = 0;
+        for( int iChild = 0; iChild < poOtherPROJCS->GetChildCount(); iChild++ )
+        {
+            const OGR_SRSNode *poNode = poOtherPROJCS->GetChild( iChild );
+            if( !EQUAL(poNode->GetValue(), "PARAMETER")
+                || poNode->GetChildCount() != 2 )
+                continue;
+
+            const char* pszParamName = poNode->GetChild(0)->GetValue();
+            if( bIgnoreScaleFactor &&
+                EQUAL( pszParamName, SRS_PP_SCALE_FACTOR ) )
+            {
+                continue;
+            }
+
+            if( bIgnoreStdParallel12 &&
+                (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
+                 EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
+            {
+                continue;
+            }
+
+            if( bIgnoreRectifiedGridAngle &&
+                EQUAL( pszParamName, SRS_PP_RECTIFIED_GRID_ANGLE ) )
+            {
+                continue;
+            }
+
+            double dfVal = poOtherSRS->GetProjParm( pszParamName );
+            if( !IsDefaultParameter(pszParamName, dfVal) )
+            {
+                nCounterOtherNonDefaultParameters ++;
+            }
+        }
+
+        if( nCountNonDefaultParameters != nCounterOtherNonDefaultParameters )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different number of non default PARAMETER");
+#endif
+            return FALSE;
         }
     }
 
@@ -6719,10 +6997,15 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
     {
         if( GetLinearUnits() != 0.0 )
         {
-            const double dfRatio =
-                poOtherSRS->GetLinearUnits() / GetLinearUnits();
-            if( dfRatio < 0.9999999999 || dfRatio > 1.000000001 )
+            // EPSG uses 0.201166195164 for Clarke's link, ESRI 0.2011661949 --> 1.3e-9 relative error
+            if( !IsRelativeErrorSmaller(poOtherSRS->GetLinearUnits(),
+                                        GetLinearUnits(), 1e-8 ) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for linear unit too big");
+#endif
                 return FALSE;
+            }
         }
     }
 
@@ -6752,6 +7035,88 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS1)->IsSame(
         reinterpret_cast<OGRSpatialReference *>(hSRS2) );
+}
+
+/************************************************************************/
+/*                           OSRFindMatches()                           */
+/************************************************************************/
+
+/**
+ * \brief Try to identify a match between the passed SRS and a related SRS
+ * in a catalog (currently EPSG only)
+ *
+ * Matching may be partial, or may fail.
+ * Returned entries will be sorted by decreasing match confidence (first
+ * entry has the highest match confidence).
+ *
+ * The exact way matching is done may change in future versions.
+ *
+ * The current algorithm is:
+ * - try first AutoIdentifyEPSG(). If it succeeds, return the corresponding SRS
+ * - otherwise iterate over all SRS from the EPSG catalog (as found in GDAL
+ *   pcs.csv and gcs.csv files+esri_extra.wkt), and find those that match the
+ *   input SRS using the IsSame() function (ignoring TOWGS84 clauses)
+ * - if there is a single match using IsSame() or one of the matches has the
+ *   same SRS name, return it with 100% confidence
+ * - if a SRS has the same SRS name, but does not pass the IsSame() criteria,
+ *   return it with 50% confidence.
+ * - otherwise return all candidate SRS that pass the IsSame() criteria with a
+ *   90% confidence.
+ *
+ * A pre-built SRS cache in ~/.gdal/X.Y/srs_cache will be used if existing,
+ * otherwise it will be built at the first run of this function.
+ *
+ * This function is the same as OGRSpatialReference::FindMatches().
+ *
+ * @param hSRS SRS to match
+ * @param papszOptions NULL terminated list of options or NULL
+ * @param pnEntries Output parameter. Number of values in the returned array.
+ * @param ppanMatchConfidence Output parameter (or NULL). *ppanMatchConfidence
+ * will be allocated to an array of *pnEntries whose values between 0 and 100
+ * indicate the confidence in the match. 100 is the highest confidence level.
+ * The array must be freed with CPLFree().
+ * 
+ * @return an array of SRS that match the passed SRS, or NULL. Must be freed with
+ * OSRFreeSRSArray()
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReferenceH* OSRFindMatches( OGRSpatialReferenceH hSRS,
+                                      char** papszOptions,
+                                      int* pnEntries,
+                                      int** ppanMatchConfidence )
+{
+    if( pnEntries )
+        *pnEntries = 0;
+    if( ppanMatchConfidence )
+        *ppanMatchConfidence = NULL;
+    VALIDATE_POINTER1( hSRS, "OSRFindMatches", NULL );
+
+    OGRSpatialReference* poSRS = reinterpret_cast<OGRSpatialReference*>(hSRS);
+    return poSRS->FindMatches(papszOptions, pnEntries,
+                              ppanMatchConfidence);
+}
+
+/************************************************************************/
+/*                           OSRFreeSRSArray()                          */
+/************************************************************************/
+
+/**
+ * \brief Free return of OSRIdentifyMatches()
+ *
+ * @param pahSRS array of SRS (must be NULL terminated)
+ * @since GDAL 2.3
+ */
+void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
+{
+    if( pahSRS != NULL )
+    {
+        for( int i = 0; pahSRS[i] != NULL; ++i )
+        {
+            OSRRelease(pahSRS[i]);
+        }
+        CPLFree(pahSRS);
+    }
 }
 
 /************************************************************************/
@@ -7230,7 +7595,8 @@ OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey,
 CPL_C_START
 void CleanupESRIDatumMappingTable();
 CPL_C_END
-static void CleanupSRSWGS84Thread();
+static void CleanupSRSWGS84Mutex();
+void CleanupFindMatchesCacheAndMutex();
 
 /**
  * \brief Cleanup cached SRS related memory.
@@ -7244,7 +7610,8 @@ void OSRCleanup( void )
     CleanupESRIDatumMappingTable();
     CSVDeaccess( NULL );
     OCTCleanupProjMutex();
-    CleanupSRSWGS84Thread();
+    CleanupSRSWGS84Mutex();
+    CleanupFindMatchesCacheAndMutex();
 }
 
 /************************************************************************/
@@ -7690,10 +8057,10 @@ OGRSpatialReference* OGRSpatialReference::GetWGS84SRS()
 }
 
 /************************************************************************/
-/*                        CleanupSRSWGS84Thread()                       */
+/*                        CleanupSRSWGS84Mutex()                       */
 /************************************************************************/
 
-static void CleanupSRSWGS84Thread()
+static void CleanupSRSWGS84Mutex()
 {
     if( hMutex != NULL )
     {

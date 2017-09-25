@@ -103,7 +103,7 @@ def test_gdaltindex_1():
         print(ds.GetLayer(0).GetFeatureCount())
         return 'fail'
     tileindex_wkt = ds.GetLayer(0).GetSpatialRef().ExportToWkt()
-    if tileindex_wkt.find('GCS_WGS_1984') == -1:
+    if tileindex_wkt.find('WGS_1984') == -1:
         gdaltest.post_reason('fail')
         print(ret_stdout)
         print(ret_stderr)
