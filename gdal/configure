@@ -23125,7 +23125,7 @@ fi
 
     if test "$HAVE_CHARLS" = "yes"; then
         LIBS="-lCharLS $LIBS"
-        CHARLS_INC="-DCHARLS_INTERFACE"
+        CHARLS_INC="-DCHARLS_INTERFACE_H"
     fi
   fi
 fi
