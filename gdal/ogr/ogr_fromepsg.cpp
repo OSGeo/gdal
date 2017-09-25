@@ -28,10 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <ctype.h>
-
 #include "cpl_port.h"
 #include "ogr_srs_api.h"
+
+#include <ctype.h>
 
 #include <cmath>
 #include <cstddef>
@@ -3315,10 +3315,12 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
  * @since GDAL 2.3
  */
 OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
-                                          char** /*papszOptions*/,
+                                          char** papszOptions,
                                           int* pnEntries,
                                           int** ppanMatchConfidence ) const
 {
+    CPL_IGNORE_RET_VAL(papszOptions);
+
     if( pnEntries )
         *pnEntries = 0;
     if( ppanMatchConfidence )
