@@ -36,6 +36,10 @@
 #endif
 
 /* CharLS header */
-#include <interface.h>
+#ifdef CHARLS_INTERFACE_H
+#include <CharLS/interface.h>
+#else
+#include <CharLS/charls.h>
+#endif
 
 #endif // JPEGLS_HEADER_H
