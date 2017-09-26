@@ -290,7 +290,10 @@ static char **CSVSplitLine( CSVTable* psTable,
         papszRetList = static_cast<char**>(
             VSI_CALLOC_VERBOSE( psTable->nFields + 1, sizeof(char*) ));
         if( papszRetList == NULL )
+        {
+            VSIFree(pszToken);
             return NULL;
+        }
         nListAlloc = psTable->nFields;
     }
 
