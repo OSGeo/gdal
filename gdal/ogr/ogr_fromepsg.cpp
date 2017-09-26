@@ -3028,7 +3028,10 @@ static void IngestDict(const char* pszDictFile,
     if( fp == NULL )
         return;
 
-    VSIFPrintfL(fpOut, "# From %s\n", pszDictFile);
+    if( fpOut )
+    {
+        VSIFPrintfL(fpOut, "# From %s\n", pszDictFile);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
@@ -3481,10 +3484,6 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
         {
             *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
             (*ppanMatchConfidence)[0] = 50;
-        }
-        for(size_t j=0; j<nSameCount; j++)
-        {
-            delete apoSameSRS[j];
         }
         return pahRet;
     }
