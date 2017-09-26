@@ -2220,11 +2220,13 @@ OGRErr OGRSpatialReference::morphFromESRI()
                               const_cast<char **>(apszProjMapping+1),
                               2 );
     pszProjection = GetAttrValue("PROJECTION");
-
-    RemapPNamesBasedOnProjCSAndPName(
-        this, pszProjection,
-        const_cast<char **>(apszParamNameMapping),
-        false /* from ESRI */ );
+    if( pszProjection )
+    {
+        RemapPNamesBasedOnProjCSAndPName(
+            this, pszProjection,
+            const_cast<char **>(apszParamNameMapping),
+            false /* from ESRI */ );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
