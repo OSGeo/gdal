@@ -1534,6 +1534,18 @@ def osr_esri_32():
     return 'success'
 
 ###############################################################################
+# Test morphing invalid PROJCS WKT does not crash
+
+def osr_esri_33():
+
+    sr = osr.SpatialReference()
+    sr.ImportFromWkt('PROJCS[]')
+    sr.MorphFromESRI()
+    sr.MorphToESRI()
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1569,8 +1581,8 @@ gdaltest_list = [
     osr_esri_30,
     osr_esri_31,
     osr_esri_32,
+    osr_esri_33,
     None ]
-
 
 if __name__ == '__main__':
 
