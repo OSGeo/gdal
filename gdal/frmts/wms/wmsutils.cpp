@@ -135,8 +135,9 @@ const char *WMSUtilDecode(CPLString &s, const char *encoding) {
     if (EQUAL(encoding, "base64")) {
         std::vector<char> buffer(s.begin(), s.end());
         buffer.push_back('\0');
-        CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(&buffer[0]));
-        s.assign(&buffer[0], strlen(&buffer[0]));
+        int nSize =
+            CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(&buffer[0]));
+        s.assign(&buffer[0], nSize);
     }
     else if (EQUAL(encoding, "XMLencoded")) {
         int len = static_cast<int>(s.size());
