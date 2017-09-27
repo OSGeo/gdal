@@ -10,6 +10,7 @@ export LC_ALL=en_US.utf8
 sudo debootstrap xenial "$chroot"
 sudo mount --rbind "$PWD" "$chroot$PWD"
 sudo mount --rbind /dev/pts "$chroot/dev/pts"
+sudo mount --rbind /dev/shm "$chroot/dev/shm"
 sudo mount --rbind /proc "$chroot/proc"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu xenial universe" >> xenial/etc/apt/sources.list'
 sudo su -c 'echo "en_US.UTF-8 UTF-8" >> xenial/etc/locale.gen'

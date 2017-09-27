@@ -78,11 +78,13 @@ def test_gdal2tiles_py_zoom_option():
 
     shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
-    # --processes=2 commented out as unreliable on Travis
-    test_py_scripts.run_py_script(
-        script_path,
-        'gdal2tiles',
-        '-q -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+    # Because of multiprocessing, run as external process, to avoid issues with
+    # Ubuntu 12.04 and socket.setdefaulttimeout()
+    # as well as on Windows that doesn't manage to fork
+    test_py_scripts.run_py_script_as_external_script(
+         script_path,
+         'gdal2tiles',
+        '-q --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 

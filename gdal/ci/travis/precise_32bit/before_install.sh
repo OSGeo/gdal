@@ -10,6 +10,7 @@ export LC_ALL=en_US.utf8
 sudo i386 debootstrap --arch=i386 precise "$chroot"
 sudo mount --rbind "$PWD" "$chroot$PWD"
 sudo mount --rbind /dev/pts "$chroot/dev/pts"
+sudo mount --rbind /dev/shm "$chroot/dev/shm"
 sudo mount --rbind /proc "$chroot/proc"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu precise universe" >> buildroot.i386/etc/apt/sources.list'
 sudo i386 chroot "$chroot" locale-gen en_US.UTF-8
