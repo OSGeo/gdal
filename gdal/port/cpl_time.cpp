@@ -228,7 +228,7 @@ static const char* const aszMonthStr[] = {
  * @param pnSecond pointer to int receiving second (between 0 and 60, or -1 if unknown), or NULL
  * @param pnTZFlag pointer to int receiving time zone flag (0=unknown, 100=GMT,
  *                 101=GMT+15minute, 99=GMT-15minute), or NULL
- * @param pnWeekDay pointer to int receiving day of week (between 1 and 7), or NULL
+ * @param pnWeekDay pointer to int receiving day of week (between 1 and 7, or 0 if unset), or NULL
  * @return TRUE if parsing is successful
  *
  * @since GDAL 2.3
