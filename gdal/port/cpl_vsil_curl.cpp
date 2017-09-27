@@ -4565,12 +4565,14 @@ VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
         return WriteChunked(pBuffer, nSize, nMemb);
     }
 
+    const GByte* pabySrcBuffer = reinterpret_cast<const GByte*>(pBuffer);
     while( nBytesToWrite > 0 )
     {
         const int nToWriteInBuffer = static_cast<int>(
             std::min(static_cast<size_t>(m_nBufferSize - m_nBufferOff),
                      nBytesToWrite));
-        memcpy(m_pabyBuffer + m_nBufferOff, pBuffer, nToWriteInBuffer);
+        memcpy(m_pabyBuffer + m_nBufferOff, pabySrcBuffer, nToWriteInBuffer);
+        pabySrcBuffer += nToWriteInBuffer;
         m_nBufferOff += nToWriteInBuffer;
         m_nCurOffset += nToWriteInBuffer;
         nBytesToWrite -= nToWriteInBuffer;
