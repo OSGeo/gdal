@@ -3082,7 +3082,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             {
                 if( !STARTS_WITH(*papszIter, "DCAP_") &&
                     !STARTS_WITH(*papszIter, "DMD_") &&
-                    !STARTS_WITH(*papszIter, "DS_") )
+                    !STARTS_WITH(*papszIter, "DS_") &&
+                    !STARTS_WITH(*papszIter, "OGR_DRIVER=") )
                 {
                     if( bFirstOtherOption )
                         printf("  Other metadata items:\n"); /*ok*/
