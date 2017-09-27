@@ -3362,7 +3362,10 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     {
         return NULL;
     }
- 
+    const char*pszSRSName = GetAttrValue(pszSRSType);
+    if( pszSRSName == NULL )
+        return NULL;
+
     const std::vector<OGRSpatialReference*>* papoSRSCache =
                                                     GetSRSCache(pszSRSType);
     if( papoSRSCache == NULL )
@@ -3370,7 +3373,7 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
 
     std::vector< OGRSpatialReference* > apoSameSRS;
     const char* apszOptions[] = { "TOWGS84=ONLY_IF_IN_BOTH", NULL };
-    CPLString osSRSName(MassageSRSName(GetAttrValue(pszSRSType), false));
+    CPLString osSRSName(MassageSRSName(pszSRSName, false));
     CPLString osSRSNameExtra(MassageSRSName(osSRSName, true));
     std::vector<size_t> anMatchingSRSNameIndices;
     for(size_t i = 0; i < papoSRSCache->size(); i++ )
