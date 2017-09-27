@@ -42,3 +42,9 @@ KAK_OBJ +=      \
     $(KAKDIR)/apps/make/avx2_region_compositor.o \
     $(KAKDIR)/apps/make/avx2_vex_transfer.o
 endif
+
+# The following are for Kakadu 7.A and later.
+ifneq ($(wildcard $(KAKDIR)/apps/make/supp_local.o),)
+KAK_OBJ +=      \
+    $(KAKDIR)/apps/make/supp_local.o
+endif
