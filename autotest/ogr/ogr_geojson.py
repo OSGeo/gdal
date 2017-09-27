@@ -2580,6 +2580,9 @@ def ogr_geojson_49():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_geojson_49.json')
 
     return 'success'
 
