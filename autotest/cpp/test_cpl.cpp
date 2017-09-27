@@ -32,6 +32,7 @@
 #include <cpl_sha256.h>
 #include <cpl_string.h>
 #include "cpl_safemaths.hpp"
+#include "cpl_time.h"
 
 #include <fstream>
 #include <string>
@@ -1239,4 +1240,73 @@ namespace tut
         try { (CPLSM(1U) / CPLSM(0U)).v(); ensure(false); } catch (...) {}
     }
 
+    // Test CPLParseRFC822DateTime()
+    template<>
+    template<>
+    void object::test<27>()
+    {
+        int year, month, day, hour, min, sec, tz, weekday;
+        ensure( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 101 );
+        ensure_equals( weekday, 4 );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 100 );
+        ensure_equals( weekday, 4 );
+
+        // Without day of week, second and timezone
+        ensure( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, -1 );
+        ensure_equals( tz, 0 );
+        ensure_equals( weekday, 0 );
+
+        ensure( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( weekday, 0 );
+
+        ensure( !CPLParseRFC822DateTime("00 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("32 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +-100", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+    }
 } // namespace tut
