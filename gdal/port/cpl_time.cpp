@@ -276,8 +276,14 @@ int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
         ++papszVal;
     }
 
+    int day = atoi(*papszVal);
+    if( day <= 0 || day >= 32 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
     if( pnDay )
-        *pnDay = atoi(*papszVal);
+        *pnDay = day;
     ++papszVal;
 
     int month = 0;
