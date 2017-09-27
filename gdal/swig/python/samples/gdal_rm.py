@@ -54,7 +54,7 @@ def gdal_rm_recurse(filename, simulate = False):
             print('Unlink(%s)' % filename)
             return 0
         else:
-            gdal.Unlink(filename)
+            return gdal.Unlink(filename)
 
 def gdal_rm(argv, progress = None):
     filename = None
