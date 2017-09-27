@@ -1290,17 +1290,17 @@ namespace tut
 
         ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
         ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
