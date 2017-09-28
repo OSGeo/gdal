@@ -1880,21 +1880,23 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 
             for( int i = 0; i < l_nBands; i++ )
             {
-                PDS4RawRasterBand *poBand = new
-                          PDS4RawRasterBand(poDS, i+1, poDS->m_fpImage,
-                            (bBottomToTop ) ?
-                                nOffset + nBandOffset * i +
-                                    (nLines - 1) * nLineOffset :
-                                nOffset + nBandOffset * i,
-                            nPixelOffset,
-                            (bBottomToTop ) ? -nLineOffset : nLineOffset,
-                            eDT,
+                PDS4RawRasterBand *poBand = new PDS4RawRasterBand(
+                    poDS,
+                    i+1,
+                    poDS->m_fpImage,
+                    (bBottomToTop ) ?
+                        nOffset + nBandOffset * i +
+                            static_cast<vsi_l_offset>(nLines - 1) * nLineOffset :
+                        nOffset + nBandOffset * i,
+                    nPixelOffset,
+                    (bBottomToTop ) ? -nLineOffset : nLineOffset,
+                    eDT,
 #ifdef CPL_LSB
-                                        bLSBOrder,
+                    bLSBOrder,
 #else
-                                        !bLSBOrder,
+                    !bLSBOrder,
 #endif
-                                        true);
+                    true);
                 if( bNoDataSet )
                 {
                     poBand->SetNoDataValue(dfNoData);
