@@ -1486,6 +1486,12 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
     if( psProduct == NULL )
         return NULL;
 
+    // Test case: https://starbase.jpl.nasa.gov/pds4/1700/dph_example_products/test_Images_DisplaySettings/TestPattern_Image/TestPattern.xml
+    const char* pszVertDir = CPLGetXMLValue(psProduct,
+        "Observation_Area.Discipline_Area.Display_Settings.Display_Direction."
+        "vertical_display_direction", "");
+    const bool bBottomToTop = EQUAL(pszVertDir, "Bottom to Top");
+
     PDS4Dataset *poDS = new PDS4Dataset();
 
     CPLStringList aosSubdatasets;
@@ -1876,8 +1882,13 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             {
                 PDS4RawRasterBand *poBand = new
                           PDS4RawRasterBand(poDS, i+1, poDS->m_fpImage,
-                                        nOffset + nBandOffset * i,
-                                        nPixelOffset, nLineOffset, eDT,
+                            (bBottomToTop ) ?
+                                nOffset + nBandOffset * i +
+                                    (nLines - 1) * nLineOffset :
+                                nOffset + nBandOffset * i,
+                            nPixelOffset,
+                            (bBottomToTop ) ? -nLineOffset : nLineOffset,
+                            eDT,
 #ifdef CPL_LSB
                                         bLSBOrder,
 #else
