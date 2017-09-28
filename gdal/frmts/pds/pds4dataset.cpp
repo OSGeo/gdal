@@ -1362,7 +1362,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
             }
             else
             {
-                osSphereName += "polarRadius";
+                osSphereName += "_polarRadius";
                 oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
                                 dfPolarRadius, 0.0, "Reference_Meridian", 0.0);
             }
@@ -1449,6 +1449,14 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         int nCount = CSLCount(papszTokens);
         if( nCount == 5 && strlen(papszTokens[1]) == 1 &&
             (papszTokens[2][0] == '\\' || papszTokens[2][0] == '/') )
+        {
+            osXMLFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
+            nFAOIdxLookup = atoi(papszTokens[3]);
+            nArrayIdxLookup = atoi(papszTokens[4]);
+        }
+        else if( nCount == 5 &&
+            (EQUAL(papszTokens[1], "/vsicurl/http") ||
+             EQUAL(papszTokens[1], "/vsicurl/https")) )
         {
             osXMLFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
             nFAOIdxLookup = atoi(papszTokens[3]);
@@ -2726,7 +2734,14 @@ void PDS4Dataset::WriteHeader()
     CPLString osTemplateFilename = CSLFetchNameValueDef(m_papszCreationOptions,
                                                       "TEMPLATE", "");
     if( !osTemplateFilename.empty() )
+    {
+        if( STARTS_WITH(osTemplateFilename, "http://") ||
+            STARTS_WITH(osTemplateFilename, "https://") )
+        {
+            osTemplateFilename = "/vsicurl_streaming/" + osTemplateFilename;
+        }
         psRoot = CPLParseXMLFile(osTemplateFilename);
+    }
     else if( !m_osXMLPDS4.empty() )
         psRoot = CPLParseXMLString(m_osXMLPDS4);
     else
