@@ -1010,9 +1010,9 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 
 ## @method hashref ClassCounts($classifier, $progress = undef, $progress_data = undef)
 # Compute the counts of cell values or number of cell values in ranges.
-# @note Classifier is required only for float bands. Do not specify
-# one for integer bands.
-# @note NoData values are counted similar to other values for integer rasters.
+# @note Classifier is required only for float bands.
+# @note NoData values are counted similar to other values when
+# classifier is not defined for integer rasters.
 #
 # @param classifier Anonymous array of format [ $comparison,
 # $classifier ], where $comparison is a string '<', '<=', '>', or '>='
@@ -1022,7 +1022,7 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 # comparison returns true, then the second $value or $classifier is
 # applied, and if not then the third $value or $classifier.
 #
-# In the example below, the real line is divided into ranges
+# In the example below, the line is divided into ranges
 # [-inf..3), [3..5), and [5..inf], i.e., three ranges with class
 # indexes 0, 1, and 2. Note that the indexes are used as keys for
 # class counts and not the class values (here 1.0, 2.0, and 3.0),
@@ -1045,17 +1045,18 @@ Geo::GDAL::Driver('PNG')->Copy(Name => 'test.png', Src => $d->Dither->Dataset);
 ## @method Reclassify($classifier, $progress = undef, $progress_data = undef)
 # Reclassify the cells in the band.
 # @note NoData values in integer rasters are reclassified if
-# explicitly specified in the classifier. However, they are not
+# explicitly specified in the hash classifier. However, they are not
 # reclassified to the default value, if one is specified. In real
 # valued rasters nodata cells are not reclassified.
 # @note If the subroutine is user terminated or the classifier is
 # incorrect, already reclassified cells will stay reclassified but an
 # error is raised.
 # @param classifier For integer rasters an anonymous hash, which
-# contains old class values as keys and new class values as values. A
-# special key '*' (star) can be used as default, to act as a fallback
-# new class value. For real valued rasters the classifier is as in
-# Geo::GDAL::Band::ClassCounts.
+# contains old class values as keys and new class values as values, or
+# an array classifier as in Geo::GDAL::Band::ClassCounts. In a hash
+# classifier a special key '*' (star) can be used as default, to act
+# as a fallback new class value. For real valued rasters the
+# classifier is as in Geo::GDAL::Band::ClassCounts.
 
 ## @method ComputeRasterMinMax($approx_ok = 0)
 # @return arrayref MinMax = [min, max]
