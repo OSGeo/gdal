@@ -19,7 +19,10 @@ The driver also reads and write georeferencing and coordinate system information
 as well as selected other header metadata.<p>
 
 If several Array objects are present in the label, they will be reported as
-separate subdatasets.<p>
+separate subdatasets (typically the main subdataset is an Array3D, and
+backplanes are represented as Array2D. Creation of new datasets with
+subdatasets is not supported: only a single Array3D with possibly multiple bands
+is supported.<p>
 
 A mask band is attached to each source band. The
 value of this mask band is 0 when the pixel value is one of the missing constants.<p>
@@ -78,6 +81,139 @@ Value of longitude_direction. Defaults to Positive East.</li>
 bounding box</li>
 </ul>
 
+<h2>Examples:</h2>
+
+<li>Listing bands and subdatasets:</li>
+
+<pre>$ gdalinfo b0011_p237201_01_01v02.xml
+
+Driver: PDS4/NASA Planetary Data System 4
+Files: b0011_p237201_01_01v02.xml
+       b0011_p237201_01_01v02.qub
+Size is 512, 512
+Coordinate System is `'
+Image Structure Metadata:
+  INTERLEAVE=BAND
+Subdatasets:
+  SUBDATASET_1_NAME=PDS4:b0011_p237201_01_01v02.xml:1:1
+  SUBDATASET_1_DESC=Image file b0011_p237201_01_01v02.qub, array Spectral_Qube_Object
+  SUBDATASET_2_NAME=PDS4:b0011_p237201_01_01v02.xml:1:2
+  SUBDATASET_2_DESC=Image file b0011_p237201_01_01v02.qub, array iof_r2
+  SUBDATASET_3_NAME=PDS4:b0011_p237201_01_01v02.xml:1:3
+  SUBDATASET_3_DESC=Image file b0011_p237201_01_01v02.qub, array iof_r7
+  SUBDATASET_4_NAME=PDS4:b0011_p237201_01_01v02.xml:1:4
+[...]
+  SUBDATASET_16_DESC=Image file b0011_p237201_01_01v02.qub, array emission_angle
+  SUBDATASET_17_NAME=PDS4:b0011_p237201_01_01v02.xml:1:17
+  SUBDATASET_17_DESC=Image file b0011_p237201_01_01v02.qub, array phase_angle
+  SUBDATASET_18_NAME=PDS4:b0011_p237201_01_01v02.xml:1:18
+  SUBDATASET_18_DESC=Image file b0011_p237201_01_01v02.qub, array approx_incidence_angle
+  SUBDATASET_19_NAME=PDS4:b0011_p237201_01_01v02.xml:1:19
+  SUBDATASET_19_DESC=Image file b0011_p237201_01_01v02.qub, array approx_emission_angle
+  SUBDATASET_20_NAME=PDS4:b0011_p237201_01_01v02.xml:1:20
+  SUBDATASET_20_DESC=Image file b0011_p237201_01_01v02.qub, array approx_phase_angle
+Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0,  512.0)
+Upper Right (  512.0,    0.0)
+Lower Right (  512.0,  512.0)
+Center      (  256.0,  256.0)
+Band 1 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.146998785514825,   Scale:4.48823844390647e-06
+Band 2 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.146998785514825,   Scale:4.48823844390647e-06
+Band 3 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.146998785514825,   Scale:4.48823844390647e-06
+Band 4 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.146998785514825,   Scale:4.48823844390647e-06
+Band 5 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.146998785514825,   Scale:4.48823844390647e-06
+</pre>
+
+<p>
+The information displayed by default is the one of the first subdataset
+(SUBDATASET_1_NAME)
+</p>
+
+<li>Getting information on a subdataset:</li>
+
+<pre>$ gdalinfo PDS4:b0011_p237201_01_01v02.xml:1:2
+
+Driver: PDS4/NASA Planetary Data System 4
+Files: b0011_p237201_01_01v02.xml
+       b0011_p237201_01_01v02.qub
+Size is 512, 512
+Coordinate System is `'
+Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0,  512.0)
+Upper Right (  512.0,    0.0)
+Lower Right (  512.0,  512.0)
+Center      (  256.0,  256.0)
+Band 1 Block=512x1 Type=Int16, ColorInterp=Undefined
+  Offset: 0.04984971,   Scale:7.454028e-06
+</pre>
+
+<li>Conversion to GeoTIFF of a given subdatasets:</li>
+
+<pre>$ gdal_translate PDS4:b0011_p237201_01_01v02.xml:1:2 iof_r2.tif</pre>
+
+<li>Conversion to GeoTIFF of a all subdatasets:</li>
+
+<pre>$ gdal_translate -sds b0011_p237201_01_01v02.xml b0011_p237201_01_01v02.tif</pre>
+
+<p>This will create b0011_p237201_01_01v02_X.tif files where X=1,....,N</pre>
+
+<li>Creation of a new PDS4 dataset, using the default template and setting
+its parametrized variables:</li>
+
+<pre>$ gdal_translate input.tif output.xml -of PDS4 \
+            -co VAR_TARGET_TYPE=Satellite \
+            -co VAR_Target=Moon \
+            -co VAR_OBSERVING_SYSTEM_NAME=LOLA \
+            -co VAR_LOGICAL_IDENTIFIER=Lunar_LRO_LOLA_DEM_Global_64ppd.tif \
+            -co VAR_TITLE="LRO LOLA Digital Elevation Model (DEM) 64ppd" \
+            -co VAR_INVESTIGATION_AREA_NAME="Lunar Reconnaissance Orbiter" \
+            -co VAR_INVESTIGATION_AREA_LID_REFERENCE="urn:nasa:pds:context:instrument_host:spacecraft.lro"
+</pre>
+
+<li>Creation of a PDS4 dataset, using a non default template (here on a
+HTTP server, but local filename also possible):</li>
+
+<pre>$ gdal_translate input.tif output.xml -of PDS4 \
+            -co TEMPLATE=http://example.com/mytemplate.xml
+</pre>
+
+<li>Creation of a PDS4 dataset from a source PDS4 dataset (using the XML file of
+this source PDS4 dataset as an implicit template), with subsetting:</li>
+
+<pre>$ gdal_translate input.xml output.xml -of PDS4 -projwin ullx ully lrx lry</pre>
+
+<li>In Python, creation of a PDS4 dataset from a GeoTIFF, using a base template into
+which one substitute one element with a new value:</li>
+
+<pre>
+from osgeo import gdal
+from lxml import etree
+
+# Customization of template
+template = open('template.xml','rb').read()
+root = etree.XML(template)
+ns = '{http://pds.nasa.gov/pds4/pds/v1}'
+identifier = root.find(".//{ns}Identification_Area/{ns}logical_identifier".format(ns = ns))
+identifier.text = 'new_identifier'
+
+# Serialize the modified template in a in-memory file
+in_memory_template = '/vsimem/template.xml'
+gdal.FileFromMemBuffer(in_memory_template, etree.tostring(root))
+
+# Create the output dataset
+gdal.Translate('out.xml', 'in.tif', format = 'PDS4',
+               creationOptions = ['TEMPLATE='+in_memory_template])
+
+# Cleanup
+gdal.Unlink(in_memory_template)
+</pre>
 
 <h2>See Also:</h2>
 
