@@ -1334,8 +1334,7 @@ def gpkg_14():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
-    ## There's some non null data in R,G,B bands that is masked by the alpha. Oh well...
-    expected_cs = [2762,2762,2762,1223]
+    expected_cs = [1223,1223,1223,1223]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -1356,7 +1355,7 @@ def gpkg_14():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg')
-    expected_cs = [15080,15080,15080,13365]
+    expected_cs = [13365, 13365, 13365, 13365]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
