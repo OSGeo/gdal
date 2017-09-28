@@ -508,7 +508,7 @@ void CheckPackedGeneric(GDALDataType eIn, GDALDataType eOut)
     Tout arrayOut[N];
     for(int i=0;i<N;i++)
     {
-        arrayIn[i] = i + 1;
+        arrayIn[i] = static_cast<Tin>(i + 1);
         arrayOut[i] = 0;
     }
     GDALCopyWords(arrayIn, eIn, GDALGetDataTypeSizeBytes(eIn),
