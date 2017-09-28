@@ -1551,7 +1551,13 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    meta->gridAttrib.max = meta->gridAttrib.min;
    meta->gridAttrib.f_maxmin = 1;
    meta->gridAttrib.numMiss = 0;
-   meta->gridAttrib.refVal = (float)refVal;
+   if (refVal >= std::numeric_limits<float>::max() || CPLIsNan(refVal)) {
+      meta->gridAttrib.refVal = std::numeric_limits<float>::max();
+   } else if (refVal <= -std::numeric_limits<float>::max()) {
+      meta->gridAttrib.refVal = -std::numeric_limits<float>::max();
+   } else {
+      meta->gridAttrib.refVal = static_cast<float>(refVal);
+   }
    meta->gridAttrib.ESF = ESF;
    meta->gridAttrib.DSF = DSF;
    bufLoc = 8;
