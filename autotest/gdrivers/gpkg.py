@@ -3436,6 +3436,43 @@ cellsize     60
 
     gdal.Unlink('/vsimem/gpkg_39.gpkg')
 
+    # Test detecting tiles at zero (without nodata value)
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_39')
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_39.gpkg')
+
+    # Test detecting tiles at nodata value
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.GetRasterBand(1).SetNoDataValue(2)
+    ds.GetRasterBand(1).Fill(2)
+    ds.GetRasterBand(1).FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_39')
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_39.gpkg')
+
     return 'success'
 
 ###############################################################################
