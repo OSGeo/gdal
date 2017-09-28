@@ -760,7 +760,8 @@ void PNGDataset::CollectXMPMetadata()
         nOffset += 4;
         pszChunkType[4] = 0;
 
-        if (strcmp(pszChunkType, "iTXt") == 0 && nLength > 22)
+        if (strcmp(pszChunkType, "iTXt") == 0 && nLength > 22  &&
+            nLength < 2 << 29)
         {
             char* pszContent = reinterpret_cast<char *>(
                 VSIMalloc(nLength + 1) );
