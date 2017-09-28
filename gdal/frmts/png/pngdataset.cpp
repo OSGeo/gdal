@@ -761,7 +761,9 @@ void PNGDataset::CollectXMPMetadata()
         pszChunkType[4] = 0;
 
         if (strcmp(pszChunkType, "iTXt") == 0 && nLength > 22  &&
-            nLength < 2 << 29)
+            // Does not make sense to have a XMP content larger than 10 MB
+            // (XMP in JPEG must fit in 65 KB...)
+            nLength < 10 * 1024 * 1024)
         {
             char* pszContent = reinterpret_cast<char *>(
                 VSIMalloc(nLength + 1) );
