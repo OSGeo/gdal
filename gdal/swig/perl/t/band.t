@@ -46,6 +46,20 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     delete $counts{1};
     $counts{3} = 6;
     is_deeply($c, \%counts, "$datatype: Reclassify without default");
+
+    my $classifier = ['<', [5.0, [3, 1, 2], 3]];
+    $band->WriteTile($tile);
+    $c = $band->ClassCounts($classifier);
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {0 => 9, 1 => 6, 2 => 10}, "$datatype: Class counts with an array");
+    $band->Reclassify($classifier); # see below
+    $c = $band->ClassCounts;
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {1 => 9, 2 => 6, 3 => 10}, "$datatype: Reclassify with an array");
     
     $band->WriteTile($tile);
     $band->NoDataValue(5);
@@ -56,6 +70,14 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     #}
     is_deeply($c, {0 => 22, 5 => 3}, "Reclassify with default does not affect cells with NoData.");
 
+    $band->WriteTile($tile);
+    $band->NoDataValue(5);
+    $band->Reclassify(['<', [5, [3, 1, 2], 3]]); # see below
+    $c = $band->ClassCounts;
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {1 => 9, 2 => 6, 3 => 7, 5 => 3}, "$datatype: Reclassify raster with NoData with an array");
 }
 
 for my $datatype (qw/Float32 Float64/) {
