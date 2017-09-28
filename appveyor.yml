@@ -97,9 +97,9 @@ install:
 - echo NETCDF_LIB=$(SDK_LIB)\netcdf.lib >> nmake.local
 - echo NETCDF_INC_DIR=$(SDK_INC) >> nmake.local
 - echo NETCDF_HAS_NC4 = yes >> nmake.local
-- nmake /f makefile.vc MSVC_VER=%MSVC_VER% DEBUG=1 %WIN64_ARG% USER_DEFS=/WX
+- nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd apps
-- nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% DEBUG=1 %WIN64_ARG% USER_DEFS=/WX
+- nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd ..
 - cd swig\python
 - python setup.py build
