@@ -1594,6 +1594,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
     CPLErr eErr = CE_Failure;
 
+    int bHasNoData = FALSE;
+    double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
+    const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
+
     bool bAllOpaque = true;
     if( m_eDT == GDT_Byte && m_poCT == NULL && nAlphaBand != 0 )
     {
@@ -1617,6 +1621,34 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         }
         else
             bAllOpaque = false;
+    }
+    else if( m_eDT == GDT_Float32 )
+    {
+        const float* pSrc = reinterpret_cast<float*>(m_pabyCachedTiles);
+        int i;
+        const float fNoDataValueOrZero =
+            bHasNoData ? static_cast<float>(dfNoDataValue) : 0.0f;
+        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        {
+            const float fVal = pSrc[i];
+            if( bHasNanNoData )
+            {
+                if( CPLIsNan(fVal) )
+                    continue;
+            }
+            else if( fVal == fNoDataValueOrZero )
+            {
+                continue;
+            }
+            break;
+        }
+        if( i == nBlockXSize * nBlockYSize )
+        {
+            // If tile is fully transparent, don't serialize it and remove it if it exists
+            DeleteTile(nRow, nCol);
+
+            return CE_None;
+        }
     }
 
     if( bIsLossyFormat )
@@ -1755,8 +1787,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         double dfTileMax = 0.0;
         double dfTileMean = 0.0;
         double dfTileStdDev = 0.0;
-        int bHasNoData = FALSE;
-        double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
         double dfTileOffset = 0.0;
         double dfTileScale = 1.0;
         if( m_eTF == GPKG_TF_PNG_16BIT )
@@ -1809,8 +1839,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 float fMin = 0.0f;
                 float fMax = 0.0f;
                 double dfM2 = 0.0;
-                const bool bHasNanNoData = bHasNoData &&
-                                           CPLIsNan(dfNoDataValue);
                 for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
                 {
                     const float fVal = pSrc[i];
@@ -1819,7 +1847,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         if( CPLIsNan(fVal) )
                             continue;
                     }
-                    else if( bHasNoData && fVal == dfNoDataValue )
+                    else if( bHasNoData && fVal ==
+                                        static_cast<float>(dfNoDataValue) )
                     {
                         continue;
                     }
@@ -1920,7 +1949,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             float fMin = 0.0f;
             float fMax = 0.0f;
             double dfM2 = 0.0;
-            const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
             for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
             {
                 const float fVal = pSrc[i];
@@ -1929,7 +1957,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     if( CPLIsNan(fVal) )
                         continue;
                 }
-                else if( bHasNoData && fVal == dfNoDataValue )
+                else if( bHasNoData && fVal ==
+                                        static_cast<float>(dfNoDataValue) )
                 {
                     continue;
                 }
