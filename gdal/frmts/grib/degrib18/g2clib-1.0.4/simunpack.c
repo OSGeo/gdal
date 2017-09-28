@@ -1,3 +1,4 @@
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "grib2.h"
@@ -40,9 +41,13 @@ g2int simunpack(unsigned char *cpack,g2int cpack_length,g2int *idrstmpl,g2int nd
       g2int  *ifld;
       g2int  j,nbits /* ,itype */;
       g2float ref,bscale,dscale;
+      double bscale_tmp;
 
       rdieee(idrstmpl+0,&ref,1);
-      bscale = (float)int_power(2.0,idrstmpl[1]);
+      bscale_tmp = int_power(2.0,idrstmpl[1]);
+      if (bscale_tmp >= FLT_MAX) bscale = FLT_MAX;
+      else if (bscale_tmp <= -FLT_MAX) bscale = -FLT_MAX;
+      else bscale = (float)bscale_tmp;
       dscale = (float)int_power(10.0,-idrstmpl[2]);
       nbits = idrstmpl[3];
       /* itype = idrstmpl[4]; */
