@@ -58,6 +58,11 @@ static GOA2Manager oStaticManager;
 bool CPLIsMachinePotentiallyGCEInstance()
 {
 #ifdef __linux
+    // Some Travis-CI workers are GCE machines, and for some tests, we don't
+    // want this code path to be taken
+    if( CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) )
+        return false;
+
     // If /var/log/kern.log exists, it should contain a string like
     // DMI: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
     bool bIsMachinePotentialGCEInstance = true;
