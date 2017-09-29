@@ -74,43 +74,43 @@ def vsigs_1():
 
     # Invalid header filename
     gdal.ErrorReset()
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py')
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs/foo/bar')
+    with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py'):
+        with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+            with gdaltest.error_handler():
+                f = open_for_read('/vsigs/foo/bar')
     if f is not None:
-        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
     last_err = gdal.GetLastErrorMsg()
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
     if last_err.find('Cannot read') < 0:
         gdaltest.post_reason('fail')
         print(last_err)
         return 'fail'
 
     # Invalid content for header file 
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', 'vsigs.py')
-    f = open_for_read('/vsigs/foo/bar')
+    with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', 'vsigs.py'):
+        with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+            f = open_for_read('/vsigs/foo/bar')
     if f is not None:
-        gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
         gdal.VSIFCloseL(f)
         return 'fail'
-    gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
 
     # Missing GS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs/foo/bar')
+    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+        with gdaltest.error_handler():
+            f = open_for_read('/vsigs/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') < 0:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        f = open_for_read('/vsigs_streaming/foo/bar')
+    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+        with gdaltest.error_handler():
+            f = open_for_read('/vsigs_streaming/foo/bar')
     if f is not None or gdal.VSIGetLastErrorMsg().find('GS_SECRET_ACCESS_KEY') < 0:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
