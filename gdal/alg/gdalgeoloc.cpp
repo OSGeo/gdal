@@ -334,10 +334,10 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             const int i = iX + iY * nXSize;
 
             const double dBMX = static_cast<double>(
-                    (psTransform->padfGeoLocX[i] - dfMinX) / dfPixelSize);
+                    (psTransform->padfGeoLocX[i] - dfMinX) / dfPixelSize) - 0.5;
 
             const double dBMY = static_cast<double>(
-                (dfMaxY - psTransform->padfGeoLocY[i]) / dfPixelSize);
+                (dfMaxY - psTransform->padfGeoLocY[i]) / dfPixelSize) - 0.5;
 
 
             //Get top left index by truncation
@@ -386,12 +386,12 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
                 psTransform->pafBackMapX[iBMX + 1 + iBMY * nBMXSize] +=
                     static_cast<float>( tempwt * (
-                        iX * psTransform->dfPIXEL_STEP +
+                        (iX + 0.5) * psTransform->dfPIXEL_STEP +
                         psTransform->dfPIXEL_OFFSET));
 
                 psTransform->pafBackMapY[iBMX + 1 + iBMY * nBMXSize] +=
                     static_cast<float>( tempwt * (
-                        iY * psTransform->dfLINE_STEP +
+                        (iY + 0.5)* psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
                 wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  tempwt;
 
@@ -405,12 +405,12 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 const double tempwt = fracBMX * fracBMY;
                 psTransform->pafBackMapX[iBMX + 1 + (iBMY+1) * nBMXSize] +=
                     static_cast<float>( tempwt * (
-                        iX * psTransform->dfPIXEL_STEP +
+                        (iX + 0.5) * psTransform->dfPIXEL_STEP +
                         psTransform->dfPIXEL_OFFSET));
 
                 psTransform->pafBackMapY[iBMX + 1 + (iBMY+1) * nBMXSize] +=
                     static_cast<float>( tempwt * (
-                        iY * psTransform->dfLINE_STEP +
+                        (iY + 0.5) * psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
                 wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += tempwt;
 
@@ -424,12 +424,12 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 const double tempwt = (1.0 - fracBMX) * fracBMY;
                 psTransform->pafBackMapX[iBMX + (iBMY+1) * nBMXSize] +=
                     static_cast<float>( tempwt * (
-                        iX * psTransform->dfPIXEL_STEP +
+                        (iX + 0.5) * psTransform->dfPIXEL_STEP +
                         psTransform->dfPIXEL_OFFSET));
 
                 psTransform->pafBackMapY[iBMX + (iBMY+1) * nBMXSize] +=
                     static_cast<float>(tempwt * (
-                        iY * psTransform->dfLINE_STEP +
+                        (iY + 0.5) * psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
                 wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += tempwt;
 
@@ -878,10 +878,10 @@ int GDALGeoLocTransform( void *pTransformArg,
             }
 
             const double dfGeoLocPixel =
-                (padfX[i] - psTransform->dfPIXEL_OFFSET)
+                (padfX[i] - 0.5 - psTransform->dfPIXEL_OFFSET)
                 / psTransform->dfPIXEL_STEP;
             const double dfGeoLocLine =
-                (padfY[i] - psTransform->dfLINE_OFFSET)
+                (padfY[i] - 0.5 - psTransform->dfLINE_OFFSET)
                 / psTransform->dfLINE_STEP;
 
             int iX = std::max(0, static_cast<int>(dfGeoLocPixel));
@@ -969,10 +969,10 @@ int GDALGeoLocTransform( void *pTransformArg,
 
             const double dfBMX =
                 ((padfX[i] - psTransform->adfBackMapGeoTransform[0])
-                 / psTransform->adfBackMapGeoTransform[1]);
+                 / psTransform->adfBackMapGeoTransform[1]) - 0.5;
             const double dfBMY =
                 ((padfY[i] - psTransform->adfBackMapGeoTransform[3])
-                 / psTransform->adfBackMapGeoTransform[5]);
+                 / psTransform->adfBackMapGeoTransform[5]) - 0.5;
 
             const int iBMX = static_cast<int>(dfBMX);
             const int iBMY = static_cast<int>(dfBMY);
