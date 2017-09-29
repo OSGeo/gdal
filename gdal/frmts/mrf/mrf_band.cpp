@@ -1053,3 +1053,4 @@ GDALRasterBand* GDALMRFRasterBand::GetOverview(int n)
 }
 
 NAMESPACE_MRF_END
+
