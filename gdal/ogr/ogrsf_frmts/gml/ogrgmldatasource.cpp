@@ -272,6 +272,12 @@ bool OGRGMLDataSource::CheckHeader(const char *pszStr)
         return false;
     }
 
+    // Ignore kml files
+    if( strstr(pszStr, "<kml") != NULL )
+    {
+        return false;
+    }
+
     // Ignore .xsd schemas.
     if( strstr(pszStr, "<schema") != NULL ||
         strstr(pszStr, "<xs:schema") != NULL ||
