@@ -317,7 +317,9 @@ int main( int nArgc, char ** papszArgv )
         if( poDS != NULL && bVerbose )
         {
             printf( "Had to open data source read-only.\n" );
+#ifdef __AFL_HAVE_MANUAL_CONTROL
             bReadOnly = true;
+#endif
         }
     }
 
