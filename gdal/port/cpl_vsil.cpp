@@ -1203,8 +1203,6 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
 /*                        VSIFGetRangeStatusL()                        */
 /************************************************************************/
 
-// TODO(rouault): "exte,t" in r34586?
-
 /**
  * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset,
  *                                       vsi_l_offset nLength )
@@ -1215,7 +1213,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * implemented for Linux (and no other Unix derivatives) and Windows.
  *
  * Note: A return of VSI_RANGE_STATUS_DATA doesn't exclude that the
- * exte,t is filled with zeroes! It must be interpreted as "may
+ * extent is filled with zeroes! It must be interpreted as "may
  * contain non-zero data".
  *
  * @param nOffset offset of the start of the extent.
@@ -1234,7 +1232,7 @@ int VSIFPutcL( int nChar, VSILFILE * fp )
  * implemented for Linux (and no other Unix derivatives) and Windows.
  *
  * Note: A return of VSI_RANGE_STATUS_DATA doesn't exclude that the
- * exte,t is filled with zeroes! It must be interpreted as "may
+ * extent is filled with zeroes! It must be interpreted as "may
  * contain non-zero data".
  *
  * @param fp file handle opened with VSIFOpenL().
