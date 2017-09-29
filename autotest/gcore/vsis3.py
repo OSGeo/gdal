@@ -772,6 +772,43 @@ def vsis3_3():
                 print(data)
                 return 'fail'
 
+    # List buckets (empty result)
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListAllMyBucketsResult>
+        <Buckets>
+        </Buckets>
+        </ListAllMyBucketsResult>
+        """)
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsis3/')
+    if dir_contents != [ '.' ]:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
+    gdal.VSICurlClearCache()
+
+    # List buckets
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListAllMyBucketsResult>
+        <Buckets>
+            <Bucket>
+                <Name>mybucket</Name>
+            </Bucket>
+        </Buckets>
+        </ListAllMyBucketsResult>
+        """)
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsis3/')
+    if dir_contents != [ 'mybucket' ]:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -1339,7 +1376,7 @@ def vsis3_7():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&prefix=dir/', 200,
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir/', 200,
                  { 'Content-type': 'application/xml', 'Connection':'close' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1367,7 +1404,7 @@ def vsis3_7():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir_nonempty/', 416)
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&prefix=dir_nonempty/', 200,
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir_nonempty/', 200,
                  { 'Content-type': 'application/xml' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1906,11 +1943,12 @@ def vsis3_extra_1():
             print('ReadDir() should not return empty list')
             return 'fail'
         for filename in readdir:
-            subpath = path + '/' + filename
-            if gdal.VSIStatL(subpath) is None:
-                gdaltest.post_reason('fail')
-                print('Stat(%s) should not return an error' % subpath)
-                return 'fail'
+            if filename != '.':
+                subpath = path + '/' + filename
+                if gdal.VSIStatL(subpath) is None:
+                    gdaltest.post_reason('fail')
+                    print('Stat(%s) should not return an error' % subpath)
+                    return 'fail'
 
         unique_id = 'vsis3_test'
         subpath = path + '/' + unique_id

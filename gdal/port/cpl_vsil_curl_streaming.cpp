@@ -35,6 +35,7 @@
 
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
+#include "cpl_azure.h"
 #include "cpl_hash_set.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
@@ -58,6 +59,11 @@ void VSIInstallS3StreamingFileHandler(void)
 void VSIInstallGSStreamingFileHandler(void)
 {
     // Not supported.
+}
+
+void VSIInstallAzureStreamingFileHandler(void)
+{
+    // Not supported
 }
 
 #else
@@ -274,7 +280,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
                                    GByte          *pData );
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders(const CPLString& )
+    virtual struct curl_slist* GetCurlHeaders(const CPLString&,
+                                const struct curl_slist* /* psExistingHeaders */ )
         { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
     virtual bool CanRestartOnError( const char* /*pszErrorMsg*/,
@@ -571,9 +578,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         osVerb = "HEAD";
     }
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb));
-    if( headers != NULL )
-        curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
+    curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
     // when doing a HEAD when recycling connections.
@@ -1012,9 +1018,8 @@ void VSICurlStreamingHandle::DownloadInThread()
 {
     struct curl_slist* headers = 
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET"));
-    if( headers != NULL )
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     static bool bHasCheckVersion = false;
     static bool bSupportGZip = false;
@@ -1732,8 +1737,8 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
-        override;
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+                                const struct curl_slist* psExistingHeaders) override;
     virtual bool StopReceivingBytesOnError() override { return false; }
     virtual bool CanRestartOnError( const char* pszErrorMsg,
                                     bool bSetError ) override;
@@ -1788,9 +1793,10 @@ VSIS3StreamingHandle::~VSIS3StreamingHandle()
 /************************************************************************/
 
 struct curl_slist*
-VSIS3StreamingHandle::GetCurlHeaders( const CPLString& osVerb )
+VSIS3StreamingHandle::GetCurlHeaders( const CPLString& osVerb,
+                                      const struct curl_slist* psExistingHeaders )
 {
-    return m_poS3HandleHelper->GetCurlHeaders(osVerb);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
 }
 
 /************************************************************************/
@@ -1837,9 +1843,10 @@ class VSIGSStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     VSIGSHandleHelper* m_poGCHandleHelper;
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+                                    const struct curl_slist* psExistingHeaders)
         override;
-    virtual bool StopReceivingBytesOnError() override { return false; }
+    virtual bool StopReceivingBytesOnError() override { return true; }
     virtual bool InterpretRedirect() override { return false; }
 
   public:
@@ -1889,13 +1896,97 @@ VSIGSStreamingHandle::~VSIGSStreamingHandle()
 /************************************************************************/
 
 struct curl_slist*
-VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb )
+VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
+                                      const struct curl_slist* psExistingHeaders )
 {
-    if( CSLFetchNameValue(m_papszHTTPOptions, "HEADER_FILE") )
-        return NULL;
-    return m_poGCHandleHelper->GetCurlHeaders(osVerb);
+    return m_poGCHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
 }
 
+
+
+
+/************************************************************************/
+/*                      VSIAzureStreamingFSHandler                      */
+/************************************************************************/
+
+class VSIAzureStreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+{
+protected:
+    virtual CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
+        override;
+
+public:
+        VSIAzureStreamingFSHandler() {}
+};
+
+/************************************************************************/
+/*                         VSIAzureStreamingHandle                      */
+/************************************************************************/
+
+class VSIAzureStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
+{
+    VSIAzureBlobHandleHelper* m_poHandleHelper;
+
+  protected:
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+                                    const struct curl_slist* psExistingHeaders)
+        override;
+    virtual bool StopReceivingBytesOnError() override { return true; }
+    virtual bool InterpretRedirect() override { return false; }
+
+  public:
+    VSIAzureStreamingHandle( VSIAzureStreamingFSHandler* poFS,
+                             VSIAzureBlobHandleHelper* poGCHandleHelper );
+    virtual ~VSIAzureStreamingHandle();
+};
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSIAzureStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSIAzureBlobHandleHelper* poHandleHelper =
+            VSIAzureBlobHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+    if( poHandleHelper )
+    {
+        return new VSIAzureStreamingHandle(this, poHandleHelper);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        VSIAzureStreamingHandle()                     */
+/************************************************************************/
+
+VSIAzureStreamingHandle::VSIAzureStreamingHandle(
+    VSIAzureStreamingFSHandler* poFS,
+    VSIAzureBlobHandleHelper* poGCHandleHelper) :
+    VSICurlStreamingHandle(poFS, poGCHandleHelper->GetURL()),
+    m_poHandleHelper(poGCHandleHelper)
+{}
+
+/************************************************************************/
+/*                       ~VSIAzureStreamingHandle()                     */
+/************************************************************************/
+
+VSIAzureStreamingHandle::~VSIAzureStreamingHandle()
+{
+    delete m_poHandleHelper;
+}
+
+/************************************************************************/
+/*                           GetCurlHeaders()                           */
+/************************************************************************/
+
+struct curl_slist*
+VSIAzureStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
+                                      const struct curl_slist* psExistingHeaders )
+{
+    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
 
 //! @endcond
 
@@ -2021,7 +2112,7 @@ void VSIInstallS3StreamingFileHandler(void)
  * performance.
  *
  * Several authentication methods are possible. In order of priorities (first
- * mentionned is the most prioritary)
+ * mentioned is the most prioritary)
  * <ol>
  *  <li>The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options can be
  * set for AWS style authentication</li>
@@ -2086,6 +2177,62 @@ void VSIInstallGSStreamingFileHandler( void )
     VSIFileManager::InstallHandler( "/vsigs_streaming/", new VSIGSStreamingFSHandler );
 }
 
+/************************************************************************/
+/*                   VSIInstallAzureStreamingFileHandler()              */
+/************************************************************************/
+
+/**
+ * \brief Install /vsiaz_streaming/ Microsoft Azure Blob file system handler
+ * (requires libcurl)
+ *
+ * A special file handler is installed that allows on-the-fly random reading of
+ * non-public files streamed from Microsoft Azure Blob containers, without prior
+ * download of the entire file.
+ *
+ * Recognized filenames are of the form /vsiaz_streaming/container/key where
+ * container is the name of the container and key the object "key", i.e.
+ * a filename potentially containing subdirectories.
+ *
+ * Partial downloads are done with a 16 KB granularity by default.
+ * If the driver detects sequential reading
+ * it will progressively increase the chunk size up to 2 MB to improve download
+ * performance.
+ *
+ * Several authentication methods are possible. In order of priorities (first
+ * mentioned is the most prioritary)
+ * <ol>
+ *  <li>The AZURE_STORAGE_CONNECTION_STRING configuration option, given in the
+ * access key section of the administration interface. It contains both the
+ * account name and a secret key.
+ *  </li>
+ *  <li>The AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY configuration
+ * options pointing respectively to the account name and a secret key.
+ *  </li>
+ * </ol>
+ *
+ * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
+ * options can be used to define a proxy server. The syntax to use is the one of
+ * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
+ *
+ * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
+ * options can be used to set the path to the Certification Authority (CA)
+ * bundle file (if not specified, curl will use a file in a system location).
+ *
+ * On reading, the file can be cached in RAM by setting the configuration option
+ * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by
+ * setting the configuration option VSI_CACHE_SIZE (in bytes).
+ *
+ * VSIStatL() will return the size in st_size member.
+ *
+ * @since GDAL 2.3
+ */
+
+void VSIInstallAzureStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsiaz_streaming/",
+                                    new VSIAzureStreamingFSHandler );
+}
+
 
 //! @cond Doxygen_Suppress
 
@@ -2099,7 +2246,7 @@ void VSICurlStreamingClearCache( void )
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
     const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
-                                   "/vsigs_streaming/" };
+                                   "/vsigs_streaming/", "vsiaz_streaming/" };
     for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
     {
         VSICurlStreamingFSHandler *poFSHandler =

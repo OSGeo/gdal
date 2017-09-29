@@ -1603,6 +1603,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallS3StreamingFileHandler();
         VSIInstallGSFileHandler();
         VSIInstallGSStreamingFileHandler();
+        VSIInstallAzureFileHandler();
+        VSIInstallAzureStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();

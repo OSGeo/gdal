@@ -1,6 +1,6 @@
 /**********************************************************************
  * Project:  CPL - Common Portability Library
- * Purpose:  Google Cloud Storage routines
+ * Purpose:  Microsoft Azure Storage Blob routines
  * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  **********************************************************************
@@ -25,14 +25,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef CPL_GOOGLE_CLOUD_INCLUDED_H
-#define CPL_GOOGLE_CLOUD_INCLUDED_H
+#ifndef CPL_AZURE_INCLUDED_H
+#define CPL_AZURE_INCLUDED_H
 
 #ifndef DOXYGEN_SKIP
-
-#include <cstddef>
-
-#include "cpl_string.h"
 
 #ifdef HAVE_CURL
 
@@ -41,60 +37,57 @@
 #include "cpl_aws.h"
 #include <map>
 
-class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
+class VSIAzureBlobHandleHelper: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osEndpoint;
-        CPLString m_osBucketObjectKey;
-        CPLString m_osSecretAccessKey;
-        CPLString m_osAccessKeyId;
-        bool      m_bUseHeaderFile;
-        GOA2Manager m_oManager;
+        CPLString m_osBucket;
+        CPLString m_osObjectKey;
+        CPLString m_osStorageAccount;
+        CPLString m_osStorageKey;
+        bool      m_bUseHTTPS;
+
         std::map<CPLString, CPLString> m_oMapQueryParameters;
 
-        static bool     GetConfiguration(CPLString& osSecretAccessKey,
-                                         CPLString& osAccessKeyId,
-                                         CPLString& osHeaderFile,
-                                         GOA2Manager& oManager);
+        static bool     GetConfiguration(bool& bUseHTTPS,
+                                         CPLString& osEndpoint,
+                                         CPLString& osStorageAccount,
+                                         CPLString& osStorageKey);
 
-        static bool     GetConfigurationFromConfigFile(
-                                         CPLString& osSecretAccessKey,
-                                         CPLString& osAccessKeyId,
-                                         CPLString& osOAuth2RefreshToken,
-                                         CPLString& osOAuth2ClientId,
-                                         CPLString& osOAuth2ClientSecret,
-                                         CPLString& osCredentials);
+        static CPLString BuildURL(const CPLString& osEndpoint,
+                                  const CPLString& osStorageAccount,
+                                  const CPLString& osBucket,
+                                  const CPLString& osObjectKey,
+                                  bool bUseHTTPS);
 
         void RebuildURL();
 
     public:
-        VSIGSHandleHelper(const CPLString& osEndpoint,
-                          const CPLString& osBucketObjectKey,
-                          const CPLString& osSecretAccessKey,
-                          const CPLString& osAccessKeyId,
-                          bool bUseHeaderFile,
-                          const GOA2Manager& oManager);
-       ~VSIGSHandleHelper();
+        VSIAzureBlobHandleHelper(const CPLString& osEndpoint,
+                                 const CPLString& osBucket,
+                                 const CPLString& osObjectKey,
+                                 const CPLString& osStorageAccount,
+                                 const CPLString& osStorageKey,
+                                 bool bUseHTTPS);
+       ~VSIAzureBlobHandleHelper();
 
-        static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
+        static VSIAzureBlobHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix);
 
         virtual void ResetQueryParameters() CPL_OVERRIDE;
         virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
-                                          const  struct curl_slist* psExistingHeaders,
+                                          const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
-
-        static void CleanMutex();
-        static void ClearCache();
 };
+
 
 #endif /* HAVE_CURL */
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif /* CPL_GOOGLE_CLOUD_INCLUDED_H */
+#endif /* CPL_AZURE_INCLUDED_H */

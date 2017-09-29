@@ -37,6 +37,12 @@ def Usage():
     return -1
 
 def gdal_rm_recurse(filename, simulate = False):
+
+    delete_self = True
+    if filename.endswith('/*'):
+        delete_self = False
+        filename = filename[0:-2]
+
     dir_contents = gdal.ReadDir(filename)
     if dir_contents:
         for f in dir_contents:
@@ -44,11 +50,20 @@ def gdal_rm_recurse(filename, simulate = False):
                 ret = gdal_rm_recurse(filename + '/' + f, simulate = simulate)
                 if ret != 0:
                     return ret
-        if simulate:
+        if not delete_self:
+            return 0
+        elif simulate:
             print('Rmdir(%s)' % filename)
             return 0
         else:
-            return gdal.Rmdir(filename)
+            ret = gdal.Rmdir(filename)
+            # Some filesystems, like /vsiaz/ don't have a real directory
+            # implementation. As soon as you remove the last file in the dir,
+            # the dir "disappears".
+            if ret < 0:
+                if gdal.VSIStatL(filename) is None:
+                    ret = 0
+            return ret
     else:
         if simulate:
             print('Unlink(%s)' % filename)

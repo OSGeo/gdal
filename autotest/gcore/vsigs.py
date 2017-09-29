@@ -7,7 +7,7 @@
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
 #
 ###############################################################################
-# Copyright (c) 20157 Even Rouault <even dot rouault at spatialys dot com>
+# Copyright (c) 2017 Even Rouault <even dot rouault at spatialys dot com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -75,19 +75,15 @@ def vsigs_1():
     # Invalid header filename
     gdal.ErrorReset()
     gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', '/i_dont/exist.py')
-    f = open_for_read('/vsigs/foo/bar')
-    if f is None:
+    with gdaltest.error_handler():
+        f = open_for_read('/vsigs/foo/bar')
+    if f is not None:
         gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
         return 'fail'
-    with gdaltest.error_handler():
-        data = gdal.VSIFReadL(1, 1, f)
     last_err = gdal.GetLastErrorMsg()
     gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
-    gdal.VSIFCloseL(f)
-    if len(data) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
     if last_err.find('Cannot read') < 0:
         gdaltest.post_reason('fail')
         print(last_err)
@@ -96,16 +92,12 @@ def vsigs_1():
     # Invalid content for header file 
     gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', 'vsigs.py')
     f = open_for_read('/vsigs/foo/bar')
-    if f is None:
+    if f is not None:
         gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
         gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
         return 'fail'
-    data = gdal.VSIFReadL(1, 1, f)
     gdal.SetConfigOption('GDAL_HTTP_HEADER_FILE', None)
-    gdal.VSIFCloseL(f)
-    if len(data) != 0:
-        gdaltest.post_reason('fail')
-        return 'fail'
 
     # Missing GS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
@@ -370,6 +362,25 @@ def vsigs_readdir():
     dir_contents = gdal.ReadDir('/vsigs/gs_fake_bucket2/a_dir/resource3.bin')
     if dir_contents is not None:
         gdaltest.post_reason('fail')
+        return 'fail'
+
+    # List buckets
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListAllMyBucketsResult>
+        <Buckets>
+            <Bucket>
+                <Name>mybucket</Name>
+            </Bucket>
+        </Buckets>
+        </ListAllMyBucketsResult>
+        """)
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsigs/')
+    if dir_contents != [ 'mybucket' ]:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
         return 'fail'
 
     return 'success'
@@ -1115,11 +1126,12 @@ def vsigs_extra_1():
             print('ReadDir() should not return empty list')
             return 'fail'
         for filename in readdir:
-            subpath = path + '/' + filename
-            if gdal.VSIStatL(subpath) is None:
-                gdaltest.post_reason('fail')
-                print('Stat(%s) should not return an error' % subpath)
-                return 'fail'
+            if filename != '.':
+                subpath = path + '/' + filename
+                if gdal.VSIStatL(subpath) is None:
+                    gdaltest.post_reason('fail')
+                    print('Stat(%s) should not return an error' % subpath)
+                    return 'fail'
 
         unique_id = 'vsigs_test'
         subpath = path + '/' + unique_id
