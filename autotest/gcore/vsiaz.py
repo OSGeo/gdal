@@ -441,6 +441,32 @@ def vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
 
+    # Simulate illegal read
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = gdal.VSIFReadL(1, 1, f)
+    if len(ret) != 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
+
+    # Simulate illegal seek
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = gdal.VSIFSeekL(f, 1, 0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.VSIFCloseL(f)
+
     # Simulate failure when putting BlockBob
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
     if f is None:
@@ -456,7 +482,38 @@ def vsiaz_fake_write():
         request.end_headers()
 
     handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
+
+    if gdal.VSIFSeekL(f, 0, 0) != 0:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
     gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
+
+    if gdal.VSIFTellL(f) != 35000:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
+    if gdal.VSIFSeekL(f, 35000, 0) != 0:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
+    if gdal.VSIFSeekL(f, 0, 1) != 0:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+    if gdal.VSIFSeekL(f, 0, 2) != 0:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
+    if gdal.VSIFEofL(f) != 0:
+        gdaltest.post_reason('fail')
+        gdal.VSIFCloseL(f)
+        return 'fail'
+
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
             ret = gdal.VSIFCloseL(f)
@@ -465,7 +522,6 @@ def vsiaz_fake_write():
             print(ret)
             gdal.VSIFCloseL(f)
             return 'fail'
-
 
     # Simulate creation of BlockBob over an existing blob of incompatible type
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -595,6 +651,59 @@ def vsiaz_fake_write():
         gdal.VSIFCloseL(f)
 
 
+    # Test failed writing of a block of an AppendBlob
+    gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
+    f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
+    gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', None)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
+    handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin?comp=appendblock', 403)
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            ret = gdal.VSIFWriteL('0123456789abcdef', 1, 16, f)
+        if ret != 0:
+            gdaltest.post_reason('fail')
+            print(ret)
+            gdal.VSIFCloseL(f)
+            return 'fail'
+        gdal.VSIFCloseL(f)
+
+
+    return 'success'
+
+###############################################################################
+# Test Unlink()
+
+def vsiaz_fake_unlink():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    # Success
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'} )
+    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 202, {'Connection':'close'})
+    with webserver.install_http_handler(handler):
+        ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Failure
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'} )
+    handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 400, {'Connection':'close'})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
+    if ret != -1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -604,6 +713,12 @@ def vsiaz_fake_mkdir_rmdir():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    # Invalid name
+    ret = gdal.Mkdir('/vsiaz', 0)
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
@@ -637,6 +752,30 @@ def vsiaz_fake_mkdir_rmdir():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Invalid name
+    ret = gdal.Rmdir('/vsiaz')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Not a directory
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/it_is_a_file/', 404)
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=it_is_a_file/&restype=container',
+                200,
+                {'Connection':'close', 'Content-type': 'application/xml' },
+                """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>it_is_a_file/</Prefix>
+                    </EnumerationResults>
+                """)
+    with webserver.install_http_handler(handler):
+        ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/it_is_a_file')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Valid
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir/&restype=container',
                 200,
@@ -899,6 +1038,7 @@ gdaltest_list = [ vsiaz_init,
                   vsiaz_fake_basic,
                   vsiaz_fake_readdir,
                   vsiaz_fake_write,
+                  vsiaz_fake_unlink,
                   vsiaz_fake_mkdir_rmdir,
                   vsiaz_stop_webserver,
                   vsiaz_cleanup ]
