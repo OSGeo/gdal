@@ -326,6 +326,16 @@ def vsiaz_fake_readdir():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Test error on ReadDir()
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=/&prefix=error_test/&restype=container', 500)
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/error_test/')
+    if dir_contents is not None:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
     # List containers (empty result)
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, { 'Content-type': 'application/xml' },

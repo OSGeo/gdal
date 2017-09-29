@@ -6627,20 +6627,12 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
-            if( sWriteFuncData.pBuffer != NULL &&
-                poHandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
-            {
-                CPLFree(sWriteFuncData.pBuffer);
-            }
-            else
-            {
-                CPLDebug(GetDebugKey(), "%s",
-                         sWriteFuncData.pBuffer
-                         ? sWriteFuncData.pBuffer : "(null)");
-                CPLFree(sWriteFuncData.pBuffer);
-                delete poHandleHelper;
-                return NULL;
-            }
+            CPLDebug(GetDebugKey(), "%s",
+                        sWriteFuncData.pBuffer
+                        ? sWriteFuncData.pBuffer : "(null)");
+            CPLFree(sWriteFuncData.pBuffer);
+            delete poHandleHelper;
+            return NULL;
         }
         else
         {
