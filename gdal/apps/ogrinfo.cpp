@@ -39,7 +39,6 @@
 
 CPL_CVSID("$Id$")
 
-bool bReadOnly = false;
 bool bVerbose = true;
 bool bSuperQuiet = false;
 bool bSummaryOnly = false;
@@ -121,6 +120,7 @@ int main( int nArgc, char ** papszArgv )
     bool bFeatureCount = true;
     bool bExtent = true;
     bool bDatasetGetNextFeature = false;
+    bool bReadOnly = false;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -280,6 +280,12 @@ int main( int nArgc, char ** papszArgv )
             papszLayers = CSLAddString( papszLayers, papszArgv[iArg] );
             bAllLayers = false;
         }
+    }
+
+    if( pszSQLStatement == NULL )
+    {
+        // Force read-only mode also if we don't have a SQL statement
+        bReadOnly = true;
     }
 
     if( pszDataSource == NULL )
