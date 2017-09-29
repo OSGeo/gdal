@@ -4355,8 +4355,9 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
 
 int VSIS3WriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
-    if( (nWhence == SEEK_SET && nOffset != m_nCurOffset) ||
-        nOffset != 0 )
+    if( !((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
+          (nWhence == SEEK_CUR && nOffset == 0) ||
+          (nWhence == SEEK_END && nOffset == 0)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Seek not supported on writable %s files",
@@ -4824,7 +4825,7 @@ size_t
 VSIS3WriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
     if( m_bError )
-        return false;
+        return 0;
 
     size_t nBytesToWrite = nSize * nMemb;
     if( nBytesToWrite == 0 )
@@ -6066,8 +6067,9 @@ VSIAzureWriteHandle::~VSIAzureWriteHandle()
 
 int VSIAzureWriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
-    if( (nWhence == SEEK_SET && nOffset != m_nCurOffset) ||
-        nOffset != 0 )
+    if( !((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
+          (nWhence == SEEK_CUR && nOffset == 0) ||
+          (nWhence == SEEK_END && nOffset == 0)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Seek not supported on writable %s files",
@@ -6127,7 +6129,7 @@ size_t
 VSIAzureWriteHandle::Write( const void *pBuffer, size_t nSize, size_t nMemb )
 {
     if( m_bError )
-        return false;
+        return 0;
 
     size_t nBytesToWrite = nSize * nMemb;
     if( nBytesToWrite == 0 )

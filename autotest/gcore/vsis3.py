@@ -927,6 +927,9 @@ def vsis3_4():
         if gdal.VSIFWriteL('foo', 1, 3, f) != 3:
             gdaltest.post_reason('fail')
             return 'fail'
+        if gdal.VSIFSeekL(f, gdal.VSIFTellL(f), 0) != 0:
+            gdaltest.post_reason('fail')
+            return 'fail'
         if gdal.VSIFWriteL('bar', 1, 3, f) != 3:
             gdaltest.post_reason('fail')
             return 'fail'
