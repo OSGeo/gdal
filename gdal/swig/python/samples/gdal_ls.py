@@ -197,7 +197,7 @@ def gdal_ls(argv, fout = sys.stdout):
         return Usage()
 
     # Remove trailing
-    if dirname[-1] == '/':
+    if  dirname[-1] == '/':
         dirname = dirname[0:len(dirname)-1]
 
     if needsVSICurl(dirname):

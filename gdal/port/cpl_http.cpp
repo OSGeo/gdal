@@ -883,7 +883,8 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // memory after free
         if( strstr(pszHeaderFile, "/vsicurl/") == NULL &&
             strstr(pszHeaderFile, "/vsis3/") == NULL &&
-            strstr(pszHeaderFile, "/vsigs/") == NULL )
+            strstr(pszHeaderFile, "/vsigs/") == NULL &&
+            strstr(pszHeaderFile, "/vsiaz/") == NULL )
         {
             fp = VSIFOpenL( pszHeaderFile, "rb" );
         }

@@ -70,6 +70,7 @@ public:
         virtual void ResetQueryParameters() = 0;
         virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) = 0;
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
+                                          const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const = 0;
 
@@ -132,6 +133,7 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         void ResetQueryParameters() CPL_OVERRIDE;
         void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
+                                          const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 

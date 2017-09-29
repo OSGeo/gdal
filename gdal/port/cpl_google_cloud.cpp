@@ -299,13 +299,55 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "");
     if( !osHeaderFile.empty() )
     {
-        if( bFirstTimeForDebugMessage )
+        bool bFoundAuth = false;
+        VSILFILE *fp = NULL;
+        // Do not allow /vsicurl/ access from /vsicurl because of GetCurlHandleFor()
+        // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
+        // memory after free
+        if( strstr(osHeaderFile, "/vsicurl/") == NULL &&
+            strstr(osHeaderFile, "/vsis3/") == NULL &&
+            strstr(osHeaderFile, "/vsigs/") == NULL &&
+            strstr(osHeaderFile, "/vsiaz/") == NULL )
         {
-            CPLDebug("GS", "Using GDAL_HTTP_HEADER_FILE=%s",
-                     osHeaderFile.c_str());
+            fp = VSIFOpenL( osHeaderFile, "rb" );
         }
-        bFirstTimeForDebugMessage = false;
-        return true;
+        if( fp == NULL )
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Cannot read %s", osHeaderFile.c_str());
+        }
+        else
+        {
+            const char* pszLine = NULL;
+            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            {
+                if( STARTS_WITH(pszLine, "Authorization: ") )
+                {
+                    bFoundAuth = true;
+                    break;
+                }
+            }
+            VSIFCloseL(fp);
+            if( !bFoundAuth )
+            {
+                CPLDebug("GS", "Cannot find Authorization header in %s",
+                         osHeaderFile.c_str());
+            }
+        }
+        if( bFoundAuth )
+        {
+            if( bFirstTimeForDebugMessage )
+            {
+                CPLDebug("GS", "Using GDAL_HTTP_HEADER_FILE=%s",
+                        osHeaderFile.c_str());
+            }
+            bFirstTimeForDebugMessage = false;
+            return true;
+        }
+        else
+        {
+            osHeaderFile.clear();
+        }
     }
 
     CPLString osRefreshToken( CPLGetConfigOption("GS_OAUTH2_REFRESH_TOKEN",
@@ -573,7 +615,8 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 void VSIGSHandleHelper::RebuildURL()
 {
     m_osURL = m_osEndpoint + m_osBucketObjectKey;
-    if( m_osBucketObjectKey.find('/') == std::string::npos )
+    if( !m_osBucketObjectKey.empty() &&
+        m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
     std::map<CPLString, CPLString>::iterator oIter =
         m_oMapQueryParameters.begin();
@@ -619,6 +662,7 @@ void VSIGSHandleHelper::AddQueryParameter( const CPLString& osKey,
 
 struct curl_slist *
 VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
+                                   const struct curl_slist* /* psExistingHeaders */,
                                    const void *,
                                    size_t ) const
 {
@@ -643,7 +687,8 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     }
 
     CPLString osCanonicalResource("/" + m_osBucketObjectKey);
-    if( m_osBucketObjectKey.find('/') == std::string::npos )
+    if( !m_osBucketObjectKey.empty() &&
+        m_osBucketObjectKey.find('/') == std::string::npos )
         osCanonicalResource += "/";
 
     return GetGSHeaders( osVerb,

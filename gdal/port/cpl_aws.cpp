@@ -351,7 +351,10 @@ CPLString VSIS3HandleHelper::BuildURL(const CPLString& osAWSS3Endpoint,
                                       const CPLString& osObjectKey,
                                       bool bUseHTTPS, bool bUseVirtualHosting)
 {
-    if( bUseVirtualHosting )
+    if( osBucket.empty()  )
+        return CPLSPrintf("%s://%s", (bUseHTTPS) ? "https" : "http",
+                                        osAWSS3Endpoint.c_str());
+    else if( bUseVirtualHosting )
         return CPLSPrintf("%s://%s.%s/%s", (bUseHTTPS) ? "https" : "http",
                                         osBucket.c_str(),
                                         osAWSS3Endpoint.c_str(),
@@ -899,7 +902,8 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
         CPLGetConfigOption("AWS_REQUEST_PAYER", "");
     CPLString osBucket;
     CPLString osObjectKey;
-    if( !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
+    if( pszURI != NULL && pszURI[0] != '\0' &&
+        !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
                                osBucket, osObjectKey) )
     {
         return NULL;
@@ -945,6 +949,7 @@ void VSIS3HandleHelper::AddQueryParameter( const CPLString& osKey,
 
 struct curl_slist *
 VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
+                                   const struct curl_slist* /* psExistingHeaders */,
                                    const void *pabyDataContent,
                                    size_t nBytesContent ) const
 {
@@ -967,7 +972,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osCanonicalQueryString += CPLAWSURLEncode(oIter->second);
     }
 
-    const CPLString osHost(m_bUseVirtualHosting
+    const CPLString osHost(m_bUseVirtualHosting && !m_osBucket.empty()
         ? CPLString(m_osBucket + "." + m_osAWSS3Endpoint) : m_osAWSS3Endpoint);
     const CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
         m_osSecretAccessKey,
