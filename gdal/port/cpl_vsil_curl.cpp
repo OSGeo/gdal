@@ -5966,7 +5966,6 @@ class VSIAzureWriteHandle CPL_FINAL : public VSIVirtualHandle
     VSIAzureFSHandler  *m_poFS;
     CPLString           m_osFilename;
     VSIAzureBlobHandleHelper  *m_poHandleHelper;
-    bool                m_bUseChunked;
 
     vsi_l_offset        m_nCurOffset;
     int                 m_nBufferOff;
