@@ -510,7 +510,7 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                         if( pdfRetryDelay )
                             *pdfRetryDelay = CPLAtof(pszValue);
                     }
-                    else if( EQUAL(pszKey, "use_head") )
+                        else if( EQUAL(pszKey, "use_head") )
                     {
                         if( pbUseHead )
                             *pbUseHead = CPLTestBool(pszValue);
@@ -1036,15 +1036,21 @@ retry:
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-        char *pszEffectiveURL = NULL;
-        curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL,
-                          &pszEffectiveURL);
-        if( pszEffectiveURL != NULL && strstr(pszEffectiveURL, osURL) == NULL )
+        CPLString osEffectiveURL;
         {
-            CPLDebug("VSICURL", "Effective URL: %s", pszEffectiveURL);
+            char *pszEffectiveURL = NULL;
+            curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL,
+                              &pszEffectiveURL);
+            if( pszEffectiveURL )
+                osEffectiveURL = pszEffectiveURL;
+        }
+
+        if( !osEffectiveURL.empty() && strstr(osEffectiveURL, osURL) == NULL )
+        {
+            CPLDebug("VSICURL", "Effective URL: %s", osEffectiveURL.c_str());
 
             // Is this is a redirect to a S3 URL?
-            if( VSICurlIsS3SignedURL(pszEffectiveURL) &&
+            if( VSICurlIsS3SignedURL(osEffectiveURL) &&
                 !VSICurlIsS3SignedURL(osURL) )
             {
                 // Note that this is a redirect as we won't notice after the
@@ -1058,7 +1064,7 @@ retry:
                              "with GET request instead of HEAD since the URL "
                              "might be valid only for GET");
                     bRetryWithGet = true;
-                    osURL = pszEffectiveURL;
+                    osURL = osEffectiveURL;
                     CPLFree(sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncHeaderData.pBuffer);
                     goto retry;
@@ -1068,12 +1074,12 @@ retry:
 
         if( bS3Redirect && response_code >= 200 && response_code < 300 &&
             sWriteFuncHeaderData.nTimestampDate > 0 &&
-            pszEffectiveURL != NULL &&
+            !osEffectiveURL.empty() &&
             CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
                                            "TRUE")) )
         {
             const GIntBig nExpireTimestamp =
-                VSICurlGetExpiresFromS3SigneURL(pszEffectiveURL);
+                VSICurlGetExpiresFromS3SigneURL(osEffectiveURL);
             if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
             {
                 const int nValidity =
@@ -1086,7 +1092,7 @@ retry:
                 // figure out the expiration timestamp in local time
                 m_bS3Redirect = true;
                 m_nExpireTimestampLocal = time(NULL) + nValidity;
-                m_osRedirectURL = pszEffectiveURL;
+                m_osRedirectURL = osEffectiveURL;
                 CachedFileProp* cachedFileProp =
                     poFS->GetCachedFileProp(m_pszURL);
                 cachedFileProp->bS3Redirect = m_bS3Redirect;
@@ -1203,9 +1209,9 @@ retry:
 
         // Try to guess if this is a directory. Generally if this is a
         // directory, curl will retry with an URL with slash added.
-        if( pszEffectiveURL != NULL &&
-            strncmp(osURL, pszEffectiveURL, osURL.size()) == 0 &&
-            pszEffectiveURL[osURL.size()] == '/' )
+        if( !osEffectiveURL.empty() &&
+            strncmp(osURL, osEffectiveURL, osURL.size()) == 0 &&
+            osEffectiveURL[osURL.size()] == '/' )
         {
             eExists = EXIST_YES;
             fileSize = 0;
@@ -1406,21 +1412,27 @@ retry:
         goto retry;
     }
 
-    char *pszEffectiveURL = NULL;
-    curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
-    if( !m_bS3Redirect && pszEffectiveURL != NULL &&
-        strstr(pszEffectiveURL, m_pszURL) == NULL )
+    CPLString osEffectiveURL;
     {
-        CPLDebug("VSICURL", "Effective URL: %s", pszEffectiveURL);
+        char *pszEffectiveURL = NULL;
+        curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
+        if( pszEffectiveURL )
+            osEffectiveURL = pszEffectiveURL;
+    }
+
+    if( !m_bS3Redirect && !osEffectiveURL.empty() &&
+        strstr(osEffectiveURL, m_pszURL) == NULL )
+    {
+        CPLDebug("VSICURL", "Effective URL: %s", osEffectiveURL.c_str());
         if( response_code >= 200 && response_code < 300 &&
             sWriteFuncHeaderData.nTimestampDate > 0 &&
-            VSICurlIsS3SignedURL(pszEffectiveURL) &&
+            VSICurlIsS3SignedURL(osEffectiveURL) &&
             !VSICurlIsS3SignedURL(m_pszURL) &&
             CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT",
                                            "TRUE")) )
         {
             GIntBig nExpireTimestamp =
-                VSICurlGetExpiresFromS3SigneURL(pszEffectiveURL);
+                VSICurlGetExpiresFromS3SigneURL(osEffectiveURL);
             if( nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10 )
             {
                 const int nValidity =
@@ -1433,7 +1445,7 @@ retry:
                 // figure out the expiration timestamp in local time.
                 m_bS3Redirect = true;
                 m_nExpireTimestampLocal = time(NULL) + nValidity;
-                m_osRedirectURL = pszEffectiveURL;
+                m_osRedirectURL = osEffectiveURL;
                 cachedFileProp->bS3Redirect = m_bS3Redirect;
                 cachedFileProp->nExpireTimestampLocal = m_nExpireTimestampLocal;
                 cachedFileProp->osRedirectURL = m_osRedirectURL;
