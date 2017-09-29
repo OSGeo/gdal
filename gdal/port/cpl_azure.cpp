@@ -210,7 +210,7 @@ VSIAzureBlobHandleHelper::~VSIAzureBlobHandleHelper()
 
 static
 CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
-                              bool bMissingOK)
+                              bool bErrorIfMissing)
 {
     CPLString osKey(pszKey + CPLString("="));
     size_t nPos = osStr.find(osKey);
@@ -219,7 +219,7 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
         const char* pszMsg = CPLSPrintf(
             "%s missing in AZURE_STORAGE_CONNECTION_STRING", pszKey);
         CPLDebug("AZURE", "%s", pszMsg);
-        if( !bMissingOK )
+        if( bErrorIfMissing )
         {
             VSIError(VSIE_AWSInvalidCredentials, "%s", pszMsg);
         }
