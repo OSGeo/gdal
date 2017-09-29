@@ -3676,8 +3676,9 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
 
 int VSIS3WriteHandle::Seek( vsi_l_offset nOffset, int nWhence )
 {
-    if( (nWhence == SEEK_SET && nOffset != m_nCurOffset) ||
-        nOffset != 0 )
+    if( !((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
+          (nWhence == SEEK_CUR && nOffset == 0) ||
+          (nWhence == SEEK_END && nOffset == 0)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Seek not supported on writable /vsis3 files");
