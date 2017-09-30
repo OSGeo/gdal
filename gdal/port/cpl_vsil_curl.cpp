@@ -533,8 +533,10 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                              EQUAL(pszKey, "cookie") ||
                              EQUAL(pszKey, "header_file") ||
                              EQUAL(pszKey, "unsafessl") ||
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
                              EQUAL(pszKey, "timeout") ||
                              EQUAL(pszKey, "connecttimeout") ||
+#endif
                              EQUAL(pszKey, "low_speed_time") ||
                              EQUAL(pszKey, "low_speed_limit") ||
                              EQUAL(pszKey, "proxy") ||
