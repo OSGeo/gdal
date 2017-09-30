@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "grib2.h"
 
-float DoubleToFloatClamp(double val) {
+static float DoubleToFloatClamp(double val) {
    if (val >= FLT_MAX) return FLT_MAX;
    if (val <= -FLT_MAX) return -FLT_MAX;
    return (float)val;
