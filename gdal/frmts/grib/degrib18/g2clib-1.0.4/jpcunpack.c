@@ -1,6 +1,13 @@
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "grib2.h"
+
+float DoubleToFloatClamp(double val) {
+   if (val >= FLT_MAX) return FLT_MAX;
+   if (val <= -FLT_MAX) return -FLT_MAX;
+   return (float)val;
+}
 
 g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
                 g2float **fld)
@@ -42,8 +49,8 @@ g2int jpcunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
       g2float  ref,bscale,dscale;
 
       rdieee(idrstmpl+0,&ref,1);
-      bscale = (float)int_power(2.0,idrstmpl[1]);
-      dscale = (float)int_power(10.0,-idrstmpl[2]);
+      bscale = DoubleToFloatClamp(int_power(2.0,idrstmpl[1]));
+      dscale = DoubleToFloatClamp(int_power(10.0,-idrstmpl[2]));
       nbits = idrstmpl[3];
 //
 //  if nbits equals 0, we have a constant field where the reference value
