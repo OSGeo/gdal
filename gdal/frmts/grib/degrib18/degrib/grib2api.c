@@ -57,10 +57,10 @@
    sInt4 * l3264b, sInt4 * jer, sInt4 * ndjer, sInt4 * kjer);
 #endif
 
-static int FloatToSInt4Clamp(float val) {
-  if (val >= INT_MAX) return INT_MAX;
-  if (val <= INT_MIN) return INT_MIN;
-  return (sInt4)val;
+static sInt4 FloatToSInt4Clamp(float val) {
+   if (val >= INT_MAX) return INT_MAX;
+   if (val <= INT_MIN) return INT_MIN;
+   return (sInt4)val;
 }
 
 /*****************************************************************************
