@@ -13,9 +13,10 @@
  * NOTES
  *****************************************************************************
  */
+#include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "grib2api.h"
 #include "grib2.h"
 #include "scan.h"
@@ -55,6 +56,12 @@
    float * xmisss, sInt4 * inew, sInt4 * minpk, sInt4 * iclean,
    sInt4 * l3264b, sInt4 * jer, sInt4 * ndjer, sInt4 * kjer);
 #endif
+
+static int FloatToSInt4Clamp(float val) {
+  if (val >= INT_MAX) return INT_MAX;
+  if (val <= INT_MIN) return INT_MIN;
+  return (sInt4)val;
+}
 
 /*****************************************************************************
  * mdl_LocalUnpack() --
@@ -378,14 +385,14 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ib[i] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[i] == 0)) {
-               iain[i] = (sInt4)xmissp;
+               iain[i] = FloatToSInt4Clamp(xmissp);
             } else {
-               iain[i] = (sInt4)fld[i];
+               iain[i] = FloatToSInt4Clamp(fld[i]);
             }
          }
       } else {
          for (i = 0; i < ngrdpts; i++) {
-            iain[i] = (sInt4)fld[i];
+            iain[i] = FloatToSInt4Clamp(fld[i]);
          }
       }
    } else {
@@ -409,9 +416,9 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ib[curIndex] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[curIndex] == 0)) {
-               iain[i] = (sInt4)xmissp;
+               iain[i] = FloatToSInt4Clamp(xmissp);
             } else {
-               iain[curIndex] = (sInt4)fld[i];
+               iain[curIndex] = FloatToSInt4Clamp(fld[i]);
             }
          }
       } else {
@@ -421,7 +428,7 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             curIndex = (x - 1) + (y - 1) * nx;
             if( curIndex < 0 || curIndex >= nd2x3 )
                 return 1;
-            iain[curIndex] = (sInt4)fld[i];
+            iain[curIndex] = FloatToSInt4Clamp(fld[i]);
          }
       }
       *scan = 64 + (*scan & 0x0f);
