@@ -5822,7 +5822,14 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
                                             GetFSPrefix().c_str());
         if( poHandleHelper == NULL )
             return NULL;
-        return new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
+        VSIS3WriteHandle* poHandle =
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
+        if( !poHandle->IsOK() )
+        {
+            delete poHandle;
+            poHandle = NULL;
+        }
+        return poHandle;
     }
 
     return
@@ -6041,6 +6048,8 @@ VSIAzureWriteHandle::VSIAzureWriteHandle( VSIAzureFSHandler* poFS,
         CPLGetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", NULL);
     if( pszChunkSizeBytes )
         m_nBufferSize = atoi(pszChunkSizeBytes);
+    if( m_nBufferSize <= 0 || m_nBufferSize > 4 * 1024 * 1024 )
+        m_nBufferSize = 4 * 1024 * 1024;
 
     m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
     if( m_pabyBuffer == NULL )
