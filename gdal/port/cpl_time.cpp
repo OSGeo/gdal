@@ -323,6 +323,11 @@ int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
         *pnHour = hour;
     ++papszVal;
 
+    if( *papszVal == NULL )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
     int minute = atoi(*papszVal);
     if( minute < 0 || minute >= 60 )
     {
