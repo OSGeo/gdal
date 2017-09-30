@@ -633,9 +633,10 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         }
         if( eDataType == GDT_Float32 )
         {
-            // TODO(schwehr): Is this really what we want?
-            dfNoDataValue =
-                static_cast<double>(static_cast<float>(dfNoDataValue));
+            if( dfNoDataValue >= std::numeric_limits<float>::max() )
+                dfNoDataValue = std::numeric_limits<float>::max();
+            if( dfNoDataValue <= -std::numeric_limits<float>::max() )
+                dfNoDataValue = -std::numeric_limits<float>::max();
         }
     }
 
