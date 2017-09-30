@@ -633,10 +633,18 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         }
         if( eDataType == GDT_Float32 )
         {
-            if( dfNoDataValue >= std::numeric_limits<float>::max() )
+            if( CPLIsInf(dfNoDataValue) || CPLIsNan(dfNoDataValue) )
+            {
+                // pass through.
+            }
+            else if( dfNoDataValue >= std::numeric_limits<float>::max() )
+            {
                 dfNoDataValue = std::numeric_limits<float>::max();
-            if( dfNoDataValue <= -std::numeric_limits<float>::max() )
+            }
+            else if( dfNoDataValue <= -std::numeric_limits<float>::max() )
+            {
                 dfNoDataValue = -std::numeric_limits<float>::max();
+            }
         }
     }
 
