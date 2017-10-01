@@ -16864,8 +16864,8 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             for( int i = 4; i <= l_nBands; i++)
             {
-                poDS->GetRasterBand(1)->SetColorInterpretation(
-                    poSrcDS->GetRasterBand(1)->GetColorInterpretation());
+                poDS->GetRasterBand(i)->SetColorInterpretation(
+                    poSrcDS->GetRasterBand(i)->GetColorInterpretation());
             }
         }
     }
