@@ -5121,6 +5121,35 @@ def tiff_write_123():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
 
+    # Test that PHOTOMETRIC=RGB overrides the source color interpretation of the
+    # first 3 bands
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 3)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgb.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgb.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 5)
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgbua.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgbua.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgbua.tif')
+
     return 'success'
 
 ###############################################################################
