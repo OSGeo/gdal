@@ -9479,7 +9479,7 @@ void GTiffDataset::FlushCacheInternal( bool bFlushDirectory )
         }
     }
 
-    if( bFlushDirectory )
+    if( bFlushDirectory && GetAccess() == GA_Update )
     {
         if( !SetDirectory() )
             return;
