@@ -4887,7 +4887,7 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
 
     eBandInterp = eInterp;
 
-    if( poGDS->bCrystalized )
+    if( eAccess != GA_Update )
     {
         CPLDebug( "GTIFF", "ColorInterpretation %s for band %d goes to PAM "
                   "instead of TIFF tag",
@@ -4895,19 +4895,14 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         return GDALPamRasterBand::SetColorInterpretation( eInterp );
     }
 
-    // Greyscale + alpha.
-    if( eInterp == GCI_AlphaBand
-        && nBand == 2
-        && poGDS->nSamplesPerPixel == 2
-        && poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK )
+    if( poGDS->bCrystalized )
     {
-        const uint16 v[1] = {
-            GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
-                               DEFAULT_ALPHA_TYPE) };
-
-        TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
-        return CE_None;
+        if( !poGDS->SetDirectory() )
+            return CE_Failure;
     }
+
+    poGDS->bNeedsRewrite = true;
+    poGDS->bMetadataChanged = true;
 
     // Try to autoset TIFFTAG_PHOTOMETRIC = PHOTOMETRIC_RGB if possible.
     if( poGDS->nBands >= 3 &&
@@ -4996,8 +4991,8 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         }
     }
 
-    // Mark alpha band in extrasamples.
-    if( eInterp == GCI_AlphaBand )
+    // Mark alpha band / undefined in extrasamples.
+    if( eInterp == GCI_AlphaBand || eInterp == GCI_Undefined )
     {
         uint16 *v = NULL;
         uint16 count = 0;
@@ -5005,30 +5000,33 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
         {
             const int nBaseSamples = poGDS->nSamplesPerPixel - count;
 
-            for( int i = 1; i <= poGDS->nBands; ++i )
+            if( eInterp == GCI_AlphaBand )
             {
-                if( i != nBand &&
-                    poGDS->GetRasterBand(i)->GetColorInterpretation() ==
-                    GCI_AlphaBand )
+                for( int i = 1; i <= poGDS->nBands; ++i )
                 {
-                    if( i == nBaseSamples + 1 &&
-                        CSLFetchNameValue( poGDS->papszCreationOptions,
-                                           "ALPHA" ) != NULL )
+                    if( i != nBand &&
+                        poGDS->GetRasterBand(i)->GetColorInterpretation() ==
+                        GCI_AlphaBand )
                     {
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
-                            "Band %d was already identified as alpha band, "
-                            "and band %d is now marked as alpha too. "
-                            "Presumably ALPHA creation option is not needed",
-                            i, nBand );
-                    }
-                    else
-                    {
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
-                            "Band %d was already identified as alpha band, "
-                            "and band %d is now marked as alpha too",
-                            i, nBand );
+                        if( i == nBaseSamples + 1 &&
+                            CSLFetchNameValue( poGDS->papszCreationOptions,
+                                            "ALPHA" ) != NULL )
+                        {
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined,
+                                "Band %d was already identified as alpha band, "
+                                "and band %d is now marked as alpha too. "
+                                "Presumably ALPHA creation option is not needed",
+                                i, nBand );
+                        }
+                        else
+                        {
+                            CPLError(
+                                CE_Warning, CPLE_AppDefined,
+                                "Band %d was already identified as alpha band, "
+                                "and band %d is now marked as alpha too",
+                                i, nBand );
+                        }
                     }
                 }
             }
@@ -5043,9 +5041,17 @@ CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
                     static_cast<uint16 *>(
                         CPLMalloc( count * sizeof(uint16) ) );
                 memcpy( pasNewExtraSamples, v, count * sizeof(uint16) );
-                pasNewExtraSamples[nBand - nBaseSamples - 1] =
-                    GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
+                if( eInterp == GCI_AlphaBand )
+                {
+                    pasNewExtraSamples[nBand - nBaseSamples - 1] =
+                        GTiffGetAlphaValue(CPLGetConfigOption("GTIFF_ALPHA", NULL),
                                             DEFAULT_ALPHA_TYPE);
+                }
+                else
+                {
+                    pasNewExtraSamples[nBand - nBaseSamples - 1] =
+                        EXTRASAMPLE_UNSPECIFIED;
+                }
 
                 TIFFSetField( poGDS->hTIFF, TIFFTAG_EXTRASAMPLES,
                               count, pasNewExtraSamples);
