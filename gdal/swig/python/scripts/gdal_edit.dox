@@ -90,7 +90,7 @@ Note: these values can be applied using -unscale during a gdal_translate run.</d
 Assign a specified offset value to output bands. If no offset is needed, it
 recommended to set the value to 0. For more see scale.</dd> 
 
-<dt> <b>-colorinterp_X<b> <i>red|green|blue|alpha|undefined</i>:</dt><dd>
+<dt> <b>-colorinterp_X</b> <i>red|green|blue|alpha|undefined</i>:</dt><dd>
 (GDAL >= 2.3) Change the color interpretation of band X (where X is a valid
 band number, starting at 1)
 </dd>
