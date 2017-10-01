@@ -10591,7 +10591,8 @@ void GTiffDataset::WriteRPC( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 /************************************************************************/
 
 static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
-                                          uint16 nPhotometric)
+                                          uint16 nPhotometric,
+                                          char** papszCreationOptions)
 {
     bool bStardardColorInterp = true;
     if( nPhotometric == PHOTOMETRIC_MINISBLACK )
@@ -10610,7 +10611,18 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
     }
     else if( nPhotometric == PHOTOMETRIC_RGB )
     {
-        for( int i = 0; i < poSrcDS->GetRasterCount(); ++i )
+        int iStart = 0;
+        if( EQUAL(CSLFetchNameValueDef(papszCreationOptions,
+                                       "PHOTOMETRIC", ""), "RGB") )
+        {
+            iStart = 3;
+            if( poSrcDS->GetRasterCount() == 4 &&
+                CSLFetchNameValue(papszCreationOptions, "ALPHA") != NULL )
+            {
+                iStart = 4;
+            }
+        }
+        for( int i = iStart; i < poSrcDS->GetRasterCount(); ++i )
         {
             const GDALColorInterp eInterp =
                 poSrcDS->GetRasterBand(i+1)->GetColorInterpretation();
@@ -10692,7 +10704,8 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
     const bool bStardardColorInterp =
-        IsStandardColorInterpretation(poSrcDS, nPhotometric);
+        IsStandardColorInterpretation(poSrcDS, nPhotometric,
+                                      l_papszCreationOptions);
 
 /* -------------------------------------------------------------------- */
 /*      We also need to address band specific metadata, and special     */
@@ -10750,7 +10763,9 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
                                 "description", "" );
         }
 
-        if( !bStardardColorInterp )
+        if( !bStardardColorInterp &&
+            !(nBand <= 3 &&  EQUAL(CSLFetchNameValueDef(
+                l_papszCreationOptions, "PHOTOMETRIC", ""), "RGB") ) )
         {
             AppendMetadataItem( &psRoot, &psTail, "COLORINTERP",
                                 GDALGetColorInterpretationName(
@@ -10849,7 +10864,7 @@ void GTiffDataset::PushMetadataToPam()
 
 {
     const bool bStardardColorInterp =
-        IsStandardColorInterpretation(this, nPhotometric);
+        IsStandardColorInterpretation(this, nPhotometric, papszCreationOptions);
 
     for( int nBand = 0; nBand <= GetRasterCount(); ++nBand )
     {
@@ -16369,6 +16384,25 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             DEFAULT_ALPHA_TYPE) == EXTRASAMPLE_UNSPECIFIED )
     {
         nCloneInfoFlags &= ~GCIF_COLORINTERP;
+    }
+    // Ignore source band color interpretation if requesting PHOTOMETRIC=RGB
+    else if( l_nBands >= 3 &&
+        EQUAL(CSLFetchNameValueDef(papszOptions, "PHOTOMETRIC", ""), "RGB") )
+    {
+        for( int i = 1; i <= 3; i++)
+        {
+            poDS->GetRasterBand(i)->SetColorInterpretation(
+                static_cast<GDALColorInterp>(GCI_RedBand + (i-1)));
+        }
+        nCloneInfoFlags &= ~GCIF_COLORINTERP;
+        if( !(l_nBands == 4 && CSLFetchNameValue(papszOptions, "ALPHA") != NULL) )
+        {
+            for( int i = 4; i <= l_nBands; i++)
+            {
+                poDS->GetRasterBand(1)->SetColorInterpretation(
+                    poSrcDS->GetRasterBand(1)->GetColorInterpretation());
+            }
+        }
     }
 
     poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
