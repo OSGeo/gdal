@@ -534,8 +534,18 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         }
         if( eDataType == GDT_Float32 )
         {
-            dfNoDataValue =
-                static_cast<double>(static_cast<float>(dfNoDataValue));
+            if( CPLIsInf(dfNoDataValue) || CPLIsNan(dfNoDataValue) )
+            {
+                // pass through.
+            }
+            else if( dfNoDataValue >= std::numeric_limits<float>::max() )
+            {
+                dfNoDataValue = std::numeric_limits<float>::max();
+            }
+            else if( dfNoDataValue <= -std::numeric_limits<float>::max() )
+            {
+                dfNoDataValue = -std::numeric_limits<float>::max();
+            }
         }
     }
 
