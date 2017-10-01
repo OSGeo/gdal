@@ -1126,8 +1126,9 @@ same value is used in all the bands.</dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 1.8.0)
 Override the projection for the output file. If not specified, the projection of
-the input vector file will be used if available. If incompatible projections
-between input and output files, no attempt will be made to reproject features.
+the input vector file will be used if available. When using this option, no reprojection
+of features from the SRS of the input vector to the specified SRS of the output raster,
+so use only this option to correct an invalid source SRS.
 The <i>srs_def</i> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
 EPSG:n or a file containing the WKT. </dd>
 
