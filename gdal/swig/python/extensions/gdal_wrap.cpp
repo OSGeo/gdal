@@ -3206,6 +3206,53 @@ typedef int RETURN_NONE;
 typedef int VSI_RETVAL;
 
 
+
+/* This is quite annoying but the data member of a string/buffer object */
+/* is sometimes not 8-byte aligned (Linux 64bit at least) given that it is */
+/* part of the object structure, and so has an offset. So we will allocate */
+/* a bit more, do the RasterIO() on a properly aligned buffer, and then move */
+/* back if necessary to the original buffer */
+
+#define ALIGNMENT_EXTRA 63
+#define ALIGNMENT_SHIFT 32
+
+static
+char* get_aligned_buffer(char* data, GDALDataType ntype)
+{
+    int alignment_needed = ntype == GDT_Byte ? 1:
+                           ntype == GDT_Int16 ? 2:
+                           ntype == GDT_UInt16 ? 2:
+                           ntype == GDT_Int32 ? 4:
+                           ntype == GDT_UInt32 ? 4:
+                           ntype == GDT_Float32 ? 4:
+                           ntype == GDT_Float64 ? 8:
+                           ntype == GDT_CInt16 ? 2:
+                           ntype == GDT_CInt32 ? 4:
+                           ntype == GDT_CFloat32 ? 4:
+                           ntype == GDT_CFloat64 ? 8: 8;
+    char* data_aligned = data + (alignment_needed - (size_t)data % alignment_needed) % alignment_needed;
+    if( data_aligned != data )
+        data_aligned += ALIGNMENT_SHIFT;
+    return data_aligned;
+}
+
+static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t buf_size)
+{
+    if( data != data_aligned )
+        memmove(data, data_aligned, buf_size);
+
+#if PY_VERSION_HEX >= 0x03000000
+    PyBytesObject* stringobj = (PyBytesObject *) obj;
+#else
+    PyStringObject* stringobj = (PyStringObject *) obj;
+#endif
+    Py_SIZE(stringobj) = buf_size;
+    stringobj->ob_sval[buf_size] = '\0';
+    stringobj->ob_shash = -1;          /* invalidate cached hash value */
+}
+
+
+
 #define MODULE_NAME           "gdal"
 
 
@@ -4870,14 +4917,14 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
                                     pband_list, band_list,
                                     pixel_space, line_space, band_space,
                                     FALSE));
-    if (buf_size == 0)
+    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
     {
         *buf = NULL;
         return CE_Failure;
     }
 
 #if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -4886,7 +4933,7 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 #else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -4895,19 +4942,20 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 #endif
+    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data, 0, buf_size);
+        memset(data_aligned, 0, buf_size);
     }
     else if( band_list > 1 && band_space != 0 )
     {
         if( line_space != 0 && band_space > line_space * nysize )
-            memset(data, 0, buf_size);
+            memset(data_aligned, 0, buf_size);
         else if( pixel_space != 0 && band_space < pixel_space &&
                  pixel_space != GDALGetRasterCount(self) * ntypesize )
-            memset(data, 0, buf_size);
+            memset(data_aligned, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -4916,13 +4964,17 @@ SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster1(GDALDatasetShadow *self,int xoff
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
     CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, xoff, yoff, xsize, ysize,
-                               (void*) data, nxsize, nysize, ntype,
+                               (void*) data_aligned, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
+    }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
     }
     return eErr;
 }
@@ -5270,13 +5322,13 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
         ComputeBandRasterIOSize( nxsize, nysize,
                                  GDALGetDataTypeSize( ntype ) / 8,
                                  pixel_space, line_space, FALSE ) );
-    if (buf_size == 0)
+    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
     {
         *buf = NULL;
         return CE_Failure;
     }
 #if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -5286,7 +5338,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 #else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -5295,11 +5347,12 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 #endif
+    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data, 0, buf_size);
+        memset(data_aligned, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -5322,25 +5375,36 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadRaster1(GDALRasterBandShadow *self,do
     }
 
     CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                         (void *) data, nxsize, nysize, ntype,
+                         (void *) data_aligned, nxsize, nysize, ntype,
                          pixel_space, line_space, &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
     }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
+    }
+
     return eErr;
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int xoff,int yoff,void **buf){
 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
-    int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
+    GDALDataType ntype = GDALGetRasterDataType(self);
+    int nDataTypeSize = (GDALGetDataTypeSize(ntype) / 8);
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
+    if( buf_size + ALIGNMENT_EXTRA < buf_size)
+    {
+        *buf = NULL;
+        return CE_Failure;
+    }
 
 #if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -5350,7 +5414,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 #else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -5359,12 +5423,19 @@ SWIGINTERN CPLErr GDALRasterBandShadow_ReadBlock(GDALRasterBandShadow *self,int 
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 #endif
-    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data);
+    char* data_aligned = get_aligned_buffer(data, ntype);
+
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data_aligned);
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
     }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
+    }
+
     return eErr;
   }
 

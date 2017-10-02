@@ -101,13 +101,13 @@ def test_gdaladdo_3():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_3.tif' )
+    gdal.Translate( 'tmp/test_gdaladdo_3.tif', '../gcore/data/nodata_byte.tif', options = '-outsize 1024 1024' )
 
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2')
 
     ds = gdal.Open('tmp/test_gdaladdo_3.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 1152
+    exp_cs = 20683
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )

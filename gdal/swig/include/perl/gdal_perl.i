@@ -2044,7 +2044,7 @@ sub Write {
 }
 
 sub Close {
-    my ($self, $data) = @_;
+    my ($self) = @_;
     Geo::GDAL::VSIFCloseL($self);
 }
 

@@ -30,6 +30,7 @@
 ###############################################################################
 
 import json
+import struct
 import sys
 
 sys.path.append( '../pymod' )
@@ -1688,6 +1689,45 @@ def isis_29():
 
     return 'success'
 
+# Test Fill() on a GeoTIFF file
+def isis_30():
+
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/test.lbl', 1, 1, options = ['DATA_LOCATION=GEOTIFF'])
+    ds.GetRasterBand(1).Fill(1)
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/test.lbl')
+    if cs != 1:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+# Test correct working of block caching with a GeoTIFF file
+def isis_31():
+
+    gdal.SetConfigOption('GDAL_FORCE_CACHING', 'YES')
+    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/test.lbl', 1, 1, options = ['DATA_LOCATION=GEOTIFF'])
+    ds.WriteRaster(0,0,1,1, struct.pack('B' * 1, 1))
+    ds = None
+    gdal.SetConfigOption('GDAL_FORCE_CACHING', None)
+
+    ds = gdal.Open('/vsimem/test.lbl')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('ISIS3').Delete('/vsimem/test.lbl')
+    if cs != 1:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     isis_1,
     isis_2,
@@ -1717,7 +1757,9 @@ gdaltest_list = [
     isis_26,
     isis_27,
     isis_28,
-    isis_29 ]
+    isis_29,
+    isis_30,
+    isis_31 ]
 
 
 if __name__ == '__main__':

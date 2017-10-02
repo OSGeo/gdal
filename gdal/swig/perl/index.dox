@@ -191,13 +191,14 @@ OGR Error: Unsupported geometry type
 while
 
 \code
-$point = Geo::OGR::Geometry->new(WKT=>"POINTXX(1 1)");
+my $point = Geo::OGR::Geometry->new(WKT=>"POINTXX(1 1)");
 \endcode
 
 Produces:
 \code
-OGR Error: Unsupported geometry type at <long path>/OGR.pm line 652.
-	Geo::OGR::Geometry::new("Geo::OGR::Geometry", "WKT", "POINTXX(1 1)") called at foo.pl line 18
+OGR Error: Corrupt data
+ at <long path>/OGR.pm line 693.
+        Geo::OGR::Geometry::new("Geo::OGR::Geometry", "WKT", "POINTXX(1 1)") called at foo.pl line 18
 \endcode
 
 and

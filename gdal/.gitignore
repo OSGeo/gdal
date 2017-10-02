@@ -102,3 +102,4 @@ html/
 nmake.local*
 *~
 *tmp
+.python-version

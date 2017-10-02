@@ -68,6 +68,8 @@ def osr_erm_2():
 
     if not srs2.IsSame(srs):
         gdaltest.post_reason( 'EPSG:n import does not match.' )
+        print(srs)
+        print(srs2)
         return 'fail'
 
     return 'success'

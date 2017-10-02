@@ -30,6 +30,7 @@
 
 #include "cpl_conv.h"
 #include "ods_formula.h"
+#include "cpl_safemaths.hpp"
 
 CPL_CVSID("$Id$")
 
@@ -1048,23 +1049,58 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_INTEGER)
         {
+            double dfVal = 0.0;
             int nVal = 0;
+            bool bFloatRes = false;
             CPL_IGNORE_RET_VAL(nVal);
             switch (eOp)
             {
                 case ODS_ADD:
-                  nVal = papoSubExpr[0]->int_value + papoSubExpr[1]->int_value;
+                  try
+                  {
+                      nVal = (CPLSM(papoSubExpr[0]->int_value) + CPLSM(papoSubExpr[1]->int_value)).v();
+                  }
+                  catch( const CPLSafeIntOverflow& )
+                  {
+                      bFloatRes = true;
+                      dfVal = static_cast<double>(papoSubExpr[0]->int_value) + papoSubExpr[1]->int_value;
+                  }
                   break;
                 case ODS_SUBTRACT:
-                  nVal = papoSubExpr[0]->int_value - papoSubExpr[1]->int_value;
+                  try
+                  {
+                      nVal = (CPLSM(papoSubExpr[0]->int_value) - CPLSM(papoSubExpr[1]->int_value)).v();
+                  }
+                  catch( const CPLSafeIntOverflow& )
+                  {
+                      bFloatRes = true;
+                      dfVal = static_cast<double>(papoSubExpr[0]->int_value) - papoSubExpr[1]->int_value;
+                  }
                   break;
                 case ODS_MULTIPLY:
-                  nVal = papoSubExpr[0]->int_value * papoSubExpr[1]->int_value;
+                  try
+                  {
+                      nVal = (CPLSM(papoSubExpr[0]->int_value) * CPLSM(papoSubExpr[1]->int_value)).v();
+                  }
+                  catch( const CPLSafeIntOverflow& )
+                  {
+                      bFloatRes = true;
+                      dfVal = static_cast<double>(papoSubExpr[0]->int_value) * papoSubExpr[1]->int_value;
+                  }
                   break;
                 case ODS_DIVIDE   :
                     if( papoSubExpr[1]->int_value != 0 )
-                        nVal = papoSubExpr[0]->int_value /
-                            papoSubExpr[1]->int_value;
+                    {
+                        try
+                        {
+                            nVal = (CPLSM(papoSubExpr[0]->int_value) / CPLSM(papoSubExpr[1]->int_value)).v();
+                        }
+                        catch( const CPLSafeIntOverflow& )
+                        {
+                            bFloatRes = true;
+                            dfVal = static_cast<double>(papoSubExpr[0]->int_value) / papoSubExpr[1]->int_value;
+                        }
+                    }
                     else
                         return false;
                     break;
@@ -1080,8 +1116,16 @@ ods_formula_node::EvaluateBinaryArithmetic( IODSCellEvaluator* poEvaluator )
             }
 
             eNodeType = SNT_CONSTANT;
-            field_type = ODS_FIELD_TYPE_INTEGER;
-            int_value = nVal;
+            if( bFloatRes )
+            {
+                field_type = ODS_FIELD_TYPE_FLOAT;
+                float_value = dfVal;
+            }
+            else
+            {
+                field_type = ODS_FIELD_TYPE_INTEGER;
+                int_value = nVal;
+            }
 
             FreeSubExpr();
 
@@ -1227,11 +1271,24 @@ static bool GetRowCol(const char* pszCell, int& nRow, int& nCol)
 
     nCol = 0;
     int i = 1;
-    for( ; pszCell[i]>='A' && pszCell[i]<='Z'; i++ )
+    for( ; pszCell[i]>='A' && pszCell[i]<='Z' && nCol < 1000000; i++ )
     {
         nCol = nCol * 26 + (pszCell[i] - 'A');
     }
-    nRow = atoi(pszCell + i) - 1;
+    if( nCol >= 1000000 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid cell %s", pszCell);
+        return false;
+    }
+    nRow = atoi(pszCell + i);
+    if( nRow <= 1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid cell %s", pszCell);
+        return false;
+    }
+    nRow --;
 
     return true;
 }

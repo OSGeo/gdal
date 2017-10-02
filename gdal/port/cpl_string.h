@@ -219,7 +219,7 @@ GByte CPL_DLL *CPLHexToBinary( const char *pszHex,
 
 char CPL_DLL *CPLBase64Encode( int nBytes,
                                const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLBase64DecodeInPlace( GByte* pszBase64 );
+int CPL_DLL CPLBase64DecodeInPlace( GByte* pszBase64 ) CPL_WARN_UNUSED_RESULT;
 
 /** Type of value */
 typedef enum
@@ -520,6 +520,8 @@ class CPL_DLL CPLStringList
 
     /** Return list. Ownership remains to the object */
     char **List() { return papszList; }
+    /** Return list. Ownership remains to the object */
+    char **List() const { return papszList; }
     char **StealList();
 
     CPLStringList &Sort();

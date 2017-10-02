@@ -32,6 +32,8 @@
 #include "cpl_conv.h"
 #include "cpl_vsi_error.h"
 #include "ods_formula.h"
+
+#include <algorithm>
 #include <set>
 
 CPL_CVSID("$Id$")
@@ -655,8 +657,22 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (nRowsRepeated > 65536)
+        if (nRowsRepeated < 0 || nRowsRepeated > 10000)
         {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid value for number-rows-repeated = %d",
+                     nRowsRepeated);
+            bEndTableParsing = true;
+            return;
+        }
+        const int nFields = std::max(
+            static_cast<int>(apoFirstLineValues.size()),
+            poCurLayer != NULL ?
+                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big gap with previous valid row");
             bEndTableParsing = true;
             return;
         }
@@ -791,6 +807,27 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
 
         nCellsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-columns-repeated", "1"));
+        if (nCellsRepeated < 0 || nCellsRepeated > 10000)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid value for number-columns-repeated = %d",
+                     nCellsRepeated);
+            bEndTableParsing = true;
+            nCellsRepeated = 0;
+            return;
+        }
+        const int nFields = nCellsRepeated +
+            (poCurLayer != NULL ?
+                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too big gap with previous valid row");
+            bEndTableParsing = true;
+            nCellsRepeated = 0;
+            return;
+        }
+
     }
     else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {

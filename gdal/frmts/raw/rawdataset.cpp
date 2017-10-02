@@ -593,9 +593,8 @@ int RawRasterBand::CanUseDirectIO(int /* nXOff */,
         CPLGetConfigOption("GDAL_ONE_BIG_READ", NULL);
     if ( pszGDAL_ONE_BIG_READ == NULL )
     {
-        const int nBytesToRW = nPixelOffset * nXSize;
         if ( nLineSize < 50000
-             || nBytesToRW > nLineSize / 5 * 2
+             || nXSize > nLineSize / nPixelOffset / 5 * 2
              || IsSignificantNumberOfLinesLoaded(nYOff, nYSize) )
         {
             return FALSE;
@@ -1164,9 +1163,10 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
         int iBandIndex = 0;
         for( ; iBandIndex < nBandCount; iBandIndex++ )
         {
-            RawRasterBand *poBand = static_cast<RawRasterBand *>(
+            RawRasterBand *poBand = dynamic_cast<RawRasterBand *>(
                 GetRasterBand(panBandMap[iBandIndex]));
-            if( !poBand->CanUseDirectIO(nXOff, nYOff,
+            if( poBand == NULL ||
+                !poBand->CanUseDirectIO(nXOff, nYOff,
                                         nXSize, nYSize, eBufType) )
             {
                 break;

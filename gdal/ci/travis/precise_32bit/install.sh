@@ -3,7 +3,7 @@
 set -e
 
 export chroot="$PWD"/buildroot.i386
-export LC_ALL=en_US
+export LC_ALL=en_US.utf8
 
 sudo i386 chroot "$chroot" sh -c "cd $PWD/gdal && CC=clang CXX=clang ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-epsilon"
 # --with-gta

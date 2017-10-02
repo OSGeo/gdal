@@ -307,14 +307,10 @@ static void RPCEvaluate4( const double *padfTerms,
         sum3 += terms * coefs3;
         sum4 += terms * coefs4;
     }
-    sum1.AddLowAndHigh();
-    sum2.AddLowAndHigh();
-    sum3.AddLowAndHigh();
-    sum4.AddLowAndHigh();
-    dfSum1 = static_cast<double>(sum1);
-    dfSum2 = static_cast<double>(sum2);
-    dfSum3 = static_cast<double>(sum3);
-    dfSum4 = static_cast<double>(sum4);
+    dfSum1 = sum1.GetHorizSum();
+    dfSum2 = sum2.GetHorizSum();
+    dfSum3 = sum3.GetHorizSum();
+    dfSum4 = sum4.GetHorizSum();
 }
 
 #else

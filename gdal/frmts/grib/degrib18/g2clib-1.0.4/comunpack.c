@@ -1,8 +1,14 @@
+#include <float.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
 #include "grib2.h"
 
+static float DoubleToFloatClamp(double val) {
+   if (val >= FLT_MAX) return FLT_MAX;
+   if (val <= -FLT_MAX) return -FLT_MAX;
+   return (float)val;
+}
 
 int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float *fld)
 ////$$$  SUBPROGRAM DOCUMENTATION BLOCK
@@ -59,8 +65,8 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       //printf('IDRSTMPL: ',(idrstmpl(j),j=1,16)
       rdieee(idrstmpl+0,&ref,1);
 //      printf("SAGTref: %f\n",ref);
-      bscale = (g2float)int_power(2.0,idrstmpl[1]);
-      dscale = (g2float)int_power(10.0,-idrstmpl[2]);
+      bscale = DoubleToFloatClamp(int_power(2.0,idrstmpl[1]));
+      dscale = DoubleToFloatClamp(int_power(10.0,-idrstmpl[2]));
       nbitsgref = idrstmpl[3];
       itype = idrstmpl[4];
       ngroups = idrstmpl[9];

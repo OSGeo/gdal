@@ -4996,8 +4996,8 @@ def tiff_write_123():
         return 'fail'
     ds = None
 
-    # Test overriding internal color interpretation with PAM one
-    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif', gdal.GA_Update)
+    # Test overriding internal color interpretation with PAM one (read-only mode)
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     ds = None
     statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml',
@@ -5120,6 +5120,54 @@ def tiff_write_123():
     ds = None
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
+
+    # Test that PHOTOMETRIC=RGB overrides the source color interpretation of the
+    # first 3 bands
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 3)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgb.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgb.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 5)
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgbua.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgbua.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgbua.tif')
+
+
+    # Test updating alpha to undefined
+    gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_rgba_to_undefined.tif', 1,1,4,
+                             options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgba_to_undefined.tif', gdal.GA_Update)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_Undefined)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_rgba_to_undefined.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_rgba_to_undefined.tif')
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgba_to_undefined.tif')
+
 
     return 'success'
 

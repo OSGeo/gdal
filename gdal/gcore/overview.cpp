@@ -43,9 +43,15 @@
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
-// TODO(schwehr): Fix warning: Software emulation of SSE2.
-// #include "gdalsse_priv.h"
 #include "gdalwarper.h"
+
+// Restrict to 64bit processors because they are guaranteed to have SSE2.
+// Could possibly be used too on 32bit, but we would need to check at runtime.
+#if defined(__x86_64) || defined(_M_X64)
+#define USE_SSE2
+
+#include <gdalsse_priv.h>
+#endif
 
 CPL_CVSID("$Id$")
 
@@ -1227,6 +1233,18 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows(
         dfRes1, dfRes2, dfRes3 );
 }
 
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeights,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontal_3rows(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeights, 4,
+        dfRes1, dfRes2, dfRes3 );
+}
+
 /************************************************************************/
 /*                  GDALResampleConvolutionVertical()                   */
 /************************************************************************/
@@ -1282,15 +1300,101 @@ template<class T> static inline void GDALResampleConvolutionVertical_2cols(
     dfRes2 = dfVal3 + dfVal4;
 }
 
-// TODO(schwehr): Move define of USE_SSE2 and include to the top of the file.
-// Restrict to 64bit processors because they are guaranteed to have SSE2.
-// Could possibly be used too on 32bit, but we would need to check at runtime.
-#if defined(__x86_64) || defined(_M_X64)
-#define USE_SSE2
-#endif
-
 #ifdef USE_SSE2
-#include <gdalsse_priv.h>
+
+#ifdef __AVX__
+/************************************************************************/
+/*             GDALResampleConvolutionVertical_16cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_16cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc2 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc3 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+0*nStride) * w0; 
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+0*nStride) * w0;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+0*nStride) * w0;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+1*nStride) * w1;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+1*nStride) * w1;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+2*nStride) * w2;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+2*nStride) * w2;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+3*nStride) * w3;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+3*nStride) * w3;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4) * w;
+        v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8) * w;
+        v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+    v_acc2.Store4Val(afDest+8);
+    v_acc3.Store4Val(afDest+12);
+}
+
+#else
+
+
+/************************************************************************/
+/*              GDALResampleConvolutionVertical_8cols<T>                */
+/************************************************************************/
+
+template<class T> static inline void GDALResampleConvolutionVertical_8cols(
+    const T* pChunk, int nStride, const double* padfWeights, int nSrcLineCount,
+    float* afDest )
+{
+    int i = 0;
+    int j = 0;
+    XMMReg4Double v_acc0 = XMMReg4Double::Zero();
+    XMMReg4Double v_acc1 = XMMReg4Double::Zero();
+    for(;i+3<nSrcLineCount;i+=4, j+=4*nStride)
+    {
+        XMMReg4Double w0 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+0);
+        XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
+        XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
+        XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+0*nStride) * w0; 
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+0*nStride) * w0;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+1*nStride) * w1;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+1*nStride) * w1;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+2*nStride) * w2;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+2*nStride) * w2;
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+3*nStride) * w3;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+3*nStride) * w3;
+    }
+    for( ; i < nSrcLineCount; ++i, j += nStride )
+    {
+        XMMReg4Double w = XMMReg4Double::Load1ValHighAndLow(padfWeights+i);
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0) * w;
+        v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4) * w;
+    }
+    v_acc0.Store4Val(afDest);
+    v_acc1.Store4Val(afDest+4);
+}
+
+#endif // __AVX__
 
 /************************************************************************/
 /*              GDALResampleConvolutionHorizontalSSE2<T>                */
@@ -1317,9 +1421,8 @@ template<class T> static inline double GDALResampleConvolutionHorizontalSSE2(
     }
 
     v_acc1 += v_acc2;
-    v_acc1.AddLowAndHigh();
 
-    double dfVal = static_cast<double>(v_acc1.GetLow());
+    double dfVal = v_acc1.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfVal += pChunk[i] * padfWeightsAligned[i];
@@ -1369,10 +1472,9 @@ GDALResampleConvolutionHorizontalWithMaskSSE2(
         v_acc += v_pixels * v_weight;
         v_acc_weight += v_weight;
     }
-    v_acc.AddLowAndHigh();
-    v_acc_weight.AddLowAndHigh();
-    dfVal = static_cast<double>(v_acc.GetLow());
-    dfWeightSum = static_cast<double>(v_acc_weight.GetLow());
+
+    dfVal = v_acc.GetHorizSum();
+    dfWeightSum = v_acc_weight.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         const double dfWeight = padfWeightsAligned[i] * pabyMask[i];
@@ -1445,13 +1547,9 @@ GDALResampleConvolutionHorizontal_3rows_SSE2(
         v_acc3 += v_pixels2 * v_weight2;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
     for( ; i < nSrcPixelCount; ++i )
     {
         dfRes1 += pChunkRow1[i] * padfWeightsAligned[i];
@@ -1515,13 +1613,9 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
         v_acc3 += v_pixels3 * v_weight;
     }
 
-    v_acc1.AddLowAndHigh();
-    v_acc2.AddLowAndHigh();
-    v_acc3.AddLowAndHigh();
-
-    dfRes1 = static_cast<double>(v_acc1.GetLow());
-    dfRes2 = static_cast<double>(v_acc2.GetLow());
-    dfRes3 = static_cast<double>(v_acc3.GetLow());
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
 
     for( ; i < nSrcPixelCount; ++i )
     {
@@ -1557,6 +1651,62 @@ GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
     GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
         pChunkRow1, pChunkRow2, pChunkRow3,
         padfWeightsAligned, nSrcPixelCount,
+        dfRes1, dfRes2, dfRes3 );
+}
+
+/************************************************************************/
+/*     GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2<T>       */
+/************************************************************************/
+
+template<class T> static inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+    const T* pChunkRow1, const T* pChunkRow2, const T* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3)
+{
+    const XMMReg4Double v_weight =
+        XMMReg4Double::Load4ValAligned(padfWeightsAligned);
+
+    // Retrieve the pixel & accumulate.
+    const XMMReg4Double v_pixels1 = XMMReg4Double::Load4Val(pChunkRow1);
+    const XMMReg4Double v_pixels2 = XMMReg4Double::Load4Val(pChunkRow2);
+    const XMMReg4Double v_pixels3 = XMMReg4Double::Load4Val(pChunkRow3);
+
+    XMMReg4Double v_acc1 = v_pixels1 * v_weight;
+    XMMReg4Double v_acc2 = v_pixels2 * v_weight;
+    XMMReg4Double v_acc3 = v_pixels3 * v_weight;
+
+    dfRes1 = v_acc1.GetHorizSum();
+    dfRes2 = v_acc2.GetHorizSum();
+    dfRes3 = v_acc3.GetHorizSum();
+}
+
+/************************************************************************/
+/*       GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>      */
+/************************************************************************/
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>(
+    const GByte* pChunkRow1, const GByte* pChunkRow2, const GByte* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
+        dfRes1, dfRes2, dfRes3 );
+}
+
+template<> inline void
+GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
+    const GUInt16* pChunkRow1, const GUInt16* pChunkRow2,
+    const GUInt16* pChunkRow3,
+    const double* padfWeightsAligned,
+    double& dfRes1, double& dfRes2, double& dfRes3 )
+{
+    GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
+        pChunkRow1, pChunkRow2, pChunkRow3,
+        padfWeightsAligned,
         dfRes1, dfRes2, dfRes3 );
 }
 
@@ -1701,7 +1851,29 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             }
             int iSrcLineOff = 0;
 #ifdef USE_SSE2
-            if( bSrcPixelCountLess8 )
+            if( nSrcPixelCount == 4 )
+            {
+                for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
+                {
+                    const int j =
+                        iSrcLineOff * nChunkXSize +
+                        (nSrcPixelStart - nChunkXOff);
+                    double dfVal1 = 0.0;
+                    double dfVal2 = 0.0;
+                    double dfVal3 = 0.0;
+                    GDALResampleConvolutionHorizontalPixelCount4_3rows(
+                        pChunk + j, pChunk + j + nChunkXSize,
+                        pChunk + j + 2 * nChunkXSize,
+                        padfWeights, dfVal1, dfVal2, dfVal3);
+                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal1;
+                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal2;
+                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                                           iDstPixel - nDstXOff] = dfVal3;
+                }
+            }
+            else if( bSrcPixelCountLess8 )
             {
                 for( ; iSrcLineOff+2 < nHeight; iSrcLineOff +=3 )
                 {
@@ -1857,6 +2029,37 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             int iFilteredPixelOff = 0;  // Used after for.
             // j used after for.
             int j = (nSrcLineStart - nChunkYOff) * nDstXSize;
+#ifdef USE_SSE2
+
+#ifdef __AVX__
+            for( ;
+                 iFilteredPixelOff+15 < nDstXSize;
+                 iFilteredPixelOff += 16, j += 16 )
+            {
+                GDALResampleConvolutionVertical_16cols(
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+            }
+#else
+            for( ;
+                 iFilteredPixelOff+7 < nDstXSize;
+                 iFilteredPixelOff += 8, j += 8 )
+            {
+                GDALResampleConvolutionVertical_8cols(
+                    padfHorizontalFilteredBand + j, nDstXSize, padfWeights,
+                    nSrcLineCount, pafDstScanline + iFilteredPixelOff );
+            }
+#endif
+
+            for( ; iFilteredPixelOff < nDstXSize; iFilteredPixelOff++, j++ )
+            {
+                const double dfVal =
+                    GDALResampleConvolutionVertical(
+                        padfHorizontalFilteredBand + j,
+                        nDstXSize, padfWeights, nSrcLineCount );
+                pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal);
+            }
+#else
             for( ;
                  iFilteredPixelOff+1 < nDstXSize;
                  iFilteredPixelOff += 2, j += 2 )
@@ -1878,6 +2081,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         nDstXSize, padfWeights, nSrcLineCount );
                 pafDstScanline[iFilteredPixelOff] = static_cast<float>(dfVal);
             }
+#endif
         }
         else
         {

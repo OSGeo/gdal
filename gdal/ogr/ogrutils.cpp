@@ -42,6 +42,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "ogr_core.h"
@@ -1257,107 +1258,30 @@ static const char* const aszMonthStr[] = {
 
 int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
 {
-    // Following
-    // http://asg.web.cmu.edu/rfc/rfc822.html#sec-5 :
-    // [Fri,] 28 Dec 2007 05:24[:17] GMT
-    char** papszTokens =
-        CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
-    char** papszVal = papszTokens;
-    bool bRet = false;
-    int nTokens = CSLCount(papszTokens);
-    if( nTokens < 6 )
+    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+    if( !CPLParseRFC822DateTime( pszRFC822DateTime,
+                                    &nYear,
+                                    &nMonth,
+                                    &nDay,
+                                    &nHour,
+                                    &nMinute,
+                                    &nSecond,
+                                    &nTZFlag,
+                                    NULL ) )
     {
-        CSLDestroy(papszTokens);
         return false;
     }
 
-    if( !((*papszVal)[0] >= '0' && (*papszVal)[0] <= '9') )
-    {
-        // Ignore day of week.
-        ++papszVal;
-    }
+    psField->Date.Year = static_cast<GInt16>(nYear);
+    psField->Date.Month = static_cast<GByte>(nMonth);
+    psField->Date.Day = static_cast<GByte>(nDay);
+    psField->Date.Hour = static_cast<GByte>(nHour);
+    psField->Date.Minute = static_cast<GByte>(nMinute);
+    psField->Date.Second = (nSecond < 0) ? 0.0f : static_cast<float>(nSecond);
+    psField->Date.TZFlag = static_cast<GByte>(nTZFlag);
+    psField->Date.Reserved = 0;
 
-    const int day = atoi(*papszVal);
-    ++papszVal;
-
-    int month = 0;
-
-    for( int i = 0; i < 12; ++i )
-    {
-        if( EQUAL(*papszVal, aszMonthStr[i]) )
-            month = i + 1;
-    }
-    ++papszVal;
-
-    int year = atoi(*papszVal);
-    ++papszVal;
-    if( year < 100 && year >= 30 )
-        year += 1900;
-    else if( year < 30 && year >= 0 )
-        year += 2000;
-
-    const int hour = atoi(*papszVal);
-    ++papszVal;
-
-    const int minute = atoi(*papszVal);
-    ++papszVal;
-
-    int second = 0;
-    if( *papszVal != NULL && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9' )
-    {
-        second = atoi(*papszVal);
-        ++papszVal;
-    }
-
-    if( month != 0 )
-    {
-        bRet = true;
-        int TZ = 0;
-
-        if( *papszVal == NULL )
-        {
-        }
-        else if( strlen(*papszVal) == 5 &&
-                 ((*papszVal)[0] == '+' || (*papszVal)[0] == '-') )
-        {
-            char szBuf[3] = { (*papszVal)[1], (*papszVal)[2], 0 };
-            const int TZHour = atoi(szBuf);
-            szBuf[0] = (*papszVal)[3];
-            szBuf[1] = (*papszVal)[4];
-            szBuf[2] = 0;
-            const int TZMinute = atoi(szBuf);
-            TZ = 100 + (((*papszVal)[0] == '+') ? 1 : -1) *
-                        ((TZHour * 60 + TZMinute) / 15);
-        }
-        else
-        {
-            const char* aszTZStr[] = {
-                "GMT", "UT", "Z", "EST", "EDT", "CST", "CDT", "MST", "MDT",
-                "PST", "PDT"
-            };
-            int anTZVal[] = { 0, 0, 0, -5, -4, -6, -5, -7, -6, -8, -7 };
-            for( int i = 0; i < 11; ++i )
-            {
-                if( EQUAL(*papszVal, aszTZStr[i]) )
-                {
-                    TZ = 100 + anTZVal[i] * 4;
-                    break;
-                }
-            }
-        }
-
-        psField->Date.Year = static_cast<GInt16>(year);
-        psField->Date.Month = static_cast<GByte>(month);
-        psField->Date.Day = static_cast<GByte>(day);
-        psField->Date.Hour = static_cast<GByte>(hour);
-        psField->Date.Minute = static_cast<GByte>(minute);
-        psField->Date.Second = static_cast<float>(second);
-        psField->Date.TZFlag = static_cast<GByte>(TZ);
-        psField->Date.Reserved = 0;
-    }
-
-    CSLDestroy(papszTokens);
-    return bRet;
+    return true;
 }
 
 /**

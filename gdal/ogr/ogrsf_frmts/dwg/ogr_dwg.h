@@ -127,7 +127,7 @@ class OGRDWGLayer : public OGRLayer
 
     void                FormatDimension( CPLString &osText, double dfValue );
 
-    CPLString           TextUnescape( OdString oString);
+    CPLString           TextUnescape( OdString oString, bool );
 
     OdDbBlockTableRecordPtr m_poBlock;
     OdDbObjectIteratorPtr   poEntIter;

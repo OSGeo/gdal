@@ -213,7 +213,7 @@ typedef struct
 
 typedef struct
 {
-    int    bUpdated;
+    bool   bUpdated;
     double dfComplete;
     char  *pszProgressMsg;
     int    bRet;
@@ -395,9 +395,9 @@ static const char* const apszInstr[] =
 static const GByte abyEndOfJunkMarker[] = { 0xDE, 0xAD, 0xBE, 0xEF };
 
 /* Recycling of connections to child processes */
-#define MAX_RECYCLED        128
-#define DEFAULT_RECYCLED    4
-static int bRecycleChild = FALSE;
+static const int MAX_RECYCLED = 128;
+static const int DEFAULT_RECYCLED = 4;
+static bool bRecycleChild = false;
 static int nMaxRecycled = 0;
 static GDALServerSpawnedProcess* aspRecycled[MAX_RECYCLED];
 
@@ -468,7 +468,7 @@ class GDALClientDataset: public GDALPamDataset
     GDALPipe                                         *p;
     CPLString                                         osProjection;
     CPLString                                         osGCPProjection;
-    int                                               bFreeDriver;
+    bool                                              bFreeDriver;
     int                                               nGCPCount;
     GDAL_GCP                                         *pasGCPs;
     std::map<CPLString, char**>                       aoMapMetadata;
@@ -1360,7 +1360,9 @@ static int GDALPipeWrite(GDALPipe* p, const GDALRasterAttributeTable* poRAT)
     // TODO(schwehr): Refactor and simplify.
     int bRet = FALSE;
     if( poRAT == NULL )
+    {
         bRet = GDALPipeWrite(p, (const char*)NULL);
+    }
     else
     {
         CPLXMLNode* poNode = poRAT->Serialize();
@@ -1372,7 +1374,9 @@ static int GDALPipeWrite(GDALPipe* p, const GDALRasterAttributeTable* poRAT)
             CPLDestroyXMLNode(poNode);
         }
         else
+        {
             bRet = GDALPipeWrite(p, (const char*)NULL);
+        }
     }
     return bRet;
 }
@@ -1448,7 +1452,9 @@ static void GDALConsumeErrors(GDALPipe* p)
             !GDALPipeRead(p, &nErrNo) ||
             !GDALPipeRead(p, &pszErrorMsg) )
             return;
-        CPLError((CPLErr)eErr, (CPLErrorNum)nErrNo, "%s", pszErrorMsg ? pszErrorMsg : "unknown");
+        CPLError(static_cast<CPLErr>(eErr),
+                 static_cast<CPLErrorNum>(nErrNo), "%s",
+                 pszErrorMsg ? pszErrorMsg : "unknown");
         CPLFree(pszErrorMsg);
     }
 }
@@ -1670,7 +1676,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 
 #ifdef HAVE_GETADDRINFO
         struct addrinfo sHints;
-        struct addrinfo* psResults = NULL, *psResultsIter;
+        struct addrinfo* psResults = NULL;
         memset(&sHints, 0, sizeof(struct addrinfo));
         sHints.ai_family = AF_UNSPEC;
         sHints.ai_socktype = SOCK_STREAM;
@@ -1686,9 +1692,9 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
             return NULL;
         }
 
-        for( psResultsIter = psResults;
-             psResultsIter != NULL;
-             psResultsIter = psResultsIter->ai_next)
+        // Used after for.
+        struct addrinfo *psResultsIter = psResults;
+        for( ; psResultsIter != NULL; psResultsIter = psResultsIter->ai_next )
         {
             nConnSocket = socket(psResultsIter->ai_family,
                                  psResultsIter->ai_socktype,
@@ -1754,8 +1760,8 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         }
 #endif
 
-        GDALServerSpawnedProcess* ssp =
-                (GDALServerSpawnedProcess*)CPLMalloc(sizeof(GDALServerSpawnedProcess));
+        GDALServerSpawnedProcess* ssp = static_cast<GDALServerSpawnedProcess*>(
+            CPLMalloc(sizeof(GDALServerSpawnedProcess)));
         ssp->sp = NULL;
         ssp->p = GDALPipeBuild(nConnSocket);
 
@@ -1782,7 +1788,8 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
             if (connect(nConnSocket, (const SOCKADDR *)&sockAddrUnix, sizeof (sockAddrUnix)) >= 0 )
             {
                 GDALServerSpawnedProcess* ssp =
-                    (GDALServerSpawnedProcess*)CPLMalloc(sizeof(GDALServerSpawnedProcess));
+                    static_cast<GDALServerSpawnedProcess *>(
+                        CPLMalloc(sizeof(GDALServerSpawnedProcess)));
                 ssp->sp = NULL;
                 ssp->p = GDALPipeBuild(nConnSocket);
 
@@ -1812,7 +1819,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
 #endif
     bool bCheckVersions = true;
 
-    CPLSpawnedProcess* sp;
+    CPLSpawnedProcess* sp = NULL;
 #ifndef WIN32
     if( EQUAL(pszSpawnServer, "NO") || EQUAL(pszSpawnServer, "OFF") ||
         EQUAL(pszSpawnServer, "FALSE")  || EQUAL(pszSpawnServer, "0") )
@@ -1899,7 +1906,7 @@ static int CPL_STDCALL RunAsyncProgress(double dfComplete,
     /* of the dataset, such as IReadBlock() / IRasterIO() */
     GDALServerAsyncProgress* asyncp = (GDALServerAsyncProgress*)pProgressArg;
     CPLMutexHolderD(&(asyncp->hMutex));
-    asyncp->bUpdated = TRUE;
+    asyncp->bUpdated = true;
     asyncp->dfComplete = dfComplete;
     CPLFree(asyncp->pszProgressMsg);
     asyncp->pszProgressMsg = (pszMessage) ? CPLStrdup(pszMessage) : NULL;
@@ -1914,7 +1921,7 @@ static int CPL_STDCALL RunSyncProgress(double dfComplete,
                                        const char *pszMessage,
                                        void *pProgressArg)
 {
-    GDALPipe* p = (GDALPipe*)pProgressArg;
+    GDALPipe* p = static_cast<GDALPipe *>(pProgressArg);
     if( !GDALPipeWrite(p, INSTR_Progress) ||
         !GDALPipeWrite(p, dfComplete) ||
         !GDALPipeWrite(p, pszMessage) )
@@ -3646,7 +3653,7 @@ GDALClientDataset::GDALClientDataset(GDALServerSpawnedProcess* sspIn)
 {
     ssp = sspIn;
     p = ssp->p;
-    bFreeDriver = FALSE;
+    bFreeDriver = false;
     nGCPCount = 0;
     pasGCPs = NULL;
     async = NULL;
@@ -3661,7 +3668,7 @@ GDALClientDataset::GDALClientDataset(GDALPipe* pIn)
 {
     ssp = NULL;
     p = pIn;
-    bFreeDriver = FALSE;
+    bFreeDriver = false;
     nGCPCount = 0;
     pasGCPs = NULL;
     async = NULL;
@@ -3707,7 +3714,7 @@ int GDALClientDataset::ProcessAsyncProgress()
     if( !async ) return TRUE;
     CPLMutexHolderD(&(async->hMutex));
     if( !async->bUpdated ) return async->bRet;
-    async->bUpdated = FALSE;
+    async->bUpdated = false;
     if( !GDALPipeWrite(p, INSTR_Progress) ||
         !GDALPipeWrite(p, async->dfComplete) ||
         !GDALPipeWrite(p, async->pszProgressMsg) )
@@ -5889,7 +5896,7 @@ int GDALClientDataset::Init(const char* pszFilename, GDALAccess eAccessIn,
 
     if( pszDriverName != NULL )
     {
-        bFreeDriver = TRUE;
+        bFreeDriver = true;
         poDriver = new GDALDriver();
         poDriver->SetDescription(pszDriverName);
         CPLFree(pszDriverName);
@@ -6369,7 +6376,7 @@ static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
     if( bRecycleChild )
     {
         /* Kill all unused descriptors */
-        bRecycleChild = FALSE;
+        bRecycleChild = false;
         for(int i=0;i<nMaxRecycled;i++)
         {
             if( aspRecycled[i] != NULL )
@@ -6388,42 +6395,49 @@ static void GDALUnloadAPIPROXYDriver( GDALDriver* /* poDriver */ )
 
 GDALDriver* GDALGetAPIPROXYDriver()
 {
+    // Call CPLGetConfigOption before holding DM mutex to avoid confusing
+    // deadlock detectors that keep track of the order of lock acquisitions
+    // and error out if the order is inverted.
+    const char* pszConnPool =
+        CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
+
     CPLMutexHolderD(GDALGetphDMMutex());
-    if( poAPIPROXYDriver == NULL )
-    {
+    if( poAPIPROXYDriver != NULL )
+        return poAPIPROXYDriver;
+
 #ifdef DEBUG_VERBOSE
-        CPL_STATIC_ASSERT(INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
+    CPL_STATIC_ASSERT(
+        INSTR_END + 1 == sizeof(apszInstr) / sizeof(apszInstr[0]));
 #endif
-        /* If asserted, change GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR */
-        // cppcheck-suppress duplicateExpression
-        CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
+    // If asserted, change
+    // GDAL_CLIENT_SERVER_PROTOCOL_MAJOR / GDAL_CLIENT_SERVER_PROTOCOL_MINOR
+    // cppcheck-suppress duplicateExpression
+    CPL_STATIC_ASSERT(INSTR_END + 1 == 81);
 
-        const char* pszConnPool = CPLGetConfigOption("GDAL_API_PROXY_CONN_POOL", "YES");
-        if( atoi(pszConnPool) > 0 )
-        {
-            bRecycleChild = TRUE;
-            nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
-        }
-        else if( CPLTestBool(pszConnPool) )
-        {
-            bRecycleChild = TRUE;
-            nMaxRecycled = DEFAULT_RECYCLED;
-        }
-        memset(aspRecycled, 0, sizeof(aspRecycled));
-
-        poAPIPROXYDriver = new GDALDriver();
-
-        poAPIPROXYDriver->SetDescription( "API_PROXY" );
-        poAPIPROXYDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-        poAPIPROXYDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "API_PROXY" );
-
-        poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;
-        poAPIPROXYDriver->pfnIdentify = GDALClientDataset::Identify;
-        poAPIPROXYDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
-        poAPIPROXYDriver->pfnCreate = GDALClientDataset::Create;
-        poAPIPROXYDriver->pfnDelete = GDALClientDataset::Delete;
-        poAPIPROXYDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
+    if( atoi(pszConnPool) > 0 )
+    {
+        bRecycleChild = true;
+        nMaxRecycled = std::min(atoi(pszConnPool), MAX_RECYCLED);
     }
+    else if( CPLTestBool(pszConnPool) )
+    {
+        bRecycleChild = true;
+        nMaxRecycled = DEFAULT_RECYCLED;
+    }
+    memset(aspRecycled, 0, sizeof(aspRecycled));
+
+    poAPIPROXYDriver = new GDALDriver();
+
+    poAPIPROXYDriver->SetDescription("API_PROXY");
+    poAPIPROXYDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poAPIPROXYDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "API_PROXY");
+
+    poAPIPROXYDriver->pfnOpen = GDALClientDataset::Open;
+    poAPIPROXYDriver->pfnIdentify = GDALClientDataset::Identify;
+    poAPIPROXYDriver->pfnCreateCopy = GDALClientDataset::CreateCopy;
+    poAPIPROXYDriver->pfnCreate = GDALClientDataset::Create;
+    poAPIPROXYDriver->pfnDelete = GDALClientDataset::Delete;
+    poAPIPROXYDriver->pfnUnloadDriver = GDALUnloadAPIPROXYDriver;
+
     return poAPIPROXYDriver;
 }

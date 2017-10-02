@@ -13,9 +13,10 @@
  * NOTES
  *****************************************************************************
  */
+#include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "grib2api.h"
 #include "grib2.h"
 #include "scan.h"
@@ -55,6 +56,12 @@
    float * xmisss, sInt4 * inew, sInt4 * minpk, sInt4 * iclean,
    sInt4 * l3264b, sInt4 * jer, sInt4 * ndjer, sInt4 * kjer);
 #endif
+
+static sInt4 FloatToSInt4Clamp(float val) {
+   if (val >= INT_MAX) return INT_MAX;
+   if (val <= INT_MIN) return INT_MIN;
+   return (sInt4)val;
+}
 
 /*****************************************************************************
  * mdl_LocalUnpack() --
@@ -378,14 +385,14 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ib[i] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[i] == 0)) {
-               iain[i] = (sInt4)xmissp;
+               iain[i] = FloatToSInt4Clamp(xmissp);
             } else {
-               iain[i] = (sInt4)fld[i];
+               iain[i] = FloatToSInt4Clamp(fld[i]);
             }
          }
       } else {
          for (i = 0; i < ngrdpts; i++) {
-            iain[i] = (sInt4)fld[i];
+            iain[i] = FloatToSInt4Clamp(fld[i]);
          }
       }
    } else {
@@ -409,9 +416,9 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             ib[curIndex] = bmap[i];
             /* Check if we are supposed to insert xmissp into the field */
             if ((iclean != 0) && (ib[curIndex] == 0)) {
-               iain[i] = (sInt4)xmissp;
+               iain[i] = FloatToSInt4Clamp(xmissp);
             } else {
-               iain[curIndex] = (sInt4)fld[i];
+               iain[curIndex] = FloatToSInt4Clamp(fld[i]);
             }
          }
       } else {
@@ -421,7 +428,7 @@ static int TransferInt (float * fld, sInt4 ngrdpts, sInt4 ibitmap,
             curIndex = (x - 1) + (y - 1) * nx;
             if( curIndex < 0 || curIndex >= nd2x3 )
                 return 1;
-            iain[curIndex] = (sInt4)fld[i];
+            iain[curIndex] = FloatToSInt4Clamp(fld[i]);
          }
       }
       *scan = 64 + (*scan & 0x0f);
@@ -756,7 +763,7 @@ static
 void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
                   sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
-                  sInt4 * is2, sInt4 * ns2, sInt4 * is3, CPL_UNUSED sInt4 * ns3,
+                  sInt4 * is2, sInt4 * ns2, sInt4 * is3, sInt4 * ns3,
                   sInt4 * is4, sInt4 * ns4, sInt4 * is5, CPL_UNUSED sInt4 * ns5,
                   sInt4 * is6, CPL_UNUSED sInt4 * ns6, sInt4 * is7, CPL_UNUSED sInt4 * ns7,
                   sInt4 * ib, sInt4 * ibitmap, unsigned char *c_ipack,
@@ -975,6 +982,14 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
    curIndex = 14;
    for (i = 0; i < gfld->igdtlen; i++) {
       const struct gridtemplate *templatesgrid = get_templatesgrid();
+      if( curIndex < 0 || curIndex >= *ns3 )
+      {
+        jer[8 + *ndjer] = 2;
+        jer[8] = 2003;    /* undefined sect 3 template: FIXME: wrong code probably */
+        *kjer = 9;
+        g2_free (gfld);
+        return;
+      }
       is3[curIndex] = gfld->igdtmpl[i];
       curIndex += abs (templatesgrid[gridIndex].mapgrid[i]);
    }

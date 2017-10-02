@@ -425,6 +425,13 @@ public:
     return OSRAutoIdentifyEPSG( self );
   }
 
+#ifdef SWIGPYTHON
+  void FindMatches( char** options = NULL, OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL )
+  {
+        *matches = OSRFindMatches(self, options, nvalues, confidence_values);
+  }
+#endif
+
   OGRErr SetProjection( char const *arg ) {
     return OSRSetProjection( self, arg );
   }

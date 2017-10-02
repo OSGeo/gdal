@@ -36,6 +36,7 @@ sys.path.append( '../pymod' )
 
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 import gdaltest
 import ogrtest
 import test_cli_utilities
@@ -62,7 +63,9 @@ def test_gdal_contour_1():
         pass
 
     drv = gdal.GetDriverByName('GTiff')
-    wkt = 'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AUTHORITY[\"EPSG\",\"4326\"]]'
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    wkt = sr.ExportToWkt()
 
     size = 160
     precision = 1. / size
@@ -105,8 +108,10 @@ def test_gdal_contour_1():
 
     lyr = ds.ExecuteSQL("select * from contour order by elev asc")
 
-    if lyr.GetSpatialRef().ExportToWkt().find('GCS_WGS_1984') == -1:
+    if lyr.GetSpatialRef().ExportToWkt() != wkt:
         print('Did not get expected spatial ref')
+        print(lyr.GetSpatialRef().ExportToWkt())
+        print(wkt)
         return 'fail'
 
     if lyr.GetFeatureCount() != len(expected_envelopes):

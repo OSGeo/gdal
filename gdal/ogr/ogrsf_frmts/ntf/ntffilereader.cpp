@@ -1522,7 +1522,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
         else
             papoGroup = ReadRecordGroup();
 
-        if( papoGroup == NULL )
+        if( papoGroup == NULL || papoGroup[0] == NULL )
             break;
 
         int nType = papoGroup[0]->GetType();

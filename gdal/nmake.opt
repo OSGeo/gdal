@@ -132,13 +132,13 @@ CXX_PDB_FLAGS=
 !IFNDEF DEBUG
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MDd /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
 !ELSE
 !IFNDEF DEBUG
 OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /FC /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
+OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MDd /EHsc /GR /FC /DDEBUG
 !ENDIF
 !ENDIF  #MSVC_VER
 !ENDIF  # OPTFLAGS
@@ -195,6 +195,9 @@ SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
 # Linker debug options
 !IFDEF DEBUG
 LDEBUG= /debug
+!ELSEIFDEF WITH_PDB
+# Ensures that PDB is included in release DLL if so requested
+LDEBUG= /debug /opt:ref /opt:icf
 !ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
@@ -253,7 +256,10 @@ INCLUDE_GNM_FRMTS = YES
 BSB_SUPPORTED = 1
 
 # Comment out the following to disable ODBC support.
+
+!IFNDEF ODBC_SUPPORTED
 ODBC_SUPPORTED = 1
+!ENDIF
 
 # Uncomment out the following to enable plugin with SQL Native Client support for MSSQL Bulk Copy.
 #SQLNCLI_VERSION = 11
@@ -628,12 +634,14 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
 # Uncomment POPPLER_0_20_OR_LATER = YES for Poppler >= 0.20.0
 # Uncomment POPPLER_0_23_OR_LATER = YES for Poppler >= 0.23.0
+# Uncomment POPPLER_0_58_OR_LATER = YES for Poppler >= 0.58.0
 #POPPLER_ENABLED = YES
 #POPPLER_CFLAGS = -Ie:/kde/include -Ie:/kde/include/poppler
 #POPPLER_HAS_OPTCONTENT = YES
 #POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES
 #POPPLER_0_20_OR_LATER = YES
 #POPPLER_0_23_OR_LATER = YES
+#POPPLER_0_58_OR_LATER = YES
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
 # Uncomment for PDF support

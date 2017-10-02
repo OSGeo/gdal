@@ -99,14 +99,15 @@ static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 
 static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszSource);
-        CPLFree(psOptionsForBinary->pszDest);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
+    if( psOptionsForBinary == NULL )
+        return;
+
+    CPLFree(psOptionsForBinary->pszSource);
+    CPLFree(psOptionsForBinary->pszDest);
+    CPLFree(psOptionsForBinary->pszFormat);
+    CPLFree(psOptionsForBinary);
 }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -181,7 +182,7 @@ int main(int argc, char** argv)
                                    psOptions, &bUsageError);
     if(bUsageError == TRUE)
         Usage();
-    int nRetCode = (hOutDS) ? 0 : 1;
+    int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);
     GDALClose(hOutDS);

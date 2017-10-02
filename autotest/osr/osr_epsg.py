@@ -288,6 +288,108 @@ def osr_epsg_11():
     return 'success'
 
 ###############################################################################
+# Test IsSame() on SRS that differs only by their PROJ4 EXTENSION (besides
+# different EPSG codes)
+
+def osr_epsg_12():
+
+    sr1 = osr.SpatialReference()
+    sr1.ImportFromEPSG(3857)
+
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromEPSG(3395)
+
+    if sr1.IsSame(sr2):
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test FindMatches()
+
+def osr_epsg_13():
+
+    # One exact match (and test PROJCS)
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3044)
+    sr.MorphToESRI()
+    sr.MorphFromESRI()
+    matches = sr.FindMatches()
+    if len(matches) != 1 or matches[0][1] != 100:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+    if matches[0][0].IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Two matches (and test GEOGCS)
+    sr.SetFromUserInput("""GEOGCS["myLKS94",
+    DATUM["Lithuania_1994_ETRS89",
+        SPHEROID["GRS 1980",6378137,298.257222101],
+        TOWGS84[0,0,0,0,0,0,0]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]""")
+    matches = sr.FindMatches()
+    if len(matches) != 2:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+    if matches[0][0].GetAuthorityCode(None) != '4126' or matches[0][1] != 90:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+    if matches[1][0].GetAuthorityCode(None) != '4669' or matches[1][1] != 90:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+
+    # Zero match
+    sr.SetFromUserInput("""GEOGCS["myGEOGCS",
+    DATUM["my_datum",
+        SPHEROID["WGS 84",6378137,298.257223563]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]
+""")
+    matches = sr.FindMatches()
+    if len(matches) != 0:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+
+    # One single match, but not similar according to IsSame()
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["WGS 84 / UTM zone 32N",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",9],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",999999999],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]]]
+""")
+    matches = sr.FindMatches()
+    if len(matches) != 1 or matches[0][1] != 50:
+        gdaltest.post_reason('fail')
+        print(matches)
+        return 'fail'
+    if matches[0][0].IsSame(sr) == 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_epsg_1,
@@ -301,6 +403,8 @@ gdaltest_list = [
     osr_epsg_9,
     osr_epsg_10,
     osr_epsg_11,
+    osr_epsg_12,
+    osr_epsg_13,
     None ]
 
 if __name__ == '__main__':

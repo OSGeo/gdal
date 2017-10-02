@@ -84,6 +84,7 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     iFIDAsRegularColumnIndex(-1),
     bAutoFIDOnCreateViaCopy(true),
     bCopyStatementWithFID(false),
+    bNeedToUpdateSequence(false),
     papszOverrideColumnTypes(NULL)
 {
     SetDescription( poFeatureDefn->GetName() );
@@ -98,6 +99,7 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
 OGRPGDumpLayer::~OGRPGDumpLayer()
 {
     EndCopy();
+    UpdateSequenceIfNeeded();
 
     poFeatureDefn->Release();
     CPLFree(pszSchemaName);
@@ -220,6 +222,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
                     // FID column is an autoincremented column.
                     StartCopy(bFIDSet);
                     bCopyStatementWithFID = bFIDSet;
+                    bNeedToUpdateSequence = bFIDSet;
                 }
 
                 eErr = CreateFeatureViaCopy( poFeature );
@@ -280,11 +283,16 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
+        bNeedToUpdateSequence = true;
         if( bNeedComma )
             osCommand += ", ";
 
         osCommand = osCommand + OGRPGDumpEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = true;
+    }
+    else
+    {
+        UpdateSequenceIfNeeded();
     }
 
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -717,7 +725,29 @@ OGRErr OGRPGDumpLayer::EndCopy()
 
     bUseCopy = USE_COPY_UNSET;
 
+    UpdateSequenceIfNeeded();
+
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       UpdateSequenceIfNeeded()                       */
+/************************************************************************/
+
+void OGRPGDumpLayer::UpdateSequenceIfNeeded()
+{
+    if( bNeedToUpdateSequence && pszFIDColumn != NULL )
+    {
+        CPLString osCommand;
+        osCommand.Printf(
+            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s",
+            OGRPGDumpEscapeString(pszSqlTableName).c_str(),
+            OGRPGDumpEscapeString(pszFIDColumn).c_str(),
+            OGRPGDumpEscapeColumnName(pszFIDColumn).c_str(),
+            pszSqlTableName);
+        poDS->Log(osCommand);
+        bNeedToUpdateSequence = false;
+    }
 }
 
 /************************************************************************/

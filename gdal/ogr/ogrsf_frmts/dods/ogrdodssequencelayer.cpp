@@ -656,7 +656,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                   void *pValPtr = &byVal;
 
                   poFieldVar->buf2val( &pValPtr );
-                  panIntList[iSubIndex] = byVal;
+                  if( panIntList )
+                    panIntList[iSubIndex] = byVal;
               }
               break;
 
@@ -666,7 +667,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                   void *pValPtr = &nIntVal;
 
                   poFieldVar->buf2val( &pValPtr );
-                  panIntList[iSubIndex] = nIntVal;
+                  if( panIntList )
+                    panIntList[iSubIndex] = nIntVal;
               }
               break;
 
@@ -676,7 +678,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                   void *pValPtr = &nIntVal;
 
                   poFieldVar->buf2val( &pValPtr );
-                  panIntList[iSubIndex] = nIntVal;
+                  if( panIntList )
+                    panIntList[iSubIndex] = nIntVal;
               }
               break;
 
@@ -686,7 +689,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                   void *pValPtr = &nIntVal;
 
                   poFieldVar->buf2val( &pValPtr );
-                  panIntList[iSubIndex] = nIntVal;
+                  if( panIntList )
+                    panIntList[iSubIndex] = nIntVal;
               }
               break;
 
@@ -696,18 +700,21 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                   void *pValPtr = &nIntVal;
 
                   poFieldVar->buf2val( &pValPtr );
-                  panIntList[iSubIndex] = nIntVal;
+                  if( panIntList )
+                    panIntList[iSubIndex] = nIntVal;
               }
               break;
 
               case dods_float32_c:
-                padfDblList[iSubIndex] =
-                    dynamic_cast<Float32 *>(poFieldVar)->value();
+                if( padfDblList )
+                    padfDblList[iSubIndex] =
+                        dynamic_cast<Float32 *>(poFieldVar)->value();
                 break;
 
               case dods_float64_c:
-                padfDblList[iSubIndex] =
-                    dynamic_cast<Float64 *>(poFieldVar)->value();
+                if( padfDblList )
+                    padfDblList[iSubIndex] =
+                        dynamic_cast<Float64 *>(poFieldVar)->value();
                 break;
 
               case dods_str_c:
@@ -715,7 +722,8 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               {
                   string *poStrVal = NULL;
                   poFieldVar->buf2val( (void **) &poStrVal );
-                  papszStrList[iSubIndex] = CPLStrdup( poStrVal->c_str() );
+                  if( papszStrList )
+                    papszStrList[iSubIndex] = CPLStrdup( poStrVal->c_str() );
                   delete poStrVal;
               }
               break;

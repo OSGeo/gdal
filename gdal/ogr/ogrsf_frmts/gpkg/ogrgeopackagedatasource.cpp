@@ -604,14 +604,24 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GPKG:") )
     {
         char** papszTokens = CSLTokenizeString2(poOpenInfo->pszFilename, ":", 0);
-        if( CSLCount(papszTokens) != 3 )
+        int nCount = CSLCount(papszTokens);
+        if( nCount != 3 && nCount != 4 )
         {
             CSLDestroy(papszTokens);
             return FALSE;
         }
 
-        osFilename = papszTokens[1];
-        osSubdatasetTableName = papszTokens[2];
+        if( nCount == 3 )
+        {
+            osFilename = papszTokens[1];
+        }
+        /* GPKG:C:\BLA.GPKG:foo */
+        else if ( nCount == 4 && strlen(papszTokens[1]) == 1 &&
+                  (papszTokens[2][0] == '/' || papszTokens[2][0] == '\\') )
+        {
+            osFilename = CPLString(papszTokens[1]) + ":" + papszTokens[2];
+        }
+        osSubdatasetTableName = papszTokens[nCount-1];
 
         CSLDestroy(papszTokens);
         VSILFILE *fp = VSIFOpenL(osFilename, "rb");
@@ -1333,7 +1343,9 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     if( dfMinX >= dfMaxX || dfMinY >= dfMaxY )
         return false;
 
-    CPLString osDataNull;
+    // Config option just for debug, and for example force set to NaN
+    // which is not supported
+    CPLString osDataNull = CPLGetConfigOption("GPKG_NODATA", "");
     if( !bIsTiles )
     {
         char* pszSQL = sqlite3_mprintf(
@@ -4212,8 +4224,15 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     psWO->papszWarpOptions = CSLSetNameValue(NULL, "OPTIMIZE_SIZE", "YES");
     if( bHasNoData )
     {
-        psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
-                                                 "INIT_DEST", "NO_DATA");
+        if( dfNoDataValue == 0.0 )
+        {
+            // Do not initialize in the case where nodata != 0, since we
+            // want the GeoPackage driver to return empty tiles at the nodata
+            // value instead of 0 as GDAL core would
+            psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
+                                                 "INIT_DEST", "0");
+        }
+
         psWO->padfSrcNoDataReal =
             static_cast<double*>(CPLMalloc(sizeof(double)));
         psWO->padfSrcNoDataReal[0] = dfNoDataValue;

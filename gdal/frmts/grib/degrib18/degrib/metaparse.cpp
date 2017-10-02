@@ -1906,7 +1906,14 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    } else {
       fstSurfType = meta->pds2.sect4.fstSurfType;
       scale = meta->pds2.sect4.fstSurfScale;
-      value = static_cast<int>(meta->pds2.sect4.fstSurfValue);
+      if (meta->pds2.sect4.fstSurfValue >= std::numeric_limits<sInt4>::max() ||
+          meta->pds2.sect4.fstSurfValue <= std::numeric_limits<sInt4>::min()) {
+         // Out of range, so just call it missing.
+         preErrSprintf ("fstSurfValue out of range\n");
+         value = GRIB2MISSING_s4;
+      } else {
+        value = static_cast<sInt4>(meta->pds2.sect4.fstSurfValue);
+      }
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (fstSurfType == GRIB2MISSING_u1)) {
          fstSurfValue = 0;

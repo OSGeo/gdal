@@ -948,7 +948,8 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
       }
     }
 
-    char abyNoData[8];
+    double dfNoDataForAlignment;
+    void* abyNoData = &dfNoDataForAlignment;
     GDALCopyWords(&dfNoDataVal, GDT_Float64, 0,
                   abyNoData, eType, 0, 1);
 

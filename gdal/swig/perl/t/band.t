@@ -21,6 +21,12 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
         }
     }
     $band->WriteTile($tile);
+
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
     
     $c = $band->ClassCounts;
     is_deeply($c, \%counts, "$datatype: ClassCounts");
@@ -40,6 +46,20 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     delete $counts{1};
     $counts{3} = 6;
     is_deeply($c, \%counts, "$datatype: Reclassify without default");
+
+    my $classifier = ['<', [5.0, [3, 1, 2], 3]];
+    $band->WriteTile($tile);
+    $c = $band->ClassCounts($classifier);
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {0 => 9, 1 => 6, 2 => 10}, "$datatype: Class counts with an array");
+    $band->Reclassify($classifier); # see below
+    $c = $band->ClassCounts;
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {1 => 9, 2 => 6, 3 => 10}, "$datatype: Reclassify with an array");
     
     $band->WriteTile($tile);
     $band->NoDataValue(5);
@@ -50,6 +70,14 @@ for my $datatype (qw/Byte Int16 Int32 UInt16 UInt32/) {
     #}
     is_deeply($c, {0 => 22, 5 => 3}, "Reclassify with default does not affect cells with NoData.");
 
+    $band->WriteTile($tile);
+    $band->NoDataValue(5);
+    $band->Reclassify(['<', [5, [3, 1, 2], 3]]); # see below
+    $c = $band->ClassCounts;
+    #for my $key (keys %$c) {
+    #    print "$key $c->{$key}\n";
+    #}
+    is_deeply($c, {1 => 9, 2 => 6, 3 => 7, 5 => 3}, "$datatype: Reclassify raster with NoData with an array");
 }
 
 for my $datatype (qw/Float32 Float64/) {
@@ -59,8 +87,9 @@ for my $datatype (qw/Float32 Float64/) {
     $tile->[1] = [5,6];
     $band->WriteTile($tile);
 
-    # 1   2   3
-    #   3   5
+    # x < 3       => x = 1
+    # 3 <= x < 5  => x = 2
+    # x >= 5      => x = 3
     my $classifier = ['<', [5.0, [3.0, 1.0, 2.0], 3.0]];
     my $counts = $band->ClassCounts($classifier);
     #say STDERR $counts;
@@ -70,17 +99,46 @@ for my $datatype (qw/Float32 Float64/) {
         push @counts, $key => $counts->{$key};
     }
     is_deeply(\@counts, [0=>1,1=>1,2=>2], "Class counts $datatype");
+    
     $band->Reclassify($classifier);
-    $tile = $band->ReadTile;
-    #for my $y (0..$#$tile) {
-    #    say STDERR "@{$tile->[$y]}";
+    my $tile2 = $band->ReadTile;
+    #print STDERR "\n";
+    #for my $row (@$tile2) {
+    #    print STDERR "@$row\n";
     #}
-    is_deeply($tile, [[1,2],[3,3]], "Reclassify $datatype");
+    #print STDERR "\n";
+    is_deeply($tile2, [[1,2],[3,3]], "Reclassify $datatype");
 
     eval {
         $band->Reclassify($classifier, sub {return 1});
     };
     ok(!$@, "Reclassify overload test $datatype: $@");
+
+    # test the effect of set no data value
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
+    $band->WriteTile($tile);
+    $band->NoDataValue(6);
+    $counts = $band->ClassCounts($classifier);
+    @counts = ();
+    for my $key (sort {$a<=>$b} keys %$counts) {
+        #say STDERR "$key => $counts->{$key}";
+        push @counts, $key => $counts->{$key};
+    }
+    is_deeply(\@counts, [0=>1,1=>1,2=>1], "No data cells are not counted in class counts for $datatype");
+
+    $band->Reclassify($classifier);
+    $tile = $band->ReadTile;
+    #print STDERR "\n";
+    #for my $row (@$tile) {
+    #    print STDERR "@$row\n";
+    #}
+    #print STDERR "\n";
+    is_deeply($tile, [[1,2],[3,6]], "No data value is not reclassified for $datatype");
+    
 }
     
 my $band = Geo::GDAL::Driver('MEM')->Create(Type => 'CFloat32', Width => 5, Height => 5)->Band;

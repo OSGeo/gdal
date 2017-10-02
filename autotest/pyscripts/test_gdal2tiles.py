@@ -76,12 +76,15 @@ def test_gdal2tiles_py_zoom_option():
     if script_path is None:
         return 'skip'
 
-    shutil.rmtree('tmp/out_gdal2tiles_smallworld')
+    shutil.rmtree('tmp/out_gdal2tiles_smallworld', ignore_errors=True)
 
-    test_py_scripts.run_py_script(
-        script_path,
-        'gdal2tiles',
-        '-q -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
+    # Because of multiprocessing, run as external process, to avoid issues with
+    # Ubuntu 12.04 and socket.setdefaulttimeout()
+    # as well as on Windows that doesn't manage to fork
+    test_py_scripts.run_py_script_as_external_script(
+         script_path,
+         'gdal2tiles',
+        '-q --processes=2 -z 0-1 ../gdrivers/data/small_world.tif tmp/out_gdal2tiles_smallworld')
 
     ds = gdal.Open('tmp/out_gdal2tiles_smallworld/1/0/0.png')
 
@@ -94,18 +97,6 @@ def test_gdal2tiles_py_zoom_option():
             return 'fail'
 
     ds = None
-
-    return 'success'
-
-
-def test_gdal2tiles_py_cleanup():
-
-    lst = ['tmp/out_gdal2tiles_smallworld', 'tmp/out_gdal2tiles_bounds_approx']
-    for filename in lst:
-        try:
-            shutil.rmtree(filename)
-        except Exception:
-            pass
 
     return 'success'
 
@@ -254,6 +245,7 @@ def _test_utf8(should_raise_unicode=False,
 
     try:
         ret = test_py_scripts.run_py_script(script_path, 'gdal2tiles', args)
+        print(ret)
     except UnicodeEncodeError:
         if should_raise_unicode:
             return 'success'
@@ -277,6 +269,18 @@ def _test_utf8(should_raise_unicode=False,
             gdaltest.post_reason(
                 'Should not display a warning message about LC_CTYPE variable')
             return 'fail'
+
+    return 'success'
+
+
+def test_gdal2tiles_py_cleanup():
+
+    lst = ['tmp/out_gdal2tiles_smallworld', 'tmp/out_gdal2tiles_bounds_approx']
+    for filename in lst:
+        try:
+            shutil.rmtree(filename)
+        except Exception:
+            pass
 
     return 'success'
 

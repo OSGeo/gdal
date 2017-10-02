@@ -679,7 +679,7 @@ void OGRSimpleCurve::setPoint( int iPoint, double xIn, double yIn )
     if( iPoint >= nPointCount )
     {
         setNumPoints( iPoint+1 );
-        if( nPointCount < iPoint + 1 )
+        if( nPointCount < iPoint + 1 || paoPoints == NULL )
             return;
     }
 

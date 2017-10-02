@@ -31,6 +31,8 @@
 #include "cpl_port.h"
 #include "ogr_srs_api.h"
 
+#include <ctype.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -44,11 +46,11 @@
 #include "cpl_conv.h"
 #include "cpl_csv.h"
 #include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
-
 
 CPL_CVSID("$Id$")
 
@@ -56,6 +58,8 @@ extern void OGRsnPrintDouble( char * pszStrBuf, size_t size, double dfValue );
 
 int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
 void OGREPSGDatumNameMassage( char ** ppszDatum );
+
+void CleanupFindMatchesCacheAndMutex();
 
 static const char * const apszDatumEquiv[] =
 {
@@ -71,6 +75,10 @@ static const char * const apszDatumEquiv[] =
     "European_Reference_System_1989",
     NULL
 };
+
+static CPLMutex* hFindMatchesMutex = NULL;
+static std::vector<OGRSpatialReference*>* papoSRSCache_PROJCS = NULL;
+static std::vector<OGRSpatialReference*>* papoSRSCache_GEOGCS = NULL;
 
 /************************************************************************/
 /*                      OGREPSGDatumNameMassage()                       */
@@ -2191,6 +2199,16 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
+    return importFromEPSGAInternal(nCode, NULL);
+}
+
+/************************************************************************/
+/*                       importFromEPSGAInternal()                      */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::importFromEPSGAInternal( int nCode,
+                                                     const char* pszSRSType )
+{
     const int nCodeIn = nCode;
     // HACK to support 3D WGS84
     if( nCode == 4979 )
@@ -2224,7 +2242,24 @@ OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 /* -------------------------------------------------------------------- */
 /*      Try this as various sorts of objects till one works.            */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = SetEPSGGeogCS( this, nCode );
+    OGRErr eErr;
+
+    if( pszSRSType && EQUAL(pszSRSType, "GEOGCS") )
+    {
+        eErr = SetEPSGGeogCS( this, nCode );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
+    else if( pszSRSType && EQUAL(pszSRSType, "PROJCS") )
+    {
+        eErr = SetEPSGProjCS( this, nCode );
+        if( eErr != OGRERR_NONE )
+            return eErr;
+    }
+    else
+    {
+        eErr = SetEPSGGeogCS( this, nCode );
+    }
     if( eErr == OGRERR_UNSUPPORTED_SRS )
         eErr = SetEPSGProjCS( this, nCode );
     if( eErr == OGRERR_UNSUPPORTED_SRS )
@@ -2595,6 +2630,9 @@ int OGRSpatialReference::GetEPSGGeogCS()
  *
  * This method is the same as the C function OSRAutoIdentifyEPSG().
  *
+ * Since GDAL 2.3, the FindMatches() method can also be used for improved
+ * matching by researching the EPSG catalog.
+ *
  * @return OGRERR_NONE or OGRERR_UNSUPPORTED_SRS.
  */
 
@@ -2708,6 +2746,10 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
  * \brief Set EPSG authority info if possible.
  *
  * This function is the same as OGRSpatialReference::AutoIdentifyEPSG().
+ *
+ * Since GDAL 2.3, the OSRFindMatches() function can also be used for improved
+ * matching by researching the EPSG catalog.
+ *
  */
 
 OGRErr OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS )
@@ -2846,4 +2888,630 @@ int OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS )
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->
         EPSGTreatsAsNorthingEasting();
+}
+
+/************************************************************************/
+/*                   CleanupFindMatchesCacheAndMutex()                  */
+/************************************************************************/
+
+void CleanupFindMatchesCacheAndMutex()
+{
+    if( hFindMatchesMutex != NULL )
+    {
+        CPLDestroyMutex(hFindMatchesMutex);
+        hFindMatchesMutex = NULL;
+    }
+    if( papoSRSCache_GEOGCS )
+    {
+        for( size_t i = 0; i < papoSRSCache_GEOGCS->size(); i++ )
+            delete (*papoSRSCache_GEOGCS)[i];
+        delete papoSRSCache_GEOGCS;
+        papoSRSCache_GEOGCS = NULL;
+    }
+    if( papoSRSCache_PROJCS )
+    {
+        for( size_t i = 0; i < papoSRSCache_PROJCS->size(); i++ )
+            delete (*papoSRSCache_PROJCS)[i];
+        delete papoSRSCache_PROJCS;
+        papoSRSCache_PROJCS = NULL;
+    }
+}
+
+/************************************************************************/
+/*                           MassageSRSName()                           */
+/************************************************************************/
+
+/* Transform a SRS name typically coming from EPSG or ESRI into a simplified
+ * form that can be compared. */
+static CPLString MassageSRSName(const char* pszInput, bool bExtraMassaging)
+{
+    CPLString osRet;
+    bool bLastWasSep = false;
+    for( int i = 0; pszInput[i] != '\0'; ++ i)
+    {
+        if( isdigit( pszInput[i] ) )
+        {
+            if( (i > 0 && isalpha( pszInput[i-1] )) || bLastWasSep )
+                osRet += "_";
+            bLastWasSep = false;
+
+            /* Abbreviate 19xx as xx */
+            if( pszInput[i] == '1' && pszInput[i+1] == '9' &&
+                pszInput[i+2] != '\0' && isdigit(pszInput[i+2]) &&
+                (i == 0 || !isdigit(pszInput[i-1])) )
+            {
+                i ++;
+                continue;
+            }
+            osRet += pszInput[i];
+        }
+        else if( isalpha( pszInput[i] ) )
+        {
+            if( bLastWasSep )
+                osRet += "_";
+            osRet += pszInput[i];
+            bLastWasSep = false;
+        }
+        else
+        {
+            bLastWasSep = true;
+        }
+    }
+
+    osRet.tolower();
+    osRet.replaceAll("gauss_kruger", "gk"); // EPSG -> ESRI
+    osRet.replaceAll("rt_90_25", "rt_90_2_5"); // ESRI -> EPSG
+    osRet.replaceAll("rt_38_25", "rt_38_2_5"); // ESRI -> EPSG
+    osRet.replaceAll("_zone_", "_"); // EPSG -> ESRI
+    osRet.replaceAll("_stateplane_", "_"); // ESRI -> EPSG
+    osRet.replaceAll("_nsidc_", "_"); // EPSG -> ESRI
+    osRet.replaceAll("_I_", "_1_"); // ESRI -> EPSG
+    osRet.replaceAll("_II_", "_2_"); // ESRI -> EPSG
+    osRet.replaceAll("_III_", "_3_"); // ESRI -> EPSG
+    osRet.replaceAll("_IV_", "_4_"); // ESRI -> EPSG
+    osRet.replaceAll("_V_", "_5_"); // ESRI -> EPSG
+    osRet.replaceAll("pulkovo_42_adj_83_", "pulkovo_42_83_"); // ESRI -> EPSG
+    osRet.replaceAll("_old_fips", "_deprecated_fips");
+    if( bExtraMassaging )
+        osRet.replaceAll("_deprecated", ""); // EPSG -> ESRI
+
+    // _FIPS_XXXX_Feet  --> _ftUS       ESRI -> EPSG
+    // _FIPS_XXXX_Ft_US --> _ftUS       ESRI -> EPSG
+    // _FIPS_XXXX       --> ""          ESRI -> EPSG
+    size_t nPos = osRet.find("_fips_");
+    if( nPos != std::string::npos )
+    {
+        size_t nPos2 = osRet.find("_feet", nPos + strlen("_fips_"));
+        if( nPos2 != std::string::npos &&
+            nPos2 + strlen("_feet") == osRet.size() )
+        {
+            osRet.resize(nPos);
+            osRet += "_ftus";
+        }
+        else
+        {
+            nPos2 =  osRet.find("_ft_us", nPos + strlen("_fips_"));
+            if( nPos2 != std::string::npos &&
+                nPos2 + strlen("_ft_us") == osRet.size() )
+            {
+                osRet.resize(nPos);
+                osRet += "_ftus";
+            }
+            else if( osRet.find('_', nPos + strlen("_fips_")) ==
+                                                            std::string::npos )
+            {
+                osRet.resize(nPos);
+            }
+        }
+    }
+
+    return osRet;
+}
+
+/************************************************************************/
+/*                            IngestDict()                              */
+/************************************************************************/
+
+static void IngestDict(const char* pszDictFile,
+                       const char* pszSRSType,
+                       std::vector<OGRSpatialReference*>* papoSRSCache,
+                       VSILFILE* fpOut)
+{
+/* -------------------------------------------------------------------- */
+/*      Find and open file.                                             */
+/* -------------------------------------------------------------------- */
+    const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
+    if( pszFilename == NULL )
+        return;
+
+    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
+    if( fp == NULL )
+        return;
+
+    if( fpOut )
+    {
+        VSIFPrintfL(fpOut, "# From %s\n", pszDictFile);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process lines.                                                  */
+/* -------------------------------------------------------------------- */
+    const char *pszLine = NULL;
+    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    {
+        if( pszLine[0] == '#' )
+            continue;
+
+        const char* pszComma = strchr(pszLine, ',');
+        if( pszComma )
+        {
+            const char* pszWKT = pszComma + 1;
+            if( STARTS_WITH(pszWKT, pszSRSType) )
+            {
+                OGRSpatialReference* poSRS = new OGRSpatialReference();
+                if( poSRS->SetFromUserInput(pszWKT) == OGRERR_NONE )
+                {
+                    const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
+                    if( pszProjection &&
+                        EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+                    {
+                        // Remove duplicate Standard_Parallel_1
+                        double dfLatOrigin =
+                            poSRS->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN);
+                        double dfStdParallel1 =
+                            poSRS->GetProjParm(SRS_PP_STANDARD_PARALLEL_1);
+                        if( dfLatOrigin == dfStdParallel1 )
+                        {
+                            OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
+                            if( poPROJCS )
+                            {
+                                const int iChild = poSRS->FindProjParm(
+                                    SRS_PP_STANDARD_PARALLEL_1, poPROJCS );
+                                if( iChild != -1 )
+                                    poPROJCS->DestroyChild( iChild);
+                            }
+                        }
+                    }
+
+                    papoSRSCache->push_back(poSRS);
+
+                    if( fpOut )
+                    {
+                        VSIFPrintfL(fpOut, "%s\n", pszWKT);
+                    }
+                }
+                else
+                {
+                    delete poSRS;
+                }
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFCloseL( fp );
+}
+
+/************************************************************************/
+/*                            GetSRSCache()                             */
+/************************************************************************/
+
+const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
+                                                    const char* pszSRSType)
+{
+    if( pszSRSType == NULL )
+        return NULL;
+
+    std::vector<OGRSpatialReference*>* papoSRSCache = NULL;
+
+    CPLMutexHolderD(&hFindMatchesMutex);
+    CPLString osFilename;
+    const char* pszFilename = "";
+    if( EQUAL(pszSRSType, "PROJCS") )
+    {
+        pszFilename = "pcs.csv";
+        if( papoSRSCache_PROJCS != NULL )
+            return papoSRSCache_PROJCS;
+        papoSRSCache_PROJCS = new std::vector<OGRSpatialReference*>();
+        papoSRSCache = papoSRSCache_PROJCS;
+    }
+    else if( EQUAL(pszSRSType, "GEOGCS") )
+    {
+        pszFilename = "gcs.csv" ;
+        if( papoSRSCache_GEOGCS != NULL )
+            return papoSRSCache_GEOGCS;
+        papoSRSCache_GEOGCS = new std::vector<OGRSpatialReference*>();
+        papoSRSCache = papoSRSCache_GEOGCS;
+    }
+    else
+    {
+        return NULL;
+    }
+
+    // First try to look an already built SRS cache in ~/.gdal/X.Y/srs_cache
+#ifdef WIN32
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+#else
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+#endif
+    const char* pszCSVFilename = CSVFilename(pszFilename);
+    CPLString osCacheFilename;
+    CPLString osCacheDirectory =
+            CPLGetConfigOption("OSR_SRS_CACHE_DIRECTORY", "");
+    if( (pszHome != NULL || !osCacheDirectory.empty()) &&
+        CPLTestBool(CPLGetConfigOption("OSR_SRS_CACHE", "YES")) )
+    {
+        if( osCacheDirectory.empty() )
+        {
+            osCacheDirectory = CPLFormFilename(pszHome, ".gdal", NULL);
+            // Version this, because might be sensitive to GDAL / 
+            // EPSG versions
+            osCacheDirectory = CPLFormFilename(osCacheDirectory,
+                CPLSPrintf("%d.%d",
+                            GDAL_VERSION_MAJOR,
+                            GDAL_VERSION_MINOR), NULL);
+            osCacheDirectory = CPLFormFilename(osCacheDirectory,
+                                                "srs_cache", NULL);
+        }
+        osCacheFilename = CPLFormFilename(osCacheDirectory,
+                        CPLResetExtension(pszFilename, "wkt"), NULL);
+        VSIStatBufL sStatCache;
+        VSIStatBufL sStatCSV;
+        VSILFILE* fp = NULL;
+        if( VSIStatL((osCacheFilename + ".gz").c_str(), &sStatCache) == 0 &&
+            VSIStatL(pszCSVFilename, &sStatCSV) == 0 &&
+            sStatCache.st_mtime >= sStatCSV.st_mtime &&
+            (VSIStatL(CPLResetExtension(
+                pszCSVFilename, "override.csv"), &sStatCSV) != 0 ||
+                sStatCache.st_mtime >= sStatCSV.st_mtime) )
+        {
+            osCacheFilename += ".gz";
+            fp = VSIFOpenL(("/vsigzip/" + osCacheFilename).c_str(), "rb");
+        }
+        else if( VSIStatL(osCacheFilename, &sStatCache) == 0 &&
+            VSIStatL(pszCSVFilename, &sStatCSV) == 0 &&
+            sStatCache.st_mtime >= sStatCSV.st_mtime &&
+            (VSIStatL(CPLResetExtension(
+                pszCSVFilename, "override.csv"), &sStatCSV) != 0 ||
+                sStatCache.st_mtime >= sStatCSV.st_mtime) )
+        {
+            fp = VSIFOpenL(osCacheFilename, "rb");
+        }
+        if( fp )
+        {
+            CPLDebug("OSR", "Using %s cache",
+                        osCacheFilename.c_str());
+            const char* pszLine;
+            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            {
+                OGRSpatialReference* poSRS =
+                                new OGRSpatialReference();
+                poSRS->SetFromUserInput(pszLine);
+                papoSRSCache->push_back(poSRS);
+            }
+            VSIFCloseL(fp);
+
+            return papoSRSCache;
+        }
+    }
+
+    // If no already built cache, ingest the EPSG database and write the
+    // cache
+    CPLDebug("OSR", "Building %s cache", pszSRSType);
+    VSILFILE* fp = VSIFOpenL(pszCSVFilename, "rb");
+    if( fp == NULL )
+    {
+        return NULL;
+    }
+    VSILFILE* fpOut = NULL;
+    if( !osCacheFilename.empty() )
+    {
+        CPLString osDirname(CPLGetDirname(osCacheFilename));
+        CPLString osDirnameParent(CPLGetDirname(osDirname));
+        CPLString osDirnameGrantParent(
+                                CPLGetDirname(osDirnameParent));
+        VSIMkdir( osDirnameGrantParent, 0755 );
+        VSIMkdir( osDirnameParent, 0755 );
+        VSIMkdir( osDirname, 0755 );
+        fpOut = VSIFOpenL(
+            ("/vsigzip/" + osCacheFilename + ".gz").c_str(), "wb");
+        if( fpOut == NULL )
+            fpOut = VSIFOpenL(osCacheFilename, "wb");
+        if( fpOut != NULL )
+        {
+            VSIFPrintfL(fpOut, "# From %s\n", pszFilename);
+        }
+    }
+    const char* pszLine;
+    OGRSpatialReference* poSRS = NULL;
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    {
+        if( poSRS == NULL )
+            poSRS = new OGRSpatialReference();
+        int nCode = atoi(pszLine);
+        if( nCode > 0 &&
+            poSRS->importFromEPSGAInternal(nCode, pszSRSType)
+                                                == OGRERR_NONE )
+        {
+            // Strip AXIS like in importFromEPSG()
+            OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
+
+            if( poGEOGCS != NULL )
+                poGEOGCS->StripNodes( "AXIS" );
+
+            OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
+            if( poPROJCS != NULL &&
+                poSRS->EPSGTreatsAsNorthingEasting() )
+                poPROJCS->StripNodes( "AXIS" );
+
+            if( fpOut )
+            {
+                char* pszWKT = NULL;
+                poSRS->exportToWkt(&pszWKT);
+                if( pszWKT )
+                {
+                    VSIFPrintfL(fpOut, "%s\n", pszWKT);
+                    CPLFree(pszWKT);
+                }
+            }
+
+            papoSRSCache->push_back(poSRS);
+            poSRS = NULL;
+        }
+    }
+    CPLPopErrorHandler();
+    delete poSRS;
+    VSIFCloseL(fp);
+
+    IngestDict("esri_extra.wkt", pszSRSType, papoSRSCache, fpOut);
+
+    if( fpOut )
+        VSIFCloseL(fpOut);
+
+    return papoSRSCache;
+}
+
+/************************************************************************/
+/*                            FindMatches()                             */
+/************************************************************************/
+
+/**
+ * \brief Try to identify a match between the passed SRS and a related SRS
+ * in a catalog (currently EPSG only)
+ *
+ * Matching may be partial, or may fail.
+ * Returned entries will be sorted by decreasing match confidence (first
+ * entry has the highest match confidence).
+ *
+ * The exact way matching is done may change in future versions.
+ * 
+ *  The current algorithm is:
+ * - try first AutoIdentifyEPSG(). If it succeeds, return the corresponding SRS
+ * - otherwise iterate over all SRS from the EPSG catalog (as found in GDAL
+ *   pcs.csv and gcs.csv files+esri_extra.wkt), and find those that match the
+ *   input SRS using the IsSame() function (ignoring TOWGS84 clauses)
+ * - if there is a single match using IsSame() or one of the matches has the
+ *   same SRS name, return it with 100% confidence
+ * - if a SRS has the same SRS name, but does not pass the IsSame() criteria,
+ *   return it with 50% confidence.
+ * - otherwise return all candidate SRS that pass the IsSame() criteria with a
+ *   90% confidence.
+ * 
+ * A pre-built SRS cache in ~/.gdal/X.Y/srs_cache will be used if existing,
+ * otherwise it will be built at the first run of this function.
+ *
+ * This method is the same as OSRFindMatches().
+ *
+ * @param papszOptions NULL terminated list of options or NULL
+ * @param pnEntries Output parameter. Number of values in the returned array.
+ * @param ppanMatchConfidence Output parameter (or NULL). *ppanMatchConfidence
+ * will be allocated to an array of *pnEntries whose values between 0 and 100
+ * indicate the confidence in the match. 100 is the highest confidence level.
+ * The array must be freed with CPLFree().
+ * 
+ * @return an array of SRS that match the passed SRS, or NULL. Must be freed with
+ * OSRFreeSRSArray()
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
+                                          char** papszOptions,
+                                          int* pnEntries,
+                                          int** ppanMatchConfidence ) const
+{
+    CPL_IGNORE_RET_VAL(papszOptions);
+
+    if( pnEntries )
+        *pnEntries = 0;
+    if( ppanMatchConfidence )
+        *ppanMatchConfidence = NULL;
+
+    OGRSpatialReference oSRSClone(*this);
+    if( oSRSClone.AutoIdentifyEPSG() == OGRERR_NONE )
+    {
+        const char* pszCode = oSRSClone.GetAuthorityCode(NULL);
+        if( pszCode )
+            oSRSClone.importFromEPSG(atoi(pszCode));
+        OGRSpatialReferenceH* pahRet =
+            static_cast<OGRSpatialReferenceH*>(
+                    CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+        pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(oSRSClone.Clone());
+        if( pnEntries )
+            *pnEntries = 1;
+        if( ppanMatchConfidence )
+        {
+            *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+            (*ppanMatchConfidence)[0] = 100;
+        }
+        return pahRet;
+    }
+
+    const char* pszSRSType = "";
+    if( IsProjected() )
+    {
+        pszSRSType = "PROJCS";
+    }
+    else if( IsGeographic() )
+    {
+        pszSRSType = "GEOGCS";
+    }
+    else
+    {
+        return NULL;
+    }
+    const char*pszSRSName = GetAttrValue(pszSRSType);
+    if( pszSRSName == NULL )
+        return NULL;
+
+    const std::vector<OGRSpatialReference*>* papoSRSCache =
+                                                    GetSRSCache(pszSRSType);
+    if( papoSRSCache == NULL )
+        return NULL;
+
+    std::vector< OGRSpatialReference* > apoSameSRS;
+    const char* apszOptions[] = { "TOWGS84=ONLY_IF_IN_BOTH", NULL };
+    CPLString osSRSName(MassageSRSName(pszSRSName, false));
+    CPLString osSRSNameExtra(MassageSRSName(osSRSName, true));
+    std::vector<size_t> anMatchingSRSNameIndices;
+    for(size_t i = 0; i < papoSRSCache->size(); i++ )
+    {
+        const OGRSpatialReference* poOtherSRS = (*papoSRSCache)[i];
+#ifdef notdef
+        if( EQUAL(poOtherSRS->GetAuthorityCode(NULL), "2765") )
+        {
+            printf("brkpt\n"); /* ok */
+        }
+#endif
+        const char* pszOtherSRSName = poOtherSRS->GetAttrValue(pszSRSType);
+        if( pszOtherSRSName == NULL )
+            continue;
+        CPLString osOtherSRSName(
+            MassageSRSName(pszOtherSRSName, false));
+        if( EQUAL( osSRSName, osOtherSRSName ) )
+        {
+            anMatchingSRSNameIndices.push_back(i);
+        }
+        if( IsSame(poOtherSRS, apszOptions) )
+        {
+            apoSameSRS.push_back( poOtherSRS->Clone() );
+        }
+    }
+
+    const size_t nSameCount = apoSameSRS.size();
+
+    if( nSameCount == 1 )
+    {
+        OGRSpatialReferenceH* pahRet =
+            static_cast<OGRSpatialReferenceH*>(
+                    CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+        pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(apoSameSRS[0]);
+        if( pnEntries )
+            *pnEntries = 1;
+        if( ppanMatchConfidence )
+        {
+            *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+            (*ppanMatchConfidence)[0] = 100;
+        }
+        return pahRet;
+    }
+
+    int nCountExtraMatches = 0;
+    size_t iExtraMatch = 0;
+    for(size_t i=0; i<nSameCount; i++)
+    {
+        CPLString osOtherSRSName(
+            MassageSRSName(apoSameSRS[i]->GetAttrValue(pszSRSType), false));
+        CPLString osOtherSRSNameExtra(MassageSRSName(osOtherSRSName, true));
+        if( EQUAL(osSRSName, osOtherSRSName) )
+        {
+            OGRSpatialReferenceH* pahRet =
+                static_cast<OGRSpatialReferenceH*>(
+                        CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+            pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(apoSameSRS[i]);
+            if( pnEntries )
+                *pnEntries = 1;
+            if( ppanMatchConfidence )
+            {
+                *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+                (*ppanMatchConfidence)[0] = 100;
+            }
+            for(size_t j=0; j<nSameCount; j++)
+            {
+                if( i != j )
+                    delete apoSameSRS[j];
+            }
+            return pahRet;
+        }
+        else if ( EQUAL(osSRSNameExtra, osOtherSRSNameExtra) )
+        {
+            nCountExtraMatches ++;
+            iExtraMatch = i;
+        }
+    }
+
+    if( nCountExtraMatches == 1 )
+    {
+        OGRSpatialReferenceH* pahRet =
+            static_cast<OGRSpatialReferenceH*>(
+                    CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+        pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(apoSameSRS[iExtraMatch]);
+        if( pnEntries )
+            *pnEntries = 1;
+        if( ppanMatchConfidence )
+        {
+            *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+            (*ppanMatchConfidence)[0] = 100;
+        }
+        for(size_t j=0; j<nSameCount; j++)
+        {
+            if( iExtraMatch != j )
+                delete apoSameSRS[j];
+        }
+        return pahRet;
+    }
+
+    if( nSameCount == 0 && anMatchingSRSNameIndices.size() == 1 )
+    {
+        const OGRSpatialReference* poOtherSRS =
+                            (*papoSRSCache)[anMatchingSRSNameIndices[0]];
+        OGRSpatialReferenceH* pahRet =
+            static_cast<OGRSpatialReferenceH*>(
+                    CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+        pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(poOtherSRS->Clone());
+        if( pnEntries )
+            *pnEntries = 1;
+        if( ppanMatchConfidence )
+        {
+            *ppanMatchConfidence = static_cast<int*>(CPLMalloc(sizeof(int)));
+            (*ppanMatchConfidence)[0] = 50;
+        }
+        return pahRet;
+    }
+
+    if( nSameCount == 0 )
+        return NULL;
+
+    if( pnEntries )
+        *pnEntries = static_cast<int>(nSameCount);
+    OGRSpatialReferenceH* pahRet =
+                static_cast<OGRSpatialReferenceH*>(
+                        CPLCalloc(sizeof(OGRSpatialReferenceH),
+                                  nSameCount + 1));
+    if( ppanMatchConfidence )
+    {
+        *ppanMatchConfidence = static_cast<int*>(
+                            CPLMalloc(sizeof(int) * (nSameCount + 1)));
+    }
+    for(size_t i=0; i<nSameCount; i++)
+    {
+        pahRet[i] = reinterpret_cast<OGRSpatialReferenceH>(apoSameSRS[i]);
+        if( ppanMatchConfidence )
+            (*ppanMatchConfidence)[i] = 90; // Arbitrary...
+    }
+    pahRet[ nSameCount ] = NULL;
+
+    return pahRet;
 }

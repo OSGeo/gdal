@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0"
+#define YYBISON_VERSION "3.0.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -58,12 +58,14 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
+
 /* Substitute the variable and function names.  */
 #define yyparse         ods_formulaparse
 #define yylex           ods_formulalex
 #define yyerror         ods_formulaerror
 #define yydebug         ods_formuladebug
 #define yynerrs         ods_formulanerrs
+
 
 /* Copy the first part of user declarations.  */
 #line 1 "ods_formula_parser.y" /* yacc.c:339  */
@@ -102,6 +104,8 @@
 #include "cpl_string.h"
 #include "ods_formula.h"
 
+CPL_CVSID("$Id$")
+
 #define YYSTYPE  ods_formula_node*
 
 /* Defining YYSTYPE_IS_TRIVIAL is needed because the parser is generated as a C++ file. */
@@ -118,13 +122,14 @@ static void ods_formulaerror( ods_formula_parse_context * /* context */,
               "Formula Parsing Error: %s", msg );
 }
 
-#line 126 "ods_formula_parser.cpp" /* yacc.c:339  */
 
-# ifndef YY_NULL
+#line 127 "ods_formula_parser.cpp" /* yacc.c:339  */
+
+# ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULL nullptr
+#   define YY_NULLPTR nullptr
 #  else
-#   define YY_NULL 0
+#   define YY_NULLPTR 0
 #  endif
 # endif
 
@@ -185,7 +190,7 @@ int ods_formulaparse (ods_formula_parse_context *context);
 
 /* Copy the second part of user declarations.  */
 
-#line 193 "ods_formula_parser.cpp" /* yacc.c:358  */
+#line 194 "ods_formula_parser.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -242,11 +247,30 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#ifndef __attribute__
-/* This feature is available in gcc versions 2.5 and later.  */
-# if (! defined __GNUC__ || __GNUC__ < 2 \
-      || (__GNUC__ == 2 && __GNUC_MINOR__ < 5))
-#  define __attribute__(Spec) /* empty */
+#ifndef YY_ATTRIBUTE
+# if (defined __GNUC__                                               \
+      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
+     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
+#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
+# else
+#  define YY_ATTRIBUTE(Spec) /* empty */
+# endif
+#endif
+
+#ifndef YY_ATTRIBUTE_PURE
+# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
+#endif
+
+#ifndef YY_ATTRIBUTE_UNUSED
+# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
+#endif
+
+#if !defined _Noreturn \
+     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
+# if defined _MSC_VER && 1200 <= _MSC_VER
+#  define _Noreturn __declspec (noreturn)
+# else
+#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
 # endif
 #endif
 
@@ -465,11 +489,11 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    89,    89,    94,    94,    98,   103,   108,   113,   119,
-     126,   134,   141,   148,   154,   161,   169,   176,   181,   188,
-     195,   202,   209,   216,   223,   230,   237,   244,   260,   267,
-     274,   281,   288,   295,   302,   309,   315,   322,   328,   333,
-     339,   346
+       0,    90,    90,    95,    95,    99,   104,   109,   114,   120,
+     127,   135,   142,   149,   155,   162,   170,   177,   182,   189,
+     196,   203,   210,   217,   224,   231,   238,   245,   263,   270,
+     277,   284,   291,   298,   305,   312,   318,   325,   331,   336,
+     342,   349
 };
 #endif
 
@@ -485,7 +509,7 @@ static const char *const yytname[] =
   "ODST_AND", "ODST_IF", "'+'", "'-'", "'&'", "'*'", "'/'", "'%'",
   "ODST_UMINUS", "','", "';'", "'('", "')'", "'='", "'<'", "'>'", "'!'",
   "'['", "']'", "':'", "$accept", "input", "comma", "value_expr",
-  "value_expr_list", "value_expr_and_cell_range_list", "cell_range", YY_NULL
+  "value_expr_list", "value_expr_and_cell_range_list", "cell_range", YY_NULLPTR
 };
 #endif
 
@@ -956,11 +980,11 @@ static int
 yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                 yytype_int16 *yyssp, int yytoken)
 {
-  YYSIZE_T yysize0 = yytnamerr (YY_NULL, yytname[yytoken]);
+  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
   YYSIZE_T yysize = yysize0;
   enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
   /* Internationalized format string. */
-  const char *yyformat = YY_NULL;
+  const char *yyformat = YY_NULLPTR;
   /* Arguments of yyformat. */
   char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
   /* Number of reported tokens (one for the "unexpected", one per
@@ -1017,7 +1041,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                   }
                 yyarg[yycount++] = yytname[yyx];
                 {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULL, yytname[yyx]);
+                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
                   if (! (yysize <= yysize1
                          && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
                     return 2;
@@ -1097,75 +1121,75 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, ods_formula_parse_
   switch (yytype)
     {
           case 3: /* ODST_NUMBER  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1107 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1127 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 4: /* ODST_STRING  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1113 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1133 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 5: /* ODST_IDENTIFIER  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1119 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1139 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 6: /* ODST_FUNCTION_NO_ARG  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1125 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1145 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 7: /* ODST_FUNCTION_SINGLE_ARG  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1131 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1151 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 8: /* ODST_FUNCTION_TWO_ARG  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1137 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1157 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 9: /* ODST_FUNCTION_THREE_ARG  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1143 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1163 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 10: /* ODST_FUNCTION_ARG_LIST  */
-#line 83 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1149 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1169 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 37: /* value_expr  */
-#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 85 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1155 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1175 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 38: /* value_expr_list  */
-#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 85 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1161 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1181 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 39: /* value_expr_and_cell_range_list  */
-#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 85 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1167 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1187 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
     case 40: /* cell_range  */
-#line 84 "ods_formula_parser.y" /* yacc.c:1257  */
+#line 85 "ods_formula_parser.y" /* yacc.c:1257  */
       { delete ((*yyvaluep)); }
-#line 1173 "ods_formula_parser.cpp" /* yacc.c:1257  */
+#line 1193 "ods_formula_parser.cpp" /* yacc.c:1257  */
         break;
 
 
@@ -1431,207 +1455,187 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 90 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 91 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             context->poRoot = (yyvsp[0]);
         }
-#line 1443 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1463 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 99 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 100 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1451 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1471 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 104 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 105 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[0]);
         }
-#line 1459 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1479 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 109 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 110 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-2]);
         }
-#line 1467 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1487 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 114 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 115 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-3]);
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1476 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1496 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 120 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 121 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-5]);
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1486 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1506 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 127 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 128 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-7]);
             (yyval)->PushSubExpression( (yyvsp[-5]) );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1497 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1517 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 135 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 136 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_AND );
             (yyvsp[-1])->ReverseSubExpressions();
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1507 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1527 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 142 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 143 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_OR );
             (yyvsp[-1])->ReverseSubExpressions();
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1517 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1537 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 149 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 150 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_NOT );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1526 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1546 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 155 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 156 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_IF );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1536 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1556 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 162 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 163 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_IF );
             (yyval)->PushSubExpression( (yyvsp[-5]) );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1547 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1567 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 170 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 171 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-3]);
             (yyvsp[-1])->ReverseSubExpressions();
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1557 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1577 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 177 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 178 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[-1]);
         }
-#line 1565 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1585 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 182 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 183 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_EQ );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1575 "ods_formula_parser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 19:
-#line 189 "ods_formula_parser.y" /* yacc.c:1646  */
-    {
-            (yyval) = new ods_formula_node( ODS_NE );
-            (yyval)->PushSubExpression( (yyvsp[-3]) );
-            (yyval)->PushSubExpression( (yyvsp[0]) );
-        }
-#line 1585 "ods_formula_parser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 20:
-#line 196 "ods_formula_parser.y" /* yacc.c:1646  */
-    {
-            (yyval) = new ods_formula_node( ODS_NE );
-            (yyval)->PushSubExpression( (yyvsp[-3]) );
-            (yyval)->PushSubExpression( (yyvsp[0]) );
-        }
 #line 1595 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 21:
-#line 203 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 19:
+#line 190 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new ods_formula_node( ODS_LT );
-            (yyval)->PushSubExpression( (yyvsp[-2]) );
+            (yyval) = new ods_formula_node( ODS_NE );
+            (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1605 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 22:
-#line 210 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 20:
+#line 197 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new ods_formula_node( ODS_GT );
-            (yyval)->PushSubExpression( (yyvsp[-2]) );
+            (yyval) = new ods_formula_node( ODS_NE );
+            (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1615 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 23:
-#line 217 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 21:
+#line 204 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new ods_formula_node( ODS_LE );
-            (yyval)->PushSubExpression( (yyvsp[-3]) );
+            (yyval) = new ods_formula_node( ODS_LT );
+            (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1625 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 24:
-#line 224 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 22:
+#line 211 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new ods_formula_node( ODS_LE );
-            (yyval)->PushSubExpression( (yyvsp[-3]) );
+            (yyval) = new ods_formula_node( ODS_GT );
+            (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1635 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 25:
-#line 231 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 23:
+#line 218 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_LE );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
@@ -1640,20 +1644,42 @@ yyreduce:
 #line 1645 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 26:
-#line 238 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 24:
+#line 225 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new ods_formula_node( ODS_GE );
+            (yyval) = new ods_formula_node( ODS_LE );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
 #line 1655 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
-  case 27:
-#line 245 "ods_formula_parser.y" /* yacc.c:1646  */
+  case 25:
+#line 232 "ods_formula_parser.y" /* yacc.c:1646  */
     {
-            if ((yyvsp[0])->eNodeType == SNT_CONSTANT)
+            (yyval) = new ods_formula_node( ODS_LE );
+            (yyval)->PushSubExpression( (yyvsp[-3]) );
+            (yyval)->PushSubExpression( (yyvsp[0]) );
+        }
+#line 1665 "ods_formula_parser.cpp" /* yacc.c:1646  */
+    break;
+
+  case 26:
+#line 239 "ods_formula_parser.y" /* yacc.c:1646  */
+    {
+            (yyval) = new ods_formula_node( ODS_GE );
+            (yyval)->PushSubExpression( (yyvsp[-3]) );
+            (yyval)->PushSubExpression( (yyvsp[0]) );
+        }
+#line 1675 "ods_formula_parser.cpp" /* yacc.c:1646  */
+    break;
+
+  case 27:
+#line 246 "ods_formula_parser.y" /* yacc.c:1646  */
+    {
+            if ((yyvsp[0])->eNodeType == SNT_CONSTANT &&
+                !((yyvsp[0])->field_type == ODS_FIELD_TYPE_INTEGER &&
+                  (yyvsp[0])->int_value == INT_MIN))
             {
                 (yyval) = (yyvsp[0]);
                 (yyval)->int_value *= -1;
@@ -1666,144 +1692,144 @@ yyreduce:
                 (yyval)->PushSubExpression( (yyvsp[0]) );
             }
         }
-#line 1674 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1696 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 261 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 264 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_ADD );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1684 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1706 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 268 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 271 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_SUBTRACT );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1694 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1716 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 275 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 278 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_CONCAT );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1704 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1726 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 282 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 285 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_MULTIPLY );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1714 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1736 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 289 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 292 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_DIVIDE );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1724 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1746 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 296 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 299 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_MODULUS );
             (yyval)->PushSubExpression( (yyvsp[-2]) );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1734 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1756 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 303 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 306 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_CELL );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1743 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1765 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 310 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 313 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[0]);
             (yyvsp[0])->PushSubExpression( (yyvsp[-2]) );
         }
-#line 1752 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1774 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 316 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 319 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_LIST );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1761 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1783 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 323 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 326 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[0]);
             (yyvsp[0])->PushSubExpression( (yyvsp[-2]) );
         }
-#line 1770 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1792 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 329 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 332 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_LIST );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1779 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1801 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 334 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 337 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = (yyvsp[0]);
             (yyvsp[0])->PushSubExpression( (yyvsp[-2]) );
         }
-#line 1788 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1810 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 340 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 343 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_LIST );
             (yyval)->PushSubExpression( (yyvsp[0]) );
         }
-#line 1797 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1819 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 347 "ods_formula_parser.y" /* yacc.c:1646  */
+#line 350 "ods_formula_parser.y" /* yacc.c:1646  */
     {
             (yyval) = new ods_formula_node( ODS_CELL_RANGE );
             (yyval)->PushSubExpression( (yyvsp[-3]) );
             (yyval)->PushSubExpression( (yyvsp[-1]) );
         }
-#line 1807 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1829 "ods_formula_parser.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1811 "ods_formula_parser.cpp" /* yacc.c:1646  */
+#line 1833 "ods_formula_parser.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires

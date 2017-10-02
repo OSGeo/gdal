@@ -1700,7 +1700,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     if( EQUAL(pszBaseGeometry, "ArcByBulge") )
     {
         const CPLXMLNode *psChild = FindBareXMLChild( psNode, "bulge");
-        if( psChild == NULL || psChild->eType != CXT_Element )
+        if( psChild == NULL || psChild->eType != CXT_Element ||
+            psChild->psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing bulge element." );

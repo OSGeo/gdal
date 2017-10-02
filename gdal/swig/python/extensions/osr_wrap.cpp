@@ -3019,8 +3019,10 @@ SWIG_Python_NonDynamicSetAttr(PyObject *obj, PyObject *name, PyObject *value) {
 #define SWIGTYPE_p_long swig_types[5]
 #define SWIGTYPE_p_p_char swig_types[6]
 #define SWIGTYPE_p_p_double swig_types[7]
-static swig_type_info *swig_types[9];
-static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_int swig_types[8]
+#define SWIGTYPE_p_p_p_OSRSpatialReferenceShadow swig_types[9]
+static swig_type_info *swig_types[11];
+static swig_module_info swig_module = {swig_types, 10, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3865,6 +3867,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetStatePlane(OSRSpatialReferenceSha
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_AutoIdentifyEPSG(OSRSpatialReferenceShadow *self){
     return OSRAutoIdentifyEPSG( self );
+  }
+SWIGINTERN void OSRSpatialReferenceShadow_FindMatches(OSRSpatialReferenceShadow *self,char **options=NULL,OSRSpatialReferenceShadow ***matches=NULL,int *nvalues=NULL,int **confidence_values=NULL){
+        *matches = OSRFindMatches(self, options, nvalues, confidence_values);
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetProjection(OSRSpatialReferenceShadow *self,char const *arg){
     return OSRSetProjection( self, arg );
@@ -8176,6 +8181,130 @@ SWIGINTERN PyObject *_wrap_SpatialReference_AutoIdentifyEPSG(PyObject *SWIGUNUSE
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_SpatialReference_FindMatches(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  char **arg2 = (char **) NULL ;
+  OSRSpatialReferenceShadow ***arg3 = (OSRSpatialReferenceShadow ***) NULL ;
+  int *arg4 = (int *) NULL ;
+  int **arg5 = (int **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  OGRSpatialReferenceH *pahSRS3 = NULL ;
+  int nvalues3 = 0 ;
+  int *confidence_values3 = NULL ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  {
+    /* %typemap(in) (OSRSpatialReferenceShadow***, int* nvalues3, int** confidence_values3)  */
+    arg3 = &pahSRS3;
+    arg4 = &nvalues3;
+    arg5 = &confidence_values3;
+  }
+  if (!PyArg_ParseTuple(args,(char *)"O|O:SpatialReference_FindMatches",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_FindMatches" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj1)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg2 = CSLAddString( arg2, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      CPLErrorReset();
+    }
+    OSRSpatialReferenceShadow_FindMatches(arg1,arg2,arg3,arg4,arg5);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout) (OOSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+    
+    Py_DECREF(resultobj);
+    
+    resultobj = PyList_New( *(arg4));
+    for( int i = 0; i < *(arg4); i++ )
+    {
+      PyObject *tuple = PyTuple_New( 2 );
+      PyTuple_SetItem( tuple, 0,
+        SWIG_NewPointerObj(SWIG_as_voidptr((*(arg3))[i]), SWIGTYPE_p_OSRSpatialReferenceShadow, 1 ) );
+      PyTuple_SetItem( tuple, 1, PyInt_FromLong((*(arg5))[i]) );
+      PyList_SetItem( resultobj, i, tuple );
+    }
+    CPLFree( *(arg3) );
+    CPLFree( *(arg5) );
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
   return NULL;
 }
 
@@ -16051,6 +16180,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_GetUTMZone", _wrap_SpatialReference_GetUTMZone, METH_VARARGS, (char *)"SpatialReference_GetUTMZone(SpatialReference self) -> int"},
 	 { (char *)"SpatialReference_SetStatePlane", _wrap_SpatialReference_SetStatePlane, METH_VARARGS, (char *)"SpatialReference_SetStatePlane(SpatialReference self, int zone, int is_nad83=1, char const * unitsname, double units=0.0) -> OGRErr"},
 	 { (char *)"SpatialReference_AutoIdentifyEPSG", _wrap_SpatialReference_AutoIdentifyEPSG, METH_VARARGS, (char *)"SpatialReference_AutoIdentifyEPSG(SpatialReference self) -> OGRErr"},
+	 { (char *)"SpatialReference_FindMatches", _wrap_SpatialReference_FindMatches, METH_VARARGS, (char *)"SpatialReference_FindMatches(SpatialReference self, char ** options=None)"},
 	 { (char *)"SpatialReference_SetProjection", _wrap_SpatialReference_SetProjection, METH_VARARGS, (char *)"SpatialReference_SetProjection(SpatialReference self, char const * arg) -> OGRErr"},
 	 { (char *)"SpatialReference_SetProjParm", _wrap_SpatialReference_SetProjParm, METH_VARARGS, (char *)"SpatialReference_SetProjParm(SpatialReference self, char const * name, double val) -> OGRErr"},
 	 { (char *)"SpatialReference_GetProjParm", _wrap_SpatialReference_GetProjParm, METH_VARARGS, (char *)"SpatialReference_GetProjParm(SpatialReference self, char const * name, double default_val=0.0) -> double"},
@@ -16161,6 +16291,8 @@ static swig_type_info _swigt__p_int = {"_p_int", "int *|OGRAxisOrientation *|OGR
 static swig_type_info _swigt__p_long = {"_p_long", "long *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_p_OSRSpatialReferenceShadow = {"_p_p_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow ***", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OSRCoordinateTransformationShadow,
@@ -16171,6 +16303,8 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_long,
   &_swigt__p_p_char,
   &_swigt__p_p_double,
+  &_swigt__p_p_int,
+  &_swigt__p_p_p_OSRSpatialReferenceShadow,
 };
 
 static swig_cast_info _swigc__p_OSRCoordinateTransformationShadow[] = {  {&_swigt__p_OSRCoordinateTransformationShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -16181,6 +16315,8 @@ static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0
 static swig_cast_info _swigc__p_long[] = {  {&_swigt__p_long, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_p_OSRSpatialReferenceShadow[] = {  {&_swigt__p_p_p_OSRSpatialReferenceShadow, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OSRCoordinateTransformationShadow,
@@ -16191,6 +16327,8 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_long,
   _swigc__p_p_char,
   _swigc__p_p_double,
+  _swigc__p_p_int,
+  _swigc__p_p_p_OSRSpatialReferenceShadow,
 };
 
 

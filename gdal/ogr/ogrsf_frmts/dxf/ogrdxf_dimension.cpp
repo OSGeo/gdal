@@ -118,7 +118,7 @@ OGRFeature *OGRDXFLayer::TranslateDIMENSION()
             break;
 
           case 1:
-            osText = szLineBuf;
+            osText = TextUnescape(szLineBuf, false);
             break;
 
           default:

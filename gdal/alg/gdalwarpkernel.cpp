@@ -476,8 +476,21 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         return GWKGenericMonoThread(poWK, pfnFunc);
     }
 
-    const int nThreads =
+    int nThreads =
         std::min(psThreadData->poThreadPool->GetThreadCount(), nDstYSize / 2);
+    // Config option mostly useful for tests to be able to test multithreading
+    // with small rasters
+    const int nWarpChunkSize = atoi(
+        CPLGetConfigOption("WARP_THREAD_CHUNK_SIZE", "65536"));
+    if( nWarpChunkSize > 0 )
+    {
+        GIntBig nChunks =
+            static_cast<GIntBig>(nDstYSize) * poWK->nDstXSize / nWarpChunkSize;
+        if( nThreads > nChunks )
+            nThreads = static_cast<int>(nChunks);
+    }
+    if( nThreads <= 0 )
+        nThreads = 1;
 
     CPLDebug("WARP", "Using %d threads", nThreads);
 
@@ -4039,24 +4052,19 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
             XMMReg2Double v_padfWeight =
                 XMMReg2Double::Load2Val(padfWeight + iC);
 
-            v_acc_1.GetLow() += v_pixels_1 * v_padfWeight;
-            v_acc_2.GetLow() += v_pixels_2 * v_padfWeight;
-            v_acc_3.GetLow() += v_pixels_3 * v_padfWeight;
-            v_acc_4.GetLow() += v_pixels_4 * v_padfWeight;
+            v_acc_1.AddToLow( v_pixels_1 * v_padfWeight );
+            v_acc_2.AddToLow( v_pixels_2 * v_padfWeight );
+            v_acc_3.AddToLow( v_pixels_3 * v_padfWeight );
+            v_acc_4.AddToLow( v_pixels_4 * v_padfWeight );
 
             i+=2;
             iC+=2;
         }
 
-        v_acc_1.AddLowAndHigh();
-        v_acc_2.AddLowAndHigh();
-        v_acc_3.AddLowAndHigh();
-        v_acc_4.AddLowAndHigh();
-
-        double dfAccumulatorLocal_1 = static_cast<double>(v_acc_1.GetLow());
-        double dfAccumulatorLocal_2 = static_cast<double>(v_acc_2.GetLow());
-        double dfAccumulatorLocal_3 = static_cast<double>(v_acc_3.GetLow());
-        double dfAccumulatorLocal_4 = static_cast<double>(v_acc_4.GetLow());
+        double dfAccumulatorLocal_1 = v_acc_1.GetHorizSum();
+        double dfAccumulatorLocal_2 = v_acc_2.GetHorizSum();
+        double dfAccumulatorLocal_3 = v_acc_3.GetHorizSum();
+        double dfAccumulatorLocal_4 = v_acc_4.GetHorizSum();
 
         if( i == iMax )
         {
@@ -4105,9 +4113,7 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
             v_acc += v_pixels * v_padfWeight;
         }
 
-        v_acc.AddLowAndHigh();
-
-        double dfAccumulatorLocal = static_cast<double>(v_acc.GetLow());
+        double dfAccumulatorLocal = v_acc.GetHorizSum();
 
         if( i < iMax )
         {

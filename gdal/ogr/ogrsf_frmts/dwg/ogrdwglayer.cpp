@@ -102,10 +102,10 @@ OGRDWGLayer::~OGRDWGLayer()
 /*                            TextUnescape()                            */
 /************************************************************************/
 
-CPLString OGRDWGLayer::TextUnescape( OdString oString )
+CPLString OGRDWGLayer::TextUnescape( OdString oString, bool bIsMText )
 
 {
-    return ACTextUnescape( (const char *) oString, poDS->GetEncoding() );
+    return ACTextUnescape( (const char *) oString, poDS->GetEncoding(), bIsMText );
 }
 
 /************************************************************************/
@@ -163,8 +163,8 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
                                               OdDbEntityPtr poEntity )
 
 {
-    poFeature->SetField( "Layer", TextUnescape(poEntity->layer()) );
-    poFeature->SetField( "Linetype", TextUnescape(poEntity->layer()) );
+    poFeature->SetField( "Layer", TextUnescape(poEntity->layer(), false) );
+    poFeature->SetField( "Linetype", TextUnescape(poEntity->layer(), false) );
 
     CPLString osValue;
     osValue.Printf( "%d", (int) poEntity->lineWeight() );
@@ -413,7 +413,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
-    CPLString osText = TextUnescape( poMTE->contents() );
+    CPLString osText = TextUnescape( poMTE->contents(), true );
 
     if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
@@ -536,7 +536,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
-    CPLString osText = TextUnescape( poText->textString() );
+    CPLString osText = TextUnescape( poText->textString(), false );
 
     if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );

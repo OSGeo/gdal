@@ -499,10 +499,17 @@ class CPL_DLL OGRFeatureQuery
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
+    OGRErr      Compile( OGRLayer *, OGRFeatureDefn*, const char *,
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar );
   public:
                 OGRFeatureQuery();
                ~OGRFeatureQuery();
 
+    OGRErr      Compile( OGRLayer *, const char *,
+                         int bCheck = TRUE,
+                         swq_custom_func_registrar*
+                         poCustomFuncRegistrar = NULL );
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*

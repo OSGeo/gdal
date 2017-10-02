@@ -62,6 +62,13 @@ OGRIDBDataSource::~OGRIDBDataSource()
 
     CPLFree( papoLayers );
 
+    if (poConn != NULL && poConn->IsOpen() ) 
+    {
+           poConn->Close();
+           CPLDebug( "OGR_IDB",
+              "Closing connection" );
+    }
+
     delete poConn;
 }
 
