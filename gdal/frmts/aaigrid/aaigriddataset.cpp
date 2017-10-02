@@ -546,6 +546,11 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
             {
                 dfNoDataValue = -std::numeric_limits<float>::max();
             }
+            else
+            {
+                dfNoDataValue =
+                    static_cast<double>(static_cast<float>(dfNoDataValue));
+            }
         }
     }
 
@@ -654,6 +659,11 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
             else if( dfNoDataValue <= -std::numeric_limits<float>::max() )
             {
                 dfNoDataValue = -std::numeric_limits<float>::max();
+            }
+            else
+            {
+                dfNoDataValue =
+                    static_cast<double>(static_cast<float>(dfNoDataValue));
             }
         }
     }
