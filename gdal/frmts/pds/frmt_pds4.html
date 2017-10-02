@@ -241,6 +241,18 @@ gdal.Translate('out.xml', 'in.tif', format = 'PDS4',
 gdal.Unlink(in_memory_template)
 </pre>
 
+<h2>Limitations</h2>
+
+<ul>
+<li>No support for the creation of subdatasets</li>
+<li>No PDS4 table support</li>
+</ul>
+
+<p>
+As a new driver and new format, please report any issues to the bug tracker,
+as explained on the <a href="https://trac.osgeo.org/gdal/wiki">wiki</a>
+</p>
+
 <h2>See Also:</h2>
 
 <ul>
