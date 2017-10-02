@@ -2789,7 +2789,7 @@ void PDS4Dataset::WriteHeader()
     }
 
     if( !m_osWKT.empty() &&
-            CSLFindString(m_papszCreationOptions, "VAR_TARGET") < 0 )
+            CSLFetchNameValue(m_papszCreationOptions, "VAR_TARGET") == NULL )
     {
         OGRSpatialReference oSRS;
         oSRS.SetFromUserInput(m_osWKT);
