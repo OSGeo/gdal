@@ -177,6 +177,32 @@ its parametrized variables:</li>
             -co VAR_INVESTIGATION_AREA_LID_REFERENCE="urn:nasa:pds:context:instrument_host:spacecraft.lro"
 </pre>
 
+<li>Creation of the same PDS4 dataset as above, using the default template but
+setting its parameterized variables from a text file. Helps with long command
+lines:</li>
+<p>
+Create a text file "myOptions.txt" with the below content</p>
+<pre>
+#This is a comment
+#Conversion parameters for the LRO LOLA dataset
+-co VAR_TARGET_TYPE=Satellite 
+-co VAR_Target=Moon 
+-co VAR_OBSERVING_SYSTEM_NAME=LOLA 
+-co VAR_LOGICAL_IDENTIFIER=Lunar_LRO_LOLA_DEM_Global_64ppd.tif
+-co VAR_TITLE="LRO LOLA Digital Elevation Model (DEM) 64ppd"
+-co VAR_INVESTIGATION_AREA_NAME="Lunar Reconnaissance Orbiter"
+-co VAR_INVESTIGATION_AREA_LID_REFERENCE="urn:nasa:pds:context:instrument_host:spacecraft.lro"
+#end of file
+</pre>
+
+<pre>
+gdal_translate input.tif output.xml -of PDS4 --optfile myOptions.txt
+</pre>
+<p>
+For more on --optfile, consult <a href="gdal_utilities.html">the general
+documentation on GDAL utilities</a>.</p>
+
+
 <li>Creation of a PDS4 dataset, using a non default template (here on a
 HTTP server, but local filename also possible):</li>
 
