@@ -563,6 +563,12 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         if( oManager.GetBearer() != NULL )
         {
             CPLDebug("GS", "Using GCE inherited permissions");
+
+            {
+                CPLMutexHolder oHolder( &hMutex );
+                oStaticManager = oManager;
+            }
+
             bFirstTimeForDebugMessage = false;
             return true;
         }
