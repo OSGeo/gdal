@@ -1354,6 +1354,7 @@ retry:
         osHeaderRange.Printf("Range: bytes=%s", rangeStr);
         // So it gets included in Azure signature
         headers = curl_slist_append(headers, osHeaderRange.c_str());
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
     }
     else
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
