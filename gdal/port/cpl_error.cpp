@@ -494,7 +494,7 @@ static int CPLGetProcessMemorySize()
 
 struct CPLTimeVal
 {
-  long    tv_sec;         /* seconds */
+  time_t  tv_sec;         /* seconds */
   long    tv_usec;        /* and microseconds */
 };
 
@@ -503,7 +503,7 @@ static void CPLGettimeofday(struct CPLTimeVal* tp, void* tzp)
   struct _timeb theTime;
 
   _ftime(&theTime);
-  tp->tv_sec = theTime.time;
+  tp->tv_sec = static_cast<time_t>(theTime.time);
   tp->tv_usec = theTime.millitm * 1000;
 }
 #else
