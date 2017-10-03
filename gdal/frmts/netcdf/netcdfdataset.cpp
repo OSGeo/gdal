@@ -376,47 +376,69 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         else
             bSignedData = true;
 
-        // For NC4 format NC_BYTE is signed, NC_UBYTE is unsigned.
+        // For NC4 format NC_BYTE is (normally) signed, NC_UBYTE is unsigned.
+        // But in case a NC3 file was converted automatically and has hints
+        // that it is unsigned, take them into account
         if( poNCDFDS->eFormat == NCDF_FORMAT_NC4 )
         {
             bSignedData = true;
         }
+
+        // Fix nodata value as it was stored signed.
+        if( !bSignedData && dfNoData < 0 )
+        {
+            dfNoData += 256;
+        }
+
+        // If we got valid_range, test for signed/unsigned range.
+        // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
+        if( bGotValidRange )
+        {
+            // If we got valid_range={0,255}, treat as unsigned.
+            if( adfValidRange[0] == 0 && adfValidRange[1] == 255 )
+            {
+                bSignedData = false;
+                // Fix nodata value as it was stored signed.
+                if( !bSignedData && dfNoData < 0 )
+                {
+                    dfNoData += 256;
+                }
+
+                // Reset valid_range.
+                adfValidRange[0] = dfNoData;
+                adfValidRange[1] = dfNoData;
+            }
+            // If we got valid_range={-128,127}, treat as signed.
+            else if( adfValidRange[0] == -128 && adfValidRange[1] == 127 )
+            {
+                bSignedData = true;
+                // Reset valid_range.
+                adfValidRange[0] = dfNoData;
+                adfValidRange[1] = dfNoData;
+            }
+        }
+        // Else test for _Unsigned.
+        // http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html
         else
         {
-            // If we got valid_range, test for signed/unsigned range.
-            // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
-            if( bGotValidRange )
+            char *pszTemp = NULL;
+            if( NCDFGetAttr(cdfid, nZId, "_Unsigned", &pszTemp) == CE_None )
             {
-                // If we got valid_range={0,255}, treat as unsigned.
-                if( (adfValidRange[0] == 0) && (adfValidRange[1] == 255) )
-                {
+                if( EQUAL(pszTemp, "true") )
                     bSignedData = false;
-                    // Reset valid_range.
-                    adfValidRange[0] = dfNoData;
-                    adfValidRange[1] = dfNoData;
-                }
-                // If we got valid_range={-128,127}, treat as signed.
-                else if( (adfValidRange[0] == -128) &&
-                         (adfValidRange[1] == 127) )
-                {
+                else if( EQUAL(pszTemp, "false") )
                     bSignedData = true;
-                    // Reset valid_range.
+                CPLFree(pszTemp);
+            }
+
+            // Fix nodata value as it was stored signed.
+            if( !bSignedData && dfNoData < 0 )
+            {
+                dfNoData += 256;
+                if( !bGotValidRange )
+                {
                     adfValidRange[0] = dfNoData;
                     adfValidRange[1] = dfNoData;
-                }
-            }
-            // Else test for _Unsigned.
-            // http://www.unidata.ucar.edu/software/netcdf/docs/BestPractices.html
-            else
-            {
-                char *pszTemp = NULL;
-                if( NCDFGetAttr(cdfid, nZId, "_Unsigned", &pszTemp) == CE_None )
-                {
-                    if( EQUAL(pszTemp, "true") )
-                        bSignedData = false;
-                    else if( EQUAL(pszTemp, "false") )
-                        bSignedData = true;
-                    CPLFree(pszTemp);
                 }
             }
         }
@@ -426,12 +448,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             // set PIXELTYPE=SIGNEDBYTE
             // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
             SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
-        }
-        else
-        {
-            // Fix nodata value as it was stored signed.
-            if( dfNoData < 0 )
-                dfNoData += 256;
         }
     }
 
