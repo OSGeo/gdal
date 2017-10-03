@@ -591,7 +591,7 @@ void CPLDebug( const char * pszCategory,
         struct CPLTimeVal tv;
         CPLGettimeofday(&tv, NULL);
         strcpy( pszMessage, "[" );
-        strcat( pszMessage, VSICTime( tv.tv_sec ) );
+        strcat( pszMessage, VSICTime( static_cast<unsigned long>(tv.tv_sec) ) );
 
         // On windows anyway, ctime puts a \n at the end, but I'm not
         // convinced this is standard behaviour, so we'll get rid of it
