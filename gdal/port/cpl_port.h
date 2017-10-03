@@ -180,10 +180,13 @@
 /* -------------------------------------------------------------------- */
 
 #ifdef __cplusplus
-#  if __cplusplus >= 201103L
-#    define HAVE_CXX11 1
+#  if __cplusplus < 201103L
+#    error Must have C++11 or newer.
 #  endif
-/* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
+#  if __cplusplus >= 201402L
+#    define HAVE_CXX14 1
+#  endif
+/* TODO(schwehr): What are the correct test for C++ 17? */
 #endif  /* __cplusplus */
 
 /*---------------------------------------------------------------------
