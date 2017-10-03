@@ -2651,21 +2651,21 @@ int CPLCopyTree( const char *pszNewPath, const char *pszOldPath )
 
 {
     VSIStatBufL sStatBuf;
-
-    if( VSIStatL(pszOldPath, &sStatBuf) != 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "It seems no file system object called '%s' exists.",
-                 pszOldPath);
-
-        return -1;
-    }
     if( VSIStatL(pszNewPath, &sStatBuf) == 0 )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "It seems that a file system object called '%s' already exists.",
             pszNewPath);
+
+        return -1;
+    }
+
+    if( VSIStatL(pszOldPath, &sStatBuf) != 0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "It seems no file system object called '%s' exists.",
+                 pszOldPath);
 
         return -1;
     }
