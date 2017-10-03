@@ -498,7 +498,7 @@ struct CPLTimeVal
   long    tv_usec;        /* and microseconds */
 };
 
-static void CPLGettimeofday(struct CPLTimeVal* tp, void* tzp)
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
 {
   struct _timeb theTime;
 
