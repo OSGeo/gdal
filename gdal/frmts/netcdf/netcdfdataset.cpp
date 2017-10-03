@@ -385,6 +385,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             bSignedData = true;
         }
 
+        // Fix nodata value as it was stored signed.
+        if( !bSignedData && dfNoData < 0 )
+        {
+            dfNoData += 256;
+        }
+
         // If we got valid_range, test for signed/unsigned range.
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
         if( bGotValidRange )
@@ -393,6 +399,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             if( adfValidRange[0] == 0 && adfValidRange[1] == 255 )
             {
                 bSignedData = false;
+                // Fix nodata value as it was stored signed.
+                if( !bSignedData && dfNoData < 0 )
+                {
+                    dfNoData += 256;
+                }
+
                 // Reset valid_range.
                 adfValidRange[0] = dfNoData;
                 adfValidRange[1] = dfNoData;
@@ -419,6 +431,17 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                     bSignedData = true;
                 CPLFree(pszTemp);
             }
+
+            // Fix nodata value as it was stored signed.
+            if( !bSignedData && dfNoData < 0 )
+            {
+                dfNoData += 256;
+                if( !bGotValidRange )
+                {
+                    adfValidRange[0] = dfNoData;
+                    adfValidRange[1] = dfNoData;
+                }
+            }
         }
 
         if( bSignedData )
@@ -426,12 +449,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             // set PIXELTYPE=SIGNEDBYTE
             // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
             SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
-        }
-        else
-        {
-            // Fix nodata value as it was stored signed.
-            if( dfNoData < 0 )
-                dfNoData += 256;
         }
     }
 

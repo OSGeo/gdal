@@ -901,7 +901,8 @@ static size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
 static bool VSICurlIsS3SignedURL( const char* pszURL )
 {
     return
-        strstr(pszURL, ".s3.amazonaws.com/") != NULL &&
+        (strstr(pszURL, ".s3.amazonaws.com/") != NULL ||
+         strstr(pszURL, ".storage.googleapis.com/") != NULL) &&
         (strstr(pszURL, "&Signature=") != NULL ||
          strstr(pszURL, "?Signature=") != NULL);
 }

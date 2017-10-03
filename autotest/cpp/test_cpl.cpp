@@ -1311,4 +1311,38 @@ namespace tut
         ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
     }
+
+    // Test CPLCopyTree()
+    template<>
+    template<>
+    void object::test<28>()
+    {
+        CPLString osTmpPath(CPLGetDirname(CPLGenerateTempFilename(NULL)));
+        CPLString osSrcDir(CPLFormFilename(osTmpPath, "src_dir", NULL));
+        CPLString osNewDir(CPLFormFilename(osTmpPath, "new_dir", NULL));
+        ensure( VSIMkdir(osSrcDir, 0755) == 0 );
+        CPLString osSrcFile(CPLFormFilename(osSrcDir, "my.bin", NULL));
+        VSILFILE* fp = VSIFOpenL(osSrcFile, "wb");
+        ensure( fp != NULL );
+        VSIFCloseL(fp);
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, "/i/dont/exist") < 0 );
+        CPLPopErrorHandler();
+
+        ensure( CPLCopyTree(osNewDir, osSrcDir) == 0 );
+        VSIStatBufL sStat;
+        CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", NULL));
+        ensure( VSIStatL(osNewFile, &sStat) == 0 );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, osSrcDir) < 0 );
+        CPLPopErrorHandler();
+
+        VSIUnlink( osNewFile );
+        VSIRmdir( osNewDir );
+        VSIUnlink( osSrcFile );
+        VSIRmdir( osSrcDir );
+    }
+
 } // namespace tut
