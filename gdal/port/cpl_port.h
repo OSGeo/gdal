@@ -393,7 +393,7 @@ typedef unsigned int  GUIntptr_t;
 /*! @cond Doxygen_Suppress */
 // Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
 // to detect misuses of NULL
-#if defined(NULL_AS_NULLPTR) && HAVE_CXX11
+#if defined(NULL_AS_NULLPTR)
 
 #ifdef __GNUC__
 // We need to include all that bunch of system headers, otherwise
@@ -429,11 +429,11 @@ extern "C++" {
 
 #undef NULL
 #define NULL nullptr
-#else /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
+#else /* defined(NULL_AS_NULLPTR) */
 #ifndef NULL
 #  define NULL  0
 #endif
-#endif /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
+#endif /* defined(NULL_AS_NULLPTR) */
 /*! @endcond */
 
 #ifndef MAX
@@ -1025,26 +1025,12 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
-#if HAVE_CXX11 || _MSC_VER >= 1500
+// #if HAVE_CXX11 || _MSC_VER >= 1500
 
 /** To be used in public headers only. For non-public headers or .cpp files,
  * use override directly. */
 #  define CPL_OVERRIDE override
 
-#else
-
-/** To be used in public headers only. For non-public headers or .cpp files,
- * use override directly. */
-#  define CPL_OVERRIDE
-
-/* For GDAL source compilation only, ignore override if non C++11 compiler */
-#ifdef GDAL_COMPILATION
-#  define override
-#endif
-
-#endif /* HAVE_CXX11 || _MSC_VER >= 1500 */
-
-#if HAVE_CXX11
 /** C++11 final qualifier */
 #  define CPL_FINAL final
 
@@ -1056,19 +1042,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
-#else
-/** C++11 final qualifier */
-#  define CPL_FINAL
-
-/** Helper to remove the copy and assignment constructors so that the compiler
-   will not generate the default versions.
-
-   Must be placed in the private section of a class and should be at the end.
-*/
-#  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
-    ClassName( const ClassName & ); \
-    ClassName &operator=( const ClassName & );
-#endif  /* HAVE_CXX11 */
 
 #endif /* __cplusplus */
 
@@ -1133,7 +1106,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7) && HAVE_CXX11
+#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7)
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
