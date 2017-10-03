@@ -3038,6 +3038,28 @@ def netcdf_78():
     return 'success'
 
 ###############################################################################
+# test we handle correctly _Unsigned="true" for a byte dataset with
+# negative nodata value
+
+def netcdf_79():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_neg_fillvalue_and_unsigned_hint.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -3125,7 +3147,8 @@ gdaltest_list = [
     netcdf_75,
     netcdf_76,
     netcdf_77,
-    netcdf_78
+    netcdf_78,
+    netcdf_79
 ]
 
 ###############################################################################
