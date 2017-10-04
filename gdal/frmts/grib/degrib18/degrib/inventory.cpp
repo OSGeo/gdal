@@ -35,7 +35,16 @@
 #include "metaname.h"
 #include "filedatasource.h"
 
+#include "cpl_port.h"
+
 #define SECT0LEN_BYTE 16
+
+static sInt4 DoubleToSInt4Clamp(double val) {
+   if (val >= INT_MAX) return INT_MAX;
+   if (val <= INT_MIN) return INT_MIN;
+   if (CPLIsNan(val)) return 0;
+   return (sInt4)val;
+}
 
 typedef union {
    sInt4 li;
@@ -668,8 +677,8 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 
    if (timeRangeUnit == 255) {
       timeRangeUnit = 1;
-      lenTime = (sInt4) ((inv->validTime - inv->foreSec - inv->refTime) /
-                         3600);
+      lenTime = DoubleToSInt4Clamp(
+          (inv->validTime - inv->foreSec - inv->refTime) / 3600.0);
    }
 /*   myAssert (timeRangeUnit == 1);*/
    /* Try to convert lenTime to hourly. */
