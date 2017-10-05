@@ -34,7 +34,7 @@ wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/FileGDB_API_
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-64bit.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-64bit.tar.gz
-wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/openjpeg-v2.3.0-linux-x86_64.tar.gz
+wget https://github.com/uclouvain/openjpeg/releases/download/v2.3.0/openjpeg-v2.3.0-linux-x86_64.tar.gz
 #wget http://even.rouault.free.fr/mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 tar xzf MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/include/* /usr/local/include
