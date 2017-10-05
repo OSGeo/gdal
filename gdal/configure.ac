@@ -2603,7 +2603,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a OpenJPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(openjpeg,[  --with-openjpeg[=ARG]     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)],,)
+AC_ARG_WITH(openjpeg,[  --with-openjpeg     Include JPEG-2000 support via OpenJPEG 2.x library],,)
 
 HAVE_OPENJPEG=no
 
@@ -2611,62 +2611,21 @@ if test "$with_openjpeg" = "no" ; then
 
   AC_MSG_NOTICE([OpenJPEG (JPEG2000) support disabled.])
 
-elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
-
-  AC_CHECK_HEADERS([openjpeg-2.2/openjpeg.h])
-  if test "$ac_cv_header_openjpeg_2_2_openjpeg_h" = "yes"; then
-    AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-    if test "$HAVE_OPENJPEG" = "yes"; then
-        OPENJPEG_VERSION=20200
-        LIBS="-lopenjp2 $LIBS"
-    fi
-  else
-    AC_CHECK_HEADERS([openjpeg-2.1/openjpeg.h])
-    if test "$ac_cv_header_openjpeg_2_1_openjpeg_h" = "yes"; then
-        AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-        if test "$HAVE_OPENJPEG" = "yes"; then
-            OPENJPEG_VERSION=20100
-            LIBS="-lopenjp2 $LIBS"
-        fi
-    else
-        AC_CHECK_HEADERS([openjpeg-2.0/openjpeg.h])
-        if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
-            AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-            if test "$HAVE_OPENJPEG" = "yes"; then
-                LIBS="-lopenjp2 $LIBS"
-            fi
-        fi
-    fi
-  fi
 else
 
-  HAVE_OPENJPEG=yes
-  if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-2.1/openjpeg.h ; then
-    OPENJPEG_VERSION=20100
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-2.2/openjpeg.h ; then
-    OPENJPEG_VERSION=20200
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  else
-    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1 or $with_openjpeg/include/openjpeg-2.2])
-  fi
+  PKG_PROG_PKG_CONFIG([0.25])
+  PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0])
 
-  AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,-L$with_openjpeg/lib)
-
-  if test "$HAVE_OPENJPEG" = "yes"; then
-      LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
-      AC_MSG_NOTICE([using OpenJPEG v2 library from $with_openjpeg.])
+  if test -n "$OPENJPEG_CFLAGS"; then
+    HAVE_OPENJPEG=yes
+    EXTRA_INCLUDES="$OPENJPEG_CFLAGS $EXTRA_INCLUDES"
+    LIBS="$OPENJPEG_LIBS $LIBS"
   fi
 fi
 
 if test "$HAVE_OPENJPEG" != "no" ; then
   OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
 fi
-
-AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
-AC_SUBST([OPENJPEG_VERSION],$OPENJPEG_VERSION)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a FGDB API to use, or disable driver.
