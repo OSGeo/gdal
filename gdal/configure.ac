@@ -2614,7 +2614,9 @@ if test "$with_openjpeg" = "no" ; then
 else
 
   PKG_PROG_PKG_CONFIG([0.25])
-  PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0])
+  PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0],
+        [OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`],
+        [OPENJPEG_VERSION=;])
 
   if test -n "$OPENJPEG_CFLAGS"; then
     HAVE_OPENJPEG=yes

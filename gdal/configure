@@ -25482,36 +25482,17 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$OPENJPEG_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (libopenjp2 >= 2.1.0) were not met:
-
-$OPENJPEG_PKG_ERRORS
-
-Consider adjusting the PKG_CONFIG_PATH environment variable if you
-installed software in a non-standard prefix.
-
-Alternatively, you may set the environment variables OPENJPEG_CFLAGS
-and OPENJPEG_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-" "$LINENO" 5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                OPENJPEG_VERSION=;
 elif test $pkg_failed = untried; then
-	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
-is in your PATH or set the PKG_CONFIG environment variable to the full
-path to pkg-config.
-
-Alternatively, you may set the environment variables OPENJPEG_CFLAGS
-and OPENJPEG_LIBS to avoid the need to call pkg-config.
-See the pkg-config man page for more details.
-
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.
-See \`config.log' for more details" "$LINENO" 5; }
+	OPENJPEG_VERSION=;
 else
 	OPENJPEG_CFLAGS=$pkg_cv_OPENJPEG_CFLAGS
 	OPENJPEG_LIBS=$pkg_cv_OPENJPEG_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	:
+	OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`
 fi
 
   if test -n "$OPENJPEG_CFLAGS"; then
