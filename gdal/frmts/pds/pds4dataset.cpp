@@ -2979,7 +2979,17 @@ void PDS4Dataset::WriteHeader()
         CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
                                     CPLGetFilename(m_osImageFilename));
         CPLXMLNode* psArray = CPLCreateXMLNode(psFAO, CXT_Element,
-                                            (osPrefix + "Array_3D").c_str());
+                                            (osPrefix + "Array_3D_Image").c_str());
+
+        const char* pszLocalIdentifier = CPLGetXMLValue(
+            psDisciplineArea,
+            "disp:Display_Settings.Local_Internal_Reference."
+                                            "local_identifier_reference",
+            "image");
+        CPLCreateXMLElementAndValue(psArray,
+                                    (osPrefix + "local_identifier").c_str(),
+                                    pszLocalIdentifier);
+
         int nOffset = 0;
         if( m_poExternalDS )
         {

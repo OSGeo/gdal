@@ -53,6 +53,11 @@ def validate_xml(filename):
                                   force_download = True):
         return 'skip'
 
+    if not gdaltest.download_file('https://pds.nasa.gov/pds4/disp/v1/PDS4_DISP_1800.xsd',
+                                  'pds.nasa.gov_pds4_disp_v1_PDS4_DISP_1800.xsd',
+                                  force_download = True):
+        return 'skip'
+
     if not gdaltest.download_file('https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1700.xsd',
                                   'pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1700.xsd',
                                   force_download = True):
