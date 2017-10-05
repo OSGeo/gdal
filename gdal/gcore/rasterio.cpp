@@ -4060,8 +4060,14 @@ static void GDALCopyWholeRasterGetSwathSize(
 
         // but if the minimum idal swath buf size is less, then go for it to
         // avoid unnecessarily abusing RAM usage.
+        // but try to use 10 MB at least.
         GIntBig nIdealSwathBufSize =
             static_cast<GIntBig>(nSwathCols) * nSwathLines * nPixelSize;
+        if( nIdealSwathBufSize < nTargetSwathSize &&
+            nIdealSwathBufSize < 10 * 1000 * 1000 )
+        {
+            nIdealSwathBufSize = 10 * 1000 * 1000;
+        }
         if( pszSrcCompression != NULL && EQUAL(pszSrcCompression, "JPEG2000") &&
             (!bDstIsCompressed || ((nSrcBlockXSize % nBlockXSize) == 0 &&
                                    (nSrcBlockYSize % nBlockYSize) == 0)) )
