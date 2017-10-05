@@ -582,6 +582,7 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     bool bAddComma = false;
 
     OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
+    bool bHasOGR_STYLEField = false;
     for( int i = 0; i < poFDefn->GetFieldCount(); i++ )
     {
         if( bAddComma )
@@ -589,6 +590,8 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
         bAddComma = true;
 
         OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(i);
+        if( EQUAL(poFieldDefn->GetNameRef(), "OGR_STYLE") )
+            bHasOGR_STYLEField = true;
 
         osSQL += "\"";
         osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
@@ -601,9 +604,16 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
     if( bAddComma )
         osSQL += ",";
     bAddComma = true;
-    osSQL += "OGR_STYLE VARCHAR";
-    if( !bExposeOGR_STYLE )
-     osSQL += " HIDDEN";
+    if( bHasOGR_STYLEField )
+    {
+        osSQL += "'dummy' VARCHAR HIDDEN";
+    }
+    else
+    {
+        osSQL += "OGR_STYLE VARCHAR";
+        if( !bExposeOGR_STYLE )
+            osSQL += " HIDDEN";
+    }
 
     for( int i = 0; i < poFDefn->GetGeomFieldCount(); i++ )
     {
