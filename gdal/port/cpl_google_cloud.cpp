@@ -41,6 +41,61 @@ static CPLMutex *hMutex = NULL;
 static bool bFirstTimeForDebugMessage = true;
 static GOA2Manager oStaticManager;
 
+/************************************************************************/
+/*                    CPLIsMachineForSureGCEInstance()                  */
+/************************************************************************/
+
+/** Returns whether the current machine is surely a Google Compute Engine instance.
+ * 
+ * This does a very quick check without network access.
+ * Note: only works for Linux GCE instances.
+ * 
+ * @return true if the current machine is surely a GCE instance.
+ * @since GDAL 2.3
+ */
+bool CPLIsMachineForSureGCEInstance()
+{
+#ifdef __linux
+    // If /var/log/kern.log exists, it should contain a string like
+    // DMI: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+    bool bIsGCEInstance = false;
+    if( CPLTestBool(CPLGetConfigOption(
+                        "CPL_GCE_CHECK_LOCAL_FILES", "YES")) )
+    {
+        static bool bIsGCEInstanceStatic = false;
+        static bool bDone = false;
+        {
+            CPLMutexHolder oHolder( &hMutex );
+            if( !bDone )
+            {
+                bDone = true;
+
+                VSILFILE* fp = VSIFOpenL("/var/log/kern.log", "rb"); // Ubuntu 16.04
+                if( fp == NULL )
+                    fp = VSIFOpenL("/var/log/dmesg", "rb"); // CentOS 6
+                if( fp != NULL )
+                {
+                    const char* pszLine;
+                    while( (pszLine = CPLReadLineL(fp)) != NULL )
+                    {
+                        if( strstr(pszLine, "DMI:") != NULL )
+                        {
+                            bIsGCEInstanceStatic =
+                                        strstr(pszLine, "Google Compute") != NULL;
+                            break;
+                        }
+                    }
+                    VSIFCloseL(fp);
+                }
+            }
+        }
+        bIsGCEInstance = bIsGCEInstanceStatic;
+    }
+    return bIsGCEInstance;
+#else
+    return false;
+#endif
+}
 
 /************************************************************************/
 /*                 CPLIsMachinePotentiallyGCEInstance()                 */
@@ -58,30 +113,11 @@ static GOA2Manager oStaticManager;
 bool CPLIsMachinePotentiallyGCEInstance()
 {
 #ifdef __linux
-    // If /var/log/kern.log exists, it should contain a string like
-    // DMI: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
     bool bIsMachinePotentialGCEInstance = true;
     if( CPLTestBool(CPLGetConfigOption(
                         "CPL_GCE_CHECK_LOCAL_FILES", "YES")) )
     {
-        VSILFILE* fp = VSIFOpenL("/var/log/kern.log", "rb"); // Ubuntu 16.04
-        if( fp == NULL )
-            fp = VSIFOpenL("/var/log/dmesg", "rb"); // CentOS 6
-        if( fp != NULL )
-        {
-            const char* pszLine;
-            bIsMachinePotentialGCEInstance = false;
-            while( (pszLine = CPLReadLineL(fp)) != NULL )
-            {
-                if( strstr(pszLine, "DMI:") != NULL )
-                {
-                    bIsMachinePotentialGCEInstance =
-                                strstr(pszLine, "Google Compute") != NULL;
-                    break;
-                }
-            }
-            VSIFCloseL(fp);
-        }
+        bIsMachinePotentialGCEInstance = CPLIsMachineForSureGCEInstance();
     }
     return bIsMachinePotentialGCEInstance;
 #elif defined(WIN32)

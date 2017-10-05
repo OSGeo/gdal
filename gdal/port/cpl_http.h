@@ -125,6 +125,7 @@ char** CPLHTTPGetOptionsFromEnv();
 /*! @endcond */
 
 bool CPLIsMachinePotentiallyGCEInstance();
+bool CPLIsMachineForSureGCEInstance();
 
 /** Manager of Google OAuth2 authentication.
  * 
