@@ -434,7 +434,8 @@ DestRect elements, but it also passes the data through a simple filtering
 kernel specified with the Kernel element.  The Kernel element should have
 two child elements, Size and Coefs and optionally the boolean attribute
 normalized (defaults to false=0).  The size must always be an odd number,
-and the Coefs must have Size * Size entries separated by spaces.
+and the Coefs must have Size * Size entries separated by spaces.  For now
+kernel is not applied to sub-sampled or over-sampled data.
 
 \code
     <KernelFilteredSource>
