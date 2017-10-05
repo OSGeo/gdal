@@ -377,7 +377,7 @@ namespace Selafin {
         int nLength=0;
         read_integer(fp,nLength);
         panData = NULL;
-        if (nLength<0 || nLength+1<=0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
+        if (nLength<0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
         }
