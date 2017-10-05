@@ -1127,6 +1127,9 @@ class GTiffRasterBand : public GDALPamRasterBand
                                                GIntBig *pnLineSpace,
                                                char **papszOptions );
 
+    void*           CacheMultiRange( int nXOff, int nYOff,
+                                        int nXSize, int nYSize );
+
 protected:
     GTiffDataset       *poGDS;
     GDALMultiDomainMetadata oGTiffMDMD;
@@ -2123,6 +2126,16 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
             return static_cast<CPLErr>(nErr);
     }
 
+    void* pBufferedData = NULL;
+    if( eAccess == GA_ReadOnly &&
+        eRWFlag == GF_Read &&
+        nPlanarConfig == PLANARCONFIG_CONTIG &&
+        VSIHasOptimizedReadMultiRange(osFilename) )
+    {
+        pBufferedData = reinterpret_cast<GTiffRasterBand *>(
+            GetRasterBand(1))->CacheMultiRange(nXOff, nYOff, nXSize, nYSize);
+    }
+
     ++nJPEGOverviewVisibilityCounter;
     const CPLErr eErr =
         GDALPamDataset::IRasterIO(
@@ -2131,6 +2144,14 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
             nBandCount, panBandMap, nPixelSpace, nLineSpace,
             nBandSpace, psExtraArg);
     nJPEGOverviewVisibilityCounter--;
+
+    if( pBufferedData )
+    {
+        VSIFree( pBufferedData );
+        VSI_TIFFSetCachedRanges( TIFFClientdata( hTIFF ),
+                                 0, NULL, NULL, NULL );
+    }
+
     return eErr;
 }
 
@@ -2241,11 +2262,11 @@ int GTiffDataset::VirtualMemIO( GDALRWFlag eRWFlag,
 
     size_t nMappingSize = 0;
     GByte* pabySrcData = NULL;
-    if( STARTS_WITH(GetDescription(), "/vsimem/") )
+    if( STARTS_WITH(osFilename, "/vsimem/") )
     {
         vsi_l_offset nDataLength = 0;
         pabySrcData =
-            VSIGetMemFileBuffer(GetDescription(), &nDataLength, FALSE);
+            VSIGetMemFileBuffer(osFilename, &nDataLength, FALSE);
         nMappingSize = static_cast<size_t>(nDataLength);
         if( pabySrcData == NULL )
             return -1;
@@ -3952,6 +3973,98 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                         CacheMultiRange()                            */
+/************************************************************************/
+
+void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
+                                        int nXSize, int nYSize )
+{
+    void* pBufferedData = NULL;
+    const int nBlockX1 = nXOff / nBlockXSize;
+    const int nBlockY1 = nYOff / nBlockYSize;
+    const int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+    const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+    thandle_t th = TIFFClientdata( poGDS->hTIFF );
+    if( poGDS->SetDirectory() && !VSI_TIFFHasCachedRanges(th) )
+    {
+        std::vector< std::pair<vsi_l_offset, size_t> > aOffsetSize;
+        size_t nTotalSize = 0;
+        nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+        for( int iY = nBlockY1; iY <= nBlockY2; iY ++)
+        {
+            for( int iX = nBlockX1; iX <= nBlockX2; iX ++)
+            {
+                GDALRasterBlock* poBlock = TryGetLockedBlockRef(iX, iY);
+                if( poBlock != NULL )
+                {
+                    poBlock->DropLock();
+                    continue;
+                }
+                int nBlockId = iX + iY * nBlocksPerRow;
+                if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+                    nBlockId += (nBand - 1) * poGDS->nBlocksPerBand;
+                vsi_l_offset nOffset = 0;
+                vsi_l_offset nSize = 0;
+                if( poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize) )
+                {
+                    if( nTotalSize + nSize < 10 * 1024 * 1024 )
+                    {
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("GTiff",
+                                 "Precaching for block (%d, %d), "
+                                 CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                                 iX, iY,
+                                 nOffset,
+                                 nOffset + static_cast<size_t>(nSize) - 1);
+#endif
+                        aOffsetSize.push_back(
+                            std::pair<vsi_l_offset, size_t>
+                                (nOffset, static_cast<size_t>(nSize)) );
+                        nTotalSize += static_cast<size_t>(nSize);
+                    }
+                }
+            }
+        }
+
+        std::sort(aOffsetSize.begin(), aOffsetSize.end());
+
+        if( nTotalSize > 0 )
+        {
+            pBufferedData = VSI_MALLOC_VERBOSE(nTotalSize);
+            if( pBufferedData )
+            {
+                std::vector<vsi_l_offset> anOffsets;
+                std::vector<size_t> anSizes;
+                std::vector<void*> apData;
+                size_t nAccOffset = 0;
+                for( size_t i = 0; i < aOffsetSize.size(); i++ )
+                {
+                    anOffsets.push_back(aOffsetSize[i].first);
+                    anSizes.push_back(aOffsetSize[i].second);
+                    apData.push_back(static_cast<GByte*>(pBufferedData) + nAccOffset);
+                    nAccOffset += aOffsetSize[i].second;
+                }
+                VSILFILE* fp = VSI_TIFFGetVSILFile(th);
+                if( VSIFReadMultiRangeL(
+                                    static_cast<int>(aOffsetSize.size()),
+                                    &apData[0],
+                                    &anOffsets[0],
+                                    &anSizes[0],
+                                    fp ) == 0 )
+                {
+                    VSI_TIFFSetCachedRanges( th,
+                                             static_cast<int>(aOffsetSize.size()),
+                                             &apData[0],
+                                             &anOffsets[0],
+                                             &anSizes[0] );
+                }
+            }
+        }
+    }
+    return pBufferedData;
+}
+
+/************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
 
@@ -4003,6 +4116,14 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             return static_cast<CPLErr>(nErr);
     }
 
+    void* pBufferedData = NULL;
+    if( poGDS->eAccess == GA_ReadOnly &&
+        eRWFlag == GF_Read &&
+        VSIHasOptimizedReadMultiRange(poGDS->osFilename) )
+    {
+        pBufferedData = CacheMultiRange(nXOff, nYOff, nXSize, nYSize);
+    }
+
     if( poGDS->nBands != 1 &&
         poGDS->nPlanarConfig == PLANARCONFIG_CONTIG &&
         eRWFlag == GF_Read &&
@@ -4041,6 +4162,13 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     --poGDS->nJPEGOverviewVisibilityCounter;
 
     poGDS->bLoadingOtherBands = false;
+
+    if( pBufferedData )
+    {
+        VSIFree( pBufferedData );
+        VSI_TIFFSetCachedRanges( TIFFClientdata( poGDS->hTIFF ),
+                                 0, NULL, NULL, NULL );
+    }
 
     return eErr;
 }
@@ -9674,6 +9802,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
                                                 int l_nJpegQuality)
 {
     GTiffDataset* poODS = new GTiffDataset();
+    poODS->osFilename = osFilename;
     poODS->nJpegQuality = l_nJpegQuality;
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
@@ -9938,6 +10067,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
                 }
 
                 GTiffDataset *poODS = new GTiffDataset();
+                poODS->osFilename = osFilename;
                 if( poODS->OpenOffset( hTIFF, ppoActiveDSRef,
                                        nOverviewOffset, false,
                                        GA_Update ) != CE_None )
@@ -14429,6 +14559,7 @@ void GTiffDataset::ScanDirectories()
             nOverviewCount < 30 /* to avoid DoS */ )
         {
             GTiffDataset *poODS = new GTiffDataset();
+            poODS->osFilename = osFilename;
             if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, false,
                                    eAccess ) != CE_None
                 || poODS->GetRasterCount() != GetRasterCount() )
@@ -14454,6 +14585,7 @@ void GTiffDataset::ScanDirectories()
                  poMaskDS == NULL )
         {
             poMaskDS = new GTiffDataset();
+            poMaskDS->osFilename = osFilename;
 
             // The TIFF6 specification - page 37 - only allows 1
             // SamplesPerPixel and 1 BitsPerSample Here we support either 1 or
@@ -14496,6 +14628,7 @@ void GTiffDataset::ScanDirectories()
                  iDirIndex != 1 )
         {
             GTiffDataset* poDS = new GTiffDataset();
+            poDS->osFilename = osFilename;
             if( poDS->OpenOffset( hTIFF, ppoActiveDSRef, nThisDir, FALSE,
                                   eAccess ) != CE_None
                 || poDS->GetRasterCount() == 0
@@ -16834,6 +16967,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         VSIUnlink( bStreaming ? l_osTmpFilename.c_str() : pszFilename );
         return NULL;
     }
+    poDS->osFilename = pszFilename;
 
     if( bStreaming )
     {
