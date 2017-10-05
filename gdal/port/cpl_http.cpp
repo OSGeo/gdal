@@ -57,7 +57,26 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_CURL
 static std::map<CPLString, CURL*>* poSessionMap = NULL;
 static CPLMutex *hSessionMapMutex = NULL;
-#endif
+static bool bHasCheckVersion = false;
+static bool bSupportGZip = false;
+static bool bSupportHTTP2 = false;
+
+/************************************************************************/
+/*                       CheckCurlFeatures()                            */
+/************************************************************************/
+
+static void CheckCurlFeatures()
+{
+    CPLMutexHolder oHolder( &hSessionMapMutex );
+    if( !bHasCheckVersion )
+    {
+        const char* pszVersion = curl_version();
+        CPLDebug("HTTP", "%s", pszVersion);
+        bSupportGZip = strstr(pszVersion, "zlib/") != NULL;
+        bSupportHTTP2 = strstr(curl_version(), "nghttp2/") != NULL;
+        bHasCheckVersion = true;
+    }
+}
 
 /************************************************************************/
 /*                            CPLWriteFct()                             */
@@ -66,7 +85,6 @@ static CPLMutex *hSessionMapMutex = NULL;
 /*      it larger as needed.                                            */
 /************************************************************************/
 
-#ifdef HAVE_CURL
 
 typedef struct
 {
@@ -151,6 +169,7 @@ typedef struct
 
 static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
 {
+    { "GDAL_HTTP_VERSION", "HTTP_VERSION" },
     { "GDAL_HTTP_CONNECTTIMEOUT", "CONNECTTIMEOUT" },
     { "GDAL_HTTP_TIMEOUT", "TIMEOUT" },
     { "GDAL_HTTP_LOW_SPEED_TIME", "LOW_SPEED_TIME" },
@@ -163,7 +182,8 @@ static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
-    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" }
+    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
+    { "GDAL_HTTP_CAPATH", "CAPATH" }
 };
 
 char** CPLHTTPGetOptionsFromEnv()
@@ -228,17 +248,23 @@ char** CPLHTTPGetOptionsFromEnv()
  *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
  *     environment variable is defined to use it as the CAINFO value, and as a
  *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
+ * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
+ *     Will default to 1.1 generally (except on some controlled environments,
+ *     like Google Compute Engine VMs, where 2TLS will be the default).
+ *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
+ *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only. Whereas
+ *     "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY, HEADER_FILE values are searched in the configuration
- * options named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION values are searched in the configuration
+ * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
- * GDAL_HTTP_HEADER_FILE.
+ * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -466,13 +492,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    static bool bHasCheckVersion = false;
-    static bool bSupportGZip = false;
-    if( !bHasCheckVersion )
-    {
-        bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
-        bHasCheckVersion = true;
-    }
     bool bGZipRequested = false;
     if( bSupportGZip &&
         CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
@@ -654,6 +673,15 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
+    CheckCurlFeatures();
+
+    char** papszOptionsToFree = NULL;
+    if( papszOptions == NULL )
+    {
+        papszOptionsToFree = CPLHTTPGetOptionsFromEnv();
+        papszOptions = papszOptionsToFree;
+    }
+
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
@@ -664,6 +692,99 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
         curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                          CURL_HTTP_VERSION_1_0);
+    else if( pszHttpVersion && strcmp(pszHttpVersion, "1.1") == 0 )
+        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                         CURL_HTTP_VERSION_1_1);
+    else if( pszHttpVersion &&
+             (strcmp(pszHttpVersion, "2") == 0 ||
+              strcmp(pszHttpVersion, "2.0") == 0) )
+    {
+        // 7.33.0
+#if LIBCURL_VERSION_NUM >= 0x72100
+        if( bSupportHTTP2 )
+        {
+            // Try HTTP/2 both for HTTP and HTTPS. With fallback to HTTP/1.1
+            curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                             CURL_HTTP_VERSION_2_0);
+        }
+        else
+#endif
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+#if LIBCURL_VERSION_NUM >= 0x72100
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "HTTP/2 not available in this build of Curl. "
+                        "It needs to be built against nghttp2");
+#else
+                CPLError(CE_Warning, CPLE_NotSupported,
+                          "HTTP/2 not supported by this version of Curl. "
+                          "You need curl 7.33 or later, with nghttp2 support");
+
+#endif
+                bHasWarned = true;
+            }
+        }
+    }
+    else if( pszHttpVersion == NULL ||
+             strcmp(pszHttpVersion, "2TLS") == 0 )
+    {
+        // 7.47.0
+#if LIBCURL_VERSION_NUM >= 0x72F00
+        if( bSupportHTTP2 )
+        {
+            // Only enable this mode if explicitly required, or if the
+            // machine is a GCE instance. On other networks, requesting a
+            // file in HTTP/2 is found to be significantly slower than HTTP/1.1
+            // for unknown reasons.
+            if( pszHttpVersion != NULL || CPLIsMachineForSureGCEInstance() )
+            {
+                static bool bDebugEmitted = false;
+                if( !bDebugEmitted )
+                {
+                    CPLDebug("HTTP", "Using HTTP/2 for HTTPS when possible");
+                    bDebugEmitted = true;
+                }
+
+                // CURL_HTTP_VERSION_2TLS means for HTTPS connection, try to
+                // negotiate HTTP/2 with the server (and fallback to HTTP/1.1
+                // otherwise), and for HTTP connection do HTTP/1
+                curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                CURL_HTTP_VERSION_2TLS);
+            }
+        }
+        else
+#endif
+        if( pszHttpVersion != NULL )
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+#if LIBCURL_VERSION_NUM >= 0x72F00
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "HTTP/2 not available in this build of Curl. "
+                        "It needs to be built against nghttp2");
+#else
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "HTTP_VERSION=2TLS not available in this version "
+                         "of Curl. You need curl 7.47 or later");
+#endif
+                bHasWarned = true;
+            }
+        }
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "HTTP_VERSION=%s not supported", pszHttpVersion);
+    }
+
+    // Default value is 1 since curl 7.50.2. But worth applying it on
+    // previous versions as well.
+    const char* pszTCPNoDelay = CSLFetchNameValueDef( papszOptions,
+                                                      "TCP_NODELAY", "1");
+    curl_easy_setopt(http_handle, CURLOPT_TCP_NODELAY, atoi(pszTCPNoDelay));
 
     /* Support control over HTTPAUTH */
     const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
@@ -829,6 +950,12 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
     }
 
+    const char* pszCAPath = CSLFetchNameValue( papszOptions, "CAPATH" );
+    if( pszCAPath != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CAPATH, pszCAPath);
+    }
+
     /* Set Referer */
     const char *pszReferer = CSLFetchNameValue(papszOptions, "REFERER");
     if( pszReferer != NULL )
@@ -903,6 +1030,9 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
             VSIFCloseL(fp);
         }
     }
+
+    CSLDestroy(papszOptionsToFree);
+
     return headers;
 }
 #endif  // def HAVE_CURL

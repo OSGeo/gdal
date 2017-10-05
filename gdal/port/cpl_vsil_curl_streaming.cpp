@@ -491,9 +491,13 @@ VSICurlStreamingHandleWriteFuncForHeader( void *buffer, size_t count,
         if( psStruct->bIsHTTP && psStruct->bIsInHeader )
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
-            if( STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
-                STARTS_WITH_CI(pszLine, "HTTP/1.1 ") )
-                psStruct->nHTTPCode = atoi(pszLine + 9);
+            if( STARTS_WITH_CI(pszLine, "HTTP/") )
+            {
+                const char* pszSpace = strchr(
+                    const_cast<const char*>(pszLine), ' ');
+                if( pszSpace )
+                    psStruct->nHTTPCode = atoi(pszSpace + 1);
+            }
 
             if( pszLine[0] == '\r' || pszLine[0] == '\n' )
             {
@@ -607,7 +611,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     if( STARTS_WITH(m_pszURL, "ftp") )
     {
         if( sWriteFuncData.pBuffer != NULL &&
-            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: ") )
+            STARTS_WITH_CI(sWriteFuncData.pBuffer, "Content-Length: ") )
         {
             const char* pszBuffer =
                 sWriteFuncData.pBuffer + strlen("Content-Length: ");
@@ -901,8 +905,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
     // Reset buffer if we have followed link after a redirect.
     if( nSize >= 9 && InterpretRedirect() &&
         (nHTTPCode == 301 || nHTTPCode == 302) &&
-        (STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/1.0 ") ||
-         STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/1.1 ")) )
+        STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/") )
     {
         nHeaderSize = 0;
         nHTTPCode = 0;
@@ -923,12 +926,15 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
 
         if( eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
             strchr(reinterpret_cast<char *>(pabyHeaderData), '\n') != NULL &&
-            (STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
-                            "HTTP/1.0 ") ||
-             STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
-                            "HTTP/1.1 ")) )
+            STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
+                            "HTTP/") )
         {
-            nHTTPCode = atoi(reinterpret_cast<char *>(pabyHeaderData) + 9);
+            nHTTPCode = 0;
+            const char* pszSpace = strchr(
+                const_cast<const char*>(
+                    reinterpret_cast<char *>(pabyHeaderData)), ' ');
+            if( pszSpace )
+                nHTTPCode = atoi(pszSpace + 1);
             if( ENABLE_DEBUG )
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 

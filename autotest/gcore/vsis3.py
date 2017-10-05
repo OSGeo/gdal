@@ -243,17 +243,17 @@ def vsis3_2():
     def method(request):
         request.protocol_version = 'HTTP/1.1'
         if 'Range' in request.headers:
-            if request.headers['Range'] != 'bytes=0-4095':
+            if request.headers['Range'] != 'bytes=0-16383':
                 sys.stderr.write("Bad Range: '%s'\n" % str(request.headers['Range']))
                 request.send_response(403)
                 return
             request.send_response(206)
             request.send_header('Content-type', 'text/plain')
-            request.send_header('Content-Range', 'bytes 0-4095/1000000')
-            request.send_header('Content-Length', 4096)
+            request.send_header('Content-Range', 'bytes 0-16383/1000000')
+            request.send_header('Content-Length', 16384)
             request.send_header('Connection', 'close')
             request.end_headers()
-            request.wfile.write(''.join('a' for i in range(4096)).encode('ascii'))
+            request.wfile.write(''.join('a' for i in range(16384)).encode('ascii'))
         else:
             request.send_response(200)
             request.send_header('Content-type', 'text/plain')

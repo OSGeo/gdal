@@ -576,6 +576,32 @@ int VSISupportsSparseFiles( const char* pszPath )
 }
 
 /************************************************************************/
+/*                     VSIHasOptimizedReadMultiRange()                  */
+/************************************************************************/
+
+/**
+ * \brief Returns if the filesystem supports efficient multi-range reading.
+ *
+ * Currently only returns TRUE for /vsicurl/ and derived file systems.
+ *
+ * @param pszPath the path of the filesystem object to be tested.
+ * UTF-8 encoded.
+ *
+ * @return TRUE if the file system is known to have an efficient multi-range
+ * reading.
+ *
+ * @since GDAL 2.3
+ */
+
+int VSIHasOptimizedReadMultiRange( const char* pszPath )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszPath );
+
+    return poFSHandler->HasOptimizedReadMultiRange( pszPath );
+}
+
+/************************************************************************/
 /*                             VSIFOpenL()                              */
 /************************************************************************/
 

@@ -210,6 +210,8 @@ int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
 int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
 
+int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */
