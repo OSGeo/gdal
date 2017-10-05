@@ -614,6 +614,8 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #OPENJPEG_VERSION = 20100
 # For OpenJpeg 2.2.x, uncomment
 #OPENJPEG_VERSION = 20200
+# For OpenJpeg 2.3.x, uncomment
+#OPENJPEG_VERSION = 20300
 
 #if using an external zlib uncomment the following lines
 #ZLIB_EXTERNAL_LIB = 1
