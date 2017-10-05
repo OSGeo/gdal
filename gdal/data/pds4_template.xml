@@ -50,7 +50,7 @@
             <disp:Display_Settings>
                 <Local_Internal_Reference>
                     <local_identifier_reference>image</local_identifier_reference>
-                    <local_reference_type>display_settings_to_image</local_reference_type>
+                    <local_reference_type>display_settings_to_array</local_reference_type>
                 </Local_Internal_Reference>
                 <disp:Display_Direction>
                     <disp:horizontal_display_axis>Sample</disp:horizontal_display_axis>
