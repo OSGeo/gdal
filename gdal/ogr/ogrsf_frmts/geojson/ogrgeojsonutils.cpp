@@ -76,7 +76,9 @@ bool GeoJSONIsObject( const char* pszText )
         || strstr(pszText, "\"FeatureCollection\"") != NULL
         || strstr(pszText, "\"Feature\"") != NULL
         || (strstr(pszText, "\"geometryType\"") != NULL &&
-            strstr(pszText, "\"esriGeometry") != NULL);
+            strstr(pszText, "\"esriGeometry") != NULL)
+        || (strstr(pszText, "\"fields\"") != NULL &&
+            strstr(pszText, "\"esriFieldType") != NULL);
 }
 
 /************************************************************************/
