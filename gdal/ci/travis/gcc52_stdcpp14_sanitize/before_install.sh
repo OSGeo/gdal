@@ -24,7 +24,7 @@ mysql -e "GRANT ALL ON autotest.* TO 'travis'@'localhost';" -u root
 #wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-64bit.tar.gz
 #wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-64bit.tar.gz
-wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
+wget https://github.com/uclouvain/openjpeg/releases/download/v2.3.0/openjpeg-v2.3.0-linux-x86_64.tar.gz
 #wget http://even.rouault.free.fr/mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 wget http://even.rouault.free.fr/install-gcc-5.2.0.tar.bz2
 #tar xzf MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
@@ -41,9 +41,9 @@ sudo cp -r install-libecwj2/lib/* /usr/local/lib
 #tar xzf install-libkml-r864-64bit.tar.gz
 #sudo cp -r install-libkml/include/* /usr/local/include
 #sudo cp -r install-libkml/lib/* /usr/local/lib
-tar xzf install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
-sudo cp -r install-openjpeg/include/* /usr/local/include
-sudo cp -r install-openjpeg/lib/* /usr/local/lib
+tar xzf openjpeg-v2.3.0-linux-x86_64.tar.gz
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/include/* /usr/local/include
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/lib/* /usr/local/lib
 #tar xzf mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 #sudo cp -r mongo-cxx-1.0.2-install/include/* /usr/local/include
 #sudo cp -r mongo-cxx-1.0.2-install/lib/* /usr/local/lib
