@@ -1420,11 +1420,15 @@ void OGRXLSXDataSource::startElementStylesCbk(const char *pszNameIn,
         if (pszFormatCode && nNumFmtId >= 164)
         {
             int bHasDate = strstr(pszFormatCode, "DD") != NULL ||
-                           strstr(pszFormatCode, "YY") != NULL;
-            int bHasTime = strstr(pszFormatCode, "HH") != NULL;
+                           strstr(pszFormatCode, "dd") != NULL ||
+                           strstr(pszFormatCode, "YY") != NULL ||
+                           strstr(pszFormatCode, "yy") != NULL;
+            int bHasTime = strstr(pszFormatCode, "HH") != NULL ||
+                           strstr(pszFormatCode, "hh") != NULL;
             if (bHasDate && bHasTime)
                 apoMapStyleFormats[nNumFmtId] = XLSXFieldTypeExtended(OFTDateTime,
-                                        strstr(pszFormatCode, "SS.000") != NULL );
+                                        strstr(pszFormatCode, "SS.000") != NULL ||
+                                        strstr(pszFormatCode, "ss.000") != NULL);
             else if (bHasDate)
                 apoMapStyleFormats[nNumFmtId] = XLSXFieldTypeExtended(OFTDate);
             else if (bHasTime)
