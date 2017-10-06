@@ -369,7 +369,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                     static_cast<float>( tempwt * (
                         (iY + FSHIFT) * psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + iBMY * nBMXSize] += tempwt;
+                wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
 
                 //For backward compatibility
                 pabyValidFlag[iBMX + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
@@ -389,7 +389,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                     static_cast<float>( tempwt * (
                         (iY + FSHIFT)* psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  tempwt;
+                wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  static_cast<float>(tempwt);
 
                 //For backward compatibility
                 pabyValidFlag[iBMX + 1 + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
@@ -408,7 +408,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                     static_cast<float>( tempwt * (
                         (iY + FSHIFT) * psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += tempwt;
+                wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
 
                 //For backward compatibility
                 pabyValidFlag[iBMX + 1 + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
@@ -427,7 +427,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                     static_cast<float>(tempwt * (
                         (iY + FSHIFT) * psTransform->dfLINE_STEP +
                         psTransform->dfLINE_OFFSET));
-                wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += tempwt;
+                wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
 
                 //For backward compatibility
                 pabyValidFlag[iBMX + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
