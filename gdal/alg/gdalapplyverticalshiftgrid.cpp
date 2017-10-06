@@ -546,7 +546,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
 /*                          my_proj4_logger()                           */
 /************************************************************************/
 
-#if defined(PROJ_STATIC) && PJ_VERSION <= 493
+#if defined(PROJ_STATIC) && PJ_VERSION >= 490 && PJ_VERSION <= 493
 static void my_proj4_logger(void * user_data, int /*level*/, const char * msg)
 {
     CPLString* posMsg = static_cast<CPLString*>(user_data);
