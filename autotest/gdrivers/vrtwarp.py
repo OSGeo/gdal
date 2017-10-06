@@ -405,7 +405,7 @@ def vrtwarp_9():
     if vrtwarp_ds.GetRasterBand(1).Checksum() != expected_cs_main:
         gdaltest.post_reason('fail')
         return 'fail'
-    if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 63972:
+    if vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() != 63859:
         gdaltest.post_reason('fail')
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize)
         print(vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize)
