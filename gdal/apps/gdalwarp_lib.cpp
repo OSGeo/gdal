@@ -1596,9 +1596,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
-        /* else try to fill dstNoData from source bands */
+        /* else try to fill dstNoData from source bands, unless -dstalpha is specified */
         if ( psOptions->pszDstNodata == NULL && psWO->padfSrcNoDataReal != NULL &&
-             psWO->padfDstNoDataReal == NULL )
+             psWO->padfDstNoDataReal == NULL && !bEnableDstAlpha )
         {
             psWO->padfDstNoDataReal = static_cast<double *>(
                 CPLMalloc(psWO->nBandCount*sizeof(double)));
