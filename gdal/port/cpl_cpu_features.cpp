@@ -202,7 +202,7 @@ bool CPLHaveRuntimeAVX()
 
 #else
 
-int CPLHaveRuntimeAVX()
+bool CPLHaveRuntimeAVX()
 {
     return false;
 }
