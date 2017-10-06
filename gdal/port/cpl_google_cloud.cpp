@@ -357,7 +357,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             const char* pszLine = NULL;
             while( (pszLine = CPLReadLineL(fp)) != NULL )
             {
-                if( STARTS_WITH(pszLine, "Authorization: ") )
+                if( STARTS_WITH_CI(pszLine, "Authorization:") )
                 {
                     bFoundAuth = true;
                     break;
