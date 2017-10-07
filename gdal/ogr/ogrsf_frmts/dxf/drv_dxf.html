@@ -46,7 +46,10 @@ DXF_MERGE_BLOCK_GEOMETRIES config option may be set to FALSE.
 leaders, and a feature with the dimension label.
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but
 no effort is currently made to represent the fill style of HATCH entities.
-<li> 3DFACE, SOLID: Translated as POLYGON.
+The DXF_HATCH_TOLERANCE config option determines the tolerance used when looking
+for the next component to add to the hatch boundary.
+<li> 3DFACE, SOLID: Translated as POLYGON, except for SOLIDS with only one
+distinct vertex (translated as POINT) or two distinct vertices (LINESTRING).
 
 </ul>
 
