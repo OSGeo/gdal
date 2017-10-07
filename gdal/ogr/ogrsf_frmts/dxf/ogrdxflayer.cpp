@@ -34,6 +34,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
 
 CPL_CVSID("$Id$")
 
@@ -2290,7 +2291,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
 /*     doesn't exist.                                                   */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::InsertBlock( const CPLString osBlockName,
+OGRFeature *OGRDXFLayer::InsertBlock( const CPLString& osBlockName,
     OGRDXFInsertTransformer oTransformer, OGRFeature* const poFeature,
     const bool bInline )
 {
