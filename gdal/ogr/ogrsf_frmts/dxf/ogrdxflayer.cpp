@@ -2281,59 +2281,103 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
 }
 
 /************************************************************************/
-/*                      GeometryInsertTransformer                       */
+/*                            InsertBlock()                             */
+/*                                                                      */
+/*     Inserts the given block at the location specified by the given   */
+/*     transformer.  Returns poFeature, or NULL if bInline is true      */
+/*     and all block features have been pushed to the pending feature   */
+/*     stack.  Throws std::invalid_argument if the requested block      */
+/*     doesn't exist.                                                   */
 /************************************************************************/
 
-class GeometryInsertTransformer : public OGRCoordinateTransformation
+OGRFeature *OGRDXFLayer::InsertBlock( const CPLString osBlockName,
+    OGRDXFInsertTransformer oTransformer, OGRFeature* const poFeature,
+    const bool bInline )
 {
-public:
-    GeometryInsertTransformer() :
-            dfXOffset(0),dfYOffset(0),dfZOffset(0),
-            dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
-            dfAngle(0.0) {}
+/* -------------------------------------------------------------------- */
+/*      In the case where we do not inline blocks, we just capture      */
+/*      info on a point feature.                                        */
+/* -------------------------------------------------------------------- */
+    if( !bInline )
+    {
+        poFeature->SetGeometryDirectly( new OGRPoint( oTransformer.dfXOffset,
+            oTransformer.dfYOffset,
+            oTransformer.dfZOffset ) );
 
-    double dfXOffset;
-    double dfYOffset;
-    double dfZOffset;
-    double dfXScale;
-    double dfYScale;
-    double dfZScale;
-    double dfAngle;
+        poFeature->SetField( "BlockName", osBlockName );
 
-    OGRSpatialReference *GetSourceCS() override { return NULL; }
-    OGRSpatialReference *GetTargetCS() override { return NULL; }
-    int Transform( int nCount,
-                   double *x, double *y, double *z ) override
-        { return TransformEx( nCount, x, y, z, NULL ); }
+        poFeature->SetField( "BlockAngle", oTransformer.dfAngle * 180 / M_PI );
+        poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
 
-    int TransformEx( int nCount,
-                     double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL ) override
-        {
-            for( int i = 0; i < nCount; i++ )
-            {
-                x[i] *= dfXScale;
-                y[i] *= dfYScale;
-                if( z )
-                    z[i] *= dfZScale;
+        return poFeature;
+    }
 
-                const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
-                const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
+/* -------------------------------------------------------------------- */
+/*      Lookup the block.                                               */
+/* -------------------------------------------------------------------- */
+    DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
 
-                x[i] = dfXNew;
-                y[i] = dfYNew;
+    if( poBlock == NULL )
+    {
+        //CPLDebug( "DXF", "Attempt to insert missing block %s", osBlockName );
+        throw std::invalid_argument("osBlockName");
+    }
 
-                x[i] += dfXOffset;
-                y[i] += dfYOffset;
-                if( z )
-                    z[i] += dfZOffset;
+/* -------------------------------------------------------------------- */
+/*      Transform the geometry.                                         */
+/* -------------------------------------------------------------------- */
+    if( poBlock->poGeometry != NULL )
+    {
+        OGRGeometry *poGeometry = poBlock->poGeometry->clone();
 
-                if( pabSuccess )
-                    pabSuccess[i] = TRUE;
-            }
-            return TRUE;
-        }
-};
+        poGeometry->transform( &oTransformer );
+
+        poFeature->SetGeometryDirectly( poGeometry );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have complete features associated with the block, push    */
+/*      them on the pending feature stack copying over key override     */
+/*      information.                                                    */
+/*                                                                      */
+/*      Note that while we transform the geometry of the features we    */
+/*      don't adjust subtle things like text angle.                     */
+/* -------------------------------------------------------------------- */
+    for( unsigned int iSubFeat = 0;
+         iSubFeat < poBlock->apoFeatures.size();
+         iSubFeat++ )
+    {
+        OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
+        CPLString osCompEntityId;
+
+        if( poSubFeature->GetGeometryRef() != NULL )
+            poSubFeature->GetGeometryRef()->transform( &oTransformer );
+
+        ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
+            oTransformer.dfXScale, poSubFeature );
+
+        osCompEntityId += poFeature->GetFieldAsString( "EntityHandle" );
+        poSubFeature->SetField( "EntityHandle", osCompEntityId );
+
+        apoPendingFeatures.push( poSubFeature );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return the working feature if we had geometry, otherwise        */
+/*      return NULL and let the machinery find the rest of the          */
+/*      features in the pending feature stack.                          */
+/* -------------------------------------------------------------------- */
+    if( poBlock->poGeometry == NULL )
+    {
+        return NULL;
+    }
+    else
+    {
+        // Set style pen color
+        PrepareLineStyle( poFeature );
+        return poFeature;
+    }
+}
 
 /************************************************************************/
 /*                          TranslateINSERT()                           */
@@ -2344,10 +2388,9 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    GeometryInsertTransformer oTransformer;
+    OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFInsertTransformer oTransformer;
     CPLString osBlockName;
-    double dfAngle = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -2381,10 +2424,9 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             break;
 
           case 50:
-            dfAngle = CPLAtof(szLineBuf);
             // We want to transform this to radians.
             // It is apparently always in degrees regardless of $AUNITS
-            oTransformer.dfAngle = dfAngle * M_PI / 180.0;
+            oTransformer.dfAngle = CPLAtof(szLineBuf) * M_PI / 180.0;
             break;
 
           case 2:
@@ -2406,96 +2448,33 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-/* -------------------------------------------------------------------- */
-/*      In the case where we do not inlined blocks we just capture      */
-/*      info on a point feature.                                        */
-/* -------------------------------------------------------------------- */
-    if( !poDS->InlineBlocks() )
+    // Transform the insertion point into world coordinates
+    OGRPoint oInsertionPoint( oTransformer.dfXOffset, oTransformer.dfYOffset,
+        oTransformer.dfZOffset );
+    ApplyOCSTransformer( &oInsertionPoint );
+    oTransformer.dfXOffset = oInsertionPoint.getX();
+    oTransformer.dfYOffset = oInsertionPoint.getY();
+    oTransformer.dfZOffset = oInsertionPoint.getZ();
+
+    try
     {
-        // ApplyOCSTransformer( poGeom ); ?
-        poFeature->SetGeometryDirectly(
-            new OGRPoint( oTransformer.dfXOffset,
-                          oTransformer.dfYOffset,
-                          oTransformer.dfZOffset ) );
-
-        poFeature->SetField( "BlockName", osBlockName );
-
-        poFeature->SetField( "BlockAngle", dfAngle );
-        poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
-
-        return poFeature;
+        poFeature = InsertBlock( osBlockName, oTransformer, poFeature,
+            poDS->InlineBlocks() );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Lookup the block.                                               */
-/* -------------------------------------------------------------------- */
-    DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
-
-    if( poBlock == NULL )
+    catch( const std::invalid_argument& )
     {
+        // Block doesn't exist
         delete poFeature;
         return NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the geometry.                                         */
-/* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry != NULL )
+    
+    if( !poFeature )
     {
-        OGRGeometry *poGeometry = poBlock->poGeometry->clone();
-
-        poGeometry->transform( &oTransformer );
-
-        poFeature->SetGeometryDirectly( poGeometry );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we have complete features associated with the block, push    */
-/*      them on the pending feature stack copying over key override     */
-/*      information.                                                    */
-/*                                                                      */
-/*      Note that while we transform the geometry of the features we    */
-/*      don't adjust subtle things like text angle.                     */
-/* -------------------------------------------------------------------- */
-    for( unsigned int iSubFeat = 0;
-         iSubFeat < poBlock->apoFeatures.size();
-         iSubFeat++ )
-    {
-        OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
-        CPLString osCompEntityId;
-
-        if( poSubFeature->GetGeometryRef() != NULL )
-            poSubFeature->GetGeometryRef()->transform( &oTransformer );
-
-        ACAdjustText( dfAngle, oTransformer.dfXScale, poSubFeature );
-
-#ifdef notdef
-        osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );
-        osCompEntityId += ":";
-#endif
-        osCompEntityId += poFeature->GetFieldAsString( "EntityHandle" );
-
-        poSubFeature->SetField( "EntityHandle", osCompEntityId );
-
-        apoPendingFeatures.push( poSubFeature );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Return the working feature if we had geometry, otherwise        */
-/*      return NULL and let the machinery find the rest of the          */
-/*      features in the pending feature stack.                          */
-/* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry == NULL )
-    {
+        // The block geometries were appended to apoPendingFeatures
         delete poFeature;
         return NULL;
     }
-    else
-    {
-        // Set style pen color
-        PrepareLineStyle( poFeature );
-        return poFeature;
-    }
+    return poFeature;
 }
 
 /************************************************************************/
