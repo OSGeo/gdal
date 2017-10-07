@@ -33,6 +33,8 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
+#include <vector>
+
 CPL_CVSID("$Id$")
 
 /******************************************************************************/
@@ -374,6 +376,31 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
 }
 
 /************************************************************************/
+/*                      ErrorHandlerAccumulator()                       */
+/************************************************************************/
+
+class ErrorStruct
+{
+  public:
+    CPLErr type;
+    CPLErrorNum no;
+    CPLString msg;
+
+    ErrorStruct() : type(CE_None), no(CPLE_None) {}
+    ErrorStruct(CPLErr eErrIn, CPLErrorNum noIn, const char* msgIn) :
+        type(eErrIn), no(noIn), msg(msgIn) {}
+};
+
+static void CPL_STDCALL ErrorHandlerAccumulator( CPLErr eErr, CPLErrorNum no,
+                                                 const char* msg )
+{
+    std::vector<ErrorStruct>* paoErrors =
+        static_cast<std::vector<ErrorStruct> *>(
+            CPLGetErrorHandlerUserData());
+    paoErrors->push_back(ErrorStruct(eErr, no, msg));
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -498,10 +525,19 @@ int main( int argc, char ** argv )
     }
     else
     {
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+        std::vector<ErrorStruct> aoErrors;
+        CPLPushErrorHandlerEx( ErrorHandlerAccumulator, &aoErrors );
         hDstDS = GDALOpenEx( psOptionsForBinary->pszDstFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
                              NULL, psOptionsForBinary->papszDestOpenOptions, NULL );
         CPLPopErrorHandler();
+        if( hDstDS != NULL )
+        {
+            for( size_t i = 0; i < aoErrors.size(); i++ )
+            {
+                CPLError( aoErrors[i].type, aoErrors[i].no, "%s",
+                          aoErrors[i].msg.c_str());
+            }
+        }
     }
 
     if( hDstDS != NULL && psOptionsForBinary->bOverwrite )
