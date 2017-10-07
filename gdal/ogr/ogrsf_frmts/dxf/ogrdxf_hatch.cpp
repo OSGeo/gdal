@@ -32,6 +32,7 @@
 #include "cpl_conv.h"
 #include "ogr_api.h"
 
+#include <algorithm>
 #include "ogrdxf_polyline_smooth.h"
 
 CPL_CVSID("$Id$")
@@ -96,6 +97,20 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 
     if( nCode == 0 )
         poDS->UnreadValue();
+   
+/* -------------------------------------------------------------------- */
+/*      Obtain a tolerance value used when building the polygon.        */
+/* -------------------------------------------------------------------- */
+   double dfTolerance = atof( CPLGetConfigOption( "DXF_HATCH_TOLERANCE", "-1" ) );
+   if( dfTolerance < 0 )
+   {
+       // If the configuration variable isn't set, compute the bounding box
+       // and work out a tolerance from that
+       OGREnvelope oEnvelope;
+       oGC.getEnvelope( &oEnvelope );
+       dfTolerance = std::max( oEnvelope.MaxX - oEnvelope.MinX,
+           oEnvelope.MaxY - oEnvelope.MinY ) * 1e-7;
+   }
 
 /* -------------------------------------------------------------------- */
 /*      Try to turn the set of lines into something useful.             */
@@ -104,7 +119,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 
     OGRGeometry* poFinalGeom = (OGRGeometry *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
-                                  TRUE, TRUE, 0.0000001, &eErr );
+                                  TRUE, TRUE, dfTolerance, &eErr );
     if( eErr != OGRERR_NONE )
     {
         delete poFinalGeom;
