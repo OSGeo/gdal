@@ -306,7 +306,7 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
 
   ::SysFreeString(buffer);
 
-  if (strlen(strESRIWKT) <= 0)
+  if ( strESRIWKT[0] == '\0' )
   {
     CPLError( CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is NULL");
     return false;
