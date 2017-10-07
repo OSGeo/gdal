@@ -37,7 +37,9 @@ CPL_CVSID("$Id$")
 
 OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
     poDS(poDSIn),
-    poFeatureDefn(new OGRFeatureDefn( "blocks" ))
+    poFeatureDefn(new OGRFeatureDefn( "blocks" )),
+    iNextFID(0),
+    iNextSubFeature(0)
 {
     ResetReading();
 
