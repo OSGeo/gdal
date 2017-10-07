@@ -181,7 +181,7 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateHATCH();
     OGRFeature *        TranslateSOLID();
 
-    OGRFeature *        InsertBlock( const CPLString osBlockName,
+    OGRFeature *        InsertBlock( const CPLString& osBlockName,
                                      OGRDXFInsertTransformer oTransformer,
                                      OGRFeature* const poFeature,
                                      const bool bInline );
