@@ -454,7 +454,7 @@ static CPLErr Resolve( CPLXMLNode *psNode,
                                    CSLT_ALLOWEMPTYTOKENS |
                                    CSLT_STRIPLEADSPACES |
                                    CSLT_STRIPENDSPACES);
-            if( CSLCount(papszTokens) != 2 || strlen(papszTokens[1]) <= 0 )
+            if( CSLCount(papszTokens) != 2 || papszTokens[1][0] == '\0' )
             {
                 CPLError(bStrict ? CE_Failure : CE_Warning,
                          CPLE_NotSupported,
