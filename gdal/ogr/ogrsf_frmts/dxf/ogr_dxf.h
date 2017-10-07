@@ -87,6 +87,63 @@ class OGRDXFBlocksLayer : public OGRLayer
 };
 
 /************************************************************************/
+/*                       OGRDXFInsertTransformer                        */
+/*                                                                      */
+/*      Stores the transformation needed to insert a block reference.   */
+/************************************************************************/
+
+class OGRDXFInsertTransformer : public OGRCoordinateTransformation
+{
+public:
+    OGRDXFInsertTransformer() :
+        dfXOffset(0),dfYOffset(0),dfZOffset(0),
+        dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
+        dfAngle(0.0) {}
+
+    double dfXOffset;
+    double dfYOffset;
+    double dfZOffset;
+    double dfXScale;
+    double dfYScale;
+    double dfZScale;
+    double dfAngle;
+
+    OGRSpatialReference *GetSourceCS() override { return NULL; }
+    OGRSpatialReference *GetTargetCS() override { return NULL; }
+    int Transform( int nCount,
+        double *x, double *y, double *z ) override
+    { return TransformEx( nCount, x, y, z, NULL ); }
+
+    int TransformEx( int nCount,
+        double *x, double *y, double *z = NULL,
+        int *pabSuccess = NULL ) override
+    {
+        for( int i = 0; i < nCount; i++ )
+        {
+            x[i] *= dfXScale;
+            y[i] *= dfYScale;
+            if( z )
+                z[i] *= dfZScale;
+
+            const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
+            const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
+
+            x[i] = dfXNew;
+            y[i] = dfYNew;
+
+            x[i] += dfXOffset;
+            y[i] += dfYOffset;
+            if( z )
+                z[i] += dfZOffset;
+
+            if( pabSuccess )
+                pabSuccess[i] = TRUE;
+        }
+        return TRUE;
+    }
+};
+
+/************************************************************************/
 /*                             OGRDXFLayer                              */
 /************************************************************************/
 class OGRDXFLayer : public OGRLayer
@@ -124,6 +181,10 @@ class OGRDXFLayer : public OGRLayer
     OGRFeature *        TranslateHATCH();
     OGRFeature *        TranslateSOLID();
 
+    OGRFeature *        InsertBlock( const CPLString osBlockName,
+                                     OGRDXFInsertTransformer oTransformer,
+                                     OGRFeature* const poFeature,
+                                     const bool bInline );
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
     OGRErr              CollectPolylinePath( OGRGeometryCollection * );

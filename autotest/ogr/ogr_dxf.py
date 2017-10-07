@@ -2610,6 +2610,23 @@ def ogr_dxf_40():
     return 'success'
 
 ###############################################################################
+# Test handing of OCS vs WCS for INSERT (#7077)
+
+def ogr_dxf_41():
+
+    ds = ogr.Open('data/insert-ocs-reduced.dxf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetFeature(1)
+    expected_wkt = 'LINESTRING (331545 5831900,' + \
+    '331565 5831900,331565 5831920,331545 5831920,331545 5831900)'
+    if ogrtest.check_feature_geometry(f, expected_wkt) != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2662,6 +2679,7 @@ gdaltest_list = [
     ogr_dxf_38,
     ogr_dxf_39,
     ogr_dxf_40,
+    ogr_dxf_41,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
