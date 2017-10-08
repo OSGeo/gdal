@@ -637,10 +637,15 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
 
     for( int iLayer = 0; iLayer < nNewLayers; iLayer++ )
     {
+        bool bIsDefPoints = false;
+        bool bWrote290 = false;
         for( unsigned i = 0; i < aosDefaultLayerText.size(); i++ )
         {
             if( anDefaultLayerCode[i] == 2 )
             {
+                if( EQUAL(papszLayersToCreate[iLayer], "DEFPOINTS") )
+                    bIsDefPoints = true;
+
                 if( !WriteValue( fpOut, 2, papszLayersToCreate[iLayer] ) )
                     return false;
             }
@@ -650,11 +655,21 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
             }
             else
             {
+                if( anDefaultLayerCode[i] == 290 )
+                    bWrote290 = true;
+
                 if( !WriteValue( fpOut,
                                  anDefaultLayerCode[i],
                                  aosDefaultLayerText[i] ) )
                     return false;
             }
+        }
+        if( bIsDefPoints && !bWrote290 )
+        {
+            // The Defpoints layer must be explicitly set to not plotted to
+            // please Autocad. See https://trac.osgeo.org/gdal/ticket/7078
+            if( !WriteValue( fpOut, 290, "0" ) )
+                return false;
         }
     }
 
