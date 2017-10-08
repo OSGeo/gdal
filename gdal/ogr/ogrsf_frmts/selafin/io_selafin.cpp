@@ -594,7 +594,7 @@ namespace Selafin {
         CPLFree(panTemp);
         // Read the connectivity table as an array of nPointsPerElement*nElements integers, and check if all point numbers are valid
         nLength=read_intarray(fp,poHeader->panConnectivity,poHeader->nFileSize);
-        if (nLength!=poHeader->nElements*poHeader->nPointsPerElement) {
+        if (poHeader->nElements != 0 && nLength/poHeader->nElements != poHeader->nPointsPerElement) {
             delete poHeader;
             return NULL;
         }
