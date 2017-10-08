@@ -5019,8 +5019,6 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_TRANSFER_ENCODING, "chunked");
-
         m_osCurlErrBuf.resize(CURL_ERROR_SIZE+1);
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, &m_osCurlErrBuf[0] );
 
