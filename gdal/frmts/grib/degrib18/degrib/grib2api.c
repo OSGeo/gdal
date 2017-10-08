@@ -1095,15 +1095,15 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
    }
    /* Mimic MDL's handling of reference value (IS5(12)) */
    memcpy (&f_temp, &(is5[11]), sizeof (float));
-   is5[11] = (sInt4) f_temp;
+   is5[11] = FloatToSInt4Clamp(f_temp);
    if ((is5[9] == 2) || (is5[9] == 3)) {
       if (is5[20] == 0) {
          memcpy (&(f_temp), &(is5[23]), sizeof (float));
          *xmissp = f_temp;
-         is5[23] = (sInt4) f_temp;
+         is5[23] = FloatToSInt4Clamp(f_temp);
          memcpy (&(f_temp), &(is5[27]), sizeof (float));
          *xmisss = f_temp;
-         is5[27] = (sInt4) f_temp;
+         is5[27] = FloatToSInt4Clamp(f_temp);
       } else {
          *xmissp = is5[23];
          *xmisss = is5[27];
