@@ -2370,6 +2370,7 @@ OGRFeature *OGRDXFLayer::InsertBlock( const CPLString& osBlockName,
 /* -------------------------------------------------------------------- */
     if( poBlock->poGeometry == NULL )
     {
+        delete poFeature;
         return NULL;
     }
     else
