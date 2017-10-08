@@ -43,7 +43,6 @@
 #pragma warning( disable : 4211 ) /* nonstandard extension used : redefined extern to static */
 #endif
 
-#include <my_global.h>
 #include <mysql.h>
 
 #ifdef _MSC_VER
