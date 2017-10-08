@@ -44,7 +44,6 @@
 #pragma warning( disable : 4005 ) /* warning C4005: 'HAVE_STRUCT_TIMESPEC': macro redefinition */
 #endif
 
-#include <my_global.h>
 #include <mysql.h>
 
 #ifdef _MSC_VER
