@@ -671,16 +671,15 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
+// Note: papszOptions must be kept alive until curl_easy/multi_perform()
+// has completed, and we must be careful not to set short lived strings
+// with curl_easy_setopt(), as long as we need to support curl < 7.17
+// see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
+// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS 
+
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
     CheckCurlFeatures();
-
-    char** papszOptionsToFree = NULL;
-    if( papszOptions == NULL )
-    {
-        papszOptionsToFree = CPLHTTPGetOptionsFromEnv();
-        papszOptions = papszOptionsToFree;
-    }
 
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
 
@@ -689,6 +688,8 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 
     const char *pszHttpVersion =
         CSLFetchNameValue( papszOptions, "HTTP_VERSION");
+    if( pszHttpVersion == NULL )
+        pszHttpVersion = CPLGetConfigOption( "GDAL_HTTP_VERSION", NULL );
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
         curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                          CURL_HTTP_VERSION_1_0);
@@ -1030,8 +1031,6 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
             VSIFCloseL(fp);
         }
     }
-
-    CSLDestroy(papszOptionsToFree);
 
     return headers;
 }
