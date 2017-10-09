@@ -367,16 +367,6 @@ void VSIOSSHandleHelper::SetEndpoint( const CPLString &osStr )
     RebuildURL();
 }
 
-/************************************************************************/
-/*                           SetObjectKey()                             */
-/************************************************************************/
-
-void VSIOSSHandleHelper::SetObjectKey( const CPLString &osStr )
-{
-    m_osObjectKey = osStr;
-    RebuildURL();
-}
-
 #endif // HAVE_CURL
 
 //! @endcond

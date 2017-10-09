@@ -89,7 +89,6 @@ class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
         bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
         void SetEndpoint(const CPLString &osStr);
         void SetVirtualHosting(bool b);
-        void SetObjectKey(const CPLString &osStr);
 
         static bool GetConfiguration(CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId);

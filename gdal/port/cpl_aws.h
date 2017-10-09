@@ -167,7 +167,6 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         void SetRegion(const CPLString &osStr);
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
-        void SetObjectKey(const CPLString &osStr);
 
         static bool GetConfiguration(CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
