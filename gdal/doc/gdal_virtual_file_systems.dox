@@ -152,17 +152,17 @@ Note that /path/to/the/archive may also itself use this alternate syntax.
 
 \section gdal_virtual_file_systems_network Network based file systems
 
-A generic \link gdal_virtual_file_systems_vsicurl /vsicurl/\endlink file system
+A generic \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" file system
 handler exists for online resources that do
 not require particular signed authentication schemes. It is specialized into
 sub-filesystems for commercial cloud storage services, such as
-\link gdal_virtual_file_systems_vsis3 /vsis3/\endlink,
-\link gdal_virtual_file_systems_vsigs /vsigs/\endlink,
-\link gdal_virtual_file_systems_vsiaz /vsiaz/\endlink or
-\link gdal_virtual_file_systems_vsioss /vsioss/\endlink.
+\ref gdal_virtual_file_systems_vsis3 "/vsis3/",
+\ref gdal_virtual_file_systems_vsigs "/vsigs/",
+\ref gdal_virtual_file_systems_vsiaz "/vsiaz/" or
+\ref gdal_virtual_file_systems_vsioss "/vsioss/".
 
 When reading of entire files in a streaming way is possible, prefer using the
-\link gdal_virtual_file_systems_vsicurl_streaming /vsicurl_streaming/\endlink,
+\ref gdal_virtual_file_systems_vsicurl_streaming "/vsicurl_streaming/",
 and its variants for the above cloud storage services, for more efficiency.
 
 \subsection gdal_virtual_file_systems_vsicurl /vsicurl/ (http/https/ftp files: random access)
@@ -295,7 +295,7 @@ Recognized filenames are of the form /vsis3/bucket/key where
 bucket is the name of the S3 bucket and key the S3 object "key", i.e.
 a filename potentially containing subdirectories.
 
-The generalities of \link gdal_virtual_file_systems_vsicurl /vsicurl/\endlink apply.
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
 The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
 be set.  The AWS_SESSION_TOKEN configuration option must be set when
@@ -350,7 +350,7 @@ bucket is the name of the S3 bucket and resource the S3 object "key", i.e.
 a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
-\link gdal_virtual_file_systems_vsis3 /vsis3/\endlink
+\ref gdal_virtual_file_systems_vsis3 "/vsis3/"
 
 @since GDAL 2.1
 
@@ -370,7 +370,7 @@ Recognized filenames are of the form /vsigs/bucket/key where
 bucket is the name of the bucket and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
-The generalities of \link gdal_virtual_file_systems_vsicurl /vsicurl/\endlink apply.
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
 Several authentication methods are possible. In order of priorities (first
 mentioned is the most prioritary)
@@ -430,7 +430,7 @@ bucket is the name of the bucket and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
-\link gdal_virtual_file_systems_vsigs /vsigs/\endlink
+\ref gdal_virtual_file_systems_vsigs "/vsigs/"
 
 @since GDAL 2.2
 
@@ -461,7 +461,7 @@ Recognized filenames are of the form /vsiaz/container/key where
 container is the name of the container and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
-The generalities of \link gdal_virtual_file_systems_vsicurl /vsicurl/\endlink apply.
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
 Several authentication methods are possible. In order of priorities (first
 mentioned is the most prioritary)
@@ -489,7 +489,7 @@ container is the name of the container and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
-\link gdal_virtual_file_systems_vsiaz /vsiaz/\endlink
+\ref gdal_virtual_file_systems_vsiaz "/vsiaz/"
 
 @since GDAL 2.3
 
@@ -509,7 +509,7 @@ Recognized filenames are of the form /vsioss/bucket/key where
 bucket is the name of the OSS bucket and key the OSS object "key", i.e.
 a filename potentially containing subdirectories.
 
-The generalities of \link gdal_virtual_file_systems_vsicurl /vsicurl/\endlink apply.
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
 The OSS_SECRET_ACCESS_KEY and OSS_ACCESS_KEY_ID configuration options *must*
 be set. The OSS_ENDPOINT configuration option should normally be set to the
@@ -542,7 +542,7 @@ container is the name of the container and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
-\link gdal_virtual_file_systems_vsioss /vsioss/\endlink
+\ref gdal_virtual_file_systems_vsioss "/vsioss/"
 
 @since GDAL 2.3
 
