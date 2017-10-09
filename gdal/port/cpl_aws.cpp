@@ -49,7 +49,6 @@ static CPLString osGlobalAccessKeyId;
 static CPLString osGlobalSecretAccessKey;
 static CPLString osGlobalSessionToken;
 static GIntBig nGlobalExpiration = 0;
-#endif
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -126,6 +125,26 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
     return osRet;
 }
 
+
+/************************************************************************/
+/*                         CPLAWSGetHeaderVal()                         */
+/************************************************************************/
+
+CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
+                             const char* pszKey)
+{
+    CPLString osKey(pszKey);
+    osKey += ":";
+    const struct curl_slist* psIter = psExistingHeaders;
+    for(; psIter != NULL; psIter = psIter->next)
+    {
+        if( STARTS_WITH(psIter->data, osKey.c_str()) )
+            return CPLString(psIter->data + osKey.size()).Trim();
+    }
+    return CPLString();
+}
+
+
 /************************************************************************/
 /*                CPLGetAWS_SIGN4_Authorization()                       */
 /************************************************************************/
@@ -140,6 +159,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                const CPLString& osRequestPayer,
                                const CPLString& osService,
                                const CPLString& osVerb,
+                               const struct curl_slist* psExistingHeaders,
                                const CPLString& osHost,
                                const CPLString& osCanonicalURI,
                                const CPLString& osCanonicalQueryString,
@@ -155,30 +175,41 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 
     osCanonicalRequest += osCanonicalQueryString + "\n";
 
-    CPLString osCanonicalHeaders =
-        "host:" + osHost + "\n" +
-        "x-amz-content-sha256:" + osXAMZContentSHA256 + "\n" +
-        "x-amz-date:" + osTimestamp + "\n";
-    if( !osRequestPayer.empty() )
+    std::map<CPLString, CPLString> oSortedMapAMZHeaders;
+    const struct curl_slist* psIter = psExistingHeaders;
+    for(; psIter != NULL; psIter = psIter->next)
     {
-        osCanonicalHeaders += "x-amz-request-payer:";
-        osCanonicalHeaders += osRequestPayer;
-        osCanonicalHeaders += "\n";
+        if( STARTS_WITH_CI(psIter->data, "x-amz-") )
+        {
+            const char* pszColumn = strstr(psIter->data, ":");
+            if( pszColumn )
+            {
+                CPLString osKey(psIter->data);
+                osKey.resize( pszColumn - psIter->data);
+                oSortedMapAMZHeaders[osKey.tolower()] = CPLString(pszColumn + strlen(":")).Trim();
+            }
+        }
     }
+    oSortedMapAMZHeaders["host"] = osHost;
+    oSortedMapAMZHeaders["x-amz-content-sha256"] = osXAMZContentSHA256;
+    oSortedMapAMZHeaders["x-amz-date"] = osTimestamp;
+    if( !osRequestPayer.empty() )
+        oSortedMapAMZHeaders["x-amz-request-payer"] = osRequestPayer;
     if( !osAccessToken.empty() )
+        oSortedMapAMZHeaders["x-amz-security-token"] = osAccessToken;
+    CPLString osCanonicalHeaders;
+    CPLString osSignedHeaders;
+    std::map<CPLString, CPLString>::const_iterator oIter = oSortedMapAMZHeaders.begin();
+    for(; oIter != oSortedMapAMZHeaders.end(); ++oIter )
     {
-        osCanonicalHeaders += "x-amz-security-token:";
-        osCanonicalHeaders += osAccessToken;
-        osCanonicalHeaders += "\n";
+        osCanonicalHeaders += oIter->first + ":" + oIter->second + "\n";
+        if( !osSignedHeaders.empty() )
+            osSignedHeaders += ";";
+        osSignedHeaders += oIter->first;
     }
 
     osCanonicalRequest += osCanonicalHeaders + "\n";
 
-    CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
-    if( !osRequestPayer.empty() )
-        osSignedHeaders += ";x-amz-request-payer";
-    if( !osAccessToken.empty() )
-        osSignedHeaders += ";x-amz-security-token";
     osCanonicalRequest += osSignedHeaders + "\n";
 
     osCanonicalRequest += osXAMZContentSHA256;
@@ -303,7 +334,6 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
     return szTimeStamp;
 }
 
-#ifdef HAVE_CURL
 
 /************************************************************************/
 /*                         VSIS3HandleHelper()                          */
@@ -949,7 +979,7 @@ void VSIS3HandleHelper::AddQueryParameter( const CPLString& osKey,
 
 struct curl_slist *
 VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
-                                   const struct curl_slist* /* psExistingHeaders */,
+                                   const struct curl_slist* psExistingHeaders,
                                    const void *pabyDataContent,
                                    size_t nBytesContent ) const
 {
@@ -982,6 +1012,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         m_osRequestPayer,
         "s3",
         osVerb,
+        psExistingHeaders,
         osHost,
         m_bUseVirtualHosting
         ? ("/" + m_osObjectKey).c_str() :

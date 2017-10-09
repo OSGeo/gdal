@@ -39,24 +39,6 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_CURL
 
 /************************************************************************/
-/*                           GetHeaderVal()                             */
-/************************************************************************/
-
-static CPLString GetHeaderVal(const struct curl_slist* psExistingHeaders,
-                              const char* pszKey)
-{
-    CPLString osKey(pszKey);
-    osKey += ":";
-    const struct curl_slist* psIter = psExistingHeaders;
-    for(; psIter != NULL; psIter = psIter->next)
-    {
-        if( STARTS_WITH(psIter->data, osKey.c_str()) )
-            return CPLString(psIter->data + osKey.size()).Trim();
-    }
-    return CPLString();
-}
-
-/************************************************************************/
 /*                          GetAzureBlobHeaders()                       */
 /************************************************************************/
 
@@ -122,20 +104,20 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
 
     CPLString osStringToSign;
     osStringToSign += osVerb + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Content-Encoding") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Content-Language") + "\n";
-    CPLString osContentLength(GetHeaderVal(psExistingHeaders, "Content-Length"));
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-Encoding") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-Language") + "\n";
+    CPLString osContentLength(CPLAWSGetHeaderVal(psExistingHeaders, "Content-Length"));
     if( osContentLength == "0" )
         osContentLength.clear(); // since x-ms-version 2015-02-21
     osStringToSign += osContentLength + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Date") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "If-Modified-Since") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "If-Match") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "If-None-Match") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "If-Unmodified-Since") + "\n";
-    osStringToSign += GetHeaderVal(psExistingHeaders, "Range") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Date") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "If-Modified-Since") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "If-Match") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "If-None-Match") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "If-Unmodified-Since") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Range") + "\n";
     osStringToSign += osCanonicalizedHeaders;
     osStringToSign += osCanonicalizedResource;
 

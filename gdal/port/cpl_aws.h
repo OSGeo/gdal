@@ -33,22 +33,14 @@
 
 #ifndef DOXYGEN_SKIP
 
+#ifdef HAVE_CURL
+
 #include <cstddef>
 
 #include "cpl_string.h"
 
-CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
-                                        const CPLString& osAccessKeyId,
-                                        const CPLString& osAccessToken,
-                                        const CPLString& osAWSRegion,
-                                        const CPLString& osRequestPayer,
-                                        const CPLString& osService,
-                                        const CPLString& osVerb,
-                                        const CPLString& osHost,
-                                        const CPLString& osCanonicalURI,
-                                        const CPLString& osCanonicalQueryString,
-                                        const CPLString& osXAMZContentSHA256,
-                                        const CPLString& osTimestamp);
+#include <curl/curl.h>
+#include <map>
 
 CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes );
 CPLString CPLGetLowerCaseHexSHA256( const CPLString& osStr );
@@ -57,10 +49,22 @@ CPLString CPLGetAWS_SIGN4_Timestamp();
 
 CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 
-#ifdef HAVE_CURL
+CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
+                             const char* pszKey);
 
-#include <curl/curl.h>
-#include <map>
+CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
+                                        const CPLString& osAccessKeyId,
+                                        const CPLString& osAccessToken,
+                                        const CPLString& osAWSRegion,
+                                        const CPLString& osRequestPayer,
+                                        const CPLString& osService,
+                                        const CPLString& osVerb,
+                                        const struct curl_slist* psExistingHeaders,
+                                        const CPLString& osHost,
+                                        const CPLString& osCanonicalURI,
+                                        const CPLString& osCanonicalQueryString,
+                                        const CPLString& osXAMZContentSHA256,
+                                        const CPLString& osTimestamp);
 
 class IVSIS3LikeHandleHelper
 {
