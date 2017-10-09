@@ -121,6 +121,7 @@ int main( int nArgc, char ** papszArgv )
     bool bExtent = true;
     bool bDatasetGetNextFeature = false;
     bool bReadOnly = false;
+    bool bUpdate = false;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -138,6 +139,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-ro") )
         {
             bReadOnly = true;
+        }
+        else if( EQUAL(papszArgv[iArg],"-update") )
+        {
+            bUpdate = true;
         }
         else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet"))
         {
@@ -282,12 +287,6 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-    if( pszSQLStatement == NULL )
-    {
-        // Force read-only mode also if we don't have a SQL statement
-        bReadOnly = true;
-    }
-
     if( pszDataSource == NULL )
         Usage("No datasource specified.");
 
@@ -307,9 +306,20 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     GDALDataset *poDS = static_cast<GDALDataset *>(GDALOpenEx(
         pszDataSource,
-        (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
+        ((bReadOnly || pszSQLStatement == NULL) && !bUpdate ? GDAL_OF_READONLY : GDAL_OF_UPDATE) | GDAL_OF_VECTOR,
         NULL, papszOpenOptions, NULL));
-    if( poDS == NULL && !bReadOnly )
+    if( poDS == NULL && !bReadOnly && !bUpdate && pszSQLStatement == NULL )
+    {
+        // In some cases (empty geopackage for example), opening in read-only
+        // mode fails, so retry in update mode
+        if( GDALIdentifyDriverEx( pszDataSource, GDAL_OF_VECTOR, NULL, NULL ) )
+        {
+            poDS = static_cast<GDALDataset *>(GDALOpenEx(
+                pszDataSource,
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL));
+        }
+    }
+    if( poDS == NULL && !bReadOnly && !bUpdate && pszSQLStatement != NULL )
     {
         poDS = static_cast<GDALDataset *>(GDALOpenEx(
             pszDataSource,
