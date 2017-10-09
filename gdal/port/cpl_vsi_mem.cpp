@@ -847,7 +847,7 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
 //! @endcond
 
 /************************************************************************/
-/*                     VSIInstallLargeFileHandler()                     */
+/*                       VSIInstallMemFileHandler()                     */
 /************************************************************************/
 
 /**
@@ -863,13 +863,7 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
  * without duplicating original copies of the data or to "steal" the block
  * of memory associated with a memory file.
  *
- * At this time the memory handler does not properly handle directory
- * semantics for the memory portion of the filesystem.  The VSIReadDir()
- * function is not supported though this will be corrected in the future.
- *
- * Calling this function repeatedly should do no harm, though it is not
- * necessary.  It is already called the first time a virtualizable
- * file access function (i.e. VSIFOpenL(), VSIMkDir(), etc) is called.
+ * Directory related functions are supported.
  *
  * This code example demonstrates using GDAL to translate from one memory
  * buffer to another.
