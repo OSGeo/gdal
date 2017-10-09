@@ -1250,16 +1250,6 @@ void VSIS3HandleHelper::SetVirtualHosting( bool b )
     RebuildURL();
 }
 
-/************************************************************************/
-/*                           SetObjectKey()                             */
-/************************************************************************/
-
-void VSIS3HandleHelper::SetObjectKey( const CPLString &osStr )
-{
-    m_osObjectKey = osStr;
-    RebuildURL();
-}
-
 #endif
 
 //! @endcond
