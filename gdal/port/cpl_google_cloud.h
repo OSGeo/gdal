@@ -50,7 +50,6 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
         GOA2Manager m_oManager;
-        std::map<CPLString, CPLString> m_oMapQueryParameters;
 
         static bool     GetConfiguration(CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
@@ -65,7 +64,7 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
                                          CPLString& osOAuth2ClientSecret,
                                          CPLString& osCredentials);
 
-        void RebuildURL();
+        virtual void RebuildURL() CPL_OVERRIDE;
 
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
@@ -78,9 +77,6 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix);
-
-        virtual void ResetQueryParameters() CPL_OVERRIDE;
-        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
                                           const  struct curl_slist* psExistingHeaders,

@@ -1035,7 +1035,8 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         if( strstr(pszHeaderFile, "/vsicurl/") == NULL &&
             strstr(pszHeaderFile, "/vsis3/") == NULL &&
             strstr(pszHeaderFile, "/vsigs/") == NULL &&
-            strstr(pszHeaderFile, "/vsiaz/") == NULL )
+            strstr(pszHeaderFile, "/vsiaz/") == NULL &&
+            strstr(pszHeaderFile, "/vsioss/") == NULL )
         {
             fp = VSIFOpenL( pszHeaderFile, "rb" );
         }

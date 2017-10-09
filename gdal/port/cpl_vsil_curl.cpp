@@ -36,6 +36,7 @@
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
 #include "cpl_azure.h"
+#include "cpl_alibaba_oss.h"
 #include "cpl_hash_set.h"
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
@@ -65,6 +66,11 @@ void VSIInstallGSFileHandler( void )
 }
 
 void VSIInstallAzureFileHandler( void )
+{
+    // Not supported
+}
+
+void VSIInstallOSSFileHandler( void )
 {
     // Not supported
 }
@@ -941,7 +947,7 @@ static bool MultiPerformWait(CURLM* hCurlMultiHandle, int& repeats)
 {
 
     // Wait for events on the sockets
-    // Using curl_multi_wait() is prefered to avoid hitting the 1024 file
+    // Using curl_multi_wait() is preferred to avoid hitting the 1024 file
     // descriptor limit
     // 7.28.0
 #if LIBCURL_VERSION_NUM >= 0x071C00
@@ -4474,7 +4480,6 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
 class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
   protected:
-        virtual const char* GetDebugKey() const = 0;
         virtual char** GetFileList( const char *pszFilename,
                                     int nMaxFiles,
                                     bool* pbGotFileList ) override;
@@ -4490,6 +4495,8 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
                                int nFlags ) override;
 
         virtual int      DeleteObject( const char *pszFilename );
+
+        virtual const char* GetDebugKey() const = 0;
 
         virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
         virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
@@ -4681,16 +4688,29 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
 
     if( !m_bUseChunked )
     {
-        const int nChunkSizeMB = atoi(CPLGetConfigOption("VSIS3_CHUNK_SIZE", "50"));
+        const int nChunkSizeMB = atoi(
+            CPLGetConfigOption("VSIS3_CHUNK_SIZE",
+                    CPLGetConfigOption("VSIOSS_CHUNK_SIZE", "50")));
         if( nChunkSizeMB <= 0 || nChunkSizeMB > 1000 )
             m_nBufferSize = 0;
         else
             m_nBufferSize = nChunkSizeMB * 1024 * 1024;
+
+        // For testing only !
+        const char* pszChunkSizeBytes =
+            CPLGetConfigOption("VSIS3_CHUNK_SIZE_BYTES",
+                CPLGetConfigOption("VSIOSS_CHUNK_SIZE_BYTES", NULL));
+        if( pszChunkSizeBytes )
+            m_nBufferSize = atoi(pszChunkSizeBytes);
+        if( m_nBufferSize <= 0 || m_nBufferSize > 1000 * 1024 * 1024 )
+            m_nBufferSize = 50 * 1024 * 1024;
+
         m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
         if( m_pabyBuffer == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "Cannot allocate working buffer for /vsis3");
+                    "Cannot allocate working buffer for %s",
+                     m_poFS->GetFSPrefix().c_str());
         }
     }
 }
@@ -4804,7 +4824,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
             }
             else
             {
-                CPLDebug("S3", "%s",
+                CPLDebug(m_poFS->GetDebugKey(), "%s",
                          sWriteFuncData.pBuffer
                          ? sWriteFuncData.pBuffer
                          : "(null)");
@@ -4827,7 +4847,8 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
                 m_osUploadID =
                     CPLGetXMLValue(
                         psNode, "=InitiateMultipartUploadResult.UploadId", "");
-                CPLDebug("S3", "UploadId: %s", m_osUploadID.c_str());
+                CPLDebug(m_poFS->GetDebugKey(),
+                         "UploadId: %s", m_osUploadID.c_str());
                 CPLDestroyXMLNode(psNode);
             }
             if( m_osUploadID.empty() )
@@ -4929,7 +4950,7 @@ bool VSIS3WriteHandle::UploadPart()
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
     if( response_code != 200 || sWriteFuncHeaderData.pBuffer == NULL )
     {
-        CPLDebug("S3", "%s",
+        CPLDebug(m_poFS->GetDebugKey(), "%s",
                  sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
         CPLError(CE_Failure, CPLE_AppDefined, "UploadPart(%d) of %s failed",
                     m_nPartNumber, m_osFilename.c_str());
@@ -4944,7 +4965,7 @@ bool VSIS3WriteHandle::UploadPart()
             const size_t nPos = osEtag.find("\r");
             if( nPos != std::string::npos )
                 osEtag.resize(nPos);
-            CPLDebug("S3", "Etag for part %d is %s",
+            CPLDebug(m_poFS->GetDebugKey(), "Etag for part %d is %s",
                      m_nPartNumber, osEtag.c_str());
             m_aosEtags.push_back(osEtag);
         }
@@ -5954,10 +5975,7 @@ void VSIS3FSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelpe
     if( !poS3HandleHelper )
         return;
     oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
-        VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
-                      poS3HandleHelper->GetAWSS3Endpoint(),
-                      poS3HandleHelper->GetRequestPayer(),
-                      poS3HandleHelper->GetVirtualHosting() );
+        VSIS3UpdateParams ( poS3HandleHelper );
 }
 
 /************************************************************************/
@@ -5977,10 +5995,7 @@ void VSIS3FSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelpe
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        poS3HandleHelper->SetAWSRegion(oIter->second.m_osAWSRegion);
-        poS3HandleHelper->SetAWSS3Endpoint(oIter->second.m_osAWSS3Endpoint);
-        poS3HandleHelper->SetRequestPayer(oIter->second.m_osRequestPayer);
-        poS3HandleHelper->SetVirtualHosting(oIter->second.m_bUseVirtualHosting);
+        oIter->second.UpdateHandlerHelper(poS3HandleHelper);
     }
 }
 
@@ -7038,7 +7053,259 @@ bool VSIAzureHandle::IsDirectoryFromExists( const char* /*pszVerb*/,
     return bIsDir;
 }
 
-} /* end of anoymous namespace */
+
+/************************************************************************/
+/*                         VSIOSSFSHandler                              */
+/************************************************************************/
+
+class VSIOSSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+{
+    std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
+
+protected:
+        virtual VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
+        virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+
+        virtual const char* GetDebugKey() const override { return "OSS"; }
+
+        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
+                const char* pszURI, bool bAllowNoObject) override;
+
+        virtual CPLString GetFSPrefix() override { return "/vsioss/"; }
+
+        virtual void        ClearCache() override;
+
+public:
+        VSIOSSFSHandler() {}
+        virtual ~VSIOSSFSHandler();
+
+        virtual VSIVirtualHandle *Open( const char *pszFilename,
+                                        const char *pszAccess,
+                                        bool bSetError ) override;
+
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+};
+
+/************************************************************************/
+/*                            VSIOSSHandle                              */
+/************************************************************************/
+
+class VSIOSSHandle CPL_FINAL : public IVSIS3LikeHandle
+{
+    VSIOSSHandleHelper* m_poHandleHelper;
+
+  protected:
+        virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+                    const struct curl_slist* psExistingHeaders ) override;
+        virtual bool CanRestartOnError( const char*, bool ) override;
+
+    public:
+        VSIOSSHandle( VSIOSSFSHandler* poFS,
+                     const char* pszFilename,
+                     VSIOSSHandleHelper* poHandleHelper );
+        virtual ~VSIOSSHandle();
+};
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
+                                        const char *pszAccess,
+                                        bool bSetError)
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return NULL;
+
+    if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
+    {
+        /*if( strchr(pszAccess, '+') != NULL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "w+ not supported for /vsioss. Only w");
+            return NULL;
+        }*/
+        VSIOSSHandleHelper* poHandleHelper =
+            VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                            GetFSPrefix().c_str(), false);
+        if( poHandleHelper == NULL )
+            return NULL;
+        UpdateHandleFromMap(poHandleHelper);
+        VSIS3WriteHandle* poHandle =
+            new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false);
+        if( !poHandle->IsOK() )
+        {
+            delete poHandle;
+            poHandle = NULL;
+        }
+        return poHandle;
+    }
+
+    return
+        VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+}
+
+/************************************************************************/
+/*                       ~VSIOSSFSHandler()                             */
+/************************************************************************/
+
+VSIOSSFSHandler::~VSIOSSFSHandler()
+{
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSIOSSFSHandler::ClearCache()
+{
+    VSICurlFilesystemHandler::ClearCache();
+
+    oMapBucketsToOSSParams.clear();
+}
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlHandle* VSIOSSFSHandler::CreateFileHandle(const char* pszFilename)
+{
+    VSIOSSHandleHelper* poHandleHelper =
+        VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                        GetFSPrefix().c_str(), false);
+    if( poHandleHelper )
+    {
+        UpdateHandleFromMap(poHandleHelper);
+        return new VSIOSSHandle(this, pszFilename, poHandleHelper);
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                          GetURLFromDirname()                         */
+/************************************************************************/
+
+CPLString VSIOSSFSHandler::GetURLFromDirname( const CPLString& osDirname )
+{
+    CPLString osDirnameWithoutPrefix = osDirname.substr(GetFSPrefix().size());
+
+    VSIOSSHandleHelper* poHandleHelper =
+        VSIOSSHandleHelper::BuildFromURI(osDirnameWithoutPrefix,
+                                        GetFSPrefix().c_str(), true);
+    if( poHandleHelper == NULL )
+    {
+        return "";
+    }
+    UpdateHandleFromMap(poHandleHelper);
+    CPLString osBaseURL(poHandleHelper->GetURL());
+    if( !osBaseURL.empty() && osBaseURL.back() == '/' )
+        osBaseURL.resize(osBaseURL.size()-1);
+    delete poHandleHelper;
+
+    return osBaseURL;
+}
+
+/************************************************************************/
+/*                          CreateHandleHelper()                        */
+/************************************************************************/
+
+IVSIS3LikeHandleHelper* VSIOSSFSHandler::CreateHandleHelper(const char* pszURI,
+                                                          bool bAllowNoObject)
+{
+    return VSIOSSHandleHelper::BuildFromURI(
+                                pszURI, GetFSPrefix().c_str(), bAllowNoObject);
+}
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+void VSIOSSFSHandler::UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+    oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
+        VSIOSSUpdateParams ( poOSSHandleHelper );
+}
+
+/************************************************************************/
+/*                         UpdateHandleFromMap()                        */
+/************************************************************************/
+
+void VSIOSSFSHandler::UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+    std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
+        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
+    if( oIter != oMapBucketsToOSSParams.end() )
+    {
+        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
+    }
+}
+
+/************************************************************************/
+/*                            VSIOSSHandle()                            */
+/************************************************************************/
+
+VSIOSSHandle::VSIOSSHandle( VSIOSSFSHandler* poFSIn,
+                          const char* pszFilename,
+                          VSIOSSHandleHelper* poHandleHelper ) :
+        IVSIS3LikeHandle(poFSIn, pszFilename, poHandleHelper->GetURL()),
+        m_poHandleHelper(poHandleHelper)
+{
+}
+
+/************************************************************************/
+/*                            ~VSIOSSHandle()                           */
+/************************************************************************/
+
+VSIOSSHandle::~VSIOSSHandle()
+{
+    delete m_poHandleHelper;
+}
+
+/************************************************************************/
+/*                           GetCurlHeaders()                           */
+/************************************************************************/
+
+struct curl_slist* VSIOSSHandle::GetCurlHeaders( const CPLString& osVerb,
+                                const struct curl_slist* psExistingHeaders )
+{
+    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+}
+
+/************************************************************************/
+/*                          CanRestartOnError()                         */
+/************************************************************************/
+
+bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
+{
+    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    {
+        static_cast<VSIOSSFSHandler *>(poFS)->
+            UpdateMapFromHandle(m_poHandleHelper);
+
+        SetURL(m_poHandleHelper->GetURL());
+        return true;
+    }
+    return false;
+}
+
+
+
+} /* end of anonymous namespace */
 
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
@@ -7120,82 +7387,7 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
 /**
  * \brief Install /vsicurl/ HTTP/FTP file system handler (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * files available through HTTP/FTP web protocols, without prior download of the
- * entire file.
- *
- * Recognized filenames are of the form /vsicurl/http://path/to/remote/resource
- * or /vsicurl/ftp://path/to/remote/resource where path/to/remote/resource is
- * the URL of a remote resource.
- * 
- * Starting with GDAL 2.3, options can be passed in the filename with the
- * following syntax:
- * /vsicurl/option1=val1[,optionN=valN]*,url=http://...
- * Currently supported options are :
- * <ul>
- * <li>use_head=yes/no: whether the HTTP HEAD request can be emitted.
- *     Default to YES.
- *     Setting this option overrides the behaviour of the
- *     CPL_VSIL_CURL_USE_HEAD configuration option.</li>
- * <li>max_retry=number: default to 0.
- *     Setting this option overrides the behaviour of the
- *     GDAL_HTTP_MAX_RETRY configuration option.</li>
- * <li>retry_delay=number_in_seconds: default to 30.
- *     Setting this option overrides the behaviour of the
- *     GDAL_HTTP_RETRY_DELAY configuration option.</li>
- * <li>list_dir=yes/no: whether an attempt to read the file list of the
- *     directory where the file is located should be done. Default to YES.</li>
- * </ul>
- *
- * Partial downloads (requires the HTTP server to support random reading) are
- * done with a 16 KB granularity by default (starting with GDAL 2.3, the chunk
- * size can be configured with the CPL_VSIL_CURL_CHUNK_SIZE configuration option,
- * with a value in bytes.) If the driver detects sequential
- * reading it will progressively increase the chunk size up to 2 MB to improve
- * download performance.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- * 
- * Starting with GDAL 2.3, the GDAL_HTTP_MAX_RETRY (number of attempts) and
- * GDAL_HTTP_RETRY_DELAY (in seconds) configuration option can be set, so that
- * request retries are done in case of HTTP errors 502, 503 or 504.
- *
- * The file can be cached in RAM by setting the
- * configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
- * can be modified by setting the configuration option VSI_CACHE_SIZE (in
- * bytes). Content in that cache is discarded when the file handle is closed.
- * 
- * In addition, a global LRU cache of 16 MB shared among all downloaded content 
- * is enabled by default, and content in it may be reused after a file handle
- * has been closed and reopen. Starting with GDAL 2.3, the
- * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
- * "/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory",
- * so that at file handle closing, all cached content related to the mentioned
- * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code. Alternatively,
- * VSICurlClearCache() can be used.
- *
- * Starting with GDAL 2.1, /vsicurl/ will try to query directly redirected URLs
- * to Amazon S3 signed URLs during their validity period, so as to minimize
- * round-trips. This behaviour can be disabled by setting the configuration
- * option CPL_VSIL_CURL_USE_S3_REDIRECT to NO.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * VSIStatL() will return the size in st_size member and file nature- file or
- * directory - in st_mode member (the later only reliable with FTP resources for
- * now).
- *
- * VSIReadDir() should be able to parse the HTML directory listing returned by
- * the most popular web servers, such as Apache or Microsoft IIS.
- *
- * This special file handler can be combined with other virtual filesystems
- * handlers, such as /vsizip. For example,
- * /vsizip//vsicurl/path/to/remote/file.zip/path/inside/zip
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsicurl">/vsicurl/ documentation</a>
  *
  * @since GDAL 1.8.0
  */
@@ -7226,91 +7418,7 @@ void VSIInstallCurlFileHandler( void )
 /**
  * \brief Install /vsis3/ Amazon S3 file system handler (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public  files available in AWS S3 buckets, without prior download of the
- * entire file.
- * It also allows sequential writing of files (no seeks or read operations are
- * then allowed). Deletion of files with VSIUnlink() is also supported.
- * Starting with GDAL 2.3, creation of directories with VSIMkdir() and deletion
- * of (empty) directories with VSIRmdir() are also possible.
- *
- * Recognized filenames are of the form /vsis3/bucket/key where
- * bucket is the name of the S3 bucket and key the S3 object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads (requires the HTTP server to support random reading) are
- * done with a 16 KB granularity by default (starting with GDAL 2.3, the chunk
- * size can be configured with the CPL_VSIL_CURL_CHUNK_SIZE configuration option,
- * with a value in bytes.) If the driver detects sequential
- * reading it will progressively increase the chunk size up to 2 MB to improve
- * download performance.
- * Starting with GDAL 2.3, the number of bytes read when opening a file can be
- * specified with the GDAL_INGESTED_BYTES_AT_OPEN configuration option. It defaults
- * to the chunk size
- *
- * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
- * be set.  The AWS_SESSION_TOKEN configuration option must be set when
- * temporary credentials are used.  The AWS_REGION (or AWS_DEFAULT_REGION
- * starting with GDAL 2.3) configuration option may be
- * set to one of the supported
- * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
- * regions</a> and defaults to 'us-east-1'.
- * 
- * Starting with GDAL 2.3, alternate ways of providing credentials similar to
- * what the "aws" command line utility or Boto3 support can be used. If the
- * above mentioned environment variables are not provided, the ~/.aws/credentials
- * or %UserProfile%/.aws/credentials file will be read (or the file pointed by
- * CPL_AWS_CREDENTIALS_FILE). The profile may be
- * specified with the AWS_PROFILE environment variable (the default profile is "default")
- * The ~/.aws/config or %UserProfile%/.aws/config file may also be used (or the
- * file pointer by AWS_CONFIG_FILE) to retrieve credentials and the AWS region.
- * If none of the above method succeeds, instance profile credentials will be
- * retrieved when GDAL is used on EC2 instances.
- * 
- * Starting with GDAL 2.2, the
- * AWS_REQUEST_PAYER configuration option may be set to "requester" to
- * facilitate use with
- * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
- * Pays buckets</a>.
- * 
- * The AWS_S3_ENDPOINT configuration option defaults to s3.amazonaws.com. 
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the
- * configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
- * can be modified by setting the configuration option VSI_CACHE_SIZE (in
- * bytes). Content in that cache is discarded when the file handle is closed.
- * 
- * In addition, a global LRU cache of 16 MB shared among all downloaded content 
- * is enabled by default, and content in it may be reused after a file handle
- * has been closed and reopen. Starting with GDAL 2.3, the
- * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
- * "/vsis3/bucket/foo.tif:/vsis3/another_bucket/some_directory",
- * so that at file handle closing, all cached content related to the mentioned
- * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code. Alternatively,
- * VSICurlClearCache() can be used.
- * 
- * On writing, the file is uploaded using the S3
- * <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/mpUploadInitiate.html">multipart upload API</a>.
- * The size of chunks is set to 50 MB by default, allowing creating files up to
- * 500 GB (10000 parts of 50 MB each). If larger files are needed, then increase
- * the value of the VSIS3_CHUNK_SIZE config option to a larger value (expressed
- * in MB).  In case the process is killed and the file not properly closed, the
- * multipart upload will remain open, causing Amazon to charge you for the parts
- * storage. You'll have to abort yourself with other means such "ghost" uploads
- * (e.g. with the <a href="http://s3tools.org/s3cmd">s3cmd</a> utility) For
- * files smaller than the chunk size, a simple PUT request is used instead of
- * the multipart upload API.
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsis3">/vsis3/ documentation</a>
  *
  * @since GDAL 2.1
  */
@@ -7327,96 +7435,7 @@ void VSIInstallS3FileHandler( void )
  * \brief Install /vsigs/ Google Cloud Storage file system handler
  * (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public files available in Google Cloud Storage buckets, without prior
- * download of the entire file.
- * Starting with GDAL 2.3, it also allows sequential writing of files (no seeks
- * or read operations are then allowed). Deletion of files with VSIUnlink(),
- * creation of directories with VSIMkdir() and deletion of (empty) directories with
- * VSIRmdir() are also possible.
- *
- * Recognized filenames are of the form /vsigs/bucket/key where
- * bucket is the name of the bucket and key the object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads (requires the HTTP server to support random reading) are
- * done with a 16 KB granularity by default (starting with GDAL 2.3, the chunk
- * size can be configured with the CPL_VSIL_CURL_CHUNK_SIZE configuration option,
- * with a value in bytes.) If the driver detects sequential
- * reading it will progressively increase the chunk size up to 2 MB to improve
- * download performance.
- * Starting with GDAL 2.3, the number of bytes read when opening a file can be
- * specified with the GDAL_INGESTED_BYTES_AT_OPEN configuration option. It defaults
- * to the chunk size
- *
- * Several authentication methods are possible. In order of priorities (first
- * mentioned is the most prioritary)
- * <ol>
- *  <li>The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options can be
- * set for AWS style authentication</li>
- *  <li>The GDAL_HTTP_HEADER_FILE configuration
- * option to point to a filename of a text file with "key: value" headers.
- * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.</li>
- *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_REFRESH_TOKEN
- * configuration option can be set to use OAuth2 client authentication.
- * See http://code.google.com/apis/accounts/docs/OAuth2.html
- * This refresh token can be obtained with the "gdal_auth.py -s storage" or
- * "gdal_auth.py -s storage-rw" script
- * Note: instead of using the default GDAL application credentials, you may
- * define the GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET configuration
- * options (need to be defined both for gdal_auth.py and later execution of /vsigs)
- * </li>
- *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_PRIVATE_KEY (or GS_OAUTH2_PRIVATE_KEY_FILE)
- * and GS_OAUTH2_CLIENT_EMAIL can be set to use OAuth2 service account authentication.
- * See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
- * for more details on this authentication method.
- * The GS_OAUTH2_PRIVATE_KEY configuration option must contain the private key
- * as a inline string, starting with "-----BEGIN PRIVATE KEY-----"
- * Alternatively the GS_OAUTH2_PRIVATE_KEY_FILE configuration option can be set
- * to indicate a filename that contains such a private key.
- * The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader"
- * permissions to the service account. The GS_OAUTH2_SCOPE configuration option
- * can be set to change the default permission scope from
- * "https://www.googleapis.com/auth/devstorage.read_write"
- * to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
- *  <li>(GDAL &gt;= 2.3) An alternate way of providing credentials similar to
- * what the "gsutil" command line utility or Boto3 support can be used. If the
- * above mentioned environment variables are not provided, the ~/.boto
- * or %UserProfile%/.boto file will be read (or the file pointed by
- * CPL_GS_CREDENTIALS_FILE) for the gs_secret_access_key and gs_access_key_id
- * entries for AWS style authentication. If not found, it will look for the
- * gs_oauth2_refresh_token (and optionally client_id and client_secret) entry
- * for OAuth2 client authentication.</li>
- *  <li>(GDAL &gt;= 2.3) Finally if none of the above method succeeds, the code
- * will check if the current machine is a Google Compute Engine instance, and
- * if so will use the permissions associated to it (using the default service
- * account associated with the VM)</li>
- * </ol>
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the
- * configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
- * can be modified by setting the configuration option VSI_CACHE_SIZE (in
- * bytes). Content in that cache is discarded when the file handle is closed.
- * 
- * In addition, a global LRU cache of 16 MB shared among all downloaded content 
- * is enabled by default, and content in it may be reused after a file handle
- * has been closed and reopen. Starting with GDAL 2.3, the
- * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
- * "/vsigs/bucket/foo.tif:/vsigs/another_bucket/some_directory",
- * so that at file handle closing, all cached content related to the mentioned
- * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code. Alternatively,
- * VSICurlClearCache() can be used.
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsigs">/vsigs/ documentation</a>
  *
  * @since GDAL 2.2
  */
@@ -7434,69 +7453,7 @@ void VSIInstallGSFileHandler( void )
  * \brief Install /vsiaz/ Microsoft Azure Blob file system handler
  * (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public files available in Microsoft Azure Blob containers, without prior
- * download of the entire file.
- * It also allows sequential writing of files (no seeks
- * or read operations are then allowed). A block blob will be created if the
- * file size is below 4 MB. Beyond, an append blob will be created (with a
- * maximum file size of 195 GB).
- * Deletion of files with VSIUnlink(), creation of directories with VSIMkdir()
- * and deletion of (empty) directories with VSIRmdir() are also possible.
- * Note: when using VSIMkdir(), a special hidden .gdal_marker_for_dir empty
- * file is created, since Azure Blob does not support natively empty directories.
- * If that file is the last one remaining in a directory, VSIRmdir() will
- * automatically remove it. This file will not be seen with VSIReadDir().
- * If removing files from directories not created with VSIMkdir(), when the
- * last file is deleted, its directory is automatically removed by Azure, so
- * the sequence VSIUnlink("/vsiaz/container/subdir/lastfile") followed by
- * VSIRmdir("/vsiaz/container/subdir") will fail on the VSIRmdir() invokation.
- *
- * Recognized filenames are of the form /vsiaz/container/key where
- * container is the name of the container and key the object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads are done with a 16 KB granularity by default.
- * If the driver detects sequential reading
- * it will progressively increase the chunk size up to 2 MB to improve download
- * performance.
- *
- * Several authentication methods are possible. In order of priorities (first
- * mentioned is the most prioritary)
- * <ol>
- *  <li>The AZURE_STORAGE_CONNECTION_STRING configuration option, given in the
- * access key section of the administration interface. It contains both the
- * account name and a secret key.
- *  </li>
- *  <li>The AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY configuration
- * options pointing respectively to the account name and a secret key.
- *  </li>
- * </ol>
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the
- * configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
- * can be modified by setting the configuration option VSI_CACHE_SIZE (in
- * bytes). Content in that cache is discarded when the file handle is closed.
- * 
- * In addition, a global LRU cache of 16 MB shared among all downloaded content 
- * is enabled by default, and content in it may be reused after a file handle
- * has been closed and reopen. Starting with GDAL 2.3, the
- * CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
- * "/vsiaz/bucket/foo.tif:/vsiaz/another_bucket/some_directory",
- * so that at file handle closing, all cached content related to the mentioned
- * file(s) is no longer cached. This can help when dealing with resources that
- * can be modified during execution of GDAL related code. Alternatively,
- * VSICurlClearCache() can be used.
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiaz">/vsiaz/ documentation</a>
  *
  * @since GDAL 2.3
  */
@@ -7504,6 +7461,24 @@ void VSIInstallGSFileHandler( void )
 void VSIInstallAzureFileHandler( void )
 {
     VSIFileManager::InstallHandler( "/vsiaz/", new VSIAzureFSHandler );
+}
+
+/************************************************************************/
+/*                      VSIInstallOSSFileHandler()                      */
+/************************************************************************/
+
+/**
+ * \brief Install /vsioss/ Alibaba Cloud Object Storage Service (OSS) file
+ * system handler (requires libcurl)
+ *
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsioss">/vsioss/ documentation</a>
+ *
+ *
+ * @since GDAL 2.3
+ */
+void VSIInstallOSSFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsioss/", new VSIOSSFSHandler );
 }
 
 /************************************************************************/
@@ -7526,7 +7501,8 @@ void VSICurlClearCache( void )
     // FIXME ? Currently we have different filesystem instances for
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
-    const char* const apszFS[] = { "/vsicurl/", "/vsis3/", "/vsigs/", "/vsiaz/" };
+    const char* const apszFS[] = { "/vsicurl/", "/vsis3/", "/vsigs/",
+                                   "/vsiaz/", "/vsioss/" };
     for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
     {
         VSICurlFilesystemHandler *poFSHandler =
