@@ -75,6 +75,28 @@ static void CheckCurlFeatures()
         bSupportGZip = strstr(pszVersion, "zlib/") != NULL;
         bSupportHTTP2 = strstr(curl_version(), "nghttp2/") != NULL;
         bHasCheckVersion = true;
+
+        curl_version_info_data* data = curl_version_info(CURLVERSION_NOW);
+        if( data->version_num < LIBCURL_VERSION_NUM )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GDAL was built against curl %d.%d.%d, but is "
+                     "running against %s. Runtime failure is likely !",
+                     LIBCURL_VERSION_MAJOR,
+                     LIBCURL_VERSION_MINOR,
+                     LIBCURL_VERSION_PATCH,
+                     data->version);
+        }
+        else if( data->version_num > LIBCURL_VERSION_NUM )
+        {
+            CPLDebug("HTTP",
+                     "GDAL was built against curl %d.%d.%d, but is "
+                     "running against %s.",
+                     LIBCURL_VERSION_MAJOR,
+                     LIBCURL_VERSION_MINOR,
+                     LIBCURL_VERSION_PATCH,
+                     data->version);
+        }
     }
 }
 
