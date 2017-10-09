@@ -46,12 +46,12 @@ static CPLString GetHeaderVal(const struct curl_slist* psExistingHeaders,
                               const char* pszKey)
 {
     CPLString osKey(pszKey);
-    osKey += ": ";
+    osKey += ":";
     const struct curl_slist* psIter = psExistingHeaders;
     for(; psIter != NULL; psIter = psIter->next)
     {
         if( STARTS_WITH(psIter->data, osKey.c_str()) )
-            return psIter->data + osKey.size();
+            return CPLString(psIter->data + osKey.size()).Trim();
     }
     return CPLString();
 }
@@ -87,12 +87,12 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     {
         if( STARTS_WITH(psIter->data, "x-ms-") )
         {
-            const char* pszColumn = strstr(psIter->data, ": ");
+            const char* pszColumn = strstr(psIter->data, ":");
             if( pszColumn )
             {
                 CPLString osKey(psIter->data);
                 osKey.resize( pszColumn - psIter->data);
-                oSortedMapMSHeaders[osKey] = pszColumn + strlen(": ");
+                oSortedMapMSHeaders[osKey] = CPLString(pszColumn + strlen(":")).Trim();
             }
         }
     }
