@@ -157,30 +157,12 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
         osDate = szDate;
     }
 
-    std::map<CPLString, CPLString> oSortedMapGOOGHeaders;
-    const struct curl_slist* psIter = psExistingHeaders;
-    for(; psIter != NULL; psIter = psIter->next)
-    {
-        if( STARTS_WITH_CI(psIter->data, "x-goog-") )
-        {
-            const char* pszColumn = strstr(psIter->data, ":");
-            if( pszColumn )
-            {
-                CPLString osKey(psIter->data);
-                osKey.resize( pszColumn - psIter->data);
-                oSortedMapGOOGHeaders[osKey.tolower()] =
-                        CPLString(pszColumn + strlen(":")).Trim();
-            }
-        }
-    }
-
-    CPLString osCanonicalizedGOOGHeaders;
-    std::map<CPLString, CPLString>::const_iterator oIter =
-            oSortedMapGOOGHeaders.begin();
-    for(; oIter != oSortedMapGOOGHeaders.end(); ++oIter )
-    {
-        osCanonicalizedGOOGHeaders += oIter->first + ":" + oIter->second + "\n";
-    }
+    std::map<CPLString, CPLString> oSortedMapHeaders;
+    CPLString osCanonicalizedHeaders(
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
+                            oSortedMapHeaders,
+                            psExistingHeaders,
+                            "x-goog-"));
 
     // See https://cloud.google.com/storage/docs/migrating
     CPLString osStringToSign;
@@ -188,7 +170,7 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
     osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
     osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
     osStringToSign += osDate + "\n";
-    osStringToSign += osCanonicalizedGOOGHeaders;
+    osStringToSign += osCanonicalizedHeaders;
     osStringToSign += osCanonicalResource;
 #ifdef DEBUG_VERBOSE
     CPLDebug("GS", "osStringToSign = %s", osStringToSign.c_str());
@@ -696,42 +678,7 @@ void VSIGSHandleHelper::RebuildURL()
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
-    std::map<CPLString, CPLString>::iterator oIter =
-        m_oMapQueryParameters.begin();
-    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
-    {
-        if( oIter == m_oMapQueryParameters.begin() )
-            m_osURL += "?";
-        else
-            m_osURL += "&";
-        m_osURL += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            m_osURL += "=";
-            m_osURL += oIter->second;
-        }
-    }
-}
-
-/************************************************************************/
-/*                       ResetQueryParameters()                         */
-/************************************************************************/
-
-void VSIGSHandleHelper::ResetQueryParameters()
-{
-    m_oMapQueryParameters.clear();
-    RebuildURL();
-}
-
-/************************************************************************/
-/*                         AddQueryParameter()                          */
-/************************************************************************/
-
-void VSIGSHandleHelper::AddQueryParameter( const CPLString& osKey,
-                                           const CPLString& osValue )
-{
-    m_oMapQueryParameters[osKey] = osValue;
-    RebuildURL();
+    m_osURL += GetQueryString();
 }
 
 /************************************************************************/

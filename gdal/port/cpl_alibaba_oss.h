@@ -1,6 +1,9 @@
 /**********************************************************************
+ * $Id$
+ *
+ * Name:     cpl_alibaba_oss.h
  * Project:  CPL - Common Portability Library
- * Purpose:  Microsoft Azure Storage Blob routines
+ * Purpose:  Alibaba Cloud Object Storage Service
  * Author:   Even Rouault <even.rouault at spatialys.com>
  *
  **********************************************************************
@@ -25,64 +28,90 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef CPL_AZURE_INCLUDED_H
-#define CPL_AZURE_INCLUDED_H
+#ifndef CPL_ALIBABA_OSS_INCLUDED_H
+#define CPL_ALIBABA_OSS_INCLUDED_H
 
 #ifndef DOXYGEN_SKIP
+
+#include <cstddef>
+
+#include "cpl_string.h"
 
 #ifdef HAVE_CURL
 
 #include <curl/curl.h>
-#include "cpl_http.h"
-#include "cpl_aws.h"
 #include <map>
+#include "cpl_aws.h"
 
-class VSIAzureBlobHandleHelper: public IVSIS3LikeHandleHelper
+class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
+        CPLString m_osSecretAccessKey;
+        CPLString m_osAccessKeyId;
         CPLString m_osEndpoint;
         CPLString m_osBucket;
         CPLString m_osObjectKey;
-        CPLString m_osStorageAccount;
-        CPLString m_osStorageKey;
-        bool      m_bUseHTTPS;
-
-        static bool     GetConfiguration(bool& bUseHTTPS,
-                                         CPLString& osEndpoint,
-                                         CPLString& osStorageAccount,
-                                         CPLString& osStorageKey);
-
-        static CPLString BuildURL(const CPLString& osEndpoint,
-                                  const CPLString& osStorageAccount,
-                                  const CPLString& osBucket,
-                                  const CPLString& osObjectKey,
-                                  bool bUseHTTPS);
+        bool m_bUseHTTPS;
+        bool m_bUseVirtualHosting;
 
         virtual void RebuildURL() CPL_OVERRIDE;
 
+  protected:
+
     public:
-        VSIAzureBlobHandleHelper(const CPLString& osEndpoint,
-                                 const CPLString& osBucket,
-                                 const CPLString& osObjectKey,
-                                 const CPLString& osStorageAccount,
-                                 const CPLString& osStorageKey,
-                                 bool bUseHTTPS);
-       ~VSIAzureBlobHandleHelper();
+        VSIOSSHandleHelper(const CPLString& osSecretAccessKey,
+                    const CPLString& osAccessKeyId,
+                    const CPLString& osEndpoint,
+                    const CPLString& osBucket,
+                    const CPLString& osObjectKey,
+                    bool bUseHTTPS, bool bUseVirtualHosting);
+       ~VSIOSSHandleHelper();
 
-        static VSIAzureBlobHandleHelper* BuildFromURI(const char* pszURI,
-                                               const char* pszFSPrefix);
+        static VSIOSSHandleHelper* BuildFromURI(const char* pszURI,
+                                                const char* pszFSPrefix,
+                                               bool bAllowNoObject);
+        static CPLString BuildURL(const CPLString& osEndpoint,
+                                  const CPLString& osBucket,
+                                  const CPLString& osObjectKey,
+                                  bool bUseHTTPS, bool bUseVirtualHosting);
 
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
+        struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
+        bool CanRestartOnError(const char*, bool bSetError = false) CPL_OVERRIDE;
+
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
+        const CPLString& GetBucket() const { return m_osBucket; }
+        const CPLString& GetObjectKey() const { return m_osObjectKey; }
+        const CPLString& GetEndpoint()const  { return m_osEndpoint; }
+        bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
+        void SetEndpoint(const CPLString &osStr);
+        void SetVirtualHosting(bool b);
+        void SetObjectKey(const CPLString &osStr);
+
+        static bool GetConfiguration(CPLString& osSecretAccessKey,
+                                     CPLString& osAccessKeyId);
 };
 
+class VSIOSSUpdateParams
+{
+    public:
+        CPLString m_osEndpoint;
+
+        VSIOSSUpdateParams() {}
+
+        explicit VSIOSSUpdateParams(const VSIOSSHandleHelper* poHelper) :
+            m_osEndpoint(poHelper->GetEndpoint()) {}
+
+        void UpdateHandlerHelper(VSIOSSHandleHelper* poHelper) {
+            poHelper->SetEndpoint(m_osEndpoint);
+        }
+};
 
 #endif /* HAVE_CURL */
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif /* CPL_AZURE_INCLUDED_H */
+#endif /* CPL_ALIBABA_OSS_INCLUDED_H */

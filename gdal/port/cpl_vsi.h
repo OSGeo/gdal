@@ -316,6 +316,8 @@ void VSIInstallGSFileHandler(void);
 void VSIInstallGSStreamingFileHandler(void);
 void VSIInstallAzureFileHandler(void);
 void VSIInstallAzureStreamingFileHandler(void);
+void VSIInstallOSSFileHandler(void);
+void VSIInstallOSSStreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */

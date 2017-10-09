@@ -55,7 +55,7 @@ CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                                         const CPLString& osAccessKeyId,
                                         const CPLString& osAccessToken,
-                                        const CPLString& osAWSRegion,
+                                        const CPLString& osRegion,
                                         const CPLString& osRequestPayer,
                                         const CPLString& osService,
                                         const CPLString& osVerb,
@@ -68,11 +68,19 @@ CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
 
 class IVSIS3LikeHandleHelper
 {
+protected:
+        std::map<CPLString, CPLString> m_oMapQueryParameters;
+
+        virtual void RebuildURL() = 0;
+        CPLString GetQueryString() const;
+
 public:
+        IVSIS3LikeHandleHelper() {}
         virtual ~IVSIS3LikeHandleHelper() {}
 
-        virtual void ResetQueryParameters() = 0;
-        virtual void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) = 0;
+        void ResetQueryParameters();
+        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue);
+
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
@@ -81,6 +89,17 @@ public:
         virtual bool CanRestartOnError(const char*, bool /*bSetError*/ = false) { return false;}
 
         virtual const CPLString& GetURL() const = 0;
+
+        static bool GetBucketAndObjectKey(const char* pszURI,
+                                          const char* pszFSPrefix,
+                                          bool bAllowNoObject,
+                                          CPLString &osBucketOut,
+                                          CPLString &osObjectKeyOut);
+
+        static CPLString BuildCanonicalizedHeaders(
+                            std::map<CPLString, CPLString>& oSortedMapHeaders,
+                            const struct curl_slist* psExistingHeaders,
+                            const char* pszHeaderPrefix);
 };
 
 class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
@@ -89,19 +108,15 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         CPLString m_osSecretAccessKey;
         CPLString m_osAccessKeyId;
         CPLString m_osSessionToken;
-        CPLString m_osAWSS3Endpoint;
-        CPLString m_osAWSRegion;
+        CPLString m_osEndpoint;
+        CPLString m_osRegion;
         CPLString m_osRequestPayer;
         CPLString m_osBucket;
         CPLString m_osObjectKey;
         bool m_bUseHTTPS;
         bool m_bUseVirtualHosting;
-        std::map<CPLString, CPLString> m_oMapQueryParameters;
 
-        static bool GetBucketAndObjectKey(const char* pszURI, const char* pszFSPrefix,
-                                          bool bAllowNoObject,
-                                          CPLString &osBucketOut, CPLString &osObjectKeyOut);
-        void RebuildURL();
+        virtual void RebuildURL() CPL_OVERRIDE;
 
         static bool GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                                             CPLString& osAccessKeyId,
@@ -119,8 +134,8 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         VSIS3HandleHelper(const CPLString& osSecretAccessKey,
                     const CPLString& osAccessKeyId,
                     const CPLString& osSessionToken,
-                    const CPLString& osAWSS3Endpoint,
-                    const CPLString& osAWSRegion,
+                    const CPLString& osEndpoint,
+                    const CPLString& osRegion,
                     const CPLString& osRequestPayer,
                     const CPLString& osBucket,
                     const CPLString& osObjectKey,
@@ -129,13 +144,11 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
 
         static VSIS3HandleHelper* BuildFromURI(const char* pszURI, const char* pszFSPrefix,
                                                bool bAllowNoObject);
-        static CPLString BuildURL(const CPLString& osAWSS3Endpoint,
+        static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
                                   bool bUseHTTPS, bool bUseVirtualHosting);
 
-        void ResetQueryParameters() CPL_OVERRIDE;
-        void AddQueryParameter(const CPLString& osKey, const CPLString& osValue) CPL_OVERRIDE;
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = NULL,
@@ -146,12 +159,12 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
         const CPLString& GetObjectKey() const { return m_osObjectKey; }
-        const CPLString& GetAWSS3Endpoint()const  { return m_osAWSS3Endpoint; }
-        const CPLString& GetAWSRegion() const { return m_osAWSRegion; }
+        const CPLString& GetEndpoint()const  { return m_osEndpoint; }
+        const CPLString& GetRegion() const { return m_osRegion; }
         const CPLString& GetRequestPayer() const { return m_osRequestPayer; }
         bool GetVirtualHosting() const { return m_bUseVirtualHosting; }
-        void SetAWSS3Endpoint(const CPLString &osStr);
-        void SetAWSRegion(const CPLString &osStr);
+        void SetEndpoint(const CPLString &osStr);
+        void SetRegion(const CPLString &osStr);
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
         void SetObjectKey(const CPLString &osStr);
@@ -167,19 +180,26 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
 class VSIS3UpdateParams
 {
     public:
-        CPLString m_osAWSRegion;
-        CPLString m_osAWSS3Endpoint;
+        CPLString m_osRegion;
+        CPLString m_osEndpoint;
         CPLString m_osRequestPayer;
         bool m_bUseVirtualHosting;
 
-        VSIS3UpdateParams(const CPLString& osAWSRegion = "",
-                          const CPLString& osAWSS3Endpoint = "",
-                          const CPLString& osRequestPayer = "",
-                          bool bUseVirtualHosting = false) :
-            m_osAWSRegion(osAWSRegion),
-            m_osAWSS3Endpoint(osAWSS3Endpoint),
-            m_osRequestPayer(osRequestPayer),
-            m_bUseVirtualHosting(bUseVirtualHosting) {}
+        VSIS3UpdateParams() :
+            m_bUseVirtualHosting(false) {}
+
+        explicit VSIS3UpdateParams(const VSIS3HandleHelper* poHelper) :
+            m_osRegion(poHelper->GetRegion()),
+            m_osEndpoint(poHelper->GetEndpoint()),
+            m_osRequestPayer(poHelper->GetRequestPayer()),
+            m_bUseVirtualHosting(poHelper->GetVirtualHosting()) {}
+
+        void UpdateHandlerHelper(VSIS3HandleHelper* poHelper) {
+            poHelper->SetRegion(m_osRegion);
+            poHelper->SetEndpoint(m_osEndpoint);
+            poHelper->SetRequestPayer(m_osRequestPayer);
+            poHelper->SetVirtualHosting(m_bUseVirtualHosting);
+        }
 };
 
 #endif /* HAVE_CURL */

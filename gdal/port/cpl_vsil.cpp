@@ -1629,6 +1629,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallGSStreamingFileHandler();
         VSIInstallAzureFileHandler();
         VSIInstallAzureStreamingFileHandler();
+        VSIInstallOSSFileHandler();
+        VSIInstallOSSStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();

@@ -36,6 +36,7 @@
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
 #include "cpl_azure.h"
+#include "cpl_alibaba_oss.h"
 #include "cpl_hash_set.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
@@ -62,6 +63,11 @@ void VSIInstallGSStreamingFileHandler(void)
 }
 
 void VSIInstallAzureStreamingFileHandler(void)
+{
+    // Not supported
+}
+
+void VSIInstallOSSStreamingFileHandler(void)
 {
     // Not supported
 }
@@ -1679,10 +1685,23 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 }
 
 /************************************************************************/
+/*                      IVSIS3LikeStreamingFSHandler                    */
+/************************************************************************/
+
+class IVSIS3LikeStreamingFSHandler: public VSICurlStreamingFSHandler
+{
+public:
+        IVSIS3LikeStreamingFSHandler() {}
+
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * /*poHandleHelper*/ ) {}
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * /*poHandleHelper*/ ) {}
+};
+
+/************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
 
-class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+class VSIS3StreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -1694,8 +1713,8 @@ protected:
 public:
         VSIS3StreamingFSHandler() {}
 
-        void UpdateMapFromHandle( VSIS3HandleHelper * poS3HandleHelper );
-        void UpdateHandleFromMap( VSIS3HandleHelper * poS3HandleHelper );
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
 
 /************************************************************************/
@@ -1703,15 +1722,18 @@ public:
 /************************************************************************/
 
 void VSIS3StreamingFSHandler::UpdateMapFromHandle(
-    VSIS3HandleHelper * poS3HandleHelper )
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
+
     oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
-        VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
-                      poS3HandleHelper->GetAWSS3Endpoint(),
-                      poS3HandleHelper->GetRequestPayer(),
-                      poS3HandleHelper->GetVirtualHosting() );
+        VSIS3UpdateParams ( poS3HandleHelper );
 }
 
 /************************************************************************/
@@ -1719,28 +1741,31 @@ void VSIS3StreamingFSHandler::UpdateMapFromHandle(
 /************************************************************************/
 
 void VSIS3StreamingFSHandler::UpdateHandleFromMap(
-    VSIS3HandleHelper * poS3HandleHelper )
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
     CPLMutexHolder oHolder( &hMutex );
+
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
 
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        poS3HandleHelper->SetAWSRegion(oIter->second.m_osAWSRegion);
-        poS3HandleHelper->SetAWSS3Endpoint(oIter->second.m_osAWSS3Endpoint);
-        poS3HandleHelper->SetRequestPayer(oIter->second.m_osRequestPayer);
-        poS3HandleHelper->SetVirtualHosting(oIter->second.m_bUseVirtualHosting);
+        oIter->second.UpdateHandlerHelper(poS3HandleHelper);  
     }
 }
 
 /************************************************************************/
-/*                            VSIS3StreamingHandle                      */
+/*                          VSIS3LikeStreamingHandle                    */
 /************************************************************************/
 
-class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
+class VSIS3LikeStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
 {
-    VSIS3HandleHelper* m_poS3HandleHelper;
+    IVSIS3LikeHandleHelper* m_poS3HandleHelper;
 
   protected:
     virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
@@ -1751,9 +1776,9 @@ class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     virtual bool InterpretRedirect() override { return false; }
 
   public:
-    VSIS3StreamingHandle( VSIS3StreamingFSHandler* poFS,
-                          VSIS3HandleHelper* poS3HandleHelper );
-    virtual ~VSIS3StreamingHandle();
+    VSIS3LikeStreamingHandle( IVSIS3LikeStreamingFSHandler* poFS,
+                          IVSIS3LikeHandleHelper* poS3HandleHelper );
+    virtual ~VSIS3LikeStreamingHandle();
 };
 
 /************************************************************************/
@@ -1769,27 +1794,27 @@ VSIS3StreamingFSHandler::CreateFileHandle( const char* pszURL )
     if( poS3HandleHelper )
     {
         UpdateHandleFromMap(poS3HandleHelper);
-        return new VSIS3StreamingHandle(this, poS3HandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poS3HandleHelper);
     }
     return NULL;
 }
 
 /************************************************************************/
-/*                        VSIS3StreamingHandle()                        */
+/*                     VSIS3LikeStreamingHandle()                       */
 /************************************************************************/
 
-VSIS3StreamingHandle::VSIS3StreamingHandle(
-    VSIS3StreamingFSHandler* poFS,
-    VSIS3HandleHelper* poS3HandleHelper) :
+VSIS3LikeStreamingHandle::VSIS3LikeStreamingHandle(
+    IVSIS3LikeStreamingFSHandler* poFS,
+    IVSIS3LikeHandleHelper* poS3HandleHelper) :
     VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL()),
     m_poS3HandleHelper(poS3HandleHelper)
 {}
 
 /************************************************************************/
-/*                       ~VSIS3StreamingHandle()                        */
+/*                     ~VSIS3LikeStreamingHandle()                      */
 /************************************************************************/
 
-VSIS3StreamingHandle::~VSIS3StreamingHandle()
+VSIS3LikeStreamingHandle::~VSIS3LikeStreamingHandle()
 {
     delete m_poS3HandleHelper;
 }
@@ -1799,7 +1824,7 @@ VSIS3StreamingHandle::~VSIS3StreamingHandle()
 /************************************************************************/
 
 struct curl_slist*
-VSIS3StreamingHandle::GetCurlHeaders( const CPLString& osVerb,
+VSIS3LikeStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
                                       const struct curl_slist* psExistingHeaders )
 {
     return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
@@ -1809,12 +1834,12 @@ VSIS3StreamingHandle::GetCurlHeaders( const CPLString& osVerb,
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3StreamingHandle::CanRestartOnError( const char* pszErrorMsg,
+bool VSIS3LikeStreamingHandle::CanRestartOnError( const char* pszErrorMsg,
                                               bool bSetError )
 {
     if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
     {
-        static_cast<VSIS3StreamingFSHandler*>(m_poFS)->
+        static_cast<IVSIS3LikeStreamingFSHandler*>(m_poFS)->
             UpdateMapFromHandle(m_poS3HandleHelper);
 
         SetURL(m_poS3HandleHelper->GetURL());
@@ -1829,7 +1854,7 @@ bool VSIS3StreamingHandle::CanRestartOnError( const char* pszErrorMsg,
 /*                       VSIGSStreamingFSHandler                        */
 /************************************************************************/
 
-class VSIGSStreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+class VSIGSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
 protected:
     virtual CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
@@ -1838,27 +1863,6 @@ protected:
 
 public:
         VSIGSStreamingFSHandler() {}
-};
-
-/************************************************************************/
-/*                            VSIGSStreamingHandle                      */
-/************************************************************************/
-
-class VSIGSStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
-{
-    VSIGSHandleHelper* m_poGCHandleHelper;
-
-  protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                                    const struct curl_slist* psExistingHeaders)
-        override;
-    virtual bool StopReceivingBytesOnError() override { return true; }
-    virtual bool InterpretRedirect() override { return false; }
-
-  public:
-    VSIGSStreamingHandle( VSIGSStreamingFSHandler* poFS,
-                          VSIGSHandleHelper* poGCHandleHelper );
-    virtual ~VSIGSStreamingHandle();
 };
 
 /************************************************************************/
@@ -1872,50 +1876,17 @@ VSIGSStreamingFSHandler::CreateFileHandle( const char* pszURL )
             VSIGSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if( poGCHandleHelper )
     {
-        return new VSIGSStreamingHandle(this, poGCHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poGCHandleHelper);
     }
     return NULL;
 }
-
-/************************************************************************/
-/*                        VSIGSStreamingHandle()                        */
-/************************************************************************/
-
-VSIGSStreamingHandle::VSIGSStreamingHandle(
-    VSIGSStreamingFSHandler* poFS,
-    VSIGSHandleHelper* poGCHandleHelper) :
-    VSICurlStreamingHandle(poFS, poGCHandleHelper->GetURL()),
-    m_poGCHandleHelper(poGCHandleHelper)
-{}
-
-/************************************************************************/
-/*                       ~VSIGSStreamingHandle()                        */
-/************************************************************************/
-
-VSIGSStreamingHandle::~VSIGSStreamingHandle()
-{
-    delete m_poGCHandleHelper;
-}
-
-/************************************************************************/
-/*                           GetCurlHeaders()                           */
-/************************************************************************/
-
-struct curl_slist*
-VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
-                                      const struct curl_slist* psExistingHeaders )
-{
-    return m_poGCHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
-}
-
-
 
 
 /************************************************************************/
 /*                      VSIAzureStreamingFSHandler                      */
 /************************************************************************/
 
-class VSIAzureStreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+class VSIAzureStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
 protected:
     virtual CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
@@ -1924,27 +1895,6 @@ protected:
 
 public:
         VSIAzureStreamingFSHandler() {}
-};
-
-/************************************************************************/
-/*                         VSIAzureStreamingHandle                      */
-/************************************************************************/
-
-class VSIAzureStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
-{
-    VSIAzureBlobHandleHelper* m_poHandleHelper;
-
-  protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                                    const struct curl_slist* psExistingHeaders)
-        override;
-    virtual bool StopReceivingBytesOnError() override { return true; }
-    virtual bool InterpretRedirect() override { return false; }
-
-  public:
-    VSIAzureStreamingHandle( VSIAzureStreamingFSHandler* poFS,
-                             VSIAzureBlobHandleHelper* poGCHandleHelper );
-    virtual ~VSIAzureStreamingHandle();
 };
 
 /************************************************************************/
@@ -1958,83 +1908,106 @@ VSIAzureStreamingFSHandler::CreateFileHandle( const char* pszURL )
             VSIAzureBlobHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if( poHandleHelper )
     {
-        return new VSIAzureStreamingHandle(this, poHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poHandleHelper);
     }
     return NULL;
 }
 
-/************************************************************************/
-/*                        VSIAzureStreamingHandle()                     */
-/************************************************************************/
-
-VSIAzureStreamingHandle::VSIAzureStreamingHandle(
-    VSIAzureStreamingFSHandler* poFS,
-    VSIAzureBlobHandleHelper* poGCHandleHelper) :
-    VSICurlStreamingHandle(poFS, poGCHandleHelper->GetURL()),
-    m_poHandleHelper(poGCHandleHelper)
-{}
 
 /************************************************************************/
-/*                       ~VSIAzureStreamingHandle()                     */
+/*                       VSIOSSStreamingFSHandler                        */
 /************************************************************************/
 
-VSIAzureStreamingHandle::~VSIAzureStreamingHandle()
+class VSIOSSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
-    delete m_poHandleHelper;
+    std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
+
+protected:
+    virtual CPLString GetFSPrefix() override { return "/vsioss_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
+        override;
+
+public:
+        VSIOSSStreamingFSHandler() {}
+
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+};
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+void VSIOSSStreamingFSHandler::UpdateMapFromHandle(
+    IVSIS3LikeHandleHelper * poHandleHelper )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+
+    oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
+        VSIOSSUpdateParams ( poOSSHandleHelper );
 }
 
 /************************************************************************/
-/*                           GetCurlHeaders()                           */
+/*                         UpdateHandleFromMap()                        */
 /************************************************************************/
 
-struct curl_slist*
-VSIAzureStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
-                                      const struct curl_slist* psExistingHeaders )
+void VSIOSSStreamingFSHandler::UpdateHandleFromMap(
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    return m_poHandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+
+    std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
+        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
+    if( oIter != oMapBucketsToOSSParams.end() )
+    {
+        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
+    }
 }
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSIOSSStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSIOSSHandleHelper* poOSSHandleHelper =
+            VSIOSSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(),
+                                            false);
+    if( poOSSHandleHelper )
+    {
+        UpdateHandleFromMap(poOSSHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poOSSHandleHelper);
+    }
+    return NULL;
+}
+
 
 //! @endcond
 
-} /* end of anoymous namespace */
+} /* end of anonymous namespace */
 
 /************************************************************************/
-/*                   VSIInstallCurlFileHandler()                        */
+/*                 VSIInstallCurlStreamingFileHandler()                 */
 /************************************************************************/
 
 /**
  * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires
  * libcurl).
  *
- * A special file handler is installed that allows on-the-fly sequential reading
- * of files streamed through HTTP/FTP web protocols (typically dynamically
- * generated files), without prior download of the entire file.
- *
- * Although this file handler is able seek to random offsets in the file, this
- * will not be efficient. If you need efficient random access and that the
- * server supports range dowloading, you should use the /vsicurl/ file system
- * handler instead.
- *
- * Recognized filenames are of the form
- * /vsicurl_streaming/http://path/to/remote/resource or
- * /vsicurl_streaming/ftp://path/to/remote/resource where
- * path/to/remote/resource is the URL of a remote resource.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * The file can be cached in RAM by setting the configuration option VSI_CACHE
- * to TRUE. The cache size defaults to 25 MB, but can be modified by setting the
- * configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member and file nature- file or
- * directory - in st_mode member (the later only reliable with FTP resources for
- * now).
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsicurl_streaming">/vsicurl_streaming/ documentation</a>
  *
  * @since GDAL 1.10
  */
@@ -2052,41 +2025,7 @@ void VSIInstallCurlStreamingFileHandler(void)
  * \brief Install /vsis3_streaming/ Amazon S3 file system handler (requires
  * libcurl).
  *
- * A special file handler is installed that allows on-the-fly sequential reading
- * of non-public files streamed from AWS S3 buckets without prior download of
- * the entire file.
- *
- * Recognized filenames are of the form /vsis3_streaming/bucket/key where
- * bucket is the name of the S3 bucket and resource the S3 object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
- * be set.
- * The AWS_SESSION_TOKEN configuration option must be set when temporary
- * credentials are used.
-
- * The AWS_REGION configuration option may be set to one of the supported
- * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">
- * S3 regions</a> and defaults to 'us-east-1'.  The AWS_S3_ENDPOINT
- * configuration option defaults to s3.amazonaws.com. Starting with GDAL 2.2,
- * the AWS_REQUEST_PAYER configuration option may be set to "requester" to
- * facilitate use with
- * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
- * Pays buckets</a>.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * The file can be cached in RAM by setting the configuration option VSI_CACHE
- * to TRUE. The cache size defaults to 25 MB, but can be modified by setting the
- * configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsis3_streaming">/vsis3_streaming/ documentation</a>
  *
  * @since GDAL 2.1
  */
@@ -2104,76 +2043,7 @@ void VSIInstallS3StreamingFileHandler(void)
  * \brief Install /vsigs_streaming/ Google Cloud Storage file system handler
  * (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public files streamed from Google Cloud Storage buckets, without prior
- * download of the entire file.
- *
- * Recognized filenames are of the form /vsigs_streaming/bucket/key where
- * bucket is the name of the bucket and key the object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads are done with a 16 KB granularity by default.
- * If the driver detects sequential reading
- * it will progressively increase the chunk size up to 2 MB to improve download
- * performance.
- *
- * Several authentication methods are possible. In order of priorities (first
- * mentioned is the most prioritary)
- * <ol>
- *  <li>The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options can be
- * set for AWS style authentication</li>
- *  <li>The GDAL_HTTP_HEADER_FILE configuration
- * option to point to a filename of a text file with "key: value" headers.
- * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.</li>
- *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_REFRESH_TOKEN
- * configuration option can be set to use OAuth2 client authentication.
- * See http://code.google.com/apis/accounts/docs/OAuth2.html
- * This refresh token can be obtained with the "gdal_auth.py -s storage" or
- * "gdal_auth.py -s storage-rw" script
- * Note: instead of using the default GDAL application credentials, you may
- * define the GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET configuration
- * options (need to be defined both for gdal_auth.py and later execution of /vsigs)
- * </li>
- *  <li>(GDAL &gt;= 2.3) The GS_OAUTH2_PRIVATE_KEY (or GS_OAUTH2_PRIVATE_KEY_FILE)
- * and GS_OAUTH2_CLIENT_EMAIL can be set to use OAuth2 service account authentication.
- * See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
- * for more details on this authentication method.
- * The GS_OAUTH2_PRIVATE_KEY configuration option must contain the private key
- * as a inline string, starting with "-----BEGIN PRIVATE KEY-----"
- * Alternatively the GS_OAUTH2_PRIVATE_KEY_FILE configuration option can be set
- * to indicate a filename that contains such a private key.
- * The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader"
- * permissions to the service account. The GS_OAUTH2_SCOPE configuration option
- * can be set to change the default permission scope from
- * "https://www.googleapis.com/auth/devstorage.read_write"
- * to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
- *  <li>(GDAL &gt;= 2.3) An alternate way of providing credentials similar to
- * what the "gsutil" command line utility or Boto3 support can be used. If the
- * above mentioned environment variables are not provided, the ~/.boto
- * or %UserProfile%/.boto file will be read (or the file pointed by
- * CPL_GS_CREDENTIALS_FILE) for the gs_secret_access_key and gs_access_key_id
- * entries for AWS style authentication. If not found, it will look for the
- * gs_oauth2_refresh_token (and optionally client_id and client_secret) entry
- * for OAuth2 client authentication.</li>
- *  <li>(GDAL &gt;= 2.3) Finally if none of the above method succeeds, the code
- * will check if the current machine is a Google Compute Engine instance, and
- * if so will use the permissions associated to it (using the default service
- * account associated with the VM)</li>
- * </ol>
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by
- * setting the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsigs_streaming">/vsigs_streaming/ documentation</a>
  *
  * @since GDAL 2.2
  */
@@ -2191,44 +2061,7 @@ void VSIInstallGSStreamingFileHandler( void )
  * \brief Install /vsiaz_streaming/ Microsoft Azure Blob file system handler
  * (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public files streamed from Microsoft Azure Blob containers, without prior
- * download of the entire file.
- *
- * Recognized filenames are of the form /vsiaz_streaming/container/key where
- * container is the name of the container and key the object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads are done with a 16 KB granularity by default.
- * If the driver detects sequential reading
- * it will progressively increase the chunk size up to 2 MB to improve download
- * performance.
- *
- * Several authentication methods are possible. In order of priorities (first
- * mentioned is the most prioritary)
- * <ol>
- *  <li>The AZURE_STORAGE_CONNECTION_STRING configuration option, given in the
- * access key section of the administration interface. It contains both the
- * account name and a secret key.
- *  </li>
- *  <li>The AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_ACCESS_KEY configuration
- * options pointing respectively to the account name and a secret key.
- *  </li>
- * </ol>
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by
- * setting the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiaz_streaming">/vsiaz_streaming/ documentation</a>1
  *
  * @since GDAL 2.3
  */
@@ -2239,6 +2072,24 @@ void VSIInstallAzureStreamingFileHandler( void )
                                     new VSIAzureStreamingFSHandler );
 }
 
+/************************************************************************/
+/*                    VSIInstallOSSStreamingFileHandler()               */
+/************************************************************************/
+
+/**
+ * \brief Install /vsioss_streaming/ Alibaba Cloud Object Storage Service (OSS)
+ * file system handler (requires libcurl)
+ *
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsioss_streaming">/vsioss_streaming/ documentation</a>
+ *
+ * @since GDAL 2.3
+ */
+
+void VSIInstallOSSStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsioss_streaming/",
+                                    new VSIOSSStreamingFSHandler );
+}
 
 //! @cond Doxygen_Suppress
 
@@ -2252,7 +2103,8 @@ void VSICurlStreamingClearCache( void )
     // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
     // file size, etc.
     const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
-                                   "/vsigs_streaming/", "vsiaz_streaming/" };
+                                   "/vsigs_streaming/", "vsiaz_streaming/",
+                                   "/vsioss_streaming/" };
     for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
     {
         VSICurlStreamingFSHandler *poFSHandler =

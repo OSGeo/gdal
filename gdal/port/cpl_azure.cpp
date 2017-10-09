@@ -63,37 +63,23 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
         osDate = szDate;
     }
 
-    std::map<CPLString, CPLString> oSortedMapMSHeaders;
-    const struct curl_slist* psIter = psExistingHeaders;
-    for(; psIter != NULL; psIter = psIter->next)
-    {
-        if( STARTS_WITH_CI(psIter->data, "x-ms-") )
-        {
-            const char* pszColumn = strstr(psIter->data, ":");
-            if( pszColumn )
-            {
-                CPLString osKey(psIter->data);
-                osKey.resize( pszColumn - psIter->data);
-                oSortedMapMSHeaders[osKey.tolower()] = CPLString(pszColumn + strlen(":")).Trim();
-            }
-        }
-    }
     CPLString osMsVersion("2015-02-21");
+    std::map<CPLString, CPLString> oSortedMapMSHeaders;
     oSortedMapMSHeaders["x-ms-version"] = osMsVersion;
     oSortedMapMSHeaders["x-ms-date"] = osDate;
-    CPLString osCanonicalizedHeaders;
-    std::map<CPLString, CPLString>::const_iterator oIter = oSortedMapMSHeaders.begin();
-    for(; oIter != oSortedMapMSHeaders.end(); ++oIter )
-    {
-        osCanonicalizedHeaders += oIter->first + ":" + oIter->second + "\n";
-    }
+    CPLString osCanonicalizedHeaders(
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
+                            oSortedMapMSHeaders,
+                            psExistingHeaders,
+                            "x-ms-"));
 
     CPLString osCanonicalizedResource;
     osCanonicalizedResource += "/" + osStorageAccount;
     osCanonicalizedResource += osResource;
 
     // We assume query parameters are in lower case and they are not repeated
-    oIter = oMapQueryParameters.begin();
+    std::map<CPLString, CPLString>::const_iterator
+        oIter = oMapQueryParameters.begin();
     for( ; oIter != oMapQueryParameters.end(); ++oIter )
     {
         osCanonicalizedResource += "\n";
@@ -352,43 +338,7 @@ void VSIAzureBlobHandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osStorageAccount, m_osBucket,
                        m_osObjectKey, m_bUseHTTPS);
-
-    std::map<CPLString, CPLString>::iterator oIter =
-        m_oMapQueryParameters.begin();
-    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
-    {
-        if( oIter == m_oMapQueryParameters.begin() )
-            m_osURL += "?";
-        else
-            m_osURL += "&";
-        m_osURL += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            m_osURL += "=";
-            m_osURL += oIter->second;
-        }
-    }
-}
-
-/************************************************************************/
-/*                       ResetQueryParameters()                         */
-/************************************************************************/
-
-void VSIAzureBlobHandleHelper::ResetQueryParameters()
-{
-    m_oMapQueryParameters.clear();
-    RebuildURL();
-}
-
-/************************************************************************/
-/*                         AddQueryParameter()                          */
-/************************************************************************/
-
-void VSIAzureBlobHandleHelper::AddQueryParameter( const CPLString& osKey,
-                                           const CPLString& osValue )
-{
-    m_oMapQueryParameters[osKey] = osValue;
-    RebuildURL();
+    m_osURL += GetQueryString();
 }
 
 /************************************************************************/
