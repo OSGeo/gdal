@@ -141,6 +141,7 @@ bool CPLIsMachinePotentiallyGCEInstance()
 
 static
 struct curl_slist* GetGSHeaders( const CPLString& osVerb,
+                                 const struct curl_slist* psExistingHeaders,
                                  const CPLString& osCanonicalResource,
                                  const CPLString& osSecretAccessKey,
                                  const CPLString& osAccessKeyId )
@@ -156,12 +157,38 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
         osDate = szDate;
     }
 
+    std::map<CPLString, CPLString> oSortedMapGOOGHeaders;
+    const struct curl_slist* psIter = psExistingHeaders;
+    for(; psIter != NULL; psIter = psIter->next)
+    {
+        if( STARTS_WITH_CI(psIter->data, "x-goog-") )
+        {
+            const char* pszColumn = strstr(psIter->data, ":");
+            if( pszColumn )
+            {
+                CPLString osKey(psIter->data);
+                osKey.resize( pszColumn - psIter->data);
+                oSortedMapGOOGHeaders[osKey.tolower()] =
+                        CPLString(pszColumn + strlen(":")).Trim();
+            }
+        }
+    }
+
+    CPLString osCanonicalizedGOOGHeaders;
+    std::map<CPLString, CPLString>::const_iterator oIter =
+            oSortedMapGOOGHeaders.begin();
+    for(; oIter != oSortedMapGOOGHeaders.end(); ++oIter )
+    {
+        osCanonicalizedGOOGHeaders += oIter->first + ":" + oIter->second + "\n";
+    }
+
     // See https://cloud.google.com/storage/docs/migrating
     CPLString osStringToSign;
     osStringToSign += osVerb + "\n";
-    osStringToSign += /* Content-MD5 */ "\n";
-    osStringToSign += /* Content-Type */ "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-MD5") + "\n";
+    osStringToSign += CPLAWSGetHeaderVal(psExistingHeaders, "Content-Type") + "\n";
     osStringToSign += osDate + "\n";
+    osStringToSign += osCanonicalizedGOOGHeaders;
     osStringToSign += osCanonicalResource;
 #ifdef DEBUG_VERBOSE
     CPLDebug("GS", "osStringToSign = %s", osStringToSign.c_str());
@@ -333,6 +360,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
 
     osHeaderFile =
         CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", "");
+    bool bMayWarnDidNotFindAuth = false;
     if( !osHeaderFile.empty() )
     {
         bool bFoundAuth = false;
@@ -343,7 +371,8 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         if( strstr(osHeaderFile, "/vsicurl/") == NULL &&
             strstr(osHeaderFile, "/vsis3/") == NULL &&
             strstr(osHeaderFile, "/vsigs/") == NULL &&
-            strstr(osHeaderFile, "/vsiaz/") == NULL )
+            strstr(osHeaderFile, "/vsiaz/") == NULL &&
+            strstr(osHeaderFile, "/vsioss/") == NULL )
         {
             fp = VSIFOpenL( osHeaderFile, "rb" );
         }
@@ -365,10 +394,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             }
             VSIFCloseL(fp);
             if( !bFoundAuth )
-            {
-                CPLDebug("GS", "Cannot find Authorization header in %s",
-                         osHeaderFile.c_str());
-            }
+                bMayWarnDidNotFindAuth = true;
         }
         if( bFoundAuth )
         {
@@ -610,6 +636,12 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         }
     }
 
+    if( bMayWarnDidNotFindAuth )
+    {
+        CPLDebug("GS", "Cannot find Authorization header in %s",
+                 CPLGetConfigOption("GDAL_HTTP_HEADER_FILE", ""));
+    }
+
     CPLString osMsg;
     osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
                  "GS_OAUTH2_REFRESH_TOKEN or "
@@ -708,7 +740,7 @@ void VSIGSHandleHelper::AddQueryParameter( const CPLString& osKey,
 
 struct curl_slist *
 VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
-                                   const struct curl_slist* /* psExistingHeaders */,
+                                   const struct curl_slist* psExistingHeaders,
                                    const void *,
                                    size_t ) const
 {
@@ -738,6 +770,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osCanonicalResource += "/";
 
     return GetGSHeaders( osVerb,
+                         psExistingHeaders,
                          osCanonicalResource,
                          m_osSecretAccessKey,
                          m_osAccessKeyId );
