@@ -85,14 +85,14 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     const struct curl_slist* psIter = psExistingHeaders;
     for(; psIter != NULL; psIter = psIter->next)
     {
-        if( STARTS_WITH(psIter->data, "x-ms-") )
+        if( STARTS_WITH_CI(psIter->data, "x-ms-") )
         {
             const char* pszColumn = strstr(psIter->data, ":");
             if( pszColumn )
             {
                 CPLString osKey(psIter->data);
                 osKey.resize( pszColumn - psIter->data);
-                oSortedMapMSHeaders[osKey] = CPLString(pszColumn + strlen(":")).Trim();
+                oSortedMapMSHeaders[osKey.tolower()] = CPLString(pszColumn + strlen(":")).Trim();
             }
         }
     }
