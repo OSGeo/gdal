@@ -2624,7 +2624,7 @@ void VSIZipWriteHandle::StartNewFile( VSIZipWriteHandle* poSubFile )
  * handled by this driver.
  *
  * The syntax to open a file inside a zip file is
- * /vsizip/path/to/the/file.zip/path/inside/the/zip/file were
+ * /vsizip/path/to/the/file.zip/path/inside/the/zip/file where
  * path/to/the/file.zip is relative or absolute and path/inside/the/zip/file is
  * the relative path to the file inside the archive.
  *
