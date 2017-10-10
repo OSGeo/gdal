@@ -290,7 +290,13 @@ OGRLayer* OGRGeoJSONDataSource::ICreateLayer( const char* pszNameIn,
                 }
 
                 if( strcmp(it.key, "name") == 0 )
+                {
                     bFoundNameInNativeData = true;
+                    if( !CPLFetchBool(papszOptions, "WRITE_NAME", true) )
+                    {
+                        continue;
+                    }
+                }
 
                 // If a native description exists, ignore it if an explicit
                 // DESCRIPTION option has been provided.
