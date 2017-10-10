@@ -33,8 +33,22 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <limits>
 
 CPL_CVSID("$Id$")
+
+namespace {
+
+int DoubleToIntClamp(double dfValue) {
+  if( CPLIsNan(dfValue) ) return 0;
+  if( dfValue >= std::numeric_limits<int>::max() )
+      return std::numeric_limits<int>::max();
+  if( dfValue <= std::numeric_limits<int>::min() )
+      return std::numeric_limits<int>::min();
+  return static_cast<int>(dfValue);
+}
+
+}  // namespace
 
 /************************************************************************/
 /*                           OGRSimpleCurve()                           */
@@ -2319,7 +2333,7 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 }
 
 /************************************************************************/
-/*                               Equals()                                */
+/*                               Equals()                               */
 /************************************************************************/
 
 OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
@@ -2473,7 +2487,7 @@ OGRBoolean OGRSimpleCurve::IsEmpty() const
 }
 
 /************************************************************************/
-/*                     OGRSimpleCurve::segmentize()                      */
+/*                     OGRSimpleCurve::segmentize()                     */
 /************************************************************************/
 
 void OGRSimpleCurve::segmentize( double dfMaxLength )
@@ -2528,8 +2542,25 @@ void OGRSimpleCurve::segmentize( double dfMaxLength )
         const double dfSquareDist = dfX * dfX + dfY * dfY;
         if( dfSquareDist > dfSquareMaxLength )
         {
+            const double dfIntermediatePoints =
+                floor(sqrt(dfSquareDist / dfSquareMaxLength));
             const int nIntermediatePoints =
-                static_cast<int>(floor(sqrt(dfSquareDist / dfSquareMaxLength)));
+                DoubleToIntClamp(dfIntermediatePoints);
+
+            // TODO(schwehr): Can these be tighter?
+            // Limit allocation of paoNewPoints to a few GB of memory.
+            // An OGRRawPoint is 2 doubles.
+            // kMax is a guess of what a reasonable max might be.
+            const int kMax = 2 << 26;
+            if ( nNewPointCount > kMax || nIntermediatePoints > kMax )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many points in a segment: %d or %d",
+                         nNewPointCount, nIntermediatePoints);
+                CPLFree(paoNewPoints);
+                CPLFree(padfNewZ);
+                return;
+            }
 
             paoNewPoints = static_cast<OGRRawPoint *>(
                 CPLRealloc(paoNewPoints,
@@ -2723,7 +2754,7 @@ OGRLineString* OGRLineString::CurveToLine(
 }
 
 /************************************************************************/
-/*                          get_LinearArea()                          */
+/*                          get_LinearArea()                            */
 /************************************************************************/
 
 /**
