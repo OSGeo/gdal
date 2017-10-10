@@ -535,54 +535,7 @@ char **VSISparseFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 /**
  * Install /vsisparse/ virtual file handler.
  *
- * The sparse virtual file handler allows a virtual file to be composed
- * from chunks of data in other files, potentially with large spaces in
- * the virtual file set to a constant value.  This can make it possible to
- * test some sorts of operations on what seems to be a large file with
- * image data set to a constant value.  It is also helpful when wanting to
- * add test files to the test suite that are too large, but for which most
- * of the data can be ignored.  It could, in theory, also be used to
- * treat several files on different file systems as one large virtual file.
- *
- * The file referenced by /vsisparse/ should be an XML control file
- * formatted something like:
- *
- *
-\verbatim
-<VSISparseFile>
-  <Length>87629264</Length>
-  <SubfileRegion>  Stuff at start of file.
-    <Filename relative="1">251_head.dat</Filename>
-    <DestinationOffset>0</DestinationOffset>
-    <SourceOffset>0</SourceOffset>
-    <RegionLength>2768</RegionLength>
-  </SubfileRegion>
-
-  <SubfileRegion>  RasterDMS node.
-    <Filename relative="1">251_rasterdms.dat</Filename>
-    <DestinationOffset>87313104</DestinationOffset>
-    <SourceOffset>0</SourceOffset>
-    <RegionLength>160</RegionLength>
-  </SubfileRegion>
-
-  <SubfileRegion>  Stuff at end of file.
-    <Filename relative="1">251_tail.dat</Filename>
-    <DestinationOffset>87611924</DestinationOffset>
-    <SourceOffset>0</SourceOffset>
-    <RegionLength>17340</RegionLength>
-  </SubfileRegion>
-
-  <ConstantRegion>  Default for the rest of the file.
-    <DestinationOffset>0</DestinationOffset>
-    <RegionLength>87629264</RegionLength>
-    <Value>0</Value>
-  </ConstantRegion>
-</VSISparseFile>
-\endverbatim
- *
- * Hopefully the values and semantics are fairly obvious.
- *
- * This driver is installed by default.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsisparse">/vsisparse/ documentation</a>
  */
 
 void VSIInstallSparseFileHandler()

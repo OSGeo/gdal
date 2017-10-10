@@ -7473,7 +7473,6 @@ void VSIInstallAzureFileHandler( void )
  *
  * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsioss">/vsioss/ documentation</a>
  *
- *
  * @since GDAL 2.3
  */
 void VSIInstallOSSFileHandler( void )

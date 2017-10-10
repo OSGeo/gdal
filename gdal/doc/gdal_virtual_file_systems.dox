@@ -6,6 +6,8 @@
 
 <ol>
 <li> \ref gdal_virtual_file_systems_intro
+<li> \ref gdal_virtual_file_systems_chaining
+<li> \ref gdal_virtual_file_systems_drivers
 <li> \ref gdal_virtual_file_systems_vsizip
 <li> \ref gdal_virtual_file_systems_vsigzip
 <li> \ref gdal_virtual_file_systems_vsitar
@@ -22,14 +24,16 @@
 <li> \ref gdal_virtual_file_systems_vsioss
 <li> \ref gdal_virtual_file_systems_vsioss_streaming
 </ol>
+<li> \ref gdal_virtual_file_systems_vsistdin
+<li> \ref gdal_virtual_file_systems_vsistdout
 <li> \ref gdal_virtual_file_systems_vsimem
+<li> \ref gdal_virtual_file_systems_subfile
+<li> \ref gdal_virtual_file_systems_vsisparse
+<li> \ref gdal_virtual_file_systems_vsicache
 <li> \ref gdal_virtual_file_systems_vsicrypt
-<li> \ref gdal_virtual_file_systems_chaining
-<li> \ref gdal_virtual_file_systems_drivers
 </ol>
 
 \section gdal_virtual_file_systems_intro Introduction
-
 
 GDAL can access files located on "standard" file systems, ie in the / hierarchy
 on unix-like systems or in c:\, d:\, etc... drives on Windows. But most GDAL
@@ -46,6 +50,29 @@ Example:
 <pre>
 gdalinfo /vsizip/my.zip/my.tif
 </pre>
+
+\section gdal_virtual_file_systems_chaining Chaining
+
+It is possible to chain multiple file system handlers
+
+ogrinfo a shapefile in a zip file on the internet: 
+<pre>
+ogrinfo -ro -al -so /vsizip//vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip
+</pre>
+
+ogrinfo a shapefile in a zip file on an ftp:
+<pre>
+ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp 
+</pre>
+
+\section gdal_virtual_file_systems_drivers Drivers supporting virtual file systems
+
+Virtual file systems can only be used with GDAL or OGR drivers supporting the
+"large file API", which is now the vast majority of file based drivers. The 
+ull list of these formats can be obtained by looking at the driver marked with
+'v' when running either gdalinfo --formats or ogrinfo --formats.
+
+Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 
 \section gdal_virtual_file_systems_vsizip /vsizip/ (.zip archives)
 
@@ -274,7 +301,7 @@ bundle file (if not specified, curl will use a file in a system location).
 
 The file can be cached in RAM by setting the configuration option VSI_CACHE
 to TRUE. The cache size defaults to 25 MB, but can be modified by setting the
- configuration option VSI_CACHE_SIZE (in bytes).
+configuration option VSI_CACHE_SIZE (in bytes).
 
 VSIStatL() will return the size in st_size member and file nature- file or
 directory - in st_mode member (the later only reliable with FTP resources for
@@ -297,24 +324,30 @@ a filename potentially containing subdirectories.
 
 The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
-The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
-be set.  The AWS_SESSION_TOKEN configuration option must be set when
-temporary credentials are used.  The AWS_REGION (or AWS_DEFAULT_REGION
-starting with GDAL 2.3) configuration option may be
-set to one of the supported
-<a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
-regions</a> and defaults to 'us-east-1'.
 
-Starting with GDAL 2.3, alternate ways of providing credentials similar to
+Several authentication methods are possible. In order of priorities (first
+mentioned is the most prioritary)
+<ol>
+  <li>The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options can
+be set.  The AWS_SESSION_TOKEN configuration option must be set when
+temporary credentials are used.</li>
+  <li>Starting with GDAL 2.3, alternate ways of providing credentials similar to
 what the "aws" command line utility or Boto3 support can be used. If the
 above mentioned environment variables are not provided, the ~/.aws/credentials
 or %UserProfile%/.aws/credentials file will be read (or the file pointed by
 CPL_AWS_CREDENTIALS_FILE). The profile may be
-specified with the AWS_PROFILE environment variable (the default profile is "default")
-The ~/.aws/config or %UserProfile%/.aws/config file may also be used (or the
-file pointer by AWS_CONFIG_FILE) to retrieve credentials and the AWS region.
-If none of the above method succeeds, instance profile credentials will be
-retrieved when GDAL is used on EC2 instances.
+specified with the AWS_PROFILE environment variable (the default profile is "default")</li>
+  <li>The ~/.aws/config or %UserProfile%/.aws/config file may also be used (or the
+file pointer by AWS_CONFIG_FILE) to retrieve credentials and the AWS region.</li>
+  <li>If none of the above method succeeds, instance profile credentials will be
+retrieved when GDAL is used on EC2 instances.</li>
+</ol>
+
+The AWS_REGION (or AWS_DEFAULT_REGION
+starting with GDAL 2.3) configuration option may be
+set to one of the supported
+<a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">S3
+regions</a> and defaults to 'us-east-1'.
 
 Starting with GDAL 2.2, the
 AWS_REQUEST_PAYER configuration option may be set to "requester" to
@@ -546,7 +579,30 @@ Authentication options, and read-only features, are identical to
 
 @since GDAL 2.3
 
-\section gdal_virtual_file_systems_vsimem /vsimem/
+\section gdal_virtual_file_systems_vsistdin /vsistdin/ (standard input streaming)
+
+/vsistdin/ is a file handler that allows reading from the standard input stream.
+
+The filename syntax must be only "/vsistdin/"
+
+The file operations available are of course limited to Read() and forward Seek().
+Full seek in the first MB of a file is possible, and it is cached so that
+closing, re-opening /vsistdin/ and reading within thist first megabyte, is
+possible multiple times in the same process.
+
+\section gdal_virtual_file_systems_vsistdout /vsistdout/ (standard output streaming)
+
+/vsistdout/ is a file handler that allows writing into the standard output stream.
+
+The filename syntax must be only "/vsistdout/"
+
+The file operations available are of course limited to Write().
+
+A variation of this file system exists as the /vsistdout_redirect/ file
+system handler, where the output function can be defined with
+VSIStdoutSetRedirection().
+
+\section gdal_virtual_file_systems_vsimem /vsimem/ (in-memory files)
 
 /vsimem/ is a file handler that allows block of memory to be
 treated as files. All portions of the file system underneath the base
@@ -566,34 +622,99 @@ access in reading to the same underlying file, provided they used different
 handles, but concurrent write and read operations on the same underlying file
 are not supported (locking is left to the responsibility of calling code)
 
-\section gdal_virtual_file_systems_vsicrypt /vsicrypt/
+\section gdal_virtual_file_systems_subfile /vsisubfile/ (portions of files)
+
+The /vsisubfile/ virtual file system handler allows access to subregions of
+files, treating them as a file on their own to the virtual file
+system functions (VSIFOpenL(), etc).
+
+A special form of the filename is used to indicate a subportion
+of another file:
+   /vsisubfile/&lt;offset&gt;[_&lt;size&gt;],&lt;filename&gt;
+
+The size parameter is optional.  Without it the remainder of the file from
+the start offset as treated as part of the subfile.  Otherwise only
+&lt;size&gt; bytes from &lt;offset&gt; are treated as part of the subfile.
+The &lt;filename&gt; portion may be a relative or absolute path using normal
+rules.  The &lt;offset&gt; and &lt;size&gt; values are in bytes.
+
+eg.
+   /vsisubfile/1000_3000,/data/abc.ntf
+   /vsisubfile/5000,../xyz/raw.dat
+
+Unlike the /vsimem/ or conventional file system handlers, there
+is no meaningful support for filesystem operations for creating new
+files, traversing directories, and deleting files within the /vsisubfile/
+area.  Only the VSIStatL(), VSIFOpenL() and operations based on the file
+handle returned by VSIFOpenL() operate properly.
+
+\section gdal_virtual_file_systems_vsisparse /vsispare/ (sparse files)
+
+The /vsisparse/ virtual file handler allows a virtual file to be composed
+from chunks of data in other files, potentially with large spaces in
+the virtual file set to a constant value.  This can make it possible to
+test some sorts of operations on what seems to be a large file with
+image data set to a constant value.  It is also helpful when wanting to
+add test files to the test suite that are too large, but for which most
+of the data can be ignored.  It could, in theory, also be used to
+treat several files on different file systems as one large virtual file.
+
+The file referenced by /vsisparse/ should be an XML control file
+formatted something like:
+
+\verbatim
+<VSISparseFile>
+  <Length>87629264</Length>
+  <SubfileRegion>  <!-- Stuff at start of file. -->
+    <Filename relative="1">251_head.dat</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>2768</RegionLength>
+  </SubfileRegion>
+
+  <SubfileRegion>  <!-- RasterDMS node. -->
+    <Filename relative="1">251_rasterdms.dat</Filename>
+    <DestinationOffset>87313104</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>160</RegionLength>
+  </SubfileRegion>
+
+  <SubfileRegion>  <!-- Stuff at end of file. -->
+    <Filename relative="1">251_tail.dat</Filename>
+    <DestinationOffset>87611924</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>17340</RegionLength>
+  </SubfileRegion>
+
+  <ConstantRegion>  <!-- Default for the rest of the file. -->
+    <DestinationOffset>0</DestinationOffset>
+    <RegionLength>87629264</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+</VSISparseFile>
+\endverbatim
+
+Hopefully the values and semantics are fairly obvious.
+
+\section gdal_virtual_file_systems_vsicache File caching
+
+This is not a proper virtual file system handler, but a C function that
+takes a virtual file handle and return a new handle that caches read-operations
+on the input file handle.
+
+The VSICachedFile class only handles read operations at that time, and will
+error out on write operations.
+
+This is done with the VSICreateCachedFile() function, that is implictly used
+by a number of the above mentioned file systems if the VSI_CACHE configuration
+option is set to YES. The default size of caching for each file is 25 MB, and
+can be controlled with the VSI_CACHE_SIZE configuration option (value in bytes).
+
+\section gdal_virtual_file_systems_vsicrypt /vsicrypt/ (encrypted files)
 
 /vsicrypt/ is a special file handler is installed that allows reading/creating/update
 encrypted files on the fly, with random access capabilities.
 
 Refert to VSIInstallCryptFileHandler() for more details.
-
-\section gdal_virtual_file_systems_chaining Chaining
-
-It is possible to chain multiple file system handlers
-
-ogrinfo a shapefile in a zip file on the internet: 
-<pre>
-ogrinfo -ro -al -so /vsizip//vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip
-</pre>
-
-ogrinfo a shapefile in a zip file on an ftp:
-<pre>
-ogrinfo -ro -al -so /vsizip//vsicurl/ftp://user:password@example.com/foldername/file.zip/example.shp 
-</pre>
-
-\section gdal_virtual_file_systems_drivers Drivers supporting virtual file systems
-
-Virtual file systems can only be used with GDAL or OGR drivers supporting the
-"large file API", which is now the vast majority of file based drivers. The 
-ull list of these formats can be obtained by looking at the driver marked with
-'v' when running either gdalinfo --formats or ogrinfo --formats.
-
-Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
 
 */
