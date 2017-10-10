@@ -27,14 +27,31 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
-#include "gdal_utils_priv.h"
-#include "commonutils.h"
+#include "cpl_port.h"
 
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
-#include <string>
+#include <memory>
 #include <vector>
+
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+#include "gdal_version.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogrsf_frmts.h"
+
 
 CPL_CVSID("$Id$")
 
@@ -243,15 +260,6 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 
 int main( int nArgc, char ** papszArgv )
 {
-    GDALDatasetH hDS = NULL;
-    GDALDatasetH hODS = NULL;
-    int bCloseODS = TRUE;
-    int bUsageError = FALSE;
-    GDALDatasetH hDstDS;
-    int nRetCode = 1;
-    GDALVectorTranslateOptionsForBinary* psOptionsForBinary;
-    GDALVectorTranslateOptions *psOptions;
-
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
         exit(1);
@@ -266,6 +274,15 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = NULL;
+    GDALDatasetH hODS = NULL;
+    bool bCloseODS = true;
+    int bUsageError = FALSE;
+    GDALDatasetH hDstDS = NULL;
+    int nRetCode = 1;
+    GDALVectorTranslateOptionsForBinary* psOptionsForBinary = NULL;
+    GDALVectorTranslateOptions *psOptions = NULL;
+
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
 
     if( nArgc < 1 )
@@ -354,7 +371,7 @@ int main( int nArgc, char ** papszArgv )
         else
         {
             hDS = hODS;
-            bCloseODS = FALSE;
+            bCloseODS = false;
         }
     }
     else
@@ -426,7 +443,7 @@ int main( int nArgc, char ** papszArgv )
     if( bUsageError )
         Usage();
     else
-        nRetCode = (hDstDS) ? 0 : 1;
+        nRetCode = hDstDS ? 0 : 1;
 
     GDALVectorTranslateOptionsFree(psOptions);
     GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
