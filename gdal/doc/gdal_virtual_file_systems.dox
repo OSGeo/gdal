@@ -571,8 +571,8 @@ reading of files (primarily non-public) files available in Alibaba Cloud Object
 Storage Service (OSS) buckets, without prior download of the
 entire file. It requires GDAL to be built against libcurl.
 
-Recognized filenames are of the form /vsioss_streaming/container/key where
-container is the name of the container and key the object "key", i.e.
+Recognized filenames are of the form /vsioss_streaming/bucket/key where
+bucket is the name of the bucket and key the object "key", i.e.
 a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
