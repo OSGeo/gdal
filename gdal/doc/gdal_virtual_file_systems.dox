@@ -546,8 +546,9 @@ The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 
 The OSS_SECRET_ACCESS_KEY and OSS_ACCESS_KEY_ID configuration options *must*
 be set. The OSS_ENDPOINT configuration option should normally be set to the
-relevant value. The default is oss-us-east-1.aliyuncs.com. If the bucket is
-stored in another region than oss-us-east-1, the code will be redirected to
+appropriate value, which reflects the region attached to the bucket.
+The default is oss-us-east-1.aliyuncs.com. If the bucket is
+stored in another region than oss-us-east-1, the code logic will redirect to
 the appropriate endpoint.
 
 On writing, the file is uploaded using the OSS
