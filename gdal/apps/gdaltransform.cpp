@@ -27,9 +27,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdalwarper.h"
+#include "cpl_port.h"
+
+#include <cstdio>
+#include <cstdlib>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
+#include "gdal_alg.h"
+#include "gdalwarper.h"
+#include "gdal.h"
+#include "gdal_version.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
 #include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
 
 CPL_CVSID("$Id$")
 
@@ -61,14 +74,14 @@ static void Usage(const char* pszErrorMsg = NULL)
 static char *SanitizeSRS( const char *pszUserInput )
 
 {
-    OGRSpatialReferenceH hSRS;
-    char *pszResult = NULL;
-
     CPLErrorReset();
 
-    hSRS = OSRNewSpatialReference( NULL );
+    char *pszResult = NULL;
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(NULL);
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
+    {
         OSRExportToWkt( hSRS, &pszResult );
+    }
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -94,6 +107,22 @@ static char *SanitizeSRS( const char *pszUserInput )
 int main( int argc, char ** argv )
 
 {
+    // Check that we are running against at least GDAL 1.5.
+    // Note to developers: if we use newer API, please change the requirement.
+    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
+    {
+        fprintf(stderr,
+                "At least, GDAL >= 1.5.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n",
+                argv[0], GDAL_RELEASE_NAME);
+        exit(1);
+    }
+
+    GDALAllRegister();
+    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    if( argc < 1 )
+        exit( -argc );
+
     const char         *pszSrcFilename = NULL;
     const char         *pszDstFilename = NULL;
     int                 nOrder = 0;
@@ -109,36 +138,23 @@ int main( int argc, char ** argv )
     double              dfZ = 0.0;
     bool                bCoordOnCommandLine = false;
 
-    /* Check that we are running against at least GDAL 1.5 */
-    /* Note to developers : if we use newer API, please change the requirement */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
-    {
-        fprintf(stderr, "At least, GDAL >= 1.5.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n", argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
-
-    GDALAllRegister();
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
-    if( argc < 1 )
-        exit( -argc );
-
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    int i;
-
-    for( i = 1; i < argc && argv[i] != NULL; i++ )
+    for( int i = 1; i < argc && argv[i] != NULL; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and "
+                   "is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             CSLDestroy(argv);
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )
+        {
             Usage();
+        }
         else if( EQUAL(argv[i],"-t_srs") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -196,23 +212,21 @@ int main( int argc, char ** argv )
             pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
-            if( argv[i+1] != NULL
-                && (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
+            if( argv[i+1] != NULL &&
+                (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
             {
-                /* Check that last argument is really a number and not a filename */
-                /* looking like a number (see ticket #863) */
+                // Check that last argument is really a number and not a
+                // filename looking like a number (see ticket #863).
                 if (endptr && *endptr == 0)
                     pasGCPs[nGCPCount-1].dfGCPZ = CPLAtof(argv[++i]);
             }
 
             /* should set id and info? */
         }
-
         else if( EQUAL(argv[i],"-output_xy") )
         {
             bOutputXY = TRUE;
         }
-
         else if( EQUAL(argv[i],"-coord")  && i + 2 < argc)
         {
             bCoordOnCommandLine = true;
@@ -223,23 +237,27 @@ int main( int argc, char ** argv )
             bOutputXY = TRUE;
         }
         else if( argv[i][0] == '-' )
+        {
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
-
+        }
         else if( pszSrcFilename == NULL )
+        {
             pszSrcFilename = argv[i];
-
+        }
         else if( pszDstFilename == NULL )
+        {
             pszDstFilename = argv[i];
-
+        }
         else
+        {
             Usage("Too many command options.");
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open src and destination file, if appropriate.                  */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = NULL, hDstDS = NULL;
-
+    GDALDatasetH hSrcDS = NULL;
     if( pszSrcFilename != NULL )
     {
         hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
@@ -247,6 +265,7 @@ int main( int argc, char ** argv )
             exit( 1 );
     }
 
+    GDALDatasetH hDstDS = NULL;
     if( pszDstFilename != NULL )
     {
         hDstDS = GDALOpen( pszDstFilename, GA_ReadOnly );
@@ -256,7 +275,9 @@ int main( int argc, char ** argv )
 
     if( hSrcDS != NULL && nGCPCount > 0 )
     {
-        fprintf( stderr, "Command line GCPs and input file specified, specify one or the other.\n" );
+        fprintf(stderr,
+                "Command line GCPs and input file specified, "
+                "specify one or the other.\n");
         exit( 1 );
     }
 
