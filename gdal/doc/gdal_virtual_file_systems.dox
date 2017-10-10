@@ -648,7 +648,7 @@ files, traversing directories, and deleting files within the /vsisubfile/
 area.  Only the VSIStatL(), VSIFOpenL() and operations based on the file
 handle returned by VSIFOpenL() operate properly.
 
-\section gdal_virtual_file_systems_vsisparse /vsispare/ (sparse files)
+\section gdal_virtual_file_systems_vsisparse /vsisparse/ (sparse files)
 
 The /vsisparse/ virtual file handler allows a virtual file to be composed
 from chunks of data in other files, potentially with large spaces in
