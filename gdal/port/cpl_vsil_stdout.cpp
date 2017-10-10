@@ -427,6 +427,10 @@ int VSIStdoutRedirectFilesystemHandler::Stat( const char * /* pszFilename */,
  * output stream.
  *
  * The file operations available are of course limited to Write().
+ * 
+ * A variation of this file system exists as the /vsistdout_redirect/ file
+ * system handler, where the output function can be defined with
+ * VSIStdoutSetRedirection().
  *
  * @since GDAL 1.8.0
  */

@@ -496,30 +496,7 @@ char **VSISubFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 /**
  * Install /vsisubfile/ virtual file handler.
  *
- * This virtual file system handler allows access to subregions of
- * files, treating them as a file on their own to the virtual file
- * system functions (VSIFOpenL(), etc).
- *
- * A special form of the filename is used to indicate a subportion
- * of another file:
- *
- *   /vsisubfile/&lt;offset&gt;[_&lt;size&gt;],&lt;filename&gt;
- *
- * The size parameter is optional.  Without it the remainder of the file from
- * the start offset as treated as part of the subfile.  Otherwise only
- * &lt;size&gt; bytes from &lt;offset&gt; are treated as part of the subfile.
- * The &lt;filename&gt; portion may be a relative or absolute path using normal
- * rules.  The &lt;offset&gt; and &lt;size&gt; values are in bytes.
- *
- * eg.
- *   /vsisubfile/1000_3000,/data/abc.ntf
- *   /vsisubfile/5000,../xyz/raw.dat
- *
- * Unlike the /vsimem/ or conventional file system handlers, there
- * is no meaningful support for filesystem operations for creating new
- * files, traversing directories, and deleting files within the /vsisubfile/
- * area.  Only the VSIStatL(), VSIFOpenL() and operations based on the file
- * handle returned by VSIFOpenL() operate properly.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_subfile">/vsisubfile/ documentation</a>
  */
 
 void VSIInstallSubFileHandler()
