@@ -620,6 +620,7 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
                 return OGRERR_FAILURE;
             }
             CPLFree(dfValues);
+            dfValues = NULL;
         }
     }
     // Delete all layers with the same step number in layer list. Usually there are two of them: one for points and one for elements, but we can't rely on that because of possible layer filtering specifications
