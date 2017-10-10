@@ -4278,6 +4278,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
     GIntBig      nFeaturesWritten = 0;
 
     bool bRet = true;
+    CPLErrorReset();
     while( true )
     {
         if( m_nLimit >= 0 && psInfo->nFeaturesRead >= m_nLimit )
@@ -4293,7 +4294,13 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             poFeature = poSrcLayer->GetNextFeature();
 
         if( poFeature == NULL )
+        {
+            if( CPLGetLastErrorType() == CE_Failure )
+            {
+                bRet = false;
+            }
             break;
+        }
 
         if( psInfo->nFeaturesRead == 0 || psInfo->bPerFeatureCT )
         {
