@@ -739,8 +739,9 @@ void GDALDestroyWarpOperation( GDALWarpOperationH hOperation )
         delete static_cast<GDALWarpOperation *>(hOperation);
 }
 
+
 /************************************************************************/
-/*                         ChunkAndWarpImage()                          */
+/*                          CollectChunkList()                          */
 /************************************************************************/
 
 static int OrderWarpChunk(const void* _a, const void *_b)
@@ -758,6 +759,65 @@ static int OrderWarpChunk(const void* _a, const void *_b)
     else
         return 0;
 }
+
+void GDALWarpOperation::CollectChunkList(
+    int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Collect the list of chunks to operate on.                       */
+/* -------------------------------------------------------------------- */
+    WipeChunkList();
+    CollectChunkListInternal( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
+
+    // Sort chunks from top to bottom, and for equal y, from left to right.
+    // TODO(schwehr): Use std::sort.
+    if( pasChunkList )
+        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
+              OrderWarpChunk);
+
+/* -------------------------------------------------------------------- */
+/*      Find the global source window.                                  */
+/* -------------------------------------------------------------------- */
+
+    int nSrcXOff = INT_MAX;
+    int nSrcYOff = INT_MAX;
+    int nSrcX2Off = INT_MIN;
+    int nSrcY2Off = INT_MIN;
+    double dfApproxAccArea = 0;
+    for( int iChunk = 0;
+         pasChunkList != NULL && iChunk < nChunkListCount;
+         iChunk++ )
+    {
+        GDALWarpChunk *pasThisChunk = pasChunkList + iChunk;
+        nSrcXOff = std::min(nSrcXOff, pasThisChunk->sx);
+        nSrcYOff = std::min(nSrcYOff, pasThisChunk->sy);
+        nSrcX2Off = std::max(nSrcX2Off, pasThisChunk->sx + pasThisChunk->ssx);
+        nSrcY2Off = std::max(nSrcY2Off, pasThisChunk->sy + pasThisChunk->ssy);
+        dfApproxAccArea += static_cast<double>(pasThisChunk->ssx) *
+                                pasThisChunk->ssy;
+    }
+    if( nSrcXOff < nSrcX2Off )
+    {
+        const double dfTotalArea =
+            static_cast<double>(nSrcX2Off - nSrcXOff) * (nSrcY2Off - nSrcYOff);
+        // This is really a gross heuristics, but should work in most cases
+        if( dfApproxAccArea >= dfTotalArea * 0.80 )
+        {
+            reinterpret_cast<GDALDataset*>(psOptions->hSrcDS)->AdviseRead(
+                nSrcXOff, nSrcYOff,
+                nSrcX2Off - nSrcXOff, nSrcY2Off - nSrcYOff,
+                nDstXSize, nDstYSize,
+                psOptions->eWorkingDataType,
+                psOptions->nBandCount, NULL,
+                NULL);
+        }
+    }
+}
+
+/************************************************************************/
+/*                         ChunkAndWarpImage()                          */
+/************************************************************************/
 
 /**
  * \fn CPLErr GDALWarpOperation::ChunkAndWarpImage(
@@ -789,14 +849,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
 /* -------------------------------------------------------------------- */
 /*      Collect the list of chunks to operate on.                       */
 /* -------------------------------------------------------------------- */
-    WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
-
-    // Sort chucks from top to bottom, and for equal y, from left to right.
-    // TODO(schwehr): Use std::sort.
-    if( pasChunkList )
-        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
-              OrderWarpChunk);
 
 /* -------------------------------------------------------------------- */
 /*      Total up output pixels to process.                              */
@@ -972,14 +1025,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 /* -------------------------------------------------------------------- */
 /*      Collect the list of chunks to operate on.                       */
 /* -------------------------------------------------------------------- */
-    WipeChunkList();
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
-
-    // Sort chucks from top to bottom, and for equal y, from left to right.
-    // TODO(schwehr): Use std::sort.
-    if( pasChunkList )
-        qsort(pasChunkList, nChunkListCount, sizeof(GDALWarpChunk),
-              OrderWarpChunk);
 
 /* -------------------------------------------------------------------- */
 /*      Process them one at a time, updating the progress               */
@@ -1123,10 +1169,10 @@ void GDALWarpOperation::WipeChunkList()
 }
 
 /************************************************************************/
-/*                          CollectChunkList()                          */
+/*                       CollectChunkListInternal()                     */
 /************************************************************************/
 
-CPLErr GDALWarpOperation::CollectChunkList(
+CPLErr GDALWarpOperation::CollectChunkListInternal(
     int nDstXOff, int nDstYOff,  int nDstXSize, int nDstYSize )
 
 {
@@ -1276,10 +1322,10 @@ CPLErr GDALWarpOperation::CollectChunkList(
 
             int nChunk2 = nDstXSize - nChunk1;
 
-            eErr = CollectChunkList( nDstXOff, nDstYOff,
+            eErr = CollectChunkListInternal( nDstXOff, nDstYOff,
                                      nChunk1, nDstYSize );
 
-            eErr2 = CollectChunkList( nDstXOff+nChunk1, nDstYOff,
+            eErr2 = CollectChunkListInternal( nDstXOff+nChunk1, nDstYOff,
                                       nChunk2, nDstYSize );
         }
         else if( !(bStreamableOutput && nDstYSize / 2 < nBlockYSize) )
@@ -1294,10 +1340,10 @@ CPLErr GDALWarpOperation::CollectChunkList(
 
             const int nChunk2 = nDstYSize - nChunk1;
 
-            eErr = CollectChunkList( nDstXOff, nDstYOff,
+            eErr = CollectChunkListInternal( nDstXOff, nDstYOff,
                                      nDstXSize, nChunk1 );
 
-            eErr2 = CollectChunkList( nDstXOff, nDstYOff+nChunk1,
+            eErr2 = CollectChunkListInternal( nDstXOff, nDstYOff+nChunk1,
                                       nDstXSize, nChunk2 );
         }
 
