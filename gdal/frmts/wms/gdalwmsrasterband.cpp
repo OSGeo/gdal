@@ -863,6 +863,14 @@ CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0,
     int bx1 = (x0 + sx - 1) / nBlockXSize;
     int by1 = (y0 + sy - 1) / nBlockYSize;
 
+    // Avoid downloading a insane number of tiles
+    const int MAX_TILES = 1000; // arbitrary number
+    if( (bx1 - bx0 + 1) > MAX_TILES / (by1 - by0 + 1) )
+    {
+        CPLDebug("WMS", "Too many tiles for AdviseRead()");
+        return CE_Failure;
+    }
+
     return ReadBlocks(0, 0, NULL, bx0, by0, bx1, by1, 1);
 }
 
