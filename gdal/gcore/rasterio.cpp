@@ -4383,6 +4383,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
               nSwathCols, nSwathLines, static_cast<int>(bInterleave) );
 
     // Advise the source raster that we are going to read it completely
+    // Note: this might already have been done by GDALCreateCopy() in the
+    // likely case this function is indirectly called by it
     poSrcDS->AdviseRead( 0, 0, nXSize, nYSize, nXSize, nYSize, eDT,
                          nBandCount, NULL, NULL );
 

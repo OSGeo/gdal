@@ -2257,6 +2257,9 @@ int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
  * Many drivers just ignore the AdviseRead() call, but it can dramatically
  * accelerate access via some drivers.
  *
+ * Depending on call paths, drivers might receive several calls to
+ * AdviseRead() with the same parameters.
+ *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
  *
