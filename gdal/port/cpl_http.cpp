@@ -226,6 +226,24 @@ char** CPLHTTPGetOptionsFromEnv()
 }
 
 /************************************************************************/
+/*                      CPLHTTPGetNewRetryDelay()                       */
+/************************************************************************/
+
+double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
+{
+    if( response_code == 429 ||
+            (response_code>= 502 && response_code <= 504) )
+    {
+        // Use an exponential backoff factor of 2 plus some random jitter
+        return dfOldDelay * (2 + rand() * 0.5 / RAND_MAX);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/************************************************************************/
 /*                           CPLHTTPFetch()                             */
 /************************************************************************/
 
@@ -261,7 +279,7 @@ char** CPLHTTPGetOptionsFromEnv()
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...</li>
- * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 502, 503 or
+ * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 429, 502, 503 or
  *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)</li>
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
  *                 Default is 30. (GDAL >= 2.0)</li>
@@ -524,7 +542,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If 502, 503 or 504 status code retry this HTTP call until max   */
+/*      If 429, 502, 503 or 504 status code retry this HTTP call until max   */
 /*      retry has been reached                                          */
 /* -------------------------------------------------------------------- */
     const char *pszRetryDelay =
@@ -612,10 +630,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
             if( response_code >= 400 && response_code < 600 )
             {
-                // If HTTP 502, 503 or 504 gateway timeout error retry after a
-                // pause.
-                if( (response_code >= 502 && response_code <= 504) &&
-                    nRetryCount < nMaxRetries )
+                double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
+                                                            dfRetryDelaySecs);
+                if( dfNewRetryDelay > 0 && nRetryCount < nMaxRetries )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. "
@@ -623,6 +640,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                              static_cast<int>(response_code), pszURL,
                              dfRetryDelaySecs);
                     CPLSleep(dfRetryDelaySecs);
+                    dfRetryDelaySecs = dfNewRetryDelay;
                     nRetryCount++;
 
                     CPLFree(psResult->pszContentType);
