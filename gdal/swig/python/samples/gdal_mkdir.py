@@ -56,7 +56,7 @@ def gdal_rm(argv, progress = None):
     if filename is None:
         return Usage()
 
-    ret = gdal.Mkdir(filename, int('0666', 8))
+    ret = gdal.Mkdir(filename, int('0755', 8))
     if ret != 0:
         print('Creation failed')
     return ret

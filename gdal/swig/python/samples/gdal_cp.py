@@ -166,7 +166,7 @@ def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
         return -1
 
     if gdal.VSIStatL(targetdir) is None:
-        gdal.Mkdir(targetdir, 0755)
+        gdal.Mkdir(targetdir, int('0755', 8))
 
     for srcfile in lst:
         if srcfile == '.' or srcfile == '..':
@@ -299,7 +299,7 @@ def gdal_cp(argv, progress = None):
                 targetfile = targetfile + '/' + srcfile
 
             if gdal.VSIStatL(targetfile) is None:
-                gdal.Mkdir(targetfile, 0755)
+                gdal.Mkdir(targetfile, int('0755', 8))
 
         return gdal_cp_recurse(srcfile, targetfile, progress, skip_failure)
 
