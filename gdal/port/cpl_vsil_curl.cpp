@@ -6147,13 +6147,6 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
     {
-        if( pszFilename[strlen(pszFilename)-1] == '/' )
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Illegal filename");
-            return NULL;
-        }
-
         VSIGSHandleHelper* poHandleHelper =
             VSIGSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str());
