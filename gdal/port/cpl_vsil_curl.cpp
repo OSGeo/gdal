@@ -1291,8 +1291,8 @@ retry:
         {
             // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
             // pause.
-            double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
-                                                             dfRetryDelay);
+            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                static_cast<int>(response_code), dfRetryDelay);
             if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
@@ -1632,8 +1632,8 @@ retry:
 
         // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
         // pause.
-        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
-                                                             dfRetryDelay);
+        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+            static_cast<int>(response_code), dfRetryDelay);
         if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
