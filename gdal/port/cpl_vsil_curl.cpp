@@ -1058,6 +1058,7 @@ vsi_l_offset VSICurlHandle::GetFileSize( bool bSetError )
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
     int nRetryCount = 0;
+    double dfRetryDelay = m_dfRetryDelay;
 
 retry:
     CURL* hCurlHandle = curl_easy_init();
@@ -1288,17 +1289,20 @@ retry:
         }
         else if( response_code != 200 )
         {
-            // If HTTP 502, 503 or 504 gateway timeout error retry after a
+            // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
             // pause.
-            if( (response_code >= 502 && response_code <= 504) &&
+            double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
+                                                             dfRetryDelay);
+            if( dfNewRetryDelay > 0 &&
                 nRetryCount < m_nMaxRetry )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                             "HTTP error code: %d - %s. "
                             "Retrying again in %.1f secs",
                             static_cast<int>(response_code), m_pszURL,
-                            m_dfRetryDelay);
-                CPLSleep(m_dfRetryDelay);
+                            dfRetryDelay);
+                CPLSleep(dfRetryDelay);
+                dfRetryDelay = dfNewRetryDelay;
                 nRetryCount++;
                 CPLFree(sWriteFuncData.pBuffer);
                 CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -1470,6 +1474,7 @@ bool VSICurlHandle::DownloadRegion( const vsi_l_offset startOffset,
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
     int nRetryCount = 0;
+    double dfRetryDelay = m_dfRetryDelay;
 
 retry:
     CURL* hCurlHandle = curl_easy_init();
@@ -1625,17 +1630,20 @@ retry:
             return DownloadRegion(startOffset, nBlocks);
         }
 
-        // If HTTP 502, 503 or 504 gateway timeout error retry after a
+        // If HTTP 429, 502, 503 or 504 gateway timeout error retry after a
         // pause.
-        if( (response_code >= 502 && response_code <= 504) &&
+        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
+                                                             dfRetryDelay);
+        if( dfNewRetryDelay > 0 &&
             nRetryCount < m_nMaxRetry )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                         "HTTP error code: %d - %s. "
                         "Retrying again in %.1f secs",
                         static_cast<int>(response_code), m_pszURL,
-                        m_dfRetryDelay);
-            CPLSleep(m_dfRetryDelay);
+                        dfRetryDelay);
+            CPLSleep(dfRetryDelay);
+            dfRetryDelay = dfNewRetryDelay;
             nRetryCount++;
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
