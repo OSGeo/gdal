@@ -999,6 +999,15 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
     nWinBandCount = 0;
     nWinBufLoaded = FALSE;
     papCurLineBuf = NULL;
+
+    m_nAdviseReadXOff = -1;
+    m_nAdviseReadYOff = -1;
+    m_nAdviseReadXSize = -1;
+    m_nAdviseReadYSize = -1;
+    m_nAdviseReadBufXSize = -1;
+    m_nAdviseReadBufYSize = -1;
+    m_nAdviseReadBandCount = -1;
+    m_panAdviseReadBandList = NULL;
 }
 
 /************************************************************************/
@@ -1096,6 +1105,8 @@ ECWDataset::~ECWDataset()
     CSLDestroy( papszGMLMetadata );
 
     CPLFree(sCachedMultiBandIO.pabyData);
+
+    CPLFree(m_panAdviseReadBandList);
 }
 
 #if ECWSDK_VERSION>=50
@@ -1520,8 +1531,6 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBandCount, int *panBandList,
                                CPL_UNUSED char **papszOptions )
 {
-    int *panAdjustedBandList = NULL;
-
     CPLDebug( "ECW",
               "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)",
               nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
@@ -1556,10 +1565,62 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         return CE_Failure;
     }
 
+    // We don't setup the reading window right away, in case the actual read
+    // pattern wouldn't be compatible of it. Which might be the case for
+    // example if AdviseRead() requests a full image, but we don't read by
+    // chunks of the full width of one or several lines 
+    m_nAdviseReadXOff = nXOff;
+    m_nAdviseReadYOff = nYOff;
+    m_nAdviseReadXSize = nXSize;
+    m_nAdviseReadYSize = nYSize;
+    m_nAdviseReadBufXSize = nBufXSize;
+    m_nAdviseReadBufYSize = nBufYSize;
+    m_nAdviseReadBandCount = nBandCount;
+    CPLFree(m_panAdviseReadBandList);
+    if( panBandList )
+    {
+        m_panAdviseReadBandList =
+            static_cast<int*>(CPLMalloc(sizeof(int) * nBandCount));
+        memcpy(m_panAdviseReadBandList, panBandList, sizeof(int) * nBandCount);
+    }
+    else
+    {
+        m_panAdviseReadBandList = NULL;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        RunDeferedAdviseRead()                        */
+/************************************************************************/
+
+CPLErr ECWDataset::RunDeferedAdviseRead()
+{
+    CPLAssert(m_nAdviseReadXOff >= 0);
+
+    const int nXOff = m_nAdviseReadXOff;
+    const int nYOff = m_nAdviseReadYOff;
+    const int nXSize = m_nAdviseReadXSize;
+    const int nYSize = m_nAdviseReadYSize;
+    const int nBufXSize = m_nAdviseReadBufXSize;
+    const int nBufYSize = m_nAdviseReadBufYSize;
+    const int nBandCount = m_nAdviseReadBandCount;
+    int* panBandList = m_panAdviseReadBandList;
+
+    m_nAdviseReadXOff = -1;
+    m_nAdviseReadYOff = -1;
+    m_nAdviseReadXSize = -1;
+    m_nAdviseReadYSize = -1;
+    m_nAdviseReadBufXSize = -1;
+    m_nAdviseReadBufYSize = -1;
+    m_nAdviseReadBandCount = -1;
+    m_panAdviseReadBandList = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Adjust band numbers to be zero based.                           */
 /* -------------------------------------------------------------------- */
-    panAdjustedBandList = (int *)
+    int* panAdjustedBandList = (int *)
         CPLMalloc(sizeof(int) * nBandCount );
     nBandIndexToPromoteTo8Bit = -1;
     for( int ii= 0; ii < nBandCount; ii++ )
@@ -1588,6 +1649,7 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         ECWReportError(oErr);
 
         bWinActive = FALSE;
+        CPLFree( panBandList );
         return CE_Failure;
     }
 
@@ -1624,6 +1686,8 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
     for( int iBand = 0; iBand < nWinBandCount; iBand++ )
         papCurLineBuf[iBand] =
             CPLMalloc(nBufXSize * (GDALGetDataTypeSize(eRasterDataType)/8) );
+
+    CPLFree( panBandList );
 
     return CE_None;
 }
@@ -1668,7 +1732,18 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
 #endif
 
     if( !bWinActive )
-        return FALSE;
+    {
+        if( nXOff == m_nAdviseReadXOff && nXSize == m_nAdviseReadXSize &&
+            nBufXSize == m_nAdviseReadXSize )
+        {
+            if( RunDeferedAdviseRead() != CE_None )
+                return FALSE;
+        }
+        if( !bWinActive )
+        {
+            return FALSE;
+        }
+    }
 
     if( nXOff != nWinXOff || nXSize != nWinXSize )
         return FALSE;
