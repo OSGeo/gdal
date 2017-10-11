@@ -1290,13 +1290,18 @@ int VRTDataset::CloseDependentDatasets()
 /* We will return TRUE only if all the bands are VRTSourcedRasterBands */
 /* made of identical sources, that are strictly VRTSimpleSource, and that */
 /* the band number of each source is the band number of the */
-/* VRTSouredRasterBand. */
+/* VRTSourcedRasterBand. */
 
 int VRTDataset::CheckCompatibleForDatasetIO()
 {
     int nSources = 0;
     VRTSource **papoSources = NULL;
     CPLString osResampling;
+
+    if( m_bCompatibleForDatasetIO >= 0 )
+    {
+        return m_bCompatibleForDatasetIO;
+    }
 
     for(int iBand = 0; iBand < nBands; iBand++)
     {
@@ -1447,6 +1452,63 @@ GDALDataset* VRTDataset::GetSingleSimpleSource()
 }
 
 /************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr VRTDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize,
+                               GDALDataType eDT,
+                               int nBandCount, int *panBandList,
+                               char **papszOptions )
+{
+    if( !CheckCompatibleForDatasetIO() )
+        return CE_None;
+
+    VRTSourcedRasterBand* poVRTBand
+        = reinterpret_cast<VRTSourcedRasterBand *>( papoBands[0] );
+    if( poVRTBand->nSources != 1 )
+        return CE_None;
+
+    VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
+        poVRTBand->papoSources[0] );
+
+    GDALRasterBand* poBand = poSource->GetBand();
+    if( poBand == NULL )
+        return CE_None;
+
+    GDALDataset* poSrcDS = poBand->GetDataset();
+    if( poSrcDS == NULL )
+        return CE_None;
+
+    /* Find source window and buffer size */
+    double dfReqXOff = 0.0;
+    double dfReqYOff = 0.0;
+    double dfReqXSize = 0.0;
+    double dfReqYSize = 0.0;
+    int nReqXOff = 0;
+    int nReqYOff = 0;
+    int nReqXSize = 0;
+    int nReqYSize = 0;
+    int nOutXOff = 0;
+    int nOutYOff = 0;
+    int nOutXSize = 0;
+    int nOutYSize = 0;
+    if( !poSource->GetSrcDstWindow(
+           nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
+           &dfReqXOff, &dfReqYOff,
+           &dfReqXSize, &dfReqYSize,
+           &nReqXOff, &nReqYOff,
+           &nReqXSize, &nReqYSize,
+           &nOutXOff, &nOutYOff,
+           &nOutXSize, &nOutYSize ) )
+        return CE_None;
+
+    return poSrcDS->AdviseRead(nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                               nOutXSize, nOutYSize,
+                               eDT, nBandCount, panBandList, papszOptions);
+}
+
+/************************************************************************/
 /*                              IRasterIO()                             */
 /************************************************************************/
 
@@ -1459,12 +1521,7 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg )
 {
-    if( m_bCompatibleForDatasetIO < 0 )
-    {
-        m_bCompatibleForDatasetIO = CheckCompatibleForDatasetIO();
-    }
-
-    bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(m_bCompatibleForDatasetIO);
+    bool bLocalCompatibleForDatasetIO = CPL_TO_BOOL(CheckCompatibleForDatasetIO());
     if( bLocalCompatibleForDatasetIO && eRWFlag == GF_Read &&
         (nBufXSize < nXSize || nBufYSize < nYSize) )
     {
