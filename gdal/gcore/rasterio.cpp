@@ -4382,12 +4382,9 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
               "GDALDatasetCopyWholeRaster(): %d*%d swaths, bInterleave=%d",
               nSwathCols, nSwathLines, static_cast<int>(bInterleave) );
 
-    if( nSwathCols == nXSize && poSrcDS->GetDriver() != NULL &&
-        EQUAL(poSrcDS->GetDriver()->GetDescription(), "ECW") )
-    {
-        poSrcDS->AdviseRead( 0, 0, nXSize, nYSize, nXSize, nYSize, eDT,
-                             nBandCount, NULL, NULL);
-    }
+    // Advise the source raster that we are going to read it completely
+    poSrcDS->AdviseRead( 0, 0, nXSize, nYSize, nXSize, nYSize, eDT,
+                         nBandCount, NULL, NULL );
 
 /* ==================================================================== */
 /*      Band oriented (uninterleaved) case.                             */
