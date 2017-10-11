@@ -630,8 +630,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
             if( response_code >= 400 && response_code < 600 )
             {
-                double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(response_code,
-                                                            dfRetryDelaySecs);
+                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                    static_cast<int>(response_code),
+                    dfRetryDelaySecs);
                 if( dfNewRetryDelay > 0 && nRetryCount < nMaxRetries )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
