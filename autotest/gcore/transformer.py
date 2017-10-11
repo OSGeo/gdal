@@ -593,19 +593,16 @@ def transformer_11():
     ]
     ds.SetMetadata(rpc, 'RPC')
 
-    # This one used to fail, but with height clamping it works now
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=4000' ] )
     (success,pnt) = tr.TransformPoint( 0, 0, 0, 0 )
-    if not success or abs(pnt[0] - 77.3509648791219) > 1e-7 or abs(pnt[1] - 38.73966191563848) > 1e-7:
-        gdaltest.post_reason('fail')
+    if success:
         print(pnt)
         return 'fail'
 
     # But this one should succeed
     tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_HEIGHT=1150' ] )
     (success,pnt) = tr.TransformPoint( 0, 0, 0, 0 )
-    if not success or abs(pnt[0] - 77.3509648791219) > 1e-7 or abs(pnt[1] - 38.73966191563848) > 1e-7:
-        gdaltest.post_reason('fail')
+    if not success or abs(pnt[0] - 77.350939956024618) > 1e-7 or abs(pnt[1] - 38.739703990877814) > 1e-7:
         print(pnt)
         return 'fail'
 
