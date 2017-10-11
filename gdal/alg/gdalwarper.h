@@ -465,7 +465,9 @@ private:
     void           *psThreadData;
 
     void            WipeChunkList();
-    CPLErr          CollectChunkList( int nDstXOff, int nDstYOff,
+    CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,
+                                      int nDstXSize, int nDstYSize );
+    void            CollectChunkList( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize );
     void            ReportTiming( const char * );
 
