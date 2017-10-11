@@ -165,10 +165,8 @@ def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
         print('%s is not a directory' % srcdir)
         return -1
 
-    try:
-        os.stat(targetdir)
-    except:
-        os.mkdir(targetdir)
+    if gdal.VSIStatL(targetdir) is None:
+        gdal.Mkdir(targetdir, 0755)
 
     for srcfile in lst:
         if srcfile == '.' or srcfile == '..':
@@ -289,17 +287,20 @@ def gdal_cp(argv, progress = None):
         if srcfile[-1] == '/':
             srcfile = srcfile[0:len(srcfile)-1]
         statBufSrc = gdal.VSIStatL(srcfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
+        if statBufSrc is None:
+            statBufSrc = gdal.VSIStatL(srcfile + '/', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
         statBufDst = gdal.VSIStatL(targetfile, gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG)
         if statBufSrc is not None and statBufSrc.IsDirectory() and statBufDst is not None and statBufDst.IsDirectory():
-            if targetfile[-1] != '/':
-                if srcfile.rfind('/') != -1:
-                    targetfile = targetfile + srcfile[srcfile.rfind('/'):]
-                else:
-                    targetfile = targetfile + '/' + srcfile
-                try:
-                    os.stat(targetfile)
-                except:
-                    os.mkdir(targetfile)
+            if targetfile[-1] == '/':
+                targetfile = targetfile[0:-1]
+            if srcfile.rfind('/') != -1:
+                targetfile = targetfile + srcfile[srcfile.rfind('/'):]
+            else:
+                targetfile = targetfile + '/' + srcfile
+
+            if gdal.VSIStatL(targetfile) is None:
+                gdal.Mkdir(targetfile, 0755)
+
         return gdal_cp_recurse(srcfile, targetfile, progress, skip_failure)
 
     (srcdir, pattern) = os.path.split(srcfile)
