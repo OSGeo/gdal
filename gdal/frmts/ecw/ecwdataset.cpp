@@ -1565,6 +1565,16 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
         return CE_Failure;
     }
 
+    if( nBufXSize != nXSize || nBufYSize != nYSize )
+    {
+        // This early exit is because experimentally we found that
+        // performance of requesting at 50% is much slower with
+        // AdviseRead()...
+        // At least on JPEG2000 images with SDK 3.3
+        CPLDebug("ECW", "Ignoring AdviseRead() for non full resolution request");
+        return CE_None;
+    }
+
     // We don't setup the reading window right away, in case the actual read
     // pattern wouldn't be compatible of it. Which might be the case for
     // example if AdviseRead() requests a full image, but we don't read by
@@ -1734,7 +1744,7 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
     if( !bWinActive )
     {
         if( nXOff == m_nAdviseReadXOff && nXSize == m_nAdviseReadXSize &&
-            nBufXSize == m_nAdviseReadXSize )
+            nBufXSize == m_nAdviseReadBufXSize )
         {
             if( RunDeferedAdviseRead() != CE_None )
                 return FALSE;
