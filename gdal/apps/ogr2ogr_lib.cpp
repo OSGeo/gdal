@@ -3541,7 +3541,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                  !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
                  m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != NULL &&
                  strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NULLABLE") != NULL &&
-                 CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == NULL&&
+                 CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == NULL &&
                  !m_bForceNullable )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
@@ -3555,7 +3555,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
                  m_poSrcDS != NULL &&
                  m_poSrcDS->GetDriver() != NULL &&
-                 EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GMLAS") )
+                 ( EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GMLAS") ||
+                   EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "NAS") ) )
         {
             anRequestedGeomFields.push_back(0);
             eGCreateLayerType = wkbNone;
