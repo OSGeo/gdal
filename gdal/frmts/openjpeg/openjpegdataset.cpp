@@ -222,6 +222,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 #endif
 
     int         nThreads;
+    int         m_nBlocksToLoad;
     int         GetNumThreads();
     int         bEnoughMemoryToLoadOtherBands;
     int         bRewrite;
@@ -542,7 +543,7 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
             return FALSE;
 
         JobStruct oJob;
-        int nBlocksToLoad = 0;
+        m_nBlocksToLoad = 0;
         try
         {
             for(int nBlockXOff = nXStart; nBlockXOff <= nXEnd; ++nBlockXOff)
@@ -556,27 +557,29 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                         continue;
                     }
                     oJob.oPairs.push_back( std::pair<int,int>(nBlockXOff, nBlockYOff) );
-                    nBlocksToLoad ++;
+                    m_nBlocksToLoad ++;
                 }
             }
         }
         catch( const std::bad_alloc& )
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory error");
+            m_nBlocksToLoad = 0;
             return -1;
         }
 
-        if( nBlocksToLoad > 1 )
+        if( m_nBlocksToLoad > 1 )
         {
-            const int l_nThreads = std::min(nBlocksToLoad, nMaxThreads);
+            const int l_nThreads = std::min(m_nBlocksToLoad, nMaxThreads);
             CPLJoinableThread** pahThreads = (CPLJoinableThread**) VSI_CALLOC_VERBOSE( sizeof(CPLJoinableThread*), l_nThreads );
             if( pahThreads == NULL )
             {
+                m_nBlocksToLoad = 0;
                 return -1;
             }
             int i;
 
-            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", nBlocksToLoad, l_nThreads);
+            CPLDebug("OPENJPEG", "%d blocks to load (%d threads)", m_nBlocksToLoad, l_nThreads);
 
             oJob.poGDS = this;
             oJob.nBand = poBand->GetBand();
@@ -618,7 +621,11 @@ int JP2OpenJPEGDataset::PreloadBlocks(JP2OpenJPEGRasterBand* poBand,
                 CPLJoinThread( pahThreads[i] );
             CPLFree(pahThreads);
             if( !oJob.bSuccess )
+            {
+                m_nBlocksToLoad = 0;
                 return -1;
+            }
+            m_nBlocksToLoad = 0;
         }
     }
 
@@ -773,6 +780,16 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             eErr = CE_Failure;
             goto end;
         }
+
+#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 2
+        if( getenv("OPJ_NUM_THREADS") == NULL )
+        {
+            if( m_nBlocksToLoad <= 1 )
+                opj_codec_set_threads(pCodec, GetNumThreads());
+            else
+                opj_codec_set_threads(pCodec, GetNumThreads() / m_nBlocksToLoad);
+        }
+#endif
 
         if(!opj_read_header(pStream,pCodec,&psImage))
         {
@@ -1096,6 +1113,7 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     m_psJP2OpenJPEGFile = NULL;
 #endif
     nThreads = -1;
+    m_nBlocksToLoad = 0;
     bEnoughMemoryToLoadOtherBands = TRUE;
     bRewrite = FALSE;
     bHasGeoreferencingAtOpening = FALSE;
