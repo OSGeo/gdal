@@ -457,6 +457,14 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
         }
     }
 
+    // To prevent int overflow in poRange.getSize() call where we do
+    // nSteps * 2
+    if( poHeader->nSteps >= INT_MAX / 2 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, "Invalid nSteps value" );
+        return FALSE;
+    }
+
     // Create two layers for each selected time step: one for points, the other for elements
     poRange.setMaxValue(poHeader->nSteps);
     const int nNewLayers = static_cast<int>(poRange.getSize());
