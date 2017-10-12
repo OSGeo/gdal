@@ -618,16 +618,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 
 # Uncomment for OpenJpeg (release v2.1 or later) support
 #OPENJPEG_ENABLED = YES
+# Note that, contrary to GDAL releases <= 2.2.X, this must point to the
+# directory where openjpeg.h and opj_config.h are set 
 #OPENJPEG_CFLAGS = -IC:\openjpeg\include\openjpeg-2.X
 #OPENJPEG_LIB = C:\openjpeg\lib\openjp2.lib
-
-# Temporary hack for gisinternals builds
-!IFDEF OPENJPEG_VERSION
-!IF $(OPENJPEG_VERSION) == 20100
-OPENJPEG_CFLAGS = $(OPENJPEG_CFLAGS)\openjpeg-2.1 $(OPENJPEG_CFLAGS)
-!ENDIF
-!ENDIF
-
 
 #if using an external zlib uncomment the following lines
 #ZLIB_EXTERNAL_LIB = 1
