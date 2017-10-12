@@ -235,6 +235,8 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
             (response_code>= 502 && response_code <= 504) )
     {
         // Use an exponential backoff factor of 2 plus some random jitter
+        // We don't care about cryptographic quality randomness, hence:
+        // coverity[dont_call]
         return dfOldDelay * (2 + rand() * 0.5 / RAND_MAX);
     }
     else
