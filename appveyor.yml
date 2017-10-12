@@ -77,9 +77,8 @@ install:
 - echo POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES >> nmake.local
 - echo POPPLER_LIBS = $(SDK_LIB)\poppler.lib $(SDK_LIB)\freetype2411.lib advapi32.lib gdi32.lib >> nmake.local
 - echo OPENJPEG_ENABLED = YES >> nmake.local
-- echo OPENJPEG_CFLAGS = -I$(SDK_INC) >> nmake.local
+- echo OPENJPEG_CFLAGS = -I$(SDK_INC)\openjpeg-2.1 >> nmake.local
 - echo OPENJPEG_LIB = $(SDK_LIB)\openjp2.lib >> nmake.local
-- echo OPENJPEG_VERSION = 20100 >> nmake.local
 - echo ECWDIR=bla >> nmake.local
 - echo ECWLIB=$(SDK_LIB)\libecwj2.lib >> nmake.local
 - echo ECWFLAGS=-DECWSDK_VERSION=33 -I$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI >> nmake.local
