@@ -4486,12 +4486,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             {
                 if( dfWidthInUserUnit >= dfHeightInUserUnit )
                 {
-                    dfDPI = (int)(0.5 + (double)nWidth / (MAXIMUM_SIZE_IN_UNITS -
+                    dfDPI = ceil((double)nWidth / (MAXIMUM_SIZE_IN_UNITS -
                             (sMargins.nLeft + sMargins.nRight)) / USER_UNIT_IN_INCH);
                 }
                 else
                 {
-                    dfDPI = (int)(0.5 + (double)nHeight / (MAXIMUM_SIZE_IN_UNITS -
+                    dfDPI = ceil((double)nHeight / (MAXIMUM_SIZE_IN_UNITS -
                             (sMargins.nBottom + sMargins.nTop)) / USER_UNIT_IN_INCH);
                 }
                 CPLDebug("PDF", "Adjusting DPI to %d so that page dimension in "
