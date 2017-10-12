@@ -566,7 +566,13 @@ OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
         OGRLineString* poLS =
             oCC.papoCurves[iRing]->CurveToLine(dfMaxAngleStepSizeDegrees,
                                                papszOptions);
-        poPoly->addRingDirectly(OGRCurve::CastToLinearRing(poLS));
+        OGRLinearRing* poRing = OGRCurve::CastToLinearRing(poLS);
+        if( poRing == 0 ) {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "OGRCurve::CastToLinearRing failed");
+            break;
+        }
+        poPoly->addRingDirectly(poRing);
     }
     return poPoly;
 }
