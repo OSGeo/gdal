@@ -1923,10 +1923,6 @@ fi
 AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
 AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
 
-if test "$HAVE_OGDI" != "no" ; then
-  OPT_GDAL_FORMATS="ogdi $OPT_GDAL_FORMATS"
-fi
-
 dnl ---------------------------------------------------------------------------
 dnl Select FME_HOME or disable FME support.
 dnl ---------------------------------------------------------------------------
