@@ -3635,6 +3635,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         OGRGeometry *poResult = NULL;
         for( ; psParent != NULL; psParent = psParent->psNext )
         {
+            psChild = GetChildElement(psParent);
+            if( psChild == NULL )
+                continue;
             poPS = new OGRPolyhedralSurface();
             for( ; psChild != NULL; psChild = psChild->psNext )
             {
@@ -3659,6 +3662,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                              wkbPolygon )
                     {
                         poPS->addGeometryDirectly( poPolygon );
+                    }
+                    else if( wkbFlatten(poPolygon->getGeometryType()) ==
+                             wkbCurvePolygon )
+                    {
+                        poPS->addGeometryDirectly(
+                            OGRGeometryFactory::forceToPolygon(poPolygon) );
                     }
                     else
                     {
