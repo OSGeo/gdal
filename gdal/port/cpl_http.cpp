@@ -48,7 +48,11 @@
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
 #endif
 
+#ifdef HAVE_OPENSSL_CRYPTO
+#include <openssl/err.h>
 #endif
+
+#endif // HAVE_CURL
 
 CPL_CVSID("$Id$")
 
@@ -60,6 +64,61 @@ static CPLMutex *hSessionMapMutex = NULL;
 static bool bHasCheckVersion = false;
 static bool bSupportGZip = false;
 static bool bSupportHTTP2 = false;
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+
+// Ported from https://curl.haxx.se/libcurl/c/opensslthreadlock.html
+static CPLMutex** pahSSLMutex = NULL;
+
+static void CPLOpenSSLLockingFunction(int mode, int n,
+                                 const char * /*file*/, int /*line*/)
+{
+  if(mode & CRYPTO_LOCK)
+  {
+      CPLAcquireMutex( pahSSLMutex[n], 3600.0 );
+  }
+  else
+  {
+      CPLReleaseMutex( pahSSLMutex[n] );
+  }
+}
+
+static unsigned long CPLOpenSSLIdCallback(void)
+{
+  return static_cast<unsigned long>(CPLGetPID());
+}
+
+static void CPLOpenSSLInit()
+{
+    if( strstr(curl_version(), "OpenSSL") &&
+        CRYPTO_get_id_callback() == NULL )
+    {
+        pahSSLMutex = static_cast<CPLMutex**>(
+                CPLMalloc( CRYPTO_num_locks() * sizeof(CPLMutex*) ) );
+        for(int i = 0;  i < CRYPTO_num_locks();  i++)
+        {
+            pahSSLMutex[i] = CPLCreateMutex();
+            CPLReleaseMutex( pahSSLMutex[i] );
+        }
+        CRYPTO_set_id_callback(CPLOpenSSLIdCallback);
+        CRYPTO_set_locking_callback(CPLOpenSSLLockingFunction);
+    }
+}
+
+static void CPLOpenSSLCleanup()
+{
+    if( pahSSLMutex )
+    {
+        for(int i = 0;  i < CRYPTO_num_locks();  i++)
+        {
+            CPLDestroyMutex(pahSSLMutex[i]);
+        }
+        CPLFree(pahSSLMutex);
+        pahSSLMutex = NULL;
+    }
+}
+
+#endif
 
 /************************************************************************/
 /*                       CheckCurlFeatures()                            */
@@ -97,6 +156,10 @@ static void CheckCurlFeatures()
                      LIBCURL_VERSION_PATCH,
                      data->version);
         }
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+        CPLOpenSSLInit();
+#endif
     }
 }
 
@@ -1135,6 +1198,11 @@ void CPLHTTPCleanup()
     // Not quite a safe sequence.
     CPLDestroyMutex( hSessionMapMutex );
     hSessionMapMutex = NULL;
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+    CPLOpenSSLCleanup();
+#endif
+
 #endif
 }
 
