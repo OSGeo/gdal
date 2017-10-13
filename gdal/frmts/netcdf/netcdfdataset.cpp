@@ -2023,7 +2023,17 @@ char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     char **papszValues = NULL;
     if( pszValue != NULL )
     {
-        papszValues = NCDFTokenizeArray(pszValue);
+        if( pszValue[0] != '{' && CPLString(pszValue).Trim().find(' ') != std::string::npos )
+        {
+            // Some files like ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
+            // do not use standard formatting for arrays, but just space
+            // separated syntax
+            papszValues = CSLTokenizeString2(pszValue, " ", 0);
+        }
+        else
+        {
+            papszValues = NCDFTokenizeArray(pszValue);
+        }
     }
     // Try gdal tags.
     else
@@ -2046,6 +2056,16 @@ char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     }
 
     return papszValues;
+}
+
+/************************************************************************/
+/*                       IsDifferenceBelow()                            */
+/************************************************************************/
+
+static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
+{
+    const double dfAbsDiff = fabs(dfA - dfB);
+    return dfAbsDiff <= dfError;
 }
 
 /************************************************************************/
@@ -2959,9 +2979,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
             SetProjection(pszTempProjection);
             CPLFree(pszTempProjection);
-
-            if( !bGotCfGT )
-                CPLDebug("GDAL_netCDF", "got SRS but no geotransform from CF!");
         }
 
         // Is pixel spacing uniform across the map?
@@ -3001,9 +3018,14 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                      pdfXCoord[xdim - 2], pdfXCoord[xdim - 1]);
 #endif
 
-            if( (abs(abs(nSpacingBegin) - abs(nSpacingLast))  <= 1) &&
-                (abs(abs(nSpacingBegin) - abs(nSpacingMiddle)) <= 1) &&
-                (abs(abs(nSpacingMiddle) - abs(nSpacingLast)) <= 1) )
+            const double dfSpacingBegin = nSpacingBegin;
+            const double dfSpacingMiddle = nSpacingMiddle;
+            const double dfSpacingLast = nSpacingLast;
+            // ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
+            // requires a 2/1000 tolerance.
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
             {
                 bLonSpacingOK = true;
             }
@@ -3044,17 +3066,21 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
             // For Latitude we allow an error of 0.1 degrees for gaussian
             // gridding (only if this is not a projected SRS).
-
-            if( (abs(abs(nSpacingBegin) - abs(nSpacingLast))  <= 1) &&
-                (abs(abs(nSpacingBegin) - abs(nSpacingMiddle)) <= 1) &&
-                (abs(abs(nSpacingMiddle) - abs(nSpacingLast)) <= 1) )
+            // Note: we use fabs() instead of abs() to avoid int32 overflow
+            // issues.
+            const double dfSpacingBegin = nSpacingBegin;
+            const double dfSpacingMiddle = nSpacingMiddle;
+            const double dfSpacingLast = nSpacingLast;
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
             {
                 bLatSpacingOK = true;
             }
             else if( !oSRS.IsProjected() &&
-                     (((abs(abs(nSpacingBegin) - abs(nSpacingLast))) <= 100) &&
-                      ((abs(abs(nSpacingBegin) - abs(nSpacingMiddle))) <= 100) &&
-                      ((abs(abs(nSpacingMiddle) - abs(nSpacingLast))) <= 100)) )
+                     (((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))) <= 100) &&
+                      ((fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle))) <= 100) &&
+                      ((fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast))) <= 100)) )
             {
                 bLatSpacingOK = true;
                 CPLError(CE_Warning, CPLE_AppDefined,
