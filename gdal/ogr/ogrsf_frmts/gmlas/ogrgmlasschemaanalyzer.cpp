@@ -884,6 +884,11 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                                     m_oMapDocNSURIToPrefix,
                                                     oCache );
 
+    // In this first pass we load the schemas that are directly pointed by
+    // the user with the XSD open option, or that we found in the xsi:schemaLocation
+    // attribute
+    // The namespaces of those schemas are the "first choice" namespaces from
+    // which we will try to find elements to turn them into layers
     aoNamespaces.push_back("");
     for( size_t i = 0; i < aoXSDs.size(); i++ )
     {
@@ -974,7 +979,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
 
     bool bFoundGMLFeature = false;
 
-    // Initial pass, in all namespaces, to figure out inheritance relationships
+    // Second pass, in all namespaces, to figure out inheritance relationships
     // and group models that have names
     std::map<CPLString, CPLString> oMapURIToPrefixWithEmpty(m_oMapURIToPrefix);
     oMapURIToPrefixWithEmpty[""] = "";
@@ -1057,6 +1062,46 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         XMLString::release(&xmlNamespace);
     }
 
+    // Check that we can find elements in the namespaces pointed in the
+    // xsi:schemaLocation of the document, then fallback to namespaces
+    // that might be indirectly imported by those first level namespaces
+    bool bFoundElementsInFirstChoiceNamespaces = false;
+    for( size_t iNS = 0; !bFoundElementsInFirstChoiceNamespaces &&
+                         iNS < aoNamespaces.size(); iNS++ )
+    {
+        XMLCh* xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+
+        XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
+            XSConstants::ELEMENT_DECLARATION, xmlNamespace);
+        bFoundElementsInFirstChoiceNamespaces = 
+            poMapElements != NULL && poMapElements->getLength() > 0;
+        XMLString::release(&xmlNamespace);
+    }
+    if( !bFoundElementsInFirstChoiceNamespaces )
+    {
+        CPLDebug("GMLAS", "Did not find element in 'first choice' namespaces. "
+                 "Falling back to the namespaces they import");
+        aoNamespaces.clear();
+        oIterNS = oMapURIToPrefixWithEmpty.begin();
+        for( ; oIterNS != oMapURIToPrefixWithEmpty.end(); ++oIterNS)
+        {
+            const CPLString& osNSURI(oIterNS->first);
+            if( osNSURI == szXS_URI ||
+                osNSURI == szXSI_URI ||
+                osNSURI == szXMLNS_URI ||
+                osNSURI == szXLINK_URI ||
+                osNSURI == szWFS_URI ||
+                osNSURI == szWFS20_URI ||
+                osNSURI == szGML_URI ||
+                osNSURI == szGML32_URI )
+            {
+                // Skip all boring namespaces
+                continue;
+            }
+            aoNamespaces.push_back(osNSURI);
+        }
+    }
+
     // Find which elements must be top levels (because referenced several
     // times)
     std::set<XSElementDeclaration*> oSetVisitedEltDecl;
@@ -1069,6 +1114,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     // inspire/geologicalunit/geologicalunit.gml test dataset.
     std::set<CPLString> aoSetXPathEltsForTopClass;
 
+    // Third and fourth passes
     for( int iPass = 0; iPass < 2; ++iPass )
     {
         for( size_t iNS = 0; iNS < aoNamespaces.size(); iNS++ )
