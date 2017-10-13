@@ -748,6 +748,10 @@ QHULL_SETTING = INTERNAL
 # When linking against the static lib:
 # CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
 
+# OpenSSL stuff (needed if using curl in multithreaded way, with OpenSSL backend)
+# OPENSSL_INC = -Ic:/install-openssl/include
+# OPENSSL_LIB = c:/instal-oppenssl/lib/ssleay32.lib
+
 # Comment out to disable MRF support.
 MRF_SETTING=yes
 
@@ -960,5 +964,5 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
 	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib \
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) ws2_32.lib \
     kernel32.lib psapi.lib
