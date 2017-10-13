@@ -311,6 +311,12 @@ int VSITarReader::GotoNextFile()
     nNextFileSize = 0;
     for(int i=0;i<11;i++)
         nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+    if( nNextFileSize > GINTBIG_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid file size for %s", osNextFileName.c_str());
+        return FALSE;
+    }
 
     nModifiedTime = 0;
     for(int i=0;i<11;i++)
