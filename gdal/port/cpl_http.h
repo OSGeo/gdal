@@ -123,6 +123,8 @@ CPL_C_END
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
 char** CPLHTTPGetOptionsFromEnv();
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay);
+void* CPLHTTPIgnoreSigPipe();
+void CPLHTTPRestoreSigPipeHandler(void* old_handler);
 /*! @endcond */
 
 bool CPLIsMachinePotentiallyGCEInstance();

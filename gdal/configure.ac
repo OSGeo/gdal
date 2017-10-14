@@ -303,6 +303,7 @@ AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(sigaction)
 AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
 

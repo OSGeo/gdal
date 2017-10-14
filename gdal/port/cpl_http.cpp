@@ -52,6 +52,10 @@
 #include <openssl/err.h>
 #endif
 
+#ifdef HAVE_SIGACTION
+#include <signal.h>
+#endif
+
 #endif // HAVE_CURL
 
 CPL_CVSID("$Id$")
@@ -91,6 +95,7 @@ static unsigned long CPLOpenSSLIdCallback(void)
 static void CPLOpenSSLInit()
 {
     if( strstr(curl_version(), "OpenSSL") &&
+        CPLTestBool(CPLGetConfigOption("CPL_OPENSSL_INIT_ENABLED", "YES")) &&
         CRYPTO_get_id_callback() == NULL )
     {
         pahSSLMutex = static_cast<CPLMutex**>(
@@ -630,7 +635,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         psResult->nStatus = static_cast<int>(curl_easy_perform(http_handle));
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch content-type if possible.                                 */
@@ -1141,6 +1148,50 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 
     return headers;
 }
+
+/************************************************************************/
+/*                         CPLHTTPIgnoreSigPipe()                       */
+/************************************************************************/
+
+/* If using OpenSSL with Curl, openssl can cause SIGPIPE to be triggered */
+/* As we set CURLOPT_NOSIGNAL = 1, we must manually handle this situation */
+
+void* CPLHTTPIgnoreSigPipe()
+{
+#if defined(SIGPIPE) && defined(HAVE_SIGACTION)
+    struct sigaction old_pipe_act;
+    struct sigaction action;
+    /* Get previous handler */
+    memset(&old_pipe_act, 0, sizeof(struct sigaction));
+    sigaction(SIGPIPE, NULL, &old_pipe_act);
+
+    /* Install new handler */
+    action = old_pipe_act;
+    action.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &action, NULL);
+
+    void* ret = CPLMalloc(sizeof(old_pipe_act));
+    memcpy(ret, &old_pipe_act, sizeof(old_pipe_act));
+    return ret;
+#else
+    return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                     CPLHTTPRestoreSigPipeHandler()                   */
+/************************************************************************/
+
+void CPLHTTPRestoreSigPipeHandler(void* old_handler)
+{
+#if defined(SIGPIPE) && defined(HAVE_SIGACTION)
+    sigaction(SIGPIPE, static_cast<struct sigaction*>(old_handler), NULL);
+    CPLFree(old_handler);
+#else
+    (void)old_handler;
+#endif
+}
+
 #endif  // def HAVE_CURL
 
 /************************************************************************/

@@ -166,6 +166,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
 
     while (still_running || (conn_i != nRequestCount)) {
@@ -219,6 +220,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
 
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     if (conn_i != nRequestCount) { // something gone really really wrong
         // oddly built libcurl or perhaps absence of network interface
