@@ -646,7 +646,9 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     if (nWKID == 102100)
         nWKID = 3857;
 
-    const char* pszEndURL = strstr(pszURL, "/MapServer?f=json");
+    const char* pszEndURL = strstr(pszURL, "/?f=json");
+    if( pszEndURL == NULL )
+        pszEndURL = strstr(pszURL, "?f=json");
     CPLAssert(pszEndURL);
     CPLString osURL(pszURL);
     osURL.resize(pszEndURL - pszURL);
@@ -708,7 +710,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
-            "    <ServerUrl>%s/MapServer/tile/${z}/${y}/${x}</ServerUrl>\n"
+            "    <ServerUrl>%s/tile/${z}/${y}/${x}</ServerUrl>\n"
             "  </Service>\n"
             "  <DataWindow>\n"
             "    <UpperLeftX>%.8f</UpperLeftX>\n"
@@ -789,7 +791,10 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
              STARTS_WITH_CI(pszFilename, "http") &&
-             strstr(pszFilename, "/MapServer?f=json") != NULL)
+             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
+              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
     {
         return TRUE;
     }
@@ -832,7 +837,10 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (STARTS_WITH_CI(pszFilename, "WMS:http") ||
               STARTS_WITH_CI(pszFilename, "http")) &&
-             strstr(pszFilename, "/MapServer?f=json") != NULL)
+             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
+              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
     {
         if (STARTS_WITH_CI(pszFilename, "WMS:http"))
             pszFilename += 4;
