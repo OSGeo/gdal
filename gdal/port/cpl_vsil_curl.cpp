@@ -1149,7 +1149,7 @@ retry:
                 eExists = EXIST_YES;
                 fileSize = CPLScanUIntBig(
                     pszContentLength,
-                    strlen(pszContentLength));
+                    static_cast<int>(strlen(pszContentLength)));
                 if( ENABLE_DEBUG )
                     CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
                             osURL.c_str(), fileSize);
