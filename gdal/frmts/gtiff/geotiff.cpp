@@ -1128,7 +1128,9 @@ class GTiffRasterBand : public GDALPamRasterBand
                                                char **papszOptions );
 
     void*           CacheMultiRange( int nXOff, int nYOff,
-                                        int nXSize, int nYSize );
+                                     int nXSize, int nYSize,
+                                     int nBufXSize, int nBufYSize,
+                                     GDALRasterIOExtraArg* psExtraArg );
 
 protected:
     GTiffDataset       *poGDS;
@@ -2133,7 +2135,10 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
         VSIHasOptimizedReadMultiRange(osFilename) )
     {
         pBufferedData = reinterpret_cast<GTiffRasterBand *>(
-            GetRasterBand(1))->CacheMultiRange(nXOff, nYOff, nXSize, nYSize);
+            GetRasterBand(1))->CacheMultiRange(nXOff, nYOff,
+                                               nXSize, nYSize,
+                                               nBufXSize, nBufYSize,
+                                               psExtraArg);
     }
 
     ++nJPEGOverviewVisibilityCounter;
@@ -3977,19 +3982,34 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
-                                        int nXSize, int nYSize )
+                                        int nXSize, int nYSize,
+                                        int nBufXSize, int nBufYSize,
+                                        GDALRasterIOExtraArg* psExtraArg )
 {
     void* pBufferedData = NULL;
-    const int nBlockX1 = nXOff / nBlockXSize;
-    const int nBlockY1 = nYOff / nBlockYSize;
-    const int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
-    const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+    int nBlockX1 = nXOff / nBlockXSize;
+    int nBlockY1 = nYOff / nBlockYSize;
+    int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+    int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+    if( psExtraArg->bFloatingPointWindowValidity )
+    {
+        const double dfSrcXInc = psExtraArg->dfXSize / static_cast<double>( nBufXSize );
+        const double dfSrcYInc = psExtraArg->dfYSize / static_cast<double>( nBufYSize );
+        const double EPS = 1e-10;
+        nBlockX1 = static_cast<int>((0+0.5) * dfSrcXInc + psExtraArg->dfXOff + EPS) / nBlockXSize;
+        nBlockY1 = static_cast<int>((0+0.5) * dfSrcYInc + psExtraArg->dfYOff + EPS) / nBlockYSize;
+        nBlockX2 = static_cast<int>((nBufXSize-1+0.5) * dfSrcXInc + psExtraArg->dfXOff + EPS) / nBlockXSize;
+        nBlockY2 = static_cast<int>((nBufYSize-1+0.5) * dfSrcYInc + psExtraArg->dfYOff + EPS) / nBlockYSize;
+    }
     thandle_t th = TIFFClientdata( poGDS->hTIFF );
     if( poGDS->SetDirectory() && !VSI_TIFFHasCachedRanges(th) )
     {
         std::vector< std::pair<vsi_l_offset, size_t> > aOffsetSize;
         size_t nTotalSize = 0;
         nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+        const unsigned int nMaxRawBlockCacheSize =
+            atoi(CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE",
+                                    "10485760"));
         for( int iY = nBlockY1; iY <= nBlockY2; iY ++)
         {
             for( int iX = nBlockX1; iX <= nBlockX2; iX ++)
@@ -4007,7 +4027,7 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                 vsi_l_offset nSize = 0;
                 if( poGDS->IsBlockAvailable(nBlockId, &nOffset, &nSize) )
                 {
-                    if( nTotalSize + nSize < 10 * 1024 * 1024 )
+                    if( nTotalSize + nSize < nMaxRawBlockCacheSize )
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GTiff",
@@ -4121,7 +4141,9 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         eRWFlag == GF_Read &&
         VSIHasOptimizedReadMultiRange(poGDS->osFilename) )
     {
-        pBufferedData = CacheMultiRange(nXOff, nYOff, nXSize, nYSize);
+        pBufferedData = CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
+                                        nBufXSize, nBufYSize,
+                                        psExtraArg);
     }
 
     if( poGDS->nBands != 1 &&
