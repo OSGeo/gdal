@@ -458,9 +458,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                                                                      */
 /*      Currently this code does not attempt to protect against         */
 /*      multiple threads asking for the same named session.  If that    */
-/*      occurs it will be in use in multiple threads at once which      */
-/*      might have bad consequences depending on what guarantees        */
-/*      libcurl gives - which I have not investigated.                  */
+/*      occurs it will be in use in multiple threads at once, which     */
+/*      will lead to potential crashes in libcurl.                      */
 /* -------------------------------------------------------------------- */
     CURL *http_handle = NULL;
 
