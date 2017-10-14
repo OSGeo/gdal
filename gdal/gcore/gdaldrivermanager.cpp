@@ -35,6 +35,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -312,6 +313,11 @@ GDALDriverManager::~GDALDriverManager()
 /*      Cleanup QHull mutex.                                            */
 /* -------------------------------------------------------------------- */
     GDALTriangulationTerminate();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup curl related stuff.                                     */
+/* -------------------------------------------------------------------- */
+    CPLHTTPCleanup();
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the master CPL mutex, which governs the creation        */
