@@ -937,6 +937,70 @@ def gml_PolyhedralSurface():
         print(geom.ExportToWkt())
         return 'fail'
 
+    # several polygon patches (and test that non elements such as comments are parsed OK)
+    gml = """<gml:PolyhedralSurface>
+                <gml:polygonPatches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">1 2 3 4 5 6 7 8 9 1 2 3</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:PolygonPatch>
+                    <!--- --->
+                </gml:polygonPatches>
+                <!--- --->
+                <gml:polygonPatches>
+                    <gml:PolygonPatch>
+                        <gml:exterior>
+                            <gml:LinearRing>
+                                <gml:posList srsDimension="3">1 2 3 4 5 6 7 8 9 1 2 3</gml:posList>
+                            </gml:LinearRing>
+                        </gml:exterior>
+                    </gml:PolygonPatch>
+                </gml:polygonPatches>
+            </gml:PolyhedralSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))),POLYHEDRALSURFACE (((1 2 3,4 5 6,7 8 9,1 2 3))))':
+        gdaltest.post_reason( '<gml:PolyhedralSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+    # Test PolyhedralSurface with curve section (which we linearize since the SF PolyhedralSurface doesn't support curves)
+    gml = """<gml:PolyhedralSurface>
+                <gml:polygonPatches>
+                    <gml:PolygonPatch interpolation="planar">
+                        <gml:exterior>
+                            <gml:Ring>
+                                <gml:curveMember>
+                                    <gml:Curve>
+                                        <gml:segments>
+                                            <gml:LineStringSegment interpolation="linear">
+                                                <gml:pos>0 -1</gml:pos>
+                                                <gml:pos>0 1</gml:pos>
+                                            </gml:LineStringSegment>
+                                            <gml:Arc interpolation="circularArc3Points" numArc="1">
+                                                <gml:pos>0 1</gml:pos>
+                                                <gml:pos>1 0</gml:pos>
+                                                <gml:pos>0 -1</gml:pos>
+                                            </gml:Arc>
+                                        </gml:segments>
+                                    </gml:Curve>
+                                </gml:curveMember>
+                            </gml:Ring>
+                        </gml:exterior>
+                    </gml:PolygonPatch>
+                </gml:polygonPatches>
+            </gml:PolyhedralSurface>"""
+
+    geom = ogr.CreateGeometryFromGML( gml )
+    if geom.ExportToWkt().find('POLYHEDRALSURFACE (((0 -1,0 1,') < 0:
+        gdaltest.post_reason( '<gml:PolyhedralSurface> not correctly parsed' )
+        print(geom.ExportToWkt())
+        return 'fail'
+
+
     return 'success'
 
 
@@ -1249,6 +1313,9 @@ def gml_invalid_geoms():
         ("<gml:ArcByCenterPoint><gml:pos>1 2</gml:pos><gml:radius>2</gml:radius><gml:startAngle>90</gml:startAngle></gml:ArcByCenterPoint>", None),
         ("<gml:CircleByCenterPoint><gml:radius>2</gml:radius></gml:CircleByCenterPoint>", None),
         ("<gml:CircleByCenterPoint><gml:pos>1 2</gml:pos></gml:CircleByCenterPoint>", None),
+        ('<gml:PolyhedralSurface><foo/></gml:PolyhedralSurface>', None),
+        ('<gml:PolyhedralSurface><gml:polygonPatches><foo/></gml:polygonPatches></gml:PolyhedralSurface>', None),
+        ('<gml:PolyhedralSurface><gml:polygonPatches><gml:PolygonPatch><gml:exterior><foo/></gml:exterior></gml:PolygonPatch></gml:polygonPatches></gml:PolyhedralSurface>', None),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
