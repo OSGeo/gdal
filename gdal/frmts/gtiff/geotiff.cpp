@@ -3987,20 +3987,26 @@ void* GTiffRasterBand::CacheMultiRange( int nXOff, int nYOff,
                                         GDALRasterIOExtraArg* psExtraArg )
 {
     void* pBufferedData = NULL;
-    int nBlockX1 = nXOff / nBlockXSize;
-    int nBlockY1 = nYOff / nBlockYSize;
-    int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
-    int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+    // Same logic as in GDALRasterBand::IRasterIO()
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
     if( psExtraArg->bFloatingPointWindowValidity )
     {
-        const double dfSrcXInc = psExtraArg->dfXSize / static_cast<double>( nBufXSize );
-        const double dfSrcYInc = psExtraArg->dfYSize / static_cast<double>( nBufYSize );
-        const double EPS = 1e-10;
-        nBlockX1 = static_cast<int>((0+0.5) * dfSrcXInc + psExtraArg->dfXOff + EPS) / nBlockXSize;
-        nBlockY1 = static_cast<int>((0+0.5) * dfSrcYInc + psExtraArg->dfYOff + EPS) / nBlockYSize;
-        nBlockX2 = static_cast<int>((nBufXSize-1+0.5) * dfSrcXInc + psExtraArg->dfXOff + EPS) / nBlockXSize;
-        nBlockY2 = static_cast<int>((nBufYSize-1+0.5) * dfSrcYInc + psExtraArg->dfYOff + EPS) / nBlockYSize;
+        dfXOff = psExtraArg->dfXOff;
+        dfYOff = psExtraArg->dfYOff;
+        dfXSize = psExtraArg->dfXSize;
+        dfYSize = psExtraArg->dfYSize;
     }
+    const double dfSrcXInc = dfXSize / static_cast<double>( nBufXSize );
+    const double dfSrcYInc = dfYSize / static_cast<double>( nBufYSize );
+    const double EPS = 1e-10;
+    const int nBlockX1 = static_cast<int>((0+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
+    const int nBlockY1 = static_cast<int>((0+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
+    const int nBlockX2 = static_cast<int>((nBufXSize-1+0.5) * dfSrcXInc + dfXOff + EPS) / nBlockXSize;
+    const int nBlockY2 = static_cast<int>((nBufYSize-1+0.5) * dfSrcYInc + dfYOff + EPS) / nBlockYSize;
+
     thandle_t th = TIFFClientdata( poGDS->hTIFF );
     if( poGDS->SetDirectory() && !VSI_TIFFHasCachedRanges(th) )
     {
