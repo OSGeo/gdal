@@ -316,13 +316,12 @@ See other configure options <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptio
 <h2>Performance hints</h2>
 SQLite is a Transactional DBMS; while many INSERT statements are executed in close
 sequence, BEGIN TRANSACTION and COMMIT TRANSACTION statements have to be invoked
-appropriately in order to get optimal performance.
-The default OGR behavior is to COMMIT a transaction every 200 inserted rows. This
-value is surely too low for SQLite; and closing too much frequently the current
-transaction causes severe performance degradation.
+appropriately (with the OGR_L_StartTransaction() / OGR_L_CommitTransaction())
+in order to get optimal performance. By default, if no transaction
+is explictly started, SQLite will autocommit on every statement, which will be slow.
+If using ogr2ogr, its default behaviour is to COMMIT a transaction every 20000 inserted rows.
 The <b>-gt</b> argument allows explicitly setting the number of rows for each transaction.
-Explicitly defining <b>-gt 1024</b> usually ensures a noticeable performance boost;
-defining an even bigger <b>-gt 65536</b> ensures optimal performance while
+Increasing to <b>-gt 65536</b> or more ensures optimal performance while
 populating some table containing many hundredth thousand or million rows.<p>
 
 SQLite usually has a very minimal memory foot-print; just about 20MB of RAM are
