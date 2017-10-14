@@ -605,7 +605,9 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     curl_easy_setopt(hLocalHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hLocalHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
     if( headers != NULL )
         curl_slist_free_all(headers);
 
@@ -1064,7 +1066,9 @@ void VSICurlStreamingHandle::DownloadInThread()
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     CURLcode eRet = curl_easy_perform(hCurlHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
     if( headers != NULL )
         curl_slist_free_all(headers);
 

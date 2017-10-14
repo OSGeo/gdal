@@ -1009,6 +1009,7 @@ static void MultiPerform(CURLM* hCurlMultiHandle,
     if( hEasyHandle )
         curl_multi_add_handle(hCurlMultiHandle, hEasyHandle);
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     while( true )
     {
         int still_running;
@@ -1036,6 +1037,7 @@ static void MultiPerform(CURLM* hCurlMultiHandle,
 
         MultiPerformWait(hCurlMultiHandle, repeats);
     }
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     if( hEasyHandle )
         curl_multi_remove_handle(hCurlMultiHandle, hEasyHandle);
@@ -4818,7 +4820,9 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
         curl_slist_free_all(headers);
 
@@ -4952,7 +4956,9 @@ bool VSIS3WriteHandle::UploadPart()
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hCurlHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     curl_slist_free_all(headers);
 
@@ -5276,7 +5282,9 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
         curl_slist_free_all(headers);
 
@@ -5381,7 +5389,9 @@ bool VSIS3WriteHandle::CompleteMultipart()
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hCurlHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     curl_slist_free_all(headers);
 
@@ -5436,7 +5446,9 @@ bool VSIS3WriteHandle::AbortMultipart()
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hCurlHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     curl_slist_free_all(headers);
 
@@ -5782,7 +5794,9 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
         curl_slist_free_all(headers);
 
@@ -6594,7 +6608,9 @@ bool VSIAzureWriteHandle::DoPUT(bool bBlockBob, bool bInitOnly)
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                             VSICurlHandleWriteFunc);
 
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
         curl_slist_free_all(headers);
 
