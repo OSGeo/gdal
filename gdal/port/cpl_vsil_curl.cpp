@@ -1139,19 +1139,21 @@ retry:
 
     if( STARTS_WITH(osURL, "ftp") )
     {
-        if( sWriteFuncData.pBuffer != NULL &&
-            STARTS_WITH_CI(sWriteFuncData.pBuffer, "Content-Length: ") )
+        if( sWriteFuncData.pBuffer != NULL )
         {
-            const char* pszBuffer =
-                sWriteFuncData.pBuffer + strlen("Content-Length: ");
-            eExists = EXIST_YES;
-            fileSize = CPLScanUIntBig(
-                pszBuffer,
-                static_cast<int>(sWriteFuncData.nSize -
-                                 strlen("Content-Length: ")));
-            if( ENABLE_DEBUG )
-                CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
-                         osURL.c_str(), fileSize);
+            const char* pszContentLength = strstr(
+                const_cast<const char*>(sWriteFuncData.pBuffer), "Content-Length: ");
+            if( pszContentLength )
+            {
+                pszContentLength += strlen("Content-Length: ");
+                eExists = EXIST_YES;
+                fileSize = CPLScanUIntBig(
+                    pszContentLength,
+                    strlen(pszContentLength));
+                if( ENABLE_DEBUG )
+                    CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB,
+                            osURL.c_str(), fileSize);
+            }
         }
     }
 
