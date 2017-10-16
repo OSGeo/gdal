@@ -1004,7 +1004,7 @@ CPLErr ILWISDataset::WriteProjection()
 
     const IlwisDatums   *piwDatum = iwDatums;
     //std::string pszEllips;
-    std::string pszDatum;
+    std::string osDatum;
     //std::string pszProj;
 
 /* -------------------------------------------------------------------- */
@@ -1022,12 +1022,14 @@ CPLErr ILWISDataset::WriteProjection()
         csy = pszBaseName + ".csy";
 
         WriteElement("Ilwis", "Type", csFileName, "CoordSystem");
-        pszDatum = poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
+        const char* pszDatum = poGeogSRS->GetAttrValue( "GEOGCS|DATUM" );
+        if( pszDatum )
+            osDatum = pszDatum;
 
         /* WKT to ILWIS translation */
         while ( piwDatum->pszWKTDatum)
         {
-            if( EQUALN( pszDatum.c_str(), piwDatum->pszWKTDatum, strlen(piwDatum->pszWKTDatum) ) )
+            if( EQUALN( osDatum.c_str(), piwDatum->pszWKTDatum, strlen(piwDatum->pszWKTDatum) ) )
             {
                 WriteElement("CoordSystem", "Datum", csFileName, piwDatum->pszIlwisDatum);
                 break;
