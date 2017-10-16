@@ -449,7 +449,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
     friend class OGRCurvePolygon;
     friend class OGRCompoundCurve;
 //! @endcond
-    virtual int    ContainsPoint( const OGRPoint* p ) const;
+    virtual int ContainsPoint( const OGRPoint* p ) const;
+    virtual int IntersectsPoint( const OGRPoint* p ) const;
     virtual double get_AreaOfCurveSegments() const = 0;
 
   public:
@@ -778,6 +779,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
         const CPL_OVERRIDE;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing()
         const CPL_OVERRIDE;
+    virtual int    IntersectsPoint( const OGRPoint* p ) const CPL_OVERRIDE;
     virtual int    ContainsPoint( const OGRPoint* p ) const CPL_OVERRIDE;
     virtual double get_AreaOfCurveSegments() const CPL_OVERRIDE;
 //! @endcond
@@ -1071,6 +1073,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     static OGRPolygon*      CasterToPolygon(OGRSurface* poSurface);
 
   private:
+    OGRBoolean      IntersectsPoint( const OGRPoint* p ) const;
     OGRBoolean      ContainsPoint( const OGRPoint* p ) const;
     virtual int   checkRing( OGRCurve * poNewRing ) const;
     OGRErr        addRingDirectlyInternal( OGRCurve* poCurve,
