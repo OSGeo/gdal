@@ -2018,6 +2018,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                                             &dfHeight ) )
             {
                 panSuccess[i] = FALSE;
+                padfX[i] = HUGE_VAL;
+                padfY[i] = HUGE_VAL;
                 continue;
             }
 
@@ -2052,6 +2054,8 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
                     &dfResultX, &dfResultY ) )
         {
             panSuccess[i] = FALSE;
+            padfX[i] = HUGE_VAL;
+            padfY[i] = HUGE_VAL;
             continue;
         }
 
