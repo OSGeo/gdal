@@ -785,7 +785,15 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
                      "dynamic_cast failed.  Expected OGRPoint.");
             return FALSE;
         }
-        return ContainsPoint(poPoint);
+        if( getExteriorRingCurve() != NULL &&
+            getNumInteriorRings() == 0 &&
+            wkbFlatten(getExteriorRingCurve()->getGeometryType()) == wkbCircularString)
+        {
+            const int nRet = dynamic_cast<const OGRCircularString*>(
+                            getExteriorRingCurve())->IntersectsPoint(poPoint);
+            if( nRet >= 0 )
+                return nRet;
+        }
     }
 
     return OGRGeometry::Intersects(poOtherGeom);

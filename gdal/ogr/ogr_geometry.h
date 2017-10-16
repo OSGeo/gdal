@@ -765,6 +765,9 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
         const CPL_OVERRIDE;
     virtual int    ContainsPoint( const OGRPoint* p ) const CPL_OVERRIDE;
     virtual double get_AreaOfCurveSegments() const CPL_OVERRIDE;
+
+    friend class OGRCurvePolygon;
+    int IntersectsPoint( const OGRPoint* p ) const;
 //! @endcond
 
   public:
