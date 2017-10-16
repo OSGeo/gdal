@@ -135,7 +135,7 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         || yoff < 0 || yoff + ysize > GetBlockHeight() )
     {
         return ThrowPCIDSKException( 0,
-            "Invalid window in ReadBloc(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
+            "Invalid window in ReadBlock(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
             xoff, yoff, xsize, ysize );
     }
 
@@ -145,6 +145,14 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
     int    pixel_size = DataTypeSize( pixel_type );
     uint64 offset = start_byte + line_offset * block_index
         + pixel_offset * xoff;
+    if( xsize > 1 && pixel_offset > static_cast<uint64>(INT_MAX / (xsize - 1)) )
+    {
+        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+    }
+    if( pixel_offset*(xsize-1) > static_cast<uint64>(INT_MAX - pixel_size) )
+    {
+        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+    }
     int    window_size = (int) (pixel_offset*(xsize-1) + pixel_size);
 
 /* -------------------------------------------------------------------- */
