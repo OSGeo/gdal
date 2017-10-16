@@ -412,10 +412,10 @@ int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
  * @param p the point to test
  * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
  *
- * @since GDAL 2.0
+ * @since GDAL 2.3
  */
 
-int OGRCurve::IntersectsPoint( const OGRPoint* /* p */ ) const
+int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
 {
     return -1;
 }
