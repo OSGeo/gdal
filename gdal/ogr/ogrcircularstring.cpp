@@ -889,12 +889,32 @@ double OGRCircularString::get_Area() const
     return dfArea;
 }
 
+//! @cond Doxygen_Suppress
+
 /************************************************************************/
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
-//! @cond Doxygen_Suppress
 int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
+{
+    double cx = 0.0;
+    double cy = 0.0;
+    double square_R = 0.0;
+    if( IsFullCircle(cx, cy, square_R) )
+    {
+        const double square_dist =
+            (p->getX() - cx) * (p->getX() - cx) +
+            (p->getY() - cy) * (p->getY() - cy);
+        return square_dist < square_R;
+    }
+    return -1;
+}
+
+/************************************************************************/
+/*                       IntersectsPoint()                              */
+/************************************************************************/
+
+int OGRCircularString::IntersectsPoint( const OGRPoint* p ) const
 {
     double cx = 0.0;
     double cy = 0.0;
@@ -908,4 +928,5 @@ int OGRCircularString::ContainsPoint( const OGRPoint* p ) const
     }
     return -1;
 }
+
 //! @endcond
