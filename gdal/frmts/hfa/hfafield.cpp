@@ -52,6 +52,19 @@ CPL_CVSID("$Id$")
 
 static const int MAX_ENTRY_REPORT = 16;
 
+namespace {
+
+int FloatToIntClamp(float fValue) {
+  if( CPLIsNan(fValue) ) return 0;
+  if( fValue >= std::numeric_limits<int>::max() )
+      return std::numeric_limits<int>::max();
+  if( fValue <= std::numeric_limits<int>::min() )
+      return std::numeric_limits<int>::min();
+  return static_cast<int>(fValue);
+}
+
+}  // namespace
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              HFAField                                */
@@ -1213,7 +1226,7 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
               HFAStandard(4, &fValue);
 
               dfDoubleRet = fValue;
-              nIntRet = static_cast<int>(fValue);
+              nIntRet = FloatToIntClamp(fValue);
           }
           else if( nBaseItemType == EPT_f64 )
           {
