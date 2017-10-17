@@ -862,6 +862,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
                             nRead - nSkip, bFinished ) ||
             oParser.ExceptionOccurred() )
         {
+            // to avoid killing ourselves during layer deletion
             poLayer->UnsetReader();
             delete poLayer;
             return FALSE;
@@ -888,13 +889,6 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
     if( bThresholdReached )
     {
         poLayer->InvalidateFeatureCount();
-    }
-    else if( oParser.ExceptionOccurred() )
-    {
-        // to avoid killing ourselves during layer deletion
-        poLayer->UnsetReader();
-        delete poLayer;
-        return false;
     }
     else if( !oParser.IsTypeKnown() || !oParser.IsFeatureCollection() )
     {
