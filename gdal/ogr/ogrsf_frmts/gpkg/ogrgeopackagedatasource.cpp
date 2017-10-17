@@ -631,7 +631,7 @@ const std::map<CPLString, CPLString> &
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
-        osSQL += CPLSPrintf("%d", 1 + nTableLimit);
+        osSQL += CPLSPrintf("%d", 1 + 3 * nTableLimit);
     }
 
     SQLResult oResult;
@@ -680,7 +680,7 @@ const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
     if( nTableLimit > 0 )
     {
         osSQL += " LIMIT ";
-        osSQL += CPLSPrintf("%d", 1 + nTableLimit);
+        osSQL += CPLSPrintf("%d", 1 + 10 * nTableLimit);
     }
 
     SQLResult oResult;
