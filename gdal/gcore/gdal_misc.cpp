@@ -620,6 +620,9 @@ double GDALAdjustValueToDataType(
             break;
         case GDT_Float32:
         {
+            if( !CPLIsFinite(dfValue) )
+                break;
+
             // TODO(schwehr): ::min() versus ::lowest.
             // Use ClampAndRound after it has been fixed.
             if ( dfValue < -std::numeric_limits<float>::max())
