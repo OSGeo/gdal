@@ -2343,10 +2343,12 @@ def ogr_geojson_45():
         f = lyr.GetNextFeature()
         native_data = f.GetNativeData()
         if i == 0:
-            expected = '{ "type": "Feature", "foo": [ "bar", "baz", 1.000000, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }'
+            expected = [
+                '{ "type": "Feature", "foo": [ "bar", "baz", 1.000000, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }',
+                '{ "type": "Feature", "foo": [ "bar", "baz", 1.0, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }' ]
         else:
-            expected = '{"type":"Feature","foo":["bar","baz",1.0,true,false,[],{}],"properties":{"myprop":"myvalue"},"geometry":null}'
-        if native_data != expected:
+            expected = ['{"type":"Feature","foo":["bar","baz",1.0,true,false,[],{}],"properties":{"myprop":"myvalue"},"geometry":null}']
+        if native_data not in expected:
             gdaltest.post_reason('fail')
             print(native_data)
             return 'fail'
