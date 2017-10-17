@@ -3174,14 +3174,20 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
 
     jpeg_set_defaults(&sCInfo);
 
-    // This is to address bug related in ticket #1795.
-    if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+    // libjpeg turbo 1.5.2 honours max_memory_to_use, but has no backing
+    // store implementation, so better not set max_memory_to_use ourselves.
+    // See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/162
+    if( sCInfo.mem->max_memory_to_use > 0 )
     {
-        // If the user doesn't provide a value for JPEGMEM, we want to be sure
-        // that at least 500 MB will be used before creating the temporary file.
-        const long nMinMemory = 500 * 1024 * 1024;
-        sCInfo.mem->max_memory_to_use =
-            std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
+        // This is to address bug related in ticket #1795.
+        if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+        {
+            // If the user doesn't provide a value for JPEGMEM, we want to be sure
+            // that at least 500 MB will be used before creating the temporary file.
+            const long nMinMemory = 500 * 1024 * 1024;
+            sCInfo.mem->max_memory_to_use =
+                std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
+        }
     }
 
     if( eDT == GDT_UInt16 )
