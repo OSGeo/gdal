@@ -4624,21 +4624,26 @@ void netCDFDataset::AddGridMappingRef()
         (nBands >= 1) && (GetRasterBand(1)) &&
         pszCFProjection != NULL && !EQUAL(pszCFProjection, "") )
     {
-        const int nVarId =
-            static_cast<netCDFRasterBand *>(GetRasterBand(1))->nZId;
         bAddedGridMappingRef = true;
 
         // Make sure we are in define mode.
         SetDefineMode(true);
-        int status = nc_put_att_text(cdfid, nVarId, CF_GRD_MAPPING,
-                                     strlen(pszCFProjection), pszCFProjection);
-        NCDF_ERR(status);
-        if( pszCFCoordinates != NULL && !EQUAL(pszCFCoordinates, "") )
+
+        for( int i = 1; i <= nBands; i++ )
         {
-            status =
-                nc_put_att_text(cdfid, nVarId, CF_COORDINATES,
-                                strlen(pszCFCoordinates), pszCFCoordinates);
+            const int nVarId =
+                static_cast<netCDFRasterBand *>(GetRasterBand(i))->nZId;
+
+            int status = nc_put_att_text(cdfid, nVarId, CF_GRD_MAPPING,
+                                        strlen(pszCFProjection), pszCFProjection);
             NCDF_ERR(status);
+            if( pszCFCoordinates != NULL && !EQUAL(pszCFCoordinates, "") )
+            {
+                status =
+                    nc_put_att_text(cdfid, nVarId, CF_COORDINATES,
+                                    strlen(pszCFCoordinates), pszCFCoordinates);
+                NCDF_ERR(status);
+            }
         }
 
         // Go back to previous define mode.
