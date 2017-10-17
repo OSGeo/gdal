@@ -92,6 +92,8 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         void AnalyzeFeature();
         void TooComplex();
 
+        CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONReaderStreamingParser)
+
     public:
         OGRGeoJSONReaderStreamingParser(OGRGeoJSONReader& oReader,
                                         OGRGeoJSONLayer* poLayer,
