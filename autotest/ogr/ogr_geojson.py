@@ -597,23 +597,21 @@ def ogr_geojson_14():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
         return 'skip'
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open('data/ogr_geojson_14.geojson')
-    gdal.PopErrorHandler()
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/ogr_geojson_14.geojson')
     lyr = ds.GetLayer(0)
 
     out_ds = gdaltest.geojson_drv.CreateDataSource('tmp/out_ogr_geojson_14.geojson')
     out_lyr = out_ds.CreateLayer('lyr')
 
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        geom = feat.GetGeometryRef()
-        if geom is not None:
-            #print(geom)
-            out_feat = ogr.Feature(feature_def = out_lyr.GetLayerDefn())
-            out_feat.SetGeometry(geom)
-            out_lyr.CreateFeature(out_feat)
-        feat = lyr.GetNextFeature()
+    with gdaltest.error_handler():
+        for feat in lyr:
+            geom = feat.GetGeometryRef()
+            if geom is not None:
+                #print(geom)
+                out_feat = ogr.Feature(feature_def = out_lyr.GetLayerDefn())
+                out_feat.SetGeometry(geom)
+                out_lyr.CreateFeature(out_feat)
 
     out_ds = None
 
@@ -2323,31 +2321,43 @@ def ogr_geojson_45():
         return 'skip'
 
     # Test read support
-    ds = gdal.OpenEx(
-"""{"type": "FeatureCollection", "foo": "bar", "bar": "baz",
-    "features":[ { "type": "Feature", "foo": "bar", "properties": { "myprop": "myvalue" }, "geometry": null } ]}""", gdal.OF_VECTOR, open_options = ['NATIVE_DATA=YES'])
-    lyr = ds.GetLayer(0)
-    native_data = lyr.GetMetadataItem("NATIVE_DATA", "NATIVE_DATA")
-    if native_data != '{ "foo": "bar", "bar": "baz" }':
-        gdaltest.post_reason('fail')
-        print(native_data)
-        return 'fail'
-    native_media_type = lyr.GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA")
-    if native_media_type != 'application/vnd.geo+json':
-        gdaltest.post_reason('fail')
-        print(native_media_type)
-        return 'fail'
-    f = lyr.GetNextFeature()
-    native_data = f.GetNativeData()
-    if native_data != '{ "type": "Feature", "foo": "bar", "properties": { "myprop": "myvalue" }, "geometry": null }':
-        gdaltest.post_reason('fail')
-        print(native_data)
-        return 'fail'
-    native_media_type = f.GetNativeMediaType()
-    if native_media_type != 'application/vnd.geo+json':
-        gdaltest.post_reason('fail')
-        print(native_media_type)
-        return 'fail'
+    content = """{"type": "FeatureCollection", "foo": "bar", "bar": "baz",
+    "features":[ { "type": "Feature", "foo": ["bar", "baz", 1.0, true, false,[],{}], "properties": { "myprop": "myvalue" }, "geometry": null } ]}"""
+    for i in range(2):
+        if i == 0:
+            ds = gdal.OpenEx(content, gdal.OF_VECTOR, open_options = ['NATIVE_DATA=YES'])
+        else:
+            gdal.FileFromMemBuffer('/vsimem/ogr_geojson_45.json', content)
+            ds = gdal.OpenEx('/vsimem/ogr_geojson_45.json', gdal.OF_VECTOR, open_options = ['NATIVE_DATA=YES'])
+        lyr = ds.GetLayer(0)
+        native_data = lyr.GetMetadataItem("NATIVE_DATA", "NATIVE_DATA")
+        if native_data != '{ "foo": "bar", "bar": "baz" }':
+            gdaltest.post_reason('fail')
+            print(native_data)
+            return 'fail'
+        native_media_type = lyr.GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA")
+        if native_media_type != 'application/vnd.geo+json':
+            gdaltest.post_reason('fail')
+            print(native_media_type)
+            return 'fail'
+        f = lyr.GetNextFeature()
+        native_data = f.GetNativeData()
+        if i == 0:
+            expected = '{ "type": "Feature", "foo": [ "bar", "baz", 1.000000, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }'
+        else:
+            expected = '{"type":"Feature","foo":["bar","baz",1.0,true,false,[],{}],"properties":{"myprop":"myvalue"},"geometry":null}'
+        if native_data != expected:
+            gdaltest.post_reason('fail')
+            print(native_data)
+            return 'fail'
+        native_media_type = f.GetNativeMediaType()
+        if native_media_type != 'application/vnd.geo+json':
+            gdaltest.post_reason('fail')
+            print(native_media_type)
+            return 'fail'
+        ds = None
+        if i == 1:
+            gdal.Unlink('/vsimem/ogr_geojson_45.json')
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
     lyr = ds.CreateLayer('test', options = [
@@ -3458,11 +3468,14 @@ def ogr_geojson_60():
 def ogr_geojson_61():
 
     # Invalid JSon
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_61.json',
+                           """{ "type": "FeatureCollection", """)
     with gdaltest.error_handler():
-        ds = gdal.OpenEx("""{ "type": "FeatureCollection", """)
+        ds = gdal.OpenEx('/vsimem/ogr_geojson_61.json')
     if ds is not None:
         gdaltest.post_reason('failure')
         return 'fail'
+    gdal.Unlink('/vsimem/ogr_geojson_61.json')
 
     # Invalid single geometry
     with gdaltest.error_handler():

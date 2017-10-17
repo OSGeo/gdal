@@ -225,6 +225,7 @@ class CPL_DLL OGRFeatureDefn
        explicit OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
+    void                 SetName( const char* pszName );
     virtual const char  *GetName();
 
     virtual int         GetFieldCount();

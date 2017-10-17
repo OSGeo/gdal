@@ -55,6 +55,8 @@
 #  pragma warning(disable:4512)
 #endif
 
+#include "ogrgeojsonreader.h"
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -71,11 +73,15 @@ const OGRwkbGeometryType OGRGeoJSONLayer::DefaultGeometryType = wkbUnknown;
 OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
                                   OGRSpatialReference* poSRSIn,
                                   OGRwkbGeometryType eGType,
-                                  OGRGeoJSONDataSource* poDS ) :
+                                  OGRGeoJSONDataSource* poDS,
+                                  OGRGeoJSONReader* poReader ):
     OGRMemLayer( pszName, poSRSIn, eGType),
     poDS_(poDS),
+    poReader_(poReader),
     bUpdated_(false),
-    bOriginalIdModified_(false)
+    bOriginalIdModified_(false),
+    nTotalFeatureCount_(0),
+    nNextFID_(0)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable( poDS->IsUpdatable() );
@@ -85,7 +91,10 @@ OGRGeoJSONLayer::OGRGeoJSONLayer( const char* pszName,
 /*                          ~OGRGeoJSONLayer                            */
 /************************************************************************/
 
-OGRGeoJSONLayer::~OGRGeoJSONLayer() {}
+OGRGeoJSONLayer::~OGRGeoJSONLayer()
+{
+    delete poReader_;
+}
 
 /************************************************************************/
 /*                           GetFIDColumn                               */
@@ -103,6 +112,206 @@ const char* OGRGeoJSONLayer::GetFIDColumn()
 void OGRGeoJSONLayer::SetFIDColumn( const char* pszFIDColumn )
 {
     sFIDColumn_ = pszFIDColumn;
+}
+
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
+
+void OGRGeoJSONLayer::ResetReading()
+{
+    if( poReader_ )
+    {
+        nNextFID_ = 0;
+        poReader_->ResetReading();
+    }
+    else
+        OGRMemLayer::ResetReading();
+}
+
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
+
+OGRFeature* OGRGeoJSONLayer::GetNextFeature()
+{
+    if( poReader_ )
+    {
+        while ( true )
+        {
+            OGRFeature* poFeature = poReader_->GetNextFeature(this);
+            if( poFeature == NULL )
+                return NULL;
+            if( poFeature->GetFID() == OGRNullFID )
+            {
+                poFeature->SetFID(nNextFID_);
+                nNextFID_ ++;
+            }
+            if( (m_poFilterGeom == NULL ||
+                FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter)) )
+                && (m_poAttrQuery == NULL ||
+                    m_poAttrQuery->Evaluate(poFeature)) )
+            {
+                return poFeature;
+            }
+            delete poFeature;
+        }
+    }
+    else
+    {
+        return OGRMemLayer::GetNextFeature();
+    }
+}
+
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
+
+GIntBig OGRGeoJSONLayer::GetFeatureCount(int bForce)
+{
+    if( poReader_ )
+    {
+        if( m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+            nTotalFeatureCount_ >= 0 )
+        {
+            return nTotalFeatureCount_;
+        }
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+    else
+    {
+        return OGRMemLayer::GetFeatureCount(bForce);
+    }
+}
+
+/************************************************************************/
+/*                            GetFeature()                              */
+/************************************************************************/
+
+OGRFeature* OGRGeoJSONLayer::GetFeature(GIntBig nFID)
+{
+    if( poReader_ )
+    {
+        return OGRLayer::GetFeature(nFID);
+    }
+    else
+    {
+        return OGRMemLayer::GetFeature(nFID);
+    }
+}
+
+/************************************************************************/
+/*                             IngestAll()                              */
+/************************************************************************/
+
+bool OGRGeoJSONLayer::IngestAll()
+{
+    if( poReader_ )
+    {
+        OGRGeoJSONReader* poReader = poReader_;
+        poReader_ = NULL;
+
+        nNextFID_ = 0;
+        nTotalFeatureCount_ = -1;
+        bool bRet = poReader->IngestAll(this);
+        delete poReader;
+        return bRet;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+/************************************************************************/
+/*                           ISetFeature()                              */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::ISetFeature( OGRFeature *poFeature )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::ISetFeature(poFeature);
+}
+
+/************************************************************************/
+/*                         ICreateFeature()                             */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::ICreateFeature( OGRFeature *poFeature )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::ICreateFeature(poFeature);
+}
+
+/************************************************************************/
+/*                          DeleteFeature()                             */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::DeleteFeature( GIntBig nFID )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::DeleteFeature(nFID);
+}
+
+/************************************************************************/
+/*                           CreateField()                              */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::CreateField(poField, bApproxOK);
+}
+
+/************************************************************************/
+/*                          DeleteField()                               */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::DeleteField( int iField )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::DeleteField(iField);
+}
+
+/************************************************************************/
+/*                          ReorderFields()                             */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::ReorderFields( int* panMap )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::ReorderFields(panMap);
+}
+
+/************************************************************************/
+/*                         AlterFieldDefn()                             */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::AlterFieldDefn( int iField,
+                                        OGRFieldDefn* poNewFieldDefn,
+                                        int nFlagsIn )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn);
+}
+
+/************************************************************************/
+/*                         CreateGeomField()                            */
+/************************************************************************/
+
+OGRErr OGRGeoJSONLayer::CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                        int bApproxOK )
+{
+    if( !IngestAll() )
+        return OGRERR_FAILURE;
+    return OGRMemLayer::CreateGeomField(poGeomField, bApproxOK);
 }
 
 /************************************************************************/

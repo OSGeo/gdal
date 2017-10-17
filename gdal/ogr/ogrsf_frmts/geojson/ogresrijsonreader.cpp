@@ -113,7 +113,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     poLayer_ = new OGRGeoJSONLayer( OGRGeoJSONLayer::DefaultName, poSRS,
                                     OGRESRIJSONGetGeometryType(poGJObject_),
-                                    poDS );
+                                    poDS, NULL );
     if( poSRS != NULL )
         poSRS->Release();
 
@@ -135,6 +135,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     CPLErrorReset();
 
+    poLayer_->DetectGeometryType();
     poDS->AddLayer(poLayer_);
 }
 
