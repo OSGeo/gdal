@@ -693,9 +693,9 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
     SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
 
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(GeoTransform));
-    for (int i = 0; i < l; i++) {
-        GeoTransform[1] /= scale;
-        GeoTransform[5] /= scale;
+    for (int i = 0; i < l + 1; i++) {
+        GeoTransform[1] *= scale;
+        GeoTransform[5] *= scale;
     }
 
     nRasterXSize = current.size.x;
