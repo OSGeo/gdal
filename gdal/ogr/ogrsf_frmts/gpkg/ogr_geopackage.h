@@ -283,6 +283,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
 class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
 {
+        bool                    m_bStatsComputed;
+
     public:
                                 GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
                                                          int nTileWidth, int nTileHeight);
