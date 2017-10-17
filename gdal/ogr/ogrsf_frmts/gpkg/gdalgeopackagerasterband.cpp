@@ -3282,7 +3282,8 @@ void GDALGPKGMBTilesLikeRasterBand::SetNoDataValueInternal( double dfNoDataValue
 
 GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
     GDALGeoPackageDataset* poDSIn, int nTileWidth, int nTileHeight) :
-            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight)
+            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight),
+            m_bStatsComputed(false)
 {
     poDS = poDSIn;
 }
@@ -3369,11 +3370,13 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
     GDALGeoPackageDataset *poGDS
         = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
 
-    if( eDataType != GDT_Byte &&
+    if( poGDS->eAccess == GA_ReadOnly &&
+        eDataType != GDT_Byte &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-        CSLFetchNameValue(GDALGPKGMBTilesLikeRasterBand::GetMetadata(),
-                          "STATISTICS_MINIMUM") == NULL )
+        !m_bStatsComputed )
     {
+        m_bStatsComputed = true;
+
         const int nColMin = poGDS->m_nShiftXTiles;
         const int nColMax = (nRasterXSize - 1 + poGDS->m_nShiftXPixelsMod) /
                                         nBlockXSize + poGDS->m_nShiftXTiles;
@@ -3426,15 +3429,17 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
         {
             char* pszSQL = sqlite3_mprintf(
                 "SELECT MIN(min), MAX(max) FROM "
-                "gpkg_2d_gridded_tile_ancillary t_a JOIN \"%w\" tpudt ON "
-                "t_a.tpudt_id = tpudt.id WHERE tpudt.zoom_level = %d AND "
-                "tpudt.tile_column >= %d AND tpudt.tile_column <= %d AND "
-                "tpudt.tile_row >= %d AND tpudt.tile_row <= %d",
+                "gpkg_2d_gridded_tile_ancillary WHERE tpudt_id "
+                "IN (SELECT id FROM \"%w\" WHERE "
+                "zoom_level = %d AND "
+                "tile_column >= %d AND tile_column <= %d AND "
+                "tile_row >= %d AND tile_row <= %d)",
                 poGDS->m_osRasterTable.c_str(),
                 poGDS->m_nZoomLevel,
                 nColMin, nColMax,
                 nRowMin, nRowMax);
             SQLResult sResult;
+            CPLDebug("GPKG", "%s", pszSQL);
             if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
                 sResult.nRowCount == 1 )
             {
@@ -3468,7 +3473,9 @@ const char* GDALGeoPackageRasterBand::GetMetadataItem(const char* pszName,
                                                       const char* pszDomain)
 {
     if( eDataType != GDT_Byte &&
-        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+        (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        (EQUAL(pszName, "STATISTICS_MINIMUM") ||
+         EQUAL(pszName, "STATISTICS_MAXIMUM")) )
     {
         GetMetadata();
     }
