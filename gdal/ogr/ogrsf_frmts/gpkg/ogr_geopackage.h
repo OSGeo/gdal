@@ -65,6 +65,24 @@ static const GUInt32 GPKG_1_2_VERSION = 0x000027D8U; // 10200
 static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
 
+typedef struct
+{
+    CPLString osExtensionName;
+    CPLString osDefinition;
+    CPLString osScope;
+} GPKGExtensionDesc;
+
+typedef struct
+{
+    CPLString osDataType;
+    CPLString osIdentifier;
+    CPLString osDescription;
+    CPLString osMinX;
+    CPLString osMinY;
+    CPLString osMaxX;
+    CPLString osMaxY;
+} GPKGContentsDesc;
+
 /************************************************************************/
 /*                          GDALGeoPackageDataset                       */
 /************************************************************************/
@@ -177,6 +195,21 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
         void                    CreateOGREmptyTableIfNeeded();
         void                    RemoveOGREmptyTable();
+
+        std::map<CPLString, CPLString> m_oMapNameToType;
+        const std::map<CPLString, CPLString>&
+                                        GetNameTypeMapFromSQliteMaster();
+
+        bool                    m_bMapTableToExtensionsBuilt;
+        std::map< CPLString, std::vector<GPKGExtensionDesc> > m_oMapTableToExtensions;
+        const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
+                                        GetExtensions();
+
+        bool                    m_bMapTableToContentsBuilt;
+        std::map< CPLString, GPKGContentsDesc > m_oMapTableToContents;
+        const std::map< CPLString, GPKGContentsDesc > & GetContents();
+
+        std::map<int, OGRSpatialReference*> m_oMapSrsIdToSrs;
 
     public:
                             GDALGeoPackageDataset();
