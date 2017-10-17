@@ -718,6 +718,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
               zFactor = None, scale = None, azimuth = None, altitude = None,
               combined = False, multiDirectional = False,
               slopeFormat = None, trigonometric = False, zeroForFlat = False,
+              addAlpha = None,
               callback = None, callback_data = None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
         Keyword arguments are :
@@ -737,6 +738,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
+          addAlpha --- adds an alpha band to the output file (only for processing = 'color-relief')
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -773,6 +775,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
             new_options += ['-trigonometric' ]
         if zeroForFlat:
             new_options += ['-zero_for_flat' ]
+        if addAlpha:
+            new_options += [ '-alpha' ]
 
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 
@@ -810,7 +814,7 @@ def NearblackOptions(options = [], format = 'GTiff',
           colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
           maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2.
           nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
-          setAlpha --- adds an alpha band if the output file.
+          setAlpha --- adds an alpha band to the output file.
           setMask --- adds a mask band to the output file.
           callback --- callback method
           callback_data --- user data for callback
