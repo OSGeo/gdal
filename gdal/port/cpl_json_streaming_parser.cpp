@@ -458,7 +458,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
         {
             while(nLength)
             {
-                int ch = *pStr;
+                char ch = *pStr;
                 if( ch == '+' || ch == '-' || isdigit(ch) ||
                     ch == '.' || ch == 'e' || ch == 'E' )
                 {
@@ -505,7 +505,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                     return EmitException("Too many characters in number");
                 }
 
-                int ch = *pStr;
+                char ch = *pStr;
                 if( m_bInUnicode)
                 {
                     if( m_osUnicodeHex.size() == 8 )
@@ -783,7 +783,7 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
         {
             while(nLength)
             {
-                int ch = *pStr;
+                char ch = *pStr;
                 if( isalpha(ch) )
                 {
                     m_osToken += ch;
