@@ -3484,6 +3484,18 @@ def ogr_geojson_61():
         gdaltest.post_reason('failure')
         return 'fail'
 
+    # Empty property name
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_61.json',
+            """{ "type": "FeatureCollection", "features": [ { "type": "Feature", "properties": {"": 1}, "geometry": null }] }""")
+    ds = gdal.OpenEx('/vsimem/ogr_geojson_61.json')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField("") != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/ogr_geojson_61.json')
+
     return 'success'
 
 ###############################################################################

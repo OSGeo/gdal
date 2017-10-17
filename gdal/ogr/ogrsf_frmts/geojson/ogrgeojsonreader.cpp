@@ -77,6 +77,7 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         json_object* m_poCurObj;
         size_t m_nCurObjMemEstimate;
         GUIntBig m_nTotalOGRFeatureMemEstimate;
+        bool m_bKeySet;
         CPLString m_osCurKey;
         std::vector<json_object*> m_apoCurObj;
         std::vector<bool> m_abFirstMember;
@@ -242,6 +243,7 @@ OGRGeoJSONReaderStreamingParser::OGRGeoJSONReaderStreamingParser(
                 m_poCurObj(NULL),
                 m_nCurObjMemEstimate(0),
                 m_nTotalOGRFeatureMemEstimate(0),
+                m_bKeySet(false),
                 m_bNeedFID64(false),
                 m_bStoreNativeData(bStoreNativeData),
                 m_nCurFeatureIdx(0)
@@ -299,12 +301,13 @@ OGRFeature* OGRGeoJSONReaderStreamingParser::GetNextFeature()
 
 void OGRGeoJSONReaderStreamingParser::AppendObject(json_object* poNewObj)
 {
-    if( !m_osCurKey.empty() )
+    if( m_bKeySet )
     {
         CPLAssert(
             json_object_get_type(m_apoCurObj.back()) == json_type_object );
         json_object_object_add( m_apoCurObj.back(), m_osCurKey, poNewObj);
         m_osCurKey.clear();
+        m_bKeySet = false;
     }
     else
     {
@@ -562,6 +565,7 @@ void OGRGeoJSONReaderStreamingParser::StartObjectMember(const char* pszKey,
 
         m_nCurObjMemEstimate += ESTIMATE_OBJECT_ELT_SIZE;
         m_osCurKey.assign(pszKey, nKeyLen);
+        m_bKeySet = true;
     }
 }
 
