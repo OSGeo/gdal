@@ -3469,7 +3469,7 @@ def ogr_geojson_61():
 
     # Invalid JSon
     gdal.FileFromMemBuffer('/vsimem/ogr_geojson_61.json',
-                           """{ "type": "FeatureCollection", """)
+                           """{ "type": "FeatureCollection", "features": [""")
     with gdaltest.error_handler():
         ds = gdal.OpenEx('/vsimem/ogr_geojson_61.json')
     if ds is not None:
