@@ -618,11 +618,6 @@ bool CPLJSonStreamingParser::Parse(const char* pStr, size_t nLength,
                 }
                 else if( ch == '"' )
                 {
-                    if( m_bInUnicode )
-                    {
-                        return EmitException("Unterminated unicode sequence");
-                    }
-
                     bEOS = true;
                     AdvanceChar(pStr, nLength);
                     SkipSpace(pStr, nLength);

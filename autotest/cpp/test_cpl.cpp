@@ -1519,19 +1519,30 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
-            const char sText[] = "\"a\\b\\f\\n\\r\\t\\u0020\"";
+            const char sText[] = "\"\\\\a\\b\\f\\n\\r\\t\\u0020\\u0001\\\"\"";
             ensure( oParser.Parse( sText, strlen(sText), true ) );
-            ensure_equals( oParser.GetSerialized(), "\"a\\b\\f\\n\\r\\t \"" );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
 
             oParser.Reset();
             for( size_t i = 0; sText[i]; i++ )
                 ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
-            ensure_equals( oParser.GetSerialized(), "\"a\\b\\f\\n\\r\\t \"" );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
-            const char sText[] = "\"u0001\\u0020\\uD834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
+            const char sText[] = "\"u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
             ensure( oParser.Parse( sText, strlen(sText), true ) );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u00e9\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xc3\xa9\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
@@ -1619,6 +1630,18 @@ namespace tut
         // errors
         {
             CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
             const char sText[] = "truxe";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
@@ -1631,6 +1654,12 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
+            const char sText[] = "fals";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
             const char sText[] = "falsxe";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
@@ -1638,6 +1667,12 @@ namespace tut
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "falsex";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nul";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
@@ -1685,7 +1720,19 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
             const char sText[] = "[,";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[|";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
@@ -1709,7 +1756,7 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
-            const char sText[] = "{ 1";
+            const char sText[] = "{ |";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
@@ -1733,7 +1780,19 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\" }";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
             const char sText[] = "{\"a\" x}";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "1x";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
