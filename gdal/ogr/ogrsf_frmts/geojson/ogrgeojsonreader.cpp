@@ -424,19 +424,11 @@ void OGRGeoJSONReaderStreamingParser::StartObject()
             m_abFirstMember.push_back(true);
         }
 
-        if (m_nDepth == 1 && (m_bInType || m_bInFeatures))
-        {
-            m_poCurObj = NULL;
-            m_apoCurObj.clear();
-        }
-        else
-        {
-            m_nCurObjMemEstimate += ESTIMATE_OBJECT_SIZE;
+        m_nCurObjMemEstimate += ESTIMATE_OBJECT_SIZE;
 
-            json_object* poNewObj = json_object_new_object();
-            AppendObject( poNewObj );
-            m_apoCurObj.push_back( poNewObj );
-        }
+        json_object* poNewObj = json_object_new_object();
+        AppendObject( poNewObj );
+        m_apoCurObj.push_back( poNewObj );
     }
     else if( m_bFirstPass && m_nDepth == 0 )
     {
