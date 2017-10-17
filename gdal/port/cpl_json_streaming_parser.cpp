@@ -398,7 +398,8 @@ void CPLJSonStreamingParser::DecodeUnicode()
         m_osToken += static_cast<char>(0xC0 | (nUCSChar >> 6));
         m_osToken += static_cast<char>(0x80 | (nUCSChar & 0x3F));
     }
-    else if (IsHighSurrogate(nUCSChar) )
+    else if (IsLowSurrogate(nUCSChar) ||
+             IsHighSurrogate(nUCSChar) )
     {
         /* Invalid code point. Insert the replacement char */
         m_osToken += szReplacementUTF8;

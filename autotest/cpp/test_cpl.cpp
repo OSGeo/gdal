@@ -1530,13 +1530,21 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
-            const char sText[] = "\"u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
+            const char sText[] = "\"\\u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
             ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\u0001 \xf0\x9d\x84\x9e\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "\"\\ud834\"";
             ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\\t\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\\t\"" );
         }
         {
             CPLJSonStreamingParserDump oParser;
@@ -1762,6 +1770,12 @@ namespace tut
         }
         {
             CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ 1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\"";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
@@ -1769,6 +1783,12 @@ namespace tut
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\": ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": 1 2";
             ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
