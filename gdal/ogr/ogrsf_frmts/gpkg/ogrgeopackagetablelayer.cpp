@@ -551,6 +551,42 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
     return osUpdate + osWhere;
 }
 
+/************************************************************************/
+/*                            GetLayerDefn()                            */
+/************************************************************************/
+
+OGRFeatureDefn* OGRGeoPackageTableLayer::GetLayerDefn()
+{
+    if( !m_bFeatureDefnCompleted )
+    {
+        m_bFeatureDefnCompleted = true;
+        ReadTableDefinition();
+    }
+    return m_poFeatureDefn;
+}
+
+/************************************************************************/
+/*                            GetGeomType()                             */
+/************************************************************************/
+
+OGRwkbGeometryType OGRGeoPackageTableLayer::GetGeomType()
+{
+    return m_poFeatureDefn->GetGeomType();
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRGeoPackageTableLayer::GetGeometryColumn()
+
+{
+    if( m_poFeatureDefn->GetGeomFieldCount() > 0 )
+        return m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
+    else
+        return "";
+}
+
 //----------------------------------------------------------------------
 // ReadTableDefinition()
 //
@@ -560,7 +596,7 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateUpdateSQL( OGRFeature *poFeatu
 // populate OGRSpatialReference information and OGRFeatureDefn objects,
 // among others.
 //
-OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable)
+OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 {
     OGRErr err;
     SQLResult oResultTable;
@@ -597,7 +633,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         SQLResultFree(&oResult);
     }
 
-    if( bIsGpkgTable )
+    if( m_bIsInGpkgContents )
     {
         /* Check that the table name is registered in gpkg_contents */
         char* pszSQL = sqlite3_mprintf(
@@ -682,7 +718,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
         }
 #endif
 
-        if( bIsSpatial )
+        if( m_bIsSpatial )
         {
             const char *pszMinX = SQLResultGetValue(&oResultContents, 4, 0);
             const char *pszMinY = SQLResultGetValue(&oResultContents, 5, 0);
@@ -784,6 +820,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                  m_pszTableName);
     }
 
+    bool bHasPreexistingSingleGeomColumn = m_poFeatureDefn->GetGeomFieldCount() ==  1;
     for ( int iRecord = 0; iRecord < oResultTable.nRowCount; iRecord++ )
     {
         const char *pszName = SQLResultGetValue(&oResultTable, 1, iRecord);
@@ -819,12 +856,16 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition(bool bIsSpatial, bool bIsGpk
                              m_pszTableName, pszName);
                 }
 
-                if ( m_poFeatureDefn->GetGeomFieldCount() == 0 )
+                if ( bHasPreexistingSingleGeomColumn || m_poFeatureDefn->GetGeomFieldCount() == 0 )
                 {
-                    OGRGeomFieldDefn oGeomField(pszName, oGeomType);
+                    if( !bHasPreexistingSingleGeomColumn )
+                    {
+                        OGRGeomFieldDefn oGeomField(pszName, oGeomType);
+                        m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                    }
+                    bHasPreexistingSingleGeomColumn = false;
                     if( bNotNull )
-                        oGeomField.SetNullable(FALSE);
-                    m_poFeatureDefn->AddGeomFieldDefn(&oGeomField);
+                        m_poFeatureDefn->GetGeomFieldDefn(0)->SetNullable(FALSE);
 
                     /* Read the SRS */
                     OGRSpatialReference *poSRS = m_poDS->GetSpatialRef(m_iSrs);
@@ -967,6 +1008,9 @@ OGRGeoPackageTableLayer::OGRGeoPackageTableLayer(
     OGRGeoPackageLayer(poDS),
     m_pszTableName(CPLStrdup(pszTableName)),
     m_bIsTable(true), // sensible init for creation mode
+    m_bIsSpatial(false),
+    m_bIsInGpkgContents(false),
+    m_bFeatureDefnCompleted(false),
     m_iSrs(0),
     m_poExtent(NULL),
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -1164,6 +1208,8 @@ bool OGRGeoPackageTableLayer::CheckUpdatableTable(const char* pszOperation)
 OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
                                              CPL_UNUSED int bApproxOK )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !CheckUpdatableTable("CreateField") )
         return OGRERR_FAILURE;
 
@@ -1261,6 +1307,8 @@ OGRErr OGRGeoPackageTableLayer::CreateField( OGRFieldDefn *poField,
 OGRErr OGRGeoPackageTableLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                                  int /* bApproxOK */ )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !CheckUpdatableTable("CreateGeomField") )
         return OGRERR_FAILURE;
 
@@ -1481,6 +1529,8 @@ void OGRGeoPackageTableLayer::CheckGeometryType( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !m_poDS->GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1646,6 +1696,8 @@ OGRErr OGRGeoPackageTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !m_poDS->GetUpdate() || m_pszFidColumn == NULL )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -1924,6 +1976,8 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
 
 OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
 
@@ -1943,6 +1997,8 @@ OGRFeature* OGRGeoPackageTableLayer::GetNextFeature()
 
 OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return NULL;
 
@@ -1997,6 +2053,8 @@ OGRFeature* OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 
 OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if ( !m_poDS->GetUpdate() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -2052,6 +2110,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
 OGRErr OGRGeoPackageTableLayer::SyncToDisk()
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( m_bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
         return OGRERR_FAILURE;
 
@@ -2104,6 +2164,8 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 
 GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( m_poFilterGeom == NULL && m_pszAttrQueryString == NULL )
     {
@@ -2213,6 +2275,8 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount( int /*bForce*/ )
 
 OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     /* Extent already calculated! We're done. */
     if ( m_poExtent != NULL )
     {
@@ -2293,6 +2357,8 @@ void OGRGeoPackageTableLayer::RecomputeExtent()
 
 int OGRGeoPackageTableLayer::TestCapability ( const char * pszCap )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if ( EQUAL(pszCap, OLCSequentialWrite) )
     {
         return m_poDS->GetUpdate();
@@ -3266,6 +3332,31 @@ void OGRGeoPackageTableLayer::BuildWhere()
 }
 
 /************************************************************************/
+/*                        SetOpeningParameters()                        */
+/************************************************************************/
+
+void OGRGeoPackageTableLayer::SetOpeningParameters(bool bIsInGpkgContents,
+                                                   bool bIsSpatial,
+                                                   const char* pszGeomColName,
+                                                   const char* pszGeomType,
+                                                   bool bHasZ,
+                                                   bool bHasM)
+{
+    m_bIsInGpkgContents = bIsInGpkgContents;
+    m_bIsSpatial = bIsSpatial;
+    if( pszGeomType )
+    {
+        OGRwkbGeometryType eType =
+                GPkgGeometryTypeToWKB(pszGeomType, bHasZ, bHasM);
+        m_poFeatureDefn->SetGeomType(eType);
+        if( eType != wkbNone )
+        {
+            m_poFeatureDefn->GetGeomFieldDefn(0)->SetName(pszGeomColName);
+        }
+    }
+}
+
+/************************************************************************/
 /*                        SetCreationParameters()                       */
 /************************************************************************/
 
@@ -3277,6 +3368,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters( OGRwkbGeometryType eGType,
                                                      const char* pszIdentifier,
                                                      const char* pszDescription )
 {
+    m_bIsSpatial = eGType != wkbNone;
+    m_bIsInGpkgContents = true;
+    m_bFeatureDefnCompleted = true;
     m_bDeferredCreation = true;
     m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
@@ -3549,6 +3643,8 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 char **OGRGeoPackageTableLayer::GetMetadata( const char *pszDomain )
 
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !m_bHasTriedDetectingFID64 && m_pszFidColumn != NULL )
     {
         m_bHasTriedDetectingFID64 = true;
@@ -3875,6 +3971,8 @@ CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(const std::vector<OGRFie
 
 OGRErr OGRGeoPackageTableLayer::DeleteField( int iFieldToDelete )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !CheckUpdatableTable("DeleteField") )
         return OGRERR_FAILURE;
 
@@ -3983,6 +4081,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
                                                 OGRFieldDefn* poNewFieldDefn,
                                                 int nFlagsIn )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !CheckUpdatableTable("AlterFieldDefn") )
         return OGRERR_FAILURE;
 
@@ -4312,6 +4412,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn( int iFieldToAlter,
 
 OGRErr OGRGeoPackageTableLayer::ReorderFields( int* panMap )
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( !CheckUpdatableTable("ReorderFields") )
         return OGRERR_FAILURE;
 

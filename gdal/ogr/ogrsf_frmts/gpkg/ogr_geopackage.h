@@ -354,6 +354,9 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
     bool                        m_bIsTable;
+    bool                        m_bIsSpatial;
+    bool                        m_bIsInGpkgContents;
+    bool                        m_bFeatureDefnCompleted;
     int                         m_iSrs;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -405,14 +408,20 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 
     void                CheckGeometryType( OGRFeature *poFeature );
 
+    OGRErr              ReadTableDefinition();
+
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
-                                            const char * pszTableName );
+                                                 const char * pszTableName );
                         virtual ~OGRGeoPackageTableLayer();
 
     /************************************************************************/
     /* OGR API methods */
 
+    const char*         GetName() override { return GetDescription(); }
+    OGRwkbGeometryType  GetGeomType() override;
+    const char*         GetGeometryColumn() override;
+    OGRFeatureDefn*     GetLayerDefn() override;
     int                 TestCapability( const char * ) override;
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
     OGRErr              CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
@@ -443,7 +452,12 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                PostInit();
     void                RecomputeExtent();
 
-    OGRErr              ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable);
+    void                SetOpeningParameters(bool bIsInGpkgContents,
+                                             bool bIsSpatial,
+                                             const char* pszGeomColName,
+                                             const char* pszGeomType,
+                                             bool bHasZ,
+                                             bool bHasM);
     void                SetCreationParameters( OGRwkbGeometryType eGType,
                                                const char* pszGeomColumnName,
                                                int bGeomNullable,

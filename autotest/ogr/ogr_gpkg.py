@@ -1342,14 +1342,18 @@ def ogr_gpkg_16():
 
     # No warning since we open as read-only
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
+    lyr = ds.GetLayer(0)
+    lyr.GetLayerDefn()
     ds = None
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail : warning NOT expected')
         return 'fail'
 
     # Warning since we open as read-write
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
@@ -1359,16 +1363,20 @@ def ogr_gpkg_16():
     ds = None
 
     # Warning since we open as read-only
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
         return 'fail'
 
     # and also as read-write
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg', update = 1)
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
@@ -1384,8 +1392,10 @@ def ogr_gpkg_16():
         "extension_name, definition, scope ) VALUES ( 'foo', 'geom', 'gpkg_geom_XXXX', 'some ext', 'read-write' ) ")
     ds = None
 
-    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
+    lyr = ds.GetLayer(0)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    lyr.GetLayerDefn()
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail : warning expected')
@@ -1402,7 +1412,8 @@ def ogr_gpkg_16():
 
     # No warning since we open as read-only
     ds = ogr.Open('/vsimem/ogr_gpk_16.gpkg')
-    ds = None
+    lyr = ds.GetLayer(0)
+    lyr.GetLayerDefn()
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail : warning NOT expected')
         return 'fail'
