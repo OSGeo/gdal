@@ -862,7 +862,7 @@ std::string CPLJSonStreamingParser::GetSerializedString(const char* pszStr)
             osStr += "\\\"";
         else if( ch == '\\' )
             osStr += "\\\\";
-        else if( ch >= 0 && ch < ' ' )
+        else if( static_cast<int>(ch) >= 0 && ch < ' ' )
             osStr += CPLSPrintf("\\u%04X", ch);
         else
             osStr += ch;
