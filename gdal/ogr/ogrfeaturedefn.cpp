@@ -217,6 +217,22 @@ OGRFeatureDefn *OGRFeatureDefn::Clone()
 }
 
 /************************************************************************/
+/*                              SetName()                               */
+/************************************************************************/
+
+/**
+ * \brief Change name of this OGRFeatureDefn.
+ *
+ * @param pszName feature definition name
+ * @since GDAL 2.3
+ */
+void OGRFeatureDefn::SetName( const char* pszName )
+{
+    CPLFree(pszFeatureClassName);
+    pszFeatureClassName = CPLStrdup(pszName);
+}
+
+/************************************************************************/
 /*                              GetName()                               */
 /************************************************************************/
 
