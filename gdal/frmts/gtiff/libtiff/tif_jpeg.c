@@ -2310,12 +2310,22 @@ static int JPEGInitializeLibJPEG( TIFF * tif, int decompress )
 #ifndef TIFF_JPEG_MAX_MEMORY_TO_USE
 #define TIFF_JPEG_MAX_MEMORY_TO_USE (10 * 1024 * 1024)
 #endif
-        /* Increase the max memory usable. This helps when creating files */
-        /* with "big" tile, without using libjpeg temporary files. */
-        /* For example a 512x512 tile with 3 bands */
-        /* requires 1.5 MB which is above libjpeg 1MB default */
-        if( sp->cinfo.c.mem->max_memory_to_use < TIFF_JPEG_MAX_MEMORY_TO_USE )
-            sp->cinfo.c.mem->max_memory_to_use = TIFF_JPEG_MAX_MEMORY_TO_USE;
+        /* libjpeg turbo 1.5.2 honours max_memory_to_use, but has no backing */
+        /* store implementation, so better not set max_memory_to_use ourselves. */
+        /* See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/162 */
+        if( sp->cinfo.c.mem->max_memory_to_use > 0 )
+        {
+            /* This is to address bug related in ticket GDAL #1795. */
+            if (getenv("JPEGMEM") == NULL)
+            {
+                /* Increase the max memory usable. This helps when creating files */
+                /* with "big" tile, without using libjpeg temporary files. */
+                /* For example a 512x512 tile with 3 bands */
+                /* requires 1.5 MB which is above libjpeg 1MB default */
+                if( sp->cinfo.c.mem->max_memory_to_use < TIFF_JPEG_MAX_MEMORY_TO_USE )
+                    sp->cinfo.c.mem->max_memory_to_use = TIFF_JPEG_MAX_MEMORY_TO_USE;
+            }
+        }
     }
 
     sp->cinfo_initialized = TRUE;
