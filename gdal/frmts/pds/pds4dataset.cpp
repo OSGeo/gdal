@@ -2440,10 +2440,25 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
                                     (osPrefix + "spheroid_name").c_str(),
                                     pszDatum);
     }
+
+    double dfSemiMajor = oSRS.GetSemiMajor();
+    double dfSemiMinor = oSRS.GetSemiMinor();
+    const char* pszRadii = CSLFetchNameValue(m_papszCreationOptions, "RADII");
+    if( pszRadii )
+    {
+        char** papszTokens = CSLTokenizeString2(pszRadii, " ,", 0);
+        if( CSLCount(papszTokens) == 2 )
+        {
+            dfSemiMajor = CPLAtof(papszTokens[0]);
+            dfSemiMinor = CPLAtof(papszTokens[1]);
+        }
+        CSLDestroy(papszTokens);
+    }
+
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + "semi_major_radius").c_str(),
-                CPLSPrintf("%.18g", oSRS.GetSemiMajor())),
+                CPLSPrintf("%.18g", dfSemiMajor)),
         "unit", "m");
     // No, this is not a bug. The PDS4 semi_minor_radius is the minor radius
     // on the equatorial plane. Which in WKT doesn't really exist, so reuse
@@ -2451,12 +2466,12 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + "semi_minor_radius").c_str(),
-                CPLSPrintf("%.18g", oSRS.GetSemiMajor())),
+                CPLSPrintf("%.18g", dfSemiMajor)),
         "unit", "m");
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psGM,
                 (osPrefix + "polar_radius").c_str(),
-                CPLSPrintf("%.18g", oSRS.GetSemiMinor())),
+                CPLSPrintf("%.18g", dfSemiMinor)),
         "unit", "m");
     const char* pszLongitudeDirection =
         CSLFetchNameValueDef(m_papszCreationOptions, "LONGITUDE_DIRECTION",
@@ -2978,8 +2993,11 @@ void PDS4Dataset::WriteHeader()
                                               (osPrefix + "File").c_str());
         CPLCreateXMLElementAndValue(psFile, (osPrefix + "file_name").c_str(),
                                     CPLGetFilename(m_osImageFilename));
+        const char* pszArrayType = CSLFetchNameValueDef(m_papszCreationOptions,
+                                            "ARRAY_TYPE", "Array_3D_Image");
+        const bool bIsArray2D = STARTS_WITH(pszArrayType, "Array_2D");
         CPLXMLNode* psArray = CPLCreateXMLNode(psFAO, CXT_Element,
-                                            (osPrefix + "Array_3D_Image").c_str());
+                                            (osPrefix + pszArrayType).c_str());
 
         const char* pszLocalIdentifier = CPLGetXMLValue(
             psDisciplineArea,
@@ -3003,7 +3021,8 @@ void PDS4Dataset::WriteHeader()
                                         (osPrefix + "offset").c_str(),
                                         CPLSPrintf("%d", nOffset)),
             "unit", "byte");
-        CPLCreateXMLElementAndValue(psArray, (osPrefix + "axes").c_str(), "3");
+        CPLCreateXMLElementAndValue(psArray, (osPrefix + "axes").c_str(),
+                                                    (bIsArray2D) ? "2" : "3");
         CPLCreateXMLElementAndValue(psArray,
                                     (osPrefix + "axis_index_order").c_str(),
                                     "Last Index Fastest");
@@ -3080,6 +3099,7 @@ void PDS4Dataset::WriteHeader()
             CPLCreateXMLElementAndValue(psAxis,
                                 (osPrefix + "sequence_number").c_str(), "2");
         }
+        if( !bIsArray2D )
         {
             CPLXMLNode* psAxis = CPLCreateXMLNode(psArray, CXT_Element,
                                         (osPrefix + "Axis_Array").c_str());
@@ -3180,6 +3200,17 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         return NULL;
     }
 
+    const char* pszArrayType = CSLFetchNameValueDef(papszOptions,
+                                    "ARRAY_TYPE", "Array_3D_Image");
+    const bool bIsArray2D = STARTS_WITH(pszArrayType, "Array_2D");
+    if( nBands > 1 && bIsArray2D )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ARRAY_TYPE=%s is not supported for a multi-band raster",
+                 pszArrayType);
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Compute pixel, line and band offsets                            */
 /* -------------------------------------------------------------------- */
@@ -3189,6 +3220,9 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 
     const char* pszInterleave = CSLFetchNameValueDef(
         papszOptions, "INTERLEAVE", "BSQ");
+    if( bIsArray2D )
+        pszInterleave = "BIP";
+
     if( EQUAL(pszInterleave,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
@@ -3558,6 +3592,20 @@ void GDALRegister_PDS4()
     "default='Positive East'>"
 "     <Value>Positive East</Value>"
 "     <Value>Positive West</Value>"
+"  </Option>"
+"  <Option name='RADII' type='string' description='Value of form "
+    "semi_major_radius,semi_minor_radius to override the ones of the SRS'/>"
+"  <Option name='ARRAY_TYPE' type='string-select' description='Name of the "
+            "Array XML element' default='Array_3D_Image'>"
+"     <Value>Array</Value>"
+"     <Value>Array_2D</Value>"
+"     <Value>Array_2D_Image</Value>"
+"     <Value>Array_2D_Map</Value>"
+"     <Value>Array_2D_Spectrum</Value>"
+"     <Value>Array_3D</Value>"
+"     <Value>Array_3D_Image</Value>"
+"     <Value>Array_3D_Movie</Value>"
+"     <Value>Array_3D_Spectrum</Value>"
 "  </Option>"
 "  <Option name='BOUNDING_DEGREES' type='string'"
     "description='Manually set bounding box with the syntax "
