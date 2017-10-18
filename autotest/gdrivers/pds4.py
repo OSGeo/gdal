@@ -1186,6 +1186,93 @@ def pds4_16():
 
     return 'success'
 
+###############################################################################
+# Test ARRAY_TYPE creation option
+
+def pds4_17():
+
+    filename = '/vsimem/out.xml'
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options = ['ARRAY_TYPE=Array_2D'])
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    if data.find('<Array_2D>') < 0 or data.find('<axes>2</axes>') < 0 or \
+       data.find('<axis_name>Band</axis_name>') >= 0 or \
+       data.find('<sequence_number>3</sequence_number>') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+    # Test multi-band creation with Array_2D
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options = ['ARRAY_TYPE=Array_2D'])
+    if ds is not None:
+        gdaltest.post_reason('expected failure')
+        return 'fail'
+
+    # Test multi-band creation with Array_3D_Spectrum
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 2, options = ['ARRAY_TYPE=Array_3D_Spectrum'])
+
+    ret = validate_xml(filename)
+    if ret == 'fail':
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    if data.find('<Array_3D_Spectrum>') < 0 or data.find('<axes>3</axes>') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+    return 'success'
+
+###############################################################################
+# Test RADII creation option
+
+def pds4_18():
+
+    filename = '/vsimem/out.xml'
+
+    ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1, 1, options = ['RADII=1,2'])
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([2,1,0,49,0,-2])
+    with gdaltest.error_handler():
+        ds = None
+
+    f = gdal.VSIFOpenL(filename, 'rb')
+    if f:
+        data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+    if data.find('<cart:semi_major_radius unit="m">1</cart:semi_major_radius>') < 0 or \
+       data.find('<cart:semi_minor_radius unit="m">1</cart:semi_minor_radius>') < 0 or \
+       data.find('<cart:polar_radius unit="m">2</cart:polar_radius>') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.GetDriverByName('PDS4').Delete(filename)
+
+    return 'success'
+
 gdaltest_list = [
     pds4_1,
     pds4_2,
@@ -1202,7 +1289,9 @@ gdaltest_list = [
     pds4_13,
     pds4_14,
     pds4_15,
-    pds4_16 ]
+    pds4_16,
+    pds4_17,
+    pds4_18 ]
 
 if __name__ == '__main__':
 

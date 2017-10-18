@@ -80,6 +80,16 @@ PDS4 conversions. Defaults to YES.</li>
 Defaults to planetocentric.</li>
 <li> <b>LONGITUDE_DIRECTION</b>=Positive East/Positive West.
 Value of longitude_direction. Defaults to Positive East.</li>
+<li> <b>RADII</b>=semi_major_radius,semi_minor_radius.
+To override the ones of the SRS. Note that the first value (semi_major_radius)
+will be used to set the &lt;pds:semi_major_radius&gt; and
+&lt;pds:semi_minor_radius&gt; XML elements, and that second value
+(semi_minor_radius) will be used to set the &lt;pds:polar_radius&gt; XML element.</li>
+<li> <b>ARRAY_TYPE</b>=Array/Array_2D/Array_2D_Image/Array_2D_Map/
+Array_2D_Spectrum/Array_3D/Array_3D_Image/Array_3D_Movie/Array_3D_Spectrum.
+To set the XML element that defines the type of array. Defaults to Array_3D_Image.
+Using a Array_2D* for a multiband image is not supported. When using a
+Array_2D* value, INTERLEAVE will be ignored.</li>
 <li> <b>BOUNDING_DEGREES</b>=west_lon,south_lat,east_lon,north_lat. Manually set
 bounding box</li>
 </ul>
