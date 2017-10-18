@@ -2341,6 +2341,25 @@ OGRFeature *OGRDXFLayer::InsertBlock( const CPLString& osBlockName,
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
+        // If the subfeature is on layer 0, this is a special case: the
+        // subfeature should take on the style properties of the layer
+        // the block is being inserted onto
+        if( EQUAL( poSubFeature->GetFieldAsString( "Layer" ), "0" ) )
+        {
+            poSubFeature->SetField( "Layer",
+                poFeature->GetFieldAsString( "Layer" ) );
+
+            // If it's a pen, then replace the style string
+            const char* pszSubFeatureStyle = poSubFeature->GetStyleString();
+            if( pszSubFeatureStyle != NULL &&
+                STARTS_WITH_CI(pszSubFeatureStyle, "PEN") )
+            {
+                PrepareLineStyle( poSubFeature );
+            }
+
+            // TODO Do this for other style types (trac ticket #7099)
+        }
+
         ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
             oTransformer.dfXScale, poSubFeature );
 
