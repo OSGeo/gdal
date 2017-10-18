@@ -451,6 +451,18 @@ end:
 }
 
 /************************************************************************/
+/*                         SquareDistance()                             */
+/************************************************************************/
+
+static double SquareDistance(double dfX1, double dfX2,
+                             double dfY1, double dfY2)
+{
+    const double dfDX = dfX1 - dfX2;
+    const double dfDY = dfY1 - dfY2;
+    return dfDX * dfDX + dfDY * dfDY;
+}
+
+/************************************************************************/
 /*                        ProcessProximityLine()                        */
 /************************************************************************/
 
@@ -497,20 +509,19 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the above (below)      */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        float fNearDistSq =
-            static_cast<float>(
+        double dfNearDistSq =
                 std::max(dfMaxDist, static_cast<double>(nXSize)) *
-                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0);
+                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0;
 
         if( panNearX[iPixel] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
-                 + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iPixel], iPixel,
+                               panNearY[iPixel], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
             }
             else
             {
@@ -527,13 +538,13 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iPixel != iStart && panNearX[iLast] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
-                 + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iLast], iPixel,
+                               panNearY[iLast], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
                 panNearX[iPixel] = panNearX[iLast];
                 panNearY[iPixel] = panNearY[iLast];
             }
@@ -547,13 +558,13 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iTR != iEnd && panNearX[iTR] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
-                 + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iTR], iPixel,
+                               panNearY[iTR], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
                 panNearX[iPixel] = panNearX[iTR];
                 panNearY[iPixel] = panNearY[iTR];
             }
@@ -565,10 +576,10 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
         if( panNearX[iPixel] != -1
             && (pdfSrcNoDataValue == NULL
                 || panSrcScanline[iPixel] != *pdfSrcNoDataValue)
-            && fNearDistSq <= dfMaxDist * dfMaxDist
+            && dfNearDistSq <= dfMaxDist * dfMaxDist
             && (pafProximity[iPixel] < 0
-                || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
-            pafProximity[iPixel] = static_cast<float>(sqrt(fNearDistSq));
+                || dfNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
+            pafProximity[iPixel] = static_cast<float>(sqrt(dfNearDistSq));
     }
 
     return CE_None;
