@@ -122,7 +122,7 @@ public:
 
     sqlite3_stmt *PrepareStatement(const char *);
     OGRErr        ExecuteSQL( const char *, bool = false );
-    OGRErr        ExecuteSQL(sqlite3_stmt *);
+    OGRErr        ExecuteSQL(sqlite3_stmt *&);
 };
 
 #endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED
