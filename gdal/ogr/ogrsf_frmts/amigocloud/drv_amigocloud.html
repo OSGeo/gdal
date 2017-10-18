@@ -9,7 +9,7 @@
 
 (GDAL/OGR &gt;= 2.1)<p>
 
-This driver can connect to the services implementing the AmigoCloud API.
+This driver can connect to the AmigoCloud API services.
 GDAL/OGR must be built with Curl support in order for the
 AmigoCloud driver to be compiled.<p>
 
@@ -28,6 +28,15 @@ This is necessary when you need to access a particular AmigoCloud dataset.
 </ul>
 
 If several parameters are specified, they must be separated by a space.<p>
+If no datset_id is provided, the driver will print list of available datasets for given project.
+<li> For example: <b>"AmigoCloud:1234 datasets"</b>
+    <pre>
+    List of available datasets for project id: 1234
+    | id        | name
+    |-----------|-------------------
+    | 5551      | points
+    | 5552      | lines
+</pre>
 
 <h2>Configuration options</h2>
 
@@ -97,7 +106,30 @@ can be NULL. Defaults to YES.</li>
 <h2>Examples</h2>
 
 <li>
-Acceccing data from a public table:
+    Different ways to provide AmigoCloud API token:
+    <pre>
+    ogrinfo --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+    ogrinfo -oo AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+    env AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw ogrinfo -al "AmigoCloud:1234 datasets=987"
+    </pre>
+    <pre>
+    export AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw
+    ogrinfo -al "AmigoCloud:1234 datasets=987"
+    </pre>
+
+<li>
+Show list of datasets.
+    <pre>
+    $ ogrinfo -ro "AmigoCloud:1234 datasets"
+    List of available datasets for project id: 1234
+    | id        | name
+    |-----------|-------------------
+    | 5551      | points
+    | 5552      | lines
+    </pre>
+
+<li>
+Accessing data from a public table:
 <pre>
 ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
 </pre>
@@ -106,7 +138,7 @@ ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
 <li>
 Creating and populating a table from a shapefile:
 <pre>
-ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f "AmigoCloud" AmigoCloud:"1234" myshapefile.shp
+ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
 </pre>
 <p>
 

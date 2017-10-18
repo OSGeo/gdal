@@ -31,7 +31,7 @@
 #include "ogrgeojsonreader.h"
 #include <sstream>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename, const char* pszOptionName);
 
@@ -133,6 +133,53 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
     return osOptionValue;
 }
 
+bool OGRAmigoCloudDataSource::ListDatasets()
+{
+    std::stringstream url;
+    url << std::string(GetAPIURL()) << "/users/0/projects/" << std::string(GetProjetcId()) << "/datasets/?summary";
+
+    json_object* result = RunGET(url.str().c_str());
+    if( result == NULL ) {
+        CPLError(CE_Failure, CPLE_AppDefined, "AmigoCloud:get failed.");
+        return false;
+    }
+
+    if( result != NULL )
+    {
+        int type = json_object_get_type(result);
+        if(type == json_type_object)
+        {
+            json_object *poResults = CPL_json_object_object_get(result, "results");
+            if(poResults != NULL) {
+                array_list *res = json_object_get_array(poResults);
+                if(res != NULL) {
+                    CPLprintf("List of available datasets for project id: %s\n", GetProjetcId());
+                    CPLprintf("| id \t\t| name\n");
+                    CPLprintf("|---------------|-------------------\n");
+                    for(int i = 0; i < res->length; i++) {
+                        json_object *ds = (json_object*)array_list_get_idx(res, i);
+                        if(ds!=NULL) {
+                            const char *name = NULL;
+                            int64_t dataset_id = 0;
+                            json_object *poName = CPL_json_object_object_get(ds, "name");
+                            if (poName != NULL) {
+                                name = json_object_get_string(poName);
+                            }
+                            json_object *poId = CPL_json_object_object_get(ds, "id");
+                            if (poId != NULL) {
+                                dataset_id = json_object_get_int64(poId);
+                            }
+                            CPLprintf("| %lld \t| %s \n", dataset_id, name);
+                        }
+                    }
+                }
+            }
+        }
+        json_object_put(result);
+    }
+    return true;
+}
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -161,15 +208,18 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         }
     }
 
-    osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "API_KEY",
+    osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "AMIGOCLOUD_API_KEY",
                                     CPLGetConfigOption("AMIGOCLOUD_API_KEY", ""));
 
     if (osAPIKey.empty())
     {
-        osAPIKey = OGRAMIGOCLOUDGetOptionValue(pszFilename, "API_KEY");
+        osAPIKey = OGRAMIGOCLOUDGetOptionValue(pszFilename, "AMIGOCLOUD_API_KEY");
     }
-
-    CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
+    if (osAPIKey.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "AMIGOCLOUD_API_KEY is not defined.\n");
+        return FALSE;
+    }
 
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
@@ -190,6 +240,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     if( osCurrentSchema.empty() )
         return FALSE;
 
+    CPLString osDatasets = OGRAMIGOCLOUDGetOptionValue(pszFilename, "datasets");
     if (!osDatasets.empty())
     {
         char** papszTables = CSLTokenizeString2(osDatasets, ",", 0);
@@ -201,6 +252,11 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         }
         CSLDestroy(papszTables);
         return TRUE;
+    } else {
+        // If 'datasets' word is in the filename, but no datasets specified,
+        // print the list of available datasets
+        if(std::string(pszFilename).find("datasets") != std::string::npos)
+            ListDatasets();
     }
 
     return TRUE;
@@ -426,21 +482,13 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
 
     CPLDebug( "AMIGOCLOUD", "RunPOST Response:%s", psResult->pabyData );
 
-    json_tokener* jstok = NULL;
     json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "JSON parsing error: %s (at offset %d)",
-                  json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 
@@ -461,6 +509,13 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
                     return NULL;
                 }
             }
+            json_object* poJob = CPL_json_object_object_get(poObj, "job");
+            if (poJob != NULL) {
+                const char *job = json_object_get_string(poJob);
+                if (job != NULL) {
+                    waitForJobToFinish(job);
+                }
+            }
         }
         else
         {
@@ -471,6 +526,41 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
 
     return poObj;
 }
+
+bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
+{
+    std::stringstream url;
+    url << std::string(GetAPIURL()) << "/me/jobs/" << std::string(jobId);
+
+    bool done = false;
+    int count = 0;
+    while (!done && count<5) {
+        count++;
+        json_object *result = RunGET(url.str().c_str());
+        if (result == NULL) {
+            CPLError(CE_Failure, CPLE_AppDefined, "AmigoCloud:get failed.");
+            return false;
+        }
+
+        if (result != NULL) {
+            int type = json_object_get_type(result);
+            if (type == json_type_object) {
+                json_object *poStatus = CPL_json_object_object_get(result, "status");
+                const char *status = json_object_get_string(poStatus);
+                if (status != NULL) {
+                    if (std::string(status) == "SUCCESS") {
+                        return true;
+                    } else if (std::string(status) == "FAILURE") {
+                        return false;
+                    }
+                }
+            }
+        }
+        CPLSleep(1.0); // Sleep 1 sec.
+    }
+    return false;
+}
+
 
 /************************************************************************/
 /*                               RunDELETE()                               */
@@ -523,21 +613,13 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
 
     CPLDebug( "AMIGOCLOUD", "RunDELETE Response:%s", psResult->pabyData );
 
-    json_tokener* jstok = NULL;
     json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "JSON parsing error: %s (at offset %d)",
-                  json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 
@@ -582,13 +664,17 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     /* -------------------------------------------------------------------- */
     if( !osAPIKey.empty() )
     {
-        osURL += "?token=";
+        if(osURL.find("?") == std::string::npos)
+            osURL += "?token=";
+        else
+            osURL += "&token=";
         osURL += osAPIKey;
     }
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), NULL);
-    if( psResult == NULL )
+    if( psResult == NULL ) {
         return NULL;
+    }
 
     if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
@@ -616,21 +702,13 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
 
     CPLDebug( "AMIGOCLOUD", "RunGET Response:%s", psResult->pabyData );
 
-    json_tokener* jstok = NULL;
     json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "JSON parsing error: %s (at offset %d)",
-                  json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 
@@ -731,21 +809,13 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 
     CPLDebug( "AMIGOCLOUD", "RunSQL Response:%s", psResult->pabyData );
 
-    json_tokener* jstok = NULL;
     json_object* poObj = NULL;
-
-    jstok = json_tokener_new();
-    poObj = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 

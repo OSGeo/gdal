@@ -30,7 +30,7 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRAmigoCloudLayer()                            */
@@ -114,8 +114,11 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
             json_object* poVal = CPL_json_object_object_get(poRowObj,
                             poFeatureDefn->GetFieldDefn(i)->GetNameRef());
 
-            if( poVal != NULL &&
-                json_object_get_type(poVal) == json_type_string )
+            if( poVal == NULL )
+            {
+                poFeature->SetFieldNull(i);
+            }
+            else if( json_object_get_type(poVal) == json_type_string )
             {
                 if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime )
                 {
@@ -131,14 +134,12 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object* poRowObj)
                     poFeature->SetField(i, json_object_get_string(poVal));
                 }
             }
-            else if( poVal != NULL &&
-                (json_object_get_type(poVal) == json_type_int ||
-                 json_object_get_type(poVal) == json_type_boolean) )
+            else if( json_object_get_type(poVal) == json_type_int ||
+                     json_object_get_type(poVal) == json_type_boolean )
             {
                 poFeature->SetField(i, (GIntBig)json_object_get_int64(poVal));
             }
-            else if( poVal != NULL &&
-                json_object_get_type(poVal) == json_type_double )
+            else if( json_object_get_type(poVal) == json_type_double )
             {
                 poFeature->SetField(i, json_object_get_double(poVal));
             }
@@ -361,16 +362,27 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
             }
             if(!fieldName.empty() && !fieldType.empty())
             {
-
                 if(EQUAL(fieldType.c_str(), "string") ||
                    EQUAL(fieldType.c_str(), "unknown(19)") /* name */ )
                 {
                     OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTString);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
-                else if(EQUAL(fieldType.c_str(), "number"))
+                else if(EQUAL(fieldType.c_str(), "number") ||
+                        EQUAL(fieldType.c_str(), "float") ||
+                        EQUAL(fieldType.c_str(), "real"))
                 {
                     OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTReal);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
+                else if(EQUAL(fieldType.c_str(), "integer"))
+                {
+                    OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTInteger);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
+                else if(EQUAL(fieldType.c_str(), "bigint"))
+                {
+                    OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTInteger64);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
                 else if(EQUAL(fieldType.c_str(), "date"))
