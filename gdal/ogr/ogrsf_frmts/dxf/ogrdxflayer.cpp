@@ -2085,48 +2085,15 @@ static bool PointXAxisComparer(const OGRPoint& oP1, const OGRPoint& oP2)
 }
 
 /* -------------------------------------------------------------------- */
-/*      PointXYEqualityComparer                                         */
+/*      PointXYZEqualityComparer                                        */
 /*                                                                      */
-/*      Returns true if oP1 is equal to oP2 in the X and Y directions.  */
+/*      Returns true if oP1 is equal to oP2 in the X, Y and Z axes.     */
 /* -------------------------------------------------------------------- */
 
-static bool PointXYEqualityComparer(const OGRPoint& oP1, const OGRPoint& oP2)
+static bool PointXYZEqualityComparer(const OGRPoint& oP1, const OGRPoint& oP2)
 {
-    return oP1.getX() == oP2.getX() && oP1.getY() == oP2.getY();
-}
-
-/* -------------------------------------------------------------------- */
-/*      OrderSolidVertices                                              */
-/*                                                                      */
-/*      Order vertices of a SOLID using Jarvis march                    */
-/* -------------------------------------------------------------------- */
-
-static void OrderSolidVertices(OGRPoint poCorners[], const int nCount)
-{
-    if( nCount <= 1 ) {
-        return;
-    }
-
-    double dfX1 = poCorners[0].getX();
-    double dfY1 = poCorners[0].getY();
-
-    double dfMinAngle = 10.0;
-    int iMinAngleIndex = 0;
-    for( int i = 1; i < nCount; i++ ) {
-        double dfAngle = atan2( poCorners[i].getX() - dfX1,
-            poCorners[i].getY() - dfY1 );
-        if( dfAngle < 0 ) dfAngle += 2 * M_PI;
-        if( dfAngle < dfMinAngle ) {
-            dfMinAngle = dfAngle;
-            iMinAngleIndex = i;
-        }
-    }
-
-    OGRPoint poTmp = poCorners[1];
-    poCorners[1] = poCorners[iMinAngleIndex];
-    poCorners[iMinAngleIndex] = poTmp;
-
-    OrderSolidVertices( poCorners + 1, nCount - 1 );
+    return oP1.getX() == oP2.getX() && oP1.getY() == oP2.getY() &&
+        oP1.getZ() == oP2.getZ();
 }
 
 /************************************************************************/
@@ -2142,12 +2109,16 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
     OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     double dfX1 = 0.0;
     double dfY1 = 0.0;
+    double dfZ1 = 0.0;
     double dfX2 = 0.0;
     double dfY2 = 0.0;
+    double dfZ2 = 0.0;
     double dfX3 = 0.0;
     double dfY3 = 0.0;
+    double dfZ3 = 0.0;
     double dfX4 = 0.0;
     double dfY4 = 0.0;
+    double dfZ4 = 0.0;
 
     while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0) {
         switch (nCode) {
@@ -2160,6 +2131,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 30:
+            dfZ1 = CPLAtof(szLineBuf);
             break;
 
         case 11:
@@ -2171,6 +2143,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 31:
+            dfZ2 = CPLAtof(szLineBuf);
             break;
 
         case 12:
@@ -2182,6 +2155,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 32:
+            dfZ3 = CPLAtof(szLineBuf);
             break;
 
         case 13:
@@ -2193,6 +2167,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 33:
+            dfZ4 = CPLAtof(szLineBuf);
             break;
 
         default:
@@ -2207,26 +2182,32 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
         return NULL;
     }
 
-    CPLDebug("Corner coordinates are", "%f,%f,%f,%f,%f,%f,%f,%f", dfX1, dfY1,
-            dfX2, dfY2, dfX3, dfY3, dfX4, dfY4);
+    // do we want Z-coordinates?
+    const bool bWantZ = dfZ1 != 0.0 || dfZ2 != 0.0 ||
+                        dfZ3 != 0.0 || dfZ4 != 0.0;
 
+    // check how many unique corners we have
     OGRPoint* poCorners = new OGRPoint[4];
     poCorners[0].setX(dfX1);
     poCorners[0].setY(dfY1);
+    if( bWantZ )
+        poCorners[0].setZ(dfZ1);
     poCorners[1].setX(dfX2);
     poCorners[1].setY(dfY2);
+    if( bWantZ )
+        poCorners[1].setZ(dfZ2);
     poCorners[2].setX(dfX3);
     poCorners[2].setY(dfY3);
+    if( bWantZ )
+        poCorners[2].setZ(dfZ3);
     poCorners[3].setX(dfX4);
     poCorners[3].setY(dfY4);
-
-    // corners in SOLID can be in any order, so we need to order them into
-    // a sensible order. First sort them to remove duplicates. Then run a
-    // Jarvis march to form the convex hull of the points.
+    if( bWantZ )
+        poCorners[3].setZ(dfZ4);
 
     std::sort(poCorners, poCorners + 4, PointXAxisComparer);
     int nCornerCount = static_cast<int>(std::unique(poCorners, poCorners + 4,
-        PointXYEqualityComparer) - poCorners);
+        PointXYZEqualityComparer) - poCorners);
     if( nCornerCount < 1 )
     {
         DXF_LAYER_READER_ERROR();
@@ -2234,8 +2215,6 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
         delete[] poCorners;
         return NULL;
     }
-
-    OrderSolidVertices(poCorners, nCornerCount);
 
     OGRGeometry* poFinalGeom;
 
@@ -2253,13 +2232,21 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
     }
     else
     {
+        // SOLID vertices seem to be joined in the order 1-2-4-3-1.
+        // See trac ticket #7089
         OGRLinearRing* poLinearRing = new OGRLinearRing();
-        poLinearRing->setPoint( 0, &poCorners[0] );
-        poLinearRing->setPoint( 1, &poCorners[1] );
-        poLinearRing->setPoint( 2, &poCorners[2] );
-        if( nCornerCount == 4 )
-            poLinearRing->setPoint( 3, &poCorners[3] );
+        int iIndex = 0;
+        poLinearRing->setPoint( iIndex++, dfX1, dfY1, dfZ1 );
+        if( dfX1 != dfX2 || dfY1 != dfY2 || dfZ1 != dfZ2 )
+            poLinearRing->setPoint( iIndex++, dfX2, dfY2, dfZ2 );
+        if( dfX2 != dfX4 || dfY2 != dfY4 || dfZ2 != dfZ4 )
+            poLinearRing->setPoint( iIndex++, dfX4, dfY4, dfZ4 );
+        if( dfX4 != dfX3 || dfY4 != dfY3 || dfZ4 != dfZ3 )
+            poLinearRing->setPoint( iIndex++, dfX3, dfY3, dfZ3 );
         poLinearRing->closeRings();
+
+        if( !bWantZ )
+            poLinearRing->flattenTo2D();
 
         OGRPolygon* poPoly = new OGRPolygon();
         poPoly->addRingDirectly( poLinearRing );
