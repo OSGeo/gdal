@@ -823,7 +823,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
                                             true, bStoreNativeData_);
 
     vsi_l_offset nFileSize = 0;
-    if( !STARTS_WITH(poDS->GetDescription(), "/vsi") )
+    if( STARTS_WITH(poDS->GetDescription(), "/vsimem/") ||
+        !STARTS_WITH(poDS->GetDescription(), "/vsi") )
     {
         VSIStatBufL sStatBuf;
         if( VSIStatL( poDS->GetDescription(), &sStatBuf ) == 0 )
@@ -875,8 +876,25 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
         }
         if( bFinished || (nIter % 100) == 0 )
         {
-            CPLDebug("GeoJSON", "First pass: %.2f %%",
-                     100.0 * VSIFTellL(fp) / nFileSize);
+            if( nFileSize == 0 )
+            {
+                if( bFinished )
+                {
+                    CPLDebug("GeoJSON", "First pass: 100.00 %%");
+                }
+                else
+                {
+                    CPLDebug("GeoJSON",
+                             "First pass: " CPL_FRMT_GUIB " bytes read",
+                             static_cast<GUIntBig>(nIter) *
+                                static_cast<GUIntBig>(nBufferSize_) + nRead);
+                }
+            }
+            else
+            {
+                CPLDebug("GeoJSON", "First pass: %.2f %%",
+                         100.0 * VSIFTellL(fp) / nFileSize);
+            }
         }
         if( nLimitFeaturesFirstPass > 0 &&
             poLayer->GetFeatureCount(FALSE) >= nLimitFeaturesFirstPass )
