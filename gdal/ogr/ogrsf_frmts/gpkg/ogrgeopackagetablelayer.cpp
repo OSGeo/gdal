@@ -566,6 +566,17 @@ OGRFeatureDefn* OGRGeoPackageTableLayer::GetLayerDefn()
 }
 
 /************************************************************************/
+/*                      GetFIDColumn()                                  */
+/************************************************************************/
+
+const char* OGRGeoPackageTableLayer::GetFIDColumn()
+{
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
+    return OGRGeoPackageLayer::GetFIDColumn();
+}
+
+/************************************************************************/
 /*                            GetGeomType()                             */
 /************************************************************************/
 

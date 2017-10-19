@@ -218,11 +218,26 @@ def ogr_gpkg_4():
         return 'fail'
 
     lyr0 = gdaltest.gpkg_ds.GetLayer(0)
-    lyr1 = gdaltest.gpkg_ds.GetLayer(1)
+
+    if lyr0.GetFIDColumn() != 'fid':
+        gdaltest.post_reason( 'unexpected FID name for layer 0' )
+        return 'fail'
+
+    gdaltest.gpkg_ds = None
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
+
+    lyr0 = gdaltest.gpkg_ds.GetLayer(0)
 
     if lyr0.GetName() != 'first_layer':
         gdaltest.post_reason( 'unexpected layer name for layer 0' )
         return 'fail'
+
+    gdaltest.gpkg_ds = None
+    gdaltest.gpkg_ds = gdaltest.gpkg_dr.Open( 'tmp/gpkg_test.gpkg', update = 1 )
+
+    lyr0 = gdaltest.gpkg_ds.GetLayer(0)
+    lyr1 = gdaltest.gpkg_ds.GetLayer(1)
+
     if lyr0.GetLayerDefn().GetGeomFieldDefn(0).GetName() != 'gpkg_geometry':
         gdaltest.post_reason( 'unexpected geometry field name for layer 0' )
         return 'fail'
