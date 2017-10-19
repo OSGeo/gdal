@@ -154,8 +154,8 @@ bool OGRAmigoCloudDataSource::ListDatasets()
                 array_list *res = json_object_get_array(poResults);
                 if(res != NULL) {
                     CPLprintf("List of available datasets for project id: %s\n", GetProjetcId());
-                    CPLprintf("| id \t\t| name\n");
-                    CPLprintf("|---------------|-------------------\n");
+                    CPLprintf("| id \t | name\n");
+                    CPLprintf("|--------|-------------------\n");
                     for(int i = 0; i < res->length; i++) {
                         json_object *ds = (json_object*)array_list_get_idx(res, i);
                         if(ds!=NULL) {
@@ -169,7 +169,9 @@ bool OGRAmigoCloudDataSource::ListDatasets()
                             if (poId != NULL) {
                                 dataset_id = json_object_get_int64(poId);
                             }
-                            CPLprintf("| %lld \t| %s \n", dataset_id, name);
+                            std::stringstream str;
+                            str << "| " << dataset_id << "\t | "<< name;
+                            CPLprintf("%s\n", str.str().c_str());
                         }
                     }
                 }
