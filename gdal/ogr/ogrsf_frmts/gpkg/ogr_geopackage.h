@@ -452,6 +452,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     /* OGR API methods */
 
     const char*         GetName() override { return GetDescription(); }
+    const char*         GetFIDColumn() override;
     OGRwkbGeometryType  GetGeomType() override;
     const char*         GetGeometryColumn() override;
     OGRFeatureDefn*     GetLayerDefn() override;
