@@ -14,6 +14,8 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
          { 3, 25, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,-4,4,4,-4,4,-4} },
              // 3.10: Mercator
 //       {10, 19, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,-4,4,1,4,4,4} },
+	 {12, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,1,4,4,-4,-4,-4,-4} },
+ 	     // 3.101
          {10, 19, 0, {1,1,4,1,4,1,4,4,4,-4,-4,1,-4,-4,-4,1,4,4,4} },
              // 3.20: Polar Stereographic Projection
 //       {20, 18, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1} },
@@ -43,6 +45,8 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
          {90, 21, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,4,4,4,4,1,4,4,4,4} },
              // 3.100: Triangular grid based on an icosahedron
          {100, 11, 0, {1,1,2,1,-4,4,4,1,1,1,4} },
+	     // 3.101: General unstructured grid
+         {101, 4, 0, {1,4,1,-4} },
              // 3.110: Equatorial Azimuthal equidistant
          {110, 16, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,4,4,1,1} },
              // 3.120: Azimuth-range projection
