@@ -442,6 +442,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     void                CheckGeometryType( OGRFeature *poFeature );
 
     OGRErr              ReadTableDefinition();
+    void                InitView();
 
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
@@ -483,7 +484,6 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    void                PostInit();
     void                RecomputeExtent();
 
     void                SetOpeningParameters(bool bIsInGpkgContents,
