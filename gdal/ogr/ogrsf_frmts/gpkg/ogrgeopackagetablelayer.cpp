@@ -1108,6 +1108,8 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
     CheckUnknownExtensions();
 
+    InitView();
+
     return OGRERR_NONE;
 }
 
@@ -1192,10 +1194,10 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 }
 
 /************************************************************************/
-/*                        PostInit()                                    */
+/*                        InitView()                                    */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::PostInit()
+void OGRGeoPackageTableLayer::InitView()
 {
 #ifdef SQLITE_HAS_COLUMN_METADATA
     if( !m_bIsTable )
@@ -1963,6 +1965,8 @@ OGRErr OGRGeoPackageTableLayer::ISetFeature( OGRFeature *poFeature )
 OGRErr OGRGeoPackageTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     CPLFree(m_pszAttrQueryString);
     m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
 
@@ -3273,6 +3277,8 @@ void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 void OGRGeoPackageTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
     if( InstallFilter( poGeomIn ) )
     {
         BuildWhere();
