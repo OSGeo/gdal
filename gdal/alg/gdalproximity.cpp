@@ -268,6 +268,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     int *panNearX = NULL;
     int *panNearY = NULL;
     GInt32 *panSrcScanline = NULL;
+    bool bTempFileAlreadyDeleted = false;
 
     if( eProxType == GDT_Byte
         || eProxType == GDT_UInt16
@@ -290,6 +291,10 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
             eErr = CE_Failure;
             goto end;
         }
+        // On Unix, attempt at deleting the temporary file now, so that
+        // if the process gets interrupted, it is automatically destroyed
+        // by the operating system.
+        bTempFileAlreadyDeleted = VSIUnlink( osTmpFile ) == 0;
         hWorkProximityBand = GDALGetRasterBand( hWorkProximityDS, 1 );
     }
 
@@ -444,7 +449,10 @@ end:
     {
         CPLString osProxFile = GDALGetDescription( hWorkProximityDS );
         GDALClose( hWorkProximityDS );
-        GDALDeleteDataset( GDALGetDriverByName( "GTiff" ), osProxFile );
+        if( !bTempFileAlreadyDeleted )
+        {
+            GDALDeleteDataset( GDALGetDriverByName( "GTiff" ), osProxFile );
+        }
     }
 
     return eErr;
