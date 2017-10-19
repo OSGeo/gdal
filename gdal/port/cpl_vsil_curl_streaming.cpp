@@ -83,7 +83,7 @@ struct curl_slist* VSICurlSetOptions( CURL* hCurlHandle, const char* pszURL,
 struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy );
 
-#define ENABLE_DEBUG        1
+#define ENABLE_DEBUG        0
 
 #define N_MAX_REGIONS       10
 
