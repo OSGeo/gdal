@@ -403,7 +403,7 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 const double dfVal =
                     1 + 2 * std::floor(dfSegmentLength1 / dfMaxLength / 2.0);
                 if ( dfVal >= std::numeric_limits<int>::max() ||
-                     dfVal <= std::numeric_limits<int>::min() ||
+                     dfVal < 0.0 ||
                      CPLIsNan(dfVal) )
                 {
                     CPLError(
@@ -437,10 +437,18 @@ void OGRCircularString::segmentize( double dfMaxLength )
             if( dfSegmentLength1 > dfMaxLength ||
                 dfSegmentLength2 > dfMaxLength )
             {
-                int nIntermediatePoints =
-                    1 +
-                    2 * static_cast<int>(std::floor(dfSegmentLength2
-                                                    / dfMaxLength / 2.0));
+                const double dfVal =
+                    1 + 2 * std::floor(dfSegmentLength2 / dfMaxLength / 2.0);
+                if ( dfVal >= std::numeric_limits<int>::max() ||
+                     dfVal < 0.0 ||
+                     CPLIsNan(dfVal) )
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "segmentize nIntermediatePoints invalid 2: %lf", dfVal);
+                    break;
+                }
+                int nIntermediatePoints = static_cast<int>(dfVal);
                 const double dfStep =
                     (alpha2 - alpha1) / (nIntermediatePoints + 1);
                 for( int j = 1; j <= nIntermediatePoints; ++j )
@@ -469,9 +477,9 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 dfSegmentLength2 > dfMaxLength )
             {
                 const double dfVal =
-                    1 + 2 * ceil(dfSegmentLength1 / dfMaxLength / 2.0);
+                    1 + 2 * std::ceil(dfSegmentLength1 / dfMaxLength / 2.0);
                 if ( dfVal >= std::numeric_limits<int>::max() ||
-                     dfVal <= std::numeric_limits<int>::min() ||
+                     dfVal < 0.0 ||
                      CPLIsNan(dfVal) )
                 {
                     CPLError(
@@ -499,9 +507,9 @@ void OGRCircularString::segmentize( double dfMaxLength )
                 dfSegmentLength2 > dfMaxLength )
             {
                 const double dfVal =
-                    1 + 2 * ceil(dfSegmentLength2 / dfMaxLength / 2.0);
+                    1 + 2 * std::ceil(dfSegmentLength2 / dfMaxLength / 2.0);
                 if ( dfVal >= std::numeric_limits<int>::max() ||
-                     dfVal <= std::numeric_limits<int>::min() ||
+                     dfVal < 0.0 ||
                      CPLIsNan(dfVal) )
                 {
                     CPLError(
