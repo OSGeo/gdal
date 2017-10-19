@@ -362,16 +362,27 @@ void OGRAmigoCloudLayer::EstablishLayerDefn(const char* pszLayerName,
             }
             if(!fieldName.empty() && !fieldType.empty())
             {
-
                 if(EQUAL(fieldType.c_str(), "string") ||
                    EQUAL(fieldType.c_str(), "unknown(19)") /* name */ )
                 {
                     OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTString);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
-                else if(EQUAL(fieldType.c_str(), "number"))
+                else if(EQUAL(fieldType.c_str(), "number") ||
+                        EQUAL(fieldType.c_str(), "float") ||
+                        EQUAL(fieldType.c_str(), "real"))
                 {
                     OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTReal);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
+                else if(EQUAL(fieldType.c_str(), "integer"))
+                {
+                    OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTInteger);
+                    poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                }
+                else if(EQUAL(fieldType.c_str(), "bigint"))
+                {
+                    OGRFieldDefn oFieldDefn(fieldName.c_str(), OFTInteger64);
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
                 else if(EQUAL(fieldType.c_str(), "date"))
