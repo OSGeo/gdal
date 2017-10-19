@@ -93,7 +93,6 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRAmigoCloud()
-
 {
     if( GDALGetDriverByName( "AmigoCloud" ) != NULL )
         return;
@@ -108,7 +107,7 @@ void RegisterOGRAmigoCloud()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
     "<OpenOptionList>"
-    "  <Option name='API_KEY' type='string' description='Account API key'/>"
+    "  <Option name='AMIGOCLOUD_API_KEY' type='string' description='Account API key'/>"
     "  <Option name='PROJECTID' type='string' description='Project id' required='true'/>"
     "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
     "</OpenOptionList>");
