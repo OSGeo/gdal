@@ -169,10 +169,11 @@ bool OGRAmigoCloudDataSource::ListDatasets()
                             if (poId != NULL) {
                                 dataset_id = json_object_get_int64(poId);
                             }
-                            std::stringstream str;
-                            str << "| " << dataset_id << "\t | "<< name;
-                            CPLprintf("%s\n", str.str().c_str());
-                        }
+                            if (name != NULL) {
+                                std::stringstream str;
+                                str << "| " << dataset_id << "\t | " << name;
+                                CPLprintf("%s\n", str.str().c_str());
+                            }                        }
                     }
                 }
             }
