@@ -801,7 +801,10 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
     if( nSrcType == eGeoJSONSourceFile )
     {
         if( !ReadFromFile( poOpenInfo ) )
+        {
+            delete poReader;
             return;
+        }
         RemoveJSonPStuff();
     }
     const OGRErr err = poReader->Parse( pszGeoData_ );
