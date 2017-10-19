@@ -2720,8 +2720,9 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
         }
     }
 
+    const char *pszFeatureMember = strstr(pszXML, "<gml:featureMember");
     const char *pszDescription = strstr(pszXML, "<gml:description>");
-    if( pszDescription )
+    if( pszDescription && (pszFeatureMember == NULL || pszDescription < pszFeatureMember) )
     {
         pszDescription += strlen("<gml:description>");
         const char *pszEndDescription =
@@ -2740,7 +2741,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
     const char *l_pszName = strstr(pszXML, "<gml:name");
     if( l_pszName )
         l_pszName = strchr(l_pszName, '>');
-    if( l_pszName )
+    if( l_pszName && (pszFeatureMember == NULL || l_pszName < pszFeatureMember) )
     {
         l_pszName++;
         const char *pszEndName = strstr(l_pszName, "</gml:name>");
