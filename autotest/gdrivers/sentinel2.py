@@ -433,8 +433,8 @@ def sentinel2_l1c_5():
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
+        gdal.Open('/vsimem/test.xml')
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -2078,8 +2078,8 @@ def sentinel2_l2a_3():
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        ds = gdal.Open('/vsimem/test.xml')
-    if ds is not None:
+        gdal.Open('/vsimem/test.xml')
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
