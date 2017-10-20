@@ -33,7 +33,7 @@
 //
 //$$$
 
-      #define MAXPDSTEMP 24           // maximum number of templates
+      #define MAXPDSTEMP 25           // maximum number of templates
       #define MAXPDSMAPLEN 200        // maximum template map length
 
       struct pdstemplate
