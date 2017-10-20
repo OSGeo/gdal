@@ -1237,6 +1237,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                                         meta->pds2.sect4.numBands *
                                         sizeof (sect4_BandType));
       for (i = 0; i < meta->pds2.sect4.numBands; i++) {
+         if (ns4 < 30 + 11 * i + 1) {
+             return -1;
+         }
          meta->pds2.sect4.bands[i].series =
                (unsigned short int) is4[23 + 11 * i];
          meta->pds2.sect4.bands[i].numbers =
