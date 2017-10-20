@@ -267,9 +267,22 @@ printf "***NEWFILE***:my.dat\n" >> all_geoms_tab.tar
 cat $(dirname $0)/../../autotest/ogr/data/all_geoms.dat >> all_geoms_tab.tar
 printf "***NEWFILE***:my.id\n" >> all_geoms_tab.tar
 cat $(dirname $0)/../../autotest/ogr/data/all_geoms.id >> all_geoms_tab.tar
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > poly_indexed.tar
+printf "***NEWFILE***:my.tab\n" >> poly_indexed.tar
+cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.tab >> poly_indexed.tar
+printf "***NEWFILE***:my.map\n" >> poly_indexed.tar
+cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.map >> poly_indexed.tar
+printf "***NEWFILE***:my.dat\n" >> poly_indexed.tar
+cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.dat >> poly_indexed.tar
+printf "***NEWFILE***:my.id\n" >> poly_indexed.tar
+cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.id >> poly_indexed.tar
+printf "***NEWFILE***:my.ind\n" >> poly_indexed.tar
+cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.ind >> poly_indexed.tar
+
 rm -f $OUT/mitab_tab_fuzzer_seed_corpus.zip
-zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar >/dev/null
-rm all_geoms_tab.tar
+zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar poly_indexed.tar >/dev/null
+rm all_geoms_tab.tar poly_indexed.tar
 
 echo "Building mitab_mif_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > small_mif.tar
