@@ -2428,6 +2428,31 @@ def ogr_mitab_46():
     return 'success'
 
 ###############################################################################
+#Test opening a dataset with a .ind file
+
+def ogr_mitab_47():
+
+    ds = ogr.Open('data/poly_indexed.tab')
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("PRFEDEA = '35043413'")
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+
+    for ext in ('tab', 'dat', 'map', 'id'):
+        gdal.FileFromMemBuffer('/vsimem/poly_indexed.' + ext,
+                               open('data/poly_indexed.' + ext, 'rb').read())
+    ds = ogr.Open('/vsimem/poly_indexed.tab')
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("PRFEDEA = '35043413'")
+    if lyr.GetFeatureCount() != 1:
+        return 'fail'
+    ds = None
+    for ext in ('tab', 'dat', 'map', 'id'):
+        gdal.Unlink('/vsimem/poly_indexed.' + ext)
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2491,6 +2516,7 @@ gdaltest_list = [
     ogr_mitab_44,
     ogr_mitab_45,
     ogr_mitab_46,
+    ogr_mitab_47,
     ogr_mitab_cleanup
     ]
 
