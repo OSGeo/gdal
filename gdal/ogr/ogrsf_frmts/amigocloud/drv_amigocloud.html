@@ -9,7 +9,7 @@
 
 (GDAL/OGR &gt;= 2.1)<p>
 
-This driver can connect to the services implementing the AmigoCloud API.
+This driver can connect to the AmigoCloud API services.
 GDAL/OGR must be built with Curl support in order for the
 AmigoCloud driver to be compiled.<p>
 
@@ -19,15 +19,24 @@ The driver supports read and write operations.<p>
 
 The minimal syntax to open a AmigoCloud datasource is : <pre>AmigoCloud:[project_id]</pre><p>
 
-Additionnal optional parameters can be specified after the ':' sign.
+Additional optional parameters can be specified after the ':' sign.
 Currently the following one is supported :<p>
 
 <ul>
-<li> <b>tables=dataset_id1[,dataset_id2]*</b>: A list of AmigoCloud dataset IDs.
-This is necessary when you need to access a particular AmigoCloud datasets.
+<li> <b>datasets=dataset_id1[,dataset_id2, ..]</b>: A list of AmigoCloud dataset IDs.
+This is necessary when you need to access a particular AmigoCloud dataset.
 </ul>
 
 If several parameters are specified, they must be separated by a space.<p>
+If no datset_id is provided, the driver will print list of available datasets for given project.
+<li> For example: <b>"AmigoCloud:1234 datasets"</b>
+    <pre>
+    List of available datasets for project id: 1234
+    | id        | name
+    |-----------|-------------------
+    | 5551      | points
+    | 5552      | lines
+</pre>
 
 <h2>Configuration options</h2>
 
@@ -35,8 +44,6 @@ The following configuration options are available :
 <ul>
 <li>AMIGOCLOUD_API_URL: defaults to https://www.amigocloud.com/api/v1.
 Can be used to point to another server.</li>
-<li>AMIGOCLOUD_HTTPS: can be set to NO to use http:// protocol instead of
-https:// (only if AMIGOCLOUD_API_URL is not defined).</li>
 <li>AMIGOCLOUD_API_KEY: see following paragraph.</li>
 </ul>
 
@@ -59,12 +66,6 @@ layer, following RFC 41.
 The driver will forward any spatial filter set with SetSpatialFilter() to
 the server. It also makes the same for attribute
 filters set with SetAttributeFilter().<p>
-
-<h2>Paging</h2>
-
-Features are retrieved from the server by chunks of 500 by default.
-This number can be altered with the AMIGOCLOUD_PAGE_SIZE
-configuration option.<p>
 
 <h2>Write support</h2>
 
@@ -105,16 +106,39 @@ can be NULL. Defaults to YES.</li>
 <h2>Examples</h2>
 
 <li>
-Acceccing data from a public table:
+    Different ways to provide AmigoCloud API token:
+    <pre>
+    ogrinfo --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+    ogrinfo -oo AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw -al "AmigoCloud:1234 datasets=987"
+    env AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw ogrinfo -al "AmigoCloud:1234 datasets=987"
+    </pre>
+    <pre>
+    export AMIGOCLOUD_API_KEY=abcdefghijklmnopqrstuvw
+    ogrinfo -al "AmigoCloud:1234 datasets=987"
+    </pre>
+
+<li>
+Show list of datasets.
+    <pre>
+    $ ogrinfo -ro "AmigoCloud:1234 datasets"
+    List of available datasets for project id: 1234
+    | id        | name
+    |-----------|-------------------
+    | 5551      | points
+    | 5552      | lines
+    </pre>
+
+<li>
+Accessing data from a public table:
 <pre>
-ogrinfo -ro "AmigoCloud:1234 tables=1234,1235"
+ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
 </pre>
 <p>
 
 <li>
 Creating and populating a table from a shapefile:
 <pre>
-ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f "AmigoCloud" AmigoCloud:"1234" myshapefile.shp
+ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
 </pre>
 <p>
 
