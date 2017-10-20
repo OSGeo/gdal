@@ -874,6 +874,17 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 
         if (rPixelSizeY < 0 || fabs(rPixelSizeY - meta->gds.Dy) > 0.002)
             rPixelSizeY = meta->gds.Dy;
+
+        // Longitude origin of GRIB files is sometimes funny. Try to shift as close
+        // as possible to the traditionnal [-180,180] longitude range
+        // See https://trac.osgeo.org/gdal/ticket/7103
+        if( rMinX >= 179 && rPixelSizeX * meta->gds.Nx > 10 &&
+            CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
+        {
+            CPLDebug("GRIB", "Adjusting longitude origin from %f to %f",
+                     rMinX - rPixelSizeX / 2, rMinX - rPixelSizeX / 2 - 360 );
+            rMinX -= 360;
+        }
     }
 
     // http://gdal.org/gdal_datamodel.html :
