@@ -44,7 +44,7 @@ CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr)
 
     osStr += "\"";
 
-    char ch;
+    char ch = '\0';
     for(int i=0; (ch = pszStr[i]) != '\0'; i++)
     {
         if (ch == '"')
@@ -65,7 +65,7 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
 {
     CPLString osStr;
 
-    char ch;
+    char ch = '\0';
     for(int i=0; (ch = pszStr[i]) != '\0'; i++)
     {
         if (ch == '\'')
@@ -144,7 +144,7 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         osBaseSQL = "";
     }
 
-    if( osFIDColName.size() > 0 )
+    if( !osFIDColName.empty() )
     {
         CPLString sql;
         sql.Printf("SELECT %s FROM %s", OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(), OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
@@ -183,14 +183,14 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
         }
     }
 
-    if( osFIDColName.size() > 0 )
+    if( !osFIDColName.empty() )
     {
         osBaseSQL = "SELECT ";
         osBaseSQL += OGRAMIGOCLOUDEscapeIdentifier(osFIDColName);
     }
     for(int i=0; i<poFeatureDefn->GetGeomFieldCount(); i++)
     {
-        if( osBaseSQL.size() == 0 )
+        if( osBaseSQL.empty() )
             osBaseSQL = "SELECT ";
         else
             osBaseSQL += ", ";
@@ -198,13 +198,13 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
     }
     for(int i=0; i<poFeatureDefn->GetFieldCount(); i++)
     {
-        if( osBaseSQL.size() == 0 )
+        if( osBaseSQL.empty())
             osBaseSQL = "SELECT ";
         else
             osBaseSQL += ", ";
         osBaseSQL += OGRAMIGOCLOUDEscapeIdentifier(poFeatureDefn->GetFieldDefn(i)->GetNameRef());
     }
-    if( osBaseSQL.size() == 0 )
+    if( osBaseSQL.empty() )
         osBaseSQL = "SELECT *";
     osBaseSQL += " FROM ";
     osBaseSQL += OGRAMIGOCLOUDEscapeIdentifier(osTableName);
@@ -220,15 +220,15 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
 
 json_object* OGRAmigoCloudTableLayer::FetchNewFeatures(GIntBig iNextIn)
 {
-    if( osFIDColName.size() > 0 )
+    if( !osFIDColName.empty()  )
     {
         CPLString osSQL;
 
-        if(osWHERE.size() > 0)
+        if(!osWHERE.empty())
         {
             osSQL.Printf("%s WHERE %s ",
                          osSELECTWithoutWHERE.c_str(),
-                         (osWHERE.size() > 0) ? CPLSPrintf("%s", osWHERE.c_str()) : "");
+                         (!osWHERE.empty()) ? CPLSPrintf("%s", osWHERE.c_str()) : "");
         } else
         {
             osSQL.Printf("%s", osSELECTWithoutWHERE.c_str());
@@ -319,7 +319,7 @@ void OGRAmigoCloudTableLayer::SetSpatialFilter( int iGeomField, OGRGeometry * po
 void OGRAmigoCloudTableLayer::FlushDeferredInsert()
 
 {
-    if(vsDeferredInsertChangesets.size()==0)
+    if(vsDeferredInsertChangesets.empty())
         return;
 
     std::stringstream url;
@@ -405,8 +405,6 @@ OGRErr OGRAmigoCloudTableLayer::CreateField( OGRFieldDefn *poFieldIn,
 OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 
 {
-    int i;
-
     if( bDeferredCreation )
     {
         if( RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -430,7 +428,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
     int counter=0;
 
     // Add geometry field
-    for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+    for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
         if( poFeature->GetGeomFieldRef(i) == NULL )
             continue;
@@ -446,7 +444,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
         int nSRID = poGeomFieldDefn->nSRID;
         if( nSRID == 0 )
             nSRID = 4326;
-        char* pszEWKB;
+        char* pszEWKB = NULL;
         if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon &&
             wkbFlatten(GetGeomType()) == wkbMultiPolygon )
         {
@@ -466,7 +464,7 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
     std::string amigo_id_value;
 
     // Add non-geometry field
-    for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+    for(int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
     {
         std::string name = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
         std::string value = poFeature->GetFieldAsString(i);
@@ -476,6 +474,8 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
             amigo_id_value = value;
             continue;
         }
+        if( !poFeature->IsFieldSet(i) )
+            continue;
 
         if(counter > 0)
             record << ",";
@@ -521,7 +521,6 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature( OGRFeature *poFeature )
 OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
 
 {
-    int i;
     OGRErr eRet = OGRERR_FAILURE;
 
     if( bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE )
@@ -553,8 +552,11 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
         CPLString osSQL;
         osSQL.Printf("UPDATE %s SET ", OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
         int bMustComma = FALSE;
-        for(i = 0; i < poFeatureDefn->GetFieldCount(); i++)
+        for(int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
+            if( !poFeature->IsFieldSet(i) )
+                continue;
+
             if(bMustComma)
                 osSQL += ", ";
             else
@@ -586,7 +588,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
             }
         }
 
-        for(i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
+        for(int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
         {
             if(bMustComma)
                 osSQL += ", ";
@@ -616,6 +618,8 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
             }
         }
 
+        if( !bMustComma ) // nothing to do
+            return OGRERR_NONE;
 
         osSQL += CPLSPrintf(" WHERE %s = '%s'",
                             OGRAMIGOCLOUDEscapeIdentifier(osFIDColName).c_str(),
@@ -670,7 +674,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
         return OGRERR_FAILURE;
     }
 
-    if( osFIDColName.size() == 0 )
+    if( osFIDColName.empty() )
         return OGRERR_FAILURE;
 
     std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFID);
@@ -739,7 +743,7 @@ void OGRAmigoCloudTableLayer::BuildWhere()
 
         char szBox3D_1[128];
         char szBox3D_2[128];
-        char* pszComma;
+        char* pszComma = NULL;
 
         CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.18g %.18g", sEnvelope.MinX, sEnvelope.MinY);
         while((pszComma = strchr(szBox3D_1, ',')) != NULL)
@@ -752,17 +756,17 @@ void OGRAmigoCloudTableLayer::BuildWhere()
                        szBox3D_1, szBox3D_2 );
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( osWHERE.size() > 0 )
+        if( !osWHERE.empty() )
             osWHERE += " AND ";
         osWHERE += osQuery;
     }
 
-    if( osFIDColName.size() == 0 )
+    if( osFIDColName.empty() )
     {
         osBaseSQL = osSELECTWithoutWHERE;
-        if( osWHERE.size() > 0 )
+        if( !osWHERE.empty() )
         {
             osBaseSQL += " WHERE ";
             osBaseSQL += osWHERE;
@@ -783,7 +787,7 @@ OGRFeature* OGRAmigoCloudTableLayer::GetFeature( GIntBig nFeatureId )
 
     GetLayerDefn();
 
-    if( osFIDColName.size() == 0 )
+    if( osFIDColName.empty() )
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
     CPLString osSQL = osSELECTWithoutWHERE;
@@ -822,7 +826,7 @@ GIntBig OGRAmigoCloudTableLayer::GetFeatureCount(int bForce)
 
     CPLString osSQL(CPLSPrintf("SELECT COUNT(*) FROM %s",
                                OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str()));
-    if( osWHERE.size() > 0 )
+    if( !osWHERE.empty() )
     {
         osSQL += " WHERE ";
         osSQL += osWHERE;
@@ -967,7 +971,7 @@ int OGRAmigoCloudTableLayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap, OLCRandomRead) )
     {
         GetLayerDefn();
-        return osFIDColName.size() != 0;
+        return osFIDColName.empty();
     }
 
     if(
