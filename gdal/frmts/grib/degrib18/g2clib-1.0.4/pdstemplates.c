@@ -58,6 +58,8 @@ static const struct pdstemplate templatespds[MAXPDSTEMP] = {
          {20,19,0, {1,1,1,1,1,-4,4,2,4,2,1,1,1,1,1,2,1,3,2} },
              // 4.30: Satellite Product
          {30,5,1, {1,1,1,1,1} },
+             // 4.32: Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for synthetic satellite data
+         {32,10,1, {1,1,1,1,1,2,1,1,-4,1} },
              // 4.254: CCITT IA5 Character String
          {254,3,0, {1,1,4} },
              // 4.1000: Cross section of analysis or forecast
