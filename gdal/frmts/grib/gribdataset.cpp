@@ -930,9 +930,9 @@ void GDALRegister_GRIB()
 
     poDriver->SetDescription("GRIB");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb)");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "grb");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "grb grb2");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GRIBDataset::Open;
