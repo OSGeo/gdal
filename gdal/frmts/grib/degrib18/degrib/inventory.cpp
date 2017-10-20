@@ -504,7 +504,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
 /*
 enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    GS4_STATISTIC = 8, GS4_PROBABIL_TIME = 9, GS4_PERCENTILE = 10,
-   GS4_RADAR = 20, GS4_SATELLITE = 30
+   GS4_RADAR = 20, GS4_SATELLITE = 30, GS4_SATELLITE_SYNTHETIC = 32
 };
 */
    /* Parse the interesting data out of sect 4. */
@@ -516,9 +516,10 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_ENSEMBLE_STAT)
        && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
+       && (templat != GS4_SATELLITE_SYNTHETIC)
        && (templat != GS4_DERIVED_INTERVAL)) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 8, 9, "
-                  "10, 11, 12, 15, 20, 30. Template found = %d\n", templat);
+                  "10, 11, 12, 15, 20, 30, 32. Template found = %d\n", templat);
       return -8;
    }
    cat = (*buffer)[10 - 5];
@@ -719,6 +720,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    }
 
    if ((templat == GS4_RADAR) || (templat == GS4_SATELLITE)
+       || (templat == GS4_SATELLITE_SYNTHETIC)
        || (templat == 254) || (templat == 1000) || (templat == 1001)
        || (templat == 1002)) {
       fstSurfValue = 0;

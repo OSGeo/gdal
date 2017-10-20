@@ -798,6 +798,7 @@ static const GRIB2ParmTable MeteoLongRadiate[] = {
 /* 4 */    {"ULWRF", "Upward long-wave radiation flux", "W/(m^2)", UC_NONE},
 /* 5 */    {"NLWRF", "Net long wave radiation flux", "W/(m^2)", UC_NONE},
 /* 6 */    {"NLWRCS", "Net long-wave radiation flux; clear sky", "W/(m^2)", UC_NONE},
+/* 7 */    {"BRTEMP", "Brightness Temperature", "K", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 0.6 */

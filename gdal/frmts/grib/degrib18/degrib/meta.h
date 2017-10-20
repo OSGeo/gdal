@@ -249,7 +249,8 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    GS4_ENSEMBLE_STAT = 11, GS4_DERIVED_INTERVAL = 12,
    GS4_STATISTIC_SPATIAL_AREA = 15, // TODO; partially supported. Should fetch specific fields in metaparse.cpp
    GS4_RADAR = 20,
-   GS4_SATELLITE = 30
+   GS4_SATELLITE = 30,
+   GS4_SATELLITE_SYNTHETIC = 32
 };
 
 typedef struct {

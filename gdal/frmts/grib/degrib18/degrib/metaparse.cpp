@@ -1172,8 +1172,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
        (is4[7] != GS4_DERIVED) && (is4[7] != GS4_PROBABIL_PNT) &&
        (is4[7] != GS4_STATISTIC) && (is4[7] != GS4_PROBABIL_TIME) &&
        (is4[7] != GS4_PERCENTILE) && (is4[7] != GS4_ENSEMBLE_STAT) &&
-       (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_DERIVED_INTERVAL) &&
-       (is4[7] != GS4_STATISTIC_SPATIAL_AREA)) {
+       (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_SATELLITE_SYNTHETIC) &&
+       (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA)) {
 #ifdef DEBUG
       printf ("Un-supported Template. %d\n", is4[7]);
 #endif
@@ -1229,6 +1229,37 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
 
       return 0;
    }
+   if (meta->pds2.sect4.templat == GS4_SATELLITE_SYNTHETIC) {
+      meta->pds2.sect4.genID = (uChar) is4[12];
+      meta->pds2.sect4.numBands = (uChar) is4[22];
+      meta->pds2.sect4.bands =
+            (sect4_BandType *) realloc ((void *) meta->pds2.sect4.bands,
+                                        meta->pds2.sect4.numBands *
+                                        sizeof (sect4_BandType));
+      for (i = 0; i < meta->pds2.sect4.numBands; i++) {
+         if (ns4 < 30 + 11 * i + 1) {
+             return -1;
+         }
+         meta->pds2.sect4.bands[i].series =
+               (unsigned short int) is4[23 + 11 * i];
+         meta->pds2.sect4.bands[i].numbers =
+               (unsigned short int) is4[25 + 11 * i];
+         meta->pds2.sect4.bands[i].instType = (uChar) is4[27 + 11 * i];
+         meta->pds2.sect4.bands[i].centWaveNum.factor =
+               (uChar) is4[29 + 11 * i];
+         meta->pds2.sect4.bands[i].centWaveNum.value = is4[30 + 11 * i];
+      }
+
+      meta->pds2.sect4.fstSurfType = GRIB2MISSING_u1;
+      meta->pds2.sect4.fstSurfScale = GRIB2MISSING_s1;
+      meta->pds2.sect4.fstSurfValue = 0;
+      meta->pds2.sect4.sndSurfType = GRIB2MISSING_u1;
+      meta->pds2.sect4.sndSurfScale = GRIB2MISSING_s1;
+      meta->pds2.sect4.sndSurfValue = 0;
+
+      return 0;
+   }
+
    meta->pds2.sect4.bgGenID = (uChar) is4[12];
    meta->pds2.sect4.genID = (uChar) is4[13];
    if ((is4[14] == GRIB2MISSING_u2) || (is4[16] == GRIB2MISSING_u1)) {
