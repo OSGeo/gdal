@@ -291,6 +291,8 @@ class OGRAmigoCloudDataSource : public OGRDataSource
                                                         OGRGeometry *poSpatialFilter = NULL,
                                                         const char *pszDialect = NULL,
                                                         int bRunDeferredActions = FALSE );
+        bool ListDatasets();
+        bool waitForJobToFinish(const char* jobId);
 };
 
 #endif /* ndef OGR_AMIGOCLOUD_H_INCLUDED */
