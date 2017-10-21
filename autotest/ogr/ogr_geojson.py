@@ -3651,6 +3651,31 @@ def ogr_geojson_65():
 
     return 'success'
 
+###############################################################################
+# Test features with properties not being a dictionary
+
+def ogr_geojson_66():
+
+    ds = ogr.Open("""{
+"type": "FeatureCollection",
+"features": [
+{
+    "type": "Feature",
+    "geometry": null,
+    "properties": null 
+},
+{
+    "type": "Feature",
+    "geometry": null,
+    "properties": [] 
+}
+]}""")
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 0:
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3717,6 +3742,7 @@ gdaltest_list = [
     ogr_geojson_63,
     ogr_geojson_64,
     ogr_geojson_65,
+    ogr_geojson_66,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
