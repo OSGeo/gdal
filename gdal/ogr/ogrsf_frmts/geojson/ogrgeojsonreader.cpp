@@ -1821,7 +1821,11 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
 /* -------------------------------------------------------------------- */
 /*      Read collection of properties.                                  */
 /* -------------------------------------------------------------------- */
-    json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
+    lh_entry* poObjPropsEntry =
+        OGRGeoJSONFindMemberEntryByName( poObj, "properties" );
+    json_object* poObjProps = const_cast<json_object*>(
+        static_cast<const json_object*>(
+            poObjPropsEntry ? poObjPropsEntry->v : NULL));
 
     json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
     if( poObjId )
@@ -1955,6 +1959,14 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
         }
 
         bSuccess = true;  // SUCCESS
+    }
+    else if( NULL != poObjPropsEntry &&
+             ( poObjProps == NULL ||
+               (json_object_get_type(poObjProps) == json_type_array &&
+                json_object_array_length(poObjProps) == 0) ) )
+    {
+        // Ignore "properties": null and "properties": []
+        bSuccess = true;
     }
     else if( poObj != NULL && json_object_get_type(poObj) == json_type_object )
     {
