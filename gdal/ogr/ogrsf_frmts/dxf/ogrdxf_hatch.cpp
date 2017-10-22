@@ -53,6 +53,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     CPLString osHatchPattern;
+    double dfElevation = 0.0;  // Z value to be used for EVERY point
     /* int nFillFlag = 0; */
     OGRGeometryCollection oGC;
 
@@ -60,6 +61,11 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     {
         switch( nCode )
         {
+          case 30:
+            // Constant elevation.
+            dfElevation = CPLAtof( szLineBuf );
+            break;
+
           case 70:
             /* nFillFlag = atoi(szLineBuf); */
             break;
@@ -77,7 +83,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
                    iBoundary < nBoundaryPathCount;
                    iBoundary++ )
               {
-                  if (CollectBoundaryPath( &oGC ) != OGRERR_NONE)
+                  if (CollectBoundaryPath( &oGC, dfElevation ) != OGRERR_NONE)
                       break;
               }
           }
@@ -175,7 +181,8 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 /*                        CollectBoundaryPath()                         */
 /************************************************************************/
 
-OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
+OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
+    const double dfElevation )
 
 {
     char szLineBuf[257];
@@ -196,7 +203,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /*      Handle polyline loops.                                          */
 /* ==================================================================== */
     if( nBoundaryPathType & 0x02 )
-        return CollectPolylinePath( poGC );
+        return CollectPolylinePath( poGC, dfElevation );
 
 /* ==================================================================== */
 /*      Handle non-polyline loops.                                      */
@@ -271,8 +278,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             OGRLineString *poLS = new OGRLineString();
 
-            poLS->addPoint( dfStartX, dfStartY );
-            poLS->addPoint( dfEndX, dfEndY );
+            poLS->addPoint( dfStartX, dfStartY, dfElevation );
+            poLS->addPoint( dfEndX, dfEndY, dfElevation );
 
             poGC->addGeometryDirectly( poLS );
         }
@@ -336,11 +343,13 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
             {
                 OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                    dfCenterX, dfCenterY, 0.0,
+                    dfCenterX, dfCenterY, dfElevation,
                     dfRadius, dfRadius, 0.0,
                     dfStartAngle, dfEndAngle, 0.0 );
 
-                poArc->flattenTo2D();
+                // If the input was 2D, we assume we want to keep it that way
+                if( dfElevation == 0.0 )
+                    poArc->flattenTo2D();
 
                 poGC->addGeometryDirectly( poArc );
             }
@@ -439,11 +448,13 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
             {
                 OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                    dfCenterX, dfCenterY, 0.0,
+                    dfCenterX, dfCenterY, dfElevation,
                     dfMajorRadius, dfMinorRadius, dfRotation,
                     dfStartAngle, dfEndAngle, 0.0 );
 
-                poArc->flattenTo2D();
+                // If the input was 2D, we assume we want to keep it that way
+                if( dfElevation == 0.0 )
+                    poArc->flattenTo2D();
 
                 poGC->addGeometryDirectly( poArc );
             }
@@ -494,7 +505,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /*                        CollectPolylinePath()                         */
 /************************************************************************/
 
-OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
+OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
+    const double dfElevation )
 
 {
     int nCode = 0;
@@ -534,7 +546,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
           case 10:
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+                oSmoothPolyline.AddPoint(dfX, dfY, dfElevation, dfBulge);
                 dfBulge = 0.0;
                 bHaveY = false;
             }
@@ -545,7 +557,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
           case 20:
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
             }
@@ -553,7 +565,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             bHaveY = true;
             if( bHaveX && bHaveY && !bHaveBulges )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
                 bHaveY = false;
@@ -564,7 +576,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             dfBulge = CPLAtof(szLineBuf);
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
                 bHaveY = false;
@@ -585,7 +597,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
         poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
-        oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+        oSmoothPolyline.AddPoint(dfX, dfY, dfElevation, dfBulge);
 
     if( bIsClosed )
         oSmoothPolyline.Close();

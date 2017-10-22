@@ -108,6 +108,24 @@ public:
     double dfZScale;
     double dfAngle;
 
+    OGRDXFInsertTransformer GetOffsetTransformer()
+    {
+        OGRDXFInsertTransformer oResult;
+        oResult.dfXOffset = this->dfXOffset;
+        oResult.dfYOffset = this->dfYOffset;
+        oResult.dfZOffset = this->dfZOffset;
+        return oResult;
+    }
+    OGRDXFInsertTransformer GetRotateScaleTransformer()
+    {
+        OGRDXFInsertTransformer oResult;
+        oResult.dfXScale = this->dfXScale;
+        oResult.dfYScale = this->dfYScale;
+        oResult.dfZScale = this->dfZScale;
+        oResult.dfAngle = this->dfAngle;
+        return oResult;
+    }
+
     OGRSpatialReference *GetSourceCS() override { return NULL; }
     OGRSpatialReference *GetTargetCS() override { return NULL; }
     int Transform( int nCount,
@@ -186,8 +204,10 @@ class OGRDXFLayer : public OGRLayer
                                      OGRFeature* const poFeature,
                                      const bool bInline );
     void                FormatDimension( CPLString &osText, double dfValue );
-    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
-    OGRErr              CollectPolylinePath( OGRGeometryCollection * );
+    OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
+                                             const double dfElevation );
+    OGRErr              CollectPolylinePath( OGRGeometryCollection *poGC,
+                                             const double dfElevation );
 
     CPLString           TextRecode( const char * );
     CPLString           TextUnescape( const char *, bool );
