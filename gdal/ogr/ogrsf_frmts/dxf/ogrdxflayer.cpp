@@ -444,7 +444,23 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 
     OCSTransformer oTransformer( adfN );
 
+    // Promote to 3D, in case the OCS transformation introduces a
+    // third dimension to the geometry.
+    const bool bInitially2D = !poGeometry->Is3D();
+    if( bInitially2D )
+        poGeometry->set3D( TRUE );
+
     poGeometry->transform( &oTransformer );
+
+    // If the geometry was 2D to begin with, and is still 2D after the
+    // OCS transformation, flatten it back to 2D.
+    if( bInitially2D )
+    {
+        OGREnvelope3D oEnvelope;
+        poGeometry->getEnvelope( &oEnvelope );
+        if( oEnvelope.MaxZ == 0.0 && oEnvelope.MinZ == 0.0 )
+            poGeometry->flattenTo2D();
+    }
 }
 
 /************************************************************************/
@@ -2318,7 +2334,17 @@ OGRFeature *OGRDXFLayer::InsertBlock( const CPLString& osBlockName,
     {
         OGRGeometry *poGeometry = poBlock->poGeometry->clone();
 
-        poGeometry->transform( &oTransformer );
+        {
+            OGRDXFInsertTransformer oSubTransformer(
+                oTransformer.GetRotateScaleTransformer() );
+            poGeometry->transform( &oSubTransformer );
+        }
+        ApplyOCSTransformer( poGeometry );
+        {
+            OGRDXFInsertTransformer oSubTransformer(
+                oTransformer.GetOffsetTransformer() );
+            poGeometry->transform( &oSubTransformer );
+        }
 
         poFeature->SetGeometryDirectly( poGeometry );
     }
@@ -2338,8 +2364,21 @@ OGRFeature *OGRDXFLayer::InsertBlock( const CPLString& osBlockName,
         OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
         CPLString osCompEntityId;
 
-        if( poSubFeature->GetGeometryRef() != NULL )
-            poSubFeature->GetGeometryRef()->transform( &oTransformer );
+        OGRGeometry *poSubFeatGeom = poSubFeature->GetGeometryRef();
+        if( poSubFeatGeom != NULL )
+        {
+            {
+                OGRDXFInsertTransformer oSubTransformer(
+                    oTransformer.GetRotateScaleTransformer() );
+                poSubFeatGeom->transform( &oSubTransformer );
+            }
+            ApplyOCSTransformer( poSubFeatGeom );
+            {
+                OGRDXFInsertTransformer oSubTransformer(
+                    oTransformer.GetOffsetTransformer() );
+                poSubFeatGeom->transform( &oSubTransformer );
+            }
+        }
 
         // If the subfeature is on layer 0, this is a special case: the
         // subfeature should take on the style properties of the layer
