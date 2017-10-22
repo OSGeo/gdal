@@ -376,7 +376,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             /* No number found */
             if( *szStart == '.' )
             {
-                CPLError( CE_Warning, CPLE_FileIO,
+                CPLError( CE_Failure, CPLE_FileIO,
                           "Unexpected value in grid row %d (expected floating "
                           "point value, found \"%s\").\n",
                           nBlockYOff, szStart );
@@ -388,7 +388,8 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
             /* Found sign at end of input, seek back to re-read it */
             bool bOnlySign = false;
-            if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
+            if ( (*szStart == '-' || *szStart == '+') &&
+                 static_cast<size_t>(szStart + 1 - szLineBuf) == nCharsRead )
             {
                 if( VSIFSeekL( poGDS->fp,
                                VSIFTellL( poGDS->fp)-1,
@@ -478,7 +479,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           "Unexpected ASCII null-character in grid row %d at "
                           "offset %ld.\n",
                           nBlockYOff,
-                          (long) (szStart - szLineBuf) );
+                          (long) (szEnd - szLineBuf) );
 
                 while( *szEnd == '\0' &&
                        static_cast<size_t>(szEnd - szLineBuf) < nCharsRead )
@@ -546,8 +547,22 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nMaxLineSize = nCharsExamined + 1;
 
     if( nBlockYOff > 0 )
-        panLineOffset[nBlockYOff - 1] =
+    {
+        vsi_l_offset nNewOffset =
             panLineOffset[nBlockYOff] + nCharsExamined;
+        if( panLineOffset[nBlockYOff - 1] == 0 )
+        {
+            panLineOffset[nBlockYOff - 1] = nNewOffset;
+        }
+        else if( panLineOffset[nBlockYOff - 1] != nNewOffset )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Coding error: previous offset for line %d was "
+                     CPL_FRMT_GUIB ", new offset would be " CPL_FRMT_GUIB,
+                     nBlockYOff - 1,
+                     panLineOffset[nBlockYOff - 1], nNewOffset );
+        }
+    }
 
     nLastReadLine = nBlockYOff;
 
