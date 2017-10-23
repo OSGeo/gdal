@@ -483,7 +483,9 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
         poDS = NULL;
     }
 
-    if( poDS != NULL && poDS->HasOtherPages() )
+    if( poDS != NULL && poDS->HasOtherPages() &&
+        (STARTS_WITH(poOpenInfo->pszFilename, "http") ||
+         STARTS_WITH(poOpenInfo->pszFilename, "/vsimem/")) )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
