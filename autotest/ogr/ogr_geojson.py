@@ -2274,6 +2274,76 @@ def ogr_geojson_42():
         gdaltest.post_reason('fail')
         return 'fail'
 
+
+    # Test scrolling with ESRI json
+    resultOffset0 = """
+{
+  "objectIdFieldName" : "objectid",
+  "geometryType" : "esriGeometryPoint",
+  "fields" : [
+    {
+      "name" : "objectid",
+      "alias" : "Object ID",
+      "type" : "esriFieldTypeOID"
+    },
+
+  ],
+  "features" : [
+    {
+      "geometry" : {
+        "x" : 2,
+        "y" : 49,
+        "z" : 1
+      },
+      "attributes" : {
+        "objectid" : 1
+      }
+    }
+  ],
+  "exceededTransferLimit": true
+}
+"""
+
+    resultOffset1 = """
+{
+  "objectIdFieldName" : "objectid",
+  "geometryType" : "esriGeometryPoint",
+  "fields" : [
+    {
+      "name" : "objectid",
+      "alias" : "Object ID",
+      "type" : "esriFieldTypeOID"
+    },
+
+  ],
+  "features" : [
+    {
+      "geometry": null,
+      "attributes" : {
+        "objectid" : 20
+      }
+    }
+  ]
+}
+"""
+
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1', resultOffset0)
+    gdal.FileFromMemBuffer('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=1', resultOffset1)
+    ds = ogr.Open('/vsimem/geojson/test.json?resultRecordCount=1')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None or f.GetFID() != 20:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=1')
+    gdal.Unlink('/vsimem/geojson/test.json?resultRecordCount=1&resultOffset=1')
+
+
     return 'success'
 
 ###############################################################################
