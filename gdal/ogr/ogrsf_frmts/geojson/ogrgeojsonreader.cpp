@@ -67,6 +67,7 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
 
         int m_nDepth;
         bool m_bInFeatures;
+        bool m_bCanEasilyAppend;
         bool m_bInFeaturesArray;
         bool m_bInCoordinates;
         bool m_bInType;
@@ -121,6 +122,7 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         bool IsTypeKnown() const { return m_bIsTypeKnown; }
         bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
         GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
+        bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
 };
 
 /************************************************************************/
@@ -133,6 +135,8 @@ OGRGeoJSONReader::OGRGeoJSONReader() :
     bFirstSeg_(false),
     bJSonPLikeWrapper_(false),
     fp_(NULL),
+    bCanEasilyAppend_(false),
+    bFCHasBBOX_(false),
     bGeometryPreserve_(true),
     bAttributesSkip_(false),
     bFlattenNestedAttributes_(false),
@@ -235,6 +239,7 @@ OGRGeoJSONReaderStreamingParser::OGRGeoJSONReaderStreamingParser(
                 m_eLayerGeomType(wkbUnknown),
                 m_nDepth(0),
                 m_bInFeatures(false),
+                m_bCanEasilyAppend(false),
                 m_bInFeaturesArray(false),
                 m_bInCoordinates(false),
                 m_bInType(false),
@@ -534,6 +539,7 @@ void OGRGeoJSONReaderStreamingParser::StartObjectMember(const char* pszKey,
     if( m_nDepth == 1 )
     {
         m_bInFeatures = strcmp(pszKey, "features") == 0;
+        m_bCanEasilyAppend = m_bInFeatures;
         m_bInType = strcmp(pszKey, "type") == 0;
         if( m_bInType || m_bInFeatures )
         {
@@ -932,12 +938,15 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
 
     FinalizeLayerDefn(poLayer);
 
+    bCanEasilyAppend_ = oParser.CanEasilyAppend();
     nTotalFeatureCount_ = poLayer->GetFeatureCount(FALSE);
     nTotalOGRFeatureMemEstimate_ = oParser.GetTotalOGRFeatureMemEstimate();
 
     json_object* poRootObj = oParser.StealRootObject();
     if( poRootObj )
     {
+        bFCHasBBOX_ = CPL_json_object_object_get(poRootObj, "bbox") != NULL;
+
         //CPLDebug("GeoJSON", "%s", json_object_get_string(poRootObj));
 
         json_object* poName = CPL_json_object_object_get(poRootObj, "name");

@@ -2519,8 +2519,6 @@ def ogr_geojson_47():
     else:
         data = None
 
-    gdal.Unlink('/vsimem/ogr_geojson_47.json')
-
     # we don't want crs if there's no in the source
     if data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
        data.find('crs') >= 0 or \
@@ -2528,6 +2526,144 @@ def ogr_geojson_47():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
+
+    # Test append support
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2)'))
+    lyr.CreateFeature(f)
+    if f.GetFID() != 1:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2 3)'))
+    lyr.CreateFeature(f)
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    # Test append support
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(4 5)'))
+    lyr.CreateFeature(f)
+    f.SetField("myprop", "value_of_point_4_5")
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_47.json', 'rb')
+    if fp is not None:
+        data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    else:
+        data = None
+
+    # we don't want crs if there's no in the source
+    if data.find('"foo": "bar"') < 0 or data.find('"bar": "baz"') < 0 or \
+       data.find('crs') >= 0 or \
+       data.find('"myprop": "another_value"') < 0 or \
+       data.find('"myprop": "value_of_point_4_5"') < 0 or \
+       data.find('id') >= 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_geojson_47.json')
+
+    # Test appending to empty features array
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "features": []}""")
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test appending to array ending with non feature
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "features": [ null ]}""")
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    # Test appending to feature collection not ending with "features"
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "features": [], "something": "else"}""")
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_47.json', 'rb')
+    if fp is not None:
+        data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    else:
+        data = None
+
+    if data.find('something') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # Test appending to feature collection with "bbox"
+    gdal.FileFromMemBuffer('/vsimem/ogr_geojson_47.json', """{ "type": "FeatureCollection", "bbox": [0,0,0,0], "features": [ { "type": "Feature", "geometry": { "type": "Point", "coordinates": [0,0]} } ]}""")
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    ds = None
+    ds = ogr.Open('/vsimem/ogr_geojson_47.json')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    fp = gdal.VSIFOpenL('/vsimem/ogr_geojson_47.json', 'rb')
+    if fp is not None:
+        data = gdal.VSIFReadL(1, 10000, fp).decode('ascii')
+        gdal.VSIFCloseL(fp)
+    else:
+        data = None
+
+    if data.find('bbox') < 0:
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_geojson_47.json')
 
     return 'success'
 

@@ -116,6 +116,10 @@ class OGRGeoJSONReader
     OGRFeature* GetNextFeature(OGRGeoJSONLayer* poLayer);
     bool IngestAll(OGRGeoJSONLayer* poLayer);
 
+    VSILFILE* GetFP() { return fp_; }
+    bool CanEasilyAppend() const { return bCanEasilyAppend_; }
+    bool FCHasBBOX() const { return bFCHasBBOX_; }
+
   private:
     friend class OGRGeoJSONReaderStreamingParser;
 
@@ -124,6 +128,8 @@ class OGRGeoJSONReader
     bool bFirstSeg_;
     bool bJSonPLikeWrapper_;
     VSILFILE* fp_;
+    bool bCanEasilyAppend_;
+    bool bFCHasBBOX_;
 
     bool bGeometryPreserve_;
     bool bAttributesSkip_;

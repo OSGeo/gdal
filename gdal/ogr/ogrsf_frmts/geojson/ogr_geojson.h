@@ -102,6 +102,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
   private:
     OGRGeoJSONDataSource* poDS_;
     OGRGeoJSONReader* poReader_;
+    bool bHasAppendedFeatures_;
     CPLString sFIDColumn_;
     bool bUpdated_;
     bool bOriginalIdModified_;
@@ -109,6 +110,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
     GIntBig nNextFID_;
 
     bool IngestAll();
+    void TerminateAppendSession();
 };
 
 /************************************************************************/
