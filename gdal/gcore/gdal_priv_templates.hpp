@@ -192,6 +192,11 @@ inline void GDALCopyWord(const double dfValueIn, float &fValueOut)
 template <class Tout>
 inline void GDALCopyWord(const float fValueIn, Tout &tValueOut)
 {
+    if( CPLIsNan(fValueIn) )
+    {
+        tValueOut = 0;
+        return;
+    }
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, Tout>(fMaxVal, fMinVal);
     tValueOut = static_cast<Tout>(
@@ -200,6 +205,11 @@ inline void GDALCopyWord(const float fValueIn, Tout &tValueOut)
 
 inline void GDALCopyWord(const float fValueIn, short &nValueOut)
 {
+    if( CPLIsNan(fValueIn) )
+    {
+        nValueOut = 0;
+        return;
+    }
     float fMaxVal, fMinVal;
     GDALGetDataLimits<float, short>(fMaxVal, fMinVal);
     float fValue = fValueIn >= 0.0f ? fValueIn + 0.5f :
@@ -211,6 +221,11 @@ inline void GDALCopyWord(const float fValueIn, short &nValueOut)
 template <class Tout>
 inline void GDALCopyWord(const double dfValueIn, Tout &tValueOut)
 {
+    if( CPLIsNan(dfValueIn) )
+    {
+        tValueOut = 0;
+        return;
+    }
     double dfMaxVal, dfMinVal;
     GDALGetDataLimits<double, Tout>(dfMaxVal, dfMinVal);
     tValueOut = static_cast<Tout>(
@@ -219,6 +234,11 @@ inline void GDALCopyWord(const double dfValueIn, Tout &tValueOut)
 
 inline void GDALCopyWord(const double dfValueIn, int &nValueOut)
 {
+    if( CPLIsNan(dfValueIn) )
+    {
+        nValueOut = 0;
+        return;
+    }
     double dfMaxVal, dfMinVal;
     GDALGetDataLimits<double, int>(dfMaxVal, dfMinVal);
     double dfValue = dfValueIn >= 0.0 ? dfValueIn + 0.5 :
@@ -229,25 +249,16 @@ inline void GDALCopyWord(const double dfValueIn, int &nValueOut)
 
 inline void GDALCopyWord(const double dfValueIn, short &nValueOut)
 {
-    double dfMaxVal, dfMinVal;
-    GDALGetDataLimits<double, short>(dfMaxVal, dfMinVal);
-    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
-        dfValueIn - 0.5;
-    nValueOut = static_cast<short>(
-        GDALClampValue(dfValue, dfMaxVal, dfMinVal));
-}
-
-inline void GDALCopyWord(const double dfValueIn, GByte &nValueOut)
-{
     if( CPLIsNan(dfValueIn) )
     {
         nValueOut = 0;
         return;
     }
     double dfMaxVal, dfMinVal;
-    GDALGetDataLimits<double, GByte>(dfMaxVal, dfMinVal);
-    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
-    nValueOut = static_cast<GByte>(
+    GDALGetDataLimits<double, short>(dfMaxVal, dfMinVal);
+    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 :
+        dfValueIn - 0.5;
+    nValueOut = static_cast<short>(
         GDALClampValue(dfValue, dfMaxVal, dfMinVal));
 }
 
