@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.112 2017-07-24 10:34:14 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.113 2017-10-23 11:34:26 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -2332,6 +2332,13 @@ initCIELabConversion(TIFFRGBAImage* img)
 	float   *whitePoint;
 	float   refWhite[3];
 
+	TIFFGetFieldDefaulted(img->tif, TIFFTAG_WHITEPOINT, &whitePoint);
+	if (whitePoint[1] == 0.0f ) {
+		TIFFErrorExt(img->tif->tif_clientdata, module,
+		    "Invalid value for WhitePoint tag.");
+		return NULL;
+        }
+
 	if (!img->cielab) {
 		img->cielab = (TIFFCIELabToRGB *)
 			_TIFFmalloc(sizeof(TIFFCIELabToRGB));
@@ -2342,7 +2349,6 @@ initCIELabConversion(TIFFRGBAImage* img)
 		}
 	}
 
-	TIFFGetFieldDefaulted(img->tif, TIFFTAG_WHITEPOINT, &whitePoint);
 	refWhite[1] = 100.0F;
 	refWhite[0] = whitePoint[0] / whitePoint[1] * refWhite[1];
 	refWhite[2] = (1.0F - whitePoint[0] - whitePoint[1])
