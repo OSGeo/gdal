@@ -795,6 +795,7 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
    char f_ignoreScan;   /* Flag to ignore the attempt at changing the scan */
    sInt4 dummyScan;     /* Dummy place holder for call to Transfer routines
                          * if ignoring scan. */
+   const struct gridtemplate *templatesgrid = get_templatesgrid();
 
    myAssert (*ndjer >= 8);
    /* Init the error handling array. */
@@ -980,9 +981,16 @@ void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * 
       g2_free (gfld);
       return;
    }
+   if( gfld->igdtlen > templatesgrid[gridIndex].mapgridlen )
+   {
+      jer[8 + *ndjer] = 2;
+      jer[8] = 2003;    /* undefined sect 3 template: FIXME: wrong code probably */
+      *kjer = 9;
+      g2_free (gfld);
+      return;
+   }
    curIndex = 14;
    for (i = 0; i < gfld->igdtlen; i++) {
-      const struct gridtemplate *templatesgrid = get_templatesgrid();
       if( curIndex < 0 || curIndex >= *ns3 )
       {
         jer[8 + *ndjer] = 2;
