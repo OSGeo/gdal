@@ -240,15 +240,27 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 {
 #ifdef WIN32
     const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    static const char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    static const char SEP_STRING[] = "/";
 #endif
 
-    osCredentials =
-        // GDAL specific config option (mostly for testing purpose, but also
-        // used in production in some cases)
-        CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE",
-                        CPLFormFilename( pszHome, ".boto", NULL ) );
+    // GDAL specific config option (mostly for testing purpose, but also
+    // used in production in some cases)
+    const char* pszCredentials =
+                    CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE", NULL);
+    if( pszCredentials )
+    {
+        osCredentials = pszCredentials;
+    }
+    else
+    {
+        osCredentials = pszHome ? pszHome : "";
+        osCredentials += SEP_STRING;
+        osCredentials += ".boto";
+    }
+
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
     if( fp != NULL )
     {
