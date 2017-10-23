@@ -339,20 +339,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     if( m_nOffset > poFile->nLength )
     {
-        if( !bUpdate )  // Read-only files cannot be extended by seek.
-        {
-            CPLDebug(
-                "VSIMemHandle",
-                "Attempt to extend read-only file '%s' to length " CPL_FRMT_GUIB
-                " from " CPL_FRMT_GUIB ".",
-                poFile->osFilename.c_str(),
-                m_nOffset, poFile->nLength);
-
-            m_nOffset = poFile->nLength;
-            errno = EACCES;
-            return -1;
-        }
-        else  // Writable files are zero-extended by seek past end.
+        if( bUpdate ) // Writable files are zero-extended by seek past end.
         {
             bExtendFileAtNextWrite = true;
         }
@@ -381,7 +368,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     // FIXME: Integer overflow check should be placed here:
     size_t nBytesToRead = nSize * nCount;
 
-    if( poFile->nLength < m_nOffset )
+    if( poFile->nLength <= m_nOffset )
     {
         bEOF = true;
         return 0;
