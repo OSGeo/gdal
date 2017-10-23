@@ -82,7 +82,6 @@ class OGRLIBKMLLayer:public OGRLayer
 
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
-                                OGRSpatialReference * poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 OGRLIBKMLDataSource *poOgrDS,
                                 kmldom::ElementPtr poKmlRoot,

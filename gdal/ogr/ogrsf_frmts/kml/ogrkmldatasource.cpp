@@ -184,13 +184,13 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
     if( CPLGetConfigOption("KML_DEBUG",NULL) != NULL )
         poKMLFile_->print(3);
 
-    nLayers_ = poKMLFile_->getNumLayers();
+    const int nLayers = poKMLFile_->getNumLayers();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate memory for the Layers                                  */
 /* -------------------------------------------------------------------- */
     papoLayers_ = static_cast<OGRKMLLayer **>(
-        CPLMalloc( sizeof(OGRKMLLayer *) * nLayers_ ));
+        CPLMalloc( sizeof(OGRKMLLayer *) * nLayers ));
 
     OGRSpatialReference *poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
         "   DATUM[\"WGS_1984\","
@@ -206,7 +206,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create the Layers and fill them                                 */
 /* -------------------------------------------------------------------- */
-    for( int nCount = 0; nCount < nLayers_; nCount++ )
+    for( int nCount = 0; nCount < nLayers; nCount++ )
     {
         if( !poKMLFile_->selectLayer(nCount) )
         {
@@ -243,6 +243,20 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             sName.Printf( "Layer #%d", nCount );
         }
+        else
+        {
+            // Build unique layer name
+            int nIter = 2;
+            while( true )
+            {
+                if( GetLayerByName(sName) == NULL )
+                    break;
+                sName = CPLSPrintf("%s (#%d)",
+                                   poKMLFile_->getCurrentName().c_str(),
+                                   nIter);
+                nIter ++;
+            }
+        }
 
         OGRKMLLayer *poLayer =
             new OGRKMLLayer( sName.c_str(), poSRS, false, poGeotype, this );
@@ -253,6 +267,8 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
         papoLayers_[nCount] = poLayer;
+
+        nLayers_ = nCount + 1;
     }
 
     poSRS->Release();
