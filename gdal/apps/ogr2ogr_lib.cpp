@@ -4243,7 +4243,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
     OGRLayer *poDstLayer = psInfo->poDstLayer;
     int* const panMap = psInfo->panMap;
     const int iSrcZField = psInfo->iSrcZField;
-    const bool bPreserveFID = psInfo->bPreserveFID;
+    const bool bPreserveFID = psInfo->bPreserveFID && strcmp(poSrcLayer->GetFIDColumn(), "") != 0;
     const int nSrcGeomFieldCount = poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
     const int nDstGeomFieldCount = poDstLayer->GetLayerDefn()->GetGeomFieldCount();
     const bool bExplodeCollections = m_bExplodeCollections && nDstGeomFieldCount <= 1;
