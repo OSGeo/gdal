@@ -365,10 +365,19 @@ def vsifile_7():
 
     # Test seeking  beyond file size in read-only mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'rb')
-    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0:
+    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gdal.VSIFTellL(fp) != 0:
+    if gdal.VSIFEofL(fp) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTellL(fp) != 0x7FFFFFFFFFFFFFFF:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(gdal.VSIFReadL(1, 1, fp)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFEofL(fp) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(fp)
