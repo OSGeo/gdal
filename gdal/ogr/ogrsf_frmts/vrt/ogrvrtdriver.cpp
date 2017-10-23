@@ -78,8 +78,10 @@ static int OGRVRTDriverIdentify( GDALOpenInfo *poOpenInfo )
 static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if( !OGRVRTDriverIdentify(poOpenInfo) )
         return NULL;
+#endif
 
     // Are we being passed the XML definition directly?
     // Skip any leading spaces/blanks.
