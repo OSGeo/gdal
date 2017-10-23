@@ -856,15 +856,20 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
 
 void OGRGeoJSONDataSource::CheckExceededTransferLimit(json_object* poObj)
 {
-    if( poObj && json_object_get_type(poObj) == json_type_object )
+    for( int i = 0; i < 2; i ++ )
     {
-        json_object* poProperties =
-            CPL_json_object_object_get(poObj, "properties");
-        if( poProperties &&
-            json_object_get_type(poProperties) == json_type_object )
+        if( i == 1 )
+        {
+            if( poObj && json_object_get_type(poObj) == json_type_object )
+            {
+                poObj = CPL_json_object_object_get(poObj, "properties");
+            }
+        }
+        if( poObj &&
+            json_object_get_type(poObj) == json_type_object )
         {
             json_object* poExceededTransferLimit =
-                CPL_json_object_object_get(poProperties,
+                CPL_json_object_object_get(poObj,
                                         "exceededTransferLimit");
             if( poExceededTransferLimit &&
                 json_object_get_type(poExceededTransferLimit) ==
@@ -872,6 +877,7 @@ void OGRGeoJSONDataSource::CheckExceededTransferLimit(json_object* poObj)
             {
                 bOtherPages_ = CPL_TO_BOOL(
                     json_object_get_boolean(poExceededTransferLimit) );
+                return;
             }
         }
     }
