@@ -69,14 +69,28 @@ bool GeoJSONIsObject( const char* pszText )
         return false;
 
     return
+        // GeoJSON geometry
         (strstr(pszText, "\"type\"") != NULL &&
          strstr(pszText, "\"coordinates\"") != NULL)
+
+        // TopoJSON
         || (strstr(pszText, "\"type\"") != NULL &&
             strstr(pszText, "\"Topology\"") != NULL)
+
+        // GeoJSON FeatureCollection
         || strstr(pszText, "\"FeatureCollection\"") != NULL
+
+        // GeoJSON Feature
         || strstr(pszText, "\"Feature\"") != NULL
+
+        // ESRI Json geometry
         || (strstr(pszText, "\"geometryType\"") != NULL &&
             strstr(pszText, "\"esriGeometry") != NULL)
+
+        // ESRI Json "FeatureCollection"
+        || strstr(pszText, "\"fieldAliases\"") != NULL
+
+        // ESRI Json "FeatureCollection"
         || (strstr(pszText, "\"fields\"") != NULL &&
             strstr(pszText, "\"esriFieldType") != NULL);
 }

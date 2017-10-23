@@ -681,7 +681,8 @@ void OGRGeoJSONDataSource::LoadLayers(char** papszOpenOptionsIn)
 /*      Is it ESRI Feature Service data ?                               */
 /* -------------------------------------------------------------------- */
     if( strstr(pszGeoData_, "esriGeometry") ||
-        strstr(pszGeoData_, "esriFieldType") )
+        strstr(pszGeoData_, "esriFieldType") ||
+        strstr(pszGeoData_, "\"fieldAliases\"") )
     {
         OGRESRIJSONReader reader;
         OGRErr err = reader.Parse( pszGeoData_ );
