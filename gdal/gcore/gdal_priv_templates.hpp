@@ -237,6 +237,20 @@ inline void GDALCopyWord(const double dfValueIn, short &nValueOut)
         GDALClampValue(dfValue, dfMaxVal, dfMinVal));
 }
 
+inline void GDALCopyWord(const double dfValueIn, GByte &nValueOut)
+{
+    if( CPLIsNan(dfValueIn) )
+    {
+        nValueOut = 0;
+        return;
+    }
+    double dfMaxVal, dfMinVal;
+    GDALGetDataLimits<double, GByte>(dfMaxVal, dfMinVal);
+    double dfValue = dfValueIn > 0.0 ? dfValueIn + 0.5 : dfValueIn - 0.5;
+    nValueOut = static_cast<GByte>(
+        GDALClampValue(dfValue, dfMaxVal, dfMinVal));
+}
+
 // Roundoff occurs for Float32 -> int32 for max/min. Overload GDALCopyWord
 // specifically for this case.
 inline void GDALCopyWord(const float fValueIn, int &nValueOut)
