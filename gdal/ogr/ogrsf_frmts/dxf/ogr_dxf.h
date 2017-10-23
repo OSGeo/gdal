@@ -261,7 +261,7 @@ class OGRDXFLayer : public OGRLayer
                                            const bool bInlineNestedBlocks,
                                            const bool bMergeGeometry );
     OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
-                                              OGRDXFInsertTransformer oTransformer,
+                                              const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
     void                FormatDimension( CPLString &osText, double dfValue );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,

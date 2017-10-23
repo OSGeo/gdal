@@ -2365,8 +2365,10 @@ OGRGeometry *OGRDXFLayer::SimplifyBlockGeometry(
 /*     Returns a point geometry located at the block's insertion        */
 /*     point.                                                           */
 /************************************************************************/
-OGRDXFFeature *OGRDXFLayer::InsertBlockReference( const CPLString& osBlockName,
-    OGRDXFInsertTransformer oTransformer, OGRDXFFeature* const poFeature )
+OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
+    const CPLString& osBlockName,
+    const OGRDXFInsertTransformer& oTransformer,
+    OGRDXFFeature* const poFeature )
 {
     // Store the block's properties in the special DXF-specific members
     // on the feature object
@@ -2498,9 +2500,6 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
         // insert that block
         if( bInlineRecursively && poSubFeature->IsBlockReference() )
         {
-            OGRPoint *poInsertionPoint = static_cast<OGRPoint *>(
-                poSubFeature->GetGeometryRef() );
-
             // Unpack the transformation data stored in fields of this
             // feature
             OGRDXFInsertTransformer oInnerTransformer;
@@ -2553,14 +2552,20 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             OGRGeometry *poSubFeatGeom = poSubFeature->GetGeometryRef();
             if( poSubFeatGeom != NULL )
             {
-                poSubFeatGeom->transform( &oTransformer.GetRotateScaleTransformer() );
+                // Rotation and scaling first
+                OGRDXFInsertTransformer oInnerTrans =
+                    oTransformer.GetRotateScaleTransformer();
+                poSubFeatGeom->transform( &oInnerTrans );
 
+                // Then the OCS to WCS transformation
                 if( adfOCS )
                     ApplyOCSTransformer( poSubFeatGeom, adfOCS );
                 else
                     ApplyOCSTransformer( poSubFeatGeom );
 
-                poSubFeatGeom->transform( &oTransformer.GetOffsetTransformer() );
+                // Offset translation last
+                oInnerTrans = oTransformer.GetOffsetTransformer();
+                poSubFeatGeom->transform( &oInnerTrans );
             }
 
             // If we are merging features, and this is not text or a block

@@ -73,6 +73,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
         }
         if( nCode < 0 )
         {
+            bInlineBlocks = bOldInlineBlocks;
             DXF_READER_ERROR();
             return false;
         }
@@ -85,6 +86,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
         if( oBlockMap.find(osBlockName) != oBlockMap.end() )
         {
+            bInlineBlocks = bOldInlineBlocks;
             DXF_READER_ERROR();
             return false;
         }
@@ -97,6 +99,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
     }
     if( nCode < 0 )
     {
+        bInlineBlocks = bOldInlineBlocks;
         DXF_READER_ERROR();
         return false;
     }

@@ -84,7 +84,7 @@ as described here.
 <li> A new layer will be available called "blocks".  It will contain one or
 more features for each BLOCK defined in the file.  In addition to the usual
 attributes, they will also have a Block attribute indicating what block
-they are part of. (Note, in GDAL 2.2.2 and earlier this attribute was called
+they are part of. (Note, in GDAL 2.2.x and earlier this attribute was called
 BlockName.)
 <li> The entities layer will have new attributes BlockName, BlockScale,
 BlockAngle, BlockOCSNormal and BlockOCSCoords. BlockScale gives the X, Y,
@@ -168,7 +168,7 @@ conditions apply:
 <li> A "blocks" layer may be created, and it must be created before the
 entities layer.
 <li> The entities in the blocks layer should have the Block field
-populated. (Note, in GDAL 2.2.2 and earlier this attribute was called
+populated. (Note, in GDAL 2.2.x and earlier this attribute was called
 BlockName.)
 <li> Objects to be written as INSERTs in the entities layer should have a
 POINT geometry, and the BlockName field set. You may also set BlockAngle,

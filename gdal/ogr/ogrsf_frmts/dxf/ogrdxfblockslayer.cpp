@@ -63,6 +63,12 @@ OGRDXFBlocksLayer::~OGRDXFBlocksLayer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
+
+    while (!apoPendingFeatures.empty())
+    {
+        delete apoPendingFeatures.front();
+        apoPendingFeatures.pop();
+    }
 }
 
 /************************************************************************/
@@ -74,7 +80,10 @@ void OGRDXFBlocksLayer::ResetReading()
 {
     iNextFID = 0;
     while (!apoPendingFeatures.empty())
+    {
+        delete apoPendingFeatures.front();
         apoPendingFeatures.pop();
+    }
     oIt = poDS->GetBlockMap().begin();
 }
 
