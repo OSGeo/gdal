@@ -724,6 +724,16 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'did not get expected layer name.' )
         return 'fail'
 
+    # STAR geometry
+    feat = dxf_layer.GetNextFeature()
+
+    if feat.GetField('Block') != 'STAR':
+        gdaltest.post_reason( 'Did not get expected block name.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))' ):
+        return 'fail'
+
     # First MTEXT
     feat = dxf_layer.GetNextFeature()
     if feat.GetField( 'Text' ) != gdaltest.sample_text:
@@ -751,16 +761,6 @@ def ogr_dxf_16():
     if ogrtest.check_feature_geometry( feat, 'POINT (0.879677852348995 -0.263903355704699 0)' ):
         return 'fail'
 
-    # STAR geometry
-    feat = dxf_layer.GetNextFeature()
-
-    if feat.GetField('BlockName') != 'STAR':
-        gdaltest.post_reason( 'Did not get expected block name.' )
-        return 'fail'
-
-    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((-0.028147497671066 1.041457413829428 0,0.619244948763444 -1.069604911500494 0),(0.619244948763444 -1.069604911500494 0,-0.957014920816232 0.478507460408116 0),(-0.957014920816232 0.478507460408116 0,1.041457413829428 0.365917469723853 0),(1.041457413829428 0.365917469723853 0,-0.478507460408116 -1.041457413829428 0),(-0.478507460408116 -1.041457413829428 0,-0.056294995342131 1.013309916158363 0))' ):
-        return 'fail'
-
     feat = None
 
     # cleanup
@@ -783,21 +783,21 @@ def ogr_dxf_17():
     dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( LINESTRING(0 0,1 1),LINESTRING(1 0,0 1))' ) )
-    dst_feat.SetField( 'BlockName', 'XMark' )
+    dst_feat.SetField( 'Block', 'XMark' )
     blyr.CreateFeature( dst_feat )
 
     # Block with 2 polygons
     dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( POLYGON((10 10,10 20,20 20,20 10,10 10)),POLYGON((10 -10,10 -20,20 -20,20 -10,10 -10)))' ) )
-    dst_feat.SetField( 'BlockName', 'Block2' )
+    dst_feat.SetField( 'Block', 'Block2' )
     blyr.CreateFeature( dst_feat )
 
     # Block with point and line
     dst_feat = ogr.Feature( feature_def = blyr.GetLayerDefn() )
     dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt(
         'GEOMETRYCOLLECTION( POINT(1 2),LINESTRING(0 0,1 1))' ) )
-    dst_feat.SetField( 'BlockName', 'Block3' )
+    dst_feat.SetField( 'Block', 'Block3' )
     blyr.CreateFeature( dst_feat )
 
     # Write a block reference feature.
@@ -2717,6 +2717,88 @@ def ogr_dxf_41():
     return 'success'
 
 ###############################################################################
+# Test insertion of blocks within blocks (#7106)
+
+def ogr_dxf_42():
+
+    # Inlining, merging
+    ds = ogr.Open('data/block-insert-order.dxf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'Defaults: Expected 2 features, found %d' % lyr.GetFeatureCount() )
+        return 'fail'
+
+    # No inlining, merging
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
+    ds = ogr.Open('data/block-insert-order.dxf')
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
+
+    lyr = ds.GetLayerByName('entities')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason( 'No inlining: Expected 2 features on entities, found %d' % lyr.GetFeatureCount() )
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT Z (0 0 0)') != 0:
+        gdaltest.post_reason( 'Wrong geometry for first insertion point' )
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT Z (-1 -2 -3)') != 0:
+        gdaltest.post_reason( 'Wrong geometry for second insertion point' )
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('blocks')
+    if lyr.GetFeatureCount() != 6:
+        gdaltest.post_reason( 'No inlining: Expected 6 feature on blocks, found %d' % lyr.GetFeatureCount() )
+        return 'fail'
+
+    f = lyr.GetFeature(3)
+    if ogrtest.check_feature_geometry(f, 'POINT Z (5 5 0)') != 0:
+        gdaltest.post_reason( 'Wrong geometry for second insertion of BLOCK4 on BLOCK3' )
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetFeature(4)
+    if ogrtest.check_feature_geometry(f, 'POINT Z (-5.48795472456028 1.69774937525433 4.12310562561766)') != 0:
+        gdaltest.post_reason( 'Wrong geometry for third insertion of BLOCK4 on BLOCK3' )
+        f.DumpReadable()
+        return 'fail'
+
+    if f.GetField('BlockName') != 'BLOCK4':
+        gdaltest.post_reason( 'Wrong BlockName' )
+        return 'fail'
+    if f.GetField('BlockScale') != [0.4,1.0,1.5]:
+        gdaltest.post_reason( 'Wrong BlockScale' )
+        return 'fail'
+    if f.GetField('BlockAngle') != 40:
+        gdaltest.post_reason( 'Wrong BlockAngle' )
+        return 'fail'
+    if f.GetField('BlockOCSNormal') != [0.6,0.565685424949238,0.565685424949238]:
+        gdaltest.post_reason( 'Wrong BlockOCSNormal' )
+        return 'fail'
+    if f.GetField('BlockOCSCoords') != [5,5,0]:
+        gdaltest.post_reason( 'Wrong BlockOCSCoords' )
+        return 'fail'
+    if f.GetField('Block') != 'BLOCK3':
+        gdaltest.post_reason( 'Wrong Block' )
+        return 'fail'
+
+    # Inlining, no merging
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/block-insert-order.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 4:
+        gdaltest.post_reason( 'Merging: Expected 4 features, found %d' % lyr.GetFeatureCount() )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2770,6 +2852,7 @@ gdaltest_list = [
     ogr_dxf_39,
     ogr_dxf_40,
     ogr_dxf_41,
+    ogr_dxf_42,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

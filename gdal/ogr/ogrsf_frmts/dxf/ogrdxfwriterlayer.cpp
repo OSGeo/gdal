@@ -70,14 +70,23 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    OGRFieldDefn  oBlockField( "BlockName", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockField );
+    OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockNameField );
 
     OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
     poFeatureDefn->AddFieldDefn( &oScaleField );
 
     OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
     poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+    OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+    OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+    OGRFieldDefn  oBlockField( "Block", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockField );
 }
 
 /************************************************************************/
@@ -285,18 +294,34 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     delete poTool;
 
 /* -------------------------------------------------------------------- */
-/*      Write location.                                                 */
+/*      Write location in OCS.                                          */
 /* -------------------------------------------------------------------- */
-    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    int nCoordCount = 0;
+    const double *padfCoords =
+        poFeature->GetFieldAsDoubleList( "BlockOCSCoords", &nCoordCount );
 
-    WriteValue( 10, poPoint->getX() );
-    if( !WriteValue( 20, poPoint->getY() ) )
-        return OGRERR_FAILURE;
-
-    if( poPoint->getGeometryType() == wkbPoint25D )
+    if( nCoordCount == 3 )
     {
-        if( !WriteValue( 30, poPoint->getZ() ) )
+        WriteValue( 10, padfCoords[0] );
+        WriteValue( 20, padfCoords[1] );
+        if( !WriteValue( 30, padfCoords[2] ) )
             return OGRERR_FAILURE;
+    }
+    else
+    {
+        // We don't have an OCS; we will just assume that the location of
+        // the geometry (in WCS) is the correct insertion point.
+        OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+
+        WriteValue( 10, poPoint->getX() );
+        if( !WriteValue( 20, poPoint->getY() ) )
+            return OGRERR_FAILURE;
+
+        if( poPoint->getGeometryType() == wkbPoint25D )
+        {
+            if( !WriteValue( 30, poPoint->getZ() ) )
+                return OGRERR_FAILURE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -321,6 +346,20 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     if( dfAngle != 0.0 )
     {
         WriteValue( 50, dfAngle ); // degrees
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write OCS normal vector.                                        */
+/* -------------------------------------------------------------------- */
+    int nOCSCount = 0;
+    const double *padfOCS =
+        poFeature->GetFieldAsDoubleList( "BlockOCSNormal", &nOCSCount );
+
+    if( nOCSCount == 3 )
+    {
+        WriteValue( 210, padfOCS[0] );
+        WriteValue( 220, padfOCS[1] );
+        WriteValue( 230, padfOCS[2] );
     }
 
     return OGRERR_NONE;
@@ -1108,12 +1147,6 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
     if( eGType == wkbPoint )
     {
         const char *pszBlockName = poFeature->GetFieldAsString("BlockName");
-
-        // we don't want to treat as a block ref if we are writing blocks layer
-        if( pszBlockName != NULL
-            && poDS->poBlocksLayer != NULL
-            && poFeature->GetDefnRef() == poDS->poBlocksLayer->GetLayerDefn())
-            pszBlockName = NULL;
 
         // We don't want to treat as a blocks ref if the block is not defined
         if( pszBlockName
