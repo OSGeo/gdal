@@ -705,7 +705,8 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
 /*      Is it ESRI Feature Service data ?                               */
 /* -------------------------------------------------------------------- */
     if( strstr(pszGeoData_, "esriGeometry") ||
-        strstr(pszGeoData_, "esriFieldType") )
+        strstr(pszGeoData_, "esriFieldType") ||
+        strstr(pszGeoData_, "\"fieldAliases\"") )
     {
         OGRESRIJSONReader reader;
         if( nSrcType == eGeoJSONSourceFile )
