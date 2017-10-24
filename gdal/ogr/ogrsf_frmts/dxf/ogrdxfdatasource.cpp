@@ -40,7 +40,8 @@ CPL_CVSID("$Id$")
 OGRDXFDataSource::OGRDXFDataSource() :
     fp(NULL),
     iEntitiesSectionOffset(0),
-    bInlineBlocks(false)
+    bInlineBlocks(false),
+    bMergeBlockGeometries(false)
 {}
 
 /************************************************************************/
@@ -104,6 +105,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
     bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
+    bMergeBlockGeometries = CPLTestBool(
+        CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
@@ -654,5 +657,24 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
+
+        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oScaleField );
+
+        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+        OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+        OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+        // This field holds the name of the block on which the entity lies.
+        // The BlockName field was previously used for this purpose; this
+        // was changed because of the ambiguity with the BlockName field
+        // used by INSERT entities.
+        OGRFieldDefn  oBlockField( "Block", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockField );
     }
 }

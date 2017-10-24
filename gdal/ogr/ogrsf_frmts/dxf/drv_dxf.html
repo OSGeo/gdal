@@ -18,31 +18,40 @@ Features will all have the following generic attributes:
 
 <ul>
 <li> Layer: The name of the DXF layer.  The default layer is "0".
-<li> SubClasses: Where available, a list of classes to which an element belongs.
+<li> SubClasses: Where available, a list of classes to which an entity belongs.
 <li> ExtendedEntity: Where available, extended entity attributes all appended to form a single text attribute.
 <li> Linetype: Where available, the line type used for this entity.
 <li> EntityHandle: The hexadecimal entity handle.  A sort of feature id.
 <li> Text: The text of labels.
 </ul>
 
-<h2>Supported Elements</h2>
+<h2>Supported Entities</h2>
 
-The following element types are supported:<p>
+The following entity types are supported:<p>
 
 <ul>
-<li> POINT: Produces a simple point geometry feature.
-<li> MTEXT, TEXT: Produces a point feature with LABEL style information.
-<li> LINE, POLYLINE, LWPOLYLINE: translated as a LINESTRING. Rounded
+<li> POINT: Produces a simple POINT geometry feature.
+<li> MTEXT, TEXT: Produces a POINT feature with LABEL style information.
+<li> LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
 polylines (those with their vertices' budge attributes set) will be tessellated.
 Single-vertex polylines are translated to POINT.
 <li> CIRCLE, ELLIPSE, ARC:  Translated as a LINESTRING, tessellating the
 arc into line segments.
-<li> INSERT: An attempt is made to insert the block definition as defined
-in the insert.  Linework blocks are aggregated into a single feature with
-a geometry collection for the geometry.  Text blocks are returned as one or
-more text features.  To avoid merging blocks into a geometry collection the
-DXF_MERGE_BLOCK_GEOMETRIES config option may be set to FALSE.
-<li> DIMENSION: This element is exploded into a feature with arrows and
+<li> INSERT: By default, the block definition referenced by the INSERT will
+be inserted as a compound geometry (for example, a MULTILINESTRING for a block
+containing many lines, or a GEOMETRYCOLLECTION for block that contains points
+and lines). If the block contains TEXT or MTEXT entities, they are not merged
+into the compound geometry and are instead returned as separate features.<br>
+Two configuration options are available to control the behavior of INSERT
+entities:
+<ul>
+<li>DXF_MERGE_BLOCK_GEOMETRIES: To avoid merging blocks into a compound
+geometry the DXF_MERGE_BLOCK_GEOMETRIES config option may be set to FALSE.
+Use this option if you need to preserve the styling (such as colors) of
+individual linework entities within the block.
+<li>DXF_INLINE_BLOCKS: See below.
+</ul>
+<li> DIMENSION: This entity is exploded into a feature with arrows and
 leaders, and a feature with the dimension label.
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but
 no effort is currently made to represent the fill style of HATCH entities.
@@ -54,7 +63,7 @@ distinct vertex (translated as POINT) or two distinct vertices (LINESTRING).
 </ul>
 
 A reasonable attempt is made to preserve line color, line width, text size
-and orientation via OGR feature styling information when translating elements.
+and orientation via OGR feature styling information when translating entities.
 Currently no effort is made to preserve fill styles or complex line style
 attributes.<p>
 
@@ -72,16 +81,20 @@ configuration option is set to the value FALSE, then the behavior is different
 as described here.
 
 <ul>
-<li> A new layer will be available called blocks.  It will contain one or
+<li> A new layer will be available called "blocks".  It will contain one or
 more features for each BLOCK defined in the file.  In addition to the usual
-attributes, they will also have a BlockName attribute indicate what block
-they are part of.
+attributes, they will also have a Block attribute indicating what block
+they are part of. (Note, in GDAL 2.2.x and earlier this attribute was called
+BlockName.)
 <li> The entities layer will have new attributes BlockName, BlockScale,
-and BlockAngle.
+BlockAngle, BlockOCSNormal and BlockOCSCoords. BlockScale gives the X, Y,
+and Z scale factors; BlockOCSNormal contains the unit normal vector of the
+object coordinate system (OCS) of the INSERT entity; BlockOCSCoords gives
+the OCS coordinates of the insertion point.
 <li> INSERT entities will populate these new fields with the corresponding
 information (they are null for all other entities).
 <li> INSERT entities will not have block geometry inlined - instead they will
-have a point geometry for the insertion point.
+have a POINT geometry for the insertion point.
 </ul>
 
 The intention is that with DXF_INLINE_BLOCKS disabled, the block references
@@ -148,21 +161,26 @@ portions (portion before or after the ENTITIES section). <p>
 It is possible to export a "blocks" layer to DXF in addition to the
 "entities" layer in order to produce actual DXF BLOCKs definitions
 in the output file.  It is also possible to write INSERT entities if
-a block name is provided for an entity.  To make this work the follow
-conditions apply.
+a block name is provided for an entity.  To make this work the following
+conditions apply:
 
 <ul>
 <li> A "blocks" layer may be created, and it must be created before the
 entities layer.
-<li> The entities in the blocks layer should have the BlockName field
-populated.
+<li> The entities in the blocks layer should have the Block field
+populated. (Note, in GDAL 2.2.x and earlier this attribute was called
+BlockName.)
 <li> Objects to be written as INSERTs in the entities layer should have a
-POINT geometry, and the BlockName field set.
+POINT geometry, and the BlockName field set. You may also set BlockAngle,
+BlockScale, BlockOCSNormal and BlockOCSCoords (see above under DXF_INLINE_BLOCKS
+for details). If BlockOCSCoords is set to a list of 3 real numbers, it is used
+as the location of the block; in this situation the position of the POINT
+geometry is ignored.
 <li> If a block (name) is already defined in the template header, that will be
 used regardless of whether a new definition was provided in the blocks layer.
 </ul>
 
-The intention is that a simple translation from DXF to with DXF_INLINE_BLOCKS
+The intention is that a simple translation from DXF to DXF with DXF_INLINE_BLOCKS
 set to FALSE will approximately reproduce the original blocks and keep
 INSERT entities as INSERT entities rather than exploding them.<p>
 
