@@ -46,6 +46,10 @@ OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );
+
+    OGRFieldDefn  oChildBlockNameField( "ChildBlockName", OFTString );
+    poFeatureDefn->AddFieldDefn( &oChildBlockNameField );
+  
 }
 
 /************************************************************************/
@@ -140,6 +144,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     poFeature->SetFID( iNextFID++ );
 
+    poFeature->SetField( "ChildBlockName", poFeature->GetFieldAsString( "BlockName" ) );
     poFeature->SetField( "BlockName", oIt->first.c_str() );
 
     m_nFeaturesRead++;
