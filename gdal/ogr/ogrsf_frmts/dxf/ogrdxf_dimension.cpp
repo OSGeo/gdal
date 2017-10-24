@@ -37,13 +37,13 @@ CPL_CVSID("$Id$")
 /*                         TranslateDIMENSION()                         */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateDIMENSION()
+OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
 
 {
     char szLineBuf[257];
     int nCode = 0;
     // int  nDimType = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfArrowX1 = 0.0;
     double dfArrowY1 = 0.0;
     // double dfArrowZ1 = 0.0;
@@ -318,7 +318,7 @@ the approach is as above in all these cases.
     if( osText == " " )
         return poFeature;
 
-    OGRFeature *poLabelFeature = poFeature->Clone();
+    OGRDXFFeature *poLabelFeature = poFeature->CloneDXFFeature();
 
     poLabelFeature->SetGeometryDirectly( new OGRPoint( dfTextX, dfTextY ) );
 
