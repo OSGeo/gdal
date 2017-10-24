@@ -45,12 +45,12 @@ CPL_CVSID("$Id$")
 /*      preserve the actual details of the hatching.                    */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateHATCH()
+OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
 
     CPLString osHatchPattern;
     double dfElevation = 0.0;  // Z value to be used for EVERY point

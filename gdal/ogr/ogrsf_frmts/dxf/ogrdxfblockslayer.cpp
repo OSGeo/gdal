@@ -38,8 +38,7 @@ CPL_CVSID("$Id$")
 OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
     poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn( "blocks" )),
-    iNextFID(0),
-    iNextSubFeature(0)
+    iNextFID(0)
 {
     ResetReading();
 
@@ -64,6 +63,12 @@ OGRDXFBlocksLayer::~OGRDXFBlocksLayer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
+
+    while (!apoPendingFeatures.empty())
+    {
+        delete apoPendingFeatures.front();
+        apoPendingFeatures.pop();
+    }
 }
 
 /************************************************************************/
@@ -74,7 +79,11 @@ void OGRDXFBlocksLayer::ResetReading()
 
 {
     iNextFID = 0;
-    iNextSubFeature = 0;
+    while (!apoPendingFeatures.empty())
+    {
+        delete apoPendingFeatures.front();
+        apoPendingFeatures.pop();
+    }
     oIt = poDS->GetBlockMap().begin();
 }
 
@@ -82,69 +91,64 @@ void OGRDXFBlocksLayer::ResetReading()
 /*                      GetNextUnfilteredFeature()                      */
 /************************************************************************/
 
-OGRFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
+OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
 {
-    OGRFeature *poFeature = NULL;
+    OGRDXFFeature *poFeature = NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      If we have pending features, return one of them.                */
+/* -------------------------------------------------------------------- */
+    if( !apoPendingFeatures.empty() )
+    {
+        poFeature = apoPendingFeatures.front();
+        apoPendingFeatures.pop();
+
+        poFeature->SetFID( iNextFID++ );
+        poFeature->SetField( "Block", osBlockName.c_str() );
+        m_nFeaturesRead++;
+        return poFeature;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Are we out of features?                                         */
 /* -------------------------------------------------------------------- */
-    if( oIt == poDS->GetBlockMap().end() )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Are we done reading the current blocks features?                */
-/* -------------------------------------------------------------------- */
-    DXFBlockDefinition *psBlock = &(oIt->second);
-    size_t nSubFeatureCount = psBlock->apoFeatures.size();
-
-    if( psBlock->poGeometry != NULL )
-        nSubFeatureCount++;
-
-    if( iNextSubFeature >= nSubFeatureCount )
+    while( oIt != poDS->GetBlockMap().end() )
     {
+        poFeature = new OGRDXFFeature( poFeatureDefn );
+
+        // Let's insert this block at the origin with no rotation and scale.
+        OGRDXFLayer oTempLayer(poDS);
+        poFeature = oTempLayer.InsertBlockInline( oIt->first,
+            OGRDXFInsertTransformer(), NULL,
+            poFeature, apoPendingFeatures,
+            false, poDS->ShouldMergeBlockGeometries() );
+
+        osBlockName = oIt->first;
         ++oIt;
 
-        iNextSubFeature = 0;
+        if( !poFeature ) 
+        {
+            if ( apoPendingFeatures.empty() )
+            {
+                // This block must have been empty. Move onto the next block
+                continue;
+            }
+            else
+            {
+                poFeature = apoPendingFeatures.front();
+                apoPendingFeatures.pop();
+            }
+        }
 
-        if( oIt == poDS->GetBlockMap().end() )
-            return NULL;
-
-        psBlock = &(oIt->second);
+        poFeature->SetFID( iNextFID++ );
+        poFeature->SetField( "Block", osBlockName.c_str() );
+        m_nFeaturesRead++;
+        return poFeature;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Is this a geometry based block?                                 */
-/* -------------------------------------------------------------------- */
-    if( psBlock->poGeometry != NULL
-        && iNextSubFeature == psBlock->apoFeatures.size() )
-    {
-        poFeature = new OGRFeature( poFeatureDefn );
-        poFeature->SetGeometry( psBlock->poGeometry );
-        iNextSubFeature++;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Otherwise duplicate the next sub-feature.                       */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        poFeature = new OGRFeature( poFeatureDefn );
-        poFeature->SetFrom( psBlock->apoFeatures[iNextSubFeature] );
-        iNextSubFeature++;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Set FID and block name.                                         */
-/* -------------------------------------------------------------------- */
-    poFeature->SetFID( iNextFID++ );
-
-    poFeature->SetField( "BlockName", oIt->first.c_str() );
-
-    m_nFeaturesRead++;
-
-    return poFeature;
+    // No more blocks left.
+    return NULL;
 }
 
 /************************************************************************/

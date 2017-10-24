@@ -62,7 +62,22 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    OGRFieldDefn  oBlockField( "BlockName", OFTString );
+    OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockNameField );
+
+    OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oScaleField );
+
+    OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+    poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+    OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+    OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+    OGRFieldDefn  oBlockField( "Block", OFTString );
     poFeatureDefn->AddFieldDefn( &oBlockField );
 }
 
@@ -135,7 +150,7 @@ OGRFeature *OGRDXFBlocksWriterLayer::FindBlock( const char *pszBlockName )
 {
     for( size_t i=0; i < apoBlocks.size(); i++ )
     {
-        const char *pszThisName = apoBlocks[i]->GetFieldAsString("BlockName");
+        const char *pszThisName = apoBlocks[i]->GetFieldAsString("Block");
 
         if( pszThisName != NULL && strcmp(pszBlockName,pszThisName) == 0 )
             return apoBlocks[i];

@@ -297,6 +297,8 @@ class CPL_DLL OGRFeature
     char                *m_pszTmpFieldValue;
 //! @endcond
 
+    bool                CopySelfTo( OGRFeature *poNew );
+
   public:
     explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
