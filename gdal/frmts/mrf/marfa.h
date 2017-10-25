@@ -223,6 +223,15 @@ static inline unsigned long long net64(const unsigned long long x)
 #define net64(x) swab64(x)
 #endif
 
+// Count the values in a buffer that match a specific value
+template<typename T> static int MatchCount(T *buff, int sz, T val) {
+    int ncount = 0;
+    for (int i = 0; i < sz; i++)
+        if (buff[i] == val)
+            ncount++;
+    return ncount;
+}
+
 const char *CompName(ILCompression comp);
 const char *OrderName(ILOrder val);
 ILCompression CompToken(const char *, ILCompression def = IL_ERR_COMP);
@@ -401,6 +410,9 @@ protected:
 
     // Write a tile, the infooffset is the relative position in the index file
     virtual CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
+
+    // Custom CopyWholeRaster for Zen JPEG
+    CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData);
 
     // For versioned MRFs, add a version
     CPLErr AddVersion();
