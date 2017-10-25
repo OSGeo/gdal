@@ -1800,28 +1800,6 @@ void OGRGeoRSSLayer::LoadSchema()
 }
 
 /************************************************************************/
-/*                         OGRGeoRSSIsInt()                             */
-/************************************************************************/
-
-static int OGRGeoRSSIsInt(const char* pszStr)
-{
-    while(*pszStr == ' ')
-        pszStr++;
-
-    for( int i=0; pszStr[i]; i++ )
-    {
-        if (pszStr[i] == '+' || pszStr[i] == '-')
-        {
-            if (i != 0)
-                return FALSE;
-        }
-        else if (!(pszStr[i] >= '0' && pszStr[i] <= '9'))
-            return FALSE;
-    }
-    return TRUE;
-}
-
-/************************************************************************/
 /*                  startElementLoadSchemaCbk()                         */
 /************************************************************************/
 
@@ -1973,21 +1951,12 @@ void OGRGeoRSSLayer::startElementLoadSchemaCbk(const char *pszName, const char *
             if (currentAttrFieldDefn->GetType() == OFTInteger ||
                 currentAttrFieldDefn->GetType() == OFTReal)
             {
-                char* pszRemainingStr = NULL;
-                CPLStrtod(ppszAttr[i + 1], &pszRemainingStr);
-                if (pszRemainingStr == NULL ||
-                    *pszRemainingStr == 0 ||
-                    *pszRemainingStr == ' ')
+                const CPLValueType eType = CPLGetValueType(ppszAttr[i+1]);
+                if( eType == CPL_VALUE_REAL )
                 {
-                    if (currentAttrFieldDefn->GetType() == OFTInteger)
-                    {
-                        if( !OGRGeoRSSIsInt(ppszAttr[i + 1]) )
-                        {
-                            currentAttrFieldDefn->SetType(OFTReal);
-                        }
-                    }
+                    currentAttrFieldDefn->SetType(OFTReal);
                 }
-                else
+                else if( eType == CPL_VALUE_STRING )
                 {
                     currentAttrFieldDefn->SetType(OFTString);
                 }
@@ -2146,25 +2115,16 @@ void OGRGeoRSSLayer::endElementLoadSchemaCbk(const char *pszName)
             if (currentFieldDefn->GetType() == OFTInteger ||
                 currentFieldDefn->GetType() == OFTReal)
             {
-                char* pszRemainingStr = NULL;
-                CPLStrtod(pszSubElementValue, &pszRemainingStr);
-                if (pszRemainingStr == NULL ||
-                    *pszRemainingStr == 0 ||
-                    *pszRemainingStr == ' ')
+                const CPLValueType eType = CPLGetValueType(pszSubElementValue);
+                if( eType == CPL_VALUE_REAL )
                 {
-                    if (currentFieldDefn->GetType() == OFTInteger)
-                    {
-                        if( !OGRGeoRSSIsInt(pszSubElementValue) )
-                        {
-                            currentFieldDefn->SetType(OFTReal);
-                        }
-                    }
+                    currentFieldDefn->SetType(OFTReal);
                 }
-                else
+                else if( eType == CPL_VALUE_STRING )
                 {
                     currentFieldDefn->SetType(OFTString);
                 }
-            }
+             }
         }
 
         CPLFree(pszSubElementName);
