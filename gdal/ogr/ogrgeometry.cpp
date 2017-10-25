@@ -2101,7 +2101,8 @@ OGRGeometry::IsValid() const
     else
     {
 #ifndef HAVE_GEOS
-
+        CPLError( CE_Failure, CPLE_NotSupported,
+                    "GEOS support not enabled." );
         return FALSE;
 
 #else
@@ -2173,7 +2174,8 @@ OGRGeometry::IsSimple() const
 
 {
 #ifndef HAVE_GEOS
-
+    CPLError( CE_Failure, CPLE_NotSupported,
+                "GEOS support not enabled." );
     return FALSE;
 
 #else
@@ -2244,7 +2246,8 @@ OGRGeometry::IsRing() const
 
 {
 #ifndef HAVE_GEOS
-
+    CPLError( CE_Failure, CPLE_NotSupported,
+                "GEOS support not enabled." );
     return FALSE;
 
 #else
