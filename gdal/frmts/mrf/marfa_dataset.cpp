@@ -1665,22 +1665,22 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 // If bFBO is set, only the values of the first band are set non-zero when needed
 template<typename T> void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands, bool bFBO) {
     for (int i = 0; i < nPixels; i++) {
-        if (mask[nPixels] == 0) { // enforce zero values
+        if (mask[i] == 0) { // enforce zero values
             for (int b = 0; b < nBands; b++)
-                buffer[nBands * nPixels + b] = 0;
+                buffer[nBands * i + b] = 0;
         }
         else { // enforce non-zero
             if (bFBO) { // First band only
                 bool f = true;
                 for (int b = 0; b < nBands; b++)
-                    f = f && (0 == buffer[nBands * nPixels + b]);
+                    f = f && (0 == buffer[nBands * i + b]);
                 if (f)
-                    buffer[nBands * nPixels] = 1;
+                    buffer[nBands * i] = 1;
             }
             else { // Every band
                 for (int b = 0; b < nBands; b++)
-                    if (0 == buffer[nBands * nPixels + b])
-                        buffer[nBands * nPixels + b] = 1;
+                    if (0 == buffer[nBands * i + b])
+                        buffer[nBands * i + b] = 1;
             }
         }
     }
