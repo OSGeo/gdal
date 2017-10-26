@@ -1661,35 +1661,29 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
 }
 
 
-// interleaved Zen filter, test every value, set first band only
-template<typename T> void ZenFilterInterleaved(T* buffer, GByte *mask, int nPixels, int nBands) {
+// Prepares the data so it is suitable for Zen JPEG encoding, based on input mask
+// If bFBO is set, only the values of the first band are set non-zero when needed
+template<typename T> void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands, bool bFBO) {
     for (int i = 0; i < nPixels; i++) {
-        if (mask[nPixels] == 0) { // enforce zero
+        if (mask[nPixels] == 0) { // enforce zero values
             for (int b = 0; b < nBands; b++)
                 buffer[nBands * nPixels + b] = 0;
         }
         else { // enforce non-zero
-            bool f = true;
-            for (int b = 0; b < nBands; b++)
-                f = f && (0 == buffer[nBands * nPixels + b]);
-            if (f)
-                buffer[nBands * nPixels] = 1;
+            if (bFBO) { // First band only
+                bool f = true;
+                for (int b = 0; b < nBands; b++)
+                    f = f && (0 == buffer[nBands * nPixels + b]);
+                if (f)
+                    buffer[nBands * nPixels] = 1;
+            }
+            else { // Every band
+                for (int b = 0; b < nBands; b++)
+                    if (0 == buffer[nBands * nPixels + b])
+                        buffer[nBands * nPixels + b] = 1;
+            }
         }
     }
-}
-
-// Non-interleaved filter, test and set every value
-template<typename T> void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands) {
-    for (int i = 0; i < nPixels; i++)
-        if (mask[nPixels] == 0) { // enforce zero
-            for (int b = 0; b < nBands; b++)
-                buffer[nBands * nPixels + b] = 0;
-        }
-        else { // enforce non-zero
-            for (int b = 0; b < nBands; b++)
-                if (0 == buffer[nBands * nPixels + b])
-                    buffer[nBands * nPixels + b] = 1;
-        }
 }
 
 // Custom CopyWholeRaster for Zen JPEG, called when the input has a PER_DATASET mask
@@ -1731,11 +1725,11 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     const int nPageYSize = current.pagesize.y;
     const double nTotalBlocks = static_cast<double>(DIV_ROUND_UP(nYSize, nPageYSize)) *
         static_cast<double>(DIV_ROUND_UP(nXSize, nPageXSize));
-    GDALDataType eDT = poDstPrototypeBand->GetRasterDataType();
+    const GDALDataType eDT = poDstPrototypeBand->GetRasterDataType();
 
     // All the bands are done per block
     // this flag tells us to apply the Zen filter to the first band only
-    int bInterleave = (current.order == IL_Interleaved);
+    const bool bFirstBandOnly = (current.order == IL_Interleaved);
 
     if (!pfnProgress(0.0, NULL, pProgressData))
     {
@@ -1763,7 +1757,7 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     // Advise the source that a complete read will be done
     poSrc->AdviseRead(0, 0, nXSize, nYSize, nXSize, nYSize, eDT, nBandCount, NULL, NULL);
 
-    // For every block
+    // For every block, break on error
     for (int row = 0; row < nYSize && eErr == CE_None; row += nPageYSize) {
         int nRows = std::min(nPageYSize, nYSize - row);
         for (int col = 0; col < nXSize && eErr == CE_None; col += nPageXSize) {
@@ -1794,29 +1788,21 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             if (eErr != CE_None)
                 break;
 
-            // type macro
-#define ZFILTER(T)\
-    if (bInterleave)\
-        ZenFilterInterleaved(reinterpret_cast<T *>(buffer), buffer_mask, nPixelCount, nBandCount);\
-                else\
-        ZenFilter(reinterpret_cast<T *>(buffer), buffer_mask, nPixelCount, nBandCount);
-
-            // This is JPEG, only 8 and 12(16) bits integer types are valid
+            // This is JPEG, only 8 and 12(16) bits unsigned integer types are valid
             switch (eDT) {
             case GDT_Byte:
-                ZFILTER(GByte);
+                ZenFilter(reinterpret_cast<GByte *>(buffer), 
+                    buffer_mask, nPixelCount, nBandCount, bFirstBandOnly);
                 break;
             case GDT_UInt16:
-            case GDT_Int16:
-                ZFILTER(GUInt16);
+                ZenFilter(reinterpret_cast<GUInt16 *>(buffer), 
+                    buffer_mask, nPixelCount, nBandCount, bFirstBandOnly);
                 break;
             default:
                 CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type for Zen filter");
                 eErr = CE_Failure;
                 break;
             }
-
-#undef ZFILTER
 
             // Write
             eErr = RasterIO(GF_Write, col, row, nCols, nRows,
