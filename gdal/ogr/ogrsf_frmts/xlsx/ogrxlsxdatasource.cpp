@@ -1303,6 +1303,18 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE* fpWorkbookRels)
 }
 
 /************************************************************************/
+/*                           GetUnprefixed()                            */
+/************************************************************************/
+
+static const char* GetUnprefixed(const char* pszStr)
+{
+    const char* pszColumn = strchr(pszStr, ':');
+    if( pszColumn )
+        return pszColumn + 1;
+    return pszStr;
+}
+
+/************************************************************************/
 /*                          startElementWBCbk()                         */
 /************************************************************************/
 
@@ -1318,7 +1330,7 @@ void OGRXLSXDataSource::startElementWBCbk(const char *pszNameIn,
     if( bStopParsing ) return;
 
     nWithoutEventCounter = 0;
-    if (strcmp(pszNameIn,"sheet") == 0)
+    if (strcmp(GetUnprefixed(pszNameIn),"sheet") == 0)
     {
         const char* pszSheetName = GetAttributeValue(ppszAttr, "name", NULL);
         const char* pszId = GetAttributeValue(ppszAttr, "r:id", NULL);
