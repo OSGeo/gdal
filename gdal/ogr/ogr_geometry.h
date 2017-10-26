@@ -103,15 +103,15 @@ typedef OGRMultiPolygon* (*OGRPolyhedralSurfaceCastToMultiPolygon)(OGRPolyhedral
  * relationships between geometries is described in the SFCOM, or other simple
  * features interface specifications, like "OpenGIS® Implementation
  * Specification for Geographic information - Simple feature access - Part 1:
- * Common architecture"
- * (<a href="http://www.opengeospatial.org/standards/sfa">OGC 06-103r4</a>)
+ * Common architecture":
+ * <a href="http://www.opengeospatial.org/standards/sfa">OGC 06-103r4</a>
  *
  * In GDAL 2.0, the hierarchy of classes has been extended with
  * <a href="https://portal.opengeospatial.org/files/?artifact_id=32024">
  * (working draft) ISO SQL/MM Part 3 (ISO/IEC 13249-3)</a> curve geometries :
  * CIRCULARSTRING (OGRCircularString), COMPOUNDCURVE (OGRCompoundCurve),
  * CURVEPOLYGON (OGRCurvePolygon), MULTICURVE (OGRMultiCurve) and
- *  MULTISURFACE (OGRMultiSurface).
+ * MULTISURFACE (OGRMultiSurface).
  *
  */
 
