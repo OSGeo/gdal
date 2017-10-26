@@ -822,6 +822,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FEATURE_DATASET' type='string' description='FeatureDataset folder into to put the new layer'/>"
+"  <Option name='LAYER_ALIAS' type='string' description='Alias of layer name'/>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column' default='SHAPE'/>"
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "  <Option name='FID' type='string' description='Name of OID column' default='OBJECTID' deprecated_alias='OID_NAME'/>"
