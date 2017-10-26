@@ -1744,13 +1744,16 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
         return CE_Failure;
     }
 
-    int nPixelCount = nPageXSize * nPageYSize;
+    const int nPixelCount = nPageXSize * nPageYSize;
     void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, GDALGetDataTypeSizeBytes(eDT));
-    GByte *buffer_mask = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
+    GByte *buffer_mask = NULL;
+    if (buffer)
+        buffer_mask = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
 
     if (!buffer || !buffer_mask) {
-        // Just in case buffer did get allocated, get rid of it
+        // Just in case buffers did get allocated
         CPLFree(buffer);
+        CPLFree(buffer_mask);
         CPLError(CE_Failure, CPLE_OutOfMemory, "Can't allocate copy buffer");
         return CE_Failure;
     }
@@ -1770,6 +1773,7 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             if (eErr == CE_None && !pfnProgress(nBlocksDone++ / nTotalBlocks, NULL, pProgressData)) {
                 eErr = CE_Failure;
                 CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()");
+                break;
             }
 
             // Get the data mask as byte
@@ -1777,9 +1781,9 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
                 buffer_mask, nCols, nRows, GDT_Byte, 0, 0, NULL);
 
             if (eErr != CE_None)
-                continue;
+                break;
 
-            // If there is no data at all, skip this block completely
+            // If there is no data at all, skip this block
             if (MatchCount(buffer_mask, nPixelCount, static_cast<GByte>(0)) == nPixelCount)
                 continue;
 
@@ -1787,39 +1791,40 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             eErr = poSrc->RasterIO(GF_Read, col, row, nCols, nRows,
                 buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
 
-            // Filter
-            if (eErr == CE_None) {
+            if (eErr != CE_None)
+                break;
 
             // type macro
 #define ZFILTER(T)\
     if (bInterleave)\
         ZenFilterInterleaved(reinterpret_cast<T *>(buffer), buffer_mask, nPixelCount, nBandCount);\
-    else\
+                else\
         ZenFilter(reinterpret_cast<T *>(buffer), buffer_mask, nPixelCount, nBandCount);
 
-                // This is JPEG, only 8 and 12(16) bits integer types are valid
-                switch (eDT) {
-                case GDT_Byte:
-                    ZFILTER(GByte);
-                    break;
-                case GDT_UInt16:
-                case GDT_Int16:
-                    ZFILTER(GUInt16);
-                    break;
-                default:
-                    CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type for Zen filter");
-                    eErr = CE_Failure;
-                }
-
-#undef ZFILTER
+            // This is JPEG, only 8 and 12(16) bits integer types are valid
+            switch (eDT) {
+            case GDT_Byte:
+                ZFILTER(GByte);
+                break;
+            case GDT_UInt16:
+            case GDT_Int16:
+                ZFILTER(GUInt16);
+                break;
+            default:
+                CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type for Zen filter");
+                eErr = CE_Failure;
+                break;
             }
 
+#undef ZFILTER
+
             // Write
-            if (eErr == CE_None)
-                eErr = RasterIO(GF_Write, col, row, nCols, nRows,
-                    buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
+            eErr = RasterIO(GF_Write, col, row, nCols, nRows,
+                buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
 
         } // Columns
+        if (eErr != CE_None)
+            break;
     } // Rows
 
     // Cleanup
