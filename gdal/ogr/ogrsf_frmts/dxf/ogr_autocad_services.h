@@ -43,6 +43,12 @@ CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding,
 
 const unsigned char *ACGetColorTable( void );
 
+const int* ACGetKnownDimStyleCodes( void );
+
+const char *ACGetDimStylePropertyName( const int iDimStyleCode );
+
+const char *ACGetDimStylePropertyDefault( const int iDimStyleCode );
+
 void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature );
 
 #endif /* ndef OGR_AUTOCAD_SERVICES_H_INCLUDED */

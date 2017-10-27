@@ -339,6 +339,7 @@ class OGRDXFDataSource : public OGRDataSource
     int                 iEntitiesSectionOffset;
 
     std::map<CPLString,DXFBlockDefinition> oBlockMap;
+    std::map<CPLString,CPLString> oBlockRecordHandles;
     std::map<CPLString,CPLString> oHeaderVariables;
 
     CPLString           osEncoding;
@@ -346,6 +347,10 @@ class OGRDXFDataSource : public OGRDataSource
     // indexed by layer name, then by property name.
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
+
+    // indexed by dimstyle name, then by DIM... variable name
+    std::map< CPLString, std::map<CPLString,CPLString> >
+                        oDimStyleTable;
 
     std::map<CPLString,CPLString> oLineTypeTable;
 
@@ -376,15 +381,21 @@ class OGRDXFDataSource : public OGRDataSource
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();
     DXFBlockDefinition *LookupBlock( const char *pszName );
+    CPLString           GetBlockNameByRecordHandle( const char *pszID );
     std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
+    bool                ReadDimStyleDefinition();
     const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
+    bool                LookupDimStyle( const char *pszDimstyle,
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
     const char         *LookupLineType( const char *pszName );
+    void                PopulateDefaultDimStyleProperties(
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
 
     // Header variables.
     bool               ReadHeaderSection();
