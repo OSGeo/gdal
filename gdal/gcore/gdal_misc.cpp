@@ -2844,9 +2844,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
 /* -------------------------------------------------------------------- */
 /*      --optfile                                                       */
-/*                                                                      */
-/*      Annoyingly the options inserted by --optfile will *not* be      */
-/*      processed properly if they are general options.                 */
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--optfile") )
         {
@@ -2870,6 +2867,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             const char *pszLine;
+            char** papszArgvOptfile = CSLAddString(NULL, papszReturn[0]);
+            bool bHasOptfile = false;
             while( (pszLine = CPLReadLineL( fpOptFile )) != NULL )
             {
                 if( pszLine[0] == '#' || strlen(pszLine) == 0 )
@@ -2877,11 +2876,34 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 char **papszTokens = CSLTokenizeString( pszLine );
                 for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
-                    papszReturn = CSLAddString( papszReturn, papszTokens[i] );
+                {
+                    if( EQUAL( papszTokens[i], "--optfile") )
+                    {
+                        // To avoid potential recursion
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "--optfile not supported in a option file");
+                        bHasOptfile = true;
+                    }
+                    papszArgvOptfile = CSLAddString( papszArgvOptfile, papszTokens[i] );
+                }
                 CSLDestroy( papszTokens );
             }
 
             VSIFCloseL( fpOptFile );
+
+            if( !bHasOptfile )
+            {
+                GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
+                                            &papszArgvOptfile, 0);
+            }
+
+            char** papszIter = papszArgvOptfile + 1;
+            while( *papszIter )
+            {
+                papszReturn = CSLAddString(papszReturn, *papszIter);
+                ++ papszIter;
+            }
+            CSLDestroy(papszArgvOptfile);
 
             iArg += 1;
         }
