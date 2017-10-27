@@ -259,7 +259,8 @@ class OGRDXFLayer : public OGRLayer
                                            OGRDXFFeature* const poFeature,
                                            std::queue<OGRDXFFeature *>& apoExtraFeatures,
                                            const bool bInlineNestedBlocks,
-                                           const bool bMergeGeometry );
+                                           const bool bMergeGeometry,
+                                           const int iRecursionDepth = 0 );
     OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
                                               const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
