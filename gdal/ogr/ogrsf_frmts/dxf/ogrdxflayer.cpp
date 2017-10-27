@@ -2446,8 +2446,20 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
     OGRDXFFeature* const poFeature,
     std::queue<OGRDXFFeature *>& apoExtraFeatures,
     const bool bInlineRecursively,
-    const bool bMergeGeometry )
+    const bool bMergeGeometry,
+    const int iRecursionDepth /* = 0 */ )
 {
+    // Make sure we are not recursing too deeply (avoid stack overflows)
+    // 128 is a totally arbitrary limit
+    if( iRecursionDepth > 128 )
+    {
+        CPLDebug( "DXF",
+            "Block recursion limit exceeded. Ignoring further INSERTs" );
+
+        delete poFeature;
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Transform the insertion point from OCS into                     */
 /*      world coordinates.                                              */
@@ -2519,7 +2531,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 poSubFeature = InsertBlockInline( poSubFeature->osBlockName,
                     oInnerTransformer, poSubFeature->adfBlockOCS,
                     poSubFeature, apoInnerExtraFeatures,
-                    true, bMergeGeometry );
+                    true, bMergeGeometry, iRecursionDepth + 1 );
             }
             catch( const std::invalid_argument& )
             {
@@ -2576,7 +2588,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 !poSubFeature->IsBlockReference() &&
                 poSubFeature->GetGeometryRef() )
             {
-                poMergedGeometry->addGeometry( poSubFeature->GetGeometryRef() );
+                poMergedGeometry->addGeometryDirectly( poSubFeature->StealGeometry() );
+                delete poSubFeature;
             }
             else
             {
