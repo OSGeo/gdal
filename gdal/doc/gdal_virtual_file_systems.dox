@@ -257,9 +257,13 @@ configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
 can be modified by setting the configuration option VSI_CACHE_SIZE (in
 bytes). Content in that cache is discarded when the file handle is closed.
 
-In addition, a global LRU cache of 16 MB shared among all downloaded content 
-is enabled by default, and content in it may be reused after a file handle
-has been closed and reopen. Starting with GDAL 2.3, the
+In addition, a global least-recently-used cache of 16 MB shared among all
+downloaded content is enabled by default, and content in it may be reused
+after a file handle has been closed and reopen. Starting with GDAL 2.3, the
+size of this global LRU cache can be modified by setting the configuration
+option CPL_VSIL_CURL_CACHE_SIZE (in bytes).
+
+Starting with GDAL 2.3, the
 CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
 "/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory",
 so that at file handle closing, all cached content related to the mentioned
