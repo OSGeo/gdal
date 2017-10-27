@@ -2799,6 +2799,19 @@ def ogr_dxf_42():
     return 'success'
 
 ###############################################################################
+# Ensure recursively-included blocks don't fail badly
+
+def ogr_dxf_43():
+
+    # Inlining, merging
+    ds = ogr.Open('data/insert-recursive-pair.dxf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2853,6 +2866,7 @@ gdaltest_list = [
     ogr_dxf_40,
     ogr_dxf_41,
     ogr_dxf_42,
+    ogr_dxf_43,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
