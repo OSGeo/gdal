@@ -717,6 +717,7 @@ This is done with the VSICreateCachedFile() function, that is implictly used
 by a number of the above mentioned file systems if the VSI_CACHE configuration
 option is set to YES. The default size of caching for each file is 25 MB, and
 can be controlled with the VSI_CACHE_SIZE configuration option (value in bytes).
+Content in that cache is discarded when the file handle is closed.
 
 \section gdal_virtual_file_systems_vsicrypt /vsicrypt/ (encrypted files)
 
