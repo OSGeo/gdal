@@ -59,6 +59,11 @@ The DXF_HATCH_TOLERANCE config option determines the tolerance used when looking
 for the next component to add to the hatch boundary.
 <li> 3DFACE, SOLID: Translated as POLYGON, except for SOLIDS with only one
 distinct vertex (translated as POINT) or two distinct vertices (LINESTRING).
+<li> LEADER, MULTILEADER: The leader line is translated as a LINESTRING.
+An arrowhead, if present, is translated as one or more additional features.
+Text for MULTILEADER entities is translated into a POINT feature with a label.
+<i>Note: Spline paths are not supported for either type of leader, and only
+text content is supported for MULTILEADERs (block content is unsupported).</i>
 
 </ul>
 
