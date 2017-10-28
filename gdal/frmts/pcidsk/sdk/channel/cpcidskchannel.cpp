@@ -38,6 +38,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 
 #include "cpl_port.h"
 
@@ -137,6 +138,23 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 }
 
 /************************************************************************/
+/*                         SortOverviewComp()                           */
+/************************************************************************/
+
+static bool SortOverviewComp(const std::string &first,
+                             const std::string &second)
+{
+    if( !STARTS_WITH(first.c_str(), "_Overview_") ||
+        !STARTS_WITH(second.c_str(), "_Overview_") )
+    {
+        return false;
+    }
+    int nFirst = atoi(first.c_str() + 10);
+    int nSecond = atoi(second.c_str() + 10);
+    return nFirst < nSecond;
+}
+
+/************************************************************************/
 /*                       EstablishOverviewInfo()                        */
 /************************************************************************/
 void CPCIDSKChannel::EstablishOverviewInfo() const
@@ -148,6 +166,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
     overviews_initialized = true;
 
     std::vector<std::string> keys = GetMetadataKeys();
+    std::sort(keys.begin(), keys.end(), SortOverviewComp); // sort overviews
     size_t i;
 
     for( i = 0; i < keys.size(); i++ )
