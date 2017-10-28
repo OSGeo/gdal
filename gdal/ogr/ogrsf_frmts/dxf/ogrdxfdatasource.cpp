@@ -320,7 +320,6 @@ bool OGRDXFDataSource::ReadTablesSection()
         if( nCode != 0 || !EQUAL(szLineBuf,"TABLE") )
             continue;
 
-        // Currently we are only interested in the LAYER table.
         nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
         if( nCode < 0 )
         {
@@ -344,6 +343,11 @@ bool OGRDXFDataSource::ReadTablesSection()
             if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
             {
                 if( !ReadLineTypeDefinition() )
+                    return false;
+            }
+            if( nCode == 0 && EQUAL(szLineBuf,"DIMSTYLE") )
+            {
+                if( !ReadDimStyleDefinition() )
                     return false;
             }
         }
@@ -505,6 +509,90 @@ const char *OGRDXFDataSource::LookupLineType( const char *pszName )
         return oLineTypeTable[pszName];
     else
         return NULL;
+}
+
+/************************************************************************/
+/*                  PopulateDefaultDimStyleProperties()                 */
+/************************************************************************/
+
+void OGRDXFDataSource::PopulateDefaultDimStyleProperties(
+    std::map<CPLString, CPLString>& oDimStyleProperties)
+
+{
+    const int* piCode = ACGetKnownDimStyleCodes();
+    do
+    {
+        const char* pszProperty = ACGetDimStylePropertyName(*piCode);
+        oDimStyleProperties[pszProperty] =
+            ACGetDimStylePropertyDefault(*piCode);
+    } while ( *(++piCode) );
+}
+
+/************************************************************************/
+/*                       ReadDimStyleDefinition()                       */
+/************************************************************************/
+
+bool OGRDXFDataSource::ReadDimStyleDefinition()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+    std::map<CPLString,CPLString> oDimStyleProperties;
+    CPLString osDimStyleName = "";
+
+    PopulateDefaultDimStyleProperties(oDimStyleProperties);
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osDimStyleName = CPLString(szLineBuf).Recode( GetEncoding(), CPL_ENC_UTF8 );
+            break;
+
+          default:
+            const char* pszProperty = ACGetDimStylePropertyName(nCode);
+            if( pszProperty )
+                oDimStyleProperties[pszProperty] = szLineBuf;
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+
+    if( !oDimStyleProperties.empty() )
+        oDimStyleTable[osDimStyleName] = oDimStyleProperties;
+
+    if( nCode == 0 )
+        UnreadValue();
+    return true;
+}
+
+/************************************************************************/
+/*                           LookupDimStyle()                           */
+/*                                                                      */
+/*      If the specified DIMSTYLE does not exist, a default set of      */
+/*      of style properties are copied into oDimStyleProperties and     */
+/*      false is returned.  Otherwise true is returned.                 */
+/************************************************************************/
+
+bool OGRDXFDataSource::LookupDimStyle( const char *pszDimStyle,
+    std::map<CPLString,CPLString>& oDimStyleProperties )
+
+{
+    if( pszDimStyle == NULL || !oDimStyleTable.count(pszDimStyle) )
+    {
+        PopulateDefaultDimStyleProperties(oDimStyleProperties);
+        return false;
+    }
+
+    // make a copy of the DIMSTYLE properties, so no-one can mess around
+    // with our original copy
+    oDimStyleProperties = oDimStyleTable[pszDimStyle];
+    return true;
 }
 
 /************************************************************************/

@@ -63,11 +63,16 @@ bool OGRDXFDataSource::ReadBlocksSection()
         // Process contents of BLOCK definition till we find the
         // first entity.
         CPLString osBlockName;
+        CPLString osBlockRecordHandle;
 
         while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > 0 )
         {
             if( nCode == 2 )
                 osBlockName = szLineBuf;
+
+            // get the block record handle as well, for arrowheads
+            else if( nCode == 330 )
+                osBlockRecordHandle = szLineBuf;
 
             // anything else we want?
         }
@@ -77,6 +82,9 @@ bool OGRDXFDataSource::ReadBlocksSection()
             DXF_READER_ERROR();
             return false;
         }
+
+        // store the block record handle mapping even if the block is empty
+        oBlockRecordHandles[osBlockRecordHandle] = osBlockName;
 
         if( EQUAL(szLineBuf,"ENDBLK") )
             continue;
@@ -131,6 +139,24 @@ DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
         return NULL;
     else
         return &(oBlockMap[l_osName]);
+}
+
+/************************************************************************/
+/*                     GetBlockNameByRecordHandle()                     */
+/*                                                                      */
+/*      Find the name of the block with the given BLOCK_RECORD handle.  */
+/*      If there is no such block, an empty string is returned.         */
+/************************************************************************/
+
+CPLString OGRDXFDataSource::GetBlockNameByRecordHandle( const char *pszID )
+
+{
+    CPLString l_osID = pszID;
+
+    if( oBlockRecordHandles.count( l_osID ) == 0 )
+        return "";
+    else
+        return oBlockRecordHandles[l_osID];
 }
 
 /************************************************************************/

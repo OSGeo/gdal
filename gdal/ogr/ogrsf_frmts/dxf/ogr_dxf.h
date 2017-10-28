@@ -251,6 +251,8 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateDIMENSION();
     OGRDXFFeature *     TranslateHATCH();
     OGRDXFFeature *     TranslateSOLID();
+    OGRDXFFeature *     TranslateLEADER();
+    OGRDXFFeature *     TranslateMLEADER();
 
     static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
     OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
@@ -265,6 +267,11 @@ class OGRDXFLayer : public OGRLayer
                                               const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
     void                FormatDimension( CPLString &osText, double dfValue );
+    void                InsertArrowhead( OGRDXFFeature* const poFeature,
+                                         const CPLString& osBlockName,
+                                         const OGRPoint oPoint1,
+                                         const OGRPoint oPoint2,
+                                         const double dfArrowheadSize );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
                                              const double dfElevation );
     OGRErr              CollectPolylinePath( OGRGeometryCollection *poGC,
@@ -339,6 +346,7 @@ class OGRDXFDataSource : public OGRDataSource
     int                 iEntitiesSectionOffset;
 
     std::map<CPLString,DXFBlockDefinition> oBlockMap;
+    std::map<CPLString,CPLString> oBlockRecordHandles;
     std::map<CPLString,CPLString> oHeaderVariables;
 
     CPLString           osEncoding;
@@ -346,6 +354,10 @@ class OGRDXFDataSource : public OGRDataSource
     // indexed by layer name, then by property name.
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
+
+    // indexed by dimstyle name, then by DIM... variable name
+    std::map< CPLString, std::map<CPLString,CPLString> >
+                        oDimStyleTable;
 
     std::map<CPLString,CPLString> oLineTypeTable;
 
@@ -376,15 +388,21 @@ class OGRDXFDataSource : public OGRDataSource
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();
     DXFBlockDefinition *LookupBlock( const char *pszName );
+    CPLString           GetBlockNameByRecordHandle( const char *pszID );
     std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
+    bool                ReadDimStyleDefinition();
     const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
+    bool                LookupDimStyle( const char *pszDimstyle,
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
     const char         *LookupLineType( const char *pszName );
+    void                PopulateDefaultDimStyleProperties(
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
 
     // Header variables.
     bool               ReadHeaderSection();
