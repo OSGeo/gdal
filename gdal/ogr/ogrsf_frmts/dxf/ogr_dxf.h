@@ -251,6 +251,8 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateDIMENSION();
     OGRDXFFeature *     TranslateHATCH();
     OGRDXFFeature *     TranslateSOLID();
+    OGRDXFFeature *     TranslateLEADER();
+    OGRDXFFeature *     TranslateMLEADER();
 
     static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
     OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
@@ -265,6 +267,11 @@ class OGRDXFLayer : public OGRLayer
                                               const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
     void                FormatDimension( CPLString &osText, double dfValue );
+    void                InsertArrowhead( OGRDXFFeature* const poFeature,
+                                         const CPLString& osBlockName,
+                                         const OGRPoint oPoint1,
+                                         const OGRPoint oPoint2,
+                                         const double dfArrowheadSize );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
                                              const double dfElevation );
     OGRErr              CollectPolylinePath( OGRGeometryCollection *poGC,
