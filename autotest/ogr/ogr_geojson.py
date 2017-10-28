@@ -44,7 +44,7 @@ import ogrtest
 # Test utilities
 def validate_layer(lyr, name, features, type, fields, box):
 
-    if name != lyr.GetName():
+    if name is not None and name != lyr.GetName():
         print('Wrong layer name')
         return False
 
@@ -679,14 +679,14 @@ def ogr_geojson_16():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
+    lyr = ds.GetLayerByName('esripoint')
     if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
+        gdaltest.post_reason('Missing layer called esripoint')
         return 'fail'
 
     extent = (2,2,49,49)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbPoint, 4, extent)
+    rc = validate_layer(lyr, 'esripoint', 1, ogr.wkbPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -741,14 +741,11 @@ def ogr_geojson_17():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (2,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbLineString, 0, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
     if not rc:
         return 'fail'
 
@@ -802,14 +799,11 @@ def ogr_geojson_18():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (-3,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbPolygon, 0, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
     if not rc:
         return 'fail'
 
@@ -854,14 +848,11 @@ def ogr_geojson_19():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (2,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -1355,15 +1346,12 @@ def ogr_geojson_28():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
     extent = (2,2,49,49,1,1)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -1418,15 +1406,12 @@ def ogr_geojson_29():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
     extent = (2,3,49,50,1,2)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbLineString, 0, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbLineString, 0, extent)
     if not rc:
         return 'fail'
 
@@ -1458,15 +1443,12 @@ def ogr_geojson_30():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
     extent = (2,3,49,50,1,2)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -1498,15 +1480,12 @@ def ogr_geojson_31():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     # validate layer doesn't check z, but put it in
     extent = (2,3,49,50,1,4)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbPolygon, 0, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbPolygon, 0, extent)
     if not rc:
         return 'fail'
 
@@ -1538,14 +1517,11 @@ def ogr_geojson_32():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (2,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -1577,14 +1553,11 @@ def ogr_geojson_33():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (2,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
         return 'fail'
 
@@ -1616,14 +1589,11 @@ def ogr_geojson_34():
         gdaltest.post_reason('Wrong number of layers')
         return 'fail'
 
-    lyr = ds.GetLayerByName('ESRIJSON')
-    if lyr is None:
-        gdaltest.post_reason('Missing layer called ESRIJSON')
-        return 'fail'
+    lyr = ds.GetLayer(0)
 
     extent = (2,3,49,50)
 
-    rc = validate_layer(lyr, 'ESRIJSON', 1, ogr.wkbMultiPoint, 4, extent)
+    rc = validate_layer(lyr, None, 1, ogr.wkbMultiPoint, 4, extent)
     if not rc:
         return 'fail'
 

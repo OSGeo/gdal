@@ -820,7 +820,11 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
     VSIFSeekL(fp, 0, SEEK_SET);
     bFirstSeg_ = true;
 
-    const char* pszName = CPLGetBasename(poDS->GetDescription());
+    const char* pszName = poDS->GetDescription();
+    if( STARTS_WITH_CI(pszName, "GeoJSON:") )
+        pszName += strlen("GeoJSON:");
+    pszName = CPLGetBasename(pszName);
+
     OGRGeoJSONLayer* poLayer =
       new OGRGeoJSONLayer( pszName, NULL,
                            OGRGeoJSONLayer::DefaultGeometryType,

@@ -35,6 +35,7 @@
 #include "ogrsf_frmts.h"
 
 #include "ogr_json_header.h"
+#include "ogrgeojsonutils.h"
 
 #include <set>
 
@@ -238,7 +239,7 @@ class OGRESRIJSONReader
     ~OGRESRIJSONReader();
 
     OGRErr Parse( const char* pszText );
-    void ReadLayers( OGRGeoJSONDataSource* poDS );
+    void ReadLayers( OGRGeoJSONDataSource* poDS, GeoJSONSourceType eSourceType );
 
     json_object* GetJSonObject() { return poGJObject_; }
 
