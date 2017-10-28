@@ -2812,6 +2812,127 @@ def ogr_dxf_43():
     return 'success'
 
 ###############################################################################
+# General tests of LEADER and MULTILEADER entities (#7111)
+
+def ogr_dxf_44():
+
+    ds = ogr.Open('data/leader-mleader.dxf')
+    lyr = ds.GetLayer(0)
+
+    # LEADER with default arrowhead, plus a couple of DIMSTYLE overrides
+    # (6.0 arrowhead size and 1.5 scale factor)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (30 40 0,10 40 0,19.3125 34.6875 0,10.3125 34.6875 0,-13.5990791268758 34.6875 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((21.0 41.5,30 40,21.0 38.5,21.0 41.5))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Skip text
+    f = lyr.GetNextFeature()
+
+    # Basic LEADER with no dimension style or override information
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (-21.121645731992 38.035579873508 30,-12.2152357926375 44.793971841437 30,-13.7256166009765 49.0748560186272 30,-13.9025293262723 49.0416613258524 30)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((-20.9601206293303 38.1204894796201 30,-21.121645731992 38.035579873508 30,-20.9963899665916 38.1682862909638 30,-20.9601206293303 38.1204894796201 30))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # LEADER with a custom arrowhead that consists of a polygon and line
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (30 80 0,10 65 0,25 55 0,25 50 0,40 65 0,48 65 0,169.282571623465 65.0 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 80.4,30.4 82.8,32.8 79.6,29.6 77.2,27.2 80.4))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (28.4 78.8 0,26.8 77.6 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Check that the very long text string in the MTEXT entity associated
+    # to this LEADER is captured correctly
+    f = lyr.GetNextFeature()
+    if len( f.GetField('Text') ) != 320:
+        gdaltest.post_reason( 'Wrong text length: got %d' % len( f.GetField('Text') ) )
+        return 'fail'
+
+    # MULTILEADER with custom arrowhead
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING (30 35,10 20,25 10,25 5,40 20,48 20)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 35.4,30.4 37.8,32.8 34.6,29.6 32.2,27.2 35.4))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (28.4 33.8 0,26.8 32.6 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT (50.0 22.0327421555252)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"Basic Multileader",p:7,s:4g)':
+        gdaltest.post_reason( 'Wrong style string on MULTILEADER text' )
+        f.DumpReadable()
+        return 'fail'
+
+    # There are three LEADERs, followed by two MULTILEADERs, without arrowheads.
+    # In the first LEADER/MULTILEADER, the arrowhead is set to an empty block.
+    # In the second LEADER/MULTILEADER, the arrowhead is too large to be displayed.
+    # The third LEADER has the arrow turned off (this isn't possible for MULTILEADER).
+    # We just check each of these to make sure there is no polygon (arrowhead) feature.
+    for x in range(3):
+        f = lyr.GetNextFeature()
+        geom = f.GetGeometryRef()
+        if geom.GetGeometryType() != ogr.wkbLineString25D:
+            gdaltest.post_reason( 'Unexpected LEADER geometry, expected wkbLineString25D on iteration %d' % x )
+            return 'fail'
+
+    for x in range(2):
+        f = lyr.GetNextFeature()
+        geom = f.GetGeometryRef()
+        if geom.GetGeometryType() != ogr.wkbLineString:
+            gdaltest.post_reason( 'Unexpected MULTILEADER geometry, expected wkbLineString on iteration %d' % x )
+            return 'fail'
+
+        f = lyr.GetNextFeature()
+        geom = f.GetGeometryRef()
+        if geom.GetGeometryType() != ogr.wkbPoint:
+            gdaltest.post_reason( 'Unexpected MULTILEADER geometry, expected wkbPoint on iteration %d' % x )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2867,6 +2988,7 @@ gdaltest_list = [
     ogr_dxf_41,
     ogr_dxf_42,
     ogr_dxf_43,
+    ogr_dxf_44,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

@@ -2881,6 +2881,15 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateSOLID();
         }
+        else if( EQUAL(szLineBuf,"LEADER") )
+        {
+            poFeature = TranslateLEADER();
+        }
+        else if( EQUAL(szLineBuf,"MLEADER")
+            || EQUAL(szLineBuf,"MULTILEADER") )
+        {
+            poFeature = TranslateMLEADER();
+        }
         else
         {
             if( oIgnoredEntities.count(szLineBuf) == 0 )

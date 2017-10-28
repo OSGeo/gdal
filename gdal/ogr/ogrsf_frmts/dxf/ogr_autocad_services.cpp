@@ -103,7 +103,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
         {
             // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
             // See data/dwg/EP/42002.dwg
-            // Not sure what \W and \T do, but we skip them.
+            // \W is for width and \T is for tracking, but we skip them.
             // According to qcad rs_text.cpp, \A values are vertical
             // alignment, 0=bottom, 1=mid, 2=top but we ignore for now.
 
@@ -418,6 +418,74 @@ const unsigned char *ACGetColorTable()
     };
 
     return abyDXFColors;
+}
+
+/************************************************************************/
+/*                       ACGetKnownDimStyleCodes()                      */
+/*                                                                      */
+/*      Gets a list of the DIMSTYLE codes that we care about. Array     */
+/*      terminates with a zero value.                                   */
+/************************************************************************/
+
+const int* ACGetKnownDimStyleCodes()
+{
+	static const int aiKnownCodes[] = {
+		40, 41, 42, 44, 75, 76, 77, 140, 147, 341, 0
+	};
+
+	return aiKnownCodes;
+}
+
+/************************************************************************/
+/*                      ACGetDimStylePropertyName()                     */
+/************************************************************************/
+
+const char *ACGetDimStylePropertyName( const int iDimStyleCode )
+
+{
+	// We are only interested in properties required by the DIMENSION
+	// and LEADER code. Return NULL for other properties.
+	switch (iDimStyleCode)
+	{
+		case 40: return "DIMSCALE";
+		case 41: return "DIMASZ";
+		case 42: return "DIMEXO";
+		case 44: return "DIMEXE";
+		case 75: return "DIMSE1";
+		case 76: return "DIMSE2";
+		case 77: return "DIMTAD";
+		case 140: return "DIMTXT";
+		case 147: return "DIMGAP";
+		case 341: return "DIMLDRBLK";
+		default: return NULL;
+	}
+}
+
+/************************************************************************/
+/*                    ACGetDimStylePropertyDefault()                    */
+/************************************************************************/
+
+const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
+
+{
+	// We are only interested in properties required by the DIMENSION
+	// and LEADER code. Return "0" for other, unknown properties.
+	// These defaults were obtained from the Express\defaults.scr file
+	// in an AutoCAD installation.
+	switch (iDimStyleCode)
+	{
+		case 40: return "1.0";
+		case 41: return "0.18";
+		case 42: return "0.0625";
+		case 44: return "0.18";
+		case 75: return "0";
+		case 76: return "0";
+		case 77: return "0";
+		case 140: return "0.18";
+		case 147: return "0.09";
+		case 341: return "";
+		default: return "0";
+	}
 }
 
 /************************************************************************/
