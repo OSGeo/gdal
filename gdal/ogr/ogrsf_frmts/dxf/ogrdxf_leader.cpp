@@ -444,6 +444,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     {
         DXF_LAYER_READER_ERROR();
         delete poFeature;
+        delete poLine;
         return NULL;
     }
     if( nCode == 0 )
