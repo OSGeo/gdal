@@ -536,7 +536,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 /*      defined by the two points.                                      */
 /************************************************************************/
 static void GenerateDefaultArrowhead( OGRDXFFeature* const poArrowheadFeature,
-    const OGRPoint oPoint1, const OGRPoint oPoint2,
+    const OGRPoint& oPoint1, const OGRPoint& oPoint2,
     const double dfArrowheadScale )
 
 {
@@ -577,8 +577,8 @@ static void GenerateDefaultArrowhead( OGRDXFFeature* const poArrowheadFeature,
 /*      the line segment defined by the two points.                     */
 /************************************************************************/
 void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
-    const CPLString& osBlockHandle, const OGRPoint oPoint1,
-    const OGRPoint oPoint2, const double dfArrowheadSize )
+    const CPLString& osBlockHandle, const OGRPoint& oPoint1,
+    const OGRPoint& oPoint2, const double dfArrowheadSize )
 {
     const double dfFirstSegmentLength = PointDist( oPoint1.getX(),
         oPoint1.getY(), oPoint2.getX(), oPoint2.getY() );

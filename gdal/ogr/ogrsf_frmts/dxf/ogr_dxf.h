@@ -269,8 +269,8 @@ class OGRDXFLayer : public OGRLayer
     void                FormatDimension( CPLString &osText, double dfValue );
     void                InsertArrowhead( OGRDXFFeature* const poFeature,
                                          const CPLString& osBlockName,
-                                         const OGRPoint oPoint1,
-                                         const OGRPoint oPoint2,
+                                         const OGRPoint& oPoint1,
+                                         const OGRPoint& oPoint2,
                                          const double dfArrowheadSize );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
                                              const double dfElevation );
@@ -401,7 +401,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     const char         *LookupLineType( const char *pszName );
-    void                PopulateDefaultDimStyleProperties(
+    static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
 
     // Header variables.
