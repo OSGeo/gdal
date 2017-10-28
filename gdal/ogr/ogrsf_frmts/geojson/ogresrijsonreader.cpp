@@ -98,7 +98,8 @@ OGRErr OGRESRIJSONReader::Parse( const char* pszText )
 /*                           ReadLayers()                               */
 /************************************************************************/
 
-void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
+void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS,
+                                    GeoJSONSourceType eSourceType )
 {
     CPLAssert( NULL == poLayer_ );
 
@@ -111,7 +112,16 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     OGRSpatialReference* poSRS = OGRESRIJSONReadSpatialReference( poGJObject_ );
 
-    poLayer_ = new OGRGeoJSONLayer( "ESRIJSON", poSRS,
+    const char* pszName = "ESRIJSON";
+    if( eSourceType == eGeoJSONSourceFile )
+    {
+        pszName = poDS->GetDescription();
+        if( STARTS_WITH_CI(pszName, "ESRIJSON:") )
+            pszName += strlen("ESRIJSON:");
+        pszName = CPLGetBasename(pszName);
+    }
+
+    poLayer_ = new OGRGeoJSONLayer( pszName, poSRS,
                                     OGRESRIJSONGetGeometryType(poGJObject_),
                                     poDS, NULL );
     if( poSRS != NULL )
