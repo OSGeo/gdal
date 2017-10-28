@@ -2867,7 +2867,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             const char *pszLine;
-            char** papszArgvOptfile = CSLAddString(NULL, papszReturn[0]);
+            // dummy value as first argument to please
+            // GDALGeneralCmdLineProcessor()
+            char** papszArgvOptfile = CSLAddString(NULL, "");
             bool bHasOptfile = false;
             while( (pszLine = CPLReadLineL( fpOptFile )) != NULL )
             {
@@ -2894,7 +2896,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( !bHasOptfile )
             {
                 GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                            &papszArgvOptfile, 0);
+                                            &papszArgvOptfile, nOptions);
             }
 
             char** papszIter = papszArgvOptfile + 1;
