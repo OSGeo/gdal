@@ -29,6 +29,7 @@
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
+#include <stdexcept>
 
 CPL_CVSID("$Id$")
 
