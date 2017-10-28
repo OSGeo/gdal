@@ -197,7 +197,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 
     // Zero scale has a special meaning which we aren't interested in,
     // so we can change it to 1.0
-    if( !dfScale )
+    if( dfScale == 0.0 )
         dfScale = 1.0;
 
 /* -------------------------------------------------------------------- */
@@ -457,7 +457,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 /* -------------------------------------------------------------------- */
     poLine->setPoint( nNumVertices++, dfLandingX, dfLandingY );
 
-    if( dfDoglegLength && ( dfDoglegVectorX || dfDoglegVectorY ) )
+    if( dfDoglegLength != 0.0 && ( dfDoglegVectorX != 0.0 || dfDoglegVectorY != 0.0 ) )
     {
         // We assume that the dogleg vector in the DXF is a unit vector.
         // Safe assumption? Who knows. The documentation is so bad.
