@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>TopoJSON driver</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>TopoJSON driver</h1>
+
+<p>(Note: prior to GDAL 2.3, the functionality of this driver was available in the
+GeoJSON driver. They are now distinct drivers)</p>
+
+<p>Starting with OGR 1.11, the driver can read the <a href="https://github.com/topojson/topojson-specification/blob/master/README.md">TopoJSON format</a></p>
+
+<h2>Datasource</h2>
+
+<p>The driver accepts three types of sources of data:</p>
+<ul>
+<li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to
+perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request.</li>
+<li>Plain text file with TopoJSON data - identified from the file extension .json or .topojson</li>
+<li>Text passed directly and encoded in Topo JSON</li>
+</ul>
+
+Starting with GDAL 2.3, the URL/filename/text might be prefixed with TopoJSON: to avoid any ambiguity with other drivers.
+
+<h2>See Also</h2>
+
+<p>
+<ul>
+<li><a href="drv_geojson.html">GeoJSON driver</a></li>
+<li><a href="https://github.com/topojson/topojson-specification/blob/master/README.md">TopoJSON Format Specification</a></li>
+</ul>
+</p>
+
+</body>
+</html>
