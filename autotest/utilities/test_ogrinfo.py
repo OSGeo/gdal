@@ -305,6 +305,16 @@ def test_ogrinfo_17():
         print(err)
         return 'fail'
 
+    f = open('tmp/optfile.txt', 'wt')
+    f.write('--config foo\n')
+    f.close()
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogrinfo_path() + ' --optfile tmp/optfile.txt', check_memleak = False )
+    os.unlink('tmp/optfile.txt')
+    if err.find('--config option given without a key and value argument') < 0:
+        gdaltest.post_reason('fail')
+        print(err)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
