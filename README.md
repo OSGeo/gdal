@@ -27,3 +27,4 @@ GDAL is an open source X/MIT licensed translator library for raster and vector g
 * Download: http://download.osgeo.org/gdal
 * Wiki: http://trac.osgeo.org/gdal - Bug tracking, various user and developer contributed documentation and hints
 * Mailing list: http://lists.osgeo.org/mailman/listinfo/gdal-dev
+
