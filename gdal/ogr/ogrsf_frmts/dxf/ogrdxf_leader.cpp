@@ -474,12 +474,12 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 /* -------------------------------------------------------------------- */
 
     // Get the first line segment of the leader and its length.
-    OGRPoint oPoint1, oPoint2;
-    poLine->getPoint( 0, &oPoint1 );
-    poLine->getPoint( 1, &oPoint2 );
-
     if( nNumVertices >= 2 )
     {
+        OGRPoint oPoint1, oPoint2;
+        poLine->getPoint( 0, &oPoint1 );
+        poLine->getPoint( 1, &oPoint2 );
+
         InsertArrowhead( poFeature, osArrowheadBlockHandle, oPoint1, oPoint2,
             dfArrowheadSize * dfScale );
     }
