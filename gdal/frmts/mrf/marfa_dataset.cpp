@@ -1739,7 +1739,8 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     }
 
     const int nPixelCount = nPageXSize * nPageYSize;
-    void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, GDALGetDataTypeSizeBytes(eDT));
+    const int dts = GDALGetDataTypeSizeBytes(eDT);
+    void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, dts);
     GByte *buffer_mask = NULL;
     if (buffer)
         buffer_mask = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
@@ -1783,7 +1784,8 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
             // get the data in the buffer, interleaved
             eErr = poSrc->RasterIO(GF_Read, col, row, nCols, nRows,
-                buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
+                buffer, nCols, nRows, eDT, nBandCount, NULL, 
+                nBands * dts, nBands * dts * nCols, dts, NULL);
 
             if (eErr != CE_None)
                 break;
@@ -1805,11 +1807,9 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             }
 
             // Write
-            if( eErr == CE_None )
-            {
-                eErr = RasterIO(GF_Write, col, row, nCols, nRows,
-                    buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
-            }
+            eErr = RasterIO(GF_Write, col, row, nCols, nRows,
+                buffer, nCols, nRows, eDT, nBandCount, NULL, 
+                nBands * dts, nBands * dts * nCols, dts, NULL);
 
         } // Columns
         if (eErr != CE_None)
