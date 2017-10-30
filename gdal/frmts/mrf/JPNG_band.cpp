@@ -19,8 +19,6 @@
 */
 
 #include "marfa.h"
-#include <cassert>
-
 CPL_CVSID("$Id$")
 
 CPL_C_START
@@ -64,8 +62,7 @@ static void RGBA2RGB(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
         *--stop = *--source_end;
         *--stop = *--source_end;
@@ -84,8 +81,7 @@ static void LA2L(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void L2LA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
     }
 }

@@ -992,6 +992,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             else
                 family->open(poOpenInfo->pszFilename, true);
             jp2_source *jp2_src = new jp2_source;
+            poInput = jp2_src;
             if( !jp2_src->open(family) || !jp2_src->read_header() )
             {
                 CPLDebug("JP2KAK", "Cannot read JP2 boxes");
@@ -1000,8 +1001,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 delete poRawInput;
                 return NULL;
             }
-
-            poInput = jp2_src;
 
             oJP2Palette = jp2_src->access_palette();
             oJP2Channels = jp2_src->access_channels();
@@ -1757,23 +1756,26 @@ CPLErr JP2KAKDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      Write out the passed box and delete it.                         */
 /************************************************************************/
 
-static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
+static void JP2KAKWriteBox( jp2_family_tgt *jp2_family, GDALJP2Box *poBox )
 
 {
     if( poBox == NULL )
         return;
 
+    jp2_output_box jp2_out;
+
     GUInt32 nBoxType = 0;
     memcpy(&nBoxType, poBox->GetType(), sizeof(nBoxType));
     CPL_MSBPTR32(&nBoxType);
 
+    int length = static_cast<int>(poBox->GetDataLength());
+
     // Write to a box on the JP2 file.
-    jp2_out->open_next(nBoxType);
-
-    jp2_out->write(const_cast<kdu_byte *>(poBox->GetWritableData()),
-                   static_cast<int>(poBox->GetDataLength()));
-
-    jp2_out->close();
+    jp2_out.open(jp2_family, nBoxType);
+    jp2_out.set_target_size(length);
+    jp2_out.write(const_cast<kdu_byte *>(poBox->GetWritableData()),
+                   length);
+    jp2_out.close();
 
     delete poBox;
 }
@@ -2513,16 +2515,41 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             const char *pszGMLJP2V2Def =
                 CSLFetchNameValue(papszOptions, "GMLJP2V2_DEF");
-            if( pszGMLJP2V2Def != NULL )
-                JP2KAKWriteBox(
-                    &jp2_out,
-                    oJP2MD.CreateGMLJP2V2(
-                        nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
-            else
-                JP2KAKWriteBox(&jp2_out, oJP2MD.CreateGMLJP2(nXSize, nYSize));
+            GDALJP2Box* poBox;
+            if( pszGMLJP2V2Def != NULL ) {
+                poBox = oJP2MD.CreateGMLJP2V2(
+                    nXSize,nYSize,pszGMLJP2V2Def,poSrcDS);
+            } else {
+                poBox = oJP2MD.CreateGMLJP2(nXSize, nYSize);
+            }
+            try
+            {
+                JP2KAKWriteBox(&family, poBox);
+            }
+            catch( ... )
+            {
+                CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
+                oCodeStream.destroy();
+                CPLFree(layer_bytes);
+                delete poBox;
+                return NULL;
+            }
         }
-        if( CPLFetchBool(papszOptions, "GeoJP2", true) )
-            JP2KAKWriteBox(&jp2_out, oJP2MD.CreateJP2GeoTIFF());
+        if( CPLFetchBool(papszOptions, "GeoJP2", true) ) {
+            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+            try
+            {
+                JP2KAKWriteBox(&family, poBox);
+            }
+            catch( ... )
+            {
+                CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
+                oCodeStream.destroy();
+                CPLFree(layer_bytes);
+                delete poBox;
+                return NULL;
+            }
+        }
     }
 
     // Do we have any XML boxes we want to preserve?
@@ -2541,7 +2568,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poXMLBox->SetType("xml ");
         poXMLBox->SetWritableData(static_cast<int>(strlen(papszMD[0]) + 1),
                                   reinterpret_cast<GByte *>(papszMD[0]));
-        JP2KAKWriteBox(&jp2_out, poXMLBox);
+        JP2KAKWriteBox(&family, poXMLBox);
     }
 
     // Open codestream box.

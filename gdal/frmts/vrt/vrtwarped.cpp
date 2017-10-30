@@ -269,10 +269,11 @@ GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
     VRTWarpedDataset *poDS = new VRTWarpedDataset( nPixels, nLines );
 
+    // Call this before assigning hDstDS
+    GDALWarpResolveWorkingDataType(psOptions);
+
     psOptions->hDstDS = poDS;
     poDS->SetGeoTransform( padfGeoTransform );
-
-    GDALWarpResolveWorkingDataType(psOptions);
 
     for( int i = 0; i < psOptions->nBandCount; i++ )
     {

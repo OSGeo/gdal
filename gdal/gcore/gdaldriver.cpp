@@ -864,6 +864,23 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         GDALValidateCreationOptions( this, papszOptions );
 
 /* -------------------------------------------------------------------- */
+/*      Advise the source raster that we are going to read it completely */
+/* -------------------------------------------------------------------- */
+
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBandCount = poSrcDS->GetRasterCount();
+    GDALDataType eDT = GDT_Unknown;
+    if( nBandCount > 0 )
+    {
+        GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(1);
+        if( poSrcBand )
+            eDT = poSrcBand->GetRasterDataType();
+    }
+    poSrcDS->AdviseRead( 0, 0, nXSize, nYSize, nXSize, nYSize, eDT,
+                         nBandCount, NULL, NULL );
+
+/* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
 /*      otherwise fallback to the internal implementation using the     */
 /*      Create() method.                                                */

@@ -9,7 +9,7 @@
      SV** f = av_fetch(classifier, 0, 0);
      SV** s = av_fetch(classifier, 1, 0);
      SV** t = av_fetch(classifier, 2, 0);
-     if (f && SvNOK(*f)) {
+     if (f && (SvNOK(*f) || SvIOK(*f))) {
          switch(comparison) {
          case 0: /* lt */
          if (nv < SvNV(*f))
@@ -28,10 +28,47 @@
              t = s;
          break;
          }
-         if (t && SvNOK(*t))
+         if (t && (SvNOK(*t) || SvIOK(*t)))
              return SvNV(*t);
          else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
              return NVClassify(comparison, nv, (AV*)(SvRV(*t)), error);
+         else
+             *error = "The decision in a classifier must be a number or a reference to a classifier.";
+     } else
+         *error = "The first value in a classifier must be a number.";
+     return 0;
+  }
+  int64_t IVClassify(int comparison, int64_t k, AV* classifier, const char **error) {
+     /* recursive, return k < classifier[0] ? classifier[1] : classifier[2]
+        sets error if there are not three values in the classifier,
+        first is not a number, or second or third are not a number of arrayref
+     */
+     SV** f = av_fetch(classifier, 0, 0);
+     SV** s = av_fetch(classifier, 1, 0);
+     SV** t = av_fetch(classifier, 2, 0);
+     if (f && (SvNOK(*f) || SvIOK(*f))) {
+         switch(comparison) {
+         case 0: /* lt */
+         if (k < SvNV(*f))
+             t = s;
+         break;
+         case 1: /* lte */
+         if (k <= SvNV(*f))
+             t = s;
+         break;
+         case 2: /* gt */
+         if (k > SvNV(*f))
+             t = s;
+         break;
+         case 3: /* gte */
+         if (k >= SvNV(*f))
+             t = s;
+         break;
+         }
+         if (t && (SvNOK(*t) || SvIOK(*t)))
+             return SvNV(*t);
+         else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
+             return IVClassify(comparison, k, (AV*)(SvRV(*t)), error);
          else
              *error = "The decision in a classifier must be a number or a reference to a classifier.";
      } else
@@ -46,7 +83,7 @@
      SV** f = av_fetch(classifier, 0, 0);
      SV** s = av_fetch(classifier, 1, 0);
      SV** t = av_fetch(classifier, 2, 0);
-     if (f && SvNOK(*f)) {
+     if (f && (SvNOK(*f) || SvIOK(*f))) {
          ++*klass;
          switch(comparison) {
          case 0: /* lt */
@@ -70,7 +107,7 @@
              t = s;
          break;
          }
-         if (t && SvNOK(*t))
+         if (t && (SvNOK(*t) || SvIOK(*t)))
              return;
          else if (t && SvROK(*t) && (SvTYPE(SvRV(*t)) == SVt_PVAV))
              NVClass(comparison, nv, (AV*)(SvRV(*t)), klass, error);
@@ -109,7 +146,7 @@
 %}
 
 %extend GDALRasterBandShadow {
-  
+
     %apply (int nList, double* pList) {(int nFixedLevelCount, double *padfFixedLevels)};
     %apply (int defined, double value) {(int bUseNoData, double dfNoDataValue)};
     CPLErr ContourGenerate(double dfContourInterval, double dfContourBase,
@@ -201,11 +238,11 @@
     SV *ClassCounts(SV* classifier,
                     GDALProgressFunc callback = NULL,
                     void* callback_data = NULL) {
-                    
+
         const char *error = NULL;
         GDALDataType dt = GDALGetRasterDataType(self);
-        if (!(dt == GDT_Float32 || dt == GDT_Float64)) {
-            do_confess("ClassCounts with classifier requires a float band.", 1);
+        if (!(dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_Int16 || dt == GDT_UInt32 || dt == GDT_Int32 || dt == GDT_Float32 || dt == GDT_Float64)) {
+            do_confess("ClassCounts with classifier requires an integer or real band.", 1);
         }
 
         AV* array_classifier = NULL;
@@ -215,6 +252,8 @@
         if (error) do_confess(error, 1);
 
         HV* hash = newHV();
+        int has_no_data;
+        double no_data = GDALGetRasterNoDataValue(self, &has_no_data);
         int XBlockSize, YBlockSize;
         GDALGetBlockSize( self, &XBlockSize, &YBlockSize );
         int XBlocks = (GDALGetRasterBandXSize(self) + XBlockSize - 1) / XBlockSize;
@@ -239,12 +278,30 @@
                     for (int iX = 0; iX < XValid; ++iX) {
                         double nv = 0;
                         switch(dt) {
+                        case GDT_Byte:
+                            nv = ((GByte*)(data))[iX + iY * XBlockSize];
+                            break;
+                        case GDT_UInt16:
+                            nv = ((GUInt16*)(data))[iX + iY * XBlockSize];
+                            break;
+                        case GDT_Int16:
+                            nv = ((GInt16*)(data))[iX + iY * XBlockSize];
+                            break;
+                        case GDT_UInt32:
+                            nv = ((GUInt32*)(data))[iX + iY * XBlockSize];
+                            break;
+                        case GDT_Int32:
+                            nv = ((GInt32*)(data))[iX + iY * XBlockSize];
+                            break;
                         case GDT_Float32:
-                          nv = ((float*)(data))[iX + iY * XBlockSize];
-                          break;
+                            nv = ((float*)(data))[iX + iY * XBlockSize];
+                            break;
                         case GDT_Float64:
-                          nv = ((double*)(data))[iX + iY * XBlockSize];
-                          break;
+                            nv = ((double*)(data))[iX + iY * XBlockSize];
+                            break;
+                        }
+                        if (has_no_data && nv == no_data) {
+                            continue;
                         }
                         int k = 0;
                         NVClass(comparison, nv, array_classifier, &k, &error);
@@ -266,7 +323,7 @@
                 }
             }
         }
-        
+
         CPLFree(data);
         if (hash)
             return newRV_noinc((SV*)hash);
@@ -281,11 +338,11 @@
     void Reclassify(SV* classifier,
                     GDALProgressFunc callback = NULL,
                     void* callback_data = NULL) {
-                    
+
         const char *error = NULL;
-        
+
         GDALDataType dt = GDALGetRasterDataType(self);
-        
+
         bool is_integer_raster = true;
         HV* hash_classifier = NULL;
         bool has_default = false;
@@ -293,7 +350,7 @@
 
         AV* array_classifier = NULL;
         int comparison = 0;
-        
+
         if (dt == GDT_Byte || dt == GDT_UInt16 || dt == GDT_Int16 || dt == GDT_UInt32 || dt == GDT_Int32) {
             if (SvROK(classifier) && (SvTYPE(SvRV(classifier)) == SVt_PVHV)) {
                 hash_classifier = (HV*)SvRV(classifier);
@@ -303,7 +360,9 @@
                     deflt = SvIV(*sv);
                 }
             } else {
-                do_confess(NEED_HASH_REF, 1);
+                /*do_confess(NEED_HASH_REF, 1);*/
+                array_classifier = to_array_classifier(classifier, &comparison, &error);
+                if (error) do_confess(error, 1);
             }
         } else if (dt == GDT_Float32 || dt == GDT_Float64) {
             is_integer_raster = false;
@@ -312,7 +371,7 @@
         } else {
             do_confess("Only integer and float rasters can be reclassified.", 1);
         }
-        
+
         int has_no_data;
         double no_data = GDALGetRasterNoDataValue(self, &has_no_data);
         int XBlockSize, YBlockSize;
@@ -362,20 +421,29 @@
                         }
 
                         if (is_integer_raster) {
-                            char key[12];
-                            int klen = sprintf(key, "%i", k);
-                            SV** sv = hv_fetch(hash_classifier, key, klen, 0);
-                            if (sv && SvOK(*sv)) {
-                                k = SvIV(*sv);
-                            } else if (has_default) {
-                                if (!(has_no_data && k == no_data))
-                                    k = deflt;
-                                else
-                                    continue;
+                            if (array_classifier) {
+                                if (!(has_no_data && k == no_data)) {
+                                    k = IVClassify(comparison, k, array_classifier, &error);
+                                    if (error) goto fail;
+                                }
+                            } else {
+                                char key[12];
+                                int klen = sprintf(key, "%i", k);
+                                SV** sv = hv_fetch(hash_classifier, key, klen, 0);
+                                if (sv && SvOK(*sv)) {
+                                    k = SvIV(*sv);
+                                } else if (has_default) {
+                                    if (!(has_no_data && k == no_data))
+                                        k = deflt;
+                                    else
+                                        continue;
+                                }
                             }
                         } else {
-                            nv = NVClassify(comparison, nv, array_classifier, &error);
-                            if (error) goto fail;
+                            if (!(has_no_data && nv == no_data)) {
+                                nv = NVClassify(comparison, nv, array_classifier, &error);
+                                if (error) goto fail;
+                            }
                         }
 
                         switch(dt) {
@@ -410,7 +478,7 @@
         return;
         fail:
         CPLFree(data);
-        do_confess(error, 1);        
+        do_confess(error, 1);
         return;
     }
 

@@ -2,7 +2,7 @@
 
 CXX = g++
 #CXXFLAGS := $(shell gdal-config --cflags)
-CXXFLAGS = -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
+CXXFLAGS = -g -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
 CXXFLAGS += -I. -Itut $(CPPFLAGS)
 CXXFLAGS += -Wall
 CXXFLAGS += -Wextra -Wno-unused-function
@@ -46,6 +46,18 @@ quick_test:
 	./testblockcachelimits --debug ON
 	./testmultithreadedwriting
 	./testdestroy
+
+test_sse:
+	$(CXX) -g -O2  testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mssse3 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mssse3 -msse4.1 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mavx2 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -DUSE_SSE2_EMULATION testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
 
 OBJ = \
     gdal_unit_test.o \
@@ -108,7 +120,7 @@ test_c_include_from_cpp_file: test_c_include_from_cpp_file.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
-	$(RM) $(PROGS)
+	$(RM) $(PROGS) testsse
 	$(RM) $(OBJ)
 	$(RM) *.a
 	$(RM) *.out

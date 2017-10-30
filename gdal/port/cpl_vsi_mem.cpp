@@ -339,20 +339,7 @@ int VSIMemHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
     if( m_nOffset > poFile->nLength )
     {
-        if( !bUpdate )  // Read-only files cannot be extended by seek.
-        {
-            CPLDebug(
-                "VSIMemHandle",
-                "Attempt to extend read-only file '%s' to length " CPL_FRMT_GUIB
-                " from " CPL_FRMT_GUIB ".",
-                poFile->osFilename.c_str(),
-                m_nOffset, poFile->nLength);
-
-            m_nOffset = poFile->nLength;
-            errno = EACCES;
-            return -1;
-        }
-        else  // Writable files are zero-extended by seek past end.
+        if( bUpdate ) // Writable files are zero-extended by seek past end.
         {
             bExtendFileAtNextWrite = true;
         }
@@ -381,7 +368,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     // FIXME: Integer overflow check should be placed here:
     size_t nBytesToRead = nSize * nCount;
 
-    if( poFile->nLength < m_nOffset )
+    if( poFile->nLength <= m_nOffset )
     {
         bEOF = true;
         return 0;
@@ -847,7 +834,7 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
 //! @endcond
 
 /************************************************************************/
-/*                     VSIInstallLargeFileHandler()                     */
+/*                       VSIInstallMemFileHandler()                     */
 /************************************************************************/
 
 /**
@@ -863,13 +850,7 @@ GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace( const char* /*pszDirname*/ )
  * without duplicating original copies of the data or to "steal" the block
  * of memory associated with a memory file.
  *
- * At this time the memory handler does not properly handle directory
- * semantics for the memory portion of the filesystem.  The VSIReadDir()
- * function is not supported though this will be corrected in the future.
- *
- * Calling this function repeatedly should do no harm, though it is not
- * necessary.  It is already called the first time a virtualizable
- * file access function (i.e. VSIFOpenL(), VSIMkDir(), etc) is called.
+ * Directory related functions are supported.
  *
  * This code example demonstrates using GDAL to translate from one memory
  * buffer to another.

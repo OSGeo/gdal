@@ -17,6 +17,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include <limits>
+
 #include "degrib2.h"
 #include "myerror.h"
 #include "myassert.h"
@@ -1548,7 +1551,13 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
    meta->gridAttrib.max = meta->gridAttrib.min;
    meta->gridAttrib.f_maxmin = 1;
    meta->gridAttrib.numMiss = 0;
-   meta->gridAttrib.refVal = (float)refVal;
+   if (refVal >= std::numeric_limits<float>::max() || CPLIsNan(refVal)) {
+      meta->gridAttrib.refVal = std::numeric_limits<float>::max();
+   } else if (refVal <= -std::numeric_limits<float>::max()) {
+      meta->gridAttrib.refVal = -std::numeric_limits<float>::max();
+   } else {
+      meta->gridAttrib.refVal = static_cast<float>(refVal);
+   }
    meta->gridAttrib.ESF = ESF;
    meta->gridAttrib.DSF = DSF;
    bufLoc = 8;
@@ -1582,8 +1591,8 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
             data[newIndex] = UNDEFINED;
          } else {
             if (numBits != 0) {
-               if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
-                   return -1;
+                if( ((int)bdsRemainingSize - 1) * 8 + bufLoc < (int)numBits )
+                    return -1;
                memBitRead (&uli_temp, sizeof (sInt4), bds, numBits,
                            &bufLoc, &numUsed);
                assert( numUsed <= bdsRemainingSize );
@@ -1659,7 +1668,7 @@ static int ReadGrib1Sect4 (uChar *bds, uInt4 gribLen, uInt4 *curLoc,
                newIndex = i;
             }
 
-            if( bdsRemainingSize < (unsigned) (numBits + 7) / 8)
+            if( ((int)bdsRemainingSize - 1) * 8 + bufLoc < (int)numBits )
                 return -1;
             memBitRead (&uli_temp, sizeof (sInt4), bds, numBits, &bufLoc,
                         &numUsed);
@@ -1936,7 +1945,16 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 */
    Clock_Print (meta->validTime, 20, meta->pds1.validTime, "%Y%m%d%H%M", 0);
 
-   meta->deltTime = (sInt4) (meta->pds1.validTime - meta->pds1.refTime);
+   double deltaTime = meta->pds1.validTime - meta->pds1.refTime;
+   if (deltaTime >= std::numeric_limits<sInt4>::max()) {
+       printf ("Clamped deltaTime.  Was %lf\n", deltaTime);
+       deltaTime = std::numeric_limits<sInt4>::max();
+   }
+   if (deltaTime <= std::numeric_limits<sInt4>::min()) {
+       printf ("Clamped deltaTime.  Was %lf\n", deltaTime);
+       deltaTime = std::numeric_limits<sInt4>::min();
+   }
+   meta->deltTime = static_cast<sInt4>(deltaTime);
 
    /* Read section 5.  If it is "7777" == 926365495 we are done. */
    if (curLoc == gribLen) {

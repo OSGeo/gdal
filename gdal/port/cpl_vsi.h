@@ -210,6 +210,8 @@ int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
 int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
 
+int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */
@@ -312,6 +314,10 @@ void VSIInstallS3FileHandler(void);
 void VSIInstallS3StreamingFileHandler(void);
 void VSIInstallGSFileHandler(void);
 void VSIInstallGSStreamingFileHandler(void);
+void VSIInstallAzureFileHandler(void);
+void VSIInstallAzureStreamingFileHandler(void);
+void VSIInstallOSSFileHandler(void);
+void VSIInstallOSSStreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */

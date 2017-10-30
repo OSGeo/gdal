@@ -33,6 +33,8 @@
 #include "ogr_api.h"
 
 #include <cmath>
+#include <algorithm>
+#include <stdexcept>
 
 CPL_CVSID("$Id$")
 
@@ -48,15 +50,6 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn ) :
     poFeatureDefn->Reference();
 
     poDS->AddStandardFields( poFeatureDefn );
-
-    if( !poDS->InlineBlocks() )
-    {
-        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
-        poFeatureDefn->AddFieldDefn( &oScaleField );
-
-        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
-        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
-    }
 
     SetDescription( poFeatureDefn->GetName() );
 }
@@ -120,7 +113,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
     switch( nCode )
     {
       case 8:
-        poFeature->SetField( "Layer", TextUnescape(pszValue) );
+        poFeature->SetField( "Layer", TextRecode(pszValue) );
         break;
 
       case 100:
@@ -138,7 +131,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         break;
 
       case 6:
-        poFeature->SetField( "Linetype", TextUnescape(pszValue) );
+        poFeature->SetField( "Linetype", TextRecode(pszValue) );
         break;
 
       case 370:
@@ -164,7 +157,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
 
           if( !osAggregate.empty() )
               osAggregate += " ";
-          osAggregate += pszValue;
+          osAggregate += TextRecode(pszValue);
 
           poFeature->SetField( "ExtendedEntity", osAggregate );
       }
@@ -200,8 +193,8 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Is the layer disabled/hidden/frozen/off?                        */
 /* -------------------------------------------------------------------- */
-    int bHidden =
-        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+    const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
+    const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
@@ -431,18 +424,58 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
         || oStyleProperties.count("230_N.dZ") == 0 )
         return;
 
-    if( poGeometry == NULL )
-        return;
-
     double adfN[3];
 
     adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
     adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
     adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
 
+    ApplyOCSTransformer( poGeometry, adfN );
+}
+
+/************************************************************************/
+/*                         ApplyOCSTransformer()                        */
+/*                                                                      */
+/*      Apply a transformation from the given OCS to world              */
+/*      coordinates.                                                    */
+/************************************************************************/
+
+void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry,
+    double adfN[3] )
+
+{
+    if( poGeometry == NULL || adfN == NULL )
+        return;
+
     OCSTransformer oTransformer( adfN );
 
+    // Promote to 3D, in case the OCS transformation introduces a
+    // third dimension to the geometry.
+    const bool bInitially2D = !poGeometry->Is3D();
+    if( bInitially2D )
+        poGeometry->set3D( TRUE );
+
     poGeometry->transform( &oTransformer );
+
+    // If the geometry was 2D to begin with, and is still 2D after the
+    // OCS transformation, flatten it back to 2D.
+    if( bInitially2D )
+    {
+        OGREnvelope3D oEnvelope;
+        poGeometry->getEnvelope( &oEnvelope );
+        if( oEnvelope.MaxZ == 0.0 && oEnvelope.MinZ == 0.0 )
+            poGeometry->flattenTo2D();
+    }
+}
+
+/************************************************************************/
+/*                             TextRecode()                             */
+/************************************************************************/
+
+CPLString OGRDXFLayer::TextRecode( const char *pszInput )
+
+{
+    return CPLString( pszInput ).Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
 }
 
 /************************************************************************/
@@ -452,22 +485,22 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 /*      and \~ for space, and do the recoding to UTF8.                  */
 /************************************************************************/
 
-CPLString OGRDXFLayer::TextUnescape( const char *pszInput )
+CPLString OGRDXFLayer::TextUnescape( const char *pszInput, bool bIsMText )
 
 {
-    return ACTextUnescape( pszInput, poDS->GetEncoding() );
+    return ACTextUnescape( pszInput, poDS->GetEncoding(), bIsMText );
 }
 
 /************************************************************************/
 /*                           TranslateMTEXT()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateMTEXT()
+OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
@@ -518,7 +551,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
           case 3:
             if( osText != "" )
                 osText += "\n";
-            osText += TextUnescape(szLineBuf);
+            osText += TextUnescape(szLineBuf, true);
             break;
 
           case 50:
@@ -526,7 +559,7 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
             break;
 
           case 7:
-            osStyleName = TextUnescape(szLineBuf);
+            osStyleName = TextRecode(szLineBuf);
             break;
 
           default:
@@ -549,7 +582,10 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
         poGeom = new OGRPoint( dfX, dfY );
-    ApplyOCSTransformer( poGeom );
+
+    /* We do NOT apply the OCS for MTEXT. See https://trac.osgeo.org/gdal/ticket/7049 */
+    /* ApplyOCSTransformer( poGeom ); */
+
     poFeature->SetGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */
@@ -657,12 +693,12 @@ OGRFeature *OGRDXFLayer::TranslateMTEXT()
 /*                           TranslateTEXT()                            */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateTEXT()
+OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
@@ -708,7 +744,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 
           case 1:
           // case 3:  // we used to capture prompt, but it should not be displayed as text.
-            osText += szLineBuf;
+            osText += TextUnescape(szLineBuf, false);
             break;
 
           case 50:
@@ -724,7 +760,7 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 7:
-            osStyleName = TextUnescape(szLineBuf);
+            osStyleName = TextRecode(szLineBuf);
             break;
           
           default:
@@ -808,8 +844,8 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /* -------------------------------------------------------------------- */
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
-    int bHidden =
-        EQUAL(poDS->LookupLayerProperty( osLayer, "Hidden" ), "1");
+    const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
+    const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
 
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
@@ -886,12 +922,12 @@ OGRFeature *OGRDXFLayer::TranslateTEXT()
 /*                           TranslatePOINT()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslatePOINT()
+OGRDXFFeature *OGRDXFLayer::TranslatePOINT()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
@@ -947,12 +983,12 @@ OGRFeature *OGRDXFLayer::TranslatePOINT()
 /*                           TranslateLINE()                            */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateLINE()
+OGRDXFFeature *OGRDXFLayer::TranslateLINE()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
@@ -1034,7 +1070,7 @@ OGRFeature *OGRDXFLayer::TranslateLINE()
 /************************************************************************/
 /*                         TranslateLWPOLYLINE()                        */
 /************************************************************************/
-OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
+OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
 {
     // Collect vertices and attributes into a smooth polyline.
@@ -1045,7 +1081,7 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     int nCode = 0;
     int nPolylineFlag = 0;
 
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
@@ -1161,13 +1197,13 @@ OGRFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 /*      We also capture the following VERTEXes.                         */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
+OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
 
 {
     char szLineBuf[257];
     int nCode = 0;
     int nPolylineFlag = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
 
 /* -------------------------------------------------------------------- */
 /*      Collect information from the POLYLINE object itself.            */
@@ -1416,12 +1452,12 @@ OGRFeature *OGRDXFLayer::TranslatePOLYLINE()
 /*                          TranslateCIRCLE()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateCIRCLE()
+OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
@@ -1490,12 +1526,12 @@ OGRFeature *OGRDXFLayer::TranslateCIRCLE()
 /*                          TranslateELLIPSE()                          */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateELLIPSE()
+OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
@@ -1649,12 +1685,12 @@ OGRFeature *OGRDXFLayer::TranslateELLIPSE()
 /*                            TranslateARC()                            */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateARC()
+OGRDXFFeature *OGRDXFLayer::TranslateARC()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
@@ -1748,7 +1784,7 @@ OGRFeature *OGRDXFLayer::TranslateARC()
 void rbspline2(int npts,int k,int p1,double b[],double h[],
         bool bCalculateKnots, double knots[], double p[]);
 
-OGRFeature *OGRDXFLayer::TranslateSPLINE()
+OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 
 {
     char szLineBuf[257];
@@ -1760,7 +1796,7 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
     int nKnots = -1;
     bool bResult = false;
     bool bCalculateKnots = false;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     std::vector<double> adfControlPoints;
     std::vector<double> adfKnots;
     std::vector<double> adfWeights;
@@ -1945,12 +1981,12 @@ OGRFeature *OGRDXFLayer::TranslateSPLINE()
 /*                          Translate3DFACE()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::Translate3DFACE()
+OGRDXFFeature *OGRDXFLayer::Translate3DFACE()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
     double dfX1 = 0.0;
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
@@ -2056,67 +2092,54 @@ OGRFeature *OGRDXFLayer::Translate3DFACE()
 }
 
 /* -------------------------------------------------------------------- */
-/*      Distance                                                        */
+/*      PointXAxisComparer                                              */
 /*                                                                      */
-/*      Calculate distance between two points                           */
+/*      Returns true if oP1 is to the left of oP2, or they have the     */
+/*      same x-coordinate and oP1 is below oP2.                         */
 /* -------------------------------------------------------------------- */
 
-static double Distance(double dX0, double dY0, double dX1, double dY1) {
-    return sqrt((dX1 - dX0) * (dX1 - dX0) + (dY1 - dY0) * (dY1 - dY0));
+static bool PointXAxisComparer(const OGRPoint& oP1, const OGRPoint& oP2)
+{
+    return oP1.getX() == oP2.getX() ?
+        oP1.getY() < oP2.getY() :
+        oP1.getX() < oP2.getX();
 }
 
 /* -------------------------------------------------------------------- */
-/*      AddEdgesByNearest                                               */
+/*      PointXYZEqualityComparer                                        */
 /*                                                                      */
-/*      Order and add SOLID edges to geometry collection                */
+/*      Returns true if oP1 is equal to oP2 in the X, Y and Z axes.     */
 /* -------------------------------------------------------------------- */
 
-static void AddEdgesByNearest(OGRGeometryCollection* poCollection, OGRLineString *poLS,
-        OGRLineString *poLS4, double dfX2, double dfY2, double dfX3,
-        double dfY3, double dfX4, double dfY4) {
-    OGRLineString *poLS2 = new OGRLineString();
-    OGRLineString *poLS3 = new OGRLineString();
-    poLS->addPoint(dfX2, dfY2);
-    poCollection->addGeometryDirectly(poLS);
-    poLS2->addPoint(dfX2, dfY2);
-    double dTo3 = Distance(dfX2, dfY2, dfX3, dfY3);
-    double dTo4 = Distance(dfX2, dfY2, dfX4, dfY4);
-    if (dTo3 <= dTo4) {
-        poLS2->addPoint(dfX3, dfY3);
-        poCollection->addGeometryDirectly(poLS2);
-        poLS3->addPoint(dfX3, dfY3);
-        poLS3->addPoint(dfX4, dfY4);
-        poCollection->addGeometryDirectly(poLS3);
-        poLS4->addPoint(dfX4, dfY4);
-    } else {
-        poLS2->addPoint(dfX4, dfY4);
-        poCollection->addGeometryDirectly(poLS2);
-        poLS3->addPoint(dfX4, dfY4);
-        poLS3->addPoint(dfX3, dfY3);
-        poCollection->addGeometryDirectly(poLS3);
-        poLS4->addPoint(dfX3, dfY3);
-    }
+static bool PointXYZEqualityComparer(const OGRPoint& oP1, const OGRPoint& oP2)
+{
+    return oP1.getX() == oP2.getX() && oP1.getY() == oP2.getY() &&
+        oP1.getZ() == oP2.getZ();
 }
 
 /************************************************************************/
 /*                           TranslateSOLID()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateSOLID()
+OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
 
 {
     CPLDebug("SOLID", "translating solid");
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+    OGRDXFFeature *poFeature = new OGRDXFFeature(poFeatureDefn);
     double dfX1 = 0.0;
     double dfY1 = 0.0;
+    double dfZ1 = 0.0;
     double dfX2 = 0.0;
     double dfY2 = 0.0;
+    double dfZ2 = 0.0;
     double dfX3 = 0.0;
     double dfY3 = 0.0;
+    double dfZ3 = 0.0;
     double dfX4 = 0.0;
     double dfY4 = 0.0;
+    double dfZ4 = 0.0;
 
     while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0) {
         switch (nCode) {
@@ -2129,6 +2152,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 30:
+            dfZ1 = CPLAtof(szLineBuf);
             break;
 
         case 11:
@@ -2140,6 +2164,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 31:
+            dfZ2 = CPLAtof(szLineBuf);
             break;
 
         case 12:
@@ -2151,6 +2176,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 32:
+            dfZ3 = CPLAtof(szLineBuf);
             break;
 
         case 13:
@@ -2162,6 +2188,7 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
             break;
 
         case 33:
+            dfZ4 = CPLAtof(szLineBuf);
             break;
 
         default:
@@ -2176,42 +2203,78 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
         return NULL;
     }
 
-    CPLDebug("Corner coordinates are", "%f,%f,%f,%f,%f,%f,%f,%f", dfX1, dfY1,
-            dfX2, dfY2, dfX3, dfY3, dfX4, dfY4);
+    // do we want Z-coordinates?
+    const bool bWantZ = dfZ1 != 0.0 || dfZ2 != 0.0 ||
+                        dfZ3 != 0.0 || dfZ4 != 0.0;
 
-    OGRGeometryCollection* poCollection = NULL;
-    poCollection = new OGRGeometryCollection();
+    // check how many unique corners we have
+    OGRPoint* poCorners = new OGRPoint[4];
+    poCorners[0].setX(dfX1);
+    poCorners[0].setY(dfY1);
+    if( bWantZ )
+        poCorners[0].setZ(dfZ1);
+    poCorners[1].setX(dfX2);
+    poCorners[1].setY(dfY2);
+    if( bWantZ )
+        poCorners[1].setZ(dfZ2);
+    poCorners[2].setX(dfX3);
+    poCorners[2].setY(dfY3);
+    if( bWantZ )
+        poCorners[2].setZ(dfZ3);
+    poCorners[3].setX(dfX4);
+    poCorners[3].setY(dfY4);
+    if( bWantZ )
+        poCorners[3].setZ(dfZ4);
 
-    OGRLineString *poLS = new OGRLineString();
-    poLS->addPoint(dfX1, dfY1);
-
-    // corners in SOLID can be in any order, so we need to order them for
-    // creating edges for polygon
-
-    double dTo2 = Distance(dfX1, dfY1, dfX2, dfY2);
-    double dTo3 = Distance(dfX1, dfY1, dfX3, dfY3);
-    double dTo4 = Distance(dfX1, dfY1, dfX4, dfY4);
-
-    OGRLineString *poLS4 = new OGRLineString();
-
-    if (dTo2 <= dTo3 && dTo2 <= dTo4) {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX2, dfY2, dfX3, dfY3,
-                dfX4, dfY4);
-    } else if (dTo3 <= dTo2 && dTo3 <= dTo4) {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX3, dfY3, dfX2, dfY2,
-                dfX4, dfY4);
-    } else /* if (dTo4 <= dTo2 && dTo4 <= dTo3) */ {
-        AddEdgesByNearest(poCollection, poLS, poLS4, dfX4, dfY4, dfX3, dfY3,
-                dfX2, dfY2);
+    std::sort(poCorners, poCorners + 4, PointXAxisComparer);
+    int nCornerCount = static_cast<int>(std::unique(poCorners, poCorners + 4,
+        PointXYZEqualityComparer) - poCorners);
+    if( nCornerCount < 1 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        delete[] poCorners;
+        return NULL;
     }
-    poLS4->addPoint(dfX1, dfY1);
-    poCollection->addGeometryDirectly(poLS4);
-    OGRErr eErr;
 
-    OGRGeometry* poFinalGeom = (OGRGeometry *) OGRBuildPolygonFromEdges(
-            (OGRGeometryH) poCollection, TRUE, TRUE, 0, &eErr);
+    OGRGeometry* poFinalGeom;
 
-    delete poCollection;
+    // what kind of object do we need?
+    if( nCornerCount == 1 )
+    {
+        poFinalGeom = poCorners[0].clone();
+    }
+    else if( nCornerCount == 2 )
+    {
+        OGRLineString* poLS = new OGRLineString();
+        poLS->setPoint( 0, &poCorners[0] );
+        poLS->setPoint( 1, &poCorners[1] );
+        poFinalGeom = poLS;
+    }
+    else
+    {
+        // SOLID vertices seem to be joined in the order 1-2-4-3-1.
+        // See trac ticket #7089
+        OGRLinearRing* poLinearRing = new OGRLinearRing();
+        int iIndex = 0;
+        poLinearRing->setPoint( iIndex++, dfX1, dfY1, dfZ1 );
+        if( dfX1 != dfX2 || dfY1 != dfY2 || dfZ1 != dfZ2 )
+            poLinearRing->setPoint( iIndex++, dfX2, dfY2, dfZ2 );
+        if( dfX2 != dfX4 || dfY2 != dfY4 || dfZ2 != dfZ4 )
+            poLinearRing->setPoint( iIndex++, dfX4, dfY4, dfZ4 );
+        if( dfX4 != dfX3 || dfY4 != dfY3 || dfZ4 != dfZ3 )
+            poLinearRing->setPoint( iIndex++, dfX3, dfY3, dfZ3 );
+        poLinearRing->closeRings();
+
+        if( !bWantZ )
+            poLinearRing->flattenTo2D();
+
+        OGRPolygon* poPoly = new OGRPolygon();
+        poPoly->addRingDirectly( poLinearRing );
+        poFinalGeom = poPoly;
+    }
+
+    delete[] poCorners;
 
     ApplyOCSTransformer(poFinalGeom);
 
@@ -2227,73 +2290,393 @@ OGRFeature *OGRDXFLayer::TranslateSOLID()
 }
 
 /************************************************************************/
-/*                      GeometryInsertTransformer                       */
+/*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
-class GeometryInsertTransformer : public OGRCoordinateTransformation
+OGRGeometry *OGRDXFLayer::SimplifyBlockGeometry(
+    OGRGeometryCollection *poCollection )
 {
-public:
-    GeometryInsertTransformer() :
-            dfXOffset(0),dfYOffset(0),dfZOffset(0),
-            dfXScale(1.0),dfYScale(1.0),dfZScale(1.0),
-            dfAngle(0.0) {}
+/* -------------------------------------------------------------------- */
+/*      If there is only one geometry in the collection, just return    */
+/*      it.                                                             */
+/* -------------------------------------------------------------------- */
+    if( poCollection->getNumGeometries() == 1 )
+    {
+        OGRGeometry *poReturn = poCollection->getGeometryRef(0);
+        poCollection->removeGeometry(0, FALSE);
+        delete poCollection;
+        return poReturn;
+    }
 
-    double dfXOffset;
-    double dfYOffset;
-    double dfZOffset;
-    double dfXScale;
-    double dfYScale;
-    double dfZScale;
-    double dfAngle;
+/* -------------------------------------------------------------------- */
+/*      Convert to polygon, multipolygon, multilinestring or multipoint */
+/* -------------------------------------------------------------------- */
 
-    OGRSpatialReference *GetSourceCS() override { return NULL; }
-    OGRSpatialReference *GetTargetCS() override { return NULL; }
-    int Transform( int nCount,
-                   double *x, double *y, double *z ) override
-        { return TransformEx( nCount, x, y, z, NULL ); }
-
-    int TransformEx( int nCount,
-                     double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL ) override
+    OGRwkbGeometryType eType =
+                wkbFlatten(poCollection->getGeometryRef(0)->getGeometryType());
+    int i;
+    for(i=1;i<poCollection->getNumGeometries();i++)
+    {
+        if (wkbFlatten(poCollection->getGeometryRef(i)->getGeometryType())
+            != eType)
         {
-            for( int i = 0; i < nCount; i++ )
-            {
-                x[i] *= dfXScale;
-                y[i] *= dfYScale;
-                if( z )
-                    z[i] *= dfZScale;
-
-                const double dfXNew = x[i] * cos(dfAngle) - y[i] * sin(dfAngle);
-                const double dfYNew = x[i] * sin(dfAngle) + y[i] * cos(dfAngle);
-
-                x[i] = dfXNew;
-                y[i] = dfYNew;
-
-                x[i] += dfXOffset;
-                y[i] += dfYOffset;
-                if( z )
-                    z[i] += dfZOffset;
-
-                if( pabSuccess )
-                    pabSuccess[i] = TRUE;
-            }
-            return TRUE;
+            eType = wkbUnknown;
+            break;
         }
-};
+    }
+    if (eType == wkbPoint || eType == wkbLineString)
+    {
+        OGRGeometryCollection* poNewColl;
+        if (eType == wkbPoint)
+            poNewColl = new OGRMultiPoint();
+        else
+            poNewColl = new OGRMultiLineString();
+        while(poCollection->getNumGeometries() > 0)
+        {
+            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
+            poCollection->removeGeometry(0,FALSE);
+            poNewColl->addGeometryDirectly(poGeom);
+        }
+        delete poCollection;
+        return poNewColl;
+    }
+    else if (eType == wkbPolygon)
+    {
+        std::vector<OGRGeometry*> aosPolygons;
+        while(poCollection->getNumGeometries() > 0)
+        {
+            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
+            poCollection->removeGeometry(0,FALSE);
+            aosPolygons.push_back(poGeom);
+        }
+        delete poCollection;
+        int bIsValidGeometry;
+        return OGRGeometryFactory::organizePolygons(
+            &aosPolygons[0], (int)aosPolygons.size(),
+            &bIsValidGeometry, NULL);
+    }
+
+    return poCollection;
+}
+
+/************************************************************************/
+/*                       InsertBlockReference()                         */
+/*                                                                      */
+/*     Returns a point geometry located at the block's insertion        */
+/*     point.                                                           */
+/************************************************************************/
+OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
+    const CPLString& osBlockName,
+    const OGRDXFInsertTransformer& oTransformer,
+    OGRDXFFeature* const poFeature )
+{
+    // Store the block's properties in the special DXF-specific members
+    // on the feature object
+    poFeature->bIsBlockReference = true;
+    poFeature->osBlockName = osBlockName;
+    poFeature->dfBlockAngle = oTransformer.dfAngle * 180 / M_PI;
+    poFeature->adfBlockScale[0] = oTransformer.dfXScale;
+    poFeature->adfBlockScale[1] = oTransformer.dfYScale;
+    poFeature->adfBlockScale[2] = oTransformer.dfZScale;
+
+    if( oStyleProperties.count("210_N.dX") != 0
+        && oStyleProperties.count("220_N.dY") != 0
+        && oStyleProperties.count("230_N.dZ") != 0 )
+    {
+        poFeature->adfBlockOCS[0] = CPLAtof(oStyleProperties["210_N.dX"]);
+        poFeature->adfBlockOCS[1] = CPLAtof(oStyleProperties["220_N.dY"]);
+        poFeature->adfBlockOCS[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
+    }
+    else 
+    {
+        poFeature->adfBlockOCS[0] = 0.0;
+        poFeature->adfBlockOCS[1] = 0.0;
+        poFeature->adfBlockOCS[2] = 1.0;
+    }
+
+    poFeature->adfOriginalCoords[0] = oTransformer.dfXOffset;
+    poFeature->adfOriginalCoords[1] = oTransformer.dfYOffset;
+    poFeature->adfOriginalCoords[2] = oTransformer.dfZOffset;
+
+    // Only if DXF_INLINE_BLOCKS is false should we ever need to expose these
+    // to the end user as fields.
+    if( poFeature->GetFieldIndex( "BlockName" ) != -1 )
+    {
+        poFeature->SetField( "BlockName", poFeature->osBlockName );
+        poFeature->SetField( "BlockAngle", poFeature->dfBlockAngle );
+        poFeature->SetField( "BlockScale", 3, poFeature->adfBlockScale );
+        poFeature->SetField( "BlockOCSNormal", 3, poFeature->adfBlockOCS );
+        poFeature->SetField( "BlockOCSCoords", 3, poFeature->adfOriginalCoords );
+    }
+
+    // For convenience to the end user, the point geometry will be located
+    // at the WCS coordinates of the insertion point.
+    OGRPoint* poInsertionPoint = new OGRPoint( oTransformer.dfXOffset,
+        oTransformer.dfYOffset, oTransformer.dfZOffset );
+
+    ApplyOCSTransformer( poInsertionPoint );
+    poFeature->SetGeometryDirectly( poInsertionPoint );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                         InsertBlockInline()                          */
+/*                                                                      */
+/*     Inserts the given block at the location specified by the given   */
+/*     transformer.  Returns poFeature, or NULL if all features on      */
+/*     the block have been pushed to the extra feature queue.           */
+/*     If poFeature is not returned, it is deleted.                     */
+/*     Throws std::invalid_argument if the requested block              */
+/*     doesn't exist.                                                   */
+/*                                                                      */
+/*     - adfOCS: The OCS to apply to this block, or NULL if we          */
+/*       should use this layer's current OCS.                           */
+/*     - bInlineRecursively: If true, INSERTs within this block         */
+/*       will be recursively inserted.  Otherwise, they will be         */
+/*       represented as a point geometry using InsertInlineBlock.       */
+/*     - bMergeGeometry: If true, all features in the block,            */
+/*       apart from text features, are merged into a                    */
+/*       GeometryCollection which is returned by the function.          */
+/************************************************************************/
+
+OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
+    OGRDXFInsertTransformer oTransformer,
+    double adfOCS[3],
+    OGRDXFFeature* const poFeature,
+    std::queue<OGRDXFFeature *>& apoExtraFeatures,
+    const bool bInlineRecursively,
+    const bool bMergeGeometry,
+    const int iRecursionDepth /* = 0 */ )
+{
+    // Make sure we are not recursing too deeply (avoid stack overflows)
+    // 128 is a totally arbitrary limit
+    if( iRecursionDepth > 128 )
+    {
+        CPLDebug( "DXF",
+            "Block recursion limit exceeded. Ignoring further INSERTs" );
+
+        delete poFeature;
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transform the insertion point from OCS into                     */
+/*      world coordinates.                                              */
+/* -------------------------------------------------------------------- */
+    OGRPoint oInsertionPoint( oTransformer.dfXOffset, oTransformer.dfYOffset,
+        oTransformer.dfZOffset );
+
+    if( adfOCS )
+        ApplyOCSTransformer( &oInsertionPoint, adfOCS );
+    else
+        ApplyOCSTransformer( &oInsertionPoint );
+
+    oTransformer.dfXOffset = oInsertionPoint.getX();
+    oTransformer.dfYOffset = oInsertionPoint.getY();
+    oTransformer.dfZOffset = oInsertionPoint.getZ();
+
+/* -------------------------------------------------------------------- */
+/*      Lookup the block.                                               */
+/* -------------------------------------------------------------------- */
+    DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
+
+    if( poBlock == NULL )
+    {
+        //CPLDebug( "DXF", "Attempt to insert missing block %s", osBlockName );
+        throw std::invalid_argument("osBlockName");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have complete features associated with the block, push    */
+/*      them on the pending feature stack copying over key override     */
+/*      information.                                                    */
+/*                                                                      */
+/*      If bMergeGeometry is true, we merge the features                */
+/*      (except text) into a single GeometryCollection.                 */
+/* -------------------------------------------------------------------- */
+    OGRGeometryCollection *poMergedGeometry = NULL;
+    if( bMergeGeometry )
+        poMergedGeometry = new OGRGeometryCollection();
+
+    std::queue<OGRDXFFeature *> apoInnerExtraFeatures;
+
+    for( unsigned int iSubFeat = 0;
+        iSubFeat < poBlock->apoFeatures.size();
+        iSubFeat++ )
+    {
+        OGRDXFFeature *poSubFeature =
+            poBlock->apoFeatures[iSubFeat]->CloneDXFFeature();
+
+        // Does this feature represent a block that we inlined? If so,
+        // insert that block
+        if( bInlineRecursively && poSubFeature->IsBlockReference() )
+        {
+            // Unpack the transformation data stored in fields of this
+            // feature
+            OGRDXFInsertTransformer oInnerTransformer;
+            oInnerTransformer.dfXOffset = poSubFeature->adfOriginalCoords[0];
+            oInnerTransformer.dfYOffset = poSubFeature->adfOriginalCoords[1];
+            oInnerTransformer.dfZOffset = poSubFeature->adfOriginalCoords[2];
+            oInnerTransformer.dfAngle = poSubFeature->dfBlockAngle * M_PI / 180;
+            oInnerTransformer.dfXScale = poSubFeature->adfBlockScale[0];
+            oInnerTransformer.dfYScale = poSubFeature->adfBlockScale[1];
+            oInnerTransformer.dfZScale = poSubFeature->adfBlockScale[2];
+
+            poSubFeature->bIsBlockReference = false;
+
+            // Insert this block recursively
+            try
+            {
+                poSubFeature = InsertBlockInline( poSubFeature->osBlockName,
+                    oInnerTransformer, poSubFeature->adfBlockOCS,
+                    poSubFeature, apoInnerExtraFeatures,
+                    true, bMergeGeometry, iRecursionDepth + 1 );
+            }
+            catch( const std::invalid_argument& )
+            {
+                // Block doesn't exist. Skip it and keep going
+                delete poSubFeature;
+                continue;
+            }
+
+            if( !poSubFeature )
+            {
+                if ( apoInnerExtraFeatures.empty() )
+                {
+                    // Block is empty. Skip it and keep going
+                    continue;
+                }
+                else
+                {
+                    // Load up the first extra feature ready for
+                    // transformation
+                    poSubFeature = apoInnerExtraFeatures.front();
+                    apoInnerExtraFeatures.pop();
+                }
+            }
+        }
+
+        // Go through the current feature and any extra features generated
+        // by the recursive insert, and apply transformations
+        while( true )
+        {
+            OGRGeometry *poSubFeatGeom = poSubFeature->GetGeometryRef();
+            if( poSubFeatGeom != NULL )
+            {
+                // Rotation and scaling first
+                OGRDXFInsertTransformer oInnerTrans =
+                    oTransformer.GetRotateScaleTransformer();
+                poSubFeatGeom->transform( &oInnerTrans );
+
+                // Then the OCS to WCS transformation
+                if( adfOCS )
+                    ApplyOCSTransformer( poSubFeatGeom, adfOCS );
+                else
+                    ApplyOCSTransformer( poSubFeatGeom );
+
+                // Offset translation last
+                oInnerTrans = oTransformer.GetOffsetTransformer();
+                poSubFeatGeom->transform( &oInnerTrans );
+            }
+
+            // If we are merging features, and this is not text or a block
+            // reference, merge it into the GeometryCollection
+            if( bMergeGeometry && 
+                (poSubFeature->GetStyleString() == NULL ||
+                    strstr(poSubFeature->GetStyleString(),"LABEL") == NULL) &&
+                !poSubFeature->IsBlockReference() &&
+                poSubFeature->GetGeometryRef() )
+            {
+                poMergedGeometry->addGeometryDirectly( poSubFeature->StealGeometry() );
+                delete poSubFeature;
+            }
+            else
+            {
+                // If the subfeature is on layer 0, this is a special case: the
+                // subfeature should take on the style properties of the layer
+                // the block is being inserted onto.
+                // But don't do this if we are inserting onto a Blocks layer
+                // (that is, the owning feature has no layer).
+                if( EQUAL( poSubFeature->GetFieldAsString( "Layer" ), "0" ) &&
+                    !EQUAL( poFeature->GetFieldAsString( "Layer" ), "" ) )
+                {
+                    poSubFeature->SetField( "Layer",
+                        poFeature->GetFieldAsString( "Layer" ) );
+
+                    // If it's a pen, then replace the style string
+                    const char* pszSubFeatureStyle =
+                        poSubFeature->GetStyleString();
+                    if( pszSubFeatureStyle != NULL &&
+                        STARTS_WITH_CI(pszSubFeatureStyle, "PEN") )
+                    {
+                        PrepareLineStyle( poSubFeature );
+                    }
+
+                    // TODO Do this for other style types (trac ticket #7099)
+                }
+
+                ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
+                    oTransformer.dfXScale, poSubFeature );
+
+                if ( !EQUAL( poFeature->GetFieldAsString( "EntityHandle" ), "" ) )
+                {
+                    poSubFeature->SetField( "EntityHandle",
+                        poFeature->GetFieldAsString( "EntityHandle" ) );
+                }
+
+                apoExtraFeatures.push( poSubFeature );
+            }
+
+            if( apoInnerExtraFeatures.empty() )
+            {
+                break;
+            }
+            else
+            {
+                poSubFeature = apoInnerExtraFeatures.front();
+                apoInnerExtraFeatures.pop();
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return the merged geometry if applicable.  Otherwise            */
+/*      return NULL and let the machinery find the rest of the          */
+/*      features in the pending feature stack.                          */
+/* -------------------------------------------------------------------- */
+    if( bMergeGeometry )
+    {
+        if( poMergedGeometry->getNumGeometries() == 0 )
+        {
+            delete poMergedGeometry;
+        }
+        else
+        {
+            poFeature->SetGeometryDirectly(
+                SimplifyBlockGeometry( poMergedGeometry ) );
+
+            PrepareLineStyle( poFeature );
+            return poFeature;
+        }
+    }
+
+    delete poFeature;
+    return NULL;
+}
 
 /************************************************************************/
 /*                          TranslateINSERT()                           */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateINSERT()
+OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
-    GeometryInsertTransformer oTransformer;
+    OGRDXFFeature* poFeature = new OGRDXFFeature( poFeatureDefn );
+    OGRDXFInsertTransformer oTransformer;
     CPLString osBlockName;
-    double dfAngle = 0.0;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -2327,10 +2710,9 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
             break;
 
           case 50:
-            dfAngle = CPLAtof(szLineBuf);
             // We want to transform this to radians.
             // It is apparently always in degrees regardless of $AUNITS
-            oTransformer.dfAngle = dfAngle * M_PI / 180.0;
+            oTransformer.dfAngle = CPLAtof(szLineBuf) * M_PI / 180.0;
             break;
 
           case 2:
@@ -2352,106 +2734,44 @@ OGRFeature *OGRDXFLayer::TranslateINSERT()
     if( nCode == 0 )
         poDS->UnreadValue();
 
-/* -------------------------------------------------------------------- */
-/*      In the case where we do not inlined blocks we just capture      */
-/*      info on a point feature.                                        */
-/* -------------------------------------------------------------------- */
+    // If we are not inlining blocks, just insert a point that refers
+    // to this block
     if( !poDS->InlineBlocks() )
     {
-        // ApplyOCSTransformer( poGeom ); ?
-        poFeature->SetGeometryDirectly(
-            new OGRPoint( oTransformer.dfXOffset,
-                          oTransformer.dfYOffset,
-                          oTransformer.dfZOffset ) );
-
-        poFeature->SetField( "BlockName", osBlockName );
-
-        poFeature->SetField( "BlockAngle", dfAngle );
-        poFeature->SetField( "BlockScale", 3, &(oTransformer.dfXScale) );
-
-        return poFeature;
+        return InsertBlockReference( osBlockName, oTransformer, poFeature );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Lookup the block.                                               */
-/* -------------------------------------------------------------------- */
-    DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
-
-    if( poBlock == NULL )
+    // Try inlining the contents of this block
+    try
     {
+        poFeature = InsertBlockInline( osBlockName, oTransformer, NULL,
+            poFeature, apoPendingFeatures,
+            true, poDS->ShouldMergeBlockGeometries() );
+    }
+    catch( const std::invalid_argument& )
+    {
+        // Block doesn't exist
         delete poFeature;
         return NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Transform the geometry.                                         */
-/* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry != NULL )
+    
+    if( !poFeature )
     {
-        OGRGeometry *poGeometry = poBlock->poGeometry->clone();
-
-        poGeometry->transform( &oTransformer );
-
-        poFeature->SetGeometryDirectly( poGeometry );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we have complete features associated with the block, push    */
-/*      them on the pending feature stack copying over key override     */
-/*      information.                                                    */
-/*                                                                      */
-/*      Note that while we transform the geometry of the features we    */
-/*      don't adjust subtle things like text angle.                     */
-/* -------------------------------------------------------------------- */
-    for( unsigned int iSubFeat = 0;
-         iSubFeat < poBlock->apoFeatures.size();
-         iSubFeat++ )
-    {
-        OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
-        CPLString osCompEntityId;
-
-        if( poSubFeature->GetGeometryRef() != NULL )
-            poSubFeature->GetGeometryRef()->transform( &oTransformer );
-
-        ACAdjustText( dfAngle, oTransformer.dfXScale, poSubFeature );
-
-#ifdef notdef
-        osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );
-        osCompEntityId += ":";
-#endif
-        osCompEntityId += poFeature->GetFieldAsString( "EntityHandle" );
-
-        poSubFeature->SetField( "EntityHandle", osCompEntityId );
-
-        apoPendingFeatures.push( poSubFeature );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Return the working feature if we had geometry, otherwise        */
-/*      return NULL and let the machinery find the rest of the          */
-/*      features in the pending feature stack.                          */
-/* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry == NULL )
-    {
+        // The block geometries were appended to apoPendingFeatures
         delete poFeature;
         return NULL;
     }
-    else
-    {
-        // Set style pen color
-        PrepareLineStyle( poFeature );
-        return poFeature;
-    }
+    return poFeature;
 }
 
 /************************************************************************/
 /*                      GetNextUnfilteredFeature()                      */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
+OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 
 {
-    OGRFeature *poFeature = NULL;
+    OGRDXFFeature *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      If we have pending features, return one of them.                */
@@ -2560,6 +2880,15 @@ OGRFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         else if( EQUAL(szLineBuf,"SOLID") )
         {
             poFeature = TranslateSOLID();
+        }
+        else if( EQUAL(szLineBuf,"LEADER") )
+        {
+            poFeature = TranslateLEADER();
+        }
+        else if( EQUAL(szLineBuf,"MLEADER")
+            || EQUAL(szLineBuf,"MULTILEADER") )
+        {
+            poFeature = TranslateMLEADER();
         }
         else
         {

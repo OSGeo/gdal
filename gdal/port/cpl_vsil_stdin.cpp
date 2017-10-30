@@ -427,7 +427,7 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
  * \brief Install /vsistdin/ file system handler
  *
  * A special file handler is installed that allows reading from the standard
- * input steam.
+ * input stream.
  *
  * The file operations available are of course limited to Read() and
  * forward Seek() (full seek in the first MB of a file).

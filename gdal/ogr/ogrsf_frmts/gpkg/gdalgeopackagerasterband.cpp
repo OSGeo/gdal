@@ -1432,10 +1432,19 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTile()
     if( poMainDS->m_nTileInsertionCount < 0 )
         return CE_Failure;
 
-    CPLAssert(!m_bInWriteTile);
+    if (m_bInWriteTile)
+    {
+        // Shouldn't happen in practice, but #7022 shows that the unexpected
+        // can happen sometimes.
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Recursive call to GDALGPKGMBTilesLikePseudoDataset::WriteTile()");
+        return CE_Failure;
+    }
+    GDALRasterBlock::EnterDisableDirtyBlockFlush();
     m_bInWriteTile = true;
     CPLErr eErr = WriteTileInternal();
     m_bInWriteTile = false;
+    GDALRasterBlock::LeaveDisableDirtyBlockFlush();
     return eErr;
 }
 
@@ -1585,6 +1594,10 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
     CPLErr eErr = CE_Failure;
 
+    int bHasNoData = FALSE;
+    double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
+    const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
+
     bool bAllOpaque = true;
     if( m_eDT == GDT_Byte && m_poCT == NULL && nAlphaBand != 0 )
     {
@@ -1608,6 +1621,34 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         }
         else
             bAllOpaque = false;
+    }
+    else if( m_eDT == GDT_Float32 )
+    {
+        const float* pSrc = reinterpret_cast<float*>(m_pabyCachedTiles);
+        int i;
+        const float fNoDataValueOrZero =
+            bHasNoData ? static_cast<float>(dfNoDataValue) : 0.0f;
+        for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
+        {
+            const float fVal = pSrc[i];
+            if( bHasNanNoData )
+            {
+                if( CPLIsNan(fVal) )
+                    continue;
+            }
+            else if( fVal == fNoDataValueOrZero )
+            {
+                continue;
+            }
+            break;
+        }
+        if( i == nBlockXSize * nBlockYSize )
+        {
+            // If tile is fully transparent, don't serialize it and remove it if it exists
+            DeleteTile(nRow, nCol);
+
+            return CE_None;
+        }
     }
 
     if( bIsLossyFormat )
@@ -1746,8 +1787,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         double dfTileMax = 0.0;
         double dfTileMean = 0.0;
         double dfTileStdDev = 0.0;
-        int bHasNoData = FALSE;
-        double dfNoDataValue = IGetRasterBand(1)->GetNoDataValue(&bHasNoData);
         double dfTileOffset = 0.0;
         double dfTileScale = 1.0;
         if( m_eTF == GPKG_TF_PNG_16BIT )
@@ -1800,8 +1839,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 float fMin = 0.0f;
                 float fMax = 0.0f;
                 double dfM2 = 0.0;
-                const bool bHasNanNoData = bHasNoData &&
-                                           CPLIsNan(dfNoDataValue);
                 for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
                 {
                     const float fVal = pSrc[i];
@@ -1810,7 +1847,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         if( CPLIsNan(fVal) )
                             continue;
                     }
-                    else if( bHasNoData && fVal == dfNoDataValue )
+                    else if( bHasNoData && fVal ==
+                                        static_cast<float>(dfNoDataValue) )
                     {
                         continue;
                     }
@@ -1911,7 +1949,6 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             float fMin = 0.0f;
             float fMax = 0.0f;
             double dfM2 = 0.0;
-            const bool bHasNanNoData = bHasNoData && CPLIsNan(dfNoDataValue);
             for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
             {
                 const float fVal = pSrc[i];
@@ -1920,7 +1957,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                     if( CPLIsNan(fVal) )
                         continue;
                 }
-                else if( bHasNoData && fVal == dfNoDataValue )
+                else if( bHasNoData && fVal ==
+                                        static_cast<float>(dfNoDataValue) )
                 {
                     continue;
                 }
@@ -2744,11 +2782,14 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(int nRow, int nCol, in
     int iQuadrantFlag = 0;
     if( nDstXOffset == 0 && nDstYOffset == 0 )
         iQuadrantFlag |= (1 << 0);
-    if( nDstXOffset + nDstXSize == nBlockXSize && nDstYOffset == 0  )
+    if( (nDstXOffset != 0 || nDstXOffset + nDstXSize == nBlockXSize) &&
+        nDstYOffset == 0  )
         iQuadrantFlag |= (1 << 1);
-    if( nDstXOffset == 0 && nDstYOffset + nDstYSize == nBlockYSize )
+    if( nDstXOffset == 0 &&
+        (nDstYOffset != 0 || nDstYOffset + nDstYSize == nBlockYSize) )
         iQuadrantFlag |= (1 << 2);
-    if( nDstXOffset + nDstXSize == nBlockXSize && nDstYOffset + nDstYSize == nBlockYSize )
+    if( (nDstXOffset != 0 || nDstXOffset + nDstXSize == nBlockXSize) &&
+        (nDstYOffset != 0 || nDstYOffset + nDstYSize == nBlockYSize) )
         iQuadrantFlag |= (1 << 3);
     int l_nFlags = iQuadrantFlag << (4 * (nBand - 1));
     int nFullFlags = (1 << (4 * nBands)) - 1;
@@ -3165,28 +3206,49 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                 }
                 else
                 {
+                    const int nXValid = (nBlockXOff * nBlockXSize >
+                                        nRasterXSize - nBlockXSize) ?
+                        (nRasterXSize - nBlockXOff * nBlockXSize): nBlockXSize;
+                    const int nYValid = (nBlockYOff * nBlockYSize >
+                                        nRasterYSize - nBlockYSize) ?
+                        (nRasterYSize - nBlockYOff * nBlockYSize): nBlockYSize;
+
                     if( nCol == nColMin )
                     {
                         nDstXOffset = m_poTPD->m_nShiftXPixelsMod;
-                        nDstXSize = nBlockXSize - m_poTPD->m_nShiftXPixelsMod;
+                        nDstXSize = std::min( nXValid,
+                                    nBlockXSize - m_poTPD->m_nShiftXPixelsMod );
                         nSrcXOffset = 0;
                     }
                     else
                     {
                         nDstXOffset = 0;
-                        nDstXSize = m_poTPD->m_nShiftXPixelsMod;
+                        if( nXValid > nBlockXSize - m_poTPD->m_nShiftXPixelsMod )
+                        {
+                            nDstXSize = nXValid -
+                                (nBlockXSize - m_poTPD->m_nShiftXPixelsMod);
+                        }
+                        else
+                            nDstXSize = 0;
                         nSrcXOffset = nBlockXSize - m_poTPD->m_nShiftXPixelsMod;
                     }
                     if( nRow == nRowMin )
                     {
                         nDstYOffset = m_poTPD->m_nShiftYPixelsMod;
-                        nDstYSize = nBlockYSize - m_poTPD->m_nShiftYPixelsMod;
+                        nDstYSize = std::min( nYValid,
+                                    nBlockYSize - m_poTPD->m_nShiftYPixelsMod );
                         nSrcYOffset = 0;
                     }
                     else
                     {
                         nDstYOffset = 0;
-                        nDstYSize = m_poTPD->m_nShiftYPixelsMod;
+                        if( nYValid > nBlockYSize - m_poTPD->m_nShiftYPixelsMod )
+                        {
+                            nDstYSize = nYValid -
+                                (nBlockYSize - m_poTPD->m_nShiftYPixelsMod);
+                        }
+                        else
+                            nDstYSize = 0;
                         nSrcYOffset = nBlockYSize - m_poTPD->m_nShiftYPixelsMod;
                     }
 
@@ -3198,18 +3260,22 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                               nSrcXOffset, nSrcYOffset);
 #endif
 
-                    for( int y=0; y<nDstYSize; y++ )
+                    if( nDstXSize > 0 && nDstYSize > 0 )
                     {
-                        GByte* pDst =
-                          m_poTPD->m_pabyCachedTiles +
-                          ((iBand - 1) * nBlockXSize * nBlockYSize +
-                          (y + nDstYOffset) * nBlockXSize + nDstXOffset) * m_nDTSize;
-                        GByte* pSrc =
-                            pabySrc + ((y + nSrcYOffset) * nBlockXSize +
-                            nSrcXOffset) * m_nDTSize;
-                        GDALCopyWords(pSrc, eDataType, m_nDTSize,
-                                    pDst, eDataType, m_nDTSize,
-                                    nDstXSize);
+                        for( int y=0; y<nDstYSize; y++ )
+                        {
+                            GByte* pDst =
+                                m_poTPD->m_pabyCachedTiles +
+                                ((iBand - 1) * nBlockXSize * nBlockYSize +
+                                (y + nDstYOffset) * nBlockXSize + nDstXOffset)
+                                    * m_nDTSize;
+                            GByte* pSrc =
+                                pabySrc + ((y + nSrcYOffset) * nBlockXSize +
+                                nSrcXOffset) * m_nDTSize;
+                            GDALCopyWords(pSrc, eDataType, m_nDTSize,
+                                        pDst, eDataType, m_nDTSize,
+                                        nDstXSize);
+                        }
                     }
                 }
 
@@ -3222,9 +3288,12 @@ CPLErr GDALGPKGMBTilesLikeRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff
                     m_poTPD->m_asCachedTilesDesc[0].nRow = -1;
                     m_poTPD->m_asCachedTilesDesc[0].nCol = -1;
                     m_poTPD->m_asCachedTilesDesc[0].nIdxWithinTileData = -1;
-                    eErr = m_poTPD->WriteShiftedTile(nRow, nCol, iBand,
+                    if( nDstXSize > 0 && nDstYSize > 0  )
+                    {
+                        eErr = m_poTPD->WriteShiftedTile(nRow, nCol, iBand,
                                                    nDstXOffset, nDstYOffset,
                                                    nDstXSize, nDstYSize);
+                    }
                 }
             }
 
@@ -3273,7 +3342,8 @@ void GDALGPKGMBTilesLikeRasterBand::SetNoDataValueInternal( double dfNoDataValue
 
 GDALGeoPackageRasterBand::GDALGeoPackageRasterBand(
     GDALGeoPackageDataset* poDSIn, int nTileWidth, int nTileHeight) :
-            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight)
+            GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileWidth, nTileHeight),
+            m_bStatsComputed(false)
 {
     poDS = poDSIn;
 }
@@ -3310,6 +3380,13 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue( double dfNoDataValue )
 {
     if( eDataType == GDT_Byte )
         return CE_None;
+
+    if( CPLIsNan(dfNoDataValue) )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "A NaN nodata value cannot be recorded in "
+                 "gpkg_2d_gridded_coverage_ancillary table");
+    }
 
     SetNoDataValueInternal(dfNoDataValue);
 
@@ -3360,11 +3437,13 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
     GDALGeoPackageDataset *poGDS
         = reinterpret_cast<GDALGeoPackageDataset *>( poDS );
 
-    if( eDataType != GDT_Byte &&
+    if( poGDS->eAccess == GA_ReadOnly &&
+        eDataType != GDT_Byte &&
         (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-        CSLFetchNameValue(GDALGPKGMBTilesLikeRasterBand::GetMetadata(),
-                          "STATISTICS_MINIMUM") == NULL )
+        !m_bStatsComputed )
     {
+        m_bStatsComputed = true;
+
         const int nColMin = poGDS->m_nShiftXTiles;
         const int nColMax = (nRasterXSize - 1 + poGDS->m_nShiftXPixelsMod) /
                                         nBlockXSize + poGDS->m_nShiftXTiles;
@@ -3417,15 +3496,17 @@ char** GDALGeoPackageRasterBand::GetMetadata(const char* pszDomain)
         {
             char* pszSQL = sqlite3_mprintf(
                 "SELECT MIN(min), MAX(max) FROM "
-                "gpkg_2d_gridded_tile_ancillary t_a JOIN \"%w\" tpudt ON "
-                "t_a.tpudt_id = tpudt.id WHERE tpudt.zoom_level = %d AND "
-                "tpudt.tile_column >= %d AND tpudt.tile_column <= %d AND "
-                "tpudt.tile_row >= %d AND tpudt.tile_row <= %d",
+                "gpkg_2d_gridded_tile_ancillary WHERE tpudt_id "
+                "IN (SELECT id FROM \"%w\" WHERE "
+                "zoom_level = %d AND "
+                "tile_column >= %d AND tile_column <= %d AND "
+                "tile_row >= %d AND tile_row <= %d)",
                 poGDS->m_osRasterTable.c_str(),
                 poGDS->m_nZoomLevel,
                 nColMin, nColMax,
                 nRowMin, nRowMax);
             SQLResult sResult;
+            CPLDebug("GPKG", "%s", pszSQL);
             if( SQLQuery( poGDS->IGetDB(), pszSQL, &sResult) == OGRERR_NONE &&
                 sResult.nRowCount == 1 )
             {
@@ -3459,7 +3540,9 @@ const char* GDALGeoPackageRasterBand::GetMetadataItem(const char* pszName,
                                                       const char* pszDomain)
 {
     if( eDataType != GDT_Byte &&
-        (pszDomain == NULL || EQUAL(pszDomain, "")) )
+        (pszDomain == NULL || EQUAL(pszDomain, "")) &&
+        (EQUAL(pszName, "STATISTICS_MINIMUM") ||
+         EQUAL(pszName, "STATISTICS_MAXIMUM")) )
     {
         GetMetadata();
     }

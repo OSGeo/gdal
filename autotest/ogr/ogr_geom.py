@@ -4225,7 +4225,6 @@ def ogr_geom_multipoint_envelope_bug():
 
     return 'success'
 
-
 ###############################################################################
 def ogr_geom_polygon_empty_ring():
 
@@ -4233,6 +4232,25 @@ def ogr_geom_polygon_empty_ring():
     g2 = ogr.Geometry( ogr.wkbLinearRing )
     g.AddGeometryDirectly( g2 )
     if not g.IsEmpty():
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geom_polygon_intersects_point():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    poly = ogr.CreateGeometryFromWkt('POLYGON((0 0,5 5,10 0,0 0))')
+    point = ogr.Geometry(ogr.wkbPoint)
+    point.AddPoint(10, 0)
+    if poly.Intersects(point) != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if poly.Contains(point) != 0:
+        gdaltest.post_reason('fail')
         return 'fail'
 
     return 'success'
@@ -4304,6 +4322,7 @@ gdaltest_list = [
     ogr_geom_triangle_ps_tin_conversion,
     ogr_geom_multipoint_envelope_bug,
     ogr_geom_polygon_empty_ring,
+    ogr_geom_polygon_intersects_point,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]

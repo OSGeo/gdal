@@ -86,15 +86,16 @@ OGRPGDumpDataSource::OGRPGDumpDataSource( const char* pszNameIn,
 OGRPGDumpDataSource::~OGRPGDumpDataSource()
 
 {
+    EndCopy();
+    for( int i = 0; i < nLayers; i++ )
+        delete papoLayers[i];
+
     if( fp )
     {
         LogCommit();
         VSIFCloseL(fp);
         fp = NULL;
     }
-
-    for( int i = 0; i < nLayers; i++ )
-        delete papoLayers[i];
     CPLFree(papoLayers);
     CPLFree(pszName);
 }

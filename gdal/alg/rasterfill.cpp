@@ -161,8 +161,8 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
                  void * pProgressArg )
 
 {
-    int   nXSize = GDALGetRasterBandXSize( hTargetBand );
-    int   nYSize = GDALGetRasterBandYSize( hTargetBand );
+    const int nXSize = GDALGetRasterBandXSize(hTargetBand);
+    const int nYSize = GDALGetRasterBandYSize(hTargetBand);
 
 /* -------------------------------------------------------------------- */
 /*      Report starting progress value.                                 */
@@ -348,8 +348,10 @@ target_x, target_y, origin_x, origin_y, target_value )                  \
                                                                         \
 if( quad_value != nNoDataVal )                                          \
 {                                                                       \
-    double dfDx = (double)target_x - (double)origin_x;                  \
-    double dfDy = (double)target_y - (double)origin_y;                  \
+    const double dfDx =                                                 \
+        static_cast<double>(target_x) - static_cast<double>(origin_x);  \
+    const double dfDy =                                                 \
+        static_cast<double>(target_y) - static_cast<double>(origin_y);  \
     double dfDistSq = dfDx * dfDx + dfDy * dfDy;                        \
                                                                         \
     if( dfDistSq < quad_dist*quad_dist )                                \

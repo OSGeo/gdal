@@ -886,7 +886,7 @@
 # - \a Default
 # - \a Ignored (default is false)
 #
-# @note Simplified parameters <name> => <type> is also supported.
+# @note Simplified parameters Name => 'Type' are also supported.
 #
 # @return a new Geo::OGR::FieldDefn object
 

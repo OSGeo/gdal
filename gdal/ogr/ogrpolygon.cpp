@@ -278,7 +278,8 @@ OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
 
 int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
 {
-    if( !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")) )
+    if( poNewRing == NULL ||
+        !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Wrong curve type. Expected LINEARRING.");

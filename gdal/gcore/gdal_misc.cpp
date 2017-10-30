@@ -620,6 +620,9 @@ double GDALAdjustValueToDataType(
             break;
         case GDT_Float32:
         {
+            if( !CPLIsFinite(dfValue) )
+                break;
+
             // TODO(schwehr): ::min() versus ::lowest.
             // Use ClampAndRound after it has been fixed.
             if ( dfValue < -std::numeric_limits<float>::max())
@@ -2290,7 +2293,7 @@ double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
  * 
  * Starting with GDAL 2.2.2, if bApproxOK = FALSE, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK configuration option will be read. If
- * set to YES, then bApproxOK will be overriden with TRUE.
+ * set to YES, then bApproxOK will be overridden with TRUE.
  * Starting with GDAL 2.2.2, when exact fit is asked, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_THRESHOLD configuration option can be set to
  * give the maximum error threshold in pixel. The default is 0.25.
@@ -2841,9 +2844,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
 /* -------------------------------------------------------------------- */
 /*      --optfile                                                       */
-/*                                                                      */
-/*      Annoyingly the options inserted by --optfile will *not* be      */
-/*      processed properly if they are general options.                 */
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--optfile") )
         {
@@ -2867,6 +2867,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             const char *pszLine;
+            // dummy value as first argument to please
+            // GDALGeneralCmdLineProcessor()
+            char** papszArgvOptfile = CSLAddString(NULL, "");
+            bool bHasOptfile = false;
             while( (pszLine = CPLReadLineL( fpOptFile )) != NULL )
             {
                 if( pszLine[0] == '#' || strlen(pszLine) == 0 )
@@ -2874,11 +2878,41 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 char **papszTokens = CSLTokenizeString( pszLine );
                 for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
-                    papszReturn = CSLAddString( papszReturn, papszTokens[i] );
+                {
+                    if( EQUAL( papszTokens[i], "--optfile") )
+                    {
+                        // To avoid potential recursion
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "--optfile not supported in a option file");
+                        bHasOptfile = true;
+                    }
+                    papszArgvOptfile = CSLAddString( papszArgvOptfile, papszTokens[i] );
+                }
                 CSLDestroy( papszTokens );
             }
 
             VSIFCloseL( fpOptFile );
+
+            char** papszArgvOptfileMod = papszArgvOptfile;
+            if( !bHasOptfile )
+            {
+                if( GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
+                                        &papszArgvOptfileMod, nOptions) < 0 )
+                {
+                    CSLDestroy( papszReturn );
+                    CSLDestroy(papszArgvOptfile);
+                    return -1;
+                }
+            }
+
+            char** papszIter = papszArgvOptfileMod + 1;
+            while( *papszIter )
+            {
+                papszReturn = CSLAddString(papszReturn, *papszIter);
+                ++ papszIter;
+            }
+            CSLDestroy(papszArgvOptfile);
+            CSLDestroy(papszArgvOptfileMod);
 
             iArg += 1;
         }
@@ -3082,7 +3116,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             {
                 if( !STARTS_WITH(*papszIter, "DCAP_") &&
                     !STARTS_WITH(*papszIter, "DMD_") &&
-                    !STARTS_WITH(*papszIter, "DS_") )
+                    !STARTS_WITH(*papszIter, "DS_") &&
+                    !STARTS_WITH(*papszIter, "OGR_DRIVER=") )
                 {
                     if( bFirstOtherOption )
                         printf("  Other metadata items:\n"); /*ok*/

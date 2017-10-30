@@ -657,12 +657,13 @@ sqlite3_stmt *VFKReaderSQLite::PrepareStatement(const char *pszSQLCommand)
 
   \return OGRERR_NONE on success
 */
-OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
+OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *& hStmt)
 {
     const int rc = sqlite3_step(hStmt);
     if (rc != SQLITE_ROW) {
         if (rc == SQLITE_DONE) {
             sqlite3_finalize(hStmt);
+            hStmt = NULL;
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
@@ -670,7 +671,10 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *hStmt)
                  "In ExecuteSQL(): sqlite3_step:\n  %s",
                  sqlite3_errmsg(m_poDB));
         if (hStmt)
+        {
             sqlite3_finalize(hStmt);
+            hStmt = NULL;
+        }
         return OGRERR_FAILURE;
     }
 

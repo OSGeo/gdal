@@ -693,9 +693,9 @@ CPLErr GDALMRFDataset::LevelInit(const int l) {
     SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
 
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(GeoTransform));
-    for (int i = 0; i < l; i++) {
-        GeoTransform[1] /= scale;
-        GeoTransform[5] /= scale;
+    for (int i = 0; i < l + 1; i++) {
+        GeoTransform[1] *= scale;
+        GeoTransform[5] *= scale;
     }
 
     nRasterXSize = current.size.x;
@@ -1633,8 +1633,17 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
       nCloneFlags |= GCIF_MASK; // We do copy the data, so copy the mask too if necessary
       char **papszCWROptions = NULL;
       papszCWROptions = CSLAddNameValue(papszCWROptions, "COMPRESSED", "TRUE");
-      err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
-        (GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
+
+      // Use the Zen version of the CopyWholeRaster if input has a dataset mask and JPEGs are generated
+      if (GMF_PER_DATASET == poSrcDS->GetRasterBand(1)->GetMaskFlags() &&
+          (poDS->current.comp == IL_JPEG || poDS->current.comp == IL_JPNG)) {
+          err = poDS->ZenCopy(poSrcDS, pfnProgress, pProgressData);
+          nCloneFlags ^= GCIF_MASK; // Turn the external mask off
+      }
+      else {
+          err = GDALDatasetCopyWholeRaster((GDALDatasetH)poSrcDS,
+              (GDALDatasetH)poDS, papszCWROptions, pfnProgress, pProgressData);
+      }
 
       CSLDestroy(papszCWROptions);
     }
@@ -1651,6 +1660,174 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
     return poDS;
 }
 
+
+// Prepares the data so it is suitable for Zen JPEG encoding, based on input mask
+// If bFBO is set, only the values of the first band are set non-zero when needed
+template<typename T> void ZenFilter(T* buffer, GByte *mask, int nPixels, int nBands, bool bFBO) {
+    for (int i = 0; i < nPixels; i++) {
+        if (mask[i] == 0) { // enforce zero values
+            for (int b = 0; b < nBands; b++)
+                buffer[nBands * i + b] = 0;
+        }
+        else { // enforce non-zero
+            if (bFBO) { // First band only
+                bool f = true;
+                for (int b = 0; b < nBands; b++)
+                    f = f && (0 == buffer[nBands * i + b]);
+                if (f)
+                    buffer[nBands * i] = 1;
+            }
+            else { // Every band
+                for (int b = 0; b < nBands; b++)
+                    if (0 == buffer[nBands * i + b])
+                        buffer[nBands * i + b] = 1;
+            }
+        }
+    }
+}
+
+// Custom CopyWholeRaster for Zen JPEG, called when the input has a PER_DATASET mask
+// Works like GDALDatasetCopyWholeRaster, but it does filter the input data based on the mask
+//
+CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData)
+{
+    VALIDATE_POINTER1(poSrc, "MRF:ZenCopy", CE_Failure);
+
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the datasets match in size and band counts.             */
+    /* -------------------------------------------------------------------- */
+    const int nXSize = GetRasterXSize();
+    const int nYSize = GetRasterYSize();
+    const int nBandCount = GetRasterCount();
+
+    if (poSrc->GetRasterXSize() != nXSize
+        || poSrc->GetRasterYSize() != nYSize
+        || poSrc->GetRasterCount() != nBandCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "Input and output dataset sizes or band counts do not\n"
+            "match in GDALDatasetCopyWholeRaster()");
+        return CE_Failure;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Get our prototype band, and assume the others are similarly     */
+    /*      configured. Also get the per_dataset mask                       */
+    /* -------------------------------------------------------------------- */
+    GDALRasterBand *poSrcPrototypeBand = poSrc->GetRasterBand(1);
+    GDALRasterBand *poDstPrototypeBand = GetRasterBand(1);
+    GDALRasterBand *poSrcMask = poSrcPrototypeBand->GetMaskBand();
+
+    const int nPageXSize = current.pagesize.x;
+    const int nPageYSize = current.pagesize.y;
+    const double nTotalBlocks = static_cast<double>(DIV_ROUND_UP(nYSize, nPageYSize)) *
+        static_cast<double>(DIV_ROUND_UP(nXSize, nPageXSize));
+    const GDALDataType eDT = poDstPrototypeBand->GetRasterDataType();
+
+    // All the bands are done per block
+    // this flag tells us to apply the Zen filter to the first band only
+    const bool bFirstBandOnly = (current.order == IL_Interleaved);
+
+    if (!pfnProgress(0.0, NULL, pProgressData))
+    {
+        CPLError(CE_Failure, CPLE_UserInterrupt,
+            "User terminated CreateCopy()");
+        return CE_Failure;
+    }
+
+    const int nPixelCount = nPageXSize * nPageYSize;
+    void *buffer = VSI_MALLOC3_VERBOSE(nPixelCount, nBandCount, GDALGetDataTypeSizeBytes(eDT));
+    GByte *buffer_mask = NULL;
+    if (buffer)
+        buffer_mask = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(nPixelCount));
+
+    if (!buffer || !buffer_mask) {
+        // Just in case buffers did get allocated
+        CPLFree(buffer);
+        CPLFree(buffer_mask);
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Can't allocate copy buffer");
+        return CE_Failure;
+    }
+
+    int nBlocksDone = 0;
+    CPLErr eErr = CE_None;
+    // Advise the source that a complete read will be done
+    poSrc->AdviseRead(0, 0, nXSize, nYSize, nXSize, nYSize, eDT, nBandCount, NULL, NULL);
+
+    // For every block, break on error
+    for (int row = 0; row < nYSize && eErr == CE_None; row += nPageYSize) {
+        int nRows = std::min(nPageYSize, nYSize - row);
+        for (int col = 0; col < nXSize && eErr == CE_None; col += nPageXSize) {
+            int nCols = std::min(nPageXSize, nXSize - col);
+
+            // Report
+            if (eErr == CE_None && !pfnProgress(nBlocksDone++ / nTotalBlocks, NULL, pProgressData)) {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()");
+                break;
+            }
+
+            // Get the data mask as byte
+            eErr = poSrcMask->RasterIO(GF_Read, col, row, nCols, nRows, 
+                buffer_mask, nCols, nRows, GDT_Byte, 0, 0, NULL);
+
+            if (eErr != CE_None)
+                break;
+
+            // If there is no data at all, skip this block
+            if (MatchCount(buffer_mask, nPixelCount, static_cast<GByte>(0)) == nPixelCount)
+                continue;
+
+            // get the data in the buffer, interleaved
+            eErr = poSrc->RasterIO(GF_Read, col, row, nCols, nRows,
+                buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
+
+            if (eErr != CE_None)
+                break;
+
+            // This is JPEG, only 8 and 12(16) bits unsigned integer types are valid
+            switch (eDT) {
+            case GDT_Byte:
+                ZenFilter(reinterpret_cast<GByte *>(buffer), 
+                    buffer_mask, nPixelCount, nBandCount, bFirstBandOnly);
+                break;
+            case GDT_UInt16:
+                ZenFilter(reinterpret_cast<GUInt16 *>(buffer), 
+                    buffer_mask, nPixelCount, nBandCount, bFirstBandOnly);
+                break;
+            default:
+                CPLError(CE_Failure, CPLE_AppDefined, "Unsupported data type for Zen filter");
+                eErr = CE_Failure;
+                break;
+            }
+
+            // Write
+            if( eErr == CE_None )
+            {
+                eErr = RasterIO(GF_Write, col, row, nCols, nRows,
+                    buffer, nCols, nRows, eDT, nBandCount, NULL, 0, 0, 0, NULL);
+            }
+
+        } // Columns
+        if (eErr != CE_None)
+            break;
+    } // Rows
+
+    // Cleanup
+    CPLFree(buffer);
+    CPLFree(buffer_mask);
+
+    // Final report
+    if (eErr == CE_None && !pfnProgress(1.0, NULL, pProgressData)) {
+        eErr = CE_Failure;
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()");
+    }
+
+    return eErr;
+}
 
 // Apply create options to the current dataset, only valid during creation
 void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)

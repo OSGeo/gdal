@@ -1,18 +1,28 @@
-platform:
-- x64
-- x86
+environment:
+  matrix:
+  - platform: x64
+    VSCOMNTOOLS: $(VS140COMNTOOLS)
+    SDK: release-1900-x64
+    MSVC_VER: 1900
+# Disabled to be faster
+#  - platform: x64
+#    VSCOMNTOOLS: $(VS120COMNTOOLS)
+#    SDK: release-1800-x64
+#    MSVC_VER: 1800
+  - platform: x86
+    VSCOMNTOOLS: $(VS120COMNTOOLS)
+    SDK: release-1800
+    MSVC_VER: 1800
 
 shallow_clone: true
 
 install:
 - if "%platform%" == "x86" SET PATH=c:\python27;%PATH%
 - if "%platform%" == "x64" SET PATH=c:\Python27-x64;%PATH%
-- if "%platform%" == "x86" call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat"
+- if "%platform%" == "x86" call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat"
 - if "%platform%" == "x64" "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-- if "%platform%" == "x64" call "%VS120COMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
+- if "%platform%" == "x64" call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
 - if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
-- if "%platform%" == "x86" SET SDK=release-1800
-- if "%platform%" == "x64" SET SDK=release-1800-x64
 - set SDK_ZIP=%SDK%-dev.zip
 - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
 - echo "%SDK_ZIP%"
@@ -67,9 +77,8 @@ install:
 - echo POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES >> nmake.local
 - echo POPPLER_LIBS = $(SDK_LIB)\poppler.lib $(SDK_LIB)\freetype2411.lib advapi32.lib gdi32.lib >> nmake.local
 - echo OPENJPEG_ENABLED = YES >> nmake.local
-- echo OPENJPEG_CFLAGS = -I$(SDK_INC) >> nmake.local
+- echo OPENJPEG_CFLAGS = -I$(SDK_INC)\openjpeg-2.1 >> nmake.local
 - echo OPENJPEG_LIB = $(SDK_LIB)\openjp2.lib >> nmake.local
-- echo OPENJPEG_VERSION = 20100 >> nmake.local
 - echo ECWDIR=bla >> nmake.local
 - echo ECWLIB=$(SDK_LIB)\libecwj2.lib >> nmake.local
 - echo ECWFLAGS=-DECWSDK_VERSION=33 -I$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI >> nmake.local
@@ -87,16 +96,16 @@ install:
 - echo NETCDF_LIB=$(SDK_LIB)\netcdf.lib >> nmake.local
 - echo NETCDF_INC_DIR=$(SDK_INC) >> nmake.local
 - echo NETCDF_HAS_NC4 = yes >> nmake.local
-- nmake /f makefile.vc MSVC_VER=1800 DEBUG=1 %WIN64_ARG% USER_DEFS=/WX
+- nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd apps
-- nmake /f makefile.vc test_ogrsf.exe MSVC_VER=1800 DEBUG=1 %WIN64_ARG% USER_DEFS=/WX
+- nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd ..
 - cd swig\python
 - python setup.py build
 - python setup.py install
 - cd ..\..
 - cd ..\autotest\cpp
-- nmake /f makefile.vc MSVC_VER=1800 %WIN64_ARG%
+- nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG%
 - cd ..\..
 
 
@@ -116,7 +125,7 @@ test_script:
 # The ca-bundle.crt file which we could point to is invalid in the current SDK
 # See https://github.com/gisinternals/buildsystem/issues/104
   - SET GDAL_HTTP_UNSAFESSL=YES
-  - nmake /f makefile.vc check MSVC_VER=1800 %WIN64_ARG%
+  - nmake /f makefile.vc check MSVC_VER=%MSVC_VER% %WIN64_ARG%
   - cd ..
   - python run_all.py
 

@@ -95,6 +95,20 @@ static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
                 bFirstWarning = false;
             }
 
+            // Trash drastically non-sensical values.
+            if( x > 1.0e6 || x < -1.0e6 || CPLIsNan(x) )
+            {
+                static bool bFirstWarning2 = true;
+                if( bFirstWarning2 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Longitude %lf is unreasonable.  Setting to 0."
+                             "This warning will not be issued any more", x);
+                    bFirstWarning2 = false;
+                }
+                x = 0.0;
+            }
+
             if (x > 180)
                 x -= (static_cast<int>((x+180)/360)*360);
             else if (x < -180)

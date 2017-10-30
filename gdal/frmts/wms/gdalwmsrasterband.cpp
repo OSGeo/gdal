@@ -36,7 +36,11 @@ GDALWMSRasterBand::GDALWMSRasterBand(GDALWMSDataset *parent_dataset, int band,
     m_parent_dataset(parent_dataset),
     m_scale(scale),
     m_overview(-1),
-    m_color_interp(GCI_Undefined)
+    m_color_interp(GCI_Undefined),
+    m_nAdviseReadBX0(-1),
+    m_nAdviseReadBY0(-1),
+    m_nAdviseReadBX1(-1),
+    m_nAdviseReadBY1(-1)
 {
 #ifdef DEBUG_VERBOSE
     printf("[%p] GDALWMSRasterBand::GDALWMSRasterBand(%p, %d, %f)\n",/*ok*/
@@ -848,20 +852,62 @@ CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name) {
     return ret;
 }
 
-CPLErr GDALWMSRasterBand::AdviseRead(int x0, int y0,
-                                     int sx, int sy,
-                                     CPL_UNUSED int bsx,
-                                     CPL_UNUSED int bsy,
-                                     CPL_UNUSED GDALDataType bdt,
-                                     CPL_UNUSED char **options) {
-//    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
+CPLErr GDALWMSRasterBand::AdviseRead(int nXOff, int nYOff,
+                                     int nXSize, int nYSize,
+                                     int nBufXSize,
+                                     int nBufYSize,
+                                     GDALDataType eDT,
+                                     char **papszOptions) {
+//    printf("AdviseRead(%d, %d, %d, %d)\n", nXOff, nYOff, nXSize, nYSize);
     if (m_parent_dataset->m_offline_mode || !m_parent_dataset->m_use_advise_read) return CE_None;
     if (m_parent_dataset->m_cache == NULL) return CE_Failure;
 
-    int bx0 = x0 / nBlockXSize;
-    int by0 = y0 / nBlockYSize;
-    int bx1 = (x0 + sx - 1) / nBlockXSize;
-    int by1 = (y0 + sy - 1) / nBlockYSize;
+/* ==================================================================== */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* ==================================================================== */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 )
+    {
+        const int nOverview =
+            GDALBandGetBestOverviewLevel2( this, nXOff, nYOff, nXSize, nYSize,
+                                           nBufXSize, nBufYSize, NULL );
+        if (nOverview >= 0)
+        {
+            GDALRasterBand* poOverviewBand = GetOverview(nOverview);
+            if (poOverviewBand == NULL)
+                return CE_Failure;
+
+            return poOverviewBand->AdviseRead(
+                nXOff, nYOff, nXSize, nYSize,
+                nBufXSize, nBufYSize, eDT, papszOptions );
+        }
+    }
+
+    int bx0 = nXOff / nBlockXSize;
+    int by0 = nYOff / nBlockYSize;
+    int bx1 = (nXOff + nXSize - 1) / nBlockXSize;
+    int by1 = (nYOff + nYSize - 1) / nBlockYSize;
+
+    // Avoid downloading a insane number of tiles
+    const int MAX_TILES = 1000; // arbitrary number
+    if( (bx1 - bx0 + 1) > MAX_TILES / (by1 - by0 + 1) )
+    {
+        CPLDebug("WMS", "Too many tiles for AdviseRead()");
+        return CE_Failure;
+    }
+
+    if( m_nAdviseReadBX0 == bx0 &&
+        m_nAdviseReadBY0 == by0 &&
+        m_nAdviseReadBX1 == bx1 &&
+        m_nAdviseReadBY1 == by1 )
+    {
+        return CE_None;
+    }
+    m_nAdviseReadBX0 = bx0;
+    m_nAdviseReadBY0 = by0;
+    m_nAdviseReadBX1 = bx1;
+    m_nAdviseReadBY1 = by1;
 
     return ReadBlocks(0, 0, NULL, bx0, by0, bx1, by1, 1);
 }

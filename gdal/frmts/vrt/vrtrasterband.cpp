@@ -564,6 +564,10 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         {
             SetMaskBand(poBand);
         }
+        else
+        {
+            delete poBand;
+        }
 
         break;
     }

@@ -642,8 +642,9 @@ OGRErr OGR_SRSNode::importFromWkt( char **ppszInput, int nRecLevel,
 /*      Read the ``value'' for this node.                               */
 /* -------------------------------------------------------------------- */
     {
-        char szToken[512] = {};
+        char szToken[512]; // do not initialize whole buffer. significant overhead
         size_t nTokenLen = 0;
+        szToken[0] = '\0';
 
         while( *pszInput != '\0' &&
                nTokenLen + 1 < sizeof(szToken) )

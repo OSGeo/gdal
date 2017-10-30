@@ -40,7 +40,9 @@ multi-polygon representation with one polygon per triangle in triangle
 fans and meshes.</p>
 
 <p>If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
-it will be read and used to associate a projection with features.</p>
+it will be read and used to associate a projection with features. Starting
+with GDAL 2.3, a match will be attempted with the EPSG databases to identify
+the SRS of the .prj with an entry in the catalog.</p>
 
 <p>The read driver assumes that multipart polygons follow the specification,
 that is to say the vertices of outer rings should be oriented clockwise on the

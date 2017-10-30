@@ -401,6 +401,26 @@ int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
 }
 
 /************************************************************************/
+/*                         IntersectsPoint()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns if a point intersects a (closed) curve.
+ *
+ * Final users should use OGRGeometry::Intersects() instead.
+ *
+ * @param p the point to test
+ * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
+ *
+ * @since GDAL 2.3
+ */
+
+int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
+{
+    return -1;
+}
+
+/************************************************************************/
 /*                          ~OGRPointIterator()                         */
 /************************************************************************/
 

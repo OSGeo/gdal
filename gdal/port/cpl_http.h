@@ -106,6 +106,15 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 char CPL_DLL *GOA2GetAccessToken( const char *pszRefreshToken,
                                   const char *pszScope );
 
+char  CPL_DLL **GOA2GetAccessTokenFromServiceAccount(
+                                        const char* pszPrivateKey,
+                                        const char* pszClientEmail,
+                                        const char* pszScope,
+                                        char** papszAdditionalClaims,
+                                        char** papszOptions);
+
+char CPL_DLL **GOA2GetAccessTokenFromCloudEngineVM( char** papszOptions );
+
 CPL_C_END
 
 #ifdef __cplusplus
@@ -113,7 +122,73 @@ CPL_C_END
 // Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
 char** CPLHTTPGetOptionsFromEnv();
+double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay);
+void* CPLHTTPIgnoreSigPipe();
+void CPLHTTPRestoreSigPipeHandler(void* old_handler);
 /*! @endcond */
+
+bool CPLIsMachinePotentiallyGCEInstance();
+bool CPLIsMachineForSureGCEInstance();
+
+/** Manager of Google OAuth2 authentication.
+ * 
+ * This class handles different authentication methods and handles renewal
+ * of access token.
+ *
+ * @since GDAL 2.3
+ */
+class GOA2Manager
+{
+    public:
+
+        GOA2Manager();
+
+        /** Authentication method */
+        typedef enum
+        {
+            NONE,
+            GCE,
+            ACCESS_TOKEN_FROM_REFRESH,
+            SERVICE_ACCOUNT
+        } AuthMethod;
+
+        bool SetAuthFromGCE( char** papszOptions );
+        bool SetAuthFromRefreshToken( const char* pszRefreshToken,
+                                      const char* pszClientId,
+                                      const char* pszClientSecret,
+                                      char** papszOptions );
+        bool SetAuthFromServiceAccount(const char* pszPrivateKey,
+                                       const char* pszClientEmail,
+                                       const char* pszScope,
+                                       char** papszAdditionalClaims,
+                                       char** papszOptions );
+
+        /** Returns the authentication method. */
+        AuthMethod GetAuthMethod() const { return m_eMethod; }
+
+        const char* GetBearer() const;
+
+    private:
+
+        mutable CPLString       m_osCurrentBearer;
+        mutable time_t          m_nExpirationTime;
+        AuthMethod      m_eMethod;
+
+        // for ACCESS_TOKEN_FROM_REFRESH
+        CPLString       m_osClientId;
+        CPLString       m_osClientSecret;
+        CPLString       m_osRefreshToken;
+
+        // for SERVICE_ACCOUNT
+        CPLString       m_osPrivateKey;
+        CPLString       m_osClientEmail;
+        CPLString       m_osScope;
+        CPLStringList   m_aosAdditionalClaims;
+
+        CPLStringList   m_aosOptions;
+};
+
+
 #endif // __cplusplus
 
 #endif /* ndef CPL_HTTP_H_INCLUDED */

@@ -34,15 +34,6 @@ using std::vector;
 
 NAMESPACE_MRF_START
 
-// Count the values in a buffer that match a specific value
-template<typename T> static int MatchCount(T *buff, int sz, T val) {
-    int ncount=0;
-    for (int i=0; i < sz; i++)
-        if (buff[i] == val)
-            ncount++;
-    return ncount;
-}
-
 //
 // Scales by 2x2 a buffer in place, using Nearest resampling
 // Always pick the top-left corner

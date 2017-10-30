@@ -103,6 +103,7 @@ static const char * const apszGcsNameMapping[] = {
 "Militar_Geographische_Institute", "GCS_MGI",
 "ED50", "GCS_European_1950",
 "ETRS89", "GCS_ETRS_1989",
+"NAD27_Michigan", "GCS_North_American_Michigan", 
 NULL, NULL};
 
 static const char * const apszGcsNameMappingBasedOnProjCS[] = {

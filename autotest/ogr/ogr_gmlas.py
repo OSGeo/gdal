@@ -32,6 +32,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
 import os.path
 import sys
@@ -1320,6 +1325,46 @@ def ogr_gmlas_conf_ignored_xpath():
     return 'success'
 
 ###############################################################################
+
+do_log = False
+class GMLASHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.startswith('/vsimem/'):
+                from osgeo import gdal
+                f = gdal.VSIFOpenL(self.path, "rb")
+                if f is None:
+                    self.send_response(404)
+                    self.end_headers()
+                else:
+                    gdal.VSIFSeekL(f, 0, 2)
+                    size = gdal.VSIFTellL(f)
+                    gdal.VSIFSeekL(f, 0, 0)
+                    content = gdal.VSIFReadL(1, size, f)
+                    gdal.VSIFCloseL(f)
+                    self.protocol_version = 'HTTP/1.0'
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(content)
+                return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+###############################################################################
 # Test schema caching
 
 def ogr_gmlas_cache():
@@ -1335,7 +1380,7 @@ def ogr_gmlas_cache():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
@@ -2230,7 +2275,7 @@ def ogr_gmlas_xlink_resolver():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
@@ -4628,6 +4673,53 @@ def ogr_gmlas_extra_eureg():
                                   'data/gmlas/real_world/output/EUReg.example.txt',
                                   options = '-oo REMOVE_UNUSED_LAYERS=YES')
 
+
+###############################################################################
+# Test a schema that has nothing interesting in it but imports another
+# sceham
+
+def ogr_gmlas_no_element_in_first_choice_schema():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_interesting_schema.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:my_ns="http://my/ns" 
+           targetNamespace="http://my/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:my_ns="http://my/ns" 
+           targetNamespace="http://main/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+ <xs:import namespace="http://my/ns" schemaLocation="ogr_gmlas_interesting_schema.xsd" />
+</xs:schema>""")
+
+
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd'])
+    lyr = ds.GetLayerByName('_ogr_layers_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_xpath'] != 'my_ns:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_interesting_schema.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd')
+
+    return 'success'
+
 ###############################################################################
 #  Cleanup
 
@@ -4701,6 +4793,7 @@ gdaltest_list = [
     ogr_gmlas_any_field_at_end_of_declaration,
     ogr_gmlas_aux_schema_without_namespace_prefix,
     ogr_gmlas_geometry_as_substitutiongroup,
+    ogr_gmlas_no_element_in_first_choice_schema,
     ogr_gmlas_cleanup ]
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]

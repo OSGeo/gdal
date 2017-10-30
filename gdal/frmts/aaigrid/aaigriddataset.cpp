@@ -77,6 +77,24 @@ float DoubleToFloatClamp(double dfValue) {
     return static_cast<float>(dfValue);
 }
 
+// Cast to float and back for make sure the NoData value matches
+// that expressed by a float value.  Clamps to the range of a float
+// if the value is too large.  Preserves +/-inf and NaN.
+// TODO(schwehr): This should probably be moved to port as it is likely
+// to be needed for other formats.
+double MapNoDataToFloat(double dfNoDataValue) {
+    if( CPLIsInf(dfNoDataValue) || CPLIsNan(dfNoDataValue) )
+        return dfNoDataValue;
+
+    if( dfNoDataValue >= std::numeric_limits<float>::max() )
+        return std::numeric_limits<float>::max();
+
+    if( dfNoDataValue <= -std::numeric_limits<float>::max() )
+        return -std::numeric_limits<float>::max();
+
+    return static_cast<double>(static_cast<float>(dfNoDataValue));
+}
+
 }  // namespace
 
 static CPLString OSR_GDS( char **papszNV, const char *pszField,
@@ -534,8 +552,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         }
         if( eDataType == GDT_Float32 )
         {
-            dfNoDataValue =
-                static_cast<double>(static_cast<float>(dfNoDataValue));
+            dfNoDataValue = MapNoDataToFloat(dfNoDataValue);
         }
     }
 
@@ -633,9 +650,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         }
         if( eDataType == GDT_Float32 )
         {
-            // TODO(schwehr): Is this really what we want?
-            dfNoDataValue =
-                static_cast<double>(static_cast<float>(dfNoDataValue));
+            dfNoDataValue = MapNoDataToFloat(dfNoDataValue);
         }
     }
 

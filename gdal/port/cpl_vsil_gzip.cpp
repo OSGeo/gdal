@@ -2149,7 +2149,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     if( strchr(pszAccess, '+') != NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Random access not supported for /vsizip");
+                 "Read-write random access not supported for /vsizip");
         return NULL;
     }
 
@@ -2624,14 +2624,14 @@ void VSIZipWriteHandle::StartNewFile( VSIZipWriteHandle* poSubFile )
  * handled by this driver.
  *
  * The syntax to open a file inside a zip file is
- * /vsizip/path/to/the/file.zip/path/inside/the/zip/file were
+ * /vsizip/path/to/the/file.zip/path/inside/the/zip/file where
  * path/to/the/file.zip is relative or absolute and path/inside/the/zip/file is
  * the relative path to the file inside the archive.
  *
  * Starting with GDAL 2.2, an alternate syntax is available so as to enable
  * chaining and not being dependent on .zip extension :
  * /vsizip/{/path/to/the/archive}/path/inside/the/zip/file.
- * Note that /path/to/the/archive may also itself this alternate syntax.
+ * Note that /path/to/the/archive may also itself use this alternate syntax.
  *
  * If the path is absolute, it should begin with a / on a Unix-like OS (or C:\
  * on Windows), so the line looks like /vsizip//home/gdal/...  For example

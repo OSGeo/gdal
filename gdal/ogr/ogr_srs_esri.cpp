@@ -645,7 +645,8 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 static
 int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr,
                                       const char* pszProgCSName,
-                                      char **mappingTable )
+                                      char **mappingTable,
+                                      bool bToESRI )
 {
   OGR_SRSNode *poPROJCS = pOgr->GetAttrNode( "PROJCS" );
   if( poPROJCS == NULL ) return -1;
@@ -656,7 +657,7 @@ int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr,
     while( mappingTable[i] != NULL &&
            EQUALN(pszProgCSName, mappingTable[i], strlen(mappingTable[i])) )
     {
-      const char* pszParamName = mappingTable[i+1];
+      const char* pszParamName = (bToESRI) ? mappingTable[i+1] :  mappingTable[i+2];
       for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
       {
           OGR_SRSNode *poParm = poPROJCS->GetChild( iChild );
@@ -665,7 +666,7 @@ int RemapPNamesBasedOnProjCSAndPName( OGRSpatialReference* pOgr,
               && poParm->GetChildCount() == 2
               && EQUAL(poParm->GetChild(0)->GetValue(), pszParamName) )
           {
-              poParm->GetChild(0)->SetValue( mappingTable[i+2] );
+              poParm->GetChild(0)->SetValue( (bToESRI) ? mappingTable[i+2] : mappingTable[i+1] );
               break;
           }
       }
@@ -778,11 +779,36 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
     else if( EQUAL(osProj, "STATEPLANE") )
     {
-        int nZone = static_cast<int>( OSR_GDV( papszPrj, "zone", 0.0 ) );
+        const double dfZone = OSR_GDV(papszPrj, "zone", 0.0);
+
+        if( dfZone < std::numeric_limits<int>::min() ||
+            dfZone > std::numeric_limits<int>::max() ||
+            CPLIsNan(dfZone) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "zone out of range: %f", dfZone);
+            return OGRERR_CORRUPT_DATA;
+        }
+
+        int nZone = static_cast<int>( dfZone );
+
         if( nZone != 0 )
             nZone = ESRIToUSGSZone( nZone );
         else
-            nZone = static_cast<int>( OSR_GDV( papszPrj, "fipszone", 0.0 ) );
+        {
+            const double dfFipszone = OSR_GDV(papszPrj, "fipszone", 0.0);
+
+            if( dfFipszone < std::numeric_limits<int>::min() ||
+                dfFipszone > std::numeric_limits<int>::max() ||
+                CPLIsNan(dfFipszone) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "fipszone out of range: %f", dfFipszone);
+                return OGRERR_CORRUPT_DATA;
+            }
+
+            nZone = static_cast<int>( dfFipszone );
+        }
 
         if( nZone != 0 )
         {
@@ -836,8 +862,16 @@ OGRErr OGRSpatialReference::importFromESRI( char **papszPrj )
     }
     else if( EQUAL(osProj, "EQUIDISTANT_CONIC") )
     {
-        const int nStdPCount = static_cast<int>(
-            OSR_GDV( papszPrj, "PARAM_1", 0.0 ) );
+        const double dfStdPCount = OSR_GDV( papszPrj, "PARAM_1", 0.0 );
+        // TODO(schwehr): What is a reasonable range for StdPCount?
+        if( dfStdPCount < 0 || dfStdPCount > std::numeric_limits<int>::max() ||
+            CPLIsNan(dfStdPCount) )
+        {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "StdPCount out of range: %lf", dfStdPCount);
+                return OGRERR_CORRUPT_DATA;
+        }
+        const int nStdPCount = static_cast<int>(dfStdPCount);
 
         if( nStdPCount == 1 )
         {
@@ -1853,7 +1887,8 @@ OGRErr OGRSpatialReference::morphToESRI()
             const_cast<char **>(apszParamValueMapping));
         RemapPNamesBasedOnProjCSAndPName(
             this, pszProjection,
-            const_cast<char **>(apszParamNameMapping));
+            const_cast<char **>(apszParamNameMapping),
+            true /* to ESRI */ );
       }
     }
 
@@ -1961,6 +1996,48 @@ OGRErr OGRSpatialReference::morphFromESRI()
             char *pszNewValue = CPLStrdup( poDatum->GetValue() + 2 );
             poDatum->SetValue( pszNewValue );
             CPLFree( pszNewValue );
+        }
+
+        // Combine Datum and PrimeM in a few cases
+        static const char * const apszDatumNameMappingBasedPrime[] = {
+            "Ferro", "System_Jednotne_Trigonometricke_Site_Katastralni",
+                "System_Jednotne_Trigonometricke_Site_Katastralni_Ferro",
+            "Ferro", "System_Jednotne_Trigonometricke_Site_Katastralni_05",
+                "System_Jednotne_Trigonometricke_Site_Katastralni_05_Ferro",
+            "Ferro", "Militar_Geographische_Institute",
+                "Militar_Geographische_Institut_Ferro", // note the Institute vs Institu difference
+            "Jakarta", "Gunung_Segara", "Gunung_Segara_Jakarta",
+            "Jakarta", "Makassar", "Makassar_Jakarta",
+            "Jakarta", "Batavia", "Batavia_Jakarta",
+            "Jakarta", "Padang_1884", "Padang_1884_Jakarta",
+            "Paris", "Carthage", "Carthage_Paris",
+            "Paris", "Nouvelle_Triangulation_Francaise",
+                "Nouvelle_Triangulation_Francaise_Paris",
+            "Paris", "Tananarive_1925", "Tananarive_1925_Paris",
+            "Paris", "Voirol_1875", "Voirol_1875_Paris",
+            "Paris", "Voirol_1879", "Voirol_1879_Paris",
+            "Paris", "Nord_Sahara_1959", "Nord_Sahara_1959_Paris",
+            "Rome", "Monte_Mario", "Monte_Mario_Rome",
+            "Oslo", "NGO_1948", "NGO_1948_Oslo",
+            "Brussels", "Reseau_National_Belge_1950",
+                "Reseau_National_Belge_1950_Brussels",
+            "Lisbon", "Lisbon_1890", "Lisbon_1890_Lisbon",
+            "Lisbon", "Lisbon_1937", "Lisbon_1937_Lisbon",
+            "Athens", "Greek", "Greek_Athens",
+            "Stockholm", "Stockholm_1938", "Stockholm_1938_Stockholm",
+            "Bogota", "Bogota_1975", "Bogota_1975_Bogota",
+            "Greenwich", "North_American_Michigan", "NAD27_Michigan"
+        };
+
+        const char* pszPrimeName = GetAttrValue("PRIMEM");
+        for( size_t i = 0; i < CPL_ARRAYSIZE(apszDatumNameMappingBasedPrime); i+=3 )
+        {
+            if( pszPrimeName && EQUAL(pszPrimeName, apszDatumNameMappingBasedPrime[i]) &&
+                EQUAL(poDatum->GetValue(), apszDatumNameMappingBasedPrime[i+1]) )
+            {
+                poDatum->SetValue( apszDatumNameMappingBasedPrime[i+2] );
+                break;
+            }
         }
     }
 
@@ -2142,6 +2219,14 @@ OGRErr OGRSpatialReference::morphFromESRI()
                               const_cast<char **>(apszProjMapping),
                               const_cast<char **>(apszProjMapping+1),
                               2 );
+    pszProjection = GetAttrValue("PROJECTION");
+    if( pszProjection )
+    {
+        RemapPNamesBasedOnProjCSAndPName(
+            this, pszProjection,
+            const_cast<char **>(apszParamNameMapping),
+            false /* from ESRI */ );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */

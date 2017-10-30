@@ -332,8 +332,10 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 
             pasAttDesc = static_cast<NTFAttDesc *>(
                 CPLRealloc( pasAttDesc, sizeof(NTFAttDesc) * nAttCount ));
+            memset( &pasAttDesc[nAttCount-1], 0, sizeof(NTFAttDesc) );
 
-            ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 );
+            if( !ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 ) )
+                nAttCount --;
         }
 
 /* -------------------------------------------------------------------- */
@@ -1522,7 +1524,7 @@ OGRFeature * NTFFileReader::ReadOGRFeature( OGRNTFLayer * poTargetLayer )
         else
             papoGroup = ReadRecordGroup();
 
-        if( papoGroup == NULL )
+        if( papoGroup == NULL || papoGroup[0] == NULL )
             break;
 
         int nType = papoGroup[0]->GetType();

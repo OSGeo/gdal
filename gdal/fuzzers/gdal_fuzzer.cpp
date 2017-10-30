@@ -172,7 +172,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     ((nBYSize == 1 && nYSizeToRead > 1 &&
                       GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
                                         "BLOCK_OFFSET_0_1", "TIFF") == NULL) ||
-                     nBXSize < GDALGetRasterXSize(hDS)) &&
+                     nBXSize != GDALGetRasterXSize(hDS)) &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
                     if( EQUAL(pszCompress, "PIXARLOG") &&

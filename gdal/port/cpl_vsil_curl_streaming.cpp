@@ -35,6 +35,8 @@
 
 #include "cpl_aws.h"
 #include "cpl_google_cloud.h"
+#include "cpl_azure.h"
+#include "cpl_alibaba_oss.h"
 #include "cpl_hash_set.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
@@ -60,6 +62,16 @@ void VSIInstallGSStreamingFileHandler(void)
     // Not supported.
 }
 
+void VSIInstallAzureStreamingFileHandler(void)
+{
+    // Not supported
+}
+
+void VSIInstallOSSStreamingFileHandler(void)
+{
+    // Not supported
+}
+
 #else
 
 //! @cond Doxygen_Suppress
@@ -76,6 +88,8 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
 #define N_MAX_REGIONS       10
 
 #define BKGND_BUFFER_SIZE   (1024 * 1024)
+
+void VSICurlStreamingClearCache( void );  // used in cpl_vsil_curl.cpp
 
 /************************************************************************/
 /*                               RingBuffer                             */
@@ -209,6 +223,8 @@ public:
     void                ReleaseMutex();
 
     CachedFileProp*     GetCachedFileProp(const char*     pszURL);
+
+    virtual void    ClearCache();
 };
 
 /************************************************************************/
@@ -270,7 +286,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
                                    GByte          *pData );
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders(const CPLString& )
+    virtual struct curl_slist* GetCurlHeaders(const CPLString&,
+                                const struct curl_slist* /* psExistingHeaders */ )
         { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
     virtual bool CanRestartOnError( const char* /*pszErrorMsg*/,
@@ -480,9 +497,13 @@ VSICurlStreamingHandleWriteFuncForHeader( void *buffer, size_t count,
         if( psStruct->bIsHTTP && psStruct->bIsInHeader )
         {
             char* pszLine = psStruct->pBuffer + psStruct->nSize;
-            if( STARTS_WITH_CI(pszLine, "HTTP/1.0 ") ||
-                STARTS_WITH_CI(pszLine, "HTTP/1.1 ") )
-                psStruct->nHTTPCode = atoi(pszLine + 9);
+            if( STARTS_WITH_CI(pszLine, "HTTP/") )
+            {
+                const char* pszSpace = strchr(
+                    const_cast<const char*>(pszLine), ' ');
+                if( pszSpace )
+                    psStruct->nHTTPCode = atoi(pszSpace + 1);
+            }
 
             if( pszLine[0] == '\r' || pszLine[0] == '\n' )
             {
@@ -567,9 +588,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         osVerb = "HEAD";
     }
 
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb));
-    if( headers != NULL )
-        curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders(osVerb, headers));
+    curl_easy_setopt(hLocalHandle, CURLOPT_HTTPHEADER, headers);
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
     // when doing a HEAD when recycling connections.
@@ -585,7 +605,9 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
     curl_easy_setopt(hLocalHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     curl_easy_perform(hLocalHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
     if( headers != NULL )
         curl_slist_free_all(headers);
 
@@ -597,7 +619,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     if( STARTS_WITH(m_pszURL, "ftp") )
     {
         if( sWriteFuncData.pBuffer != NULL &&
-            STARTS_WITH(sWriteFuncData.pBuffer, "Content-Length: ") )
+            STARTS_WITH_CI(sWriteFuncData.pBuffer, "Content-Length: ") )
         {
             const char* pszBuffer =
                 sWriteFuncData.pBuffer + strlen("Content-Length: ");
@@ -891,8 +913,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
     // Reset buffer if we have followed link after a redirect.
     if( nSize >= 9 && InterpretRedirect() &&
         (nHTTPCode == 301 || nHTTPCode == 302) &&
-        (STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/1.0 ") ||
-         STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/1.1 ")) )
+        STARTS_WITH_CI(reinterpret_cast<char *>(buffer), "HTTP/") )
     {
         nHeaderSize = 0;
         nHTTPCode = 0;
@@ -913,12 +934,15 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader( GByte *buffer, size_t count,
 
         if( eExists == EXIST_UNKNOWN && nHTTPCode == 0 &&
             strchr(reinterpret_cast<char *>(pabyHeaderData), '\n') != NULL &&
-            (STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
-                            "HTTP/1.0 ") ||
-             STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
-                            "HTTP/1.1 ")) )
+            STARTS_WITH_CI(reinterpret_cast<char *>(pabyHeaderData),
+                            "HTTP/") )
         {
-            nHTTPCode = atoi(reinterpret_cast<char *>(pabyHeaderData) + 9);
+            nHTTPCode = 0;
+            const char* pszSpace = strchr(
+                const_cast<const char*>(
+                    reinterpret_cast<char *>(pabyHeaderData)), ' ');
+            if( pszSpace )
+                nHTTPCode = atoi(pszSpace + 1);
             if( ENABLE_DEBUG )
                 CPLDebug("VSICURL", "HTTP code = %d", nHTTPCode);
 
@@ -1008,9 +1032,8 @@ void VSICurlStreamingHandle::DownloadInThread()
 {
     struct curl_slist* headers = 
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
-    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET"));
-    if( headers != NULL )
-        curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
+    headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
+    curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
     static bool bHasCheckVersion = false;
     static bool bSupportGZip = false;
@@ -1043,7 +1066,9 @@ void VSICurlStreamingHandle::DownloadInThread()
     szCurlErrBuf[0] = '\0';
     curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     CURLcode eRet = curl_easy_perform(hCurlHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
     if( headers != NULL )
         curl_slist_free_all(headers);
 
@@ -1513,6 +1538,20 @@ VSICurlStreamingFSHandler::VSICurlStreamingFSHandler()
 
 VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
 {
+    ClearCache();
+
+    CPLDestroyMutex( hMutex );
+    hMutex = NULL;
+}
+
+/************************************************************************/
+/*                            ClearCache()                              */
+/************************************************************************/
+
+void VSICurlStreamingFSHandler::ClearCache()
+{
+    CPLMutexHolder oHolder( &hMutex );
+
     for( std::map<CPLString, CachedFileProp*>::const_iterator
              iterCacheFileSize = cacheFileSize.begin();
          iterCacheFileSize != cacheFileSize.end();
@@ -1520,9 +1559,7 @@ VSICurlStreamingFSHandler::~VSICurlStreamingFSHandler()
     {
         CPLFree(iterCacheFileSize->second);
     }
-
-    CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    cacheFileSize.clear();  
 }
 
 /************************************************************************/
@@ -1652,10 +1689,23 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 }
 
 /************************************************************************/
+/*                      IVSIS3LikeStreamingFSHandler                    */
+/************************************************************************/
+
+class IVSIS3LikeStreamingFSHandler: public VSICurlStreamingFSHandler
+{
+public:
+        IVSIS3LikeStreamingFSHandler() {}
+
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * /*poHandleHelper*/ ) {}
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * /*poHandleHelper*/ ) {}
+};
+
+/************************************************************************/
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
 
-class VSIS3StreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+class VSIS3StreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -1667,8 +1717,8 @@ protected:
 public:
         VSIS3StreamingFSHandler() {}
 
-        void UpdateMapFromHandle( VSIS3HandleHelper * poS3HandleHelper );
-        void UpdateHandleFromMap( VSIS3HandleHelper * poS3HandleHelper );
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
 
 /************************************************************************/
@@ -1676,15 +1726,18 @@ public:
 /************************************************************************/
 
 void VSIS3StreamingFSHandler::UpdateMapFromHandle(
-    VSIS3HandleHelper * poS3HandleHelper )
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
     CPLMutexHolder oHolder( &hMutex );
 
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
+
     oMapBucketsToS3Params[ poS3HandleHelper->GetBucket() ] =
-        VSIS3UpdateParams ( poS3HandleHelper->GetAWSRegion(),
-                      poS3HandleHelper->GetAWSS3Endpoint(),
-                      poS3HandleHelper->GetRequestPayer(),
-                      poS3HandleHelper->GetVirtualHosting() );
+        VSIS3UpdateParams ( poS3HandleHelper );
 }
 
 /************************************************************************/
@@ -1692,41 +1745,44 @@ void VSIS3StreamingFSHandler::UpdateMapFromHandle(
 /************************************************************************/
 
 void VSIS3StreamingFSHandler::UpdateHandleFromMap(
-    VSIS3HandleHelper * poS3HandleHelper )
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
     CPLMutexHolder oHolder( &hMutex );
+
+    VSIS3HandleHelper * poS3HandleHelper =
+        dynamic_cast<VSIS3HandleHelper *>(poHandleHelper);
+    CPLAssert( poS3HandleHelper );
+    if( !poS3HandleHelper )
+        return;
 
     std::map< CPLString, VSIS3UpdateParams>::iterator oIter =
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        poS3HandleHelper->SetAWSRegion(oIter->second.m_osAWSRegion);
-        poS3HandleHelper->SetAWSS3Endpoint(oIter->second.m_osAWSS3Endpoint);
-        poS3HandleHelper->SetRequestPayer(oIter->second.m_osRequestPayer);
-        poS3HandleHelper->SetVirtualHosting(oIter->second.m_bUseVirtualHosting);
+        oIter->second.UpdateHandlerHelper(poS3HandleHelper);  
     }
 }
 
 /************************************************************************/
-/*                            VSIS3StreamingHandle                      */
+/*                          VSIS3LikeStreamingHandle                    */
 /************************************************************************/
 
-class VSIS3StreamingHandle CPL_FINAL: public VSICurlStreamingHandle
+class VSIS3LikeStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
 {
-    VSIS3HandleHelper* m_poS3HandleHelper;
+    IVSIS3LikeHandleHelper* m_poS3HandleHelper;
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
-        override;
+    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+                                const struct curl_slist* psExistingHeaders) override;
     virtual bool StopReceivingBytesOnError() override { return false; }
     virtual bool CanRestartOnError( const char* pszErrorMsg,
                                     bool bSetError ) override;
     virtual bool InterpretRedirect() override { return false; }
 
   public:
-    VSIS3StreamingHandle( VSIS3StreamingFSHandler* poFS,
-                          VSIS3HandleHelper* poS3HandleHelper );
-    virtual ~VSIS3StreamingHandle();
+    VSIS3LikeStreamingHandle( IVSIS3LikeStreamingFSHandler* poFS,
+                          IVSIS3LikeHandleHelper* poS3HandleHelper );
+    virtual ~VSIS3LikeStreamingHandle();
 };
 
 /************************************************************************/
@@ -1742,27 +1798,27 @@ VSIS3StreamingFSHandler::CreateFileHandle( const char* pszURL )
     if( poS3HandleHelper )
     {
         UpdateHandleFromMap(poS3HandleHelper);
-        return new VSIS3StreamingHandle(this, poS3HandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poS3HandleHelper);
     }
     return NULL;
 }
 
 /************************************************************************/
-/*                        VSIS3StreamingHandle()                        */
+/*                     VSIS3LikeStreamingHandle()                       */
 /************************************************************************/
 
-VSIS3StreamingHandle::VSIS3StreamingHandle(
-    VSIS3StreamingFSHandler* poFS,
-    VSIS3HandleHelper* poS3HandleHelper) :
+VSIS3LikeStreamingHandle::VSIS3LikeStreamingHandle(
+    IVSIS3LikeStreamingFSHandler* poFS,
+    IVSIS3LikeHandleHelper* poS3HandleHelper) :
     VSICurlStreamingHandle(poFS, poS3HandleHelper->GetURL()),
     m_poS3HandleHelper(poS3HandleHelper)
 {}
 
 /************************************************************************/
-/*                       ~VSIS3StreamingHandle()                        */
+/*                     ~VSIS3LikeStreamingHandle()                      */
 /************************************************************************/
 
-VSIS3StreamingHandle::~VSIS3StreamingHandle()
+VSIS3LikeStreamingHandle::~VSIS3LikeStreamingHandle()
 {
     delete m_poS3HandleHelper;
 }
@@ -1772,21 +1828,22 @@ VSIS3StreamingHandle::~VSIS3StreamingHandle()
 /************************************************************************/
 
 struct curl_slist*
-VSIS3StreamingHandle::GetCurlHeaders( const CPLString& osVerb )
+VSIS3LikeStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
+                                      const struct curl_slist* psExistingHeaders )
 {
-    return m_poS3HandleHelper->GetCurlHeaders(osVerb);
+    return m_poS3HandleHelper->GetCurlHeaders(osVerb, psExistingHeaders);
 }
 
 /************************************************************************/
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3StreamingHandle::CanRestartOnError( const char* pszErrorMsg,
+bool VSIS3LikeStreamingHandle::CanRestartOnError( const char* pszErrorMsg,
                                               bool bSetError )
 {
     if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
     {
-        static_cast<VSIS3StreamingFSHandler*>(m_poFS)->
+        static_cast<IVSIS3LikeStreamingFSHandler*>(m_poFS)->
             UpdateMapFromHandle(m_poS3HandleHelper);
 
         SetURL(m_poS3HandleHelper->GetURL());
@@ -1801,7 +1858,7 @@ bool VSIS3StreamingHandle::CanRestartOnError( const char* pszErrorMsg,
 /*                       VSIGSStreamingFSHandler                        */
 /************************************************************************/
 
-class VSIGSStreamingFSHandler CPL_FINAL: public VSICurlStreamingFSHandler
+class VSIGSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
 protected:
     virtual CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
@@ -1810,26 +1867,6 @@ protected:
 
 public:
         VSIGSStreamingFSHandler() {}
-};
-
-/************************************************************************/
-/*                            VSIGSStreamingHandle                      */
-/************************************************************************/
-
-class VSIGSStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
-{
-    VSIGSHandleHelper* m_poGCHandleHelper;
-
-  protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb )
-        override;
-    virtual bool StopReceivingBytesOnError() override { return false; }
-    virtual bool InterpretRedirect() override { return false; }
-
-  public:
-    VSIGSStreamingHandle( VSIGSStreamingFSHandler* poFS,
-                          VSIGSHandleHelper* poGCHandleHelper );
-    virtual ~VSIGSStreamingHandle();
 };
 
 /************************************************************************/
@@ -1843,85 +1880,138 @@ VSIGSStreamingFSHandler::CreateFileHandle( const char* pszURL )
             VSIGSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
     if( poGCHandleHelper )
     {
-        return new VSIGSStreamingHandle(this, poGCHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poGCHandleHelper);
     }
     return NULL;
 }
 
-/************************************************************************/
-/*                        VSIGSStreamingHandle()                        */
-/************************************************************************/
-
-VSIGSStreamingHandle::VSIGSStreamingHandle(
-    VSIGSStreamingFSHandler* poFS,
-    VSIGSHandleHelper* poGCHandleHelper) :
-    VSICurlStreamingHandle(poFS, poGCHandleHelper->GetURL()),
-    m_poGCHandleHelper(poGCHandleHelper)
-{}
 
 /************************************************************************/
-/*                       ~VSIGSStreamingHandle()                        */
+/*                      VSIAzureStreamingFSHandler                      */
 /************************************************************************/
 
-VSIGSStreamingHandle::~VSIGSStreamingHandle()
+class VSIAzureStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
-    delete m_poGCHandleHelper;
+protected:
+    virtual CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
+        override;
+
+public:
+        VSIAzureStreamingFSHandler() {}
+};
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSIAzureStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSIAzureBlobHandleHelper* poHandleHelper =
+            VSIAzureBlobHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+    if( poHandleHelper )
+    {
+        return new VSIS3LikeStreamingHandle(this, poHandleHelper);
+    }
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                       VSIOSSStreamingFSHandler                        */
+/************************************************************************/
+
+class VSIOSSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+{
+    std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
+
+protected:
+    virtual CPLString GetFSPrefix() override { return "/vsioss_streaming/"; }
+    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
+        override;
+
+public:
+        VSIOSSStreamingFSHandler() {}
+
+        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+};
+
+/************************************************************************/
+/*                         UpdateMapFromHandle()                        */
+/************************************************************************/
+
+void VSIOSSStreamingFSHandler::UpdateMapFromHandle(
+    IVSIS3LikeHandleHelper * poHandleHelper )
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+
+    oMapBucketsToOSSParams[ poOSSHandleHelper->GetBucket() ] =
+        VSIOSSUpdateParams ( poOSSHandleHelper );
 }
 
 /************************************************************************/
-/*                           GetCurlHeaders()                           */
+/*                         UpdateHandleFromMap()                        */
 /************************************************************************/
 
-struct curl_slist*
-VSIGSStreamingHandle::GetCurlHeaders( const CPLString& osVerb )
+void VSIOSSStreamingFSHandler::UpdateHandleFromMap(
+    IVSIS3LikeHandleHelper * poHandleHelper )
 {
-    if( CSLFetchNameValue(m_papszHTTPOptions, "HEADER_FILE") )
-        return NULL;
-    return m_poGCHandleHelper->GetCurlHeaders(osVerb);
+    CPLMutexHolder oHolder( &hMutex );
+
+    VSIOSSHandleHelper * poOSSHandleHelper =
+        dynamic_cast<VSIOSSHandleHelper *>(poHandleHelper);
+    CPLAssert( poOSSHandleHelper );
+    if( !poOSSHandleHelper )
+        return;
+
+    std::map< CPLString, VSIOSSUpdateParams>::iterator oIter =
+        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
+    if( oIter != oMapBucketsToOSSParams.end() )
+    {
+        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
+    }
+}
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSIOSSStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSIOSSHandleHelper* poOSSHandleHelper =
+            VSIOSSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(),
+                                            false);
+    if( poOSSHandleHelper )
+    {
+        UpdateHandleFromMap(poOSSHandleHelper);
+        return new VSIS3LikeStreamingHandle(this, poOSSHandleHelper);
+    }
+    return NULL;
 }
 
 
 //! @endcond
 
-} /* end of anoymous namespace */
+} /* end of anonymous namespace */
 
 /************************************************************************/
-/*                   VSIInstallCurlFileHandler()                        */
+/*                 VSIInstallCurlStreamingFileHandler()                 */
 /************************************************************************/
 
 /**
  * \brief Install /vsicurl_streaming/ HTTP/FTP file system handler (requires
  * libcurl).
  *
- * A special file handler is installed that allows on-the-fly sequential reading
- * of files streamed through HTTP/FTP web protocols (typically dynamically
- * generated files), without prior download of the entire file.
- *
- * Although this file handler is able seek to random offsets in the file, this
- * will not be efficient. If you need efficient random access and that the
- * server supports range dowloading, you should use the /vsicurl/ file system
- * handler instead.
- *
- * Recognized filenames are of the form
- * /vsicurl_streaming/http://path/to/remote/resource or
- * /vsicurl_streaming/ftp://path/to/remote/resource where
- * path/to/remote/resource is the URL of a remote resource.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * The file can be cached in RAM by setting the configuration option VSI_CACHE
- * to TRUE. The cache size defaults to 25 MB, but can be modified by setting the
- * configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member and file nature- file or
- * directory - in st_mode member (the later only reliable with FTP resources for
- * now).
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsicurl_streaming">/vsicurl_streaming/ documentation</a>
  *
  * @since GDAL 1.10
  */
@@ -1939,41 +2029,7 @@ void VSIInstallCurlStreamingFileHandler(void)
  * \brief Install /vsis3_streaming/ Amazon S3 file system handler (requires
  * libcurl).
  *
- * A special file handler is installed that allows on-the-fly sequential reading
- * of non-public files streamed from AWS S3 buckets without prior download of
- * the entire file.
- *
- * Recognized filenames are of the form /vsis3_streaming/bucket/key where
- * bucket is the name of the S3 bucket and resource the S3 object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options *must*
- * be set.
- * The AWS_SESSION_TOKEN configuration option must be set when temporary
- * credentials are used.
-
- * The AWS_REGION configuration option may be set to one of the supported
- * <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region">
- * S3 regions</a> and defaults to 'us-east-1'.  The AWS_S3_ENDPOINT
- * configuration option defaults to s3.amazonaws.com. Starting with GDAL 2.2,
- * the AWS_REQUEST_PAYER configuration option may be set to "requester" to
- * facilitate use with
- * <a href="http://docs.aws.amazon.com/AmazonS3/latest/dev/RequesterPaysBuckets.html">Requester
- * Pays buckets</a>.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * Starting with GDAL 2.1.3, the CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * The file can be cached in RAM by setting the configuration option VSI_CACHE
- * to TRUE. The cache size defaults to 25 MB, but can be modified by setting the
- * configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsis3_streaming">/vsis3_streaming/ documentation</a>
  *
  * @since GDAL 2.1
  */
@@ -1991,39 +2047,7 @@ void VSIInstallS3StreamingFileHandler(void)
  * \brief Install /vsigs_streaming/ Google Cloud Storage file system handler
  * (requires libcurl)
  *
- * A special file handler is installed that allows on-the-fly random reading of
- * non-public files streamed from Google Cloud Storage buckets, without prior
- * download of the entire file.
- *
- * Recognized filenames are of the form /vsigs_streaming/bucket/key where
- * bucket is the name of the bucket and key the object "key", i.e.
- * a filename potentially containing subdirectories.
- *
- * Partial downloads are done with a 16 KB granularity by default.
- * If the driver detects sequential reading
- * it will progressively increase the chunk size up to 2 MB to improve download
- * performance.
- *
- * The GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID configuration options must be
- * set to use the AWS S3 authentication compatibility method.
- * 
- * Alternatively, it is possible to set the GDAL_HTTP_HEADER_FILE configuration
- * option to point to a filename of a text file with "key: value" headers.
- * Typically, it must contain a "Authorization: Bearer XXXXXXXXX" line.
- *
- * The GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD and GDAL_PROXY_AUTH configuration
- * options can be used to define a proxy server. The syntax to use is the one of
- * Curl CURLOPT_PROXY, CURLOPT_PROXYUSERPWD and CURLOPT_PROXYAUTH options.
- *
- * The CURL_CA_BUNDLE or SSL_CERT_FILE configuration
- * options can be used to set the path to the Certification Authority (CA)
- * bundle file (if not specified, curl will use a file in a system location).
- *
- * On reading, the file can be cached in RAM by setting the configuration option
- * VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be modified by
- * setting the configuration option VSI_CACHE_SIZE (in bytes).
- *
- * VSIStatL() will return the size in st_size member.
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsigs_streaming">/vsigs_streaming/ documentation</a>
  *
  * @since GDAL 2.2
  */
@@ -2032,5 +2056,70 @@ void VSIInstallGSStreamingFileHandler( void )
 {
     VSIFileManager::InstallHandler( "/vsigs_streaming/", new VSIGSStreamingFSHandler );
 }
+
+/************************************************************************/
+/*                   VSIInstallAzureStreamingFileHandler()              */
+/************************************************************************/
+
+/**
+ * \brief Install /vsiaz_streaming/ Microsoft Azure Blob file system handler
+ * (requires libcurl)
+ *
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiaz_streaming">/vsiaz_streaming/ documentation</a>1
+ *
+ * @since GDAL 2.3
+ */
+
+void VSIInstallAzureStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsiaz_streaming/",
+                                    new VSIAzureStreamingFSHandler );
+}
+
+/************************************************************************/
+/*                    VSIInstallOSSStreamingFileHandler()               */
+/************************************************************************/
+
+/**
+ * \brief Install /vsioss_streaming/ Alibaba Cloud Object Storage Service (OSS)
+ * file system handler (requires libcurl)
+ *
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsioss_streaming">/vsioss_streaming/ documentation</a>
+ *
+ * @since GDAL 2.3
+ */
+
+void VSIInstallOSSStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsioss_streaming/",
+                                    new VSIOSSStreamingFSHandler );
+}
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                      VSICurlStreamingClearCache()                    */
+/************************************************************************/
+
+void VSICurlStreamingClearCache( void )
+{
+    // FIXME ? Currently we have different filesystem instances for
+    // vsicurl/, /vsis3/, /vsigs/ . So each one has its own cache of regions,
+    // file size, etc.
+    const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
+                                   "/vsigs_streaming/", "vsiaz_streaming/",
+                                   "/vsioss_streaming/" };
+    for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
+    {
+        VSICurlStreamingFSHandler *poFSHandler =
+            dynamic_cast<VSICurlStreamingFSHandler*>(
+                VSIFileManager::GetHandler( apszFS[i] ));
+
+        if( poFSHandler )
+            poFSHandler->ClearCache();
+    }
+}
+
+//! @endcond
 
 #endif  // !defined(HAVE_CURL) || defined(CPL_MULTIPROC_STUB)

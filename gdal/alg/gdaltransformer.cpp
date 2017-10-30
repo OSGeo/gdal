@@ -1952,11 +1952,8 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
-            {
-                panSuccess[i] = FALSE;
+            if( !panSuccess[i] )
                 continue;
-            }
 
             const double dfNewX = padfGeoTransform[0]
                 + padfX[i] * padfGeoTransform[1]

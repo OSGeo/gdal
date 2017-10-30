@@ -99,7 +99,6 @@ CPLString OGRLIBKMLGetSanitizedNCName( const char* pszName )
  OGRLIBKMLLayer constructor
 
  Args:          pszLayerName    the name of the layer
-                poSpatialRef    the spacial Refrance for the layer
                 eGType          the layers geometry type
                 poOgrDS         pointer to the datasource the layer is in
                 poKmlRoot       pointer to the root kml element of the layer
@@ -113,7 +112,6 @@ CPLString OGRLIBKMLGetSanitizedNCName( const char* pszName )
 ******************************************************************************/
 
 OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
-                                OGRSpatialReference * poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 OGRLIBKMLDataSource * poOgrDS,
                                 ElementPtr poKmlRoot,
@@ -338,9 +336,6 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
             }
             iFeature = 0;
         }
-
-        /***** check if any features are another layer *****/
-        m_poOgrDS->ParseLayers( m_poKmlLayer, poSpatialRef );
     }
     /***** it was from a DS::CreateLayer *****/
     else

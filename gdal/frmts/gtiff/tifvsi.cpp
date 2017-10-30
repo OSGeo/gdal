@@ -75,12 +75,39 @@ typedef struct
     // For pseudo-mmap'ed /vsimem/ file
     vsi_l_offset nDataLength;
     void*        pBase;
+
+    // If we pre-cached data (typically from /vsicurl/ )
+    int          nCachedRanges;
+    void**       ppCachedData;
+    vsi_l_offset* panCachedOffsets;
+    size_t*       panCachedSizes;
 } GDALTiffHandle;
 
 static tsize_t
 _tiffReadProc( thandle_t th, tdata_t buf, tsize_t size )
 {
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle *>(th);
+
+    if( psGTH->nCachedRanges )
+    {
+        const vsi_l_offset nCurOffset = VSIFTellL( psGTH->fpL );
+        for( int i = 0; i < psGTH->nCachedRanges; i++ )
+        {
+            if( nCurOffset >= psGTH->panCachedOffsets[i] &&
+                nCurOffset + static_cast<size_t>(size) <=
+                    psGTH->panCachedOffsets[i] + psGTH->panCachedSizes[i] )
+            {
+                memcpy( buf,
+                        static_cast<GByte*>(psGTH->ppCachedData[i]) +
+                            (nCurOffset - psGTH->panCachedOffsets[i]), size );
+                VSIFSeekL( psGTH->fpL, nCurOffset + size, SEEK_SET );
+                return size;
+            }
+            if( nCurOffset < psGTH->panCachedOffsets[i] )
+                break;
+        }
+    }
+
     return VSIFReadL( buf, 1, size, psGTH->fpL );
 }
 
@@ -198,6 +225,9 @@ _tiffCloseProc( thandle_t th )
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
     GTHFlushBuffer(th);
     CPLFree(psGTH->abyWriteBuffer);
+    CPLFree(psGTH->ppCachedData);
+    CPLFree(psGTH->panCachedOffsets);
+    CPLFree(psGTH->panCachedSizes);
     CPLFree(psGTH);
     return 0;
 }
@@ -249,6 +279,41 @@ int VSI_TIFFFlushBufferedWrite( thandle_t th )
     GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
     psGTH->bAtEndOfFile = false;
     return GTHFlushBuffer(th);
+}
+
+int VSI_TIFFHasCachedRanges( thandle_t th )
+{
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    return psGTH->nCachedRanges != 0;
+}
+
+void VSI_TIFFSetCachedRanges( thandle_t th, int nRanges,
+                              void ** ppData,
+                              const vsi_l_offset* panOffsets,
+                              const size_t* panSizes )
+{
+    GDALTiffHandle* psGTH = reinterpret_cast<GDALTiffHandle*>( th );
+    psGTH->nCachedRanges = nRanges;
+    if( nRanges )
+    {
+        psGTH->ppCachedData =
+            static_cast<void**>(CPLRealloc(psGTH->ppCachedData,
+                                                nRanges * sizeof(void*)));
+        memcpy(psGTH->ppCachedData, ppData,
+            nRanges * sizeof(void*));
+
+        psGTH->panCachedOffsets =
+            static_cast<vsi_l_offset*>(CPLRealloc(psGTH->panCachedOffsets,
+                                                nRanges * sizeof(vsi_l_offset)));
+        memcpy(psGTH->panCachedOffsets, panOffsets,
+            nRanges * sizeof(vsi_l_offset));
+
+        psGTH->panCachedSizes =
+            static_cast<size_t*>(CPLRealloc(psGTH->panCachedSizes,
+                                                nRanges * sizeof(size_t)));
+        memcpy(psGTH->panCachedSizes, panSizes,
+            nRanges * sizeof(size_t));
+    }
 }
 
 // Open a TIFF file for read/writing.

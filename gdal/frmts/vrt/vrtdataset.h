@@ -200,6 +200,12 @@ class CPL_DLL VRTDataset : public GDALDataset
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg) CPL_OVERRIDE;
 
+    virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                               int nBufXSize, int nBufYSize,
+                               GDALDataType eDT,
+                               int nBandCount, int *panBandList,
+                               char **papszOptions ) CPL_OVERRIDE;
+
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 

@@ -6,12 +6,15 @@ export chroot="$PWD"/xenial
 mkdir -p "$chroot$PWD"
 sudo apt-get update
 sudo apt-get install -y debootstrap
-export LC_ALL=en_US
+export LC_ALL=en_US.utf8
 sudo debootstrap xenial "$chroot"
 sudo mount --rbind "$PWD" "$chroot$PWD"
 sudo mount --rbind /dev/pts "$chroot/dev/pts"
+sudo mount --rbind /dev/shm "$chroot/dev/shm"
 sudo mount --rbind /proc "$chroot/proc"
 sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu xenial universe" >> xenial/etc/apt/sources.list'
+sudo su -c 'echo "en_US.UTF-8 UTF-8" >> xenial/etc/locale.gen'
+sudo chroot "$chroot" locale-gen
 sudo chroot "$chroot" apt-get update
 #sudo chroot "$chroot" apt-get install -y clang
 sudo chroot "$chroot" apt-get install -y software-properties-common python-software-properties
@@ -24,8 +27,8 @@ sudo chroot "$chroot" apt-get install -y doxygen texlive-latex-base
 sudo chroot "$chroot" apt-get install -y make
 sudo chroot "$chroot" apt-get install -y python-dev
 sudo chroot "$chroot" apt-get install -y g++
-sudo chroot "$chroot" apt-get install -y libsfcgal-dev
-sudo chroot "$chroot" apt-get install -y fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
+sudo chroot "$chroot" apt-get install -y --allow-unauthenticated libsfcgal-dev
+sudo chroot "$chroot" apt-get install -y --allow-unauthenticated fossil libgeotiff-dev libcharls-dev libopenjp2-7-dev libcairo2-dev
 wget http://llvm.org/releases/3.9.0/clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 tar xJf clang+llvm-3.9.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
 

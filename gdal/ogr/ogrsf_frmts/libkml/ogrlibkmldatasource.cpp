@@ -73,7 +73,7 @@ static const char OGRLIBKMLSRSWKT[] =
 
 static ElementPtr OGRLIBKMLParse(std::string oKml, std::string *posError)
 {
-    // To allow reading files using an explict namespace prefix like <kml:kml>
+    // To allow reading files using an explicit namespace prefix like <kml:kml>
     // we need to use ParseNS (see #6981). But if we use ParseNS, we have
     // issues reading gx: elements. So use ParseNS only when we have errors
     // with Parse. This is not completely satisfactory...
@@ -751,6 +751,17 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     int bUpdateIn,
     int nGuess )
 {
+    // Build unique layer name
+    CPLString osUniqueLayername(pszLayerName);
+    int nIter = 2;
+    while( true )
+    {
+        if( GetLayerByName(osUniqueLayername) == NULL )
+            break;
+        osUniqueLayername = CPLSPrintf("%s (#%d)", pszLayerName, nIter);
+        nIter ++;
+    }
+
     /***** check to see if we have enough space to store the layer *****/
     if( nLayers == nAlloced )
     {
@@ -760,10 +771,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     }
 
     /***** create the layer *****/
-    const int iLayer = nLayers++;
-
-    OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer( pszLayerName,
-                                                      poSpatialRef,
+    OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer( osUniqueLayername,
                                                       eGType,
                                                       poOgrDS,
                                                       poKmlRoot,
@@ -774,7 +782,11 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
                                                       bUpdateIn );
 
     /***** add the layer to the array *****/
+    const int iLayer = nLayers++;
     papoLayers[iLayer] = poOgrLayer;
+
+    /***** check if any features are another layer *****/
+    ParseLayers( poKmlContainer, poSpatialRef );
 
     return poOgrLayer;
 }

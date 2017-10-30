@@ -473,6 +473,10 @@ protected:
     std::vector<GDALWMSRasterBand *> m_overviews;
     int m_overview;
     GDALColorInterp m_color_interp;
+    int m_nAdviseReadBX0;
+    int m_nAdviseReadBY0;
+    int m_nAdviseReadBX1;
+    int m_nAdviseReadBY1;
 };
 
 #endif /* notdef WMSDRIVER_H_INCLUDED */

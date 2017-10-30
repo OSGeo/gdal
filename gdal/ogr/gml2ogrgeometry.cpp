@@ -1700,7 +1700,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     if( EQUAL(pszBaseGeometry, "ArcByBulge") )
     {
         const CPLXMLNode *psChild = FindBareXMLChild( psNode, "bulge");
-        if( psChild == NULL || psChild->eType != CXT_Element )
+        if( psChild == NULL || psChild->eType != CXT_Element ||
+            psChild->psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing bulge element." );
@@ -3634,6 +3635,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         OGRGeometry *poResult = NULL;
         for( ; psParent != NULL; psParent = psParent->psNext )
         {
+            psChild = GetChildElement(psParent);
+            if( psChild == NULL )
+                continue;
             poPS = new OGRPolyhedralSurface();
             for( ; psChild != NULL; psChild = psChild->psNext )
             {
@@ -3658,6 +3662,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                              wkbPolygon )
                     {
                         poPS->addGeometryDirectly( poPolygon );
+                    }
+                    else if( wkbFlatten(poPolygon->getGeometryType()) ==
+                             wkbCurvePolygon )
+                    {
+                        poPS->addGeometryDirectly(
+                            OGRGeometryFactory::forceToPolygon(poPolygon) );
                     }
                     else
                     {

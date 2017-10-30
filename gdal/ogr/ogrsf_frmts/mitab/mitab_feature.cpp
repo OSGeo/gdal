@@ -1926,7 +1926,8 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
         for( int iLine = 0; iLine < numLines; iLine++ )
         {
             poGeom = poMultiLine->getGeometryRef(iLine);
-            if (poGeom && wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
+            if (poGeom == NULL ||
+                wkbFlatten(poGeom->getGeometryType()) != wkbLineString)
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
                          "TABPolyline: Object contains an invalid Geometry!");

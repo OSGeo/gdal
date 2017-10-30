@@ -52,6 +52,7 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <limits>
 #include <new>
 #include <utility>
 #include <vector>
@@ -4658,7 +4659,18 @@ static void OGRGeometryFactoryStrokeArc( OGRLineString* poLine,
     const int nSign = dfStep > 0 ? 1 : -1;
 
     // Constant angle between all points, so as to not depend on winding order.
-    int nSteps = static_cast<int>(fabs((alpha1 - alpha0) / dfStep) + 0.5);
+    const double dfNumSteps = fabs((alpha1 - alpha0) / dfStep) + 0.5;
+    if ( dfNumSteps >= std::numeric_limits<int>::max() ||
+         dfNumSteps <= std::numeric_limits<int>::min() ||
+         CPLIsNan(dfNumSteps) )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "OGRGeometryFactoryStrokeArc: bogus steps: "
+                 "%lf %lf %lf %lf", alpha0, alpha1, dfStep, dfNumSteps);
+        return;
+    }
+
+    int nSteps = static_cast<int>(dfNumSteps);
     if( bStealthConstraints )
     {
         // We need at least 6 intermediate vertex, and if more additional
@@ -4686,7 +4698,9 @@ static void OGRGeometryFactoryStrokeArc( OGRLineString* poLine,
             poLine->addPoint(dfX, dfY, z);
         }
         else
+        {
             poLine->addPoint(dfX, dfY);
+        }
     }
 }
 
@@ -4932,8 +4946,21 @@ OGRLineString* OGRGeometryFactory::curveToLineString(
             // low-significant bits of all the points are symmetrical w.r.t the
             // mid-point.
             const double dfRatio = (alpha1 - alpha0) / (alpha2 - alpha0);
-            const GUInt32 nAlphaRatio =
-                static_cast<GUInt32>(0.5 + HIDDEN_ALPHA_SCALE * dfRatio);
+            double dfAlphaRatio = 0.5 + HIDDEN_ALPHA_SCALE * dfRatio;
+            if( dfAlphaRatio < 0.0 )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "AlphaRation < 0: %lf", dfAlphaRatio);
+                dfAlphaRatio *= -1;
+            }
+            else if( dfAlphaRatio >= std::numeric_limits<GUInt32>::max() ||
+                     CPLIsNan(dfAlphaRatio) )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "AlphaRatio too large: %lf", dfAlphaRatio);
+                dfAlphaRatio = std::numeric_limits<GUInt32>::max();
+            }
+            const GUInt32 nAlphaRatio = static_cast<GUInt32>(dfAlphaRatio);
             const GUInt16 nAlphaRatioLow = nAlphaRatio & HIDDEN_ALPHA_HALF_MASK;
             const GUInt16 nAlphaRatioHigh =
                 nAlphaRatio >> HIDDEN_ALPHA_HALF_WIDTH;

@@ -2845,10 +2845,10 @@ CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
 }
 
 /************************************************************************/
-/*                          JPGAddEXIFOverview()                        */
+/*                             JPGAddEXIF()                             */
 /************************************************************************/
 
-void   JPGAddEXIFOverview( GDALDataType eWorkDT,
+void   JPGAddEXIF        ( GDALDataType eWorkDT,
                            GDALDataset *poSrcDS, char **papszOptions,
                            void *cinfo,
                            my_jpeg_write_m_header p_jpeg_write_m_header,
@@ -2912,6 +2912,9 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
             nOvrHeight = 1;
     }
 
+    vsi_l_offset nJPEGIfByteCount = 0;
+    GByte *pabyOvr = NULL;
+
     if( bGenerateEXIFThumbnail && nXSize > nOvrWidth && nYSize > nOvrHeight )
     {
         GDALDataset *poMemDS =
@@ -2951,151 +2954,37 @@ void   JPGAddEXIFOverview( GDALDataType eWorkDT,
         delete poOutDS;
         poOutDS = NULL;
         GDALClose(poMemDS);
-        vsi_l_offset nJPEGIfByteCount = 0;
-        GByte *pabyOvr = NULL;
         if( bExifOverviewSuccess )
             pabyOvr = VSIGetMemFileBuffer(osTmpFile, &nJPEGIfByteCount, TRUE);
         VSIUnlink(osTmpFile);
 
-        const unsigned int nMarkerSize =
-            6 + 16 + 5 * 12 + 4 + static_cast<unsigned int>(nJPEGIfByteCount);
         if( pabyOvr == NULL )
         {
+            nJPEGIfByteCount = 0;
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Could not generate EXIF overview");
         }
-        else if( nMarkerSize < 65536 )
-        {
-            p_jpeg_write_m_header(cinfo, JPEG_APP0 + 1, nMarkerSize);
-            p_jpeg_write_m_byte(cinfo, 'E');  // EXIF signature.
-            p_jpeg_write_m_byte(cinfo, 'x');
-            p_jpeg_write_m_byte(cinfo, 'i');
-            p_jpeg_write_m_byte(cinfo, 'f');
-            p_jpeg_write_m_byte(cinfo, '\0');
-            p_jpeg_write_m_byte(cinfo, '\0');
-
-            // TIFF little-endian signature.
-            p_jpeg_write_m_byte(cinfo, TIFF_LITTLEENDIAN & 0xff);
-            p_jpeg_write_m_byte(cinfo, TIFF_LITTLEENDIAN >> 8);
-            p_jpeg_write_m_byte(cinfo, TIFF_VERSION);
-            p_jpeg_write_m_byte(cinfo, 0x00);
-
-            p_jpeg_write_m_byte(cinfo, 8);  // Offset of IFD0.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 0);  // Number of entries of IFD0.
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 14); // Offset of IFD1.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 5);  // Number of entries of IFD1.
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, JPEG_TIFF_IMAGEWIDTH & 0xff);
-            p_jpeg_write_m_byte(cinfo, (JPEG_TIFF_IMAGEWIDTH >> 8) & 0xff);
-
-            p_jpeg_write_m_byte(cinfo, TIFF_LONG);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 1);  // 1 value.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, nOvrWidth & 0xff);
-            p_jpeg_write_m_byte(cinfo, nOvrWidth >> 8);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, JPEG_TIFF_IMAGEHEIGHT & 0xff);
-            p_jpeg_write_m_byte(cinfo, JPEG_TIFF_IMAGEHEIGHT >> 8);
-
-            p_jpeg_write_m_byte(cinfo, TIFF_LONG);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 1);  // 1 value.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, nOvrHeight & 0xff);
-            p_jpeg_write_m_byte(cinfo, nOvrHeight >> 8);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, JPEG_TIFF_COMPRESSION & 0xff);
-            p_jpeg_write_m_byte(cinfo, JPEG_TIFF_COMPRESSION >> 8);
-
-            p_jpeg_write_m_byte(cinfo, TIFF_SHORT);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 1); // 1 value.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 6); // JPEG compression.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, JPEG_EXIF_JPEGIFOFSET & 0xff);
-            p_jpeg_write_m_byte(cinfo, JPEG_EXIF_JPEGIFOFSET >> 8);
-
-            p_jpeg_write_m_byte(cinfo, TIFF_LONG);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 1); // 1 value.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            const unsigned int nJPEGIfOffset = 16 + 5 * 12 + 4;
-            p_jpeg_write_m_byte(cinfo, nJPEGIfOffset & 0xff);
-            p_jpeg_write_m_byte(cinfo, nJPEGIfOffset >> 8);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, JPEG_EXIF_JPEGIFBYTECOUNT & 0xff);
-            p_jpeg_write_m_byte(cinfo, JPEG_EXIF_JPEGIFBYTECOUNT >> 8);
-
-            p_jpeg_write_m_byte(cinfo, TIFF_LONG);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(cinfo, 1); // 1 value.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            p_jpeg_write_m_byte(
-                cinfo, static_cast<GByte>(nJPEGIfByteCount & 0xff));
-            p_jpeg_write_m_byte(
-                cinfo, static_cast<GByte>(nJPEGIfByteCount >> 8));
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            // Offset of IFD2 == 0 ==> end of TIFF directory.
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-            p_jpeg_write_m_byte(cinfo, 0);
-
-            for( int i = 0; i < static_cast<int>(nJPEGIfByteCount); i++ )
-                p_jpeg_write_m_byte(cinfo, pabyOvr[i]);
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Cannot write EXIF thumbnail. "
-                     "The size of the EXIF segment exceeds 65536 bytes");
-        }
-        CPLFree(pabyOvr);
     }
+
+    GUInt32 nMarkerSize;
+    const bool bWriteExifMetadata =
+        CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
+
+    GByte* pabyEXIF =
+        EXIFCreate(bWriteExifMetadata ? poSrcDS->GetMetadata() : NULL,
+                   pabyOvr,
+                   static_cast<GUInt32>(nJPEGIfByteCount),
+                   nOvrWidth, nOvrHeight, &nMarkerSize);
+    if( pabyEXIF )
+    {
+        p_jpeg_write_m_header(cinfo, JPEG_APP0 + 1, nMarkerSize);
+        for( GUInt32 i = 0; i < nMarkerSize; i++ )
+        {
+            p_jpeg_write_m_byte(cinfo, pabyEXIF[i]);
+        }
+        VSIFree(pabyEXIF);
+    }
+    CPLFree(pabyOvr);
 }
 
 #endif  // !defined(JPGDataset)
@@ -3285,14 +3174,20 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
 
     jpeg_set_defaults(&sCInfo);
 
-    // This is to address bug related in ticket #1795.
-    if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+    // libjpeg turbo 1.5.2 honours max_memory_to_use, but has no backing
+    // store implementation, so better not set max_memory_to_use ourselves.
+    // See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/162
+    if( sCInfo.mem->max_memory_to_use > 0 )
     {
-        // If the user doesn't provide a value for JPEGMEM, we want to be sure
-        // that at least 500 MB will be used before creating the temporary file.
-        const long nMinMemory = 500 * 1024 * 1024;
-        sCInfo.mem->max_memory_to_use =
-            std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
+        // This is to address bug related in ticket #1795.
+        if (CPLGetConfigOption("JPEGMEM", NULL) == NULL)
+        {
+            // If the user doesn't provide a value for JPEGMEM, we want to be sure
+            // that at least 500 MB will be used before creating the temporary file.
+            const long nMinMemory = 500 * 1024 * 1024;
+            sCInfo.mem->max_memory_to_use =
+                std::max(sCInfo.mem->max_memory_to_use, nMinMemory);
+        }
     }
 
     if( eDT == GDT_UInt16 )
@@ -3353,7 +3248,7 @@ JPGDataset::CreateCopyStage2( const char *pszFilename, GDALDataset *poSrcDS,
 
     jpeg_start_compress(&sCInfo, TRUE);
 
-    JPGAddEXIFOverview(eWorkDT, poSrcDS, papszOptions,
+    JPGAddEXIF        (eWorkDT, poSrcDS, papszOptions,
                        &sCInfo,
                        (my_jpeg_write_m_header)jpeg_write_m_header,
                        (my_jpeg_write_m_byte)jpeg_write_m_byte,
@@ -3601,6 +3496,7 @@ const char *GDALJPGDriver::GetMetadataItem( const char *pszName,
 "   <Option name='EXIF_THUMBNAIL' type='boolean' description='whether to generate an EXIF thumbnail(overview). By default its max dimension will be 128' default='NO'/>\n"
 "   <Option name='THUMBNAIL_WIDTH' type='int' description='Forced thumbnail width' min='32' max='512'/>\n"
 "   <Option name='THUMBNAIL_HEIGHT' type='int' description='Forced thumbnail height' min='32' max='512'/>\n"
+"   <Option name='WRITE_EXIF_METADATA' type='boolean' description='whether to write EXIF_ metadata in a EXIF segment' default='YES'/>"
 "</CreationOptionList>\n";
         SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
     }

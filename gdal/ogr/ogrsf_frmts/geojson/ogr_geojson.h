@@ -42,9 +42,17 @@
 
 class OGRGeoJSONDataSource;
 
+GDALDataset* OGRGeoJSONDriverOpenInternal( GDALOpenInfo* poOpenInfo,
+                                           GeoJSONSourceType nSrcType,
+                                           const char* pszJSonFlavor );
+void OGRGeoJSONDriverStoreContent( const char* pszSource, char* pszText );
+char* OGRGeoJSONDriverStealStoredContent( const char* pszSource );
+
 /************************************************************************/
 /*                           OGRGeoJSONLayer                            */
 /************************************************************************/
+
+class OGRGeoJSONReader;
 
 class OGRGeoJSONLayer : public OGRMemLayer
 {
@@ -57,7 +65,8 @@ class OGRGeoJSONLayer : public OGRMemLayer
     OGRGeoJSONLayer( const char* pszName,
                      OGRSpatialReference* poSRS,
                      OGRwkbGeometryType eGType,
-                     OGRGeoJSONDataSource* poDS );
+                     OGRGeoJSONDataSource* poDS,
+                     OGRGeoJSONReader* poReader);
     virtual ~OGRGeoJSONLayer();
 
     //
@@ -67,18 +76,47 @@ class OGRGeoJSONLayer : public OGRMemLayer
     virtual int         TestCapability( const char * pszCap ) override;
 
     virtual OGRErr      SyncToDisk() override;
+
+    virtual void        ResetReading() override;
+    virtual OGRFeature* GetNextFeature() override;
+    virtual OGRFeature* GetFeature(GIntBig nFID) override;
+    virtual GIntBig     GetFeatureCount(int bForce) override;
+
+    OGRErr              ISetFeature( OGRFeature *poFeature ) override;
+    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
+    virtual OGRErr      CreateField( OGRFieldDefn *poField,
+                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr      DeleteField( int iField ) override;
+    virtual OGRErr      ReorderFields( int* panMap ) override;
+    virtual OGRErr      AlterFieldDefn( int iField,
+                                        OGRFieldDefn* poNewFieldDefn,
+                                        int nFlags ) override;
+    virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poGeomField,
+                                         int bApproxOK = TRUE ) override;
+
     //
     // OGRGeoJSONLayer Interface
     //
     void SetFIDColumn( const char* pszFIDColumn );
     void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
+    void IncFeatureCount() { nTotalFeatureCount_++; }
+    void UnsetReader() { poReader_ = NULL; }
+    void InvalidateFeatureCount() { nTotalFeatureCount_ = -1; }
 
   private:
     OGRGeoJSONDataSource* poDS_;
+    OGRGeoJSONReader* poReader_;
+    bool bHasAppendedFeatures_;
     CPLString sFIDColumn_;
     bool bUpdated_;
     bool bOriginalIdModified_;
+    GIntBig nTotalFeatureCount_;
+    GIntBig nNextFID_;
+
+    bool IngestAll();
+    void TerminateAppendSession();
 };
 
 /************************************************************************/
@@ -140,7 +178,8 @@ class OGRGeoJSONDataSource : public OGRDataSource
     // OGRDataSource Interface
     //
     int Open( GDALOpenInfo* poOpenInfo,
-               GeoJSONSourceType nSrcType );
+              GeoJSONSourceType nSrcType,
+              const char* pszJSonFlavor );
     const char* GetName() override;
     int GetLayerCount() override;
     OGRLayer* GetLayer( int nLayer ) override;
@@ -178,6 +217,7 @@ class OGRGeoJSONDataSource : public OGRDataSource
     int  GetBBOXInsertLocation() const { return nBBOXInsertLocation_; }
     int  HasOtherPages() const { return bOtherPages_; }
     bool IsUpdatable() const { return bUpdatable_; }
+    const CPLString& GetJSonFlavor() const { return osJSonFlavor_; }
 
     virtual void        FlushCache() override;
 
@@ -207,13 +247,22 @@ class OGRGeoJSONDataSource : public OGRDataSource
 
     bool bUpdatable_;
 
+    CPLString osJSonFlavor_;
+
     //
     // Private utility functions
     //
     void Clear();
-    int ReadFromFile( GDALOpenInfo* poOpenInfo );
-    int ReadFromService( const char* pszSource );
-    void LoadLayers(char** papszOpenOptions);
+    int ReadFromFile( GDALOpenInfo* poOpenInfo, const char* pszUnprefixed );
+    int ReadFromService( GDALOpenInfo* poOpenInfo, const char* pszSource );
+    void LoadLayers(GDALOpenInfo* poOpenInfo,
+                    GeoJSONSourceType nSrcType,
+                    const char* pszUnprefixed,
+                    const char* pszJSonFlavor);
+    void SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
+                            OGRGeoJSONReader* poReader);
+    void CheckExceededTransferLimit( json_object* poObj );
+    void RemoveJSonPStuff();
 };
 
 #endif  // OGR_GEOJSON_H_INCLUDED

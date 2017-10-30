@@ -119,6 +119,9 @@
 #include "cpl_string.h"
 
 #ifdef GDAL_COMPILATION
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
 #include "shapefil.h"
 #else
 #include "dbfopen.h"

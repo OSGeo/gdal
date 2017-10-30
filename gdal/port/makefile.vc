@@ -57,6 +57,9 @@ OBJ	=	cpl_conv.obj \
 		cpl_vsi_error.obj \
 		cpl_cpu_features.obj \
 		cpl_google_cloud.obj \
+		cpl_azure.obj \
+		cpl_alibaba_oss.obj \
+		cpl_json_streaming_parser.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib
@@ -91,6 +94,10 @@ EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_CRYPTOPP $(CRYPTOPP_INC)
 
 !IFDEF USE_ONLY_CRYPTODLL_ALG
 EXTRAFLAGS =	$(EXTRAFLAGS) -DUSE_ONLY_CRYPTODLL_ALG
+!ENDIF
+
+!IFDEF OPENSSL_INC
+EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_OPENSSL_CRYPTO $(OPENSSL_INC)
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED

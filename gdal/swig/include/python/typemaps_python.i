@@ -1982,3 +1982,31 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   }
 
 }
+
+
+%typemap(in,numinputs=0) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL) ( OGRSpatialReferenceH* pahSRS = NULL, int nvalues = 0, int* confidence_values = NULL )
+{
+  /* %typemap(in) (OSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+  $1 = &pahSRS;
+  $2 = &nvalues;
+  $3 = &confidence_values;
+}
+
+%typemap(argout) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL)
+{
+    /* %typemap(argout) (OOSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+
+    Py_DECREF($result);
+
+    $result = PyList_New( *($2));
+    for( int i = 0; i < *($2); i++ )
+    {
+        PyObject *tuple = PyTuple_New( 2 );
+        PyTuple_SetItem( tuple, 0,
+            SWIG_NewPointerObj(SWIG_as_voidptr((*($1))[i]), SWIGTYPE_p_OSRSpatialReferenceShadow, 1 ) );
+        PyTuple_SetItem( tuple, 1, PyInt_FromLong((*($3))[i]) );
+        PyList_SetItem( $result, i, tuple );
+    }
+    CPLFree( *($1) );
+    CPLFree( *($3) );
+}

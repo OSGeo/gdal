@@ -32,6 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gstEndian.h"
+#include "cpl_safemaths.hpp"
 
 #include <algorithm>
 
@@ -1138,7 +1139,18 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     int blockX, blockY;
     firstBand->GetBlockSize(&blockX, &blockY);
-    CPLDebug("FIT write", "inherited block size %ix%i", blockX, blockY);
+    int nDTSize = GDALGetDataTypeSizeBytes(firstBand->GetRasterDataType());
+    try
+    {
+        CPL_IGNORE_RET_VAL(
+            CPLSM(blockX) * CPLSM(blockY) * CPLSM(nDTSize) * CPLSM(nBands));
+        CPLDebug("FIT write", "inherited block size %ix%i", blockX, blockY);
+    }
+    catch( ... )
+    {
+        blockX = 256;
+        blockY = 256;
+    }
 
     if( CSLFetchNameValue(papszOptions,"PAGESIZE") != NULL )
     {
@@ -1188,15 +1200,17 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    unsigned long bytesPerComponent =
-        (GDALGetDataTypeSize(firstBand->GetRasterDataType()) / 8);
-    unsigned long bytesPerPixel = nBands * bytesPerComponent;
+    unsigned long bytesPerPixel = nBands * nDTSize;
 
     unsigned long pageBytes = blockX * blockY * bytesPerPixel;
     char *output = (char *) malloc(pageBytes);
     if (! output)
-        CPLError(CE_Fatal, CPLE_NotSupported,
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
                  "FITRasterBand couldn't allocate %lu bytes", pageBytes);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+        return NULL;
+    }
     FreeGuard<char> guardOutput( output );
 
     long maxx = (long) ceil(poSrcDS->GetRasterXSize() / (double) blockX);
@@ -1235,7 +1249,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       static_cast<int>(y * blockY), // nYOff
                                       static_cast<int>(readX), // nXSize
                                       static_cast<int>(readY), // nYSize
-                                      output + iBand * bytesPerComponent,
+                                      output + iBand * nDTSize,
                                       // pData
                                       blockX, // nBufXSize
                                       blockY, // nBufYSize
@@ -1251,26 +1265,26 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 #ifdef swapping
             char *p = output;
             unsigned long i;
-            switch(bytesPerComponent) {
+            switch(nDTSize) {
             case 1:
                 // do nothing
                 break;
             case 2:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap16(p + i);
                 break;
             case 4:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap32(p + i);
                 break;
             case 8:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap64(p + i);
                 break;
             default:
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "FIT write - unsupported bytesPerPixel %lu",
-                         bytesPerComponent);
+                         "FIT write - unsupported bytesPerPixel %d",
+                         nDTSize);
             } // switch
 #endif // swapping
 

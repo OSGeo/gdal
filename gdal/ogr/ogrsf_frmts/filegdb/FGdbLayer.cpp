@@ -2455,8 +2455,14 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(defn_xml, "EXTCLSID", "");
     }
 
-    /* Set the alias for the Feature Class */
-    if (pszLayerNameIn != layerName)
+    /* Set the alias for the Feature Class, check if we received an */
+    /* explicit one in the options vector. */
+    const char* pszLayerAlias = CSLFetchNameValue( papszOptions, "LAYER_ALIAS");
+    if ( pszLayerAlias != NULL )
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszLayerAlias);
+    }
+    else if (pszLayerNameIn != layerName)
     {
         CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszLayerNameIn);
     }

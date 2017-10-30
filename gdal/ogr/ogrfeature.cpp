@@ -880,57 +880,10 @@ OGRFeature *OGRFeature::Clone()
     if( poNew == NULL )
         return NULL;
 
-    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    if( !CopySelfTo( poNew ) )
     {
-        if( !poNew->SetFieldInternal( i, pauFields + i ) )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-    for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
-    {
-        if( papoGeometries[i] != NULL )
-        {
-            poNew->papoGeometries[i] = papoGeometries[i]->clone();
-            if( poNew->papoGeometries[i] == NULL )
-            {
-                delete poNew;
-                return NULL;
-            }
-        }
-    }
-
-    if( m_pszStyleString != NULL )
-    {
-        poNew->m_pszStyleString = VSI_STRDUP_VERBOSE(m_pszStyleString);
-        if( poNew->m_pszStyleString == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-
-    poNew->SetFID( GetFID() );
-
-    if( m_pszNativeData != NULL )
-    {
-        poNew->m_pszNativeData = VSI_STRDUP_VERBOSE(m_pszNativeData);
-        if( poNew->m_pszNativeData == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-
-    if( m_pszNativeMediaType != NULL )
-    {
-        poNew->m_pszNativeMediaType = VSI_STRDUP_VERBOSE(m_pszNativeMediaType);
-        if( poNew->m_pszNativeMediaType == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
+        delete poNew;
+        return NULL;
     }
 
     return poNew;
@@ -959,6 +912,76 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 
     return reinterpret_cast<OGRFeatureH>(
         reinterpret_cast<OGRFeature *>(hFeat)->Clone());
+}
+
+/************************************************************************/
+/*                             CopySelfTo()                             */
+/************************************************************************/
+
+/**
+* \brief Copies the innards of this OGRFeature into the supplied object.
+*
+* This is mainly intended to allow derived classes to implement their own
+* Clone functions.
+*
+* @param poNew The object into which to copy the data of this object.
+* @return True if successful, false if the copy failed.
+*/
+
+bool OGRFeature::CopySelfTo( OGRFeature* poNew )
+{
+    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    {
+        if( !poNew->SetFieldInternal( i, pauFields + i ) )
+        {
+            return false;
+        }
+    }
+    if( poNew->papoGeometries )
+    {
+        for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
+        {
+            if( papoGeometries[i] != NULL )
+            {
+                poNew->papoGeometries[i] = papoGeometries[i]->clone();
+                if( poNew->papoGeometries[i] == NULL )
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    if( m_pszStyleString != NULL )
+    {
+        poNew->m_pszStyleString = VSI_STRDUP_VERBOSE(m_pszStyleString);
+        if( poNew->m_pszStyleString == NULL )
+        {
+            return false;
+        }
+    }
+
+    poNew->SetFID( GetFID() );
+
+    if( m_pszNativeData != NULL )
+    {
+        poNew->m_pszNativeData = VSI_STRDUP_VERBOSE(m_pszNativeData);
+        if( poNew->m_pszNativeData == NULL )
+        {
+            return false;
+        }
+    }
+
+    if( m_pszNativeMediaType != NULL )
+    {
+        poNew->m_pszNativeMediaType = VSI_STRDUP_VERBOSE(m_pszNativeMediaType);
+        if( poNew->m_pszNativeMediaType == NULL )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /************************************************************************/

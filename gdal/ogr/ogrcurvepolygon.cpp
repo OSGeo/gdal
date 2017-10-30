@@ -566,7 +566,13 @@ OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
         OGRLineString* poLS =
             oCC.papoCurves[iRing]->CurveToLine(dfMaxAngleStepSizeDegrees,
                                                papszOptions);
-        poPoly->addRingDirectly(OGRCurve::CastToLinearRing(poLS));
+        OGRLinearRing* poRing = OGRCurve::CastToLinearRing(poLS);
+        if( poRing == NULL ) {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "OGRCurve::CastToLinearRing failed");
+            break;
+        }
+        poPoly->addRingDirectly(poRing);
     }
     return poPoly;
 }
@@ -752,6 +758,23 @@ OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
 }
 
 /************************************************************************/
+/*                          IntersectsPoint()                           */
+/************************************************************************/
+
+OGRBoolean OGRCurvePolygon::IntersectsPoint( const OGRPoint* p ) const
+{
+    if( getExteriorRingCurve() != NULL &&
+        getNumInteriorRings() == 0 )
+    {
+        const int nRet = getExteriorRingCurve()->IntersectsPoint(p);
+        if( nRet >= 0 )
+            return nRet;
+    }
+
+    return OGRGeometry::Intersects(p);
+}
+
+/************************************************************************/
 /*                               Contains()                             */
 /************************************************************************/
 
@@ -791,7 +814,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
                      "dynamic_cast failed.  Expected OGRPoint.");
             return FALSE;
         }
-        return ContainsPoint(poPoint);
+        return IntersectsPoint(poPoint);
     }
 
     return OGRGeometry::Intersects(poOtherGeom);

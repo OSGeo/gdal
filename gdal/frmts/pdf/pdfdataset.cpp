@@ -129,7 +129,11 @@ class ObjectAutoFree : public Object
 
 public:
     ObjectAutoFree() {}
-    ~ObjectAutoFree() { obj.free(); }
+    ~ObjectAutoFree() {
+#ifndef POPPLER_0_58_OR_LATER
+        obj.free();
+#endif
+    }
 
     Object* getObj() { return &obj; }
 };
@@ -2290,7 +2294,11 @@ GDALPDFObject* PDFDataset::GetCatalog()
     if (bUseLib.test(PDFLIB_POPPLER))
     {
         poCatalogObjectPoppler = new ObjectAutoFree;
+#ifdef POPPLER_0_58_OR_LATER
+        *poCatalogObjectPoppler->getObj() = poDocPoppler->getXRef()->getCatalog();
+#else
         poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler->getObj());
+#endif
         if (!poCatalogObjectPoppler->getObj()->isNull())
             poCatalogObject = new GDALPDFObjectPoppler(poCatalogObjectPoppler->getObj(), FALSE);
     }
@@ -4031,7 +4039,11 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALPDFObject* poPageObj = NULL;
 #ifdef HAVE_POPPLER
     PDFDoc* poDocPoppler = NULL;
+#ifdef POPPLER_0_58_OR_LATER
+    Object oObj;
+#else
     ObjectAutoFree oObj;
+#endif
     Page* poPagePoppler = NULL;
     Catalog* poCatalogPoppler = NULL;
 #endif
@@ -4078,8 +4090,12 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
         if (pszUserPwd)
             poUserPwd = new GooString(pszUserPwd);
 
+#ifdef POPPLER_0_58_OR_LATER
+        poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, std::move(oObj)), NULL, poUserPwd);
+#else
         oObj.getObj()->initNull();
         poDocPoppler = new PDFDoc(new VSIPDFFileStream(fp, pszFilename, oObj.getObj()), NULL, poUserPwd);
+#endif
         delete poUserPwd;
 
         if ( !poDocPoppler->isOk() || poDocPoppler->getNumPages() == 0 )
@@ -4770,10 +4786,16 @@ GDALDataset *PDFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poDocPoppler->getXRef()->isOk() )
     {
         Object oInfo;
+#ifdef POPPLER_0_58_OR_LATER
+        oInfo = poDocPoppler->getDocInfo();
+#else
         poDocPoppler->getDocInfo(&oInfo);
+#endif
         GDALPDFObjectPoppler oInfoObjPoppler(&oInfo, FALSE);
         poDS->ParseInfo(&oInfoObjPoppler);
+#ifndef POPPLER_0_58_OR_LATER
         oInfo.free();
+#endif
     }
 
     /* Find layers */

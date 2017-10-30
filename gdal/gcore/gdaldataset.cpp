@@ -2257,6 +2257,9 @@ int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
  * Many drivers just ignore the AdviseRead() call, but it can dramatically
  * accelerate access via some drivers.
  *
+ * Depending on call paths, drivers might receive several calls to
+ * AdviseRead() with the same parameters.
+ *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
  *
@@ -5704,7 +5707,7 @@ GDALSQLParseInfo *
 GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
                             swq_select_parse_options *poSelectParseOptions)
 {
-    int nFIDIndex = 0;
+    int nFirstLayerFirstSpecialFieldIndex = 0;
 
     GDALSQLParseInfo *psParseInfo =
         static_cast<GDALSQLParseInfo *>(CPLCalloc(1, sizeof(GDALSQLParseInfo)));
@@ -5772,13 +5775,13 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
     psParseInfo->sFieldList.count = 0;
     psParseInfo->sFieldList.names = static_cast<char **>(
-        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT)));
+        CPLMalloc(sizeof(char *) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
     psParseInfo->sFieldList.types = static_cast<swq_field_type *>(CPLMalloc(
-        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT)));
+        sizeof(swq_field_type) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
     psParseInfo->sFieldList.table_ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
     psParseInfo->sFieldList.ids = static_cast<int *>(
-        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT)));
+        CPLMalloc(sizeof(int) * (nFieldCount + SPECIAL_FIELD_COUNT + 1)));
 
     bool bIsFID64 = false;
     for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
@@ -5837,11 +5840,15 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
             psParseInfo->sFieldList.ids[iOutField] = iField;
         }
 
+        if( iTable == 0 )
+        {
+            nFirstLayerFirstSpecialFieldIndex = psParseInfo->sFieldList.count;
+        }
+
         if( iTable == 0 ||
             (poSelectParseOptions &&
              poSelectParseOptions->bAddSecondaryTablesGeometryFields) )
         {
-            nFIDIndex = psParseInfo->sFieldList.count;
 
             for( int iField = 0;
                  iField < poSrcLayer->GetLayerDefn()->GetGeomFieldCount();
@@ -5893,8 +5900,48 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
                                             : SpecialFieldTypes[iField];
         psParseInfo->sFieldList.table_ids[psParseInfo->sFieldList.count] = 0;
         psParseInfo->sFieldList.ids[psParseInfo->sFieldList.count] =
-            nFIDIndex + iField;
+            nFirstLayerFirstSpecialFieldIndex + iField;
         psParseInfo->sFieldList.count++;
+    }
+
+    /* In the case a layer has an explicit FID column name, then add it */
+    /* so it can be selected */
+    for( int iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
+    {
+        swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
+        GDALDataset *poTableDS = this;
+
+        if( psTableDef->data_source != NULL )
+        {
+            poTableDS = reinterpret_cast<GDALDataset *>(
+                OGROpenShared(psTableDef->data_source, FALSE, NULL));
+            CPLAssert(poTableDS != NULL);
+            poTableDS->Dereference();
+        }
+
+        OGRLayer *poSrcLayer =
+            poTableDS->GetLayerByName(psTableDef->table_name);
+
+        const char* pszFID = poSrcLayer->GetFIDColumn();
+        if( pszFID && !EQUAL(pszFID, "") && !EQUAL(pszFID, "FID") &&
+            poSrcLayer->GetLayerDefn()->GetFieldIndex(pszFID) < 0 )
+        {
+            const int iOutField = psParseInfo->sFieldList.count++;
+            psParseInfo->sFieldList.names[iOutField] =
+                const_cast<char*>(pszFID);
+            if( poSrcLayer->GetMetadataItem(OLMD_FID64) != NULL &&
+                EQUAL(poSrcLayer->GetMetadataItem(OLMD_FID64), "YES") )
+            {
+                psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER64;
+            }
+            else
+            {
+                psParseInfo->sFieldList.types[iOutField] = SWQ_INTEGER;
+            }
+            psParseInfo->sFieldList.table_ids[iOutField] = iTable;
+            psParseInfo->sFieldList.ids[iOutField] =
+                poSrcLayer->GetLayerDefn()->GetFieldCount() + SPF_FID;
+        }
     }
 
 /* -------------------------------------------------------------------- */

@@ -7,19 +7,16 @@
 
 <h1>JP2OpenJPEG --- JPEG2000 driver based on OpenJPEG library</h1>
 
-<p>(GDAL &gt;= 1.8.0)</p>
-
 <p>This driver is an implementation of a JPEG2000 reader/writer based on OpenJPEG library <b>v2</b>.</p>
 
-<p>For GDAL 1.10, use openjpeg 2.0. For GDAL 1.11 or later, use openjpeg 2.X.</p>
-<p>For GDAL 1.9.x or before, use the v2 branch from its Subversion repository : http://openjpeg.googlecode.com/svn/branches/v2 (before r2230 when it was deleted).</p>
+<p>For GDAL 1.11 or later, use openjpeg 2.X. For GDAL 2.3, use openjpeg >= 2.1</p>
 
 <p>The driver uses the VSI Virtual File API, so it can read JPEG2000 compressed NITF files.</p>
 
-<p>Starting with GDAL 1.9.0, XMP metadata can be extracted from JPEG2000 files, and will be
+<p>XMP metadata can be extracted from JPEG2000 files, and will be
 stored as XML raw content in the xml:XMP metadata domain.</p>
 
-<p>Starting with GDAL 1.10, the driver supports writing georeferencing information as GeoJP2 and GMLJP2 boxes.</p>
+<p>The driver supports writing georeferencing information as GeoJP2 and GMLJP2 boxes.</p>
 
 <p>Starting with GDAL 2.0, the driver supports creating files with transparency,
 arbitrary band count, and adding/reading metadata. Update of georeferencing or
@@ -63,7 +60,8 @@ to disable multi-threading</p>
 at the code-block level. This must be enabled with the OPJ_NUM_THREADS environment
 variable (note: this is a system environment variable, not a GDAL configuration
 option), which can be set to a numeric value or NUM_CPUS. Its default value is
-1.</p>
+1. Starting with GDAL 2.3, this multi-threading at code-block level is automatically
+enabled by GDAL</p>
 
 <p>Both multi-threading mechanism can be combined together.</p>
 

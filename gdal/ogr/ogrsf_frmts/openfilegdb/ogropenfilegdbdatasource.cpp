@@ -65,7 +65,8 @@ int OGROpenFileGDBDataSource::FileExists(const char* pszFilename)
         return CSLFindString(m_papszFiles, CPLGetFilename(pszFilename)) >= 0;
 
     VSIStatBufL sStat;
-    return VSIStatExL(pszFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0;
+    CPLString osFilename(pszFilename);
+    return VSIStatExL(osFilename, &sStat, VSI_STAT_EXISTS_FLAG) == 0;
 }
 
 /************************************************************************/
@@ -140,9 +141,9 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     m_papszFiles = VSIReadDir(m_osDirName);
 
     /* Explore catalog table */
-    const char* psza00000001 =
+    CPLString osa00000001 =
         CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
-    if( !FileExists(psza00000001) || !oTable.Open(psza00000001) )
+    if( !FileExists(osa00000001) || !oTable.Open(osa00000001) )
     {
         if( nInterestTable >= 0 && FileExists(m_pszName) )
         {
@@ -280,37 +281,37 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
         idx = oIter->second;
     if( idx > 0 && (nInterestTable < 0 || nInterestTable == idx) )
     {
-        const char* pszFilename = CPLFormFilename(
+        CPLString osFilename = CPLFormFilename(
             m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
-        if( FileExists(pszFilename) )
+        if( FileExists(osFilename) )
         {
             nCandidateLayers ++;
 
             if( m_papszFiles != NULL )
             {
-                const char* pszSDC = CPLResetExtension(pszFilename, "gdbtable.sdc");
-                const char* pszCDF = CPLResetExtension(pszFilename, "gdbtable.cdf");
-                if( FileExists(pszSDC) || FileExists(pszCDF) )
+                CPLString osSDC = CPLResetExtension(osFilename, "gdbtable.sdc");
+                CPLString osCDF = CPLResetExtension(osFilename, "gdbtable.cdf");
+                if( FileExists(osSDC) || FileExists(osCDF) )
                 {
                     nLayersSDCOrCDF ++;
                     if( GDALGetDriverByName("FileGDB") == NULL )
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                 "%s layer has a %s file whose format is unhandled",
-                                osName.c_str(), FileExists(pszSDC) ? pszSDC : pszCDF);
+                                osName.c_str(), FileExists(osSDC) ? osSDC.c_str() : osCDF.c_str());
                     }
                     else
                     {
                         CPLDebug("OpenFileGDB",
                                  "%s layer has a %s file whose format is unhandled",
-                                  osName.c_str(), FileExists(pszSDC) ? pszSDC : pszCDF);
+                                  osName.c_str(), FileExists(osSDC) ? osSDC.c_str() : osCDF.c_str());
                     }
                     return;
                 }
             }
 
             m_apoLayers.push_back(
-                new OGROpenFileGDBLayer(pszFilename,
+                new OGROpenFileGDBLayer(osFilename,
                                         osName,
                                         osDefinition,
                                         osDocumentation,
@@ -331,8 +332,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv10(int iGDBItems,
 
     FileGDBTable oTable;
 
-    if( !oTable.Open(CPLFormFilename(m_osDirName,
-            CPLSPrintf("a%08x.gdbtable", iGDBItems + 1), NULL)) )
+    CPLString osFilename(CPLFormFilename(m_osDirName,
+            CPLSPrintf("a%08x.gdbtable", iGDBItems + 1), NULL));
+    if( !oTable.Open(osFilename) )
         return FALSE;
 
     int iName = oTable.GetFieldIdx("Name");
@@ -399,8 +401,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
     CPLDebug("OpenFileGDB", "FileGDB v9");
 
     /* Fetch names of layers */
-    if( !oTable.Open(CPLFormFilename(m_osDirName,
-            CPLSPrintf("a%08x", iGDBObjectClasses + 1), "gdbtable")) )
+    CPLString osFilename(CPLFormFilename(m_osDirName,
+            CPLSPrintf("a%08x", iGDBObjectClasses + 1), "gdbtable"));
+    if( !oTable.Open(osFilename) )
         return FALSE;
 
     int iName = oTable.GetFieldIdx("Name");
@@ -450,8 +453,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
     oTable.Close();
 
     /* Find tables that are spatial layers */
-    if( !oTable.Open(CPLFormFilename(m_osDirName,
-            CPLSPrintf("a%08x", iGDBFeatureClasses + 1), "gdbtable")) )
+    osFilename = CPLFormFilename(m_osDirName,
+            CPLSPrintf("a%08x", iGDBFeatureClasses + 1), "gdbtable");
+    if( !oTable.Open(osFilename) )
         return FALSE;
 
     int iObjectClassID = oTable.GetFieldIdx("ObjectClassID");
@@ -557,12 +561,12 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
     if( oIter != m_osMapNameToIdx.end() )
     {
         int idx = oIter->second;
-        const char* pszFilename = CPLFormFilename(
-                            m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
-        if( FileExists(pszFilename) )
+        CPLString osFilename(CPLFormFilename(
+                        m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable"));
+        if( FileExists(osFilename) )
         {
             poLayer = new OGROpenFileGDBLayer(
-                                    pszFilename, pszName, "", "");
+                                    osFilename, pszName, "", "");
             m_apoHiddenLayers.push_back(poLayer);
             return poLayer;
         }

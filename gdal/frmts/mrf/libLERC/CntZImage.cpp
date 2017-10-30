@@ -603,7 +603,7 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
 
       if (bArr)
       {
-        int numBytesWritten;
+        int numBytesWritten = 0;
         rv = zPart ? writeZTile(  &ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError) :
                           writeCntTile(&ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, cntMin, cntMax, cntsNoIntIn);
         if (!rv)

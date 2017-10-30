@@ -26,13 +26,27 @@ you need to do processing on a whole file.
 <h3>Georeferencing Issues</h3>
 
 The DTED specification (<a href="http://www.nga.mil/ast/fm/acq/89020B.pdf">MIL-PRF-89020B</a>) states that
-<i>horizontal datum shall be the World Geodetic System (WGS 84)</i>. However, there are still people using old data files
+<i>horizontal datum shall be the World Geodetic System (WGS 84)</i>. The vertical datum is defined as EGM96, or EPSG:5773. However, there are still people using old data files
 georeferenced in WGS 72. A header field indicates the horizontal datum code, so we can detect and handle this situation.
 <br>
 <ul>
 <li>If the horizontal datum specified in the DTED file is WGS84, the DTED driver will report WGS 84 as SRS.</li>
 <li>If the horizontal datum specified in the DTED file is WGS72, the DTED driver will report WGS 72 as SRS and issue a warning.</li>
 <li>If the horizontal datum specified in the DTED file is neither WGS84 nor WGS72, the DTED driver will report WGS 84 as SRS and issue a warning.</li>
+</ul>
+
+
+<h3>Configuration options</h3>
+
+<p>
+
+This paragraph lists the configuration options that can be set to alter the default behaviour of the DTED driver.
+</p>
+
+<ul>
+<li>
+    REPORT_COMPD_CS: (GDAL >= 2.2.2). Can be set to TRUE to avoid stripping the vertical CS of compound CS when reading the SRS of a file. Default value : FALSE
+</li>
 </ul>
 
 <h3>Checksum Issues</h3>

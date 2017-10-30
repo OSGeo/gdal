@@ -119,6 +119,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 iFIDAsRegularColumnIndex;
     bool                bAutoFIDOnCreateViaCopy;
     bool                bCopyStatementWithFID;
+    bool                bNeedToUpdateSequence;
 
     char              **papszOverrideColumnTypes;
 
@@ -126,6 +127,8 @@ class OGRPGDumpLayer : public OGRLayer
 
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
+
+    void                UpdateSequenceIfNeeded();
 
   public:
                         OGRPGDumpLayer(OGRPGDumpDataSource* poDS,

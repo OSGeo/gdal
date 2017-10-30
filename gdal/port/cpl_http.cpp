@@ -48,7 +48,15 @@
 #define CURLINFO_RESPONSE_CODE CURLINFO_HTTP_CODE
 #endif
 
+#ifdef HAVE_OPENSSL_CRYPTO
+#include <openssl/err.h>
 #endif
+
+#ifdef HAVE_SIGACTION
+#include <signal.h>
+#endif
+
+#endif // HAVE_CURL
 
 CPL_CVSID("$Id$")
 
@@ -57,7 +65,108 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_CURL
 static std::map<CPLString, CURL*>* poSessionMap = NULL;
 static CPLMutex *hSessionMapMutex = NULL;
+static bool bHasCheckVersion = false;
+static bool bSupportGZip = false;
+static bool bSupportHTTP2 = false;
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+
+// Ported from https://curl.haxx.se/libcurl/c/opensslthreadlock.html
+static CPLMutex** pahSSLMutex = NULL;
+
+static void CPLOpenSSLLockingFunction(int mode, int n,
+                                 const char * /*file*/, int /*line*/)
+{
+  if(mode & CRYPTO_LOCK)
+  {
+      CPLAcquireMutex( pahSSLMutex[n], 3600.0 );
+  }
+  else
+  {
+      CPLReleaseMutex( pahSSLMutex[n] );
+  }
+}
+
+static unsigned long CPLOpenSSLIdCallback(void)
+{
+  return static_cast<unsigned long>(CPLGetPID());
+}
+
+static void CPLOpenSSLInit()
+{
+    if( strstr(curl_version(), "OpenSSL") &&
+        CPLTestBool(CPLGetConfigOption("CPL_OPENSSL_INIT_ENABLED", "YES")) &&
+        CRYPTO_get_id_callback() == NULL )
+    {
+        pahSSLMutex = static_cast<CPLMutex**>(
+                CPLMalloc( CRYPTO_num_locks() * sizeof(CPLMutex*) ) );
+        for(int i = 0;  i < CRYPTO_num_locks();  i++)
+        {
+            pahSSLMutex[i] = CPLCreateMutex();
+            CPLReleaseMutex( pahSSLMutex[i] );
+        }
+        CRYPTO_set_id_callback(CPLOpenSSLIdCallback);
+        CRYPTO_set_locking_callback(CPLOpenSSLLockingFunction);
+    }
+}
+
+static void CPLOpenSSLCleanup()
+{
+    if( pahSSLMutex )
+    {
+        for(int i = 0;  i < CRYPTO_num_locks();  i++)
+        {
+            CPLDestroyMutex(pahSSLMutex[i]);
+        }
+        CPLFree(pahSSLMutex);
+        pahSSLMutex = NULL;
+    }
+}
+
 #endif
+
+/************************************************************************/
+/*                       CheckCurlFeatures()                            */
+/************************************************************************/
+
+static void CheckCurlFeatures()
+{
+    CPLMutexHolder oHolder( &hSessionMapMutex );
+    if( !bHasCheckVersion )
+    {
+        const char* pszVersion = curl_version();
+        CPLDebug("HTTP", "%s", pszVersion);
+        bSupportGZip = strstr(pszVersion, "zlib/") != NULL;
+        bSupportHTTP2 = strstr(curl_version(), "nghttp2/") != NULL;
+        bHasCheckVersion = true;
+
+        curl_version_info_data* data = curl_version_info(CURLVERSION_NOW);
+        if( data->version_num < LIBCURL_VERSION_NUM )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "GDAL was built against curl %d.%d.%d, but is "
+                     "running against %s. Runtime failure is likely !",
+                     LIBCURL_VERSION_MAJOR,
+                     LIBCURL_VERSION_MINOR,
+                     LIBCURL_VERSION_PATCH,
+                     data->version);
+        }
+        else if( data->version_num > LIBCURL_VERSION_NUM )
+        {
+            CPLDebug("HTTP",
+                     "GDAL was built against curl %d.%d.%d, but is "
+                     "running against %s.",
+                     LIBCURL_VERSION_MAJOR,
+                     LIBCURL_VERSION_MINOR,
+                     LIBCURL_VERSION_PATCH,
+                     data->version);
+        }
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+        CPLOpenSSLInit();
+#endif
+    }
+}
 
 /************************************************************************/
 /*                            CPLWriteFct()                             */
@@ -66,7 +175,6 @@ static CPLMutex *hSessionMapMutex = NULL;
 /*      it larger as needed.                                            */
 /************************************************************************/
 
-#ifdef HAVE_CURL
 
 typedef struct
 {
@@ -151,10 +259,12 @@ typedef struct
 
 static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
 {
+    { "GDAL_HTTP_VERSION", "HTTP_VERSION" },
     { "GDAL_HTTP_CONNECTTIMEOUT", "CONNECTTIMEOUT" },
     { "GDAL_HTTP_TIMEOUT", "TIMEOUT" },
     { "GDAL_HTTP_LOW_SPEED_TIME", "LOW_SPEED_TIME" },
     { "GDAL_HTTP_LOW_SPEED_LIMIT", "LOW_SPEED_LIMIT" },
+    { "GDAL_HTTP_USERPWD", "USERPWD" },
     { "GDAL_HTTP_PROXY", "PROXY" },
     { "GDAL_HTTP_PROXYUSERPWD", "PROXYUSERPWD" },
     { "GDAL_PROXY_AUTH", "PROXYAUTH" },
@@ -163,7 +273,8 @@ static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY" },
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
-    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" }
+    { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
+    { "GDAL_HTTP_CAPATH", "CAPATH" }
 };
 
 char** CPLHTTPGetOptionsFromEnv()
@@ -180,6 +291,26 @@ char** CPLHTTPGetOptionsFromEnv()
         }
     }
     return papszOptions;
+}
+
+/************************************************************************/
+/*                      CPLHTTPGetNewRetryDelay()                       */
+/************************************************************************/
+
+double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
+{
+    if( response_code == 429 ||
+            (response_code>= 502 && response_code <= 504) )
+    {
+        // Use an exponential backoff factor of 2 plus some random jitter
+        // We don't care about cryptographic quality randomness, hence:
+        // coverity[dont_call]
+        return dfOldDelay * (2 + rand() * 0.5 / RAND_MAX);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 /************************************************************************/
@@ -218,7 +349,7 @@ char** CPLHTTPGetOptionsFromEnv()
  * <li>NETRC=[YES/NO] to enable or disable use of $HOME/.netrc, default YES.</li>
  * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL >= 1.9.0)</li>
  * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2; ...</li>
- * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 502, 503 or
+ * <li>MAX_RETRY=val, where val is the maximum number of retry attempts if a 429, 502, 503 or
  *               504 HTTP error occurs. Default is 0. (GDAL >= 2.0)</li>
  * <li>RETRY_DELAY=val, where val is the number of seconds between retry attempts.
  *                 Default is 30. (GDAL >= 2.0)</li>
@@ -228,17 +359,23 @@ char** CPLHTTPGetOptionsFromEnv()
  *     the CAINFO options is not defined, GDAL will also look if the CURL_CA_BUNDLE
  *     environment variable is defined to use it as the CAINFO value, and as a
  *     fallback to the SSL_CERT_FILE environment variable. (GDAL >= 2.1.3)</li>
+ * <li>HTTP_VERSION=1.0/1.1/2/2TLS (GDAL >= 2.3). Specify HTTP version to use.
+ *     Will default to 1.1 generally (except on some controlled environments,
+ *     like Google Compute Engine VMs, where 2TLS will be the default).
+ *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
+ *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only. Whereas
+ *     "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
- * LOW_SPEED_TIME, LOW_SPEED_LIMIT, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY, HEADER_FILE values are searched in the configuration
- * options named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
- * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT,
+ * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION values are searched in the configuration
+ * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
+ * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
- * GDAL_HTTP_HEADER_FILE.
+ * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -326,9 +463,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /*                                                                      */
 /*      Currently this code does not attempt to protect against         */
 /*      multiple threads asking for the same named session.  If that    */
-/*      occurs it will be in use in multiple threads at once which      */
-/*      might have bad consequences depending on what guarantees        */
-/*      libcurl gives - which I have not investigated.                  */
+/*      occurs it will be in use in multiple threads at once, which     */
+/*      will lead to potential crashes in libcurl.                      */
 /* -------------------------------------------------------------------- */
     CURL *http_handle = NULL;
 
@@ -466,13 +602,6 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
-    static bool bHasCheckVersion = false;
-    static bool bSupportGZip = false;
-    if( !bHasCheckVersion )
-    {
-        bSupportGZip = strstr(curl_version(), "zlib/") != NULL;
-        bHasCheckVersion = true;
-    }
     bool bGZipRequested = false;
     if( bSupportGZip &&
         CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
@@ -482,7 +611,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If 502, 503 or 504 status code retry this HTTP call until max   */
+/*      If 429, 502, 503 or 504 status code retry this HTTP call until max   */
 /*      retry has been reached                                          */
 /* -------------------------------------------------------------------- */
     const char *pszRetryDelay =
@@ -506,7 +635,9 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Execute the request, waiting for results.                       */
 /* -------------------------------------------------------------------- */
+        void* old_handler = CPLHTTPIgnoreSigPipe();
         psResult->nStatus = static_cast<int>(curl_easy_perform(http_handle));
+        CPLHTTPRestoreSigPipeHandler(old_handler);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch content-type if possible.                                 */
@@ -570,10 +701,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
             if( response_code >= 400 && response_code < 600 )
             {
-                // If HTTP 502, 503 or 504 gateway timeout error retry after a
-                // pause.
-                if( (response_code >= 502 && response_code <= 504) &&
-                    nRetryCount < nMaxRetries )
+                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
+                    static_cast<int>(response_code),
+                    dfRetryDelaySecs);
+                if( dfNewRetryDelay > 0 && nRetryCount < nMaxRetries )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. "
@@ -581,6 +712,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
                              static_cast<int>(response_code), pszURL,
                              dfRetryDelaySecs);
                     CPLSleep(dfRetryDelaySecs);
+                    dfRetryDelaySecs = dfNewRetryDelay;
                     nRetryCount++;
 
                     CPLFree(psResult->pszContentType);
@@ -652,8 +784,16 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 /*                         CPLHTTPSetOptions()                          */
 /************************************************************************/
 
+// Note: papszOptions must be kept alive until curl_easy/multi_perform()
+// has completed, and we must be careful not to set short lived strings
+// with curl_easy_setopt(), as long as we need to support curl < 7.17
+// see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
+// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS 
+
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
+    CheckCurlFeatures();
+
     CURL *http_handle = reinterpret_cast<CURL *>(pcurl);
 
     if( CPLTestBool(CPLGetConfigOption("CPL_CURL_VERBOSE", "NO")) )
@@ -661,9 +801,104 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 
     const char *pszHttpVersion =
         CSLFetchNameValue( papszOptions, "HTTP_VERSION");
+    if( pszHttpVersion == NULL )
+        pszHttpVersion = CPLGetConfigOption( "GDAL_HTTP_VERSION", NULL );
     if( pszHttpVersion && strcmp(pszHttpVersion, "1.0") == 0 )
         curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
                          CURL_HTTP_VERSION_1_0);
+    else if( pszHttpVersion && strcmp(pszHttpVersion, "1.1") == 0 )
+        curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                         CURL_HTTP_VERSION_1_1);
+    else if( pszHttpVersion &&
+             (strcmp(pszHttpVersion, "2") == 0 ||
+              strcmp(pszHttpVersion, "2.0") == 0) )
+    {
+        // 7.33.0
+#if LIBCURL_VERSION_NUM >= 0x72100
+        if( bSupportHTTP2 )
+        {
+            // Try HTTP/2 both for HTTP and HTTPS. With fallback to HTTP/1.1
+            curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                             CURL_HTTP_VERSION_2_0);
+        }
+        else
+#endif
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+#if LIBCURL_VERSION_NUM >= 0x72100
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "HTTP/2 not available in this build of Curl. "
+                        "It needs to be built against nghttp2");
+#else
+                CPLError(CE_Warning, CPLE_NotSupported,
+                          "HTTP/2 not supported by this version of Curl. "
+                          "You need curl 7.33 or later, with nghttp2 support");
+
+#endif
+                bHasWarned = true;
+            }
+        }
+    }
+    else if( pszHttpVersion == NULL ||
+             strcmp(pszHttpVersion, "2TLS") == 0 )
+    {
+        // 7.47.0
+#if LIBCURL_VERSION_NUM >= 0x72F00
+        if( bSupportHTTP2 )
+        {
+            // Only enable this mode if explicitly required, or if the
+            // machine is a GCE instance. On other networks, requesting a
+            // file in HTTP/2 is found to be significantly slower than HTTP/1.1
+            // for unknown reasons.
+            if( pszHttpVersion != NULL || CPLIsMachineForSureGCEInstance() )
+            {
+                static bool bDebugEmitted = false;
+                if( !bDebugEmitted )
+                {
+                    CPLDebug("HTTP", "Using HTTP/2 for HTTPS when possible");
+                    bDebugEmitted = true;
+                }
+
+                // CURL_HTTP_VERSION_2TLS means for HTTPS connection, try to
+                // negotiate HTTP/2 with the server (and fallback to HTTP/1.1
+                // otherwise), and for HTTP connection do HTTP/1
+                curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION,
+                                CURL_HTTP_VERSION_2TLS);
+            }
+        }
+        else
+#endif
+        if( pszHttpVersion != NULL )
+        {
+            static bool bHasWarned = false;
+            if( !bHasWarned )
+            {
+#if LIBCURL_VERSION_NUM >= 0x72F00
+                CPLError(CE_Warning, CPLE_NotSupported,
+                        "HTTP/2 not available in this build of Curl. "
+                        "It needs to be built against nghttp2");
+#else
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "HTTP_VERSION=2TLS not available in this version "
+                         "of Curl. You need curl 7.47 or later");
+#endif
+                bHasWarned = true;
+            }
+        }
+    }
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "HTTP_VERSION=%s not supported", pszHttpVersion);
+    }
+
+    // Default value is 1 since curl 7.50.2. But worth applying it on
+    // previous versions as well.
+    const char* pszTCPNoDelay = CSLFetchNameValueDef( papszOptions,
+                                                      "TCP_NODELAY", "1");
+    curl_easy_setopt(http_handle, CURLOPT_TCP_NODELAY, atoi(pszTCPNoDelay));
 
     /* Support control over HTTPAUTH */
     const char *pszHttpAuth = CSLFetchNameValue( papszOptions, "HTTPAUTH" );
@@ -829,6 +1064,12 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         curl_easy_setopt(http_handle, CURLOPT_CAINFO, pszCAInfo);
     }
 
+    const char* pszCAPath = CSLFetchNameValue( papszOptions, "CAPATH" );
+    if( pszCAPath != NULL )
+    {
+        curl_easy_setopt(http_handle, CURLOPT_CAPATH, pszCAPath);
+    }
+
     /* Set Referer */
     const char *pszReferer = CSLFetchNameValue(papszOptions, "REFERER");
     if( pszReferer != NULL )
@@ -883,7 +1124,9 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // memory after free
         if( strstr(pszHeaderFile, "/vsicurl/") == NULL &&
             strstr(pszHeaderFile, "/vsis3/") == NULL &&
-            strstr(pszHeaderFile, "/vsigs/") == NULL )
+            strstr(pszHeaderFile, "/vsigs/") == NULL &&
+            strstr(pszHeaderFile, "/vsiaz/") == NULL &&
+            strstr(pszHeaderFile, "/vsioss/") == NULL )
         {
             fp = VSIFOpenL( pszHeaderFile, "rb" );
         }
@@ -902,8 +1145,53 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
             VSIFCloseL(fp);
         }
     }
+
     return headers;
 }
+
+/************************************************************************/
+/*                         CPLHTTPIgnoreSigPipe()                       */
+/************************************************************************/
+
+/* If using OpenSSL with Curl, openssl can cause SIGPIPE to be triggered */
+/* As we set CURLOPT_NOSIGNAL = 1, we must manually handle this situation */
+
+void* CPLHTTPIgnoreSigPipe()
+{
+#if defined(SIGPIPE) && defined(HAVE_SIGACTION)
+    struct sigaction old_pipe_act;
+    struct sigaction action;
+    /* Get previous handler */
+    memset(&old_pipe_act, 0, sizeof(struct sigaction));
+    sigaction(SIGPIPE, NULL, &old_pipe_act);
+
+    /* Install new handler */
+    action = old_pipe_act;
+    action.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &action, NULL);
+
+    void* ret = CPLMalloc(sizeof(old_pipe_act));
+    memcpy(ret, &old_pipe_act, sizeof(old_pipe_act));
+    return ret;
+#else
+    return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                     CPLHTTPRestoreSigPipeHandler()                   */
+/************************************************************************/
+
+void CPLHTTPRestoreSigPipeHandler(void* old_handler)
+{
+#if defined(SIGPIPE) && defined(HAVE_SIGACTION)
+    sigaction(SIGPIPE, static_cast<struct sigaction*>(old_handler), NULL);
+    CPLFree(old_handler);
+#else
+    (void)old_handler;
+#endif
+}
+
 #endif  // def HAVE_CURL
 
 /************************************************************************/
@@ -960,6 +1248,11 @@ void CPLHTTPCleanup()
     // Not quite a safe sequence.
     CPLDestroyMutex( hSessionMapMutex );
     hSessionMapMutex = NULL;
+
+#if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
+    CPLOpenSSLCleanup();
+#endif
+
 #endif
 }
 

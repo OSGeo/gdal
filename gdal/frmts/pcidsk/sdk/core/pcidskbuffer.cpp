@@ -286,8 +286,11 @@ void PCIDSKBuffer::Put( double value, int offset, int size,
 PCIDSKBuffer &PCIDSKBuffer::operator=( const PCIDSKBuffer &src )
 
 {
-    SetSize( src.buffer_size );
-    memcpy( buffer, src.buffer, buffer_size );
+    if( this != &src )
+    {
+        SetSize( src.buffer_size );
+        memcpy( buffer, src.buffer, buffer_size );
+    }
 
     return *this;
 }

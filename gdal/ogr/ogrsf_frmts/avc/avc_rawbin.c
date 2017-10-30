@@ -456,7 +456,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
  **********************************************************************/
 GInt16  AVCRawBinReadInt16(AVCRawBinFile *psFile)
 {
-    GInt16 n16Value;
+    GInt16 n16Value = 0;
 
     AVCRawBinReadBytes(psFile, 2, (GByte*)(&n16Value));
 
@@ -470,7 +470,7 @@ GInt16  AVCRawBinReadInt16(AVCRawBinFile *psFile)
 
 GInt32  AVCRawBinReadInt32(AVCRawBinFile *psFile)
 {
-    GInt32 n32Value;
+    GInt32 n32Value = 0;
 
     AVCRawBinReadBytes(psFile, 4, (GByte*)(&n32Value));
 
@@ -484,7 +484,7 @@ GInt32  AVCRawBinReadInt32(AVCRawBinFile *psFile)
 
 float   AVCRawBinReadFloat(AVCRawBinFile *psFile)
 {
-    float fValue;
+    float fValue = 0.0f;
 
     AVCRawBinReadBytes(psFile, 4, (GByte*)(&fValue));
 
@@ -498,7 +498,7 @@ float   AVCRawBinReadFloat(AVCRawBinFile *psFile)
 
 double  AVCRawBinReadDouble(AVCRawBinFile *psFile)
 {
-    double dValue;
+    double dValue = 0.0;
 
     AVCRawBinReadBytes(psFile, 8, (GByte*)(&dValue));
 

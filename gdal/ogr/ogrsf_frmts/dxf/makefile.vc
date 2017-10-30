@@ -3,8 +3,9 @@ OBJ     =       ogrdxfdriver.obj ogrdxfdatasource.obj ogrdxflayer.obj \
 		ogrdxfwriterds.obj ogrdxfwriterlayer.obj intronurbs.obj \
 		ogrdxf_polyline_smooth.obj ogrdxfblockslayer.obj \
 		ogrdxfblockswriterlayer.obj ogrdxf_hatch.obj \
-		ogr_autocad_services.obj
-        
+		ogr_autocad_services.obj ogrdxf_feature.obj \
+		ogrdxf_leader.obj
+
 EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..

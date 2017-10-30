@@ -21,6 +21,7 @@
  */
 
 #include "cpl_time.h"
+#include "cpl_string.h"
 
 #include <cstring>
 #include <ctime>
@@ -199,4 +200,206 @@ GIntBig CPLYMDHMSToUnixTime( const struct tm *brokendowntime )
         brokendowntime->tm_min * SECSPERMIN +
         brokendowntime->tm_hour * SECSPERHOUR +
         days * SECSPERDAY;
+}
+
+
+
+/************************************************************************/
+/*                      OGRParseRFC822DateTime()                        */
+/************************************************************************/
+
+static const char* const aszWeekDayStr[] = {
+    "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+
+static const char* const aszMonthStr[] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+/** Parse a RFC822 formatted date-time string.
+ * 
+ * Such as [Fri,] 28 Dec 2007 05:24[:17] GMT
+ *
+ * @param pszRFC822DateTime formatted string.
+ * @param pnYear pointer to int receiving year (like 1980, 2000, etc...), or NULL
+ * @param pnMonth pointer to int receiving month (between 1 and 12), or NULL
+ * @param pnDay pointer to int receiving day of month (between 1 and 31), or NULL
+ * @param pnHour pointer to int receiving hour of day (between 0 and 23), or NULL
+ * @param pnMinute pointer to int receiving minute (between 0 and 59), or NULL
+ * @param pnSecond pointer to int receiving second (between 0 and 60, or -1 if unknown), or NULL
+ * @param pnTZFlag pointer to int receiving time zone flag (0=unknown, 100=GMT,
+ *                 101=GMT+15minute, 99=GMT-15minute), or NULL
+ * @param pnWeekDay pointer to int receiving day of week (between 1 and 7, or 0 if invalid/unset), or NULL
+ * @return TRUE if parsing is successful
+ *
+ * @since GDAL 2.3
+ */
+int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
+                            int* pnYear,
+                            int* pnMonth,
+                            int* pnDay,
+                            int* pnHour,
+                            int* pnMinute,
+                            int* pnSecond,
+                            int* pnTZFlag,
+                            int* pnWeekDay )
+{
+    // Following
+    // https://www.w3.org/Protocols/rfc822/#z28 :
+    // [Fri,] 28 Dec 2007 05:24[:17] GMT
+    char** papszTokens =
+        CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
+    char** papszVal = papszTokens;
+    int nTokens = CSLCount(papszTokens);
+    if( nTokens < 5 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+
+    if( pnWeekDay )
+        *pnWeekDay = 0;
+
+    if( !((*papszVal)[0] >= '0' && (*papszVal)[0] <= '9') )
+    {
+        if( pnWeekDay )
+        {
+            for( size_t i = 0; i < CPL_ARRAYSIZE(aszWeekDayStr); ++i )
+            {
+                if( EQUAL(*papszVal, aszWeekDayStr[i]) )
+                {
+                    *pnWeekDay = static_cast<int>(i+1);
+                    break;
+                }
+            }
+        }
+
+        ++papszVal;
+    }
+
+    int day = atoi(*papszVal);
+    if( day <= 0 || day >= 32 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+    if( pnDay )
+        *pnDay = day;
+    ++papszVal;
+
+    int month = 0;
+    for( int i = 0; i < 12; ++i )
+    {
+        if( EQUAL(*papszVal, aszMonthStr[i]) )
+        {
+            month = i + 1;
+            break;
+        }
+    }
+    if( month == 0 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+    if( pnMonth )
+        *pnMonth = month;
+    ++papszVal;
+
+    int year = atoi(*papszVal);
+    if( year < 100 && year >= 30 )
+        year += 1900;
+    else if( year < 30 && year >= 0 )
+        year += 2000;
+    if( pnYear )
+        *pnYear = year;
+    ++papszVal;
+
+    int hour = atoi(*papszVal);
+    if( hour < 0 || hour >= 24 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+    if( pnHour )
+        *pnHour = hour;
+    ++papszVal;
+
+    if( *papszVal == NULL )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+    int minute = atoi(*papszVal);
+    if( minute < 0 || minute >= 60 )
+    {
+        CSLDestroy(papszTokens);
+        return false;
+    }
+    if (pnMinute )
+        *pnMinute = minute;
+    ++papszVal;
+
+    if( *papszVal != NULL && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9' )
+    {
+        int second = atoi(*papszVal);
+        if( second < 0 || second >= 61 )
+        {
+            CSLDestroy(papszTokens);
+            return false;
+        }
+        if( pnSecond )
+            *pnSecond = second;
+        ++papszVal;
+    }
+    else if( pnSecond )
+        *pnSecond = -1;
+
+    int TZ = 0;
+    if( *papszVal == NULL )
+    {
+    }
+    else if( strlen(*papszVal) == 5 &&
+                ((*papszVal)[0] == '+' || (*papszVal)[0] == '-') )
+    {
+        char szBuf[3] = { (*papszVal)[1], (*papszVal)[2], 0 };
+        const int TZHour = atoi(szBuf);
+        if( TZHour < 0 || TZHour >= 15 )
+        {
+            CSLDestroy(papszTokens);
+            return false;
+        }
+        szBuf[0] = (*papszVal)[3];
+        szBuf[1] = (*papszVal)[4];
+        szBuf[2] = 0;
+        const int TZMinute = atoi(szBuf);
+        TZ = 100 + (((*papszVal)[0] == '+') ? 1 : -1) *
+                    ((TZHour * 60 + TZMinute) / 15);
+    }
+    else
+    {
+        const char* aszTZStr[] = {
+            "GMT", "UT", "Z", "EST", "EDT", "CST", "CDT", "MST", "MDT",
+            "PST", "PDT"
+        };
+        const int anTZVal[] = { 0, 0, 0, -5, -4, -6, -5, -7, -6, -8, -7 };
+        TZ = -1;
+        for( int i = 0; i < 11; ++i )
+        {
+            if( EQUAL(*papszVal, aszTZStr[i]) )
+            {
+                TZ = 100 + anTZVal[i] * 4;
+                break;
+            }
+        }
+        if( TZ < 0 )
+        {
+            CSLDestroy(papszTokens);
+            return false;
+        }
+    }
+
+    if( pnTZFlag )
+        *pnTZFlag = TZ;
+
+    CSLDestroy(papszTokens);
+    return true;
 }

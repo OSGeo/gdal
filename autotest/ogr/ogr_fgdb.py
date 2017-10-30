@@ -2534,6 +2534,37 @@ def ogr_fgdb_24():
     return 'success'
 
 ###############################################################################
+# Test selecting FID column with OGRSQL
+
+def ogr_fgdb_25():
+
+    ds = ogr.Open('data/curves.gdb')
+    sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
+    if sql_lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('polygon')
+    lyr.SetAttributeFilter('OBJECTID = 2')
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -2595,6 +2626,7 @@ gdaltest_list = [
     ogr_fgdb_22,
     ogr_fgdb_23,
     ogr_fgdb_24,
+    ogr_fgdb_25,
     ogr_fgdb_cleanup,
     ]
 

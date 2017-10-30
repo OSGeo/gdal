@@ -215,11 +215,25 @@ namespace tut
         ensure( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) == static_cast<double>(1.23f) && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float32, -1e300,&bClamped,&bRounded) == -std::numeric_limits<float>::max() && bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        {
+            double dfNan = std::numeric_limits<double>::quiet_NaN();
+            double dfGot = GDALAdjustValueToDataType(GDT_Float32, dfNan,&bClamped,&bRounded);
+            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+        }
 
         ensure( GDALAdjustValueToDataType(GDT_Float64, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, 1e-50,&bClamped,&bRounded) == 1e-50 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, -1e40,&bClamped,&bRounded) == -1e40 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, 1e40,&bClamped,&bRounded) == 1e40 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        {
+            double dfNan = std::numeric_limits<double>::quiet_NaN();
+            double dfGot = GDALAdjustValueToDataType(GDT_Float64, dfNan,&bClamped,&bRounded);
+            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+        }
     }
 
     class FakeBand: public GDALRasterBand

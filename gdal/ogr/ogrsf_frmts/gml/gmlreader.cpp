@@ -1097,7 +1097,7 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
 /* -------------------------------------------------------------------- */
 /*      Do we need to update the property type?                         */
 /* -------------------------------------------------------------------- */
-    if( !poClass->IsSchemaLocked() )
+    if( !poClass->IsSchemaLocked() && !EQUAL(pszValue, OGR_GML_NULL) )
     {
         poClass->GetProperty(iProperty)->AnalysePropertyValue(
             poFeature->GetProperty(iProperty), m_bSetWidthFlag );
@@ -1301,6 +1301,12 @@ bool GMLReader::PrescanForSchema( bool bGetExtents,
     void* hCacheSRS = GML_BuildOGRGeometryFromList_CreateCache();
 
     std::string osWork;
+
+    for( int i = 0; i < m_nClassCount; i++ )
+    {
+        m_papoClass[i]->SetFeatureCount(-1);
+        m_papoClass[i]->SetSRSName(NULL);
+    }
 
     GMLFeature *poFeature = NULL;
     while( (poFeature = NextFeature()) != NULL )

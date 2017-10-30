@@ -483,6 +483,36 @@ static int CPLGetProcessMemorySize()
 
 #endif // def MEMORY_DEBUG
 
+
+
+/************************************************************************/
+/*                        CPLGettimeofday()                             */
+/************************************************************************/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <sys/timeb.h>
+
+struct CPLTimeVal
+{
+  time_t  tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
+
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+{
+  struct _timeb theTime;
+
+  _ftime(&theTime);
+  tp->tv_sec = static_cast<time_t>(theTime.time);
+  tp->tv_usec = theTime.millitm * 1000;
+}
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  CPLTimeVal timeval
+#  define  CPLGettimeofday(t,u) gettimeofday(t,u)
+#endif
+
+
 /************************************************************************/
 /*                              CPLDebug()                              */
 /************************************************************************/
@@ -558,7 +588,10 @@ void CPLDebug( const char * pszCategory,
 #ifdef TIMESTAMP_DEBUG
     if( CPLGetConfigOption( "CPL_TIMESTAMP", NULL ) != NULL )
     {
-        strcpy( pszMessage, VSICTime( VSITime(NULL) ) );
+        struct CPLTimeVal tv;
+        CPLGettimeofday(&tv, NULL);
+        strcpy( pszMessage, "[" );
+        strcat( pszMessage, VSICTime( static_cast<unsigned long>(tv.tv_sec) ) );
 
         // On windows anyway, ctime puts a \n at the end, but I'm not
         // convinced this is standard behaviour, so we'll get rid of it
@@ -568,7 +601,9 @@ void CPLDebug( const char * pszCategory,
         {
             pszMessage[strlen(pszMessage) - 1] = 0; // blow it out
         }
-        strcat( pszMessage, ": " );
+        CPLsnprintf(pszMessage+strlen(pszMessage),
+                    ERROR_MAX - strlen(pszMessage),
+                    "].%06d: ", static_cast<int>(tv.tv_usec));
     }
 #endif
 

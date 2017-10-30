@@ -112,7 +112,7 @@ OGRDODSLayer::~OGRDODSLayer()
                   poFeatureDefn->GetName() );
     }
 
-    if( papoFields != NULL )
+    if( papoFields != NULL && poFeatureDefn != NULL )
     {
         int iField;
 

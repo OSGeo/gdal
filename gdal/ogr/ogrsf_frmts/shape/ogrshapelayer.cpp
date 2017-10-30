@@ -932,10 +932,12 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     unsigned int nOffset = 0;
     unsigned int nSize = 0;
+    bool bIsLastRecord = false;
     if( hSHP != NULL )
     {
         nOffset = hSHP->panRecOffset[nFID];
         nSize = hSHP->panRecSize[nFID];
+        bIsLastRecord = (nOffset + nSize + 8 == hSHP->nFileSize );
     }
 
     OGRErr eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
@@ -944,7 +946,18 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     if( hSHP != NULL )
     {
-        if( nOffset != hSHP->panRecOffset[nFID] ||
+        if( bIsLastRecord )
+        {
+            // Optimization: we don't need repacking if this is the last
+            // record of the file. Just potential truncation
+            CPLAssert( nOffset == hSHP->panRecOffset[nFID] );
+            CPLAssert( hSHP->panRecOffset[nFID] + hSHP->panRecSize[nFID] + 8 == hSHP->nFileSize );
+            if( hSHP->panRecSize[nFID] < nSize )
+            {
+                VSIFTruncateL(VSI_SHP_GetVSIL(hSHP->fpSHP), hSHP->nFileSize);
+            }
+        }
+        else if( nOffset != hSHP->panRecOffset[nFID] ||
             nSize != hSHP->panRecSize[nFID] )
         {
             bSHPNeedsRepack = true;
@@ -2123,7 +2136,30 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
         }
 
         if( poSRS )
-            poSRS->AutoIdentifyEPSG();
+        {
+            if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+            {
+                int nEntries = 0;
+                int* panConfidence = NULL;
+                OGRSpatialReferenceH* pahSRS =
+                    poSRS->FindMatches(NULL, &nEntries, &panConfidence);
+                if( nEntries == 1 && panConfidence[0] == 100 )
+                {
+                    poSRS->Release();
+                    poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                    CPLFree(pahSRS);
+                }
+                else
+                {
+                    OSRFreeSRSArray(pahSRS);
+                }
+                CPLFree(panConfidence);
+            }
+            else
+            {
+                poSRS->AutoIdentifyEPSG();
+            }
+        }
     }
 
     return poSRS;

@@ -385,6 +385,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             bSignedData = true;
         }
 
+        // Fix nodata value as it was stored signed.
+        if( !bSignedData && dfNoData < 0 )
+        {
+            dfNoData += 256;
+        }
+
         // If we got valid_range, test for signed/unsigned range.
         // http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Attribute-Conventions.html
         if( bGotValidRange )
@@ -393,6 +399,12 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             if( adfValidRange[0] == 0 && adfValidRange[1] == 255 )
             {
                 bSignedData = false;
+                // Fix nodata value as it was stored signed.
+                if( !bSignedData && dfNoData < 0 )
+                {
+                    dfNoData += 256;
+                }
+
                 // Reset valid_range.
                 adfValidRange[0] = dfNoData;
                 adfValidRange[1] = dfNoData;
@@ -419,6 +431,17 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                     bSignedData = true;
                 CPLFree(pszTemp);
             }
+
+            // Fix nodata value as it was stored signed.
+            if( !bSignedData && dfNoData < 0 )
+            {
+                dfNoData += 256;
+                if( !bGotValidRange )
+                {
+                    adfValidRange[0] = dfNoData;
+                    adfValidRange[1] = dfNoData;
+                }
+            }
         }
 
         if( bSignedData )
@@ -426,12 +449,6 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
             // set PIXELTYPE=SIGNEDBYTE
             // See http://trac.osgeo.org/gdal/wiki/rfc14_imagestructure
             SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
-        }
-        else
-        {
-            // Fix nodata value as it was stored signed.
-            if( dfNoData < 0 )
-                dfNoData += 256;
         }
     }
 
@@ -2025,7 +2042,17 @@ char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     char **papszValues = NULL;
     if( pszValue != NULL )
     {
-        papszValues = NCDFTokenizeArray(pszValue);
+        if( pszValue[0] != '{' && CPLString(pszValue).Trim().find(' ') != std::string::npos )
+        {
+            // Some files like ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
+            // do not use standard formatting for arrays, but just space
+            // separated syntax
+            papszValues = CSLTokenizeString2(pszValue, " ", 0);
+        }
+        else
+        {
+            papszValues = NCDFTokenizeArray(pszValue);
+        }
     }
     // Try gdal tags.
     else
@@ -2048,6 +2075,16 @@ char **netCDFDataset::FetchStandardParallels( const char *pszGridMappingValue )
     }
 
     return papszValues;
+}
+
+/************************************************************************/
+/*                       IsDifferenceBelow()                            */
+/************************************************************************/
+
+static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
+{
+    const double dfAbsDiff = fabs(dfA - dfB);
+    return dfAbsDiff <= dfError;
 }
 
 /************************************************************************/
@@ -2962,9 +2999,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             CPLDebug("GDAL_netCDF", "setting WKT from CF");
             SetProjection(pszTempProjection);
             CPLFree(pszTempProjection);
-
-            if( !bGotCfGT )
-                CPLDebug("GDAL_netCDF", "got SRS but no geotransform from CF!");
         }
 
         // Is pixel spacing uniform across the map?
@@ -3007,9 +3041,11 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             const double dfSpacingBegin = nSpacingBegin;
             const double dfSpacingMiddle = nSpacingMiddle;
             const double dfSpacingLast = nSpacingLast;
-            if( (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))  <= 1) &&
-                (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle)) <= 1) &&
-                (fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast)) <= 1) )
+            // ftp://data.knmi.nl/download/KNW-NetCDF-3D/1.0/noversion/2013/11/14/KNW-1.0_H37-ERA_NL_20131114.nc
+            // requires a 2/1000 tolerance.
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
             {
                 bLonSpacingOK = true;
             }
@@ -3055,9 +3091,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             const double dfSpacingBegin = nSpacingBegin;
             const double dfSpacingMiddle = nSpacingMiddle;
             const double dfSpacingLast = nSpacingLast;
-            if( (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingLast))  <= 1) &&
-                (fabs(fabs(dfSpacingBegin) - fabs(dfSpacingMiddle)) <= 1) &&
-                (fabs(fabs(dfSpacingMiddle) - fabs(dfSpacingLast)) <= 1) )
+            if( IsDifferenceBelow(dfSpacingBegin, dfSpacingLast, 2) &&
+                IsDifferenceBelow(dfSpacingBegin, dfSpacingMiddle, 2) &&
+                IsDifferenceBelow(dfSpacingMiddle, dfSpacingLast, 2) )
             {
                 bLatSpacingOK = true;
             }
@@ -4588,21 +4624,26 @@ void netCDFDataset::AddGridMappingRef()
         (nBands >= 1) && (GetRasterBand(1)) &&
         pszCFProjection != NULL && !EQUAL(pszCFProjection, "") )
     {
-        const int nVarId =
-            static_cast<netCDFRasterBand *>(GetRasterBand(1))->nZId;
         bAddedGridMappingRef = true;
 
         // Make sure we are in define mode.
         SetDefineMode(true);
-        int status = nc_put_att_text(cdfid, nVarId, CF_GRD_MAPPING,
-                                     strlen(pszCFProjection), pszCFProjection);
-        NCDF_ERR(status);
-        if( pszCFCoordinates != NULL && !EQUAL(pszCFCoordinates, "") )
+
+        for( int i = 1; i <= nBands; i++ )
         {
-            status =
-                nc_put_att_text(cdfid, nVarId, CF_COORDINATES,
-                                strlen(pszCFCoordinates), pszCFCoordinates);
+            const int nVarId =
+                static_cast<netCDFRasterBand *>(GetRasterBand(i))->nZId;
+
+            int status = nc_put_att_text(cdfid, nVarId, CF_GRD_MAPPING,
+                                        strlen(pszCFProjection), pszCFProjection);
             NCDF_ERR(status);
+            if( pszCFCoordinates != NULL && !EQUAL(pszCFCoordinates, "") )
+            {
+                status =
+                    nc_put_att_text(cdfid, nVarId, CF_COORDINATES,
+                                    strlen(pszCFCoordinates), pszCFCoordinates);
+                NCDF_ERR(status);
+            }
         }
 
         // Go back to previous define mode.

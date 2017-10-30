@@ -1590,7 +1590,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     int i;
     uchar	*pabyRec;
     int32	i32;
-    int     bExtendFile = FALSE;
+    int     bAppendToLastRecord = FALSE;
+    int     bAppendToFile = FALSE;
 
     psSHP->bUpdated = TRUE;
 
@@ -1887,6 +1888,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
                         psSHP->panRecSize[nShapeId] + 8 == psSHP->nFileSize )
     {
         nRecordOffset = psSHP->panRecOffset[nShapeId];
+        bAppendToLastRecord = TRUE;
     }
     else if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
@@ -1902,7 +1904,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
             return -1;
         }
 
-        bExtendFile = TRUE;
+        bAppendToFile = TRUE;
         nRecordOffset = psSHP->nFileSize;
     }
     else
@@ -1957,7 +1959,11 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
     free( pabyRec );
 
-    if( bExtendFile )
+    if( bAppendToLastRecord )
+    {
+        psSHP->nFileSize = psSHP->panRecOffset[nShapeId] + nRecordSize; 
+    }
+    else if( bAppendToFile )
     {
         if( nShapeId == -1 )
             nShapeId = psSHP->nRecords++;

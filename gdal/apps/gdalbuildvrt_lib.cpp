@@ -348,9 +348,12 @@ VRTBuilder::~VRTBuilder()
     CPLFree(pszVRTNoData);
     CPLFree(panBandList);
 
-    for(int i=0;i<nInputFiles;i++)
+    if( ppszInputFilenames )
     {
-        CPLFree(ppszInputFilenames[i]);
+        for(int i=0;i<nInputFiles;i++)
+        {
+            CPLFree(ppszInputFilenames[i]);
+        }
     }
     CPLFree(ppszInputFilenames);
     CPLFree(pahSrcDS);
@@ -548,18 +551,10 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     int _nBands = GDALGetRasterCount(hDS);
 
     //if provided band list
-    if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands >= nMaxBandNo)
+    if(nBands != 0 && _nBands != 0 && nMaxBandNo != 0 && _nBands > nMaxBandNo)
     {
-        if(_nBands < nMaxBandNo)
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Skipping %s as it has no such bands", dsFileName);
-            return FALSE;
-        }
-        else
-        {
-            _nBands = nMaxBandNo;
-        }
+        // Limit number of bands used to nMaxBandNo
+        _nBands = nMaxBandNo;
     }
 
     if (_nBands == 0)
@@ -794,7 +789,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
 {
     int iBand = 1;
-    for(int i=0;i<nInputFiles;i++)
+    for(int i=0; ppszInputFilenames != NULL && i<nInputFiles;i++)
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
@@ -908,7 +903,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
     }
 
-    for( int i = 0; i < nInputFiles; i++ )
+    for( int i = 0; ppszInputFilenames != NULL && i < nInputFiles; i++ )
     {
         DatasetProperty* psDatasetProperties = &pasDatasetProperties[i];
 
@@ -1120,7 +1115,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
     }
 
     int nCountValid = 0;
-    for(int i=0;i<nInputFiles;i++)
+    for(int i=0; ppszInputFilenames != NULL && i<nInputFiles;i++)
     {
         const char* dsFileName = ppszInputFilenames[i];
 

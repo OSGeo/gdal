@@ -232,7 +232,15 @@ CPLErr SRTMHGTDataset::GetGeoTransform(double * padfTransform)
 const char *SRTMHGTDataset::GetProjectionRef()
 
 {
-    return SRS_WKT_WGS84;
+        if (CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
+        {
+                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
+
+        }
+        else
+        {
+            return SRS_WKT_WGS84;
+        }
 }
 
 /************************************************************************/
@@ -359,7 +367,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   default:
     numPixels_x = numPixels_y = 0;
     break;
-  }    
+  }
 
   poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB

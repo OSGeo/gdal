@@ -149,8 +149,8 @@ def transformer_4():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-19.554539744554866) > 0.001 \
-       or abs(pnt[1]-9.1910760024906537) > 0.001 \
+       or abs(pnt[0]-20.436627518907024) > 0.001 \
+       or abs(pnt[1]-10.484599774610549) > 0.001 \
        or pnt[2] != 0:
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
@@ -926,7 +926,7 @@ gdaltest_list = [
     ]
 
 disabled_gdaltest_list = [
-    transformer_9
+    transformer_11
 ]
 
 

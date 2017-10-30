@@ -382,7 +382,9 @@ int SENTINEL2Dataset::Identify( GDALOpenInfo *poOpenInfo )
         return FALSE;
 
     /* Accept directly .zip as provided by https://scihub.esa.int/ */
-    if( (STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
+    if( (STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
+         STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_") ||
+         STARTS_WITH_CI(pszJustFilename, "S2A_OPER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2B_OPER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2A_USER_PRD_MSI") ||
          STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI") ) &&
@@ -478,6 +480,25 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
         osMTD[15] = 'F';
         CPLString osSAFE(CPLString(osBasename) + ".SAFE");
         osFilename = osFilename + "/" + osSAFE +"/" + osMTD + ".xml";
+        if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
+            osFilename = "/vsizip/" + osFilename;
+        CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());
+        GDALOpenInfo oOpenInfo(osFilename, GA_ReadOnly);
+        return Open(&oOpenInfo);
+    }
+    else if( (STARTS_WITH_CI(pszJustFilename, "S2A_MSIL1C_") ||
+              STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_") ) &&
+         EQUAL(CPLGetExtension(pszJustFilename), "zip") )
+    {
+        CPLString osBasename(CPLGetBasename(pszJustFilename));
+        CPLString osFilename(poOpenInfo->pszFilename);
+        CPLString osSAFE(osBasename);
+        // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
+        // has .SAFE.zip extension, but other products have just a .zip 
+        // extension. So for the subdir in the zip only add .SAFE when needed
+        if( !EQUAL(CPLGetExtension(osSAFE), "SAFE") )
+            osSAFE += ".SAFE";
+        osFilename = osFilename + "/" + osSAFE + "/MTD_MSIL1C.xml";
         if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
             osFilename = "/vsizip/" + osFilename;
         CPLDebug("SENTINEL2", "Trying %s", osFilename.c_str());

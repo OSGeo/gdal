@@ -476,7 +476,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
 
                     OGRGeoJSONLayer* poLayer = new OGRGeoJSONLayer(
                             pszId ? pszId : "TopoJSON", NULL,
-                            wkbUnknown, poDS );
+                            wkbUnknown, poDS, NULL );
                     OGRFeatureDefn* poDefn = poLayer->GetLayerDefn();
                     {
                         OGRFieldDefn fldDefn( "id", OFTString );
@@ -511,6 +511,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                         }
                     }
 
+                    poLayer->DetectGeometryType();
                     poDS->AddLayer(poLayer);
                 }
             }
@@ -526,7 +527,7 @@ static bool ParseObjectMain( const char* pszId, json_object* poObj,
                     if( *ppoMainLayer == NULL )
                     {
                         *ppoMainLayer = new OGRGeoJSONLayer(
-                            "TopoJSON", NULL, wkbUnknown, poDS );
+                            "TopoJSON", NULL, wkbUnknown, poDS, NULL );
                         {
                             OGRFieldDefn fldDefn( "id", OFTString );
                             (*ppoMainLayer)->
@@ -677,5 +678,8 @@ void OGRTopoJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     }
 
     if( poMainLayer != NULL )
+    {
+        poMainLayer->DetectGeometryType();
         poDS->AddLayer(poMainLayer);
+    }
 }

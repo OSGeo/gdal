@@ -34,6 +34,7 @@
 import os
 import sys
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
@@ -3013,6 +3014,51 @@ def netcdf_77():
 
     return 'success'
 
+
+###############################################################################
+# test we handle correctly valid_range={0,255} for a byte dataset with
+# negative nodata value
+
+def netcdf_78():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_valid_range.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test we handle correctly _Unsigned="true" for a byte dataset with
+# negative nodata value
+
+def netcdf_79():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_neg_fillvalue_and_unsigned_hint.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 ###############################################################################
@@ -3100,7 +3146,9 @@ gdaltest_list = [
     netcdf_74,
     netcdf_75,
     netcdf_76,
-    netcdf_77
+    netcdf_77,
+    netcdf_78,
+    netcdf_79
 ]
 
 ###############################################################################

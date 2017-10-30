@@ -159,9 +159,14 @@ retry:  // TODO(schwehr): Stop using goto.
     if( fpL != NULL )
     {
         bStatOK = TRUE;
-        const int nBufSize = 1025;
-        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize, 1) );
-        nHeaderBytesTried = nBufSize - 1;
+        int nBufSize =
+            atoi(CPLGetConfigOption("GDAL_INGESTED_BYTES_AT_OPEN", "1024"));
+        if( nBufSize < 1024 )
+            nBufSize = 1024;
+        else if( nBufSize > 10 * 1024 * 1024) 
+            nBufSize = 10 * 1024 * 1024;
+        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize+1, 1) );
+        nHeaderBytesTried = nBufSize;
         nHeaderBytes = static_cast<int>(
             VSIFReadL( pabyHeader, 1, nHeaderBytesTried, fpL ) );
         VSIRewindL( fpL );

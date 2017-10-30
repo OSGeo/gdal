@@ -129,6 +129,10 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
     virtual vsi_l_offset Tell() override;
     virtual size_t    Read( void *pBuffer, size_t nSize,
                             size_t nMemb ) override;
+    virtual int          ReadMultiRange( int nRanges, void ** ppData,
+                                         const vsi_l_offset* panOffsets,
+                                         const size_t* panSizes ) override;
+
     virtual size_t    Write( const void *pBuffer, size_t nSize,
                              size_t nMemb ) override;
     virtual int       Eof() override;
@@ -499,6 +503,18 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( nRet != nCount )
         bEOF = true;
     return nRet;
+}
+
+/************************************************************************/
+/*                           ReadMultiRange()                           */
+/************************************************************************/
+
+int VSICachedFile::ReadMultiRange( int const nRanges, void ** const ppData,
+                                   const vsi_l_offset* const panOffsets,
+                                   const size_t* const panSizes )
+{
+    // If the base is /vsicurl/
+    return poBase->ReadMultiRange( nRanges, ppData, panOffsets, panSizes );
 }
 
 /************************************************************************/

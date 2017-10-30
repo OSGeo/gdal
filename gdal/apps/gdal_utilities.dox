@@ -1054,13 +1054,18 @@ formats.
 Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
-Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. Either
-the -tr or -ts option must be used in that case.
+Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images. 
+Since 1.8.0, it will create a new target raster image when any of the -of, 
+-a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used. 
+The resolution or size must be specified using the -tr or -ts option for all new
+rasters.  The target raster will be overwritten if it already exists and any of 
+these creation-related options are used.
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd>
 The band(s) to burn values into.  Multiple -b arguments may be used to burn
-into a list of bands.  The default is to burn into band 1.</dd>
+into a list of bands.  The default is to burn into band 1.  Not used when 
+creating a new raster.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated
@@ -1121,8 +1126,9 @@ same value is used in all the bands.</dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 1.8.0)
 Override the projection for the output file. If not specified, the projection of
-the input vector file will be used if available. If incompatible projections
-between input and output files, no attempt will be made to reproject features.
+the input vector file will be used if available. When using this option, no reprojection
+of features from the SRS of the input vector to the specified SRS of the output raster,
+so use only this option to correct an invalid source SRS.
 The <i>srs_def</i> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
 EPSG:n or a file containing the WKT. </dd>
 
@@ -1165,8 +1171,10 @@ non-error output.</dd>
 Any OGR supported readable datasource.</dd>
 
 <dt> <em>dst_filename</em>: </dt><dd>
-The GDAL supported output file.  Must support update mode access.
-Before GDAL 1.8.0, gdal_rasterize could not create new output files.</dd>
+The GDAL supported output file.  Must support update mode access.  As of GDAL 
+1.8.0, this file will be created (or overwritten if it already exists) if the 
+-of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are 
+used.</dd>
 
 </dl>
 
@@ -1188,6 +1196,14 @@ file, pulling the top elevation from the ROOF_H attribute.
 
 \verbatim
 gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
+\endverbatim
+
+The following would burn all polygons from footprint.shp into a new 1000x1000
+rgb TIFF as the color red.  Note that -b is not used; the order of the -burn 
+options determines the bands of the output raster.
+
+\verbatim
+gdal_rasterize -burn 255 -burn 0 -burn 0 -ot Byte -ts 1000 1000 -l footprints footprints.shp mask.tif
 \endverbatim
 
 \if man
@@ -2531,6 +2547,7 @@ Options:
    [--help-general] [-h]  Show help and exit
    [-p]                   Pretty-print where applicable (e.g. WKT)
    [-V]                   Validate SRS
+   [-e]                   Search for EPSG number(s) corresponding to SRS
    [-o out_type]          Output type { default, all, wkt_all, proj4,
                                         wkt, wkt_simple, wkt_noct, wkt_esri,
                                         mapinfo, xml }

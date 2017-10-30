@@ -637,10 +637,15 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
 
     for( int iLayer = 0; iLayer < nNewLayers; iLayer++ )
     {
+        bool bIsDefPoints = false;
+        bool bWrote290 = false;
         for( unsigned i = 0; i < aosDefaultLayerText.size(); i++ )
         {
             if( anDefaultLayerCode[i] == 2 )
             {
+                if( EQUAL(papszLayersToCreate[iLayer], "DEFPOINTS") )
+                    bIsDefPoints = true;
+
                 if( !WriteValue( fpOut, 2, papszLayersToCreate[iLayer] ) )
                     return false;
             }
@@ -650,11 +655,21 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
             }
             else
             {
+                if( anDefaultLayerCode[i] == 290 )
+                    bWrote290 = true;
+
                 if( !WriteValue( fpOut,
                                  anDefaultLayerCode[i],
                                  aosDefaultLayerText[i] ) )
                     return false;
             }
+        }
+        if( bIsDefPoints && !bWrote290 )
+        {
+            // The Defpoints layer must be explicitly set to not plotted to
+            // please Autocad. See https://trac.osgeo.org/gdal/ticket/7078
+            if( !WriteValue( fpOut, 290, "0" ) )
+                return false;
         }
     }
 
@@ -714,7 +729,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fpIn )
 /* -------------------------------------------------------------------- */
 /*      Is this block already defined in the template header?           */
 /* -------------------------------------------------------------------- */
-        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("BlockName");
+        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("Block");
 
         if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
             continue;
@@ -734,7 +749,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fpIn )
         WriteEntityID( fpIn );
         WriteValue( fpIn, 100, "AcDbSymbolTableRecord" );
         WriteValue( fpIn, 100, "AcDbBlockTableRecord" );
-        WriteValue( fpIn, 2, poThisBlockFeat->GetFieldAsString("BlockName") );
+        WriteValue( fpIn, 2, poThisBlockFeat->GetFieldAsString("Block") );
         if( !WriteValue( fpIn, 340, "0" ) )
             return false;
     }
@@ -763,7 +778,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 /* -------------------------------------------------------------------- */
 /*      Is this block already defined in the template header?           */
 /* -------------------------------------------------------------------- */
-        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("BlockName");
+        CPLString osBlockName = poThisBlockFeat->GetFieldAsString("Block");
 
         if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
             continue;
@@ -772,7 +787,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 /*      Write the block definition preamble.                            */
 /* -------------------------------------------------------------------- */
         CPLDebug( "DXF", "Writing BLOCK definition for '%s'.",
-                  poThisBlockFeat->GetFieldAsString("BlockName") );
+                  poThisBlockFeat->GetFieldAsString("Block") );
 
         WriteValue( fpIn, 0, "BLOCK" );
         WriteEntityID( fpIn );
@@ -782,7 +797,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
         else
             WriteValue( fpIn, 8, "0" );
         WriteValue( fpIn, 100, "AcDbBlockBegin" );
-        WriteValue( fpIn, 2, poThisBlockFeat->GetFieldAsString("BlockName") );
+        WriteValue( fpIn, 2, poThisBlockFeat->GetFieldAsString("Block") );
         WriteValue( fpIn, 70, "0" );
 
         // Origin
@@ -790,7 +805,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
         WriteValue( fpIn, 20, "0.0" );
         WriteValue( fpIn, 30, "0.0" );
 
-        WriteValue( fpIn, 3, poThisBlockFeat->GetFieldAsString("BlockName") );
+        WriteValue( fpIn, 3, poThisBlockFeat->GetFieldAsString("Block") );
         WriteValue( fpIn, 1, "" );
 
 /* -------------------------------------------------------------------- */
@@ -803,7 +818,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 /*      Write out following features if they are the same block.        */
 /* -------------------------------------------------------------------- */
         while( iBlock < poBlocksLayer->apoBlocks.size()-1
-            && EQUAL(poBlocksLayer->apoBlocks[iBlock+1]->GetFieldAsString("BlockName"),
+            && EQUAL(poBlocksLayer->apoBlocks[iBlock+1]->GetFieldAsString("Block"),
                      osBlockName) )
         {
             iBlock++;

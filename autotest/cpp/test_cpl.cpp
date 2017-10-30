@@ -32,6 +32,8 @@
 #include <cpl_sha256.h>
 #include <cpl_string.h>
 #include "cpl_safemaths.hpp"
+#include "cpl_time.h"
+#include "cpl_json_streaming_parser.h"
 
 #include <fstream>
 #include <string>
@@ -1239,4 +1241,649 @@ namespace tut
         try { (CPLSM(1U) / CPLSM(0U)).v(); ensure(false); } catch (...) {}
     }
 
+    // Test CPLParseRFC822DateTime()
+    template<>
+    template<>
+    void object::test<27>()
+    {
+        int year, month, day, hour, min, sec, tz, weekday;
+        ensure( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 101 );
+        ensure_equals( weekday, 4 );
+
+        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 100 );
+        ensure_equals( weekday, 4 );
+
+        // Without day of week, second and timezone
+        ensure( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, -1 );
+        ensure_equals( tz, 0 );
+        ensure_equals( weekday, 0 );
+
+        ensure( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( weekday, 0 );
+
+        ensure( !CPLParseRFC822DateTime("Sun, 01 Jan 2017 12", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("00 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("32 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +-100", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+    }
+
+    // Test CPLCopyTree()
+    template<>
+    template<>
+    void object::test<28>()
+    {
+        CPLString osTmpPath(CPLGetDirname(CPLGenerateTempFilename(NULL)));
+        CPLString osSrcDir(CPLFormFilename(osTmpPath, "src_dir", NULL));
+        CPLString osNewDir(CPLFormFilename(osTmpPath, "new_dir", NULL));
+        ensure( VSIMkdir(osSrcDir, 0755) == 0 );
+        CPLString osSrcFile(CPLFormFilename(osSrcDir, "my.bin", NULL));
+        VSILFILE* fp = VSIFOpenL(osSrcFile, "wb");
+        ensure( fp != NULL );
+        VSIFCloseL(fp);
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, "/i/dont/exist") < 0 );
+        CPLPopErrorHandler();
+
+        ensure( CPLCopyTree(osNewDir, osSrcDir) == 0 );
+        VSIStatBufL sStat;
+        CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", NULL));
+        ensure( VSIStatL(osNewFile, &sStat) == 0 );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, osSrcDir) < 0 );
+        CPLPopErrorHandler();
+
+        VSIUnlink( osNewFile );
+        VSIRmdir( osNewDir );
+        VSIUnlink( osSrcFile );
+        VSIRmdir( osSrcDir );
+    }
+
+    class CPLJSonStreamingParserDump: public CPLJSonStreamingParser
+    {
+            std::vector<bool> m_abFirstMember;
+            CPLString m_osSerialized;
+            CPLString m_osException;
+
+        public:
+            CPLJSonStreamingParserDump() {}
+
+            virtual void Reset()
+            {
+                m_osSerialized.clear();
+                m_osException.clear();
+                CPLJSonStreamingParser::Reset();
+            }
+
+            virtual void String(const char* pszValue, size_t);
+            virtual void Number(const char* pszValue, size_t);
+            virtual void Boolean(bool bVal) ;
+            virtual void Null() ;
+
+            virtual void StartObject() ;
+            virtual void EndObject() ;
+            virtual void StartObjectMember(const char* pszKey, size_t);
+
+            virtual void StartArray();
+            virtual void EndArray();
+            virtual void StartArrayMember();
+
+            virtual void Exception(const char* pszMessage);
+
+            const CPLString& GetSerialized() const { return m_osSerialized; }
+            const CPLString& GetException() const { return m_osException; }
+    };
+
+    void CPLJSonStreamingParserDump::StartObject()
+    {
+        m_osSerialized += "{";
+        m_abFirstMember.push_back(true);
+    }
+    void CPLJSonStreamingParserDump::EndObject()
+    {
+        m_osSerialized += "}";
+        m_abFirstMember.pop_back();
+    }
+
+    void CPLJSonStreamingParserDump::StartObjectMember(const char* pszKey,
+                                                       size_t)
+    {
+        if( !m_abFirstMember.back() )
+            m_osSerialized += ", ";
+        m_osSerialized += CPLSPrintf("\"%s\": ", pszKey);
+        m_abFirstMember.back() = false;
+    }
+
+    void CPLJSonStreamingParserDump::String(const char* pszValue, size_t)
+    {
+        m_osSerialized += GetSerializedString(pszValue);
+    }
+
+    void CPLJSonStreamingParserDump::Number(const char* pszValue, size_t)
+    {
+        m_osSerialized += pszValue;
+    }
+
+    void CPLJSonStreamingParserDump::Boolean(bool bVal)
+    {
+        m_osSerialized += bVal ? "true" : "false";
+    }
+
+    void CPLJSonStreamingParserDump::Null()
+    {
+        m_osSerialized += "null";
+    }
+
+    void CPLJSonStreamingParserDump::StartArray()
+    {
+        m_osSerialized += "[";
+        m_abFirstMember.push_back(true);
+    }
+
+    void CPLJSonStreamingParserDump::EndArray()
+    {
+        m_osSerialized += "]";
+        m_abFirstMember.pop_back();
+    }
+
+    void CPLJSonStreamingParserDump::StartArrayMember()
+    {
+        if( !m_abFirstMember.back() )
+            m_osSerialized += ", ";
+        m_abFirstMember.back() = false;
+    }
+
+    void CPLJSonStreamingParserDump::Exception(const char* pszMessage)
+    {
+        m_osException = pszMessage;
+    }
+
+    // Test CPLJSonStreamingParser()
+    template<>
+    template<>
+    void object::test<29>()
+    {
+        // nominal cases
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "true";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "false";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "null";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "10";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "123eE-34";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\\\a\\b\\f\\n\\r\\t\\u0020\\u0001\\\"\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\u0001 \xf0\x9d\x84\x9e\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\\t\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\\t\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u00e9\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xc3\xa9\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{}";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[[]]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1,2]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{\"a\":null}";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = " { \"a\" : null ,\r\n\t\"b\": {\"c\": 1}, \"d\": [1] }";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            const char sExpected[] = "{\"a\": null, \"b\": {\"c\": 1}, \"d\": [1]}";
+            ensure_equals( oParser.GetSerialized(), sExpected );
+
+            oParser.Reset();
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sExpected );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sExpected );
+        }
+
+        // errors
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "truxe";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "truex";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "fals";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "falsxe";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "falsex";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nul";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nulxl";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nullx";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "true false";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "x";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "}";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[,";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[|";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ :";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ ,";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ |";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ 1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": 1 2";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\", ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\" }";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{\"a\" x}";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "1x";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\x\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ux";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u000";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\uD834\\ux\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"too long\"";
+            oParser.SetMaxStringSize(2);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[[]]";
+            oParser.SetMaxDepth(1);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": {} }";
+            oParser.SetMaxDepth(1);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+    }
 } // namespace tut

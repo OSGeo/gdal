@@ -101,6 +101,7 @@ class OGRMemLayer : public OGRLayer
 
     int                 TestCapability( const char * ) override;
 
+    bool                IsUpdatable() const { return m_bUpdatable; }
     void                SetUpdatable( bool bUpdatableIn )
         { m_bUpdatable = bUpdatableIn; }
     void                SetAdvertizeUTF8( bool bAdvertizeUTF8In )

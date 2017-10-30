@@ -78,8 +78,10 @@ static int OGRVRTDriverIdentify( GDALOpenInfo *poOpenInfo )
 static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if( !OGRVRTDriverIdentify(poOpenInfo) )
         return NULL;
+#endif
 
     // Are we being passed the XML definition directly?
     // Skip any leading spaces/blanks.
@@ -97,6 +99,10 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
     // Open file and check if it contains appropriate XML.
     else
     {
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if( poOpenInfo->fpL == NULL )
+            return NULL;
+#endif
         VSIStatBufL sStatBuf;
         if( VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||
             sStatBuf.st_size > 1024 * 1024 )

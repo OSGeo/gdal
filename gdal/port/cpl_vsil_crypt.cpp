@@ -2096,7 +2096,7 @@ void VSISetCryptKey( const GByte* /* pabyKey */, int /* nKeySize */ )
 
 #endif  // HAVE_CRYPTOPP
 
-// Below is only useful if using as a plugin over GDAL 1.11 or GDAL 2.0.
+// Below is only useful if using as a plugin over GDAL >= 2.0.
 #ifdef VSICRYPT_AUTOLOAD
 
 CPL_C_START
@@ -2105,22 +2105,37 @@ CPL_C_END
 
 void GDALRegisterMe()
 {
-    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) ==
-        VSIFileManager::GetHandler(".") )
+    VSIFilesystemHandler* poExistingHandler =
+                    VSIFileManager::GetHandler(VSICRYPT_PREFIX);
+    if( poExistingHandler == VSIFileManager::GetHandler(".") )
+    {
+        // In the case where VSICRYPT_PREFIX is just handled by the regular
+        // handler, install the vsicrypt handler (shouldn't happen)
         VSIInstallCryptFileHandler();
+    }
+    else
+    {
+        // If there's already an installed handler, then check if it is a
+        // dummy one (should normally be the case) or a real one
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        VSIStatBufL sStat;
+        CPL_IGNORE_RET_VAL(
+            VSIStatL((CPLString(VSICRYPT_PREFIX) + "i_do_not_exist").c_str(), &sStat));
+        CPLPopErrorHandler();
+        if( strstr(CPLGetLastErrorMsg(), "support not available in this build") )
+        {
+            // Dummy handler. Register the new one, and delete the old one
+            VSIInstallCryptFileHandler();
+            delete poExistingHandler;
+        }
+        else
+        {
+            CPLDebug("VSICRYPT", "GDAL has already a working %s implementation",
+                     VSICRYPT_PREFIX);
+        }
+        CPLErrorReset();
+    }
 }
-
-#ifndef GDAL_DCAP_RASTER
-CPL_C_START
-void CPL_DLL RegisterOGRCRYPT();
-CPL_C_END
-
-void RegisterOGRCRYPT()
-{
-    if( VSIFileManager::GetHandler(VSICRYPT_PREFIX) ==
-        VSIFileManager::GetHandler(".") )
-        VSIInstallCryptFileHandler();
-}
-#endif
 
 #endif /* VSICRYPT_AUTOLOAD */

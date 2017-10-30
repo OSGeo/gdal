@@ -259,6 +259,31 @@ def grib_10():
 
     return 'success'
 
+###############################################################################
+# Test support for GRIB2 Section 4 Template 32, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for synthetic satellite data.
+
+def grib_11():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    # First band extracted from http://nomads.ncep.noaa.gov/pub/data/nccf/com/hur/prod/hwrf.2017102006/twenty-se27w.2017102006.hwrfsat.core.0p02.f000.grb2
+    ds = gdal.Open('data/twenty-se27w.2017102006.hwrfsat.core.0p02.f000_truncated.grb2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 19911:
+        gdaltest.post_reason('Could not open file')
+        print(cs)
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1508479200 sec UTC', 'GRIB_VALID_TIME': '  1508479200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217', 'GRIB_PDS_PDTN': '32', 'GRIB_COMMENT': 'Brightness Temperature [C]', 'GRIB_SHORT_NAME': '0 undefined', 'GRIB_ELEMENT': 'BRTEMP'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
@@ -269,7 +294,8 @@ gdaltest_list = [
     grib_7,
     grib_8,
     grib_9,
-    grib_10
+    grib_10,
+    grib_11
     ]
 
 if __name__ == '__main__':

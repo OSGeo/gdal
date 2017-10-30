@@ -716,7 +716,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         }
 
         size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
-        while( buffer.PostionBit() < dSectionBitSize - 8)
+        while( buffer.PositionBit() < dSectionBitSize - 8)
         {
             CADClass stClass;
             stClass.dClassNum        = buffer.ReadBITSHORT();
@@ -797,7 +797,7 @@ int DWGFileR2000::CreateFileMap()
         }
         unsigned int dSectionBitSize = dSectionSize * 8;
 
-        while( buffer.PostionBit() < dSectionBitSize )
+        while( buffer.PositionBit() < dSectionBitSize )
         {
             tmpOffset.first  = buffer.ReadUMCHAR(); // 8 + 8*8
             tmpOffset.second = buffer.ReadMCHAR(); // 8 + 8*8
@@ -846,7 +846,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
-    dObjectSize += static_cast<unsigned int>(buffer.PostionBit() / 8 + 2);
+    dObjectSize += static_cast<unsigned int>(buffer.PositionBit() / 8 + 2);
 
     CADBuffer objectBuffer(dObjectSize + 64);
 
@@ -3528,7 +3528,7 @@ CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, CADBuffer 
     xrecord->hXDictionary = buffer.ReadHANDLE();
 
     size_t dObjectSizeBit = (dObjectSize + 4) * 8;
-    while( buffer.PostionBit() < dObjectSizeBit )
+    while( buffer.PositionBit() < dObjectSizeBit )
     {
         xrecord->hObjIdHandles.push_back( buffer.ReadHANDLE() );
     }

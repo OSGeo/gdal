@@ -523,6 +523,7 @@ const char *DTEDDataset::GetProjectionRef()
 {
     // get xml and aux SR first
     const char* pszPrj = GDALPamDataset::GetProjectionRef();
+    const char* pszVertDatum;
     if(pszPrj && strlen(pszPrj) > 0)
         return pszPrj;
 
@@ -532,11 +533,19 @@ const char *DTEDDataset::GetProjectionRef()
     pszPrj = GetMetadataItem( "DTED_HorizontalDatum");
     if (EQUAL(pszPrj, "WGS84"))
     {
-        return
-            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-            "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-            "AUTHORITY[\"EPSG\",\"4326\"]]";
+
+        pszVertDatum = GetMetadataItem("DTED_VerticalDatum");
+        if (EQUAL(pszVertDatum, "MSL") &&
+            CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
+        {
+                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
+
+        }
+        else
+        {
+            return SRS_WKT_WGS84;
+        }
+
     }
     else if (EQUAL(pszPrj, "WGS72"))
     {

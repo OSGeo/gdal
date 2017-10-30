@@ -38,9 +38,16 @@
 /* -------------------------------------------------------------------- */
 /*      Various Functions.                                              */
 /* -------------------------------------------------------------------- */
-CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding );
+CPLString ACTextUnescape( const char *pszInput, const char *pszEncoding,
+    bool bIsMText );
 
 const unsigned char *ACGetColorTable( void );
+
+const int* ACGetKnownDimStyleCodes( void );
+
+const char *ACGetDimStylePropertyName( const int iDimStyleCode );
+
+const char *ACGetDimStylePropertyDefault( const int iDimStyleCode );
 
 void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature );
 

@@ -210,10 +210,11 @@ class OGRGMLDataSource : public OGRDataSource
     OGRGMLLayer*        GetLastReadLayer() const { return poLastReadLayer; }
     void                SetLastReadLayer(OGRGMLLayer* poLayer) { poLastReadLayer = poLayer; }
 
-    const char         *GetAppPrefix();
-    bool                RemoveAppPrefix();
-    bool                WriteFeatureBoundedBy();
-    const char         *GetSRSDimensionLoc();
+    const char         *GetAppPrefix() const;
+    bool                RemoveAppPrefix() const;
+    bool                WriteFeatureBoundedBy() const;
+    const char         *GetSRSDimensionLoc() const;
+    bool                GMLFeatureCollection() const;
 
     virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,

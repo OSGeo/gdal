@@ -203,6 +203,7 @@
             <xs:enumeration value="wkbMultiSurface"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbCurve"/> <!-- new in GDAL 2.1 -->
             <xs:enumeration value="wkbSurface"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbUnknown25D"/>
             <xs:enumeration value="wkbPoint25D"/>
             <xs:enumeration value="wkbLineString25D"/>
             <xs:enumeration value="wkbPolygon25D"/>

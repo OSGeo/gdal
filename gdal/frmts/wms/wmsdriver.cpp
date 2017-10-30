@@ -502,6 +502,8 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     int nTileWidth = -1;
     int nTileHeight = -1;
     int nWKID = -1;
+    int nLatestWKID = -1;
+    CPLString osWKT;
     double dfMinX = 0.0;
     double dfMaxY = 0.0;
     int bHasMinX = FALSE;
@@ -522,9 +524,42 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                 nWKID = nVal;
             else if (nWKID != nVal)
             {
-                CPLDebug("WMS", "Inconsisant WKID values : %d, %d", nVal, nWKID);
+                CPLDebug("WMS", "Inconsistent WKID values : %d, %d", nVal, nWKID);
                 VSIFCloseL(fp);
                 return NULL;
+            }
+        }
+        else if ((pszVal = GetJSonValue(pszLine, "latestWkid")) != NULL)
+        {
+            int nVal = atoi(pszVal);
+            if (nLatestWKID < 0)
+                nLatestWKID = nVal;
+            else if (nLatestWKID != nVal)
+            {
+                CPLDebug("WMS", "Inconsistent latestWkid values : %d, %d", nVal, nLatestWKID);
+                VSIFCloseL(fp);
+                return NULL;
+            }
+        }
+        else if ((pszVal = GetJSonValue(pszLine, "wkt")) != NULL)
+        {
+            osWKT = pszVal;
+            size_t nPos;
+            // FIXME: we should really use a proper JSon parser !!!
+            if( !osWKT.empty() && osWKT[0] == '"' &&
+                (nPos = osWKT.find("\"}")) != std::string::npos )
+            {
+                osWKT = osWKT.substr(1, nPos - 1);
+                osWKT.replaceAll("\\\"", "\"");
+            }
+            else if( osWKT.size() > 2 && osWKT[0] == '"' && osWKT.back() == '"' )
+            {
+                osWKT = osWKT.substr(1, osWKT.size() - 2);
+                osWKT.replaceAll("\\\"", "\"");
+            }
+            else
+            {
+                osWKT.clear();
             }
         }
         else if ((pszVal = GetJSonValue(pszLine, "x")) != NULL)
@@ -589,7 +624,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         CPLDebug("WMS", "Did not get tile height");
         return NULL;
     }
-    if (nWKID <= 0)
+    if (nWKID <= 0 && osWKT.empty())
     {
         CPLDebug("WMS", "Did not get WKID");
         return NULL;
@@ -605,10 +640,15 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         return NULL;
     }
 
+    if( nLatestWKID > 0 )
+        nWKID = nLatestWKID;
+
     if (nWKID == 102100)
         nWKID = 3857;
 
-    const char* pszEndURL = strstr(pszURL, "/MapServer?f=json");
+    const char* pszEndURL = strstr(pszURL, "/?f=json");
+    if( pszEndURL == NULL )
+        pszEndURL = strstr(pszURL, "?f=json");
     CPLAssert(pszEndURL);
     CPLString osURL(pszURL);
     osURL.resize(pszEndURL - pszURL);
@@ -627,16 +667,50 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     const int nLevelCountOri = nLevelCount;
     while( (double)nTileCountX * nTileWidth * (1 << nLevelCount) > INT_MAX )
         nLevelCount --;
-    while( (double)nTileHeight * (1 << nLevelCount) > INT_MAX )
+    while( nLevelCount >= 0 &&
+           (double)nTileHeight * (1 << nLevelCount) > INT_MAX )
         nLevelCount --;
     if( nLevelCount != nLevelCountOri )
         CPLDebug("WMS", "Had to limit level count to %d instead of %d to stay within GDAL raster size limits",
                  nLevelCount, nLevelCountOri);
 
+    CPLString osEscapedWKT;
+    if( nWKID < 0 && !osWKT.empty() )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(osWKT);
+        oSRS.morphFromESRI();
+
+        int nEntries = 0;
+        int* panConfidence = NULL;
+        OGRSpatialReferenceH* pahSRS =
+            oSRS.FindMatches(NULL, &nEntries, &panConfidence);
+        if( nEntries == 1 && panConfidence[0] == 100 )
+        {
+            OGRSpatialReference* poSRS =
+                reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+            oSRS = *poSRS;
+            const char* pszCode = oSRS.GetAuthorityCode(NULL);
+            if( pszCode )
+                nWKID = atoi(pszCode);
+        }
+        OSRFreeSRSArray(pahSRS);
+        CPLFree(panConfidence);
+
+        char* pszWKT = NULL;
+        oSRS.exportToWkt(&pszWKT);
+        osWKT = pszWKT;
+        CPLFree(pszWKT);
+
+        char* pszEscaped = CPLEscapeString(osWKT, -1, CPLES_XML);
+        osEscapedWKT = pszEscaped;
+        CPLFree(pszEscaped);
+    }
+
     CPLString osXML = CPLSPrintf(
             "<GDAL_WMS>\n"
             "  <Service name=\"TMS\">\n"
-            "    <ServerUrl>%s/MapServer/tile/${z}/${y}/${x}</ServerUrl>\n"
+            "    <ServerUrl>%s/tile/${z}/${y}/${x}</ServerUrl>\n"
             "  </Service>\n"
             "  <DataWindow>\n"
             "    <UpperLeftX>%.8f</UpperLeftX>\n"
@@ -647,7 +721,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
             "    <TileCountX>%d</TileCountX>\n"
             "    <YOrigin>top</YOrigin>\n"
             "  </DataWindow>\n"
-            "  <Projection>EPSG:%d</Projection>\n"
+            "  <Projection>%s</Projection>\n"
             "  <BlockSizeX>%d</BlockSizeX>\n"
             "  <BlockSizeY>%d</BlockSizeY>\n"
             "  <Cache/>\n"
@@ -656,7 +730,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
             dfMinX, dfMaxY, dfMaxX, dfMinY,
             nLevelCount,
             nTileCountX,
-            nWKID,
+            nWKID > 0 ? CPLSPrintf("EPSG:%d", nWKID) : osEscapedWKT.c_str(),
             nTileWidth, nTileHeight);
     CPLDebug("WMS", "Opening TMS :\n%s", osXML.c_str());
 
@@ -717,7 +791,10 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
              STARTS_WITH_CI(pszFilename, "http") &&
-             strstr(pszFilename, "/MapServer?f=json") != NULL)
+             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
+              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
     {
         return TRUE;
     }
@@ -760,7 +837,10 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (STARTS_WITH_CI(pszFilename, "WMS:http") ||
               STARTS_WITH_CI(pszFilename, "http")) &&
-             strstr(pszFilename, "/MapServer?f=json") != NULL)
+             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
+              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
+              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
     {
         if (STARTS_WITH_CI(pszFilename, "WMS:http"))
             pszFilename += 4;
