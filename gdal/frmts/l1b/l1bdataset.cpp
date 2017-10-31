@@ -3028,6 +3028,17 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
     if (pabyHeader == NULL || nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
         return L1B_NONE;
 
+    // try NOAA-18 formats
+    if ( nHeaderBytes > 22 + 10
+        && *(pabyHeader + 0) == '\0'
+        && *(pabyHeader + 1) == '\0'
+        && *(pabyHeader + 2) == '\0'
+        && *(pabyHeader + 3) == '\0'
+        && *(pabyHeader + 4) == '\0'
+        && *(pabyHeader + 5) == '\0'
+        && EQUALN((const char*)(pabyHeader + 22), "/N1BD/N18/", 10))
+        return L1B_NOAA15_NOHDR;
+
     // We will try the NOAA-15 and later formats first
     if ( nHeaderBytes > L1B_NOAA15_HEADER_SIZE + 61
          && *(pabyHeader + L1B_NOAA15_HEADER_SIZE + 25) == '.'
