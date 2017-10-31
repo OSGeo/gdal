@@ -173,7 +173,7 @@ None by default.
 The GDAL home page is L<http://gdal.org/>
 
 The documentation of this module is written in Doxygen format. See
-L<http://ajolma.net/Geo-GDAL/snapshot/>
+L<http://arijolma.org/Geo-GDAL/snapshot/>
 
 =head1 AUTHOR
 
