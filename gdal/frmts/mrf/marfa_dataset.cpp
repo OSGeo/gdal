@@ -1811,9 +1811,13 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
                 buffer, nCols, nRows, eDT, nBandCount, NULL, 
                 nBands * dts, nBands * dts * nCols, dts, NULL);
 
+            if (eErr != CE_None)
+                break;
+
         } // Columns
         if (eErr != CE_None)
             break;
+
     } // Rows
 
     // Cleanup
