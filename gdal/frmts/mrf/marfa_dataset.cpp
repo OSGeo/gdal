@@ -1807,12 +1807,12 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
             }
 
             // Write
-            eErr = RasterIO(GF_Write, col, row, nCols, nRows,
-                buffer, nCols, nRows, eDT, nBandCount, NULL, 
-                nBands * dts, nBands * dts * nCols, dts, NULL);
-
-            if (eErr != CE_None)
-                break;
+            if( eErr == CE_None )
+            {
+                eErr = RasterIO(GF_Write, col, row, nCols, nRows,
+                    buffer, nCols, nRows, eDT, nBandCount, NULL, 
+                    nBands * dts, nBands * dts * nCols, dts, NULL);
+            }
 
         } // Columns
         if (eErr != CE_None)
