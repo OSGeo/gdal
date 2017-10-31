@@ -80,7 +80,7 @@ class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
-        bool CanRestartOnError(const char*, bool bSetError = false) CPL_OVERRIDE;
+        bool CanRestartOnError(const char*, bool bSetError, bool* pbUpdateMap = NULL) CPL_OVERRIDE;
 
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
