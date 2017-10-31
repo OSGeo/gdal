@@ -86,7 +86,8 @@ public:
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const = 0;
 
-        virtual bool CanRestartOnError(const char*, bool /*bSetError*/ = false) { return false;}
+        virtual bool AllowAutomaticRedirection() { return true; }
+        virtual bool CanRestartOnError(const char*, bool /*bSetError*/, bool* /*pbUpdateMap*/ = NULL) { return false;}
 
         virtual const CPLString& GetURL() const = 0;
 
@@ -154,7 +155,8 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                                           const void *pabyDataContent = NULL,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
-        bool CanRestartOnError(const char*, bool bSetError = false) CPL_OVERRIDE;
+        bool AllowAutomaticRedirection() CPL_OVERRIDE { return false; }
+        bool CanRestartOnError(const char*, bool bSetError, bool* pbUpdateMap = NULL) CPL_OVERRIDE;
 
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }

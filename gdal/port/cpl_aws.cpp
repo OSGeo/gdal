@@ -1120,11 +1120,14 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
-                                           bool bSetError )
+                                           bool bSetError, bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
 #endif
+
+    if( pbUpdateMap != NULL )
+        *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
@@ -1177,8 +1180,9 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
         return true;
     }
 
-    if( EQUAL(pszCode, "PermanentRedirect") )
+    if( EQUAL(pszCode, "PermanentRedirect") || EQUAL(pszCode, "TemporaryRedirect") )
     {
+        const bool bIsTemporaryRedirect = EQUAL(pszCode, "TemporaryRedirect");
         const char* pszEndpoint =
             CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
         if( pszEndpoint == NULL ||
@@ -1208,6 +1212,10 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             : pszEndpoint);
         CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
+
+        if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+            *pbUpdateMap = false;
+
         return true;
     }
 

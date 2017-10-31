@@ -440,8 +440,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual struct curl_slist* GetCurlHeaders( const CPLString& /*osVerb*/,
                                 const struct curl_slist* /* psExistingHeaders */)
         { return NULL; }
-    bool CanRestartOnError( const char* pszErrorMsg )
-        { return CanRestartOnError(pszErrorMsg, false); }
+    virtual bool AllowAutomaticRedirection() { return true; }
     virtual bool CanRestartOnError( const char*, bool ) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
@@ -1107,6 +1106,9 @@ retry:
         osVerb = "HEAD";
     }
 
+    if( !AllowAutomaticRedirection() )
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -1485,6 +1487,9 @@ retry:
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
+    if( !AllowAutomaticRedirection() )
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
                                pfnReadCbk, pReadCbkUserData);
@@ -1626,7 +1631,7 @@ retry:
         sWriteFuncHeaderData.bError )
     {
         if( sWriteFuncData.pBuffer != NULL &&
-            CanRestartOnError((const char*)sWriteFuncData.pBuffer) )
+            CanRestartOnError((const char*)sWriteFuncData.pBuffer, false) )
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -4588,6 +4593,8 @@ class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
                     const struct curl_slist* psExistingHeaders ) override;
         virtual bool CanRestartOnError( const char*, bool ) override;
+        virtual bool AllowAutomaticRedirection() override
+            { return m_poS3HandleHelper->AllowAutomaticRedirection(); }
 
     public:
         VSIS3Handle( VSIS3FSHandler* poFS,
@@ -4831,7 +4838,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         if( response_code != 200 || sWriteFuncData.pBuffer == NULL )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -5293,7 +5300,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         if( response_code != 200 )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -5806,7 +5813,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         if( response_code != 204 && response_code != 202)
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
                 bGoOn = true;
@@ -5912,6 +5919,8 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         struct curl_slist* headers = 
             VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), NULL);
+        // Disable automatic redirection
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -5943,10 +5952,14 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
+            bool bUpdateMap = true;
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false, &bUpdateMap) )
             {
-                UpdateMapFromHandle(poS3HandleHelper);
+                if( bUpdateMap )
+                {
+                    UpdateMapFromHandle(poS3HandleHelper);
+                }
                 CPLFree(sWriteFuncData.pBuffer);
             }
             else
@@ -6060,10 +6073,14 @@ struct curl_slist* VSIS3Handle::GetCurlHeaders( const CPLString& osVerb,
 
 bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    bool bUpdateMap = false;
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError, &bUpdateMap) )
     {
-        static_cast<VSIS3FSHandler *>(poFS)->
-            UpdateMapFromHandle(m_poS3HandleHelper);
+        if( bUpdateMap )
+        {
+            static_cast<VSIS3FSHandler *>(poFS)->
+                UpdateMapFromHandle(m_poS3HandleHelper);
+        }
 
         SetURL(m_poS3HandleHelper->GetURL());
         return true;
@@ -7311,7 +7328,7 @@ struct curl_slist* VSIOSSHandle::GetCurlHeaders( const CPLString& osVerb,
 
 bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError, NULL) )
     {
         static_cast<VSIOSSFSHandler *>(poFS)->
             UpdateMapFromHandle(m_poHandleHelper);

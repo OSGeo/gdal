@@ -534,6 +534,82 @@ def vsis3_2():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Test temporary redirect
+    handler = webserver.SequentialHandler()
+
+    class HandlerClass:
+        def __init__(self, response_value):
+            self.old_authorization = None
+            self.response_value = response_value
+
+        def method_req_1(self, request):
+            if request.headers['Host'].find('127.0.0.1') < 0:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            self.old_authorization = request.headers['Authorization']
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(307)
+            response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>TemporaryRedirect</Code><Endpoint>localhost:%d</Endpoint></Error>' % request.server.port
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
+            request.send_header('Content-type', 'application/xml')
+            request.send_header('Transfer-Encoding', 'chunked')
+            request.end_headers()
+            request.wfile.write(response.encode('ascii'))
+
+        def method_req_2(self, request):
+            if request.headers['Host'].find('localhost') < 0:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            if self.old_authorization == request.headers['Authorization']:
+                sys.stderr.write('Should have get a different Authorization. Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(200)
+            response = self.response_value
+            request.send_header('Content-Length', len(response))
+            request.end_headers()
+            request.wfile.write(response.encode('ascii'))
+
+    h = HandlerClass('foo')
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource', custom_method = h.method_req_2)
+
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsis3/s3_test_temporary_redirect_read/resource')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    # Retry on the same bucket and check that the redirection was indeed temporary
+    handler = webserver.SequentialHandler()
+
+    h = HandlerClass('bar')
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read/resource2', custom_method = h.method_req_2)
+
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsis3/s3_test_temporary_redirect_read/resource2')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        data = gdal.VSIFReadL(1, 3, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    if data != 'bar':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -805,6 +881,85 @@ def vsis3_3():
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/')
     if dir_contents != [ 'mybucket' ]:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
+    # Test temporary redirect
+    handler = webserver.SequentialHandler()
+
+    class HandlerClass:
+        def __init__(self, response_value):
+            self.old_authorization = None
+            self.response_value = response_value
+
+        def method_req_1(self, request):
+            if request.headers['Host'].find('127.0.0.1') < 0:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            self.old_authorization = request.headers['Authorization']
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(307)
+            response = '<?xml version="1.0" encoding="UTF-8"?><Error><Message>bla</Message><Code>TemporaryRedirect</Code><Endpoint>localhost:%d</Endpoint></Error>' % request.server.port
+            response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
+            request.send_header('Content-type', 'application/xml')
+            request.send_header('Transfer-Encoding', 'chunked')
+            request.end_headers()
+            request.wfile.write(response.encode('ascii'))
+
+        def method_req_2(self, request):
+            if request.headers['Host'].find('localhost') < 0:
+                sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            if self.old_authorization == request.headers['Authorization']:
+                sys.stderr.write('Should have get a different Authorization. Bad headers: %s\n' % str(request.headers))
+                request.send_response(403)
+                return
+            request.protocol_version = 'HTTP/1.1'
+            request.send_response(200)
+            request.send_header('Content-type', 'application/xml')
+            response = self.response_value
+            request.send_header('Content-Length', len(response))
+            request.end_headers()
+            request.wfile.write(response.encode('ascii'))
+
+    h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
+                <ListBucketResult>
+                    <Prefix>/</Prefix>
+                    <CommonPrefixes>
+                        <Prefix>/test</Prefix>
+                    </CommonPrefixes>
+                </ListBucketResult>
+            """)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/', custom_method = h.method_req_2)
+
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir')
+    if dir_contents != ['test']:
+        gdaltest.post_reason('fail')
+        print(dir_contents)
+        return 'fail'
+
+    # Retry on the same bucket and check that the redirection was indeed temporary
+    handler = webserver.SequentialHandler()
+
+    h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>/test/</Prefix>
+                <CommonPrefixes>
+                    <Prefix>/test/test2</Prefix>
+                </CommonPrefixes>
+            </ListBucketResult>
+        """)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/&prefix=test/', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/&prefix=test/', custom_method = h.method_req_2)
+
+    with webserver.install_http_handler(handler):
+        dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir/test')
+    if dir_contents != ['test2']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'

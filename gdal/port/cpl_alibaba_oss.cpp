@@ -281,11 +281,15 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
-                                           bool bSetError )
+                                            bool bSetError,
+                                            bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("OSS", "%s", pszErrorMsg);
 #endif
+
+    if( pbUpdateMap != NULL )
+        *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
