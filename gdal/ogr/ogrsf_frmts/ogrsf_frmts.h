@@ -206,6 +206,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
     OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
+    int                 GetGeomFieldFilter() const { return m_iGeomFieldFilter; }
+    const char          *GetAttrQueryString() const { return m_pszAttrQueryString; }
 //! @endcond
 
  protected:
