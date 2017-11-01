@@ -1509,15 +1509,6 @@ GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess,
                            GDALDataset *poDependentDS );
 
 /* ==================================================================== */
-/*      Misc functions.                                                 */
-/* ==================================================================== */
-
-CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree,
-                                     int *pnXSize, int *pnYSize,
-                                     double *padfGeoTransform,
-                                     char **ppszProjection );
-
-/* ==================================================================== */
 /*  Infrastructure to check that dataset characteristics are valid      */
 /* ==================================================================== */
 

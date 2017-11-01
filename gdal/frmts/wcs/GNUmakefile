@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	wcsdataset.o httpdriver.o
+OBJ	=	wcsdataset.o httpdriver.o gmlcoverage.o
 
 CPPFLAGS	:=	 $(CPPFLAGS)
 

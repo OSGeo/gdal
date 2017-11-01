@@ -6,7 +6,7 @@ OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalcolortable.o gdalmajorobject.o overview.o \
 		gdaldefaultoverviews.o gdalpamdataset.o gdalpamrasterband.o \
 		gdaljp2metadata.o gdaljp2box.o gdalmultidomainmetadata.o \
-		gdal_rat.o gdalgmlcoverage.o gdalpamproxydb.o \
+		gdal_rat.o gdalpamproxydb.o \
                 gdalallvalidmaskband.o gdalnodatamaskband.o \
 		gdalproxydataset.o gdalproxypool.o gdaldefaultasync.o \
 		gdalnodatavaluesmaskband.o gdaldllmain.o gdalexif.o gdalclientserver.o \

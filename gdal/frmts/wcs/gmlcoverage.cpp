@@ -47,10 +47,10 @@ CPL_CVSID("$Id$")
 /*                        ParseGMLCoverageDesc()                        */
 /************************************************************************/
 
-CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
-                             int *pnXSize, int *pnYSize,
-                             double *padfGeoTransform,
-                             char **ppszProjection )
+CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
+                            int *pnXSize, int *pnYSize,
+                            double *padfGeoTransform,
+                            char **ppszProjection )
 
 {
     CPLStripXMLNamespace( psXML, NULL, TRUE );
