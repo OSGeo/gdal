@@ -40,6 +40,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "commonutils.h"
@@ -387,6 +388,7 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO, int nSrcCoun
         if( hCTCutlineToSrc != NULL )
             OGR_G_Transform( hGeomInSrcSRS, hCTCutlineToSrc );
 
+        const double epsilon = std::numeric_limits<double>::epsilon();
         for(int nIter=0;nIter<10;nIter++)
         {
             OGR_G_DestroyGeometry(hTransformedGeom);
@@ -396,10 +398,14 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO, int nSrcCoun
             OGR_G_GetEnvelope(hTransformedGeom, &sCurEnvelope);
             if( nIter > 0 || hCTSrcToDst == NULL )
             {
-                if( sCurEnvelope.MinX == sLastEnvelope.MinX &&
-                    sCurEnvelope.MinY == sLastEnvelope.MinY &&
-                    sCurEnvelope.MaxX == sLastEnvelope.MaxX &&
-                    sCurEnvelope.MaxY == sLastEnvelope.MaxY )
+                if (std::abs(sCurEnvelope.MinX - sLastEnvelope.MinX) <=
+                        epsilon * std::abs(sCurEnvelope.MinX + sLastEnvelope.MinX) &&
+                    std::abs(sCurEnvelope.MinY - sLastEnvelope.MinY) <=
+                        epsilon * std::abs(sCurEnvelope.MinY + sLastEnvelope.MinY) &&
+                    std::abs(sCurEnvelope.MaxX - sLastEnvelope.MaxX) <=
+                        epsilon * std::abs(sCurEnvelope.MaxX + sLastEnvelope.MaxX) &&
+                    std::abs(sCurEnvelope.MaxY - sLastEnvelope.MaxY) <=
+                        epsilon * std::abs(sCurEnvelope.MaxY + sLastEnvelope.MaxY))
                 {
                     break;
                 }
