@@ -40,6 +40,7 @@
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include "gmlcoverage.h"
 
 CPL_CVSID("$Id$")
 
