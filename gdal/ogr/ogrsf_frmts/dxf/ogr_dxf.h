@@ -266,7 +266,8 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
                                               const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
-    void                FormatDimension( CPLString &osText, double dfValue );
+    static void         FormatDimension( CPLString &osText, const double dfValue,
+                                         int nPrecision );
     void                InsertArrowhead( OGRDXFFeature* const poFeature,
                                          const CPLString& osBlockName,
                                          const OGRPoint& oPoint1,
