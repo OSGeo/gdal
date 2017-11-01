@@ -33,6 +33,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "gmlcoverage.h"
 
 #include <algorithm>
 
@@ -40,11 +41,6 @@
 
 CPL_CVSID("$Id$")
 
-
-CPLErr WCSParseGMLCoverage( CPLXMLNode *psTree,
-                            int *pnXSize, int *pnYSize,
-                            double *padfGeoTransform,
-                            char **ppszProjection );
 
 /************************************************************************/
 /* ==================================================================== */
