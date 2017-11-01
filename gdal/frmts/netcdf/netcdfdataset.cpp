@@ -5777,6 +5777,22 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
             if( CSLCount(papszTokens) == 2 )
             {
                 const char* pszDimName = papszTokens[0];
+                bool bValidName = true;
+                if( STARTS_WITH(pszDimName, "_nc4_non_coord_") )
+                {
+                    // This is an internal netcdf prefix. Using it may
+                    // cause memory leaks.
+                    bValidName = false;
+                }
+                if( !bValidName )
+                {
+                    CPLDebug("netCDF",
+                             "nc_def_dim(%s) failed: invalid name found",
+                             pszDimName);
+                    CSLDestroy(papszTokens);
+                    continue;
+                }
+
                 bool bIsASCII = true;
                 for( int i = 0; pszDimName[i] != '\0'; i++ )
                 {
