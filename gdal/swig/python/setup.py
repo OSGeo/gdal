@@ -169,7 +169,7 @@ class gdal_ext(build_ext):
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
         self.gdal_config = self.GDAL_CONFIG
-        self.already_raised_no_config_error = False
+        self.extra_cflags = []
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
@@ -181,11 +181,8 @@ class gdal_ext(build_ext):
             # If an error is thrown, it is possibly because
             # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
-            # We'll try one time to use the gdal-config that might be
-            # on the path. If that fails, we're done, however.
-            if not self.already_raised_no_config_error:
-                self.already_raised_no_config_error = True
-                return fetch_config(option)
+            # We'll try to use the gdal-config that might be on the path.
+            return fetch_config(option)
 
     def finalize_options(self):
         if self.include_dirs is None:
@@ -214,6 +211,17 @@ class gdal_ext(build_ext):
         self.gdaldir = self.get_gdal_config('prefix')
         self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
         self.include_dirs.append(os.path.join(self.gdaldir,'include'))
+
+        cflags = self.get_gdal_config('cflags')
+        if cflags:
+            self.extra_cflags = cflags.split()
+
+    def build_extension(self, ext):
+        # We override this instead of setting extra_compile_args directly on
+        # the Extension() instantiations below because we want to use the same
+        # logic to resolve the location of gdal-config throughout.
+        ext.extra_compile_args.extend(self.extra_cflags)
+        return build_ext.build_extension(self, ext)
 
 
 extra_link_args = []
