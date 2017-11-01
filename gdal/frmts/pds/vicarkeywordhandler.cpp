@@ -134,7 +134,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    long int nPixelOffset=0;
+    vsi_l_offset nPixelOffset=0;
     const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
     if (EQUAL( pszFormat, "BYTE" )) {
         nPixelOffset = 1;
@@ -151,15 +151,15 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if( nPixelOffset == 0 )
         return FALSE;
 
-    const long int nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
-    const long int nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
+    const vsi_l_offset nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
+    const vsi_l_offset nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
     const int nBands = atoi( CSLFetchNameValueDef( papszKeywordList, "NB", "" ) );
     const int nBB = atoi( CSLFetchNameValueDef( papszKeywordList, "NBB", "" ) );
 
-    const long int nLineOffset = nPixelOffset * nCols + nBB ;
-    const long int nBandOffset = nLineOffset * nRows;
+    const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
+    const vsi_l_offset nBandOffset = nLineOffset * nRows;
 
-    const long int starteol = LabelSize + nBandOffset * nBands;
+    const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
