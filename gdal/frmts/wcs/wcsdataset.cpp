@@ -40,6 +40,12 @@
 
 CPL_CVSID("$Id$")
 
+
+CPLErr WCSParseGMLCoverage( CPLXMLNode *psTree,
+                            int *pnXSize, int *pnYSize,
+                            double *padfGeoTransform,
+                            char **ppszProjection );
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              WCSDataset                              */
@@ -982,8 +988,8 @@ int WCSDataset::ExtractGridInfo100()
 /* -------------------------------------------------------------------- */
 /*      Extract size, geotransform and coordinate system.               */
 /* -------------------------------------------------------------------- */
-    if( GDALParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
-                              adfGeoTransform, &pszProjection ) != CE_None )
+    if( WCSParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
+                             adfGeoTransform, &pszProjection ) != CE_None )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
