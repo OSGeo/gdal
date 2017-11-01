@@ -399,7 +399,7 @@ public:
     bool                HasColorMap( int nBand );
     void                GetColorMap( int nBand, GDALColorTable* poCT );
     void                SetColorMap( int nBand, GDALColorTable* poCT );
-    void                SetGeoReference( int nSRIDIn );
+    void                SetGeoReference( long long nSRIDIn );
     bool                GetDataBlock(
                             int nBand,
                             int nLevel,
@@ -445,6 +445,7 @@ public:
     void                GetRPC();
     void                GetGCP();
     void                SetGCP( int nGCPCountIn, const GDAL_GCP *pasGCPListIn );
+    void                QueryWKText();
 
 public:
 
@@ -455,13 +456,13 @@ public:
     CPLString           sOwner;
     CPLString           sColumn;
     CPLString           sDataTable;
-    int                 nRasterId;
+    long long           nRasterId;
     CPLString           sWhere;
     CPLString           sValueAttributeTab;
 
-    int                 nSRID;
-    int                 nExtentSRID;
-    bool                bGenSpatialIndex;
+    long long           nSRID;
+    long long           nExtentSRID;
+    bool                bGenSpatialExtent;
     bool                bCreateObjectTable;
     CPLXMLNode*         phMetadata;
     CPLString           sCellDepth;
