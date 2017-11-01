@@ -347,10 +347,10 @@ GDALDataset* GeoRasterDataset::Open( GDALOpenInfo* poOpenInfo )
     poGRD->SetMetadataItem( "RDT_TABLE_NAME",
         poGRW->sDataTable.c_str(), "ORACLE" );
 
-    poGRD->SetMetadataItem( "RASTER_ID", CPLSPrintf( "%d",
+    poGRD->SetMetadataItem( "RASTER_ID", CPLSPrintf( "%lld",
         poGRW->nRasterId ), "ORACLE" );
 
-    poGRD->SetMetadataItem( "SRID", CPLSPrintf( "%d",
+    poGRD->SetMetadataItem( "SRID", CPLSPrintf( "%lld",
         poGRW->nSRID ), "ORACLE" );
 
     poGRD->SetMetadataItem( "WKT", poGRW->sWKText.c_str(), "ORACLE" );
@@ -400,29 +400,36 @@ void GeoRasterDataset::JP2_Open( GDALAccess /* eAccess */ )
     {
         CPLString osDSName;
 
-        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%lld,noext",
                           poGeoRaster->poConnection->GetUser(),
                           poGeoRaster->poConnection->GetPassword(),
                           poGeoRaster->poConnection->GetServer(),
                           poGeoRaster->sDataTable.c_str(),
                           poGeoRaster->nRasterId );
 
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+
         poJP2Dataset = (GDALDataset*) GDALOpenEx( osDSName.c_str(), 
                                                   GDAL_OF_RASTER,
                                                   apszDrivers,
                                                   NULL, NULL );
+
+        CPLPopErrorHandler();
+
+        if( ! poJP2Dataset )
+        {
+            CPLString osLastErrorMsg(CPLGetLastErrorMsg());
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Unable to open JPEG2000 image within GeoRaster dataset.\n%s",
+                osLastErrorMsg.c_str() );
+        }
     }
-
-    // Report error
-
-    if( ! poJP2Dataset )
+    else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Unable to open JPEG2000 image within GeoRaster dataset.\n%s",
-                 ( ! poJP2Driver ) ?
-        "No JPEG2000 capable driver (JP2OPENJPEG,, JP2ECW, JP2MRSID, etc...) is available." :
-        "One or several JPEG2000 capable drivers are available but the lob could not be "
-        "opened successfully." );
+            "Unable to open JPEG2000 image within GeoRaster dataset.\n%s",
+            "No JPEG2000 capable driver (JP2OPENJPEG, "
+            "JP2ECW, JP2MRSID, etc...) is available." );
     }
 }
 
@@ -530,7 +537,7 @@ void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
 
         CPLString osDSName;
 
-        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%lld,noext",
                           poGeoRaster->poConnection->GetUser(),
                           poGeoRaster->poConnection->GetPassword(),
                           poGeoRaster->poConnection->GetServer(),
@@ -548,16 +555,22 @@ void GeoRasterDataset::JP2_CreateCopy( GDALDataset* poJP2DS,
         CPLPopErrorHandler();
 
         CSLDestroy( papszOpt );
-    }
 
-    if( ! poJP2Dataset )
+        if( ! poJP2Dataset )
+        {
+            CPLString osLastErrorMsg(CPLGetLastErrorMsg());
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                "Unable to copy JPEG2000 image within GeoRaster dataset.\n%s",
+                osLastErrorMsg.c_str() );
+            return;
+        }
+    }
+    else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "Unable to copy JPEG2000 image into GeoRaster dataset.\n%s",
-                 ( ! poJP2Driver ) ?
-        "No JPEG2000 capable driver (JP2OPENJPEG, JP2ECW, JP2MRSID, etc...) is available." :
-        "One or several JPEG2000 capable drivers are available but the file could not be "
-        "opened successfully." );
+            "Unable to copy JPEG2000 image within GeoRaster dataset.\n%s",
+            "No JPEG2000 capable driver (JP2OPENJPEG, "
+            "JP2ECW, JP2MRSID, etc...) is available." );
         return;
     }
 
@@ -707,7 +720,7 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
     OCILobLocator* poLocator;
     
     poStmt = poConnection->CreateStatement( CPLSPrintf( 
-                   "select rasterblock from %s where rasterid = %d "
+                   "select rasterblock from %s where rasterid = %lld "
                    "and rownum = 1 for update",
                    poGeoRaster->sDataTable.c_str(),
                    poGeoRaster->nRasterId ) );
@@ -789,7 +802,7 @@ char** GeoRasterDataset::GetFileList()
     {
         CPLString osDSName;
 
-        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%d,noext",
+        osDSName.Printf( "/vsiocilob/%s,%s,%s,%s,%lld,noext",
                 this->poGeoRaster->poConnection->GetUser(),
                 this->poGeoRaster->poConnection->GetPassword(),
                 this->poGeoRaster->poConnection->GetServer(),
@@ -1177,7 +1190,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
 
     char szStringId[OWTEXT];
 
-    strcpy( szStringId, CPLSPrintf( "georaster:%s,%s,%s,%s,%d",
+    strcpy( szStringId, CPLSPrintf( "georaster:%s,%s,%s,%s,%lld",
         poGRW->poConnection->GetUser(),
         poGRW->poConnection->GetPassword(),
         poGRW->poConnection->GetServer(),
@@ -1212,7 +1225,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
         poGRD->poGeoRaster->SetGeoReference( atoi( pszFetched ) );
     }
 
-    poGRD->poGeoRaster->bGenSpatialIndex =
+    poGRD->poGeoRaster->bGenSpatialExtent =
         CPLFetchBool( papszOptions, "SPATIALEXTENT", TRUE );
 
     pszFetched = CSLFetchNameValue( papszOptions, "EXTENTSRID" );
@@ -1336,12 +1349,12 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
                  adfTransform[5] == 1.0 ) )
         {
             poDstDS->SetGeoTransform( adfTransform );
-        }
-    }
 
-    if( ! poDstDS->bForcedSRID ) /* forced by create option SRID */
-    {
-        poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+            if( ! poDstDS->bForcedSRID ) /* forced by create option SRID */
+            {
+                poDstDS->SetProjection( poSrcDS->GetProjectionRef() );
+            }
+        }
     }
 
     // --------------------------------------------------------------------
@@ -1727,7 +1740,7 @@ GDALDataset *GeoRasterDataset::CreateCopy( const char* pszFilename,
 
     if( pfnProgress )
     {
-        CPLDebug("GEOR", "Output dataset: (georaster:%s/%s@%s,%s,%d) on %s%s,%s",
+        CPLDebug("GEOR", "Output dataset: (georaster:%s/%s@%s,%s,%lld) on %s%s,%s",
             poDstDS->poGeoRaster->poConnection->GetUser(),
             poDstDS->poGeoRaster->poConnection->GetPassword(),
             poDstDS->poGeoRaster->poConnection->GetServer(),
@@ -1879,18 +1892,24 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     // Try to interpreter the WKT text
     // --------------------------------------------------------------------
 
+    poGeoRaster->QueryWKText();
+
     char* pszWKText = CPLStrdup( poGeoRaster->sWKText );
 
     if( ! ( oSRS.importFromWkt( &pszWKText ) == OGRERR_NONE && oSRS.GetRoot() ) )
     {
-        return "";
+        return pszWKText;
     }
 
     // ----------------------------------------------------------------
-    // Decorate with ORACLE Authority codes
+    // Decorate with Authority name
     // ----------------------------------------------------------------
 
-    oSRS.SetAuthority(oSRS.GetRoot()->GetValue(), "ORACLE", poGeoRaster->nSRID);
+    if( strlen(poGeoRaster->sAuthority) > 0 )
+    {
+       oSRS.SetAuthority(oSRS.GetRoot()->GetValue(), 
+           poGeoRaster->sAuthority.c_str(), poGeoRaster->nSRID);
+    }
 
     int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
 
@@ -2035,7 +2054,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
     if( eOGRErr != OGRERR_NONE )
     {
-        poGeoRaster->SetGeoReference( DEFAULT_CRS );
+        poGeoRaster->SetGeoReference( UNKNOWN_CRS );
 
         return CE_Failure;
     }
