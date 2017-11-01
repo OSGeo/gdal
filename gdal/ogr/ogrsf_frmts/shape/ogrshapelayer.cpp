@@ -1480,7 +1480,7 @@ GIntBig OGRShapeLayer::GetFeatureCount( int bForce )
     }
 
     // Attribute filter only.
-    if( m_poAttrQuery != NULL )
+    if( m_poAttrQuery != NULL && m_poFilterGeom == NULL )
     {
         // See if we can ignore reading geometries.
         const bool bSaveGeometryIgnored =
