@@ -5264,10 +5264,11 @@ def ogr_shape_108():
     ds = ogr.Open('data/poly.shp')
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(479750.6875,4764702.0,479750.6875,4764702.0)
+    expected_fc = lyr.GetFeatureCount()
     lyr.SetAttributeFilter("1=1")
-    if lyr.GetFeatureCount() != 3:
+    if lyr.GetFeatureCount() != expected_fc:
         gdaltest.post_reason('fail')
-        print(lyr.GetFeatureCount())
+        print(lyr.GetFeatureCount(), expected_fc)
         return'fail'
 
     return 'success'
