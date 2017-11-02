@@ -398,7 +398,6 @@ namespace tut
         // Prepare tester collection
         std::vector<int> list;
         list.push_back(158);
-        list.push_back(0);
 
         // Test attributes
         ensure_equal_attributes(lyr, "eas_id", list);
