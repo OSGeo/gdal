@@ -835,6 +835,10 @@ def ogr_elasticsearch_4():
         {
             "_source": {
                 "type": "Feature",
+                "a_geoshape" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
                 "properties": {
                     "int_field": 3,
                 }
@@ -857,6 +861,10 @@ def ogr_elasticsearch_4():
         {
             "_source": {
                 "type": "Feature",
+                "a_geopoint" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
                 "properties": {
                     "int_field": 4,
                 }
@@ -896,6 +904,10 @@ def ogr_elasticsearch_4():
         {
             "_source": {
                 "type": "Feature",
+                "a_geoshape" : {
+                    "type": "POINT",
+                    "coordinates": [2,49]
+                },
                 "properties": {
                     "int_field": 5,
                 }
@@ -1561,11 +1573,11 @@ def ogr_elasticsearch_9():
             "_id": "my_id",
             "_source": {
                 "type": "Feature",
+                "a_geoshape": {
+                    "type": "point",
+                    "coordinates": [2.5,49.5]
+                },
                 "properties": {
-                    "a_geoshape": {
-                        "type": "point",
-                        "coordinates": [2.5,49.5]
-                    },
                     "str_field": "foo"
                 }
             }
@@ -2114,6 +2126,10 @@ def ogr_elasticsearch_10():
             "_id": "my_id",
             "_source": {
                 "type": "Feature",
+                "a_geoshape": {
+                    "type": "point",
+                    "coordinates": [2.0,49.0]
+                },
                 "properties": {
                     "keyword_field": "foo2"
                 }
