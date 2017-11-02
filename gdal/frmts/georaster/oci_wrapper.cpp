@@ -98,7 +98,7 @@ OWConnection::OWConnection( OCIExtProcContext* poWithContext )
     szSchema[0] = '\0';
 
     OWStatement* poStmt = CreateStatement(
-            "select sys_context('userenv','current_user'),\n"
+            "select sys_context('userenv','session_user'),\n"
             "       sys_context('userenv','current_schema') || '.'\n"
             "from dual\n" );
 
@@ -811,6 +811,29 @@ void OWStatement::Bind( long* pnData )
         hError );
 }
 
+void OWStatement::Bind( long long* pnData )
+{
+    OCIBind* hBind = NULL;
+
+    nNextBnd++;
+
+    CheckError( OCIBindByPos(
+        hStmt,
+        &hBind,
+        hError,
+        (ub4) nNextBnd,
+        (dvoid*) pnData,
+        (sb4) sizeof(long long),
+        (ub2) SQLT_INT,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
+        (ub4) OCI_DEFAULT ),
+        hError );
+}
+
 void OWStatement::Bind( double* pnData )
 {
     OCIBind* hBind = NULL;
@@ -1001,6 +1024,25 @@ void OWStatement::Define( long* pnData )
         (ub4) nNextCol,
         (dvoid*) pnData,
         (sb4) sizeof(long int),
+        (ub2) SQLT_INT,
+        (void*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) OCI_DEFAULT ), hError );
+}
+
+void OWStatement::Define( long long* pnData )
+{
+    OCIDefine* hDefine = NULL;
+
+    nNextCol++;
+
+    CheckError( OCIDefineByPos( hStmt,
+        &hDefine,
+        hError,
+        (ub4) nNextCol,
+        (dvoid*) pnData,
+        (sb4) sizeof(long long),
         (ub2) SQLT_INT,
         (void*) NULL,
         (ub2*) NULL,
@@ -1428,33 +1470,15 @@ unsigned long OWStatement::GetBlobLength( OCILobLocator* phLocator )
                                          
 unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
                                      void* pBuffer,
-                                     int nSize )
+                                     unsigned long nSize )
 {
-    ub4 nAmont      = (ub4) 0;
-
-    if( CheckError( OCILobRead(
-        poConnection->hSvcCtx,
-        hError,
-        phLocator,
-        (ub4*) &nAmont,
-        (ub4) 1,
-        (dvoid*) pBuffer,
-        (ub4) nSize,
-        (dvoid *) 0,
-        (OCICallbackLobRead) 0,
-        (ub2) 0,
-        (ub1) SQLCS_IMPLICIT), hError ) )
-    {
-        return 0;
-    }
-
-    return nAmont;
+    return ReadBlob( phLocator, pBuffer, (unsigned long) 1, nSize );
 }
 
 unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
                                      void* pBuffer,
-                                     int nOffset,
-                                     int nSize )
+                                     unsigned long nOffset,
+                                     unsigned long nSize )
 {
     ub8 nAmont = (ub8) nSize;
 
@@ -1463,12 +1487,12 @@ unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
         hError,
         phLocator,
         (ub8*) &nAmont,
-        (ub8*) NULL,
+        (ub8*) 0,
         (ub8) nOffset,
-        (dvoid*) pBuffer,
+        (void*) pBuffer,
         (ub8) nSize,
         (ub1) OCI_ONE_PIECE,
-        (dvoid *) 0,
+        (dvoid*) 0,
         (OCICallbackLobRead2) 0,
         (ub2) 0,
         (ub1) SQLCS_IMPLICIT), hError ) )
@@ -1476,49 +1500,31 @@ unsigned long OWStatement::ReadBlob( OCILobLocator* phLocator,
         return 0;
     }
 
-    return nAmont;
+    return (unsigned long) nAmont;
 }
 
 bool OWStatement::WriteBlob( OCILobLocator* phLocator,
                              void* pBuffer,
-                             int nSize )
+                             unsigned long nSize )
 {
-    ub4 nAmont  = (ub4) nSize;
+    ub8 nAmont = WriteBlob( phLocator, pBuffer, (unsigned long) 1, nSize );
 
-    if( CheckError( OCILobWrite(
-        poConnection->hSvcCtx,
-        hError,
-        phLocator,
-        (ub4*) &nAmont,
-        (ub4) 1,
-        (dvoid*) pBuffer,
-        (ub4) nSize,
-        (ub1) OCI_ONE_PIECE,
-        (dvoid*) NULL,
-        NULL,
-        (ub2) 0,
-        (ub1) SQLCS_IMPLICIT ),
-        hError ) )
-    {
-        return false;
-    }
-
-    return nAmont == (ub4) nSize;
+    return ( nAmont == (ub8) nSize );
 }
 
-int OWStatement::WriteBlob( OCILobLocator* phLocator,
+unsigned long OWStatement::WriteBlob( OCILobLocator* phLocator,
                              void* pBuffer,
-                             int nOffset,
-                             int nSize )
+                             unsigned long nOffset,
+                             unsigned long nSize )
 {
-    ub8 nAmont  = (ub8) nSize;
+    ub8 nAmont = (ub8) nSize;
 
     if( CheckError( OCILobWrite2(
         poConnection->hSvcCtx,
         hError,
         phLocator,
         (ub8*) &nAmont,
-        (ub8*) NULL,
+        (ub8*) 0,
         (ub8) nOffset,
         (dvoid*) pBuffer,
         (ub8) nSize,
@@ -1528,11 +1534,12 @@ int OWStatement::WriteBlob( OCILobLocator* phLocator,
         (ub2) 0,
         (ub1) SQLCS_IMPLICIT ), hError ) )
     {
-        return 0;
+        return (unsigned long) 0;
     }
 
     return nAmont;
 }
+
 char* OWStatement::ReadCLob( OCILobLocator* phLocator )
 {
     ub4 nSize  = 0;
@@ -1594,6 +1601,50 @@ void OWStatement::BindName( const char* pszName, int* pnData )
         (sb4) -1,
         (dvoid*) pnData,
         (sb4) sizeof(int),
+        (ub2) SQLT_INT,
+        (dvoid*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
+        (ub4) OCI_DEFAULT ),
+        hError );
+}
+
+void OWStatement::BindName( const char* pszName, long* pnData )
+{
+    OCIBind* hBind = NULL;
+
+    CheckError( OCIBindByName(
+        (OCIStmt*) hStmt,
+        (OCIBind**) &hBind,
+        (OCIError*) hError,
+        (text*) pszName,
+        (sb4) -1,
+        (dvoid*) pnData,
+        (sb4) sizeof(long),
+        (ub2) SQLT_INT,
+        (dvoid*) NULL,
+        (ub2*) NULL,
+        (ub2*) NULL,
+        (ub4) 0,
+        (ub4*) NULL,
+        (ub4) OCI_DEFAULT ),
+        hError );
+}
+
+void OWStatement::BindName( const char* pszName, long long* pnData )
+{
+    OCIBind* hBind = NULL;
+
+    CheckError( OCIBindByName(
+        (OCIStmt*) hStmt,
+        (OCIBind**) &hBind,
+        (OCIError*) hError,
+        (text*) pszName,
+        (sb4) -1,
+        (dvoid*) pnData,
+        (sb4) sizeof(long long),
         (ub2) SQLT_INT,
         (dvoid*) NULL,
         (ub2*) NULL,
@@ -1730,6 +1781,46 @@ bool OWIsNumeric( const char *pszText )
     }
 
     return true;
+}
+
+/*****************************************************************************/
+/*                     Remove quotes                                         */
+/*****************************************************************************/
+
+char *OWRemoveQuotes( const char* pszText )
+{
+    const size_t nSize = strlen(pszText);
+
+    if( nSize > 2 && pszText[0] != '"' && pszText[nSize - 1] != '"' )
+    {
+        return CPLStrdup( pszText );
+    }
+
+    char *pszResult
+        = reinterpret_cast<char*>( CPLMalloc(nSize - 1) );
+
+    CPLStrlcpy( pszResult, &pszText[1], nSize - 1);
+
+    return pszResult;
+}
+
+/*****************************************************************************/
+/*                     To upper if there is no quotes                        */
+/*****************************************************************************/
+
+void OWUpperIfNoQuotes( char* pszText )
+{
+    const size_t nSize = strlen( pszText );
+
+    if( nSize > 2 && pszText[0] == '"' && pszText[nSize - 1] == '"' )
+    {
+        return;
+    }
+
+    for( size_t i = 0; i < nSize; i++ )
+    {
+        pszText[i] = toupper( pszText[i] );
+    }
 }
 
 /*****************************************************************************/

@@ -321,7 +321,7 @@ GDALColorInterp GeoRasterRasterBand::GetColorInterpretation()
             }
             else
             {
-                return GCI_GrayIndex;
+                return GCI_Undefined;
             }
         }
     }
@@ -604,7 +604,7 @@ CPLErr GeoRasterRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT
     if( ! pszVATName )
     {
         pszVATName = CPLStrdup( CPLSPrintf(
-            "RAT_%s_%d_%d",
+            "RAT_%s_%lld_%d",
             poGeoRaster->sDataTable.c_str(),
             poGeoRaster->nRasterId,
             nBand ) );
