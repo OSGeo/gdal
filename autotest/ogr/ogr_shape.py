@@ -228,7 +228,7 @@ def ogr_shape_7():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -258,7 +258,7 @@ def ogr_shape_8():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -748,7 +748,7 @@ def ogr_shape_21():
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
 
-        if feat.GetGeometryRef() is not None:
+        if feat is not None and feat.GetGeometryRef() is not None:
             return 'fail'
 
     return 'success'

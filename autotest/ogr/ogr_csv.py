@@ -2169,7 +2169,7 @@ def ogr_csv_43():
     lyr.SetSpatialFilterRect(0, 0, 0, 100, 100)
     lyr.SetSpatialFilter(0, lyr.GetSpatialFilter())
     lyr.SetSpatialFilter(lyr.GetSpatialFilter())
-    if lyr.GetFeatureCount() != 2:
+    if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetExtent() != (2.0, 2.0, 49.0, 49.0):
