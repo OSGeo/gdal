@@ -1213,16 +1213,13 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             poGeom = OGRCurve::CastToLinearRing((OGRCurve*)poGeom);
         }
 
-        OGRTriangle *poTriangle;
-        if( EQUAL(poGeom->getGeometryName(), "LINEARRING") )
-        {
-            poTriangle = new OGRTriangle();
-        }
-        else
+        if( poGeom == NULL || !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
         {
             delete poGeom;
             return NULL;
         }
+
+        OGRTriangle *poTriangle = new OGRTriangle();
 
         if( poTriangle->addRingDirectly( (OGRCurve*)poGeom ) != OGRERR_NONE )
         {
