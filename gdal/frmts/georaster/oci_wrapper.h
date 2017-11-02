@@ -64,6 +64,8 @@ int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
 const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
+char*               OWRemoveQuotes( const char* pszText );
+void                OWUpperIfNoQuotes( char* pszText );
 
 /***************************************************************************/
 /*                            Arbitrary limits                             */
@@ -381,6 +383,7 @@ public:
 
     void                Bind( int* pnData );
     void                Bind( long* pnData );
+    void                Bind( long long* pnData );
     void                Bind( double* pnData );
     void                Bind( char* pData, long nData );
     void                Bind( sdo_geometry** pphData );
@@ -389,6 +392,7 @@ public:
     void                Bind( char* pszData, int nSize = OWNAME );
     void                Define( int* pnData );
     void                Define( long* pnData );
+    void                Define( long long* pnData );
     void                Define( double* pnData );
     void                Define( char* pszData, int nSize = OWNAME );
     void                Define( OCILobLocator** pphLocator );
@@ -398,6 +402,8 @@ public:
     void                Define( sdo_pc** pphData );
     void                Define( OCILobLocator** pphLocator, long nIterations );
     void                BindName( const char* pszName, int* pnData );
+    void                BindName( const char* pszName, long* pnData );
+    void                BindName( const char* pszName, long long* pnData );
     void                BindName( const char* pszName, double* pnData );
     void                BindName( const char* pszName, char* pszData,
                             int nSize = OWNAME );
@@ -407,15 +413,17 @@ public:
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
     unsigned long       ReadBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nSize );
+                            void* pBuffer, unsigned long nSize );
     unsigned long       ReadBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nOffset, int nSize );
+                            void* pBuffer, unsigned long nOffset, 
+                                           unsigned long nSize );
     char*               ReadCLob( OCILobLocator* phLocator );
     void                WriteCLob( OCILobLocator** pphLocator, char* pszData );
     bool                WriteBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nSize );
-    int                 WriteBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nOffset, int nSize );
+                            void* pBuffer, unsigned long  nSize );
+    unsigned long       WriteBlob( OCILobLocator* phLocator,
+                            void* pBuffer, unsigned long nOffset, 
+                                           unsigned long nSize );
     int                 GetElement( OCIArray** ppoData,
                             int nIndex, int* pnResult );
     double              GetElement( OCIArray** ppoData,
