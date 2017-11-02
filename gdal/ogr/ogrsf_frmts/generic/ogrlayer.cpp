@@ -1356,8 +1356,8 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
     if( m_poFilterGeom == NULL )
         return TRUE;
 
-    if( poGeometry == NULL )
-        return TRUE;
+    if( poGeometry == NULL || poGeometry->IsEmpty() )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the target geometry envelope, and if there is no        */
