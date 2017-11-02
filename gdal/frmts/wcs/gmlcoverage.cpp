@@ -42,7 +42,7 @@
 #include "ogr_spatialref.h"
 #include "gmlcoverage.h"
 
-CPL_CVSID("$Id$")
+CPL_CVSID("$Id: gmlcoverage.cpp 40604 2017-11-01 12:40:39Z ajolma $")
 
 /************************************************************************/
 /*                        ParseGMLCoverageDesc()                        */
