@@ -209,7 +209,8 @@ ogrinfo -ro -al -so /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/p
 
 Starting with GDAL 2.3, options can be passed in the filename with the
 following syntax:
-/vsicurl/option1=val1[,optionN=valN]*,url=http://...
+/vsicurl/[option_i=val_i&]*url=http://...
+where each option name and value (including the value of "url") is URL-encoded.
 Currently supported options are :
 <ul>
 <li>use_head=yes/no: whether the HTTP HEAD request can be emitted.

@@ -502,80 +502,94 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
         !STARTS_WITH(pszFilename, "ftp://") &&
         !STARTS_WITH(pszFilename, "file://") )
     {
-        const char* pszURLArg = strstr(pszFilename, ",url=");
-        if( pszURLArg )
+        char** papszTokens = CSLTokenizeString2( pszFilename, "&", 0 );
+        for( int i = 0; papszTokens[i] != NULL; i++ )
         {
-            CPLString osOptions( pszFilename );
-            osOptions.resize( pszURLArg - pszFilename );
-            char** papszTokens = CSLTokenizeString2( osOptions, ",", 0 );
-            for( int i = 0; papszTokens && papszTokens[i]; i++ )
+            char* pszUnescaped = CPLUnescapeString( papszTokens[i], NULL,
+                                                    CPLES_URL );
+            CPLFree(papszTokens[i]);
+            papszTokens[i] = pszUnescaped;
+        }
+
+        CPLString osURL;
+        for( int i = 0; papszTokens[i]; i++ )
+        {
+            char* pszKey = NULL;
+            const char* pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
+            if( pszKey && pszValue )
             {
-                char* pszKey = NULL;
-                const char* pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
-                if( pszKey && pszValue )
+                if( EQUAL(pszKey, "max_retry") )
                 {
-                    if( EQUAL(pszKey, "max_retry") )
-                    {
-                        if( pnMaxRetry )
-                            *pnMaxRetry = atoi(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "retry_delay") )
-                    {
-                        if( pdfRetryDelay )
-                            *pdfRetryDelay = CPLAtof(pszValue);
-                    }
-                        else if( EQUAL(pszKey, "use_head") )
-                    {
-                        if( pbUseHead )
-                            *pbUseHead = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "list_dir") )
-                    {
-                        if( pbListDir )
-                            *pbListDir = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "empty_dir") )
-                    {
-                        /* Undocumented. Used by PLScenes driver */
-                        /* This more or less emulates the behaviour of
-                         * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
-                        if( pbEmptyDir )
-                            *pbEmptyDir = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "useragent") ||
-                             EQUAL(pszKey, "referer") ||
-                             EQUAL(pszKey, "cookie") ||
-                             EQUAL(pszKey, "header_file") ||
-                             EQUAL(pszKey, "unsafessl") ||
+                    if( pnMaxRetry )
+                        *pnMaxRetry = atoi(pszValue);
+                }
+                else if( EQUAL(pszKey, "retry_delay") )
+                {
+                    if( pdfRetryDelay )
+                        *pdfRetryDelay = CPLAtof(pszValue);
+                }
+                    else if( EQUAL(pszKey, "use_head") )
+                {
+                    if( pbUseHead )
+                        *pbUseHead = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "list_dir") )
+                {
+                    if( pbListDir )
+                        *pbListDir = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "empty_dir") )
+                {
+                    /* Undocumented. Used by PLScenes driver */
+                    /* This more or less emulates the behaviour of
+                        * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
+                    if( pbEmptyDir )
+                        *pbEmptyDir = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "useragent") ||
+                            EQUAL(pszKey, "referer") ||
+                            EQUAL(pszKey, "cookie") ||
+                            EQUAL(pszKey, "header_file") ||
+                            EQUAL(pszKey, "unsafessl") ||
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-                             EQUAL(pszKey, "timeout") ||
-                             EQUAL(pszKey, "connecttimeout") ||
+                            EQUAL(pszKey, "timeout") ||
+                            EQUAL(pszKey, "connecttimeout") ||
 #endif
-                             EQUAL(pszKey, "low_speed_time") ||
-                             EQUAL(pszKey, "low_speed_limit") ||
-                             EQUAL(pszKey, "proxy") ||
-                             EQUAL(pszKey, "proxyauth") ||
-                             EQUAL(pszKey, "proxyuserpwd") )
+                            EQUAL(pszKey, "low_speed_time") ||
+                            EQUAL(pszKey, "low_speed_limit") ||
+                            EQUAL(pszKey, "proxy") ||
+                            EQUAL(pszKey, "proxyauth") ||
+                            EQUAL(pszKey, "proxyuserpwd") )
+                {
+                    // Above names are the ones supported by
+                    // CPLHTTPSetOptions()
+                    if( ppapszHTTPOptions )
                     {
-                        // Above names are the ones supported by
-                        // CPLHTTPSetOptions()
-                        if( ppapszHTTPOptions )
-                        {
-                            *ppapszHTTPOptions = CSLSetNameValue(
-                                *ppapszHTTPOptions, pszKey, pszValue);
-                        }
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                                    "Unsupported option: %s", pszKey);
+                        *ppapszHTTPOptions = CSLSetNameValue(
+                            *ppapszHTTPOptions, pszKey, pszValue);
                     }
                 }
-                CPLFree(pszKey);
+                else if( EQUAL(pszKey, "url") )
+                {
+                    osURL = pszValue;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                                "Unsupported option: %s", pszKey);
+                }
             }
-            CSLDestroy(papszTokens);
-            return pszURLArg + strlen(",url=");
+            CPLFree(pszKey);
         }
+
+        CSLDestroy(papszTokens);
+        if( osURL.empty() )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Missing url parameter");
+            return pszFilename;
+        }
+
+        return osURL;
     }
 
     return pszFilename;
