@@ -4256,6 +4256,34 @@ def ogr_geom_polygon_intersects_point():
     return 'success'
 
 ###############################################################################
+# Test fix for #7128
+
+def ogr_geom_geometrycollection():
+
+    wkt_list = ['GEOMETRYCOLLECTION (POINT EMPTY)',
+                'GEOMETRYCOLLECTION (LINESTRING EMPTY)',
+                'GEOMETRYCOLLECTION (POLYGON EMPTY)',
+                'GEOMETRYCOLLECTION (MULTIPOINT EMPTY)',
+                'GEOMETRYCOLLECTION (MULTILINESTRING EMPTY)',
+                'GEOMETRYCOLLECTION (MULTIPOLYGON EMPTY)',
+                'GEOMETRYCOLLECTION (GEOMETRYCOLLECTION EMPTY)',
+                'GEOMETRYCOLLECTION (CIRCULARSTRING EMPTY)',
+                'GEOMETRYCOLLECTION (COMPOUNDCURVE EMPTY)',
+                'GEOMETRYCOLLECTION (CURVEPOLYGON EMPTY)',
+                'GEOMETRYCOLLECTION (MULTICURVE EMPTY)',
+                'GEOMETRYCOLLECTION (MULTISURFACE EMPTY)',
+                'GEOMETRYCOLLECTION (TRIANGLE EMPTY)',
+                'GEOMETRYCOLLECTION (POLYHEDRALSURFACE EMPTY)',
+                'GEOMETRYCOLLECTION (TIN EMPTY)']
+    for wkt in wkt_list:
+        g = ogr.CreateGeometryFromWkt(wkt)
+        if g.ExportToWkt() != wkt:
+            print(g.ExportToWkt(), wkt)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -4323,6 +4351,7 @@ gdaltest_list = [
     ogr_geom_multipoint_envelope_bug,
     ogr_geom_polygon_empty_ring,
     ogr_geom_polygon_intersects_point,
+    ogr_geom_geometrycollection,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]

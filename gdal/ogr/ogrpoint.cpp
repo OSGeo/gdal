@@ -493,9 +493,6 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     if( bHasM ) flags |= OGR_G_MEASURED;
     if( bIsEmpty )
     {
-        // Should be at the end.
-        if( !((*ppszInput[0] == '\000') || (*ppszInput[0] == ',')) )
-            return OGRERR_CORRUPT_DATA;
         return OGRERR_NONE;
     }
     else
