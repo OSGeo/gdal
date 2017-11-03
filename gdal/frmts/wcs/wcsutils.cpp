@@ -1,5 +1,5 @@
-#include "wcsutils.h"
 #include "ogr_spatialref.h"
+#include "wcsutils.h"
 
 CPLString URLEncode(CPLString str)
 {
@@ -9,7 +9,7 @@ CPLString URLEncode(CPLString str)
     return str2;
 }
 
-std::vector<CPLString> Split(const char *value, const char *delim)
+std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the_first_two)
 {
     std::vector<CPLString> list;
     char **tokens = CSLTokenizeString2(
@@ -19,41 +19,23 @@ std::vector<CPLString> Split(const char *value, const char *delim)
         list.push_back(tokens[i]);
     }
     CSLDestroy(tokens);
-    return list;
-}
-
-bool ParseList(CPLXMLNode *node, CPLString path, std::vector<CPLString> &list, bool swap)
-{
-    if (path != "") {
-        node = CPLGetXMLNode(node, path);
-        if (node == NULL) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Unable to find '%s'.", path.c_str());
-            return false;
-        }
-    }
-    list = Split(CPLGetXMLValue(node, "", ""), " ");
-    if (list.size() < 2) {
-        CPLError(CE_Failure, CPLE_AppDefined, "'%s' is less than 2D.", path.c_str());
-        return false;
-    }
-    if (swap) {
+    if (swap_the_first_two && list.size() >= 2) {
         CPLString tmp = list[0];
         list[0] = list[1];
         list[1] = tmp;
     }
-    return true;
+    return list;
 }
 
-bool ParseDoubleList(CPLXMLNode *node, const char *path, std::vector<double> &coords, bool swap)
+std::vector<double> Flist(std::vector<CPLString> list,
+                          unsigned int from,
+                          unsigned int count)
 {
-    std::vector<CPLString> list;
-    if (ParseList(node, path, list, swap)) {
-        for (unsigned int i = 0; i < list.size(); ++i) {
-            coords.push_back(CPLAtof(list[i]));
-        }
-        return true;
+    std::vector<double> flist;
+    for (unsigned int i = from; i < list.size() && i < from + count; ++i) {
+        flist.push_back(CPLAtof(list[i]));
     }
-    return false;
+    return flist;
 }
 
 /* -------------------------------------------------------------------- */
@@ -307,7 +289,7 @@ CPLString ParseCRS(CPLXMLNode *node)
 // if appropriate, try to create WKT description from CRS name
 // return false if failure
 // appropriate means, that the name is a real CRS
-bool CRS2Projection(CPLString crs, char **projection)
+bool CRS2Projection(CPLString crs, OGRSpatialReference &oSRS, char **projection)
 {
     if (*projection != NULL) {
         CPLFree(projection);
@@ -334,7 +316,6 @@ bool CRS2Projection(CPLString crs, char **projection)
             crs = "EPSGA:" + crs.substr(pos2 + 1, pos1 - pos2);
         }
     }
-    OGRSpatialReference oSRS;
     if (oSRS.SetFromUserInput(crs) == OGRERR_NONE) {
         oSRS.exportToWkt(projection);
         return true;
@@ -342,57 +323,75 @@ bool CRS2Projection(CPLString crs, char **projection)
     return false;
 }
 
-bool ParseGridEnvelope(CPLXMLNode *node, const char *path, std::vector<int> &sizes)
+bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection)
 {
-    node = CPLGetXMLNode(node, path);
-    if (node == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unable to find '%s'.", path);
+    OGRSpatialReference oSRS;
+    char *tmp = NULL;
+    if (projection != NULL) {
+        tmp = *projection;
+    }
+    if (!CRS2Projection(crs, oSRS, &tmp)) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to interpret coverage CRS '%s'.", crs.c_str() );
         return false;
     }
-    std::vector<CPLString> lows = Split(CPLGetXMLValue(node, "low", ""), " ");
-    std::vector<CPLString> highs = Split(CPLGetXMLValue(node, "high", ""), " ");
-    int n = MIN(lows.size(), highs.size());
-    if (n < 2) {
-        CPLError(CE_Failure, CPLE_AppDefined, "'%s' is less than 2D.", path);
-        return false;
+    if (tmp) {
+        swap = oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting();
+    } else {
+        swap = false;
     }
-    for (int i = 0; i < n; ++i) {
-        sizes.push_back(atoi(lows[i]));
-    }
-    for (int i = 0; i < n; ++i) {
-        sizes.push_back(atoi(highs[i]));
+    if (projection == NULL) {
+        CPLFree(tmp);
     }
     return true;
 }
 
-bool ParseBoundingBox(CPLXMLNode *bbox, CPLString &crs, std::vector<double> &bounds)
+std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
+                                                bool swap_the_first_two)
 {
-    bool retval = true;
-    
-    crs = ParseCRS(bbox);
-    
-    CPLString lc = CPLGetXMLValue(bbox, "LowerCorner", "");
-    if (lc == "") {
-        lc = CPLGetXMLValue(bbox, "pos", ""); // todo: is this center of cell?
+    std::vector<std::vector<int>> envelope;
+    std::vector<CPLString> list = Split(CPLGetXMLValue(node, "low", ""), " ", swap_the_first_two);
+    std::vector<int> lows;
+    for (unsigned int i = 0; i < list.size(); ++i) {
+        lows.push_back(atoi(list[i]));
     }
-    CPLString uc = CPLGetXMLValue( bbox, "UpperCorner", "");
-    if (uc == "") {
-        uc = CPLGetXMLValue(bbox, "pos", "");
+    envelope.push_back(lows);
+    list = Split(CPLGetXMLValue(node, "high", ""), " ", swap_the_first_two);
+    std::vector<int> highs;
+    for (unsigned int i = 0; i < list.size(); ++i) {
+        highs.push_back(atoi(list[i]));
     }
-
-    std::vector<CPLString> lows = Split(lc, " ");
-    std::vector<CPLString> highs = Split(uc, " ");
-
-    if (lows.size() >= 2 && highs.size() >= 2) {
-        bounds.push_back(CPLAtof(lows[0]));
-        bounds.push_back(CPLAtof(lows[1]));
-        bounds.push_back(CPLAtof(highs[0]));
-        bounds.push_back(CPLAtof(highs[1]));
-    } else {
-        CPLError(CE_Failure, CPLE_AppDefined, "Less than 2D bounding box.");
-        retval = false;
-    }
-
-    return retval;
+    envelope.push_back(highs);
+    return envelope;
 }
 
+std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node)
+{
+    std::vector<CPLString> bbox;
+    CPLString lc = CPLGetXMLValue(node, "lowerCorner", ""), uc;
+    if (lc == "") {
+        lc = CPLGetXMLValue(node, "LowerCorner", "");
+    }
+    if (lc == "") {
+        for (CPLXMLNode *n = node->psChild; n != NULL; n = n->psNext) {
+            if (n->eType != CXT_Element || !EQUAL(n->pszValue, "pos")) {
+                continue;
+            }
+            if (lc == "") {
+                lc = CPLGetXMLValue(node, NULL, "");
+            } else {
+                uc = CPLGetXMLValue(node, NULL, "");
+            }
+        }
+    } else {
+        uc = CPLGetXMLValue(node, "upperCorner", "");
+        if (uc == "") {
+            uc = CPLGetXMLValue(node, "UpperCorner", "");
+        }
+    }
+    if (lc != "" && uc != "") {
+        bbox.push_back(lc);
+        bbox.push_back(uc);
+    }
+    return bbox;
+}

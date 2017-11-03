@@ -24,9 +24,15 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     const char *Version();
 
     CPLString   osCRS; // name of the CRS
-
     char        *pszProjection; // (usually the) WKT of the CRS, from OGRSpatialReference.exportToWkt
+    bool        native_crs; // the CRS is the native CRS of the server
+    bool        axis_order_swap; // the CRS requires x and y coordinates to be swapped for requests
     double      adfGeoTransform[6];
+    bool        SetCRS(CPLString crs, bool native);
+    void        SetGeometry(std::vector<double> envelope, // xmin, ymin, xmax, ymax
+                            std::vector<CPLString> axis_order,
+                            std::vector<int> size, // 
+                            std::vector<std::vector<double>> offsets);
 
     CPLString   osBandIdentifier;
 

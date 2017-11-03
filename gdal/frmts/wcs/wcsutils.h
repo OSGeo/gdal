@@ -5,17 +5,12 @@
 CPLString URLEncode(CPLString str);
 
 std::vector<CPLString> Split(const char *value,
-                             const char *delim);
+                             const char *delim,
+                             bool swap_the_first_two = false);
 
-bool ParseList(CPLXMLNode *node,
-               CPLString path,
-               std::vector<CPLString> &list,
-               bool swap = false);
-
-bool ParseDoubleList(CPLXMLNode *node,
-                     const char *path,
-                     std::vector<double> &coords,
-                     bool swap = false);
+std::vector<double> Flist(std::vector<CPLString> list,
+                          unsigned int from = 0,
+                          unsigned int count = 2);
 
 bool FileIsReadable(CPLString filename);
 
@@ -44,13 +39,13 @@ CPLString GetKeywords(CPLXMLNode *root,
 
 CPLString ParseCRS(CPLXMLNode *node);
 
-bool CRS2Projection(CPLString crs, char
-                    **projection);
-    
-bool ParseGridEnvelope(CPLXMLNode *node,
-                       const char *path,
-                       std::vector<int> &sizes);
+bool CRS2Projection(CPLString crs,
+                    OGRSpatialReference &oSRS,
+                    char **projection);
 
-bool ParseBoundingBox(CPLXMLNode *bbox,
-                      CPLString &crs,
-                      std::vector<double> &bounds);
+bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection = NULL);
+    
+std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
+                                                bool swap_the_first_two = false);
+
+std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node);

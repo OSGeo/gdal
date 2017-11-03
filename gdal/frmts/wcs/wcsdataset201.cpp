@@ -89,9 +89,8 @@ CPLString WCSDataset201::GetCoverageRequest(CPL_UNUSED int nXOff, CPL_UNUSED int
     // http://mapserver.org/ogc/wcs_server.html
 
     CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
-    std::vector<CPLString> labels;
-    bool swap = false; // todo
-    ParseList(coverage, "boundedBy.Envelope.axisLabels", labels, swap);
+    CPLString path = "boundedBy.Envelope.axisLabels";
+    std::vector<CPLString> labels = Split(CPLGetXMLValue(coverage, path, ""), " ");
 
     // construct subsets, assuming X and Y are the first two and that they are trimmed
     CPLString subsets, tmp;
@@ -152,11 +151,7 @@ static bool GridOffsets(CPLXMLNode *grid,
                 CPLError(CE_Failure, CPLE_AppDefined, "SRS mismatch between origin and offset vector.");
                 return false;
             }
-            std::vector<double> tmp_offset;
-            if (!ParseDoubleList(node, "", tmp_offset, swap)) {
-                return false;
-            }
-            offset.push_back(tmp_offset);
+            offset.push_back(Flist(Split(CPLGetXMLValue(node, NULL, ""), " ", swap)));
             i++;
         }
 
@@ -170,11 +165,14 @@ static bool GridOffsets(CPLXMLNode *grid,
             if (!axis) {
                 continue;
             }
+            /*
             CPLString coeffs = CPLGetXMLValue(axis, "coefficients", "");
             if (coeffs != "") {
-                CPLError(CE_Failure, CPLE_AppDefined, "This is not a uniform grid.");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "This is not a uniform grid, coefficients: '%s'.", coeffs.c_str());
                 return false;
             }
+            */
             CPLString spanned = CPLGetXMLValue(axis, "gridAxesSpanned", "");
             unsigned int i = 0;
             while (spanned != labels[i] && i < labels.size()) {
@@ -190,18 +188,14 @@ static bool GridOffsets(CPLXMLNode *grid,
                 CPLError(CE_Failure, CPLE_AppDefined, "The grid is not linear and increasing from origo.");
                 return false;
             }
-            CPLXMLNode *offset_node = CPLGetXMLNode(node, "offsetVector");
+            CPLXMLNode *offset_node = CPLGetXMLNode(axis, "offsetVector");
             if (offset_node) {
                 CPLString crs2 = ParseCRS(node);
                 if (crs2 != "" && crs2 != crs) {
                     CPLError(CE_Failure, CPLE_AppDefined, "SRS mismatch between origin and offset vector.");
                     return false;
                 }
-                std::vector<double> tmp_offset;
-                if (!ParseDoubleList(offset_node, "", tmp_offset, swap)) {
-                    return false;
-                }
-                offset.push_back(tmp_offset);
+                offset.push_back(Flist(Split(CPLGetXMLValue(offset_node, NULL, ""), " ", swap)));
             } else {
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing offset vector in grid axis.");
                 return false;
@@ -216,63 +210,6 @@ static bool GridOffsets(CPLXMLNode *grid,
     return true;
 }
 
-bool WCSDataset201::Offset2GeoTransform(std::vector<double> origin,
-                                        std::vector<std::vector<double>> offset)
-{
-    for (unsigned int i = 0; i < offset.size(); i++) {
-        adfGeoTransform[i*3 + 0] = origin[i];
-        adfGeoTransform[i*3 + 1] = offset[i][0];
-        adfGeoTransform[i*3 + 2] = offset[i][1];
-    }
-
-    // For now(?) do not accept rotated grids,
-    // since we don't know how to request their subsets.
-    // That makes also coverage envelope the grid envelope.
-    if (adfGeoTransform[2] != 0 || adfGeoTransform[4] != 0) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Can't handle rotated grids.");
-        return false;
-    }
-
-    // right now adfGeoTransform[0,3] is at grid origo (center of origo cell)
-    // and offset[0] is unit vector along grid x (i) axis
-    // and offset[1] is unit vector along grid y (j) axis
-    // if offset[0][0] > 0 and offset[1][1] > 0 then origo is left bottom
-    // set adfGeoTransform[0,3] to left top corner of left top cell
-    // set adfGeoTransform[1,2] to unit vector i right
-    // set adfGeoTransform[4,5] to unit vector j down
-    double dx = fabs((offset[0][0] - offset[1][0])/2.0);
-    double dy = fabs((offset[0][1] - offset[1][1])/2.0);
-    if (offset[0][0] >= 0) {
-        if (offset[1][1] >= 0) { // left bottom
-            adfGeoTransform[0] -= dx;
-            adfGeoTransform[3] += ((double)nRasterYSize - 0.5) * dy;
-            // i vector is ok, invert j
-            adfGeoTransform[3 + 1] = -offset[1][0];
-            adfGeoTransform[3 + 2] = -offset[1][1];
-        } else { // left top
-            adfGeoTransform[0] -= dx;
-            adfGeoTransform[3] += dy;
-            // i and j are ok
-        }
-    } else {
-        if (offset[1][1] >= 0) { // right bottom
-            adfGeoTransform[0] -= ((double)nRasterXSize - 0.5) * dx;
-            adfGeoTransform[3] += ((double)nRasterYSize - 0.5) * dy;
-            // invert i and j
-            adfGeoTransform[1] = -offset[0][0];
-            adfGeoTransform[2] = -offset[0][1];
-            adfGeoTransform[3 + 1] = -offset[1][0];
-            adfGeoTransform[3 + 2] = -offset[1][1];
-        } else { // right top
-            adfGeoTransform[0] -= ((double)nRasterXSize - 0.5) * dx;
-            adfGeoTransform[3] += dy;
-            // invert i, j is ok
-            adfGeoTransform[1] = -offset[0][0];
-            adfGeoTransform[2] = -offset[0][1];
-        }
-    }
-    return true;
-}
 
 /************************************************************************/
 /*                          ExtractGridInfo()                           */
@@ -283,12 +220,13 @@ bool WCSDataset201::Offset2GeoTransform(std::vector<double> origin,
 
 bool WCSDataset201::ExtractGridInfo()
 {
+    // todo: skip this if required information is already in the service XML
+
     CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
 
     if( coverage == NULL )
         return false;
 
-    CPLString path = "domainSet";
     CPLString subtype = CoverageSubtype(coverage);
     CPLXMLNode *grid = GetGridNode(coverage, subtype);
     if (!grid) {
@@ -296,76 +234,84 @@ bool WCSDataset201::ExtractGridInfo()
     }
 
     // GridFunction (is optional)
+    // We support only linear grid functions.
+    std::vector<CPLString> axisOrder;
     CPLXMLNode *function = CPLGetXMLNode(psService, "coverageFunction.GridFunction");
     if (function) {
-        std::vector<CPLString> axisOrder;
-        std::vector<CPLString> startPoint;
-        path = "sequenceRule.axisOrder";
-        if (ParseList(function, path, axisOrder)) {
-            CPLString sequenceRule = CPLGetXMLValue(coverage, (path + ".sequenceRule").c_str(), "");
-            ParseList(coverage, path + ".startPoint", startPoint);
-            // for now require simple
-            if (!(sequenceRule == "Linear"
-                  && axisOrder[0] == "+1" && axisOrder[1] == "+2"
-                  && startPoint[0] == "0" && startPoint[1] == "0"))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "The grid is not linear and increasing from origo.");
-                return false;
-            }
+        CPLString path = "sequenceRule";
+        CPLString sequenceRule = CPLGetXMLValue(function, path, "");
+        path += ".axisOrder";
+        axisOrder = Split(CPLGetXMLValue(function, path, ""), " ");
+        path = "startPoint";
+        std::vector<CPLString> startPoint = Split(CPLGetXMLValue(function, path, ""), " ");
+        // for now require simple
+        if (sequenceRule != "Linear") {
+            CPLError(CE_Failure, CPLE_AppDefined, "Can't handle '%s' coverages.", sequenceRule.c_str());
+            return false;
         }
     }
 
-    // get native CRS from boundedBy, geo transform will be from domainSet
-
-    osCRS = ParseCRS(CPLGetXMLNode(coverage, "boundedBy.Envelope")); // todo: EnvelopeWithTimePeriod
-    std::vector<CPLString> labels;
-    if (!ParseList(coverage, "boundedBy.Envelope.axisLabels", labels)) {
+    // get CRS from boundedBy and set the native flag to true
+    // below we may set the CRS again but that won't be native
+    CPLString path = "boundedBy.Envelope";
+    CPLXMLNode *envelope = CPLGetXMLNode(coverage, path);
+    if (!SetCRS(ParseCRS(envelope), true)) {
         return false;
     }
+    path += ".axisLabels";
+    std::vector<CPLString> labels = Split(CPLGetXMLValue(coverage, path, ""), " ", axis_order_swap);
 
-    // work on grid, raster size first
-    // could there be a case of domainSet given in different CRS than boundedBy?
-    // or, worse, mixed CRS in domainSet?
+    // todo: labels are the domain dimension names
+    // these need to be reported to the user
+    // and the user may select mappings name => x, name => y, name => bands
+    // or we'll use the first two by default, and possibly make t => bands
+    
+    std::vector<CPLString> bbox = ParseBoundingBox(envelope);
+    if (labels.size() < 2 || bbox.size() < 2) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Less than 2 dimensions in coverage envelope or no axisLabels.");
+        return false;
+    }
+    std::vector<double> low = Flist(Split(bbox[0], " ", axis_order_swap));
+    std::vector<double> high = Flist(Split(bbox[1], " ", axis_order_swap));
+    std::vector<double> env;
+    env.insert(env.end(), low.begin(), low.begin() + 2);
+    env.insert(env.end(), high.begin(), high.begin() + 2);
+    // todo: EnvelopeWithTimePeriod
 
     CPLXMLNode *point = CPLGetXMLNode(grid, "origin.Point");
     CPLString crs = ParseCRS(point);
-
-    // todo: determine whether axis order need to be swapped
-    bool swap = false;
-
-    std::vector<int> sizes;
-
-    std::vector<double> origin;
-
-    if (!ParseGridEnvelope(grid, "limits.GridEnvelope", sizes)
-        || !ParseDoubleList(point, "pos", origin, swap))
-    {
-        return false;
-    }
-    unsigned int dim = sizes.size() / 2;
-    if (labels.size() != dim || origin.size() != dim) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Dimension mismatch in grid labels or origin.");
+    bool swap;
+    if (!CRSImpliesAxisOrderSwap(crs, swap)) {
         return false;
     }
 
-    // for now handle only grids with origin 0,0
-    if (sizes[0] != 0 || sizes[1] != 0) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Can't handle GridEnvelope having low not at origo.");
+    path = "limits.GridEnvelope";
+    std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path)); // todo: should we swap?
+    std::vector<int> grid_size;
+    grid_size.push_back(size[1][0] - size[0][0] + 1);
+    grid_size.push_back(size[1][1] - size[0][1] + 1);
+    std::vector<std::vector<double>> offsets;
+    if (!GridOffsets(grid, offsets, labels, subtype, crs, swap)) {
         return false;
     }
-    nRasterXSize = sizes[dim] - sizes[0] + 1;
-    nRasterYSize = sizes[dim+1] - sizes[1] + 1;
 
-    // the geo transform
-    // only rectilinear uniform grids are ok
+    SetGeometry(env, axisOrder, grid_size, offsets);
 
-    std::vector<std::vector<double>> offset; // grid unit vectors
-    if (!GridOffsets(grid, offset, labels, subtype, crs, swap)) {
-        return false;
+    crs = CPLGetXMLValue(psService, "SRS", "");
+    if (crs != "" && crs != osCRS) {
+        // the user has requested that this dataset is in different
+        // crs than the server native crs
+        // thus, we need to redo the geo transform too
+
+        // todo: warp env from osCRS to crs
+
+        if (!SetCRS(crs, false)) {
+            return false;
+        }
+
+        SetGeometry(env, axisOrder, grid_size, offsets);
     }
-    if (!Offset2GeoTransform(origin, offset)) {
-        return false;
-    }
+
     // todo: ElevationDomain, DimensionDomain
 
     // assuming here that the attributes are defined by swe:DataRecord
@@ -387,11 +333,8 @@ bool WCSDataset201::ExtractGridInfo()
             bServiceDirty = TRUE;
             CPLCreateXMLElementAndValue( psService, "NoDataValue", nodata.c_str());
         }
-        CPLXMLNode *interval_node = CPLGetXMLNode(field, "Quantity.constraint.AllowedValues.interval");
-        std::vector<double> interval;
-        if (interval_node) {
-            ParseDoubleList(interval_node, "", interval, false);
-        }
+        path = "Quantity.constraint.AllowedValues.interval";
+        std::vector<double> interval = Flist(Split(CPLGetXMLValue(field, path, ""), " "));
         bands += 1;
     }
 
@@ -405,27 +348,6 @@ bool WCSDataset201::ExtractGridInfo()
     if (bands) {
         CPLCreateXMLElementAndValue(psService, "BandCount", CPLString().Printf("%d",bands));
     }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a coordinate system override?                        */
-/* -------------------------------------------------------------------- */
-    // SRS may be one of the crsSupported
-    // the user may have set it as an option, so test it
-    //const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
-    // if it is, set osCRS to it
-
-    // if osCRS is empty, use the one from domainSet
-    if (osCRS.empty()) {
-        osCRS = crs;
-    }
-
-    // set projection from osCRS
-    if (!CRS2Projection(osCRS, &pszProjection)) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not interpret '%s' as CRS.", osCRS.c_str());
-        return false;
-    }
-
-    // note, projection may be NULL for raw images
 
 /* -------------------------------------------------------------------- */
 /*      Pick a format type if we don't already have one selected.       */

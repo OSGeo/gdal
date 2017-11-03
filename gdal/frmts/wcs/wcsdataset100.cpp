@@ -546,13 +546,15 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities )
             
             if ((node = CPLGetXMLNode(summary, "lonlatEnvelope"))) {
                 CPLString name = path3 + "lonlatEnvelope";
-                CPLString CRS = "";
-                std::vector<double> bounds;
-                // lonlat => no need to check for axis order swap
-                if (ParseBoundingBox(node, CRS, bounds)) {
-                    CPLString bbox;
-                    bbox.Printf("%f,%f,%f,%f", bounds[0], bounds[1], bounds[2], bounds[3]);
-                    metadata = CSLSetNameValue(metadata, name, bbox);
+                CPLString CRS = ParseCRS(node);
+                std::vector<CPLString> bbox = ParseBoundingBox(node);
+                if (bbox.size() >= 2) {
+                    // lonlat => no need for axis order swap
+                    std::vector<double> low = Flist(Split(bbox[0], " "));
+                    std::vector<double> high = Flist(Split(bbox[1], " "));
+                    CPLString str;
+                    str.Printf("%f,%f,%f,%f", low[0], low[1], high[0], high[1]);
+                    metadata = CSLSetNameValue(metadata, name, str);
                 }
             }
             

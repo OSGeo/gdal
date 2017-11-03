@@ -291,7 +291,8 @@ bool WCSDataset110::ExtractGridInfo()
                   "Unable to find GridCRS.GridBaseCRS" );
         return false;
     }
-    if (!CRS2Projection(osCRS, &pszProjection)) {
+    OGRSpatialReference oSRS;
+    if (!CRS2Projection(osCRS, oSRS, &pszProjection)) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to interpret GridBaseCRS '%s'.",
                   osCRS.c_str() );
@@ -314,15 +315,17 @@ bool WCSDataset110::ExtractGridInfo()
             || !EQUAL(psNode->pszValue,"BoundingBox") )
             continue;
 
-        CPLString osBBCRS;
-        std::vector<double> bounds;
-
-        if( ParseBoundingBox( psNode, osBBCRS, bounds )
-            && strstr(osBBCRS,":imageCRS")
-            && bounds[0] == 0 && bounds[1] == 0)
-        {
-            nRasterXSize = (int) (bounds[2] + 1.01);
-            nRasterYSize = (int) (bounds[3] + 1.01);
+        CPLString osBBCRS = ParseCRS(psNode);
+        if (strstr(osBBCRS,":imageCRS")) {
+            std::vector<CPLString> bbox = ParseBoundingBox(psNode);
+            if (bbox.size() >= 2) {
+                std::vector<double> low = Flist(Split(bbox[0], " "));
+                std::vector<double> high = Flist(Split(bbox[1], " "));
+                if (low[0] == 0 && low[1] == 0) {
+                    nRasterXSize = (int) (high[0] + 1.01);
+                    nRasterYSize = (int) (high[1] + 1.01);
+                }
+            }
         }
     }
 
@@ -338,19 +341,21 @@ bool WCSDataset110::ExtractGridInfo()
             || !EQUAL(psNode->pszValue,"BoundingBox") )
             continue;
 
-        CPLString osBBCRS;
-        std::vector<double> bounds;
-
-        if( ParseBoundingBox( psNode, osBBCRS, bounds )
-            && osBBCRS == osCRS
-            && adfGeoTransform[2] == 0.0
-            && adfGeoTransform[4] == 0.0 )
-        {
-            // todo: check for axis order swap
-            nRasterXSize =
-                (int) ((bounds[2] - bounds[0]) / adfGeoTransform[1] + 1.01);
-            nRasterYSize =
-                (int) ((bounds[3] - bounds[1]) / fabs(adfGeoTransform[5]) + 1.01);
+        CPLString osBBCRS = ParseCRS(psNode);
+        if (osBBCRS == osCRS) {
+            std::vector<CPLString> bbox = ParseBoundingBox(psNode);
+            if (bbox.size() >= 2
+                && adfGeoTransform[2] == 0.0
+                && adfGeoTransform[4] == 0.0)
+            {
+                std::vector<double> low = Flist(Split(bbox[0], " "));
+                std::vector<double> high = Flist(Split(bbox[1], " "));
+                // todo: check for axis order swap
+                nRasterXSize =
+                    (int) ((high[0] - low[0]) / adfGeoTransform[1] + 1.01);
+                nRasterYSize =
+                    (int) ((high[1] - low[1]) / fabs(adfGeoTransform[5]) + 1.01);
+            }
         }
     }
     // if nRasterXSize < 0 error
@@ -362,8 +367,6 @@ bool WCSDataset110::ExtractGridInfo()
 
     if( pszProjOverride )
     {
-        OGRSpatialReference oSRS;
-
         if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -558,13 +561,11 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities )
         CPLString name = path + "Keywords";
         metadata = CSLSetNameValue(metadata, name, kw);
     }
-    /*
     CPLString profiles = GetKeywords(service, "", "Profile");
     if (profiles != "") {
         CPLString name = path + "Profiles";
         metadata = CSLSetNameValue(metadata, name, profiles);
     }
-    */
 
     // provider metadata
     path2 = path;
@@ -713,26 +714,29 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities )
 
             if ((node = CPLGetXMLNode(summary, "WGS84BoundingBox"))) {
                 CPLString name = path3 + "WGS84BBOX";
-                CPLString CRS;
                 // WGS84BoundingBox is always lon,lat
-                std::vector<double> bounds;
-                if (ParseBoundingBox(node, CRS, bounds)) {
-                    CPLString bbox;
-                    bbox.Printf("%f,%f,%f,%f", bounds[0], bounds[1], bounds[2], bounds[3]);
-                    metadata = CSLSetNameValue(metadata, name, bbox);
+                std::vector<CPLString> bbox = ParseBoundingBox(node);
+                if (bbox.size() >= 2) {
+                    std::vector<double> low = Flist(Split(bbox[0], " "));
+                    std::vector<double> high = Flist(Split(bbox[1], " "));
+                    CPLString tmp;
+                    tmp.Printf("%f,%f,%f,%f", low[0], low[1], high[0], high[1]);
+                    metadata = CSLSetNameValue(metadata, name, tmp);
                 }
             }
             
             if ((node = CPLGetXMLNode(summary, "BoundingBox"))) {
                 CPLString name = path3 + "BBOX";
-                CPLString CRS;
-                std::vector<double> bounds;
-                // version 1.0, no need to check for axis order swap
-                if (ParseBoundingBox(node, CRS, bounds)) {
-                    CPLString bbox;
-                    bbox.Printf("CRS=%s minX=%f minY=%f maxX=%f maxY=%f",
-                                CRS.c_str(), bounds[0], bounds[1], bounds[2], bounds[3]);
-                    metadata = CSLSetNameValue(metadata, name, bbox);
+                CPLString CRS = ParseCRS(node);
+                std::vector<CPLString> bbox = ParseBoundingBox(node);
+                if (bbox.size() >= 2) {
+                    // todo: check axis order swap
+                    std::vector<double> low = Flist(Split(bbox[0], " "));
+                    std::vector<double> high = Flist(Split(bbox[1], " "));
+                    CPLString tmp;
+                    tmp.Printf("CRS=%s minX=%f minY=%f maxX=%f maxY=%f",
+                               CRS.c_str(), low[0], low[1], high[0], high[1]);
+                    metadata = CSLSetNameValue(metadata, name, tmp);
                 }
             }
             

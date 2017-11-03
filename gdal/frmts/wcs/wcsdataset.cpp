@@ -61,6 +61,8 @@ WCSDataset::WCSDataset(int version) :
     papszSDSModifiers(NULL),
     m_Version(version),
     pszProjection(NULL),
+    native_crs(true),
+    axis_order_swap(false),
     pabySavedDataBuffer(NULL),
     papszHttpOptions(NULL),
     nMaxCols(-1),
@@ -104,6 +106,52 @@ WCSDataset::~WCSDataset()
     CPLFree( apszCoverageOfferingMD[0] );
 
     FlushMemoryResult();
+}
+
+/************************************************************************/
+/*                           SetCRS()                                   */
+/*                                                                      */
+/*      Set the name and the WKT of the projection of this dataset.     */
+/*      Based on the projection, sets the axis order flag.              */
+/*      Also set the native flag.                                       */
+/************************************************************************/
+
+bool WCSDataset::SetCRS(CPLString crs, bool native)
+{
+    osCRS = crs;
+    if (!CRSImpliesAxisOrderSwap(osCRS, axis_order_swap, &pszProjection)) {
+        return false;
+    }
+    native_crs = native;
+    return true;
+}
+
+/************************************************************************/
+/*                           SetGeometry()                              */
+/*                                                                      */
+/*      Set GeoTransform and RasterSize from the coverage envelope,     */
+/*      axis_order, grid size, and grid offsets.                        */
+/************************************************************************/
+
+void WCSDataset::SetGeometry(std::vector<double> envelope,
+                             CPL_UNUSED std::vector<CPLString> axis_order,
+                             std::vector<int> size,
+                             CPL_UNUSED std::vector<std::vector<double>> offsets)
+{
+
+    // todo: handle offsets that are not ((x,0),(0,y))
+    
+    nRasterXSize = size[0];
+    nRasterYSize = size[1];
+    
+    adfGeoTransform[0] = envelope[0];
+    adfGeoTransform[1] = (envelope[2]-envelope[0])/(double)nRasterXSize;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = envelope[3];
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = (envelope[1]-envelope[3])/(double)nRasterYSize;
+    
+    
 }
 
 /************************************************************************/
@@ -879,6 +927,9 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     }
     psService = psService->psNext; // from ?XML to root
     // get version
+    // it may be that the version in the URL in cache (user's request)
+    // is different from the version in the XML (server's response)
+    // but that is probably not a problem
     int version_from_server = 0;
     for (CPLXMLNode *node = psService->psChild; node != NULL; node = node->psNext) {
         const char *attr = node->pszValue;
@@ -914,15 +965,13 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
 
 static CPLXMLNode *CreateService(GDALOpenInfo * poOpenInfo,
                                  CPLString path,
-                                 CPLString url,
+                                 CPLString base_url,
                                  CPLString version,
                                  CPLString coverage)
 {
-    url = url.substr(0, url.find("?"));
-    url += "?";
     // construct WCS_GDAL XML into psService
     CPLString xml = "<WCS_GDAL>";
-    xml += "<ServiceURL>" + url + "</ServiceURL>";
+    xml += "<ServiceURL>" + base_url + "</ServiceURL>";
     xml += "<Version>" + version + "</Version>";
     xml += "<CoverageName>" + coverage + "</CoverageName>";
     const char *keys2[] = {
@@ -930,7 +979,7 @@ static CPLXMLNode *CreateService(GDALOpenInfo * poOpenInfo,
         "UserPwd",
         "HttpAuth",
         "NoGridCRS", // do not put GridCRS params into GetCoverage URL if not necessary (1.1)
-        "CRS" // override native CRS
+        "CRS" // override native CRS, should be one of the supported ones, todo: check
         // todo: option for format
         // todo: options for slicing/trimming and what to put to bands
     };
@@ -991,8 +1040,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         
         // remove all parameters, and possibly add version and coverage
         // coverage is always as 'coverageId'
-        url = url.substr(0, url.find("?"));
-        url += "?";
+        CPLString base_url = url.substr(0, url.find("?"));
+        base_url += "?";
+        url = base_url;
         if (version != "") {
             url += "version=" + version;
         }
@@ -1040,13 +1090,13 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             // which is made from options and URL
             // and a Coverage description file (<basename>.DC.xml)
             filename += ".xml";
-            if (cached) {
+            if (cached && !CPLFetchBool(poOpenInfo->papszOpenOptions, "REDO_META", false)) {
                 // read from cache
                 psService = CPLParseXMLFile(filename);
                 CPLFree(poOpenInfo->pszFilename);
                 poOpenInfo->pszFilename = CPLStrdup(filename);
             } else {
-                psService = CreateService(poOpenInfo, filename, url, version, coverage);
+                psService = CreateService(poOpenInfo, filename, base_url, version, coverage);
             }
         }
     }
