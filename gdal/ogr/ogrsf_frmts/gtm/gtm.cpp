@@ -810,8 +810,6 @@ bool GTM::readFile(void* pBuffer, size_t nSize, size_t nCount)
     const size_t nRead = VSIFReadL( pBuffer, nSize, nCount, pGTMFile );
     if (nRead == 0)
     {
-        VSIFCloseL( pGTMFile );
-        pGTMFile = NULL;
         return false;
     }
     return true;
