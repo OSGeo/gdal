@@ -1748,12 +1748,13 @@ void OGRODSDataSource::FlushCache()
     hZIP = NULL;
 
     /* Re-open with VSILFILE */
-    VSILFILE* fpZIP = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszName), "ab");
+    CPLString osTmpFilename(CPLSPrintf("/vsizip/%s", pszName));
+    VSILFILE* fpZIP = VSIFOpenL(osTmpFilename, "ab");
     if (fpZIP == NULL)
         return;
 
-    VSILFILE* fp = VSIFOpenL(CPLSPrintf(
-        "/vsizip/%s/META-INF/manifest.xml", pszName), "wb");
+    osTmpFilename = CPLSPrintf("/vsizip/%s/META-INF/manifest.xml", pszName);
+    VSILFILE* fp = VSIFOpenL(osTmpFilename, "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
         fp,
@@ -1775,7 +1776,8 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "</manifest:manifest>\n");
     VSIFCloseL(fp);
 
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/meta.xml", pszName), "wb");
+    osTmpFilename = CPLSPrintf("/vsizip/%s/meta.xml", pszName);
+    fp = VSIFOpenL(osTmpFilename, "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
         fp, "<office:document-meta "
@@ -1784,7 +1786,8 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "</office:document-meta>\n");
     VSIFCloseL(fp);
 
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszName), "wb");
+    osTmpFilename = CPLSPrintf("/vsizip/%s/settings.xml", pszName);
+    fp = VSIFOpenL(osTmpFilename, "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-settings "
@@ -1839,7 +1842,8 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "</office:document-settings>\n");
     VSIFCloseL(fp);
 
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/styles.xml", pszName), "wb");
+    osTmpFilename = CPLSPrintf("/vsizip/%s/styles.xml", pszName);
+    fp = VSIFOpenL(osTmpFilename, "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-styles "
@@ -1854,7 +1858,8 @@ void OGRODSDataSource::FlushCache()
     VSIFPrintfL(fp, "</office:document-styles>\n");
     VSIFCloseL(fp);
 
-    fp = VSIFOpenL(CPLSPrintf("/vsizip/%s/content.xml", pszName), "wb");
+    osTmpFilename = CPLSPrintf("/vsizip/%s/content.xml", pszName);
+    fp = VSIFOpenL(osTmpFilename, "wb");
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     VSIFPrintfL(
          fp, "<office:document-content "
