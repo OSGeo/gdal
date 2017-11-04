@@ -246,7 +246,7 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 
     CPLString osPattern;
     for( std::vector<double>::const_iterator oIt = oLineType.begin();
-        oIt != oLineType.end(); oIt++ )
+        oIt != oLineType.end(); ++oIt )
     {
         // this is the format specifier %g followed by a literal 'g'
         osPattern += CPLString().Printf( "%.11gg ", *oIt * dfLineTypeScale );
