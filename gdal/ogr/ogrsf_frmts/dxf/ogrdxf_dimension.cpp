@@ -31,7 +31,18 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
+#include <stdexcept>
+
 CPL_CVSID("$Id$")
+
+/************************************************************************/
+/*                             PointDist()                              */
+/************************************************************************/
+
+inline static double PointDist( double x1, double y1, double x2, double y2 )
+{
+    return sqrt( (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) );
+}
 
 /************************************************************************/
 /*                         TranslateDIMENSION()                         */
@@ -56,15 +67,31 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
     double dfTextX = 0.0;
     double dfTextY = 0.0;
     // double dfTextZ = 0.0;
-    double dfAngle = 0.0;
-    double dfHeight = CPLAtof(poDS->GetVariable("$DIMTXT", "2.5"));
 
+    bool bReadyForDimstyleOverride = false;
+
+    bool bHaveBlock = false;
+    CPLString osBlockName;
     CPLString osText;
+
+    std::map<CPLString,CPLString> oDimStyleProperties;
+    poDS->PopulateDefaultDimStyleProperties(oDimStyleProperties);
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
         switch( nCode )
         {
+          case 2:
+            bHaveBlock = true;
+            osBlockName = szLineBuf;
+            break;
+
+          case 3:
+            // 3 is the dimension style name. We don't need to store it,
+            // let's just fetch the dimension style properties
+            poDS->LookupDimStyle(szLineBuf, oDimStyleProperties);
+            break;
+
           case 10:
             dfArrowX1 = CPLAtof(szLineBuf);
             break;
@@ -118,7 +145,28 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
             break;
 
           case 1:
-            osText = TextUnescape(szLineBuf, false);
+            osText = szLineBuf;
+            break;
+
+          case 1001:
+            bReadyForDimstyleOverride = EQUAL(szLineBuf, "ACAD");
+            break;
+
+          case 1070:
+            if( bReadyForDimstyleOverride )
+            {
+                // Store DIMSTYLE override values in the dimension
+                // style property map. The nInnerCode values match the
+                // group codes used in the DIMSTYLE table.
+                const int nInnerCode = atoi(szLineBuf);
+                const char* pszProperty = ACGetDimStylePropertyName(nInnerCode);
+                if( pszProperty )
+                {
+                    nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
+                    if( nCode == 1005 || nCode == 1040 || nCode == 1070 )
+                        oDimStyleProperties[pszProperty] = szLineBuf;
+                }
+            }
             break;
 
           default:
@@ -134,6 +182,37 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
     }
     if( nCode == 0 )
         poDS->UnreadValue();
+
+    // If osBlockName (group code 2) refers to a valid block, we can just insert
+    // that block - that should give us the correctly exploded geometry of this
+    // dimension. If this value is missing, or doesn't refer to a valid block,
+    // we will need to use our own logic to generate the dimension lines.
+    if( bHaveBlock && osBlockName.length() > 0 )
+    {
+        // Always inline the block, because this is an anonymous block that the
+        // user likely doesn't know or care about
+        try
+        {
+            OGRDXFFeature* poBlockFeature = InsertBlockInline( osBlockName,
+                OGRDXFInsertTransformer(), NULL,
+                poFeature, apoPendingFeatures,
+                true, false );
+
+            return poBlockFeature; // may be NULL but that is OK
+        }
+        catch( const std::invalid_argument& ) {}
+    }
+
+    // Unpack the dimension style
+    const double dfScale = CPLAtof(oDimStyleProperties["DIMSCALE"]);
+    const double dfArrowheadSize = CPLAtof(oDimStyleProperties["DIMASZ"]);
+    const double dfExtLineExtendLength = CPLAtof(oDimStyleProperties["DIMEXE"]);
+    const double dfExtLineOffset = CPLAtof(oDimStyleProperties["DIMEXO"]);
+    const bool bWantExtLine1 = atoi(oDimStyleProperties["DIMSE1"]) == 0;
+    const bool bWantExtLine2 = atoi(oDimStyleProperties["DIMSE2"]) == 0;
+    const double dfTextHeight = CPLAtof(oDimStyleProperties["DIMTXT"]);
+    const int nUnitsPrecision = atoi(oDimStyleProperties["DIMDEC"]);
+    const bool bTextSupposedlyCentered = atoi(oDimStyleProperties["DIMTAD"]) == 0;
 
 /*************************************************************************
 
@@ -170,6 +249,14 @@ the approach is as above in all these cases.
     double dfVec1X = dfArrowX1 - dfTargetX1;
     double dfVec1Y = dfArrowY1 - dfTargetY1;
 
+    // make Vec1 a unit vector
+    double dfVec1Length = PointDist(0, 0, dfVec1X, dfVec1Y);
+    if( dfVec1Length > 0.0 )
+    {
+        dfVec1X /= dfVec1Length;
+        dfVec1Y /= dfVec1Length;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Step 2, compute the direction vector from Arrow1 to Arrow2      */
 /*      as a perpendicular to Vec1.                                     */
@@ -189,14 +276,22 @@ the approach is as above in all these cases.
     double dfArrowX2 = 0.0;
     double dfArrowY2 = 0.0;
 
+    // special case if vec1 is zero, which means the arrow and target
+    // points coincide.
+    if( dfVec1X == 0.0 && dfVec1Y == 0.0 )
+    {
+        dfArrowX2 = dfTargetX2;
+        dfArrowY2 = dfTargetY2;
+    }
+
     // special case if vec1 is vertical.
-    if( dfVec1X == 0.0 )
+    else if( dfVec1X == 0.0 )
     {
         dfArrowX2 = dfTargetX2;
         dfArrowY2 = dfArrowY1;
     }
 
-    // special case if vec2 is horizontal.
+    // special case if vec1 is horizontal.
     else if( dfVec1Y == 0.0 )
     {
         dfArrowX2 = dfArrowX1;
@@ -222,39 +317,6 @@ the approach is as above in all these cases.
     }
 
 /* -------------------------------------------------------------------- */
-/*      Compute the text angle.                                         */
-/* -------------------------------------------------------------------- */
-    dfAngle = atan2(dfVec2Y,dfVec2X) * 180.0 / M_PI;
-
-/* -------------------------------------------------------------------- */
-/*      Rescale the direction vectors so we can use them in             */
-/*      constructing arrowheads.  We want them to be about 3% of the    */
-/*      length of line on which the arrows will be drawn.               */
-/* -------------------------------------------------------------------- */
-#define VECTOR_LEN(x,y) sqrt( (x)*(x) + (y)*(y) )
-#define POINT_DIST(x1,y1,x2,y2)  VECTOR_LEN((x2-x1),(y2-y1))
-
-    const double dfBaselineLength = POINT_DIST(dfArrowX1, dfArrowY1,
-                                               dfArrowX2, dfArrowY2);
-    const double dfTargetLength = dfBaselineLength * 0.03;
-
-    // recompute vector 2 to ensure the direction is regular
-    dfVec2X = (dfArrowX2 - dfArrowX1);
-    dfVec2Y = (dfArrowY2 - dfArrowY1);
-
-    // vector 1
-    const double dfVec1Len = VECTOR_LEN(dfVec1X, dfVec1Y);
-    double dfScaleFactor = (dfVec1Len == 0.0) ? 0.0 : dfTargetLength / dfVec1Len;
-    dfVec1X *= dfScaleFactor;
-    dfVec1Y *= dfScaleFactor;
-
-    // vector 2
-    const double dfVec2Len = VECTOR_LEN(dfVec2X,dfVec2Y);
-    dfScaleFactor = (dfVec2Len == 0.0) ? 0.0 : dfTargetLength / dfVec2Len;
-    dfVec2X *= dfScaleFactor;
-    dfVec2Y *= dfScaleFactor;
-
-/* -------------------------------------------------------------------- */
 /*      Create geometries for the different components of the           */
 /*      dimension object.                                               */
 /* -------------------------------------------------------------------- */
@@ -266,43 +328,33 @@ the approach is as above in all these cases.
     oLine.setPoint( 1, dfArrowX2, dfArrowY2 );
     poMLS->addGeometry( &oLine );
 
+    // Insert default arrowheads.
+    OGRPoint oPoint1, oPoint2;
+    oLine.getPoint( 0, &oPoint1 );
+    oLine.getPoint( 1, &oPoint2 );
+
+    InsertArrowhead( poFeature, "", oPoint1, oPoint2,
+        dfArrowheadSize * dfScale );
+    InsertArrowhead( poFeature, "", oPoint2, oPoint1,
+        dfArrowheadSize * dfScale );
+
     // Dimension line from Target1 to Arrow1 with a small extension.
-    oLine.setPoint( 0, dfTargetX1, dfTargetY1 );
-    oLine.setPoint( 1, dfArrowX1 + dfVec1X, dfArrowY1 + dfVec1Y );
-    poMLS->addGeometry( &oLine );
+    oLine.setPoint( 0, dfTargetX1 + dfVec1X * dfExtLineOffset,
+        dfTargetY1 + dfVec1Y * dfExtLineOffset );
+    oLine.setPoint( 1, dfArrowX1 + dfVec1X * dfExtLineExtendLength,
+        dfArrowY1 + dfVec1Y * dfExtLineExtendLength );
+    if( bWantExtLine1 && oLine.get_Length() > 0.0 ) {
+        poMLS->addGeometry( &oLine );
+    }
 
     // Dimension line from Target2 to Arrow2 with a small extension.
-    oLine.setPoint( 0, dfTargetX2, dfTargetY2 );
-    oLine.setPoint( 1, dfArrowX2 + dfVec1X, dfArrowY2 + dfVec1Y );
-    poMLS->addGeometry( &oLine );
-
-    // Add arrow1 arrow head.
-
-    oLine.setPoint( 0, dfArrowX1, dfArrowY1 );
-    oLine.setPoint( 1,
-                    dfArrowX1 + dfVec2X*3 + dfVec1X,
-                    dfArrowY1 + dfVec2Y*3 + dfVec1Y );
-    poMLS->addGeometry( &oLine );
-
-    oLine.setPoint( 0, dfArrowX1, dfArrowY1 );
-    oLine.setPoint( 1,
-                    dfArrowX1 + dfVec2X*3 - dfVec1X,
-                    dfArrowY1 + dfVec2Y*3 - dfVec1Y );
-    poMLS->addGeometry( &oLine );
-
-    // Add arrow2 arrow head.
-
-    oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1,
-                    dfArrowX2 - dfVec2X*3 + dfVec1X,
-                    dfArrowY2 - dfVec2Y*3 + dfVec1Y );
-    poMLS->addGeometry( &oLine );
-
-    oLine.setPoint( 0, dfArrowX2, dfArrowY2 );
-    oLine.setPoint( 1,
-                    dfArrowX2 - dfVec2X*3 - dfVec1X,
-                    dfArrowY2 - dfVec2Y*3 - dfVec1Y );
-    poMLS->addGeometry( &oLine );
+    oLine.setPoint( 0, dfTargetX2 + dfVec1X * dfExtLineOffset,
+        dfTargetY2 + dfVec1Y * dfExtLineOffset );
+    oLine.setPoint( 1, dfArrowX2 + dfVec1X * dfExtLineExtendLength,
+        dfArrowY2 + dfVec1Y * dfExtLineExtendLength );
+    if( bWantExtLine2 && oLine.get_Length() > 0.0 ) {
+        poMLS->addGeometry( &oLine );
+    }
 
     poFeature->SetGeometryDirectly( poMLS );
 
@@ -312,6 +364,12 @@ the approach is as above in all these cases.
 /*      Prepare a new feature to serve as the dimension text label      */
 /*      feature.  We will push it onto the layer as a pending           */
 /*      feature for the next feature read.                              */
+/*                                                                      */
+/*      The DXF format supports a myriad of options for dimension       */
+/*      text placement, some of which involve the drawing of            */
+/*      additional lines and the like.  For now we ignore most of       */
+/*      those properties and place the text alongside the dimension     */
+/*      line.                                                           */
 /* -------------------------------------------------------------------- */
 
     // a single space suppresses labeling.
@@ -322,27 +380,56 @@ the approach is as above in all these cases.
 
     poLabelFeature->SetGeometryDirectly( new OGRPoint( dfTextX, dfTextY ) );
 
-    // Do we need to compute the dimension value?
     if( osText.empty() )
+        osText = "<>";
+
+    // Do we need to compute the dimension value?
+    size_t nDimensionPos = osText.find("<>");
+    if( nDimensionPos == std::string::npos )
     {
-        FormatDimension( osText, POINT_DIST( dfArrowX1, dfArrowY1,
-                                             dfArrowX2, dfArrowY2 ) );
+        poLabelFeature->SetField( "Text", TextUnescape( osText, true ) );
+    }
+    else
+    {
+        // Replace the first occurrence of <> with the dimension
+        CPLString osDimensionText;
+        FormatDimension( osDimensionText,
+            PointDist( dfArrowX1, dfArrowY1, dfArrowX2, dfArrowY2 ),
+            nUnitsPrecision );
+        osText.replace( nDimensionPos, 2, osDimensionText );
+        poLabelFeature->SetField( "Text", TextUnescape( osText, true ) );
     }
 
     CPLString osStyle;
     char szBuffer[64];
 
-    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",p:5", osText.c_str());
+    osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",
+        TextUnescape( osText.c_str(), true ).c_str());
 
-    if( dfAngle != 0.0 )
+    // If the text is supposed to be centered on the line, we align
+    // it above the line. Drawing it properly would require us to
+    // work out the width of the text, which seems like too much
+    // effort for what is just a fallback renderer.
+    if( bTextSupposedlyCentered )
+        osStyle += ",p:11";
+    else
+        osStyle += ",p:5";
+
+    // Compute the text angle. Use atan to avoid upside-down text
+    const double dfTextAngle = ( dfArrowX1 == dfArrowX2 ) ?
+        -90.0 :
+        atan( (dfArrowY1 - dfArrowY2) / (dfArrowX1 - dfArrowX2) ) * 180.0 / M_PI;
+
+    if( dfTextAngle != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfAngle);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfTextAngle);
         osStyle += CPLString().Printf(",a:%s", szBuffer);
     }
 
-    if( dfHeight != 0.0 )
+    if( dfTextHeight != 0.0 )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g", dfHeight);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.3g",
+            dfTextHeight * dfScale);
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
@@ -364,10 +451,10 @@ the approach is as above in all these cases.
 /*      formatting conventions.                                         */
 /************************************************************************/
 
-void OGRDXFLayer::FormatDimension( CPLString &osText, double dfValue )
+void OGRDXFLayer::FormatDimension( CPLString &osText, const double dfValue,
+    int nPrecision )
 
 {
-    int nPrecision = atoi(poDS->GetVariable("$LUPREC","4"));
     if( nPrecision < 0 )
         nPrecision = 0;
     else if( nPrecision > 20 )
