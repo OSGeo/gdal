@@ -154,7 +154,7 @@ pramsey       Paul Ramsey                  OGR: FGDB, PostGIS
 etourigny     Etienne Tourigny             netcdf, hdf
               etourigny.dev at gmail dot com
               (old osgeo id etiennesky)
-              
+
 bishop        Dmitry Baryshnikov            postgis, hdf, geotiff, mitab, shp
               polimax at mail.ru
 
@@ -181,10 +181,12 @@ jratike80     Jukka Rahkonen               documentation
 
 dadler        David Adler                  DB2
               dadler@adtechgeospatial.com
-			  
 
-lplesea       Lucian Plesea		   mrf, wms
-	      lplesea@esri.com
+lplesea       Lucian Plesea                mrf, wms
+              lplesea@esri.com
+
+atlight       Alan Thomas                  DXF
+              athomas@thinkspatial.com.au
 
 ===============
 Past developers
