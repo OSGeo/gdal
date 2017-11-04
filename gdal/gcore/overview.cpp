@@ -688,6 +688,14 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         nGaussMatrixDim=7;
     }
 
+#ifdef DEBUG_OUT_OF_BOUND_ACCESS
+    int* panGaussMatrixDup = static_cast<int*>(
+        CPLMalloc(sizeof(int) * nGaussMatrixDim * nGaussMatrixDim)=;
+    memcpy(panGaussMatrixDup, panGaussMatrix,
+           sizeof(int) * nGaussMatrixDim * nGaussMatrixDim);
+    panGaussMatrix = panGaussMatrixDup;
+#endif
+
     float *pafDstScanline = static_cast<float *>(
         VSI_MALLOC_VERBOSE((nDstXOff2 - nDstXOff) * sizeof(float)) );
     if( pafDstScanline == NULL )
@@ -761,7 +769,12 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
         if( nSrcYOff2 > nChunkBottomYOff ||
             (dfYRatioDstToSrc > 1 && iDstLine == nOYSize-1) )
-            nSrcYOff2 = nChunkBottomYOff;
+        {
+            if( nChunkBottomYOff - nSrcYOff <= nGaussMatrixDim )
+            {
+                nSrcYOff2 = nChunkBottomYOff;
+            }
+        }
 
         const float * const pafSrcScanline =
             pafChunk + ((nSrcYOff-nChunkYOff) * nChunkXSize);
@@ -791,7 +804,12 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
             if( nSrcXOff2 > nChunkRightXOff ||
                 (dfXRatioDstToSrc > 1 && iDstPixel == nOXSize-1) )
-                nSrcXOff2 = nChunkRightXOff;
+            {
+                if( nChunkRightXOff - nSrcXOff <= nGaussMatrixDim )
+                {
+                    nSrcXOff2 = nChunkRightXOff;
+                }
+            }
 
             if( poColorTable == NULL )
             {
@@ -889,6 +907,9 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
     CPLFree( pafDstScanline );
     CPLFree( aEntries );
+#ifdef DEBUG_OUT_OF_BOUND_ACCESS
+    CPLFree( panGaussMatrixNew );
+#endif
 
     return eErr;
 }
