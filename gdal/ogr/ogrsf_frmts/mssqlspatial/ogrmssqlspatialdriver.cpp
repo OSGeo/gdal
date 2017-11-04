@@ -155,6 +155,8 @@ void RegisterOGRMSSQLSpatial()
 "  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
 "</LayerCreationOptionList>");
 
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MSSQL:");
+
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time "
                                "DateTime Binary" );
