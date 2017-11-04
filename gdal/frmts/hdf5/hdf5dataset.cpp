@@ -361,11 +361,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 {
     // Visit all objects.
-    unsigned i = 0;  // i is used after the for loop.
-
-    for( ; i < poH5Object->nbObjs; i++ )
-        if( poH5Object->poHchild + i != NULL )
-            DestroyH5Objects(poH5Object->poHchild + i);
+    for( unsigned i = 0; i < poH5Object->nbObjs; i++ )
+        DestroyH5Objects(poH5Object->poHchild + i);
 
     if( poH5Object->poHparent ==NULL )
         return;
@@ -388,7 +385,7 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
     poH5Object->native = 0;
 
     // All Children are visited and can be deleted.
-    if( i == poH5Object->nbObjs && poH5Object->nbObjs != 0 )
+    if( poH5Object->nbObjs != 0 )
     {
         CPLFree(poH5Object->poHchild);
         poH5Object->poHchild = NULL;
