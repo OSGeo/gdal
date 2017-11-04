@@ -42,79 +42,49 @@ static CPLXMLNode *GetGridNode(CPLXMLNode *coverage, CPLString subtype)
     return grid;
 }
 
-CPLString WCSDataset201::GetCoverageRequest(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
-                                            CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                                            CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize,
+CPLString WCSDataset201::GetCoverageRequest(int nXOff, int nYOff,
+                                            int nXSize, int nYSize,
+                                            int nBufXSize, int nBufYSize,
                                             CPL_UNUSED std::vector<double> extent,
-                                            CPLString osBandList)
+                                            CPL_UNUSED CPLString osBandList)
 {
-    CPLString osRequest, osRangeSubset;
+    CPLString request = CPLGetXMLValue(psService, "ServiceURL", ""), tmp;
+    request += "SERVICE=WCS";
+    request += "&REQUEST=GetCoverage";
+    request += "&VERSION=" + String(CPLGetXMLValue(psService, "Version", ""));
+    request += "&COVERAGEID=" + URLEncode(CPLGetXMLValue(psService, "CoverageName", ""));
+    request += "&OUTPUTCRS=" + URLEncode(CPLGetXMLValue(psService, "CRS", ""));
+    request += "&FORMAT=" + URLEncode(CPLGetXMLValue(psService, "PreferredFormat", ""));
+    // todo updatesequence
 
-/* -------------------------------------------------------------------- */
-/*      URL encode strings that could have questionable characters.     */
-/* -------------------------------------------------------------------- */
-    CPLString osCoverage = URLEncode(CPLGetXMLValue(psService, "CoverageName", ""));
-    CPLString osFormat = URLEncode(CPLGetXMLValue(psService, "PreferredFormat", ""));
+    std::vector<CPLString> domain = Split(CPLGetXMLValue(psService, "Domain", ""), ",");
+    tmp.Printf("&SUBSET=%s(%i,%i),%s(%i,%i)",
+               domain[0].c_str(), nXOff, nXOff + nXSize,
+               domain[1].c_str(), nYOff, nYOff + nYSize);
+    request += tmp;
 
-    osRangeSubset.Printf("&RangeSubset=%s",
-                         CPLGetXMLValue(psService,"FieldName",""));
-
-    if( CPLGetXMLValue( psService, "Resample", NULL ) )
-    {
-        osRangeSubset += ":";
-        osRangeSubset += CPLGetXMLValue( psService, "Resample", "");
+    // todo: set subset to slice to axis on some value other than x/y domain
+    // if DimensionToBand
+    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
+    for (unsigned int i = 0; i < dimensions.size(); ++i) {
+        request += "&SUBSET=" + dimensions[i];
     }
 
-    if( osBandList != "" )
-    {
-        osRangeSubset +=
-            CPLString().Printf( "[%s[%s]]",
-                                osBandIdentifier.c_str(),
-                                osBandList.c_str() );
+    tmp.Printf("&SCALESIZE=%s(%i),%s(%i)", domain[0].c_str(), nBufXSize, domain[1].c_str(), nBufYSize);
+    request += tmp;
+    CPLString interpolation = CPLGetXMLValue(psService, "Interpolation", "");
+    if (interpolation != "") {
+        request += "&INTERPOLATION=" + interpolation;
+    }
+    
+    CPLString range = CPLGetXMLValue(psService, "Range", "");
+    if (range != "") {
+        request += "&RANGESUBSET=" + range;
     }
 
+    // todo other stuff, e.g., GeoTIFF encoding
 
-    if (GML_IsSRSLatLongOrder(osCRS.c_str())) {
-        double tmp = extent[0];
-        extent[0] = extent[1];
-        extent[1] = tmp;
-        tmp = extent[2];
-        extent[2] = extent[3];
-        extent[3] = tmp;
-    }
-
-    // no bbox, only subset parameters, one per label, trim or slice
-    // Note: below we accept only non-rotated grids.
-    // interpolation from extension
-    // http://mapserver.org/ogc/wcs_server.html
-
-    CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
-    CPLString path = "boundedBy.Envelope.axisLabels";
-    std::vector<CPLString> labels = Split(CPLGetXMLValue(coverage, path, ""), " ");
-
-    // construct subsets, assuming X and Y are the first two and that they are trimmed
-    CPLString subsets, tmp;
-    // X
-    tmp.Printf("SUBSET=%s(%.15g,%.15g)", labels[0].c_str(), extent[0], extent[2]);
-    subsets += tmp;
-    // Y
-    tmp.Printf("SUBSET=%s(%.15g,%.15g)", labels[1].c_str(), extent[1], extent[3]);
-    subsets += tmp;
-    // todo: the rest: slice? into bands?
-
-    osRequest.Printf(
-        "%s"
-        "SERVICE=WCS&VERSION=%s"
-        "&REQUEST=GetCoverage&COVERAGEID=%s"
-        "&FORMAT=%s"
-        "&%s",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
-        CPLGetXMLValue( psService, "Version", "" ),
-        osCoverage.c_str(),
-        osFormat.c_str(),
-        subsets.c_str() );
-
-    return osRequest;
+    return request;
 
 }
 
@@ -137,6 +107,7 @@ static bool GridOffsets(CPLXMLNode *grid,
                         CPLString crs,
                         bool swap)
 {
+    // todo: use domain_index
     if (subtype == "RectifiedGrid") {
 
         // for rectified grid the geo transform is from origin and offsetVectors
@@ -220,12 +191,14 @@ static bool GridOffsets(CPLXMLNode *grid,
 
 bool WCSDataset201::ExtractGridInfo()
 {
-    // todo: skip this if required information is already in the service XML
+    // this is for checking what's in service and for filling in empty slots in it
 
     CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
 
-    if( coverage == NULL )
+    if (coverage == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service. RECREATE_SERVICE?");
         return false;
+    }
 
     CPLString subtype = CoverageSubtype(coverage);
     CPLXMLNode *grid = GetGridNode(coverage, subtype);
@@ -251,7 +224,7 @@ bool WCSDataset201::ExtractGridInfo()
         }
     }
 
-    // get CRS from boundedBy and set the native flag to true
+    // get CRS from boundedBy.Envelope and set the native flag to true
     // below we may set the CRS again but that won't be native
     CPLString path = "boundedBy.Envelope";
     CPLXMLNode *envelope = CPLGetXMLNode(coverage, path);
@@ -265,6 +238,21 @@ bool WCSDataset201::ExtractGridInfo()
     // these need to be reported to the user
     // and the user may select mappings name => x, name => y, name => bands
     // or we'll use the first two by default, and possibly make t => bands
+    // this will be managed by
+    // CPLGetXMLValue(psService, "Domain", "") // first two if ""
+
+    CPLString dimension_to_band = CPLGetXMLValue(psService, "DimensionToBand", "");
+    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
+    // todo: check that all non-domain and not dimension_to_band dimensions are sliced to some value
+    // todo: remove x/y (domain) from dimensions
+
+    if (0) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Dimensions 's' are not sliced.");
+        return false;
+    }
+    
+    // find the dimension of dimension_to_band and return what's inside "()"
+    std::vector<CPLString> dimension_to_band_trim = ParseSubset(dimensions, dimension_to_band);
     
     std::vector<CPLString> bbox = ParseBoundingBox(envelope);
     if (labels.size() < 2 || bbox.size() < 2) {
@@ -288,8 +276,26 @@ bool WCSDataset201::ExtractGridInfo()
     path = "limits.GridEnvelope";
     std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path)); // todo: should we swap?
     std::vector<int> grid_size;
-    grid_size.push_back(size[1][0] - size[0][0] + 1);
-    grid_size.push_back(size[1][1] - size[0][1] + 1);
+    // we need the indexes of x and y and possibly dimension_to_band
+
+    std::vector<int> domain_index = IndexOf(labels, Split(CPLGetXMLValue(psService, "Domain", ""), ","));
+    if (Contains(domain_index, -1)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Axis in given domain does not exist in coverage.");
+        return false;
+    }
+    
+    if (domain_index.size() == 0) {
+        // the first two
+        domain_index.push_back(0);
+        domain_index.push_back(1);
+    }
+    
+    grid_size.push_back(size[1][domain_index[0]] - size[0][domain_index[0]] + 1);
+    grid_size.push_back(size[1][domain_index[1]] - size[0][domain_index[1]] + 1);
+
+    int dimension_to_band_index = IndexOf(labels, dimension_to_band); // returns -1 if dimension_to_band is ""
+    // todo: can't be domain_index
+    
     std::vector<std::vector<double>> offsets;
     if (!GridOffsets(grid, offsets, labels, subtype, crs, swap)) {
         return false;
@@ -297,7 +303,7 @@ bool WCSDataset201::ExtractGridInfo()
 
     SetGeometry(env, axisOrder, grid_size, offsets);
 
-    crs = CPLGetXMLValue(psService, "SRS", "");
+    crs = CPLGetXMLValue(psService, "CRS", "");
     if (crs != "" && crs != osCRS) {
         // the user has requested that this dataset is in different
         // crs than the server native crs
@@ -314,6 +320,10 @@ bool WCSDataset201::ExtractGridInfo()
 
     // todo: ElevationDomain, DimensionDomain
 
+    // The range
+    // Default is to include all (types permitting?) unless dimension_to_band
+    // Can also be controlled with Range parameter
+       
     // assuming here that the attributes are defined by swe:DataRecord
     path = "rangeType";
     CPLXMLNode *record = CPLGetXMLNode(coverage, (path + ".DataRecord").c_str());
@@ -321,47 +331,140 @@ bool WCSDataset201::ExtractGridInfo()
         CPLError(CE_Failure, CPLE_AppDefined, "Attributes are not defined in a DataRecord, giving up.");
         return false;
     }
+    
+    // if Range is set remove those not in it
+    std::vector<CPLString> range = Split(CPLGetXMLValue(psService, "Range", ""), ",");
+    // todo: add check for range subsetting profile existence in server metadata here
+    std::vector<CPLString> band_name;
+    unsigned int range_index = 0; // index for reading from range
+    bool in_band_range = false;
+
     unsigned int bands = 0;
+    std::vector<CPLString> band_descr;
+    std::vector<CPLString> band_nodata;
+    std::vector<CPLString> band_interval;
+    
     for (CPLXMLNode *field = record->psChild; field != NULL; field = field->psNext) {
         if (field->eType != CXT_Element || !EQUAL(field->pszValue, "field")) {
             continue;
         }
         CPLString name = CPLGetXMLValue(field, "name", "");
-        CPLString descr = CPLGetXMLValue(field, "Quantity.description", "");
-        CPLString nodata = CPLGetXMLValue(field, "Quantity.nilValues.NilValue", "");
-        if (nodata != "") {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "NoDataValue", nodata.c_str());
+        bool include = true;
+        if (range.size() > 0) {
+            CPLString current_range = range[range_index];
+            if (name == current_range) {
+            } else if (current_range.find(name + ":") != std::string::npos) {
+                in_band_range = true;
+            } else if (current_range.find(":" + name) != std::string::npos) {
+                in_band_range = false;
+            } else {
+                if (!in_band_range) {
+                    include = false;
+                    range_index += 1;
+                    if (range_index >= range.size()) {
+                        break;
+                    }
+                }
+            }
         }
-        path = "Quantity.constraint.AllowedValues.interval";
-        std::vector<double> interval = Flist(Split(CPLGetXMLValue(field, path, ""), " "));
-        bands += 1;
+        if (include) {
+            band_name.push_back(name);
+            band_descr.push_back(CPLGetXMLValue(field, "Quantity.description", ""));
+            band_nodata.push_back(CPLGetXMLValue(field, "Quantity.nilValues.NilValue", ""));
+            path = "Quantity.constraint.AllowedValues.interval";
+            band_interval.push_back(CPLGetXMLValue(field, path, ""));
+            //std::vector<double> interval = Flist(Split(CPLGetXMLValue(field, path, ""), " "));
+            bands += 1;
+        }
     }
-
-    /*
-    bServiceDirty = TRUE;
-    if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL )
-        CPLCreateXMLElementAndValue( psService, "BandIdentifier",
-                                     osBandIdentifier );
-    */
-
-    if (bands) {
-        CPLCreateXMLElementAndValue(psService, "BandCount", CPLString().Printf("%d",bands));
+    if (!bands) {
+        CPLError(CE_Failure, CPLE_AppDefined, "No bands detected or in given range, giving up.");
+        return false;
     }
+    
+    if (dimension_to_band != "") {
+        
+        // if not sliced, must drop all but the first band_name from
+        // bands and that will become the data value and the (possibly
+        // trimmed) dimension becomes the new bands
+        
+        if (dimension_to_band_trim.size() > 0) {
+            if (dimension_to_band_trim[2] == "") {
+                // slice
+            }
+            // dimension_to_band_trim[2] may be a timestamp string ...
+            //bands = dimension_to_band_trim[2] - dimension_to_band_trim[1];
+            // todo: deal with non-integer dimension_to_band_trim values
+            // lookup from generalGridAxis.coefficients?
+            // only size is needed here, i.e, nr of bands
+        } else {
+            // get all
+            bands = size[1][dimension_to_band_index] - size[0][dimension_to_band_index] + 1;
+            // todo: remove all but first from band_* vectors
+        }
+        
+    }
+    
 
-/* -------------------------------------------------------------------- */
-/*      Pick a format type if we don't already have one selected.       */
-/*                                                                      */
+    CPLCreateXMLElementAndValue(psService, "BandCount", CPLString().Printf("%d",bands));
+    // save band information into the meta data
+    // for band type we will need to wait until we get a sample
+    // note: the type is now expected to be the same for all bands in this driver
+    //CPLCreateXMLElementAndValue(psService, "BandType", Join(, ","));
+    
+    CPLCreateXMLElementAndValue(psService, "RangeDescription", Join(band_descr, ","));
+    CPLCreateXMLElementAndValue(psService, "RangeInterval", Join(band_interval, ","));
+    CPLCreateXMLElementAndValue(psService, "NoDataValue", Join(band_nodata, ","));
+
+    // may we should set something for GetCoverage if not set
+    if (range.size() == 0) {
+        CPLCreateXMLElementAndValue(psService, "Range", Join(band_name, ","));
+    }
+    
+    // Dimensions is not needed here except for testing (todo)
+    
+    // set the PreferredFormat value in service, unless is set
+    // by the user, either through direct edit or options
+    CPLString format = CPLGetXMLValue(psService, "PreferredFormat", "");
+    
+    // todo: check the value against list of supported formats
+    
+    if (format == "") {
+        
 /*      We will prefer anything that sounds like TIFF, otherwise        */
 /*      falling back to the first supported format.  Should we          */
 /*      consider preferring the nativeFormat if available?              */
-/* -------------------------------------------------------------------- */
-    CPLString native_format = CPLGetXMLValue(coverage, "ServiceParameters.nativeFormat", "");
-    // format may be native or one the supported
-    // the user may have set it as an option, so test it
-    if (CPLGetXMLValue(psService, "PreferredFormat", NULL ) == NULL) {
-        CPLCreateXMLElementAndValue(psService, "PreferredFormat", native_format);
+
+        char **metadata = GDALPamDataset::GetMetadata(NULL);
+        int i = CSLFindString(metadata, "WCS_GLOBAL#formatSupported");
+        if (i == -1) {
+            format = CPLGetXMLValue(coverage, "ServiceParameters.nativeFormat", "");
+        } else {
+            std::vector<CPLString> format_list = Split(metadata[i], ",");
+            for (unsigned j = 0; j < format_list.size(); ++j) {
+                if (format_list[j].ifind("tiff") != std::string::npos) {
+                    format = format_list[j];
+                    break;
+                }
+            }
+            if (format == "" && format_list.size() > 0) {
+                format = format_list[0];
+            }
+        }
+        if (format == "") {
+            // all attempts to find a format have failed...
+            CPLError(CE_Failure, CPLE_AppDefined, "All attempts to find a format have failed, giving up.");
+            return false;
+        }
+
     }
 
+    if (!CPLSetXMLValue(psService, "PreferredFormat", format)) {
+        CPLCreateXMLElementAndValue(psService, "PreferredFormat", format);
+    }
+
+    // todo: set the Interpolation, check it against InterpolationSupported
+
+    bServiceDirty = TRUE;
     return true;
 }

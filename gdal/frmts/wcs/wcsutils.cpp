@@ -1,6 +1,12 @@
 #include "ogr_spatialref.h"
 #include "wcsutils.h"
 
+CPLString String(const char *str)
+{
+    CPLString retval = str;
+    return retval;
+}
+
 CPLString URLEncode(CPLString str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );
@@ -9,33 +15,148 @@ CPLString URLEncode(CPLString str)
     return str2;
 }
 
+CPLString URLRemoveKey(const char *url, CPLString key)
+{
+    CPLString retval = url;
+    key += "=";
+    while (true) {
+        size_t pos = retval.ifind(key);
+        if (pos != std::string::npos) {
+            if (pos > 0) {
+                size_t end = retval.find("&", pos);
+                retval.erase(pos-1, end - pos + 1);
+            }
+        } else {
+            break;
+        }
+    }
+    return retval;
+}
+
 std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the_first_two)
 {
-    std::vector<CPLString> list;
+    std::vector<CPLString> array;
     char **tokens = CSLTokenizeString2(
         value, delim, CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES | CSLT_HONOURSTRINGS);
     int n = CSLCount(tokens);
     for (int i = 0; i < n; ++i) {
-        list.push_back(tokens[i]);
+        array.push_back(tokens[i]);
     }
     CSLDestroy(tokens);
-    if (swap_the_first_two && list.size() >= 2) {
-        CPLString tmp = list[0];
-        list[0] = list[1];
-        list[1] = tmp;
+    if (swap_the_first_two && array.size() >= 2) {
+        CPLString tmp = array[0];
+        array[0] = array[1];
+        array[1] = tmp;
     }
-    return list;
+    return array;
 }
 
-std::vector<double> Flist(std::vector<CPLString> list,
+CPLString Join(std::vector<CPLString> array, const char *delim, bool swap_the_first_two)
+{
+    CPLString str;
+    for (unsigned int i = 0; i < array.size(); ++i) {
+        if (i > 0) {
+            str += delim;
+        }
+        if (swap_the_first_two) {
+            if (i == 0 && array.size() > 0) {
+                str += array[1];
+            } else if (i == 1) {
+                str += array[0];
+            }
+        } else {
+            str += array[i];
+        }
+    }
+    return str;
+}
+
+std::vector<double> Flist(std::vector<CPLString> array,
                           unsigned int from,
                           unsigned int count)
 {
-    std::vector<double> flist;
-    for (unsigned int i = from; i < list.size() && i < from + count; ++i) {
-        flist.push_back(CPLAtof(list[i]));
+    std::vector<double> retval;
+    for (unsigned int i = from; i < array.size() && i < from + count; ++i) {
+        retval.push_back(CPLAtof(array[i]));
     }
-    return flist;
+    return retval;
+}
+
+int IndexOf(std::vector<CPLString> array, CPLString str)
+{
+    int index = -1;
+    for (unsigned int i = 0; i < array.size(); ++i) {
+        if (array[i] == str) {
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+std::vector<int> IndexOf(std::vector<CPLString> array, std::vector<CPLString> str)
+{
+    std::vector<int> retval;
+    for (unsigned int i = 0; i < str.size(); ++i) {
+        retval.push_back(IndexOf(array, str[i]));
+    }
+    return retval;
+}
+
+bool Contains(std::vector<int> array, int value)
+{
+    for (unsigned int i = 0; i < array.size(); ++i) {
+        if (array[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+CPLString FromParenthesis(CPLString s)
+{
+    size_t pos = s.find_first_of("(");
+    if (pos != std::string::npos) {
+        s.erase(pos, 1);
+    }
+    pos = s.find_last_of(")");
+    if (pos != std::string::npos) {
+        s.erase(pos, 1);
+    }
+    return s;
+}
+
+std::vector<CPLString> ParseSubset(std::vector<CPLString> subset_array, CPLString dim)
+{
+    // array is SUBSET defs, a SUBSET def is dim[,crs](low[,high])
+    std::vector<CPLString> retval;
+    unsigned int i;
+    CPLString params;
+    for (i = 0; i < subset_array.size(); ++i) {
+        params = subset_array[i];
+        size_t pos = params.find(dim + "(");
+        if (pos != std::string::npos) {
+            retval.push_back(""); // crs
+            break;
+        }
+        pos = params.find(dim + ",");
+        if (pos != std::string::npos) {
+            params.erase(0, pos + 1);
+            pos = params.find("(");
+            retval.push_back(params.substr(0, pos - 1));
+            break;
+        }
+    }
+    if (retval.size() > 0) {
+        std::vector<CPLString> params_array = Split(FromParenthesis(params), ",");
+        retval.push_back(params_array[0]);
+        if (params_array.size() > 1) {
+            retval.push_back(params_array[1]);
+        } else {
+            retval.push_back("");
+        }
+    }
+    return retval;
 }
 
 /* -------------------------------------------------------------------- */
@@ -150,7 +271,7 @@ bool DeleteEntryFromCache(CPLString cache_dir, CPLString  key, CPLString value)
         }
         CSLDestroy(data);
     }
-    CSLSave(data2, db_name); // returns 0 in error and for empty lists
+    CSLSave(data2, db_name); // returns 0 in error and for empty arrays
     CSLDestroy(data2);
     if (filename != "") {
         char **folder = VSIReadDir(cache_dir);
@@ -350,16 +471,16 @@ std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
                                                 bool swap_the_first_two)
 {
     std::vector<std::vector<int>> envelope;
-    std::vector<CPLString> list = Split(CPLGetXMLValue(node, "low", ""), " ", swap_the_first_two);
+    std::vector<CPLString> array = Split(CPLGetXMLValue(node, "low", ""), " ", swap_the_first_two);
     std::vector<int> lows;
-    for (unsigned int i = 0; i < list.size(); ++i) {
-        lows.push_back(atoi(list[i]));
+    for (unsigned int i = 0; i < array.size(); ++i) {
+        lows.push_back(atoi(array[i]));
     }
     envelope.push_back(lows);
-    list = Split(CPLGetXMLValue(node, "high", ""), " ", swap_the_first_two);
+    array = Split(CPLGetXMLValue(node, "high", ""), " ", swap_the_first_two);
     std::vector<int> highs;
-    for (unsigned int i = 0; i < list.size(); ++i) {
-        highs.push_back(atoi(list[i]));
+    for (unsigned int i = 0; i < array.size(); ++i) {
+        highs.push_back(atoi(array[i]));
     }
     envelope.push_back(highs);
     return envelope;
