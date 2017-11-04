@@ -81,7 +81,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     m_pszName = CPLStrdup(pszFilename);
 
     m_osDirName = pszFilename;
-    int nInterestTable = -1;
+    int nInterestTable = 0;
     unsigned int unInterestTable = 0;
     const char* pszFilenameWithoutPath = CPLGetFilename(pszFilename);
     if( strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
@@ -90,10 +90,6 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
     {
         nInterestTable = static_cast<int>(unInterestTable);
         m_osDirName = CPLGetPath(m_osDirName);
-    }
-    else
-    {
-        nInterestTable = -1;
     }
 
     if( EQUAL(CPLGetExtension(m_osDirName), "zip") &&
@@ -145,7 +141,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
     if( !FileExists(osa00000001) || !oTable.Open(osa00000001) )
     {
-        if( nInterestTable >= 0 && FileExists(m_pszName) )
+        if( nInterestTable > 0 && FileExists(m_pszName) )
         {
             const char* pszLyrName = CPLSPrintf("a%08x", nInterestTable);
             OGROpenFileGDBLayer* poLayer = new OGROpenFileGDBLayer(
@@ -239,7 +235,7 @@ int OGROpenFileGDBDataSource::Open( const char* pszFilename )
         return FALSE;
     }
 
-    if( m_apoLayers.empty() && nInterestTable >= 0 )
+    if( m_apoLayers.empty() && nInterestTable > 0 )
     {
         if( FileExists(m_pszName) )
         {
@@ -279,7 +275,7 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
     int idx = 0;
     if( oIter != m_osMapNameToIdx.end() )
         idx = oIter->second;
-    if( idx > 0 && (nInterestTable < 0 || nInterestTable == idx) )
+    if( idx > 0 && (nInterestTable <= 0 || nInterestTable == idx) )
     {
         CPLString osFilename = CPLFormFilename(
             m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
