@@ -124,8 +124,8 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 
     if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
     {
-        fpSettings =
-            VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename), "rb");
+        CPLString osTmpFilename(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename));
+        fpSettings = VSIFOpenL(osTmpFilename, "rb");
     }
 
     OGRODSDataSource *poDS = new OGRODSDataSource();
