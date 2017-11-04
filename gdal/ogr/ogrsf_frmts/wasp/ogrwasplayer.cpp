@@ -457,33 +457,35 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 {
                     /*TODO join the multilinestring into linestring*/
                     OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
-                    OGRLineString * oLine = NULL;
-                    OGRPoint * oStart = new OGRPoint;
-                    OGRPoint * oEnd   = new OGRPoint;
+                    OGRLineString * poLine = NULL;
+                    OGRPoint * poStart = new OGRPoint;
+                    OGRPoint * poEnd   = new OGRPoint;
                     for ( int j=0; j<collection->getNumGeometries(); j++ )
                     {
-                        OGRLineString * poLine = static_cast<OGRLineString *>(collection->getGeometryRef(j));
-                        assert(poLine);
-                        poLine->StartPoint( oStart );
+                        OGRLineString * poSubLine = static_cast<OGRLineString *>(collection->getGeometryRef(j));
+                        assert(poSubLine);
+                        poSubLine->StartPoint( poStart );
 
-                        if ( !oLine || !oLine->getNumPoints() || oStart->Equals( oEnd ) )
+                        if( poLine == NULL )
                         {
-                            if (oLine) oLine->addSubLineString ( poLine, 1 );
-                            else oLine = static_cast<OGRLineString *>( poLine->clone() );
-                            oLine->EndPoint( oEnd );
+                            poLine = static_cast<OGRLineString *>( poSubLine->clone() );
+                        }
+                        else if ( poLine->getNumPoints() == 0 || poStart->Equals( poEnd ) )
+                        {
+                            poLine->addSubLineString ( poSubLine, 1 );
                         }
                         else
                         {
-                            Boundary oB = {oLine, dfZ, oZones[i].dfZ};
+                            Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                             oBoundaries.push_back( oB );
-                            oLine = static_cast<OGRLineString *>( poLine->clone() );
-                            oLine->EndPoint( oEnd );
+                            poLine = static_cast<OGRLineString *>( poSubLine->clone() );
                         }
+                        poLine->EndPoint( poEnd );
                     }
-                    Boundary oB = {oLine, dfZ, oZones[i].dfZ};
+                    Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                     oBoundaries.push_back( oB );
-                    delete oStart;
-                    delete oEnd;
+                    delete poStart;
+                    delete poEnd;
                 }
                 break;
                 case wkbPolygon:
