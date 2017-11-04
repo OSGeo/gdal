@@ -359,7 +359,7 @@ class OGRDXFDataSource : public OGRDataSource
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oDimStyleTable;
 
-    std::map<CPLString,CPLString> oLineTypeTable;
+    std::map<CPLString, std::vector<double> > oLineTypeTable;
 
     bool                bInlineBlocks;
     bool                bMergeBlockGeometries;
@@ -400,7 +400,7 @@ class OGRDXFDataSource : public OGRDataSource
                                              const char *pszProperty );
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
-    const char         *LookupLineType( const char *pszName );
+    std::vector<double> LookupLineType( const char *pszName );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
 

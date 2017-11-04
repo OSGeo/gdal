@@ -219,6 +219,10 @@ The intention is that "dot dash" style patterns will be preserved when written
 to DXF and that specific linetypes can be predefined in the header template,
 and referenced using the Linetype field if desired.<p>
 
+The DXF writer does not support linetype scaling. DXF files with the $LTSCALE
+system variable or group code 48 set to something other than 1 may not
+round-trip correctly.<p>
+
 <h3>Units</h2>
 
 At the moment GDAL writes DXF to report the measurement units as "English - Inches".

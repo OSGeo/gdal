@@ -134,6 +134,10 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         poFeature->SetField( "Linetype", TextRecode(pszValue) );
         break;
 
+      case 48:
+        oStyleProperties["LinetypeScale"] = pszValue;
+        break;
+
       case 370:
       case 39:
         oStyleProperties["LineWeight"] = pszValue;
@@ -233,8 +237,23 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Do we have a dash/dot line style?                               */
 /* -------------------------------------------------------------------- */
-    const char *pszPattern = poDS->LookupLineType(
+    const std::vector<double> oLineType = poDS->LookupLineType(
         poFeature->GetFieldAsString("Linetype") );
+
+    double dfLineTypeScale = CPLAtof( poDS->GetVariable( "$LTSCALE", "1.0" ) );
+    if( oStyleProperties.count( "LinetypeScale" ) > 0 )
+        dfLineTypeScale *= CPLAtof( oStyleProperties["LinetypeScale"] );
+
+    CPLString osPattern;
+    for( std::vector<double>::const_iterator oIt = oLineType.begin();
+        oIt != oLineType.end(); oIt++ )
+    {
+        // this is the format specifier %g followed by a literal 'g'
+        osPattern += CPLString().Printf( "%.11gg ", *oIt * dfLineTypeScale );
+    }
+
+    if( osPattern.length() > 0 )
+        osPattern.erase( osPattern.end() - 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Format the style string.                                        */
@@ -257,10 +276,10 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
         osStyle += CPLString().Printf( ",w:%sg", szBuffer );
     }
 
-    if( pszPattern )
+    if( osPattern != "" )
     {
         osStyle += ",p:\"";
-        osStyle += pszPattern;
+        osStyle += osPattern;
         osStyle += "\"";
     }
 
