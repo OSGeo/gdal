@@ -958,7 +958,7 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (1)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"12.6999999999999993g 6.3499999999999996g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"12.7g 6.1234567892g")':
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (1)" )
         return 'fail'
@@ -972,7 +972,7 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (2)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"0.0g 4.0g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"0g 4g")':
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (2)" )
         return 'fail'
@@ -986,7 +986,7 @@ def ogr_dxf_18():
         gdaltest.post_reason( 'Got wrong linetype. (3)' )
         return 'fail'
 
-    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")':
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:2g,p:"3g 4g")':
         print(feat.GetStyleString())
         gdaltest.post_reason( "got wrong style string (3)" )
         return 'fail'
@@ -2933,6 +2933,36 @@ def ogr_dxf_44():
     return 'success'
 
 ###############################################################################
+# Test linetype scaling (#7129)
+
+def ogr_dxf_45():
+
+    ds = ogr.Open('data/linetypes.dxf')
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DASHED2':
+        gdaltest.post_reason( 'Got wrong linetype (1)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#000000,p:"12.5g 6.25g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( 'Got wrong style string (1)' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DASHED2':
+        gdaltest.post_reason( 'Got wrong linetype (2)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#000000,p:"0.625g 0.3125g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( 'Got wrong style string (2)' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -2989,6 +3019,7 @@ gdaltest_list = [
     ogr_dxf_42,
     ogr_dxf_43,
     ogr_dxf_44,
+    ogr_dxf_45,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

@@ -455,7 +455,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
     char szLineBuf[257];
     int nCode = 0;
     CPLString osLineTypeName;
-    CPLString osLineTypeDef;
+    std::vector<double> oLineTypeDef;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
     {
@@ -467,18 +467,11 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
             break;
 
           case 49:
-          {
-              if( osLineTypeDef != "" )
-                  osLineTypeDef += " ";
-
-              if( szLineBuf[0] == '-' )
-                  osLineTypeDef += szLineBuf+1;
-              else
-                  osLineTypeDef += szLineBuf;
-
-              osLineTypeDef += "g";
-          }
-          break;
+            if( szLineBuf[0] == '-' )
+                oLineTypeDef.push_back( CPLAtof(szLineBuf+1) );
+            else
+                oLineTypeDef.push_back( CPLAtof(szLineBuf) );
+            break;
 
           default:
             break;
@@ -490,8 +483,8 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         return false;
     }
 
-    if( osLineTypeDef != "" )
-        oLineTypeTable[osLineTypeName] = osLineTypeDef;
+    if( oLineTypeDef.size() )
+        oLineTypeTable[osLineTypeName] = oLineTypeDef;
 
     if( nCode == 0 )
         UnreadValue();
@@ -502,13 +495,13 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
 /*                           LookupLineType()                           */
 /************************************************************************/
 
-const char *OGRDXFDataSource::LookupLineType( const char *pszName )
+std::vector<double> OGRDXFDataSource::LookupLineType( const char *pszName )
 
 {
     if( oLineTypeTable.count(pszName) > 0 )
         return oLineTypeTable[pszName];
     else
-        return NULL;
+        return std::vector<double>(); // empty, represents a continuous line
 }
 
 /************************************************************************/

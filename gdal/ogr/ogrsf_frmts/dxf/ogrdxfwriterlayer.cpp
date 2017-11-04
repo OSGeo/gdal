@@ -768,7 +768,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
 
     if( !osLineType.empty()
-        && (poDS->oHeaderDS.LookupLineType( osLineType ) != NULL
+        && (poDS->oHeaderDS.LookupLineType( osLineType ).size() > 0
             || oNewLineTypes.count(osLineType) > 0 ) )
     {
         // Already define -> just reference it.
@@ -802,7 +802,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
                 {
                     osLineType.Printf( "AutoLineType-%d", nNextAutoID++ );
                 }
-                while( poDS->oHeaderDS.LookupLineType(osLineType) != NULL );
+                while( poDS->oHeaderDS.LookupLineType(osLineType).size() > 0 );
             }
         }
 
