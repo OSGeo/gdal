@@ -67,7 +67,7 @@ def ogr_dxf_1():
         return 'fail'
 
     fc = gdaltest.dxf_layer.GetFeatureCount()
-    if fc != 16:
+    if fc != 22:
         gdaltest.post_reason( 'did not get expected feature count, got %d' % fc)
         return 'fail'
 
@@ -255,20 +255,40 @@ def ogr_dxf_8():
         gdaltest.post_reason( 'did not get expected geometry type.' )
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((63.862871944482457 149.209935992088333,24.341960668550669 111.934531038652722),(72.754404848874373 139.782768575383642,62.744609795879391 150.395563330366286),(33.233493572942614 102.507363621948002,23.2236985199476 113.120158376930675),(63.862871944482457 149.209935992088333,59.187727781045531 147.04077688455709),(63.862871944482457 149.209935992088333,61.424252078251662 144.669522208001183),(24.341960668550669 111.934531038652722,26.78058053478146 116.474944822739886),(24.341960668550669 111.934531038652722,29.017104831987599 114.103690146183979))' ):
+    if ogrtest.check_feature_geometry( feat, 'MULTILINESTRING ((63.8628719444825 149.209935992088,24.3419606685507 111.934531038653),(72.3255686642474 140.237438265109,63.0051995752285 150.119275371538),(32.8046573883157 102.962033311673,23.4842882992968 112.843870418103))' ):
+        return 'fail'
+
+    # Dimension arrowheads
+    feat = gdaltest.dxf_layer.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryType() != ogr.wkbPolygon25D:
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POLYGON Z ((61.7583023958313 147.797704380064 0,63.8628719444825 149.209935992088 0,62.3300839753339 147.191478127097 0,61.7583023958313 147.797704380064 0))' ):
+        return 'fail'
+
+    feat = gdaltest.dxf_layer.GetNextFeature()
+    geom = feat.GetGeometryRef()
+
+    if geom.GetGeometryType() != ogr.wkbPolygon25D:
+        gdaltest.post_reason( 'did not get expected geometry type.' )
+        return 'fail'
+
+    if ogrtest.check_feature_geometry( feat, 'POLYGON Z ((26.4465302172018 113.346762650677 0,24.3419606685507 111.934531038653 0,25.8747486376992 113.952988903644 0,26.4465302172018 113.346762650677 0))' ):
         return 'fail'
 
     # Dimension text
     feat = gdaltest.dxf_layer.GetNextFeature()
-
     geom = feat.GetGeometryRef()
 
     if ogrtest.check_feature_geometry( feat, 'POINT (42.815907752635709 131.936242584545397)' ):
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"54.3264",p:5,a:43.3,s:2.5g)'
+    expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g)'
     if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
+        gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(),expected_style) )
         return 'fail'
 
     return 'success'
@@ -278,8 +298,8 @@ def ogr_dxf_8():
 
 def ogr_dxf_9():
 
-    # Skip two dimensions each with a line and text.
-    for x in range(4):
+    # Skip two dimensions each with a line, two arrowheads and text.
+    for x in range(8):
         feat = gdaltest.dxf_layer.GetNextFeature()
 
     # block (merged geometries)
@@ -2963,6 +2983,170 @@ def ogr_dxf_45():
     return 'success'
 
 ###############################################################################
+# Test handling of DIMENSION anonymous block insertion (#7120)
+
+def ogr_dxf_46():
+
+    ds = ogr.Open('data/dimension.dxf')
+    lyr = ds.GetLayer(0)
+
+    # Extension lines
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (320000.0 5820010.0625 0,320000.0 5820010.43087258 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (320010.0 5820010.0625 0,320010.0 5820010.43087258 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Dimension arrow lines
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (320000.18 5820010.25087258 0,320004.475225102 5820010.25087258 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING Z (320009.82 5820010.25087258 0,320005.524774898 5820010.25087258 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Arrowheads
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((320000.18 5820010.28087259,320000.18 5820010.22087258,320000.0 5820010.25087258,320000.18 5820010.28087259))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((320009.82 5820010.28087259,320009.82 5820010.22087258,320010.0 5820010.25087258,320009.82 5820010.28087259))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Text
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT Z (320004.537844475 5820010.16240737 0)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:1,s:0.18g,c:#000000,a:0)':
+        gdaltest.post_reason( 'Wrong style string on DIMENSION text from block' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test handling of DIMENSION fallback when there is no anonymous block (#7120)
+
+def ogr_dxf_47():
+
+    ds = ogr.Open('data/dimension-entities-only.dxf')
+    lyr = ds.GetLayer(0)
+
+    # Basic DIMENSION inheriting default styling
+
+    # Dimension line and extension lines
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((320010.0 5820010.25087258,320000.0 5820010.25087258),(320010.0 5820010.0625,320010.0 5820010.43087258),(320000.0 5820010.0625,320000.0 5820010.43087258))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Arrowheads
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320009.82 5820010.28087259 0,320010.0 5820010.25087258 0,320009.82 5820010.22087258 0,320009.82 5820010.28087259 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320000.18 5820010.22087258 0,320000.0 5820010.25087258 0,320000.18 5820010.28087259 0,320000.18 5820010.22087258 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Text
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT (320005.0 5820010.25087258)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:11,s:0.18g)':
+        gdaltest.post_reason( 'Wrong style string on first DIMENSION text' )
+        f.DumpReadable()
+        return 'fail'
+
+    # DIMENSION with style overrides
+
+    # Dimension line
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((320005 5820005,320000 5820010))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Arrowheads
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320004.116116524 5820006.23743687 0,320005 5820005 0,320003.762563133 5820005.88388348 0,320004.116116524 5820006.23743687 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320000.883883476 5820008.76256313 0,320000 5820010 0,320001.237436867 5820009.11611652 0,320000.883883476 5820008.76256313 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Text
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT (320002.5 5820007.5)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"7.1",p:11,a:-45,s:0.48g)':
+        gdaltest.post_reason( 'Wrong style string on second DIMENSION text' )
+        f.DumpReadable()
+        return 'fail'
+
+    # DIMENSION inheriting styles from a custom DIMSTYLE
+
+    # Dimension line
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((320000.0 5820001.5,320005.0 5820001.5),(320000.0 5820002.4,320000 5820001),(320005.0 5820002.4,320005 5820001))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Arrowheads
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320000.18 5820001.47 0,320000.0 5820001.5 0,320000.18 5820001.53 0,320000.18 5820001.47 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON Z ((320004.82 5820001.53 0,320005.0 5820001.5 0,320004.82 5820001.47 0,320004.82 5820001.53 0))') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # Text
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POINT (320001.5 5820001.5)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+        # should not be upside down
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g)':
+        gdaltest.post_reason( 'Wrong style string on third DIMENSION text' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -3020,6 +3204,8 @@ gdaltest_list = [
     ogr_dxf_43,
     ogr_dxf_44,
     ogr_dxf_45,
+    ogr_dxf_46,
+    ogr_dxf_47,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

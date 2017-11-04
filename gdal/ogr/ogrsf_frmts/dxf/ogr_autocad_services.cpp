@@ -429,11 +429,11 @@ const unsigned char *ACGetColorTable()
 
 const int* ACGetKnownDimStyleCodes()
 {
-        static const int aiKnownCodes[] = {
-                40, 41, 42, 44, 75, 76, 77, 140, 147, 341, 0
-        };
+    static const int aiKnownCodes[] = {
+        40, 41, 42, 44, 75, 76, 77, 140, 147, 271, 341, 0
+    };
 
-        return aiKnownCodes;
+    return aiKnownCodes;
 }
 
 /************************************************************************/
@@ -443,22 +443,23 @@ const int* ACGetKnownDimStyleCodes()
 const char *ACGetDimStylePropertyName( const int iDimStyleCode )
 
 {
-        // We are only interested in properties required by the DIMENSION
-        // and LEADER code. Return NULL for other properties.
-        switch (iDimStyleCode)
-        {
-                case 40: return "DIMSCALE";
-                case 41: return "DIMASZ";
-                case 42: return "DIMEXO";
-                case 44: return "DIMEXE";
-                case 75: return "DIMSE1";
-                case 76: return "DIMSE2";
-                case 77: return "DIMTAD";
-                case 140: return "DIMTXT";
-                case 147: return "DIMGAP";
-                case 341: return "DIMLDRBLK";
-                default: return NULL;
-        }
+    // We are only interested in properties required by the DIMENSION
+    // and LEADER code. Return NULL for other properties.
+    switch (iDimStyleCode)
+    {
+        case 40: return "DIMSCALE";
+        case 41: return "DIMASZ";
+        case 42: return "DIMEXO";
+        case 44: return "DIMEXE";
+        case 75: return "DIMSE1";
+        case 76: return "DIMSE2";
+        case 77: return "DIMTAD";
+        case 140: return "DIMTXT";
+        case 147: return "DIMGAP";
+        case 271: return "DIMDEC";
+        case 341: return "DIMLDRBLK";
+        default: return NULL;
+    }
 }
 
 /************************************************************************/
@@ -468,24 +469,25 @@ const char *ACGetDimStylePropertyName( const int iDimStyleCode )
 const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
 
 {
-        // We are only interested in properties required by the DIMENSION
-        // and LEADER code. Return "0" for other, unknown properties.
-        // These defaults were obtained from the Express\defaults.scr file
-        // in an AutoCAD installation.
-        switch (iDimStyleCode)
-        {
-                case 40: return "1.0";
-                case 41: return "0.18";
-                case 42: return "0.0625";
-                case 44: return "0.18";
-                case 75: return "0";
-                case 76: return "0";
-                case 77: return "0";
-                case 140: return "0.18";
-                case 147: return "0.09";
-                case 341: return "";
-                default: return "0";
-        }
+    // We are only interested in properties required by the DIMENSION
+    // and LEADER code. Return "0" for other, unknown properties.
+    // These defaults were obtained from the Express\defaults.scr file
+    // in an AutoCAD installation.
+    switch (iDimStyleCode)
+    {
+        case 40: return "1.0";
+        case 41: return "0.18";
+        case 42: return "0.0625";
+        case 44: return "0.18";
+        case 75: return "0";
+        case 76: return "0";
+        case 77: return "0";
+        case 140: return "0.18";
+        case 147: return "0.09";
+        case 271: return "4";
+        case 341: return "";
+        default: return "0";
+    }
 }
 
 /************************************************************************/

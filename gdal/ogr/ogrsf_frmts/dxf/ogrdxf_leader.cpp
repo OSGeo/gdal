@@ -592,8 +592,10 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     OGRDXFFeature *poArrowheadFeature = poFeature->CloneDXFFeature();
 
     // Convert the block handle to a block name.
-    const CPLString osBlockName =
-        poDS->GetBlockNameByRecordHandle( osBlockHandle );
+    CPLString osBlockName = "";
+
+    if( osBlockHandle != "" )
+        osBlockName = poDS->GetBlockNameByRecordHandle( osBlockHandle );
 
     // If the block doesn't exist, we need to fall back to the
     // default arrowhead.
