@@ -323,7 +323,8 @@ void OGRDXFLayer::PrepareLineStyle( OGRDXFFeature* const poFeature,
         oIt != oLineType.end(); ++oIt )
     {
         // this is the format specifier %g followed by a literal 'g'
-        osPattern += CPLString().Printf( "%.11gg ", *oIt * dfLineTypeScale );
+        osPattern += CPLString().Printf( "%.11gg ",
+            fabs( *oIt ) * dfLineTypeScale );
     }
 
     if( osPattern.length() > 0 )

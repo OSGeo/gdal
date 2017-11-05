@@ -599,11 +599,12 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
         // If the unit is other than 'g' we really should be trying to
         // do some type of transformation - but what to do?  Pretty hard.
 
-        // Even entries are "pen down" represented as negative in DXF.
+        // Even entries are "pen down" represented as positive in DXF.
+        // "Pen up" entries (gaps) are represented as negative.
         if( i%2 == 0 )
-            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
-        else
             osDXFEntry.Printf( " 49\n%s\n 74\n0\n", osAmount.c_str() );
+        else
+            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
 
         osDef += osDXFEntry;
 
