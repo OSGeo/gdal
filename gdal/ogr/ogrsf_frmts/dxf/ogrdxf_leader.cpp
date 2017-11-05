@@ -628,7 +628,7 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     try
     {
         poArrowheadFeature = InsertBlockInline( osBlockName,
-            oTransformer, NULL, poArrowheadFeature, apoExtraFeatures,
+            oTransformer, poArrowheadFeature, apoExtraFeatures,
             true, false );
     }
     catch( const std::invalid_argument& )
