@@ -106,7 +106,7 @@ void OGRDXFLayer::ResetReading()
 /*      or all entity types.                                            */
 /************************************************************************/
 
-void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
+void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
                                             int nCode, char *pszValue )
 
 {
@@ -127,7 +127,7 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
       break;
 
       case 62:
-        oStyleProperties["Color"] = pszValue;
+        poFeature->oStyleProperties["Color"] = pszValue;
         break;
 
       case 6:
@@ -135,12 +135,12 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
         break;
 
       case 48:
-        oStyleProperties["LinetypeScale"] = pszValue;
+        poFeature->oStyleProperties["LinetypeScale"] = pszValue;
         break;
 
       case 370:
       case 39:
-        oStyleProperties["LineWeight"] = pszValue;
+        poFeature->oStyleProperties["LineWeight"] = pszValue;
         break;
 
       case 5:
@@ -169,15 +169,15 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
 
       // OCS vector.
       case 210:
-        oStyleProperties["210_N.dX"] = pszValue;
+        poFeature->oOCS.dfX = CPLAtof( pszValue );
         break;
 
       case 220:
-        oStyleProperties["220_N.dY"] = pszValue;
+        poFeature->oOCS.dfY = CPLAtof( pszValue );
         break;
 
       case 230:
-        oStyleProperties["230_N.dZ"] = pszValue;
+        poFeature->oOCS.dfZ = CPLAtof( pszValue );
         break;
 
       default:
@@ -186,10 +186,35 @@ void OGRDXFLayer::TranslateGenericProperty( OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                          PrepareLineStyle()                          */
+/*                        PrepareFeatureStyle()                         */
+/*                                                                      */
+/*     - poByBlockStyleProps: Style properties to use for               */
+/*       attributes with ByBlock values set.                            */
 /************************************************************************/
 
-void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
+void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
+    // Not sure of the best way of telling these apart.
+    if( poFeature->oStyleProperties.count( "WantBrush" ) )
+        PrepareHatchStyle( poFeature, poBlockFeature );
+    else 
+        PrepareLineStyle( poFeature, poBlockFeature );
+}
+
+/************************************************************************/
+/*                          PrepareLineStyle()                          */
+/*                                                                      */
+/*     - poBlockFeature: If this is not NULL, style properties on       */
+/*       poFeature with ByBlock values will be replaced with the        */
+/*       corresponding property from poBlockFeature.  If this           */
+/*       parameter is supplied it is assumed that poFeature is a        */
+/*       clone, not an "original" feature object.                       */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareLineStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
 
 {
     CPLString osLayer = poFeature->GetFieldAsString("Layer");
@@ -200,16 +225,38 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
     const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
     const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
 
+    // TODO put in object hidden here
+
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.                            */
 /* -------------------------------------------------------------------- */
     int nColor = 256;
 
-    if( oStyleProperties.count("Color") > 0 )
-        nColor = atoi(oStyleProperties["Color"]);
+    if( poFeature->oStyleProperties.count("Color") > 0 )
+        nColor = atoi(poFeature->oStyleProperties["Color"]);
 
+    // Use ByBlock color?
+    if( nColor < 1 )
+    {
+        if( poBlockFeature &&
+            poBlockFeature->oStyleProperties.count("Color") > 0 )
+        {
+            // Inherit color from the owning block
+            nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
+
+            // Use the inherited color if we regenerate the style string
+            // again during block insertion
+            poFeature->oStyleProperties["Color"] =
+                poBlockFeature->oStyleProperties["Color"];
+        }
+        else
+        {
+            // Default to black/white
+            nColor = 7;
+        }
+    }
     // Use layer color?
-    if( nColor < 1 || nColor > 255 )
+    else if( nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
         if( pszValue != NULL )
@@ -224,12 +271,26 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     double dfWeight = 0.0;
 
-    if( oStyleProperties.count("LineWeight") > 0 )
+    if( poFeature->oStyleProperties.count("LineWeight") > 0 )
     {
-        CPLString osWeight = oStyleProperties["LineWeight"];
+        CPLString osWeight = poFeature->oStyleProperties["LineWeight"];
 
-        if( osWeight == "-1" )
+        // Use ByBlock lineweight?
+        if( osWeight == "-2" && poBlockFeature &&
+            poBlockFeature->oStyleProperties.count("LineWeight") > 0 )
+        {
+            // Inherit lineweight from the owning block
+            osWeight = poBlockFeature->oStyleProperties["LineWeight"];
+
+            // Use the inherited lineweight if we regenerate the style string
+            // again during block insertion
+            poFeature->oStyleProperties["LineWeight"] = osWeight;
+        }
+        // Use layer lineweight?
+        else if( osWeight == "-1" )
+        {
             osWeight = poDS->LookupLayerProperty(osLayer,"LineWeight");
+        }
 
         dfWeight = CPLAtof(osWeight) / 100.0;
     }
@@ -237,12 +298,25 @@ void OGRDXFLayer::PrepareLineStyle( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Do we have a dash/dot line style?                               */
 /* -------------------------------------------------------------------- */
-    const std::vector<double> oLineType = poDS->LookupLineType(
-        poFeature->GetFieldAsString("Linetype") );
+    const char *pszLinetype = poFeature->GetFieldAsString("Linetype");
 
+    // Use ByBlock line style?
+    if( pszLinetype && EQUAL( pszLinetype, "ByBlock" ) && poBlockFeature )
+    {
+        pszLinetype = poBlockFeature->GetFieldAsString("Linetype");
+
+        // Use the inherited line style if we regenerate the style string
+        // again during block insertion
+        if( pszLinetype )
+            poFeature->SetField( "Linetype", pszLinetype );
+    }
+
+    const std::vector<double> oLineType = poDS->LookupLineType( pszLinetype );
+
+    // Linetype scale is not inherited from the block feature
     double dfLineTypeScale = CPLAtof( poDS->GetVariable( "$LTSCALE", "1.0" ) );
-    if( oStyleProperties.count( "LinetypeScale" ) > 0 )
-        dfLineTypeScale *= CPLAtof( oStyleProperties["LinetypeScale"] );
+    if( poFeature->oStyleProperties.count( "LinetypeScale" ) > 0 )
+        dfLineTypeScale *= CPLAtof( poFeature->oStyleProperties["LinetypeScale"] );
 
     CPLString osPattern;
     for( std::vector<double>::const_iterator oIt = oLineType.begin();
@@ -429,30 +503,6 @@ public:
 };
 
 /************************************************************************/
-/*                        ApplyOCSTransformer()                         */
-/*                                                                      */
-/*      Apply a transformation from OCS to world coordinates if an      */
-/*      OCS vector was found in the object.                             */
-/************************************************************************/
-
-void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
-
-{
-    if( oStyleProperties.count("210_N.dX") == 0
-        || oStyleProperties.count("220_N.dY") == 0
-        || oStyleProperties.count("230_N.dZ") == 0 )
-        return;
-
-    double adfN[3];
-
-    adfN[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-    adfN[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-    adfN[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
-
-    ApplyOCSTransformer( poGeometry, adfN );
-}
-
-/************************************************************************/
 /*                         ApplyOCSTransformer()                        */
 /*                                                                      */
 /*      Apply a transformation from the given OCS to world              */
@@ -460,11 +510,14 @@ void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry )
 /************************************************************************/
 
 void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry,
-    double adfN[3] )
+    const DXFTriple& oOCS )
 
 {
-    if( poGeometry == NULL || adfN == NULL )
+    if( poGeometry == NULL )
         return;
+
+    double adfN[3];
+    oOCS.ToArray( adfN );
 
     OCSTransformer oTransformer( adfN );
 
@@ -638,8 +691,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 /* -------------------------------------------------------------------- */
     int nColor = 256;
 
-    if( oStyleProperties.count("Color") > 0 )
-        nColor = atoi(oStyleProperties["Color"]);
+    if( poFeature->oStyleProperties.count("Color") > 0 )
+        nColor = atoi(poFeature->oStyleProperties["Color"]);
 
     // Use layer color?
     if( nColor < 1 || nColor > 255 )
@@ -802,7 +855,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
         poGeom = new OGRPoint( dfX, dfY, dfZ );
     else
         poGeom = new OGRPoint( dfX, dfY );
-    ApplyOCSTransformer( poGeom );
+    poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */
@@ -871,8 +924,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
 /* -------------------------------------------------------------------- */
     int nColor = 256;
 
-    if( oStyleProperties.count("Color") > 0 )
-        nColor = atoi(oStyleProperties["Color"]);
+    if( poFeature->oStyleProperties.count("Color") > 0 )
+        nColor = atoi(poFeature->oStyleProperties["Color"]);
 
     // Use layer color?
     if( nColor < 1 || nColor > 255 )
@@ -1202,7 +1255,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
         smoothPolyline.Close();
 
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
-    ApplyOCSTransformer( poGeom );
+    poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
@@ -1459,7 +1512,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     OGRGeometry* poGeom = smoothPolyline.Tesselate();
 
     if( (nPolylineFlag & 8) == 0 )
-        ApplyOCSTransformer( poGeom );
+        poFeature->ApplyOCSTransformer( poGeom );
     poFeature->SetGeometryDirectly( poGeom );
 
     PrepareLineStyle( poFeature );
@@ -1534,7 +1587,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
     if( !bHaveZ )
         poCircle->flattenTo2D();
 
-    ApplyOCSTransformer( poCircle );
+    poFeature->ApplyOCSTransformer( poCircle );
     poFeature->SetGeometryDirectly( poCircle );
     PrepareLineStyle( poFeature );
 
@@ -1627,32 +1680,24 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
 /* -------------------------------------------------------------------- */
 /*      Setup coordinate system                                         */
 /* -------------------------------------------------------------------- */
-    if( oStyleProperties.count("210_N.dX") != 0
-        && oStyleProperties.count("220_N.dY") != 0
-        && oStyleProperties.count("230_N.dZ") != 0 )
+    double adfN[3];
+    poFeature->oOCS.ToArray( adfN );
+
+    if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
     {
-        double adfN[3] = {
-            CPLAtof(oStyleProperties["210_N.dX"]),
-            CPLAtof(oStyleProperties["220_N.dY"]),
-            CPLAtof(oStyleProperties["230_N.dZ"])
-        };
+        OCSTransformer oTransformer( adfN, true );
 
-        if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
-        {
-            OCSTransformer oTransformer( adfN, true );
+        bApplyOCSTransform = true;
 
-            bApplyOCSTransform = true;
+        double *x = &dfX1;
+        double *y = &dfY1;
+        double *z = &dfZ1;
+        oTransformer.InverseTransform( 1, x, y, z );
 
-            double *x = &dfX1;
-            double *y = &dfY1;
-            double *z = &dfZ1;
-            oTransformer.InverseTransform( 1, x, y, z );
-
-            x = &dfAxisX;
-            y = &dfAxisY;
-            z = &dfAxisZ;
-            oTransformer.InverseTransform( 1, x, y, z );
-        }
+        x = &dfAxisX;
+        y = &dfAxisY;
+        z = &dfAxisZ;
+        oTransformer.InverseTransform( 1, x, y, z );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1687,7 +1732,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
             poEllipse->flattenTo2D();
 
         if( bApplyOCSTransform == true )
-            ApplyOCSTransformer( poEllipse );
+            poFeature->ApplyOCSTransformer( poEllipse );
         poFeature->SetGeometryDirectly( poEllipse );
     }
     else
@@ -1783,7 +1828,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateARC()
         if( !bHaveZ )
             poArc->flattenTo2D();
 
-        ApplyOCSTransformer( poArc );
+        poFeature->ApplyOCSTransformer( poArc );
         poFeature->SetGeometryDirectly( poArc );
     }
     else
@@ -2102,7 +2147,7 @@ OGRDXFFeature *OGRDXFLayer::Translate3DFACE()
     poPoly->addRingDirectly(poLR);
     poPoly->closeRings();
 
-    ApplyOCSTransformer( poLR );
+    poFeature->ApplyOCSTransformer( poLR );
     poFeature->SetGeometryDirectly( poPoly );
 
     /* PrepareLineStyle( poFeature ); */
@@ -2295,9 +2340,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
 
     delete[] poCorners;
 
-    ApplyOCSTransformer(poFinalGeom);
+    poFeature->ApplyOCSTransformer( poFinalGeom );
 
-    poFeature->SetGeometryDirectly(poFinalGeom);
+    poFeature->SetGeometryDirectly( poFinalGeom );
 
     if (nCode == 0)
         poDS->UnreadValue();
@@ -2394,28 +2439,10 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
     poFeature->bIsBlockReference = true;
     poFeature->osBlockName = osBlockName;
     poFeature->dfBlockAngle = oTransformer.dfAngle * 180 / M_PI;
-    poFeature->adfBlockScale[0] = oTransformer.dfXScale;
-    poFeature->adfBlockScale[1] = oTransformer.dfYScale;
-    poFeature->adfBlockScale[2] = oTransformer.dfZScale;
-
-    if( oStyleProperties.count("210_N.dX") != 0
-        && oStyleProperties.count("220_N.dY") != 0
-        && oStyleProperties.count("230_N.dZ") != 0 )
-    {
-        poFeature->adfBlockOCS[0] = CPLAtof(oStyleProperties["210_N.dX"]);
-        poFeature->adfBlockOCS[1] = CPLAtof(oStyleProperties["220_N.dY"]);
-        poFeature->adfBlockOCS[2] = CPLAtof(oStyleProperties["230_N.dZ"]);
-    }
-    else 
-    {
-        poFeature->adfBlockOCS[0] = 0.0;
-        poFeature->adfBlockOCS[1] = 0.0;
-        poFeature->adfBlockOCS[2] = 1.0;
-    }
-
-    poFeature->adfOriginalCoords[0] = oTransformer.dfXOffset;
-    poFeature->adfOriginalCoords[1] = oTransformer.dfYOffset;
-    poFeature->adfOriginalCoords[2] = oTransformer.dfZOffset;
+    poFeature->oBlockScale = DXFTriple( oTransformer.dfXScale, 
+        oTransformer.dfYScale, oTransformer.dfZScale );
+    poFeature->oOriginalCoords = DXFTriple( oTransformer.dfXOffset,
+        oTransformer.dfYOffset, oTransformer.dfZOffset );
 
     // Only if DXF_INLINE_BLOCKS is false should we ever need to expose these
     // to the end user as fields.
@@ -2423,9 +2450,10 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
     {
         poFeature->SetField( "BlockName", poFeature->osBlockName );
         poFeature->SetField( "BlockAngle", poFeature->dfBlockAngle );
-        poFeature->SetField( "BlockScale", 3, poFeature->adfBlockScale );
-        poFeature->SetField( "BlockOCSNormal", 3, poFeature->adfBlockOCS );
-        poFeature->SetField( "BlockOCSCoords", 3, poFeature->adfOriginalCoords );
+        poFeature->SetField( "BlockScale", 3, &(poFeature->oBlockScale.dfX) );
+        poFeature->SetField( "BlockOCSNormal", 3, &(poFeature->oOCS.dfX) );
+        poFeature->SetField( "BlockOCSCoords", 3,
+            &(poFeature->oOriginalCoords.dfX) );
     }
 
     // For convenience to the end user, the point geometry will be located
@@ -2433,7 +2461,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
     OGRPoint* poInsertionPoint = new OGRPoint( oTransformer.dfXOffset,
         oTransformer.dfYOffset, oTransformer.dfZOffset );
 
-    ApplyOCSTransformer( poInsertionPoint );
+    poFeature->ApplyOCSTransformer( poInsertionPoint );
     poFeature->SetGeometryDirectly( poInsertionPoint );
 
     return poFeature;
@@ -2449,8 +2477,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
 /*     Throws std::invalid_argument if the requested block              */
 /*     doesn't exist.                                                   */
 /*                                                                      */
-/*     - adfOCS: The OCS to apply to this block, or NULL if we          */
-/*       should use this layer's current OCS.                           */
+/*     - poFeature: The feature to use as a template. This feature's    */
+/*       OCS will be applied to the block.                              */
 /*     - bInlineRecursively: If true, INSERTs within this block         */
 /*       will be recursively inserted.  Otherwise, they will be         */
 /*       represented as a point geometry using InsertInlineBlock.       */
@@ -2461,7 +2489,6 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
 
 OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
     OGRDXFInsertTransformer oTransformer,
-    double adfOCS[3],
     OGRDXFFeature* const poFeature,
     std::queue<OGRDXFFeature *>& apoExtraFeatures,
     const bool bInlineRecursively,
@@ -2486,10 +2513,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
     OGRPoint oInsertionPoint( oTransformer.dfXOffset, oTransformer.dfYOffset,
         oTransformer.dfZOffset );
 
-    if( adfOCS )
-        ApplyOCSTransformer( &oInsertionPoint, adfOCS );
-    else
-        ApplyOCSTransformer( &oInsertionPoint );
+    poFeature->ApplyOCSTransformer( &oInsertionPoint );
 
     oTransformer.dfXOffset = oInsertionPoint.getX();
     oTransformer.dfYOffset = oInsertionPoint.getY();
@@ -2534,13 +2558,13 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             // Unpack the transformation data stored in fields of this
             // feature
             OGRDXFInsertTransformer oInnerTransformer;
-            oInnerTransformer.dfXOffset = poSubFeature->adfOriginalCoords[0];
-            oInnerTransformer.dfYOffset = poSubFeature->adfOriginalCoords[1];
-            oInnerTransformer.dfZOffset = poSubFeature->adfOriginalCoords[2];
+            oInnerTransformer.dfXOffset = poSubFeature->oOriginalCoords.dfX;
+            oInnerTransformer.dfYOffset = poSubFeature->oOriginalCoords.dfY;
+            oInnerTransformer.dfZOffset = poSubFeature->oOriginalCoords.dfZ;
             oInnerTransformer.dfAngle = poSubFeature->dfBlockAngle * M_PI / 180;
-            oInnerTransformer.dfXScale = poSubFeature->adfBlockScale[0];
-            oInnerTransformer.dfYScale = poSubFeature->adfBlockScale[1];
-            oInnerTransformer.dfZScale = poSubFeature->adfBlockScale[2];
+            oInnerTransformer.dfXScale = poSubFeature->oBlockScale.dfX;
+            oInnerTransformer.dfYScale = poSubFeature->oBlockScale.dfY;
+            oInnerTransformer.dfZScale = poSubFeature->oBlockScale.dfZ;
 
             poSubFeature->bIsBlockReference = false;
 
@@ -2548,8 +2572,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             try
             {
                 poSubFeature = InsertBlockInline( poSubFeature->osBlockName,
-                    oInnerTransformer, poSubFeature->adfBlockOCS,
-                    poSubFeature, apoInnerExtraFeatures,
+                    oInnerTransformer, poSubFeature, apoInnerExtraFeatures,
                     true, bMergeGeometry, iRecursionDepth + 1 );
             }
             catch( const std::invalid_argument& )
@@ -2589,10 +2612,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 poSubFeatGeom->transform( &oInnerTrans );
 
                 // Then the OCS to WCS transformation
-                if( adfOCS )
-                    ApplyOCSTransformer( poSubFeatGeom, adfOCS );
-                else
-                    ApplyOCSTransformer( poSubFeatGeom );
+                poFeature->ApplyOCSTransformer( poSubFeatGeom );
 
                 // Offset translation last
                 oInnerTrans = oTransformer.GetOffsetTransformer();
@@ -2622,18 +2642,17 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 {
                     poSubFeature->SetField( "Layer",
                         poFeature->GetFieldAsString( "Layer" ) );
-
-                    // If it's a pen, then replace the style string
-                    const char* pszSubFeatureStyle =
-                        poSubFeature->GetStyleString();
-                    if( pszSubFeatureStyle != NULL &&
-                        STARTS_WITH_CI(pszSubFeatureStyle, "PEN") )
-                    {
-                        PrepareLineStyle( poSubFeature );
-                    }
-
-                    // TODO Do this for other style types (trac ticket #7099)
                 }
+
+                // If the feature is something other than text, update the
+                // style string to replace ByBlock and ByLayer values.
+                const char* pszSubFeatureStyle = poSubFeature->GetStyleString();
+                if( pszSubFeatureStyle == NULL ||
+                    !STARTS_WITH_CI(pszSubFeatureStyle, "LABEL") )
+                {
+                    PrepareFeatureStyle( poSubFeature, poFeature );
+                }
+                // TODO Do this for text as well (trac ticket #7099)
 
                 ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
                     oTransformer.dfXScale, poSubFeature );
@@ -2763,7 +2782,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
     // Try inlining the contents of this block
     try
     {
-        poFeature = InsertBlockInline( osBlockName, oTransformer, NULL,
+        poFeature = InsertBlockInline( osBlockName, oTransformer,
             poFeature, apoPendingFeatures,
             true, poDS->ShouldMergeBlockGeometries() );
     }
@@ -2837,8 +2856,6 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle the entity.                                              */
 /* -------------------------------------------------------------------- */
-        oStyleProperties.clear();
-
         if( EQUAL(szLineBuf,"POINT") )
         {
             poFeature = TranslatePOINT();

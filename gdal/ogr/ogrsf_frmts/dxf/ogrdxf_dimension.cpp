@@ -194,8 +194,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
         try
         {
             OGRDXFFeature* poBlockFeature = InsertBlockInline( osBlockName,
-                OGRDXFInsertTransformer(), NULL,
-                poFeature, apoPendingFeatures,
+                OGRDXFInsertTransformer(), poFeature, apoPendingFeatures,
                 true, false );
 
             return poBlockFeature; // may be NULL but that is OK

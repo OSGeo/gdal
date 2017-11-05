@@ -3138,9 +3138,105 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-        # should not be upside down
     if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g)':
         gdaltest.post_reason( 'Wrong style string on third DIMENSION text' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test ByLayer and ByBlock color values (#7130)
+
+def ogr_dxf_48():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/byblock-bylayer.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+
+    lyr = ds.GetLayer(0)
+
+    # First insert an anonymous dimension block (this is NOT a test of our
+    # basic "dimension" renderer)
+
+    # The dimension extension lines are ByBlock; the INSERT is magenta
+    f = lyr.GetFeature(0)
+    if f.GetStyleString() != 'PEN(c:#ff00ff,p:"1.5875g 1.5875g")':
+        gdaltest.post_reason( 'Wrong style string on feature 0' )
+        f.DumpReadable()
+        return 'fail'
+
+    # The dimension line is set directly to blue
+    f = lyr.GetFeature(2)
+    if f.GetStyleString() != 'PEN(c:#0000ff)':
+        gdaltest.post_reason( 'Wrong style string on feature 2' )
+        f.DumpReadable()
+        return 'fail'
+
+    # The first arrowhead is a custom block; the SOLID in this block is
+    # colored ByLayer; the layer the block is inserted on (_K_POINTS)
+    # is colored red
+    f = lyr.GetFeature(4)
+    if f.GetStyleString() != 'PEN(c:#ff0000)':
+        gdaltest.post_reason( 'Wrong style string on feature 4' )
+        f.DumpReadable()
+        return 'fail'
+
+    # The first arrowhead block also contains a line colored ByBlock.
+    # The arrowhead INSERT is blue, so the line should be blue.
+    # Because this INSERT is within another block, we need to make
+    # sure the ByBlock colouring isn't handled again for the outer
+    # block, which is magenta.
+    f = lyr.GetFeature(5)
+    if f.GetStyleString() != 'PEN(c:#0000ff)':
+        gdaltest.post_reason( 'Wrong style string on feature 5' )
+        f.DumpReadable()
+        return 'fail'
+
+    # The second arrowhead, like the dimension line, is set directly
+    # to blue
+    f = lyr.GetFeature(6)
+    if f.GetStyleString() != 'PEN(c:#0000ff)':
+        gdaltest.post_reason( 'Wrong style string on feature 6' )
+        f.DumpReadable()
+        return 'fail'
+
+    # TODO The text (feature 7) should be #ff00ff but is not (#7099)
+
+    # ByLayer feature in block
+    f = lyr.GetFeature(11)
+    if f.GetStyleString() != 'PEN(c:#ff0000)':
+        gdaltest.post_reason( 'Wrong style string on feature 11' )
+        f.DumpReadable()
+        return 'fail'
+
+    # ByBlock feature in block
+    f = lyr.GetFeature(12)
+    if f.GetStyleString() != 'PEN(c:#a552a5)':
+        gdaltest.post_reason( 'Wrong style string on feature 12' )
+        f.DumpReadable()
+        return 'fail'
+
+    # ByLayer feature inserted via an INSERT on yellow layer in block
+    # inserted via an INSERT on red layer: should be yellow
+    f = lyr.GetFeature(13)
+    if f.GetStyleString() != 'PEN(c:#ffff00)':
+        gdaltest.post_reason( 'Wrong style string on feature 13' )
+        f.DumpReadable()
+        return 'fail'
+
+    # ByBlock feature inserted via a ByBlock INSERT in block inserted
+    # via a color213 INSERT: should be color213
+    f = lyr.GetFeature(14)
+    if f.GetStyleString() != 'PEN(c:#a552a5)':
+        gdaltest.post_reason( 'Wrong style string on feature 14' )
+        f.DumpReadable()
+        return 'fail'
+
+    # ByBlock entities directly on the canvas show up as black
+    f = lyr.GetFeature(15)
+    if f.GetStyleString() != 'PEN(c:#000000)':
+        gdaltest.post_reason( 'Wrong style string on feature 15' )
         f.DumpReadable()
         return 'fail'
 
@@ -3206,6 +3302,7 @@ gdaltest_list = [
     ogr_dxf_45,
     ogr_dxf_46,
     ogr_dxf_47,
+    ogr_dxf_48,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

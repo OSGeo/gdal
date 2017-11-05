@@ -135,9 +135,26 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
         poFinalGeom = poMLS;
     }
 
-    ApplyOCSTransformer( poFinalGeom );
+    poFeature->ApplyOCSTransformer( poFinalGeom );
     poFeature->SetGeometryDirectly( poFinalGeom );
 
+    // This is used when hatches are inserted as part of a block, so we know
+    // to give a BRUSH(...) style string
+    poFeature->oStyleProperties["WantBrush"] = "1";
+
+    PrepareHatchStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                         PrepareHatchStyle()                          */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareHatchStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Work out the color for this feature.  For now we just assume    */
 /*      solid fill.  We cannot trivially translate the various sorts    */
@@ -147,11 +164,26 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
     int nColor = 256;
 
-    if( oStyleProperties.count("Color") > 0 )
-        nColor = atoi(oStyleProperties["Color"]);
+    if( poFeature->oStyleProperties.count("Color") > 0 )
+        nColor = atoi(poFeature->oStyleProperties["Color"]);
 
+    // Use ByBlock color?
+    if( nColor < 1 )
+    {
+        if( poBlockFeature &&
+            poBlockFeature->oStyleProperties.count("Color") > 0 )
+        {
+            // Inherit color from the owning block
+            nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
+        }
+        else
+        {
+            // Default to black/white
+            nColor = 7;
+        }
+    }
     // Use layer color?
-    if( nColor < 1 || nColor > 255 )
+    else if( nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
         if( pszValue != NULL )
@@ -173,8 +205,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
         poFeature->SetStyleString( osStyle );
     }
-
-    return poFeature;
 }
 
 /************************************************************************/

@@ -37,15 +37,12 @@ CPL_CVSID("$Id$")
 
 OGRDXFFeature::OGRDXFFeature( OGRFeatureDefn * poFeatureDefn ):
     OGRFeature( poFeatureDefn ),
+    oOCS(0.0, 0.0, 1.0),
     bIsBlockReference(false),
-    dfBlockAngle(0.0)
+    dfBlockAngle(0.0),
+    oBlockScale(1.0, 1.0, 1.0),
+    oOriginalCoords(0.0, 0.0, 0.0)
 {
-    adfBlockScale[0] = adfBlockScale[1] = adfBlockScale[2] = 1.0;
-
-    adfBlockOCS[0] = adfBlockOCS[1] = 0.0;
-    adfBlockOCS[2] = 1.0;
-
-    adfOriginalCoords[0] = adfOriginalCoords[1] = adfOriginalCoords[2] = 0.0;
 }
 
 /************************************************************************/
@@ -66,18 +63,26 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
         return NULL;
     }
 
+    poNew->oOCS = oOCS;
     poNew->bIsBlockReference = bIsBlockReference;
     poNew->osBlockName = osBlockName;
     poNew->dfBlockAngle = dfBlockAngle;
-    poNew->adfBlockScale[0] = adfBlockScale[0];
-    poNew->adfBlockScale[1] = adfBlockScale[1];
-    poNew->adfBlockScale[2] = adfBlockScale[2];
-    poNew->adfBlockOCS[0] = adfBlockOCS[0];
-    poNew->adfBlockOCS[1] = adfBlockOCS[1];
-    poNew->adfBlockOCS[2] = adfBlockOCS[2];
-    poNew->adfOriginalCoords[0] = adfOriginalCoords[0];
-    poNew->adfOriginalCoords[1] = adfOriginalCoords[1];
-    poNew->adfOriginalCoords[2] = adfOriginalCoords[2];
+    poNew->oBlockScale = oBlockScale;
+    poNew->oOriginalCoords = oOriginalCoords;
+    poNew->oStyleProperties = oStyleProperties;
 
     return poNew;
+}
+
+/************************************************************************/
+/*                        ApplyOCSTransformer()                         */
+/*                                                                      */
+/*      Applies the OCS transformation stored in this feature to        */
+/*      the specified geometry.                                         */
+/************************************************************************/
+
+void OGRDXFFeature::ApplyOCSTransformer( OGRGeometry* const poGeometry )
+
+{
+    OGRDXFLayer::ApplyOCSTransformer( poGeometry, oOCS );
 }
