@@ -1866,7 +1866,7 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         CPLString osNextFileName;
         GIntBig nModifiedTime;
 
-        void SetInfo();
+        bool SetInfo();
 
     public:
         explicit VSIZipReader( const char* pszZipFileName );
@@ -1914,12 +1914,19 @@ VSIZipReader::~VSIZipReader()
 /*                              SetInfo()                               */
 /************************************************************************/
 
-void VSIZipReader::SetInfo()
+bool VSIZipReader::SetInfo()
 {
     char fileName[8193] = {};
     unz_file_info file_info;
-    cpl_unzGetCurrentFileInfo( unzF, &file_info, fileName, sizeof(fileName) - 1,
-                               NULL, 0, NULL, 0 );
+    if( UNZ_OK !=
+        cpl_unzGetCurrentFileInfo(
+            unzF, &file_info, fileName, sizeof(fileName) - 1,
+            NULL, 0, NULL, 0))
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "cpl_unzGetCurrentFileInfo failed");
+        cpl_unzGetFilePos(unzF, &file_pos);
+        return false;
+    }
     fileName[sizeof(fileName) - 1] = '\0';
     osNextFileName = fileName;
     nNextFileSize = file_info.uncompressed_size;
@@ -1934,6 +1941,7 @@ void VSIZipReader::SetInfo()
     nModifiedTime = CPLYMDHMSToUnixTime(&brokendowntime);
 
     cpl_unzGetFilePos(unzF, &file_pos);
+    return true;
 }
 
 /************************************************************************/
@@ -1945,7 +1953,8 @@ int VSIZipReader::GotoNextFile()
     if( cpl_unzGoToNextFile(unzF) != UNZ_OK )
         return FALSE;
 
-    SetInfo();
+    if( !SetInfo() )
+        return FALSE;
 
     return TRUE;
 }
@@ -1959,7 +1968,8 @@ int VSIZipReader::GotoFirstFile()
     if( cpl_unzGoToFirstFile(unzF) != UNZ_OK )
         return FALSE;
 
-    SetInfo();
+    if( !SetInfo() )
+        return FALSE;
 
     return TRUE;
 }
@@ -1978,7 +1988,8 @@ int VSIZipReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
         return FALSE;
     }
 
-    SetInfo();
+    if( !SetInfo() )
+        return FALSE;
 
     return TRUE;
 }
