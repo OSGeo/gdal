@@ -13,8 +13,24 @@
 #include "wcsdataset.h"
 #include "wcsutils.h"
 
-CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
-                                             CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
+                                             int nXSize, int nYSize,
+                                             CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize)
+{
+    std::vector<double> extent;
+    // WCS 1.0 extents are the outer edges of outer pixels.
+    extent.push_back(adfGeoTransform[0] +
+                     (nXOff) * adfGeoTransform[1]);
+    extent.push_back(adfGeoTransform[3] +
+                     (nYOff + nYSize) * adfGeoTransform[5]);
+    extent.push_back(adfGeoTransform[0] +
+                     (nXOff + nXSize) * adfGeoTransform[1]);
+    extent.push_back(adfGeoTransform[3] +
+                     (nYOff) * adfGeoTransform[5]);
+    return extent;
+}
+
+CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                              int nBufXSize, int nBufYSize,
                                              std::vector<double> extent,
                                              CPLString osBandList )

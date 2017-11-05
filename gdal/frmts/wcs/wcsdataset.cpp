@@ -340,18 +340,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Figure out the georeferenced extents.                           */
 /* -------------------------------------------------------------------- */
-    std::vector<double> extent;
-
-    // WCS 1.0 extents are the outer edges of outer pixels.
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff + nYSize) * adfGeoTransform[5]);
-    extent.push_back(adfGeoTransform[0] +
-                     (nXOff + nXSize) * adfGeoTransform[1]);
-    extent.push_back(adfGeoTransform[3] +
-                     (nYOff) * adfGeoTransform[5]);
-    
+    std::vector<double> extent = GetExtent(nXOff, nYOff, nXSize, nYSize,
+                                           nBufXSize, nBufYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Build band list if we have the band identifier.                 */
@@ -373,9 +363,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Construct a KVP GetCoverage request.                            */
 /* -------------------------------------------------------------------- */
-    CPLString osRequest = GetCoverageRequest(nXOff, nYOff,
-                                             nXSize, nYSize,
-                                             nBufXSize, nBufYSize,
+    bool scaled = nBufXSize != nXSize || nBufYSize != nYSize;
+    CPLString osRequest = GetCoverageRequest(scaled, nBufXSize, nBufYSize,
                                              extent, osBandList);
 
 /* -------------------------------------------------------------------- */

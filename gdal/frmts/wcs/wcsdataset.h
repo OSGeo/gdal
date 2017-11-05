@@ -54,11 +54,14 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg) override;
 
-    virtual CPLString   GetCoverageRequest( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
-                                            CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                                            CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize,
-                                            CPL_UNUSED std::vector<double> extent,
-                                            CPL_UNUSED CPLString osBandList) {return "";};
+    virtual std::vector<double> GetExtent(int nXOff, int nYOff,
+                                          int nXSize, int nYSize,
+                                          int nBufXSize, int nBufYSize) = 0;
+
+    virtual CPLString   GetCoverageRequest( bool scaled,
+                                            int nBufXSize, int nBufYSize,
+                                            std::vector<double> extent,
+                                            CPLString osBandList) = 0;
 
     CPLErr      GetCoverage( int nXOff, int nYOff,
                              int nXSize, int nYSize,
@@ -67,17 +70,17 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                              CPLHTTPResult **ppsResult );
 
     virtual CPLString   DescribeCoverageRequest() {return "";};
-    virtual CPLXMLNode *CoverageOffering(CPL_UNUSED CPLXMLNode *psDC) {return NULL;};
+    virtual CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) = 0;
 
     int         DescribeCoverage();
     
-    virtual bool        ExtractGridInfo() {return false;};
+    virtual bool        ExtractGridInfo() = 0;
 
     int         EstablishRasterDetails();
 
-    virtual CPLErr      ParseCapabilities( CPLXMLNode * ) {return CE_Fatal;};
+    virtual CPLErr      ParseCapabilities( CPLXMLNode * ) = 0;
 
-    virtual const char *ExceptionNodeName() {return "";};
+    virtual const char *ExceptionNodeName() = 0;
     
     int         ProcessError( CPLHTTPResult *psResult );
     
@@ -113,8 +116,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
 class CPL_DLL WCSDataset100 : public WCSDataset
 {
-    CPLString   GetCoverageRequest( int nXOff, int nYOff,
-                                    int nXSize, int nYSize,
+    std::vector<double> GetExtent(int nXOff, int nYOff,
+                                  int nXSize, int nYSize,
+                                  int nBufXSize, int nBufYSize) override;
+    CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
                                     std::vector<double> extent,
                                     CPLString osBandList) override;
@@ -131,8 +136,10 @@ class CPL_DLL WCSDataset100 : public WCSDataset
 
 class CPL_DLL WCSDataset110 : public WCSDataset
 {
-    CPLString   GetCoverageRequest( int nXOff, int nYOff,
-                                    int nXSize, int nYSize,
+    std::vector<double> GetExtent(int nXOff, int nYOff,
+                                  int nXSize, int nYSize,
+                                  int nBufXSize, int nBufYSize) override;
+    CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
                                     std::vector<double> extent,
                                     CPLString osBandList) override;
@@ -149,8 +156,14 @@ class CPL_DLL WCSDataset110 : public WCSDataset
 
 class CPL_DLL WCSDataset201 : public WCSDataset110
 {
-    CPLString   GetCoverageRequest( int nXOff, int nYOff,
-                                    int nXSize, int nYSize,
+    std::vector<double> GetExtent(int nXOff, int nYOff,
+                                  int nXSize, int nYSize,
+                                  int nBufXSize, int nBufYSize) override;
+    CPLString   GetSubdataset(CPLString coverage);
+    bool        SetFormat(CPLXMLNode *coverage);
+    bool        ParseGridFunction(std::vector<CPLString> &axisOrder);
+    bool        ParseRange(CPLXMLNode *coverage, char ***metadata, unsigned int &bands);
+    CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
                                     std::vector<double> extent,
                                     CPLString osBandList) override;

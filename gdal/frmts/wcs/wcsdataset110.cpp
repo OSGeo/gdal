@@ -13,9 +13,56 @@
 #include "wcsdataset.h"
 #include "wcsutils.h"
 
-CPLString WCSDataset110::GetCoverageRequest(int nXOff, int nYOff,
-                                            int nXSize, int nYSize,
-                                            int nBufXSize, int nBufYSize,
+std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
+                                             int nXSize, int nYSize,
+                                             CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize)
+{
+    std::vector<double> extent;
+
+    // outer edges of outer pixels.
+    extent.push_back(adfGeoTransform[0] +
+                     (nXOff) * adfGeoTransform[1]);
+    extent.push_back(adfGeoTransform[3] +
+                     (nYOff + nYSize) * adfGeoTransform[5]);
+    extent.push_back(adfGeoTransform[0] +
+                     (nXOff + nXSize) * adfGeoTransform[1]);
+    extent.push_back(adfGeoTransform[3] +
+                     (nYOff) * adfGeoTransform[5]);
+    
+    // WCS 1.1 extents are centers of outer pixels.
+    extent[2] -= adfGeoTransform[1] * 0.5;
+    extent[0] += adfGeoTransform[1] * 0.5;
+    extent[1] -= adfGeoTransform[5] * 0.5;
+    extent[3] += adfGeoTransform[5] * 0.5;
+
+    // Carefully adjust bounds for pixel centered values at new
+    // sampling density.
+
+    double dfXStep = adfGeoTransform[1];
+    double dfYStep = adfGeoTransform[5];
+
+    if( nBufXSize != nXSize || nBufYSize != nYSize )
+    {
+        dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+        dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
+
+        extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
+            + dfXStep * 0.5;
+        extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
+
+        extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
+            + dfYStep * 0.5;
+        extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
+    }
+
+    extent.push_back(dfXStep);
+    extent.push_back(dfYStep);
+    
+    return extent;
+}
+
+CPLString WCSDataset110::GetCoverageRequest(bool scaled,
+                                            CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize,
                                             std::vector<double> extent,
                                             CPLString osBandList)
 {
@@ -54,31 +101,7 @@ CPLString WCSDataset110::GetCoverageRequest(int nXOff, int nYOff,
                                 osBandList.c_str() );
     }
 
-    // WCS 1.1 extents are centers of outer pixels.
-    extent[2] -= adfGeoTransform[1] * 0.5;
-    extent[0] += adfGeoTransform[1] * 0.5;
-    extent[1] -= adfGeoTransform[5] * 0.5;
-    extent[3] += adfGeoTransform[5] * 0.5;
-
-    // Carefully adjust bounds for pixel centered values at new
-    // sampling density.
-
-    double dfXStep = adfGeoTransform[1];
-    double dfYStep = adfGeoTransform[5];
-
-    if( nBufXSize != nXSize || nBufYSize != nYSize )
-    {
-        dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
-        dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
-
-        extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
-            + dfXStep * 0.5;
-        extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
-
-        extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
-            + dfYStep * 0.5;
-        extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
-    }
+    
 
     if (GML_IsSRSLatLongOrder(osCRS.c_str())) {
         double tmp = extent[0];
@@ -107,8 +130,7 @@ CPLString WCSDataset110::GetCoverageRequest(int nXOff, int nYOff,
         1      0   0
         1      1   1
     */
-    if( !EQUAL(CPLGetXMLValue( psService, "NoGridCRS", "" ), "TRUE")
-        || nBufXSize != nXSize || nBufYSize != nYSize )
+    if( scaled || !EQUAL(CPLGetXMLValue( psService, "NoGridCRS", "" ), "TRUE") )
     {
         osRequest += CPLString().Printf(
             "&GridBaseCRS=%s"
@@ -118,7 +140,7 @@ CPLString WCSDataset110::GetCoverageRequest(int nXOff, int nYOff,
             "&GridOffsets=%.15g,0,0,%.15g",
             osCRS.c_str(),
             extent[0], extent[3],
-            dfXStep, dfYStep );
+            extent[4], extent[5] );
     }
     return osRequest;
 }
