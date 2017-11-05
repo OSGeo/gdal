@@ -2953,7 +2953,7 @@ def ogr_dxf_44():
     return 'success'
 
 ###############################################################################
-# Test linetype scaling (#7129)
+# Test linetype scaling (#7129) and parsing of complex linetypes (#7134)
 
 def ogr_dxf_45():
 
@@ -2978,6 +2978,26 @@ def ogr_dxf_45():
     if feat.GetStyleString() != 'PEN(c:#000000,p:"0.625g 0.3125g")':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'Got wrong style string (2)' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DASHED2_FLIPPED':
+        gdaltest.post_reason( 'Got wrong linetype (3)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#000000,p:"0.625g 0.3125g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( 'Got wrong style string (3)' )
+        return 'fail'
+
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'Drain_Pipe_Inv_100':
+        gdaltest.post_reason( 'Got wrong linetype (4)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#000000,p:"35g 22.5g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( 'Got wrong style string (4)' )
         return 'fail'
 
     return 'success'

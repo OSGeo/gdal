@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -456,6 +458,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
     int nCode = 0;
     CPLString osLineTypeName;
     std::vector<double> oLineTypeDef;
+    double dfThisValue;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
     {
@@ -467,10 +470,21 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
             break;
 
           case 49:
-            if( szLineBuf[0] == '-' )
-                oLineTypeDef.push_back( CPLAtof(szLineBuf+1) );
+            dfThisValue = CPLAtof( szLineBuf );
+
+            // Same sign as the previous entry? Continue the previous dash
+            // or gap by appending this length
+            if( oLineTypeDef.size() > 0 &&
+                ( dfThisValue < 0 ) == ( oLineTypeDef.back() < 0 ) )
+            {
+                oLineTypeDef.back() += dfThisValue;
+            }
+            // Otherwise, add a new entry
             else
-                oLineTypeDef.push_back( CPLAtof(szLineBuf) );
+            {
+                oLineTypeDef.push_back( dfThisValue );
+            }
+
             break;
 
           default:
@@ -483,8 +497,26 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         return false;
     }
 
+    // Deal with an odd number of elements by adding the last element
+    // onto the first
+    if( oLineTypeDef.size() % 2 == 1 )
+    {
+        oLineTypeDef.front() += oLineTypeDef.back();
+        oLineTypeDef.pop_back();
+    }
+
     if( oLineTypeDef.size() )
+    {
+        // If the first element is a gap, rotate the elements so the first
+        // element is a dash
+        if( oLineTypeDef.front() < 0 )
+        {
+            std::rotate( oLineTypeDef.begin(), oLineTypeDef.begin() + 1,
+                oLineTypeDef.end() );
+        }
+
         oLineTypeTable[osLineTypeName] = oLineTypeDef;
+    }
 
     if( nCode == 0 )
         UnreadValue();
