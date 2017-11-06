@@ -368,6 +368,13 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS"
 
+/** Capability set by a non-spatial driver having no support for geometries. E.g. non-spatial
+ * vector drivers (e.g. spreadsheet format drivers) do not support geometries,
+ * and accordingly will have this capability present.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
+
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate( GDALDriverH hDriver,
