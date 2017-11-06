@@ -2826,7 +2826,7 @@ def ogr_dxf_43():
     # Inlining, merging
     ds = ogr.Open('data/insert-recursive-pair.dxf')
     lyr = ds.GetLayer(0)
-    if lyr.GetFeatureCount() != 0:
+    if lyr.GetFeatureCount() != 1:
         return 'fail'
 
     return 'success'

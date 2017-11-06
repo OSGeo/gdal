@@ -103,9 +103,43 @@ RecursiveBlock1
  30
 0.0
   0
-ENDBLK
+INSERT
   5
 DEF2
+100
+AcDbEntity
+100
+AcDbBlockReference
+  8
+0
+  2
+RecursiveBlock1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+POINT
+  5
+DEF3
+100
+AcDbEntity
+100
+AcDbPoint
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDBLK
+  5
+DEF4
 100
 AcDbEntity
   8
