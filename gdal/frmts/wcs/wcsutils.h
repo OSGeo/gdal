@@ -20,9 +20,10 @@ std::vector<double> Flist(std::vector<CPLString> array,
                           unsigned int from = 0,
                           unsigned int count = 2);
 
-int IndexOf(std::vector<CPLString> array, CPLString str); // index of str in array
+int IndexOf(CPLString str, std::vector<CPLString> array); // index of str in array
+int IndexOf(int i, std::vector<int> array);
 
-std::vector<int> IndexOf(std::vector<CPLString> array, std::vector<CPLString> str); // index of strs in array
+std::vector<int> IndexOf(std::vector<CPLString> strs, std::vector<CPLString> array); // index of strs in array
 
 bool Contains(std::vector<int> array, int value);
 

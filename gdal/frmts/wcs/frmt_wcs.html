@@ -60,6 +60,100 @@ coverages with a time dimension.  Populated with the last offered time
 position by default.
 </ul>
 
+<h3>"WCS:" format for dataset name, caching, and version 2.0.1 servers</h3>
+
+<p>
+  Starting with GDAL 2.3.0, this driver supports "WCS:&lt;URL&gt;"
+  format for the WCS dataset name. When using this format the WCS_GDAL
+  XML service files are not meant to be written by the user. The
+  driver will maintain a cache for the Capabilities, (PAM) metadata,
+  coverage description, and service files. Also starting with GDAL
+  2.3.0 the driver includes support for version 2.0.1 servers.
+</p>
+
+<p>
+  The supposed workflow of the driver is as follows (an example with
+  gdalinfo). At each step the command
+  <pre>gdalinfo -oo &lt;option=value&gt; "WCS:&lt;URL&gt;"</pre>
+  is given with varying options and URL.
+  At each point the HTTP options
+  <ul>
+    <li>TIMEOUT=value</li>
+    <li>USERPWD=value</li>
+    <li>HTTPAUTH=value</li>
+  </ul>
+  the common cache control options
+  <ul>
+    <li>CACHE_DIR=path (The default location of the cache
+      directory is $HOME/.gdal/wcs_cache)</li>
+    <li>CLEAR_CACHE=TRUE (The cache is completely initialized and all
+    files are deleted.)</li>
+    <li>REFRESH_CACHE=TRUE (Either the Capabilities and metadata
+    files, or the coverage description and service files are deleted.)</li>
+  </ul>
+  and extra key value pairs for the requests (EXTRA=key1=value1&amp;key2=value2...)
+  may be used. More than one option can be given by repeating the -oo switch.
+  <ol>
+    <li>Initially the URL may be plain URL for the server, but it may
+      also contain a request for the server to use a specific version
+      (for example "http://example.com/server?version=2.0.1"). The
+      driver attempts to fetch the Capabilities file from the server,
+      save it to the cache, parse it, create metadata describing the
+      server and coverage offering, save that to the cache (same key
+      is used), and show it to the user. Coverages are recorded as
+      subdatasets.  Subsequent use of the driver using the "WCS:"
+      format will reuse the metadata obtained from the Capabilities
+      file.
+    </li>
+    <li>
+      Once the coverage offering of the server is known, a coverage
+      name/id can be added to the URL as a parameter (key may be
+      'coverageId', 'identifiers', or 'coverage'). Given that, the
+      driver attempts to fetch the coverage description from the server,
+      save it to the cache (a new key is used), parse it, and create a
+      service file. At this point, when the version 2.0.1 is used, the
+      driver may map the data fields into raster bands. However, if the
+      coverage contains more than two dimensions, nothing is yet mapped
+      to bands. The user needs to use the DIMENSIONS or the
+      DIMENSIONTOBAND option to either define the value at which the
+      extra dimension is sliced or that it is mapped as bands. If the
+      DIMENSIONTOBAND option is selected, it may be necessary to also
+      define with the RANGE option the field that is put as data into
+      the bands.
+      <ul>
+        <li>CRS=value (Override the default CRS used by the
+        server.)</li>
+        <li>PREFERREDFORMAT=value (Override the default format
+        selected by the driver.)</li>
+        <li>DOMAIN=axis_name,axis_name (The default is to use the
+        first two axes given by the server. The axis order swap may
+        apply.)</li>
+        <li>DIMENSIONS=axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)
+        (Trim or slice a dimension when fetching data from the server.)</li>
+        <li>DIMENSIONTOBAND=axis_name (Map the given dimension, for
+          example 'time', into bands.)</li>
+        <li>DEFAULTTIME (see DefaultTime above, only for 1.0.0)</li>
+        <li>INTERPOLATION=value (One of the server supported
+        interpolation methods.)</li>
+        <li>FIELDNAME=field_name,field_name:field_name,.. (A list of
+        fields to be mapped to bands. A field_name:field_name element
+        in the list denotes a range of fields. If not set, defaults to
+        the first field in the coverage description.)</li>
+        <li>OVERVIEWCOUNT (see OverviewCount above)</li>
+        <li>GETCOVERAGEEXTRA (see GetCoverageExtra above)</li>
+        <li>DESCRIBECOVERAGEEXTRA (see DescribeCoverageExtra above)</li>
+        <li>BLOCKXSIZE (see BlockXSize above)</li>
+        <li>BLOCKYSIZE (see BlockYSize above)</li>
+        <li>NODATAVALUE=value,value,.. (no data values for the fields)</li>
+      </ul>
+    </li>
+    <li>Once the service file is such that it specifies bands, it can
+    be used for requesting data from the server.
+    </li>
+  </ol>
+</p>
+
+<p></p>
 
 <h3>Time</h3>
 

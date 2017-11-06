@@ -853,6 +853,16 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     url = CPLURLAddKVP(url, "service", "WCS");
     url = CPLURLAddKVP(url, "request", "GetCapabilities");
 
+    // Add extra to the URL
+    CPLString extra = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "EXTRA", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            url = CPLURLAddKVP(url, pair[0], pair[1]);
+        }
+    }
+
     char **options = NULL;
     const char *keys2[] = {
         "Timeout",
@@ -904,7 +914,7 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     } else {
         poDS = new WCSDataset100();
     }
-    if (poDS->ParseCapabilities(psService) != CE_None) {
+    if (poDS->ParseCapabilities(psService, url) != CE_None) {
         poDS->ProcessError(psResult);
         delete poDS;
         return NULL;
@@ -921,15 +931,28 @@ WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
     // try to read the PAM XML from path + metadata extension
     if (FileIsReadable(path + ".aux.xml")) {
         CPLXMLNode *metadata = CPLParseXMLFile((path + ".aux.xml").c_str());
-        int version_from_metadata = WCSParseVersion(
-            CPLGetXMLValue(metadata, "WCS_GLOBAL#version", NULL )
-            );
+        CPLString version;
+        for (CPLXMLNode *domain = metadata->psChild; domain != NULL; domain = domain->psNext) {
+            if (CPLGetXMLValue(domain, "domain", NULL) != NULL) {
+                continue;
+            }
+            for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+                CPLString key = CPLGetXMLValue(node, "key", "");
+                if (key == "WCS_GLOBAL#version") {
+                    version = CPLGetXMLValue(node, NULL, "");
+                }
+            }
+        }
+        int version_from_metadata = WCSParseVersion(version);
         if (version_from_metadata == 201) {
             poDS = new WCSDataset201();
         } else if (version_from_metadata/10 == 11) {
             poDS = new WCSDataset110(version_from_metadata);
-        } else {
+        } else if (version_from_metadata/10 == 1) {
             poDS = new WCSDataset100();
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "The metadata does not contain version. REFRESH_CACHE?");
+            return NULL;
         }
         poDS->SetDescription(path);
         poDS->TryLoadXML(); // todo: avoid reload
@@ -953,8 +976,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
     return poDS;
 }
 
-static CPLXMLNode *CreateService(GDALOpenInfo * poOpenInfo,
-                                 CPLString base_url,
+static CPLXMLNode *CreateService(CPLString base_url,
                                  CPLString version,
                                  CPLString coverage)
 {
@@ -963,58 +985,52 @@ static CPLXMLNode *CreateService(GDALOpenInfo * poOpenInfo,
     xml += "<ServiceURL>" + base_url + "</ServiceURL>";
     xml += "<Version>" + version + "</Version>";
     xml += "<CoverageName>" + coverage + "</CoverageName>";
-    const char *keys2[] = {
-        "Timeout",
-        "UserPwd",
-        "HttpAuth",
-    };
-    for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {
-        CPLString str = keys2[i];
-        std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, str, "");
-        if (value != "") {
-            str = keys2[i];
-            xml += "<" + str + ">" + value + "</" + str + ">";
-        }
-    }
     xml += "</WCS_GDAL>";
     CPLXMLNode *psService = CPLParseXMLString(xml);
     return psService;
 }
 
-static void UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
+static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
 {
-    service = service->psChild;
+    bool updated = false;
     const char *keys2[] = {
         "NoGridCRS", // do not put GridCRS params into GetCoverage URL if not necessary (1.1)
         "CRS" // override native CRS, should be one of the supported ones
         "PreferredFormat", // option for format
-        "Domain", // names for x and y dimensions, if not set uses the first two ("name,name")
+        "Domain", // names for x and y dimensions, if not set, uses the first two ("name,name")
         "Dimensions", // options for slicing/trimming ("name[,crs](begin,end);name[,crs](slice)")
                       // note that this is not for x/y
         "DimensionToBand", // to put non x/y dimension to a band (may require Range) ("name")
+        "DefaultTime",
         "Interpolation",
-        "Range" // what to put to bands, format as RANGESUBSET in GetCoverage ("name,name:name,")
+        "FieldName", // what to put to bands, format as RANGESUBSET in GetCoverage ("name,name:name,")
+        "Timeout",
+        "UserPwd",
+        "HttpAuth",
+        "Extra",
+        "OverviewCount",
+        "GetCoverageExtra",
+        "DescribeCoverageExtra",
+        "BlockXSize",
+        "BlockYSize",
+        "NoDataValue"
     };
     for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {
         CPLString str = keys2[i];
         std::transform(str.begin(), str.end(),str.begin(), ::toupper);
         CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, str, "");
         if (value != "") {
-            str = keys2[i];
-            if (!CPLSetXMLValue(service, keys2[i], value)) {
-                CPLCreateXMLElementAndValue(service, keys2[i], value);
+            if (!EQUAL(keys2[i], "NoGridCRS")) {
+                updated = true;
             }
+            str = keys2[i];
+            CPLSetXMLValue(service, keys2[i], value);
         }
     }
     // save it to cache
     // it will be updated later with data from DescribeCoverage
     CPLSerializeXMLTreeToFile(service, path);
-    /*
-      do not do this as it prevents fetching metadata
-    CPLFree(poOpenInfo->pszFilename);
-    poOpenInfo->pszFilename = CPLStrdup(path);
-    */
+    return updated;
 }
 
 /************************************************************************/
@@ -1025,7 +1041,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     CPLXMLNode *psService = NULL;
-    CPLXMLNode *metadata = NULL;
     char **papszModifiers = NULL;
     
 /* -------------------------------------------------------------------- */
@@ -1102,18 +1117,48 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         bool recreate_service = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_SERVICE", false);
         if (coverage != "" && (!cached || (cached && !recreate_service))) {
             // the filename of the metadata is the key of URL without coverage
-            CPLString pam_url = URLRemoveKey(url, "coverageId");
+            CPLString pam_url = URLRemoveKey(url, "coverage");
             CPLString pam_filename;
             if (!FromCache(cache_dir, pam_filename, pam_url)) {
                 WCSDataset *pam = CreateFromCapabilities(poOpenInfo, pam_filename, pam_url);
                 if (!pam) {
                     return NULL;
                 }
+                delete pam;
             }
-            //metadata = CPLParseXMLFile((pam_filename + ".aux.xml").c_str());
-            // metadata is put into the new dataset once we create it below
-            CPLFree(poOpenInfo->pszFilename);
-            poOpenInfo->pszFilename = CPLStrdup(pam_filename);
+            CPLXMLNode *metadata = CPLParseXMLFile((pam_filename + ".aux.xml").c_str());
+            
+            // remove other subdataset than the current
+            int subdataset = 0;
+            for (CPLXMLNode *domain = metadata->psChild; domain != NULL; domain = domain->psNext) {
+                if (!CPLGetXMLNode(domain, "SUBDATASETS")) {
+                    continue;
+                }
+                for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+                    CPLString key = CPLGetXMLValue(node, "key", "");
+                    CPLString value = CPLGetXMLValue(node, NULL, "");
+                    if (value.find(coverage) != std::string::npos) {
+                        key.erase(0, 11); // SUBDATASET_
+                        key.erase(key.find("_") - 1, std::string::npos);
+                        subdataset = stoi(key);
+                        break;
+                    }
+                }
+                if (subdataset > 0) {
+                    CPLXMLNode *next = NULL;
+                    for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
+                        CPLString key = CPLGetXMLValue(node, "key", "");
+                        if (!key.find(CPLString().Printf("SUBDATASET_%i", subdataset))) {
+                            next = node->psNext;
+                            CPLRemoveXMLChild(domain, node);
+                        } else {
+                            next = node->psNext;
+                        }
+                    }
+                }
+            }
+                
+            CPLSerializeXMLTreeToFile(metadata, (filename + ".xml.aux.xml").c_str());
         }
         
         if (coverage == "") {
@@ -1126,20 +1171,19 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             return WCSDataset::CreateFromCapabilities(poOpenInfo, filename, url);
         } else {
             // Open a subdataset
+            // Metadata is in (<basename>.xml.aux.xml)
             // Information is in WCS_GDAL file (<basename>.xml)
             // which is made from options and URL
             // and a Coverage description file (<basename>.DC.xml)
             filename += ".xml";
+            CPLFree(poOpenInfo->pszFilename);
+            poOpenInfo->pszFilename = CPLStrdup(filename);
             if (cached && !recreate_service) {
                 // read from cache
                 psService = CPLParseXMLFile(filename);
                 UpdateService(psService, poOpenInfo, filename);
-                /*
-                CPLFree(poOpenInfo->pszFilename);
-                poOpenInfo->pszFilename = CPLStrdup(filename);
-                */
             } else {
-                psService = CreateService(poOpenInfo, base_url, version, coverage);
+                psService = CreateService(base_url, version, coverage);
                 UpdateService(psService, poOpenInfo, filename);
             }
         }
@@ -1244,9 +1288,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psService = psService;
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->papszSDSModifiers = papszModifiers;
-    if (metadata) {
-        poDS->XMLInit(metadata, NULL);
-    }
     poDS->TryLoadXML(); // we need the PAM metadata already in ExtractGridInfo
 
 /* -------------------------------------------------------------------- */
@@ -1295,6 +1336,20 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      It is ok to not have bands. The user just needs to supply       */
+/*      more information.                                               */
+/* -------------------------------------------------------------------- */
+    int nBandCount = atoi(CPLGetXMLValue(psService, "BandCount", "0"));
+    if (nBandCount == 0)
+    {
+        return poDS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract band count and type from a sample.                      */
+/* -------------------------------------------------------------------- */
+
     if( !poDS->EstablishRasterDetails() ) // todo: do this only if missing info
     {
         delete poDS;
@@ -1304,10 +1359,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int nBandCount = atoi(CPLGetXMLValue(psService,"BandCount","1"));
     int iBand;
 
-    if (!GDALCheckBandCount(nBandCount, 0))
+    if (!GDALCheckBandCount(nBandCount, FALSE))
     {
         delete poDS;
         return NULL;

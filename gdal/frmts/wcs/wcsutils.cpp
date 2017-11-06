@@ -82,7 +82,7 @@ std::vector<double> Flist(std::vector<CPLString> array,
     return retval;
 }
 
-int IndexOf(std::vector<CPLString> array, CPLString str)
+int IndexOf(CPLString str, std::vector<CPLString> array)
 {
     int index = -1;
     for (unsigned int i = 0; i < array.size(); ++i) {
@@ -94,11 +94,23 @@ int IndexOf(std::vector<CPLString> array, CPLString str)
     return index;
 }
 
-std::vector<int> IndexOf(std::vector<CPLString> array, std::vector<CPLString> str)
+int IndexOf(int i, std::vector<int> array)
+{
+    int index = -1;
+    for (unsigned int j = 0; j < array.size(); ++j) {
+        if (array[j] == i) {
+            index = j;
+            break;
+        }
+    }
+    return index;
+}
+
+std::vector<int> IndexOf(std::vector<CPLString> strs, std::vector<CPLString> array)
 {
     std::vector<int> retval;
-    for (unsigned int i = 0; i < str.size(); ++i) {
-        retval.push_back(IndexOf(array, str[i]));
+    for (unsigned int i = 0; i < strs.size(); ++i) {
+        retval.push_back(IndexOf(strs[i], array));
     }
     return retval;
 }

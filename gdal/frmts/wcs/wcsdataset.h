@@ -78,7 +78,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     int         EstablishRasterDetails();
 
-    virtual CPLErr      ParseCapabilities( CPLXMLNode * ) = 0;
+    virtual CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) = 0;
 
     virtual const char *ExceptionNodeName() = 0;
     
@@ -126,7 +126,7 @@ class CPL_DLL WCSDataset100 : public WCSDataset
     CPLString   DescribeCoverageRequest() override;
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
-    CPLErr      ParseCapabilities( CPLXMLNode * ) override;
+    CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
     const char *ExceptionNodeName() override;
     
   public:
@@ -146,7 +146,7 @@ class CPL_DLL WCSDataset110 : public WCSDataset
     CPLString   DescribeCoverageRequest() override;
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
     bool        ExtractGridInfo() override;
-    CPLErr      ParseCapabilities( CPLXMLNode * ) override;
+    CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
     const char *ExceptionNodeName() override;
     
   public:
@@ -162,7 +162,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
     CPLString   GetSubdataset(CPLString coverage);
     bool        SetFormat(CPLXMLNode *coverage);
     bool        ParseGridFunction(std::vector<CPLString> &axisOrder);
-    bool        ParseRange(CPLXMLNode *coverage, char ***metadata, unsigned int &bands);
+    int         ParseRange(CPLXMLNode *coverage, char ***metadata);
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
                                     std::vector<double> extent,

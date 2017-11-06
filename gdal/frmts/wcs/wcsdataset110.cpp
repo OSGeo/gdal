@@ -542,7 +542,7 @@ bool WCSDataset110::ExtractGridInfo()
 /*                      ParseCapabilities()                             */
 /************************************************************************/
 
-CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities )
+CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString url )
 {
     CPLStripXMLNamespace(Capabilities, NULL, TRUE);
 
@@ -657,6 +657,9 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities )
         }
     }
     // todo: if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
+    if (DescribeCoverageURL.find("localhost") != std::string::npos) {
+        DescribeCoverageURL = URLRemoveKey(url, "request");
+    }
 
     // service metadata (2.0)
     CPLString ext = "ServiceMetadata";
@@ -729,6 +732,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities )
                 } else {
                     value = CPLURLAddKVP(value, "identifiers", CPLGetXMLValue(node, NULL, ""));
                 }
+                value = "WCS:" + value;
                 // GDAL Data Model:
                 // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
                 metadata = CSLSetNameValue(metadata, name, value);

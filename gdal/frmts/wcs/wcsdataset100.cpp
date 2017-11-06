@@ -442,7 +442,7 @@ bool WCSDataset100::ExtractGridInfo()
 /*                      ParseCapabilities()                             */
 /************************************************************************/
 
-CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities )
+CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED CPLString url )
 {
 
     CPLStripXMLNamespace(Capabilities, NULL, TRUE);
