@@ -11,11 +11,13 @@ Well Known Text format for describing coordinate systems.
 Some background on OpenGIS coordinate systems and services can be found
 in the Simple Features for COM, and Spatial Reference Systems Abstract Model
 documents available from the <a href="http://www.opengeospatial.org">Open Geospatial Consortium</a>.
-The <a href="http://www.remotesensing.org/geotiff/proj_list">GeoTIFF Projections Transform List</a>
+The <a href="http://geotiff.maptools.org/proj_list/">GeoTIFF Projections Transform List</a>
 may also be of assistance in
 understanding formulations of projections in WKT.  The
 <a href="http://www.epsg.org">EPSG</a>
 Geodesy web page is also a useful resource.
+
+You may also consult the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page.
 
 \section osr_tutorial_cs Defining a Geographic Coordinate System
 
