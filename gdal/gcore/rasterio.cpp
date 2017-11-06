@@ -1544,6 +1544,7 @@ CPLErr GDALDataset::RasterIOResampled(
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
+            CPLFree(papoDstBands);
             return CE_Failure;
         }
 
