@@ -81,6 +81,32 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         VSIFCloseL(fp);
     }
 
+    int nXDim = -1;
+    int nYDim = -1;
+    bool bXDimPct = false;
+    bool bYDimPct = false;
+    bool bNonNearestResampling = false;
+    if( papszArgv != NULL )
+    {
+        int nCount = CSLCount(papszArgv);
+        for( int i = 0; i < nCount; i++ )
+        {
+            if( EQUAL(papszArgv[i], "-outsize") && i + 2 < nCount )
+            {
+                nXDim = atoi(papszArgv[i+1]);
+                bXDimPct = (papszArgv[i+1][0] != '\0' &&
+                            papszArgv[i+1][strlen(papszArgv[i+1])-1] == '%');
+                nYDim = atoi(papszArgv[i+2]);
+                bYDimPct = (papszArgv[i+2][0] != '\0' &&
+                            papszArgv[i+2][strlen(papszArgv[i+2])-1] == '%');
+            }
+            else if( EQUAL(papszArgv[i], "-r") && i + 1 < nCount )
+            {
+                bNonNearestResampling = !STARTS_WITH_CI(papszArgv[i+1], "NEAR");
+            }
+        }
+    }
+
     if( papszArgv != NULL )
     {
         GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, NULL);
@@ -102,7 +128,29 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     if( nBands )
                         nSize *= GDALGetDataTypeSizeBytes(
                                 poSrcDS->GetRasterBand(1)->GetRasterDataType() );
-                    if( nSize < 10 * 1024 * 1024 )
+
+                    // Prevent excessive downsampling which might require huge
+                    // memory allocation
+                    bool bOKForResampling = true;
+                    if( bNonNearestResampling && nXDim >= 0 && nYDim >= 0 )
+                    {
+                        if( bXDimPct && nXDim > 0 )
+                        {
+                            nXDim = static_cast<int>(
+                                poSrcDS->GetRasterXSize() / 100.0 * nXDim);
+                        }
+                        if( bYDimPct && nYDim > 0 )
+                        {
+                            nYDim = static_cast<int>(
+                                poSrcDS->GetRasterYSize() / 100.0 * nYDim);
+                        }
+                        if( nXDim > 0 && poSrcDS->GetRasterXSize() / nXDim > 100 )
+                            bOKForResampling = false;
+                        if( nYDim > 0 && poSrcDS->GetRasterYSize() / nYDim > 100 )
+                            bOKForResampling = false;
+                    }
+
+                    if( nSize < 10 * 1024 * 1024 && bOKForResampling )
                     {
                         GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
                                                             psOptions, NULL);
