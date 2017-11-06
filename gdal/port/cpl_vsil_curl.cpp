@@ -494,7 +494,8 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                                            bool* pbEmptyDir,
                                            char*** ppapszHTTPOptions)
 {
-    if( !STARTS_WITH(pszFilename, "/vsicurl/") )
+    if( !STARTS_WITH(pszFilename, "/vsicurl/") &&
+        !STARTS_WITH(pszFilename, "/vsicurl?") )
         return pszFilename;
     pszFilename += strlen("/vsicurl/");
     if( !STARTS_WITH(pszFilename, "http://") &&
@@ -502,6 +503,8 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
         !STARTS_WITH(pszFilename, "ftp://") &&
         !STARTS_WITH(pszFilename, "file://") )
     {
+        if( *pszFilename == '?' )
+            pszFilename ++;
         char** papszTokens = CSLTokenizeString2( pszFilename, "&", 0 );
         for( int i = 0; papszTokens[i] != NULL; i++ )
         {
@@ -3016,7 +3019,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool bSetError )
 {
-    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
         return NULL;
 
     if( strchr(pszAccess, 'w') != NULL ||
@@ -7458,7 +7462,9 @@ void VSIInstallCurlFileHandler( void )
     N_MAX_REGIONS = std::max(1,
                         static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE));
 
-    VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
+    VSIFilesystemHandler* poHandler = new VSICurlFilesystemHandler;
+    VSIFileManager::InstallHandler( "/vsicurl/", poHandler );
+    VSIFileManager::InstallHandler( "/vsicurl?", poHandler );
 }
 
 /************************************************************************/
