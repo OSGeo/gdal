@@ -444,7 +444,7 @@ bool WCSDataset201::ExtractGridInfo()
         CPLSetXMLValue(psService, "Domain", Join(domain, ","));
     }
     
-    char **metadata = NULL; // coverage metadata to be added/updated
+    char **metadata = CSLDuplicate(GetMetadata("SUBDATASETS")); // coverage metadata to be added/updated
     
     metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
 

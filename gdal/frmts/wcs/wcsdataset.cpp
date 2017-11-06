@@ -1131,15 +1131,18 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             // remove other subdataset than the current
             int subdataset = 0;
             for (CPLXMLNode *domain = metadata->psChild; domain != NULL; domain = domain->psNext) {
-                if (!CPLGetXMLNode(domain, "SUBDATASETS")) {
+                if (!EQUAL(CPLGetXMLValue(domain, "domain", ""), "SUBDATASETS")) {
                     continue;
                 }
                 for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+                    if (node->eType != CXT_Element) {
+                        continue;
+                    }
                     CPLString key = CPLGetXMLValue(node, "key", "");
                     CPLString value = CPLGetXMLValue(node, NULL, "");
                     if (value.find(coverage) != std::string::npos) {
                         key.erase(0, 11); // SUBDATASET_
-                        key.erase(key.find("_") - 1, std::string::npos);
+                        key.erase(key.find("_"), std::string::npos);
                         subdataset = stoi(key);
                         break;
                     }
@@ -1147,12 +1150,14 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                 if (subdataset > 0) {
                     CPLXMLNode *next = NULL;
                     for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
+                        next = node->psNext;
+                        if (node->eType != CXT_Element) {
+                            continue;
+                        }
                         CPLString key = CPLGetXMLValue(node, "key", "");
-                        if (!key.find(CPLString().Printf("SUBDATASET_%i", subdataset))) {
-                            next = node->psNext;
+                        if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
                             CPLRemoveXMLChild(domain, node);
-                        } else {
-                            next = node->psNext;
+                            CPLDestroyXMLNode(node);
                         }
                     }
                 }
