@@ -2112,11 +2112,10 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
             {
                 double dfVal = 0.0;
                 dfWeightSum = 0.0;
-                for( int i = 0,
-                         j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize)
+                int i = 0;
+                size_t j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize)
                              + iFilteredPixelOff;
-                    i < nSrcLineCount;
-                    ++i, j += nDstXSize)
+                for(; i < nSrcLineCount; ++i, j += nDstXSize)
                 {
                     const double dfWeight =
                         padfWeights[i]
