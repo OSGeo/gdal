@@ -1054,13 +1054,14 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 nDstBlockYSize /= 2;
         }
 
-        int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
-                                   static_cast<int>(0.5 + dfYRatioDstToSrc) );
-        if( nOvrFactor == 0 ) nOvrFactor = 1;
+        int nOvrXFactor = static_cast<int>(0.5 + dfXRatioDstToSrc);
+        int nOvrYFactor = static_cast<int>(0.5 + dfYRatioDstToSrc);
+        if( nOvrXFactor == 0 ) nOvrXFactor = 1;
+        if( nOvrYFactor == 0 ) nOvrYFactor = 1;
         int nFullResXSizeQueried =
-            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+            nFullResXChunk + 2 * nKernelRadius * nOvrXFactor;
         int nFullResYSizeQueried =
-            nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+            nFullResYChunk + 2 * nKernelRadius * nOvrYFactor;
 
         if( nFullResXSizeQueried > nRasterXSize )
             nFullResXSizeQueried = nRasterXSize;
@@ -1116,8 +1117,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
             int nYCount = nChunkYOff2 - nChunkYOff;
             CPLAssert(nYCount <= nFullResYChunk);
 
-            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrFactor;
-            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrFactor;
+            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrYFactor;
+            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrYFactor;
             if( nChunkYOffQueried < 0 )
             {
                 nChunkYSizeQueried += nChunkYOffQueried;
@@ -1148,9 +1149,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 int nXCount = nChunkXOff2 - nChunkXOff;
                 CPLAssert(nXCount <= nFullResXChunk);
 
-                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrFactor;
+                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrXFactor;
                 int nChunkXSizeQueried =
-                    nXCount + 2 * nKernelRadius * nOvrFactor;
+                    nXCount + 2 * nKernelRadius * nOvrXFactor;
                 if( nChunkXOffQueried < 0 )
                 {
                     nChunkXSizeQueried += nChunkXOffQueried;
