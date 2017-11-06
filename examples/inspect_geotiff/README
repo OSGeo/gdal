@@ -1,0 +1,13 @@
+This shows an example of how to use the GDAL API from within a web browser to
+inspect certain aspects of a GeoTIFF. It roughly mirrors the functionality
+found in http://www.gdal.org/gdal_tutorial.html.
+
+To use, first make sure that `gdal.js` and `gdal.js.mem` are available in this
+directory. There are some symlinks provided that will do this automatically if
+you build the project from source. Alternatively, you can
+[download a release](https://github.com/ddohler/gdal-js/releases)
+and place the files in this directory manually.
+
+Next, start up an HTTP server to serve this folder. For example,
+`python -m SimpleHTTPServer`. Navigate to whatever port your server is listening
+at, and follow the instructions on the page.

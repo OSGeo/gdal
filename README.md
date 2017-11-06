@@ -12,22 +12,19 @@ python2: No such file or directory`
 ./emsdk install sdk-incoming-64bit --build=Release
 ./emsdk activate sdk-incoming-64bit
 ```
-3. From the project directory, run `make gdal-lib`
+3. From the project directory, run `make gdal`
 
 Usage
 ---------------
-There's not really much you can easily do right now; making a more ergonomic interface to the GDAL C
-API is high on my to-do list.
+This library exports the following GDAL functions:
+- GDALOpen
+- GDALGetRasterCount
+- GDALGetRasterXSize
+- GDALGetRasterYSize
+- GDALGetProjectionRef
+- GDALGetGeoTransform
 
-If you're feeling adventurous, Emscripten provides a debugging interface for command-line programs
-which I've used successfully with `gdalinfo`. You should be able to compile `gdalinfo`, for example,
-by doing something like this from the `gdal` directory:
-```
-emmake make apps-target
-cd apps
-em++ -s ALLOW_MEMORY_GROWTH=1 gdalinfo_bin.o  ../libgdal.a
--L../../proj4/src/.libs -lproj -lpthread -ldl -o gdalinfo.html
-```
-Note that you will need to preload a useful file (a GeoTiff) into the Emscripten file system
-and pass it to `gdalinfo` as a command line argument in order for this to do anything useful. The
-Emscripten docs contain information on how to do both of those things.
+To see a full-fledged example using all of these functions from within a WebWorker, check out the
+`examples/inspect_geotiff` directory.
+
+In order to limit Javascript build size, GDAL is currently built with support for GeoTIFFs only.

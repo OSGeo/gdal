@@ -1,19 +1,37 @@
 PROJ4 = proj4
 GDAL = gdal
 EMMAKE ?= emmake
+EMCC ?= emcc
 EMCONFIGURE ?= emconfigure
-export EMCONFIGURE_JS ?= 0
-export EMCC_CFLAGS += -msse
+EMCONFIGURE_JS ?= 0
+EMCC_CFLAGS := -msse
+EXPORTED_FUNCTIONS = "[\
+  '_GDALAllRegister',\
+  '_GDALOpen',\
+  '_GDALGetRasterXSize',\
+  '_GDALGetRasterYSize',\
+  '_GDALGetRasterCount',\
+  '_GDALGetProjectionRef',\
+  '_GDALGetGeoTransform'\
+]"
+
+export EMCONFIGURE_JS
+export EMCC_CFLAGS
 
 include gdal-configure.opt
 
 ########
 # GDAL #
 ########
+gdal: gdal.js
+
+gdal.js: gdal-lib
+	$(EMCC) $(GDAL)/libgdal.a -o gdal.js -O3 -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS)
+
 gdal-lib: $(GDAL)/libgdal.a
 
 $(GDAL)/libgdal.a: $(GDAL)/config.status proj4
-	cd $(GDAL) && EMCC_FLAGS="-msse" $(EMMAKE) make lib-target
+	cd $(GDAL) && $(EMMAKE) make lib-target
 
 # TODO: Pass the configure params more elegantly so that this uses the
 # EMCONFIGURE variable
