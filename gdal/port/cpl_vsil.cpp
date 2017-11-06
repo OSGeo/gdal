@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1565,12 +1566,17 @@ VSIFileManager::VSIFileManager() :
 
 VSIFileManager::~VSIFileManager()
 {
+    std::set<VSIFilesystemHandler*> oSetAlreadyDeleted;
     for( std::map<std::string, VSIFilesystemHandler*>::const_iterator iter =
              oHandlers.begin();
          iter != oHandlers.end();
          ++iter )
     {
-        delete iter->second;
+        if( oSetAlreadyDeleted.find(iter->second) == oSetAlreadyDeleted.end() )
+        {
+            oSetAlreadyDeleted.insert(iter->second);
+            delete iter->second;
+        }
     }
 
     delete poDefaultHandler;

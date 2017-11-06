@@ -417,7 +417,7 @@ def vsicurl_test_retry():
     handler.add('GET', '/test_retry/test.txt', 429 )
     handler.add('GET', '/test_retry/test.txt', 200, {}, 'foo' )
     with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL('/vsicurl/max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
+        f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
         if f is None:
             gdaltest.post_reason('fail')
             return 'fail'
