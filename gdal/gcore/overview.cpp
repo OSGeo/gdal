@@ -1776,11 +1776,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
     const double dfYScaledRadius = nKernelRadius / dfYScaleWeight;
 
     float* pafDstScanline = static_cast<float *>(
-        VSI_MALLOC_VERBOSE(nDstXSize * sizeof(float)) );
+        VSI_MALLOC2_VERBOSE(nDstXSize, sizeof(float)) );
 
     // Temporary array to store result of horizontal filter.
     double* padfHorizontalFiltered = static_cast<double*>(
-        VSI_MALLOC_VERBOSE(nChunkYSize * nDstXSize * sizeof(double) * nBands) );
+        VSI_MALLOC3_VERBOSE(nChunkYSize, nDstXSize, sizeof(double) * nBands) );
 
     // To store convolution coefficients.
     double* padfWeights = static_cast<double *>(
@@ -1886,11 +1886,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         pChunk + j, pChunk + j + nChunkXSize,
                         pChunk + j + 2 * nChunkXSize,
                         padfWeights, dfVal1, dfVal2, dfVal3);
-                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal1;
-                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal2;
-                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal3;
                 }
             }
@@ -1908,11 +1908,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         pChunk + j, pChunk + j + nChunkXSize,
                         pChunk + j + 2 * nChunkXSize,
                         padfWeights, nSrcPixelCount, dfVal1, dfVal2, dfVal3);
-                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal1;
-                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal2;
-                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal3;
                 }
             }
@@ -1932,11 +1932,11 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                         pChunk + j + nChunkXSize,
                         pChunk + j + 2 * nChunkXSize,
                         padfWeights, nSrcPixelCount, dfVal1, dfVal2, dfVal3);
-                    padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                    padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal1;
-                    padfHorizontalFiltered[(iSrcLineOff + 1) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 1) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal2;
-                    padfHorizontalFiltered[(iSrcLineOff + 2) * nDstXSize +
+                    padfHorizontalFiltered[(static_cast<size_t>(iSrcLineOff) + 2) * nDstXSize +
                                            iDstPixel - nDstXOff] = dfVal3;
                 }
             }
@@ -1947,7 +1947,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                 const double dfVal =
                     GDALResampleConvolutionHorizontal(pChunk + j,
                                                 padfWeights, nSrcPixelCount);
-                padfHorizontalFiltered[iSrcLineOff * nDstXSize +
+                padfHorizontalFiltered[static_cast<size_t>(iSrcLineOff) * nDstXSize +
                                        iDstPixel - nDstXOff] = dfVal;
             }
         }
@@ -1962,8 +1962,8 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                     pChunk + j, pabyChunkNodataMask + j,
                     padfWeights, nSrcPixelCount,
                     dfVal, dfWeightSum );
-                const int nTempOffset =
-                    iSrcLineOff * nDstXSize + iDstPixel - nDstXOff;
+                const size_t nTempOffset =
+                    static_cast<size_t>(iSrcLineOff) * nDstXSize + iDstPixel - nDstXOff;
                 if( dfWeightSum > 0.0 )
                 {
                     padfHorizontalFiltered[nTempOffset] = dfVal / dfWeightSum;
@@ -2049,7 +2049,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
         {
             int iFilteredPixelOff = 0;  // Used after for.
             // j used after for.
-            int j = (nSrcLineStart - nChunkYOff) * nDstXSize;
+            size_t j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
 #ifdef USE_SSE2
 
 #ifdef __AVX__
@@ -2113,7 +2113,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
                 double dfVal = 0.0;
                 dfWeightSum = 0.0;
                 for( int i = 0,
-                         j = (nSrcLineStart - nChunkYOff) * nDstXSize
+                         j = (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize)
                              + iFilteredPixelOff;
                     i < nSrcLineCount;
                     ++i, j += nDstXSize)
