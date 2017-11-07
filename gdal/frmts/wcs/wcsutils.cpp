@@ -356,6 +356,7 @@ CPLXMLNode *AddSimpleMetaData(char ***metadata,
             if (CPLXMLNode *node3 = CPLGetXMLNode(node2, keys[i])) {
                 CPLString name = path + keys[i];
                 CPLString value = CPLGetXMLValue(node3, NULL, "");
+                value.Trim();
                 *metadata = CSLSetNameValue(*metadata, name, value);
             }
         }
@@ -378,7 +379,21 @@ CPLString GetKeywords(CPLXMLNode *root,
                 if (words != "") {
                     words += ",";
                 }
-                words += CPLGetXMLValue(node, NULL, "");
+                // todo: remove newlines
+
+                CPLString word = CPLGetXMLValue(node, NULL, "");
+                
+                // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
+                const char *epsg = "http://www.opengis.net/def/crs/EPSG/0/";
+                size_t pos = word.find(epsg);
+                if (pos != std::string::npos) {
+                    word.erase(pos, strlen(epsg));
+                    word = "EPSG:" + word;
+                }
+
+                word.Trim();
+                
+                words += word;
             }
         }
     }

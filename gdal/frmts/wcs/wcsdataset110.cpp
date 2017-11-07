@@ -686,6 +686,9 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     }
     if (crs != "") {
         CPLString name = path + "crsSupported";
+
+        // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
+        
         metadata = CSLSetNameValue(metadata, name, crs);
     }
 

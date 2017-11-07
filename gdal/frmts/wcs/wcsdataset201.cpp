@@ -420,230 +420,230 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, char ***metadata)
 /*                                                                      */
 /************************************************************************/
 
-    bool WCSDataset201::ExtractGridInfo()
-    {
-        // this is for checking what's in service and for filling in empty slots in it
-        // if the service file can be considered ready for use, this could be skipped
+bool WCSDataset201::ExtractGridInfo()
+{
+    // this is for checking what's in service and for filling in empty slots in it
+    // if the service file can be considered ready for use, this could be skipped
 
-        CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
+    CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
 
-        if (coverage == NULL) {
-            CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service. RECREATE_SERVICE?");
-            return false;
-        }
-
-        CPLString subtype = CoverageSubtype(coverage);
-    
-        // GridFunction (is optional)
-        // We support only linear grid functions.
-        // axisOrder affects the geo transform, if it swaps i and j
-        std::vector<CPLString> axisOrder;
-        if (!ParseGridFunction(axisOrder)) {
-            return false;
-        }
-
-        // get CRS from boundedBy.Envelope and set the native flag to true
-        // below we may set the CRS again but that won't be native
-        // also axis order swap is set
-        CPLString path = "boundedBy.Envelope";
-        CPLXMLNode *envelope = CPLGetXMLNode(coverage, path);
-        std::vector<CPLString> bbox = ParseBoundingBox(envelope);
-        if (!SetCRS(ParseCRS(envelope), true)) {
-            return false;
-        }
-
-        // has the user set the domain?
-        std::vector<CPLString> domain = Split(CPLGetXMLValue(psService, "Domain", ""), ",");
-
-        // names of axes
-        std::vector<CPLString> axes = Split(
-            CPLGetXMLValue(coverage, (path + ".axisLabels").c_str(), ""), " ", axis_order_swap);
-        std::vector<CPLString> uoms = Split(
-            CPLGetXMLValue(coverage, (path + ".uomLabels").c_str(), ""), " ", axis_order_swap);
-
-        if (axes.size() < 2 || bbox.size() < 2) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Less than 2 dimensions in coverage envelope or no axisLabels.");
-            return false;
-        }
-
-        std::vector<int> domain_indexes = IndexOf(domain, axes);
-        if (Contains(domain_indexes, -1)) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Axis in given domain does not exist in coverage.");
-            return false;
-        }
-        if (domain_indexes.size() == 0) { // default is the first two
-            domain_indexes.push_back(0);
-            domain_indexes.push_back(1);
-        }
-        if (domain.size() == 0) {
-            domain.push_back(axes[0]);
-            domain.push_back(axes[1]);
-            CPLSetXMLValue(psService, "Domain", Join(domain, ","));
-        }
-    
-        char **metadata = CSLDuplicate(GetMetadata("SUBDATASETS")); // coverage metadata to be added/updated
-    
-        metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
-
-        std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
-        std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
-        std::vector<double> low = Flist(slow);
-        std::vector<double> high = Flist(shigh);
-        std::vector<double> env;
-        env.insert(env.end(), low.begin(), low.begin() + 2);
-        env.insert(env.end(), high.begin(), high.begin() + 2);
-        // todo: EnvelopeWithTimePeriod
-    
-        for (unsigned int i = 0; i < axes.size(); ++i) {
-            CPLString key;
-            key.Printf("DIMENSION_%i_", i);
-            metadata = CSLSetNameValue(metadata, (key + "AXIS").c_str(), axes[i]);
-            if (i < uoms.size()) {
-                metadata = CSLSetNameValue(metadata, (key + "UOM").c_str(), uoms[i]);
-            }
-            if (i < 2) {
-                metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
-                                           CPLString().Printf("%.15g,%.15g", low[i], high[i]));
-            } else {
-                metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
-                                           CPLString().Printf("%s,%s", slow[i].c_str(), shigh[i].c_str()));
-            }
-        }
-
-        // domainSet
-        // requirement 23: the srsName here _shall_ be the same as in boundedBy
-        // => we ignore it
-        // the CRS of this dataset is from boundedBy (unless it is overridden)
-        // this is the size of this dataset
-        // this gives the geotransform of this dataset (unless there is CRS override)
-    
-        CPLXMLNode *grid = GetGridNode(coverage, subtype);
-        if (!grid) {
-            return false;
-        }
-
-        path = "limits.GridEnvelope";
-        std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path));
-        std::vector<int> grid_size;
-    
-        grid_size.push_back(size[1][domain_indexes[0]] - size[0][domain_indexes[0]] + 1);
-        grid_size.push_back(size[1][domain_indexes[1]] - size[0][domain_indexes[1]] + 1);
-
-        path = "axisLabels";
-        std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", axis_order_swap);
-        CPLSetXMLValue(psService, "GridAxes", Join(grid_axes, ","));
-
-        std::vector<double> origin;
-        std::vector<std::vector<double>> offsets;
-        if (!GridOffsets(grid, subtype, origin, offsets, axes, &metadata)) {
-            return false;
-        }
-
-        SetGeometry(grid_size, origin, offsets, axisOrder);
-    
-        // has the user set the dimension to band?
-        CPLString dimension_to_band = CPLGetXMLValue(psService, "DimensionToBand", "");
-        int dimension_to_band_index = IndexOf(dimension_to_band, axes); // returns -1 if dimension_to_band is ""
-        if (IndexOf(dimension_to_band_index, domain_indexes) != -1) {
-            CPLError(CE_Failure, CPLE_AppDefined, "'Dimension to band' can't be x nor y dimension.");
-            return false;
-        }
-        if (dimension_to_band != "" && dimension_to_band_index == -1) {
-            CPLError(CE_Failure, CPLE_AppDefined, "Given 'dimension to band' does not exist in coverage.");
-            return false;
-        }
-
-        // has the user set slicing or trimming?
-        std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
-        // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
-        std::vector<std::vector<double>> domain_trim;
-        std::vector<CPLString> dimension_to_band_trim;
-    
-        // are all dimensions that are not x/y domain and dimension to band sliced?
-        // if not, bands can't be defined, see below
-        bool dimensions_are_ok = true;
-        for (unsigned int i = 0; i < axes.size(); ++i) {
-            std::vector<CPLString> params;
-            for (unsigned int j = 0; j < dimensions.size(); ++j) {
-                if (dimensions[j].find(axes[i] + "(") != std::string::npos) {
-                    params = Split(FromParenthesis(dimensions[j]), ",");
-                    break;
-                }
-            }
-            int domain_index = IndexOf(axes[i], domain);
-            if (domain_index != -1) {
-                std::vector<double> trim = Flist(params);
-                domain_trim.push_back(trim);
-                continue;
-            }
-            if (axes[i] == dimension_to_band) {
-                dimension_to_band_trim = params;
-                continue;
-            }
-            // size == 1 => sliced
-            if (params.size() != 1) {
-                dimensions_are_ok = false;
-            }
-        }
-        fprintf(stderr, "Dimensions are %s\n", (dimensions_are_ok ? "ok" : "not ok"));
-        if (domain_trim.size() > 0) {
-            // todo: BoundGeometry(domain_trim);
-        }   
-
-        // check for CRS override
-        CPLString crs = CPLGetXMLValue(psService, "CRS", "");
-        if (crs != "" && crs != osCRS) {
-            // todo: warp env from osCRS to crs
-            if (!SetCRS(crs, false)) {
-                return false;
-            }
-            SetGeometry(grid_size, origin, offsets, axisOrder);
-        }
-
-        // todo: ElevationDomain, DimensionDomain
-
-        // rangeType
-
-        // get the field metadata
-        // get the count of fields
-        // if Range is set in service that may limit the fields
-        int fields = ParseRange(coverage, &metadata);
-        if (fields == 0) {
-            return false;
-        }
-
-        // add PAM metadata to domain SUBDATASET_i
-        CPLString subdataset = GetSubdataset(CPLGetXMLValue(psService, "CoverageName", ""));
-        //this->SetMetadata(metadata, subdataset);
-        
-        this->SetMetadata(metadata, "SUBDATASETS");
-        CSLDestroy(metadata);
-        TrySaveXML();
-    
-        // determine the band count
-        int bands = 0;
-        if (dimensions_are_ok) {
-            // must not have a loose dimension
-            if (dimension_to_band != "") {
-                if (fields == 1) {
-                    bands = size[1][dimension_to_band_index] - size[0][dimension_to_band_index] + 1;
-                }
-            } else {
-                bands = fields;
-            }
-        }
-        CPLSetXMLValue(psService, "BandCount", CPLString().Printf("%d",bands));
-    
-        // set the PreferredFormat value in service, unless it is set
-        // by the user, either through direct edit or options
-        if (!SetFormat(coverage)) {
-            // all attempts to find a format have failed...
-            CPLError(CE_Failure, CPLE_AppDefined, "All attempts to find a format have failed, giving up.");
-            return false;
-        }
-
-        // todo: set the Interpolation, check it against InterpolationSupported
-    
-        bServiceDirty = TRUE;
-        return true;
+    if (coverage == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service. RECREATE_SERVICE?");
+        return false;
     }
+
+    CPLString subtype = CoverageSubtype(coverage);
+    
+    // GridFunction (is optional)
+    // We support only linear grid functions.
+    // axisOrder affects the geo transform, if it swaps i and j
+    std::vector<CPLString> axisOrder;
+    if (!ParseGridFunction(axisOrder)) {
+        return false;
+    }
+
+    // get CRS from boundedBy.Envelope and set the native flag to true
+    // below we may set the CRS again but that won't be native
+    // also axis order swap is set
+    CPLString path = "boundedBy.Envelope";
+    CPLXMLNode *envelope = CPLGetXMLNode(coverage, path);
+    std::vector<CPLString> bbox = ParseBoundingBox(envelope);
+    if (!SetCRS(ParseCRS(envelope), true)) {
+        return false;
+    }
+
+    // has the user set the domain?
+    std::vector<CPLString> domain = Split(CPLGetXMLValue(psService, "Domain", ""), ",");
+
+    // names of axes
+    std::vector<CPLString> axes = Split(
+        CPLGetXMLValue(coverage, (path + ".axisLabels").c_str(), ""), " ", axis_order_swap);
+    std::vector<CPLString> uoms = Split(
+        CPLGetXMLValue(coverage, (path + ".uomLabels").c_str(), ""), " ", axis_order_swap);
+
+    if (axes.size() < 2 || bbox.size() < 2) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Less than 2 dimensions in coverage envelope or no axisLabels.");
+        return false;
+    }
+
+    std::vector<int> domain_indexes = IndexOf(domain, axes);
+    if (Contains(domain_indexes, -1)) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Axis in given domain does not exist in coverage.");
+        return false;
+    }
+    if (domain_indexes.size() == 0) { // default is the first two
+        domain_indexes.push_back(0);
+        domain_indexes.push_back(1);
+    }
+    if (domain.size() == 0) {
+        domain.push_back(axes[0]);
+        domain.push_back(axes[1]);
+        CPLSetXMLValue(psService, "Domain", Join(domain, ","));
+    }
+    
+    char **metadata = CSLDuplicate(GetMetadata("SUBDATASETS")); // coverage metadata to be added/updated
+    
+    metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
+
+    std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
+    std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
+    std::vector<double> low = Flist(slow);
+    std::vector<double> high = Flist(shigh);
+    std::vector<double> env;
+    env.insert(env.end(), low.begin(), low.begin() + 2);
+    env.insert(env.end(), high.begin(), high.begin() + 2);
+    // todo: EnvelopeWithTimePeriod
+    
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        CPLString key;
+        key.Printf("DIMENSION_%i_", i);
+        metadata = CSLSetNameValue(metadata, (key + "AXIS").c_str(), axes[i]);
+        if (i < uoms.size()) {
+            metadata = CSLSetNameValue(metadata, (key + "UOM").c_str(), uoms[i]);
+        }
+        if (i < 2) {
+            metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
+                                       CPLString().Printf("%.15g,%.15g", low[i], high[i]));
+        } else {
+            metadata = CSLSetNameValue(metadata, (key + "INTERVAL").c_str(),
+                                       CPLString().Printf("%s,%s", slow[i].c_str(), shigh[i].c_str()));
+        }
+    }
+
+    // domainSet
+    // requirement 23: the srsName here _shall_ be the same as in boundedBy
+    // => we ignore it
+    // the CRS of this dataset is from boundedBy (unless it is overridden)
+    // this is the size of this dataset
+    // this gives the geotransform of this dataset (unless there is CRS override)
+    
+    CPLXMLNode *grid = GetGridNode(coverage, subtype);
+    if (!grid) {
+        return false;
+    }
+
+    path = "limits.GridEnvelope";
+    std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path));
+    std::vector<int> grid_size;
+    
+    grid_size.push_back(size[1][domain_indexes[0]] - size[0][domain_indexes[0]] + 1);
+    grid_size.push_back(size[1][domain_indexes[1]] - size[0][domain_indexes[1]] + 1);
+
+    path = "axisLabels";
+    std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", axis_order_swap);
+    CPLSetXMLValue(psService, "GridAxes", Join(grid_axes, ","));
+
+    std::vector<double> origin;
+    std::vector<std::vector<double>> offsets;
+    if (!GridOffsets(grid, subtype, origin, offsets, axes, &metadata)) {
+        return false;
+    }
+
+    SetGeometry(grid_size, origin, offsets, axisOrder);
+    
+    // has the user set the dimension to band?
+    CPLString dimension_to_band = CPLGetXMLValue(psService, "DimensionToBand", "");
+    int dimension_to_band_index = IndexOf(dimension_to_band, axes); // returns -1 if dimension_to_band is ""
+    if (IndexOf(dimension_to_band_index, domain_indexes) != -1) {
+        CPLError(CE_Failure, CPLE_AppDefined, "'Dimension to band' can't be x nor y dimension.");
+        return false;
+    }
+    if (dimension_to_band != "" && dimension_to_band_index == -1) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Given 'dimension to band' does not exist in coverage.");
+        return false;
+    }
+
+    // has the user set slicing or trimming?
+    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
+    // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
+    std::vector<std::vector<double>> domain_trim;
+    std::vector<CPLString> dimension_to_band_trim;
+    
+    // are all dimensions that are not x/y domain and dimension to band sliced?
+    // if not, bands can't be defined, see below
+    bool dimensions_are_ok = true;
+    for (unsigned int i = 0; i < axes.size(); ++i) {
+        std::vector<CPLString> params;
+        for (unsigned int j = 0; j < dimensions.size(); ++j) {
+            if (dimensions[j].find(axes[i] + "(") != std::string::npos) {
+                params = Split(FromParenthesis(dimensions[j]), ",");
+                break;
+            }
+        }
+        int domain_index = IndexOf(axes[i], domain);
+        if (domain_index != -1) {
+            std::vector<double> trim = Flist(params);
+            domain_trim.push_back(trim);
+            continue;
+        }
+        if (axes[i] == dimension_to_band) {
+            dimension_to_band_trim = params;
+            continue;
+        }
+        // size == 1 => sliced
+        if (params.size() != 1) {
+            dimensions_are_ok = false;
+        }
+    }
+    fprintf(stderr, "Dimensions are %s\n", (dimensions_are_ok ? "ok" : "not ok"));
+    if (domain_trim.size() > 0) {
+        // todo: BoundGeometry(domain_trim);
+    }   
+
+    // check for CRS override
+    CPLString crs = CPLGetXMLValue(psService, "CRS", "");
+    if (crs != "" && crs != osCRS) {
+        // todo: warp env from osCRS to crs
+        if (!SetCRS(crs, false)) {
+            return false;
+        }
+        SetGeometry(grid_size, origin, offsets, axisOrder);
+    }
+
+    // todo: ElevationDomain, DimensionDomain
+
+    // rangeType
+
+    // get the field metadata
+    // get the count of fields
+    // if Range is set in service that may limit the fields
+    int fields = ParseRange(coverage, &metadata);
+    if (fields == 0) {
+        //return false;
+    }
+
+    // add PAM metadata to domain SUBDATASET_i
+    CPLString subdataset = GetSubdataset(CPLGetXMLValue(psService, "CoverageName", ""));
+    //this->SetMetadata(metadata, subdataset);
+        
+    this->SetMetadata(metadata, "SUBDATASETS");
+    CSLDestroy(metadata);
+    TrySaveXML();
+    
+    // determine the band count
+    int bands = 0;
+    if (dimensions_are_ok) {
+        // must not have a loose dimension
+        if (dimension_to_band != "") {
+            if (fields == 1) {
+                bands = size[1][dimension_to_band_index] - size[0][dimension_to_band_index] + 1;
+            }
+        } else {
+            bands = fields;
+        }
+    }
+    CPLSetXMLValue(psService, "BandCount", CPLString().Printf("%d",bands));
+    
+    // set the PreferredFormat value in service, unless it is set
+    // by the user, either through direct edit or options
+    if (!SetFormat(coverage)) {
+        // all attempts to find a format have failed...
+        CPLError(CE_Failure, CPLE_AppDefined, "All attempts to find a format have failed, giving up.");
+        return false;
+    }
+
+    // todo: set the Interpolation, check it against InterpolationSupported
+    
+    bServiceDirty = TRUE;
+    return true;
+}

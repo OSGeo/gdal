@@ -1084,6 +1084,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     CPLXMLNode *psService = NULL;
     char **papszModifiers = NULL;
+    bool dry_run = false;
     
 /* -------------------------------------------------------------------- */
 /*      If filename is WCS:URL                                          */
@@ -1203,6 +1204,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (UpdateService(psService, poOpenInfo, filename)) {
                 CreateServiceMetadata(coverage, pam_filename, filename);
             }
+            
+            dry_run = CPLFetchBool(poOpenInfo->papszOpenOptions, "DryRun", false);
         }
     }
 /* -------------------------------------------------------------------- */
@@ -1358,7 +1361,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      more information.                                               */
 /* -------------------------------------------------------------------- */
     int nBandCount = atoi(CPLGetXMLValue(psService, "BandCount", "0"));
-    if (nBandCount == 0)
+    if (dry_run || nBandCount == 0)
     {
         return poDS;
     }
