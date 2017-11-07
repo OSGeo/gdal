@@ -586,8 +586,11 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
 
     // AutoCAD only displays an arrowhead if the length of the arrowhead
     // is less than or equal to half the length of the line segment
-    if( dfArrowheadSize > 0.5 * dfFirstSegmentLength )
+    if( dfArrowheadSize == 0.0 || dfFirstSegmentLength == 0.0 ||
+        dfArrowheadSize > 0.5 * dfFirstSegmentLength )
+    {
         return;
+    }
 
     OGRDXFFeature *poArrowheadFeature = poFeature->CloneDXFFeature();
 
