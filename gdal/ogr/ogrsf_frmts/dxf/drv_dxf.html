@@ -51,6 +51,9 @@ Use this option if you need to preserve the styling (such as colors) of
 individual linework entities within the block.
 <li>DXF_INLINE_BLOCKS: See below.
 </ul>
+<li> ATTDEF, ATTRIB: Attributes (ATTRIB) are treated as TEXT entities, and
+attribute definitions (ATTDEF) inside blocks are ignored. The behavior is
+different when DXF_INLINE_BLOCKS is false (see below).
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but
 no effort is currently made to represent the fill style of HATCH entities.
 The DXF_HATCH_TOLERANCE config option determines the tolerance used when looking
@@ -96,11 +99,20 @@ more features for each BLOCK defined in the file.  In addition to the usual
 attributes, they will also have a Block attribute indicating what block
 they are part of. (Note, in GDAL 2.2.x and earlier this attribute was called
 BlockName.)
-<li> The entities layer will have new attributes BlockName, BlockScale,
-BlockAngle, BlockOCSNormal and BlockOCSCoords. BlockScale gives the X, Y,
-and Z scale factors; BlockOCSNormal contains the unit normal vector of the
-object coordinate system (OCS) of the INSERT entity; BlockOCSCoords gives
-the OCS coordinates of the insertion point.
+<li> ATTDEF entities in the blocks layer will have an AttributeTag attribute,
+giving the tag of the ATTDEF entity.
+<li> The entities layer will have several new attributes:
+<ul>
+<li> BlockName: The name of the referenced block.
+<li> BlockScale: The X, Y, and Z scale factors.
+<li> BlockAngle: The angle of the block in degrees.
+<li> BlockOCSNormal: The unit normal vector of the object coordinate system
+(OCS) of the INSERT entity.
+<li> BlockOCSCoords: The OCS coordinates of the insertion point.
+<li> BlockAttributes: The text content of attributes associated with this
+block. Each entry in this string list contains an attribute tag, followed by
+a space, followed by the text for that attribute.
+</ul>
 <li> INSERT entities will populate these new fields with the corresponding
 information (they are null for all other entities).
 <li> INSERT entities will not have block geometry inlined - instead they will

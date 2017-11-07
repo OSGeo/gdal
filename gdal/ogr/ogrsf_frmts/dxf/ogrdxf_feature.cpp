@@ -69,6 +69,7 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
     poNew->dfBlockAngle = dfBlockAngle;
     poNew->oBlockScale = oBlockScale;
     poNew->oOriginalCoords = oOriginalCoords;
+    poNew->osAttributeTag = osAttributeTag;
     poNew->oStyleProperties = oStyleProperties;
 
     return poNew;
@@ -81,7 +82,7 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
 /*      the specified geometry.                                         */
 /************************************************************************/
 
-void OGRDXFFeature::ApplyOCSTransformer( OGRGeometry* const poGeometry )
+void OGRDXFFeature::ApplyOCSTransformer( OGRGeometry* const poGeometry ) const
 
 {
     OGRDXFLayer::ApplyOCSTransformer( poGeometry, oOCS );

@@ -2823,7 +2823,6 @@ def ogr_dxf_42():
 
 def ogr_dxf_43():
 
-    # Inlining, merging
     ds = ogr.Open('data/insert-recursive-pair.dxf')
     lyr = ds.GetLayer(0)
     if lyr.GetFeatureCount() != 1:
@@ -3263,6 +3262,75 @@ def ogr_dxf_48():
     return 'success'
 
 ###############################################################################
+# Test block attributes (ATTRIB entities) (#7139)
+
+def ogr_dxf_49():
+
+    # Inline blocks mode
+    ds = ogr.Open('data/attrib.dxf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 6:
+        gdaltest.post_reason( 'Wrong feature count, got %d' % lyr.GetFeatureCount() )
+        return 'fail'
+
+    f = lyr.GetFeature(1)
+    if f.GetField('Text') != 'super test':
+        gdaltest.post_reason( 'Wrong Text value on first ATTRIB on first INSERT' )
+        f.DumpReadable()
+        return 'fail'
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,dx:30.293,dy:0,c:#ff0000)':
+        gdaltest.post_reason( 'Wrong style string on first ATTRIB on first INSERT' )
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetFeature(4)
+    geom = f.GetGeometryRef()
+    if geom.GetGeometryType() != ogr.wkbLineString25D:
+        gdaltest.post_reason( 'Expected LINESTRING Z' )
+        return 'fail'
+
+    f = lyr.GetFeature(5)
+    if f.GetField('Text') != '':
+        gdaltest.post_reason( 'Wrong Text value on ATTRIB on second INSERT' )
+        f.DumpReadable()
+        return 'fail'
+
+    # No inlining
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', 'FALSE')
+    ds = ogr.Open('data/attrib.dxf')
+    gdal.SetConfigOption('DXF_INLINE_BLOCKS', None)
+
+    lyr = ds.GetLayerByName('entities')
+
+    f = lyr.GetFeature(0)
+    if f.GetField('BlockAttributes') != ['MYATT1 super test','MYATTMULTI_001 Corps','MYATTMULTI_002 plpl']:
+        gdaltest.post_reason( 'Wrong BlockAttributes value on first INSERT' )
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetFeature(1)
+    if f.GetField('BlockAttributes') != ['MYATTMULTI ']:
+        gdaltest.post_reason( 'Wrong BlockAttributes value on second INSERT' )
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('blocks')
+
+    f = lyr.GetFeature(1)
+    if f.GetField('AttributeTag') != 'MYATT1':
+        gdaltest.post_reason( 'Wrong AttributeTag value on first ATTDEF' )
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetFeature(2)
+    if f.GetField('AttributeTag') != 'MYATTMULTI':
+        gdaltest.post_reason( 'Wrong AttributeTag value on second ATTDEF' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -3323,6 +3391,7 @@ gdaltest_list = [
     ogr_dxf_46,
     ogr_dxf_47,
     ogr_dxf_48,
+    ogr_dxf_49,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

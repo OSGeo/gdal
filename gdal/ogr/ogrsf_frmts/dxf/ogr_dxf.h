@@ -196,9 +196,13 @@ class OGRDXFFeature : public OGRFeature
     friend class OGRDXFLayer;
 
   protected:
-    // The feature's Object Coordinate System (OCS) unit normal vector.
+    // The feature's Object Coordinate System (OCS) unit normal vector
     DXFTriple         oOCS;
 
+    // A list of properties that are used to construct the style string
+    std::map<CPLString,CPLString> oStyleProperties;
+
+    // Additional data for INSERT entities
     bool              bIsBlockReference;
     CPLString         osBlockName;
     double            dfBlockAngle;
@@ -208,14 +212,15 @@ class OGRDXFFeature : public OGRFeature
     // the OCS insertion point
     DXFTriple         oOriginalCoords;
 
-    std::map<CPLString,CPLString> oStyleProperties;
+    // Additional data for ATTRIB and ATTDEF entities
+    CPLString         osAttributeTag;
 
   public:
     explicit OGRDXFFeature( OGRFeatureDefn * poFeatureDefn );
 
     OGRDXFFeature    *CloneDXFFeature();
 
-    void              ApplyOCSTransformer( OGRGeometry* const poGeometry );
+    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
 
     DXFTriple GetOCS() const { return oOCS; }
     bool IsBlockReference() const { return bIsBlockReference; }
@@ -223,6 +228,7 @@ class OGRDXFFeature : public OGRFeature
     double GetBlockAngle() const { return dfBlockAngle; }
     DXFTriple GetBlockScale() const { return oBlockScale; }
     DXFTriple GetInsertOCSCoords() const { return oOriginalCoords; }
+    CPLString GetAttributeTag() const { return osAttributeTag; }
 };
 
 /************************************************************************/
