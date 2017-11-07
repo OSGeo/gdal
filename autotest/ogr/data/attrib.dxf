@@ -1,0 +1,362 @@
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+STYLE
+  0
+STYLE
+  5
+11
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+Standard
+ 70
+     0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+     0
+ 42
+8.0
+  3
+arial.ttf
+  4
+
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  5
+53B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+AttBlock
+ 70
+     2
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+AttBlock
+  1
+
+  0
+CIRCLE
+  5
+BE9
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+50.0
+  0
+ATTDEF
+  5
+BEA
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+-21.82912886047243
+ 20
+6.932116009123141
+ 30
+0.0
+ 40
+8.0
+  1
+Test of the default value
+ 50
+8.0
+ 72
+     1
+ 11
+0.0
+ 21
+10.0
+ 31
+0.0
+100
+AcDbAttributeDefinition
+  3
+Enter a value for MyAtt1
+  2
+MYATT1
+ 70
+     0
+  0
+ATTDEF
+  5
+BEF
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+-35.69986357435198
+ 20
+-18.0
+ 30
+0.0
+ 40
+8.0
+  1
+
+ 72
+     1
+ 11
+0.0
+ 21
+-10.0
+ 31
+0.0
+100
+AcDbAttributeDefinition
+  3
+Say something for my multi attribute...
+  2
+MYATTMULTI
+ 70
+     0
+ 74
+     3
+  0
+ENDBLK
+  5
+53C
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  5
+56B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockReference
+ 66
+     1
+  2
+AttBlock
+ 10
+10.0
+ 20
+20.0
+ 30
+0.0
+  0
+ATTRIB
+  5
+56C
+100
+AcDbEntity
+  8
+0
+ 62
+     1
+100
+AcDbText
+ 10
+-20.29303705320601
+ 20
+30.0
+ 30
+0.0
+ 40
+8.000000000000001
+  1
+super test
+ 41
+2.34567
+ 72
+     1
+ 11
+10.0
+ 21
+30.0
+ 31
+0.0
+100
+AcDbAttribute
+  2
+MYATT1
+ 70
+     0
+  0
+ATTRIB
+  5
+572
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+-5.045020463847202
+ 20
+1.863574351978172
+ 30
+0.0
+ 40
+8.0
+  1
+%%UCorps
+100
+AcDbAttribute
+  2
+MYATTMULTI_001
+ 70
+     0
+  0
+ATTRIB
+  5
+C18
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+1.326057298772169
+ 20
+-11.46975898135516
+ 30
+0.0
+ 40
+8.0
+  1
+plpl
+100
+AcDbAttribute
+  2
+MYATTMULTI_002
+ 70
+     0
+  0
+SEQEND
+  5
+573
+100
+AcDbEntity
+  8
+0
+  0
+INSERT
+  5
+C07
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockReference
+ 66
+     1
+  2
+AttBlock
+ 10
+110.0
+ 20
+-10.0
+ 30
+0.0
+  0
+ATTRIB
+  5
+C0A
+100
+AcDbEntity
+  8
+0
+100
+AcDbText
+ 10
+74.30013642564802
+ 20
+-28.0
+ 30
+0.0
+ 40
+8.0
+  1
+
+ 72
+     1
+ 11
+110.0
+ 21
+-20.0
+ 31
+0.0
+100
+AcDbAttribute
+  2
+MYATTMULTI
+ 70
+     0
+ 74
+     3
+  0
+SEQEND
+  5
+C0B
+100
+AcDbEntity
+  8
+0
+  0
+ENDSEC
+  0
+EOF

@@ -106,6 +106,12 @@ OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
         poFeature->SetFID( iNextFID++ );
         poFeature->SetField( "Block", osBlockName.c_str() );
+        if( poFeature->GetAttributeTag() != "" )
+        {
+            poFeature->SetField( "AttributeTag",
+                poFeature->GetAttributeTag() );
+        }
+
         m_nFeaturesRead++;
         return poFeature;
     }
@@ -142,6 +148,12 @@ OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
         poFeature->SetFID( iNextFID++ );
         poFeature->SetField( "Block", osBlockName.c_str() );
+        if( poFeature->GetAttributeTag() != "" )
+        {
+            poFeature->SetField( "AttributeTag",
+                poFeature->GetAttributeTag() );
+        }
+
         m_nFeaturesRead++;
         return poFeature;
     }

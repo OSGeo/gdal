@@ -764,6 +764,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 
 /************************************************************************/
 /*                           TranslateTEXT()                            */
+/*                                                                      */
+/*      This function translates TEXT and ATTRIB entities, as well as   */
+/*      ATTDEF entities when we are not inlining blocks.                */
 /************************************************************************/
 
 OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
@@ -772,19 +775,25 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
     char szLineBuf[257];
     int nCode = 0;
     OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
+
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
+    bool bHaveZ = false;
+
     double dfAngle = 0.0;
     double dfHeight = 0.0;
     double dfXDirection = 0.0;
     double dfYDirection = 0.0;
+
     CPLString osText;
     CPLString osStyleName = "Arial";
-    bool bHaveZ = false;
+
     int nAnchorPosition = 1;
     int nHorizontalAlignment = 0;
     int nVerticalAlignment = 0;
+
+    bool bIsAttribOrAttdef = false;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -816,7 +825,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 1:
-          // case 3:  // we used to capture prompt, but it should not be displayed as text.
             osText += TextUnescape(szLineBuf, false);
             break;
 
@@ -829,13 +837,46 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 73:
-            nVerticalAlignment = atoi(szLineBuf);
+            if( !bIsAttribOrAttdef )
+                nVerticalAlignment = atoi(szLineBuf);
+            break;
+
+          case 74:
+            if( bIsAttribOrAttdef )
+                nVerticalAlignment = atoi(szLineBuf);
             break;
 
           case 7:
             osStyleName = TextRecode(szLineBuf);
             break;
           
+          case 100:
+            if( STARTS_WITH_CI( szLineBuf, "AcDbAttribute" ) )
+                bIsAttribOrAttdef = true;
+
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+
+          // 2 and 70 are for ATTRIB entities only
+          case 2:
+            if( bIsAttribOrAttdef )
+            {
+                if( strchr( szLineBuf, ' ' ) )
+                {
+                    CPLDebug( "DXF", "Attribute tags may not contain spaces" );
+                    DXF_LAYER_READER_ERROR();
+                    delete poFeature;
+                    return NULL;
+                }
+                poFeature->osAttributeTag = szLineBuf;
+            }
+            break;
+
+          case 70:
+            // TODO when the LSB is set, this ATTRIB is "invisible"
+            // and should be disregarded
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -898,7 +939,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
 /*      We need to escape double quotes with backslashes before they    */
 /*      can be inserted in the style string.                            */
 /* -------------------------------------------------------------------- */
-    if( strchr( osText, '"') != NULL )
+    if( strchr( osText, '"' ) != NULL )
     {
         CPLString osEscaped;
 
@@ -2482,7 +2523,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockReference(
 /*       OCS will be applied to the block.                              */
 /*     - bInlineRecursively: If true, INSERTs within this block         */
 /*       will be recursively inserted.  Otherwise, they will be         */
-/*       represented as a point geometry using InsertInlineBlock.       */
+/*       represented as a point geometry using InsertBlockReference.    */
 /*     - bMergeGeometry: If true, all features in the block,            */
 /*       apart from text features, are merged into a                    */
 /*       GeometryCollection which is returned by the function.          */
@@ -2564,7 +2605,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
         OGRDXFFeature *poSubFeature =
             poBlock->apoFeatures[iSubFeat]->CloneDXFFeature();
 
-        // Does this feature represent a block that we inlined? If so,
+        // Does this feature represent a block reference? If so,
         // insert that block
         if( bInlineRecursively && poSubFeature->IsBlockReference() )
         {
@@ -2643,7 +2684,9 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 poMergedGeometry->addGeometryDirectly( poSubFeature->StealGeometry() );
                 delete poSubFeature;
             }
-            else
+            // Import all other features, except ATTDEFs when inlining
+            // recursively
+            else if( !bInlineRecursively || poSubFeature->osAttributeTag == "" )
             {
                 // If the subfeature is on layer 0, this is a special case: the
                 // subfeature should take on the style properties of the layer
@@ -2677,6 +2720,10 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 }
 
                 apoExtraFeatures.push( poSubFeature );
+            }
+            else
+            {
+                delete poSubFeature;
             }
 
             if( apoInnerExtraFeatures.empty() )
@@ -2727,9 +2774,13 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
 {
     char szLineBuf[257];
     int nCode = 0;
+
     OGRDXFFeature* poFeature = new OGRDXFFeature( poFeatureDefn );
     OGRDXFInsertTransformer oTransformer;
     CPLString osBlockName;
+
+    bool bHasAttribs = false;
+    std::queue<OGRDXFFeature *> apoAttribs;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -2768,6 +2819,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             oTransformer.dfAngle = CPLAtof(szLineBuf) * M_PI / 180.0;
             break;
 
+          case 66:
+            bHasAttribs = atoi(szLineBuf) == 1;
+            break;
+
           case 2:
             osBlockName = szLineBuf;
             break;
@@ -2784,30 +2839,95 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         return NULL;
     }
 
-    if( nCode == 0 )
+/* -------------------------------------------------------------------- */
+/*      Process any attribute entities.                                 */
+/* -------------------------------------------------------------------- */
+
+    if ( bHasAttribs )
+    {
+        while( nCode == 0 && !EQUAL( szLineBuf, "SEQEND" ) )
+        {
+            if( !EQUAL( szLineBuf, "ATTRIB" ) )
+            {
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return NULL;
+            }
+
+            OGRDXFFeature *poAttribFeature = TranslateTEXT();
+
+            if( poAttribFeature && poAttribFeature->osAttributeTag != "" )
+                apoAttribs.push( poAttribFeature );
+            else
+                delete poAttribFeature;
+
+            nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
+        }
+    }
+    else if( nCode == 0 )
         poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      Perform the actual block insertion.                             */
+/* -------------------------------------------------------------------- */
 
     // If we are not inlining blocks, just insert a point that refers
     // to this block
     if( !poDS->InlineBlocks() )
     {
-        return InsertBlockReference( osBlockName, oTransformer, poFeature );
+        poFeature = InsertBlockReference( osBlockName, oTransformer,
+            poFeature );
+
+        if( bHasAttribs && 
+            poFeature->GetFieldIndex( "BlockAttributes" ) != -1 )
+        {
+            // Store the attributes and their text values as space-separated
+            // entries in the BlockAttributes field
+            char** papszAttribs = new char*[apoAttribs.size() + 1];
+            int iIndex = 0;
+
+            while( !apoAttribs.empty() )
+            {
+                CPLString osAttribString = apoAttribs.front()->osAttributeTag;
+                osAttribString += " ";
+                osAttribString += apoAttribs.front()->GetFieldAsString( "Text" );
+
+                papszAttribs[iIndex] = new char[osAttribString.length() + 1];
+                CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
+                    osAttribString.length() + 1 );
+
+                apoAttribs.pop();
+                iIndex++;
+            }
+            papszAttribs[iIndex] = NULL;
+
+            poFeature->SetField( "BlockAttributes", papszAttribs );
+        }
+    }
+    // Otherwise, try inlining the contents of this block
+    else
+    {
+        try
+        {
+            poFeature = InsertBlockInline( osBlockName, oTransformer,
+                poFeature, apoPendingFeatures,
+                true, poDS->ShouldMergeBlockGeometries() );
+        }
+        catch( const std::invalid_argument& )
+        {
+            // Block doesn't exist
+            delete poFeature;
+            return NULL;
+        }
+
+        // Append the attribute features to the pending feature stack
+        while( !apoAttribs.empty() )
+        {
+            apoPendingFeatures.push( apoAttribs.front() );
+            apoAttribs.pop();
+        }
     }
 
-    // Try inlining the contents of this block
-    try
-    {
-        poFeature = InsertBlockInline( osBlockName, oTransformer,
-            poFeature, apoPendingFeatures,
-            true, poDS->ShouldMergeBlockGeometries() );
-    }
-    catch( const std::invalid_argument& )
-    {
-        // Block doesn't exist
-        delete poFeature;
-        return NULL;
-    }
-    
     if( !poFeature )
     {
         // The block geometries were appended to apoPendingFeatures
@@ -2879,8 +2999,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT();
         }
-        else if( EQUAL(szLineBuf,"TEXT")
-                 || EQUAL(szLineBuf,"ATTDEF") )
+        else if( EQUAL(szLineBuf,"TEXT") ||
+            EQUAL(szLineBuf,"ATTDEF") )
         {
             poFeature = TranslateTEXT();
         }
@@ -2946,8 +3066,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
             if( oIgnoredEntities.count(szLineBuf) == 0 )
             {
                 oIgnoredEntities.insert( szLineBuf );
-                CPLDebug( "DWG", "Ignoring one or more of entity '%s'.",
-                          szLineBuf );
+                CPLDebug( "DXF", "Ignoring one or more of entity '%s'.",
+                            szLineBuf );
             }
         }
 

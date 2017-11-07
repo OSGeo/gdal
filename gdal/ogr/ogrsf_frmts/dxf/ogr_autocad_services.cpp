@@ -142,6 +142,12 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
 
             pszInput += 2;
         }
+        else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
+            || STARTS_WITH_CI(pszInput, "%%o") ) )
+        {
+            // Underline and overline markers, which have no effect in MTEXT
+            pszInput += 2;
+        }
         else
             osResult += *pszInput;
 

@@ -783,11 +783,18 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
         OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
         poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
 
+        OGRFieldDefn  oBlockAttribsField( "BlockAttributes", OFTStringList );
+        poFeatureDefn->AddFieldDefn( &oBlockAttribsField );
+
         // This field holds the name of the block on which the entity lies.
         // The BlockName field was previously used for this purpose; this
         // was changed because of the ambiguity with the BlockName field
         // used by INSERT entities.
         OGRFieldDefn  oBlockField( "Block", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockField );
+
+        // Extra field to use with ATTDEF entities
+        OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
+        poFeatureDefn->AddFieldDefn( &oAttributeTagField );
     }
 }

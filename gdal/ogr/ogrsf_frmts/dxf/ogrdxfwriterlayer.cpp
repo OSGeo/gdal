@@ -87,6 +87,9 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
 
     OGRFieldDefn  oBlockField( "Block", OFTString );
     poFeatureDefn->AddFieldDefn( &oBlockField );
+
+    OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
+    poFeatureDefn->AddFieldDefn( &oAttributeTagField );
 }
 
 /************************************************************************/
