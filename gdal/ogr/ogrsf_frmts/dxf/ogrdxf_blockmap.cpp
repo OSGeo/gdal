@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -101,9 +103,13 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
         // Now we will process entities till we run out at the ENDBLK code.
 
+        PushBlockInsertion( osBlockName );
+
         OGRDXFFeature *poFeature = NULL;
         while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
             oBlockMap[osBlockName].apoFeatures.push_back( poFeature );
+
+        PopBlockInsertion();
     }
     if( nCode < 0 )
     {
@@ -157,6 +163,33 @@ CPLString OGRDXFDataSource::GetBlockNameByRecordHandle( const char *pszID )
         return "";
     else
         return oBlockRecordHandles[l_osID];
+}
+
+/************************************************************************/
+/*                         PushBlockInsertion()                         */
+/*                                                                      */
+/*      Add a block name to the stack of blocks being inserted.         */
+/*      Returns false if we are already inserting this block.           */
+/************************************************************************/
+
+bool OGRDXFDataSource::PushBlockInsertion( const CPLString& osBlockName )
+
+{
+    // Make sure we are not recursing too deeply (avoid stack overflows) or
+    // inserting a block within itself (avoid billion-laughs type issues).
+    // 128 is a totally arbitrary limit
+    if( aosBlockInsertionStack.size() > 128 ||
+        std::find( aosBlockInsertionStack.begin(),
+            aosBlockInsertionStack.end(), osBlockName )
+        != aosBlockInsertionStack.end() )
+    {
+        CPLDebug( "DXF", "Dangerous block recursion detected. "
+            "Some blocks have not been inserted." );
+        return false;
+    }
+
+    aosBlockInsertionStack.push_back( osBlockName );
+    return true;
 }
 
 /************************************************************************/

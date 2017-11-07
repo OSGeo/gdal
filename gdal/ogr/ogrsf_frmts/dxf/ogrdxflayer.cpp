@@ -2534,26 +2534,13 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
     OGRDXFFeature* const poFeature,
     std::queue<OGRDXFFeature *>& apoExtraFeatures,
     const bool bInlineRecursively,
-    const bool bMergeGeometry,
-    std::vector<CPLString> *paosInsertedBlocks /* = NULL */ )
+    const bool bMergeGeometry )
 {
 /* -------------------------------------------------------------------- */
-/*      Set up protection against excessive recursion.                  */
+/*      Set up protection against excessive recursion on this layer.    */
 /* -------------------------------------------------------------------- */
-    std::vector<CPLString> aosInsertedBlocks;
-    if( !paosInsertedBlocks )
-        paosInsertedBlocks = &aosInsertedBlocks;
-
-    // Make sure we are not recursing too deeply (avoid stack overflows) or
-    // inserting a block within itself (avoid billion-laughs type issues).
-    // 128 is a totally arbitrary limit
-    if( paosInsertedBlocks->size() > 128 ||
-        std::find( paosInsertedBlocks->begin(), paosInsertedBlocks->end(),
-        osBlockName ) != paosInsertedBlocks->end() )
+    if( !poDS->PushBlockInsertion( osBlockName ) )
     {
-        CPLDebug( "DXF", "Dangerous block recursion detected. "
-            "Some INSERT entities have been skipped." );
-
         delete poFeature;
         return NULL;
     }
@@ -2579,10 +2566,9 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
     if( poBlock == NULL )
     {
         //CPLDebug( "DXF", "Attempt to insert missing block %s", osBlockName );
+        poDS->PopBlockInsertion();
         throw std::invalid_argument("osBlockName");
     }
-
-    paosInsertedBlocks->push_back( osBlockName );
 
 /* -------------------------------------------------------------------- */
 /*      If we have complete features associated with the block, push    */
@@ -2627,7 +2613,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
             {
                 poSubFeature = InsertBlockInline( poSubFeature->osBlockName,
                     oInnerTransformer, poSubFeature, apoInnerExtraFeatures,
-                    true, bMergeGeometry, paosInsertedBlocks );
+                    true, bMergeGeometry );
             }
             catch( const std::invalid_argument& )
             {
@@ -2738,7 +2724,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
         }
     }
 
-    paosInsertedBlocks->pop_back();
+    poDS->PopBlockInsertion();
 
 /* -------------------------------------------------------------------- */
 /*      Return the merged geometry if applicable.  Otherwise            */

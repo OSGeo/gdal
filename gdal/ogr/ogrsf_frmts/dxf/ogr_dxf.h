@@ -282,8 +282,7 @@ class OGRDXFLayer : public OGRLayer
                                            OGRDXFFeature* const poFeature,
                                            std::queue<OGRDXFFeature *>& apoExtraFeatures,
                                            const bool bInlineNestedBlocks,
-                                           const bool bMergeGeometry,
-                                           std::vector<CPLString> *paosInsertedBlocks = NULL );
+                                           const bool bMergeGeometry );
     OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
                                               const OGRDXFInsertTransformer& oTransformer,
                                               OGRDXFFeature* const poFeature );
@@ -391,6 +390,8 @@ class OGRDXFDataSource : public OGRDataSource
 
     OGRDXFReader        oReader;
 
+    std::vector<CPLString> aosBlockInsertionStack;
+
   public:
                         OGRDXFDataSource();
                         ~OGRDXFDataSource();
@@ -415,6 +416,9 @@ class OGRDXFDataSource : public OGRDataSource
     DXFBlockDefinition *LookupBlock( const char *pszName );
     CPLString           GetBlockNameByRecordHandle( const char *pszID );
     std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
+
+    bool                PushBlockInsertion( const CPLString& osBlockName );
+    void                PopBlockInsertion() { aosBlockInsertionStack.pop_back(); }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
     bool                ReadTablesSection();
