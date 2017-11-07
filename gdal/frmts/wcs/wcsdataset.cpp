@@ -133,26 +133,25 @@ bool WCSDataset::SetCRS(CPLString crs, bool native)
 /*      axis_order, grid size, and grid offsets.                        */
 /************************************************************************/
 
-void WCSDataset::SetGeometry(std::vector<double> envelope,
-                             CPL_UNUSED std::vector<CPLString> axis_order,
-                             std::vector<int> size,
-                             CPL_UNUSED std::vector<std::vector<double>> offsets)
+void WCSDataset::SetGeometry(std::vector<int> size,
+                             std::vector<double> origin,
+                             std::vector<std::vector<double>> offsets,
+                             CPL_UNUSED std::vector<CPLString> axis_order)
 {
-
-    // todo: handle offsets that are not ((x,0),(0,y))
-    // todo: use domain_index
-    
     nRasterXSize = size[0];
     nRasterYSize = size[1];
     
-    adfGeoTransform[0] = envelope[0];
-    adfGeoTransform[1] = (envelope[2]-envelope[0])/(double)nRasterXSize;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = envelope[3];
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = (envelope[1]-envelope[3])/(double)nRasterYSize;
+    adfGeoTransform[0] = origin[0];
+    adfGeoTransform[1] = offsets[0][0];
+    adfGeoTransform[2] = offsets[0][1];
+    adfGeoTransform[3] = origin[1];
+    adfGeoTransform[4] = offsets[0][1];
+    adfGeoTransform[5] = offsets[1][1];
     
-    
+    adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
+    adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
+    adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
+    adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
 }
 
 /************************************************************************/
@@ -877,6 +876,7 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
             options = CSLSetNameValue(options, str, value);
         }
     }
+    fprintf(stderr, "url:%s\n", url.c_str());
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     if (psResult == NULL || psResult->nDataLen == 0) {
         CPLHTTPDestroyResult(psResult);
@@ -892,15 +892,9 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     // it may be that the version in the URL in cache (user's request)
     // is different from the version in the XML (server's response)
     // but that is probably not a problem
-    int version_from_server = 0;
-    for (CPLXMLNode *node = psService->psChild; node != NULL; node = node->psNext) {
-        const char *attr = node->pszValue;
-        if (node->eType == CXT_Attribute && EQUAL(attr, "version")) {
-            version_from_server = WCSParseVersion(CPLGetXMLValue(node, NULL, ""));
-            if (version_from_server == 0) {
-                return NULL;
-            }
-        }
+    int version_from_server = WCSParseVersion(CPLGetXMLValue(psService, "version", ""));
+    if (version_from_server == 0) {
+        return NULL;
     }
                               
     CPLString capabilities = path + ".xml";
@@ -925,25 +919,32 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     return poDS;
 }
 
+static CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value)
+{
+    if (node == NULL) {
+        return NULL;
+    }
+    for (CPLXMLNode *child = node->psChild; child != NULL; child = child->psNext) {
+        if (EQUAL(CPLGetXMLValue(child, path, ""), value)) {
+            return child;
+        }
+    }
+    return NULL;
+}
+
 WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
 {
     WCSDataset *poDS;
     // try to read the PAM XML from path + metadata extension
     if (FileIsReadable(path + ".aux.xml")) {
         CPLXMLNode *metadata = CPLParseXMLFile((path + ".aux.xml").c_str());
-        CPLString version;
-        for (CPLXMLNode *domain = metadata->psChild; domain != NULL; domain = domain->psNext) {
-            if (CPLGetXMLValue(domain, "domain", NULL) != NULL) {
-                continue;
-            }
-            for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
-                CPLString key = CPLGetXMLValue(node, "key", "");
-                if (key == "WCS_GLOBAL#version") {
-                    version = CPLGetXMLValue(node, NULL, "");
-                }
-            }
-        }
-        int version_from_metadata = WCSParseVersion(version);
+        int version_from_metadata =
+            WCSParseVersion(
+                CPLGetXMLValue(
+                    SearchChildWithValue(
+                        SearchChildWithValue(metadata, "domain", ""),
+                        "key", "WCS_GLOBAL#version"),
+                    NULL, ""));
         if (version_from_metadata == 201) {
             poDS = new WCSDataset201();
         } else if (version_from_metadata/10 == 11) {
@@ -974,6 +975,47 @@ WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
         return NULL;
     }
     return poDS;
+}
+
+// master filename is the capabilities basename
+// filename is the subset/coverage basename
+static void CreateServiceMetadata(CPLString coverage, CPLString master_filename, CPLString filename)
+{
+    master_filename += ".aux.xml";
+    filename += ".aux.xml";
+
+    CPLXMLNode *metadata = CPLParseXMLFile(master_filename);
+    // remove other subdataset than the current
+    int subdataset = 0;
+    CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+    for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+        if (node->eType != CXT_Element) {
+            continue;
+        }
+        CPLString key = CPLGetXMLValue(node, "key", "");
+        CPLString value = CPLGetXMLValue(node, NULL, "");
+        if (value.find(coverage) != std::string::npos) {
+            key.erase(0, 11); // SUBDATASET_
+            key.erase(key.find("_"), std::string::npos);
+            subdataset = stoi(key);
+            break;
+        }
+    }
+    if (subdataset > 0) {
+        CPLXMLNode *next = NULL;
+        for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
+            next = node->psNext;
+            if (node->eType != CXT_Element) {
+                continue;
+            }
+            CPLString key = CPLGetXMLValue(node, "key", "");
+            if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
+                CPLRemoveXMLChild(domain, node);
+                CPLDestroyXMLNode(node);
+            }
+        }
+    }    
+    CPLSerializeXMLTreeToFile(metadata, filename);
 }
 
 static CPLXMLNode *CreateService(CPLString base_url,
@@ -1107,70 +1149,18 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         cached = cached && FileIsReadable(filename + ".xml");
 
+        bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
+        
         // the general policy for service documents in cache is
         // that they are not user editable
-        // users should use options and possibly RECREATE_SERVICE
+        // users should use options and possibly RECREATE options
 
-        // even if we have coverage we need PAM metadata
-        // if the service file needs to be (re)created
-        // if we don't have it, fetch it first
-        bool recreate_service = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_SERVICE", false);
-        if (coverage != "" && (!cached || (cached && !recreate_service))) {
-            // the filename of the metadata is the key of URL without coverage
-            CPLString pam_url = URLRemoveKey(url, "coverage");
-            CPLString pam_filename;
-            if (!FromCache(cache_dir, pam_filename, pam_url)) {
-                WCSDataset *pam = CreateFromCapabilities(poOpenInfo, pam_filename, pam_url);
-                if (!pam) {
-                    return NULL;
-                }
-                delete pam;
-            }
-            CPLXMLNode *metadata = CPLParseXMLFile((pam_filename + ".aux.xml").c_str());
-            
-            // remove other subdataset than the current
-            int subdataset = 0;
-            for (CPLXMLNode *domain = metadata->psChild; domain != NULL; domain = domain->psNext) {
-                if (!EQUAL(CPLGetXMLValue(domain, "domain", ""), "SUBDATASETS")) {
-                    continue;
-                }
-                for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
-                    if (node->eType != CXT_Element) {
-                        continue;
-                    }
-                    CPLString key = CPLGetXMLValue(node, "key", "");
-                    CPLString value = CPLGetXMLValue(node, NULL, "");
-                    if (value.find(coverage) != std::string::npos) {
-                        key.erase(0, 11); // SUBDATASET_
-                        key.erase(key.find("_"), std::string::npos);
-                        subdataset = stoi(key);
-                        break;
-                    }
-                }
-                if (subdataset > 0) {
-                    CPLXMLNode *next = NULL;
-                    for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
-                        next = node->psNext;
-                        if (node->eType != CXT_Element) {
-                            continue;
-                        }
-                        CPLString key = CPLGetXMLValue(node, "key", "");
-                        if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
-                            CPLRemoveXMLChild(domain, node);
-                            CPLDestroyXMLNode(node);
-                        }
-                    }
-                }
-            }
-                
-            CPLSerializeXMLTreeToFile(metadata, (filename + ".xml.aux.xml").c_str());
-        }
-        
         if (coverage == "") {
             // Open a dataset with subdataset(s)
             // Information is in PAM file (<basename>.aux.xml)
             // which is made from the Capabilities file (<basename>.xml)
-            if (cached && !CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false)) {
+            
+            if (cached && !recreate_meta) {
                 return WCSDataset::CreateFromMetadata(filename);
             }
             return WCSDataset::CreateFromCapabilities(poOpenInfo, filename, url);
@@ -1180,16 +1170,38 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             // Information is in WCS_GDAL file (<basename>.xml)
             // which is made from options and URL
             // and a Coverage description file (<basename>.DC.xml)
+            
             filename += ".xml";
             CPLFree(poOpenInfo->pszFilename);
             poOpenInfo->pszFilename = CPLStrdup(filename);
+
+            CPLString pam_url = URLRemoveKey(url, "coverage");
+            CPLString pam_filename;
+            bool pam_in_cache = FromCache(cache_dir, pam_filename, pam_url);
+                        
+            // even if we have coverage we need global PAM metadata
+            // if we don't have it we need to create it
+            if (recreate_meta || !FileIsReadable((filename + ".aux.xml").c_str())) {
+                if (!pam_in_cache) {
+                    // if we don't have it, fetch it first
+                    WCSDataset *pam = CreateFromCapabilities(poOpenInfo, pam_filename, pam_url);
+                    if (!pam) {
+                        return NULL;
+                    }
+                    delete pam;
+                }
+                CreateServiceMetadata(coverage, pam_filename, filename);
+            }
+            
+            bool recreate_service = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_SERVICE", false);
+            
             if (cached && !recreate_service) {
-                // read from cache
                 psService = CPLParseXMLFile(filename);
-                UpdateService(psService, poOpenInfo, filename);
             } else {
                 psService = CreateService(base_url, version, coverage);
-                UpdateService(psService, poOpenInfo, filename);
+            }
+            if (UpdateService(psService, poOpenInfo, filename)) {
+                CreateServiceMetadata(coverage, pam_filename, filename);
             }
         }
     }

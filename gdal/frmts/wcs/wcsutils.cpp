@@ -127,15 +127,12 @@ bool Contains(std::vector<int> array, int value)
 
 CPLString FromParenthesis(CPLString s)
 {
-    size_t pos = s.find_first_of("(");
-    if (pos != std::string::npos) {
-        s.erase(pos, 1);
+    size_t beg = s.find_first_of("(");
+    size_t end = s.find_last_of(")");
+    if (beg == std::string::npos || end == std::string::npos) {
+        return "";
     }
-    pos = s.find_last_of(")");
-    if (pos != std::string::npos) {
-        s.erase(pos, 1);
-    }
-    return s;
+    return s.substr(beg + 1, end - beg - 1);
 }
 
 std::vector<CPLString> ParseSubset(std::vector<CPLString> subset_array, CPLString dim)

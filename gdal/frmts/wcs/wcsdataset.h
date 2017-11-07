@@ -29,10 +29,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     bool        axis_order_swap; // the CRS requires x and y coordinates to be swapped for requests
     double      adfGeoTransform[6];
     bool        SetCRS(CPLString crs, bool native);
-    void        SetGeometry(std::vector<double> envelope, // xmin, ymin, xmax, ymax
-                            std::vector<CPLString> axis_order,
-                            std::vector<int> size, // 
-                            std::vector<std::vector<double>> offsets);
+    void        SetGeometry(std::vector<int> size,
+                            std::vector<double> origin,
+                            std::vector<std::vector<double>> offsets,
+                            std::vector<CPLString> axis_order);
 
     CPLString   osBandIdentifier;
 
@@ -168,6 +168,12 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
                                     std::vector<double> extent,
                                     CPLString osBandList) override;
     CPLString   DescribeCoverageRequest() override;
+    bool        GridOffsets(CPLXMLNode *grid,
+                            CPLString subtype,
+                            std::vector<double> &origin,
+                            std::vector<std::vector<double>> &offset,
+                            std::vector<CPLString> labels,
+                            char ***metadata);
     bool        Offset2GeoTransform(std::vector<double> origin,
                                     std::vector<std::vector<double>> offset);
     bool        ExtractGridInfo() override;
