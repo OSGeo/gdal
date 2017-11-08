@@ -1,3 +1,34 @@
+/******************************************************************************
+ *
+ * Project:  WCS Client Driver
+ * Purpose:  Implementation of Dataset class for WCS 1.0.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2006, Frank Warmerdam
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Ari Jolma
+ * Copyright (c) 2017, Finnish Environment Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
@@ -12,6 +43,11 @@
 
 #include "wcsdataset.h"
 #include "wcsutils.h"
+
+/************************************************************************/
+/*                         GetExtent()                                  */
+/*                                                                      */
+/************************************************************************/
 
 std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
                                              int nXSize, int nYSize,
@@ -30,12 +66,16 @@ std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
     return extent;
 }
 
+/************************************************************************/
+/*                        GetCoverageRequest()                          */
+/*                                                                      */
+/************************************************************************/
+
 CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                              int nBufXSize, int nBufYSize,
                                              std::vector<double> extent,
                                              CPLString osBandList )
 {
-    CPLString osRequest;
 
 /* -------------------------------------------------------------------- */
 /*      URL encode strings that could have questionable characters.     */
@@ -51,7 +91,19 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
     pszEncoded = CPLEscapeString( osFormat, -1, CPLES_URL );
     osFormat = pszEncoded;
     CPLFree( pszEncoded );
-    
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a time we want to use?                               */
+/* -------------------------------------------------------------------- */
+    CPLString osTime;
+
+    osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
+
+/* -------------------------------------------------------------------- */
+/*      Construct a "simple" GetCoverage request (WCS 1.0).             */
+/* -------------------------------------------------------------------- */
+    CPLString osRequest;
+
     osRequest.Printf(
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
         "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
@@ -69,13 +121,6 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
         osRequest += CPLGetXMLValue( psService, "Resample", "" );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have a time we want to use?                               */
-/* -------------------------------------------------------------------- */
-    CPLString osTime;
-
-    osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
-
     if( osTime != "" )
     {
         osRequest += "&time=";
@@ -91,6 +136,11 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
     return osRequest;
 }
 
+/************************************************************************/
+/*                      DescribeCoverageRequest()                       */
+/*                                                                      */
+/************************************************************************/
+
 CPLString WCSDataset100::DescribeCoverageRequest()
 {
     CPLString request;
@@ -102,6 +152,11 @@ CPLString WCSDataset100::DescribeCoverageRequest()
         CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
     return request;
 }
+
+/************************************************************************/
+/*                         CoverageOffering()                           */
+/*                                                                      */
+/************************************************************************/
 
 CPLXMLNode *WCSDataset100::CoverageOffering(CPLXMLNode *psDC)
 {
@@ -450,13 +505,13 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0) {
         return CE_Failure;
     }
-    
+
     char **metadata = NULL;
     CPLString path = "WCS_GLOBAL#";
 
     CPLString key = path + "version";
     metadata = CSLSetNameValue(metadata, key, Version());
-    
+
     for( CPLXMLNode *node = Capabilities->psChild; node != NULL; node = node->psNext)
     {
         const char *attr = node->pszValue;
@@ -541,9 +596,9 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             }
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
-            
+
             CPLXMLNode *node;
-            
+
             if ((node = CPLGetXMLNode(summary, "name"))) {
                 CPLString name = path3 + "NAME";
                 CPLString value = DescribeCoverageURL;
@@ -554,32 +609,32 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
                 metadata = CSLSetNameValue(metadata, name, value);
             }
-            
+
             if ((node = CPLGetXMLNode(summary, "label"))) {
                 CPLString name = path3 + "LABEL";
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }
-            
+
             if ((node = CPLGetXMLNode(summary, "lonlatEnvelope"))) {
                 CPLString name = path3 + "lonlatEnvelope";
                 CPLString CRS = ParseCRS(node);
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
                 if (bbox.size() >= 2) {
                     // lonlat => no need for axis order swap
-                    std::vector<double> low = Flist(Split(bbox[0], " "));
-                    std::vector<double> high = Flist(Split(bbox[1], " "));
+                    std::vector<double> low = Flist(Split(bbox[0], " "), 0, 2);
+                    std::vector<double> high = Flist(Split(bbox[1], " "), 0, 2);
                     CPLString str;
                     str.Printf("%f,%f,%f,%f", low[0], low[1], high[0], high[1]);
                     metadata = CSLSetNameValue(metadata, name, str);
                 }
             }
-            
+
             CPLString kw = GetKeywords(summary, "keywords", "keyword");
             if (kw != "") {
                 CPLString name = path3 + "keywords";
                 metadata = CSLSetNameValue(metadata, name, kw);
             }
-            
+
             index++;
         }
     }
@@ -587,6 +642,11 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
     CSLDestroy( metadata );
     return CE_None;
 }
+
+/************************************************************************/
+/*                          ExceptionNodeName()                         */
+/*                                                                      */
+/************************************************************************/
 
 const char *WCSDataset100::ExceptionNodeName()
 {

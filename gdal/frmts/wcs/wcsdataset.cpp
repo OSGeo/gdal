@@ -37,19 +37,12 @@
 #include "gmlcoverage.h"
 
 #include <algorithm>
-#include <dirent.h>
 
 #include "wcsdataset.h"
 #include "wcsrasterband.h"
 #include "wcsutils.h"
 
 CPL_CVSID("$Id: wcsdataset.cpp 39343 2017-06-27 20:57:02Z rouault $")
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            WCSDataset                                */
-/* ==================================================================== */
-/************************************************************************/
 
 /************************************************************************/
 /*                             WCSDataset()                             */
@@ -370,7 +363,6 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-
     *ppsResult = CPLHTTPFetch( osRequest, papszHttpOptions );
 
     if( ProcessError( *ppsResult ) )
@@ -420,9 +412,9 @@ int WCSDataset::DescribeCoverage()
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
 /* -------------------------------------------------------------------- */
-
         psDC = CPLParseXMLString( (const char *) psResult->pabyData );
         CPLHTTPDestroyResult( psResult );
+
         if( psDC == NULL ) {
             return FALSE;
         }
@@ -814,6 +806,10 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 }
 
+/************************************************************************/
+/*                            WCSParseVersion()                         */
+/************************************************************************/
+
 static int WCSParseVersion( const char *version )
 {
     if( EQUAL(version, "2.0.1") )
@@ -831,6 +827,10 @@ static int WCSParseVersion( const char *version )
     return 0;
 }
 
+/************************************************************************/
+/*                             Version()                                */
+/************************************************************************/
+
 const char *WCSDataset::Version()
 {
     if( this->m_Version == 201 )
@@ -845,6 +845,10 @@ const char *WCSDataset::Version()
         return "1.0.0";
     return "";
 }
+
+/************************************************************************/
+/*                      CreateFromCapabilities()                        */
+/************************************************************************/
 
 WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLString path, CPLString url)
 {
@@ -876,7 +880,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
             options = CSLSetNameValue(options, str, value);
         }
     }
-    fprintf(stderr, "url:%s\n", url.c_str());
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     if (psResult == NULL || psResult->nDataLen == 0) {
         CPLHTTPDestroyResult(psResult);
@@ -919,18 +922,9 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     return poDS;
 }
 
-static CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value)
-{
-    if (node == NULL) {
-        return NULL;
-    }
-    for (CPLXMLNode *child = node->psChild; child != NULL; child = child->psNext) {
-        if (EQUAL(CPLGetXMLValue(child, path, ""), value)) {
-            return child;
-        }
-    }
-    return NULL;
-}
+/************************************************************************/
+/*                        CreateFromMetadata()                          */
+/************************************************************************/
 
 WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
 {
@@ -977,6 +971,10 @@ WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
     return poDS;
 }
 
+/************************************************************************/
+/*                        CreateServiceMetadata()                       */
+/************************************************************************/
+
 // master filename is the capabilities basename
 // filename is the subset/coverage basename
 static void CreateServiceMetadata(CPLString coverage, CPLString master_filename, CPLString filename)
@@ -1018,6 +1016,10 @@ static void CreateServiceMetadata(CPLString coverage, CPLString master_filename,
     CPLSerializeXMLTreeToFile(metadata, filename);
 }
 
+/************************************************************************/
+/*                          CreateService()                             */
+/************************************************************************/
+
 static CPLXMLNode *CreateService(CPLString base_url,
                                  CPLString version,
                                  CPLString coverage)
@@ -1032,12 +1034,16 @@ static CPLXMLNode *CreateService(CPLString base_url,
     return psService;
 }
 
+/************************************************************************/
+/*                          UpdateService()                             */
+/************************************************************************/
+
 static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
 {
     bool updated = false;
     const char *keys2[] = {
         "NoGridCRS", // do not put GridCRS params into GetCoverage URL if not necessary (1.1)
-        "CRS" // override native CRS, should be one of the supported ones
+        "CRS", // override native CRS, should be one of the supported ones
         "PreferredFormat", // option for format
         "Domain", // names for x and y dimensions, if not set, uses the first two ("name,name")
         "Dimensions", // options for slicing/trimming ("name[,crs](begin,end);name[,crs](slice)")
@@ -1055,7 +1061,10 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "DescribeCoverageExtra",
         "BlockXSize",
         "BlockYSize",
-        "NoDataValue"
+        "NoDataValue",
+        "NoOffsetSwap",
+        "NoGridEnvelopeSwap",
+        "SubsetAxisSwap"
     };
     for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {
         CPLString str = keys2[i];
@@ -1084,7 +1093,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     CPLXMLNode *psService = NULL;
     char **papszModifiers = NULL;
-    bool dry_run = false;
+    bool dry_run = false; // do not make a GetCoverage call to get data type etc
     
 /* -------------------------------------------------------------------- */
 /*      If filename is WCS:URL                                          */
@@ -1205,7 +1214,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                 CreateServiceMetadata(coverage, pam_filename, filename);
             }
             
-            dry_run = CPLFetchBool(poOpenInfo->papszOpenOptions, "DryRun", false);
+            dry_run = CPLFetchBool(poOpenInfo->papszOpenOptions, "SKIP_GETCOVERAGE", false);
         }
     }
 /* -------------------------------------------------------------------- */
@@ -1271,10 +1280,11 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         || !CPLGetXMLValue( psService, "CoverageName", NULL ) )
     {
         CSLDestroy( papszModifiers );
-        CPLDestroyXMLNode( psService );
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Missing one or both of ServiceURL and CoverageName elements.\n"
                   "See WCS driver documentation for details on service description file format." );
+
+        CPLDestroyXMLNode( psService );
         return NULL;
     }
 
@@ -1351,7 +1361,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      the coverage description and/or service description             */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if (!poDS->ExtractGridInfo()) {
+    if( !poDS->ExtractGridInfo() ) {
         delete poDS;
         return NULL;
     }

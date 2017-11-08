@@ -1,5 +1,39 @@
+/******************************************************************************
+ *
+ * Project:  WCS Client Driver
+ * Purpose:  Implementation of utilities.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2006, Frank Warmerdam
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Ari Jolma
+ * Copyright (c) 2017, Finnish Environment Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include "ogr_spatialref.h"
 #include "wcsutils.h"
+#include <algorithm>
+
+#define DIGITS "0123456789"
 
 CPLString String(const char *str)
 {
@@ -69,6 +103,17 @@ CPLString Join(std::vector<CPLString> array, const char *delim, bool swap_the_fi
         }
     }
     return str;
+}
+
+std::vector<int> Ilist(std::vector<CPLString> array,
+                       unsigned int from,
+                       unsigned int count)
+{
+    std::vector<int> retval;
+    for (unsigned int i = from; i < array.size() && i < from + count; ++i) {
+        retval.push_back(atoi(array[i]));
+    }
+    return retval;
 }
 
 std::vector<double> Flist(std::vector<CPLString> array,
@@ -199,6 +244,23 @@ bool MakeDir(CPLString dirname)
         return VSIMkdir(dirname, 0755) == 0;
     }
     return true;
+}
+
+/************************************************************************/
+/*                       SearchChildWithValue()                         */
+/************************************************************************/
+
+CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value)
+{
+    if (node == NULL) {
+        return NULL;
+    }
+    for (CPLXMLNode *child = node->psChild; child != NULL; child = child->psNext) {
+        if (EQUAL(CPLGetXMLValue(child, path, ""), value)) {
+            return child;
+        }
+    }
+    return NULL;
 }
 
 /* -------------------------------------------------------------------- */
@@ -371,30 +433,87 @@ CPLString GetKeywords(CPLXMLNode *root,
     CPLString words = "";
     CPLXMLNode *keywords = (path != "") ? CPLGetXMLNode(root, path) : root;
     if (keywords) {
+        std::vector<unsigned int> epsg_codes;
         for (CPLXMLNode *node = keywords->psChild; node != NULL; node = node->psNext) {
             if (node->eType != CXT_Element) {
                 continue;
             }
             if (kw == node->pszValue) {
-                if (words != "") {
-                    words += ",";
-                }
-                // todo: remove newlines
-
                 CPLString word = CPLGetXMLValue(node, NULL, "");
+                word.Trim();
                 
                 // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
                 const char *epsg = "http://www.opengis.net/def/crs/EPSG/0/";
                 size_t pos = word.find(epsg);
-                if (pos != std::string::npos) {
-                    word.erase(pos, strlen(epsg));
-                    word = "EPSG:" + word;
+                if (pos == 0) {
+                    CPLString code = word.substr(strlen(epsg), std::string::npos);
+                    if (code.find_first_not_of(DIGITS) == std::string::npos) {
+                        epsg_codes.push_back(atoi(code));
+                        continue;
+                    }
                 }
 
-                word.Trim();
+                // profiles, remove http://www.opengis.net/spec/
+                // interpolation, remove http://www.opengis.net/def/interpolation/OGC/1/
                 
+                const char *spec[] = {
+                    "http://www.opengis.net/spec/",
+                    "http://www.opengis.net/def/interpolation/OGC/1/"
+                };
+                for (unsigned int i = 0; i < sizeof(spec)/sizeof(spec[0]); i++) {
+                    pos = word.find(spec[i]);
+                    if (pos != std::string::npos) {
+                        word.erase(pos, strlen(spec[i]));
+                    }
+                }
+                
+                if (words != "") {
+                    words += ",";
+                }
                 words += word;
             }
+        }
+        if (epsg_codes.size() > 0) {
+            CPLString codes;
+            std::sort(epsg_codes.begin(), epsg_codes.end());
+            unsigned int pajazzo = 0, i = 0, a, b;
+            while (1) {
+                unsigned int c = i < epsg_codes.size() ? epsg_codes[i] : 0;
+                if (pajazzo == 1) {
+                    if (c > a + 1) {
+                        if (codes != "") {
+                            codes += ",";
+                        }
+                        codes += CPLString().Printf("%i", a);
+                        a = c;
+                    } else if (c >= a) {
+                        b = c;
+                        pajazzo = 2;
+                    }
+                } else if (pajazzo == 2) {
+                    if (c > b + 1) {
+                        if (codes != "") {
+                            codes += ",";
+                        }
+                        codes += CPLString().Printf("%i:%i", a, b);
+                        a = c;
+                        pajazzo = 1;
+                    } else if (c >= b) {
+                        b = c;
+                    }
+                } else { // pajazzo == 0
+                    a = c;
+                    pajazzo = 1;
+                }
+                if (i == epsg_codes.size()) {
+                    break;
+                }
+                ++i;
+            }
+            if (words != "") {
+                words += ",";
+            }
+            words += "EPSG:" + codes;
         }
     }
     return words;
@@ -434,7 +553,7 @@ CPLString ParseCRS(CPLXMLNode *node)
 // if appropriate, try to create WKT description from CRS name
 // return false if failure
 // appropriate means, that the name is a real CRS
-bool CRS2Projection(CPLString crs, OGRSpatialReference &oSRS, char **projection)
+bool CRS2Projection(CPLString crs, OGRSpatialReference *sr, char **projection)
 {
     if (*projection != NULL) {
         CPLFree(projection);
@@ -448,21 +567,22 @@ bool CRS2Projection(CPLString crs, OGRSpatialReference &oSRS, char **projection)
         return true;
     }
     // rasdaman uses urls, which return gml:ProjectedCRS XML, which is not recognized by GDAL currently
-    if (crs.find("EPSG")) { // ...EPSG...(\d+)
-        const char *digits = "0123456789";
-        size_t pos1 = crs.find_last_of(digits);
+    if (crs.find("EPSG") != std::string::npos) { // ...EPSG...(\d+)
+        size_t pos1 = crs.find_last_of(DIGITS);
         if (pos1 != std::string::npos) {
             size_t pos2 = pos1 - 1;
             char c = crs.at(pos2);
-            while (strchr(digits, c)) {
+            while (strchr(DIGITS, c)) {
                 pos2 = pos2 - 1;
                 c = crs.at(pos2);
             }
             crs = "EPSGA:" + crs.substr(pos2 + 1, pos1 - pos2);
         }
     }
-    if (oSRS.SetFromUserInput(crs) == OGRERR_NONE) {
-        oSRS.exportToWkt(projection);
+    OGRSpatialReference local_sr;
+    OGRSpatialReference *sr_pointer = sr != NULL ? sr : &local_sr;
+    if (sr_pointer->SetFromUserInput(crs) == OGRERR_NONE) {
+        sr_pointer->exportToWkt(projection);
         return true;
     }
     return false;
@@ -472,21 +592,20 @@ bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection)
 {
     OGRSpatialReference oSRS;
     char *tmp = NULL;
-    if (projection != NULL) {
-        tmp = *projection;
-    }
-    if (!CRS2Projection(crs, oSRS, &tmp)) {
+    swap = false;
+    if (!CRS2Projection(crs, &oSRS, &tmp)) {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to interpret coverage CRS '%s'.", crs.c_str() );
+        CPLFree(tmp);
         return false;
     }
     if (tmp) {
+        if (projection != NULL) {
+            *projection = tmp;
+        } else {
+            CPLFree(tmp);
+        }
         swap = oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting();
-    } else {
-        swap = false;
-    }
-    if (projection == NULL) {
-        CPLFree(tmp);
     }
     return true;
 }

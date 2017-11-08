@@ -1,3 +1,34 @@
+/******************************************************************************
+ *
+ * Project:  WCS Client Driver
+ * Purpose:  Implementation of Dataset class for WCS 1.1.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2006, Frank Warmerdam
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Ari Jolma
+ * Copyright (c) 2017, Finnish Environment Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
@@ -12,6 +43,11 @@
 
 #include "wcsdataset.h"
 #include "wcsutils.h"
+
+/************************************************************************/
+/*                         GetExtent()                                  */
+/*                                                                      */
+/************************************************************************/
 
 std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
                                              int nXSize, int nYSize,
@@ -28,7 +64,7 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
                      (nXOff + nXSize) * adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
-    
+
     // WCS 1.1 extents are centers of outer pixels.
     extent[2] -= adfGeoTransform[1] * 0.5;
     extent[0] += adfGeoTransform[1] * 0.5;
@@ -57,9 +93,14 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
 
     extent.push_back(dfXStep);
     extent.push_back(dfYStep);
-    
+
     return extent;
 }
+
+/************************************************************************/
+/*                        GetCoverageRequest()                          */
+/*                                                                      */
+/************************************************************************/
 
 CPLString WCSDataset110::GetCoverageRequest(bool scaled,
                                             CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize,
@@ -83,7 +124,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     osFormat = pszEncoded;
     CPLFree( pszEncoded );
 
-    
+
     osRangeSubset.Printf("&RangeSubset=%s",
                          CPLGetXMLValue(psService,"FieldName",""));
 
@@ -101,7 +142,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
                                 osBandList.c_str() );
     }
 
-    
+
 
     if (GML_IsSRSLatLongOrder(osCRS.c_str())) {
         double tmp = extent[0];
@@ -145,6 +186,10 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     return osRequest;
 }
 
+/************************************************************************/
+/*                        DescribeCoverageRequest()                     */
+/*                                                                      */
+/************************************************************************/
 
 CPLString WCSDataset110::DescribeCoverageRequest()
 {
@@ -157,6 +202,11 @@ CPLString WCSDataset110::DescribeCoverageRequest()
         CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
     return request;
 }
+
+/************************************************************************/
+/*                         CoverageOffering()                           */
+/*                                                                      */
+/************************************************************************/
 
 CPLXMLNode *WCSDataset110::CoverageOffering(CPLXMLNode *psDC)
 {
@@ -306,21 +356,21 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Establish our coordinate system.                                */
 /* -------------------------------------------------------------------- */
-    osCRS = ParseCRS(psGCRS);
+    CPLString crs = ParseCRS(psGCRS);
 
-    if (osCRS.empty()) {
+    if (crs.empty()) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find GridCRS.GridBaseCRS" );
         return false;
     }
-    OGRSpatialReference oSRS;
-    if (!CRS2Projection(osCRS, oSRS, &pszProjection)) {
+
+    // todo: our new CRSImpliesAxisOrderSwap should be very forgiving so that this does not end here
+    if (!SetCRS(crs, true)) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to interpret GridBaseCRS '%s'.",
-                  osCRS.c_str() );
+                  crs.c_str() );
         return false;
     }
-    // note: pszProjection remains NULL for raw images
 
 /* -------------------------------------------------------------------- */
 /*      Search for an ImageCRS for raster size.                         */
@@ -341,11 +391,11 @@ bool WCSDataset110::ExtractGridInfo()
         if (strstr(osBBCRS,":imageCRS")) {
             std::vector<CPLString> bbox = ParseBoundingBox(psNode);
             if (bbox.size() >= 2) {
-                std::vector<double> low = Flist(Split(bbox[0], " "));
-                std::vector<double> high = Flist(Split(bbox[1], " "));
+                std::vector<int> low = Ilist(Split(bbox[0], " "), 0, 2);
+                std::vector<int> high = Ilist(Split(bbox[1], " "), 0, 2);
                 if (low[0] == 0 && low[1] == 0) {
-                    nRasterXSize = (int) (high[0] + 1.01);
-                    nRasterYSize = (int) (high[1] + 1.01);
+                    nRasterXSize = high[0];
+                    nRasterYSize = high[1];
                 }
             }
         }
@@ -370,9 +420,8 @@ bool WCSDataset110::ExtractGridInfo()
                 && adfGeoTransform[2] == 0.0
                 && adfGeoTransform[4] == 0.0)
             {
-                std::vector<double> low = Flist(Split(bbox[0], " "));
-                std::vector<double> high = Flist(Split(bbox[1], " "));
-                // todo: check for axis order swap
+                std::vector<double> low = Flist(Split(bbox[0], " ", axis_order_swap), 0, 2);
+                std::vector<double> high = Flist(Split(bbox[1], " ", axis_order_swap), 0, 2);
                 nRasterXSize =
                     (int) ((high[0] - low[0]) / adfGeoTransform[1] + 1.01);
                 nRasterYSize =
@@ -380,7 +429,6 @@ bool WCSDataset110::ExtractGridInfo()
             }
         }
     }
-    // if nRasterXSize < 0 error
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */
@@ -389,6 +437,8 @@ bool WCSDataset110::ExtractGridInfo()
 
     if( pszProjOverride )
     {
+        OGRSpatialReference oSRS;
+
         if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -551,13 +601,13 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     {
         return CE_Failure;
     }
-    
+
     char **metadata = NULL;
     CPLString path = "WCS_GLOBAL#";
 
     CPLString key = path + "version";
     metadata = CSLSetNameValue(metadata, key, Version());
-    
+
     for( CPLXMLNode *node = Capabilities->psChild; node != NULL; node = node->psNext)
     {
         const char *attr = node->pszValue;
@@ -568,7 +618,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             metadata = CSLSetNameValue(metadata, key, value);
         }
     }
-    
+
     // identification metadata
     CPLString path2 = path;
     std::vector<CPLString> keys2 = {
@@ -688,7 +738,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
         CPLString name = path + "crsSupported";
 
         // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
-        
+
         metadata = CSLSetNameValue(metadata, name, crs);
     }
 
@@ -709,9 +759,9 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             }
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
-            
+
             CPLXMLNode *node;
-            
+
             CPLString keywords = GetKeywords(summary, "Keywords", "Keyword");
             if (keywords != "") {
                 CPLString name = path3 + "KEYWORDS";
@@ -722,7 +772,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 CPLString name = path3 + "SUPPORTED_CRS";
                 metadata = CSLSetNameValue(metadata, name, crs);
             }
-            
+
             if ((node = CPLGetXMLNode(summary, "CoverageId"))
                 || (node = CPLGetXMLNode(summary, "Identifier")))
             {
@@ -746,34 +796,46 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 // WGS84BoundingBox is always lon,lat
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
                 if (bbox.size() >= 2) {
-                    std::vector<double> low = Flist(Split(bbox[0], " "));
-                    std::vector<double> high = Flist(Split(bbox[1], " "));
+                    std::vector<double> low = Flist(Split(bbox[0], " "), 0, 2);
+                    std::vector<double> high = Flist(Split(bbox[1], " "), 0, 2);
                     CPLString tmp;
                     tmp.Printf("%f,%f,%f,%f", low[0], low[1], high[0], high[1]);
                     metadata = CSLSetNameValue(metadata, name, tmp);
                 }
             }
-            
+
             if ((node = CPLGetXMLNode(summary, "BoundingBox"))) {
-                CPLString name = path3 + "BBOX";
                 CPLString CRS = ParseCRS(node);
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
                 if (bbox.size() >= 2) {
-                    // todo: check axis order swap
-                    std::vector<double> low = Flist(Split(bbox[0], " "));
-                    std::vector<double> high = Flist(Split(bbox[1], " "));
-                    CPLString tmp;
-                    tmp.Printf("CRS=%s minX=%f minY=%f maxX=%f maxY=%f",
-                               CRS.c_str(), low[0], low[1], high[0], high[1]);
-                    metadata = CSLSetNameValue(metadata, name, tmp);
+                    // todo: CRSImpliesAxisOrderSwap may fail, skip that for now
+                    bool local_axis_order_swap;
+                    CRSImpliesAxisOrderSwap(CRS, local_axis_order_swap, NULL);
+                    std::vector<CPLString> b = Split(bbox[0], " ", local_axis_order_swap);
+                    std::vector<double> low;
+                    if (b.size() >= 2) {
+                        low = Flist(b, 0, 2);
+                    }
+                    std::vector<double> high;
+                    b = Split(bbox[1], " ", local_axis_order_swap);
+                    if (b.size() >= 2) {
+                        high = Flist(b, 0, 2);
+                    }
+                    if (low.size() >= 2 && high.size() >= 2) {
+                        CPLString tmp;
+                        tmp.Printf("CRS=%s minX=%f minY=%f maxX=%f maxY=%f",
+                                   CRS.c_str(), low[0], low[1], high[0], high[1]);
+                        CPLString name = path3 + "BBOX";
+                        metadata = CSLSetNameValue(metadata, name, tmp);
+                    }
                 }
             }
-            
+
             if ((node = CPLGetXMLNode(summary, "CoverageSubtype"))) {
                 CPLString name = path3 + "TYPE";
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }
-            
+
             index++;
         }
     }
@@ -781,6 +843,11 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     CSLDestroy( metadata );
     return CE_None;
 }
+
+/************************************************************************/
+/*                          ExceptionNodeName()                         */
+/*                                                                      */
+/************************************************************************/
 
 const char *WCSDataset110::ExceptionNodeName()
 {
