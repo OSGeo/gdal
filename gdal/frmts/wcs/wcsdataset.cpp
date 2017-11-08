@@ -128,8 +128,7 @@ bool WCSDataset::SetCRS(CPLString crs, bool native)
 
 void WCSDataset::SetGeometry(std::vector<int> size,
                              std::vector<double> origin,
-                             std::vector<std::vector<double>> offsets,
-                             CPL_UNUSED std::vector<CPLString> axis_order)
+                             std::vector<std::vector<double>> offsets)
 {
     nRasterXSize = size[0];
     nRasterYSize = size[1];
@@ -1062,8 +1061,7 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "BlockXSize",
         "BlockYSize",
         "NoDataValue",
-        "NoOffsetSwap",
-        "NoGridEnvelopeSwap",
+        "NoGridSwap",
         "SubsetAxisSwap"
     };
     for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {

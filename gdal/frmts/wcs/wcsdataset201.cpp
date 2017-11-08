@@ -176,6 +176,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     }
 
     // todo other stuff, e.g., GeoTIFF encoding
+    fprintf(stderr, "URL=%s\n", request.c_str());
 
     return request;
 
@@ -205,6 +206,7 @@ CPLString WCSDataset201::DescribeCoverageRequest()
 
 bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
                                 CPLString subtype,
+                                bool swap_grid_axis,
                                 std::vector<double> &origin,
                                 std::vector<std::vector<double>> &offset,
                                 std::vector<CPLString> axes,
@@ -237,13 +239,15 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
         // the offset order should be swapped
         // Rasdaman does it
         // MapServer and GeoServer not
+        /*
         if (offset.size() > 1 && axis_order_swap) {
             CPLString no_offset_swap = CPLGetXMLValue(psService, "NoOffsetSwap", "");
             if (no_offset_swap == "") {
-                std::vector<double> tmp = offset[0];
-                offset[0] = offset[1];
-                offset[1] = tmp;
-            }
+        */
+        if (swap_grid_axis) {
+            std::vector<double> tmp = offset[0];
+            offset[0] = offset[1];
+            offset[1] = tmp;
         }
 
     } else { // if (coverage_type == "ReferenceableGrid"(ByVector)) {
@@ -371,14 +375,14 @@ bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
 /*                                                                      */
 /************************************************************************/
 
-bool WCSDataset201::ParseGridFunction(std::vector<CPLString> &axisOrder)
+bool WCSDataset201::ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder)
 {
-    CPLXMLNode *function = CPLGetXMLNode(psService, "coverageFunction.GridFunction");
+    CPLXMLNode *function = CPLGetXMLNode(coverage, "coverageFunction.GridFunction");
     if (function) {
         CPLString path = "sequenceRule";
         CPLString sequenceRule = CPLGetXMLValue(function, path, "");
         path += ".axisOrder";
-        axisOrder = Split(CPLGetXMLValue(function, path, ""), " ");
+        axisOrder = Ilist(Split(CPLGetXMLValue(function, path, ""), " "));
         path = "startPoint";
         std::vector<CPLString> startPoint = Split(CPLGetXMLValue(function, path, ""), " ");
         // for now require simple
@@ -522,14 +526,6 @@ bool WCSDataset201::ExtractGridInfo()
 
     CPLString subtype = CoverageSubtype(coverage);
 
-    // GridFunction (is optional)
-    // We support only linear grid functions.
-    // axisOrder affects the geo transform, if it swaps i and j
-    std::vector<CPLString> axisOrder;
-    if (!ParseGridFunction(axisOrder)) {
-        return false;
-    }
-
     // get CRS from boundedBy.Envelope and set the native flag to true
     // below we may set the CRS again but that won't be native
     // also axis order swap is set
@@ -569,6 +565,22 @@ bool WCSDataset201::ExtractGridInfo()
         CPLSetXMLValue(psService, "Domain", Join(domain, ","));
     }
 
+    // GridFunction (is optional)
+    // We support only linear grid functions.
+    // axisOrder determines how data is arranged in the grid <order><axis number>
+    // specifically: +2 +1 => swap grid envelope and the order of the offsets
+    std::vector<int> axisOrder;
+    if (!ParseGridFunction(coverage, axisOrder)) {
+        return false;
+    }
+    bool swap_grid_axis = false;
+    if (axisOrder.size() >= 2
+        && axisOrder[domain_indexes[0]] == 2
+        && axisOrder[domain_indexes[1]] == 1)
+    {
+        swap_grid_axis = true;
+    }
+    
     char **metadata = CSLDuplicate(GetMetadata("SUBDATASETS")); // coverage metadata to be added/updated
 
     metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
@@ -611,9 +623,9 @@ bool WCSDataset201::ExtractGridInfo()
     }
 
     path = "limits.GridEnvelope";
-    CPLString no_grid_envelope_swap = CPLGetXMLValue(psService, "NoGridEnvelopeSwap", "");
-    bool local_swap = axis_order_swap && no_grid_envelope_swap == "";
-    std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path), local_swap);
+    CPLString no_grid_swap = CPLGetXMLValue(psService, "NoGridSwap", "");
+    bool do_swap_grid_axis = swap_grid_axis && no_grid_swap == "";
+    std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path), do_swap_grid_axis);
     std::vector<int> grid_size;
 
     grid_size.push_back(size[1][domain_indexes[0]] - size[0][domain_indexes[0]] + 1);
@@ -625,11 +637,11 @@ bool WCSDataset201::ExtractGridInfo()
 
     std::vector<double> origin;
     std::vector<std::vector<double>> offsets;
-    if (!GridOffsets(grid, subtype, origin, offsets, axes, &metadata)) {
+    if (!GridOffsets(grid, subtype, do_swap_grid_axis, origin, offsets, axes, &metadata)) {
         return false;
     }
 
-    SetGeometry(grid_size, origin, offsets, axisOrder);
+    SetGeometry(grid_size, origin, offsets);
 
     // has the user set the dimension to band?
     CPLString dimension_to_band = CPLGetXMLValue(psService, "DimensionToBand", "");
@@ -688,7 +700,7 @@ bool WCSDataset201::ExtractGridInfo()
         // todo: support CRS override, it requires warping the grid to the new CRS
         CPLError(CE_Failure, CPLE_AppDefined, "CRS override not yet supported.");
         return false;
-        SetGeometry(grid_size, origin, offsets, axisOrder);
+        SetGeometry(grid_size, origin, offsets);
     }
 
     // todo: ElevationDomain, DimensionDomain

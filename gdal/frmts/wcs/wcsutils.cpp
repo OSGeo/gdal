@@ -107,7 +107,7 @@ CPLString Join(std::vector<CPLString> array, const char *delim, bool swap_the_fi
 
 std::vector<int> Ilist(std::vector<CPLString> array,
                        unsigned int from,
-                       unsigned int count)
+                       size_t count)
 {
     std::vector<int> retval;
     for (unsigned int i = from; i < array.size() && i < from + count; ++i) {
@@ -118,7 +118,7 @@ std::vector<int> Ilist(std::vector<CPLString> array,
 
 std::vector<double> Flist(std::vector<CPLString> array,
                           unsigned int from,
-                          unsigned int count)
+                          size_t count)
 {
     std::vector<double> retval;
     for (unsigned int i = from; i < array.size() && i < from + count; ++i) {

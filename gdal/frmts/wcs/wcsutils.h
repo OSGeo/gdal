@@ -48,12 +48,12 @@ CPLString Join(std::vector<CPLString> array,
                bool swap_the_first_two = false);
 
 std::vector<int> Ilist(std::vector<CPLString> array,
-                       unsigned int from,
-                       unsigned int count);
+                       unsigned int from = 0,
+                       size_t count = std::string::npos);
 
 std::vector<double> Flist(std::vector<CPLString> array,
-                          unsigned int from,
-                          unsigned int count);
+                          unsigned int from = 0,
+                          size_t count = std::string::npos);
 
 int IndexOf(CPLString str, std::vector<CPLString> array); // index of str in array
 int IndexOf(int i, std::vector<int> array);

@@ -62,8 +62,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     bool        SetCRS(CPLString crs, bool native);
     void        SetGeometry(std::vector<int> size,
                             std::vector<double> origin,
-                            std::vector<std::vector<double>> offsets,
-                            std::vector<CPLString> axis_order);
+                            std::vector<std::vector<double>> offsets);
 
     CPLString   osBandIdentifier;
 
@@ -192,7 +191,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
                                   int nBufXSize, int nBufYSize) override;
     CPLString   GetSubdataset(CPLString coverage);
     bool        SetFormat(CPLXMLNode *coverage);
-    bool        ParseGridFunction(std::vector<CPLString> &axisOrder);
+    bool        ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder);
     int         ParseRange(CPLXMLNode *coverage, char ***metadata);
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
@@ -201,6 +200,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
     CPLString   DescribeCoverageRequest() override;
     bool        GridOffsets(CPLXMLNode *grid,
                             CPLString subtype,
+                            bool swap_grid_axis,
                             std::vector<double> &origin,
                             std::vector<std::vector<double>> &offset,
                             std::vector<CPLString> labels,
