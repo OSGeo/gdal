@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "grib2.h"
@@ -55,6 +56,11 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
       g2int *lidrstmpl=0;
       xxtemplate *mapdrs;
       int ret=0;
+#ifdef GRIB_MAX_POINTS
+      const int knMaxPoints = GRIB_MAX_POINTS;
+#else
+      const int knMaxPoints = INT_MAX - 1;
+#endif
 
       ierr=0;
       *idrstmpl=0;       //NULL
@@ -74,13 +80,13 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
 
       // Get num of data points.
       ret = gbit2(cgrib,cgrib_length,ndpts,*iofst,32);
-      // ndpts is clearly nonsense if it outside of 0..33554432
+      // Reject ndpts if it outside of 0..knMaxPoints
       if (*ndpts < 0 || ret != 0) {
          *ndpts = 0;
          return 6;
       }
-      if (*ndpts > 2<<24) {
-         *ndpts = 2<<24;
+      if (*ndpts > knMaxPoints) {
+         *ndpts = knMaxPoints;
          return 6;
       }
       *iofst=*iofst+32;
