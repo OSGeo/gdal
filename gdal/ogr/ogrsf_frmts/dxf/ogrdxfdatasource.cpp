@@ -530,7 +530,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
 std::vector<double> OGRDXFDataSource::LookupLineType( const char *pszName )
 
 {
-    if( oLineTypeTable.count(pszName) > 0 )
+    if( pszName && oLineTypeTable.count(pszName) > 0 )
         return oLineTypeTable[pszName];
     else
         return std::vector<double>(); // empty, represents a continuous line
