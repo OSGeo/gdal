@@ -579,6 +579,10 @@ static int FindSectLen (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
       if (sectLen == 926365495L) {
          sectNum = 8;
       } else {
+         if (curTot + 4 == gribLen) {
+           errSprintf("ERROR: Ran out of data in Section 1\n");
+           return -1;
+         }
          sectNum = c_ipack[curTot + 4];
          if ((sectNum < 2) || (sectNum > 7)) {
             errSprintf ("ERROR (FindSectLen): Couldn't find the end of the "
