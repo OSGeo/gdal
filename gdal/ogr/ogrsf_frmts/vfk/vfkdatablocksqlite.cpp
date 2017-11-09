@@ -269,6 +269,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot retrieve feature %d", iIdx);
+                    sqlite3_finalize(hStmt);
                     break;
                 }
                 poFeature->SetRowId(rowId);
