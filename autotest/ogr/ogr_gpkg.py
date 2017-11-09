@@ -1763,7 +1763,7 @@ def ogr_gpkg_20():
 
     ds = ogr.Open('/vsimem/ogr_gpkg_20.gpkg')
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs' AND srs_id = 4327 AND organization='MY_ORG' AND organization_coordsys_id=4326 AND description is NULL")
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='my geogcs' AND srs_id = 100000 AND organization='MY_ORG' AND organization_coordsys_id=4326 AND description is NULL")
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
     if fc != 1:
@@ -1771,7 +1771,7 @@ def ogr_gpkg_20():
         print(fc)
         return 'fail'
 
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='another geogcs' AND srs_id = 4328 AND organization='NONE' AND organization_coordsys_id=4328 AND description is NULL")
+    sql_lyr = ds.ExecuteSQL("SELECT * FROM gpkg_spatial_ref_sys WHERE srs_name='another geogcs' AND srs_id = 100001 AND organization='NONE' AND organization_coordsys_id=100001 AND description is NULL")
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
     if fc != 1:
