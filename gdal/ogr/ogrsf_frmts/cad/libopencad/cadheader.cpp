@@ -223,7 +223,10 @@ long CADHandle::getAsLong(const std::vector<unsigned char>& handle)
     if( copySize > sizeof(long) )
         copySize = sizeof(long);
     memcpy( &result, handle.data(), copySize );
-    SwapEndianness( result, handle.size() );
+    // NOTE: Second argument below was previously handle.size(). This was
+    // clearly wrong (consider the case where handle.size() > sizeof(long))
+    // but I don't know what the correct value should be
+    SwapEndianness( result, copySize );
     return result;
 }
 
