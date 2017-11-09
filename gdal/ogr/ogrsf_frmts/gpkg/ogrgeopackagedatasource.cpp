@@ -426,7 +426,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
         const int nMaxSRSId
             = SQLGetInteger(
                 hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", NULL );
-        nSRSId = nMaxSRSId + 1;
+        // At least 100000 to avoid conflicting with EPSG codes
+        nSRSId = std::max(100000, nMaxSRSId + 1);
     }
 
     // Add new SRS row to gpkg_spatial_ref_sys.
