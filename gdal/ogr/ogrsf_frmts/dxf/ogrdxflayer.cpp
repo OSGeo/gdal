@@ -2836,7 +2836,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             if( !EQUAL( szLineBuf, "ATTRIB" ) )
             {
                 DXF_LAYER_READER_ERROR();
+
                 delete poFeature;
+                while( !apoAttribs.empty() )
+                {
+                    delete apoAttribs.front();
+                    apoAttribs.pop();
+                }
+
                 return NULL;
             }
 
@@ -2882,6 +2889,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
                 CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
                     osAttribString.length() + 1 );
 
+                delete apoAttribs.front();
                 apoAttribs.pop();
                 iIndex++;
             }
