@@ -47,9 +47,9 @@ set.<p>
 <li> <b>BlockYSize</b>: The block height to use for block cached remote access.
 <li> <b>NoDataValue</b>: The nodata value to use for all the bands (blank for none).  Normally defaulted from CoverageOffering info.
 <li> <b>Timeout</b>: The timeout to use for remote service requests.  If not provided, the libcurl default is used.
-<li> <b>UserPwd</b>: May be supplied with <i>userid:password</i> to pass a
+<li> <b>USERPWD</b>: May be supplied with <i>userid:password</i> to pass a
 userid and password to the remote server.
-<li> <b>HttpAuth</b>: May be BASIC, NTLM or ANY to control the authentication scheme to be used.
+<li> <b>HTTPAUTH</b>: May be BASIC, NTLM or ANY to control the authentication scheme to be used.
 <li> <b>OverviewCount</b>: The number of overviews to represent bands as having.  Defaults to a number such that the top overview is fairly smaller (less than 1K x 1K or so).
 <li> <b>GetCoverageExtra</b>: An additional set of keywords to add to GetCoverage requests in URL encoded form.  eg. "&RESAMPLE=BILINEAR&Band=1"
 <li> <b>DescribeCoverageExtra</b>: An additional set of keywords to add to DescribeCoverage requests in URL encoded form.  eg. "&CustNo=775"
@@ -78,7 +78,7 @@ position by default.
   is given with varying options and URL.
   At each point the HTTP options
   <ul>
-    <li>TIMEOUT=value</li>
+    <li>TimeOut=value</li>
     <li>USERPWD=value</li>
     <li>HTTPAUTH=value</li>
   </ul>
@@ -87,9 +87,15 @@ position by default.
     <li>CACHE_DIR=path (The default location of the cache
       directory is $HOME/.gdal/wcs_cache)</li>
     <li>CLEAR_CACHE=TRUE (The cache is completely initialized and all
-    files are deleted.)</li>
-    <li>REFRESH_CACHE=TRUE (Either the Capabilities and metadata
-    files, or the coverage description and service files are deleted.)</li>
+      files are deleted.)</li>
+    <li>REFRESH_CACHE=TRUE (The cache entry (a URL without parameters,
+      or with version and/or coverage parameters) is deleted.)</li>
+    <li>RECREATE_META=TRUE (The metadata file (.aux.xml) is recreated,
+    either the server, server at a version, or the coverage related
+      metadata file.)</li>
+    <li>RECREATE_SERVICE=TRUE (The service (WCS_GDAL) XML file is
+      initialized. Note that the service file is always updated with
+      elements given as options.</li>
   </ul>
   and extra key value pairs for the requests (EXTRA=key1=value1&amp;key2=value2...)
   may be used. More than one option can be given by repeating the -oo switch.
@@ -103,48 +109,62 @@ position by default.
       is used), and show it to the user. Coverages are recorded as
       subdatasets.  Subsequent use of the driver using the "WCS:"
       format will reuse the metadata obtained from the Capabilities
-      file.
+      file unless asked to refresh or recreate.
     </li>
     <li>
       Once the coverage offering of the server is known, a coverage
       name/id can be added to the URL as a parameter (key may be
-      'coverageId', 'identifiers', or 'coverage'). Given that, the
-      driver attempts to fetch the coverage description from the server,
-      save it to the cache (a new key is used), parse it, and create a
-      service file. At this point, when the version 2.0.1 is used, the
-      driver may map the data fields into raster bands. However, if the
-      coverage contains more than two dimensions, nothing is yet mapped
-      to bands. The user needs to use the DIMENSIONS or the
-      DIMENSIONTOBAND option to either define the value at which the
+      'coverageId', 'identifiers', or 'coverage'; the last one is
+      always used in the cache key). Given that, the driver attempts
+      to fetch the coverage description from the server, save it to
+      the cache (a new key is used), parse it, and create a service
+      file. At this point, when the version 2.0.1 is used, the driver
+      may map the data fields into raster bands. However, if the
+      coverage contains more than two dimensions, nothing is yet
+      mapped to bands. The user needs to use the Dimensions or the
+      DimensionToBand option to either define the value at which the
       extra dimension is sliced or that it is mapped as bands. If the
-      DIMENSIONTOBAND option is selected, it may be necessary to also
-      define with the RANGE option the field that is put as data into
+      DimensionToBand option is selected, it may be necessary to also
+      define with the Range option the field that is put as data into
       the bands.
       <ul>
         <li>CRS=value (Override the default CRS used by the
-        server.)</li>
-        <li>PREFERREDFORMAT=value (Override the default format
+        server. Note: currently not implemented.)</li>
+        <li>PreferredFormat=value (Override the default format
         selected by the driver.)</li>
-        <li>DOMAIN=axis_name,axis_name (The default is to use the
+        <li>Domain=axis_name,axis_name (The default is to use the
         first two axes given by the server. The axis order swap may
         apply.)</li>
-        <li>DIMENSIONS=axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)
+        <li>Dimensions=axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)
         (Trim or slice a dimension when fetching data from the server.)</li>
-        <li>DIMENSIONTOBAND=axis_name (Map the given dimension, for
+        <li>DimensionToBand=axis_name (Map the given dimension, for
           example 'time', into bands.)</li>
-        <li>DEFAULTTIME (see DefaultTime above, only for 1.0.0)</li>
-        <li>INTERPOLATION=value (One of the server supported
+        <li>DefaultTime (see DefaultTime above, only for 1.0.0)</li>
+        <li>Interpolation=value (One of the server supported
         interpolation methods.)</li>
-        <li>FIELDNAME=field_name,field_name:field_name,.. (A list of
+        <li>FieldName=field_name,field_name:field_name,.. (A list of
         fields to be mapped to bands. A field_name:field_name element
         in the list denotes a range of fields. If not set, defaults to
-        the first field in the coverage description.)</li>
-        <li>OVERVIEWCOUNT (see OverviewCount above)</li>
-        <li>GETCOVERAGEEXTRA (see GetCoverageExtra above)</li>
-        <li>DESCRIBECOVERAGEEXTRA (see DescribeCoverageExtra above)</li>
-        <li>BLOCKXSIZE (see BlockXSize above)</li>
-        <li>BLOCKYSIZE (see BlockYSize above)</li>
-        <li>NODATAVALUE=value,value,.. (no data values for the fields)</li>
+        the first field in the coverage description in versions
+        1.)</li>       
+        <li>OverviewCount (see OverviewCount above)</li>
+        <li>GetCoverageExtra (see GetCoverageExtra above)</li>
+        <li>DescribeCoverageExtra (see DescribeCoverageExtra above)</li>
+        <li>BlockXSize (see BlockXSize above)</li>
+        <li>BlockYSize (see BlockYSize above)</li>
+        <li>NoDataValue=value,value,.. ('no data' values for the fields)</li>
+        <li>NoGridSwap=TRUE (The driver will not swap the grid axis order
+        even though the GridFunction.sequenceRule.axisOrder appears to
+          say so.)</li>
+        <li>SubsetAxisSwap=TRUE (The driver will swap the axis names
+        given in boundedBy.Envelope.axisLabels for GetCoverage
+        request. May be needed for GeoServer when EPSG dictates axis
+          order swap.)</li>
+        <li>SKIP_GETCOVERAGE=TRUE (The driver will not make a small
+        GetCoverage request to the server, which it usually does if it
+        does not know the band count and band type but is otherwise
+        ok. This may be needed if GetCoverage request fails due to
+        reasons mentioned above.)</li>
       </ul>
     </li>
     <li>Once the service file is such that it specifies bands, it can

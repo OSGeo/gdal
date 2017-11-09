@@ -866,15 +866,15 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     }
 
     char **options = NULL;
-    const char *keys2[] = {
+    const char *keys[] = {
         "Timeout",
-        "UserPwd",
-        "HttpAuth"
+        "USERPWD",
+        "HTTPAUTH"
     };
-    for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {
-        CPLString str = keys2[i];
+    for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
+        CPLString str = keys[i];
         std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, str, "");
+        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");
         if (value != "") {
             options = CSLSetNameValue(options, str, value);
         }
@@ -1025,7 +1025,7 @@ static CPLXMLNode *CreateService(CPLString base_url,
 {
     // construct WCS_GDAL XML into psService
     CPLString xml = "<WCS_GDAL>";
-    xml += "<ServiceURL>" + base_url + "</ServiceURL>";
+    xml += "<ServiceURL>" + base_url + "?" + "</ServiceURL>";
     xml += "<Version>" + version + "</Version>";
     xml += "<CoverageName>" + coverage + "</CoverageName>";
     xml += "</WCS_GDAL>";
@@ -1040,7 +1040,7 @@ static CPLXMLNode *CreateService(CPLString base_url,
 static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
 {
     bool updated = false;
-    const char *keys2[] = {
+    const char *keys[] = {
         "NoGridCRS", // do not put GridCRS params into GetCoverage URL if not necessary (1.1)
         "CRS", // override native CRS, should be one of the supported ones
         "PreferredFormat", // option for format
@@ -1052,9 +1052,9 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "Interpolation",
         "FieldName", // what to put to bands, format as RANGESUBSET in GetCoverage ("name,name:name,")
         "Timeout",
-        "UserPwd",
-        "HttpAuth",
-        "Extra",
+        "USERPWD",
+        "HTTPAUTH",
+        "EXTRA",
         "OverviewCount",
         "GetCoverageExtra",
         "DescribeCoverageExtra",
@@ -1064,16 +1064,13 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "NoGridSwap",
         "SubsetAxisSwap"
     };
-    for (unsigned int i = 0; i < sizeof(keys2)/sizeof(keys2[0]); i++) {
-        CPLString str = keys2[i];
-        std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, str, "");
+    for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
+        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");
         if (value != "") {
-            if (!EQUAL(keys2[i], "NoGridCRS")) {
+            if (!EQUAL(keys[i], "NoGridCRS")) {
                 updated = true;
             }
-            str = keys2[i];
-            CPLSetXMLValue(service, keys2[i], value);
+            CPLSetXMLValue(service, keys[i], value);
         }
     }
     // save it to cache
@@ -1122,15 +1119,12 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         // remove all parameters, and possibly add version and coverage
         // coverage is always as 'coverageId'
         CPLString base_url = url.substr(0, url.find("?"));
-        base_url += "?";
         url = base_url;
         if (version != "") {
-            url += "version=" + version;
+            url += "?version=" + version;
         }
         if (coverage != "") {
-            if (version != "") {
-                url += "&";
-            }
+            url += version == "" ? "?" : "&";
             url += "coverage=" + coverage;
         }
         

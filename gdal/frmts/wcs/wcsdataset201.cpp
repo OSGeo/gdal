@@ -102,6 +102,11 @@ std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff,
                      (nXOff + nXSize) * adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
+    // ArcGIS requires us to be exact
+    extent[0] = MAX(adfGeoTransform[0], extent[0]);
+    extent[1] = MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]);
+    extent[2] = MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]);
+    extent[3] = MIN(adfGeoTransform[3], extent[3]);
     return extent;
 }
 
@@ -136,9 +141,9 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         x = y;
         y = ctmp;
     }
-    tmp.Printf("&SUBSET=%s%%28%.15g,%.15g%%29", x, extent[0], extent[2]);
+    tmp.Printf("&SUBSET=%s%%28%.18g,%.18g%%29", x, extent[0], extent[2]);
     request += tmp;
-    tmp.Printf("&SUBSET=%s%%28%.15g,%.15g%%29", y, extent[1], extent[3]);
+    tmp.Printf("&SUBSET=%s%%28%.18g,%.18g%%29", y, extent[1], extent[3]);
     request += tmp;
 
     // set subsets for axis other than x/y
@@ -632,7 +637,7 @@ bool WCSDataset201::ExtractGridInfo()
     grid_size.push_back(size[1][domain_indexes[1]] - size[0][domain_indexes[1]] + 1);
 
     path = "axisLabels";
-    std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", axis_order_swap);
+    std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", do_swap_grid_axis);
     CPLSetXMLValue(psService, "GridAxes", Join(grid_axes, ","));
 
     std::vector<double> origin;
