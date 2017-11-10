@@ -5812,6 +5812,21 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int nBlockBufSize = 4 * nBlockXSize * nBlockYSize;
     const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
+    if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
+    {
+        for( int iBand = 0; iBand < poGDS->nSamplesPerPixel; iBand ++ )
+        {
+            int nBlockIdBand = nBlockId + iBand * poGDS->nBlocksPerBand;
+            if( !poGDS->IsBlockAvailable(nBlockIdBand) )
+                return CE_Failure;
+        }
+    }
+    else
+    {
+        if( !poGDS->IsBlockAvailable(nBlockId) )
+            return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate a temporary buffer for this strip.                     */
 /* -------------------------------------------------------------------- */
