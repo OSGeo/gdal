@@ -416,7 +416,7 @@ def visoss_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket2/?delimiter=/&prefix=a_dir/', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
 
     def method(request):
         request.protocol_version = 'HTTP/1.1'
@@ -439,7 +439,7 @@ def visoss_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/oss_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/', custom_method = method)
+    handler.add('GET', '/oss_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method = method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsioss/oss_fake_bucket2/a_dir/resource3.bin')
@@ -543,7 +543,7 @@ def visoss_3():
 
         handler = webserver.SequentialHandler()
         if config_option_value is None:
-            handler.add('GET', '/oss_non_cached/?delimiter=/', 200, { 'Content-type': 'application/xml' },
+            handler.add('GET', '/oss_non_cached/?delimiter=%2F', 200, { 'Content-type': 'application/xml' },
                         """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>/</Prefix>
@@ -1093,7 +1093,7 @@ def visoss_7():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir/', 200,
+    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
                  { 'Content-type': 'application/xml', 'Connection':'close' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1121,7 +1121,7 @@ def visoss_7():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir_nonempty/', 416)
-    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir_nonempty/', 200,
+    handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
                  { 'Content-type': 'application/xml' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1150,7 +1150,7 @@ def visoss_8():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/visoss_8/?delimiter=/', 200,
+    handler.add('GET', '/visoss_8/?delimiter=%2F', 200,
                  { 'Content-type': 'application/xml' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>

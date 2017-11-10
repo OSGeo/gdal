@@ -119,7 +119,7 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
         }
         else
         {
-            osRet += CPLSPrintf("%02X", ch);
+            osRet += CPLSPrintf("%%%02X", static_cast<unsigned char>(ch));
         }
     }
     return osRet;
@@ -395,21 +395,7 @@ void VSIS3HandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey,
                        m_bUseHTTPS, m_bUseVirtualHosting);
-    std::map<CPLString, CPLString>::iterator oIter =
-        m_oMapQueryParameters.begin();
-    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
-    {
-        if( oIter == m_oMapQueryParameters.begin() )
-            m_osURL += "?";
-        else
-            m_osURL += "&";
-        m_osURL += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            m_osURL += "=";
-            m_osURL += oIter->second;
-        }
-    }
+    m_osURL += GetQueryString();
 }
 
 /************************************************************************/
@@ -1021,7 +1007,7 @@ CPLString IVSIS3LikeHandleHelper::GetQueryString() const
         if( !oIter->second.empty() )
         {
             osQueryString += "=";
-            osQueryString += oIter->second;
+            osQueryString += CPLAWSURLEncode(oIter->second);
         }
     }
     return osQueryString;
