@@ -623,7 +623,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                 self.wfile.write(response.encode('ascii'))
                 return
 
-            if self.path == '/s3_fake_bucket2/?delimiter=/&prefix=a_dir/':
+            if self.path == '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F':
                 self.protocol_version = 'HTTP/1.1'
                 if self.headers['Authorization'].find('us-east-1') >= 0:
                     self.send_response(400)
@@ -667,7 +667,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
                     self.send_response(403)
                 return
 
-            if self.path == '/s3_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/':
+            if self.path == '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F':
 
                 # /vsis3/ should have remembered the change of region and endpoint
                 if self.headers['Authorization'].find('us-west-2') < 0 or \

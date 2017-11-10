@@ -109,7 +109,7 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
         }
         else
         {
-            osRet += CPLSPrintf("%02X", ch);
+            osRet += CPLSPrintf("%%%02X", static_cast<unsigned char>(ch));
         }
     }
     return osRet;
@@ -372,7 +372,7 @@ void VSIS3HandleHelper::RebuildURL()
         if( !oIter->second.empty() )
         {
             m_osURL += "=";
-            m_osURL += oIter->second;
+            m_osURL += CPLAWSURLEncode(oIter->second);
         }
     }
 }
