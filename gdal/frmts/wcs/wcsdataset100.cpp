@@ -102,38 +102,37 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
 /* -------------------------------------------------------------------- */
 /*      Construct a "simple" GetCoverage request (WCS 1.0).             */
 /* -------------------------------------------------------------------- */
-    CPLString osRequest;
-
-    osRequest.Printf(
-        "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
-        osCoverage.c_str(),
-        osFormat.c_str(),
-        extent[0], extent[1], extent[2], extent[3],
-        nBufXSize, nBufYSize,
-        osCRS.c_str(),
-        CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
+    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    request = CPLURLAddKVP(request, "REQUEST", "GetCoverage");
+    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.0.0" ));
+    request = CPLURLAddKVP(request, "COVERAGE", osCoverage.c_str());
+    request = CPLURLAddKVP(request, "FORMAT", osFormat.c_str());
+    request += CPLString().Printf("&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
+                                  extent[0], extent[1], extent[2], extent[3],
+                                  nBufXSize, nBufYSize,
+                                  osCRS.c_str(),
+                                  CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
 
     if( CPLGetXMLValue( psService, "Resample", NULL ) )
     {
-        osRequest += "&INTERPOLATION=";
-        osRequest += CPLGetXMLValue( psService, "Resample", "" );
+        request += "&INTERPOLATION=";
+        request += CPLGetXMLValue( psService, "Resample", "" );
     }
-
+    
     if( osTime != "" )
     {
-        osRequest += "&time=";
-        osRequest += osTime;
+        request += "&time=";
+        request += osTime;
     }
-
+    
     if( osBandList != "" )
     {
-        osRequest += CPLString().Printf( "&%s=%s",
-                                         osBandIdentifier.c_str(),
-                                         osBandList.c_str() );
+        request += CPLString().Printf( "&%s=%s",
+                                       osBandIdentifier.c_str(),
+                                       osBandList.c_str() );
     }
-    return osRequest;
+    return request;
 }
 
 /************************************************************************/
@@ -143,13 +142,19 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
 
 CPLString WCSDataset100::DescribeCoverageRequest()
 {
-    CPLString request;
-    request.Printf(
-        "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&COVERAGE=%s%s",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
-        CPLGetXMLValue( psService, "Version", "1.0.0" ),
-        CPLGetXMLValue( psService, "CoverageName", "" ),
-        CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
+    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
+    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.0.0" ));
+    request = CPLURLAddKVP(request, "COVERAGE", CPLGetXMLValue( psService, "CoverageName", "" ));
+    CPLString extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     return request;
 }
 

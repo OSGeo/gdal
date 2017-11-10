@@ -152,11 +152,11 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
         extent[2] = extent[3];
         extent[3] = tmp;
     }
-
-    osRequest.Printf(
-        "%sSERVICE=WCS&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
+    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    request += CPLString().Printf(
+        "&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
         "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s%s",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
         CPLGetXMLValue( psService, "Version", "" ),
         osCoverage.c_str(),
         osFormat.c_str(),
@@ -173,7 +173,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     */
     if( scaled || !EQUAL(CPLGetXMLValue( psService, "NoGridCRS", "" ), "TRUE") )
     {
-        osRequest += CPLString().Printf(
+        request += CPLString().Printf(
             "&GridBaseCRS=%s"
             "&GridCS=urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS"
             "&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs"
@@ -183,7 +183,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             extent[0], extent[3],
             extent[4], extent[5] );
     }
-    return osRequest;
+    return request;
 }
 
 /************************************************************************/
@@ -193,13 +193,20 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
 
 CPLString WCSDataset110::DescribeCoverageRequest()
 {
-    CPLString request;
-    request.Printf(
-        "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&IDENTIFIERS=%s%s&FORMAT=text/xml",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
-        CPLGetXMLValue( psService, "Version", "1.0.0" ),
-        CPLGetXMLValue( psService, "CoverageName", "" ),
-        CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
+    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
+    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.1.0" ));
+    request = CPLURLAddKVP(request, "IDENTIFIERS", CPLGetXMLValue( psService, "CoverageName", "" ));
+    request = CPLURLAddKVP(request, "FORMAT", "text/xml");
+    CPLString extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     return request;
 }
 

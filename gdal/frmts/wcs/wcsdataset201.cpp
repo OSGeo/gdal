@@ -121,7 +121,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
                                             CPL_UNUSED CPLString osBandList)
 {
     CPLString request = CPLGetXMLValue(psService, "ServiceURL", ""), tmp;
-    request += "SERVICE=WCS";
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
     request += "&REQUEST=GetCoverage";
     request += "&VERSION=" + String(CPLGetXMLValue(psService, "Version", ""));
     request += "&COVERAGEID=" + URLEncode(CPLGetXMLValue(psService, "CoverageName", ""));
@@ -194,13 +194,20 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
 
 CPLString WCSDataset201::DescribeCoverageRequest()
 {
-    CPLString request;
-    request.Printf(
-        "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&COVERAGEID=%s%s&FORMAT=text/xml",
-        CPLGetXMLValue( psService, "ServiceURL", "" ),
-        CPLGetXMLValue( psService, "Version", "1.0.0" ),
-        CPLGetXMLValue( psService, "CoverageName", "" ),
-        CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
+    CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
+    request = CPLURLAddKVP(request, "SERVICE", "WCS");
+    request = CPLURLAddKVP(request, "REQUEST", "DescribeCoverage");
+    request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "2.0.1" ));
+    request = CPLURLAddKVP(request, "COVERAGEID", CPLGetXMLValue( psService, "CoverageName", "" ));
+    request = CPLURLAddKVP(request, "FORMAT", "text/xml");
+    CPLString extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     return request;
 }
 

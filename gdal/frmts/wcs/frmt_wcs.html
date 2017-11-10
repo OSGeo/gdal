@@ -70,6 +70,21 @@ position by default.
   coverage description, and service files. Also starting with GDAL
   2.3.0 the driver includes support for version 2.0.1 servers.
 </p>
+<p>
+  The URL in the dataset name is not a complete WCS request URL. The
+  request URL, specifically, its query part, for GetCapabilities,
+  DescribeCoverage, and GetCoverage requests is composed by the
+  driver. The URL, version and coverage attributes in the query
+  standardised into 'version' and 'coverage', is used as keys to the
+  cache database of server responses, GDAL metadata files, and GDAL
+  service files. The user should include into the URL values for
+  version and eventually for coverage attributes, and all extra
+  attributes that the server in question may recognize, and other
+  attributes not managed by the driver. However, noting that the URL
+  is a key to the cache, the user should consider using
+  GetCoverageExtra and DescribeCoverageExtra options to avoid some
+  attribute-value pairs becoming keys in the cache.
+</p>
 
 <p>
   The supposed workflow of the driver is as follows (an example with
@@ -88,8 +103,7 @@ position by default.
       directory is $HOME/.gdal/wcs_cache)</li>
     <li>CLEAR_CACHE=TRUE (The cache is completely initialized and all
       files are deleted.)</li>
-    <li>REFRESH_CACHE=TRUE (The cache entry (a URL without parameters,
-      or with version and/or coverage parameters) is deleted.)</li>
+    <li>REFRESH_CACHE=TRUE (The cache entry is deleted.)</li>
     <li>RECREATE_META=TRUE (The metadata file (.aux.xml) is recreated,
     either the server, server at a version, or the coverage related
       metadata file.)</li>
@@ -97,8 +111,7 @@ position by default.
       initialized. Note that the service file is always updated with
       elements given as options.</li>
   </ul>
-  and extra key value pairs for the requests (EXTRA=key1=value1&amp;key2=value2...)
-  may be used. More than one option can be given by repeating the -oo switch.
+  More than one option can be given by repeating the -oo switch.
   <ol>
     <li>Initially the URL may be plain URL for the server, but it may
       also contain a request for the server to use a specific version

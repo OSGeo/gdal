@@ -56,10 +56,8 @@ CPLString URLRemoveKey(const char *url, CPLString key)
     while (true) {
         size_t pos = retval.ifind(key);
         if (pos != std::string::npos) {
-            if (pos > 0) {
-                size_t end = retval.find("&", pos);
-                retval.erase(pos-1, end - pos + 1);
-            }
+            size_t end = retval.find("&", pos);
+            retval.erase(pos, end - pos + 1);
         } else {
             break;
         }
