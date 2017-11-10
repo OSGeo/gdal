@@ -84,7 +84,7 @@ void GDALRegister_HDF5()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Hierarchical Data Format Release 5");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_hdf5.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "hdf5");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "h5 hdf5");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
     poDriver->pfnOpen = HDF5Dataset::Open;
