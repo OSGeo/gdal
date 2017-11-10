@@ -42,6 +42,7 @@ extern "C" void RegisterOGRMDB();
 OGRMDBDriver::~OGRMDBDriver()
 
 {
+    OGRMDBJavaEnv::CleanupMutex();
 }
 
 /************************************************************************/

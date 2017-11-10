@@ -43,11 +43,16 @@
 
 class OGRMDBJavaEnv
 {
+    GIntBig nLastPID;
+
+        int Init();
+
     public:
         OGRMDBJavaEnv();
         ~OGRMDBJavaEnv();
 
-        int Init();
+    int InitIfNeeded();
+    static void CleanupMutex();
 
     JavaVM *jvm;
     JNIEnv *env;

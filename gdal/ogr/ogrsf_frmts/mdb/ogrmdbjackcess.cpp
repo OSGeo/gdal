@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_mdb.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$")
 
@@ -36,7 +37,7 @@ CPL_CVSID("$Id$")
 #endif
 
 static JavaVM *jvm_static = NULL;
-static JNIEnv *env_static = NULL;
+static CPLMutex* hMutex = NULL;
 
 /************************************************************************/
 /*                         OGRMDBJavaEnv()                              */
@@ -44,6 +45,7 @@ static JNIEnv *env_static = NULL;
 
 OGRMDBJavaEnv::OGRMDBJavaEnv()
 {
+    nLastPID = 0;
     jvm = NULL;
     env = NULL;
     bCalledFromJava = FALSE;
@@ -158,11 +160,42 @@ OGRMDBJavaEnv::~OGRMDBJavaEnv()
       return FALSE;} } while( false )
 
 /************************************************************************/
+/*                         CleanupMutex()                               */
+/************************************************************************/
+
+void OGRMDBJavaEnv::CleanupMutex()
+{
+    if( hMutex ) 
+        CPLDestroyMutex(hMutex);
+    hMutex = NULL;
+}
+
+/************************************************************************/
+/*                           InitIfNeeded()                             */
+/************************************************************************/
+
+int OGRMDBJavaEnv::InitIfNeeded()
+{
+    GIntBig nCurPID = CPLGetPID();
+    if( env == NULL || bCalledFromJava || nLastPID != nCurPID )
+    {
+        nLastPID = nCurPID;
+        return Init();
+    }
+    return env != NULL;
+}
+
+/************************************************************************/
 /*                              Init()                                  */
 /************************************************************************/
 
 int OGRMDBJavaEnv::Init()
 {
+    CPLMutexHolderD(&hMutex);
+
+    jvm = NULL;
+    env = NULL;
+
     if (jvm_static == NULL)
     {
         JavaVM* vmBuf[1];
@@ -278,14 +311,18 @@ int OGRMDBJavaEnv::Init()
             }
 
             jvm_static = jvm;
-            env_static = env;
         }
     }
     else
     {
         jvm = jvm_static;
-        env = env_static;
     }
+
+    if (jvm->GetEnv((void **)&env, JNI_VERSION_1_2) == JNI_EDETACHED )
+    {
+        jvm->AttachCurrentThread((void **)&env, NULL);
+    }
+
     if( env == NULL )
         return FALSE;
 
@@ -424,8 +461,8 @@ OGRMDBDatabase* OGRMDBDatabase::Open(OGRMDBJavaEnv* env, const char* pszName)
 
 int OGRMDBDatabase::FetchTableNames()
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return FALSE;
 
     jobject table_set = env->env->CallObjectMethod(database, env->database_getTableNames);
     if (env->ExceptionOccurred()) return FALSE;
@@ -457,8 +494,8 @@ int OGRMDBDatabase::FetchTableNames()
 
 OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return FALSE;
 
     jstring table_name_jstring = env->env->NewStringUTF(pszTableName);
     jobject table = env->env->CallObjectMethod(database, env->database_getTable, table_name_jstring);
@@ -502,12 +539,9 @@ OGRMDBTable::OGRMDBTable(OGRMDBJavaEnv* envIn, OGRMDBDatabase* poDBIn,
 
 OGRMDBTable::~OGRMDBTable()
 {
-    if (env)
+    if (env && env->InitIfNeeded())
     {
         //CPLDebug("MDB", "Freeing table %s", osTableName.c_str());
-        if (env->bCalledFromJava)
-            env->Init();
-
         int i;
         for(i=0;i<(int)apoColumnNameObjects.size();i++)
             env->env->DeleteGlobalRef(apoColumnNameObjects[i]);
@@ -524,8 +558,8 @@ OGRMDBTable::~OGRMDBTable()
 
 int OGRMDBTable::FetchColumns()
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return FALSE;
 
     jobject column_lists = env->env->CallObjectMethod(table, env->table_getColumns);
     if (env->ExceptionOccurred()) return FALSE;
@@ -585,8 +619,8 @@ int OGRMDBTable::FetchColumns()
 
 void OGRMDBTable::ResetReading()
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return;
 
     env->env->DeleteGlobalRef(table_iterator_obj);
     table_iterator_obj = NULL;
@@ -600,8 +634,8 @@ void OGRMDBTable::ResetReading()
 
 int OGRMDBTable::GetNextRow()
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return FALSE;
 
     if (table_iterator_obj == NULL)
     {
@@ -821,8 +855,9 @@ int OGRMDBTable::GetColumnIndex(const char* pszColName, int bEmitErrorIfNotFound
 
 int OGRMDBTable::GetRowCount()
 {
-    if (env->bCalledFromJava)
-        env->Init();
+    if( !env->InitIfNeeded() )
+        return 0;
+
     int nRowCount = env->env->CallIntMethod(table, env->table_getRowCount);
     if (env->ExceptionOccurred()) return 0;
     return nRowCount;
