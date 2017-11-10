@@ -201,7 +201,7 @@ def main():
         if len(errors) != 0:
             if not quiet:
                 print('%s is NOT a valid cloud optimized GeoTIFF.' % filename)
-                print('The following errors were foud:')
+                print('The following errors were found:')
                 for error in errors:
                     print(' - ' + error)
             ret = 1
