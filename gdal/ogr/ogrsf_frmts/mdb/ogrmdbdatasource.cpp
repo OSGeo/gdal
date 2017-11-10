@@ -290,7 +290,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     pszName = CPLStrdup( pszNewName );
 
-    if (!env.Init())
+    if (!env.InitIfNeeded())
         return FALSE;
 
     poDB = OGRMDBDatabase::Open(&env, pszNewName);
