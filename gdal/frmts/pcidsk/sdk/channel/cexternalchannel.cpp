@@ -274,6 +274,12 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
         if( axsize > 0 && aysize > 0 )
         {
             MutexHolder oHolder( mutex );
+            if( src_blocks_per_row > 0 &&
+                (ablock_y > INT_MAX / src_blocks_per_row ||
+                 ablock_y * src_blocks_per_row > INT_MAX - ablock_x) )
+            {
+                ThrowPCIDSKException(0, "Integer overflow." );
+            }
             db->ReadBlock( echannel, ablock_x + ablock_y * src_blocks_per_row, 
                         temp_buffer, axoff, ayoff, axsize, aysize );
                         
