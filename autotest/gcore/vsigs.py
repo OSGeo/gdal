@@ -305,7 +305,7 @@ def vsigs_readdir():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket2/?delimiter=/&prefix=a_dir/', 200,
+    handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -318,7 +318,7 @@ def vsigs_readdir():
                         </Contents>
                     </ListBucketResult>
                 """)
-    handler.add('GET', '/gs_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/', 200,
+    handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>

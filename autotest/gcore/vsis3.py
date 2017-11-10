@@ -665,9 +665,9 @@ def vsis3_3():
             sys.stderr.write('Bad headers: %s\n' % str(request.headers))
             request.send_response(403)
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=/&prefix=a_dir/', custom_method = method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=/&prefix=a_dir/', custom_method = method)
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=/&prefix=a_dir/', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', custom_method = method)
 
     def method(request):
         # /vsis3/ should have remembered the change of region and endpoint
@@ -696,7 +696,7 @@ def vsis3_3():
         request.end_headers()
         request.wfile.write(response.encode('ascii'))
 
-    handler.add('GET', '/s3_fake_bucket2/?delimiter=/&marker=bla&prefix=a_dir/', custom_method = method)
+    handler.add('GET', '/s3_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', custom_method = method)
 
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsis3/s3_fake_bucket2/a_dir/resource3.bin')
@@ -800,7 +800,7 @@ def vsis3_3():
 
         handler = webserver.SequentialHandler()
         if config_option_value is None:
-            handler.add('GET', '/s3_non_cached/?delimiter=/', 200, { 'Content-type': 'application/xml' },
+            handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, { 'Content-type': 'application/xml' },
                         """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>/</Prefix>
@@ -933,8 +933,8 @@ def vsis3_3():
                     </CommonPrefixes>
                 </ListBucketResult>
             """)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F', custom_method = h.method_req_2)
 
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir')
@@ -954,8 +954,8 @@ def vsis3_3():
                 </CommonPrefixes>
             </ListBucketResult>
         """)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/&prefix=test/', custom_method = h.method_req_1)
-    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=/&prefix=test/', custom_method = h.method_req_2)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method = h.method_req_1)
+    handler.add('GET', '/s3_test_temporary_redirect_read_dir/?delimiter=%2F&prefix=test%2F', custom_method = h.method_req_2)
 
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/s3_test_temporary_redirect_read_dir/test')
@@ -1534,7 +1534,7 @@ def vsis3_7():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir/', 200,
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
                  { 'Content-type': 'application/xml', 'Connection':'close' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1562,7 +1562,7 @@ def vsis3_7():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir_nonempty/', 416)
-    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=/&max-keys=1&prefix=dir_nonempty/', 200,
+    handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
                  { 'Content-type': 'application/xml' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
@@ -1591,7 +1591,7 @@ def vsis3_8():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/vsis3_8/?delimiter=/', 200,
+    handler.add('GET', '/vsis3_8/?delimiter=%2F', 200,
                  { 'Content-type': 'application/xml' },
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
