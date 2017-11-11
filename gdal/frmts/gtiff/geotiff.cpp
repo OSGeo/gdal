@@ -5812,6 +5812,30 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int nBlockBufSize = 4 * nBlockXSize * nBlockYSize;
     const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
+#ifdef INTERNAL_LIBTIFF
+    if( poGDS->nCompression == COMPRESSION_OJPEG )
+    {
+        // Need to fetch all offsets for Old-JPEG compression
+        if( poGDS->pabyBlockBuf == NULL )
+        {
+            toff_t *panByteCounts = NULL;
+            toff_t *panOffsets = NULL;
+            const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(poGDS->hTIFF) );
+
+            if( bIsTiled )
+            {
+                TIFFGetField( poGDS->hTIFF, TIFFTAG_TILEBYTECOUNTS, &panByteCounts );
+                TIFFGetField( poGDS->hTIFF, TIFFTAG_TILEOFFSETS, &panOffsets );
+            }
+            else
+            {
+                TIFFGetField( poGDS->hTIFF, TIFFTAG_STRIPBYTECOUNTS, &panByteCounts );
+                TIFFGetField( poGDS->hTIFF, TIFFTAG_STRIPOFFSETS, &panOffsets );
+            }
+        }
+    }
+#endif
+
     if( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE )
     {
         for( int iBand = 0; iBand < poGDS->nSamplesPerPixel; iBand ++ )
