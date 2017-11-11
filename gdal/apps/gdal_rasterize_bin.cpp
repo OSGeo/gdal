@@ -85,7 +85,7 @@ static void GDALRasterizeOptionsForBinaryFree(
 /*                                main()                                */
 /************************************************************************/
 
-int main(int argc, char** argv)
+MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -225,3 +225,4 @@ int main(int argc, char** argv)
 
     return nRetCode;
 }
+MAIN_END

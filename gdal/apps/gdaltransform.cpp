@@ -43,6 +43,7 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
@@ -104,7 +105,7 @@ static char *SanitizeSRS( const char *pszUserInput )
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          argv[i], nExtraArg)); } while( false )
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     // Check that we are running against at least GDAL 1.5.
@@ -391,3 +392,4 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+MAIN_END

@@ -31,6 +31,7 @@
 #include "gdal.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
@@ -162,7 +163,7 @@ static void Copy( GDALDriverH hDriver, int nArgc, char **papszArgv,
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     char *pszDriver = NULL;
@@ -243,3 +244,4 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
+MAIN_END

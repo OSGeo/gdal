@@ -418,7 +418,7 @@ static void RemoveBOM(GByte* pabyData)
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          papszArgv[iArg], nExtraArg)); } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -952,3 +952,4 @@ end:
 
     return nRet;
 }
+MAIN_END

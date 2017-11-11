@@ -84,7 +84,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          argv[i], nExtraArg)); } while( false )
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     bool bGotSRS = false;
@@ -268,6 +268,7 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+MAIN_END
 
 /************************************************************************/
 /*                      FindSRS()                                       */
