@@ -5581,7 +5581,16 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 
     int new_cdfid = -1;
     CPLString osTmpFilename(osFilename + ".tmp");
-    int status = nc_create(osTmpFilename, nCreationMode, &new_cdfid);
+    CPLString osFilenameForNCCreate(osTmpFilename);
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );
+        osFilenameForNCCreate = pszTemp;
+        CPLFree(pszTemp);
+    }
+#endif
+    int status = nc_create(osFilenameForNCCreate, nCreationMode, &new_cdfid);
     NCDF_ERR(status)
     if( status != NC_NOERR )
         return false;
@@ -5654,6 +5663,15 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
     }
     VSIUnlink(osOriFilename);
 
+    CPLString osFilenameForNCOpen(osFilename);
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
+        osFilenameForNCOpen = pszTemp;
+        CPLFree(pszTemp);
+    }
+#endif
     status = nc_open(osFilename, NC_WRITE, &cdfid);
     NCDF_ERR(status);
     if( status != NC_NOERR )
@@ -6549,7 +6567,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     int cdfid;
     const int nMode = ((poOpenInfo->nOpenFlags & (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ==
                 (GDAL_OF_UPDATE | GDAL_OF_VECTOR)) ? NC_WRITE : NC_NOWRITE;
-    if( nc_open(poDS->osFilename, nMode, &cdfid) != NC_NOERR )
+    CPLString osFilenameForNCOpen(poDS->osFilename);
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        char* pszTemp = CPLRecode( osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP" );
+        osFilenameForNCOpen = pszTemp;
+        CPLFree(pszTemp);
+    }
+#endif
+    if( nc_open(osFilenameForNCOpen, nMode, &cdfid) != NC_NOERR )
     {
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "error opening");
@@ -7809,7 +7836,16 @@ netCDFDataset::CreateLL( const char *pszFilename,
     }
 
     // Create the dataset.
-    int status = nc_create(pszFilename, poDS->nCreateMode, &(poDS->cdfid));
+    CPLString osFilenameForNCCreate(pszFilename);
+#ifdef WIN32
+    if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
+    {
+        char* pszTemp = CPLRecode( osFilenameForNCCreate, CPL_ENC_UTF8, "CP_ACP" );
+        osFilenameForNCCreate = pszTemp;
+        CPLFree(pszTemp);
+    }
+#endif
+    int status = nc_create(osFilenameForNCCreate, poDS->nCreateMode, &(poDS->cdfid));
 
     // Put into define mode.
     poDS->SetDefineMode(true);
