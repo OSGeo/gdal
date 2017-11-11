@@ -183,6 +183,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             extent[0], extent[3],
             extent[4], extent[5] );
     }
+    fprintf(stderr, "URL=%s\n", request.c_str());
     return request;
 }
 

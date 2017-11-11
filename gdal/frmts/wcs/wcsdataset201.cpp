@@ -102,11 +102,13 @@ std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff,
                      (nXOff + nXSize) * adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
+    /*
     // ArcGIS requires us to be exact
     extent[0] = MAX(adfGeoTransform[0], extent[0]);
     extent[1] = MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]);
     extent[2] = MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]);
     extent[3] = MIN(adfGeoTransform[3], extent[3]);
+    */
     return extent;
 }
 
@@ -141,9 +143,26 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         x = y;
         y = ctmp;
     }
-    tmp.Printf("&SUBSET=%s%%28%.18g,%.18g%%29", x, extent[0], extent[2]);
+
+    std::vector<CPLString> bbox = Split(CPLGetXMLValue(psService, "CoverageBBox", ""), ",");
+    const char *format = "%.18g";
+    /*
+    CPLString a = Max(extent[0], adfGeoTransform[0], format);
+    CPLString b = Min(extent[2], adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], format);
+    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
     request += tmp;
-    tmp.Printf("&SUBSET=%s%%28%.18g,%.18g%%29", y, extent[1], extent[3]);
+    a = Max(extent[1], adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], format);
+    b = Min(extent[3], adfGeoTransform[3], format);
+    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
+    request += tmp;
+    */
+    CPLString a = Max(extent[0], bbox[0], format);
+    CPLString b = Min(extent[2], bbox[2], format);
+    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
+    request += tmp;
+    a = Max(extent[1], bbox[1], format);
+    b = Min(extent[3], bbox[3], format);
+    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
     request += tmp;
 
     // set subsets for axis other than x/y
@@ -599,6 +618,7 @@ bool WCSDataset201::ExtractGridInfo()
 
     std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
     std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
+    CPLSetXMLValue(psService, "CoverageBBox", (slow[0]+","+slow[1]+","+shigh[0]+","+shigh[1]).c_str());
     std::vector<double> low = Flist(slow, 0, 2);
     std::vector<double> high = Flist(shigh, 0, 2);
     std::vector<double> env;

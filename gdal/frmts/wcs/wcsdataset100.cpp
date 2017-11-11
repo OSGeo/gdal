@@ -132,6 +132,7 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                        osBandIdentifier.c_str(),
                                        osBandList.c_str() );
     }
+    fprintf(stderr, "URL=%s\n", request.c_str());
     return request;
 }
 

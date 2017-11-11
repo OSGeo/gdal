@@ -41,6 +41,87 @@ CPLString String(const char *str)
     return retval;
 }
 
+int CompareNumbers(CPLString a, CPLString b)
+{
+    size_t a_dot = a.find(".");
+    size_t b_dot = b.find(".");
+    CPLString a_p = a.substr(0, a_dot);
+    CPLString b_p = a.substr(0, b_dot);
+    int d = a_p.length() - b_p.length();
+    for (int i = 0; i < d; ++i) {
+        if (d < 0) {
+            a_p = "0" + a_p;
+        } else {
+            b_p = "0" + b_p;
+        }
+    }
+    int c = strcmp(a_p, b_p);
+    if (c < 0) {
+        return -1;
+    } else if (c > 0) {
+        return 1;
+    }
+    a_p = a.substr(a_dot+1, std::string::npos);
+    b_p = b.substr(b_dot+1, std::string::npos);
+    d = a_p.length() - b_p.length();
+    for (int i = 0; i < d; ++i) {
+        if (d < 0) {
+            a_p += "0";
+        } else {
+            b_p += "0";
+        }
+    }
+    c = strcmp(a_p, b_p);
+    if (c < 0) {
+        return -1;
+    } else if (c > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+CPLString Max(double a, CPLString b, const char *format)
+{
+    CPLString sa;
+    sa.Printf(format, a);
+    if (CompareNumbers(sa, b) < 0) {
+        return b;
+    }
+    return sa;
+}
+
+CPLString Min(double a, CPLString b, const char *format)
+{
+    CPLString sa;
+    sa.Printf(format, a);
+    if (CompareNumbers(sa, b) < 0) {
+        return sa;
+    }
+    return b;
+}
+
+CPLString Max(double a, double b, const char *format)
+{
+    CPLString sa, sb;
+    sa.Printf(format, a);
+    sb.Printf(format, b);
+    if (CompareNumbers(sa, sb) < 0) {
+        return sb;
+    }
+    return sa;
+}
+
+CPLString Min(double a, double b, const char *format)
+{
+    CPLString sa, sb;
+    sa.Printf(format, a);
+    sb.Printf(format, b);
+    if (CompareNumbers(sa, sb) < 0) {
+        return sa;
+    }
+    return sb;
+}
+
 CPLString URLEncode(CPLString str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );

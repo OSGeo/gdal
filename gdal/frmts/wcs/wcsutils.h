@@ -35,6 +35,16 @@
 
 CPLString String(const char *str);
 
+int CompareNumbers(CPLString a, CPLString b);
+
+CPLString Max(double a, CPLString b, const char *format);
+
+CPLString Min(double a, CPLString b, const char *format);
+
+CPLString Max(double a, double b, const char *format);
+
+CPLString Min(double a, double b, const char *format);
+
 CPLString URLEncode(CPLString str);
 
 CPLString URLRemoveKey(const char *url, CPLString key);

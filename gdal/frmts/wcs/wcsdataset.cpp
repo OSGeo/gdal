@@ -1356,7 +1356,12 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Leave now or there may be a GetCoverage call.                   */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-    if (dry_run)
+    int nBandCount = -1;
+    CPLString sBandCount = CPLGetXMLValue(psService, "BandCount", "");
+    if (sBandCount != "") {
+        nBandCount = atoi(sBandCount);
+    }
+    if (dry_run || nBandCount == 0)
     {
         return poDS;
     }
@@ -1374,7 +1379,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      It is ok to not have bands. The user just needs to supply       */
 /*      more information.                                               */
 /* -------------------------------------------------------------------- */
-    int nBandCount = atoi(CPLGetXMLValue(psService, "BandCount", "0"));
+    nBandCount = atoi(CPLGetXMLValue(psService, "BandCount", "0"));
     if (nBandCount == 0)
     {
         return poDS;
