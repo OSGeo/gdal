@@ -495,7 +495,7 @@ int OGRMDBDatabase::FetchTableNames()
 OGRMDBTable* OGRMDBDatabase::GetTable(const char* pszTableName)
 {
     if( !env->InitIfNeeded() )
-        return FALSE;
+        return NULL;
 
     jstring table_name_jstring = env->env->NewStringUTF(pszTableName);
     jobject table = env->env->CallObjectMethod(database, env->database_getTable, table_name_jstring);
