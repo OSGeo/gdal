@@ -32,6 +32,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
@@ -46,7 +47,7 @@ static void Usage()
     printf( "EPSG:n definition or the name of a file containing WKT/XML.\n");
 }
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     OGRSpatialReference oSRS;
@@ -195,3 +196,4 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
+MAIN_END

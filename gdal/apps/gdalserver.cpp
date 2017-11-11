@@ -32,6 +32,7 @@
 #endif
 
 #include "cpl_port.h"
+#include "commonutils.h"
 
 #ifdef WIN32
 
@@ -603,7 +604,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     do { if (i + nExtraArg >= argc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
-int main(int argc, char* argv[])
+MAIN_START(argc, argv)
 {
     int i, nRet, bStdinout = FALSE, bPipeIn = FALSE, bPipeOut = FALSE, bNewConnection = FALSE;
     const char* pszService = NULL, *pszUnixSocketFilename = NULL;
@@ -735,3 +736,4 @@ int main(int argc, char* argv[])
 
     return nRet;
 }
+MAIN_END

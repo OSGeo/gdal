@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "commonutils.h"
 #include <map>
 #include <list>
 CPL_CVSID("$Id$")
@@ -63,7 +64,7 @@ typedef std::list<OGRGeometry*> GeometriesList;
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     const char  *pszFormat = "ESRI Shapefile";
@@ -455,6 +456,7 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
+MAIN_END
 
 /************************************************************************/
 /*                               Usage()                                */

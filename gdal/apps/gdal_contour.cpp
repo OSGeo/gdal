@@ -33,6 +33,7 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
@@ -76,7 +77,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          argv[i], nExtraArg)); } while( false )
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     bool b3D = false;
@@ -323,3 +324,4 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+MAIN_END

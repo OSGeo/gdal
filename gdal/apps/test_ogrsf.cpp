@@ -100,7 +100,7 @@ static void DestroyFeatureAndNullify( OGRFeature*& poFeature )
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     int bRet = TRUE;
@@ -233,6 +233,7 @@ int main( int nArgc, char ** papszArgv )
 
     return (bRet) ? 0 : 1;
 }
+MAIN_END
 
 /************************************************************************/
 /*                        ThreadFunction()                              */

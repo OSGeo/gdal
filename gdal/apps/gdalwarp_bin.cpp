@@ -404,7 +404,7 @@ static void CPL_STDCALL ErrorHandlerAccumulator( CPLErr eErr, CPLErrorNum no,
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     GDALDatasetH *pahSrcDS = NULL;
@@ -608,3 +608,4 @@ int main( int argc, char ** argv )
 
     return nRetCode;
 }
+MAIN_END

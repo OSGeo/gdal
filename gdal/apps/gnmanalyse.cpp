@@ -364,7 +364,7 @@ static void ReportOnLayer( OGRLayer * poLayer, int bVerbose )
                 nExtraArg)); \
         } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     int bQuiet = FALSE;
@@ -629,3 +629,4 @@ int main( int nArgc, char ** papszArgv )
 
     return nRet;
 }
+MAIN_END

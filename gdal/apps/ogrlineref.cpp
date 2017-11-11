@@ -1192,7 +1192,7 @@ static OGRErr GetCoordinates(OGRLayer* const poPkLayer,
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          papszArgv[iArg], nExtraArg)); } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     OGRErr       eErr = OGRERR_NONE;
@@ -1860,3 +1860,4 @@ int main( int nArgc, char ** papszArgv )
 
     return eErr == OGRERR_NONE ? 0 : 1;
 }
+MAIN_END
