@@ -114,6 +114,7 @@ void RegisterOGRWFS()
 "</OpenOptionList>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnIdentify = OGRWFSDriverIdentify;
     poDriver->pfnOpen = OGRWFSDriverOpen;
