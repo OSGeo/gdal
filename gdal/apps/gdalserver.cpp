@@ -600,6 +600,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
 /*                          GDALServerLoopWin32()                       */
 /************************************************************************/
 
+#ifdef WIN32
 static int GDALServerLoopWin32()
 {
     int nRet;
@@ -619,6 +620,7 @@ static int GDALServerLoopWin32()
 #endif
     return nRet;
 }
+#endif
 
 /************************************************************************/
 /*                                main()                                */
