@@ -344,12 +344,12 @@ CPLString VSIS3HandleHelper::BuildURL(const CPLString& osAWSS3Endpoint,
         return CPLSPrintf("%s://%s.%s/%s", (bUseHTTPS) ? "https" : "http",
                                         osBucket.c_str(),
                                         osAWSS3Endpoint.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
     else
         return CPLSPrintf("%s://%s/%s/%s", (bUseHTTPS) ? "https" : "http",
                                         osAWSS3Endpoint.c_str(),
                                         osBucket.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
 }
 
 /************************************************************************/
@@ -521,8 +521,8 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osVerb,
         osHost,
         m_bUseVirtualHosting
-        ? ("/" + m_osObjectKey).c_str() :
-        ("/" + m_osBucket + "/" + m_osObjectKey).c_str(),
+        ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str() :
+        CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey, false).c_str(),
         osCanonicalQueryString,
         osXAMZContentSHA256,
         osXAMZDate);
