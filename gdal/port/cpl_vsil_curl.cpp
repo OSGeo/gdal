@@ -2826,7 +2826,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                 const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
                 if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
-                    CPLString osCachedFilename = osBaseURL + pszKey;
+                    CPLString osCachedFilename = osBaseURL + CPLAWSURLEncode(pszKey, false);
 #if DEBUG_VERBOSE
                     CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
@@ -2876,7 +2876,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                         osKey.resize(osKey.size()-1);
                     if( osKey.size() > osPrefix.size() )
                     {
-                        CPLString osCachedFilename = osBaseURL + osKey;
+                        CPLString osCachedFilename = osBaseURL + CPLAWSURLEncode(osKey, false);
 #if DEBUG_VERBOSE
                         CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif

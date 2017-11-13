@@ -31,6 +31,7 @@
 #include "cpl_vsi_error.h"
 #include "cpl_sha1.h"
 #include "cpl_time.h"
+#include "cpl_aws.h"
 
 CPL_CVSID("$Id$");
 
@@ -110,7 +111,7 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
                                       bool bUseHeaderFile ) :
-    m_osURL(osEndpoint + osBucketObjectKey),
+    m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
@@ -170,7 +171,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb ) const
     if( m_bUseHeaderFile )
         return NULL;
     return GetGSHeaders( osVerb,
-                         "/" + m_osBucketObjectKey,
+                         "/" + CPLAWSURLEncode(m_osBucketObjectKey, false),
                          m_osSecretAccessKey,
                          m_osAccessKeyId );
 }
