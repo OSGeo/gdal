@@ -3614,7 +3614,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             if( nMaxFiles != 1 )
             {
                 CPLString osCachedFilename =
-                        osBaseURL + osPrefix + aoProps[i].first + osSuffix;
+                        osBaseURL + CPLAWSURLEncode(osPrefix,false) + CPLAWSURLEncode(aoProps[i].first,false) + osSuffix;
 #if DEBUG_VERBOSE
                 CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
@@ -3652,7 +3652,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                     prop.fileSize = 0;
                     prop.mTime = 0;
 
-                    CPLString osCachedFilename = osBaseURL + pszName;
+                    CPLString osCachedFilename = osBaseURL + CPLAWSURLEncode(pszName, false);
 #if DEBUG_VERBOSE
                     CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
