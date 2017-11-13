@@ -92,6 +92,10 @@ class OGRXLSDataSource : public OGRDataSource
 
     const void*         xlshandle;
 
+    CPLString           m_osANSIFilename;
+#ifdef WIN32
+    CPLString           m_osTempFilename;
+#endif
   public:
                         OGRXLSDataSource();
                         virtual ~OGRXLSDataSource();
