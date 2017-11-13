@@ -205,7 +205,7 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osAccessKeyId,
                                       bool bUseHeaderFile,
                                       const GOA2Manager& oManager ) :
-    m_osURL(osEndpoint + osBucketObjectKey),
+    m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
@@ -686,7 +686,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 
 void VSIGSHandleHelper::RebuildURL()
 {
-    m_osURL = m_osEndpoint + m_osBucketObjectKey;
+    m_osURL = m_osEndpoint + CPLAWSURLEncode(m_osBucketObjectKey, false);
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
@@ -723,7 +723,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
         return headers;
     }
 
-    CPLString osCanonicalResource("/" + m_osBucketObjectKey);
+    CPLString osCanonicalResource("/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         osCanonicalResource += "/";
