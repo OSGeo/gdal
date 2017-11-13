@@ -34,7 +34,7 @@
 
 #ifdef __cplusplus
 
-#if defined(WIN32) && (defined(_MSV_VER) || defined(SUPPORTS_WMAIN))
+#if defined(WIN32) && (defined(_MSC_VER) || defined(SUPPORTS_WMAIN))
 
 #include <wchar.h>
 #include <stdlib.h>

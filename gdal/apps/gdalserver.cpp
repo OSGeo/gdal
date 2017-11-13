@@ -597,6 +597,30 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
 #endif
 
 /************************************************************************/
+/*                          GDALServerLoopWin32()                       */
+/************************************************************************/
+
+static int GDALServerLoopWin32()
+{
+    int nRet;
+#ifdef _MSC_VER
+    __try
+#endif
+    {
+        nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
+                              GetStdHandle(STD_OUTPUT_HANDLE));
+    }
+#ifdef _MSC_VER
+    __except(1)
+    {
+        fprintf(stderr, "gdalserver exited with a fatal error.\n");
+        nRet = 1;
+    }
+#endif
+    return nRet;
+}
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -711,20 +735,7 @@ MAIN_START(argc, argv)
     else
     {
 #ifdef WIN32
-#ifdef _MSC_VER
-    __try
-#endif
-    {
-        nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
-                              GetStdHandle(STD_OUTPUT_HANDLE));
-    }
-#ifdef _MSC_VER
-    __except(1)
-    {
-        fprintf(stderr, "gdalserver exited with a fatal error.\n");
-        nRet = 1;
-    }
-#endif
+    nRet = GDALServerLoopWin32();
 #else
     if( !bFork )
         fprintf(stderr, "-nofork option incompatible with direct pipe specification.\n");
