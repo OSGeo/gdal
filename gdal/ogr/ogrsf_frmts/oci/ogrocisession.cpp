@@ -141,16 +141,13 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /*      Initialize Environment handler                                  */
 /* -------------------------------------------------------------------- */
 
-    if( Failed( OCIInitialize((ub4) (OCI_DEFAULT | OCI_OBJECT), (dvoid *)0,
-                (dvoid * (*)(dvoid *, size_t)) 0,
-                (dvoid * (*)(dvoid *, dvoid *, size_t))0,
-                (void (*)(dvoid *, dvoid *)) 0 ) ) )
-    {
-        return FALSE;
-    }
-
-    if( Failed( OCIEnvInit( (OCIEnv **) &hEnv, OCI_DEFAULT, (size_t) 0,
-                (dvoid **) 0 ) ) )
+    if( Failed( OCIEnvCreate( (OCIEnv **) &hEnv, OCI_THREADED | OCI_OBJECT,
+                              NULL,
+                              NULL,
+                              NULL,
+                              NULL,
+                              0,
+                              NULL ) ) )
     {
         return FALSE;
     }
@@ -324,7 +321,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
         nMaxNameLength = 128;
     }
 
-    CPLFree( papszNameValue );
+    CSLDestroy( papszNameValue );
 
 /* -------------------------------------------------------------------- */
 /*      Setting up the OGR compatible time formatting rules.            */
