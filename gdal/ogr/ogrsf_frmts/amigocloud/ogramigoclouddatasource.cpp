@@ -462,15 +462,15 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
-        CPLDebug( "AMIGOCLOUD", "RunPOST HTML Response:%s", psResult->pabyData );
+        CPLDebug( "AMIGOCLOUD", "RunPOST HTML Response: %s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "HTML error page returned by server:%s", psResult->pabyData);
+                 "HTML error page returned by server: %s", psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL && psResult->pabyData != NULL )
     {
-        CPLDebug( "AMIGOCLOUD", "RunPOST Error Message:%s", psResult->pszErrBuf );
+        CPLError( CE_Failure, CPLE_AppDefined, "POST Response: %s", psResult->pabyData );
     }
     else if (psResult->nStatus != 0)
     {
@@ -482,8 +482,6 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-
-    CPLDebug( "AMIGOCLOUD", "RunPOST Response:%s", psResult->pabyData );
 
     json_object* poObj = NULL;
     const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
@@ -534,14 +532,13 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
 {
     std::stringstream url;
     url << std::string(GetAPIURL()) << "/me/jobs/" << std::string(jobId);
-
     bool done = false;
     int count = 0;
     while (!done && count<5) {
         count++;
         json_object *result = RunGET(url.str().c_str());
         if (result == NULL) {
-            CPLError(CE_Failure, CPLE_AppDefined, "AmigoCloud:get failed.");
+            CPLError(CE_Failure, CPLE_AppDefined, "waitForJobToFinish failed.");
             return false;
         }
 
@@ -554,6 +551,7 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
                     if (std::string(status) == "SUCCESS") {
                         return true;
                     } else if (std::string(status) == "FAILURE") {
+                        CPLError(CE_Failure, CPLE_AppDefined, "Job failed : %s", json_object_get_string(result));
                         return false;
                     }
                 }
@@ -599,13 +597,13 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL && psResult->pabyData != NULL )
     {
-        CPLDebug( "AMIGOCLOUD", "RunDELETE Error Message:%s", psResult->pszErrBuf );
+        CPLError( CE_Failure, CPLE_AppDefined, "DELETE Response: %s", psResult->pabyData );
     }
     else if ( psResult->nStatus != 0)
     {
-        CPLDebug( "AMIGOCLOUD", "RunDELETE Error Status:%d", psResult->nStatus );
+        CPLDebug( "AMIGOCLOUD", "DELETE Error Status:%d", psResult->nStatus );
     }
 
     if( psResult->pabyData == NULL )
@@ -613,8 +611,6 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-
-    CPLDebug( "AMIGOCLOUD", "RunDELETE Response:%s", psResult->pabyData );
 
     json_object* poObj = NULL;
     const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
@@ -682,15 +678,14 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
     {
-        CPLDebug( "AMIGOCLOUD", "RunGET HTML Response:%s", psResult->pabyData );
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server:%s", psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if ( psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL && psResult->pabyData != NULL )
     {
-        CPLDebug( "AMIGOCLOUD", "RunGET Error Message:%s", psResult->pszErrBuf );
+        CPLError( CE_Failure, CPLE_AppDefined, "GET Response: %s", psResult->pabyData );
     }
     else if (psResult->nStatus != 0)
     {
