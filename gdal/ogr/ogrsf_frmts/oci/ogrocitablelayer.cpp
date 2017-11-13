@@ -616,6 +616,8 @@ OGRFeature *OGROCITableLayer::GetFeature( GIntBig nFeatureId )
                   " WHERE \"%s\" = " CPL_FRMT_GIB " ",
                   pszFIDName, nFeatureId );
 
+    CPLFree( pszFields );
+
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
