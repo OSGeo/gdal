@@ -120,6 +120,7 @@ void RegisterOGROpenAir()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OpenAir" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_openair.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGROpenAirDriverOpen;
 

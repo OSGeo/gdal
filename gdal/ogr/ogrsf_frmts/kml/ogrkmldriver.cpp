@@ -153,6 +153,7 @@ void RegisterOGRKML()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Real String" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRKMLDriverOpen;
     poDriver->pfnIdentify = OGRKMLDriverIdentify;
