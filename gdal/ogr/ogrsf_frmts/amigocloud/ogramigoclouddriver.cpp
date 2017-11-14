@@ -80,8 +80,6 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "AmigoCloud driver doesn't support database creation." );
         return NULL;
     }
 
