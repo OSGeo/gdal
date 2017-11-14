@@ -2949,7 +2949,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    const double dfScale = nBuckets / (dfMax - dfMin);
+    const double dfScale = (dfMax > dfMin) ? nBuckets / (dfMax - dfMin) : 0.0;
     memset( panHistogram, 0, sizeof(GUIntBig) * nBuckets );
 
     int bGotNoDataValue = FALSE;
