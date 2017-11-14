@@ -3220,7 +3220,12 @@ def ogr_dxf_48():
         f.DumpReadable()
         return 'fail'
 
-    # TODO The text (feature 7) should be #ff00ff but is not (#7099)
+    # Like the dimension extension lines, the text is ByBlock (#7099)
+    f = lyr.GetFeature(7)
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.141 (2C)",s:0.4g,p:5,c:#ff00ff,a:0)':
+        gdaltest.post_reason( 'Wrong style string on feature 7' )
+        f.DumpReadable()
+        return 'fail'
 
     # ByLayer feature in block
     f = lyr.GetFeature(11)

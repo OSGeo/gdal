@@ -126,6 +126,10 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
       }
       break;
 
+      case 60:
+        poFeature->oStyleProperties["Hidden"] = pszValue;
+        break;
+
       case 62:
         poFeature->oStyleProperties["Color"] = pszValue;
         break;
@@ -188,24 +192,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
 /************************************************************************/
 /*                        PrepareFeatureStyle()                         */
 /*                                                                      */
-/*     - poByBlockStyleProps: Style properties to use for               */
-/*       attributes with ByBlock values set.                            */
-/************************************************************************/
-
-void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
-    OGRDXFFeature* const poBlockFeature /* = NULL */ )
-
-{
-    // Not sure of the best way of telling these apart.
-    if( poFeature->oStyleProperties.count( "WantBrush" ) )
-        PrepareHatchStyle( poFeature, poBlockFeature );
-    else 
-        PrepareLineStyle( poFeature, poBlockFeature );
-}
-
-/************************************************************************/
-/*                          PrepareLineStyle()                          */
-/*                                                                      */
 /*     - poBlockFeature: If this is not NULL, style properties on       */
 /*       poFeature with ByBlock values will be replaced with the        */
 /*       corresponding property from poBlockFeature.  If this           */
@@ -213,58 +199,51 @@ void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
 /*       clone, not an "original" feature object.                       */
 /************************************************************************/
 
+void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
+    if( poFeature->oStyleProperties.count( "WantBrush" ) )
+    {
+        PrepareHatchStyle( poFeature, poBlockFeature );
+    }
+    else if( poFeature->GetStyleString() &&
+        STARTS_WITH_CI( poFeature->GetStyleString(), "LABEL(" ) )
+    {
+        // Find the new color of this feature, and replace it into
+        // the style string
+        const CPLString osNewColor = poFeature->GetColor( poDS, poBlockFeature );
+
+        CPLString osNewStyle = poFeature->GetStyleString();
+        const size_t nColorStartPos = osNewStyle.rfind( ",c:" );
+        if( nColorStartPos != std::string::npos )
+        {
+            const size_t nColorEndPos = osNewStyle.find_first_of( ",)",
+                nColorStartPos + 3 );
+
+            if( nColorEndPos != std::string::npos )
+            {
+                osNewStyle.replace( nColorStartPos + 3,
+                    nColorEndPos - ( nColorStartPos + 3 ), osNewColor );
+                poFeature->SetStyleString( osNewStyle );
+            }
+        }
+    }
+    else
+    {
+        PrepareLineStyle( poFeature, poBlockFeature );
+    }
+}
+
+/************************************************************************/
+/*                          PrepareLineStyle()                          */
+/************************************************************************/
+
 void OGRDXFLayer::PrepareLineStyle( OGRDXFFeature* const poFeature,
     OGRDXFFeature* const poBlockFeature /* = NULL */ )
 
 {
-    CPLString osLayer = poFeature->GetFieldAsString("Layer");
-
-/* -------------------------------------------------------------------- */
-/*      Is the layer disabled/hidden/frozen/off?                        */
-/* -------------------------------------------------------------------- */
-    const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
-    const bool bHidden = pszHidden && EQUAL(pszHidden, "1");
-
-    // TODO put in object hidden here
-
-/* -------------------------------------------------------------------- */
-/*      Work out the color for this feature.                            */
-/* -------------------------------------------------------------------- */
-    int nColor = 256;
-
-    if( poFeature->oStyleProperties.count("Color") > 0 )
-        nColor = atoi(poFeature->oStyleProperties["Color"]);
-
-    // Use ByBlock color?
-    if( nColor < 1 )
-    {
-        if( poBlockFeature &&
-            poBlockFeature->oStyleProperties.count("Color") > 0 )
-        {
-            // Inherit color from the owning block
-            nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
-
-            // Use the inherited color if we regenerate the style string
-            // again during block insertion
-            poFeature->oStyleProperties["Color"] =
-                poBlockFeature->oStyleProperties["Color"];
-        }
-        else
-        {
-            // Default to black/white
-            nColor = 7;
-        }
-    }
-    // Use layer color?
-    else if( nColor > 255 )
-    {
-        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
-            nColor = atoi(pszValue);
-    }
-
-    if( nColor < 1 || nColor > 255 )
-        return;
+    const CPLString osLayer = poFeature->GetFieldAsString("Layer");
 
 /* -------------------------------------------------------------------- */
 /*      Get line weight if available.                                   */
@@ -333,16 +312,9 @@ void OGRDXFLayer::PrepareLineStyle( OGRDXFFeature* const poFeature,
 /* -------------------------------------------------------------------- */
 /*      Format the style string.                                        */
 /* -------------------------------------------------------------------- */
-    CPLString osStyle;
-    const unsigned char *pabyDXFColors = ACGetColorTable();
 
-    osStyle.Printf( "PEN(c:#%02x%02x%02x",
-                    pabyDXFColors[nColor*3+0],
-                    pabyDXFColors[nColor*3+1],
-                    pabyDXFColors[nColor*3+2] );
-
-    if( bHidden )
-        osStyle += "00";
+    CPLString osStyle = "PEN(c:";
+    osStyle += poFeature->GetColor( poDS, poBlockFeature );
 
     if( dfWeight > 0.0 )
     {
@@ -857,7 +829,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
 
-          // 2 and 70 are for ATTRIB entities only
+          // 2 and 70 are for ATTRIB and ATTDEF entities only
           case 2:
             if( bIsAttribOrAttdef )
             {
@@ -873,8 +845,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
             break;
 
           case 70:
-            // TODO when the LSB is set, this ATTRIB is "invisible"
-            // and should be disregarded
+            // When the LSB is set, this ATTRIB is "invisible"
+            if( bIsAttribOrAttdef && atoi(szLineBuf) & 1 )
+                poFeature->oStyleProperties["Hidden"] = "1";
             break;
 
           default:
@@ -2686,15 +2659,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                         poFeature->GetFieldAsString( "Layer" ) );
                 }
 
-                // If the feature is something other than text, update the
-                // style string to replace ByBlock and ByLayer values.
-                const char* pszSubFeatureStyle = poSubFeature->GetStyleString();
-                if( pszSubFeatureStyle == NULL ||
-                    !STARTS_WITH_CI(pszSubFeatureStyle, "LABEL") )
-                {
-                    PrepareFeatureStyle( poSubFeature, poFeature );
-                }
-                // TODO Do this for text as well (trac ticket #7099)
+                // Update the style string to replace ByBlock and ByLayer values.
+                PrepareFeatureStyle( poSubFeature, poFeature );
 
                 ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
                     oTransformer.dfXScale, poSubFeature );
