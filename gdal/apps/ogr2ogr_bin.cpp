@@ -258,7 +258,7 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(papszArgv[0]))
@@ -459,3 +459,4 @@ exit:
 
     return nRetCode;
 }
+MAIN_END

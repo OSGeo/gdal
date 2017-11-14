@@ -210,7 +210,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   int i1 = intVec[3];
 
   if (i0 >= i1 || i0 < 0 || size < 0 || size > (int)m_maxHistoSize ||
-      i1 - i0 >= size)
+      i1 - i0 > size)
   {
     LERC_BRKPNT();
     return false;

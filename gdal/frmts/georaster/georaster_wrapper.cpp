@@ -79,9 +79,9 @@ GeoRasterWrapper::GeoRasterWrapper() :
     bUpdate             = false;
     bInitializeIO       = false;
     bFlushMetadata      = false;
-    nSRID               = 0;
+    nSRID               = DEFAULT_CRS;;
     nExtentSRID         = 0;
-    bGenSpatialIndex    = false;
+    bGenSpatialExtent    = false;
     bCreateObjectTable  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
@@ -340,7 +340,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
         if( OWIsNumeric( papszParam[4] ) )
         {
             poGRW->sDataTable   = papszParam[3];
-            poGRW->nRasterId    = atoi( papszParam[4]);
+            poGRW->nRasterId    = (long long) CPLAtoGIntBig( papszParam[4]);
             break;
         }
         else
@@ -367,7 +367,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     char szColumn[OWTEXT];
     char szDataTable[OWCODE];
     char szWhere[OWTEXT];
-    int nRasterId = -1;
+    long long nRasterId = -1;
     OCILobLocator* phLocator = NULL;
 
     szOwner[0]     = '\0';
@@ -404,11 +404,9 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     }
 
     OWStatement* poStmt = poGRW->poConnection->CreateStatement(
-      "DECLARE\n"
-      "  SCM VARCHAR2(64) := 'xmlns=\"http://xmlns.oracle.com/spatial/georaster\"';\n"
       "BEGIN\n"
       "\n"
-      "    IF :datatable IS NOT NULL AND :rasterid  IS NOT NULL THEN\n"
+      "    IF :datatable IS NOT NULL AND :rasterid IS NOT NULL THEN\n"
       "\n"
       "      EXECUTE IMMEDIATE\n"
       "        'SELECT OWNER, TABLE_NAME, COLUMN_NAME\n"
@@ -492,7 +490,7 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     poGRW->sDataTable   = szDataTable;
     poGRW->nRasterId    = nRasterId;
     poGRW->sWhere       = CPLSPrintf(
-        "T.%s.RASTERDATATABLE = UPPER('%s') AND T.%s.RASTERID = %d",
+        "T.%s.RASTERDATATABLE = UPPER('%s') AND T.%s.RASTERID = %lld",
         poGRW->sColumn.c_str(),
         poGRW->sDataTable.c_str(),
         poGRW->sColumn.c_str(),
@@ -502,7 +500,11 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
     //  Read Metadata XML in text
     //  -------------------------------------------------------------------
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+
     char* pszXML = poStmt->ReadCLob( phLocator );
+
+    CPLPopErrorHandler();
 
     if( pszXML )
     {
@@ -570,7 +572,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
 
     if ( nRasterId > 0 )
     {
-        strcpy( szRID, CPLSPrintf( "%d", nRasterId ) );
+        strcpy( szRID, CPLSPrintf( "%lld", nRasterId ) );
     }
     else
     {
@@ -841,7 +843,7 @@ bool GeoRasterWrapper::Create( char* pszDescription,
     //  -----------------------------------------------------------
 
     char szBindRDT[OWNAME];
-    int  nBindRID = 0;
+    long long nBindRID = 0;
     szBindRDT[0] = '\0';
 
     CPLString sObjectTable;
@@ -1136,9 +1138,9 @@ void GeoRasterWrapper::PrepareToOverwrite( void )
     bUpdate             = false;
     bInitializeIO       = false;
     bFlushMetadata      = false;
-    nSRID               = 0;
+    nSRID               = DEFAULT_CRS;;
     nExtentSRID         = 0;
-    bGenSpatialIndex    = false;
+    bGenSpatialExtent    = false;
     bCreateObjectTable  = false;
     nPyramidMaxLevel    = 0;
     nBlockCount         = 0L;
@@ -1183,7 +1185,7 @@ bool GeoRasterWrapper::Delete( void )
 //                                                            SetGeoReference()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::SetGeoReference( int nSRIDIn )
+void GeoRasterWrapper::SetGeoReference( long long nSRIDIn )
 {
     nSRID = nSRIDIn;
 
@@ -1377,14 +1379,49 @@ void GeoRasterWrapper::GetRasterInfo( void )
     }
 
     //  -------------------------------------------------------------------
-    //  Prepare to get Extents
+    //  Prepare to get Spatial reference system
     //  -------------------------------------------------------------------
 
     bIsReferenced       = EQUAL( "TRUE", CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.isReferenced", "FALSE" ) );
 
-    nSRID               = atoi( CPLGetXMLValue( phMetadata,
+    nSRID               = (long long) CPLAtoGIntBig( CPLGetXMLValue( phMetadata,
                             "spatialReferenceInfo.SRID", "0" ) );
+
+    if( bIsReferenced == false || nSRID == 0 || nSRID == UNKNOWN_CRS )
+    {
+        return;
+    }
+
+}
+
+//  ---------------------------------------------------------------------------
+//                                                                QueryWKText()
+//  ---------------------------------------------------------------------------
+
+void GeoRasterWrapper::QueryWKText()
+{
+    char* pszWKText = (char*) VSI_MALLOC2_VERBOSE( sizeof(char), 3 * OWTEXT);
+    char* pszAuthority = (char*) VSI_MALLOC2_VERBOSE( sizeof(char), OWTEXT);
+
+    OWStatement* poStmt = poConnection->CreateStatement(
+        "select wktext, auth_name from mdsys.cs_srs "
+        "where srid = :1 and wktext is not null" );
+
+    poStmt->Bind( &nSRID );
+    poStmt->Define( pszWKText, 3 * OWTEXT );
+    poStmt->Define( pszAuthority, OWTEXT );
+
+    if( poStmt->Execute() )
+    {
+        sWKText = pszWKText;
+        sAuthority = pszAuthority;
+    }
+
+    CPLFree( pszWKText );
+    CPLFree( pszAuthority );
+
+    delete poStmt;
 }
 
 //  ---------------------------------------------------------------------------
@@ -1888,7 +1925,7 @@ bool GeoRasterWrapper::GetDataBlock( int nBand,
 
         nBytesRead = poBlockStmt->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
-                                            static_cast<int>(nBlockBytes) );
+                                            nBlockBytes );
 
         CPLDebug( "Load  ", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
 
@@ -2062,7 +2099,7 @@ bool GeoRasterWrapper::SetDataBlock( int nBand,
 
         nBytesRead = poBlockStmt->ReadBlob( pahLocator[nBlock],
                                             pabyBlockBuf,
-                                            static_cast<int>(nBlockBytes) );
+                                            static_cast<unsigned long>(nBlockBytes) );
 
         CPLDebug( "Reload", "Block = %4ld Size = %7ld", nBlock, nBlockBytes );
 
@@ -2186,7 +2223,7 @@ bool GeoRasterWrapper::FlushBlock( long nCacheBlock )
 
     if( ! poBlockStmt->WriteBlob( pahLocator[nCacheBlock],
                                   pabyFlushBuffer,
-                                  static_cast<int>(nFlushBlockSize) ) )
+                                  nFlushBlockSize ) )
     {
         return false;
     }
@@ -3102,7 +3139,7 @@ bool GeoRasterWrapper::SetNoData( int nLayer, const char* pszValue )
     strcpy( szRDT, sDataTable.c_str() );
     strcpy( szNoData, pszValue );
 
-    int nRID = nRasterId;
+    long long  nRID = nRasterId;
 
     // ------------------------------------------------------------
     //  Write the in memory XML metadata to avoid losing other changes.
@@ -3398,7 +3435,7 @@ bool GeoRasterWrapper::FlushMetadata()
     if( phRPC )
     {
         SetRPC();
-        nSRID = 0;
+        nSRID = NO_CRS;
     }
 
     //  --------------------------------------------------------------------
@@ -3412,14 +3449,80 @@ bool GeoRasterWrapper::FlushMetadata()
         return false;
     }
 
-    if( bGenSpatialIndex )
+    //  --------------------------------------------------------------------
+    //  Search for existing Spatial Index SRID
+    //  --------------------------------------------------------------------
+
+    OWStatement* poStmt = (OWStatement*) 0;
+
+    if ( nSRID != UNKNOWN_CRS && bGenSpatialExtent )
     {
-        nExtentSRID = nExtentSRID == 0 ? nSRID : nExtentSRID;
+        long long nIdxSRID = -1;
+
+        poStmt = poConnection->CreateStatement( CPLSPrintf(
+            "DECLARE\n"
+            "  IDX_SRID NUMBER;\n"
+            "BEGIN\n"
+            "  BEGIN\n"
+            "    EXECUTE IMMEDIATE \n"
+            "         'SELECT SRID FROM ALL_SDO_GEOM_METADATA ' || \n"
+            "         'WHERE OWNER = ''%s'' AND ' || \n"
+            "         'TABLE_NAME  = ''%s'' AND ' || \n"
+            "         'COLUMN_NAME = ''%s'' || ''.SPATIALEXTENT'' '\n"
+            "      INTO IDX_SRID;\n"
+            "  EXCEPTION\n"
+            "    WHEN NO_DATA_FOUND THEN\n"
+            "      IDX_SRID := -1;\n"
+            "  END;\n"
+            "  :idx_srid := IDX_SRID;\n"
+            "END;",
+                sOwner.c_str(),
+                sTable.c_str(),
+                sColumn.c_str()));
+
+        poStmt->BindName( ":idx_srid", &nIdxSRID );
+
+        if( ! poStmt->Execute() )
+        {
+            nIdxSRID = -1;
+        }
+
+        if ( nIdxSRID != -1 )
+        {
+            if ( nExtentSRID == 0 )
+            {
+                nExtentSRID = nIdxSRID; 
+            }
+            else
+            {
+                if ( nExtentSRID != nIdxSRID )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                      "Cannot generate spatialExtent, "
+                      "Spatial Index SRID is (%lld)",
+                      nIdxSRID );
+
+                    nExtentSRID = 0;
+                }
+            }
+        }
+
+        delete poStmt;
+
+        CPLDebug("GEOR","nIdxSRID    = %lld",nIdxSRID);
     }
     else
     {
-        nExtentSRID = 0; /* Set spatialExtent to null */
+        nExtentSRID = 0;
     }
+
+    if ( nSRID == 0 || nSRID == UNKNOWN_CRS )
+    {
+        nExtentSRID = 0;
+    }
+
+    CPLDebug("GEOR","nExtentSRID = %lld",nExtentSRID);
+    CPLDebug("GEOR","nSRID       = %lld",nSRID);
 
     //  --------------------------------------------------------------------
     //  Update GeoRaster Metadata
@@ -3429,7 +3532,7 @@ bool GeoRasterWrapper::FlushMetadata()
 
     OCILobLocator* phLocator = NULL;
 
-    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf(
+    poStmt = poConnection->CreateStatement( CPLSPrintf(
         "DECLARE\n"
         "  GR1      sdo_georaster;\n"
         "  GM1      sdo_geometry;\n"
@@ -3443,7 +3546,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "  GR1.metadata := sys.xmltype.createxml(:3);\n"
         "\n"
         "  IF SRID != 0 THEN\n"
-        "    SDO_GEOR.georeference( GR1, SRID, :4,"
+        "    SDO_GEOR.georeference( GR1, SRID, :4, \n"
         "      SDO_NUMBER_ARRAY(:5, :6, :7), SDO_NUMBER_ARRAY(:8, :9, :10));\n"
         "  END IF;\n"
         "\n"
@@ -3469,10 +3572,7 @@ bool GeoRasterWrapper::FlushMetadata()
         "  EXCEPTION\n"
         "    WHEN OTHERS THEN\n"
         "      :except := SQLCODE;\n"
-        "      IF (SQLCODE != -29877) THEN\n"
-        "        RAISE;\n"
-        "      END IF;\n"
-        "  END\n"
+        "  END;\n"
         "\n"
         "  COMMIT;\n"
         "END;",
@@ -3516,7 +3616,7 @@ bool GeoRasterWrapper::FlushMetadata()
     if( nException )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
-            "Cannot generate spatialExtent! (ORA-%d) ", nException );
+            "Fail to update GeoRaster Metadata (ORA-%d) ", nException );
     }
 
     if (bGenPyramid)

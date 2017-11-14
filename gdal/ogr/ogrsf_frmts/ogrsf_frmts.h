@@ -206,6 +206,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     /* consider these private */
     OGRErr               InitializeIndexSupport( const char * );
     OGRLayerAttrIndex   *GetIndex() { return m_poAttrIndex; }
+    int                 GetGeomFieldFilter() const { return m_iGeomFieldFilter; }
+    const char          *GetAttrQueryString() const { return m_pszAttrQueryString; }
 //! @endcond
 
  protected:
@@ -378,6 +380,8 @@ void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRLIBKML();
 void CPL_DLL RegisterOGRKML();
 void CPL_DLL RegisterOGRGeoJSON();
+void CPL_DLL RegisterOGRESRIJSON();
+void CPL_DLL RegisterOGRTopoJSON();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRREC();

@@ -94,11 +94,21 @@ OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 /************************************************************************/
 
 int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
-                                GeoJSONSourceType nSrcType )
+                                GeoJSONSourceType nSrcType,
+                                const char* pszJSonFlavor )
 {
+    osJSonFlavor_ = pszJSonFlavor;
+
+    const char* pszUnprefixed = poOpenInfo->pszFilename;
+    if( STARTS_WITH_CI(pszUnprefixed, pszJSonFlavor) &&
+        pszUnprefixed[strlen(pszJSonFlavor)] == ':' )
+    {
+        pszUnprefixed += strlen(pszJSonFlavor) + 1;
+    }
+
     if( eGeoJSONSourceService == nSrcType )
     {
-        if( !ReadFromService( poOpenInfo->pszFilename ) )
+        if( !ReadFromService( poOpenInfo, pszUnprefixed ) )
             return FALSE;
         if( poOpenInfo->eAccess == GA_Update )
         {
@@ -109,16 +119,41 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
     else if( eGeoJSONSourceText == nSrcType )
     {
-        pszGeoData_ = CPLStrdup( poOpenInfo->pszFilename );
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Update from inline definition not supported");
+            return FALSE;
+        }
+        pszGeoData_ = CPLStrdup( pszUnprefixed );
     }
     else if( eGeoJSONSourceFile == nSrcType )
     {
-        if( poOpenInfo->fpL == NULL )
+        if( poOpenInfo->eAccess == GA_Update &&
+            !EQUAL(pszJSonFlavor, "GeoJSON") )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Update of %s not supported", pszJSonFlavor);
             return FALSE;
-        pszName_ = CPLStrdup( poOpenInfo->pszFilename );
-        pszGeoData_ = CPLStrdup(
-            reinterpret_cast<const char*>(poOpenInfo->pabyHeader)) ;
+        }
+        pszName_ = CPLStrdup( pszUnprefixed );
         bUpdatable_ = ( poOpenInfo->eAccess == GA_Update );
+
+        if( !EQUAL(pszUnprefixed, poOpenInfo->pszFilename) )
+        {
+            GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
+            if( oOpenInfo.fpL == NULL || oOpenInfo.pabyHeader == NULL )
+                return FALSE;
+            pszGeoData_ = CPLStrdup(
+                reinterpret_cast<const char*>(oOpenInfo.pabyHeader));
+        }
+        else if( poOpenInfo->fpL == NULL )
+            return FALSE;
+        else
+        {
+            pszGeoData_ = CPLStrdup(
+                reinterpret_cast<const char*>(poOpenInfo->pabyHeader));
+        }
     }
     else
     {
@@ -141,7 +176,7 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
     }
 
     SetDescription( poOpenInfo->pszFilename );
-    LoadLayers(poOpenInfo, nSrcType);
+    LoadLayers(poOpenInfo, nSrcType, pszUnprefixed, pszJSonFlavor);
     if( nLayers_ == 0 )
     {
         bool bEmitError = true;
@@ -164,15 +199,8 @@ int OGRGeoJSONDataSource::Open( GDALOpenInfo* poOpenInfo,
         if( bEmitError )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to read GeoJSON data" );
+                      "Failed to read %s data", pszJSonFlavor );
         }
-        return FALSE;
-    }
-
-    if( eGeoJSONSourceText == nSrcType && poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                    "Update from inline definition not supported");
         return FALSE;
     }
 
@@ -548,26 +576,41 @@ void OGRGeoJSONDataSource::Clear()
 /*                           ReadFromFile()                             */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
+int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo,
+                                        const char* pszUnprefixed )
 {
     GByte* pabyOut = NULL;
-    if( poOpenInfo->fpL == NULL )
-        return FALSE;
-    VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
-    if( !VSIIngestFile(poOpenInfo->fpL, poOpenInfo->pszFilename,
-                       &pabyOut, NULL, -1) )
+    if( !EQUAL(poOpenInfo->pszFilename, pszUnprefixed) )
     {
-        return FALSE;
+        GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
+        if( oOpenInfo.fpL == NULL || oOpenInfo.pabyHeader == NULL )
+            return FALSE;
+        VSIFSeekL(oOpenInfo.fpL, 0, SEEK_SET );
+        if( !VSIIngestFile(oOpenInfo.fpL, pszUnprefixed,
+                        &pabyOut, NULL, -1) )
+        {
+            return FALSE;
+        }
+    }
+    else
+    {
+        if( poOpenInfo->fpL == NULL )
+            return FALSE;
+        VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
+        if( !VSIIngestFile(poOpenInfo->fpL, poOpenInfo->pszFilename,
+                        &pabyOut, NULL, -1) )
+        {
+            return FALSE;
+        }
+
+        VSIFCloseL(poOpenInfo->fpL);
+        poOpenInfo->fpL = NULL;
     }
 
-    VSIFCloseL(poOpenInfo->fpL);
-    poOpenInfo->fpL = NULL;
     CPLFree(pszGeoData_);
     pszGeoData_ = reinterpret_cast<char *>(pabyOut);
 
     CPLAssert( NULL != pszGeoData_ );
-
-    bUpdatable_ = ( poOpenInfo->eAccess == GA_Update );
 
     return TRUE;
 }
@@ -576,22 +619,37 @@ int OGRGeoJSONDataSource::ReadFromFile( GDALOpenInfo* poOpenInfo )
 /*                           ReadFromService()                          */
 /************************************************************************/
 
-int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
+int OGRGeoJSONDataSource::ReadFromService( GDALOpenInfo* poOpenInfo,
+                                           const char* pszSource )
 {
     CPLAssert( NULL == pszGeoData_ );
     CPLAssert( NULL != pszSource );
 
-    if( eGeoJSONProtocolUnknown == GeoJSONGetProtocolType( pszSource ) )
+    CPLErrorReset();
+
+/* -------------------------------------------------------------------- */
+/*      Look if we already cached the content.                          */
+/* -------------------------------------------------------------------- */
+    char* pszStoredContent = OGRGeoJSONDriverStealStoredContent(pszSource);
+    if( pszStoredContent != NULL )
     {
-        CPLDebug( "GeoJSON", "Unknown service type (use HTTP, HTTPS, FTP)" );
-        return FALSE;
+        if( (osJSonFlavor_ == "ESRIJSON" && ESRIJSONIsObject(pszStoredContent)) ||
+            (osJSonFlavor_ == "TopoJSON" && TopoJSONIsObject(pszStoredContent)) )
+        {
+            pszGeoData_ = pszStoredContent;
+            nGeoDataLen_ = strlen(pszGeoData_);
+
+            pszName_ = CPLStrdup( pszSource );
+            return true;
+        }
+
+        OGRGeoJSONDriverStoreContent( pszSource, pszStoredContent );
+        return false;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the GeoJSON result.                                        */
 /* -------------------------------------------------------------------- */
-    CPLErrorReset();
-
     char* papsOptions[] = {
         const_cast<char *>("HEADERS=Accept: text/plain, application/json"),
         NULL
@@ -623,16 +681,6 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
 /* -------------------------------------------------------------------- */
     char* pszData = reinterpret_cast<char *>(pResult->pabyData);
 
-    if( eGeoJSONProtocolUnknown != GeoJSONGetProtocolType( pszData ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-            "The data that was downloaded also starts with "
-            "protocol prefix (http://, https:// or ftp://) "
-            "and cannot be processed as GeoJSON data.");
-        CPLHTTPDestroyResult( pResult );
-        return FALSE;
-    }
-
     // Directly assign CPLHTTPResult::pabyData to pszGeoData_.
     pszGeoData_ = pszData;
     nGeoDataLen_ = pResult->nDataLen;
@@ -647,6 +695,26 @@ int OGRGeoJSONDataSource::ReadFromService( const char* pszSource )
     CPLHTTPDestroyResult( pResult );
 
     CPLAssert( NULL != pszGeoData_ );
+
+/* -------------------------------------------------------------------- */
+/*      Cache the content if it is not handled by this driver, but      */
+/*      another related one.                                            */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszSource, poOpenInfo->pszFilename) &&
+        osJSonFlavor_ == "GeoJSON" )
+    {
+        if( !GeoJSONIsObject(pszGeoData_) )
+        {
+            if( ESRIJSONIsObject(pszGeoData_) || TopoJSONIsObject(pszGeoData_) )
+            {
+                OGRGeoJSONDriverStoreContent( pszSource, pszGeoData_ );
+                pszGeoData_ = NULL;
+                nGeoDataLen_ = 0;
+            }
+            return false;
+        }
+    }
+
     return TRUE;
 }
 
@@ -680,12 +748,14 @@ void OGRGeoJSONDataSource::RemoveJSonPStuff()
 /************************************************************************/
 
 void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
-                                      GeoJSONSourceType nSrcType)
+                                      GeoJSONSourceType nSrcType,
+                                      const char* pszUnprefixed,
+                                      const char* pszJSonFlavor)
 {
     if( NULL == pszGeoData_ )
     {
         CPLError( CE_Failure, CPLE_ObjectNull,
-                  "GeoJSON data buffer empty" );
+                  "%s data buffer empty", pszJSonFlavor );
         return;
     }
 
@@ -694,23 +764,15 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         RemoveJSonPStuff();
     }
 
-    if( !GeoJSONIsObject( pszGeoData_) )
-    {
-        CPLDebug( "GeoJSON",
-                  "No valid GeoJSON data found in source '%s'", pszName_ );
-        return;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Is it ESRI Feature Service data ?                               */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszGeoData_, "esriGeometry") ||
-        strstr(pszGeoData_, "esriFieldType") )
+    if( EQUAL(pszJSonFlavor, "ESRIJSON") )
     {
         OGRESRIJSONReader reader;
         if( nSrcType == eGeoJSONSourceFile )
         {
-            if( !ReadFromFile( poOpenInfo ) )
+            if( !ReadFromFile( poOpenInfo, pszUnprefixed ) )
                 return;
         }
         OGRErr err = reader.Parse( pszGeoData_ );
@@ -718,7 +780,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         {
             json_object* poObj = reader.GetJSonObject();
             CheckExceededTransferLimit(poObj);
-            reader.ReadLayers( this );
+            reader.ReadLayers( this, nSrcType );
         }
         return;
     }
@@ -726,13 +788,12 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
 /* -------------------------------------------------------------------- */
 /*      Is it TopoJSON data ?                                           */
 /* -------------------------------------------------------------------- */
-    if( strstr(pszGeoData_, "\"type\"") &&
-        strstr(pszGeoData_, "\"Topology\"") )
+    if( EQUAL(pszJSonFlavor, "TOPOJSON") )
     {
         OGRTopoJSONReader reader;
         if( nSrcType == eGeoJSONSourceFile )
         {
-            if( !ReadFromFile( poOpenInfo ) )
+            if( !ReadFromFile( poOpenInfo, pszUnprefixed ) )
                 return;
         }
         OGRErr err = reader.Parse( pszGeoData_ );
@@ -740,6 +801,31 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
         {
             reader.ReadLayers( this );
         }
+        return;
+    }
+
+    VSILFILE* fp = NULL;
+    if( nSrcType == eGeoJSONSourceFile &&
+        !EQUAL(poOpenInfo->pszFilename, pszUnprefixed) )
+    {
+        GDALOpenInfo oOpenInfo(pszUnprefixed, GA_ReadOnly);
+        if( oOpenInfo.fpL == NULL || oOpenInfo.pabyHeader == NULL )
+            return;
+        oOpenInfo.TryToIngest(6000);
+        CPLFree(pszGeoData_);
+        pszGeoData_ = CPLStrdup(
+                        reinterpret_cast<const char*>(oOpenInfo.pabyHeader));
+        fp = oOpenInfo.fpL;
+        oOpenInfo.fpL = NULL;
+    }
+
+    if( !GeoJSONIsObject( pszGeoData_) )
+    {
+        CPLDebug( pszJSonFlavor,
+                  "No valid %s data found in source '%s'",
+                  pszJSonFlavor, pszName_ );
+        if( fp )
+            VSIFCloseL(fp);
         return;
     }
 
@@ -755,8 +841,8 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
     bool bUseStreamingInterface = false;
     const GIntBig nMaxBytesFirstPass = CPLAtoGIntBig(
         CPLGetConfigOption("OGR_GEOJSON_MAX_BYTES_FIRST_PASS", "0"));
-    if( poOpenInfo->fpL &&
-        (!STARTS_WITH(poOpenInfo->pszFilename, "/vsistdin/") ||
+    if( (fp != NULL || poOpenInfo->fpL != NULL) &&
+        (!STARTS_WITH(pszUnprefixed, "/vsistdin/") ||
          (nMaxBytesFirstPass > 0 && nMaxBytesFirstPass <= 1000000)) )
     {
         const char* pszStr = strstr( pszGeoData_, "\"features\"");
@@ -781,10 +867,13 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
     if( bUseStreamingInterface )
     {
         bool bTryStandardReading = false;
-        if( poReader->FirstPassReadLayer( this, poOpenInfo->fpL,
+        if( poReader->FirstPassReadLayer( this, fp ? fp : poOpenInfo->fpL,
                                           bTryStandardReading ) )
         {
-            poOpenInfo->fpL = NULL;
+            if( fp )
+                fp = NULL;
+            else
+                poOpenInfo->fpL = NULL;
             CheckExceededTransferLimit(poReader->GetJSonObject());
         }
         else
@@ -792,15 +881,21 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo* poOpenInfo,
             delete poReader;
         }
         if( !bTryStandardReading )
+        {
+            if( fp )
+                VSIFCloseL(fp);
             return;
+        }
 
         poReader = new OGRGeoJSONReader();
         SetOptionsOnReader(poOpenInfo, poReader);
     }
 
+    if( fp )
+        VSIFCloseL(fp);
     if( nSrcType == eGeoJSONSourceFile )
     {
-        if( !ReadFromFile( poOpenInfo ) )
+        if( !ReadFromFile( poOpenInfo, pszUnprefixed ) )
         {
             delete poReader;
             return;
@@ -856,15 +951,20 @@ void OGRGeoJSONDataSource::SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
 
 void OGRGeoJSONDataSource::CheckExceededTransferLimit(json_object* poObj)
 {
-    if( poObj && json_object_get_type(poObj) == json_type_object )
+    for( int i = 0; i < 2; i ++ )
     {
-        json_object* poProperties =
-            CPL_json_object_object_get(poObj, "properties");
-        if( poProperties &&
-            json_object_get_type(poProperties) == json_type_object )
+        if( i == 1 )
+        {
+            if( poObj && json_object_get_type(poObj) == json_type_object )
+            {
+                poObj = CPL_json_object_object_get(poObj, "properties");
+            }
+        }
+        if( poObj &&
+            json_object_get_type(poObj) == json_type_object )
         {
             json_object* poExceededTransferLimit =
-                CPL_json_object_object_get(poProperties,
+                CPL_json_object_object_get(poObj,
                                         "exceededTransferLimit");
             if( poExceededTransferLimit &&
                 json_object_get_type(poExceededTransferLimit) ==
@@ -872,6 +972,7 @@ void OGRGeoJSONDataSource::CheckExceededTransferLimit(json_object* poObj)
             {
                 bOtherPages_ = CPL_TO_BOOL(
                     json_object_get_boolean(poExceededTransferLimit) );
+                return;
             }
         }
     }

@@ -112,7 +112,7 @@ static void GDALBuildVRTOptionsForBinaryFree( GDALBuildVRTOptionsForBinary* psOp
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -212,3 +212,4 @@ int main( int argc, char ** argv )
 
     return nRetCode;
 }
+MAIN_END

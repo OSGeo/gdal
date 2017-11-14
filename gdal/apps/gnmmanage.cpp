@@ -163,7 +163,7 @@ static void Usage(int bShort = TRUE)
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          papszArgv[iArg], nExtraArg)); } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     int bQuiet = FALSE;
@@ -920,3 +920,4 @@ exit:
 
     return nRet;
 }
+MAIN_END

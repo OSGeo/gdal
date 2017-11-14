@@ -385,8 +385,12 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
      * is not an error... it simply means that all features will be returned
      * with NONE geometry.
      *----------------------------------------------------------------*/
+    bool bUpperCase = false;
     if (nFnameLen > 4 && strcmp(pszTmpFname+nFnameLen-4, ".DAT")==0)
+    {
+        bUpperCase = true;
         strcpy(pszTmpFname+nFnameLen-4, ".MAP");
+    }
     else
         strcpy(pszTmpFname+nFnameLen-4, ".map");
 
@@ -453,22 +457,40 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     /*-----------------------------------------------------------------
      * Initializing the attribute index (.IND) support
      *----------------------------------------------------------------*/
+    bool bHasIndex = false;
 
     CPLXMLNode *psRoot = CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
-    CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", CPLResetExtension( pszFname, "IND" ) );
     OGRFeatureDefn *poLayerDefn = GetLayerDefn();
-    int iField, iIndexIndex, bHasIndex = 0;
-    for( iField = 0; iField < poLayerDefn->GetFieldCount(); iField++ )
+    for( int iField = 0; iField < poLayerDefn->GetFieldCount(); iField++ )
     {
-        iIndexIndex = GetFieldIndexNumber(iField);
+        int iIndexIndex = GetFieldIndexNumber(iField);
         if (iIndexIndex > 0)
         {
+            if( !bHasIndex )
+            {
+                const char* pszIndFilename = CPLFormCIFilename(
+                                                    CPLGetPath(pszFname),
+                                                    CPLGetBasename(pszFname),
+                                                    (bUpperCase) ? "IND" : "ind" );
+                VSIStatBufL sStat;
+                if( VSIStatL( pszIndFilename, &sStat) == 0 )
+                {
+                    CPLCreateXMLElementAndValue( psRoot, "MIIDFilename", pszIndFilename );
+                }
+                else
+                {
+                    CPLDebug("MITAB", "At least one field is supposed to be indexed, "
+                         "but index file is missing");
+                    break;
+                }
+            }
+
             CPLXMLNode *psIndex = CPLCreateXMLNode( psRoot, CXT_Element, "OGRMIAttrIndex" );
             CPLCreateXMLElementAndValue( psIndex, "FieldIndex", CPLSPrintf( "%d", iField ) );
             CPLCreateXMLElementAndValue( psIndex, "FieldName",
                                      poLayerDefn->GetFieldDefn(iField)->GetNameRef() );
             CPLCreateXMLElementAndValue( psIndex, "IndexIndex", CPLSPrintf( "%d", iIndexIndex ) );
-            bHasIndex = 1;
+            bHasIndex = true;
         }
     }
 

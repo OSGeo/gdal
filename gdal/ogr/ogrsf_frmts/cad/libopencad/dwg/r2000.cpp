@@ -3615,7 +3615,7 @@ int DWGFileR2000::ReadSectionLocators()
         DebugMsg( "  Record #%d : %d %d\n", sectionLocatorRecords[i].byRecordNumber, sectionLocatorRecords[i].dSeeker,
                   sectionLocatorRecords[i].dSize );
     }
-    if( sectionLocatorRecords.empty() )
+    if( sectionLocatorRecords.size() < 3 )
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
 
     return CADErrorCodes::SUCCESS;

@@ -29,6 +29,7 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "commonutils.h"
 
 CPL_CVSID("$Id$")
 
@@ -105,7 +106,7 @@ static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum, c
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          papszArgv[iArg], nExtraArg)); } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     GDALDatasetH     hDataset;
@@ -295,3 +296,4 @@ int main( int nArgc, char ** papszArgv )
 
     return nResultStatus;
 }
+MAIN_END

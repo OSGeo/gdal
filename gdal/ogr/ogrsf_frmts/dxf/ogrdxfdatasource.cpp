@@ -31,6 +31,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -40,7 +42,8 @@ CPL_CVSID("$Id$")
 OGRDXFDataSource::OGRDXFDataSource() :
     fp(NULL),
     iEntitiesSectionOffset(0),
-    bInlineBlocks(false)
+    bInlineBlocks(false),
+    bMergeBlockGeometries(false)
 {}
 
 /************************************************************************/
@@ -104,6 +107,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
     bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
+    bMergeBlockGeometries = CPLTestBool(
+        CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
@@ -317,7 +322,6 @@ bool OGRDXFDataSource::ReadTablesSection()
         if( nCode != 0 || !EQUAL(szLineBuf,"TABLE") )
             continue;
 
-        // Currently we are only interested in the LAYER table.
         nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
         if( nCode < 0 )
         {
@@ -341,6 +345,11 @@ bool OGRDXFDataSource::ReadTablesSection()
             if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
             {
                 if( !ReadLineTypeDefinition() )
+                    return false;
+            }
+            if( nCode == 0 && EQUAL(szLineBuf,"DIMSTYLE") )
+            {
+                if( !ReadDimStyleDefinition() )
                     return false;
             }
         }
@@ -448,7 +457,8 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
     char szLineBuf[257];
     int nCode = 0;
     CPLString osLineTypeName;
-    CPLString osLineTypeDef;
+    std::vector<double> oLineTypeDef;
+    double dfThisValue;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
     {
@@ -460,18 +470,22 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
             break;
 
           case 49:
-          {
-              if( osLineTypeDef != "" )
-                  osLineTypeDef += " ";
+            dfThisValue = CPLAtof( szLineBuf );
 
-              if( szLineBuf[0] == '-' )
-                  osLineTypeDef += szLineBuf+1;
-              else
-                  osLineTypeDef += szLineBuf;
+            // Same sign as the previous entry? Continue the previous dash
+            // or gap by appending this length
+            if( oLineTypeDef.size() > 0 &&
+                ( dfThisValue < 0 ) == ( oLineTypeDef.back() < 0 ) )
+            {
+                oLineTypeDef.back() += dfThisValue;
+            }
+            // Otherwise, add a new entry
+            else
+            {
+                oLineTypeDef.push_back( dfThisValue );
+            }
 
-              osLineTypeDef += "g";
-          }
-          break;
+            break;
 
           default:
             break;
@@ -483,8 +497,26 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         return false;
     }
 
-    if( osLineTypeDef != "" )
-        oLineTypeTable[osLineTypeName] = osLineTypeDef;
+    // Deal with an odd number of elements by adding the last element
+    // onto the first
+    if( oLineTypeDef.size() % 2 == 1 )
+    {
+        oLineTypeDef.front() += oLineTypeDef.back();
+        oLineTypeDef.pop_back();
+    }
+
+    if( oLineTypeDef.size() )
+    {
+        // If the first element is a gap, rotate the elements so the first
+        // element is a dash
+        if( oLineTypeDef.front() < 0 )
+        {
+            std::rotate( oLineTypeDef.begin(), oLineTypeDef.begin() + 1,
+                oLineTypeDef.end() );
+        }
+
+        oLineTypeTable[osLineTypeName] = oLineTypeDef;
+    }
 
     if( nCode == 0 )
         UnreadValue();
@@ -495,13 +527,97 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
 /*                           LookupLineType()                           */
 /************************************************************************/
 
-const char *OGRDXFDataSource::LookupLineType( const char *pszName )
+std::vector<double> OGRDXFDataSource::LookupLineType( const char *pszName )
 
 {
-    if( oLineTypeTable.count(pszName) > 0 )
+    if( pszName && oLineTypeTable.count(pszName) > 0 )
         return oLineTypeTable[pszName];
     else
-        return NULL;
+        return std::vector<double>(); // empty, represents a continuous line
+}
+
+/************************************************************************/
+/*                  PopulateDefaultDimStyleProperties()                 */
+/************************************************************************/
+
+void OGRDXFDataSource::PopulateDefaultDimStyleProperties(
+    std::map<CPLString, CPLString>& oDimStyleProperties)
+
+{
+    const int* piCode = ACGetKnownDimStyleCodes();
+    do
+    {
+        const char* pszProperty = ACGetDimStylePropertyName(*piCode);
+        oDimStyleProperties[pszProperty] =
+            ACGetDimStylePropertyDefault(*piCode);
+    } while ( *(++piCode) );
+}
+
+/************************************************************************/
+/*                       ReadDimStyleDefinition()                       */
+/************************************************************************/
+
+bool OGRDXFDataSource::ReadDimStyleDefinition()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+    std::map<CPLString,CPLString> oDimStyleProperties;
+    CPLString osDimStyleName = "";
+
+    PopulateDefaultDimStyleProperties(oDimStyleProperties);
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osDimStyleName = CPLString(szLineBuf).Recode( GetEncoding(), CPL_ENC_UTF8 );
+            break;
+
+          default:
+            const char* pszProperty = ACGetDimStylePropertyName(nCode);
+            if( pszProperty )
+                oDimStyleProperties[pszProperty] = szLineBuf;
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+
+    if( !oDimStyleProperties.empty() )
+        oDimStyleTable[osDimStyleName] = oDimStyleProperties;
+
+    if( nCode == 0 )
+        UnreadValue();
+    return true;
+}
+
+/************************************************************************/
+/*                           LookupDimStyle()                           */
+/*                                                                      */
+/*      If the specified DIMSTYLE does not exist, a default set of      */
+/*      of style properties are copied into oDimStyleProperties and     */
+/*      false is returned.  Otherwise true is returned.                 */
+/************************************************************************/
+
+bool OGRDXFDataSource::LookupDimStyle( const char *pszDimStyle,
+    std::map<CPLString,CPLString>& oDimStyleProperties )
+
+{
+    if( pszDimStyle == NULL || !oDimStyleTable.count(pszDimStyle) )
+    {
+        PopulateDefaultDimStyleProperties(oDimStyleProperties);
+        return false;
+    }
+
+    // make a copy of the DIMSTYLE properties, so no-one can mess around
+    // with our original copy
+    oDimStyleProperties = oDimStyleTable[pszDimStyle];
+    return true;
 }
 
 /************************************************************************/
@@ -654,5 +770,31 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
+
+        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oScaleField );
+
+        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+        OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+        OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+        OGRFieldDefn  oBlockAttribsField( "BlockAttributes", OFTStringList );
+        poFeatureDefn->AddFieldDefn( &oBlockAttribsField );
+
+        // This field holds the name of the block on which the entity lies.
+        // The BlockName field was previously used for this purpose; this
+        // was changed because of the ambiguity with the BlockName field
+        // used by INSERT entities.
+        OGRFieldDefn  oBlockField( "Block", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockField );
+
+        // Extra field to use with ATTDEF entities
+        OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
+        poFeatureDefn->AddFieldDefn( &oAttributeTagField );
     }
 }

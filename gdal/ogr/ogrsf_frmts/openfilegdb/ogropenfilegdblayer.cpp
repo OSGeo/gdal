@@ -195,6 +195,46 @@ OGROpenFileGDBLayer::~OGROpenFileGDBLayer()
 }
 
 /************************************************************************/
+/*                           BuildSRS()                                 */
+/************************************************************************/
+
+static OGRSpatialReference* BuildSRS(const char* pszWKT)
+{
+    OGRSpatialReference* poSRS = new OGRSpatialReference( pszWKT );
+    if( poSRS->morphFromESRI() != OGRERR_NONE )
+    {
+        delete poSRS;
+        poSRS = NULL;
+    }
+    if( poSRS != NULL )
+    {
+        if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+        {
+            int nEntries = 0;
+            int* panConfidence = NULL;
+            OGRSpatialReferenceH* pahSRS =
+                poSRS->FindMatches(NULL, &nEntries, &panConfidence);
+            if( nEntries == 1 && panConfidence[0] == 100 )
+            {
+                poSRS->Release();
+                poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                CPLFree(pahSRS);
+            }
+            else
+            {
+                OSRFreeSRSArray(pahSRS);
+            }
+            CPLFree(panConfidence);
+        }
+        else
+        {
+            poSRS->AutoIdentifyEPSG();
+        }
+    }
+    return poSRS;
+}
+
+/************************************************************************/
 /*                     BuildGeometryColumnGDBv10()                      */
 /************************************************************************/
 
@@ -341,12 +381,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10()
         }
         if( poSRS == NULL && pszWKT != NULL && pszWKT[0] != '{' )
         {
-            poSRS = new OGRSpatialReference( pszWKT );
-            if( poSRS->morphFromESRI() != OGRERR_NONE )
-            {
-                delete poSRS;
-                poSRS = NULL;
-            }
+            poSRS = BuildSRS(pszWKT);
         }
         if( poSRS != NULL )
         {
@@ -536,12 +571,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if( !poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{' )
         {
-            poSRS = new OGRSpatialReference( poGDBGeomField->GetWKT().c_str() );
-            if( poSRS->morphFromESRI() != OGRERR_NONE )
-            {
-                delete poSRS;
-                poSRS = NULL;
-            }
+            poSRS = BuildSRS( poGDBGeomField->GetWKT().c_str() );
         }
         if( poSRS != NULL )
         {

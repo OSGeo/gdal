@@ -32,6 +32,7 @@
 #endif
 
 #include "cpl_port.h"
+#include "commonutils.h"
 
 #ifdef WIN32
 
@@ -596,6 +597,32 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
 #endif
 
 /************************************************************************/
+/*                          GDALServerLoopWin32()                       */
+/************************************************************************/
+
+#ifdef WIN32
+static int GDALServerLoopWin32()
+{
+    int nRet;
+#ifdef _MSC_VER
+    __try
+#endif
+    {
+        nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
+                              GetStdHandle(STD_OUTPUT_HANDLE));
+    }
+#ifdef _MSC_VER
+    __except(1)
+    {
+        fprintf(stderr, "gdalserver exited with a fatal error.\n");
+        nRet = 1;
+    }
+#endif
+    return nRet;
+}
+#endif
+
+/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -603,7 +630,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     do { if (i + nExtraArg >= argc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", argv[i], nExtraArg)); } while(0)
 
-int main(int argc, char* argv[])
+MAIN_START(argc, argv)
 {
     int i, nRet, bStdinout = FALSE, bPipeIn = FALSE, bPipeOut = FALSE, bNewConnection = FALSE;
     const char* pszService = NULL, *pszUnixSocketFilename = NULL;
@@ -710,20 +737,7 @@ int main(int argc, char* argv[])
     else
     {
 #ifdef WIN32
-#ifdef _MSC_VER
-    __try
-#endif
-    {
-        nRet = GDALServerLoop(GetStdHandle(STD_INPUT_HANDLE),
-                              GetStdHandle(STD_OUTPUT_HANDLE));
-    }
-#ifdef _MSC_VER
-    __except(1)
-    {
-        fprintf(stderr, "gdalserver exited with a fatal error.\n");
-        nRet = 1;
-    }
-#endif
+    nRet = GDALServerLoopWin32();
 #else
     if( !bFork )
         fprintf(stderr, "-nofork option incompatible with direct pipe specification.\n");
@@ -735,3 +749,4 @@ int main(int argc, char* argv[])
 
     return nRet;
 }
+MAIN_END

@@ -492,7 +492,12 @@ GDALDataset *SENTINEL2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString osBasename(CPLGetBasename(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
-        CPLString osSAFE(CPLString(osBasename) + ".SAFE");
+        CPLString osSAFE(osBasename);
+        // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
+        // has .SAFE.zip extension, but other products have just a .zip 
+        // extension. So for the subdir in the zip only add .SAFE when needed
+        if( !EQUAL(CPLGetExtension(osSAFE), "SAFE") )
+            osSAFE += ".SAFE";
         osFilename = osFilename + "/" + osSAFE + "/MTD_MSIL1C.xml";
         if( strncmp(osFilename, "/vsizip/", strlen("/vsizip/")) != 0 )
             osFilename = "/vsizip/" + osFilename;

@@ -83,7 +83,7 @@ static void Usage()
 /*                             ProxyMain()                              */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     GDALDatasetH        hDataset, hOutDS;
@@ -475,6 +475,7 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
+MAIN_END
 
 /************************************************************************/
 /*                      ComputeEqualizationLUTs()                       */

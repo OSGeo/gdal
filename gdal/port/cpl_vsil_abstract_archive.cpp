@@ -629,7 +629,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile( const char* archiveFilename,
                 for( int i=0; i < content->nEntries; i++ )
                 {
                     msg += CPLString().Printf(
-                        "  %s/%s/%s\n", GetPrefix(),
+                        "  %s/{%s}/%s\n", GetPrefix(),
                         archiveFilename, content->entries[i].fileName);
                 }
             }

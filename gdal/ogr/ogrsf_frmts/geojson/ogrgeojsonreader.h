@@ -35,6 +35,7 @@
 #include "ogrsf_frmts.h"
 
 #include "ogr_json_header.h"
+#include "ogrgeojsonutils.h"
 
 #include <set>
 
@@ -116,6 +117,10 @@ class OGRGeoJSONReader
     OGRFeature* GetNextFeature(OGRGeoJSONLayer* poLayer);
     bool IngestAll(OGRGeoJSONLayer* poLayer);
 
+    VSILFILE* GetFP() { return fp_; }
+    bool CanEasilyAppend() const { return bCanEasilyAppend_; }
+    bool FCHasBBOX() const { return bFCHasBBOX_; }
+
   private:
     friend class OGRGeoJSONReaderStreamingParser;
 
@@ -124,6 +129,8 @@ class OGRGeoJSONReader
     bool bFirstSeg_;
     bool bJSonPLikeWrapper_;
     VSILFILE* fp_;
+    bool bCanEasilyAppend_;
+    bool bFCHasBBOX_;
 
     bool bGeometryPreserve_;
     bool bAttributesSkip_;
@@ -232,7 +239,7 @@ class OGRESRIJSONReader
     ~OGRESRIJSONReader();
 
     OGRErr Parse( const char* pszText );
-    void ReadLayers( OGRGeoJSONDataSource* poDS );
+    void ReadLayers( OGRGeoJSONDataSource* poDS, GeoJSONSourceType eSourceType );
 
     json_object* GetJSonObject() { return poGJObject_; }
 

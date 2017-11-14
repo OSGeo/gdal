@@ -2515,17 +2515,40 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             const char *pszGMLJP2V2Def =
                 CSLFetchNameValue(papszOptions, "GMLJP2V2_DEF");
+            GDALJP2Box* poBox;
             if( pszGMLJP2V2Def != NULL ) {
-                JP2KAKWriteBox(
-                    &family,
-                    oJP2MD.CreateGMLJP2V2(
-                    nXSize,nYSize,pszGMLJP2V2Def,poSrcDS) );
+                poBox = oJP2MD.CreateGMLJP2V2(
+                    nXSize,nYSize,pszGMLJP2V2Def,poSrcDS);
             } else {
-                JP2KAKWriteBox(&family, oJP2MD.CreateGMLJP2(nXSize, nYSize));
+                poBox = oJP2MD.CreateGMLJP2(nXSize, nYSize);
+            }
+            try
+            {
+                JP2KAKWriteBox(&family, poBox);
+            }
+            catch( ... )
+            {
+                CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
+                oCodeStream.destroy();
+                CPLFree(layer_bytes);
+                delete poBox;
+                return NULL;
             }
         }
         if( CPLFetchBool(papszOptions, "GeoJP2", true) ) {
-            JP2KAKWriteBox(&family, oJP2MD.CreateJP2GeoTIFF());
+            GDALJP2Box* poBox = oJP2MD.CreateJP2GeoTIFF();
+            try
+            {
+                JP2KAKWriteBox(&family, poBox);
+            }
+            catch( ... )
+            {
+                CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
+                oCodeStream.destroy();
+                CPLFree(layer_bytes);
+                delete poBox;
+                return NULL;
+            }
         }
     }
 

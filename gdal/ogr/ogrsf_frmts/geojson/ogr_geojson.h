@@ -42,6 +42,12 @@
 
 class OGRGeoJSONDataSource;
 
+GDALDataset* OGRGeoJSONDriverOpenInternal( GDALOpenInfo* poOpenInfo,
+                                           GeoJSONSourceType nSrcType,
+                                           const char* pszJSonFlavor );
+void OGRGeoJSONDriverStoreContent( const char* pszSource, char* pszText );
+char* OGRGeoJSONDriverStealStoredContent( const char* pszSource );
+
 /************************************************************************/
 /*                           OGRGeoJSONLayer                            */
 /************************************************************************/
@@ -102,6 +108,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
   private:
     OGRGeoJSONDataSource* poDS_;
     OGRGeoJSONReader* poReader_;
+    bool bHasAppendedFeatures_;
     CPLString sFIDColumn_;
     bool bUpdated_;
     bool bOriginalIdModified_;
@@ -109,6 +116,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
     GIntBig nNextFID_;
 
     bool IngestAll();
+    void TerminateAppendSession();
 };
 
 /************************************************************************/
@@ -170,7 +178,8 @@ class OGRGeoJSONDataSource : public OGRDataSource
     // OGRDataSource Interface
     //
     int Open( GDALOpenInfo* poOpenInfo,
-               GeoJSONSourceType nSrcType );
+              GeoJSONSourceType nSrcType,
+              const char* pszJSonFlavor );
     const char* GetName() override;
     int GetLayerCount() override;
     OGRLayer* GetLayer( int nLayer ) override;
@@ -208,6 +217,7 @@ class OGRGeoJSONDataSource : public OGRDataSource
     int  GetBBOXInsertLocation() const { return nBBOXInsertLocation_; }
     int  HasOtherPages() const { return bOtherPages_; }
     bool IsUpdatable() const { return bUpdatable_; }
+    const CPLString& GetJSonFlavor() const { return osJSonFlavor_; }
 
     virtual void        FlushCache() override;
 
@@ -237,13 +247,18 @@ class OGRGeoJSONDataSource : public OGRDataSource
 
     bool bUpdatable_;
 
+    CPLString osJSonFlavor_;
+
     //
     // Private utility functions
     //
     void Clear();
-    int ReadFromFile( GDALOpenInfo* poOpenInfo );
-    int ReadFromService( const char* pszSource );
-    void LoadLayers(GDALOpenInfo* poOpenInfo, GeoJSONSourceType nSrcType);
+    int ReadFromFile( GDALOpenInfo* poOpenInfo, const char* pszUnprefixed );
+    int ReadFromService( GDALOpenInfo* poOpenInfo, const char* pszSource );
+    void LoadLayers(GDALOpenInfo* poOpenInfo,
+                    GeoJSONSourceType nSrcType,
+                    const char* pszUnprefixed,
+                    const char* pszJSonFlavor);
     void SetOptionsOnReader(GDALOpenInfo* poOpenInfo,
                             OGRGeoJSONReader* poReader);
     void CheckExceededTransferLimit( json_object* poObj );

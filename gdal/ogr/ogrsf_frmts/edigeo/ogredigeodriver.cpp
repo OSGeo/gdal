@@ -88,6 +88,7 @@ void RegisterOGREDIGEO()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_edigeo.html" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGREDIGEODriverOpen;
     poDriver->pfnIdentify = OGREDIGEODriverIdentify;

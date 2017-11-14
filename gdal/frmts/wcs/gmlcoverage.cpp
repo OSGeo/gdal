@@ -40,6 +40,7 @@
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogr_spatialref.h"
+#include "gmlcoverage.h"
 
 CPL_CVSID("$Id$")
 
@@ -47,10 +48,10 @@ CPL_CVSID("$Id$")
 /*                        ParseGMLCoverageDesc()                        */
 /************************************************************************/
 
-CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
-                             int *pnXSize, int *pnYSize,
-                             double *padfGeoTransform,
-                             char **ppszProjection )
+CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
+                            int *pnXSize, int *pnYSize,
+                            double *padfGeoTransform,
+                            char **ppszProjection )
 
 {
     CPLStripXMLNamespace( psXML, NULL, TRUE );

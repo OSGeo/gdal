@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -191,7 +192,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
             // Build complete file name for stat.
             osTemp1.clear();
             osTemp1.append( pszPath );
-            osTemp1.append( "/" );
+            if( !osTemp1.empty() && osTemp1.back() != '/' )
+                osTemp1.append( "/" );
             osTemp1.append( papszFiles[i] );
 
             // If is file, add it.
@@ -204,7 +206,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 {
                     osTemp1.clear();
                     osTemp1.append( pszDisplayedPath );
-                    osTemp1.append( "/" );
+                    if( !osTemp1.empty() && osTemp1.back() != '/' )
+                        osTemp1.append( "/" );
                     osTemp1.append( papszFiles[i] );
                     oFiles.AddString( osTemp1 );
                 }
@@ -221,7 +224,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                     osTemp2.append( "/" );
                 }
                 osTemp2.append( papszFiles[i] );
-                osTemp2.append( "/" );
+                if( !osTemp2.empty() && osTemp2.back() != '/' )
+                    osTemp2.append( "/" );
                 oFiles.AddString( osTemp2.c_str() );
 
                 VSIReadDirRecursiveTask sTask;
@@ -1562,12 +1566,17 @@ VSIFileManager::VSIFileManager() :
 
 VSIFileManager::~VSIFileManager()
 {
+    std::set<VSIFilesystemHandler*> oSetAlreadyDeleted;
     for( std::map<std::string, VSIFilesystemHandler*>::const_iterator iter =
              oHandlers.begin();
          iter != oHandlers.end();
          ++iter )
     {
-        delete iter->second;
+        if( oSetAlreadyDeleted.find(iter->second) == oSetAlreadyDeleted.end() )
+        {
+            oSetAlreadyDeleted.insert(iter->second);
+            delete iter->second;
+        }
     }
 
     delete poDefaultHandler;

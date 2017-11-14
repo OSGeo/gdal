@@ -491,6 +491,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         {
             CPLDebug("KML", "Not handled: %s", pszName);
             delete poTmp;
+            if( poKML->poCurrent_ == poTmp )
+                poKML->poCurrent_ = NULL;
+            if( poKML->poTrunk_ == poTmp )
+                poKML->poTrunk_ = NULL;
         }
         else
         {
@@ -561,12 +565,15 @@ std::string KML::getError() const
 
 int KML::classifyNodes()
 {
+    if( poTrunk_ == NULL )
+        return false;
     return poTrunk_->classify(this);
 }
 
 void KML::eliminateEmpty()
 {
-    poTrunk_->eliminateEmpty(this);
+    if( poTrunk_ != NULL )
+        poTrunk_->eliminateEmpty(this);
 }
 
 void KML::print(unsigned short nNum)

@@ -223,7 +223,10 @@ long CADHandle::getAsLong(const std::vector<unsigned char>& handle)
     if( copySize > sizeof(long) )
         copySize = sizeof(long);
     memcpy( &result, handle.data(), copySize );
-    SwapEndianness( result, handle.size() );
+    // NOTE: Second argument below was previously handle.size(). This was
+    // clearly wrong (consider the case where handle.size() > sizeof(long))
+    // but I don't know what the correct value should be
+    SwapEndianness( result, copySize );
     return result;
 }
 
@@ -327,8 +330,11 @@ CADVariant::CADVariant( long julianday, long milliseconds ) :
     if(julianday != 0)
         dfUnix = ( double( julianday ) - 2440587.5 ) * 86400.0;
     dateTimeVal = static_cast<time_t>( dfUnix + dfSeconds );
-    char str_buff[256];
-    strftime(str_buff, 255, "%Y-%m-%d %H:%M:%S", localtime(&dateTimeVal));
+
+    char str_buff[256] = "Invalid date";
+    struct tm *poLocaltime = localtime(&dateTimeVal);
+    if(poLocaltime)
+        strftime(str_buff, 255, "%Y-%m-%d %H:%M:%S", poLocaltime);
     stringVal = str_buff;
 }
 

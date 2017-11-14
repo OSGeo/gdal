@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
+#include "commonutils.h"
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -211,7 +212,7 @@ static char *SanitizeSRS( const char *pszUserInput )
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     const char         *pszLocX = NULL, *pszLocY = NULL;
@@ -643,3 +644,4 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+MAIN_END

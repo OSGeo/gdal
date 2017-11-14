@@ -53,6 +53,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */

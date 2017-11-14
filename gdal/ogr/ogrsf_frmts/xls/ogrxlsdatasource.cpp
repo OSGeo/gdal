@@ -64,6 +64,12 @@ OGRXLSDataSource::~OGRXLSDataSource()
 
     if( xlshandle )
         freexl_close(xlshandle);
+#ifdef WIN32
+    if( m_osTempFilename.empty() )
+    {
+        VSIUnlink(m_osTempFilename);
+    }
+#endif
 }
 
 /************************************************************************/
@@ -101,13 +107,32 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
         return FALSE;
     }
 
-#ifdef _WIN32
+    pszName = CPLStrdup(pszFilename);
+    m_osANSIFilename = pszFilename;
+#ifdef WIN32
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
-        pszName = CPLRecode( pszFilename, CPL_ENC_UTF8, CPLString().Printf( "CP%d", GetACP() ) );
-    else
-        pszName = CPLStrdup( pszFilename );
-#else
-    pszName = CPLStrdup( pszFilename );
+    {
+        CPLErrorReset();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        char* pszTmpName = CPLRecode( pszFilename, CPL_ENC_UTF8, CPLString().Printf( "CP%d", GetACP() ) );
+        CPLPopErrorHandler();
+        m_osANSIFilename = pszTmpName;
+        CPLFree(pszTmpName);
+        
+        // In case recoding to the ANSI code page failed, then create a temporary file
+        // in a "safe" location
+        if( CPLGetLastErrorType() != CE_None )
+        {
+            CPLErrorReset();
+
+            // FIXME: CPLGenerateTempFilename() would normally be expected to return a UTF-8 filename
+            // but I doubt it does in all cases.
+            m_osTempFilename = CPLGenerateTempFilename("temp_xls");
+            m_osANSIFilename = m_osTempFilename;
+            CPLCopyFile( m_osANSIFilename, pszFilename );
+            CPLDebug("XLS", "Create temporary file: %s", m_osTempFilename.c_str());
+        }
+    }
 #endif
 
 // --------------------------------------------------------------------
@@ -115,7 +140,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
 // --------------------------------------------------------------------
 
     /* Open only for getting info. To get cell values, we have to use freexl_open */
-    if (freexl_open_info (pszName, &xlshandle) != FREEXL_OK)
+    if ( !GetXLSHandle() )
         return FALSE;
 
     unsigned int nSheets = 0;
@@ -158,7 +183,7 @@ const void* OGRXLSDataSource::GetXLSHandle()
     if (xlshandle)
         return xlshandle;
 
-    if (freexl_open (pszName, &xlshandle) != FREEXL_OK)
+    if (freexl_open (m_osANSIFilename, &xlshandle) != FREEXL_OK)
         return NULL;
 
     return xlshandle;

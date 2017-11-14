@@ -82,8 +82,8 @@ def validate(ds, check_tiled=True):
         if check_tiled:
             block_size = main_band.GetBlockSize()
             if block_size[0] == main_band.XSize and block_size[0] > 1024:
-                errors += ["The file is greater than 512xH or Wx512," +
-                           "but is not tiled"]
+                errors += ['The file is greater than 512xH or Wx512, ' +
+                           'but is not tiled']
 
         if ovr_count == 0:
             errors += ["The file is greater than 512xH or Wx512, " +
@@ -201,7 +201,7 @@ def main():
         if len(errors) != 0:
             if not quiet:
                 print('%s is NOT a valid cloud optimized GeoTIFF.' % filename)
-                print('The following errors were foud:')
+                print('The following errors were found:')
                 for error in errors:
                     print(' - ' + error)
             ret = 1

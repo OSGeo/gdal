@@ -81,7 +81,7 @@ static void GDALInfoOptionsForBinaryFree( GDALInfoOptionsForBinary* psOptionsFor
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -236,3 +236,4 @@ int main( int argc, char ** argv )
 
     exit( 0 );
 }
+MAIN_END

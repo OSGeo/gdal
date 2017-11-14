@@ -3060,6 +3060,16 @@ def netcdf_79():
     return 'success'
 
 ###############################################################################
+# Test creating and opening with accent
+def netcdf_80():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    test = gdaltest.GDALTest( 'NETCDF', '../data/byte.tif', 1, 4672 )
+    return test.testCreateCopy(new_filename = 'test\xc3\xa9.nc', check_gt=0, check_srs=0, check_minmax = 0)
+    
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -3148,7 +3158,8 @@ gdaltest_list = [
     netcdf_76,
     netcdf_77,
     netcdf_78,
-    netcdf_79
+    netcdf_79,
+    netcdf_80
 ]
 
 ###############################################################################

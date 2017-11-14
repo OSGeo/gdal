@@ -205,7 +205,7 @@ VSIGSHandleHelper::VSIGSHandleHelper( const CPLString& osEndpoint,
                                       const CPLString& osAccessKeyId,
                                       bool bUseHeaderFile,
                                       const GOA2Manager& oManager ) :
-    m_osURL(osEndpoint + osBucketObjectKey),
+    m_osURL(osEndpoint + CPLAWSURLEncode(osBucketObjectKey, false)),
     m_osEndpoint(osEndpoint),
     m_osBucketObjectKey(osBucketObjectKey),
     m_osSecretAccessKey(osSecretAccessKey),
@@ -240,15 +240,27 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 {
 #ifdef WIN32
     const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    static const char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    static const char SEP_STRING[] = "/";
 #endif
 
-    osCredentials =
-        // GDAL specific config option (mostly for testing purpose, but also
-        // used in production in some cases)
-        CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE",
-                        CPLFormFilename( pszHome, ".boto", NULL ) );
+    // GDAL specific config option (mostly for testing purpose, but also
+    // used in production in some cases)
+    const char* pszCredentials =
+                    CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE", NULL);
+    if( pszCredentials )
+    {
+        osCredentials = pszCredentials;
+    }
+    else
+    {
+        osCredentials = pszHome ? pszHome : "";
+        osCredentials += SEP_STRING;
+        osCredentials += ".boto";
+    }
+
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
     if( fp != NULL )
     {
@@ -674,7 +686,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
 
 void VSIGSHandleHelper::RebuildURL()
 {
-    m_osURL = m_osEndpoint + m_osBucketObjectKey;
+    m_osURL = m_osEndpoint + CPLAWSURLEncode(m_osBucketObjectKey, false);
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
@@ -711,7 +723,7 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
         return headers;
     }
 
-    CPLString osCanonicalResource("/" + m_osBucketObjectKey);
+    CPLString osCanonicalResource("/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         osCanonicalResource += "/";

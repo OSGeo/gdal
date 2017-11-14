@@ -130,8 +130,8 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
 
     if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS)"))
     {
-        fpSettings =
-            VSIFOpenL(CPLSPrintf("%s/settings.xml", osPrefixedFilename.c_str()), "rb");
+        CPLString osTmpFilename(CPLSPrintf("%s/settings.xml", osPrefixedFilename.c_str()));
+        fpSettings = VSIFOpenL(osTmpFilename, "rb");
     }
 
     OGRODSDataSource *poDS = new OGRODSDataSource();
@@ -215,6 +215,7 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
                                "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;
     poDriver->pfnOpen = OGRODSDriverOpen;

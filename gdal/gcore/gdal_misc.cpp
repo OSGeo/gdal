@@ -2844,9 +2844,6 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
 /* -------------------------------------------------------------------- */
 /*      --optfile                                                       */
-/*                                                                      */
-/*      Annoyingly the options inserted by --optfile will *not* be      */
-/*      processed properly if they are general options.                 */
 /* -------------------------------------------------------------------- */
         else if( EQUAL(papszArgv[iArg],"--optfile") )
         {
@@ -2870,6 +2867,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             }
 
             const char *pszLine;
+            // dummy value as first argument to please
+            // GDALGeneralCmdLineProcessor()
+            char** papszArgvOptfile = CSLAddString(NULL, "");
+            bool bHasOptfile = false;
             while( (pszLine = CPLReadLineL( fpOptFile )) != NULL )
             {
                 if( pszLine[0] == '#' || strlen(pszLine) == 0 )
@@ -2877,11 +2878,41 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 char **papszTokens = CSLTokenizeString( pszLine );
                 for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++)
-                    papszReturn = CSLAddString( papszReturn, papszTokens[i] );
+                {
+                    if( EQUAL( papszTokens[i], "--optfile") )
+                    {
+                        // To avoid potential recursion
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "--optfile not supported in a option file");
+                        bHasOptfile = true;
+                    }
+                    papszArgvOptfile = CSLAddString( papszArgvOptfile, papszTokens[i] );
+                }
                 CSLDestroy( papszTokens );
             }
 
             VSIFCloseL( fpOptFile );
+
+            char** papszArgvOptfileMod = papszArgvOptfile;
+            if( !bHasOptfile )
+            {
+                if( GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
+                                        &papszArgvOptfileMod, nOptions) < 0 )
+                {
+                    CSLDestroy( papszReturn );
+                    CSLDestroy(papszArgvOptfile);
+                    return -1;
+                }
+            }
+
+            char** papszIter = papszArgvOptfileMod + 1;
+            while( *papszIter )
+            {
+                papszReturn = CSLAddString(papszReturn, *papszIter);
+                ++ papszIter;
+            }
+            CSLDestroy(papszArgvOptfile);
+            CSLDestroy(papszArgvOptfileMod);
 
             iArg += 1;
         }
@@ -3031,6 +3062,10 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Creating fields with DEFAULT values.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_GEOMFIELDS, false ) )
                 printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_NONSPATIAL, false ) )
+                printf( "  No support for geometries.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
+                printf( "  Supports: Feature styles.\n" );/*ok*/
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
             {
                 CPLXMLNode *psCOL =

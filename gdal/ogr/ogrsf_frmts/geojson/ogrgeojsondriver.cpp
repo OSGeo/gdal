@@ -35,6 +35,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_http.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 // #include "json_object.h"
@@ -46,6 +47,10 @@
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
+
+static CPLMutex* ghMutex = NULL;
+static char* gpszSource = NULL;
+static char* gpszText = NULL;
 
 class OGRESRIFeatureServiceDataset;
 
@@ -396,7 +401,13 @@ int OGRESRIFeatureServiceDataset::LoadPage()
                                       CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
     GDALOpenInfo oOpenInfo(osNewURL, GA_ReadOnly);
-    if( !poDS->Open( &oOpenInfo, GeoJSONGetSourceType( &oOpenInfo ) ) ||
+    GeoJSONSourceType nSrcType;
+    if( EQUAL(poCurrent->GetJSonFlavor(), "GeoJSON") )
+        nSrcType = GeoJSONGetSourceType( &oOpenInfo );
+    else
+        nSrcType = ESRIJSONDriverGetSourceType( &oOpenInfo );
+    if( !poDS->Open( &oOpenInfo, nSrcType,
+                     poCurrent->GetJSonFlavor() ) ||
         poDS->GetLayerCount() == 0 )
     {
         delete poDS;
@@ -423,8 +434,11 @@ static int OGRGeoJSONDriverIdentifyInternal( GDALOpenInfo* poOpenInfo,
     nSrcType = GeoJSONGetSourceType( poOpenInfo );
     if( nSrcType == eGeoJSONSourceUnknown )
         return FALSE;
-    if( nSrcType == eGeoJSONSourceService )
+    if( nSrcType == eGeoJSONSourceService &&
+        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:") )
+    {
         return -1;
+    }
     return TRUE;
 }
 
@@ -446,8 +460,20 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     GeoJSONSourceType nSrcType;
     if( OGRGeoJSONDriverIdentifyInternal(poOpenInfo, nSrcType) == FALSE )
+    {
         return NULL;
+    }
+    return OGRGeoJSONDriverOpenInternal(poOpenInfo, nSrcType, "GeoJSON");
+}
 
+/************************************************************************/
+/*                     OGRGeoJSONDriverOpenInternal()                   */
+/************************************************************************/
+
+GDALDataset* OGRGeoJSONDriverOpenInternal( GDALOpenInfo* poOpenInfo,
+                                           GeoJSONSourceType nSrcType,
+                                           const char* pszJSonFlavor )
+{
     OGRGeoJSONDataSource* poDS = new OGRGeoJSONDataSource();
 
 /* -------------------------------------------------------------------- */
@@ -477,13 +503,15 @@ static GDALDataset* OGRGeoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open and start processing GeoJSON datasource to OGR objects.    */
 /* -------------------------------------------------------------------- */
-    if( !poDS->Open( poOpenInfo, nSrcType ) )
+    if( !poDS->Open( poOpenInfo, nSrcType, pszJSonFlavor ) )
     {
         delete poDS;
         poDS = NULL;
     }
 
-    if( poDS != NULL && poDS->HasOtherPages() )
+    if( poDS != NULL && poDS->HasOtherPages() &&
+        (STARTS_WITH(poOpenInfo->pszFilename, "http") ||
+         STARTS_WITH(poOpenInfo->pszFilename, "/vsimem/")) )
     {
         const char* pszFSP = CSLFetchNameValue(poOpenInfo->papszOpenOptions,
                                                "FEATURE_SERVER_PAGING");
@@ -539,6 +567,55 @@ static CPLErr OGRGeoJSONDriverDelete( const char *pszFilename )
 }
 
 /************************************************************************/
+/*                      OGRGeoJSONDriverStoreContent()                  */
+/************************************************************************/
+
+void OGRGeoJSONDriverStoreContent( const char* pszSource, char* pszText )
+{
+    CPLMutexHolderD(&ghMutex);
+    CPLAssert( pszSource );
+    CPLAssert( pszText );
+
+    CPLFree(gpszSource);
+    CPLFree(gpszText);
+    gpszSource = CPLStrdup(pszSource);
+    gpszText = pszText;
+}
+
+/************************************************************************/
+/*                    OGRGeoJSONDriverStealStoredContent()              */
+/************************************************************************/
+
+char* OGRGeoJSONDriverStealStoredContent( const char* pszSource )
+{
+    CPLMutexHolderD(&ghMutex);
+    if( gpszSource && EQUAL(pszSource, gpszSource) )
+    {
+        char* pszRet = gpszText;
+        CPLFree(gpszSource);
+        gpszSource = NULL;
+        gpszText = NULL;
+        return pszRet;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        OGRGeoJSONDriverUnload()                      */
+/************************************************************************/
+
+static void OGRGeoJSONDriverUnload( GDALDriver* )
+{
+    if( ghMutex )
+        CPLDestroyMutex(ghMutex);
+    ghMutex = NULL;
+    CPLFree(gpszSource);
+    CPLFree(gpszText);
+    gpszSource = NULL;
+    gpszText = NULL;
+}
+
+/************************************************************************/
 /*                           RegisterOGRGeoJSON()                       */
 /************************************************************************/
 
@@ -591,6 +668,7 @@ void RegisterOGRGeoJSON()
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;
     poDriver->pfnCreate = OGRGeoJSONDriverCreate;
     poDriver->pfnDelete = OGRGeoJSONDriverDelete;
+    poDriver->pfnUnloadDriver = OGRGeoJSONDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

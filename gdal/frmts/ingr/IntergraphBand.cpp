@@ -639,7 +639,20 @@ IntergraphRLEBand::IntergraphRLEBand( IntergraphDataset *poDSIn,
     if( nRLESize == 0 )
         pabyRLEBlock = (GByte*) VSIMalloc( 1 );
     else if( nRLESize < INT_MAX )
+    {
+        if( nRLESize > 100 * 1024 * 1024 )
+        {
+            IntergraphDataset *poGDS = ( IntergraphDataset * ) poDS;
+            VSIFSeekL( poGDS->fp, 0, SEEK_END );
+            if( VSIFTellL( poGDS->fp ) < nRLESize )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "File too short");
+                pabyRLEBlock = NULL;
+                return;
+            }
+        }
         pabyRLEBlock = (GByte*) VSIMalloc( nRLESize );
+    }
     if (pabyRLEBlock == NULL)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot allocate %d bytes", nRLESize);

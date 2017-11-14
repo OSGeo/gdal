@@ -332,8 +332,10 @@ int NTFFileReader::Open( const char * pszFilenameIn )
 
             pasAttDesc = static_cast<NTFAttDesc *>(
                 CPLRealloc( pasAttDesc, sizeof(NTFAttDesc) * nAttCount ));
+            memset( &pasAttDesc[nAttCount-1], 0, sizeof(NTFAttDesc) );
 
-            ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 );
+            if( !ProcessAttDesc( poRecord, pasAttDesc + nAttCount - 1 ) )
+                nAttCount --;
         }
 
 /* -------------------------------------------------------------------- */

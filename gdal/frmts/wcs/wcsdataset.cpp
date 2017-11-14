@@ -33,12 +33,14 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
+#include "gmlcoverage.h"
 
 #include <algorithm>
 
 #define DIGIT_ZERO '0'
 
 CPL_CVSID("$Id$")
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -982,8 +984,8 @@ int WCSDataset::ExtractGridInfo100()
 /* -------------------------------------------------------------------- */
 /*      Extract size, geotransform and coordinate system.               */
 /* -------------------------------------------------------------------- */
-    if( GDALParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
-                              adfGeoTransform, &pszProjection ) != CE_None )
+    if( WCSParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
+                             adfGeoTransform, &pszProjection ) != CE_None )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

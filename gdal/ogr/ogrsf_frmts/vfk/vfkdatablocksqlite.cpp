@@ -69,13 +69,15 @@ int VFKDataBlockSQLite::LoadGeometryPoint()
         /* read values */
         const double x = -1.0 * sqlite3_column_double(hStmt, 0); /* S-JTSK coordinate system expected */
         const double y = -1.0 * sqlite3_column_double(hStmt, 1);
-#ifdef DEBUG
         const GIntBig iFID = sqlite3_column_int64(hStmt, 2);
-#endif
         const int rowId = sqlite3_column_int(hStmt, 3);
 
-        VFKFeatureSQLite *poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
-        CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
+        VFKFeatureSQLite *poFeature = dynamic_cast<VFKFeatureSQLite *>(
+            GetFeatureByIndex(rowId - 1));
+        if( poFeature == NULL || poFeature->GetFID() != iFID )
+        {
+            continue;
+        }
 
         /* create geometry */
         OGRPoint pt(x, y);
@@ -248,14 +250,16 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
             poReader->ExecuteSQL("BEGIN");
 
         std::vector<int> rowIdFeat;
-        CPLString szFType;
+        CPLString osFType;
         OGRLineString oOGRLine;
 
         while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
             // read values
             const GUIntBig id = sqlite3_column_int64(hStmt, 0);
             const GUIntBig ipcb  = sqlite3_column_int64(hStmt, 1);
-            szFType = (char *) sqlite3_column_text(hStmt, 2);
+            const char* pszFType = reinterpret_cast<const char*>(
+                sqlite3_column_text(hStmt, 2));
+            osFType = pszFType ? pszFType : "";
             int rowId = sqlite3_column_int(hStmt, 3);
 
             if (ipcb == 1) {
@@ -265,23 +269,24 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Cannot retrieve feature %d", iIdx);
+                    sqlite3_finalize(hStmt);
                     break;
                 }
                 poFeature->SetRowId(rowId);
 
                 /* set geometry & reset */
-                CPLString szFTypeLine;
+                CPLString osFTypeLine;
                 if( poLine &&
                     !SetGeometryLineString(
                         poLine, &oOGRLine,
-                        bValid, szFTypeLine, rowIdFeat, nGeometries) )
+                        bValid, osFTypeLine, rowIdFeat, nGeometries) )
                 {
                     nInvalid++;
                 }
 
                 bValid = true;
                 poLine = poFeature;
-                szFTypeLine = szFType;
+                osFTypeLine = osFType;
                 iIdx++;
             }
 
@@ -316,7 +321,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
         if( poLine &&
             !SetGeometryLineString(
                 poLine, &oOGRLine,
-                bValid, szFType.c_str(), rowIdFeat, nGeometries) )
+                bValid, osFType.c_str(), rowIdFeat, nGeometries) )
         {
             nInvalid++;
         }
@@ -380,12 +385,15 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
     {
         /* read values */
         vrValue[0] = sqlite3_column_int64(hStmt, 0);
-        const long iFID = static_cast<long>(sqlite3_column_int64(hStmt, 1));
+        const GIntBig iFID = sqlite3_column_int64(hStmt, 1);
         const int rowId = sqlite3_column_int(hStmt, 2);
 
         VFKFeatureSQLite *poFeature =
             (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
-        CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
+        if( poFeature == NULL || poFeature->GetFID() != iFID )
+        {
+            continue;
+        }
 
         VFKFeatureSQLite *poLine =
             poDataBlockLines->GetFeature(vrColumn, vrValue, 2, TRUE);
@@ -400,7 +408,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
             poOgrGeometry = poLine->GetGeometry();
         }
         if (!poOgrGeometry || !poFeature->SetGeometry(poOgrGeometry)) {
-            CPLDebug("OGR-VFK", "VFKDataBlockSQLite::LoadGeometryLineStringHP(): name=%s fid=%ld "
+            CPLDebug("OGR-VFK", "VFKDataBlockSQLite::LoadGeometryLineStringHP(): name=%s fid=" CPL_FRMT_GIB " "
                      "id=" CPL_FRMT_GUIB " -> %s geometry", m_pszName, iFID, vrValue[0],
                      poOgrGeometry ? "invalid" : "empty");
             nInvalid++;
@@ -943,12 +951,13 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
 
     while(poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
         rowId++; // =sqlite3_column_int(hStmt, 1);
-#ifdef DEBUG
         const GIntBig iFID = sqlite3_column_int64(hStmt, 2);
-#endif
-
-        VFKFeatureSQLite *poFeature = (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
-        CPLAssert(NULL != poFeature && poFeature->GetFID() == iFID);
+        VFKFeatureSQLite *poFeature = dynamic_cast<VFKFeatureSQLite *>(
+            GetFeatureByIndex(rowId - 1));
+        if( poFeature == NULL || poFeature->GetFID() != iFID )
+        {
+            continue;
+        }
 
         // read geometry from DB
         const int nBytes = sqlite3_column_bytes(hStmt, 0);

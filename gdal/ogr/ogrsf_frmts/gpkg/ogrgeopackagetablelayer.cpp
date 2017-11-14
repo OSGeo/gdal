@@ -2437,15 +2437,18 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
         }
         else
         {
-            pszSQL = sqlite3_mprintf(
-                "UPDATE gpkg_contents SET "
-                "min_x = NULL, min_y = NULL, "
-                "max_x = NULL, max_y = NULL "
-                "WHERE lower(table_name) = lower('%q') AND "
-                "Lower(data_type) = 'features'",
-                m_pszTableName);
-            SQLCommand( m_poDS->GetDB(), pszSQL);
-            sqlite3_free(pszSQL);
+            if( m_poDS->GetUpdate() )
+            {
+                pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_contents SET "
+                    "min_x = NULL, min_y = NULL, "
+                    "max_x = NULL, max_y = NULL "
+                    "WHERE lower(table_name) = lower('%q') AND "
+                    "Lower(data_type) = 'features'",
+                    m_pszTableName);
+                SQLCommand( m_poDS->GetDB(), pszSQL);
+                sqlite3_free(pszSQL);
+            }
             m_bExtentChanged = false;
             err = OGRERR_FAILURE; // we didn't get an extent
         }

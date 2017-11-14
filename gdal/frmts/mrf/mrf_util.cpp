@@ -137,32 +137,33 @@ std::ostream& operator<<(std::ostream &out, const ILIdx& t) {
 }
 
 // Define PPMW to enable this handy debug function
-
 #ifdef PPMW
 void ppmWrite(const char *fname, const char *data, const ILSize &sz) {
-    FILE *fp=fopen(fname,"wb");
-    switch(sz.c) {
-    case 4:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        char *d=(char *)data;
-        for(int i=sz.x*sz.y;i;i--) {
-            fwrite(d,3,1,fp);
-            d+=4;
+    FILE *fp = fopen(fname, "wb");
+    switch (sz.c) {
+    case 4: // Strip the alpha
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        {
+            char *d = (char *)data;
+            for (int i = sz.x*sz.y; i; i--) {
+                fwrite(d, 3, 1, fp);
+                d += 4;
+            }
         }
         break;
     case 3:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x*sz.y,3,fp);
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x*sz.y, 3, fp);
         break;
     case 1:
-        fprintf(fp,"P5 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x,sz.y,fp);
+        fprintf(fp, "P5 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x, sz.y, fp);
         break;
     default:
-        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);/*ok*/
-        return;
+        fprintf(stderr, "Can't write ppm file with %d bands\n", sz.c);/*ok*/
     }
     fclose(fp);
+    return;
 }
 #endif
 

@@ -763,17 +763,6 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     CPLFree( pszPMName );
     CPLFree( pszAngularUnits );
 
-#if LIBGEOTIFF_VERSION >= 1310 && !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
-    if( psDefn->TOWGS84Count > 0 )
-        oSRS.SetTOWGS84( psDefn->TOWGS84[0],
-                         psDefn->TOWGS84[1],
-                         psDefn->TOWGS84[2],
-                         psDefn->TOWGS84[3],
-                         psDefn->TOWGS84[4],
-                         psDefn->TOWGS84[5],
-                         psDefn->TOWGS84[6] );
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Set projection units if not yet done                            */
 /* -------------------------------------------------------------------- */
@@ -857,6 +846,57 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
             oSRS = oSRSTmp;
         }
     }
+
+#if LIBGEOTIFF_VERSION >= 1310 && !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
+    if( psDefn->TOWGS84Count > 0 )
+    {
+        if( bGotFromEPSG )
+        {
+            double adfTOWGS84[7] = { 0.0 };
+            oSRS.GetTOWGS84( adfTOWGS84 );
+            bool bSame = true;
+            for( int i = 0; i < 7; i++ )
+            {
+                if( fabs(adfTOWGS84[i] - psDefn->TOWGS84[i]) > 1e-5 )
+                {
+                    bSame = false;
+                    break;
+                }
+            }
+            if( !bSame )
+            {
+                CPLDebug( "GTiff",
+                          "Modify EPSG:%d to have "
+                          "TOWGS84=%f,%f,%f,%f,%f,%f,%f "
+                          "coming from GeogTOWGS84GeoKey, instead of "
+                          "%f,%f,%f,%f,%f,%f,%f coming from EPSG",
+                          psDefn->PCS,
+                          psDefn->TOWGS84[0],
+                          psDefn->TOWGS84[1],
+                          psDefn->TOWGS84[2],
+                          psDefn->TOWGS84[3],
+                          psDefn->TOWGS84[4],
+                          psDefn->TOWGS84[5],
+                          psDefn->TOWGS84[6],
+                          adfTOWGS84[0],
+                          adfTOWGS84[1],
+                          adfTOWGS84[2],
+                          adfTOWGS84[3],
+                          adfTOWGS84[4],
+                          adfTOWGS84[5],
+                          adfTOWGS84[6] );
+            }
+        }
+
+        oSRS.SetTOWGS84( psDefn->TOWGS84[0],
+                         psDefn->TOWGS84[1],
+                         psDefn->TOWGS84[2],
+                         psDefn->TOWGS84[3],
+                         psDefn->TOWGS84[4],
+                         psDefn->TOWGS84[5],
+                         psDefn->TOWGS84[6] );
+    }
+#endif
 
 /* ==================================================================== */
 /*      Handle projection parameters.                                   */

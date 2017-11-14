@@ -323,9 +323,9 @@ CPLString VSIAzureBlobHandleHelper::BuildURL(const CPLString& osEndpoint,
         osURL += osStorageAccount + "." + osEndpoint;
     }
     osURL += "/";
-    osURL += osBucket;
+    osURL += CPLAWSURLEncode(osBucket,false);
     if( !osObjectKey.empty() )
-        osURL += "/" + osObjectKey;
+        osURL += "/" + CPLAWSURLEncode(osObjectKey,false);
     return osURL;
 }
 
@@ -353,7 +353,7 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 {
     CPLString osResource("/" + m_osBucket);
     if( !m_osObjectKey.empty() )
-        osResource += "/" + m_osObjectKey;
+        osResource += "/" + CPLAWSURLEncode(m_osObjectKey,false);
 
     return GetAzureBlobHeaders( osVerb,
                                 psExistingHeaders,

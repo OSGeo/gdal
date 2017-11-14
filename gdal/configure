@@ -34331,6 +34331,32 @@ fi
 rm -f testdeprecated.*
 rm -f testdeprecated
 
+case "${host_os}" in
+    mingw32*)
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if mingw supports wmain" >&5
+$as_echo_n "checking if mingw supports wmain... " >&6; }
+        rm -f testwmain*
+        echo '#include <wchar.h>' > testwmain.cpp
+        echo '#include <stdlib.h>' >> testwmain.cpp
+        echo 'extern "C" int wmain( int argc, wchar_t ** argv_w );' >> testwmain.cpp
+        echo 'extern "C" int wmain( int , wchar_t **  ) { return 0; } ' >> testwmain.cpp
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
+        RETVAL=$?
+        rm -f testwmain*
+        if test $RETVAL -eq 0; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
+            LDFLAGS="$LDFLAGS -municode"
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+        ;;
+    *)
+        ;;
+esac
+
 ac_config_files="$ac_config_files GDALmake.opt"
 
 

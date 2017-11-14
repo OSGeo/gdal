@@ -40,7 +40,7 @@
 #ifndef REGISTER_FUNC
 #define REGISTER_FUNC OGRRegisterAll
 #ifndef OGR_SKIP
-#define OGR_SKIP "CAD"
+#define OGR_SKIP "CAD,DXF"
 #endif
 #endif
 

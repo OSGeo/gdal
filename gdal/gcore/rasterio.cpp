@@ -1034,6 +1034,10 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 3 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
             nFullResYChunk =
                 3 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
+            if( nFullResXChunk > nRasterXSize )
+                nFullResXChunk = nRasterXSize;
+            if( nFullResYChunk > nRasterYSize )
+                nFullResYChunk = nRasterYSize;
             if( (nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
                 ((GIntBig)nFullResXChunk * nFullResYChunk <= 1024 * 1024) )
                 break;
@@ -1043,19 +1047,26 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 nDstBlockYSize > 1 )
                 nDstBlockYSize /= 2;
             /* Otherwise cut the maximal dimension */
-            else if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
+            else if( nDstBlockXSize > 1 &&
+                     (nFullResXChunk > nFullResYChunk || nDstBlockYSize == 1) )
                 nDstBlockXSize /= 2;
             else
                 nDstBlockYSize /= 2;
         }
 
-        int nOvrFactor = std::max( static_cast<int>(0.5 + dfXRatioDstToSrc),
-                                   static_cast<int>(0.5 + dfYRatioDstToSrc) );
-        if( nOvrFactor == 0 ) nOvrFactor = 1;
+        int nOvrXFactor = static_cast<int>(0.5 + dfXRatioDstToSrc);
+        int nOvrYFactor = static_cast<int>(0.5 + dfYRatioDstToSrc);
+        if( nOvrXFactor == 0 ) nOvrXFactor = 1;
+        if( nOvrYFactor == 0 ) nOvrYFactor = 1;
         int nFullResXSizeQueried =
-            nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
+            nFullResXChunk + 2 * nKernelRadius * nOvrXFactor;
         int nFullResYSizeQueried =
-            nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+            nFullResYChunk + 2 * nKernelRadius * nOvrYFactor;
+
+        if( nFullResXSizeQueried > nRasterXSize )
+            nFullResXSizeQueried = nRasterXSize;
+        if( nFullResYSizeQueried > nRasterYSize )
+            nFullResYSizeQueried = nRasterYSize;
 
         void * pChunk =
             VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDataType),
@@ -1106,8 +1117,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
             int nYCount = nChunkYOff2 - nChunkYOff;
             CPLAssert(nYCount <= nFullResYChunk);
 
-            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrFactor;
-            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrFactor;
+            int nChunkYOffQueried = nChunkYOff - nKernelRadius * nOvrYFactor;
+            int nChunkYSizeQueried = nYCount + 2 * nKernelRadius * nOvrYFactor;
             if( nChunkYOffQueried < 0 )
             {
                 nChunkYSizeQueried += nChunkYOffQueried;
@@ -1138,9 +1149,9 @@ CPLErr GDALRasterBand::RasterIOResampled(
                 int nXCount = nChunkXOff2 - nChunkXOff;
                 CPLAssert(nXCount <= nFullResXChunk);
 
-                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrFactor;
+                int nChunkXOffQueried = nChunkXOff - nKernelRadius * nOvrXFactor;
                 int nChunkXSizeQueried =
-                    nXCount + 2 * nKernelRadius * nOvrFactor;
+                    nXCount + 2 * nKernelRadius * nOvrXFactor;
                 if( nChunkXOffQueried < 0 )
                 {
                     nChunkXSizeQueried += nChunkXOffQueried;
@@ -1482,6 +1493,10 @@ CPLErr GDALDataset::RasterIOResampled(
                 3 + static_cast<int>(nDstBlockXSize * dfXRatioDstToSrc);
             nFullResYChunk =
                 3 + static_cast<int>(nDstBlockYSize * dfYRatioDstToSrc);
+            if( nFullResXChunk > nRasterXSize )
+                nFullResXChunk = nRasterXSize;
+            if( nFullResYChunk > nRasterYSize )
+                nFullResYChunk = nRasterYSize;
             if( (nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
                 ((GIntBig)nFullResXChunk * nFullResYChunk <= 1024 * 1024) )
                 break;
@@ -1491,7 +1506,8 @@ CPLErr GDALDataset::RasterIOResampled(
                 nDstBlockYSize > 1 )
                 nDstBlockYSize /= 2;
             /* Otherwise cut the maximal dimension */
-            else if( nDstBlockXSize > 1 && nFullResXChunk > nFullResYChunk )
+            else if( nDstBlockXSize > 1 &&
+                     (nFullResXChunk > nFullResYChunk || nDstBlockYSize == 1) )
                 nDstBlockXSize /= 2;
             else
                 nDstBlockYSize /= 2;
@@ -1502,6 +1518,11 @@ CPLErr GDALDataset::RasterIOResampled(
         if( nOvrFactor == 0 ) nOvrFactor = 1;
         int nFullResXSizeQueried = nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
         int nFullResYSizeQueried = nFullResYChunk + 2 * nKernelRadius * nOvrFactor;
+
+        if( nFullResXSizeQueried > nRasterXSize )
+            nFullResXSizeQueried = nRasterXSize;
+        if( nFullResYSizeQueried > nRasterYSize )
+            nFullResYSizeQueried = nRasterYSize;
 
         void * pChunk =
             VSI_MALLOC3_VERBOSE(
@@ -1523,6 +1544,7 @@ CPLErr GDALDataset::RasterIOResampled(
             GDALClose(poMEMDS);
             CPLFree(pChunk);
             CPLFree(pabyChunkNoDataMask);
+            CPLFree(papoDstBands);
             return CE_Failure;
         }
 

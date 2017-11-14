@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
+#include "commonutils.h"
 
 #include <cassert>
 
@@ -51,7 +52,7 @@ typedef enum
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char **papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     // Check strict compilation and runtime library version as we use C++ API.
@@ -757,6 +758,7 @@ int main( int nArgc, char **papszArgv )
 
     return 0;
 }
+MAIN_END
 
 /************************************************************************/
 /*                               Usage()                                */

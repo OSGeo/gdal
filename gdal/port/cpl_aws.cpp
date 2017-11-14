@@ -119,7 +119,7 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
         }
         else
         {
-            osRet += CPLSPrintf("%02X", ch);
+            osRet += CPLSPrintf("%%%02X", static_cast<unsigned char>(ch));
         }
     }
     return osRet;
@@ -379,12 +379,12 @@ CPLString VSIS3HandleHelper::BuildURL(const CPLString& osEndpoint,
         return CPLSPrintf("%s://%s.%s/%s", pszProtocol,
                                         osBucket.c_str(),
                                         osEndpoint.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
     else
         return CPLSPrintf("%s://%s/%s/%s", pszProtocol,
                                         osEndpoint.c_str(),
                                         osBucket.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
 }
 
 /************************************************************************/
@@ -395,21 +395,7 @@ void VSIS3HandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey,
                        m_bUseHTTPS, m_bUseVirtualHosting);
-    std::map<CPLString, CPLString>::iterator oIter =
-        m_oMapQueryParameters.begin();
-    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
-    {
-        if( oIter == m_oMapQueryParameters.begin() )
-            m_osURL += "?";
-        else
-            m_osURL += "&";
-        m_osURL += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            m_osURL += "=";
-            m_osURL += oIter->second;
-        }
-    }
+    m_osURL += GetQueryString();
 }
 
 /************************************************************************/
@@ -726,17 +712,32 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
 #ifdef WIN32
     const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    static const char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    static const char SEP_STRING[] = "/";
 #endif
-    const CPLString osDotAws( CPLFormFilename( pszHome, ".aws", NULL) );
+
+    CPLString osDotAws( pszHome ? pszHome : "" );
+    osDotAws += SEP_STRING;
+    osDotAws += ".aws";
 
     // Read first ~/.aws/credential file
-    osCredentials =
-        // GDAL specific config option (mostly for testing purpose, but also
-        // used in production in some cases)
-        CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE",
-                        CPLFormFilename( osDotAws, "credentials", NULL ) );
+
+    // GDAL specific config option (mostly for testing purpose, but also
+    // used in production in some cases)
+    const char* pszCredentials =
+                    CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE", NULL );
+    if( pszCredentials )
+    {
+        osCredentials = pszCredentials;
+    }
+    else
+    {
+        osCredentials = osDotAws;
+        osCredentials += SEP_STRING;
+        osCredentials += "credentials";
+    }
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
     if( fp != NULL )
     {
@@ -773,9 +774,18 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
     // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
     const char* pszAWSConfigFileEnv =
-                        CPLGetConfigOption( "AWS_CONFIG_FILE", NULL );
-    const CPLString osConfig( pszAWSConfigFileEnv ? pszAWSConfigFileEnv :
-                              CPLFormFilename( osDotAws, "config", NULL ) );
+                            CPLGetConfigOption( "AWS_CONFIG_FILE", NULL );
+    CPLString osConfig;
+    if( pszAWSConfigFileEnv )
+    {
+        osConfig = pszAWSConfigFileEnv;
+    }
+    else
+    {
+        osConfig = osDotAws;
+        osConfig += SEP_STRING;
+        osConfig += "credentials";
+    }
     fp = VSIFOpenL( osConfig, "rb" );
     if( fp != NULL )
     {
@@ -997,7 +1007,7 @@ CPLString IVSIS3LikeHandleHelper::GetQueryString() const
         if( !oIter->second.empty() )
         {
             osQueryString += "=";
-            osQueryString += oIter->second;
+            osQueryString += CPLAWSURLEncode(oIter->second);
         }
     }
     return osQueryString;
@@ -1066,8 +1076,8 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         psExistingHeaders,
         osHost,
         m_bUseVirtualHosting
-        ? ("/" + m_osObjectKey).c_str() :
-        ("/" + m_osBucket + "/" + m_osObjectKey).c_str(),
+        ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str() :
+        CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey, false).c_str(),
         osCanonicalQueryString,
         osXAMZContentSHA256,
         osXAMZDate);
@@ -1096,11 +1106,14 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
-                                           bool bSetError )
+                                           bool bSetError, bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
 #endif
+
+    if( pbUpdateMap != NULL )
+        *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
@@ -1153,8 +1166,9 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
         return true;
     }
 
-    if( EQUAL(pszCode, "PermanentRedirect") )
+    if( EQUAL(pszCode, "PermanentRedirect") || EQUAL(pszCode, "TemporaryRedirect") )
     {
+        const bool bIsTemporaryRedirect = EQUAL(pszCode, "TemporaryRedirect");
         const char* pszEndpoint =
             CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
         if( pszEndpoint == NULL ||
@@ -1184,6 +1198,10 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             : pszEndpoint);
         CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
+
+        if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+            *pbUpdateMap = false;
+
         return true;
     }
 

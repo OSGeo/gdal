@@ -6902,6 +6902,8 @@ void GDALRegister_PDF()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 #endif
 
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+
 #ifdef HAVE_POPPLER
     poDriver->SetMetadataItem( "HAVE_POPPLER", "YES" );
 #endif // HAVE_POPPLER

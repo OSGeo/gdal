@@ -67,6 +67,7 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
 
         int m_nDepth;
         bool m_bInFeatures;
+        bool m_bCanEasilyAppend;
         bool m_bInFeaturesArray;
         bool m_bInCoordinates;
         bool m_bInType;
@@ -121,6 +122,7 @@ class OGRGeoJSONReaderStreamingParser: public CPLJSonStreamingParser
         bool IsTypeKnown() const { return m_bIsTypeKnown; }
         bool IsFeatureCollection() const { return m_bIsFeatureCollection; }
         GUIntBig GetTotalOGRFeatureMemEstimate() const { return m_nTotalOGRFeatureMemEstimate; }
+        bool CanEasilyAppend() const { return m_bCanEasilyAppend; }
 };
 
 /************************************************************************/
@@ -133,6 +135,8 @@ OGRGeoJSONReader::OGRGeoJSONReader() :
     bFirstSeg_(false),
     bJSonPLikeWrapper_(false),
     fp_(NULL),
+    bCanEasilyAppend_(false),
+    bFCHasBBOX_(false),
     bGeometryPreserve_(true),
     bAttributesSkip_(false),
     bFlattenNestedAttributes_(false),
@@ -235,6 +239,7 @@ OGRGeoJSONReaderStreamingParser::OGRGeoJSONReaderStreamingParser(
                 m_eLayerGeomType(wkbUnknown),
                 m_nDepth(0),
                 m_bInFeatures(false),
+                m_bCanEasilyAppend(false),
                 m_bInFeaturesArray(false),
                 m_bInCoordinates(false),
                 m_bInType(false),
@@ -534,6 +539,7 @@ void OGRGeoJSONReaderStreamingParser::StartObjectMember(const char* pszKey,
     if( m_nDepth == 1 )
     {
         m_bInFeatures = strcmp(pszKey, "features") == 0;
+        m_bCanEasilyAppend = m_bInFeatures;
         m_bInType = strcmp(pszKey, "type") == 0;
         if( m_bInType || m_bInFeatures )
         {
@@ -814,7 +820,11 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
     VSIFSeekL(fp, 0, SEEK_SET);
     bFirstSeg_ = true;
 
-    const char* pszName = CPLGetBasename(poDS->GetDescription());
+    const char* pszName = poDS->GetDescription();
+    if( STARTS_WITH_CI(pszName, "GeoJSON:") )
+        pszName += strlen("GeoJSON:");
+    pszName = CPLGetBasename(pszName);
+
     OGRGeoJSONLayer* poLayer =
       new OGRGeoJSONLayer( pszName, NULL,
                            OGRGeoJSONLayer::DefaultGeometryType,
@@ -932,12 +942,15 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
 
     FinalizeLayerDefn(poLayer);
 
+    bCanEasilyAppend_ = oParser.CanEasilyAppend();
     nTotalFeatureCount_ = poLayer->GetFeatureCount(FALSE);
     nTotalOGRFeatureMemEstimate_ = oParser.GetTotalOGRFeatureMemEstimate();
 
     json_object* poRootObj = oParser.StealRootObject();
     if( poRootObj )
     {
+        bFCHasBBOX_ = CPL_json_object_object_get(poRootObj, "bbox") != NULL;
+
         //CPLDebug("GeoJSON", "%s", json_object_get_string(poRootObj));
 
         json_object* poName = CPL_json_object_object_get(poRootObj, "name");
@@ -1821,7 +1834,11 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
 /* -------------------------------------------------------------------- */
 /*      Read collection of properties.                                  */
 /* -------------------------------------------------------------------- */
-    json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "properties" );
+    lh_entry* poObjPropsEntry =
+        OGRGeoJSONFindMemberEntryByName( poObj, "properties" );
+    json_object* poObjProps = const_cast<json_object*>(
+        static_cast<const json_object*>(
+            poObjPropsEntry ? poObjPropsEntry->v : NULL));
 
     json_object* poObjId = OGRGeoJSONFindMemberByName( poObj, "id" );
     if( poObjId )
@@ -1955,6 +1972,14 @@ bool OGRGeoJSONReader::GenerateFeatureDefn( OGRGeoJSONLayer* poLayer,
         }
 
         bSuccess = true;  // SUCCESS
+    }
+    else if( NULL != poObjPropsEntry &&
+             ( poObjProps == NULL ||
+               (json_object_get_type(poObjProps) == json_type_array &&
+                json_object_array_length(poObjProps) == 0) ) )
+    {
+        // Ignore "properties": null and "properties": []
+        bSuccess = true;
     }
     else if( poObj != NULL && json_object_get_type(poObj) == json_type_object )
     {

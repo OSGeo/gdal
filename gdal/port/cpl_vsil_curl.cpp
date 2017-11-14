@@ -440,8 +440,7 @@ class VSICurlHandle : public VSIVirtualHandle
     virtual struct curl_slist* GetCurlHeaders( const CPLString& /*osVerb*/,
                                 const struct curl_slist* /* psExistingHeaders */)
         { return NULL; }
-    bool CanRestartOnError( const char* pszErrorMsg )
-        { return CanRestartOnError(pszErrorMsg, false); }
+    virtual bool AllowAutomaticRedirection() { return true; }
     virtual bool CanRestartOnError( const char*, bool ) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
@@ -495,7 +494,8 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
                                            bool* pbEmptyDir,
                                            char*** ppapszHTTPOptions)
 {
-    if( !STARTS_WITH(pszFilename, "/vsicurl/") )
+    if( !STARTS_WITH(pszFilename, "/vsicurl/") &&
+        !STARTS_WITH(pszFilename, "/vsicurl?") )
         return pszFilename;
     pszFilename += strlen("/vsicurl/");
     if( !STARTS_WITH(pszFilename, "http://") &&
@@ -503,80 +503,96 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
         !STARTS_WITH(pszFilename, "ftp://") &&
         !STARTS_WITH(pszFilename, "file://") )
     {
-        const char* pszURLArg = strstr(pszFilename, ",url=");
-        if( pszURLArg )
+        if( *pszFilename == '?' )
+            pszFilename ++;
+        char** papszTokens = CSLTokenizeString2( pszFilename, "&", 0 );
+        for( int i = 0; papszTokens[i] != NULL; i++ )
         {
-            CPLString osOptions( pszFilename );
-            osOptions.resize( pszURLArg - pszFilename );
-            char** papszTokens = CSLTokenizeString2( osOptions, ",", 0 );
-            for( int i = 0; papszTokens && papszTokens[i]; i++ )
+            char* pszUnescaped = CPLUnescapeString( papszTokens[i], NULL,
+                                                    CPLES_URL );
+            CPLFree(papszTokens[i]);
+            papszTokens[i] = pszUnescaped;
+        }
+
+        CPLString osURL;
+        for( int i = 0; papszTokens[i]; i++ )
+        {
+            char* pszKey = NULL;
+            const char* pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
+            if( pszKey && pszValue )
             {
-                char* pszKey = NULL;
-                const char* pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
-                if( pszKey && pszValue )
+                if( EQUAL(pszKey, "max_retry") )
                 {
-                    if( EQUAL(pszKey, "max_retry") )
-                    {
-                        if( pnMaxRetry )
-                            *pnMaxRetry = atoi(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "retry_delay") )
-                    {
-                        if( pdfRetryDelay )
-                            *pdfRetryDelay = CPLAtof(pszValue);
-                    }
-                        else if( EQUAL(pszKey, "use_head") )
-                    {
-                        if( pbUseHead )
-                            *pbUseHead = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "list_dir") )
-                    {
-                        if( pbListDir )
-                            *pbListDir = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "empty_dir") )
-                    {
-                        /* Undocumented. Used by PLScenes driver */
-                        /* This more or less emulates the behaviour of
-                         * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
-                        if( pbEmptyDir )
-                            *pbEmptyDir = CPLTestBool(pszValue);
-                    }
-                    else if( EQUAL(pszKey, "useragent") ||
-                             EQUAL(pszKey, "referer") ||
-                             EQUAL(pszKey, "cookie") ||
-                             EQUAL(pszKey, "header_file") ||
-                             EQUAL(pszKey, "unsafessl") ||
+                    if( pnMaxRetry )
+                        *pnMaxRetry = atoi(pszValue);
+                }
+                else if( EQUAL(pszKey, "retry_delay") )
+                {
+                    if( pdfRetryDelay )
+                        *pdfRetryDelay = CPLAtof(pszValue);
+                }
+                    else if( EQUAL(pszKey, "use_head") )
+                {
+                    if( pbUseHead )
+                        *pbUseHead = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "list_dir") )
+                {
+                    if( pbListDir )
+                        *pbListDir = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "empty_dir") )
+                {
+                    /* Undocumented. Used by PLScenes driver */
+                    /* This more or less emulates the behaviour of
+                        * GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR */
+                    if( pbEmptyDir )
+                        *pbEmptyDir = CPLTestBool(pszValue);
+                }
+                else if( EQUAL(pszKey, "useragent") ||
+                            EQUAL(pszKey, "referer") ||
+                            EQUAL(pszKey, "cookie") ||
+                            EQUAL(pszKey, "header_file") ||
+                            EQUAL(pszKey, "unsafessl") ||
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-                             EQUAL(pszKey, "timeout") ||
-                             EQUAL(pszKey, "connecttimeout") ||
+                            EQUAL(pszKey, "timeout") ||
+                            EQUAL(pszKey, "connecttimeout") ||
 #endif
-                             EQUAL(pszKey, "low_speed_time") ||
-                             EQUAL(pszKey, "low_speed_limit") ||
-                             EQUAL(pszKey, "proxy") ||
-                             EQUAL(pszKey, "proxyauth") ||
-                             EQUAL(pszKey, "proxyuserpwd") )
+                            EQUAL(pszKey, "low_speed_time") ||
+                            EQUAL(pszKey, "low_speed_limit") ||
+                            EQUAL(pszKey, "proxy") ||
+                            EQUAL(pszKey, "proxyauth") ||
+                            EQUAL(pszKey, "proxyuserpwd") )
+                {
+                    // Above names are the ones supported by
+                    // CPLHTTPSetOptions()
+                    if( ppapszHTTPOptions )
                     {
-                        // Above names are the ones supported by
-                        // CPLHTTPSetOptions()
-                        if( ppapszHTTPOptions )
-                        {
-                            *ppapszHTTPOptions = CSLSetNameValue(
-                                *ppapszHTTPOptions, pszKey, pszValue);
-                        }
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_NotSupported,
-                                    "Unsupported option: %s", pszKey);
+                        *ppapszHTTPOptions = CSLSetNameValue(
+                            *ppapszHTTPOptions, pszKey, pszValue);
                     }
                 }
-                CPLFree(pszKey);
+                else if( EQUAL(pszKey, "url") )
+                {
+                    osURL = pszValue;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                                "Unsupported option: %s", pszKey);
+                }
             }
-            CSLDestroy(papszTokens);
-            return pszURLArg + strlen(",url=");
+            CPLFree(pszKey);
         }
+
+        CSLDestroy(papszTokens);
+        if( osURL.empty() )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, "Missing url parameter");
+            return pszFilename;
+        }
+
+        return osURL;
     }
 
     return pszFilename;
@@ -1107,6 +1123,9 @@ retry:
         osVerb = "HEAD";
     }
 
+    if( !AllowAutomaticRedirection() )
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -1485,6 +1504,9 @@ retry:
     struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
+    if( !AllowAutomaticRedirection() )
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
+
     VSICURLInitWriteFuncStruct(&sWriteFuncData,
                                reinterpret_cast<VSILFILE *>(this),
                                pfnReadCbk, pReadCbkUserData);
@@ -1626,7 +1648,7 @@ retry:
         sWriteFuncHeaderData.bError )
     {
         if( sWriteFuncData.pBuffer != NULL &&
-            CanRestartOnError((const char*)sWriteFuncData.pBuffer) )
+            CanRestartOnError((const char*)sWriteFuncData.pBuffer, false) )
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -2997,7 +3019,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
                                                   const char *pszAccess,
                                                   bool bSetError )
 {
-    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
         return NULL;
 
     if( strchr(pszAccess, 'w') != NULL ||
@@ -3591,7 +3614,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             if( nMaxFiles != 1 )
             {
                 CPLString osCachedFilename =
-                        osBaseURL + osPrefix + aoProps[i].first + osSuffix;
+                        osBaseURL + CPLAWSURLEncode(osPrefix,false) + CPLAWSURLEncode(aoProps[i].first,false) + osSuffix;
 #if DEBUG_VERBOSE
                 CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
@@ -3629,7 +3652,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
                     prop.fileSize = 0;
                     prop.mTime = 0;
 
-                    CPLString osCachedFilename = osBaseURL + pszName;
+                    CPLString osCachedFilename = osBaseURL + CPLAWSURLEncode(pszName, false);
 #if DEBUG_VERBOSE
                     CPLDebug("S3", "Cache %s", osCachedFilename.c_str());
 #endif
@@ -4588,6 +4611,8 @@ class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
                     const struct curl_slist* psExistingHeaders ) override;
         virtual bool CanRestartOnError( const char*, bool ) override;
+        virtual bool AllowAutomaticRedirection() override
+            { return m_poS3HandleHelper->AllowAutomaticRedirection(); }
 
     public:
         VSIS3Handle( VSIS3FSHandler* poFS,
@@ -4831,7 +4856,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         if( response_code != 200 || sWriteFuncData.pBuffer == NULL )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -5293,7 +5318,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         if( response_code != 200 )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -5806,7 +5831,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         if( response_code != 204 && response_code != 202)
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
                 bGoOn = true;
@@ -5912,6 +5937,8 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         struct curl_slist* headers = 
             VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), NULL);
+        // Disable automatic redirection
+        curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
@@ -5943,10 +5970,14 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
+            bool bUpdateMap = true;
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false, &bUpdateMap) )
             {
-                UpdateMapFromHandle(poS3HandleHelper);
+                if( bUpdateMap )
+                {
+                    UpdateMapFromHandle(poS3HandleHelper);
+                }
                 CPLFree(sWriteFuncData.pBuffer);
             }
             else
@@ -6060,10 +6091,14 @@ struct curl_slist* VSIS3Handle::GetCurlHeaders( const CPLString& osVerb,
 
 bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    bool bUpdateMap = false;
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError, &bUpdateMap) )
     {
-        static_cast<VSIS3FSHandler *>(poFS)->
-            UpdateMapFromHandle(m_poS3HandleHelper);
+        if( bUpdateMap )
+        {
+            static_cast<VSIS3FSHandler *>(poFS)->
+                UpdateMapFromHandle(m_poS3HandleHelper);
+        }
 
         SetURL(m_poS3HandleHelper->GetURL());
         return true;
@@ -7311,7 +7346,7 @@ struct curl_slist* VSIOSSHandle::GetCurlHeaders( const CPLString& osVerb,
 
 bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
 {
-    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError, NULL) )
     {
         static_cast<VSIOSSFSHandler *>(poFS)->
             UpdateMapFromHandle(m_poHandleHelper);
@@ -7427,7 +7462,9 @@ void VSIInstallCurlFileHandler( void )
     N_MAX_REGIONS = std::max(1,
                         static_cast<int>(nCacheSize / DOWNLOAD_CHUNK_SIZE));
 
-    VSIFileManager::InstallHandler( "/vsicurl/", new VSICurlFilesystemHandler );
+    VSIFilesystemHandler* poHandler = new VSICurlFilesystemHandler;
+    VSIFileManager::InstallHandler( "/vsicurl/", poHandler );
+    VSIFileManager::InstallHandler( "/vsicurl?", poHandler );
 }
 
 /************************************************************************/

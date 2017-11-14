@@ -164,12 +164,12 @@ CPLString VSIOSSHandleHelper::BuildURL(const CPLString& osEndpoint,
         return CPLSPrintf("%s://%s.%s/%s", pszProtocol,
                                         osBucket.c_str(),
                                         osEndpoint.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
     else
         return CPLSPrintf("%s://%s/%s/%s", pszProtocol,
                                         osEndpoint.c_str(),
                                         osBucket.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
 }
 
 /************************************************************************/
@@ -265,7 +265,7 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     }
 
     CPLString osCanonicalizedResource( m_osBucket.empty() ? CPLString("/") :
-        "/" + m_osBucket +  "/" + m_osObjectKey);
+        "/" + m_osBucket +  "/" + CPLAWSURLEncode(m_osObjectKey, false));
     osCanonicalizedResource += osCanonicalQueryString;
 
     return CPLGetOSSHeaders(
@@ -281,11 +281,15 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
-                                           bool bSetError )
+                                            bool bSetError,
+                                            bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("OSS", "%s", pszErrorMsg);
 #endif
+
+    if( pbUpdateMap != NULL )
+        *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {

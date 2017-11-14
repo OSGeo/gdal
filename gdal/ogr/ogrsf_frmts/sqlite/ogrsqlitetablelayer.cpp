@@ -1096,7 +1096,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount( int bForce )
         {
             nFeatureCount = nResult;
             if( poDS->GetUpdate() )
-                bStatisticsNeedsToBeFlushed = TRUE;
+                ForceStatisticsToBeFlushed();
         }
     }
 
@@ -1181,7 +1181,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
             {
                 poGeomFieldDefn->bCachedExtentIsValid = TRUE;
                 if( poDS->GetUpdate() )
-                    bStatisticsNeedsToBeFlushed = TRUE;
+                    ForceStatisticsToBeFlushed();
                 poGeomFieldDefn->oCachedExtent = *psExtent;
             }
         }
@@ -1200,7 +1200,7 @@ OGRErr OGRSQLiteTableLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     if( eErr == OGRERR_NONE && m_poFilterGeom == NULL && osQuery.empty() )
     {
         poGeomFieldDefn->bCachedExtentIsValid = TRUE;
-        bStatisticsNeedsToBeFlushed = TRUE;
+        ForceStatisticsToBeFlushed();
         poGeomFieldDefn->oCachedExtent = *psExtent;
     }
     return eErr;
@@ -2510,7 +2510,7 @@ OGRErr OGRSQLiteTableLayer::ISetFeature( OGRFeature *poFeature )
                 poGeomFieldDefn->oCachedExtent.Merge(sGeomEnvelope);
             }
         }
-        bStatisticsNeedsToBeFlushed = TRUE;
+        ForceStatisticsToBeFlushed();
     }
 
     return eErr;
@@ -2917,13 +2917,13 @@ OGRErr OGRSQLiteTableLayer::ICreateFeature( OGRFeature *poFeature )
             poGeom->getEnvelope(&sGeomEnvelope);
             poGeomFieldDefn->oCachedExtent.Merge(sGeomEnvelope);
             poGeomFieldDefn->bCachedExtentIsValid = TRUE;
-            bStatisticsNeedsToBeFlushed = TRUE;
+            ForceStatisticsToBeFlushed();
         }
     }
 
     if( nFeatureCount >= 0 )
     {
-        bStatisticsNeedsToBeFlushed = TRUE;
+        ForceStatisticsToBeFlushed();
         nFeatureCount ++;
     }
 
@@ -2982,7 +2982,7 @@ OGRErr OGRSQLiteTableLayer::DeleteFeature( GIntBig nFID )
             poGeomFieldDefn->bCachedExtentIsValid = FALSE;
         }
         nFeatureCount --;
-        bStatisticsNeedsToBeFlushed = TRUE;
+        ForceStatisticsToBeFlushed();
     }
 
     return eErr;
@@ -3163,7 +3163,7 @@ int OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol)
 void OGRSQLiteTableLayer::InitFeatureCount()
 {
     nFeatureCount = 0;
-    bStatisticsNeedsToBeFlushed = TRUE;
+    ForceStatisticsToBeFlushed();
 }
 
 /************************************************************************/
@@ -3175,7 +3175,7 @@ void OGRSQLiteTableLayer::InvalidateCachedFeatureCountAndExtent()
     nFeatureCount = -1;
     for(int iGeomCol=0;iGeomCol<GetLayerDefn()->GetGeomFieldCount();iGeomCol++)
         poFeatureDefn->myGetGeomFieldDefn(iGeomCol)->bCachedExtentIsValid = FALSE;
-    bStatisticsNeedsToBeFlushed = TRUE;
+    ForceStatisticsToBeFlushed();
 }
 
 /************************************************************************/

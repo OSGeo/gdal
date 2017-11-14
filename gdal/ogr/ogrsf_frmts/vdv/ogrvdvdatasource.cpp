@@ -92,11 +92,19 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
                 else
                 {
                     nWidth = atoi(papszFrm[i] + strlen("num") + 1);
-                    nWidth += 1; /* VDV-451 width is without sign */
-                    if( nWidth >= 10 )
-                        eType = OFTInteger64;
-                    else
+                    if( nWidth < 0 || nWidth >= 100 )
+                    {
+                        nWidth = 0;
                         eType = OFTInteger;
+                    }
+                    else
+                    {
+                        nWidth += 1; /* VDV-451 width is without sign */
+                        if( nWidth >= 10 )
+                            eType = OFTInteger64;
+                        else
+                            eType = OFTInteger;
+                    }
                 }
             }
             else
@@ -107,6 +115,8 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
             if( papszFrm[i][strlen("char")] == '[' )
             {
                 nWidth = atoi(papszFrm[i] + strlen("char") + 1);
+                if( nWidth < 0 )
+                    nWidth = 0;
             }
         }
         else if( STARTS_WITH_CI(papszFrm[i], "boolean") )

@@ -70,14 +70,26 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    OGRFieldDefn  oBlockField( "BlockName", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockField );
+    OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockNameField );
 
     OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
     poFeatureDefn->AddFieldDefn( &oScaleField );
 
     OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
     poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+    OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+    OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+    poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+    OGRFieldDefn  oBlockField( "Block", OFTString );
+    poFeatureDefn->AddFieldDefn( &oBlockField );
+
+    OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
+    poFeatureDefn->AddFieldDefn( &oAttributeTagField );
 }
 
 /************************************************************************/
@@ -285,18 +297,34 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     delete poTool;
 
 /* -------------------------------------------------------------------- */
-/*      Write location.                                                 */
+/*      Write location in OCS.                                          */
 /* -------------------------------------------------------------------- */
-    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    int nCoordCount = 0;
+    const double *padfCoords =
+        poFeature->GetFieldAsDoubleList( "BlockOCSCoords", &nCoordCount );
 
-    WriteValue( 10, poPoint->getX() );
-    if( !WriteValue( 20, poPoint->getY() ) )
-        return OGRERR_FAILURE;
-
-    if( poPoint->getGeometryType() == wkbPoint25D )
+    if( nCoordCount == 3 )
     {
-        if( !WriteValue( 30, poPoint->getZ() ) )
+        WriteValue( 10, padfCoords[0] );
+        WriteValue( 20, padfCoords[1] );
+        if( !WriteValue( 30, padfCoords[2] ) )
             return OGRERR_FAILURE;
+    }
+    else
+    {
+        // We don't have an OCS; we will just assume that the location of
+        // the geometry (in WCS) is the correct insertion point.
+        OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+
+        WriteValue( 10, poPoint->getX() );
+        if( !WriteValue( 20, poPoint->getY() ) )
+            return OGRERR_FAILURE;
+
+        if( poPoint->getGeometryType() == wkbPoint25D )
+        {
+            if( !WriteValue( 30, poPoint->getZ() ) )
+                return OGRERR_FAILURE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -321,6 +349,20 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     if( dfAngle != 0.0 )
     {
         WriteValue( 50, dfAngle ); // degrees
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write OCS normal vector.                                        */
+/* -------------------------------------------------------------------- */
+    int nOCSCount = 0;
+    const double *padfOCS =
+        poFeature->GetFieldAsDoubleList( "BlockOCSNormal", &nOCSCount );
+
+    if( nOCSCount == 3 )
+    {
+        WriteValue( 210, padfOCS[0] );
+        WriteValue( 220, padfOCS[1] );
+        WriteValue( 230, padfOCS[2] );
     }
 
     return OGRERR_NONE;
@@ -560,11 +602,12 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
         // If the unit is other than 'g' we really should be trying to
         // do some type of transformation - but what to do?  Pretty hard.
 
-        // Even entries are "pen down" represented as negative in DXF.
+        // Even entries are "pen down" represented as positive in DXF.
+        // "Pen up" entries (gaps) are represented as negative.
         if( i%2 == 0 )
-            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
-        else
             osDXFEntry.Printf( " 49\n%s\n 74\n0\n", osAmount.c_str() );
+        else
+            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
 
         osDef += osDXFEntry;
 
@@ -729,7 +772,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
 
     if( !osLineType.empty()
-        && (poDS->oHeaderDS.LookupLineType( osLineType ) != NULL
+        && (poDS->oHeaderDS.LookupLineType( osLineType ).size() > 0
             || oNewLineTypes.count(osLineType) > 0 ) )
     {
         // Already define -> just reference it.
@@ -763,7 +806,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
                 {
                     osLineType.Printf( "AutoLineType-%d", nNextAutoID++ );
                 }
-                while( poDS->oHeaderDS.LookupLineType(osLineType) != NULL );
+                while( poDS->oHeaderDS.LookupLineType(osLineType).size() > 0 );
             }
         }
 
@@ -1108,12 +1151,6 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
     if( eGType == wkbPoint )
     {
         const char *pszBlockName = poFeature->GetFieldAsString("BlockName");
-
-        // we don't want to treat as a block ref if we are writing blocks layer
-        if( pszBlockName != NULL
-            && poDS->poBlocksLayer != NULL
-            && poFeature->GetDefnRef() == poDS->poBlocksLayer->GetLayerDefn())
-            pszBlockName = NULL;
 
         // We don't want to treat as a blocks ref if the block is not defined
         if( pszBlockName

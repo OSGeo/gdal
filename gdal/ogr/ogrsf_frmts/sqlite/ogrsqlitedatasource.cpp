@@ -2240,7 +2240,8 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
     }
     else if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") && !EQUAL(pszSQLCommand, "BEGIN")
         && !EQUAL(pszSQLCommand, "COMMIT")
-        && !STARTS_WITH_CI(pszSQLCommand, "CREATE TABLE ") )
+        && !STARTS_WITH_CI(pszSQLCommand, "CREATE TABLE ")
+        && !STARTS_WITH_CI(pszSQLCommand, "PRAGMA ") )
     {
         for(int i = 0; i < nLayers; i++)
             papoLayers[i]->InvalidateCachedFeatureCountAndExtent();

@@ -209,7 +209,8 @@ ogrinfo -ro -al -so /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/p
 
 Starting with GDAL 2.3, options can be passed in the filename with the
 following syntax:
-/vsicurl/option1=val1[,optionN=valN]*,url=http://...
+/vsicurl?[option_i=val_i&]*url=http://...
+where each option name and value (including the value of "url") is URL-encoded.
 Currently supported options are :
 <ul>
 <li>use_head=yes/no: whether the HTTP HEAD request can be emitted.
@@ -257,9 +258,13 @@ configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
 can be modified by setting the configuration option VSI_CACHE_SIZE (in
 bytes). Content in that cache is discarded when the file handle is closed.
 
-In addition, a global LRU cache of 16 MB shared among all downloaded content 
-is enabled by default, and content in it may be reused after a file handle
-has been closed and reopen. Starting with GDAL 2.3, the
+In addition, a global least-recently-used cache of 16 MB shared among all
+downloaded content is enabled by default, and content in it may be reused
+after a file handle has been closed and reopen. Starting with GDAL 2.3, the
+size of this global LRU cache can be modified by setting the configuration
+option CPL_VSIL_CURL_CACHE_SIZE (in bytes).
+
+Starting with GDAL 2.3, the
 CPL_VSIL_CURL_NON_CACHED configuration option can be set to values like
 "/vsicurl/http://example.com/foo.tif:/vsicurl/http://example.com/some_directory",
 so that at file handle closing, all cached content related to the mentioned
@@ -713,6 +718,7 @@ This is done with the VSICreateCachedFile() function, that is implictly used
 by a number of the above mentioned file systems if the VSI_CACHE configuration
 option is set to YES. The default size of caching for each file is 25 MB, and
 can be controlled with the VSI_CACHE_SIZE configuration option (value in bytes).
+Content in that cache is discarded when the file handle is closed.
 
 \section gdal_virtual_file_systems_vsicrypt /vsicrypt/ (encrypted files)
 

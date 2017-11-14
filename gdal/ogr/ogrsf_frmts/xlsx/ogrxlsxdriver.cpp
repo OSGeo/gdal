@@ -76,7 +76,9 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
         osPrefixedFilename = poOpenInfo->pszFilename;
     }
 
-    VSILFILE* fpContent = VSIFOpenL(CPLSPrintf("%s/[Content_Types].xml", osPrefixedFilename.c_str()), "rb");
+    CPLString osTmpFilename;
+    osTmpFilename = CPLSPrintf("%s/[Content_Types].xml", osPrefixedFilename.c_str());
+    VSILFILE* fpContent = VSIFOpenL(osTmpFilename, "rb");
     if (fpContent == NULL)
         return NULL;
 
@@ -89,19 +91,23 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
     if (strstr(szBuffer, XLSX_MIMETYPE) == NULL)
         return NULL;
 
-    VSILFILE* fpWorkbook = VSIFOpenL(CPLSPrintf("%s/xl/workbook.xml", osPrefixedFilename.c_str()), "rb");
+    osTmpFilename = CPLSPrintf("%s/xl/workbook.xml", osPrefixedFilename.c_str());
+    VSILFILE* fpWorkbook = VSIFOpenL(osTmpFilename, "rb");
     if (fpWorkbook == NULL)
         return NULL;
 
-    VSILFILE* fpWorkbookRels = VSIFOpenL(CPLSPrintf("%s/xl/_rels/workbook.xml.rels", osPrefixedFilename.c_str()), "rb");
+    osTmpFilename = CPLSPrintf("%s/xl/_rels/workbook.xml.rels", osPrefixedFilename.c_str());
+    VSILFILE* fpWorkbookRels = VSIFOpenL(osTmpFilename, "rb");
     if (fpWorkbookRels == NULL)
     {
         VSIFCloseL(fpWorkbook);
         return NULL;
     }
 
-    VSILFILE* fpSharedStrings = VSIFOpenL(CPLSPrintf("%s/xl/sharedStrings.xml", osPrefixedFilename.c_str()), "rb");
-    VSILFILE* fpStyles = VSIFOpenL(CPLSPrintf("%s/xl/styles.xml", osPrefixedFilename.c_str()), "rb");
+    osTmpFilename = CPLSPrintf("%s/xl/sharedStrings.xml", osPrefixedFilename.c_str());
+    VSILFILE* fpSharedStrings = VSIFOpenL(osTmpFilename, "rb");
+    osTmpFilename = CPLSPrintf("%s/xl/styles.xml", osPrefixedFilename.c_str());
+    VSILFILE* fpStyles = VSIFOpenL(osTmpFilename, "rb");
 
     OGRXLSXDataSource   *poDS = new OGRXLSXDataSource();
 
@@ -185,6 +191,7 @@ void RegisterOGRXLSX()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
                                "Time" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
     poDriver->pfnIdentify = OGRXLSXDriverIdentify;
     poDriver->pfnOpen = OGRXLSXDriverOpen;

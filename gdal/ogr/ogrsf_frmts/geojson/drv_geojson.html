@@ -13,26 +13,12 @@
 plain text format for data interchange and GeoJSON is nothing other than its specialization for geographic content.</p>
 
 <p>GeoJSON is supported as an output format of a number of services:
-<a href="http://featureserver.org/">FeatureServer</a>,
 <a href="http://docs.geoserver.org/2.6.x/en/user/services/wfs/outputformats.html">GeoServer</a>,
 <a href="http://exportgge.sourceforge.net/kml/">CartoWeb</a>, etc.</p>
 
 <p>The OGR GeoJSON driver translates GeoJSON encoded data to objects of the <a href="ogr_arch.html">OGR Simple Features model</a>:
 Datasource, Layer, Feature, Geometry.
 The implementation is based on <a href="http://geojson.org/geojson-spec.html">GeoJSON Specification, v1.0</a>.</p>
-
-<p>Starting with OGR 1.8.0, the GeoJSON driver can read the JSON output of Feature Service requests following the
-<a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification</a>, like
-implemented by <a href="http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html">ArcGIS Server REST API</a>.
-Starting with OGR 2.0, the GeoJSON driver can scroll through such result sets that
-are spread over multiple pages (for ArcGIS servers &gt;= 10.3). This is automatically enabled
-if URL does not contain an explicit <i>resultOffset</i> parameter. If it contains
-this parameter and scrolling is still desired, the FEATURE_SERVER_PAGING open option must be set to YES.
-The page size can be explicitly set with the <i>resultRecordCount</i> parameter (but
-is subject to a server limit). If it is not set, OGR will set it to the maximum
-value allowed by the server.</p>
-
-<p>Starting with OGR 1.11, the GeoJSON driver can read the <a href="https://github.com/mbostock/topojson/wiki/Specification">TopoJSON format</a></p>
 
 <p>Starting with GDAL 2.1.0, the GeoJSON driver supports updating existing
 GeoJSON files. In that case, the default value for the NATIVE_DATA open option
@@ -47,6 +33,9 @@ perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request</li>
 <li>Plain text file with GeoJSON data - identified from the file extension .geojson or .json</li>
 <li>Text passed directly and encoded in GeoJSON</li>
 </ul>
+
+Starting with GDAL 2.3, the URL/filename/text might be prefixed with GeoJSON: to avoid any ambiguity with other drivers.
+
 <h2>Layer</h2>
 
 <p>A GeoJSON datasource is translated to single OGRLayer object with pre-defined name <em>OGRGeoJSON</em>:
@@ -268,7 +257,7 @@ forbidden in the FeatureCollection, Feature and Geometry objects.</li>
 <li>The default coordinate precision is 7 decimal digits after decimal separator.</li>
 </ul>
 
-<h2>Example</h2>
+<h2>Examples</h2>
 
 <p>How to dump content of .geojson file:
 <pre>
@@ -294,12 +283,6 @@ ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
 </pre>
 </p>
 
-<p>Read the result of a FeatureService request against a GeoServices REST server:
-<pre>
-ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&amp;outfields=*&amp;f=json"
-</pre>
-</p>
-
 <h2>See Also</h2>
 
 <p>
@@ -308,9 +291,8 @@ ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydr
 <li><a href="https://tools.ietf.org/html/rfc7946">RFC 7946</a> standard.</li>
 <li><a href="http://geojson.org/geojson-spec.html">GeoJSON 2008</a> specification (obsoleted by RFC 7946).</li>
 <li><a href="http://json.org/">JSON</a> - JavaScript Object Notation</li>
-<li><a href="http://oss.metaparadigm.com/json-c/">JSON-C</a> - A JSON implementation in C</li>
-<li><a href="http://lists.osgeo.org/pipermail/gdal-dev/2007-November/014746.html">[Gdal-dev] OGR GeoJSON Driver</a> - driver announcement</li>
-<li><a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification</a></li>
+<li><a href="drv_esrijson.html">ESRI JSon / FeatureService driver</a></li>
+<li><a href="drv_topojson.html">TopoJSON driver</a></li>
 </ul>
 </p>
 

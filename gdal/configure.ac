@@ -5512,6 +5512,30 @@ fi
 rm -f testdeprecated.*
 rm -f testdeprecated
 
+dnl Use -municode for mingw
+case "${host_os}" in
+    mingw32*)
+        AC_MSG_CHECKING([if mingw supports wmain])
+        rm -f testwmain*
+        echo '#include <wchar.h>' > testwmain.cpp
+        echo '#include <stdlib.h>' >> testwmain.cpp
+        echo 'extern "C" int wmain( int argc, wchar_t ** argv_w );' >> testwmain.cpp
+        echo 'extern "C" int wmain( int , wchar_t **  ) { return 0; } ' >> testwmain.cpp
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
+        RETVAL=$?
+        rm -f testwmain*
+        if test $RETVAL -eq 0; then
+            AC_MSG_RESULT([yes])
+            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
+            LDFLAGS="$LDFLAGS -municode"
+        else
+            AC_MSG_RESULT([no])
+        fi
+        ;;
+    *)
+        ;;
+esac
+
 AC_OUTPUT(GDALmake.opt)
 
 dnl ---------------------------------------------------------------------------

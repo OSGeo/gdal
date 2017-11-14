@@ -33,6 +33,7 @@
 #include "gdal.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
+#include "commonutils.h"
 
 #include <cmath>
 
@@ -91,7 +92,7 @@ typedef enum
     FORMAT_PROJ
 } SrcSRSFormat;
 
-int main( int argc, char *argv[] )
+MAIN_START(argc, argv)
 {
     // Check that we are running against at least GDAL 1.4.
     // Note to developers: if we use newer API, please change the requirement.
@@ -704,3 +705,4 @@ int main( int argc, char *argv[] )
 
     exit( 0 );
 }
+MAIN_END

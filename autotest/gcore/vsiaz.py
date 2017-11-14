@@ -258,7 +258,7 @@ def vsiaz_fake_readdir():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=/&prefix=a_dir/&restype=container', 200,
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%2F&restype=container', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
@@ -275,7 +275,7 @@ def vsiaz_fake_readdir():
                         </Blobs>
                     </EnumerationResults>
                 """)
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=/&marker=bla&prefix=a_dir/&restype=container', 200,
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%2F&restype=container', 200,
                 { 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
@@ -328,7 +328,7 @@ def vsiaz_fake_readdir():
 
     # Test error on ReadDir()
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=/&prefix=error_test/&restype=container', 500)
+    handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=error_test%2F&restype=container', 500)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/az_fake_bucket2/error_test/')
     if dir_contents is not None:
@@ -722,7 +722,7 @@ def vsiaz_fake_mkdir_rmdir():
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404, {'Connection':'close'})
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir/&restype=container', 200, {'Connection':'close'})
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200, {'Connection':'close'})
     handler.add('PUT', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/.gdal_marker_for_dir', 201)
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiaz/az_bucket_test_mkdir/dir', 0)
@@ -733,7 +733,7 @@ def vsiaz_fake_mkdir_rmdir():
     # Try creating already existing directory
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir/&restype=container',
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
                 {'Connection':'close', 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
@@ -761,7 +761,7 @@ def vsiaz_fake_mkdir_rmdir():
     # Not a directory
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/it_is_a_file/', 404)
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=it_is_a_file/&restype=container',
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=it_is_a_file%2F&restype=container',
                 200,
                 {'Connection':'close', 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
@@ -777,7 +777,7 @@ def vsiaz_fake_mkdir_rmdir():
 
     # Valid
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir/&restype=container',
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
                 {'Connection':'close', 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
@@ -800,7 +800,7 @@ def vsiaz_fake_mkdir_rmdir():
     # Try deleting already deleted directory
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir/&restype=container', 200)
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container', 200)
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiaz/az_bucket_test_mkdir/dir')
     if ret == 0:
@@ -810,7 +810,7 @@ def vsiaz_fake_mkdir_rmdir():
     # Try deleting non-empty directory
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir_nonempty/', 404)
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir_nonempty/&restype=container',
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
                 {'Connection':'close', 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>
@@ -823,7 +823,7 @@ def vsiaz_fake_mkdir_rmdir():
                         </Blobs>
                     </EnumerationResults>
                 """)
-    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=/&maxresults=1&prefix=dir_nonempty/&restype=container',
+    handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
                 {'Connection':'close', 'Content-type': 'application/xml' },
                 """<?xml version="1.0" encoding="UTF-8"?>

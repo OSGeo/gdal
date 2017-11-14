@@ -40,6 +40,7 @@
 #include <queue>
 
 class OGRDXFDataSource;
+class OGRDXFFeature;
 
 /************************************************************************/
 /*                          DXFBlockDefinition                          */
@@ -50,15 +51,14 @@ class OGRDXFDataSource;
 class DXFBlockDefinition
 {
 public:
-    DXFBlockDefinition() : poGeometry(NULL) {}
+    DXFBlockDefinition() {}
     ~DXFBlockDefinition();
 
-    OGRGeometry                *poGeometry;
-    std::vector<OGRFeature *>  apoFeatures;
+    std::vector<OGRDXFFeature *> apoFeatures;
 };
 
 /************************************************************************/
-/*                         OGRDXFBlocksLayer()                          */
+/*                          OGRDXFBlocksLayer                           */
 /************************************************************************/
 
 class OGRDXFBlocksLayer : public OGRLayer
@@ -68,9 +68,11 @@ class OGRDXFBlocksLayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     GIntBig             iNextFID;
-    size_t              iNextSubFeature;
 
     std::map<CPLString,DXFBlockDefinition>::iterator oIt;
+    CPLString           osBlockName;
+
+    std::queue<OGRDXFFeature *> apoPendingFeatures;
 
   public:
     explicit OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
@@ -83,7 +85,7 @@ class OGRDXFBlocksLayer : public OGRLayer
 
     int                 TestCapability( const char * ) override;
 
-    OGRFeature *        GetNextUnfilteredFeature();
+    OGRDXFFeature *     GetNextUnfilteredFeature();
 };
 
 /************************************************************************/
@@ -107,6 +109,24 @@ public:
     double dfYScale;
     double dfZScale;
     double dfAngle;
+
+    OGRDXFInsertTransformer GetOffsetTransformer()
+    {
+        OGRDXFInsertTransformer oResult;
+        oResult.dfXOffset = this->dfXOffset;
+        oResult.dfYOffset = this->dfYOffset;
+        oResult.dfZOffset = this->dfZOffset;
+        return oResult;
+    }
+    OGRDXFInsertTransformer GetRotateScaleTransformer()
+    {
+        OGRDXFInsertTransformer oResult;
+        oResult.dfXScale = this->dfXScale;
+        oResult.dfYScale = this->dfYScale;
+        oResult.dfZScale = this->dfZScale;
+        oResult.dfAngle = this->dfAngle;
+        return oResult;
+    }
 
     OGRSpatialReference *GetSourceCS() override { return NULL; }
     OGRSpatialReference *GetTargetCS() override { return NULL; }
@@ -144,10 +164,80 @@ public:
 };
 
 /************************************************************************/
+/*                              DXFTriple                               */
+/*                                                                      */
+/*     Represents a triple (X, Y, Z) used for various purposes in       */
+/*     DXF files.  We do not use OGRPoint for this purpose, as the      */
+/*     triple does not always represent a point as such (for            */
+/*     example, it could contain a scale factor for each dimension).    */
+/************************************************************************/
+struct DXFTriple
+{
+    double dfX, dfY, dfZ;
+
+    DXFTriple(): dfX(0.0), dfY(0.0), dfZ(0.0) {}
+    DXFTriple( double x, double y, double z ): dfX(x), dfY(y), dfZ(z) {}
+
+    void ToArray( double adfOut[3] ) const
+    {
+        adfOut[0] = dfX;
+        adfOut[1] = dfY;
+        adfOut[2] = dfZ;
+    }
+};
+
+/************************************************************************/
+/*                            OGRDXFFeature                             */
+/*                                                                      */
+/*     Extends OGRFeature with some DXF-specific members.               */
+/************************************************************************/
+class OGRDXFFeature : public OGRFeature
+{
+    friend class OGRDXFLayer;
+
+  protected:
+    // The feature's Object Coordinate System (OCS) unit normal vector
+    DXFTriple         oOCS;
+
+    // A list of properties that are used to construct the style string
+    std::map<CPLString,CPLString> oStyleProperties;
+
+    // Additional data for INSERT entities
+    bool              bIsBlockReference;
+    CPLString         osBlockName;
+    double            dfBlockAngle;
+    DXFTriple         oBlockScale;
+
+    // Used for INSERT entities when DXF_INLINE_BLOCKS is false, to store
+    // the OCS insertion point
+    DXFTriple         oOriginalCoords;
+
+    // Additional data for ATTRIB and ATTDEF entities
+    CPLString         osAttributeTag;
+
+  public:
+    explicit OGRDXFFeature( OGRFeatureDefn * poFeatureDefn );
+
+    OGRDXFFeature    *CloneDXFFeature();
+
+    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
+
+    DXFTriple GetOCS() const { return oOCS; }
+    bool IsBlockReference() const { return bIsBlockReference; }
+    CPLString GetBlockName() const { return osBlockName; }
+    double GetBlockAngle() const { return dfBlockAngle; }
+    DXFTriple GetBlockScale() const { return oBlockScale; }
+    DXFTriple GetInsertOCSCoords() const { return oOriginalCoords; }
+    CPLString GetAttributeTag() const { return osAttributeTag; }
+};
+
+/************************************************************************/
 /*                             OGRDXFLayer                              */
 /************************************************************************/
 class OGRDXFLayer : public OGRLayer
 {
+    friend class OGRDXFBlocksLayer;
+
     OGRDXFDataSource   *poDS;
 
     OGRFeatureDefn     *poFeatureDefn;
@@ -155,39 +245,58 @@ class OGRDXFLayer : public OGRLayer
 
     std::set<CPLString> oIgnoredEntities;
 
-    std::queue<OGRFeature*> apoPendingFeatures;
+    std::queue<OGRDXFFeature*> apoPendingFeatures;
     void                ClearPendingFeatures();
 
-    std::map<CPLString,CPLString> oStyleProperties;
-
-    void                TranslateGenericProperty( OGRFeature *poFeature,
+    void                TranslateGenericProperty( OGRDXFFeature *poFeature,
                                                   int nCode, char *pszValue );
-    void                PrepareLineStyle( OGRFeature *poFeature );
-    void                ApplyOCSTransformer( OGRGeometry * );
 
-    OGRFeature *        TranslatePOINT();
-    OGRFeature *        TranslateLINE();
-    OGRFeature *        TranslatePOLYLINE();
-    OGRFeature *        TranslateLWPOLYLINE();
-    OGRFeature *        TranslateCIRCLE();
-    OGRFeature *        TranslateELLIPSE();
-    OGRFeature *        TranslateARC();
-    OGRFeature *        TranslateSPLINE();
-    OGRFeature *        Translate3DFACE();
-    OGRFeature *        TranslateINSERT();
-    OGRFeature *        TranslateMTEXT();
-    OGRFeature *        TranslateTEXT();
-    OGRFeature *        TranslateDIMENSION();
-    OGRFeature *        TranslateHATCH();
-    OGRFeature *        TranslateSOLID();
+    void                PrepareFeatureStyle( OGRDXFFeature* const poFeature,
+                            OGRDXFFeature* const poBlockFeature = NULL );
+    void                PrepareHatchStyle( OGRDXFFeature* const poFeature,
+                            OGRDXFFeature* const poBlockFeature = NULL );
+    void                PrepareLineStyle( OGRDXFFeature* const poFeature,
+                            OGRDXFFeature* const poBlockFeature = NULL );
 
-    OGRFeature *        InsertBlock( const CPLString& osBlockName,
-                                     OGRDXFInsertTransformer oTransformer,
-                                     OGRFeature* const poFeature,
-                                     const bool bInline );
-    void                FormatDimension( CPLString &osText, double dfValue );
-    OGRErr              CollectBoundaryPath( OGRGeometryCollection * );
-    OGRErr              CollectPolylinePath( OGRGeometryCollection * );
+    OGRDXFFeature *     TranslatePOINT();
+    OGRDXFFeature *     TranslateLINE();
+    OGRDXFFeature *     TranslatePOLYLINE();
+    OGRDXFFeature *     TranslateLWPOLYLINE();
+    OGRDXFFeature *     TranslateCIRCLE();
+    OGRDXFFeature *     TranslateELLIPSE();
+    OGRDXFFeature *     TranslateARC();
+    OGRDXFFeature *     TranslateSPLINE();
+    OGRDXFFeature *     Translate3DFACE();
+    OGRDXFFeature *     TranslateINSERT();
+    OGRDXFFeature *     TranslateMTEXT();
+    OGRDXFFeature *     TranslateTEXT();
+    OGRDXFFeature *     TranslateDIMENSION();
+    OGRDXFFeature *     TranslateHATCH();
+    OGRDXFFeature *     TranslateSOLID();
+    OGRDXFFeature *     TranslateLEADER();
+    OGRDXFFeature *     TranslateMLEADER();
+
+    static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
+    OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
+                                           OGRDXFInsertTransformer oTransformer,
+                                           OGRDXFFeature* const poFeature,
+                                           std::queue<OGRDXFFeature *>& apoExtraFeatures,
+                                           const bool bInlineNestedBlocks,
+                                           const bool bMergeGeometry );
+    OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
+                                              const OGRDXFInsertTransformer& oTransformer,
+                                              OGRDXFFeature* const poFeature );
+    static void         FormatDimension( CPLString &osText, const double dfValue,
+                                         int nPrecision );
+    void                InsertArrowhead( OGRDXFFeature* const poFeature,
+                                         const CPLString& osBlockName,
+                                         const OGRPoint& oPoint1,
+                                         const OGRPoint& oPoint2,
+                                         const double dfArrowheadSize );
+    OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
+                                             const double dfElevation );
+    OGRErr              CollectPolylinePath( OGRGeometryCollection *poGC,
+                                             const double dfElevation );
 
     CPLString           TextRecode( const char * );
     CPLString           TextUnescape( const char *, bool );
@@ -203,7 +312,10 @@ class OGRDXFLayer : public OGRLayer
 
     int                 TestCapability( const char * ) override;
 
-    OGRFeature *        GetNextUnfilteredFeature();
+    OGRDXFFeature *     GetNextUnfilteredFeature();
+
+    // General DXF utility function
+    static void         ApplyOCSTransformer( OGRGeometry *, const DXFTriple& );
 };
 
 /************************************************************************/
@@ -258,6 +370,7 @@ class OGRDXFDataSource : public OGRDataSource
     int                 iEntitiesSectionOffset;
 
     std::map<CPLString,DXFBlockDefinition> oBlockMap;
+    std::map<CPLString,CPLString> oBlockRecordHandles;
     std::map<CPLString,CPLString> oHeaderVariables;
 
     CPLString           osEncoding;
@@ -266,11 +379,18 @@ class OGRDXFDataSource : public OGRDataSource
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
-    std::map<CPLString,CPLString> oLineTypeTable;
+    // indexed by dimstyle name, then by DIM... variable name
+    std::map< CPLString, std::map<CPLString,CPLString> >
+                        oDimStyleTable;
+
+    std::map<CPLString, std::vector<double> > oLineTypeTable;
 
     bool                bInlineBlocks;
+    bool                bMergeBlockGeometries;
 
     OGRDXFReader        oReader;
+
+    std::vector<CPLString> aosBlockInsertionStack;
 
   public:
                         OGRDXFDataSource();
@@ -287,22 +407,31 @@ class OGRDXFDataSource : public OGRDataSource
 
     // The following is only used by OGRDXFLayer
 
-    bool                InlineBlocks() { return bInlineBlocks; }
+    bool                InlineBlocks() const { return bInlineBlocks; }
+    bool                ShouldMergeBlockGeometries() const { return bMergeBlockGeometries; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();
-    OGRGeometry        *SimplifyBlockGeometry( OGRGeometryCollection * );
     DXFBlockDefinition *LookupBlock( const char *pszName );
+    CPLString           GetBlockNameByRecordHandle( const char *pszID );
     std::map<CPLString,DXFBlockDefinition> &GetBlockMap() { return oBlockMap; }
+
+    bool                PushBlockInsertion( const CPLString& osBlockName );
+    void                PopBlockInsertion() { aosBlockInsertionStack.pop_back(); }
 
     // Layer and other Table Handling (ogrdatasource.cpp)
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
+    bool                ReadDimStyleDefinition();
     const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
-    const char         *LookupLineType( const char *pszName );
+    bool                LookupDimStyle( const char *pszDimstyle,
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
+    std::vector<double> LookupLineType( const char *pszName );
+    static void         PopulateDefaultDimStyleProperties(
+                         std::map<CPLString, CPLString>& oDimStyleProperties );
 
     // Header variables.
     bool               ReadHeaderSection();
