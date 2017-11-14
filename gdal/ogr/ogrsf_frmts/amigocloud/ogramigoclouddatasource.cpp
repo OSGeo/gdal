@@ -48,7 +48,9 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     bUseHTTPS(false),
     bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1)
-{}
+{
+    CPLSetConfigOption( "GDAL_HTTP_USERAGENT", "gdal/AmigoCloud build:2.x" );
+}
 
 /************************************************************************/
 /*                       ~OGRAmigoCloudDataSource()                        */
