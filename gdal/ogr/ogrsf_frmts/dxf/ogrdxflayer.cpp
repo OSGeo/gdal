@@ -2911,6 +2911,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         {
             // Block doesn't exist
             delete poFeature;
+            while( !apoAttribs.empty() )
+            {
+                delete apoAttribs.front();
+                apoAttribs.pop();
+            }
             return NULL;
         }
 
