@@ -364,7 +364,6 @@ void RegisterOGRSQLite()
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
