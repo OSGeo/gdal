@@ -215,10 +215,11 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
     bool        bUseSetDecodeArea;
     bool        bSingleTiled;
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    opj_codec_t*    m_pCodec;
-    opj_stream_t *  m_pStream;
-    opj_image_t *   m_psImage;
+    opj_codec_t**    m_ppCodec;
+    opj_stream_t **  m_ppStream;
+    opj_image_t **   m_ppsImage;
     JP2OpenJPEGFile* m_psJP2OpenJPEGFile;
+    int*             m_pnLastLevel;
 #endif
 
     int         nThreads;
@@ -377,6 +378,26 @@ CPLErr JP2OpenJPEGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                           void * pImage )
 {
     JP2OpenJPEGDataset *poGDS = (JP2OpenJPEGDataset *) poDS;
+
+#ifdef DEBUG_VERBOSE
+    int nXOff = nBlockXOff * nBlockXSize;
+    int nYOff = nBlockYOff * nBlockYSize;
+    int nXSize = std::min( nBlockXSize, nRasterXSize - nXOff );
+    int nYSize = std::min( nBlockYSize, nRasterYSize - nYOff );
+    if( poGDS->iLevel == 0 )
+    {
+        CPLDebug("OPENJPEG",
+                 "ds.GetRasterBand(%d).ReadRaster(%d,%d,%d,%d)",
+                 nBand, nXOff, nYOff, nXSize, nYSize);
+    }
+    else
+    {
+        CPLDebug("OPENJPEG",
+                 "ds.GetRasterBand(%d).GetOverview(%d).ReadRaster(%d,%d,%d,%d)",
+                 nBand, poGDS->iLevel - 1, nXOff, nYOff, nXSize, nYSize);
+    }
+#endif
+
     if ( poGDS->bEnoughMemoryToLoadOtherBands )
         return poGDS->ReadBlock(nBand, poGDS->fp, nBlockXOff, nBlockYOff, pImage,
                                 poGDS->nBands, NULL);
@@ -739,14 +760,34 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    if( m_pCodec &&
+    if( m_ppCodec &&
         CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
     {
-        pCodec = m_pCodec;
-        pStream = m_pStream;
-        psImage = m_psImage;
+        if( (*m_pnLastLevel == -1 || *m_pnLastLevel == iLevel) &&
+            *m_ppCodec != NULL && *m_ppStream != NULL && *m_ppsImage != NULL )
+        {
+            pCodec = *m_ppCodec;
+            pStream = *m_ppStream;
+            psImage = *m_ppsImage;
+        }
+        else
+        {
+            // For some reason, we need to "reboot" all the machinery if
+            // changing of overview level. Should be fixed in openjpeg
+            if( *m_ppCodec )
+                opj_destroy_codec(*m_ppCodec);
+            if( *m_ppStream)
+                opj_stream_destroy(*m_ppStream);
+            if( *m_ppsImage)
+                opj_image_destroy(*m_ppsImage);
+            *m_ppCodec = NULL;
+            *m_ppStream = NULL;
+            *m_ppsImage = NULL;
+        }
     }
-    else
+    *m_pnLastLevel = iLevel;
+
+    if( pCodec == NULL )
 #endif
     {
         pCodec = opj_create_decompress(OPJ_CODEC_J2K);
@@ -771,9 +812,18 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
             goto end;
         }
 
-        sJP2OpenJPEGFile.fp = fpIn;
-        sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
-        pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
+#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+        if( m_psJP2OpenJPEGFile )
+        {
+            pStream = JP2OpenJPEGCreateReadStream( m_psJP2OpenJPEGFile, nCodeStreamLength);
+        }
+        else
+#endif
+        {
+            sJP2OpenJPEGFile.fp = fpIn;
+            sJP2OpenJPEGFile.nBaseOffset = nCodeStreamStart;
+            pStream = JP2OpenJPEGCreateReadStream(&sJP2OpenJPEGFile, nCodeStreamLength);
+        }
         if( pStream == NULL )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "JP2OpenJPEGCreateReadStream() failed");
@@ -1010,7 +1060,14 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
 end:
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    if( m_pCodec == NULL || !CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
+    if( m_ppCodec != NULL &&
+        CPLTestBool(CPLGetConfigOption("USE_OPENJPEG_SINGLE_TILE_OPTIM", "YES")) )
+    {
+        *m_ppCodec = pCodec;
+        *m_ppStream = pStream;
+        *m_ppsImage = psImage;
+    }
+    else
 #endif
     {
         if( pCodec && pStream )
@@ -1107,10 +1164,11 @@ JP2OpenJPEGDataset::JP2OpenJPEGDataset()
     bUseSetDecodeArea = false;
     bSingleTiled = false;
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-    m_pCodec = NULL;
-    m_pStream = NULL;
-    m_psImage = NULL;
+    m_ppCodec = NULL;
+    m_ppStream = NULL;
+    m_ppsImage = NULL;
     m_psJP2OpenJPEGFile = NULL;
+    m_pnLastLevel = NULL;
 #endif
     nThreads = -1;
     m_nBlocksToLoad = 0;
@@ -1131,13 +1189,17 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
     if( iLevel == 0 )
     {
-        if( m_pCodec )
-            opj_destroy_codec(m_pCodec);
-        if( m_pStream )
-            opj_stream_destroy(m_pStream);
-        if( m_psImage )
-            opj_image_destroy(m_psImage);
+        if( m_ppCodec )
+            opj_destroy_codec(*m_ppCodec);
+        delete m_ppCodec;
+        if( m_ppStream )
+            opj_stream_destroy(*m_ppStream);
+        delete m_ppStream;
+        if( m_ppsImage )
+            opj_image_destroy(*m_ppsImage);
+        delete m_ppsImage;
         CPLFree(m_psJP2OpenJPEGFile);
+        delete m_pnLastLevel;
     }
 #endif
 
@@ -2057,6 +2119,17 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poCT != NULL )
         numResolutions = 0;
 
+#if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
+    if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
+    {
+        poDS->m_ppCodec = new opj_codec_t* (pCodec);
+        poDS->m_ppStream = new opj_stream_t* (pStream);
+        poDS->m_ppsImage = new opj_image_t* (psImage);
+        poDS->m_psJP2OpenJPEGFile = psJP2OpenJPEGFile;
+    }
+    poDS->m_pnLastLevel = new int(-1);
+#endif
+
     while (poDS->nOverviewCount+1 < numResolutions &&
            (nW > 128 || nH > 128) &&
            (poDS->bUseSetDecodeArea || ((nTileW % 2) == 0 && (nTileH % 2) == 0)))
@@ -2070,6 +2143,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         JP2OpenJPEGDataset* poODS = new JP2OpenJPEGDataset();
         poODS->SetDescription( poOpenInfo->pszFilename );
         poODS->iLevel = poDS->nOverviewCount + 1;
+        poODS->bSingleTiled = poDS->bSingleTiled;
         poODS->bUseSetDecodeArea = poDS->bUseSetDecodeArea;
         poODS->nRedIndex = poDS->nRedIndex;
         poODS->nGreenIndex = poDS->nGreenIndex;
@@ -2100,12 +2174,14 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
         poODS->bIs420 = bIs420;
 
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
-        if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
+        if( poODS->bSingleTiled && poODS->bUseSetDecodeArea )
         {
-            poODS->m_pCodec = pCodec;
-            poODS->m_pStream = pStream;
-            poODS->m_psImage = psImage;
+            poODS->m_ppCodec = poDS->m_ppCodec;
+            poODS->m_ppStream = poDS->m_ppStream;
+            poODS->m_ppsImage = poDS->m_ppsImage;
+            poODS->m_psJP2OpenJPEGFile = poDS->m_psJP2OpenJPEGFile;
         }
+        poODS->m_pnLastLevel = poDS->m_pnLastLevel;
 #endif
 
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
@@ -2130,10 +2206,7 @@ GDALDataset *JP2OpenJPEGDataset::Open( GDALOpenInfo * poOpenInfo )
 #if OPJ_VERSION_MAJOR > 2 || OPJ_VERSION_MINOR >= 3
     if( poDS->bSingleTiled && poDS->bUseSetDecodeArea )
     {
-        poDS->m_pCodec = pCodec;
-        poDS->m_pStream = pStream;
-        poDS->m_psImage = psImage;
-        poDS->m_psJP2OpenJPEGFile = psJP2OpenJPEGFile;
+        // nothing
     }
     else
 #endif
