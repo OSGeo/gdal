@@ -1099,6 +1099,15 @@ def jp2openjpeg_26():
         print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.ErrorReset()
+    out_ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
