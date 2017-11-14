@@ -212,6 +212,13 @@ bool WCSDataset100::ExtractGridInfo()
                              adfGeoTransform, &pszProjection ) != CE_None )
         return FALSE;
 
+    if (EQUAL(CPLGetXMLValue(psService, "OriginNotCenter100", ""), "TRUE")) {
+        adfGeoTransform[0] += adfGeoTransform[1]*0.5;
+        adfGeoTransform[0] += adfGeoTransform[2]*0.5;
+        adfGeoTransform[3] += adfGeoTransform[4]*0.5;
+        adfGeoTransform[3] += adfGeoTransform[5]*0.5;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Fallback to nativeCRSs declaration.                             */
 /* -------------------------------------------------------------------- */
@@ -639,6 +646,11 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             if (kw != "") {
                 CPLString name = path3 + "keywords";
                 metadata = CSLSetNameValue(metadata, name, kw);
+            }
+
+            if ((node = CPLGetXMLNode(summary, "description"))) {
+                CPLString name = path3 + "description";
+                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }
 
             index++;

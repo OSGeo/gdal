@@ -33,21 +33,21 @@
 #include "cpl_minixml.h"
 #include <vector>
 
+void Swap(double &a, double &b);
+
 CPLString String(const char *str);
 
 int CompareNumbers(CPLString a, CPLString b);
 
-CPLString Max(double a, CPLString b, const char *format);
+CPLString Max(double a, double b);
 
-CPLString Min(double a, CPLString b, const char *format);
-
-CPLString Max(double a, double b, const char *format);
-
-CPLString Min(double a, double b, const char *format);
+CPLString Min(double a, double b);
 
 CPLString URLEncode(CPLString str);
 
 CPLString URLRemoveKey(const char *url, CPLString key);
+
+std::vector<CPLString> SwapFirstTwo(std::vector<CPLString> array);
 
 std::vector<CPLString> Split(const char *value,
                              const char *delim,

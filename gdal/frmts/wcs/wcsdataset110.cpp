@@ -65,30 +65,35 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
 
+    bool no_shrink = EQUAL(CPLGetXMLValue( psService, "OuterExtents", "" ), "TRUE");
+        
     // WCS 1.1 extents are centers of outer pixels.
-    extent[2] -= adfGeoTransform[1] * 0.5;
-    extent[0] += adfGeoTransform[1] * 0.5;
-    extent[1] -= adfGeoTransform[5] * 0.5;
-    extent[3] += adfGeoTransform[5] * 0.5;
+    if (!no_shrink) {
+        extent[2] -= adfGeoTransform[1] * 0.5;
+        extent[0] += adfGeoTransform[1] * 0.5;
+        extent[1] -= adfGeoTransform[5] * 0.5;
+        extent[3] += adfGeoTransform[5] * 0.5;
+    }
 
-    // Carefully adjust bounds for pixel centered values at new
-    // sampling density.
+    double dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+    double dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
 
-    double dfXStep = adfGeoTransform[1];
-    double dfYStep = adfGeoTransform[5];
-
-    if( nBufXSize != nXSize || nBufYSize != nYSize )
-    {
-        dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
-        dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
-
-        extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
-            + dfXStep * 0.5;
-        extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
-
-        extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
-            + dfYStep * 0.5;
-        extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
+    if (!no_shrink) {
+        // Carefully adjust bounds for pixel centered values at new
+        // sampling density.
+        if( nBufXSize != nXSize || nBufYSize != nYSize )
+        {
+            dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+            dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
+            
+            extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
+                + dfXStep * 0.5;
+            extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
+            
+            extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
+                + dfYStep * 0.5;
+            extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
+        }
     }
 
     extent.push_back(dfXStep);
@@ -142,15 +147,17 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
                                 osBandList.c_str() );
     }
 
+    double
+        bbox_0 = extent[0], // min X
+        bbox_1 = extent[1], // min Y
+        bbox_2 = extent[2], // max X
+        bbox_3 = extent[3]; // max Y
 
-
-    if (GML_IsSRSLatLongOrder(osCRS.c_str())) {
-        double tmp = extent[0];
-        extent[0] = extent[1];
-        extent[1] = tmp;
-        tmp = extent[2];
-        extent[2] = extent[3];
-        extent[3] = tmp;
+    if (axis_order_swap) {
+        bbox_0 = extent[1], // min Y
+        bbox_1 = extent[0], // min X
+        bbox_2 = extent[3], // max Y
+        bbox_3 = extent[2]; // max X
     }
     CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );
     request = CPLURLAddKVP(request, "SERVICE", "WCS");
@@ -160,17 +167,56 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
         CPLGetXMLValue( psService, "Version", "" ),
         osCoverage.c_str(),
         osFormat.c_str(),
-        extent[0], extent[1], extent[2], extent[3],
+        bbox_0, bbox_1, bbox_2, bbox_3,
         osCRS.c_str(),
         osRangeSubset.c_str(),
         CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
+    /*
+    request += CPLString().Printf("&WIDTH=%d&HEIGHT=%d",
+                                  nBufXSize, nBufYSize );
+    */
+    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     /*
     nogridcrs diff add
         0      0   1
         0      1   1
         1      0   0
         1      1   1
-    */
+    */    
+    double
+        origin_1 = extent[0], // min X
+        origin_2 = extent[3], // max Y
+        offset_1 = extent[4], // dX
+        offset_2 = extent[5]; // dY
+
+    if (axis_order_swap) {
+        origin_1 = extent[3]; // max Y
+        origin_2 = extent[0]; // min X
+        offset_1 = extent[5], // dY
+        offset_2 = extent[4]; // dX
+    }
+    CPLString offsets;
+    if (EQUAL(CPLGetXMLValue(psService, "OffsetsPositive", ""), "TRUE")) {
+        offset_1 = fabs(offset_1);
+        offset_2 = fabs(offset_2);
+    }
+    if (EQUAL(CPLGetXMLValue(psService, "Offsets", "4"), "2")) {
+        offsets = CPLString().Printf("%.15g,%.15g", offset_1, offset_2);
+    } else {
+        if (axis_order_swap) {
+            offsets = CPLString().Printf("0,%.15g,%.15g,0", offset_2, offset_1);
+        } else {
+            offsets = CPLString().Printf("%.15g,0,0,%.15g", offset_1, offset_2);
+        }
+    }
+    
     if( scaled || !EQUAL(CPLGetXMLValue( psService, "NoGridCRS", "" ), "TRUE") )
     {
         request += CPLString().Printf(
@@ -178,10 +224,11 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             "&GridCS=urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS"
             "&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs"
             "&GridOrigin=%.15g,%.15g"
-            "&GridOffsets=%.15g,0,0,%.15g",
+            "&GridOffsets=%s",
             osCRS.c_str(),
-            extent[0], extent[3],
-            extent[4], extent[5] );
+            origin_1, origin_2,
+            offsets.c_str()
+            );
     }
     fprintf(stderr, "URL=%s\n", request.c_str());
     return request;
@@ -260,108 +307,6 @@ bool WCSDataset110::ExtractGridInfo()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Extract Geotransform from GridCRS.                              */
-/* -------------------------------------------------------------------- */
-    const char *pszGridType = CPLGetXMLValue( psGCRS, "GridType",
-                                              "urn:ogc:def:method:WCS::2dSimpleGrid" );
-
-    char **papszOriginTokens =
-        CSLTokenizeStringComplex( CPLGetXMLValue( psGCRS, "GridOrigin", ""),
-                                  " ", FALSE, FALSE );
-    char **papszOffsetTokens =
-        CSLTokenizeStringComplex( CPLGetXMLValue( psGCRS, "GridOffsets", ""),
-                                  " ", FALSE, FALSE );
-
-    if( strstr(pszGridType,":2dGridIn2dCrs")
-        || strstr(pszGridType,":2dGridin2dCrs") )
-    {
-        if( CSLCount(papszOffsetTokens) == 4
-            && CSLCount(papszOriginTokens) == 2 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[2]);
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[3]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dGridIn2dCrs does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return false;
-        }
-    }
-
-    else if( strstr(pszGridType,":2dGridIn3dCrs") )
-    {
-        if( CSLCount(papszOffsetTokens) == 6
-            && CSLCount(papszOriginTokens) == 3 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[3]);
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[4]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dGridIn3dCrs does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return false;
-        }
-    }
-
-    else if( strstr(pszGridType,":2dSimpleGrid") )
-    {
-        if( CSLCount(papszOffsetTokens) == 2
-            && CSLCount(papszOriginTokens) == 2 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[1]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dSimpleGrid does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return false;
-        }
-    }
-
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognized GridCRS.GridType value '%s',\n"
-                  "unable to process WCS coverage.",
-                  pszGridType );
-        CSLDestroy( papszOffsetTokens );
-        CSLDestroy( papszOriginTokens );
-        return false;
-    }
-
-    CSLDestroy( papszOffsetTokens );
-    CSLDestroy( papszOriginTokens );
-
-    // GridOrigin is center of pixel ... offset half pixel to adjust.
-
-    adfGeoTransform[0] -= (adfGeoTransform[1]+adfGeoTransform[2]) * 0.5;
-    adfGeoTransform[3] -= (adfGeoTransform[4]+adfGeoTransform[5]) * 0.5;
-
-/* -------------------------------------------------------------------- */
 /*      Establish our coordinate system.                                */
 /* -------------------------------------------------------------------- */
     CPLString crs = ParseCRS(psGCRS);
@@ -381,14 +326,94 @@ bool WCSDataset110::ExtractGridInfo()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Collect size, origin, and offsets for SetGeometry()             */
+/*                                                                      */
+/*      Extract Geotransform from GridCRS.                              */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+    const char *pszGridType = CPLGetXMLValue( psGCRS, "GridType",
+                                              "urn:ogc:def:method:WCS::2dSimpleGrid" );
+    CPLString no_grid_swap = CPLGetXMLValue(psService, "NoGridSwap", "");
+    bool do_swap = axis_order_swap && no_grid_swap == "";
+    std::vector<double> origin = Flist(Split(CPLGetXMLValue(psGCRS, "GridOrigin", ""), " ", do_swap));
+
+    std::vector<CPLString> offset_1 = Split(CPLGetXMLValue(psGCRS, "GridOffsets", ""), " ");
+    std::vector<CPLString> offset_2;
+    int n = offset_1.size();
+    if (n % 2 != 0) {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "GridOffsets has incorrect amount of coefficients.\n"
+                  "Unable to process WCS coverage.");
+        return false;
+    }
+    for (int i = 0; i < n / 2; ++i) {
+        CPLString s = offset_1.back();
+        offset_1.pop_back();
+        offset_2.insert(offset_2.begin(), s);
+    }
+    std::vector<std::vector<double>> offsets;
+    if (do_swap) {
+        offsets.push_back(Flist(offset_2));
+        offsets.push_back(Flist(offset_1));
+    } else {
+        offsets.push_back(Flist(offset_1));
+        offsets.push_back(Flist(offset_2));
+    }
+
+    if( strstr(pszGridType,":2dGridIn2dCrs")
+        || strstr(pszGridType,":2dGridin2dCrs") )
+    {
+        if( !(offset_1.size() == 2
+              && origin.size() == 2 ))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "2dGridIn2dCrs does not have expected GridOrigin or\n"
+                      "GridOffsets values - unable to process WCS coverage.");
+            return false;
+        }
+    }
+
+    else if( strstr(pszGridType,":2dGridIn3dCrs") )
+    {
+        if( !(offset_1.size() == 3
+              && origin.size() == 3 ))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "2dGridIn3dCrs does not have expected GridOrigin or\n"
+                      "GridOffsets values - unable to process WCS coverage.");
+            return false;
+        }
+    }
+
+    else if( strstr(pszGridType,":2dSimpleGrid") )
+    {
+        if( !(offset_1.size() == 1
+              && origin.size() == 2 ))
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "2dSimpleGrid does not have expected GridOrigin or\n"
+                      "GridOffsets values - unable to process WCS coverage.");
+            return false;
+        }
+    }
+    
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unrecognized GridCRS.GridType value '%s',\n"
+                  "unable to process WCS coverage.",
+                  pszGridType );
+        return false;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Search for an ImageCRS for raster size.                         */
 /* -------------------------------------------------------------------- */
+    std::vector<int> size;
     CPLXMLNode *psNode;
 
-    nRasterXSize = -1;
-    nRasterYSize = -1;
     for( psNode = psSD->psChild;
-         psNode != NULL && nRasterXSize == -1;
+         psNode != NULL && size.size() == 0;
          psNode = psNode->psNext )
     {
         if( psNode->eType != CXT_Element
@@ -402,8 +427,8 @@ bool WCSDataset110::ExtractGridInfo()
                 std::vector<int> low = Ilist(Split(bbox[0], " "), 0, 2);
                 std::vector<int> high = Ilist(Split(bbox[1], " "), 0, 2);
                 if (low[0] == 0 && low[1] == 0) {
-                    nRasterXSize = high[0];
-                    nRasterYSize = high[1];
+                    size.push_back(high[0]);
+                    size.push_back(high[1]);
                 }
             }
         }
@@ -414,7 +439,7 @@ bool WCSDataset110::ExtractGridInfo()
 /*      system and derive the size from that.                           */
 /* -------------------------------------------------------------------- */
     for( psNode = psSD->psChild;
-         psNode != NULL && nRasterXSize == -1;
+         psNode != NULL && size.size() == 0;
          psNode = psNode->psNext )
     {
         if( psNode->eType != CXT_Element
@@ -424,19 +449,29 @@ bool WCSDataset110::ExtractGridInfo()
         CPLString osBBCRS = ParseCRS(psNode);
         if (osBBCRS == osCRS) {
             std::vector<CPLString> bbox = ParseBoundingBox(psNode);
-            if (bbox.size() >= 2
-                && adfGeoTransform[2] == 0.0
-                && adfGeoTransform[4] == 0.0)
+            bool not_rot = (offsets[0].size() == 1 && offsets[1].size() == 1)
+                || ((do_swap && offsets[0][0] == 0.0 && offsets[1][1] == 0.0)
+                    || (!do_swap && offsets[0][1] == 0.0 && offsets[1][0] == 0.0));
+            if (bbox.size() >= 2 && not_rot)
             {
                 std::vector<double> low = Flist(Split(bbox[0], " ", axis_order_swap), 0, 2);
                 std::vector<double> high = Flist(Split(bbox[1], " ", axis_order_swap), 0, 2);
-                nRasterXSize =
-                    (int) ((high[0] - low[0]) / adfGeoTransform[1] + 1.01);
-                nRasterYSize =
-                    (int) ((high[1] - low[1]) / fabs(adfGeoTransform[5]) + 1.01);
+                double c1 = offsets[0][0];
+                double c2 = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
+                size.push_back((int)((high[0] - low[0]) / c1 + 1.01));
+                size.push_back((int)((high[1] - low[1]) / fabs(c2) + 1.01));
             }
         }
     }
+
+    if( size.size() < 2 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not determine the size of the grid." );
+        return false;
+    }
+
+    SetGeometry(size, origin, offsets);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */

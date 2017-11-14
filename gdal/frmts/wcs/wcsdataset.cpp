@@ -135,10 +135,10 @@ void WCSDataset::SetGeometry(std::vector<int> size,
     
     adfGeoTransform[0] = origin[0];
     adfGeoTransform[1] = offsets[0][0];
-    adfGeoTransform[2] = offsets[0][1];
+    adfGeoTransform[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
     adfGeoTransform[3] = origin[1];
-    adfGeoTransform[4] = offsets[0][1];
-    adfGeoTransform[5] = offsets[1][1];
+    adfGeoTransform[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
+    adfGeoTransform[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
     
     adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
     adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
@@ -249,6 +249,9 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /*      Try and open result as a dataset.                               */
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
+   
+    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
+    dr->CreateCopy("/tmp/result.tiff", poTileDS, TRUE, NULL, NULL, NULL);
 
     if( poTileDS == NULL )
         return CE_Failure;
@@ -1053,7 +1056,13 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "BlockYSize",
         "NoDataValue",
         "NoGridSwap",
-        "SubsetAxisSwap"
+        "SubsetAxisSwap",
+        "GridAxisLabelSwap",
+        "OuterExtents",
+        "OriginNotCenter100",
+        "Offsets",
+        "OffsetsPositive",
+        "UseScaleFactor"
     };
     for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
         CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");

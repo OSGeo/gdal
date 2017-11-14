@@ -102,13 +102,33 @@ std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff,
                      (nXOff + nXSize) * adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
+
+    extent[2] -= adfGeoTransform[1] * 0.5;
+    extent[0] += adfGeoTransform[1] * 0.5;
+    extent[1] -= adfGeoTransform[5] * 0.5;
+    extent[3] += adfGeoTransform[5] * 0.5;
+
     /*
-    // ArcGIS requires us to be exact
-    extent[0] = MAX(adfGeoTransform[0], extent[0]);
-    extent[1] = MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]);
-    extent[2] = MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]);
-    extent[3] = MIN(adfGeoTransform[3], extent[3]);
+    double dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+    double dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
+
+    // Carefully adjust bounds for pixel centered values at new
+    // sampling density.
+    if( nBufXSize != nXSize || nBufYSize != nYSize )
+    {
+        dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
+        dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
+        
+        extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
+            + dfXStep * 0.5;
+        extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
+        
+        extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
+            + dfYStep * 0.5;
+        extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
+    }
     */
+    
     return extent;
 }
 
@@ -144,24 +164,13 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         y = ctmp;
     }
 
-    std::vector<CPLString> bbox = Split(CPLGetXMLValue(psService, "CoverageBBox", ""), ",");
-    const char *format = "%.18g";
-    /*
-    CPLString a = Max(extent[0], adfGeoTransform[0], format);
-    CPLString b = Min(extent[2], adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], format);
+    CPLString a = Max(adfGeoTransform[0], extent[0]);
+    CPLString b = Min(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]);
     tmp.Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
     request += tmp;
-    a = Max(extent[1], adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], format);
-    b = Min(extent[3], adfGeoTransform[3], format);
-    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
-    request += tmp;
-    */
-    CPLString a = Max(extent[0], bbox[0], format);
-    CPLString b = Min(extent[2], bbox[2], format);
-    tmp.Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
-    request += tmp;
-    a = Max(extent[1], bbox[1], format);
-    b = Min(extent[3], bbox[3], format);
+
+    a = Max(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]);
+    b = Min(adfGeoTransform[3], extent[3]);
     tmp.Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
     request += tmp;
 
@@ -184,8 +193,15 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
 
     if (scaled) {
         // scaling is expressed in grid axes
-        std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(psService, "GridAxes", ""), ",");
-        tmp.Printf("&SCALESIZE=%s(%i),%s(%i)", grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
+        if (EQUAL(CPLGetXMLValue(psService, "UseScaleFactor", ""), "TRUE")) {
+            double fx = fabs((extent[2] - extent[0])/adfGeoTransform[1]/((double)nBufXSize + 0.5));
+            double fy = fabs((extent[3] - extent[1])/adfGeoTransform[5]/((double)nBufYSize + 0.5));
+            //tmp.Printf("&SCALEAXES=%s(%.15g),%s(%.15g)", grid_axes[0].c_str(), fx, grid_axes[1].c_str(), fy);
+            tmp.Printf("&SCALEFACTOR=%.15g", MIN(fx,fy));
+        } else {
+            std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(psService, "GridAxes", ""), ",");
+            tmp.Printf("&SCALESIZE=%s(%i),%s(%i)", grid_axes[0].c_str(), nBufXSize, grid_axes[1].c_str(), nBufYSize);
+        }
         request += tmp;
     }
 
@@ -199,7 +215,18 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         request += "&RANGESUBSET=" + range;
     }
 
+    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
+
     // todo other stuff, e.g., GeoTIFF encoding
+
+    
     fprintf(stderr, "URL=%s\n", request.c_str());
 
     return request;
@@ -618,7 +645,6 @@ bool WCSDataset201::ExtractGridInfo()
 
     std::vector<CPLString> slow = Split(bbox[0], " ", axis_order_swap);
     std::vector<CPLString> shigh = Split(bbox[1], " ", axis_order_swap);
-    CPLSetXMLValue(psService, "CoverageBBox", (slow[0]+","+slow[1]+","+shigh[0]+","+shigh[1]).c_str());
     std::vector<double> low = Flist(slow, 0, 2);
     std::vector<double> high = Flist(shigh, 0, 2);
     std::vector<double> env;
@@ -664,7 +690,9 @@ bool WCSDataset201::ExtractGridInfo()
     grid_size.push_back(size[1][domain_indexes[1]] - size[0][domain_indexes[1]] + 1);
 
     path = "axisLabels";
-    std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", do_swap_grid_axis);
+    CPLString grid_axis_label_swap = CPLGetXMLValue(psService, "GridAxisLabelSwap", "");
+    bool swap_grid_axis_labels = do_swap_grid_axis || grid_axis_label_swap == "TRUE";
+    std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", swap_grid_axis_labels);
     CPLSetXMLValue(psService, "GridAxes", Join(grid_axes, ","));
 
     std::vector<double> origin;

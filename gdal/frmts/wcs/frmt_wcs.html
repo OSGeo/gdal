@@ -173,6 +173,9 @@ position by default.
         given in boundedBy.Envelope.axisLabels for GetCoverage
         request. May be needed for GeoServer when EPSG dictates axis
           order swap.)</li>
+        <li>GridAxisLabelSwap=TRUE (Swap the order of axis labels in
+        domainSet.RectifiedGrid.axisLabels. Needed for MapServer in
+        version 2.0.1 if the axis order is swapped)</li>
         <li>SKIP_GETCOVERAGE=TRUE (The driver will not make a small
         GetCoverage request to the server, which it usually does if it
         does not know the band count and band type but is otherwise

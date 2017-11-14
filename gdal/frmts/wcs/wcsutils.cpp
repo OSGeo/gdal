@@ -35,6 +35,13 @@
 
 #define DIGITS "0123456789"
 
+void Swap(double &a, double &b)
+{
+    double tmp = a;
+    a = b;
+    b = tmp;
+}
+
 CPLString String(const char *str)
 {
     CPLString retval = str;
@@ -46,12 +53,14 @@ int CompareNumbers(CPLString a, CPLString b)
     size_t a_dot = a.find(".");
     size_t b_dot = b.find(".");
     CPLString a_p = a.substr(0, a_dot);
-    CPLString b_p = a.substr(0, b_dot);
+    CPLString b_p = b.substr(0, b_dot);
     int d = a_p.length() - b_p.length();
-    for (int i = 0; i < d; ++i) {
-        if (d < 0) {
+    if (d < 0) {
+        for (int i = 0; i < -1*d; ++i) {
             a_p = "0" + a_p;
-        } else {
+        }
+    } else if (d > 0) {
+        for (int i = 0; i < d; ++i) {
             b_p = "0" + b_p;
         }
     }
@@ -64,11 +73,13 @@ int CompareNumbers(CPLString a, CPLString b)
     a_p = a.substr(a_dot+1, std::string::npos);
     b_p = b.substr(b_dot+1, std::string::npos);
     d = a_p.length() - b_p.length();
-    for (int i = 0; i < d; ++i) {
-        if (d < 0) {
-            a_p += "0";
-        } else {
-            b_p += "0";
+    if (d < 0) {
+        for (int i = 0; i < -1*d; ++i) {
+            a_p = "0" + a_p;
+        }
+    } else if (d > 0) {
+        for (int i = 0; i < d; ++i) {
+            b_p = "0" + b_p;
         }
     }
     c = strcmp(a_p, b_p);
@@ -80,42 +91,22 @@ int CompareNumbers(CPLString a, CPLString b)
     return 0;
 }
 
-CPLString Max(double a, CPLString b, const char *format)
-{
-    CPLString sa;
-    sa.Printf(format, a);
-    if (CompareNumbers(sa, b) < 0) {
-        return b;
-    }
-    return sa;
-}
-
-CPLString Min(double a, CPLString b, const char *format)
-{
-    CPLString sa;
-    sa.Printf(format, a);
-    if (CompareNumbers(sa, b) < 0) {
-        return sa;
-    }
-    return b;
-}
-
-CPLString Max(double a, double b, const char *format)
+CPLString Max(double a, double b)
 {
     CPLString sa, sb;
-    sa.Printf(format, a);
-    sb.Printf(format, b);
+    sa.Printf("%.17g", a);
+    sb.Printf("%.17g", b);
     if (CompareNumbers(sa, sb) < 0) {
         return sb;
     }
     return sa;
 }
 
-CPLString Min(double a, double b, const char *format)
+CPLString Min(double a, double b)
 {
     CPLString sa, sb;
-    sa.Printf(format, a);
-    sb.Printf(format, b);
+    sa.Printf("%.17g", a);
+    sb.Printf("%.17g", b);
     if (CompareNumbers(sa, sb) < 0) {
         return sa;
     }
@@ -143,7 +134,21 @@ CPLString URLRemoveKey(const char *url, CPLString key)
             break;
         }
     }
+    if (retval.back() == '&') {
+        retval.pop_back();
+    }
     return retval;
+}
+
+std::vector<CPLString> SwapFirstTwo(std::vector<CPLString> array)
+{
+    if (array.size() >= 2) {
+        CPLString tmp = array[0];
+        array[0] = array[1];
+        array[1] = tmp;
+        return array;
+    }
+    return array;
 }
 
 std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the_first_two)
@@ -157,9 +162,7 @@ std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the
     }
     CSLDestroy(tokens);
     if (swap_the_first_two && array.size() >= 2) {
-        CPLString tmp = array[0];
-        array[0] = array[1];
-        array[1] = tmp;
+        return SwapFirstTwo(array);
     }
     return array;
 }
