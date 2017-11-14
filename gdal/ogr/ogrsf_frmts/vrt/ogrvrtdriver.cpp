@@ -200,6 +200,7 @@ void RegisterOGRVRT()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "vrt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_vrt.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRVRTDriverOpen;
     poDriver->pfnIdentify = OGRVRTDriverIdentify;
