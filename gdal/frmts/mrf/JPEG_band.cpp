@@ -50,8 +50,7 @@
  * If the mask has no zero pixels, a zero length APP3 marker is inserted
  * 
  * On page reads, after the JPEG decompression, if a mask or a zero length APP3 marker is detected, 
- * the masked pixels with value of zero are set to non-zero (1 in the first band), 
- * while the non-masked ones are set to zero
+ * the masked pixels with value of zero are set to 1 while the non-masked ones are set to zero
  * 
  */
 
@@ -385,39 +384,28 @@ template<typename T> void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
-                if (mask->isSet(x, y)) {
-                    // Need to make sure the pixel is not empty, accumulate the values
-                    int val = 0;
-                    for (int c = 0; c < nc; c++)
-                        val += s[c];
-                    // If the output value is all zero, make the first component (red) non-zero
-                    if (0 == val)
-                        *s = static_cast<T>(1);
-                    s += nc;
+                if (mask->isSet(x, y)) { // Non zero pixel
+                    for (int c = 0; c < nc; c++, s++) {
+                        if (s[c] == 0)
+                            s[c] = 1;
+                    }
                 }
-                else
-                {
-                    // Force all components to zero
+                else { // Zero pixel
                     for (int c = 0; c < nc; c++)
                         *s++ = 0;
                 }
             }
     }
-    else if (MASK_FULL == sJ.mask_state) {
-        // All non-zero
+    else if (MASK_FULL == sJ.mask_state) { // All non-zero
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++) {
-                int val = 0;
-                for (int c = 0; c < nc; c++)
-                    val += s[c];
-                // Make the first component non-zero
-                if (0 == val)
-                    *s = static_cast<T>(1);
-                s += nc;
+                for (int c = 0; c < nc; c++, s++) {
+                    if (s[c] == 0)
+                        s[c] = 1;
+                }
             }
     }
 }
-
 
 // JPEG marker processor, for the Zen app3 marker
 // Can't return error, only works if the JPEG mask is all in the buffer

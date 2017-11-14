@@ -29,6 +29,7 @@
 ###############################################################################
 
 import sys
+import glob
 
 sys.path.append( '../pymod' )
 
@@ -64,14 +65,49 @@ init_list = [
     ('../../gcore/data/float64.tif', 1, 4672, ['COMPRESS=LERC', 'OPTIONS=V1:YES']),
     ('../../gcore/data/utmsmall.tif', 1, 50054, None),
     ('small_world_pct.tif', 1, 14890, ['COMPRESS=PPNG']),
-    ('byte.tif', 1, [4672, [4652,4603]], ['COMPRESS=JPEG', 'QUALITY=99']),
+    ('byte.tif', 1, [4672, [4603, 4652]], ['COMPRESS=JPEG', 'QUALITY=99']),
     # following expected checksums are for: gcc 4.4 debug, mingw/vc9 32-bit, mingw-w64/vc12 64bit, MacOSX
     ('rgbsmall.tif', 1, [21212, [21162, 21110, 21155, 21116]], ['COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21172, 21262, 21163, 21440]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
-    ('rgbsmall.tif', 1, [21212, [21165, 21103, 21159, 21100]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
-    ('rgbsmall.tif', 1, [21212, [21225, 21062, 21221, 21060]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
+    ('rgbsmall.tif', 1, [21212, [21266, 21369, 21256, 21495]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99']),
+    ('rgbsmall.tif', 1, [21212, [21261, 21209, 21254, 21215]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=RGB']),
+    ('rgbsmall.tif', 1, [21212, [21283, 21127, 21278, 21124]], ['INTERLEAVE=PIXEL','COMPRESS=JPEG', 'QUALITY=99','PHOTOMETRIC=YCC']),
     ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
 ]
+
+def mrf_zen_test():
+    result = 'success'
+    expectedCS = 770
+    testvrt = '''
+<VRTDataset rasterXSize="512" rasterYSize="512">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">tmp/masked.mrf</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="512" RasterYSize="512" DataType="Byte" BlockXSize="512" BlockYSize="512" />
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
+      <LUT>0:0,1:255,255:255</LUT>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
+'''
+    for interleave in 'PIXEL', 'BAND':
+        co = ['COMPRESS=JPEG', 'INTERLEAVE=' + interleave]
+        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format = 'MRF', creationOptions = co);
+        ds = gdal.Open(testvrt)
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != expectedCS:
+            gdaltest.post_reason('Interleave=' + interleave + 
+                                 ' expected checksum ' + str(expectedCS) + ' got ' + str(cs))
+            result = 'fail'
+        for f in glob.glob('tmp/masked.*'):
+            gdal.Unlink(f)
+#        if result != 'success':
+#            return result
+
+    return result
+
 
 def mrf_overview_near_fact_2():
 
@@ -649,42 +685,19 @@ def mrf_versioned():
 def mrf_cleanup():
 
     files = [
-'12bit_rose_extract.jpg.idx',
-'12bit_rose_extract.jpg.pjg',
-'12bit_rose_extract.jpg.tst',
-'12bit_rose_extract.jpg.tst.aux.xml',
-'byte.tif.idx',
-'byte.tif.lrc',
-'byte.tif.pjg',
-'byte.tif.ppg',
-'byte.tif.pzp',
-'byte.tif.til',
-'byte.tif.tst',
-'byte.tif.tst.aux.xml',
-'int16.tif.idx',
-'int16.tif.lrc',
-'int16.tif.ppg',
-'int16.tif.tst',
-'int16.tif.tst.aux.xml',
+'12bit_rose_extract.jpg.*',
+'byte.tif.*',
+'int16.tif.*',
 'out.idx',
 'out.mrf',
 'out.mrf.aux.xml',
 'out.ppg',
-'rgbsmall.tif.idx',
-'rgbsmall.tif.pjg',
-'rgbsmall.tif.tst',
-'rgbsmall.tif.tst.aux.xml',
-'small_world_pct.tif.idx',
-'small_world_pct.tif.ppg',
-'small_world_pct.tif.tst',
-'small_world_pct.tif.tst.aux.xml',
-'cloning.idx',
-'cloning.mrf',
-'cloning.mrf.aux.xml',
-'cloning.ppg' ]
+'rgbsmall.tif.*',
+'small_world_pct.tif.*',
+'cloning.*' ]
 
-    for f in files:
-        gdal.Unlink('tmp/' + f)
+    for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
+        gdal.Unlink(f)
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
@@ -726,10 +739,13 @@ for item in init_list:
     else:
         chksum = chksum_param
         chksum_after_reopening = chksum_param
-    ut = gdaltest.GDALTest( 'MRF', src_filename, item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening )
+
+    ut = gdaltest.GDALTest('MRF', src_filename, item[1], chksum, options = options, chksum_after_reopening = chksum_after_reopening)
     if ut is None:
         print( 'MRF tests skipped' )
+
     ut = myTestCreateCopyWrapper(ut)
+
     gdaltest_list.append( (ut.myTestCreateCopy, item[0] + ' ' + str(options)) )
 
 gdaltest_list += [ mrf_overview_near_fact_2 ]
@@ -746,6 +762,7 @@ gdaltest_list += [ mrf_lerc_nodata ]
 gdaltest_list += [ mrf_lerc_with_huffman ]
 gdaltest_list += [ mrf_cached_source ]
 gdaltest_list += [ mrf_versioned ]
+# gdaltest_list += [ mrf_zen_test ]
 gdaltest_list += [ mrf_cleanup ]
 
 if __name__ == '__main__':
