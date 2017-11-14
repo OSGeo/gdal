@@ -296,15 +296,18 @@ int main( int argc, char ** argv )
         hFld = OGR_Fld_Create( pszElevAttrib, OFTReal );
         OGR_Fld_SetWidth( hFld, 12 );
         OGR_Fld_SetPrecision( hFld, 3 );
-        OGR_L_CreateField( hLayer, hFld, FALSE );
+        OGRErr eErr = OGR_L_CreateField( hLayer, hFld, FALSE );
         OGR_Fld_Destroy( hFld );
+        if( eErr == OGRERR_FAILURE )
+        {
+            exit( 1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    /* CPLErr eErr = */
-    GDALContourGenerate( hBand, dfInterval, dfOffset,
+    CPLErr eErr = GDALContourGenerate( hBand, dfInterval, dfOffset,
                          nFixedLevelCount, adfFixedLevels,
                          bNoDataSet, dfNoData, hLayer,
                          OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
@@ -326,5 +329,5 @@ int main( int argc, char ** argv )
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
-    return 0;
+    return (eErr == CE_None) ? 0 : 1;
 }
