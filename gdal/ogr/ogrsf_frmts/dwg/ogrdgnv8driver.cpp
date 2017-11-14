@@ -148,6 +148,7 @@ void RegisterOGRDGNV8()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Microstation DGNv8" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dgn" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_dgnv8.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"

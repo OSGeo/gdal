@@ -375,6 +375,11 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
 
+/** Capability set by drivers which support feature styles.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_FEATURE_STYLES     "DCAP_FEATURE_STYLES"
+
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate( GDALDriverH hDriver,

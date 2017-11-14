@@ -3064,6 +3064,8 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                 printf( "  Supports: Creating geometry fields with NOT NULL constraint.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_NONSPATIAL, false ) )
                 printf( "  No support for geometries.\n" );/*ok*/
+            if( CPLFetchBool( papszMD, GDAL_DCAP_FEATURE_STYLES, false ) )
+                printf( "  Supports: Feature styles.\n" );/*ok*/
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONOPTIONLIST ) )
             {
                 CPLXMLNode *psCOL =
