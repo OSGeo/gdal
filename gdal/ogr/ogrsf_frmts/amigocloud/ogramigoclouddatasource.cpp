@@ -48,9 +48,7 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     bUseHTTPS(false),
     bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1)
-{
-    CPLSetConfigOption( "GDAL_HTTP_USERAGENT", "gdal/AmigoCloud build:2.x" );
-}
+{}
 
 /************************************************************************/
 /*                       ~OGRAmigoCloudDataSource()                        */
@@ -67,12 +65,20 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
     {
         char** papszOptions = NULL;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("AMIGOCLOUD:%p", this));
+        papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
         CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
     }
 
     CPLFree( pszName );
     CPLFree(pszProjetctId);
+}
+
+std::string  OGRAmigoCloudDataSource::GetUserAgentOption()
+{
+    std::stringstream userAgent;
+    userAgent << "USERAGENT=gdal/AmigoCloud build:" << GDALVersionInfo("RELEASE_NAME");
+    return userAgent.str();
 }
 
 /************************************************************************/
@@ -455,6 +461,7 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
         osPOSTFIELDS += pszPostData;
     papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
     papszOptions = CSLAddString(papszOptions, pszHeaders);
+    papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
@@ -584,6 +591,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     char** papszOptions=NULL;
     CPLString osPOSTFIELDS("CUSTOMREQUEST=DELETE");
     papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
+    papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
@@ -671,8 +679,10 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
             osURL += "&token=";
         osURL += osAPIKey;
     }
+    char** papszOptions=NULL;
+    papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
 
-    CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), NULL);
+    CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
     if( psResult == NULL ) {
         return NULL;
     }
@@ -771,6 +781,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 
     std::string pszAPIURL = GetAPIURL();
     char** papszOptions = NULL;
+    papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
 
     pszAPIURL += osSQL;
 

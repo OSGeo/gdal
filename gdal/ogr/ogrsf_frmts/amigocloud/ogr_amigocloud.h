@@ -285,6 +285,8 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
         static int                         FetchSRSId( OGRSpatialReference * poSRS );
 
+        std::string                 GetUserAgentOption();
+
         int                         IsAuthenticatedConnection() { return !osAPIKey.empty(); }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
         void                        SetOGRMetadataFunction(int bFlag) { bHasOGRMetadataFunction = bFlag; }
