@@ -84,7 +84,7 @@ Usage:
 ogrinfo [--help-general] [-ro] [-q] [-where restricted_where|\@filename]
         [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
         [-sql statement|\@filename] [-dialect dialect] [-al] [-rl] [-so] [-fields={YES/NO}]
-        [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [-formats] [[-oo NAME=VALUE] ...]
+        [-geom={YES/NO/SUMMARY/WKT/ISO_WKT}] [--formats] [[-oo NAME=VALUE] ...]
         [-nomd] [-listmdd] [-mdd domain|`all`]*
         [-nocount] [-noextent]
         datasource_name [layer [layer ...]]

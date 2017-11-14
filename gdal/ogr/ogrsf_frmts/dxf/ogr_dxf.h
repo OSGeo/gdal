@@ -220,8 +220,6 @@ class OGRDXFFeature : public OGRFeature
 
     OGRDXFFeature    *CloneDXFFeature();
 
-    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
-
     DXFTriple GetOCS() const { return oOCS; }
     bool IsBlockReference() const { return bIsBlockReference; }
     CPLString GetBlockName() const { return osBlockName; }
@@ -229,6 +227,10 @@ class OGRDXFFeature : public OGRFeature
     DXFTriple GetBlockScale() const { return oBlockScale; }
     DXFTriple GetInsertOCSCoords() const { return oOriginalCoords; }
     CPLString GetAttributeTag() const { return osAttributeTag; }
+
+    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
+    const CPLString   GetColor( OGRDXFDataSource* const poDS,
+                                OGRDXFFeature* const poBlockFeature = NULL );
 };
 
 /************************************************************************/
