@@ -160,21 +160,14 @@ __inline int CPL_safer_snprintf(char* str, size_t size, const char* format, ...)
 
 #define lfind _lfind
 
-#if defined(_MSC_VER) && (_MSC_VER < 1310)
-#  define VSI_STAT64 _stat
-#  define VSI_STAT64_T _stat
-#else
-#  define VSI_STAT64 _stat64
-#  define VSI_STAT64_T __stat64
-#endif
-
-/* VC6 doesn't known intptr_t */
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-    typedef int intptr_t;
-#endif
+#define VSI_STAT64 _stat64
+#define VSI_STAT64_T __stat64
 
 #pragma warning(disable: 4786)
 
 /* #define CPL_DISABLE_DLL */
+
+/* Define to 1, if your compiler supports long long data type */
+#define HAVE_LONG_LONG 1
 
 #endif /* CPL_CONFIG_H */

@@ -220,30 +220,10 @@ typedef int             GBool;
 /* -------------------------------------------------------------------- */
 
 #if defined(WIN32) && defined(_MSC_VER)
-
 #define VSI_LARGE_API_SUPPORTED
-typedef __int64          GIntBig;
-typedef unsigned __int64 GUIntBig;
+#endif
 
-/** Minimum GIntBig value */
-#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
-/** Maximum GIntBig value */
-#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
-/** Maximum GUIntBig value */
-#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
-
-#define CPL_HAS_GINT64 1
-
-/** Signed 64 bit integer type */
-typedef GIntBig          GInt64;
-/** Unsigned 64 bit integer type */
-typedef GUIntBig         GUInt64;
-
-#define GINT64_MIN      GINTBIG_MIN
-#define GINT64_MAX      GINTBIG_MAX
-#define GUINT64_MAX     GUINTBIG_MAX
-
-#elif HAVE_LONG_LONG
+#if HAVE_LONG_LONG
 
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
