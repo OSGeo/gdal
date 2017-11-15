@@ -193,7 +193,16 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       }
 
       for (j=0;j<ngroups;j++)
+      {
+          if( gwidth[j] > INT_MAX - idrstmpl[10] )
+          {
+             free(ifld);
+             free(gwidth);
+             free(gref);
+             return -1;
+          }
           gwidth[j]=gwidth[j]+idrstmpl[10];
+      }
 
 //
 //  Extract Each Group's length (number of values in each group)
