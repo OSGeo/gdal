@@ -258,6 +258,11 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
         return NULL;
     }
 
+    // HACK. We don't handle 3D GEOGCS right now, so hardcode 3D WGS 84 to
+    // return 2D WGS 84.
+    if( iSrsId == 4979 )
+        iSrsId = 4326;
+
     std::map<int, OGRSpatialReference*>::const_iterator oIter =
                                                 m_oMapSrsIdToSrs.find(iSrsId);
     if( oIter != m_oMapSrsIdToSrs.end() )
@@ -267,11 +272,6 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
         oIter->second->Reference();
         return oIter->second;
     }
-
-    // HACK. We don't handle 3D GEOGCS right now, so hardcode 3D WGS 84 to
-    // return 2D WGS 84.
-    if( iSrsId == 4979 )
-        iSrsId = 4326;
 
     CPLString oSQL;
     oSQL.Printf( "SELECT definition, organization, organization_coordsys_id "
