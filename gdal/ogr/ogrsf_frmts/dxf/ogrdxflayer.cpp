@@ -765,7 +765,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 /*      ATTDEF entities when we are not inlining blocks.                */
 /************************************************************************/
 
-OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
+OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
 
 {
     char szLineBuf[257];
@@ -790,8 +790,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
     int nAnchorPosition = 1;
     int nHorizontalAlignment = 0;
     int nVerticalAlignment = 0;
-
-    bool bIsAttribOrAttdef = false;
 
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
@@ -851,13 +849,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT()
 
           case 7:
             osStyleName = TextRecode(szLineBuf);
-            break;
-          
-          case 100:
-            if( STARTS_WITH_CI( szLineBuf, "AcDbAttribute" ) )
-                bIsAttribOrAttdef = true;
-
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
 
           // 2 and 70 are for ATTRIB and ATTDEF entities only
@@ -2846,7 +2837,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
                 return NULL;
             }
 
-            OGRDXFFeature *poAttribFeature = TranslateTEXT();
+            OGRDXFFeature *poAttribFeature = TranslateTEXT( true );
 
             if( poAttribFeature && poAttribFeature->osAttributeTag != "" )
                 apoAttribs.push( poAttribFeature );
@@ -2997,10 +2988,13 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateMTEXT();
         }
-        else if( EQUAL(szLineBuf,"TEXT") ||
-            EQUAL(szLineBuf,"ATTDEF") )
+        else if( EQUAL(szLineBuf,"TEXT") )
         {
-            poFeature = TranslateTEXT();
+            poFeature = TranslateTEXT( false );
+        }
+        else if( EQUAL(szLineBuf,"ATTDEF") )
+        {
+            poFeature = TranslateTEXT( true );
         }
         else if( EQUAL(szLineBuf,"LINE") )
         {

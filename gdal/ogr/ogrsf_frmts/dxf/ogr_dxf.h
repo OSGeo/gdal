@@ -271,7 +271,7 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     Translate3DFACE();
     OGRDXFFeature *     TranslateINSERT();
     OGRDXFFeature *     TranslateMTEXT();
-    OGRDXFFeature *     TranslateTEXT();
+    OGRDXFFeature *     TranslateTEXT( const bool bIsAttribOrAttdef );
     OGRDXFFeature *     TranslateDIMENSION();
     OGRDXFFeature *     TranslateHATCH();
     OGRDXFFeature *     TranslateSOLID();
