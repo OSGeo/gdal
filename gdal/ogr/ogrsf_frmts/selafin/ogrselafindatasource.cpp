@@ -491,7 +491,9 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     sDate.tm_mday=poHeader->panStartDate[2];
                     sDate.tm_hour=poHeader->panStartDate[3];
                     sDate.tm_min=poHeader->panStartDate[4];
-                    sDate.tm_sec=poHeader->panStartDate[5]+(int)dfTime;
+                    double dfSec=poHeader->panStartDate[5]+dfTime;
+                    if( dfSec >= 0 && dfSec < 60 )
+                        sDate.tm_sec=static_cast<int>(dfSec);
                     mktime(&sDate);
                     strftime(szTemp,29,"%Y_%m_%d_%H_%M_%S",&sDate);
                 }
