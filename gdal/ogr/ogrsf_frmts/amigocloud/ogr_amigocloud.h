@@ -283,7 +283,9 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         json_object*                RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-        static int                         FetchSRSId( OGRSpatialReference * poSRS );
+        static int                  FetchSRSId( OGRSpatialReference * poSRS );
+
+        static std::string          GetUserAgentOption();
 
         int                         IsAuthenticatedConnection() { return !osAPIKey.empty(); }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
