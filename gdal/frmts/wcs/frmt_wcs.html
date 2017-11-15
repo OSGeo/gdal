@@ -127,7 +127,7 @@ position by default.
     <li>
       Once the coverage offering of the server is known, a coverage
       name/id can be added to the URL as a parameter (key may be
-      'coverageId', 'identifiers', or 'coverage'; the last one is
+      'coverageId', 'identifiers', or 'coverage'; 'coverage' is
       always used in the cache key). Given that, the driver attempts
       to fetch the coverage description from the server, save it to
       the cache (a new key is used), parse it, and create a service
@@ -141,46 +141,34 @@ position by default.
       define with the Range option the field that is put as data into
       the bands.
       <ul>
-        <li>CRS=value (Override the default CRS used by the
-        server. Note: currently not implemented.)</li>
-        <li>PreferredFormat=value (Override the default format
-        selected by the driver.)</li>
-        <li>Domain=axis_name,axis_name (The default is to use the
+        <li><b>PreferredFormat</b>=<i>name</i> Override the default
+          format selected by the driver. Should be one of the server
+          supported formats.</li>
+        
+        <li><b>Domain</b>=<i>axis_name,axis_name</i> The axes that are
+        used for the spatial dimensions. The default is to use the
         first two axes given by the server. The axis order swap may
-        apply.)</li>
-        <li>Dimensions=axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)
-        (Trim or slice a dimension when fetching data from the server.)</li>
-        <li>DimensionToBand=axis_name (Map the given dimension, for
-          example 'time', into bands.)</li>
-        <li>DefaultTime (see DefaultTime above, only for 1.0.0)</li>
-        <li>Interpolation=value (One of the server supported
-        interpolation methods.)</li>
-        <li>FieldName=field_name,field_name:field_name,.. (A list of
-        fields to be mapped to bands. A field_name:field_name element
-        in the list denotes a range of fields. If not set, defaults to
-        the first field in the coverage description in versions
-        1.)</li>       
-        <li>OverviewCount (see OverviewCount above)</li>
-        <li>GetCoverageExtra (see GetCoverageExtra above)</li>
-        <li>DescribeCoverageExtra (see DescribeCoverageExtra above)</li>
-        <li>BlockXSize (see BlockXSize above)</li>
-        <li>BlockYSize (see BlockYSize above)</li>
-        <li>NoDataValue=value,value,.. ('no data' values for the fields)</li>
-        <li>NoGridSwap=TRUE (The driver will not swap the grid axis order
-        even though the GridFunction.sequenceRule.axisOrder appears to
-          say so.)</li>
-        <li>SubsetAxisSwap=TRUE (The driver will swap the axis names
-        given in boundedBy.Envelope.axisLabels for GetCoverage
-        request. May be needed for GeoServer when EPSG dictates axis
-          order swap.)</li>
-        <li>GridAxisLabelSwap=TRUE (Swap the order of axis labels in
-        domainSet.RectifiedGrid.axisLabels. Needed for MapServer in
-        version 2.0.1 if the axis order is swapped)</li>
-        <li>SKIP_GETCOVERAGE=TRUE (The driver will not make a small
-        GetCoverage request to the server, which it usually does if it
-        does not know the band count and band type but is otherwise
-        ok. This may be needed if GetCoverage request fails due to
-        reasons mentioned above.)</li>
+        apply.</li>
+        <li><b>Dimensions</b>=<i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
+        Trim or slice a dimension when fetching data from the server.</li>
+        <li><b>DimensionToBand</b>=<i>axis_name</i> Map the given dimension, for
+          example 'time', into bands.</li>
+        <li><b>DefaultTime</b> See above, only for 1.0.0.</li>
+        <li><b>Interpolation</b>=<i>name</i> Override the default
+          interpolation method used by the server. Should be one of
+          the server supported interpolation methods.</li>
+        <li><b>FieldName</b>=<i>field_name,field_name:field_name,..</i>
+        A list of fields to be mapped to
+        bands. A <i>field_name:field_name</i> in the list denotes a
+        range of fields. If not set, defaults to the first field in
+        the coverage description in versions 1.0 and 1.1.</li>
+        <li><b>OverviewCount</b> See above.</li>
+        <li><b>GetCoverageExtra</b> See above.</li>
+        <li><b>DescribeCoverageExtra</b> See above.</li>
+        <li><b>BlockXSize</b> See above.</li>
+        <li><b>BlockYSize</b> See above.</li>
+        <li><b>NoDataValue</b>=<i>value,value,..</i> ('no data' values
+        for the fields)</li>
       </ul>
     </li>
     <li>Once the service file is such that it specifies bands, it can
@@ -189,7 +177,57 @@ position by default.
   </ol>
 </p>
 
-<p></p>
+<p>Servers have bugs. The following options are for fixing them on the
+  client side.
+  <ul>
+    <li><b>SKIP_GETCOVERAGE</b>=TRUE (The driver will not make a
+        GetCoverage request to the server, which it usually does if it
+        can't determine the band count and band data type from the
+        capabilities or coverage descriptions. This option may be
+      needed if GetCoverage request fails.)</li>
+    <li><b>OriginNotCenter100</b>=<i>TRUE</i> Some MapServers set the
+    grid origin to the pixel boundary instead of setting it to the
+      pixel center.</li>
+    <li><b>OuterExtents</b>=<i>TRUE</i> WCS 1.1 extents are centers of
+    outer pixels. However, some GeoServers want the extents as
+      boundaries or outer pixels.
+    <li><b>BufSizeAdjust</b>=<i>value</i> In WCS 1.1 one can't set the
+      size of the requested tile in pixels. GDAL call to dataset data
+      fails if the response is not expected size. In some cases this
+      value needs to be set to a value of 0.5 to get the requested
+      size.</li>
+    <li><b>OffsetsPositive</b>=<i>TRUE</i>
+    and <b>NrOffsets</b>=<i>2</i> The WCS 1.1 standard says that when
+    the grid is of type 2dGridIn2dCrs, which is the simplest one,
+    GridOffsets should have four values. However, some servers expect
+    there to be only two (MapServer and ArcGIS) and MapServer expects
+      them to be both positive.
+    <li><b>GridCRS</b>=<i>TRUE</i> If a WCS 1.1 request is not
+    scaled GDAL traditionally has left the Grid* parameters away from
+    the GetCoverage request. Setting this option forces them into the
+      request. Needed for GeoServer.</li>
+    <li><b>NoGridAxisSwap</b>=<i>TRUE</i> When reading the grid
+      geometry (in 1.1 origin and offsets, in 2.0.1 envelope, axis
+      labels, and offsets) no axis order swap is done although it
+      would otherwise be done. In 1.1 it would be done if the CRS has
+      inverted axes. In 2.0.1 it would be done if the axisOrder of the
+      sequenceRule in GridFunction defines os. This is needed usually
+      both in 1.1 and 2.0.1 when parsing coverage descriptions from
+      MapServer and GeoServer. Note that the </li>
+    <li><b>GridAxisLabelSwap</b>=<i>TRUE</i> When reading the grid
+      axis labels from 2.0.1 coverage description they are swapped
+      even though there is no GridFunction to tell so. May be needed
+      for MapServer in version 2.0.1 if the CRS axis order is
+      swapped.</li>
+    <li><b>SubsetAxisSwap</b>=<i>TRUE</i> When making WCS 2.0.1
+        GetCoverage request, the driver will swap the axis names given
+        in boundedBy.Envelope.axisLabels. May be needed for GeoServer
+      when EPSG dictates axis order swap.</li>
+    <li><b>UseScaleFactor</b>=<i>TRUE</i> When making WCS 2.0.1
+        GetCoverage request, the driver will use scale by factor
+        approach instead of scale to size. This is required when the server is ArcGIS.</li>
+  </ul>
+</p>
 
 <h3>Time</h3>
 

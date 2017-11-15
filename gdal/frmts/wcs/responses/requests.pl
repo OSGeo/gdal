@@ -8,7 +8,12 @@ my $size = 60;
 my $setup = {
     SimpleGeoServer => {
         URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
-        Options => ["", "-oo OuterExtents=TRUE", "-oo OuterExtents=TRUE", ""],
+        Options => [
+            "", 
+            "-oo GridCRS=TRUE -oo OuterExtents=TRUE", 
+            "-oo GridCRS=TRUE -oo OuterExtents=TRUE", 
+            ""
+            ],
         Projwin => "-projwin 145300 6737500 209680 6688700",
         Outsize => "-outsize $size 0",
         Coverage => ['smartsea:eusm2016', 'smartsea:eusm2016', 'smartsea:eusm2016', 'smartsea__eusm2016'],
@@ -18,9 +23,9 @@ my $setup = {
         URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
         Options => [
             "", 
-            "-oo OuterExtents=TRUE -oo NoGridSwap=TRUE",
-            "-oo OuterExtents=TRUE -oo NoGridSwap=TRUE",
-            "-oo NoGridSwap=TRUE -oo SubsetAxisSwap=TRUE"
+            "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
+            "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
+            "-oo GridCRS=TRUE -oo NoGridAxisSwap=TRUE -oo SubsetAxisSwap=TRUE"
             ],
         Projwin => "-projwin 3200000 6670000 3280000 6620000",
         Outsize => "-outsize $size 0",
@@ -31,9 +36,9 @@ my $setup = {
         URL => 'http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows',
         Options => [
             "-oo OriginNotCenter100=TRUE",
-            "-oo OffsetsPositive=TRUE -oo Offsets=2 -oo NoGridSwap=TRUE",
-            "-oo OffsetsPositive=TRUE -oo Offsets=2 -oo NoGridSwap=TRUE",
-            "-oo OffsetsPositive=TRUE -oo Offsets=2 -oo NoGridSwap=TRUE",
+            "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
+            "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
+            "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
             "-oo GridAxisLabelSwap=TRUE",
             ],
         Projwin => "-projwin 10 45 15 35",
@@ -53,9 +58,9 @@ my $setup = {
         URL => 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
         Options => [
             "",
-            "-oo Offsets=2",
-            "-oo Offsets=2",
-            "-oo Offsets=2",
+            "-oo NrOffsets=2",
+            "-oo NrOffsets=2",
+            "-oo NrOffsets=2",
             "-oo UseScaleFactor=TRUE"
             ],
         Projwin => "-projwin 181000 7005000 200000 6980000",
@@ -82,7 +87,7 @@ for my $server (sort keys %$setup) {
         $options = $options->[$i] if ref $options;
         my $result = "$server-$version.tiff";
         my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize} 2>&1";
-        say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result";
+        say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{show};
         my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result);
         my @full_output;
         foreach my $line (split /[\r\n]+/, $output) {

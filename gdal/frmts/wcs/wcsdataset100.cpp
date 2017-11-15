@@ -132,7 +132,6 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                        osBandIdentifier.c_str(),
                                        osBandList.c_str() );
     }
-    fprintf(stderr, "URL=%s\n", request.c_str());
     return request;
 }
 
@@ -212,7 +211,8 @@ bool WCSDataset100::ExtractGridInfo()
                              adfGeoTransform, &pszProjection ) != CE_None )
         return FALSE;
 
-    if (EQUAL(CPLGetXMLValue(psService, "OriginNotCenter100", ""), "TRUE")) {
+    // Some MapServers have origin at pixel boundary
+    if (CPLGetXMLBoolean(psService, "OriginNotCenter100")) {
         adfGeoTransform[0] += adfGeoTransform[1]*0.5;
         adfGeoTransform[0] += adfGeoTransform[2]*0.5;
         adfGeoTransform[3] += adfGeoTransform[4]*0.5;
@@ -637,7 +637,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                     std::vector<double> low = Flist(Split(bbox[0], " "), 0, 2);
                     std::vector<double> high = Flist(Split(bbox[1], " "), 0, 2);
                     CPLString str;
-                    str.Printf("%f,%f,%f,%f", low[0], low[1], high[0], high[1]);
+                    str.Printf("%.15g,%.15g,%.15g,%.15g", low[0], low[1], high[0], high[1]);
                     metadata = CSLSetNameValue(metadata, name, str);
                 }
             }

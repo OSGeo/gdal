@@ -345,6 +345,12 @@ CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char 
     return NULL;
 }
 
+bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath)
+{
+    CPLString value = CPLGetXMLValue(poRoot, pszPath, "");
+    return value == "TRUE";
+}
+
 /* -------------------------------------------------------------------- */
 /*      SetupCache                                                      */
 /* -------------------------------------------------------------------- */

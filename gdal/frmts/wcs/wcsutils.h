@@ -83,6 +83,8 @@ bool FileIsReadable(CPLString filename);
 bool MakeDir(CPLString dirname);
 
 CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value);
+
+bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath);
     
 bool SetupCache(CPLString &cache_dir,
                 bool clear);

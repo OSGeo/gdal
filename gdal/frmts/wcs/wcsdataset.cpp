@@ -1035,17 +1035,17 @@ static CPLXMLNode *CreateService(CPLString base_url,
 static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
 {
     bool updated = false;
+    // descriptions in frmt_wcs.html
     const char *keys[] = {
-        "NoGridCRS", // do not put GridCRS params into GetCoverage URL if not necessary (1.1)
-        "CRS", // override native CRS, should be one of the supported ones
-        "PreferredFormat", // option for format
-        "Domain", // names for x and y dimensions, if not set, uses the first two ("name,name")
-        "Dimensions", // options for slicing/trimming ("name[,crs](begin,end);name[,crs](slice)")
-                      // note that this is not for x/y
-        "DimensionToBand", // to put non x/y dimension to a band (may require Range) ("name")
+        "GridCRS",
+        "CRS",
+        "PreferredFormat",
+        "Domain",
+        "Dimensions",
+        "DimensionToBand",
         "DefaultTime",
         "Interpolation",
-        "FieldName", // what to put to bands, format as RANGESUBSET in GetCoverage ("name,name:name,")
+        "FieldName",
         "Timeout",
         "USERPWD",
         "HTTPAUTH",
@@ -1055,14 +1055,15 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "BlockXSize",
         "BlockYSize",
         "NoDataValue",
-        "NoGridSwap",
+        "NoGridAxisSwap",
         "SubsetAxisSwap",
         "GridAxisLabelSwap",
         "OuterExtents",
         "OriginNotCenter100",
-        "Offsets",
+        "NrOffsets",
         "OffsetsPositive",
-        "UseScaleFactor"
+        "UseScaleFactor",
+        "BufSizeAdjust"
     };
     for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
         CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");
