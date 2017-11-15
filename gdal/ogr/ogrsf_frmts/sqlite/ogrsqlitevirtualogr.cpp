@@ -677,6 +677,39 @@ int OGR2SQLITE_ConnectCreate(sqlite3* hDB, void *pAux,
 }
 
 /************************************************************************/
+/*                       OGR2SQLITE_IsHandledOp()                       */
+/************************************************************************/
+
+static bool OGR2SQLITE_IsHandledOp(int op)
+{
+    switch(op)
+    {
+        case SQLITE_INDEX_CONSTRAINT_EQ: return true;
+        case SQLITE_INDEX_CONSTRAINT_GT: return true;
+        case SQLITE_INDEX_CONSTRAINT_LE: return true;
+        case SQLITE_INDEX_CONSTRAINT_LT: return true;
+        case SQLITE_INDEX_CONSTRAINT_GE: return true;
+        case SQLITE_INDEX_CONSTRAINT_MATCH: return false; // unhandled
+#ifdef SQLITE_INDEX_CONSTRAINT_LIKE
+        /* SQLite >= 3.10 */
+        case SQLITE_INDEX_CONSTRAINT_LIKE: return true;
+        case SQLITE_INDEX_CONSTRAINT_GLOB: return false; // unhandled
+        case SQLITE_INDEX_CONSTRAINT_REGEXP: return false; // unhandled
+#endif
+#ifdef SQLITE_INDEX_CONSTRAINT_NE
+            /* SQLite >= 3.21 */
+        case SQLITE_INDEX_CONSTRAINT_NE: return true;
+        case SQLITE_INDEX_CONSTRAINT_ISNOT: return true;
+        case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: return true;
+        case SQLITE_INDEX_CONSTRAINT_ISNULL: return true;;
+        case SQLITE_INDEX_CONSTRAINT_IS: return true;
+#endif
+        default: break;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                        OGR2SQLITE_BestIndex()                        */
 /************************************************************************/
 
@@ -708,6 +741,20 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
             case SQLITE_INDEX_CONSTRAINT_LT: pszOp = " < "; break;
             case SQLITE_INDEX_CONSTRAINT_GE: pszOp = " >= "; break;
             case SQLITE_INDEX_CONSTRAINT_MATCH: pszOp = " MATCH "; break;
+#ifdef SQLITE_INDEX_CONSTRAINT_LIKE
+            /* SQLite >= 3.10 */
+            case SQLITE_INDEX_CONSTRAINT_LIKE: pszOp = " LIKE "; break;
+            case SQLITE_INDEX_CONSTRAINT_GLOB: pszOp = " GLOB "; break;
+            case SQLITE_INDEX_CONSTRAINT_REGEXP: pszOp = " REGEXP "; break;
+#endif
+#ifdef SQLITE_INDEX_CONSTRAINT_NE
+            /* SQLite >= 3.21 */
+            case SQLITE_INDEX_CONSTRAINT_NE: pszOp = " <> "; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNOT: pszOp = " IS NOT "; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: pszOp= " IS NOT NULL"; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNULL: pszOp = " IS NULL"; break;
+            case SQLITE_INDEX_CONSTRAINT_IS: pszOp = " IS "; break;
+#endif
             default: pszOp = " (unknown op) "; break;
         }
 
@@ -735,7 +782,7 @@ int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info* pIndex)
     {
         int iCol = pIndex->aConstraint[i].iColumn;
         if (pIndex->aConstraint[i].usable &&
-            pIndex->aConstraint[i].op != SQLITE_INDEX_CONSTRAINT_MATCH &&
+            OGR2SQLITE_IsHandledOp(pIndex->aConstraint[i].op) &&
             iCol < poFDefn->GetFieldCount() &&
             (iCol < 0 || poFDefn->GetFieldDefn(iCol)->GetType() != OFTBinary))
         {
@@ -825,7 +872,7 @@ int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
     OGR2SQLITE_vtab* pMyVTab = (OGR2SQLITE_vtab*) pVTab;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Open(%s, %s)",
-             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+             pMyVTab->poDS->GetDescription(), pMyVTab->poLayer->GetDescription());
 #endif
 
     OGRDataSource* poDupDataSource = NULL;
@@ -887,7 +934,7 @@ int OGR2SQLITE_Close(sqlite3_vtab_cursor* pCursor)
     OGR2SQLITE_vtab* pMyVTab = pMyCursor->pVTab;
 #ifdef DEBUG_OGR2SQLITE
     CPLDebug("OGR2SQLITE", "Close(%s, %s)",
-             pMyVTab->poDS->GetName(), pMyVTab->poLayer->GetName());
+             pMyVTab->poDS->GetDescription(), pMyVTab->poLayer->GetDescription());
 #endif
     pMyVTab->nMyRef --;
 
@@ -969,6 +1016,7 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             osAttributeFilter += "FID";
         }
 
+        bool bExpectRightOperator = true;
         switch(panConstraints[2 * i + 2])
         {
             case SQLITE_INDEX_CONSTRAINT_EQ: osAttributeFilter += " = "; break;
@@ -976,6 +1024,21 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             case SQLITE_INDEX_CONSTRAINT_LE: osAttributeFilter += " <= "; break;
             case SQLITE_INDEX_CONSTRAINT_LT: osAttributeFilter += " < "; break;
             case SQLITE_INDEX_CONSTRAINT_GE: osAttributeFilter += " >= "; break;
+            // unhandled: SQLITE_INDEX_CONSTRAINT_MATCH
+#ifdef SQLITE_INDEX_CONSTRAINT_LIKE
+            /* SQLite >= 3.10 */
+            case SQLITE_INDEX_CONSTRAINT_LIKE: osAttributeFilter += " LIKE "; break;
+            // unhandled: SQLITE_INDEX_CONSTRAINT_GLOB
+            // unhandled: SQLITE_INDEX_CONSTRAINT_REGEXP
+#endif
+#ifdef SQLITE_INDEX_CONSTRAINT_NE
+            /* SQLite >= 3.21 */
+            case SQLITE_INDEX_CONSTRAINT_NE: osAttributeFilter += " <> "; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNOT: osAttributeFilter += " IS NOT "; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNOTNULL: osAttributeFilter += " IS NOT NULL"; bExpectRightOperator = false; break;
+            case SQLITE_INDEX_CONSTRAINT_ISNULL: osAttributeFilter += " IS NULL"; bExpectRightOperator = false; break;
+            case SQLITE_INDEX_CONSTRAINT_IS: osAttributeFilter += " IS "; break;
+#endif
             default:
             {
                 sqlite3_free(pMyCursor->pVTab->zErrMsg);
@@ -986,29 +1049,32 @@ int OGR2SQLITE_Filter(sqlite3_vtab_cursor* pCursor,
             }
         }
 
-        if (sqlite3_value_type (argv[i]) == SQLITE_INTEGER)
+        if( bExpectRightOperator )
         {
-            osAttributeFilter +=
-                CPLSPrintf(CPL_FRMT_GIB, sqlite3_value_int64 (argv[i]));
-        }
-        else if (sqlite3_value_type (argv[i]) == SQLITE_FLOAT)
-        { // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
-            osAttributeFilter +=
-                CPLSPrintf("%.18g", sqlite3_value_double (argv[i]));
-        }
-        else if (sqlite3_value_type (argv[i]) == SQLITE_TEXT)
-        {
-            osAttributeFilter += "'";
-            osAttributeFilter += SQLEscapeLiteral((const char*) sqlite3_value_text (argv[i]));
-            osAttributeFilter += "'";
-        }
-        else
-        {
-            sqlite3_free(pMyCursor->pVTab->zErrMsg);
-            pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
-                                    "Unhandled constraint data type : %d",
-                                    sqlite3_value_type (argv[i]));
-            return SQLITE_ERROR;
+            if (sqlite3_value_type (argv[i]) == SQLITE_INTEGER)
+            {
+                osAttributeFilter +=
+                    CPLSPrintf(CPL_FRMT_GIB, sqlite3_value_int64 (argv[i]));
+            }
+            else if (sqlite3_value_type (argv[i]) == SQLITE_FLOAT)
+            { // Insure that only Decimal.Points are used, never local settings such as Decimal.Comma.
+                osAttributeFilter +=
+                    CPLSPrintf("%.18g", sqlite3_value_double (argv[i]));
+            }
+            else if (sqlite3_value_type (argv[i]) == SQLITE_TEXT)
+            {
+                osAttributeFilter += "'";
+                osAttributeFilter += SQLEscapeLiteral((const char*) sqlite3_value_text (argv[i]));
+                osAttributeFilter += "'";
+            }
+            else
+            {
+                sqlite3_free(pMyCursor->pVTab->zErrMsg);
+                pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
+                        "Unhandled constraint data type : %d",
+                        sqlite3_value_type (argv[i]));
+                return SQLITE_ERROR;
+            }
         }
     }
 
