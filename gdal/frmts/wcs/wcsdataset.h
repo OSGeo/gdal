@@ -44,7 +44,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
   friend class WCSDataset110;
   friend class WCSDataset201;
   
-    int         bServiceDirty;
+    bool        bServiceDirty;
     CPLXMLNode *psService;
 
     char       *apszCoverageOfferingMD[2];

@@ -387,6 +387,7 @@ bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
     }
     if (format != "") {
         CPLSetXMLValue(psService, "PreferredFormat", format);
+        bServiceDirty = true;
         return true;
     } else {
         return false;
@@ -522,6 +523,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, char ***metadata)
     } else {
         // todo: default to the first one?
         CPLSetXMLValue(psService, "NoDataValue", Join(nodata_array, ","));
+        bServiceDirty = true;
     }
 
     return fields;
@@ -585,6 +587,7 @@ bool WCSDataset201::ExtractGridInfo()
         domain.push_back(axes[0]);
         domain.push_back(axes[1]);
         CPLSetXMLValue(psService, "Domain", Join(domain, ","));
+        bServiceDirty = true;
     }
 
     // GridFunction (is optional)
@@ -656,7 +659,7 @@ bool WCSDataset201::ExtractGridInfo()
     path = "axisLabels";
     bool swap_grid_axis_labels = swap_grid_axis || CPLGetXMLBoolean(psService, "GridAxisLabelSwap");
     std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", swap_grid_axis_labels);
-    CPLSetXMLValue(psService, "GridAxes", Join(grid_axes, ","));
+    bServiceDirty = CPLUpdateXML(psService, "GridAxes", Join(grid_axes, ",")) || bServiceDirty;
 
     std::vector<double> origin;
     std::vector<std::vector<double>> offsets;
@@ -758,7 +761,8 @@ bool WCSDataset201::ExtractGridInfo()
             bands = fields;
         }
     }
-    CPLSetXMLValue(psService, "BandCount", CPLString().Printf("%d",bands));
+    bServiceDirty = CPLUpdateXML(psService, "BandCount", CPLString().Printf("%d",bands))
+        || bServiceDirty;
 
     // set the PreferredFormat value in service, unless it is set
     // by the user, either through direct edit or options
@@ -770,6 +774,5 @@ bool WCSDataset201::ExtractGridInfo()
 
     // todo: set the Interpolation, check it against InterpolationSupported
 
-    bServiceDirty = TRUE;
     return true;
 }

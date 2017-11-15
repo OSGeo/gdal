@@ -49,7 +49,7 @@ CPL_CVSID("$Id: wcsdataset.cpp 39343 2017-06-27 20:57:02Z rouault $")
 /************************************************************************/
 
 WCSDataset::WCSDataset(int version) :
-    bServiceDirty(FALSE),
+    bServiceDirty(false),
     psService(NULL),
     papszSDSModifiers(NULL),
     m_Version(version),
@@ -85,7 +85,7 @@ WCSDataset::~WCSDataset()
     if( bServiceDirty && !STARTS_WITH_CI(GetDescription(), "<WCS_GDAL>") )
     {
         CPLSerializeXMLTreeToFile( psService, GetDescription() );
-        bServiceDirty = FALSE;
+        bServiceDirty = false;
     }
 
     CPLDestroyXMLNode( psService );
@@ -451,7 +451,7 @@ int WCSDataset::DescribeCoverage()
     psCO->psNext = NULL;
 
     CPLAddXMLChild( psService, CPLCloneXMLTree( psCO ) );
-    bServiceDirty = TRUE;
+    bServiceDirty = true;
 
     psCO->psNext = psNext;
 
@@ -612,7 +612,7 @@ int WCSDataset::EstablishRasterDetails()
         psService, "BandType",
         GDALGetDataTypeName(poDS->GetRasterBand(1)->GetRasterDataType()) );
 
-    bServiceDirty = TRUE;
+    bServiceDirty = true;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -1032,7 +1032,7 @@ static CPLXMLNode *CreateService(CPLString base_url,
 /*                          UpdateService()                             */
 /************************************************************************/
 
-static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLString path)
+static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
 {
     bool updated = false;
     // descriptions in frmt_wcs.html
@@ -1066,17 +1066,21 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo, CPLStr
         "BufSizeAdjust"
     };
     for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
-        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");
-        if (value != "") {
-            if (!EQUAL(keys[i], "NoGridCRS")) {
-                updated = true;
+        const char *value;
+        if (CSLFindString(poOpenInfo->papszOpenOptions, keys[i]) != -1) {
+            value = "TRUE";
+        } else {
+            value = CSLFetchNameValue(poOpenInfo->papszOpenOptions, keys[i]);
+            if (value == NULL) {
+                continue;
             }
+        }
+        CPLString old = CPLGetXMLValue(service, keys[i], "");
+        if (value != old) {
             CPLSetXMLValue(service, keys[i], value);
+            updated = true;
         }
     }
-    // save it to cache
-    // it will be updated later with data from DescribeCoverage
-    CPLSerializeXMLTreeToFile(service, path);
     return updated;
 }
 
@@ -1206,7 +1210,11 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             } else {
                 psService = CreateService(base_url, version, coverage);
             }
-            if (UpdateService(psService, poOpenInfo, filename)) {
+            bool updated = UpdateService(psService, poOpenInfo);
+            if (updated || !(cached && !recreate_service)) {             
+                CPLSerializeXMLTreeToFile(psService, filename);
+            }
+            if (updated) {
                 CreateServiceMetadata(coverage, pam_filename, filename);
             }
             

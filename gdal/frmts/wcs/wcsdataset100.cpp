@@ -398,7 +398,7 @@ bool WCSDataset100::ExtractGridInfo()
 
         if( !osPreferredFormat.empty() )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "PreferredFormat",
                                          osPreferredFormat );
         }
@@ -414,7 +414,7 @@ bool WCSDataset100::ExtractGridInfo()
 
         if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
                                          pszSV );
         }
@@ -458,7 +458,7 @@ bool WCSDataset100::ExtractGridInfo()
 
         if( !osBandIdentifier.empty() )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "BandIdentifier",
                                          osBandIdentifier );
         }
@@ -497,7 +497,7 @@ bool WCSDataset100::ExtractGridInfo()
             && osCoverageExtra.ifind("time=") == std::string::npos )
         {
             osDefaultTime = aosTimePositions.back();
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "DefaultTime",
                                          osDefaultTime );
         }

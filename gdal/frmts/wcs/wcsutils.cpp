@@ -347,8 +347,18 @@ CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char 
 
 bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath)
 {
-    CPLString value = CPLGetXMLValue(poRoot, pszPath, "");
-    return value == "TRUE";
+    // returns true only if path exists and contains "TRUE"
+    return EQUAL(CPLGetXMLValue(poRoot, pszPath, ""), "TRUE");
+}
+
+bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value)
+{
+    CPLString old_value = CPLGetXMLValue(poRoot, pszPath, "");
+    if (new_value != old_value) {
+        CPLSetXMLValue(poRoot, pszPath, new_value);
+        return true;
+    }
+    return false;
 }
 
 /* -------------------------------------------------------------------- */

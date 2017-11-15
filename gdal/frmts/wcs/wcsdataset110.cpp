@@ -512,7 +512,7 @@ bool WCSDataset110::ExtractGridInfo()
 
         if( !osPreferredFormat.empty() )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "PreferredFormat",
                                          osPreferredFormat );
         }
@@ -529,7 +529,7 @@ bool WCSDataset110::ExtractGridInfo()
 
         if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
                                          pszSV );
         }
@@ -545,7 +545,7 @@ bool WCSDataset110::ExtractGridInfo()
 
         if( !osFieldName.empty() )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "FieldName",
                                          osFieldName );
         }
@@ -593,14 +593,17 @@ bool WCSDataset110::ExtractGridInfo()
 
         if( !osBandIdentifier.empty() )
         {
-            bServiceDirty = TRUE;
-            if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL )
+            if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL ) {
+                bServiceDirty = true;
                 CPLCreateXMLElementAndValue( psService, "BandIdentifier",
                                              osBandIdentifier );
+            }
 
-            if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
+            if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL ) {
+                bServiceDirty = true;
                 CPLCreateXMLElementAndValue( psService, "BandCount",
                                              CPLString().Printf("%d",iBand-1));
+            }
         }
 
         // Is this an ESRI server returning a GDAL recognised data type?
@@ -608,7 +611,7 @@ bool WCSDataset110::ExtractGridInfo()
         if( GDALGetDataTypeByName(osDataType) != GDT_Unknown
             && CPLGetXMLValue(psService,"BandType",NULL) == NULL )
         {
-            bServiceDirty = TRUE;
+            bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "BandType", osDataType );
         }
     }
