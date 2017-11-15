@@ -219,7 +219,7 @@ typedef int             GBool;
 /*      64bit support                                                   */
 /* -------------------------------------------------------------------- */
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(WIN32) && (defined(_MSC_VER) || defined(__MINGW32__))
 
 #define VSI_LARGE_API_SUPPORTED
 typedef __int64          GIntBig;
