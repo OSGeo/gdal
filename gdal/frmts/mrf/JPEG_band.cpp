@@ -144,7 +144,15 @@ static boolean fill_input_buffer_dec(j_decompress_ptr cinfo)
 /**
 *\brief: Do nothing stub function for JPEG library, not called
 */
-static void skip_input_data_dec(j_decompress_ptr /*cinfo*/, long /*l*/) {}
+static void skip_input_data_dec(j_decompress_ptr cinfo, long l) {
+    struct jpeg_source_mgr *src = cinfo->src;
+    if (l > 0) {
+        if (static_cast<size_t>(l) > src->bytes_in_buffer)
+            l = static_cast<long>(src->bytes_in_buffer);
+        src->bytes_in_buffer -= l;
+        src->next_input_byte += l;
+    }
+}
 
 // Destination should be already set up
 static void init_or_terminate_destination(j_compress_ptr /*cinfo*/) {}
@@ -382,12 +390,11 @@ template<typename T> void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
 
     if (MASK_LOADED == sJ.mask_state) { // Partial map
         for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
-            {
+            for (int x = 0; x < w; x++) {
                 if (mask->isSet(x, y)) { // Non zero pixel
                     for (int c = 0; c < nc; c++, s++) {
-                        if (s[c] == 0)
-                            s[c] = 1;
+                        if (*s == 0)
+                            *s = 1;
                     }
                 }
                 else { // Zero pixel
@@ -400,8 +407,8 @@ template<typename T> void apply_mask(MRFJPEGStruct &sJ, T *s, int nc) {
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++) {
                 for (int c = 0; c < nc; c++, s++) {
-                    if (s[c] == 0)
-                        s[c] = 1;
+                    if (*s == 0)
+                        *s = 1;
                 }
             }
     }

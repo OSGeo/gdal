@@ -103,8 +103,8 @@ def mrf_zen_test():
             result = 'fail'
         for f in glob.glob('tmp/masked.*'):
             gdal.Unlink(f)
-#        if result != 'success':
-#            return result
+        if result != 'success':
+            return result
 
     return result
 
@@ -762,7 +762,7 @@ gdaltest_list += [ mrf_lerc_nodata ]
 gdaltest_list += [ mrf_lerc_with_huffman ]
 gdaltest_list += [ mrf_cached_source ]
 gdaltest_list += [ mrf_versioned ]
-# gdaltest_list += [ mrf_zen_test ]
+gdaltest_list += [ mrf_zen_test ]
 gdaltest_list += [ mrf_cleanup ]
 
 if __name__ == '__main__':
