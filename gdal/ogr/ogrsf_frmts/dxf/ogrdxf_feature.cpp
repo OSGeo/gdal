@@ -130,10 +130,9 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
         nColor = atoi(oStyleProperties["Color"]);
 
     // Use ByBlock color?
-    if( nColor < 1 )
+    if( nColor < 1 && poBlockFeature )
     {
-        if( poBlockFeature &&
-            poBlockFeature->oStyleProperties.count("Color") > 0 )
+        if( poBlockFeature->oStyleProperties.count("Color") > 0 )
         {
             // Inherit color from the owning block
             nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
@@ -143,9 +142,15 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
             oStyleProperties["Color"] =
                 poBlockFeature->oStyleProperties["Color"];
         }
+        else
+        {
+            // If the owning block has no explicit color, assume ByLayer
+            nColor = 256;
+        }
     }
+
     // Use layer color?
-    else if( nColor > 255 )
+    if( nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
         if( pszValue != NULL )

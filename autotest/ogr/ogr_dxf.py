@@ -207,7 +207,7 @@ def ogr_dxf_6():
         gdaltest.post_reason( 'not keeping 2D text as 2D' )
         return 'fail'
 
-    if feat.GetStyleString() != 'LABEL(f:"normallatin1",t:"Test",a:30,s:5g,p:7,c:#000000)':
+    if feat.GetStyleString() != 'LABEL(f:"Arial",t:"Test",a:30,s:5g,p:7,c:#000000)':
         print(feat.GetStyleString())
         gdaltest.post_reason( 'got wrong style string' )
         return 'fail'
@@ -319,7 +319,7 @@ def ogr_dxf_9():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -760,7 +760,7 @@ def ogr_dxf_16():
         gdaltest.post_reason( 'Did not get expected first mtext.' )
         return 'fail'
 
-    expected_style = 'LABEL(f:"normallatin1",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
+    expected_style = 'LABEL(f:"Arial",t:"'+gdaltest.sample_style+'",a:45,s:0.5g,p:5,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s.' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -3283,7 +3283,7 @@ def ogr_dxf_49():
         gdaltest.post_reason( 'Wrong Text value on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,dx:30.293,dy:0,c:#ff0000)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293,c:#ff0000)':
         gdaltest.post_reason( 'Wrong style string on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
@@ -3330,6 +3330,65 @@ def ogr_dxf_49():
     f = lyr.GetFeature(2)
     if f.GetField('AttributeTag') != 'MYATTMULTI':
         gdaltest.post_reason( 'Wrong AttributeTag value on second ATTDEF' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test extended text styling (#7151) and additional ByBlock/ByLayer tests (#7130)
+
+def ogr_dxf_50():
+
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
+    ds = ogr.Open('data/text-fancy.dxf')
+    gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', None)
+
+    lyr = ds.GetLayer(0)
+
+    # Text in Times New Roman bold italic, stretched 190%, color ByLayer
+    # inside block inserted on a blue layer
+    f = lyr.GetFeature(0)
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151,dy:4.88825,c:#0000ff,a:0)':
+        gdaltest.post_reason( 'Wrong style string on feature 0' )
+        f.DumpReadable()
+        return 'fail'
+
+    # Polyline, color and linetype ByBlock inside block with red color
+    # and ByLayer linetype inserted on a layer with DASHED2 linetype
+    f = lyr.GetFeature(1)
+    if f.GetStyleString() != 'PEN(c:#ff0000,w:2.1g,p:"2.5g 1.25g")':
+        gdaltest.post_reason( 'Wrong style string on feature 1' )
+        f.DumpReadable()
+        return 'fail'
+
+    # Make sure TEXT objects don't inherit anything other than font name,
+    # bold and italic from their parent STYLE
+    f = lyr.GetFeature(2)
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Good text",p:1,s:5g,c:#000000)':
+        gdaltest.post_reason( 'Wrong style string on feature 2' )
+        f.DumpReadable()
+        return 'fail'
+
+    # Polyline, color ByBlock, inside block inserted on a blue layer
+    f = lyr.GetFeature(3)
+    if f.GetStyleString() != 'PEN(c:#0000ff,w:2.1g)':
+        gdaltest.post_reason( 'Wrong style string on feature 3' )
+        f.DumpReadable()
+        return 'fail'
+
+    # MTEXT stretched 250%, color ByLayer inside block inserted on a blue layer
+    f = lyr.GetFeature(4)
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice MTEXT",s:10g,w:250,p:8,c:#0000ff,a:0)':
+        gdaltest.post_reason( 'Wrong style string on feature 4' )
+        f.DumpReadable()
+        return 'fail'
+
+
+    # Individually invisible object should be invisible
+    f = lyr.GetFeature(5)
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Invisible text",p:1,s:5g,c:#00000000)':
+        gdaltest.post_reason( 'Wrong style string on feature 5' )
         f.DumpReadable()
         return 'fail'
 
@@ -3397,6 +3456,7 @@ gdaltest_list = [
     ogr_dxf_47,
     ogr_dxf_48,
     ogr_dxf_49,
+    ogr_dxf_50,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

@@ -381,6 +381,10 @@ class OGRDXFDataSource : public OGRDataSource
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
+    // indexed by style name, then by property name.
+    std::map< CPLString, std::map<CPLString,CPLString> >
+                        oTextStyleTable;
+
     // indexed by dimstyle name, then by DIM... variable name
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oDimStyleTable;
@@ -426,9 +430,13 @@ class OGRDXFDataSource : public OGRDataSource
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
+    bool                ReadTextStyleDefinition();
     bool                ReadDimStyleDefinition();
     const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
+    const char         *LookupTextStyleProperty( const char *pszTextStyle,
+                                                 const char *pszProperty,
+                                                 const char *pszDefault );
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     std::vector<double> LookupLineType( const char *pszName );
