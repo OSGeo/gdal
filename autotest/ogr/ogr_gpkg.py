@@ -4534,6 +4534,44 @@ def ogr_gpkg_56():
     return 'success'
 
 ###############################################################################
+# Test opening a corrupted gpkg with duplicated layer names
+
+def ogr_gpkg_57():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != 'YES':
+        return 'skip'
+
+    tmpfile = '/vsimem/tmp.gpkg.txt'
+    gdal.FileFromMemBuffer(tmpfile,
+"""-- SQL GPKG
+CREATE TABLE gpkg_spatial_ref_sys (srs_name,srs_id,organization,organization_coordsys_id,definition,description);
+INSERT INTO "gpkg_spatial_ref_sys" VALUES('',0,'NONE',0,'undefined','');
+CREATE TABLE gpkg_contents (table_name,data_type,identifier,description,last_change,min_x, min_y,max_x, max_y,srs_id);
+INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0);
+INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0);
+CREATE TABLE gpkg_geometry_columns (table_name,column_name,geometry_type_name,srs_id,z,m);
+INSERT INTO "gpkg_geometry_columns" VALUES('poly','geom','POLYGON',0,0,0);
+CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
+""")
+
+    with gdaltest.error_handler():
+        ds = ogr.Open(tmpfile)
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('bad layer count')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Table poly appearing several times') < 0:
+        gdaltest.post_reason('should NOT have warned')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4614,6 +4652,7 @@ gdaltest_list = [
     ogr_gpkg_54,
     ogr_gpkg_55,
     ogr_gpkg_56,
+    ogr_gpkg_57,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
