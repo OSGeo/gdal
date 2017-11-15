@@ -347,6 +347,11 @@ bool OGRDXFDataSource::ReadTablesSection()
                 if( !ReadLineTypeDefinition() )
                     return false;
             }
+            if( nCode == 0 && EQUAL(szLineBuf,"STYLE") )
+            {
+                if( !ReadTextStyleDefinition() )
+                    return false;
+            }
             if( nCode == 0 && EQUAL(szLineBuf,"DIMSTYLE") )
             {
                 if( !ReadDimStyleDefinition() )
@@ -534,6 +539,100 @@ std::vector<double> OGRDXFDataSource::LookupLineType( const char *pszName )
         return oLineTypeTable[pszName];
     else
         return std::vector<double>(); // empty, represents a continuous line
+}
+
+/************************************************************************/
+/*                       ReadTextStyleDefinition()                      */
+/************************************************************************/
+
+bool OGRDXFDataSource::ReadTextStyleDefinition()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+
+    CPLString osStyleName;
+    bool bInsideAcadSection = false;
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osStyleName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 ).toupper();
+            break;
+
+          case 70:
+            // If the LSB is set, this is not a text style
+            if( atoi(szLineBuf) & 1 )
+                return true;
+            break;
+
+          // Note: 40 and 41 group codes do not propagate from a text style
+          // down to TEXT objects. However, 41 does propagate down for MTEXT.
+
+          case 41:
+            oTextStyleTable[osStyleName]["Width"] = szLineBuf;
+            break;
+
+          case 1001:
+            bInsideAcadSection = EQUAL( szLineBuf, "ACAD" );
+            break;
+
+          case 1000:
+            if( bInsideAcadSection )
+                oTextStyleTable[osStyleName]["Font"] = szLineBuf;
+            break;
+
+          case 1071:
+            // bold and italic are kept in this undocumented bitfield
+            if( bInsideAcadSection )
+            {
+                const int nFontFlags = atoi( szLineBuf );
+                oTextStyleTable[osStyleName]["Bold"] =
+                    ( nFontFlags & 0x2000000 ) ? "1" : "0";
+                oTextStyleTable[osStyleName]["Italic"] =
+                    ( nFontFlags & 0x1000000 ) ? "1" : "0";
+            }
+            break;
+
+          default:
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+
+    if( nCode == 0 )
+        UnreadValue();
+    return true;
+}
+
+/************************************************************************/
+/*                       LookupTextStyleProperty()                      */
+/************************************************************************/
+
+const char *OGRDXFDataSource::LookupTextStyleProperty(
+    const char *pszTextStyle, const char *pszProperty, const char *pszDefault )
+
+{
+    CPLString osTextStyleUpper = pszTextStyle;
+    osTextStyleUpper.toupper();
+
+    if( pszTextStyle && pszProperty &&
+        oTextStyleTable.count( osTextStyleUpper ) > 0 &&
+        oTextStyleTable[pszTextStyle].count( pszProperty ) > 0 )
+    {
+        return (oTextStyleTable[osTextStyleUpper])[pszProperty];
+    }
+    else
+    {
+        return pszDefault;
+    }
 }
 
 /************************************************************************/

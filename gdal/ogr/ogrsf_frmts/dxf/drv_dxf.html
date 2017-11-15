@@ -31,7 +31,13 @@ The following entity types are supported:<p>
 
 <ul>
 <li> POINT: Produces a simple POINT geometry feature.
-<li> MTEXT, TEXT: Produces a POINT feature with LABEL style information.
+
+<li> MTEXT, TEXT: Produces a POINT feature with LABEL style information. The
+style string may include the following parameters: f s t a c w p dx dy bo it.
+Text positioning might not precisely match CAD software (especially the vertical
+alignment of MTEXT), as calculation of the exact position would require GDAL to
+be aware of the font metrics.
+
 <li> LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
 polylines (those with their vertices' budge attributes set) will be tessellated.
 Single-vertex polylines are translated to POINT.
