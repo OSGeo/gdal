@@ -34357,6 +34357,10 @@ $as_echo "no" >&6; }
         ;;
 esac
 
+if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
+    as_fn_error $? "--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" "$LINENO" 5
+fi
+
 ac_config_files="$ac_config_files GDALmake.opt"
 
 
@@ -37060,11 +37064,6 @@ fi
 if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&5
 $as_echo "$as_me: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&2;}
-fi
-
-if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" >&5
-$as_echo "$as_me: WARNING: --without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" >&2;}
 fi
 
 if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
