@@ -2339,8 +2339,9 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
         static_cast<vsi_l_offset>(nPixelOffset) * poDS->nRasterXSize > 20000 )
     {
         vsi_l_offset nExpectedFileSize =
-                nHeaderSize + nBandOffset * (nBands - 1) +
-                            (poDS->nRasterXSize-1) * nPixelOffset;
+            nHeaderSize + nBandOffset * (nBands - 1) +
+            (poDS->nRasterYSize-1) * static_cast<vsi_l_offset>(nLineOffset) +
+            (poDS->nRasterXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
         CPL_IGNORE_RET_VAL( VSIFSeekL(poDS->fpImage, 0, SEEK_END) );
         vsi_l_offset nFileSize = VSIFTellL(poDS->fpImage);
         if( nFileSize < nExpectedFileSize )
