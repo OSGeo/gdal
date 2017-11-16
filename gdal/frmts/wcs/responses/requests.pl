@@ -85,7 +85,11 @@ for my $server (sort keys %$setup) {
         $coverage = $coverage->[$i] if ref $coverage;
         my $options = $setup->{$server}{Options};
         $options = $options->[$i] if ref $options;
-        my $result = "$server-$version.tiff";
+        
+        #system "gdalinfo $options -oo filename=$server-$version \"WCS:$url?version=$version&coverage=$coverage\"";
+        #next;
+        
+        my $result = "$server-$version-scaled.tiff";
         my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize} 2>&1";
         say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{show};
         my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result);
