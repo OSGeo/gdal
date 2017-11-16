@@ -4,7 +4,8 @@ EMMAKE ?= emmake
 EMCC ?= emcc
 EMCONFIGURE ?= emconfigure
 EMCONFIGURE_JS ?= 0
-EMCC_CFLAGS := -msse
+GDAL_EMCC_CFLAGS := -msse -Oz
+PROJ_EMCC_CFLAGS := -msse -Oz
 EXPORTED_FUNCTIONS = "[\
   '_GDALAllRegister',\
   '_GDALOpen',\
@@ -16,9 +17,10 @@ EXPORTED_FUNCTIONS = "[\
 ]"
 
 export EMCONFIGURE_JS
-export EMCC_CFLAGS
 
 include gdal-configure.opt
+
+.PHONY: clean
 
 ########
 # GDAL #
@@ -26,12 +28,12 @@ include gdal-configure.opt
 gdal: gdal.js
 
 gdal.js: gdal-lib
-	$(EMCC) $(GDAL)/libgdal.a -o gdal.js -O3 -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS)
+	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a -o gdal.js -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS)
 
 gdal-lib: $(GDAL)/libgdal.a
 
 $(GDAL)/libgdal.a: $(GDAL)/config.status proj4
-	cd $(GDAL) && $(EMMAKE) make lib-target
+	cd $(GDAL) && EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMMAKE) make lib-target
 
 # TODO: Pass the configure params more elegantly so that this uses the
 # EMCONFIGURE variable
@@ -48,7 +50,7 @@ reset-proj4:
 proj4: reset-proj4
 	cd $(PROJ4) && ./autogen.sh
 	cd $(PROJ4) && $(EMCONFIGURE) ./configure
-	cd $(PROJ4) && $(EMMAKE) make
+	cd $(PROJ4) && EMCC_CFLAGS="$(PROJ_EMCC_CFLAGS)" $(EMMAKE) make
 
 # We need to make proj4-native a separate prerequisite even though it's nearly
 # the same thing because make will only run each prerequisite once per
@@ -66,3 +68,8 @@ proj4-native: reset-proj4-native
 	cd $(PROJ4) && ./autogen.sh
 	cd $(PROJ4) && ./configure
 	cd $(PROJ4) && make
+
+clean:
+	cd $(GDAL) && make clean
+	cd $(PROJ4) && make clean
+	rm -f gdal.js gdal.js.mem

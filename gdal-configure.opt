@@ -4,7 +4,7 @@ A = --enable-static
 A += --enable-pdf-plugin=no
 A += --without-libtool
 A += --without-ld-shared
-A += --with-threads=yes
+A += --with-threads=no
 A += --with-libz=internal
 A += --without-libiconv-prefix
 A += --without-liblzma
@@ -13,13 +13,13 @@ A += --without-grass
 A += --without-libgrass
 A += --without-cfitsio
 A += --without-pcraster
-A += --with-png=internal
+A += --without-png
 A += --without-mrf
 A += --without-dds
 A += --without-gta
 A += --with-libtiff=internal
 A += --with-geotiff=internal
-A += --with-jpeg=internal
+A += --without-jpeg
 A += --without-jpeg12
 A += --without-gif
 A += --without-ogdi
