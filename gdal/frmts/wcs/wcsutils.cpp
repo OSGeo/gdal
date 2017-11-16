@@ -347,8 +347,12 @@ CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char 
 
 bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath)
 {
-    // returns true only if path exists and contains "TRUE"
-    return EQUAL(CPLGetXMLValue(poRoot, pszPath, ""), "TRUE");
+    // returns true if path exists and does not contain untrue value
+    poRoot = CPLGetXMLNode(poRoot, pszPath);
+    if (poRoot == NULL) {
+        return false;
+    }
+    return CPLTestBool(CPLGetXMLValue(poRoot, NULL, ""));
 }
 
 bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value)
@@ -660,8 +664,14 @@ bool CRS2Projection(CPLString crs, OGRSpatialReference *sr, char **projection)
     if (crs.empty()) {
         return true;
     }
-    if (crs.find(":imageCRS") != std::string::npos) {
-        // raw image.
+    if (crs.find(":imageCRS") != std::string::npos
+        || crs.find("/Index1D") != std::string::npos
+        || crs.find("/Index2D") != std::string::npos
+        || crs.find("/Index3D") != std::string::npos
+        || crs.find("/AnsiDate") != std::string::npos
+        )
+    {
+        // not a map projection
         return true;
     }
     // rasdaman uses urls, which return gml:ProjectedCRS XML, which is not recognized by GDAL currently

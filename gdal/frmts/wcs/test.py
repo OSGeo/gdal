@@ -27,12 +27,14 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
 
     def Respond(self, request, brand, version):
         try:
+            fname = 'responses/'
             if request == 'GetCoverage':
                 suffix = '.tiff'
+                fname += brand + '-' + version + suffix
             else:
                 suffix = '.xml'
-            fname = 'responses/' + request + '-' + brand + '-' + version + suffix
-            print(fname)
+                fname += request + '-' + brand + '-' + version + suffix
+            #print(fname)
             f = open(fname, 'rb')
             content = f.read()
             f.close()
@@ -70,6 +72,8 @@ if len(sys.argv) > 1 and sys.argv[1] == "server":
 (process, port) = webserver.launch(handler = WCSHTTPHandler)
 
 url = "http://127.0.0.1:" + str(port)
+first_call = True
+cache = 'CACHE_DIR=/home/ajolma/github/gdal/gdal/frmts/wcs/cache'
 try:
     servers = ['MapServer', 'GeoServer', 'Rasdaman', 'ArcGIS']
     versions = ['1.0.0', '1.1.0', '1.1.1', '1.1.2', '2.0.1']
@@ -80,39 +84,44 @@ try:
             if server == 'Rasdaman' and version != '2.0.1':
                 continue
             if version == '1.0.0':
-                coverages = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                             'ArcGIS': '1'}
+                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
+                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
+                            'ArcGIS': '1'}
             elif version == '1.1.0':
-                coverages = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                             'ArcGIS': '1'}
+                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
+                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
+                            'ArcGIS': '1'}
             elif version == '1.1.1':
-                coverages = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                             'ArcGIS': '1'}
+                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
+                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
+                            'ArcGIS': '1'}
             elif version == '1.1.2':
-                coverages = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                             'ArcGIS': '1'}
+                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
+                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
+                            'ArcGIS': '1'}
             elif version == '2.0.1':
-                coverages = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                             'GeoServer': 'smartsea__eusm2016-EPSG2393',
-                             'Rasdaman': 'BlueMarbleCov',
-                             'ArcGIS': 'Coverage1'}
+                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
+                            'GeoServer': 'smartsea__eusm2016-EPSG2393',
+                            'Rasdaman': 'BlueMarbleCov',
+                            'ArcGIS': 'Coverage1'}
             
             query = 'version=' + version
             query += '&server=' + server
+            print('test ' + server + ' ' + version )            
+            options = [cache]
+            if first_call:
+                options.append('CLEAR_CACHE')
+                first_call = False
             # get capabilities
-            print('test ' + server + ' ' + version )
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = ['REFRESH_CACHE=TRUE'])
-            print(ds);
-            query += '&coverage=' + coverages[server]
+                             open_options = options)
+            #print(ds);
+            options = [cache]
+            query += '&coverage=' + coverage[server]
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = ['REFRESH_CACHE=TRUE'])
-            print(ds);
-            sys.exit(0)
+                             open_options = options)
+            #print(ds);
+            #sys.exit(0)
 except:
     print "Unexpected error:", sys.exc_info()[0]
     webserver.server_stop(process, port)

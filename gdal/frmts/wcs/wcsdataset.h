@@ -43,10 +43,11 @@ class CPL_DLL WCSDataset : public GDALPamDataset
   friend class WCSDataset100;
   friend class WCSDataset110;
   friend class WCSDataset201;
-  
+
+    CPLString   m_cache_dir;
     bool        bServiceDirty;
     CPLXMLNode *psService;
-
+        
     char       *apszCoverageOfferingMD[2];
 
     char      **papszSDSModifiers;
@@ -128,11 +129,11 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         nMaxRows;
 
   public:
-                WCSDataset(int version);
+    WCSDataset(int version, const char *cache_dir);
     virtual ~WCSDataset();
 
-    static WCSDataset *CreateFromMetadata( CPLString );
-    static WCSDataset *CreateFromCapabilities(GDALOpenInfo *, CPLString, CPLString );
+    static WCSDataset *CreateFromMetadata( CPLString, CPLString );
+    static WCSDataset *CreateFromCapabilities(GDALOpenInfo *, CPLString, CPLString, CPLString );
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
@@ -161,7 +162,7 @@ class CPL_DLL WCSDataset100 : public WCSDataset
     
   public:
 
-    WCSDataset100() : WCSDataset(100) {};
+    WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {};
 };
 
 class CPL_DLL WCSDataset110 : public WCSDataset
@@ -181,7 +182,7 @@ class CPL_DLL WCSDataset110 : public WCSDataset
     
   public:
 
-    WCSDataset110(int version) : WCSDataset(version) {};
+    WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {};
 };
 
 class CPL_DLL WCSDataset201 : public WCSDataset110
@@ -211,7 +212,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
     
  public:
     
-    WCSDataset201() : WCSDataset110(201) {};
+    WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {};
     
 };
 

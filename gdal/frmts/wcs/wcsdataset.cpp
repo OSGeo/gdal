@@ -48,7 +48,8 @@ CPL_CVSID("$Id: wcsdataset.cpp 39343 2017-06-27 20:57:02Z rouault $")
 /*                             WCSDataset()                             */
 /************************************************************************/
 
-WCSDataset::WCSDataset(int version) :
+WCSDataset::WCSDataset(int version, const char *cache_dir) :
+    m_cache_dir(cache_dir),
     bServiceDirty(false),
     psService(NULL),
     papszSDSModifiers(NULL),
@@ -60,9 +61,7 @@ WCSDataset::WCSDataset(int version) :
     papszHttpOptions(NULL),
     nMaxCols(-1),
     nMaxRows(-1)
-{
-    m_Version = version;
-    
+{   
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -249,9 +248,13 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /*      Try and open result as a dataset.                               */
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
-   
+
+    /* todo: remove
     GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    dr->CreateCopy("/tmp/result.tiff", poTileDS, TRUE, NULL, NULL, NULL);
+    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
+    filename = "/tmp/" + filename + ".tiff";
+    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
+    */
 
     if( poTileDS == NULL )
         return CE_Failure;
@@ -392,15 +395,12 @@ int WCSDataset::DescribeCoverage()
     CPLXMLNode *psDC = NULL;
 
     // if it is in cache, get it from there
-    CPLString cache_dir;
     CPLString dc_filename = "";
-    if (SetupCache(cache_dir, false)) {
-        dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
-        dc_filename.erase(dc_filename.find(".xml"), 4);
-        dc_filename += ".DC.xml";
-        if (FileIsReadable(dc_filename)) {
-            psDC = CPLParseXMLFile(dc_filename);
-        }
+    dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
+    dc_filename.erase(dc_filename.find(".xml"), 4);
+    dc_filename += ".DC.xml";
+    if (FileIsReadable(dc_filename)) {
+        psDC = CPLParseXMLFile(dc_filename);
     }
 
     if (!psDC) {
@@ -584,6 +584,13 @@ int WCSDataset::EstablishRasterDetails()
 
     if( poDS == NULL )
         return false;
+
+    /* todo: remove
+    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
+    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
+    filename = "/tmp/" + filename + ".tiff";
+    dr->CreateCopy(filename, poDS, TRUE, NULL, NULL, NULL);
+    */
 
     const char* pszPrj = poDS->GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
@@ -852,7 +859,7 @@ const char *WCSDataset::Version()
 /*                      CreateFromCapabilities()                        */
 /************************************************************************/
 
-WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLString path, CPLString url)
+WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLString cache, CPLString path, CPLString url)
 {
     // request Capabilities, later code will write PAM to cache
     url = CPLURLAddKVP(url, "SERVICE", "WCS");
@@ -872,47 +879,46 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
             options = CSLSetNameValue(options, str, value);
         }
     }
-    fprintf(stderr, "GC URL = %s\n", url.c_str());
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     if (psResult == NULL || psResult->nDataLen == 0) {
-        fprintf(stderr, "GC URL returned nothing\n");
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    CPLXMLNode *psService = CPLParseXMLString((const char*)psResult->pabyData);
-    if (!psService) {
+    CPLXMLNode *capabilities = CPLParseXMLString((const char*)psResult->pabyData);
+    if (!capabilities) {
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    psService = psService->psNext; // from ?XML to root
+    capabilities = capabilities->psNext; // from ?XML to root
     // get version
     // it may be that the version in the URL in cache (user's request)
     // is different from the version in the XML (server's response)
     // but that is probably not a problem
-    int version_from_server = WCSParseVersion(CPLGetXMLValue(psService, "version", ""));
+    int version_from_server = WCSParseVersion(CPLGetXMLValue(capabilities, "version", ""));
     if (version_from_server == 0) {
         return NULL;
     }
                               
-    CPLString capabilities = path + ".xml";
-    CPLSerializeXMLTreeToFile(psService, capabilities);
+    CPLSerializeXMLTreeToFile(capabilities, (path + ".xml").c_str());
 
     WCSDataset *poDS;
     if (version_from_server == 201) {
-        poDS = new WCSDataset201();
+        poDS = new WCSDataset201(cache);
     } else if (version_from_server/10 == 11) {
-        poDS = new WCSDataset110(version_from_server);
+        poDS = new WCSDataset110(version_from_server, cache);
     } else {
-        poDS = new WCSDataset100();
+        poDS = new WCSDataset100(cache);
     }
-    if (poDS->ParseCapabilities(psService, url) != CE_None) {
+    if (poDS->ParseCapabilities(capabilities, url) != CE_None) {
+        CPLDestroyXMLNode(capabilities);
         poDS->ProcessError(psResult);
         delete poDS;
         return NULL;
     }
     CPLHTTPDestroyResult(psResult);
-    CPLDestroyXMLNode(psService);
+    CPLDestroyXMLNode(capabilities);
     poDS->SetDescription(path);
+    poDS->TrySaveXML();
     return poDS;
 }
 
@@ -920,7 +926,7 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
 /*                        CreateFromMetadata()                          */
 /************************************************************************/
 
-WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
+WCSDataset *WCSDataset::CreateFromMetadata(CPLString cache, CPLString path)
 {
     WCSDataset *poDS;
     // try to read the PAM XML from path + metadata extension
@@ -934,11 +940,11 @@ WCSDataset *WCSDataset::CreateFromMetadata(CPLString path)
                         "key", "WCS_GLOBAL#version"),
                     NULL, ""));
         if (version_from_metadata == 201) {
-            poDS = new WCSDataset201();
+            poDS = new WCSDataset201(cache);
         } else if (version_from_metadata/10 == 11) {
-            poDS = new WCSDataset110(version_from_metadata);
+            poDS = new WCSDataset110(version_from_metadata, cache);
         } else if (version_from_metadata/10 == 10) {
-            poDS = new WCSDataset100();
+            poDS = new WCSDataset100(cache);
         } else {
             CPLError(CE_Failure, CPLE_AppDefined, "The metadata does not contain version. RECREATE_META?");
             return NULL;
@@ -1063,7 +1069,8 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
         "NrOffsets",
         "OffsetsPositive",
         "UseScaleFactor",
-        "BufSizeAdjust"
+        "BufSizeAdjust",
+        "filename"
     };
     for (unsigned int i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
         const char *value;
@@ -1075,11 +1082,7 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
                 continue;
             }
         }
-        CPLString old = CPLGetXMLValue(service, keys[i], "");
-        if (value != old) {
-            CPLSetXMLValue(service, keys[i], value);
-            updated = true;
-        }
+        updated = CPLUpdateXML(service, keys[i], value) || updated;
     }
     return updated;
 }
@@ -1091,7 +1094,13 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
 GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    CPLXMLNode *psService = NULL;
+    CPLString cache = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE_DIR", "");
+    if (!SetupCache(cache,
+                    CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
+    {
+        return NULL;
+    }
+    CPLXMLNode *service = NULL;
     char **papszModifiers = NULL;
     bool dry_run = false; // do not make a GetCoverage call to get data type etc
     
@@ -1107,7 +1116,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->nHeaderBytes == 0
         && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS:") )
     {
-        fprintf(stderr, "Open: %s\n", poOpenInfo->pszFilename);
         CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
         CPLString version = CPLURLGetValue(url, "version");
         url = URLRemoveKey(url, "version");
@@ -1135,15 +1143,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             url = CPLURLAddKVP(url, "coverage", coverage);
         }
         
-        CPLString cache_dir = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE_DIR", "");
-        if (!SetupCache(cache_dir,
-                        CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
-        {
-            return NULL;
-        }
-
         if (CPLFetchBool(poOpenInfo->papszOpenOptions, "REFRESH_CACHE", false)) {
-            DeleteEntryFromCache(cache_dir, "", url);
+            DeleteEntryFromCache(cache, "", url);
         }
 
         // cache is a hash of basename => URL
@@ -1152,11 +1153,10 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         // Capabilities (.xml) and PAM metadata file (.aux.xml)
         // or DescribeCoverage (.DC.xml) and WCS_GDAL (.xml)
         CPLString filename;
-        int cached = FromCache(cache_dir, filename, url);
+        int cached = FromCache(cache, filename, url);
         if (cached == -1) { // error
             return NULL;
         }
-        fprintf(stderr, "cache key = %s\n", filename.c_str());
         cached = cached && FileIsReadable(filename + ".xml");
 
         bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
@@ -1171,9 +1171,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             // which is made from the Capabilities file (<basename>.xml)
             
             if (cached && !recreate_meta) {
-                return WCSDataset::CreateFromMetadata(filename);
+                return WCSDataset::CreateFromMetadata(cache, filename);
             }
-            return WCSDataset::CreateFromCapabilities(poOpenInfo, filename, url);
+            return WCSDataset::CreateFromCapabilities(poOpenInfo, cache, filename, url);
         } else {
             // Open a subdataset
             // Metadata is in (<basename>.xml.aux.xml)
@@ -1187,14 +1187,14 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             CPLString pam_url = URLRemoveKey(url, "coverage");
             CPLString pam_filename;
-            bool pam_in_cache = FromCache(cache_dir, pam_filename, pam_url);
+            bool pam_in_cache = FromCache(cache, pam_filename, pam_url);
                         
             // even if we have coverage we need global PAM metadata
             // if we don't have it we need to create it
             if (recreate_meta || !FileIsReadable((filename + ".aux.xml").c_str())) {
                 if (!pam_in_cache || !FileIsReadable((pam_filename + ".aux.xml").c_str())) {
                     // if we don't have it, fetch it first
-                    WCSDataset *pam = CreateFromCapabilities(poOpenInfo, pam_filename, pam_url);
+                    WCSDataset *pam = CreateFromCapabilities(poOpenInfo, cache, pam_filename, pam_url);
                     if (!pam) {
                         return NULL;
                     }
@@ -1206,13 +1206,13 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             bool recreate_service = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_SERVICE", false);
             
             if (cached && !recreate_service) {
-                psService = CPLParseXMLFile(filename);
+                service = CPLParseXMLFile(filename);
             } else {
-                psService = CreateService(base_url, version, coverage);
+                service = CreateService(base_url, version, coverage);
             }
-            bool updated = UpdateService(psService, poOpenInfo);
+            bool updated = UpdateService(service, poOpenInfo);
             if (updated || !(cached && !recreate_service)) {             
-                CPLSerializeXMLTreeToFile(psService, filename);
+                CPLSerializeXMLTreeToFile(service, filename);
             }
             if (updated) {
                 CreateServiceMetadata(coverage, pam_filename, filename);
@@ -1228,12 +1228,12 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( poOpenInfo->nHeaderBytes == 0
              && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
     {
-        psService = CPLParseXMLString( poOpenInfo->pszFilename );
+        service = CPLParseXMLString( poOpenInfo->pszFilename );
     }
     else if( poOpenInfo->nHeaderBytes >= 10
              && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<WCS_GDAL>") )
     {
-        psService = CPLParseXMLFile( poOpenInfo->pszFilename );
+        service = CPLParseXMLFile( poOpenInfo->pszFilename );
     }
 /* -------------------------------------------------------------------- */
 /*      Is this apparently a subdataset?                                */
@@ -1249,7 +1249,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         iLast = CSLCount(papszModifiers)-1;
         if( iLast >= 0 )
         {
-            psService = CPLParseXMLFile( papszModifiers[iLast] );
+            service = CPLParseXMLFile( papszModifiers[iLast] );
             CPLFree( papszModifiers[iLast] );
             papszModifiers[iLast] = NULL;
         }
@@ -1258,7 +1258,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Success so far?                                                 */
 /* -------------------------------------------------------------------- */
-    if( psService == NULL )
+    if( service == NULL )
     {
         CSLDestroy( papszModifiers );
         return NULL;
@@ -1270,7 +1270,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CSLDestroy( papszModifiers );
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The WCS driver does not support update access to existing"
                   " datasets.\n" );
@@ -1280,29 +1280,29 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for required minimum fields.                              */
 /* -------------------------------------------------------------------- */
-    if( !CPLGetXMLValue( psService, "ServiceURL", NULL )
-        || !CPLGetXMLValue( psService, "CoverageName", NULL ) )
+    if( !CPLGetXMLValue( service, "ServiceURL", NULL )
+        || !CPLGetXMLValue( service, "CoverageName", NULL ) )
     {
         CSLDestroy( papszModifiers );
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Missing one or both of ServiceURL and CoverageName elements.\n"
                   "See WCS driver documentation for details on service description file format." );
 
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      What version are we working with?                               */
 /* -------------------------------------------------------------------- */
-    const char *pszVersion = CPLGetXMLValue( psService, "Version", "1.0.0" );
+    const char *pszVersion = CPLGetXMLValue( service, "Version", "1.0.0" );
 
     int nVersion = WCSParseVersion(pszVersion);
 
     if( nVersion == 0 )
     {
         CSLDestroy( papszModifiers );
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         return NULL;
     }
 
@@ -1312,14 +1312,14 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     // todo: at this point version could be from user, is that a problem?
     WCSDataset *poDS;
     if (nVersion == 201) {
-        poDS = new WCSDataset201();
+        poDS = new WCSDataset201(cache);
     } else if (nVersion/10 == 11) {
-        poDS = new WCSDataset110(nVersion);
+        poDS = new WCSDataset110(nVersion, cache);
     } else {
-        poDS = new WCSDataset100();
+        poDS = new WCSDataset100(cache);
     }
 
-    poDS->psService = psService;
+    poDS->psService = service;
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->papszSDSModifiers = papszModifiers;
     poDS->TryLoadXML(); // we need the PAM metadata already in ExtractGridInfo
@@ -1332,15 +1332,15 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->papszHttpOptions =
         CSLSetNameValue(poDS->papszHttpOptions,
                         "TIMEOUT",
-                        CPLGetXMLValue( psService, "Timeout", "30" ) );
+                        CPLGetXMLValue( service, "Timeout", "30" ) );
 
-    pszParm = CPLGetXMLValue( psService, "HTTPAUTH", NULL );
+    pszParm = CPLGetXMLValue( service, "HTTPAUTH", NULL );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
                              "HTTPAUTH", pszParm );
 
-    pszParm = CPLGetXMLValue( psService, "USERPWD", NULL );
+    pszParm = CPLGetXMLValue( service, "USERPWD", NULL );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
@@ -1350,8 +1350,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If we don't have the DescribeCoverage result for this           */
 /*      coverage, fetch it now.                                         */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psService, "CoverageOffering" ) == NULL
-        && CPLGetXMLNode( psService, "CoverageDescription" ) == NULL )
+    if( CPLGetXMLNode( service, "CoverageOffering" ) == NULL
+        && CPLGetXMLNode( service, "CoverageDescription" ) == NULL )
     {
         if( !poDS->DescribeCoverage() )
         {
@@ -1375,7 +1375,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                                                                      */
 /* -------------------------------------------------------------------- */
     int nBandCount = -1;
-    CPLString sBandCount = CPLGetXMLValue(psService, "BandCount", "");
+    CPLString sBandCount = CPLGetXMLValue(service, "BandCount", "");
     if (sBandCount != "") {
         nBandCount = atoi(sBandCount);
     }
@@ -1397,7 +1397,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      It is ok to not have bands. The user just needs to supply       */
 /*      more information.                                               */
 /* -------------------------------------------------------------------- */
-    nBandCount = atoi(CPLGetXMLValue(psService, "BandCount", "0"));
+    nBandCount = atoi(CPLGetXMLValue(service, "BandCount", "0"));
     if (nBandCount == 0)
     {
         return poDS;
@@ -1431,7 +1431,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have a band identifier to select only a subset of bands?  */
 /* -------------------------------------------------------------------- */
-    poDS->osBandIdentifier = CPLGetXMLValue(psService,"BandIdentifier","");
+    poDS->osBandIdentifier = CPLGetXMLValue(service,"BandIdentifier","");
 
 /* -------------------------------------------------------------------- */
 /*      Do we have time based subdatasets?  If so, record them in       */
