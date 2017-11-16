@@ -124,7 +124,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     CPLString request = CPLGetXMLValue(psService, "ServiceURL", "");
     request = CPLURLAddKVP(request, "SERVICE", "WCS");
     request += "&REQUEST=GetCoverage";
-    request += "&VERSION=" + String(CPLGetXMLValue(psService, "Version", ""));
+    request += "&VERSION=" + CPLString(CPLGetXMLValue(psService, "Version", ""));
     request += "&COVERAGEID=" + URLEncode(CPLGetXMLValue(psService, "CoverageName", ""));
     if (!native_crs) {
         CPLString crs = URLEncode(CPLGetXMLValue(psService, "SRS", ""));
@@ -132,7 +132,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         request += "&SUBSETTINGCRS=" + crs;
     }
     request += "&FORMAT=" + URLEncode(CPLGetXMLValue(psService, "PreferredFormat", ""));
-    
+
     // todo: updatesequence
 
     std::vector<CPLString> domain = Split(CPLGetXMLValue(psService, "Domain", ""), ",");
@@ -144,12 +144,18 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         y = tmp;
     }
 
-    CPLString a = Max(adfGeoTransform[0], extent[0]);
-    CPLString b = Min(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]);
+    CPLString a = CPLString().Printf(
+        "%.17g", MAX(adfGeoTransform[0], extent[0]));
+    CPLString b = CPLString().Printf(
+        "%.17g", MIN(adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1], extent[2]));
+
     request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", x, a.c_str(), b.c_str());
 
-    a = Max(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]);
-    b = Min(adfGeoTransform[3], extent[3]);
+    a = CPLString().Printf(
+        "%.17g", MAX(adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5], extent[1]));
+    b = CPLString().Printf(
+        "%.17g", MIN(adfGeoTransform[3], extent[3]));
+
     request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
 
     // set subsets for axis other than x/y
@@ -163,7 +169,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         std::vector<CPLString> params = Split(FromParenthesis(dimensions[i]), ",");
         request += "&SUBSET=" + dim + "%28";
         for (unsigned int j = 0; j < params.size(); ++j) {
-            // todo: %22 only for non-numbers
+            // todo: %22 (") should be used only for non-numbers
             request += "%22" + params[j] + "%22";
         }
         request += "%29";
@@ -356,11 +362,11 @@ CPLString WCSDataset201::GetSubdataset(CPLString coverage)
 
 bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
 {
-    // set the PreferredFormat value in service, unless is set
-    // by the user, either through direct edit or options
+    // set the PreferredFormat value in service,
+    // unless it is set by the user
     CPLString format = CPLGetXMLValue(psService, "PreferredFormat", "");
 
-    // todo: check the value against list of supported formats
+    // todo: check the value against list of supported formats?
     if (format != "") {
         return true;
     }
@@ -598,7 +604,7 @@ bool WCSDataset201::ExtractGridInfo()
     if (!ParseGridFunction(coverage, axisOrder)) {
         return false;
     }
-    
+
     char **metadata = CSLDuplicate(GetMetadata("SUBDATASETS")); // coverage metadata to be added/updated
 
     metadata = CSLSetNameValue(metadata, "DOMAIN", Join(domain, ","));
@@ -641,7 +647,7 @@ bool WCSDataset201::ExtractGridInfo()
         return false;
     }
 
-    // 
+    //
     bool swap_grid_axis = false;
     if (axisOrder.size() >= 2
         && axisOrder[domain_indexes[0]] == 2
@@ -771,8 +777,6 @@ bool WCSDataset201::ExtractGridInfo()
         CPLError(CE_Failure, CPLE_AppDefined, "All attempts to find a format have failed, giving up.");
         return false;
     }
-
-    // todo: set the Interpolation, check it against InterpolationSupported
 
     return true;
 }

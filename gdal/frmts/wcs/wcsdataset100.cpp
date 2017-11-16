@@ -591,7 +591,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                     "Get"),
                 "OnlineResource"),
             "href"), NULL, "");
-    // todo: if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
+    // if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
 
     this->SetMetadata( metadata, "" );
     CSLDestroy( metadata );

@@ -79,7 +79,7 @@ for my $server (sort keys %$setup) {
         my $v = $setup->{$server}{Versions}[$i];
         my $version = int($v / 100) . '.' . int($v % 100 / 10) . '.' . ($v % 10);
         next unless $do{$version} || $do{all_versions};
-        say $server.'-'.$version;
+        #say $server.'-'.$version;
         my $coverage = $setup->{$server}{Coverage};
         $coverage = $coverage->[$i] if ref $coverage;
         my $options = $setup->{$server}{Options};
@@ -109,7 +109,7 @@ for my $server (sort keys %$setup) {
             }
             push @full_output, $line;
         }
-        #say $ok;
+        say $server.'-'.$version.' '.$ok;
         if ($ok eq 'not ok' or $do{show}) {
             say "===";
             for (@full_output) {

@@ -42,77 +42,6 @@ void Swap(double &a, double &b)
     b = tmp;
 }
 
-CPLString String(const char *str)
-{
-    CPLString retval = str;
-    return retval;
-}
-
-int CompareNumbers(CPLString a, CPLString b)
-{
-    size_t a_dot = a.find(".");
-    size_t b_dot = b.find(".");
-    CPLString a_p = a.substr(0, a_dot);
-    CPLString b_p = b.substr(0, b_dot);
-    int d = a_p.length() - b_p.length();
-    if (d < 0) {
-        for (int i = 0; i < -1*d; ++i) {
-            a_p = "0" + a_p;
-        }
-    } else if (d > 0) {
-        for (int i = 0; i < d; ++i) {
-            b_p = "0" + b_p;
-        }
-    }
-    int c = strcmp(a_p, b_p);
-    if (c < 0) {
-        return -1;
-    } else if (c > 0) {
-        return 1;
-    }
-    a_p = a.substr(a_dot+1, std::string::npos);
-    b_p = b.substr(b_dot+1, std::string::npos);
-    d = a_p.length() - b_p.length();
-    if (d < 0) {
-        for (int i = 0; i < -1*d; ++i) {
-            a_p = "0" + a_p;
-        }
-    } else if (d > 0) {
-        for (int i = 0; i < d; ++i) {
-            b_p = "0" + b_p;
-        }
-    }
-    c = strcmp(a_p, b_p);
-    if (c < 0) {
-        return -1;
-    } else if (c > 0) {
-        return 1;
-    }
-    return 0;
-}
-
-CPLString Max(double a, double b)
-{
-    CPLString sa, sb;
-    sa.Printf("%.17g", a);
-    sb.Printf("%.17g", b);
-    if (CompareNumbers(sa, sb) < 0) {
-        return sb;
-    }
-    return sa;
-}
-
-CPLString Min(double a, double b)
-{
-    CPLString sa, sb;
-    sa.Printf("%.17g", a);
-    sb.Printf("%.17g", b);
-    if (CompareNumbers(sa, sb) < 0) {
-        return sa;
-    }
-    return sb;
-}
-
 CPLString URLEncode(CPLString str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );
@@ -408,7 +337,7 @@ bool SetupCache(CPLString &cache_dir, bool clear)
         }
         CSLDestroy(folder);
     }
-    return true;      
+    return true;
 }
 
 /* -------------------------------------------------------------------- */
@@ -543,7 +472,7 @@ CPLString GetKeywords(CPLXMLNode *root,
             if (kw == node->pszValue) {
                 CPLString word = CPLGetXMLValue(node, NULL, "");
                 word.Trim();
-                
+
                 // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
                 const char *epsg = "http://www.opengis.net/def/crs/EPSG/0/";
                 size_t pos = word.find(epsg);
@@ -557,7 +486,7 @@ CPLString GetKeywords(CPLXMLNode *root,
 
                 // profiles, remove http://www.opengis.net/spec/
                 // interpolation, remove http://www.opengis.net/def/interpolation/OGC/1/
-                
+
                 const char *spec[] = {
                     "http://www.opengis.net/spec/",
                     "http://www.opengis.net/def/interpolation/OGC/1/"
@@ -568,7 +497,7 @@ CPLString GetKeywords(CPLXMLNode *root,
                         word.erase(pos, strlen(spec[i]));
                     }
                 }
-                
+
                 if (words != "") {
                     words += ",";
                 }

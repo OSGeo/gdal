@@ -66,7 +66,7 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
                      (nYOff) * adfGeoTransform[5]);
 
     bool no_shrink = CPLGetXMLBoolean(psService, "OuterExtents");
-    
+
     // WCS 1.1 extents are centers of outer pixels.
     if (!no_shrink) {
         extent[2] -= adfGeoTransform[1] * 0.5;
@@ -86,11 +86,11 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
         {
             dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
             dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
-            
+
             extent[0]  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
                 + dfXStep * 0.5;
             extent[2]  = extent[0] + (nBufXSize - 1) * dfXStep;
-            
+
             extent[3]  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
                 + dfYStep * 0.5;
             extent[1]  = extent[3] + (nBufYSize - 1) * dfYStep;
@@ -303,7 +303,7 @@ bool WCSDataset110::ExtractGridInfo()
         return false;
     }
 
-    // todo: check that our new CRSImpliesAxisOrderSwap does end all here
+    // SetCRS should fail only if the CRS is really unknown to GDAL
     if (!SetCRS(crs, true)) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to interpret GridBaseCRS '%s'.",
@@ -381,7 +381,7 @@ bool WCSDataset110::ExtractGridInfo()
             return false;
         }
     }
-    
+
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -737,7 +737,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             }
         }
     }
-    // todo: if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
+    // if DescribeCoverageURL looks wrong, we change it
     if (DescribeCoverageURL.find("localhost") != std::string::npos) {
         DescribeCoverageURL = URLRemoveKey(url, "request");
     }
@@ -749,9 +749,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
         CPLString name = path + "formatSupported";
         metadata = CSLSetNameValue(metadata, name, formats);
     }
-    // wcs:Extension seems to be rather varying
-    // Extension.crsSupported from GeoServer is a huge list, todo: shorten it to something like EPSG(x,y-z)
-    // Extension.interpolationSupported
+    // wcs:Extensions: interpolation, CRS, others?
     ext += ".Extension";
     CPLString interpolation = GetKeywords(Capabilities, ext, "interpolationSupported");
     if (interpolation == "") {
@@ -836,16 +834,16 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 CPLString CRS = ParseCRS(node);
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
                 if (bbox.size() >= 2) {
-                    // todo: CRSImpliesAxisOrderSwap may fail, skip that for now
-                    bool local_axis_order_swap;
-                    CRSImpliesAxisOrderSwap(CRS, local_axis_order_swap, NULL);
-                    std::vector<CPLString> b = Split(bbox[0], " ", local_axis_order_swap);
+                    // We don't care if CRSImpliesAxisOrderSwap fails
+                    bool swap;
+                    CRSImpliesAxisOrderSwap(CRS, swap, NULL);
+                    std::vector<CPLString> b = Split(bbox[0], " ", swap);
                     std::vector<double> low;
                     if (b.size() >= 2) {
                         low = Flist(b, 0, 2);
                     }
                     std::vector<double> high;
-                    b = Split(bbox[1], " ", local_axis_order_swap);
+                    b = Split(bbox[1], " ", swap);
                     if (b.size() >= 2) {
                         high = Flist(b, 0, 2);
                     }

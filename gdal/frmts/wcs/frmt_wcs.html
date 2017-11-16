@@ -144,7 +144,9 @@ position by default.
         <li><b>PreferredFormat</b>=<i>name</i> Override the default
           format selected by the driver. Should be one of the server
           supported formats.</li>
-        
+        <li><b>Interpolation</b>=<i>name</i> Override the default
+          interpolation selected by the driver. Should be one of the server
+          supported formats.</li>
         <li><b>Domain</b>=<i>axis_name,axis_name</i> The axes that are
         used for the spatial dimensions. The default is to use the
         first two axes given by the server. The axis order swap may
@@ -154,9 +156,6 @@ position by default.
         <li><b>DimensionToBand</b>=<i>axis_name</i> Map the given dimension, for
           example 'time', into bands.</li>
         <li><b>DefaultTime</b> See above, only for 1.0.0.</li>
-        <li><b>Interpolation</b>=<i>name</i> Override the default
-          interpolation method used by the server. Should be one of
-          the server supported interpolation methods.</li>
         <li><b>FieldName</b>=<i>field_name,field_name:field_name,..</i>
         A list of fields to be mapped to
         bands. A <i>field_name:field_name</i> in the list denotes a

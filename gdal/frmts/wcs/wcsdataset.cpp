@@ -249,13 +249,6 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
 
-    /* todo: remove
-    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
-    filename = "/tmp/" + filename + ".tiff";
-    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
-    */
-
     if( poTileDS == NULL )
         return CE_Failure;
 
@@ -584,13 +577,6 @@ int WCSDataset::EstablishRasterDetails()
 
     if( poDS == NULL )
         return false;
-
-    /* todo: remove
-    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
-    filename = "/tmp/" + filename + ".tiff";
-    dr->CreateCopy(filename, poDS, TRUE, NULL, NULL, NULL);
-    */
 
     const char* pszPrj = poDS->GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
@@ -1309,7 +1295,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    // todo: at this point version could be from user, is that a problem?
+    // note: at this point version can still be from user
     WCSDataset *poDS;
     if (nVersion == 201) {
         poDS = new WCSDataset201(cache);

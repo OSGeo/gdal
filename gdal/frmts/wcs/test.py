@@ -1,5 +1,42 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+###############################################################################
+# $Id$
+#
+# Project:  GDAL/OGR Test Suite
+# Purpose:  Test WCS client support.
+# Author:   Ari Jolma <ari.jolma at gmail.com>
+#
+###############################################################################
+# Copyright (c) 2017, Ari Jolma <ari dot jolma at gmail dotcom>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+###############################################################################
+
+# Test the WCS driver using a dummy HTTP server but real responses from real servers.
+# 1. test that the driver can create the same URLs that were used to get the responses.
+# todo: test the cache
+# test setting and unsetting options
+
 import sys
 sys.path.insert(0,'/home/ajolma/github/gdal/autotest/pymod/')
+cache = 'CACHE_DIR=/home/ajolma/github/gdal/gdal/frmts/wcs/cache'
 
 try:
     from BaseHTTPServer import HTTPServer
@@ -54,7 +91,6 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             else:
                 suffix = '.xml'
                 fname += request + '-' + brand + '-' + version + suffix
-            #print(fname)
             f = open(fname, 'rb')
             content = f.read()
             f.close()
@@ -64,7 +100,6 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
-        #print(self.path)
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -78,11 +113,9 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         version = query2['version'][0]
         request = query2['request'][0]
         if scaled:
-            #self.path should match (except numerical accuracy perhaps
-            #with the 2nd URL in responses/urls
-            key = server + '-' + version
             tmp, have = self.path.split('SERVICE=WCS')
-            sys.stdout.write('test ' + key + ' ')
+            sys.stdout.write('test ' + server + ' WCS ' + version + ' ')
+            key = server + '-' + version
             tmp, should_be = urls[key].split('SERVICE=WCS')
             if have == should_be:
                 test = 'ok'
@@ -108,7 +141,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "server":
 
 url = "http://127.0.0.1:" + str(port)
 first_call = True
-cache = 'CACHE_DIR=/home/ajolma/github/gdal/gdal/frmts/wcs/cache'
 try:
     servers = ['MapServer', 'GeoServer', 'Rasdaman', 'ArcGIS']
     versions = ['1.0.0', '1.1.0', '1.1.1', '1.1.2', '2.0.1']
@@ -159,7 +191,6 @@ try:
                        'ArcGIS': [181000, 7005000, 200000, 6980000],
                        'Rasdaman': [10, 45, 15, 35]}
             
-            #print('test ' + server + ' ' + version )            
             options = [cache]
             if first_call:
                 options.append('CLEAR_CACHE')
@@ -185,7 +216,6 @@ try:
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
             ds = gdal.Translate('output.tif', ds, projWin = projwin[server], width = 60)
-            #sys.exit(0)
 except:
     print "Unexpected error:", sys.exc_info()[0]
     webserver.server_stop(process, port)

@@ -35,14 +35,6 @@
 
 void Swap(double &a, double &b);
 
-CPLString String(const char *str);
-
-int CompareNumbers(CPLString a, CPLString b);
-
-CPLString Max(double a, double b);
-
-CPLString Min(double a, double b);
-
 CPLString URLEncode(CPLString str);
 
 CPLString URLRemoveKey(const char *url, CPLString key);
