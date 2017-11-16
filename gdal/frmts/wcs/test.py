@@ -15,6 +15,23 @@ import webserver
 
 do_log = False
 
+urls = {}
+fname = 'responses/urls'
+f = open(fname, 'rb')
+content = f.read()
+f.close()
+i = 1
+for line in content.splitlines():
+    if i == 1:
+        key = line
+    elif i == 3:
+        urls[key] = line
+    i += 1
+    if i == 4:
+        i = 1
+
+scaled = False
+        
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
@@ -28,7 +45,10 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
     def Respond(self, request, brand, version):
         try:
             fname = 'responses/'
-            if request == 'GetCoverage':
+            if request == 'GetCoverage' and scaled:
+                suffix = '.tiff'
+                fname += brand + '-' + version + '-scaled' + suffix
+            elif request == 'GetCoverage':
                 suffix = '.tiff'
                 fname += brand + '-' + version + suffix
             else:
@@ -44,7 +64,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
-        print(self.path)
+        #print(self.path)
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -54,7 +74,22 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         query2 = {}
         for key in query:
             query2[key.lower()] = query[key]
-        self.Respond(query2['request'][0], query2['server'][0], query2['version'][0])
+        server = query2['server'][0]
+        version = query2['version'][0]
+        request = query2['request'][0]
+        if scaled:
+            #self.path should match (except numerical accuracy perhaps
+            #with the 2nd URL in responses/urls
+            key = server + '-' + version
+            tmp, have = self.path.split('SERVICE=WCS')
+            sys.stdout.write('test ' + key + ' ')
+            tmp, should_be = urls[key].split('SERVICE=WCS')
+            if have == should_be:
+                test = 'ok'
+            else:
+                test = "not ok\n" + have + "\n" + should_be
+            print(test)
+        self.Respond(request, server, version)
         return
 
 if len(sys.argv) > 1 and sys.argv[1] == "server":
@@ -86,41 +121,70 @@ try:
             if version == '1.0.0':
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '1'}
+                            'ArcGIS': '2'}
+                server_options = {'MapServer': ['OriginNotCenter100=TRUE'],
+                                  'GeoServer': [],
+                                  'ArcGIS': []}
             elif version == '1.1.0':
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '1'}
+                            'ArcGIS': '2'}
+                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
+                                  'GeoServer': ['GridCRS', 'OuterExtents', 'BufSizeAdjust=0.5', 'NoGridAxisSwap'],
+                                  'ArcGIS': ['NrOffsets=2']}
             elif version == '1.1.1':
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '1'}
+                            'ArcGIS': '2'}
+                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
+                                  'GeoServer': ['GridCRS', 'OuterExtents', 'BufSizeAdjust=0.5', 'NoGridAxisSwap'],
+                                  'ArcGIS': ['NrOffsets=2']}
             elif version == '1.1.2':
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '1'}
+                            'ArcGIS': '2'}
+                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
+                                  'ArcGIS': ['NrOffsets=2']}
             elif version == '2.0.1':
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
                             'GeoServer': 'smartsea__eusm2016-EPSG2393',
                             'Rasdaman': 'BlueMarbleCov',
-                            'ArcGIS': 'Coverage1'}
+                            'ArcGIS': 'Coverage2'}
+                server_options = {'MapServer': ['GridAxisLabelSwap'],
+                                  'GeoServer': ['NoGridAxisSwap', 'SubsetAxisSwap'],
+                                  'Rasdaman': [],
+                                  'ArcGIS': ['UseScaleFactor']}
+                
+            projwin = {'MapServer': [10, 45, 15, 35],
+                       'GeoServer': [3200000, 6670000, 3280000, 6620000],
+                       'ArcGIS': [181000, 7005000, 200000, 6980000],
+                       'Rasdaman': [10, 45, 15, 35]}
             
-            query = 'version=' + version
-            query += '&server=' + server
-            print('test ' + server + ' ' + version )            
+            #print('test ' + server + ' ' + version )            
             options = [cache]
             if first_call:
                 options.append('CLEAR_CACHE')
                 first_call = False
+
+            scaled = False
             # get capabilities
+            query = 'server=' + server
+            query += '&version=' + version                     
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
-            #print(ds);
+            
             options = [cache]
+            options += server_options[server]
             query += '&coverage=' + coverage[server]
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
-            #print(ds);
+            # delete ds
+            ds = 0
+
+            scaled = True
+            options = [cache]
+            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
+                             open_options = options)
+            ds = gdal.Translate('output.tif', ds, projWin = projwin[server], width = 60)
             #sys.exit(0)
 except:
     print "Unexpected error:", sys.exc_info()[0]

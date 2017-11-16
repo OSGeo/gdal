@@ -25,7 +25,7 @@ my $setup = {
             "", 
             "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
             "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
-            "-oo GridCRS=TRUE -oo NoGridAxisSwap=TRUE -oo SubsetAxisSwap=TRUE"
+            "-oo NoGridAxisSwap=TRUE -oo SubsetAxisSwap=TRUE"
             ],
         Projwin => "-projwin 3200000 6670000 3280000 6620000",
         Outsize => "-outsize $size 0",
@@ -74,13 +74,12 @@ my %do = map {$_ => 1} @ARGV;
 
 for my $server (sort keys %$setup) {
     next unless $do{$server} || $do{all_servers};
-    say $server;
     for my $i (0..$#{$setup->{$server}->{Versions}}) {
         my $url = $setup->{$server}->{URL};
         my $v = $setup->{$server}{Versions}[$i];
         my $version = int($v / 100) . '.' . int($v % 100 / 10) . '.' . ($v % 10);
         next unless $do{$version} || $do{all_versions};
-        say $version;
+        say $server.'-'.$version;
         my $coverage = $setup->{$server}{Coverage};
         $coverage = $coverage->[$i] if ref $coverage;
         my $options = $setup->{$server}{Options};
@@ -90,12 +89,13 @@ for my $server (sort keys %$setup) {
         #next;
         
         my $result = "$server-$version-scaled.tiff";
-        my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize} 2>&1";
+        my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize}";
         say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{show};
-        my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result);
+        my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1);
         my @full_output;
         foreach my $line (split /[\r\n]+/, $output) {
-            #say $line;
+            say $line if $line =~ /URL=/;
+            $line =~ s/^.+?URL=/URL=/;
             push @full_output, $line;
         }
         $output = qx(gdalinfo $result 2>&1);
@@ -109,7 +109,7 @@ for my $server (sort keys %$setup) {
             }
             push @full_output, $line;
         }
-        say $ok;
+        #say $ok;
         if ($ok eq 'not ok' or $do{show}) {
             say "===";
             for (@full_output) {
