@@ -43,8 +43,8 @@ Status:
             src/degrib/type.h
             src/degrib/weather.c
             src/degrib/weather.h
-            src/degrib/tendian.c ( that is split in GDAL between memendian.c and fileendian.cpp )
-            src/degrib/tendian.h ( that is split in GDAL between memendian.h and fileendian.h )
+            src/degrib/tendian.c
+            src/degrib/tendian.h
 
 PROVENANCE (at r40728)
 ----------
