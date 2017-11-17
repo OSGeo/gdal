@@ -1,5 +1,5 @@
 
-OBJ	=	wcsdataset.obj httpdriver.obj gmlcoverage.obj
+OBJ	=	httpdriver.obj gmlcoverage.obj wcsutils.obj wcsdataset.obj wcsdataset100.obj wcsdataset110.obj wcsdataset201.obj wcsrasterband.obj
 
 EXTRAFLAGS = -DHAVE_CURL $(CURL_CFLAGS) $(CURL_INC)
 
