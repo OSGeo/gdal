@@ -16,7 +16,7 @@ fi
 
 echo "Checking for fprintf(stderr,) statements..."
 # apps is voluntarily missing in the list of directories, due to lots of legitimate uses of such statements in programs
-grep fprintf -r  alg gnm port ogr gcore frmts --include="*.cpp" | grep stderr | grep -v -G "/[/|*][ ]*fprintf" | grep -v "/*ok" | grep -v sdts2shp | grep -v degrib18  | grep -v 8211view | grep -v 8211createfromxml | grep -v 8211dump | grep -v pcidskexception | grep -v vsipreload | grep -v fprintfstderr | grep -v cpl_multiproc | grep -v "truncation occurred" | grep -v xmlreformat | grep -v cpl_error
+grep fprintf -r  alg gnm port ogr gcore frmts --include="*.cpp" | grep stderr | grep -v -G "/[/|*][ ]*fprintf" | grep -v "/*ok" | grep -v sdts2shp | grep -v degrib  | grep -v 8211view | grep -v 8211createfromxml | grep -v 8211dump | grep -v pcidskexception | grep -v vsipreload | grep -v fprintfstderr | grep -v cpl_multiproc | grep -v "truncation occurred" | grep -v xmlreformat | grep -v cpl_error
 
 if [[ $? -eq 0 ]] ; then
     echo "FAIL: suspicious fprintf(stder,...) found. Remove or tag it with /*ok*/"
