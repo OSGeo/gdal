@@ -711,19 +711,19 @@ def pds4_13():
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.Open('PDS4:c:\dont\exist.xml:1:1')
+        ds = gdal.Open('PDS4:c:\do_not\exist.xml:1:1')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.Open('PDS4:i_dont_exist.xml')
+        ds = gdal.Open('PDS4:i_do_not_exist.xml')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.Open('PDS4:i_dont_exist.xml:1:1')
+        ds = gdal.Open('PDS4:i_do_not_exist.xml:1:1')
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -764,7 +764,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -772,7 +772,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -781,7 +781,7 @@ def pds4_14():
     </File_Area_Observational>
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array>
             <axes>3</axes>
@@ -834,7 +834,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array_3D>
             <axes>3</axes>
@@ -870,7 +870,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>
@@ -901,7 +901,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>
@@ -932,7 +932,7 @@ def pds4_14():
 <Product_Observational xmlns="http://pds.nasa.gov/pds4/pds/v1">
     <File_Area_Observational>
         <File>
-            <file_name>i_dont_exist.img</file_name>
+            <file_name>i_do_not_exist.img</file_name>
         </File>
         <Array_2D>
             <axes>2</axes>
@@ -980,7 +980,7 @@ def pds4_14():
 
     # Cannot create GeoTIFF file
     with gdaltest.error_handler():
-        ds = gdal.GetDriverByName('PDS4').Create('/i/dont/exist.xml', 1, 1,
+        ds = gdal.GetDriverByName('PDS4').Create('/i/do_not/exist.xml', 1, 1,
                                         options = ['IMAGE_FORMAT=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')

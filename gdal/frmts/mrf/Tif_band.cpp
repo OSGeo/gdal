@@ -167,7 +167,7 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         static_cast<vsi_l_offset>(nBlockXSize) * nBlockYSize * nDTSize * img.pagesize.c != dst.size )
     {
         CPLError(CE_Failure,CPLE_AppDefined,
-            "MRF: TIFF inconsistant with MRF parameters");
+            "MRF: TIFF inconsistent with MRF parameters");
         GDALClose(poTiff);
         VSIUnlink(fname);
         return CE_Failure;

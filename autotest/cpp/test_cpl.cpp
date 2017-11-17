@@ -1328,7 +1328,7 @@ namespace tut
         VSIFCloseL(fp);
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        ensure( CPLCopyTree(osNewDir, "/i/dont/exist") < 0 );
+        ensure( CPLCopyTree(osNewDir, "/i/do_not/exist") < 0 );
         CPLPopErrorHandler();
 
         ensure( CPLCopyTree(osNewDir, osSrcDir) == 0 );

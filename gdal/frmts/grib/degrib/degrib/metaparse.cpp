@@ -1236,7 +1236,7 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
  *
  * ARGUMENTS
  * refTime = To add "years / centuries / decades and normals", we need a
- *           refrence time.
+ *           reference time.
  *    delt = The delta time to convert. (Input)
  *    unit = The unit to convert. (Input)
  *     ans = The converted answer. (Output)

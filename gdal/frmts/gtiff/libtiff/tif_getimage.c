@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.113 2017-10-23 11:34:26 erouault Exp $ */
+/* $Id: tif_getimage.c,v 1.114 2017-11-17 20:21:00 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -138,7 +138,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			/*
 			 * TODO: if at all meaningful and useful, make more complete
 			 * support check here, or better still, refactor to let supporting
-			 * code decide whether there is support and what meaningfull
+			 * code decide whether there is support and what meaningful
 			 * error to return
 			 */
 			break;
@@ -416,7 +416,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			/*
 			 * TODO: if at all meaningful and useful, make more complete
 			 * support check here, or better still, refactor to let supporting
-			 * code decide whether there is support and what meaningfull
+			 * code decide whether there is support and what meaningful
 			 * error to return
 			 */
 			break;

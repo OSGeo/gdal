@@ -865,7 +865,7 @@ CPLErr JP2OpenJPEGDataset::ReadBlock( int nBand, VSILFILE* fpIn,
 
     if (bUseSetDecodeArea)
     {
-        /* We need to explicitely set the resolution factor on the image */
+        /* We need to explicitly set the resolution factor on the image */
         /* otherwise opj_set_decode_area() will assume we decode at full */
         /* resolution. */
         /* If using parameters.cp_reduce instead of opj_set_decoded_resolution_factor() */

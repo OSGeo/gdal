@@ -1934,7 +1934,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                 }
                 poDS->SetBand(i+1, poBand);
 
-                // Only instanciate explicit mask band if we have at least one
+                // Only instantiate explicit mask band if we have at least one
                 // special constant (that is not the missing_constant,
                 // already exposed as nodata value)
                 if( !GDALDataTypeIsComplex(eDT) &&
