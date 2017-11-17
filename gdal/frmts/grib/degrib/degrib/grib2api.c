@@ -20,7 +20,7 @@
 #include "grib2api.h"
 #include "grib2.h"
 #include "scan.h"
-#include "memendian.h"
+#include "tendian.h"
 #include "myassert.h"
 #include "gridtemplates.h"
 #include "pdstemplates.h"

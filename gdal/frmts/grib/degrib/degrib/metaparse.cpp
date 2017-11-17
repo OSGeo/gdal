@@ -26,7 +26,7 @@
 #include "myerror.h"
 #include "scan.h"
 #include "weather.h"
-#include "memendian.h"
+#include "tendian.h"
 #include "myutil.h"
 
 /*****************************************************************************
