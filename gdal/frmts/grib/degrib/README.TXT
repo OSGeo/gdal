@@ -1,8 +1,57 @@
-PROVENANCE
+WORK-IN-PROGRESS
+----------------
+
+Plan is to merge back to the GDAL copy:
+* Degrib Version 2.14 (10/16/2017)
+   http://www.mdl.nws.noaa.gov/~degrib/download/archive/degrib-20171016.tar.gz
+   Note: Degrib 2.14 is originally bundled with g2clib 1.0.5
+* g2clib:
+   http://www.nco.ncep.noaa.gov/pmb/codes/GRIB2/g2clib-1.6.0.tar (Last updated: 02/18/2016)
+
+Status:
+    degrib/
+        Merged:
+            src/degrib/clock.c
+            src/degrib/clock.h
+        TODO:
+            src/degrib/degrib1.c
+            src/degrib/degrib1.h
+            src/degrib/degrib2.h
+            src/degrib/degrib2.c
+            src/mdl_g2c/engribapi.c
+            src/mdl_g2c/engribapi.h
+            src/degrib/grib1tab.c
+            src/mdl_g2c/grib2api.h
+            src/mdl_g2c/grib2api.c
+            src/degrib/inventory.c
+            src/degrib/inventory.h
+            src/degrib/meta.h
+            src/degrib/metaname.c
+            src/degrib/metaname.h
+            src/degrib/metaparse.c
+            src/degrib/metaprint.c
+            src/degrib/myassert.c
+            src/degrib/myassert.h
+            src/degrib/myerror.c
+            src/degrib/myerror.h
+            src/degrib/myutil.c
+            src/degrib/myutil.h
+            src/degrib/scan.c
+            src/degrib/scan.h
+            src/degrib/tdlpack.c
+            src/degrib/tdlpack.h
+            src/degrib/type.h
+            src/degrib/weather.c
+            src/degrib/weather.h
+            src/degrib/tendian.c ( that is split in GDAL between memendian.c and fileendian.cpp )
+            src/degrib/tendian.h ( that is split in GDAL between memendian.h and fileendian.h )
+
+PROVENANCE (at r40728)
 ----------
 
 This directory contains a *modified* version of - presumably - degrib 1.80 (given
-the original subdirectory name degrib18)
+the original subdirectory name degrib18), with partial merges of degrib-2.0.3
+per r35437
 
 https://sats.nws.noaa.gov/~degrib/release/degrib1.80.txt
 
