@@ -50,6 +50,7 @@
 #define DWD 78
 #define ECMWF 98
 #define ATHENS 96
+#define NORWAY 88
 
 /* various subcenters */
 #define SUBCENTER_MDL 14
@@ -59,6 +60,60 @@
    which table to use. */
 #define DEF_NCEP_TABLE rean_nowarn
 enum Def_NCEP_Table { rean, opn, rean_nowarn, opn_nowarn };
+
+#if 0 // moved by GDAL in degrib1.h
+
+/* For an update to these tables see:
+ * http://www.nco.ncep.noaa.gov/pmb/docs/on388/table2.html
+ */
+
+extern GRIB1ParmTable parm_table_ncep_opn[256];
+extern GRIB1ParmTable parm_table_ncep_reanal[256];
+extern GRIB1ParmTable parm_table_ncep_tdl[256];
+extern GRIB1ParmTable parm_table_ncep_mdl[256];
+extern GRIB1ParmTable parm_table_omb[256];
+extern GRIB1ParmTable parm_table_nceptab_129[256];
+extern GRIB1ParmTable parm_table_nceptab_130[256];
+extern GRIB1ParmTable parm_table_nceptab_131[256];
+extern GRIB1ParmTable parm_table_nceptab_133[256];
+extern GRIB1ParmTable parm_table_nceptab_140[256];
+extern GRIB1ParmTable parm_table_nceptab_141[256];
+
+extern GRIB1ParmTable parm_table_nohrsc[256];
+
+extern GRIB1ParmTable parm_table_cptec_254[256];
+
+extern GRIB1ParmTable parm_table_afwa_000[256];
+extern GRIB1ParmTable parm_table_afwa_001[256];
+extern GRIB1ParmTable parm_table_afwa_002[256];
+extern GRIB1ParmTable parm_table_afwa_003[256];
+extern GRIB1ParmTable parm_table_afwa_010[256];
+extern GRIB1ParmTable parm_table_afwa_011[256];
+
+extern GRIB1ParmTable parm_table_dwd_002[256];
+extern GRIB1ParmTable parm_table_dwd_201[256];
+extern GRIB1ParmTable parm_table_dwd_202[256];
+extern GRIB1ParmTable parm_table_dwd_203[256];
+
+extern GRIB1ParmTable parm_table_ecmwf_128[256];
+extern GRIB1ParmTable parm_table_ecmwf_129[256];
+extern GRIB1ParmTable parm_table_ecmwf_130[256];
+extern GRIB1ParmTable parm_table_ecmwf_131[256];
+extern GRIB1ParmTable parm_table_ecmwf_140[256];
+extern GRIB1ParmTable parm_table_ecmwf_150[256];
+extern GRIB1ParmTable parm_table_ecmwf_160[256];
+extern GRIB1ParmTable parm_table_ecmwf_170[256];
+extern GRIB1ParmTable parm_table_ecmwf_180[256];
+
+extern GRIB1ParmTable parm_table_athens[256];
+
+extern GRIB1ParmTable parm_table_norway128[256];
+
+extern GRIB1ParmTable parm_table_cmc[256];
+
+extern GRIB1ParmTable parm_table_undefined[256];
+
+#endif
 
 /*****************************************************************************
  * Choose_ParmTable() --
@@ -132,6 +187,12 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
                return &parm_table_nceptab_130[0];
             case 131:
                return &parm_table_nceptab_131[0];
+            case 133:
+               return &parm_table_nceptab_133[0];
+            case 140:
+               return &parm_table_nceptab_140[0];
+            case 141:
+               return &parm_table_nceptab_141[0];
          }
          break;
       case AFWA:
@@ -197,20 +258,37 @@ static const GRIB1ParmTable *Choose_ParmTable (pdsG1Type *pdsMeta,
          switch (subcenter) {
             case 163:
                return &parm_table_nohrsc[0];
+            /* Based on 11/7/2006 email with Rob Doornbos, mimic'd what wgrib
+             * did which was to use parm_table_ncep_opn. */
+            case 161:
+               return &parm_table_ncep_opn[0];
          }
          break;
       case ATHENS:
          return &parm_table_athens[0];
          break;
+      case NORWAY:
+         if (pdsMeta->mstrVersion == 128) {
+            return &parm_table_norway128[0];
+         }
+         break;
       case CMC:
          return &parm_table_cmc[0];
          break;
    }
-   if ((pdsMeta->mstrVersion > 3) || (pdsMeta->cat > 127)) {
-       CPLDebug (
-           "GRIB",
-           "Undefined parameter table (center %d-%d table %d).",
-           center, subcenter, pdsMeta->mstrVersion);
+   if (pdsMeta->mstrVersion > 3) {
+      CPLDebug( "GRIB", "Don't understand the parameter table, since center %d-%d used\n"
+              "parameter table version %d instead of 3 (international exchange).\n"
+              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
+              center, subcenter, pdsMeta->mstrVersion);
+   }
+   if (pdsMeta->cat > 127) {
+      CPLDebug( "GRIB", "Parameter %d is > 127, so it falls in the local use section of\n"
+              "the parameter table (and is undefined on the international table.\n"
+              "Using default for now, but please email arthur.taylor@noaa.gov\n"
+              "about adding this table to his 'degrib1.c' and 'grib1tab.c' files.",
+              pdsMeta->cat);
    }
    return &parm_table_undefined[0];
 }
@@ -439,11 +517,6 @@ static int ReadGrib1Sect1 (uChar *pds, uInt4 pdsLen, uInt4 gribLen, uInt4 *curLo
       /* The 12 is because we have increased pds by 12. (but 25 is in
        * reference of 1..25, so we need another -1) */
       year = *pds + ((pds[25 - 13] - 1) * 100);
-
-      /* It seems like some old files (such as spring/I000176.grb)
-         do not have a century byte, and assum 19xx. */
-//      if( (year < 1900 || year > 2100) && *pds >= 0 && *pds < 100 )
-//          year = *pds + 1900;
    }
 
    if (ParseTime (&(pdsMeta->refTime), year, pds[1], pds[2], pds[3], pds[4],
@@ -857,7 +930,8 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
    switch (gridType) {
       case GB1S2_LATLON: // Latitude/Longitude Grid
       case GB1S2_GAUSSIAN_LATLON: // Gaussian Latitude/Longitude
-      case GB1S2_ROTATED_LATLON: // Rotated Latitude/Longitude
+      case GB1S2_ROTATED: // Rotated Latitude/Longitude
+         /* Rotated appears to be 42 bytes long and packed by norway. */
          if ((sectLen != 32) && (sectLen != 42) && (sectLen != 52)) {
             errSprintf ("For LatLon GDS, should have 32 or 42 or 52 bytes "
                         "of data\n");
@@ -867,7 +941,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          case GB1S2_GAUSSIAN_LATLON:
             gdsMeta->projType = GS3_GAUSSIAN_LATLON;
             break;
-         case GB1S2_ROTATED_LATLON:
+         case GB1S2_ROTATED:
             gdsMeta->projType = GS3_ROTATED_LATLON;
             break;
          default:
