@@ -335,7 +335,7 @@ bool WCSDataset110::ExtractGridInfo()
         offset_1.pop_back();
         offset_2.insert(offset_2.begin(), s);
     }
-    std::vector<std::vector<double>> offsets;
+    std::vector<std::vector<double> > offsets;
     if (swap) {
         offsets.push_back(Flist(offset_2));
         offsets.push_back(Flist(offset_1));

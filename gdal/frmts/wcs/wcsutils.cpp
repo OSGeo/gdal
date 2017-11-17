@@ -647,10 +647,10 @@ bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection)
     return true;
 }
 
-std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
+std::vector<std::vector<int> > ParseGridEnvelope(CPLXMLNode *node,
                                                 bool swap_the_first_two)
 {
-    std::vector<std::vector<int>> envelope;
+    std::vector<std::vector<int> > envelope;
     std::vector<CPLString> array = Split(CPLGetXMLValue(node, "low", ""), " ", swap_the_first_two);
     std::vector<int> lows;
     for (unsigned int i = 0; i < array.size(); ++i) {

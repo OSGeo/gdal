@@ -127,7 +127,7 @@ bool WCSDataset::SetCRS(CPLString crs, bool native)
 
 void WCSDataset::SetGeometry(std::vector<int> size,
                              std::vector<double> origin,
-                             std::vector<std::vector<double>> offsets)
+                             std::vector<std::vector<double> > offsets)
 {
     nRasterXSize = size[0];
     nRasterYSize = size[1];

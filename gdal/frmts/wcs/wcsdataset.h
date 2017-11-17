@@ -63,7 +63,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     bool        SetCRS(CPLString crs, bool native);
     void        SetGeometry(std::vector<int> size,
                             std::vector<double> origin,
-                            std::vector<std::vector<double>> offsets);
+                            std::vector<std::vector<double> > offsets);
 
     CPLString   osBandIdentifier;
 
@@ -203,11 +203,11 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
                             CPLString subtype,
                             bool swap_grid_axis,
                             std::vector<double> &origin,
-                            std::vector<std::vector<double>> &offset,
+                            std::vector<std::vector<double> > &offset,
                             std::vector<CPLString> labels,
                             char ***metadata);
     bool        Offset2GeoTransform(std::vector<double> origin,
-                                    std::vector<std::vector<double>> offset);
+                                    std::vector<std::vector<double> > offset);
     bool        ExtractGridInfo() override;
     
  public:

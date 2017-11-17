@@ -246,7 +246,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
                                 CPLString subtype,
                                 bool swap_grid_axis,
                                 std::vector<double> &origin,
-                                std::vector<std::vector<double>> &offset,
+                                std::vector<std::vector<double> > &offset,
                                 std::vector<CPLString> axes,
                                 char ***metadata)
 {
@@ -655,7 +655,7 @@ bool WCSDataset201::ExtractGridInfo()
         swap_grid_axis = !CPLGetXMLBoolean(psService, "NoGridAxisSwap");
     }
     path = "limits.GridEnvelope";
-    std::vector<std::vector<int>> size = ParseGridEnvelope(CPLGetXMLNode(grid, path), swap_grid_axis);
+    std::vector<std::vector<int> > size = ParseGridEnvelope(CPLGetXMLNode(grid, path), swap_grid_axis);
     std::vector<int> grid_size;
 
     grid_size.push_back(size[1][domain_indexes[0]] - size[0][domain_indexes[0]] + 1);
@@ -667,7 +667,7 @@ bool WCSDataset201::ExtractGridInfo()
     bServiceDirty = CPLUpdateXML(psService, "GridAxes", Join(grid_axes, ",")) || bServiceDirty;
 
     std::vector<double> origin;
-    std::vector<std::vector<double>> offsets;
+    std::vector<std::vector<double> > offsets;
     if (!GridOffsets(grid, subtype, swap_grid_axis, origin, offsets, axes, &metadata)) {
         return false;
     }
@@ -689,7 +689,7 @@ bool WCSDataset201::ExtractGridInfo()
     // has the user set slicing or trimming?
     std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
     // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
-    std::vector<std::vector<double>> domain_trim;
+    std::vector<std::vector<double> > domain_trim;
     std::vector<CPLString> dimension_to_band_trim;
 
     // are all dimensions that are not x/y domain and dimension to band sliced?

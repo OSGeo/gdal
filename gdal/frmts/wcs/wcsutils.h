@@ -109,7 +109,7 @@ bool CRS2Projection(CPLString crs,
 
 bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection = NULL);
     
-std::vector<std::vector<int>> ParseGridEnvelope(CPLXMLNode *node,
+std::vector<std::vector<int> > ParseGridEnvelope(CPLXMLNode *node,
                                                 bool swap_the_first_two = false);
 
 std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node);
