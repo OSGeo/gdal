@@ -446,7 +446,8 @@ CPLXMLNode *AddSimpleMetaData(char ***metadata,
     if (node2) {
         path = path + from + ".";
         for (unsigned int i = 0; i < keys.size(); i++) {
-            if (CPLXMLNode *node3 = CPLGetXMLNode(node2, keys[i])) {
+            CPLXMLNode *node3 = CPLGetXMLNode(node2, keys[i]);
+            if (node3) {
                 CPLString name = path + keys[i];
                 CPLString value = CPLGetXMLValue(node3, NULL, "");
                 value.Trim();

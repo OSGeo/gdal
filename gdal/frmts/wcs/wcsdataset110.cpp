@@ -676,7 +676,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     };
     CPLXMLNode *provider = AddSimpleMetaData(&metadata, Capabilities, path2, "ServiceProvider", keys2);
     if (provider) {
-        if( CPLXMLNode *site = CPLGetXMLNode(provider, "ProviderSite") )
+        CPLXMLNode *site = CPLGetXMLNode(provider, "ProviderSite");
+        if( site )
         {
             CPLString path3 = path2 + "ProviderSite";
             CPLString value = CPLGetXMLValue(CPLGetXMLNode(site, "href"), NULL, "");
@@ -719,7 +720,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
 
     // operations metadata
     CPLString DescribeCoverageURL = "";
-    if( CPLXMLNode *service2 = CPLGetXMLNode(Capabilities, "OperationsMetadata") )
+    CPLXMLNode *service2 = CPLGetXMLNode(Capabilities, "OperationsMetadata");
+    if( service2 )
     {
         for( CPLXMLNode *operation = service2->psChild; operation != NULL; operation = operation->psNext)
         {
@@ -772,7 +774,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     metadata = NULL;
 
     // contents metadata
-    if( CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "Contents") )
+    CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "Contents");
+    if( contents )
     {
         int index = 1;
         for( CPLXMLNode *summary = contents->psChild; summary != NULL; summary = summary->psNext)
