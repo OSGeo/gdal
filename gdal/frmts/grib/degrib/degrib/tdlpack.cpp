@@ -5,7 +5,7 @@
 #include "tdlpack.h"
 #include "myerror.h"
 #include "meta.h"
-#include "memendian.h"
+#include "tendian.h"
 #include "fileendian.h"
 #include "myassert.h"
 #include "myutil.h"

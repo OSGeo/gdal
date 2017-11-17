@@ -23,7 +23,7 @@
 
 #include "myassert.h"
 #include "myerror.h"
-#include "memendian.h"
+#include "tendian.h"
 #include "meta.h"
 #include "metaname.h"
 //#include "write.h"

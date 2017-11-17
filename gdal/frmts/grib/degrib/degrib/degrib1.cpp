@@ -23,7 +23,7 @@
 #include "degrib2.h"
 #include "myerror.h"
 #include "myassert.h"
-#include "memendian.h"
+#include "tendian.h"
 #include "scan.h"
 #include "degrib1.h"
 #include "metaname.h"

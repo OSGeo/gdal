@@ -1,5 +1,5 @@
 /*****************************************************************************
- * memendian.c
+ * tendian.c
  *
  * DESCRIPTION
  *    This file contains all the utility functions that the Driver uses to
@@ -15,7 +15,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include "memendian.h"
+#include "tendian.h"
 
 /*****************************************************************************
  * memswp() -- Review 12/2002

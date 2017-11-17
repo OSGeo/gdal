@@ -1,5 +1,5 @@
 /*****************************************************************************
- * memendian.h
+ * tendian.h
  *
  * DESCRIPTION
  *    This file contains all the utility functions that the Driver uses to
