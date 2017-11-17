@@ -25,6 +25,9 @@ extern const GRIB1ParmTable parm_table_omb[256];
 extern const GRIB1ParmTable parm_table_nceptab_129[256];
 extern const GRIB1ParmTable parm_table_nceptab_130[256];
 extern const GRIB1ParmTable parm_table_nceptab_131[256];
+extern const GRIB1ParmTable parm_table_nceptab_133[256];
+extern const GRIB1ParmTable parm_table_nceptab_140[256];
+extern const GRIB1ParmTable parm_table_nceptab_141[256];
 
 extern const GRIB1ParmTable parm_table_nohrsc[256];
 
@@ -53,6 +56,8 @@ extern const GRIB1ParmTable parm_table_ecmwf_170[256];
 extern const GRIB1ParmTable parm_table_ecmwf_180[256];
 
 extern const GRIB1ParmTable parm_table_athens[256];
+
+extern const GRIB1ParmTable parm_table_norway128[256];
 
 extern const GRIB1ParmTable parm_table_cmc[256];
 

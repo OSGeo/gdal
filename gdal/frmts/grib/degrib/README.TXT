@@ -13,14 +13,17 @@ Status:
         Merged:
             src/degrib/clock.c
             src/degrib/clock.h
-        TODO:
+            src/degrib/tendian.c
+            src/degrib/tendian.h
             src/degrib/degrib1.c
             src/degrib/degrib1.h
+            src/degrib/grib1tab.c
+
+        TODO:
             src/degrib/degrib2.h
             src/degrib/degrib2.c
             src/mdl_g2c/engribapi.c
             src/mdl_g2c/engribapi.h
-            src/degrib/grib1tab.c
             src/mdl_g2c/grib2api.h
             src/mdl_g2c/grib2api.c
             src/degrib/inventory.c
@@ -43,8 +46,6 @@ Status:
             src/degrib/type.h
             src/degrib/weather.c
             src/degrib/weather.h
-            src/degrib/tendian.c
-            src/degrib/tendian.h
 
 PROVENANCE (at r40728)
 ----------
