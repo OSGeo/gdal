@@ -785,8 +785,6 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
 
-            CPLXMLNode *node;
-
             CPLString keywords = GetKeywords(summary, "Keywords", "Keyword");
             if (keywords != "") {
                 CPLString name = path3 + "KEYWORDS";
@@ -798,8 +796,12 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 metadata = CSLSetNameValue(metadata, name, crs);
             }
 
-            if ((node = CPLGetXMLNode(summary, "CoverageId"))
-                || (node = CPLGetXMLNode(summary, "Identifier")))
+            CPLXMLNode *node = CPLGetXMLNode(summary, "CoverageId");
+            if (!node) {
+                node = CPLGetXMLNode(summary, "Identifier");
+            }
+
+            if (node)
             {
                 CPLString name = path3 + "NAME";
                 CPLString value = DescribeCoverageURL;
@@ -816,7 +818,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 metadata = CSLSetNameValue(metadata, name, value);
             }
 
-            if ((node = CPLGetXMLNode(summary, "WGS84BoundingBox"))) {
+            node = CPLGetXMLNode(summary, "WGS84BoundingBox");
+            if (node) {
                 CPLString name = path3 + "WGS84BBOX";
                 // WGS84BoundingBox is always lon,lat
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
@@ -829,7 +832,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 }
             }
 
-            if ((node = CPLGetXMLNode(summary, "BoundingBox"))) {
+            node = CPLGetXMLNode(summary, "BoundingBox");
+            if (node) {
                 CPLString CRS = ParseCRS(node);
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
                 if (bbox.size() >= 2) {
@@ -856,7 +860,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 }
             }
 
-            if ((node = CPLGetXMLNode(summary, "CoverageSubtype"))) {
+            node = CPLGetXMLNode(summary, "CoverageSubtype");
+            if (node) {
                 CPLString name = path3 + "TYPE";
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }
