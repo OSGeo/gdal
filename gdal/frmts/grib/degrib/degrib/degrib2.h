@@ -69,8 +69,16 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
 int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData * meta,
                      IS_dataType * IS, int subgNum, double majEarth,
-                     double minEarth, int simpVer, sInt4 * f_endMsg,
+                     double minEarth, int simpVer, int simpWWA, sInt4 * f_endMsg,
                      LatLon *lwlf, LatLon *uprt);
+
+#if 0 // unused by GDAL
+int ReadGrib2RecordFast (FILE *fp, sChar f_unit, double **Grib_Data,
+                         uInt4 *grib_DataLen, grib_MetaData *meta,
+                         IS_dataType *IS, int subgNum, double majEarth,
+                         double minEarth, int simpVer, int simpWWA,
+                         sInt4 *f_endMsg, LatLon *lwlf, LatLon *uprt);
+#endif
 
 /* Possible error messages left in errSprintf() */
 int FindGRIBMsg (DataSource &fp, int msg, sInt4 *offset, int *curMsg);

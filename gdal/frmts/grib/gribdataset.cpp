@@ -417,8 +417,9 @@ void GRIBRasterBand::ReadGribData( DataSource &fp, sInt4 start, int subgNum,
     uInt4 grib_DataLen = 0;  // Size of Grib_Data.
     *metaData = new grib_MetaData();
     MetaInit(*metaData);
+    const int simpWWA = 0; // seem to be unused in degrib
     ReadGrib2Record(fp, f_unit, data, &grib_DataLen, *metaData, &is, subgNum,
-                    majEarth, minEarth, f_SimpleVer, &f_endMsg, &lwlf, &uprt);
+                    majEarth, minEarth, f_SimpleVer, simpWWA, &f_endMsg, &lwlf, &uprt);
 
     // No intention to show errors, just swallow it and free the memory.
     char *errMsg = errSprintf(NULL);

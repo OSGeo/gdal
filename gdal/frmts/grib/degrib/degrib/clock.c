@@ -1461,7 +1461,6 @@ void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
  *****************************************************************************
  */
 
-#if 0  // Unused with GDAL.
 static int Clock_ScanWeekday (char *ptr)
 {
    switch (*ptr) {
@@ -1494,7 +1493,6 @@ static int Clock_ScanWeekday (char *ptr)
    }
    return -1;
 }
-#endif
 
 /*****************************************************************************
  * Clock_ScanColon() --
@@ -1520,7 +1518,6 @@ static int Clock_ScanWeekday (char *ptr)
  *****************************************************************************
  */
 
-#if 0  // Unused with GDAL.
 static double Clock_ScanColon (char *ptr)
 {
    sInt4 hour, min;
@@ -1545,7 +1542,6 @@ static double Clock_ScanColon (char *ptr)
    }
    return (sec + 60 * min + 3600 * hour);
 }
-#endif
 
 /*****************************************************************************
  * Clock_ScanSlash() --
@@ -1575,7 +1571,6 @@ static double Clock_ScanColon (char *ptr)
  *****************************************************************************
  */
 
-#if 0  // Unused with GDAL.
 static int Clock_ScanSlash (char *word, int *mon, int *day, sInt4 *year,
                             char *f_year)
 {
@@ -1606,7 +1601,6 @@ static int Clock_ScanSlash (char *word, int *mon, int *day, sInt4 *year,
    }
    return 0;
 }
-#endif
 
 /* http://www.w3.org/TR/NOTE-datetime
    Year and month:
@@ -1627,7 +1621,6 @@ Example:
 1994-11-05T13:15:30Z corresponds to the same instant.
 */
 
-#if 0  // Unused with GDAL.
 static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
                            double *ptime, char *f_time)
 {
@@ -1727,7 +1720,6 @@ static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
    *ptime = sec + min * 60 + hour * 3600 - offset;
    return 0;
 }
-#endif
 
 /*****************************************************************************
  * Clock_ScanDate() --
@@ -1916,7 +1908,6 @@ enum {
  * new Start location.  Copy up to 30 characters (in caps) into word. */
 /* return -1 if no next word, 0 otherwise */
 
-#if 0  // Unused with GDAL.
 static int Clock_GetWord (char **Start, char **End, char word[30],
                           int *wordType)
 {
@@ -1978,9 +1969,7 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
    }
    return 0;
 }
-#endif
 
-#if 0  // Unused with gdal.
 typedef struct {
    sInt4 val;
    int len;             /* read from len char string? */
@@ -1991,7 +1980,6 @@ typedef struct {
    int f_negate;
    int amount;
 } relType;
-#endif
 
 /*****************************************************************************
  * Clock_Scan() --
@@ -2016,7 +2004,6 @@ typedef struct {
  *****************************************************************************
  */
 
-#if 0  // Unused with GDAL.
 int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
 {
    char *ptr, *ptr2;
@@ -2501,8 +2488,6 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    refTime += d_remain;
    return refTime;
 }
-
-#endif  // Unused with GDAL.
 
 #ifdef CLOCK_PROGRAM
 /* See clockstart.c */

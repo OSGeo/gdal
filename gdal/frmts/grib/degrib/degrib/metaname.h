@@ -15,13 +15,12 @@ const char *subCenterLookup(unsigned short int center,
 
 const char *processLookup(unsigned short int center, unsigned char process);
 
-void ParseElemName (unsigned short int center, unsigned short int subcenter,
-                    int prodType, int templat, int cat, int subcat,
-                    sInt4 lenTime,
-                    uChar timeRangeUnit,
-                    uChar timeIncrType, uChar genID,
-                    uChar probType, double lowerProb, double upperProb,
-                    char **name, char **comment, char **unit, int *convert,
+void ParseElemName (uChar mstrVersion, uShort2 center, uShort2 subcenter, int prodType,
+                    int templat, int cat, int subcat, sInt4 lenTime,
+                    uChar timeRangeUnit, uChar statProcessID,
+                    uChar timeIncrType, uChar genID, uChar probType,
+                    double lowerProb, double upperProb, char **name,
+                    char **comment, char **unit, int *convert,
                     sChar percentile, uChar genProcess,
                     sChar f_fstValue, double fstSurfValue,
                     sChar f_sndValue, double sndSurfValue);

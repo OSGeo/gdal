@@ -760,7 +760,6 @@ is required for each GRIB2 message.
  * gfld->num_coord = number of values in array gfld->coord_list[].
  *****************************************************************************
  */
-static
 void unpk_g2ncep (CPL_UNUSED sInt4 * kfildo, float * ain, sInt4 * iain, sInt4 * nd2x3,
                   sInt4 * idat, sInt4 * nidat, float * rdat, sInt4 * nrdat,
                   sInt4 * is0, CPL_UNUSED sInt4 * ns0, sInt4 * is1, CPL_UNUSED sInt4 * ns1,
