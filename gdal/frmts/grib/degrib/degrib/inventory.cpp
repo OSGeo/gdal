@@ -438,7 +438,8 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
                                uInt4 *buffLen, char **buffer,
                                inventoryType *inv, uChar prodType,
                                unsigned short int center,
-                               unsigned short int subcenter)
+                               unsigned short int subcenter,
+                               uChar mstrVersion)
 {
    uInt4 secLen;        /* The length of the current section. */
    sInt4 foreTime;      /* forecast time (NDFD treats as "projection") */
@@ -463,6 +464,7 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    sChar f_sndValue;    /* flag if SndValue is valid. */
    sChar f_fstValue;    /* flag if FstValue is valid. */
    uChar timeRangeUnit;
+   uChar statProcessID = 255;
    sInt4 lenTime;       /* Used by parseTime to tell difference between 8hr
                          * average and 1hr average ozone. */
    uChar genID;         /* The Generating process ID (used for GFS MOS) */
@@ -511,7 +513,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    if ((templat != GS4_ANALYSIS) && (templat != GS4_ENSEMBLE)
        && (templat != GS4_DERIVED)
        && (templat != GS4_PROBABIL_PNT) && (templat != GS4_STATISTIC)
-       && (templat != GS4_PROBABIL_TIME) && (templat != GS4_PERCENTILE)
+       && (templat != GS4_PROBABIL_TIME) && (templat != GS4_PERCENT_TIME)
        && (templat != GS4_ENSEMBLE_STAT)
        && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
@@ -540,7 +542,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       /* Compute forecast time. */
       foreTimeUnit = (*buffer)[18 - 5];
       MEMCPY_BIG (&foreTime, *buffer + 19 - 5, sizeof (sInt4));
-      if (ParseSect4Time2sec (/*inv->refTime, */foreTime, foreTimeUnit, &(inv->foreSec)) != 0) {
+      if (ParseSect4Time2sec (inv->refTime, foreTime, foreTimeUnit, &(inv->foreSec)) != 0) {
          errSprintf ("unable to convert TimeUnit: %d \n", foreTimeUnit);
          return -8;
       }
@@ -582,7 +584,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             }
 */
             break;
-         case GS4_PERCENTILE: /* 4.10 */
+         case GS4_PERCENT_TIME: /* 4.10 */
             if( *buffLen < 51 - 5 + 4)
                 return -8;
             percentile = (*buffer)[35 - 5];
@@ -608,6 +610,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
                printf ("Warning: Investigate Template 4.8 bytes 35-41\n");
                inv->validTime = inv->refTime + inv->foreSec;
             }
+            statProcessID = (*buffer)[47 -5];
             timeIncrType = (*buffer)[48 - 5];
             timeRangeUnit = (*buffer)[49 - 5];
             MEMCPY_BIG (&lenTime, *buffer + 50 - 5, sizeof (sInt4));
@@ -755,8 +758,8 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    }
 
    /* Find out what the name of this variable is. */
-   ParseElemName (center, subcenter, prodType, templat, cat, subcat,
-                  lenTime, timeRangeUnit, timeIncrType, genID, probType, lowerProb,
+   ParseElemName (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
+                  lenTime, timeRangeUnit, statProcessID, timeIncrType, genID, probType, lowerProb,
                   upperProb, &(inv->element), &(inv->comment),
                   &(inv->unitName), &convert, percentile, genProcess,
                   f_fstValue, fstSurfValue, f_sndValue, sndSurfValue);
@@ -882,6 +885,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
    sInt4 fileLen;       /* Length of the GRIB2 file. */
 #endif
    unsigned short int center, subcenter; /* Who produced it. */
+   uChar mstrVersion;   /* The master table version (is it 255?) */
    // char *ptr;           /* used to find the file extension. */
 
    grib_limit = GRIB_LIMIT;
@@ -1017,13 +1021,14 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
          InventoryParseTime (buffer + 13 - 5, &(inv->refTime));
          MEMCPY_BIG (&center, buffer + 6 - 5, sizeof (short int));
          MEMCPY_BIG (&subcenter, buffer + 8 - 5, sizeof (short int));
+         MEMCPY_BIG (&mstrVersion, buffer + 10 - 5, sizeof (uChar));
 
          sectNum = 2;
          do {
             /* Look at sections 2 to 7 */
             if ((ans = GRIB2Inventory2to7 (sectNum, fp, gribLen, &bufferLen,
                                            &buffer, inv, prodType, center,
-                                           subcenter)) != 0) {
+                                           subcenter, mstrVersion)) != 0) {
                //fclose (fp);
                free (buffer);
                free (buff);

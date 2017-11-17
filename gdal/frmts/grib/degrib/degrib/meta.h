@@ -124,6 +124,7 @@ enum { TDLP_MERCATOR = 7, TDLP_LAMBERT = 3, TDLP_POLAR = 5};
 
 #define NUM_UGLY_WORD 5
 #define NUM_UGLY_ATTRIB 5
+#define NUM_HAZARD_WORD 5
 
 typedef struct {
    uChar numValid;         /* (0..5) How many valid "types" */
@@ -139,9 +140,6 @@ typedef struct {
    uChar attrib[NUM_UGLY_WORD][NUM_UGLY_ATTRIB]; /* (see WxAttrib) */
    uChar minVis;           /* vis[] should be constant, but just in case
                             * we use the minimum value. */
-   uChar f_valid;          /* 1 valid may be not-used, 2 valid and used,
-                            * 0 invalid may be not-used,
-                            * temporarily 3 (invalid and used). */
    sInt4 validIndex;    /* Which index this is, counting only used
                             * valid indexes.  If it is not used it is -1 */
    char *english[NUM_UGLY_WORD]; /* The English translation of ugly string. */
@@ -155,6 +153,9 @@ typedef struct {
 
 typedef struct {
    char **data;              /* Array of text strings (aka "ugly strings) */
+   uChar *f_valid;           /* 1 valid may be not-used, 2 valid and used,
+                              * 0 invalid may be not-used,
+                              * temporarily 3 (invalid and used). */
    uInt4 dataLen;            /* number of text strings in data. */
    int maxLen;               /* Max Length of all of the "ugly strings"
                               * It includes 1 for the \0 character. */
@@ -169,15 +170,40 @@ typedef struct {
    uInt4 dataLen;         /* Number of elements in data. */
 } sect2_UnknownType;
 
-enum { GS2_NONE, GS2_WXTYPE, GS2_UNKNOWN };
+typedef struct {
+   uChar numValid;         /* (0..5) How many valid "types" */
+   uChar haz[NUM_HAZARD_WORD]; /* (see WxCode) */
+   uChar sig[NUM_HAZARD_WORD]; /* (see WxCover) */
+   sInt4 validIndex;       /* Which index this is, counting only used
+                            * valid indexes.  If it is not used it is -1 */
+   char *english[NUM_HAZARD_WORD]; /* The english translation of ugly string. */
+   int SimpleCode;         /* Simple weather code for this ugly string. */
+} HazardStringType;
+
+typedef struct {
+   char **data;              /* Array of text strings */
+   uChar *f_valid;           /* 1 valid may be not-used, 2 valid and used,
+                              * 0 invalid may be not-used,
+                              * temporarily 3 (invalid and used). */
+   uInt4 dataLen;            /* number of text strings in data. */
+   int maxLen;               /* Max Length of all of the "ugly strings"
+                              * It includes 1 for the \0 character. */
+   HazardStringType *haz;    /* The parsed Ugly string. */
+   int maxEng[NUM_HAZARD_WORD]; /* Max length of english phrases for all ugly
+                               * word number X. */
+} sect2_HazardType;
+
+enum { GS2_NONE, GS2_WXTYPE, GS2_UNKNOWN, GS2_HAZARD };
 
 typedef struct {
 /*   void *ptr;  */              /* Pointer to section 2 data. */
    sect2_WxType wx;          /* wx data. */
    sect2_UnknownType unknown; /* unknown type of section 2 data. */
+   sect2_HazardType hazard;  /* hazard data */
    uChar ptrType;            /* Which structure is valid.
                                 GS2_WXTYPE => wx
-                                GS2_UNKNOWN => unknown */
+                                GS2_UNKNOWN => unknown
+                                GS2_HAZARD => hazard */
 } sect2_type;
 
 enum { CAT_TEMP, CAT_MOIST, CAT_MOMENT, CAT_MASS, CAT_SW_RAD,
@@ -243,14 +269,13 @@ typedef struct {  /* See Template 4.30. */
 } sect4_BandType;
 
 enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
-   GS4_PERCENT_PNT = 6, GS4_STATISTIC = 8, GS4_PROBABIL_TIME = 9,
-   GS4_PERCENTILE = 10, // FIXME: name in old degrib
-   GS4_PERCENT_TIME = 10, // FIXME: name in recent degrib
-   GS4_ENSEMBLE_STAT = 11, GS4_DERIVED_INTERVAL = 12,
-   GS4_STATISTIC_SPATIAL_AREA = 15, // TODO; partially supported. Should fetch specific fields in metaparse.cpp
-   GS4_RADAR = 20,
-   GS4_SATELLITE = 30,
-   GS4_SATELLITE_SYNTHETIC = 32
+       GS4_PERCENT_PNT = 6, GS4_ERROR = 7, GS4_STATISTIC = 8,
+       GS4_PROBABIL_TIME = 9, GS4_PERCENT_TIME = 10, GS4_ENSEMBLE_STAT = 11,
+       GS4_DERIVED_INTERVAL = 12,
+       GS4_STATISTIC_SPATIAL_AREA = 15, // TODO; partially supported. Should fetch specific fields in metaparse.cpp
+       GS4_RADAR = 20,
+       GS4_SATELLITE = 30,
+       GS4_SATELLITE_SYNTHETIC = 32
 };
 
 typedef struct {
@@ -265,6 +290,7 @@ typedef struct {
    sInt4 cutOff;             /* Data Cutoff in seconds after reference time
                                 (see sect 1 for reference time). */
    double foreSec;           /* forecast "projection time" in seconds. */
+   uChar foreUnit;           /* Original unit for foreSec.  See 4.4 */
    uChar fstSurfType;        /* Type of the first fixed surface. */
    double fstSurfValue;      /* Value of first fixed surface. */
    sChar fstSurfScale;       /* Scale factor used when storing value. */
@@ -474,6 +500,9 @@ typedef struct {
    double stretchFactor;      /* Factor of stretching. */
    int f_typeLatLon;          /* 0 regular, 1 stretch, 2 stretch / rotate. */
    double angleRotate;        /* Rotation angle. */
+/* following is just to track the datum. */
+   uChar hdatum;              /* horizontal datum to use.  0=undefined (use
+                               * grid dataum) 1=WGS84 */
 } gdsType;
 
 typedef struct {
@@ -554,7 +583,7 @@ int ParseTime (double * AnsTime, int year, uChar mon, uChar day, uChar hour,
 
 int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans);
 
-int ParseSect4Time2sec (sInt4 time, int unit, double *ans);
+int ParseSect4Time2sec (double refTime, sInt4 delt, int unit, double *ans);
 
 /* Possible error messages left in errSprintf() */
 int MetaParse (grib_MetaData * meta, sInt4 *is0, sInt4 ns0,
@@ -562,14 +591,17 @@ int MetaParse (grib_MetaData * meta, sInt4 *is0, sInt4 ns0,
                float *rdat, sInt4 nrdat, sInt4 *idat, sInt4 nidat,
                sInt4 *is3, sInt4 ns3, sInt4 *is4, sInt4 ns4,
                sInt4 *is5, sInt4 ns5, sInt4 grib_len,
-               float xmissp, float xmisss, int simpVer);
+               float xmissp, float xmisss, int simpVer, int simpWWA);
 
 #ifdef __cplusplus
+
 void ParseGrid (DataSource &fp, gridAttribType * attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
-                double unitB, uChar f_wxType, sect2_WxType * WxType,
+                double unitB, uChar f_txtType, uInt4 txt_dataLen,
+                uChar *txt_f_valid,
                 uChar f_subGrid, int startX, int startY, int stopX, int stopY);
+
 #endif
 
 void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
@@ -582,7 +614,11 @@ int MetaPrintGDS (gdsType * gds, int version, char **ans);
 /* Possible error messages left in errSprintf() */
 int MetaPrint (grib_MetaData *meta, char **ans, sChar decimal, sChar f_unit);
 #endif  // Unused with GDAL.
-  
+
+sInt4 sbit_2Comp_fourByte(sInt4 data);
+
+sChar sbit_2Comp_oneByte(sChar data);
+ 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */

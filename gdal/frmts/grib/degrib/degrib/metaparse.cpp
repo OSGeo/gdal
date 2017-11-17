@@ -26,6 +26,7 @@
 #include "myerror.h"
 #include "scan.h"
 #include "weather.h"
+#include "hazard.h"
 #include "tendian.h"
 #include "myutil.h"
 
@@ -66,6 +67,10 @@ void MetaInit (grib_MetaData *meta)
    meta->pds2.sect2.wx.ugly = NULL;
    meta->pds2.sect2.unknown.data = NULL;
    meta->pds2.sect2.unknown.dataLen = 0;
+   meta->pds2.sect2.hazard.data = NULL;
+   meta->pds2.sect2.hazard.dataLen = 0;
+   meta->pds2.sect2.hazard.maxLen = 0;
+   meta->pds2.sect2.hazard.haz = NULL;
 
    meta->pds2.sect4.numInterval = 0;
    meta->pds2.sect4.Interval = NULL;
@@ -100,21 +105,38 @@ void MetaSect2Free (grib_MetaData *meta)
 {
    size_t i;            /* Counter for use when freeing Wx data. */
 
-   for (i = 0; i < meta->pds2.sect2.wx.dataLen; i++) {
-      free (meta->pds2.sect2.wx.data[i]);
-      FreeUglyString (&(meta->pds2.sect2.wx.ugly[i]));
+   if (meta->pds2.sect2.ptrType == GS2_WXTYPE) {
+      for (i = 0; i < meta->pds2.sect2.wx.dataLen; i++) {
+         free (meta->pds2.sect2.wx.data[i]);
+         FreeUglyString (&(meta->pds2.sect2.wx.ugly[i]));
+      }
+      free (meta->pds2.sect2.wx.ugly);
+      meta->pds2.sect2.wx.ugly = NULL;
+      free (meta->pds2.sect2.wx.data);
+      meta->pds2.sect2.wx.data = NULL;
+      free (meta->pds2.sect2.wx.f_valid);
+      meta->pds2.sect2.wx.f_valid = NULL;
+      meta->pds2.sect2.wx.dataLen = 0;
+      meta->pds2.sect2.wx.maxLen = 0;
+   } else if (meta->pds2.sect2.ptrType == GS2_HAZARD) {
+      for (i = 0; i < meta->pds2.sect2.hazard.dataLen; i++) {
+         free (meta->pds2.sect2.hazard.data[i]);
+         FreeHazardString (&(meta->pds2.sect2.hazard.haz[i]));
+      }
+      free (meta->pds2.sect2.hazard.haz);
+      meta->pds2.sect2.hazard.haz = NULL;
+      free (meta->pds2.sect2.hazard.data);
+      meta->pds2.sect2.hazard.data = NULL;
+      free (meta->pds2.sect2.hazard.f_valid);
+      meta->pds2.sect2.hazard.f_valid = NULL;
+      meta->pds2.sect2.hazard.dataLen = 0;
+      meta->pds2.sect2.hazard.maxLen = 0;
+   } else {
+      free (meta->pds2.sect2.unknown.data);
+      meta->pds2.sect2.unknown.data = NULL;
+      meta->pds2.sect2.unknown.dataLen = 0;
    }
-   free (meta->pds2.sect2.wx.ugly);
-   meta->pds2.sect2.wx.ugly = NULL;
-   free (meta->pds2.sect2.wx.data);
-   meta->pds2.sect2.wx.data = NULL;
-   meta->pds2.sect2.wx.dataLen = 0;
-   meta->pds2.sect2.wx.maxLen = 0;
    meta->pds2.sect2.ptrType = GS2_NONE;
-
-   free (meta->pds2.sect2.wx.data);
-   meta->pds2.sect2.unknown.data = NULL;
-   meta->pds2.sect2.unknown.dataLen = 0;
 }
 
 /*****************************************************************************
@@ -206,7 +228,8 @@ int ParseTime (double *AnsTime, int year, uChar mon, uChar day, uChar hour,
 
    if ((year < 1900) || (year > 2100)) {
       errSprintf ("ParseTime:: year %d is invalid\n", year);
-      return -1;
+/*      return -1; */
+      year += 2000;
    }
    /* sec is allowed to be 61 for leap seconds. */
    if ((mon > 12) || (day == 0) || (day > 31) || (hour > 24) || (min > 60) ||
@@ -325,17 +348,18 @@ static int ParseSect1 (sInt4 *is1, sInt4 ns1, grib_MetaData *meta)
    meta->subcenter = (unsigned short int) is1[7];
    meta->pds2.mstrVersion = (uChar) is1[9];
    meta->pds2.lclVersion = (uChar) is1[10];
-   if (((meta->pds2.mstrVersion < 1) || (meta->pds2.mstrVersion > 3)) ||
+   if (((meta->pds2.mstrVersion < 1) || (meta->pds2.mstrVersion > 5)) ||
        (meta->pds2.lclVersion > 1)) {
       if (meta->pds2.mstrVersion == 0) {
          printf ("Warning: Master table version == 0, was experimental\n"
                  "I don't have a copy, and don't know where to get one\n"
                  "Use meta data at your own risk.\n");
-      } else {
-         errSprintf ("Master table version supported (1,2,3) yours is %d... "
-                     "Local table version supported (0,1) yours is %d...\n",
-                     meta->pds2.mstrVersion, meta->pds2.lclVersion);
-         return -2;
+      } else if (meta->pds2.mstrVersion != 255) {
+         printf ("Warning: use meta data at your own risk.\n");
+         printf ("Supported master table versions: (1,2,3,4,5) yours is %u... ", 
+                 meta->pds2.mstrVersion);
+         printf ("Supported local table version supported (0,1) yours is %u...\n", 
+                 meta->pds2.lclVersion);
       }
    }
    meta->pds2.sigTime = (uChar) is1[11];
@@ -488,8 +512,13 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
    free (buffer);
    Wx->ugly = (UglyStringType *) malloc (Wx->dataLen *
                                          sizeof (UglyStringType));
+   Wx->f_valid = (uChar *) malloc (Wx->dataLen * sizeof (uChar));
    for (j = 0; j < Wx->dataLen; j++) {
-      ParseUglyString (&(Wx->ugly[j]), Wx->data[j], simpVer);
+      if (ParseUglyString (&(Wx->ugly[j]), Wx->data[j], simpVer) == 0) {
+         Wx->f_valid[j] = 1;
+      } else {
+         Wx->f_valid[j] = 0;
+      }
    }
    /* We want to know how many bytes we need for each English phrase column,
     * so we walk through each column calculating that value. */
@@ -500,6 +529,135 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
             len = static_cast<int>(strlen (Wx->ugly[j].english[i]));
             if (len > Wx->maxEng[i]) {
                Wx->maxEng[i] = len;
+            }
+         }
+      }
+   }
+   return 0;
+}
+
+static int ParseSect2_Hazard (float *rdat, sInt4 nrdat, sInt4 *idat,
+                          uInt4 nidat, sect2_HazardType *Hazard, int simpWWA)
+{
+   size_t loc;          /* Where we currently are in idat. */
+   size_t groupLen;     /* Length of current group in idat. */
+   size_t j;            /* Counter over the length of the current group. */
+   int len;             /* length of current english phrases during creation
+                         * of the maxEng[] data. */
+   int i;               /* assists in traversing the maxEng[] array. */
+   char *buffer;        /* Used to store the current Hazard string. */
+   int buffLen;         /* Length of current Hazard string. */
+/*
+   int k;
+*/
+
+   if (nrdat < 1) {
+      return -1;
+   }
+
+   if (rdat[0] != 0) {
+      errSprintf ("ERROR: Expected rdat to be empty when dealing with "
+                  "section 2 Weather data\n");
+      return -2;
+   }
+   Hazard->dataLen = 0;
+   Hazard->data = NULL;
+   Hazard->maxLen = 0;
+   for (j = 0; j < NUM_HAZARD_WORD; j++) {
+      Hazard->maxEng[j] = 0;
+   }
+
+   loc = 0;
+   if (nidat <= loc) {
+      errSprintf ("ERROR: Ran out of idat data\n");
+      return -1;
+   }
+   groupLen = idat[loc++];
+
+   loc++;               /* Skip the decimal scale factor data. */
+   /* Note: This also assures that buffLen stays <= nidat. */
+   if (loc + groupLen >= nidat) {
+      errSprintf ("ERROR: Ran out of idat data\n");
+      return -1;
+   }
+
+   buffLen = 0;
+   buffer = (char *) malloc ((nidat + 1) * sizeof (char));
+   while (groupLen > 0) {
+      for (j = 0; j < groupLen; j++) {
+         buffer[buffLen] = (char) idat[loc];
+         buffLen++;
+         loc++;
+         if (buffer[buffLen - 1] == '\0') {
+            Hazard->dataLen++;
+            Hazard->data = (char **) realloc ((void *) Hazard->data,
+                                          Hazard->dataLen * sizeof (char *));
+            /* This is done after the realloc, just to make sure we have
+             * enough memory allocated.  */
+            /* Assert: buffLen is 1 more than strlen(buffer). */
+            Hazard->data[Hazard->dataLen - 1] = (char *)
+                  malloc (buffLen * sizeof (char));
+            strcpy (Hazard->data[Hazard->dataLen - 1], buffer);
+            if (Hazard->maxLen < buffLen) {
+               Hazard->maxLen = buffLen;
+            }
+            buffLen = 0;
+         }
+      }
+      if (loc >= nidat) {
+         groupLen = 0;
+      } else {
+         groupLen = idat[loc];
+         loc++;
+         if (groupLen != 0) {
+            loc++;      /* Skip the decimal scale factor data. */
+            /* Note: This also assures that buffLen stays <= nidat. */
+            if (loc + groupLen >= nidat) {
+               errSprintf ("ERROR: Ran out of idat data\n");
+               free (buffer);
+               return -1;
+            }
+         }
+      }
+   }
+   if (buffLen != 0) {
+      buffer[buffLen] = '\0';
+      Hazard->dataLen++;
+      Hazard->data = (char **) realloc ((void *) Hazard->data,
+                                    Hazard->dataLen * sizeof (char *));
+      /* Assert: buffLen is 1 more than strlen(buffer). -- FALSE -- */
+      buffLen = static_cast<int>(strlen (buffer)) + 1;
+
+      Hazard->data[Hazard->dataLen - 1] = (char *) malloc (buffLen * sizeof (char));
+      if (Hazard->maxLen < buffLen) {
+         Hazard->maxLen = buffLen;
+      }
+      strcpy (Hazard->data[Hazard->dataLen - 1], buffer);
+   }
+   free (buffer);
+   Hazard->haz = (HazardStringType *) malloc (Hazard->dataLen *
+                                         sizeof (HazardStringType));
+   Hazard->f_valid = (uChar *) malloc (Hazard->dataLen * sizeof (uChar));
+   for (j = 0; j < Hazard->dataLen; j++) {
+      ParseHazardString (&(Hazard->haz[j]), Hazard->data[j], simpWWA);
+      Hazard->f_valid[j] = 1;
+/*
+      printf ("%d : %d : %s", j, Hazard->haz[j].numValid, Hazard->data[j]);
+      for (k = 0; k < Hazard->haz[j].numValid; k++) {
+         printf (": %s", Hazard->haz[j].english[k]);
+      }
+      printf ("\n");
+*/
+   }
+   /* We want to know how many bytes we need for each english phrase column,
+    * so we walk through each column calculating that value. */
+   for (i = 0; i < NUM_HAZARD_WORD; i++) {
+      /* Assert: Already initialized Hazard->maxEng[i]. */
+      for (j = 0; j < Hazard->dataLen; j++) {
+         if (Hazard->haz[j].english[i] != NULL) {
+            len = static_cast<int>(strlen (Hazard->haz[j].english[i]));
+            if (len > Hazard->maxEng[i]) {
+               Hazard->maxEng[i] = len;
             }
          }
       }
@@ -700,6 +858,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
       return -1;
    }
    /* Assert: is3[14] is the shape of the earth. */
+   meta->gds.hdatum = 0;
    switch (is3[14]) {
       case 0:
          meta->gds.f_sphere = 1;
@@ -798,6 +957,12 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          if (meta->gds.minEarth < 6.4) {
             meta->gds.minEarth = meta->gds.minEarth * 1000.;
          }
+         break;
+      case 8:
+         meta->gds.f_sphere = 1;
+         meta->gds.majEarth = 6371.2;
+         meta->gds.minEarth = 6371.2;
+         meta->gds.hdatum = 1;
          break;
       default:
          errSprintf ("Undefined shape of earth? %ld\n", is3[14]);
@@ -1036,6 +1201,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
  *          instead of 0.
  *
  * NOTES
+ * http://www.nco.ncep..noaagov/pmb/docs/on388/table4.html
  *****************************************************************************
  */
 int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
@@ -1069,9 +1235,11 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
  * seconds.
  *
  * ARGUMENTS
- * time = The delta time to convert. (Input)
- * unit = The unit to convert. (Input)
- *  ans = The converted answer. (Output)
+ * refTime = To add "years / centuries / decades and normals", we need a
+ *           refrence time.
+ *    delt = The delta time to convert. (Input)
+ *    unit = The unit to convert. (Input)
+ *     ans = The converted answer. (Output)
  *
  * FILES/DATABASES: None
  *
@@ -1087,7 +1255,7 @@ int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
  * NOTES
  *****************************************************************************
  */
-int ParseSect4Time2sec (sInt4 time, int unit, double *ans)
+int ParseSect4Time2sec (double refTime, sInt4 delt, int unit, double *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
    static const sInt4 unit2sec[] = {
@@ -1097,12 +1265,132 @@ int ParseSect4Time2sec (sInt4 time, int unit, double *ans)
    };
    if ((unit >= 0) && (unit < 14)) {
       if (unit2sec[unit] != 0) {
-         *ans = (double) (time) * unit2sec[unit];
+         *ans = (double) (delt) * unit2sec[unit];
          return 0;
+      } else {
+         /* The procedure returns number of seconds to adjust by, rather
+          * than the new time, which is why we subtract refTime */
+         switch (unit) {
+            case 3: /* month */
+               *ans = Clock_AddMonthYear (refTime, delt, 0) - refTime;
+               return 0;
+            case 4: /* year */
+               *ans = Clock_AddMonthYear (refTime, 0, delt) - refTime;
+               return 0;
+            case 5: /* decade */
+               *ans = Clock_AddMonthYear (refTime, 0, delt * 10) - refTime;
+               return 0;
+            case 6: /* normal (30 year) */
+               *ans = Clock_AddMonthYear (refTime, 0, delt * 30) - refTime;
+               return 0;
+            case 7: /* century (100 year) */
+               *ans = Clock_AddMonthYear (refTime, 0, delt * 100) - refTime;
+               return 0;
+         }
       }
    }
    *ans = 0;
    return -1;
+}
+
+/*****************************************************************************
+ * sbit_2Comp_fourByte() -- Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *    The NCEP g2clib-1.0.2 library stored the lower limits and upper limits
+ * of probabilities using unsigned ints, whereas version 1.0.4 used signed
+ * ints.  The reason for the change is because some thresholds were negative.
+ *    To encode a negative value using an unsigned int, 1.0.2 used "2's
+ * complement + 1".  To encode a negative value using signed an int, 1.0.4
+ * used a "sign bit".  Example -2 => FFFFFFFE (1.0.2) => 80000002 (1.0.4).
+ * The problem (for backward compatibility sake) is to be able to read both
+ * encodings and get -2.  If one only read the new encoding method, then
+ * archived data would not be handled.
+ *    The algorithm is: If the number is positive or missing, leave it alone.
+ * If the number is negative, look at the 2's complement method, and the sign
+ * bit method, and use the method which results in a smaller absolute value.
+ *
+ * ARGUMENTS
+ * data = The number read by NCEP's library. (Input)
+ *
+ * RETURNS: sInt4
+ *    The value of treating the number as read by either method
+ *
+ * HISTORY
+ * 10/2007 Arthur Taylor (MDL): Created.
+ *
+ * NOTES
+ * 1) This algorithm will impact the possible range of values, by reducing it
+ *    from -2^31..(2^31-1) to -2^30..(2^31-1).
+ * 2) The NCEP change also impacted large positive values.  One originally
+ *    could encode 0..2^32-1.  Some confusion could arrise if the value was
+ *    originally encoded by 1.0.2 was in the range of 2^31..2^32-1.
+ ****************************************************************************/
+sInt4 sbit_2Comp_fourByte(sInt4 data)
+{
+   sInt4 x;             /* The pos. 2's complement interpretation of data */
+   sInt4 y;             /* The pos. sign bit interpretation of data */
+
+   if ((data == GRIB2MISSING_s4) || (data >= 0)) {
+      return data;
+   }
+   x = ~data + 1;
+   y = data & 0x7fffffff;
+   if (x < y) {
+      return -1 * x;
+   } else {
+      return -1 * y;
+   }
+}
+
+/*****************************************************************************
+ * sbit_2Comp_oneByte() -- Arthur Taylor / MDL
+ *
+ * PURPOSE
+ *    The NCEP g2clib-1.0.2 library stored the lower limits and upper limits
+ * of probabilities using unsigned ints, whereas version 1.0.4 used signed
+ * ints.  The reason for the change is because some thresholds were negative.
+ *    To encode a negative value using an unsigned int, 1.0.2 used "2's
+ * complement + 1".  To encode a negative value using signed an int, 1.0.4
+ * used a "sign bit".  Example -2 => 11111110 (1.0.2) => 10000010 (1.0.4).
+ * The problem (for backward compatibility sake) is to be able to read both
+ * encodings and get -2.  If one only read the new encoding method, then
+ * archived data would not be handled.
+ *    The algorithm is: If the number is positive or missing, leave it alone.
+ * If the number is negative, look at the 2's complement method, and the sign
+ * bit method, and use the method which results in a smaller absolute value.
+ *
+ * ARGUMENTS
+ * data = The number read by NCEP's library. (Input)
+ *
+ * RETURNS: sChar
+ *    The value of treating the number as read by either method
+ *
+ * HISTORY
+ * 10/2007 Arthur Taylor (MDL): Created.
+ *
+ * NOTES
+ * 1) This algorithm will impact the possible range of values, by reducing it
+ *    from -128..127 to -64...127.
+ * 2) The NCEP change also impacted large positive values.  One originally
+ *    could encode 0..255.  Some confusion could arrise if the value was
+ *    originally encoded by 1.0.2 was in the range of 128..255.
+ ****************************************************************************/
+sChar sbit_2Comp_oneByte(sChar data)
+{
+   sChar x;             /* The pos. 2's complement interpretation of data */
+   sChar y;             /* The pos. sign bit interpretation of data */
+
+   if ((data == GRIB2MISSING_s1) || (data >= 0)) {
+      return data;
+   }
+   x = ~data + 1;
+   y = data & 0x7f;
+   if (x < y) {
+      return -1 * x;
+   } else {
+      return -1 * y;
+   }
 }
 
 /*****************************************************************************
@@ -1170,8 +1458,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    if ((is4[7] != GS4_ANALYSIS) && (is4[7] != GS4_ENSEMBLE) &&
        (is4[7] != GS4_DERIVED) && (is4[7] != GS4_PROBABIL_PNT) &&
+       (is4[7] != GS4_PERCENT_PNT) && (is4[7] != GS4_ERROR) &&
        (is4[7] != GS4_STATISTIC) && (is4[7] != GS4_PROBABIL_TIME) &&
-       (is4[7] != GS4_PERCENTILE) && (is4[7] != GS4_ENSEMBLE_STAT) &&
+       (is4[7] != GS4_PERCENT_TIME) && (is4[7] != GS4_ENSEMBLE_STAT) &&
        (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_SATELLITE_SYNTHETIC) &&
        (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA)) {
 #ifdef DEBUG
@@ -1273,7 +1562,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       errSprintf ("Missing 'forecast' time?\n");
       return -5;
    }
-   if (ParseSect4Time2sec (is4[18], is4[17],
+   meta->pds2.sect4.foreUnit = is4[17];
+   if (ParseSect4Time2sec (meta->pds2.refTime, is4[18], is4[17],
                            &(meta->pds2.sect4.foreSec)) != 0) {
       errSprintf ("Unable to convert this TimeUnit: %ld\n", is4[17]);
       return -5;
@@ -1325,8 +1615,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[37], is4[39],
                         is4[40], is4[41], is4[42], is4[43]) != 0) {
             msg = errSprintf (NULL);
-            uChar numInterval = (uChar) is4[44];
-            if (numInterval != 1) {
+            meta->pds2.sect4.numInterval = (uChar) is4[44];
+            if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 38-44 of "
@@ -1334,7 +1624,6 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
-            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1397,8 +1686,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[36], is4[38],
                         is4[39], is4[40], is4[41], is4[42]) != 0) {
             msg = errSprintf (NULL);
-            uChar numInterval = (uChar) is4[43];
-            if (numInterval != 1) {
+            meta->pds2.sect4.numInterval = (uChar) is4[43];
+            if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 37-43 of "
@@ -1406,7 +1695,6 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
-            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1459,8 +1747,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[34], is4[36],
                         is4[37], is4[38], is4[39], is4[40]) != 0) {
             msg = errSprintf (NULL);
-            uChar numInterval = (uChar) is4[41];
-            if (numInterval != 1) {
+            meta->pds2.sect4.numInterval = (uChar) is4[41];
+            if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
@@ -1468,7 +1756,6 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
-            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1514,7 +1801,10 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             meta->pds2.sect4.numMissing = is4[42];
          }
          break;
-      case GS4_PERCENTILE: /* 4.10 */
+      case GS4_PERCENT_PNT: /* 4.6 */
+         meta->pds2.sect4.percentile = is4[34];
+         break;
+      case GS4_PERCENT_TIME: /* 4.10 */
          if (ns4 < 44) {
             return -1;
          }
@@ -1522,8 +1812,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[35], is4[37],
                         is4[38], is4[39], is4[40], is4[41]) != 0) {
             msg = errSprintf (NULL);
-            uChar numInterval = (uChar) is4[42];
-            if (numInterval != 1) {
+            meta->pds2.sect4.numInterval = (uChar) is4[42];
+            if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
@@ -1531,7 +1821,6 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
-            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1584,10 +1873,12 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.foreProbNum = (uChar) is4[34];
          meta->pds2.sect4.numForeProbs = (uChar) is4[35];
          meta->pds2.sect4.probType = (uChar) is4[36];
-         meta->pds2.sect4.lowerLimit.factor = (sChar) is4[37];
-         meta->pds2.sect4.lowerLimit.value = is4[38];
-         meta->pds2.sect4.upperLimit.factor = (sChar) is4[42];
-         meta->pds2.sect4.upperLimit.value = is4[43];
+         meta->pds2.sect4.lowerLimit.factor =
+               sbit_2Comp_oneByte((sChar) is4[37]);
+         meta->pds2.sect4.lowerLimit.value = sbit_2Comp_fourByte(is4[38]);
+         meta->pds2.sect4.upperLimit.factor =
+               sbit_2Comp_oneByte((sChar) is4[42]);
+         meta->pds2.sect4.upperLimit.value = sbit_2Comp_fourByte(is4[43]);
          break;
       case GS4_PROBABIL_TIME: /* 4.9 */
          if (ns4 < 56) {
@@ -1596,15 +1887,17 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.foreProbNum = (uChar) is4[34];
          meta->pds2.sect4.numForeProbs = (uChar) is4[35];
          meta->pds2.sect4.probType = (uChar) is4[36];
-         meta->pds2.sect4.lowerLimit.factor = (sChar) is4[37];
-         meta->pds2.sect4.lowerLimit.value = is4[38];
-         meta->pds2.sect4.upperLimit.factor = (sChar) is4[42];
-         meta->pds2.sect4.upperLimit.value = is4[43];
+         meta->pds2.sect4.lowerLimit.factor =
+               sbit_2Comp_oneByte((sChar) is4[37]);
+         meta->pds2.sect4.lowerLimit.value = sbit_2Comp_fourByte(is4[38]);
+         meta->pds2.sect4.upperLimit.factor =
+               sbit_2Comp_oneByte((sChar) is4[42]);
+         meta->pds2.sect4.upperLimit.value = sbit_2Comp_fourByte(is4[43]);
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[47], is4[49],
                         is4[50], is4[51], is4[52], is4[53]) != 0) {
             msg = errSprintf (NULL);
-            uChar numInterval = (uChar) is4[54];
-            if (numInterval != 1) {
+            meta->pds2.sect4.numInterval = (uChar) is4[54];
+            if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 48-54 of "
@@ -1612,7 +1905,6 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                free (msg);
                return -1;
             }
-            meta->pds2.sect4.numInterval = numInterval;
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
             free (msg);
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
@@ -1799,7 +2091,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
                float *rdat, sInt4 nrdat, sInt4 *idat, sInt4 nidat,
                sInt4 *is3, sInt4 ns3, sInt4 *is4, sInt4 ns4,
                sInt4 *is5, sInt4 ns5, sInt4 grib_len,
-               float xmissp, float xmisss, int simpVer)
+               float xmissp, float xmisss, int simpVer, CPL_UNUSED int simpWWA)
 {
    int ierr;            /* The error code of a called routine */
    /* char *element; *//* Holds the name of the current variable. */
@@ -1813,6 +2105,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    sInt4 lenTime;       /* Length of time for element (see 4.8 and 4.9) */
    uChar timeRangeUnit = 1;
    uChar incrType;
+   uChar statProcessID; /* Statistical process id or 255 for missing */
    uChar fstSurfType;   /* Type of the first fixed surface. */
    sInt4 value;         /* The scaled value from GRIB2 file. */
    sChar scale;         /* Surface scale as opposed to probility factor. */
@@ -1843,6 +2136,9 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    if ((ierr = ParseSect3 (is3, ns3, meta)) != 0) {
       preErrSprintf ("Parse error Section 3\n");
       //return ierr;
+   }
+   if (IsData_NDFD (meta->center, meta->subcenter)) {
+      meta->gds.hdatum = 1;
    }
    if (meta->gds.f_sphere != 1) {
       errSprintf ("Driver Filter: Can only handle spheres.\n");
@@ -1884,24 +2180,47 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    }
    if (meta->pds2.sect4.numInterval > 0) {
       /* Try to convert lenTime to hourly. */
+      timeRangeUnit = meta->pds2.sect4.Interval[0].timeRangeUnit;
       if (meta->pds2.sect4.Interval[0].timeRangeUnit == 255) {
          lenTime = (sInt4) ((meta->pds2.sect4.validTime -
                              meta->pds2.sect4.foreSec -
                              meta->pds2.refTime) / 3600);
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 0) {
           lenTime = (sInt4) (meta->pds2.sect4.Interval[0].lenTime / 60.);
+          timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 1) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime;
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 2) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime * 24;
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 10) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime * 3;
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 11) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime * 6;
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 12) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime * 12;
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 13) {
          lenTime = (sInt4) (meta->pds2.sect4.Interval[0].lenTime / 3600.);
+         timeRangeUnit = 1;
+      } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 3) {  /* month */
+         lenTime = meta->pds2.sect4.Interval[0].lenTime;
+         timeRangeUnit = 3;
+      } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 4) {  /* year */
+         lenTime = meta->pds2.sect4.Interval[0].lenTime;
+         timeRangeUnit = 4;
+      } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 5) {  /* decade */
+         lenTime = meta->pds2.sect4.Interval[0].lenTime * 10;
+         timeRangeUnit = 4;
+      } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 6) {  /* normal */
+         lenTime = meta->pds2.sect4.Interval[0].lenTime * 30;
+         timeRangeUnit = 4;
+      } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 7) {  /* century */
+         lenTime = meta->pds2.sect4.Interval[0].lenTime * 100;
+         timeRangeUnit = 4;
       } else {
          lenTime = 0;
          printf ("Can't handle this timeRangeUnit\n");
@@ -1920,10 +2239,12 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
          lenTime = 0;
       }
       incrType = meta->pds2.sect4.Interval[0].incrType;
+      statProcessID = meta->pds2.sect4.Interval[0].processID;
    } else {
       lenTime = 0;
       timeRangeUnit = 1;
       incrType = 255;
+      statProcessID = 255;
    }
 
    if ((meta->pds2.sect4.templat == GS4_RADAR) || (meta->pds2.sect4.templat == GS4_SATELLITE)
@@ -1975,10 +2296,10 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
       }
    }
 
-   ParseElemName (meta->center, meta->subcenter, meta->pds2.prodType,
+   ParseElemName (meta->pds2.mstrVersion, meta->center, meta->subcenter, meta->pds2.prodType,
                   meta->pds2.sect4.templat, meta->pds2.sect4.cat,
-                  meta->pds2.sect4.subcat, lenTime, timeRangeUnit, incrType,
-                  meta->pds2.sect4.genID, probType, lowerProb, upperProb,
+                  meta->pds2.sect4.subcat, lenTime, timeRangeUnit, statProcessID,
+                  incrType, meta->pds2.sect4.genID, probType, lowerProb, upperProb,
                   &(meta->element), &(meta->comment), &(meta->unitName),
                   &(meta->convert), meta->pds2.sect4.percentile,
                   meta->pds2.sect4.genProcess,
@@ -2007,7 +2328,14 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
          if ((ierr = ParseSect2_Wx (rdat, nrdat, idat, nidat,
                                     &(meta->pds2.sect2.wx), simpVer)) != 0) {
             preErrSprintf ("Parse error Section 2 : Weather Data\n");
-            //return ierr;
+            return ierr;
+         }
+      } else if (strcmp (meta->element, "WWA") == 0) {
+         meta->pds2.sect2.ptrType = GS2_HAZARD;
+         if ((ierr = ParseSect2_Hazard (rdat, nrdat, idat, nidat,
+                                    &(meta->pds2.sect2.hazard), simpWWA)) != 0) {
+            preErrSprintf ("Parse error Section 2 : Hazard Data\n");
+            return ierr;
          }
       } else {
          meta->pds2.sect2.ptrType = GS2_UNKNOWN;
@@ -2020,6 +2348,10 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    } else {
       if (strcmp (meta->element, "Wx") == 0) {
          errSprintf ("Weather grid does not have look up table?");
+         //return -11;
+      }
+      if (strcmp (meta->element, "WWA") == 0) {
+         errSprintf ("Hazard grid does not have look up table?");
          //return -11;
       }
    }
@@ -2045,8 +2377,9 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
  *      iain = Place to find data if it is an Integer (or float). (Input)
  *     unitM = M in unit conversion equation y(new) = m x(orig) + b (Input)
  *     unitB = B in unit conversion equation y(new) = m x(orig) + b (Input)
- *  f_wxType = true if we have a valid wx type. (Input)
- *    WxType = table to look up values in. (Input)
+ *    f_txtType = true if we have a valid wx/hazard type. (Input)
+ *  txt_dataLen = Length of text table
+ *  txt_f_valid = whether that entry is used/valid. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
  *     subNx = The Nx dimension of the subgrid (Input)
@@ -2072,8 +2405,9 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
  */
 static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
                              sInt4 Nx, sInt4 Ny, sInt4 *iain,
-                             double unitM, double unitB, uChar f_wxType,
-                             sect2_WxType *WxType, int startX, int startY,
+                             double unitM, double unitB,
+                             uChar f_txtType, uInt4 txt_dataLen,
+                             uChar *txt_f_valid, int startX, int startY,
                              int subNx, int subNy)
 {
    sInt4 x, y;          /* Where we are in the grid. */
@@ -2114,18 +2448,18 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
                      value = unitM * (*ftemp++) + unitB;
                   }
                }
-               if (f_wxType) {
+               if (f_txtType) {
                   index = (uInt4) value;
-                  if (index < WxType->dataLen) {
-                     if (WxType->ugly[index].f_valid == 1) {
-                        WxType->ugly[index].f_valid = 2;
-                     } else if (WxType->ugly[index].f_valid == 0) {
+                  if (index < txt_dataLen) {
+                     if (txt_f_valid[index] == 1) {
+                        txt_f_valid[index] = 2;
+                     } else if (txt_f_valid[index] == 0) {
                         /* Table is not valid here so set value to missing? */
                         /* No missing value, so use index = WxType->dataLen? */
                         /* No... set f_valid to 3 so we know we used this
                          * invalid element, then handle it in degrib2.c ::
                          * ReadGrib2Record() where we set it back to 0. */
-                        WxType->ugly[index].f_valid = 3;
+                        txt_f_valid[index] = 3;
                      }
                   }
                }
@@ -2166,8 +2500,9 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
  *      iain = Place to find data if it is an Integer (or float). (Input)
  *     unitM = M in unit conversion equation y(new) = m x(orig) + b (Input)
  *     unitB = B in unit conversion equation y(new) = m x(orig) + b (Input)
- *  f_wxType = true if we have a valid wx type. (Input)
- *    WxType = table to look up values in. (Input)
+ *    f_txtType = true if we have a valid wx/hazard type. (Input)
+ *  txt_dataLen = Length of text table
+ *  txt_f_valid = whether that entry is used/valid. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
  *     subNx = The Nx dimension of the subgrid (Input)
@@ -2194,7 +2529,8 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
 static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                                sInt4 Nx, sInt4 Ny, sInt4 *iain,
                                double unitM, double unitB, sInt4 *missCnt,
-                               uChar f_wxType, sect2_WxType *WxType,
+                               uChar f_txtType, uInt4 txt_dataLen,
+                               uChar *txt_f_valid,
                                int startX, int startY, int subNx, int subNy)
 {
    sInt4 x, y;          /* Where we are in the grid. */
@@ -2241,11 +2577,11 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                   } else {
                      value = unitM * value + unitB;
                   }
-                  if (f_wxType) {
+                  if (f_txtType) {
                      index = (uInt4) value;
-                     if (index < WxType->dataLen) {
-                        if (WxType->ugly[index].f_valid) {
-                           WxType->ugly[index].f_valid = 2;
+                     if (index < txt_dataLen) {
+                        if (txt_f_valid[index]) {
+                           txt_f_valid[index] = 2;
                         } else {
                            /* Table is not valid here so set value to missPri
                             */
@@ -2254,7 +2590,7 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
                         }
                      }
                   }
-                  if ((!f_wxType) || (value != attrib->missPri)) {
+                  if ((!f_txtType) || (value != attrib->missPri)) {
                      if (f_maxmin) {
                         if (value < attrib->min) {
                            attrib->min = value;
@@ -2294,8 +2630,9 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
  *      iain = Place to find data if it is an Integer (or float). (Input)
  *     unitM = M in unit conversion equation y(new) = m x(orig) + b (Input)
  *     unitB = B in unit conversion equation y(new) = m x(orig) + b (Input)
- *  f_wxType = true if we have a valid wx type. (Input)
- *    WxType = table to look up values in. (Input)
+ *    f_txtType = true if we have a valid wx/hazard type. (Input)
+ *  txt_dataLen = Length of text table
+ *  txt_f_valid = whether that entry is used/valid. (Input)
  *    startX = The start of the X values. (Input)
  *    startY = The start of the Y values. (Input)
  *     subNx = The Nx dimension of the subgrid (Input)
@@ -2322,7 +2659,8 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
 static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                               sInt4 Nx, sInt4 Ny, sInt4 *iain,
                               double unitM, double unitB, sInt4 *missCnt,
-                              uChar f_wxType, sect2_WxType *WxType,
+                              uChar f_txtType, uInt4 txt_dataLen,
+                              uChar *txt_f_valid,
                               int startX, int startY, int subNx, int subNy)
 {
    sInt4 x, y;          /* Where we are in the grid. */
@@ -2369,20 +2707,20 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
                   } else {
                      value = unitM * value + unitB;
                   }
-                  if (f_wxType) {
+                  if (f_txtType) {
                      index = (uInt4) value;
-                     if (index < WxType->dataLen) {
-                        if (WxType->ugly[index].f_valid) {
-                           WxType->ugly[index].f_valid = 2;
+                     if (index < txt_dataLen) {
+                        if (txt_f_valid[index]) {
+                           txt_f_valid[index] = 2;
                         } else {
-                           /* Table is not valid here so set value to missPri
+                           /* Table is not valid here so set value to missPri 
                             */
                            value = attrib->missPri;
                            (*missCnt)++;
                         }
                      }
                   }
-                  if ((!f_wxType) || (value != attrib->missPri)) {
+                  if ((!f_txtType) || (value != attrib->missPri)) {
                      if (f_maxmin) {
                         if (value < attrib->min) {
                            attrib->min = value;
@@ -2429,8 +2767,9 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
  *           ib = Where to find the bitmap if we have one (Input)
  *        unitM = M in unit conversion equation y(new) = m x(orig) + b (Input)
  *        unitB = B in unit conversion equation y(new) = m x(orig) + b (Input)
- *     f_wxType = true if we have a valid wx type. (Input)
- *       WxType = table to look up values in. (Input)
+ *    f_txtType = true if we have a valid wx/hazard type. (Input)
+ *  txt_dataLen = Length of text table
+ *  txt_f_valid = whether that entry is used/valid. (Input)
  *    f_subGrid = True if we have a subgrid, false if not. (Input)
  * startX stopX = The bounds of the subgrid in X. (0,-1) means full grid (In)
  * startY stopY = The bounds of the subgrid in Y. (0,-1) means full grid (In)
@@ -2459,7 +2798,8 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
 void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
                 uInt4 *grib_DataLen, uInt4 Nx, uInt4 Ny, int scan,
                 sInt4 nd2x3, sInt4 *iain, sInt4 ibitmap, sInt4 *ib, double unitM,
-                double unitB, uChar f_wxType, sect2_WxType *WxType,
+                double unitB, uChar f_txtType, uInt4 txt_dataLen,
+                uChar *txt_f_valid,
                 CPL_UNUSED uChar f_subGrid,
                 int startX, int startY, int stopX, int stopY)
 {
@@ -2534,14 +2874,14 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    if (scan == 64) {
       if (attrib->f_miss == 0) {
          ParseGridNoMiss (attrib, grib_Data, Nx, Ny, iain, unitM, unitB,
-                          f_wxType, WxType, startX, startY, subNx, subNy);
+                          f_txtType, txt_dataLen, txt_f_valid, startX, startY, subNx, subNy);
       } else if (attrib->f_miss == 1) {
          ParseGridPrimMiss (attrib, grib_Data, Nx, Ny, iain, unitM, unitB,
-                            &missCnt, f_wxType, WxType, startX, startY,
+                            &missCnt, f_txtType, txt_dataLen, txt_f_valid, startX, startY,
                             subNx, subNy);
       } else if (attrib->f_miss == 2) {
          ParseGridSecMiss (attrib, grib_Data, Nx, Ny, iain, unitM, unitB,
-                           &missCnt, f_wxType, WxType, startX, startY, subNx,
+                           &missCnt, f_txtType, txt_dataLen, txt_f_valid, startX, startY, subNx,
                            subNy);
       }
    } else {
@@ -2573,12 +2913,12 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
              * can check if missing falls in the range of min/max.  If
              * missing does fall in that range we need to move missing. See
              * f_readjust */
-            if (f_wxType) {
+            if (f_txtType) {
                index = (uInt4) value;
-               if (index < WxType->dataLen) {
-                  if (WxType->ugly[index].f_valid == 1) {
-                     WxType->ugly[index].f_valid = 2;
-                  } else if (WxType->ugly[index].f_valid == 0) {
+               if (index < txt_dataLen) {
+                  if (txt_f_valid[index] == 1) {
+                     txt_f_valid[index] = 2;
+                  } else if (txt_f_valid[index] == 0) {
                      /* Table is not valid here so set value to missPri */
                      if (attrib->f_miss != 0) {
                         value = attrib->missPri;
@@ -2588,12 +2928,12 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
                         /* No... set f_valid to 3 so we know we used this
                          * invalid element, then handle it in degrib2.c ::
                          * ReadGrib2Record() where we set it back to 0. */
-                        WxType->ugly[index].f_valid = 3;
+                        txt_f_valid[index] = 3;
                      }
                   }
                }
             }
-            if ((!f_wxType) ||
+            if ((!f_txtType) ||
                 ((attrib->f_miss == 0) || (value != attrib->missPri))) {
                if (attrib->f_maxmin) {
                   if (value < attrib->min) {

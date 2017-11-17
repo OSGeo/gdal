@@ -18,17 +18,19 @@ Status:
             src/degrib/degrib1.c
             src/degrib/degrib1.h
             src/degrib/grib1tab.c
-
-        TODO:
             src/degrib/degrib2.h
             src/degrib/degrib2.c
+            src/degrib/weather.c
+            src/degrib/weather.h
+            src/degrib/meta.h
+
+        TODO:
             src/mdl_g2c/engribapi.c
             src/mdl_g2c/engribapi.h
             src/mdl_g2c/grib2api.h
             src/mdl_g2c/grib2api.c
             src/degrib/inventory.c
             src/degrib/inventory.h
-            src/degrib/meta.h
             src/degrib/metaname.c
             src/degrib/metaname.h
             src/degrib/metaparse.c
@@ -44,8 +46,7 @@ Status:
             src/degrib/tdlpack.c
             src/degrib/tdlpack.h
             src/degrib/type.h
-            src/degrib/weather.c
-            src/degrib/weather.h
+
 
 PROVENANCE (at r40728)
 ----------

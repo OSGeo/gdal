@@ -2905,9 +2905,9 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
    return;
 }
 
-void ParseElemName (uShort2 center, uShort2 subcenter, int prodType,
+void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcenter, int prodType,
                     int templat, int cat, int subcat, sInt4 lenTime,
-                    uChar timeRangeUnit,
+                    uChar timeRangeUnit, CPL_UNUSED uChar statProcessID,
                     uChar timeIncrType, uChar genID, uChar probType,
                     double lowerProb, double upperProb, char **name,
                     char **comment, char **unit, int *convert,

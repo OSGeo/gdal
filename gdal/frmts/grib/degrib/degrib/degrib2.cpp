@@ -150,12 +150,15 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    }
 */
    while ((tdlpMatch != 4) && (gribMatch != 4)) {
-      for (i = curLen - 8; i + 3 < curLen; i++) {
+      for (i = curLen - 8; i + 7 < curLen; i++) {
          if ((*buff)[i] == 'G') {
             if (((*buff)[i + 1] == 'R') && ((*buff)[i + 2] == 'I') &&
                 ((*buff)[i + 3] == 'B')) {
-               gribMatch = 4;
-               break;
+               if (((*buff)[i + 7] == 1) ||
+                   ((*buff)[i + 7] == 2)) {
+                  gribMatch = 4;
+                  break;
+               }
             }
          } else if ((*buff)[i] == 'T') {
             if (((*buff)[i + 1] == 'D') && ((*buff)[i + 2] == 'L') &&
@@ -171,19 +174,27 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
          curLen += stillNeed;
          if ((limit >= 0) && (curLen > (size_t) limit)) {
             errSprintf ("ERROR: Couldn't find type in %ld bytes\n", limit);
+            *buffLen = curLen - stillNeed;
             return -1;
          }
          if (*buffLen < curLen) {
-            *buffLen = curLen;
+            myAssert (200 > stillNeed);
+            *buffLen = *buffLen + 200;
+            /* *buffLen = curLen; */
             *buff = (char *) realloc ((void *) *buff,
                                       *buffLen * sizeof (char));
          }
          if (fp.DataSourceFread((*buff) + (curLen - stillNeed), sizeof (char), stillNeed) != stillNeed) {
             errSprintf ("ERROR: Ran out of file reading SECT0\n");
+            *buffLen = curLen;
             return -1;
          }
       }
    }
+   /* Following is needed because we are increasing buffLen at a rate of
+    * 200 (to save reallocs), so it may not actually line up with the length
+    * of buffer. curLen should always be the length of buffer. */
+   *buffLen = curLen;
 
    /* curLen and (*buff) hold 8 bytes of section 0. */
    curLen -= 8;
@@ -370,7 +381,7 @@ int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
  * 1) Assumes that the pack method of multiple grids are the same.
  *****************************************************************************
  */
-static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
+static int FindSectLen2to7 (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
                             char sectNum, sInt4 *curTot, sInt4 *nd2x3,
                             short int *table50)
 {
@@ -379,6 +390,7 @@ static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 
    if ((sectNum == 2) || (sectNum == 3)) {
       /* Figure out the size of section 2 and 3. */
+      /* ERO: check change from + 5 to +6+4 per r39022 */
       if (*curTot + 6 + 4 > gribLen) {
          errSprintf ("ERROR: Ran out of data in Section 2 or 3\n");
          return -1;
@@ -389,6 +401,7 @@ static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
          *curTot = *curTot + sectLen;
          if (ns[2] < sectLen)
             ns[2] = sectLen;
+          /* ERO: check change from + 5 to +6+4 per r39022 */
          if (*curTot + 6 + 4 > gribLen) {
             errSprintf ("ERROR: Ran out of data in Section 3\n");
             return -1;
@@ -435,6 +448,7 @@ static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
 */
 
    /* Figure out the size of section 5. */
+    /* ERO: check change from + 5 to +9+2 per r39127 */
    if (*curTot + 9 + 2 > gribLen) {
       errSprintf ("ERROR: Ran out of data in Section 5\n");
       return -1;
@@ -530,7 +544,7 @@ static int FindSectLen2to7 (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
  * 1) Assumes that the pack method of multiple grids are the same.
  *****************************************************************************
  */
-static int FindSectLen (char *c_ipack, sInt4 gribLen, sInt4 ns[8],
+static int FindSectLen (unsigned char *c_ipack, sInt4 gribLen, sInt4 ns[8],
                         sInt4 *nd2x3, short int *table50)
 {
    sInt4 curTot;        /* Where we are in the current GRIB message. */
@@ -825,7 +839,8 @@ void IS_Free (IS_dataType *is)
 int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                      uInt4 *grib_DataLen, grib_MetaData *meta,
                      IS_dataType *IS, int subgNum, double majEarth,
-                     double minEarth, int simpVer, sInt4 *f_endMsg,
+                     double minEarth, int simpVer,  int simpWWA,
+                     sInt4 *f_endMsg,
                      CPL_UNUSED LatLon *lwlf,
                      CPL_UNUSED LatLon *uprt)
 {
@@ -839,7 +854,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    sInt4 nd5;           /* Size of grib message rounded up to the nearest
                          * sInt4. */
    /* A char ptr to the message stored in IS->ipack */
-   char *c_ipack = NULL;
+   unsigned char *c_ipack = NULL;
    sInt4 local_ns[8];   /* Local copy of section lengths. */
    sInt4 nd2x3;         /* Total number of grid points. */
    short int table50;   /* Type of packing used. (See code table 5.0)
@@ -871,6 +886,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    int unitLen;         /* String length of string name of current unit. */
    int version;         /* Which version of GRIB is in this message. */
    sInt4 cnt;           /* Used to help compact the weather table. */
+   //gdsType newGds;      /* The GDS of the subgrid if needed. */
    int x1, y1;          /* The original grid coordinates of the lower left
                          * corner of the subgrid. */
    int x2, y2;          /* The original grid coordinates of the upper right
@@ -953,7 +969,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          IS->ipackLen = nd5;
          IS->ipack = ipackNew;
       }
-      c_ipack = (char *) IS->ipack;
+      c_ipack = (unsigned char *) IS->ipack;
       /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
       IS->ipack[nd5 - 1] = 0;
       /* Init first 4 sInt4 to sect0. */
@@ -1068,7 +1084,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
             }
             /* Don't need to do the following, but we do in case code
              * changes. */
-            /*c_ipack = (char *) IS->ipack;*/
+            c_ipack = (unsigned char *) IS->ipack;
          }
       }
       IS->nd5 = nd5;
@@ -1082,11 +1098,19 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       }
 #endif
 */
+/*
 #ifdef LITTLE_ENDIAN
       memswp (IS->ipack, sizeof (sInt4), IS->nd5);
 #endif
+*/
    } else {
-      gribLen = IS->ipack[3];
+      c_ipack = (unsigned char *) IS->ipack;
+      /* GRIB2 files are in big endian so c_ipack is as well. */
+#ifdef LITTLE_ENDIAN
+      revmemcpy (&gribLen, &(c_ipack[12]), sizeof (sInt4));
+#else
+      memcpy (&gribLen, &(c_ipack[12]), sizeof (sInt4));
+#endif
    }
    free (buff);
 
@@ -1101,6 +1125,15 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
       /* Note we are getting data back either as a float or an int, but not
        * both, so we don't need to allocated room for both. */
+      unpk_g2ncep (&kfildo, (float *) (IS->iain), IS->iain, &(IS->nd2x3),
+                  IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],
+                  &(IS->ns[0]), IS->is[1], &(IS->ns[1]), IS->is[2],
+                  &(IS->ns[2]), IS->is[3], &(IS->ns[3]), IS->is[4],
+                  &(IS->ns[4]), IS->is[5], &(IS->ns[5]), IS->is[6],
+                  &(IS->ns[6]), IS->is[7], &(IS->ns[7]), IS->ib, &ibitmap,
+                  c_ipack, &(IS->nd5), &xmissp, &xmisss, &inew, &iclean,
+                  &l3264b, f_endMsg, jer, &ndjer, &kjer);
+/*
       unpk_grib2 (&kfildo, (float *) (IS->iain), IS->iain, &(IS->nd2x3),
                   IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],
                   &(IS->ns[0]), IS->is[1], &(IS->ns[1]), IS->is[2],
@@ -1109,6 +1142,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                   &(IS->ns[6]), IS->is[7], &(IS->ns[7]), IS->ib, &ibitmap,
                   IS->ipack, &(IS->nd5), &xmissp, &xmisss, &inew, &iclean,
                   &l3264b, f_endMsg, jer, &ndjer, &kjer);
+*/
       /*
        * Check for error messages...
        *   If we get an error message, print it, and return.
@@ -1135,7 +1169,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    if (MetaParse (meta, IS->is[0], IS->ns[0], IS->is[1], IS->ns[1],
                   IS->is[2], IS->ns[2], IS->rdat, IS->nrdat, IS->idat,
                   IS->nidat, IS->is[3], IS->ns[3], IS->is[4], IS->ns[4],
-                  IS->is[5], IS->ns[5], gribLen, xmissp, xmisss, simpVer)
+                  IS->is[5], IS->ns[5], gribLen, xmissp, xmisss, simpVer, simpWWA)
        != 0) {
 #ifdef DEBUG
       FILE *l_fp;
@@ -1228,18 +1262,37 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    }
 
    if (strcmp (meta->element, "Wx") != 0) {
-      ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
-                 meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
-                 NULL, f_subGrid, x1, y1, x2, y2);
-      if( *Grib_Data == NULL )
-          return -1;
+      if (strcmp (meta->element, "WWA") != 0) {
+         ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
+                    meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
+                    0, NULL, f_subGrid, x1, y1, x2, y2);
+      } else {
+         ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
+                    meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
+                    meta->pds2.sect2.hazard.dataLen, meta->pds2.sect2.hazard.f_valid, f_subGrid, x1, y1,
+                    x2, y2);
+         /* compact the table to only those which are actually used. */
+         cnt = 0;
+         for (i = 0; i < meta->pds2.sect2.hazard.dataLen; i++) {
+            if (meta->pds2.sect2.hazard.f_valid[i] == 2) {
+               meta->pds2.sect2.hazard.haz[i].validIndex = cnt;
+               cnt++;
+            } else if (meta->pds2.sect2.hazard.f_valid[i] == 3) {
+               meta->pds2.sect2.hazard.f_valid[i] = 0;
+               meta->pds2.sect2.hazard.haz[i].validIndex = cnt;
+               cnt++;
+            } else {
+               meta->pds2.sect2.hazard.haz[i].validIndex = -1;
+            }
+         }
+      }
    } else {
       /* Handle weather grid.  ParseGrid looks up the values... If they are
        * "<Invalid>" it sets it to missing (or creates one).  If the table
        * entry is used it sets f_valid to 2. */
       ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
                  meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
-                 (sect2_WxType *) &(meta->pds2.sect2.wx), f_subGrid, x1, y1,
+                 meta->pds2.sect2.wx.dataLen, meta->pds2.sect2.wx.f_valid, f_subGrid, x1, y1,
                  x2, y2);
       if( *Grib_Data == NULL )
           return -1;
@@ -1247,11 +1300,11 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       /* compact the table to only those which are actually used. */
       cnt = 0;
       for (i = 0; i < meta->pds2.sect2.wx.dataLen; i++) {
-         if (meta->pds2.sect2.wx.ugly[i].f_valid == 2) {
+         if (meta->pds2.sect2.wx.f_valid[i] == 2) {
             meta->pds2.sect2.wx.ugly[i].validIndex = cnt;
             cnt++;
-         } else if (meta->pds2.sect2.wx.ugly[i].f_valid == 3) {
-            meta->pds2.sect2.wx.ugly[i].f_valid = 0;
+         } else if (meta->pds2.sect2.wx.f_valid[i] == 3) {
+            meta->pds2.sect2.wx.f_valid[i] = 0;
             meta->pds2.sect2.wx.ugly[i].validIndex = cnt;
             cnt++;
          } else {
@@ -1283,3 +1336,347 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    return 0;
 }
+
+#if 0 // unused by GDAL
+int ReadGrib2RecordFast (FILE *fp, sChar f_unit, double **Grib_Data,
+                         uInt4 *grib_DataLen, grib_MetaData *meta,
+                         IS_dataType *IS, int subgNum, double majEarth,
+                         double minEarth, int simpVer, int simpWWA,
+                         sInt4 *f_endMsg, LatLon *lwlf, LatLon *uprt)
+{
+   sInt4 l3264b;        /* Number of bits in a sInt4.  Needed by FORTRAN
+                         * unpack library to determine if system has a 4
+                         * byte_ sInt4 or an 8 byte sInt4. */
+   char *buff;          /* Holds the info between records. */
+   uInt4 buffLen;       /* Length of info between records. */
+   sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
+   uInt4 gribLen;       /* Length of the current GRIB message. */
+   sInt4 nd5;           /* Size of grib message rounded up to the nearest
+                         * sInt4. */
+   unsigned char *c_ipack; /* A char ptr to the message stored in IS->ipack */
+   sInt4 local_ns[8];   /* Local copy of section lengths. */
+   sInt4 nd2x3;         /* Total number of grid points. */
+   short int table50;   /* Type of packing used. (See code table 5.0)
+                         * (GS5_SIMPLE==0, GS5_CMPLX==2, GS5_CMPLXSEC==3) */
+   sInt4 nidat;         /* Size of section 2 if it contains integer data. */
+   sInt4 nrdat;         /* Size of section 2 if it contains float data. */
+   sInt4 inew;          /* 1 if this is the first grid we are reading. 0 if
+                         * this is the second or later grid from the same
+                         * GRIB message. */
+   sInt4 iclean = 0;    /* 0 embed the missing values, 1 don't. */
+   int j;               /* Counter used to find the desired subgrid. */
+   sInt4 kfildo = 5;    /* FORTRAN Unit number for diagnostic info. Ignored,
+                         * unless library is compiled a particular way. */
+   sInt4 ibitmap;       /* 0 means no bitmap returned, otherwise 1. */
+   float xmissp;        /* The primary missing value.  If iclean = 0, this
+                         * value is embeded in grid, otherwise it is the
+                         * value returned from the GRIB message. */
+   float xmisss;        /* The secondary missing value.  If iclean = 0, this
+                         * value is embeded in grid, otherwise it is the
+                         * value returned from the GRIB message. */
+   sInt4 jer[UNPK_NUM_ERRORS * 2]; /* Any Error codes along with their *
+                                    * severity levels generated using the *
+                                    * unpack GRIB2 library. */
+   sInt4 ndjer = UNPK_NUM_ERRORS; /* The number of rows in JER( ). */
+   sInt4 kjer;          /* The actual number of errors returned in JER. */
+   size_t i;            /* counter as we loop through jer. */
+   double unitM, unitB; /* values in y = m x + b used for unit conversion. */
+   char unitName[15];   /* Holds the string name of the current unit. */
+   int unitLen;         /* String length of string name of current unit. */
+   int version;         /* Which version of GRIB is in this message. */
+   gdsType newGds;      /* The GDS of the subgrid if needed. */
+   int x1, y1;          /* The original grid coordinates of the lower left
+                         * corner of the subgrid. */
+   int x2, y2;          /* The original grid coordinates of the upper right
+                         * corner of the subgrid. */
+   uChar f_subGrid;     /* True if we have a subgrid. */
+   sInt4 Nx, Ny;        /* original size of the data. */
+
+   /*
+    * f_endMsg is 1 if in the past we either completed reading a message,
+    * or we haven't read any messages.  In either case we need to read the
+    * next message from file.
+    * If f_endMsg is false, then there is more to read from IS->ipack, so we
+    * don't want to throw it out, nor have to re-read ipack from disk.
+    */
+   l3264b = sizeof (sInt4) * 8;
+   buff = NULL;
+   buffLen = 0;
+   if (*f_endMsg == 1) {
+      if (ReadSECT0 (fp, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {
+         preErrSprintf ("Inside ReadGrib2Record\n");
+         free (buff);
+         return -1;
+      }
+      meta->GribVersion = version;
+      if (version != 2) {
+         printf ("Fast parsing doesn't handle this version because ReadGrib1Record/ReadTDLPRecord used Grib_Data[]\n");
+         return -1;
+      }
+
+      /*
+       * Make room for entire message, and read it in.
+       */
+      /* nd5 needs to be gribLen in (sInt4) units rounded up. */
+      nd5 = (gribLen + 3) / 4;
+      if (nd5 > IS->ipackLen) {
+         IS->ipackLen = nd5;
+         IS->ipack = (sInt4 *) realloc ((void *) (IS->ipack),
+                                        (IS->ipackLen) * sizeof (sInt4));
+      }
+      c_ipack = (unsigned char *) IS->ipack;
+      /* Init last sInt4 to 0, to make sure that the padded bytes are 0. */
+      IS->ipack[nd5 - 1] = 0;
+      /* Init first 4 sInt4 to sect0. */
+      memcpy (c_ipack, sect0, SECT0LEN_WORD * 4);
+      /* Read in the rest of the message. */
+      if (fread (c_ipack + SECT0LEN_WORD * 4, sizeof (char),
+                 (gribLen - SECT0LEN_WORD * 4),
+                 fp) != (gribLen - SECT0LEN_WORD * 4)) {
+         errSprintf ("GribLen = %ld, SECT0Len_WORD = %d\n", gribLen,
+                     SECT0LEN_WORD);
+         errSprintf ("Ran out of file\n");
+         free (buff);
+         return -1;
+      }
+
+      /*
+       * Make sure the arrays are large enough for call to unpacker library.
+       */
+      /* FindSectLen Does not want (ipack / c_ipack) word swapped, because
+       * that would make it much more confusing to find bytes in c_ipack. */
+      if (FindSectLen (c_ipack, gribLen, local_ns, &nd2x3, &table50) < 0) {
+         preErrSprintf ("Inside ReadGrib2Record.. Calling FindSectLen\n");
+         free (buff);
+         return -2;
+      }
+
+      /* Make sure all 'is' arrays except ns[7] are MAX (IS.ns[] ,
+       * local_ns[]). See note 1 for reason to exclude ns[7] from MAX (). */
+      for (i = 0; i < 7; i++) {
+         if (local_ns[i] > IS->ns[i]) {
+            IS->ns[i] = local_ns[i];
+            IS->is[i] = (sInt4 *) realloc ((void *) (IS->is[i]),
+                                           IS->ns[i] * sizeof (sInt4));
+         }
+      }
+
+      /* Allocate room for sect 2. If local_ns[2] = -1 there is no sect 2. */
+      if (local_ns[2] == -1) {
+         nidat = 10;
+         nrdat = 10;
+      } else {
+         /*
+          * See note 2) We have a section 2, so use:
+          *     MAX (32 * local_ns[2],SECT2_INTSIZE)
+          * and MAX (32 * local_ns[2],SECT2_FLOATSIZE)
+          * for size of section 2 unpacked.
+          */
+         nidat = (32 * local_ns[2] < SECT2_INIT_SIZE) ? SECT2_INIT_SIZE :
+               32 * local_ns[2];
+         nrdat = nidat;
+      }
+      if (nidat > IS->nidat) {
+         IS->nidat = nidat;
+         IS->idat = (sInt4 *) realloc ((void *) IS->idat,
+                                       IS->nidat * sizeof (sInt4));
+      }
+      if (nrdat > IS->nrdat) {
+         IS->nrdat = nrdat;
+         IS->rdat = (float *) realloc ((void *) IS->rdat,
+                                       IS->nrdat * sizeof (float));
+      }
+      /* Make sure we have room for the GRID part of the output. */
+      if (nd2x3 > IS->nd2x3) {
+         IS->nd2x3 = nd2x3;
+         IS->iain = (sInt4 *) realloc ((void *) IS->iain,
+                                       IS->nd2x3 * sizeof (sInt4));
+         IS->ib = (sInt4 *) realloc ((void *) IS->ib,
+                                     IS->nd2x3 * sizeof (sInt4));
+      }
+      /* See note 3) If table50 == 3, unpacker library needs nd5 >= nd2x3. */
+      if ((table50 == 3) || (table50 == 0)) {
+         if (nd5 < nd2x3) {
+            nd5 = nd2x3;
+            if (nd5 > IS->ipackLen) {
+               IS->ipackLen = nd5;
+               IS->ipack = (sInt4 *) realloc ((void *) (IS->ipack),
+                                              IS->ipackLen * sizeof (sInt4));
+            }
+            /* Don't need to do the following, but we do in case code
+             * changes. */
+            c_ipack = (unsigned char *) IS->ipack;
+         }
+      }
+      IS->nd5 = nd5;
+      /* Unpacker library requires ipack to be MSB. */
+/*
+#ifdef DEBUG
+      if (1==1) {
+         FILE *fp = fopen ("test.bin", "wb");
+         fwrite (IS->ipack, sizeof (sInt4), IS->nd5, fp);
+         fclose (fp);
+      }
+#endif
+*/
+   } else {
+      c_ipack = (unsigned char *) IS->ipack;
+      /* GRIB2 files are in big endian so c_ipack is as well. */
+#ifdef LITTLE_ENDIAN
+      revmemcpy (&gribLen, &(c_ipack[12]), sizeof (sInt4));
+#else
+      memcpy (&gribLen, &(c_ipack[12]), sizeof (sInt4));
+#endif
+   }
+   free (buff);
+
+   /* Loop through the grib message looking for the subgNum grid.  subgNum
+    * goes from 0 to n-1. */
+   for (j = 0; j <= subgNum; j++) {
+      if (j == 0) {
+         inew = 1;
+      } else {
+         inew = 0;
+      }
+
+      /* Note we are getting data back either as a float or an int, but not
+       * both, so we don't need to allocated room for both. */
+/*
+      unpk_grib2 (&kfildo, (float *) (IS->iain), IS->iain, &(IS->nd2x3),
+                  IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],
+                  &(IS->ns[0]), IS->is[1], &(IS->ns[1]), IS->is[2],
+                  &(IS->ns[2]), IS->is[3], &(IS->ns[3]), IS->is[4],
+                  &(IS->ns[4]), IS->is[5], &(IS->ns[5]), IS->is[6],
+                  &(IS->ns[6]), IS->is[7], &(IS->ns[7]), IS->ib, &ibitmap,
+                  IS->ipack, &(IS->nd5), &xmissp, &xmisss, &inew, &iclean,
+                  &l3264b, f_endMsg, jer, &ndjer, &kjer);
+*/
+      c_ipack = (unsigned char *)IS->ipack;
+      unpk_g2ncep(&kfildo, (float *) (IS->iain), IS->iain, &(IS->nd2x3),
+                  IS->idat, &(IS->nidat), IS->rdat, &(IS->nrdat), IS->is[0],
+                  &(IS->ns[0]), IS->is[1], &(IS->ns[1]), IS->is[2],
+                  &(IS->ns[2]), IS->is[3], &(IS->ns[3]), IS->is[4],
+                  &(IS->ns[4]), IS->is[5], &(IS->ns[5]), IS->is[6],
+                  &(IS->ns[6]), IS->is[7], &(IS->ns[7]), IS->ib, &ibitmap,
+                  c_ipack, &(IS->nd5), &xmissp, &xmisss, &inew, &iclean,
+                  &l3264b, f_endMsg, jer, &ndjer, &kjer);
+
+
+      /*
+       * Check for error messages...
+       *   If we get an error message, print it, and return.
+       */
+      for (i = 0; i < (uInt4) kjer; i++) {
+         if (jer[ndjer + i] == 0) {
+            /* no error. */
+         } else if (jer[ndjer + i] == 1) {
+            /* Warning. */
+#ifdef DEBUG
+            printf ("Warning: Unpack library warning code (%ld %ld)\n",
+                    jer[i], jer[ndjer + i]);
+#endif
+         } else {
+            /* BAD Error. */
+            errSprintf ("ERROR: Unpack library error code (%ld %ld)\n",
+                        jer[i], jer[ndjer + i]);
+            return -3;
+         }
+      }
+   }
+
+   /* Parse the meta data out. */
+   if (MetaParse (meta, IS->is[0], IS->ns[0], IS->is[1], IS->ns[1],
+                  IS->is[2], IS->ns[2], IS->rdat, IS->nrdat, IS->idat,
+                  IS->nidat, IS->is[3], IS->ns[3], IS->is[4], IS->ns[4],
+                  IS->is[5], IS->ns[5], gribLen, xmissp, xmisss, simpVer, simpWWA)
+       != 0) {
+#ifdef DEBUG
+      FILE *fp;
+      if ((fp = fopen ("dump.is0", "wt")) != NULL) {
+         for (i = 0; i < 8; i++) {
+            fprintf (fp, "---Section %d---\n", i);
+            for (j = 1; j <= IS->ns[i]; j++) {
+               fprintf (fp, "IS%d Item %d = %ld\n", i, j, IS->is[i][j - 1]);
+            }
+         }
+         fclose (fp);
+      }
+#endif
+      preErrSprintf ("Inside ReadGrib2Record.. Problems in MetaParse\n");
+      return -4;
+   }
+
+   if ((majEarth > 6000) && (majEarth < 7000)) {
+      if ((minEarth > 6000) && (minEarth < 7000)) {
+         meta->gds.f_sphere = 0;
+         meta->gds.majEarth = majEarth;
+         meta->gds.minEarth = minEarth;
+      } else {
+         meta->gds.f_sphere = 1;
+         meta->gds.majEarth = majEarth;
+         meta->gds.minEarth = majEarth;
+      }
+   }
+
+   /* Figure out an equation to pass to ParseGrid to convert the units for
+    * this grid. */
+/*
+   if (ComputeUnit (meta->pds2.prodType, meta->pds2.sect4.templat,
+                    meta->pds2.sect4.cat, meta->pds2.sect4.subcat, f_unit,
+                    &unitM, &unitB, unitName) == 0) {
+*/
+   if (ComputeUnit (meta->convert, meta->unitName, f_unit, &unitM, &unitB,
+                    unitName) == 0) {
+      unitLen = strlen (unitName);
+      meta->unitName = (char *) realloc ((void *) (meta->unitName),
+                                         1 + unitLen * sizeof (char));
+      strncpy (meta->unitName, unitName, unitLen);
+      meta->unitName[unitLen] = '\0';
+   }
+
+   /* compute the subgrid. */
+   if ((lwlf->lat != -100) && (uprt->lat != -100)) {
+      Nx = meta->gds.Nx;
+      Ny = meta->gds.Ny;
+      if (computeSubGrid (lwlf, &x1, &y1, uprt, &x2, &y2, &(meta->gds),
+                          &newGds) != 0) {
+         preErrSprintf ("ERROR: In compute subgrid.\n");
+         return 1;
+      }
+      /* I couldn't decide if I should "permanently" change the GDS or not.
+       * when I wrote computeSubGrid.  If next line stays, really should
+       * rewrite computeSubGrid. */
+      memcpy (&(meta->gds), &newGds, sizeof (gdsType));
+      f_subGrid = 1;
+   } else {
+      Nx = meta->gds.Nx;
+      Ny = meta->gds.Ny;
+      x1 = 1;
+      x2 = Nx;
+      y1 = 1;
+      y2 = Ny;
+      f_subGrid = 0;
+   }
+
+   if ((f_subGrid) && (meta->gds.scan != 64)) {
+      errSprintf ("Can not do a subgrid of non scanmode 64 grid yet.\n");
+      return -3;
+   }
+
+   /* Figure out some other non-section oriented meta data. */
+/*   strftime (meta->refTime, 20, "%Y%m%d%H%M",
+             gmtime (&(meta->pds2.refTime)));
+*/
+   Clock_Print (meta->refTime, 20, meta->pds2.refTime, "%Y%m%d%H%M", 0);
+/*
+   strftime (meta->validTime, 20, "%Y%m%d%H%M",
+             gmtime (&(meta->pds2.sect4.validTime)));
+*/
+   Clock_Print (meta->validTime, 20, meta->pds2.sect4.validTime,
+                "%Y%m%d%H%M", 0);
+
+   meta->deltTime = (sInt4) (meta->pds2.sect4.validTime - meta->pds2.refTime);
+
+   return 0;
+}
+#endif

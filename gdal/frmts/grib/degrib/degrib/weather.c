@@ -1950,7 +1950,7 @@ void FreeUglyString (UglyStringType * ugly)
 {
    int j;               /* Used to free all the English words. */
 
-   for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
+   for (j = 0; j < NUM_UGLY_WORD; j++) {
       free (ugly->english[j]);
    }
    free (ugly->errors);
@@ -1985,7 +1985,6 @@ static void InitUglyString (UglyStringType * ugly)
    int j;               /* Used to traverse all the attributes. */
 
    ugly->numValid = 0;
-   ugly->f_valid = 1;
    ugly->minVis = 0;
    ugly->validIndex = 0;
    ugly->SimpleCode = 0;
@@ -2090,10 +2089,14 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
       case 0:          /* Cover */
          ans = FindInTable (WxCover, (sizeof (WxCover) / sizeof (WxTable)),
                             data, &(ugly->cover[word]));
+/* Don't see why <Invalid> should be treated specially. */
+/*
          if (ans == 1) {
             ugly->f_valid = 0;
             return 0;
-         } else if (ans != 0) {
+         } else
+*/
+         if (ans != 0) {
             if (strlen (data) == 0) {
                ugly->cover[word] = COV_NOCOV;
             } else {
@@ -2113,10 +2116,14 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
       case 1:          /* Weather */
          ans = FindInTable (WxCode, (sizeof (WxCode) / sizeof (WxTable)),
                             data, &(ugly->wx[word]));
+/* Don't see why <Invalid> should be treated specially. */
+/*
          if (ans == 1) {
             ugly->f_valid = 0;
             return 0;
-         } else if (ans != 0) {
+         } else
+*/
+         if (ans != 0) {
             if (strlen (data) == 0) {
                ugly->wx[word] = WX_NOWX;
             } else {
@@ -2133,10 +2140,14 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
       case 2:          /* Intensity */
          ans = FindInTable (WxIntens, (sizeof (WxIntens) / sizeof (WxTable)),
                             data, &(ugly->intens[word]));
+/* Don't see why <Invalid> should be treated specially. */
+/*
          if (ans == 1) {
             ugly->f_valid = 0;
             return 0;
-         } else if (ans != 0) {
+         } else
+*/
+         if (ans != 0) {
             if (strlen (data) == 0) {
                ugly->intens[word] = INT_NOINT;
             } else {
@@ -2153,10 +2164,14 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
       case 3:          /* Vis */
          ans = FindInTable (WxVisib, (sizeof (WxVisib) / sizeof (WxTable)),
                             data, &(ugly->vis[word]));
+/* Don't see why <Invalid> should be treated specially. */
+/*
          if (ans == 1) {
             ugly->f_valid = 0;
             return 0;
-         } else if (ans != 0) {
+         } else
+*/
+         if (ans != 0) {
             if (strlen (data) == 0) {
                ugly->vis[word] = 0;
             } else {
@@ -2179,10 +2194,14 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
       case 4:          /* Attrib */
          ans = FindInTable (WxAttrib, (sizeof (WxAttrib) / sizeof (WxTable)),
                             data, &(ugly->attrib[word][attNum]));
+/* Don't see why <Invalid> should be treated specially. */
+/*
          if (ans == 1) {
             ugly->f_valid = 0;
             return 0;
-         } else if (ans != 0) {
+         } else
+*/
+         if (ans != 0) {
 #ifdef VERBOSE
             printf ("No '%s' in WxAttrib\n", data);
 #endif
@@ -2265,6 +2284,7 @@ static void Ugly2English (UglyStringType * ugly)
       f_first = 1;
       for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
          if (ugly->attrib[i][j] != 0) {
+            /* Fixed by GDAL */
             if (ugly->f_priority[i] == 0) {
                if (f_first) {
                   strcat (buffer, " with ");
