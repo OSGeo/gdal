@@ -36,6 +36,7 @@ void Clock_PrintDateNumber (double clock, char buffer[15]);
 
 #if 0  // Unused with GDAL.
 int Clock_Scan (double *clock, char *buffer, char f_gmt);
+double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear);
 #endif
   
 #ifdef __cplusplus

@@ -465,7 +465,7 @@ int Clock_NumDay (int month, int day, sInt4 year, char f_tot)
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   To format part of the output l_clock string.
+ *   To format part of the output clock string.
  *
  * ARGUMENTS
  *    buffer = The output string to write to. (Output)
@@ -751,8 +751,48 @@ sChar Clock_GetTimeZone ()
  * HISTORY
  *   9/2002 Arthur Taylor (MDL/RSIS): Created.
  *   6/2004 AAT (MDL): Updated.
+ *   2/2007 AAT : Updated yet again.
  *
  * NOTES
+ *    From 1987 through 2006, the start and end dates were the first Sunday in
+ * April and the last Sunday in October.
+ *
+ *    Since 1996 the European Union has observed DST from the last Sunday in
+ * March to the last Sunday in October, with transitions at 01:00 UTC.
+ *
+ *    On August 8, 2005, President George W. Bush signed the Energy Policy Act
+ * of 2005. This Act changed the time change dates for Daylight Saving Time in
+ * the U.S. Beginning in 2007, DST will begin on the second Sunday in March
+ * and end the first Sunday in November.
+
+ *    The Secretary of Energy will report the impact of this change to
+ * Congress. Congress retains the right to resume the 2005 Daylight Saving
+ * Time schedule once the Department of Energy study is complete.
+ *
+ *                   1st-apr last-oct  2nd-mar 1st-nov
+ * 1/1/1995 Sun (0)   4/2     10/29     3/12    11/5
+ * 1/1/2001 mon (1)   4/1     10/28     3/11    11/4
+ * 1/1/1991 tue (2)   4/7     10/27     3/10    11/3
+ * 1/1/2003 Wed (3)   4/6     10/26     3/9     11/2
+ * 1/1/1987 thu (4)   4/5     10/25     3/8     11/1
+ * 1/1/1999 fri (5)   4/4     10/31     3/14    11/7
+ * 1/1/2005 Sat (6)   4/3     10/30     3/13    11/6
+ *
+ * Leap years:
+ * 1/1/2012 Sun (0)
+ * 1/1/1996 Mon (1)   4/7     10/27     3/10    11/3
+ * 1/1/2008 Tue (2)   4/6     10/26     3/9     11/2
+ * 1/1/2020 Wed (3)   4/5     10/25     3/8     11/1
+
+ * 1/1/2004 Thu (4)   4/4     10/31     3/14    11/7
+ * 1/1/2032 Thu (4)   4/4     10/31     3/14    11/7
+
+ * 1/1/2016 Fri (5)
+ * 1/1/2028 Sat (6)
+ *   --- Since there is an extra day, the delta is the same
+ *   --- Problems occur with leap years pre 2007 which start on Mon or Thur
+ *       (delta shift by 7 days = 604,800 seconds) After 2007, it was leap
+ *       years starting only on Thur.
  *****************************************************************************
  */
 int Clock_IsDaylightSaving2 (double l_clock, sChar TimeZone)
@@ -760,6 +800,26 @@ int Clock_IsDaylightSaving2 (double l_clock, sChar TimeZone)
    sInt4 totDay, year;
    int day, first;
    double secs;
+   sInt4 start, end;
+
+   /* These are the deltas between the 1st sun in apr and beginning of year
+    * in seconds + 2 hours. */
+   static const sInt4 start2006[7] = {7869600, 7783200, 8301600, 8215200,
+                                8128800, 8042400, 7956000};
+   /* These are the deltas between the last sun in oct and beginning of year
+    * in seconds + 1 hour. */
+   static const sInt4 end2006[7] = {26010000, 25923600, 25837200, 25750800,
+                              25664400, 26182800, 26096400};
+   /* Previous version had typo ...26664400 -> 25664400 */
+
+   /* These are the deltas between the 2nd sun in mar and beginning of year
+    * in seconds + 2 hours. */
+   static const sInt4 start2007[7] = {6055200, 5968800, 5882400, 5796000,
+                                5709600, 6228000, 6141600};
+   /* These are the deltas between the 1st sun in nov and beginning of year
+    * in seconds + 1 hour. */
+   static const sInt4 end2007[7] = {26614800, 26528400, 26442000, 26355600,
+                              26269200, 26787600, 26701200};
 
    l_clock = l_clock - TimeZone * 3600.;
    /* Clock should now be in Standard Time, so comparisons later have to be
@@ -774,86 +834,31 @@ int Clock_IsDaylightSaving2 (double l_clock, sChar TimeZone)
    first = ((4 + (totDay - day)) % 7); /* -day should get 1/1 but may need
                                         * -day+1 => sun == 0, ... sat == 6 */
 
-   /* figure out if year is a leap year */
-   if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
-      /* look up extents of daylight savings. for leap year. */
-      switch (first) {
-         case 0:
-            if ((secs >= 7869600.0) && (secs <= 26010000.0))
-               return 1;
-            else
-               return 0;
-         case 1:
-            if ((secs >= 8388000.0) && (secs <= 25923600.0))
-               return 1;
-            else
-               return 0;
-         case 2:
-            if ((secs >= 8301600.0) && (secs <= 25837200.0))
-               return 1;
-            else
-               return 0;
-         case 3:
-            if ((secs >= 8215200.0) && (secs <= 25750800.0))
-               return 1;
-            else
-               return 0;
-         case 4:
-            if ((secs >= 8128800.0) && (secs <= 26269200.0))
-               return 1;
-            else
-               return 0;
-         case 5:
-            if ((secs >= 8042400.0) && (secs <= 26182800.0))
-               return 1;
-            else
-               return 0;
-         case 6:
-            if ((secs >= 7956000.0) && (secs <= 26096400.0))
-               return 1;
-            else
-               return 0;
+   if (year >= 2007) {
+      start = start2007[first];
+      end = end2007[first];
+      if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+         if (first == 4) {
+            start += 604800;
+            end += 604800;
+         }
       }
    } else {
-      switch (first) {
-         case 0:
-            if ((secs >= 7869600.0) && (secs <= 26010000.0))
-               return 1;
-            else
-               return 0;
-         case 1:
-            if ((secs >= 7783200.0) && (secs <= 25923600.0))
-               return 1;
-            else
-               return 0;
-         case 2:
-            if ((secs >= 8301600.0) && (secs <= 25837200.0))
-               return 1;
-            else
-               return 0;
-         case 3:
-            if ((secs >= 8215200.0) && (secs <= 25750800.0))
-               return 1;
-            else
-               return 0;
-         case 4:
-            if ((secs >= 8128800.0) && (secs <= 26664400.0))
-               return 1;
-            else
-               return 0;
-         case 5:
-            if ((secs >= 8042400.0) && (secs <= 26182800.0))
-               return 1;
-            else
-               return 0;
-         case 6:
-            if ((secs >= 7956000.0) && (secs <= 26096400.0))
-               return 1;
-            else
-               return 0;
+      start = start2006[first];
+      end = end2006[first];
+      if (((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0))) {
+         if (first == 1) {
+            start += 604800;
+         } else if (first == 4) {
+            end += 604800;
+         }
       }
    }
-   return 0;
+   if ((secs >= start) && (secs <= end)) {
+      return 1;
+   } else {
+      return 0;
+   }
 }
 
 /*****************************************************************************
@@ -2453,8 +2458,52 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
    free (Rel);
    return -1;
 }
+
+double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
+{
+   sInt4 totDay;
+   int day;
+   sInt4 year;
+   int month;
+   double d_remain;
+   int i;
+
+   totDay = (sInt4) floor (refTime / SEC_DAY);
+   Clock_Epoch2YearDay (totDay, &day, &year);
+   month = Clock_MonthNum (day, year);
+   day = day - Clock_NumDay (month, 1, year, 1) + 1;
+   d_remain = refTime - totDay * 3600 * 24.0;
+
+   /* Add the month */
+   if (incrMonth != 0) {
+      month += incrMonth;
+      while (month > 12) {
+         year++;
+         month -= 12;
+      }
+      while (month < 1) {
+         year--;
+         month += 12;
+      }
+   }
+   /* Add the year. */
+   if (incrYear != 0) {
+      year += incrYear;
+   }
+
+   /* Recompose the date */
+   i = Clock_NumDay (month, 1, year, 0);
+   if (day > i) {
+      day = i;
+   }
+   refTime = 0;
+   Clock_ScanDate (&refTime, year, month, day);
+   refTime += d_remain;
+   return refTime;
+}
+
 #endif  // Unused with GDAL.
 
 #ifdef CLOCK_PROGRAM
-/* See l_clockstart.c */
+/* See clockstart.c */
 #endif
