@@ -1369,10 +1369,10 @@ int ReadGrib2RecordFast (FILE *fp, sChar f_unit, double **Grib_Data,
                          * unless library is compiled a particular way. */
    sInt4 ibitmap;       /* 0 means no bitmap returned, otherwise 1. */
    float xmissp;        /* The primary missing value.  If iclean = 0, this
-                         * value is embeded in grid, otherwise it is the
+                         * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
    float xmisss;        /* The secondary missing value.  If iclean = 0, this
-                         * value is embeded in grid, otherwise it is the
+                         * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
    sInt4 jer[UNPK_NUM_ERRORS * 2]; /* Any Error codes along with their *
                                     * severity levels generated using the *

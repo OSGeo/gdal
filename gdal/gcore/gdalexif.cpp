@@ -1445,7 +1445,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
     GUInt32 nOffsetOfIFDAfterIFD0 = nBufferOff;
     WriteLEUInt32(pabyData, nBufferOff, 0); // offset to patch
 
-    // Space for offline tag values (aready written)
+    // Space for offline tag values (already written)
     nBufferOff += nOfflineSizeMain;
 
     if( nEXIFTags )
@@ -1463,7 +1463,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
                     nBufferOff - nTIFFStartOff + nEXIFTags * TAG_SIZE;
         WriteTags(pabyData, nBufferOff, offsetIFDData, exifTags);
 
-        // Space for offline tag values (aready written)
+        // Space for offline tag values (already written)
         nBufferOff += nOfflineSizeEXIF;
     }
 
@@ -1482,7 +1482,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
                     nBufferOff - nTIFFStartOff + nGPSTags * TAG_SIZE;
         WriteTags(pabyData, nBufferOff, offsetIFDData, gpsTags);
 
-        // Space for offline tag values (aready written)
+        // Space for offline tag values (already written)
         nBufferOff += nOfflineSizeGPS;
     }
 

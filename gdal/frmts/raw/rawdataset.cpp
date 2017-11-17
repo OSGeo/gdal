@@ -288,14 +288,14 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 
     // Figure out where to start reading.
     // Write formulas such that unsigned int overflow doesn't occur
-    const GUIntBig nPixelOffsetToSubstract =
+    const GUIntBig nPixelOffsetToSubtract =
         nPixelOffset >= 0
         ? 0 : static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
     const vsi_l_offset nReadStart = static_cast<vsi_l_offset>(
         (nLineOffset >= 0 ?
             nImgOffset + static_cast<GUIntBig>(nLineOffset) * iLine :
             nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * iLine )
-        - nPixelOffsetToSubstract);
+        - nPixelOffsetToSubtract);
 
     // Seek to the correct line.
     if( Seek(nReadStart, SEEK_SET) == -1 )
@@ -431,14 +431,14 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 
     // Figure out where to start writing.
     // Write formulas such that unsigned int overflow doesn't occur
-    const GUIntBig nPixelOffsetToSubstract =
+    const GUIntBig nPixelOffsetToSubtract =
         nPixelOffset >= 0
         ? 0 : static_cast<GUIntBig>(-static_cast<GIntBig>(nPixelOffset)) * (nBlockXSize - 1);
     const vsi_l_offset nWriteStart = static_cast<vsi_l_offset>(
         (nLineOffset >= 0 ?
             nImgOffset + static_cast<GUIntBig>(nLineOffset) * nBlockYOff :
             nImgOffset - static_cast<GUIntBig>(-static_cast<GIntBig>(nLineOffset)) * nBlockYOff )
-        - nPixelOffsetToSubstract);
+        - nPixelOffsetToSubtract);
 
     // Seek to correct location.
     if( Seek(nWriteStart, SEEK_SET) == -1 )
