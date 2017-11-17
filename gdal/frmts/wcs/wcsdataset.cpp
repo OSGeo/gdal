@@ -980,7 +980,7 @@ static void CreateServiceMetadata(CPLString coverage, CPLString master_filename,
         if (value.find(coverage) != std::string::npos) {
             key.erase(0, 11); // SUBDATASET_
             key.erase(key.find("_"), std::string::npos);
-            subdataset = stoi(key);
+            subdataset = atoi(key);
             break;
         }
     }

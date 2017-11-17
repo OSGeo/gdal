@@ -100,7 +100,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
                              int nBandCount, int *panBandList,
                              CPLHTTPResult **ppsResult );
 
-    virtual CPLString   DescribeCoverageRequest() {return "";};
+    virtual CPLString   DescribeCoverageRequest() {return "";}
     virtual CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) = 0;
 
     int         DescribeCoverage();
@@ -162,7 +162,7 @@ class CPL_DLL WCSDataset100 : public WCSDataset
     
   public:
 
-    WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {};
+    WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
 };
 
 class CPL_DLL WCSDataset110 : public WCSDataset
@@ -182,7 +182,7 @@ class CPL_DLL WCSDataset110 : public WCSDataset
     
   public:
 
-    WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {};
+    WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {}
 };
 
 class CPL_DLL WCSDataset201 : public WCSDataset110
@@ -212,7 +212,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
     
  public:
     
-    WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {};
+    WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {}
     
 };
 

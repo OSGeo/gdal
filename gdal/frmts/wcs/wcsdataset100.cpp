@@ -536,21 +536,19 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
 
     // identification metadata
     CPLString path2 = path;
-    std::vector<CPLString> keys2 = {
-        "description",
-        "name",
-        "label",
-        "fees",
-        "accessConstraints"
-    };
+    std::vector<CPLString> keys2;
+    keys2.push_back("description");
+    keys2.push_back("name");
+    keys2.push_back("label");
+    keys2.push_back("fees");
+    keys2.push_back("accessConstraints");
     CPLXMLNode *service = AddSimpleMetaData(&metadata, Capabilities, path2, "Service", keys2);
     if (service) {
         CPLString path3 = path2;
-        std::vector<CPLString> keys3 = {
-            "individualName",
-            "organisationName",
-            "positionName"
-        };
+        std::vector<CPLString> keys3;
+        keys3.push_back("individualName");
+        keys3.push_back("organisationName");
+        keys3.push_back("positionName");
         CPLString kw = GetKeywords(service, "keywords", "keyword");
         if (kw != "") {
             CPLString name = path + "keywords";
@@ -560,19 +558,17 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
         CPLXMLNode *info = CPLGetXMLNode(party, "contactInfo");
         if (party && info) {
             CPLString path4 = path3 + "contactInfo.";
-            std::vector<CPLString> keys4 = {
-                "deliveryPoint",
-                "city",
-                "administrativeArea",
-                "postalCode",
-                "country",
-                "electronicMailAddress"
-            };
+            std::vector<CPLString> keys4;
+            keys4.push_back("deliveryPoint");
+            keys4.push_back("city");
+            keys4.push_back("administrativeArea");
+            keys4.push_back("postalCode");
+            keys4.push_back("country");
+            keys4.push_back("electronicMailAddress");
             CPLString path5 = path4;
-            std::vector<CPLString> keys5 = {
-                "voice",
-                "facsimile"
-            };
+            std::vector<CPLString> keys5;
+            keys5.push_back("voice");
+            keys5.push_back("facsimile");
             AddSimpleMetaData(&metadata, info, path4, "address", keys4);
             AddSimpleMetaData(&metadata, info, path5, "phone", keys5);
         }
