@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "grib2.h"
 
 g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unpack,g2int expand,
@@ -480,8 +481,19 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
             * abort.  May need to revisit this behavior. */
           if( expand )
           {
-              if ( !(lgfld->ibmap != 255 && lgfld->bmap != 0) && 
-                   lgfld->ngrdpts != lgfld->ndpts )
+              if ( lgfld->ibmap != 255 && lgfld->bmap != 0 )
+              {
+                  if( lgfld->ngrdpts < lgfld->ndpts )
+                  {
+                      /* There are more points in the data section than in */
+                      /* the bitmap, that doesn't make sense (bitmap only */
+                      /* makes sense if it saves the encoding of points in */
+                      /* the data section) */
+                      ierr=14;
+                      return(ierr);
+                  }
+              }
+              else if( lgfld->ngrdpts != lgfld->ndpts )
               {
                   ierr=14;
                   return(ierr);
@@ -502,13 +514,8 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
                   for (j=0;j<lgfld->ngrdpts;j++) {
                       if (lgfld->bmap[j]==1)
                       {
-                          if( n >= lgfld->ndpts )
-                          {
-                              printf("g2_getfld: overflow of lgfld->fld array\n");
-                              ierr=14;
-                              free(newfld);
-                              return(ierr);
-                          }
+                          /* shouldn't happen given test done before g2_unpack7() */
+                          assert( n < lgfld->ndpts );
                           newfld[j]=lgfld->fld[n++];
                       }
                   }
