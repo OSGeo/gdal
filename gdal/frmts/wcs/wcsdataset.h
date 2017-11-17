@@ -53,7 +53,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     char      **papszSDSModifiers;
 
     int         m_Version; // eg 100 for 1.0.0, 110 for 1.1.0
-    const char *Version();
+    const char *Version() const;
 
     CPLString   osCRS; // name of the CRS
     char        *pszProjection; // (usually the) WKT of the CRS, from OGRSpatialReference.exportToWkt
@@ -192,7 +192,7 @@ class CPL_DLL WCSDataset201 : public WCSDataset110
                                   int nBufXSize, int nBufYSize) override;
     CPLString   GetSubdataset(CPLString coverage);
     bool        SetFormat(CPLXMLNode *coverage);
-    bool        ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder);
+    static bool ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder);
     int         ParseRange(CPLXMLNode *coverage, char ***metadata);
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,

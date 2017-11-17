@@ -388,8 +388,7 @@ int WCSDataset::DescribeCoverage()
     CPLXMLNode *psDC = NULL;
 
     // if it is in cache, get it from there
-    CPLString dc_filename = "";
-    dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
+    CPLString dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
     dc_filename.erase(dc_filename.find(".xml"), 4);
     dc_filename += ".DC.xml";
     if (FileIsReadable(dc_filename)) {
@@ -826,7 +825,7 @@ static int WCSParseVersion( const char *version )
 /*                             Version()                                */
 /************************************************************************/
 
-const char *WCSDataset::Version()
+const char *WCSDataset::Version() const
 {
     if( this->m_Version == 201 )
         return "2.0.1";

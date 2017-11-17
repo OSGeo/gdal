@@ -301,12 +301,11 @@ bool WCSDataset100::ExtractGridInfo()
 /*      Build CRS name to use.                                          */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    const char *pszAuth;
 
     if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
     {
         oSRS.SetFromUserInput( pszProjection );
-        pszAuth = oSRS.GetAuthorityName(NULL);
+        const char *pszAuth = oSRS.GetAuthorityName(NULL);
 
         if( pszAuth != NULL && EQUAL(pszAuth,"EPSG") )
         {
@@ -582,7 +581,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
 
     // provider metadata
     // operations metadata
-    CPLString DescribeCoverageURL = "";
+    CPLString DescribeCoverageURL;
     DescribeCoverageURL = CPLGetXMLValue(
         CPLGetXMLNode(
             CPLGetXMLNode(
