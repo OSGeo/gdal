@@ -64,7 +64,7 @@ CPLString URLRemoveKey(const char *url, CPLString key)
         }
     }
     if (retval.back() == '&') {
-        retval.pop_back();
+        retval.erase(retval.size() - 1);
     }
     return retval;
 }

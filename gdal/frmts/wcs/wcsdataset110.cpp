@@ -330,9 +330,9 @@ bool WCSDataset110::ExtractGridInfo()
                   "Unable to process WCS coverage.");
         return false;
     }
-    for (int i = 0; i < n / 2; ++i) {
+    for (unsigned int i = 0; i < n / 2; ++i) {
         CPLString s = offset_1.back();
-        offset_1.pop_back();
+        offset_1.erase(offset_1.end());
         offset_2.insert(offset_2.begin(), s);
     }
     std::vector<std::vector<double> > offsets;
