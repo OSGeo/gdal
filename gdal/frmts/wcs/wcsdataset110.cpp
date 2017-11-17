@@ -323,7 +323,7 @@ bool WCSDataset110::ExtractGridInfo()
 
     std::vector<CPLString> offset_1 = Split(CPLGetXMLValue(psGCRS, "GridOffsets", ""), " ");
     std::vector<CPLString> offset_2;
-    int n = offset_1.size();
+    size_t n = offset_1.size();
     if (n % 2 != 0) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "GridOffsets has incorrect amount of coefficients.\n"

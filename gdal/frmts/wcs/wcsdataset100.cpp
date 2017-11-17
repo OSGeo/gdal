@@ -557,8 +557,8 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             metadata = CSLSetNameValue(metadata, name, kw);
         }
         CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3, "resposibleParty", keys3);
-        CPLXMLNode *info;
-        if (party && (info = CPLGetXMLNode(party, "contactInfo"))) {
+        CPLXMLNode *info = CPLGetXMLNode(party, "contactInfo");
+        if (party && info) {
             CPLString path4 = path3 + "contactInfo.";
             std::vector<CPLString> keys4 = {
                 "deliveryPoint",
@@ -608,9 +608,8 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             CPLString path3;
             path3.Printf( "SUBDATASET_%d_", index);
 
-            CPLXMLNode *node;
-
-            if ((node = CPLGetXMLNode(summary, "name"))) {
+            CPLXMLNode *node = CPLGetXMLNode(summary, "name");
+            if (node) {
                 CPLString name = path3 + "NAME";
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "SERVICE", "WCS");
@@ -621,12 +620,14 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 metadata = CSLSetNameValue(metadata, name, value);
             }
 
-            if ((node = CPLGetXMLNode(summary, "label"))) {
+            node = CPLGetXMLNode(summary, "label");
+            if (node) {
                 CPLString name = path3 + "LABEL";
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }
 
-            if ((node = CPLGetXMLNode(summary, "lonlatEnvelope"))) {
+            node = CPLGetXMLNode(summary, "lonlatEnvelope");
+            if (node) {
                 CPLString name = path3 + "lonlatEnvelope";
                 CPLString CRS = ParseCRS(node);
                 std::vector<CPLString> bbox = ParseBoundingBox(node);
@@ -646,7 +647,8 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 metadata = CSLSetNameValue(metadata, name, kw);
             }
 
-            if ((node = CPLGetXMLNode(summary, "description"))) {
+            node = CPLGetXMLNode(summary, "description");
+            if (node) {
                 CPLString name = path3 + "description";
                 metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
             }

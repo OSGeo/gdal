@@ -729,9 +729,9 @@ bool WCSDataset201::ExtractGridInfo()
             return false;
         }
         // todo: support CRS override, it requires warping the grid to the new CRS
+        // SetGeometry(grid_size, origin, offsets);
         CPLError(CE_Failure, CPLE_AppDefined, "CRS override not yet supported.");
         return false;
-        SetGeometry(grid_size, origin, offsets);
     }
 
     // todo: ElevationDomain, DimensionDomain
