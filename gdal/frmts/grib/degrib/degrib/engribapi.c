@@ -27,9 +27,19 @@
 #include "memwatch.h"
 #endif
 
+#define GRIB2MISSING_u1 (uChar) (0xff)
+#define GRIB2MISSING_s1 (sChar) -1 * (0x7f)
+#define GRIB2MISSING_u2 (uShort2) (0xffff)
+#define GRIB2MISSING_s2 (sShort2) -1 * (0x7fff)
+#define GRIB2MISSING_u4 (uInt4) (0xffffffff)
+/* following is -1 * 2&31 because of the way signed integers are stored in
+   GRIB2. */
+#define GRIB2MISSING_s4 (sInt4) -2147483647
+/*
 #define GRIB2MISSING_1 (int) (0xff)
 #define GRIB2MISSING_2 (int) (0xffff)
 #define GRIB2MISSING_4 (sInt4) (0xffffffff)
+*/
 
 /*****************************************************************************
  * NearestInt() -- Arthur Taylor / MDL
@@ -47,9 +57,9 @@
  * NOTES:
  *****************************************************************************
  */
-static sInt4 NearestInt (double a)
+static sInt4 NearestInt(double a)
 {
-   return (sInt4) floor (a + .5);
+   return (sInt4)floor(a + .5);
 }
 
 /*****************************************************************************
@@ -93,7 +103,7 @@ static double AdjustLon (double lon)
  * NOTES:
  *****************************************************************************
  */
-void initEnGribMeta (enGribMeta *en)
+void initEnGribMeta(enGribMeta * en)
 {
    en->sec2 = NULL;
    en->lenSec2 = 0;
@@ -110,7 +120,7 @@ void initEnGribMeta (enGribMeta *en)
    en->fld = NULL;
    en->ngrdpts = 0;
    en->bmap = NULL;
-   en->ibmap = GRIB2MISSING_1;
+   en->ibmap = GRIB2MISSING_u1;
 }
 
 /*****************************************************************************
@@ -129,49 +139,48 @@ void initEnGribMeta (enGribMeta *en)
  * NOTES:
  *****************************************************************************
  */
-void freeEnGribMeta (enGribMeta *en)
+void freeEnGribMeta(enGribMeta * en)
 {
    if (en->sec2 != NULL) {
-      free (en->sec2);
+      free(en->sec2);
       en->sec2 = NULL;
    }
    en->lenSec2 = 0;
    if (en->gdsTmpl != NULL) {
-      free (en->gdsTmpl);
+      free(en->gdsTmpl);
       en->gdsTmpl = NULL;
    }
    en->lenGdsTmpl = 0;
    if (en->idefList != NULL) {
-      free (en->idefList);
+      free(en->idefList);
       en->idefList = NULL;
    }
    en->idefnum = 0;
    if (en->pdsTmpl != NULL) {
-      free (en->pdsTmpl);
+      free(en->pdsTmpl);
       en->pdsTmpl = NULL;
    }
    en->lenPdsTmpl = 0;
    if (en->coordlist != NULL) {
-      free (en->coordlist);
+      free(en->coordlist);
       en->coordlist = NULL;
    }
    en->numcoord = 0;
    if (en->drsTmpl != NULL) {
-      free (en->drsTmpl);
+      free(en->drsTmpl);
       en->drsTmpl = NULL;
    }
    en->lenDrsTmpl = 0;
    if (en->fld != NULL) {
-      printf ("Freeing fld\n");
-      free (en->fld);
+      free(en->fld);
       en->fld = NULL;
    }
    en->ngrdpts = 0;
    if (en->bmap != NULL) {
-      free (en->bmap);
+      free(en->bmap);
       en->bmap = NULL;
    }
-   en->ibmap = GRIB2MISSING_1;
+   en->ibmap = GRIB2MISSING_u1;
 }
 
 /*****************************************************************************
@@ -191,7 +200,7 @@ void freeEnGribMeta (enGribMeta *en)
  * NOTES:
  *****************************************************************************
  */
-void fillSect0 (enGribMeta *en, uChar prodType)
+void fillSect0(enGribMeta * en, uChar prodType)
 {
    en->sec0[0] = prodType;
    en->sec0[1] = 2;
@@ -226,10 +235,10 @@ void fillSect0 (enGribMeta *en, uChar prodType)
  * NOTES:
  *****************************************************************************
  */
-void fillSect1 (enGribMeta *en, uShort2 center, uShort2 subCenter,
-                uChar mstrVer, uChar lclVer, uChar refCode, sInt4 refYear,
-                int refMonth, int refDay, int refHour, int refMin, int refSec,
-                uChar prodStat, uChar typeData)
+void fillSect1(enGribMeta * en, uShort2 center, uShort2 subCenter,
+               uChar mstrVer, uChar lclVer, uChar refCode, sInt4 refYear,
+               int refMonth, int refDay, int refHour, int refMin, int refSec,
+               uChar prodStat, uChar typeData)
 {
    en->sec1[0] = center;
    en->sec1[1] = subCenter;
@@ -264,11 +273,11 @@ void fillSect1 (enGribMeta *en, uShort2 center, uShort2 subCenter,
  * NOTES:
  *****************************************************************************
  */
-void fillSect2 (enGribMeta *en, uChar *sec2, sInt4 lenSec2)
+void fillSect2(enGribMeta * en, uChar *sec2, sInt4 lenSec2)
 {
    if (lenSec2 == 0) {
       if (en->sec2 != NULL) {
-         free (en->sec2);
+         free(en->sec2);
          en->sec2 = NULL;
       }
       en->lenSec2 = 0;
@@ -276,12 +285,12 @@ void fillSect2 (enGribMeta *en, uChar *sec2, sInt4 lenSec2)
    }
    if (lenSec2 > en->lenSec2) {
       if (en->sec2 != NULL) {
-         free (en->sec2);
+         free(en->sec2);
       }
-      en->sec2 = (uChar *) malloc (lenSec2 * sizeof (char));
+      en->sec2 = (uChar *)malloc(lenSec2 * sizeof(char));
    }
    en->lenSec2 = lenSec2;
-   memcpy (en->sec2, sec2, lenSec2);
+   memcpy(en->sec2, sec2, lenSec2);
 }
 
 /*****************************************************************************
@@ -309,9 +318,9 @@ void fillSect2 (enGribMeta *en, uChar *sec2, sInt4 lenSec2)
  * NOTES:
  *****************************************************************************
  */
-static void getShpEarth (double majEarth, double minEarth, sInt4 * shapeEarth,
-                         sInt4 * factRad, sInt4 * valRad, sInt4 * factMaj,
-                         sInt4 * valMaj, sInt4 * factMin, sInt4 * valMin)
+static void getShpEarth(double majEarth, double minEarth, sInt4 *shapeEarth,
+                        sInt4 *factRad, sInt4 *valRad, sInt4 *factMaj,
+                        sInt4 *valMaj, sInt4 *factMin, sInt4 *valMin)
 {
    *factRad = 0;
    *factMaj = 0;
@@ -328,7 +337,7 @@ static void getShpEarth (double majEarth, double minEarth, sInt4 * shapeEarth,
          *valRad = 6371229;
       } else {
          *shapeEarth = 1;
-         *valRad = NearestInt (majEarth * 1000);
+         *valRad = NearestInt(majEarth * 1000);
       }
    } else {
       if ((majEarth == 6378.16) && (minEarth == 6356.775)) {
@@ -344,8 +353,8 @@ static void getShpEarth (double majEarth, double minEarth, sInt4 * shapeEarth,
          *valMin = 635675231;
       } else {
          *shapeEarth = 7;
-         *valMaj = NearestInt (majEarth * 1000);
-         *valMin = NearestInt (majEarth * 1000);
+         *valMaj = NearestInt(majEarth * 1000);
+         *valMin = NearestInt(majEarth * 1000);
       }
    }
 }
@@ -412,12 +421,12 @@ static void getShpEarth (double majEarth, double minEarth, sInt4 * shapeEarth,
  * NOTES:
  *****************************************************************************
  */
-int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
-               double minEarth, sInt4 Nx, sInt4 Ny, double lat1, double lon1,
-               double lat2, double lon2, double Dx, double Dy, uChar resFlag,
-               uChar scanFlag, uChar centerFlag, sInt4 angle, sInt4 subDivis,
-               double meshLat, double orientLon, double scaleLat1,
-               double scaleLat2, double southLat, double southLon)
+int fillSect3(enGribMeta * en, uShort2 tmplNum, double majEarth,
+              double minEarth, sInt4 Nx, sInt4 Ny, double lat1, double lon1,
+              double lat2, double lon2, double Dx, double Dy, uChar resFlag,
+              uChar scanFlag, uChar centerFlag, sInt4 angle, sInt4 subDivis,
+              double meshLat, double orientLon, double scaleLat1,
+              double scaleLat2, double southLat, double southLon)
 {
    const struct gridtemplate *templatesgrid = get_templatesgrid();
    int i;               /* loop counter over number of GDS templates. */
@@ -428,19 +437,18 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
       /* can't handle lack of a grid definition template */
       return -1;
    }
-   /* srcGridDef = [Code:3.0] 0 => Use a grid template
-     * 1 => predetermined grid (may not have grid template)
-     * 255 => means no grid applies (no grid def applies)
-     * for 1,255 tempateNum = 65535 means no grid template.
-     */
+   /* srcGridDef = [Code:3.0] 0 => Use a grid template * 1 => predetermined
+    * grid (may not have grid template) * 255 => means no grid applies (no
+    * grid def applies) * for 1,255 tempateNum = 65535 means no grid
+    * template. */
    en->gds[0] = 0;
    en->gds[1] = Nx * Ny;
    /* numExOctet = Number of octets needed for each additional grid points
     * definition.  Used to define number of points in each row (or column)
     * for non-regular grids. 0, if using regular grid. */
    en->gds[2] = 0;
-   /* interpList = [Code Table 3.11] Interpretation of list for optional points
-    * definition.  0 if no appended list. */
+   /* interpList = [Code Table 3.11] Interpretation of list for optional
+    * points definition.  0 if no appended list. */
    en->gds[3] = 0;
    en->gds[4] = tmplNum;
 
@@ -461,10 +469,10 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
 
    if (en->lenGdsTmpl < templatesgrid[i].mapgridlen) {
       if (en->gdsTmpl != NULL) {
-         free (en->gdsTmpl);
+         free(en->gdsTmpl);
       }
-      en->gdsTmpl = (sInt4 *) malloc (templatesgrid[i].mapgridlen *
-                                      sizeof (sInt4));
+      en->gdsTmpl = (sInt4 *)malloc(templatesgrid[i].mapgridlen *
+                                    sizeof(sInt4));
    }
    en->lenGdsTmpl = templatesgrid[i].mapgridlen;
 
@@ -472,9 +480,9 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
    unit = 1e6;
    /* lat/lon grid */
    if (tmplNum == 0) {
-      getShpEarth (majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
-                   &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
-                   &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
+      getShpEarth(majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
+                  &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
+                  &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
       en->gdsTmpl[7] = Nx;
       en->gdsTmpl[8] = Ny;
       en->gdsTmpl[9] = angle;
@@ -485,72 +493,72 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
             return -3;
          }
          /* using 1 / (angle / subdivis) to reduce division later */
-         unit = subDivis / (double) angle;
+         unit = subDivis / (double)angle;
       }
-      en->gdsTmpl[11] = NearestInt (lat1 * unit);
-      en->gdsTmpl[12] = NearestInt (AdjustLon (lon1) * unit);
+      en->gdsTmpl[11] = NearestInt(lat1 * unit);
+      en->gdsTmpl[12] = NearestInt(AdjustLon(lon1) * unit);
       en->gdsTmpl[13] = resFlag;
-      en->gdsTmpl[14] = NearestInt (lat2 * unit);
-      en->gdsTmpl[15] = NearestInt (AdjustLon (lon2) * unit);
-      en->gdsTmpl[16] = NearestInt (Dx * unit);
-      en->gdsTmpl[17] = NearestInt (Dy * unit);
+      en->gdsTmpl[14] = NearestInt(lat2 * unit);
+      en->gdsTmpl[15] = NearestInt(AdjustLon(lon2) * unit);
+      en->gdsTmpl[16] = NearestInt(Dx * unit);
+      en->gdsTmpl[17] = NearestInt(Dy * unit);
       en->gdsTmpl[18] = scanFlag;
       return 72;
-   /* mercator grid */
+      /* mercator grid */
    } else if (tmplNum == 10) {
-      getShpEarth (majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
-                   &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
-                   &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
+      getShpEarth(majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
+                  &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
+                  &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
       en->gdsTmpl[7] = Nx;
       en->gdsTmpl[8] = Ny;
-      en->gdsTmpl[9] = NearestInt (lat1 * unit);
-      en->gdsTmpl[10] = NearestInt (AdjustLon (lon1) * unit);
+      en->gdsTmpl[9] = NearestInt(lat1 * unit);
+      en->gdsTmpl[10] = NearestInt(AdjustLon(lon1) * unit);
       en->gdsTmpl[11] = resFlag;
-      en->gdsTmpl[12] = NearestInt (meshLat * unit);
-      en->gdsTmpl[13] = NearestInt (lat2 * unit);
-      en->gdsTmpl[14] = NearestInt (AdjustLon (lon2) * unit);
+      en->gdsTmpl[12] = NearestInt(meshLat * unit);
+      en->gdsTmpl[13] = NearestInt(lat2 * unit);
+      en->gdsTmpl[14] = NearestInt(AdjustLon(lon2) * unit);
       en->gdsTmpl[15] = scanFlag;
-      en->gdsTmpl[16] = NearestInt (AdjustLon (orientLon) * unit);
-      en->gdsTmpl[17] = NearestInt (Dx * 1000.);
-      en->gdsTmpl[18] = NearestInt (Dy * 1000.);
+      en->gdsTmpl[16] = NearestInt(AdjustLon(orientLon) * unit);
+      en->gdsTmpl[17] = NearestInt(Dx * 1000.);
+      en->gdsTmpl[18] = NearestInt(Dy * 1000.);
       return 72;
-   /* polar grid */
+      /* polar grid */
    } else if (tmplNum == 20) {
-      getShpEarth (majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
-                   &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
-                   &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
+      getShpEarth(majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
+                  &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
+                  &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
       en->gdsTmpl[7] = Nx;
       en->gdsTmpl[8] = Ny;
-      en->gdsTmpl[9] = NearestInt (lat1 * unit);
-      en->gdsTmpl[10] = NearestInt (AdjustLon (lon1) * unit);
+      en->gdsTmpl[9] = NearestInt(lat1 * unit);
+      en->gdsTmpl[10] = NearestInt(AdjustLon(lon1) * unit);
       en->gdsTmpl[11] = resFlag;
-      en->gdsTmpl[12] = NearestInt (meshLat * unit);
-      en->gdsTmpl[13] = NearestInt (AdjustLon (orientLon) * unit);
-      en->gdsTmpl[14] = NearestInt (Dx * 1000.);
-      en->gdsTmpl[15] = NearestInt (Dy * 1000.);
+      en->gdsTmpl[12] = NearestInt(meshLat * unit);
+      en->gdsTmpl[13] = NearestInt(AdjustLon(orientLon) * unit);
+      en->gdsTmpl[14] = NearestInt(Dx * 1000.);
+      en->gdsTmpl[15] = NearestInt(Dy * 1000.);
       en->gdsTmpl[16] = centerFlag;
       en->gdsTmpl[17] = scanFlag;
       return 65;
-   /* lambert grid */
+      /* lambert grid */
    } else if (tmplNum == 30) {
-      getShpEarth (majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
-                   &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
-                   &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
+      getShpEarth(majEarth, minEarth, &(en->gdsTmpl[0]), &(en->gdsTmpl[1]),
+                  &(en->gdsTmpl[2]), &(en->gdsTmpl[3]), &(en->gdsTmpl[4]),
+                  &(en->gdsTmpl[5]), &(en->gdsTmpl[6]));
       en->gdsTmpl[7] = Nx;
       en->gdsTmpl[8] = Ny;
-      en->gdsTmpl[9] = NearestInt (lat1 * unit);
-      en->gdsTmpl[10] = NearestInt (AdjustLon (lon1) * unit);
+      en->gdsTmpl[9] = NearestInt(lat1 * unit);
+      en->gdsTmpl[10] = NearestInt(AdjustLon(lon1) * unit);
       en->gdsTmpl[11] = resFlag;
-      en->gdsTmpl[12] = NearestInt (meshLat * unit);
-      en->gdsTmpl[13] = NearestInt (AdjustLon (orientLon) * unit);
-      en->gdsTmpl[14] = NearestInt (Dx * 1000.);
-      en->gdsTmpl[15] = NearestInt (Dy * 1000.);
+      en->gdsTmpl[12] = NearestInt(meshLat * unit);
+      en->gdsTmpl[13] = NearestInt(AdjustLon(orientLon) * unit);
+      en->gdsTmpl[14] = NearestInt(Dx * 1000.);
+      en->gdsTmpl[15] = NearestInt(Dy * 1000.);
       en->gdsTmpl[16] = centerFlag;
       en->gdsTmpl[17] = scanFlag;
-      en->gdsTmpl[18] = NearestInt (scaleLat1 * unit);
-      en->gdsTmpl[19] = NearestInt (scaleLat2 * unit);
-      en->gdsTmpl[20] = NearestInt (southLat * unit);
-      en->gdsTmpl[21] = NearestInt (AdjustLon (southLon) * unit);
+      en->gdsTmpl[18] = NearestInt(scaleLat1 * unit);
+      en->gdsTmpl[19] = NearestInt(scaleLat2 * unit);
+      en->gdsTmpl[20] = NearestInt(southLat * unit);
+      en->gdsTmpl[21] = NearestInt(AdjustLon(southLon) * unit);
       return 81;
    }
    /* Haven't finished mapping this projection to the template. */
@@ -577,7 +585,7 @@ int fillSect3 (enGribMeta *en, uShort2 tmplNum, double majEarth,
  * NOTES
  *****************************************************************************
  */
-static int getCodedTime (uChar timeCode, double l_time, sInt4 *ans)
+static int getCodedTime(uChar timeCode, double time, sInt4 *ans)
 {
    /* Following is a lookup table for unit conversion (see code table 4.4). */
    static const sInt4 unit2sec[] = {
@@ -588,7 +596,7 @@ static int getCodedTime (uChar timeCode, double l_time, sInt4 *ans)
 
    if (timeCode < 14) {
       if (unit2sec[timeCode] != 0) {
-         *ans = NearestInt (l_time / unit2sec[timeCode]);
+         *ans = NearestInt(time / unit2sec[timeCode]);
          return 0;
       }
    }
@@ -633,12 +641,12 @@ static int getCodedTime (uChar timeCode, double l_time, sInt4 *ans)
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
-                 uChar genProcess, uChar bgGenID, uChar genID,
-                 uChar f_valCutOff, sInt4 cutOff, uChar timeCode,
-                 double foreSec, uChar surfType1, sChar surfScale1,
-                 double dSurfVal1, uChar surfType2, sChar surfScale2,
-                 double dSurfVal2)
+int fillSect4_0(enGribMeta * en, uShort2 tmplNum, uChar cat, uChar subCat,
+                uChar genProcess, uChar bgGenID, uChar genID,
+                uChar f_valCutOff, sInt4 cutOff, uChar timeCode,
+                double foreSec, uChar surfType1, sChar surfScale1,
+                double dSurfVal1, uChar surfType2, sChar surfScale2,
+                double dSurfVal2)
 {
    int i;               /* loop counter over number of PDS templates. */
    const struct pdstemplate *templatespds = get_templatespds();
@@ -647,7 +655,7 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
    /* In addition templates (1, 2, 5, 8, 9, 12) begin with 4.0 info. */
    if ((tmplNum != 0) && (tmplNum != 1) && (tmplNum != 2) && (tmplNum != 5) &&
        (tmplNum != 8) && (tmplNum != 9) && (tmplNum != 10) &&
-       (tmplNum != 12))  {
+       (tmplNum != 12)) {
       /* This is specifically for template 4.0 (1,2,5,8,9,10,12) */
       return -1;
    }
@@ -666,10 +674,10 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
    /* Allocate memory for it. */
    if (en->lenPdsTmpl < templatespds[i].mappdslen) {
       if (en->pdsTmpl != NULL) {
-         free (en->pdsTmpl);
+         free(en->pdsTmpl);
       }
-      en->pdsTmpl = (sInt4 *) malloc (templatespds[i].mappdslen *
-                                      sizeof (sInt4));
+      en->pdsTmpl = (sInt4 *)malloc(templatespds[i].mappdslen *
+                                    sizeof(sInt4));
    }
    en->lenPdsTmpl = templatespds[i].mappdslen;
 
@@ -680,28 +688,28 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
    en->pdsTmpl[4] = genID;
    if (f_valCutOff) {
       en->pdsTmpl[5] = cutOff / 3600;
-      en->pdsTmpl[6] = (cutOff - en->pdsTmpl[5] * 3600) / 60;
+      en->pdsTmpl[6] = (cutOff % 3600) / 60;
    } else {
-      en->pdsTmpl[5] = GRIB2MISSING_2;
-      en->pdsTmpl[6] = GRIB2MISSING_1;
+      en->pdsTmpl[5] = GRIB2MISSING_u2;
+      en->pdsTmpl[6] = GRIB2MISSING_u1;
    }
    en->pdsTmpl[7] = timeCode;
-   if (getCodedTime (timeCode, foreSec, &(en->pdsTmpl[8])) != 0) {
-   /* can't handle this time code yet. */
+   if (getCodedTime(timeCode, foreSec, &(en->pdsTmpl[8])) != 0) {
+      /* can't handle this time code yet. */
       return -3;
    }
    en->pdsTmpl[9] = surfType1;
-   if (surfType1 == GRIB2MISSING_1) {
-      en->pdsTmpl[10] = GRIB2MISSING_1;
-      en->pdsTmpl[11] = GRIB2MISSING_4;
+   if (surfType1 == GRIB2MISSING_u1) {
+      en->pdsTmpl[10] = GRIB2MISSING_s1;
+      en->pdsTmpl[11] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[10] = surfScale1;
       en->pdsTmpl[11] = NearestInt (dSurfVal1 * pow (10.0, surfScale1));
    }
    en->pdsTmpl[12] = surfType2;
-   if (surfType2 == GRIB2MISSING_1) {
-      en->pdsTmpl[13] = GRIB2MISSING_1;
-      en->pdsTmpl[14] = GRIB2MISSING_4;
+   if (surfType2 == GRIB2MISSING_u1) {
+      en->pdsTmpl[13] = GRIB2MISSING_s1;
+      en->pdsTmpl[14] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[13] = surfScale2;
       en->pdsTmpl[14] = NearestInt (dSurfVal2 * pow (10.0, surfScale2));
@@ -731,8 +739,8 @@ int fillSect4_0 (enGribMeta *en, uShort2 tmplNum, uChar cat, uChar subCat,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_1 (enGribMeta *en, uShort2 tmplNum, uChar typeEnsemble,
-                 uChar perturbNum, uChar numFcsts)
+int fillSect4_1(enGribMeta * en, uShort2 tmplNum, uChar typeEnsemble,
+                uChar perturbNum, uChar numFcsts)
 {
    /* Ensemble template (1) */
    if (tmplNum != 1) {
@@ -770,8 +778,8 @@ int fillSect4_1 (enGribMeta *en, uShort2 tmplNum, uChar typeEnsemble,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_2 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
-                 uChar derivedFcst)
+int fillSect4_2(enGribMeta * en, uShort2 tmplNum, uChar numFcsts,
+                uChar derivedFcst)
 {
    /* derived template (2) */
    if (tmplNum != 2) {
@@ -818,9 +826,9 @@ int fillSect4_2 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_5 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
-                 uChar foreProbNum, uChar probType, sChar lowScale,
-                 double dlowVal, sChar upScale, double dupVal)
+int fillSect4_5(enGribMeta * en, uShort2 tmplNum, uChar numFcsts,
+                uChar foreProbNum, uChar probType, sChar lowScale,
+                double dlowVal, sChar upScale, double dupVal)
 {
    /* Point Probability template */
    if (tmplNum != 5) {
@@ -834,16 +842,16 @@ int fillSect4_5 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
    en->pdsTmpl[15] = foreProbNum;
    en->pdsTmpl[16] = numFcsts;
    en->pdsTmpl[17] = probType;
-   if ((uChar) lowScale == GRIB2MISSING_1) {
-      en->pdsTmpl[18] = GRIB2MISSING_1;
-      en->pdsTmpl[19] = GRIB2MISSING_4;
+   if (lowScale == GRIB2MISSING_s1) {
+      en->pdsTmpl[18] = GRIB2MISSING_s1;
+      en->pdsTmpl[19] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[18] = lowScale;
       en->pdsTmpl[19] = NearestInt (dlowVal * pow (10.0, lowScale));
    }
-   if ((uChar) upScale == GRIB2MISSING_1) {
-      en->pdsTmpl[20] = GRIB2MISSING_1;
-      en->pdsTmpl[21] = GRIB2MISSING_4;
+   if (upScale == GRIB2MISSING_s1) {
+      en->pdsTmpl[20] = GRIB2MISSING_s1;
+      en->pdsTmpl[21] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[20] = upScale;
       en->pdsTmpl[21] = NearestInt (dupVal * pow (10.0, upScale));
@@ -960,12 +968,12 @@ int fillSect4_8 (enGribMeta *en, uShort2 tmplNum, sInt4 endYear, int endMonth,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_9 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
-                 uChar foreProbNum, uChar probType, sChar lowScale,
-                 double dlowVal, sChar upScale, double dupVal, sInt4 endYear,
-                 int endMonth, int endDay, int endHour, int endMin,
-                 int endSec, uChar numInterval, sInt4 numMissing,
-                 sect4IntervalType * interval)
+int fillSect4_9(enGribMeta * en, uShort2 tmplNum, uChar numFcsts,
+                uChar foreProbNum, uChar probType, sChar lowScale,
+                double dlowVal, sChar upScale, double dupVal, sInt4 endYear,
+                int endMonth, int endDay, int endHour, int endMin,
+                int endSec, uChar numInterval, sInt4 numMissing,
+                sect4IntervalType * interval)
 {
    int j;               /* loop counter over number of intervals. */
 
@@ -981,16 +989,16 @@ int fillSect4_9 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
    en->pdsTmpl[15] = foreProbNum;
    en->pdsTmpl[16] = numFcsts;
    en->pdsTmpl[17] = probType;
-   if ((uChar) lowScale == GRIB2MISSING_1) {
-      en->pdsTmpl[18] = GRIB2MISSING_1;
-      en->pdsTmpl[19] = GRIB2MISSING_4;
+   if (lowScale == GRIB2MISSING_s1) {
+      en->pdsTmpl[18] = GRIB2MISSING_s1;
+      en->pdsTmpl[19] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[18] = lowScale;
       en->pdsTmpl[19] = NearestInt (dlowVal * pow (10.0, lowScale));
    }
-   if ((uChar) upScale == GRIB2MISSING_1) {
-      en->pdsTmpl[20] = GRIB2MISSING_1;
-      en->pdsTmpl[21] = GRIB2MISSING_4;
+   if (upScale == GRIB2MISSING_s1) {
+      en->pdsTmpl[20] = GRIB2MISSING_s1;
+      en->pdsTmpl[21] = GRIB2MISSING_s4;
    } else {
       en->pdsTmpl[20] = upScale;
       en->pdsTmpl[21] = NearestInt (dupVal * pow (10.0, upScale));
@@ -1048,10 +1056,10 @@ int fillSect4_9 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_10 (enGribMeta *en, uShort2 tmplNum, int percentile,
-                  sInt4 endYear, int endMonth, int endDay, int endHour,
-                  int endMin, int endSec, uChar numInterval, sInt4 numMissing,
-                  sect4IntervalType * interval)
+int fillSect4_10(enGribMeta * en, uShort2 tmplNum, int percentile,
+                 sInt4 endYear, int endMonth, int endDay, int endHour,
+                 int endMin, int endSec, uChar numInterval, sInt4 numMissing,
+                 sect4IntervalType * interval)
 {
    int j;               /* loop counter over number of intervals. */
 
@@ -1119,10 +1127,10 @@ int fillSect4_10 (enGribMeta *en, uShort2 tmplNum, int percentile,
  * NOTES:
  *****************************************************************************
  */
-int fillSect4_12 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
-                  uChar derivedFcst, sInt4 endYear, int endMonth, int endDay,
-                  int endHour, int endMin, int endSec, uChar numInterval,
-                  sInt4 numMissing, sect4IntervalType * interval)
+int fillSect4_12(enGribMeta * en, uShort2 tmplNum, uChar numFcsts,
+                 uChar derivedFcst, sInt4 endYear, int endMonth, int endDay,
+                 int endHour, int endMin, int endSec, uChar numInterval,
+                 sInt4 numMissing, sect4IntervalType * interval)
 {
    int j;               /* loop counter over number of intervals. */
 
@@ -1192,9 +1200,9 @@ int fillSect4_12 (enGribMeta *en, uShort2 tmplNum, uChar numFcsts,
  * NOTES:
  *****************************************************************************
  */
-int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
-               uChar fieldType, uChar f_miss, float missPri, float missSec,
-               uChar orderOfDiff)
+int fillSect5(enGribMeta * en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
+              uChar fieldType, uChar f_miss, float missPri, float missSec,
+              uChar orderOfDiff)
 {
    int i;               /* loop counter over number of DRS templates. */
    const struct drstemplate *templatesdrs = get_templatesdrs();
@@ -1216,10 +1224,10 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
 
    if (en->lenDrsTmpl < templatesdrs[i].mapdrslen) {
       if (en->drsTmpl != NULL) {
-         free (en->drsTmpl);
+         free(en->drsTmpl);
       }
-      en->drsTmpl = (sInt4 *) malloc (templatesdrs[i].mapdrslen *
-                                      sizeof (sInt4));
+      en->drsTmpl = (sInt4 *)malloc(templatesdrs[i].mapdrslen *
+                                    sizeof(sInt4));
    }
    en->lenDrsTmpl = templatesdrs[i].mapdrslen;
 
@@ -1230,19 +1238,24 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
       en->drsTmpl[1] = BSF;
       en->drsTmpl[2] = DSF;
       en->drsTmpl[3] = 9999; /* missing for numBits used (set later) */
-      en->drsTmpl[4] = fieldType;  /* code table 5.1 */
+      en->drsTmpl[4] = fieldType; /* code table 5.1 */
       return 21;
-   /* complex packing */
+      /* complex packing */
    } else if (tmplNum == 2) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
       en->drsTmpl[2] = DSF;
       en->drsTmpl[3] = 9999; /* missing for numBits used (set later) */
-      en->drsTmpl[4] = fieldType;  /* code table 5.1 */
+      en->drsTmpl[4] = fieldType; /* code table 5.1 */
       en->drsTmpl[5] = 9999; /* missing for group splitting method used */
       en->drsTmpl[6] = f_miss;
-      memcpy (&(en->drsTmpl[7]), &missPri, sizeof (float));
-      memcpy (&(en->drsTmpl[8]), &missSec, sizeof (float));
+      if (fieldType == 1) {
+         en->drsTmpl[7] = (sInt4)missPri;
+         en->drsTmpl[8] = (sInt4)missSec;
+      } else {
+         memcpy(&(en->drsTmpl[7]), &missPri, sizeof(float));
+         memcpy(&(en->drsTmpl[8]), &missSec, sizeof(float));
+      }
       en->drsTmpl[9] = 9999; /* number of groups */
       en->drsTmpl[10] = 9999; /* group widths */
       en->drsTmpl[11] = 9999; /* numBits for group widths */
@@ -1251,17 +1264,22 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
       en->drsTmpl[14] = 9999; /* true len of last group */
       en->drsTmpl[15] = 9999; /* numBits used for scaled group lens */
       return 47;
-   /* complex spatial packing */
+      /* complex spatial packing */
    } else if (tmplNum == 3) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
       en->drsTmpl[2] = DSF;
       en->drsTmpl[3] = 9999; /* missing for numBits used (set later) */
-      en->drsTmpl[4] = fieldType;  /* code table 5.1 */
+      en->drsTmpl[4] = fieldType; /* code table 5.1 */
       en->drsTmpl[5] = 9999; /* missing for group splitting method used */
       en->drsTmpl[6] = f_miss;
-      memcpy (&(en->drsTmpl[7]), &missPri, sizeof (float));
-      memcpy (&(en->drsTmpl[8]), &missSec, sizeof (float));
+      if (fieldType == 1) {
+         en->drsTmpl[7] = (sInt4)missPri;
+         en->drsTmpl[8] = (sInt4)missSec;
+      } else {
+         memcpy(&(en->drsTmpl[7]), &missPri, sizeof(float));
+         memcpy(&(en->drsTmpl[8]), &missSec, sizeof(float));
+      }
       en->drsTmpl[9] = 9999; /* number of groups */
       en->drsTmpl[10] = 9999; /* group widths */
       en->drsTmpl[11] = 9999; /* numBits for group widths */
@@ -1276,26 +1294,26 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
       en->drsTmpl[16] = orderOfDiff;
       en->drsTmpl[17] = 9999; /* num extra octets need for spatial differ */
       return 49;
-   /* jpeg2000 packing */
+      /* jpeg2000 packing */
    } else if ((tmplNum == 40) || (tmplNum == 40000)) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
       en->drsTmpl[2] = DSF;
       en->drsTmpl[3] = 9999; /* depth of grayscale image (set later) */
-      en->drsTmpl[4] = fieldType;  /* code table 5.1 */
+      en->drsTmpl[4] = fieldType; /* code table 5.1 */
       en->drsTmpl[5] = 9999; /* type of compression used (0 is lossless)
                               * (code table 5.40) */
       en->drsTmpl[6] = 9999; /* compression ratio */
       return 23;
-   /* png packing */
+      /* png packing */
    } else if ((tmplNum == 41) || (tmplNum == 40010)) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
       en->drsTmpl[2] = DSF;
       en->drsTmpl[3] = 9999; /* depth of grayscale image (set later) */
-      en->drsTmpl[4] = fieldType;  /* code table 5.1 */
+      en->drsTmpl[4] = fieldType; /* code table 5.1 */
       return 21;
-   /* spectral packing */
+      /* spectral packing */
    } else if (tmplNum == 50) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
@@ -1303,7 +1321,7 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
       en->drsTmpl[3] = 9999; /* num bits used for each packed value */
       en->drsTmpl[4] = 9999; /* real part of (0,0) coefficient */
       return 24;
-   /* harmonic packing */
+      /* harmonic packing */
    } else if (tmplNum == 51) {
       en->drsTmpl[0] = 9999; /* missing for Ref value (set later) */
       en->drsTmpl[1] = BSF;
@@ -1357,9 +1375,9 @@ int fillSect5 (enGribMeta *en, uShort2 tmplNum, sShort2 BSF, sShort2 DSF,
  * NOTES:
  *****************************************************************************
  */
-int fillGrid (enGribMeta *en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
-              sInt4 ibmap, sChar f_boustify, uChar f_miss, float missPri,
-              float missSec)
+int fillGrid(enGribMeta * en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
+             sInt4 ibmap, sChar f_boustify, uChar f_miss, float missPri,
+             float missSec)
 {
    uChar f_flip;        /* Used to help keep track of the direction when
                          * "boustifying" the data. */
@@ -1383,14 +1401,14 @@ int fillGrid (enGribMeta *en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
 
    if (en->ngrdpts < lenData) {
       if (en->fld != NULL) {
-         free (en->fld);
+         free(en->fld);
       }
-      en->fld = (float *) malloc (lenData * sizeof (float));
+      en->fld = (float *)malloc(lenData * sizeof(float));
       if (ibmap == 0) {
          if (en->bmap != NULL) {
-            free (en->bmap);
+            free(en->bmap);
          }
-         en->bmap = (sInt4 *) malloc (lenData * sizeof (sInt4));
+         en->bmap = (sInt4 *)malloc(lenData * sizeof(sInt4));
       }
    }
    en->ngrdpts = lenData;
@@ -1411,7 +1429,7 @@ int fillGrid (enGribMeta *en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
                } else {
                   ind2 = (Nx - x - 1) + y * Nx;
                }
-               en->fld[ind1] = (float) data[ind2];
+               en->fld[ind1] = (float)data[ind2];
                if ((data[ind2] == missPri) ||
                    ((f_miss == 2) && (data[ind2] == missSec))) {
                   en->bmap[ind1] = 0;
@@ -1423,7 +1441,7 @@ int fillGrid (enGribMeta *en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
          }
       } else {
          for (ind1 = 0; ind1 < lenData; ind1++) {
-            en->fld[ind1] = (float) data[ind1];
+            en->fld[ind1] = (float)data[ind1];
             if ((data[ind1] == missPri) ||
                 ((f_miss == 2) && (data[ind1] == missSec))) {
                en->bmap[ind1] = 0;
@@ -1447,13 +1465,13 @@ int fillGrid (enGribMeta *en, double *data, sInt4 lenData, sInt4 Nx, sInt4 Ny,
                } else {
                   ind2 = (Nx - x - 1) + y * Nx;
                }
-               en->fld[ind1] = (float) data[ind2];
+               en->fld[ind1] = (float)data[ind2];
             }
             f_flip = (!f_flip);
          }
       } else {
          for (ind1 = 0; ind1 < lenData; ind1++) {
-            en->fld[ind1] = (float) data[ind1];
+            en->fld[ind1] = (float)data[ind1];
          }
       }
       /* len(sect6) = 6, len(sect7) < 5 + lenData * 4 */
