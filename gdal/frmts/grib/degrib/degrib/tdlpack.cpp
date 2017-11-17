@@ -6,7 +6,6 @@
 #include "myerror.h"
 #include "meta.h"
 #include "tendian.h"
-#include "fileendian.h"
 #include "myassert.h"
 #include "myutil.h"
 #include "clock.h"
