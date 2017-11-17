@@ -10,8 +10,8 @@ my $setup = {
         URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
         Options => [
             "", 
-            "-oo GridCRS=TRUE -oo OuterExtents=TRUE", 
-            "-oo GridCRS=TRUE -oo OuterExtents=TRUE", 
+            "-oo OuterExtents=TRUE", 
+            "-oo OuterExtents=TRUE", 
             ""
             ],
         Projwin => "-projwin 145300 6737500 209680 6688700",
@@ -23,8 +23,8 @@ my $setup = {
         URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
         Options => [
             "", 
-            "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
-            "-oo GridCRS=TRUE -oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
+            "-oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
+            "-oo OuterExtents=TRUE -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap=TRUE",
             "-oo NoGridAxisSwap=TRUE -oo SubsetAxisSwap=TRUE"
             ],
         Projwin => "-projwin 3200000 6670000 3280000 6620000",

@@ -203,7 +203,8 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
         }
     }
     //request += CPLString().Printf("&WIDTH=%i&HEIGHT=%i", nBufXSize, nBufYSize);
-    if (scaled || CPLGetXMLBoolean(psService, "GridCRS")) {
+    bool do_not_include = CPLGetXMLBoolean(psService, "GridCRSOptional") && !scaled;
+    if (!do_not_include) {
         request += CPLString().Printf(
             "&GridBaseCRS=%s"
             "&GridCS=urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS"
@@ -670,9 +671,8 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
 
     // provider metadata
     path2 = path;
-    keys2 = {
-        "ProviderName"
-    };
+    keys2.clear();
+    keys2.push_back("ProviderName");
     CPLXMLNode *provider = AddSimpleMetaData(&metadata, Capabilities, path2, "ServiceProvider", keys2);
     if (provider) {
         CPLXMLNode *site = CPLGetXMLNode(provider, "ProviderSite");

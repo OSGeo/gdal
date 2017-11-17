@@ -60,10 +60,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     bool        native_crs; // the CRS is the native CRS of the server
     bool        axis_order_swap; // the CRS requires x and y coordinates to be swapped for requests
     double      adfGeoTransform[6];
-    bool        SetCRS(CPLString crs, bool native);
-    void        SetGeometry(std::vector<int> size,
-                            std::vector<double> origin,
-                            std::vector<std::vector<double> > offsets);
+    bool        SetCRS(const CPLString &crs, bool native);
+    void        SetGeometry(const std::vector<int> &size,
+                            const std::vector<double> &origin,
+                            const std::vector<std::vector<double> > &offsets);
 
     CPLString   osBandIdentifier;
 
@@ -132,7 +132,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     WCSDataset(int version, const char *cache_dir);
     virtual ~WCSDataset();
 
-    static WCSDataset *CreateFromMetadata( CPLString, CPLString );
+    static WCSDataset *CreateFromMetadata( const CPLString&, CPLString );
     static WCSDataset *CreateFromCapabilities(GDALOpenInfo *, CPLString, CPLString, CPLString );
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );

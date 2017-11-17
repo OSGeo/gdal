@@ -664,6 +664,11 @@ bool WCSDataset201::ExtractGridInfo()
     path = "axisLabels";
     bool swap_grid_axis_labels = swap_grid_axis || CPLGetXMLBoolean(psService, "GridAxisLabelSwap");
     std::vector<CPLString> grid_axes = Split(CPLGetXMLValue(grid, path, ""), " ", swap_grid_axis_labels);
+    // autocorrect MapServer thing
+    if (grid_axes[0] == "lat" && grid_axes[0] == "long") {
+        grid_axes[0] == "long";
+        grid_axes[1] == "lat";
+    }
     bServiceDirty = CPLUpdateXML(psService, "GridAxes", Join(grid_axes, ",")) || bServiceDirty;
 
     std::vector<double> origin;

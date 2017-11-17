@@ -492,7 +492,7 @@ CPLString GetKeywords(CPLXMLNode *root,
                     "http://www.opengis.net/spec/",
                     "http://www.opengis.net/def/interpolation/OGC/1/"
                 };
-                for (unsigned int i = 0; i < sizeof(spec)/sizeof(spec[0]); i++) {
+                for (unsigned int i = 0; i < CPL_ARRAYSIZE(spec); i++) {
                     pos = word.find(spec[i]);
                     if (pos != std::string::npos) {
                         word.erase(pos, strlen(spec[i]));
