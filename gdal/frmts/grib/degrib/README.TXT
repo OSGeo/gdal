@@ -23,10 +23,10 @@ Status:
             src/degrib/weather.c
             src/degrib/weather.h
             src/degrib/meta.h
-
-        TODO:
             src/mdl_g2c/engribapi.c
             src/mdl_g2c/engribapi.h
+
+        TODO:
             src/mdl_g2c/grib2api.h
             src/mdl_g2c/grib2api.c
             src/degrib/inventory.c
