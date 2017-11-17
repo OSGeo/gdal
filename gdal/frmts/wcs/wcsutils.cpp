@@ -507,7 +507,7 @@ CPLString GetKeywords(CPLXMLNode *root,
         if (epsg_codes.size() > 0) {
             CPLString codes;
             std::sort(epsg_codes.begin(), epsg_codes.end());
-            unsigned int pajazzo = 0, i = 0, a, b;
+            unsigned int pajazzo = 0, i = 0, a = 0, b = 0;
             while (1) {
                 unsigned int c = i < epsg_codes.size() ? epsg_codes[i] : 0;
                 if (pajazzo == 1) {

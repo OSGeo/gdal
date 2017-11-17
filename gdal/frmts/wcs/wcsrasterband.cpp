@@ -30,6 +30,8 @@
 #include "cpl_http.h"
 #include "gdal_pam.h"
 
+#include <algorithm>
+
 #include "wcsdataset.h"
 #include "wcsrasterband.h"
 

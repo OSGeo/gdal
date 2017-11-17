@@ -39,7 +39,6 @@
 #include "gmlcoverage.h"
 
 #include <algorithm>
-#include <dirent.h>
 
 #include "wcsdataset.h"
 #include "wcsutils.h"

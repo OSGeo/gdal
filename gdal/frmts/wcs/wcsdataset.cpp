@@ -1172,7 +1172,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             CPLString pam_url = URLRemoveKey(url, "coverage");
             CPLString pam_filename;
-            bool pam_in_cache = FromCache(cache, pam_filename, pam_url);
+            bool pam_in_cache = FromCache(cache, pam_filename, pam_url) != 1;
                         
             // even if we have coverage we need global PAM metadata
             // if we don't have it we need to create it
