@@ -2,12 +2,16 @@
 #define grib2_H
 #include<stdio.h>
 
-#define G2_VERSION "g2clib-1.0.4"
+#define G2_VERSION "g2clib-1.6.0"
 /*                .      .    .                                       .
 //   PRGMMR: Gilbert         ORG: W/NP11    DATE: 2002-10-25
 //
-//   Each element of structure gribfield is defined as:
+// PROGRAM HISTORY LOG:
+// 2002-10-25  Gilbert
+// 2009-01-14  Vuong     Changed struct template to gtemplate
 //
+//   Each element of structure gribfield is defined as:
+//   
 //   gribfield gfld;
 //
 //        gfld->version = GRIB edition number ( currently 2 )
@@ -151,7 +155,7 @@ typedef int g2int;
 typedef unsigned int g2intu;
 typedef float g2float;
 
-typedef struct {
+struct gtemplate {
    g2int type;           /* 3=Grid Definition Template.                       */
                          /* 4=Product Definition Template.                    */
                          /* 5=Data Representation Template.                  */
@@ -165,9 +169,9 @@ typedef struct {
    g2int extlen;         /* number of entries in the template extension.     */
    g2int *ext;           /* num of octets of each entry in the extension     */
                          /*                      part of the template.       */
-} xxtemplate;
+};
 
-//typedef struct template template; // otherwise VC6 gives "error C2447: missing function header (old-style formal list?)"
+typedef struct gtemplate gtemplate;
 
 struct gribfield {
    g2int   version,discipline;
@@ -219,12 +223,12 @@ g2int g2_gribend(unsigned char *);
 extern double int_power(double, g2int );
 extern void mkieee(g2float *,g2int *,g2int);
 void rdieee(g2int *,g2float *,g2int );
-extern xxtemplate *getpdstemplate(g2int);
-extern xxtemplate *extpdstemplate(g2int,g2int *);
-extern xxtemplate *getdrstemplate(g2int);
-extern xxtemplate *extdrstemplate(g2int,g2int *);
-extern xxtemplate *getgridtemplate(g2int);
-extern xxtemplate *extgridtemplate(g2int,g2int *);
+extern gtemplate *getpdstemplate(g2int);
+extern gtemplate *extpdstemplate(g2int,g2int *);
+extern gtemplate *getdrstemplate(g2int);
+extern gtemplate *extdrstemplate(g2int,g2int *);
+extern gtemplate *getgridtemplate(g2int);
+extern gtemplate *extgridtemplate(g2int,g2int *);
 extern void simpack(g2float *,g2int,g2int *,unsigned char *,g2int *);
 extern void compack(g2float *,g2int,g2int,g2int *,unsigned char *,g2int *);
 void misspack(g2float *,g2int ,g2int ,g2int *, unsigned char *, g2int *);

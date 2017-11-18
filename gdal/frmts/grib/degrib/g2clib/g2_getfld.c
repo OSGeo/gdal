@@ -385,7 +385,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
             lgfld->numoct_opt=igds[2];
             lgfld->interp_opt=igds[3];
             lgfld->igdtnum=igds[4];
-            free( igds );
+            free(igds);
           }
           else {
             ierr=10;

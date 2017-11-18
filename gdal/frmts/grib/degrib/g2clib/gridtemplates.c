@@ -2,7 +2,7 @@
 #include "grib2.h"
 #include "gridtemplates.h"
 
-
+/* GDAL: in original g2clib, this is in gridtemplates.h */
 static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
              // 3.0: Lat/Lon grid
          { 0, 19, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1} },
@@ -12,18 +12,27 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
          { 2, 22, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,-4,4,-4} },
              // 3.3: Stretched & Rotated Lat/Lon grid
          { 3, 25, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,-4,4,4,-4,4,-4} },
+// Added GDT 3.4,3.5    (08/05/2013)
+             // 3.4: Variable resolution Latitude/Longitude
+         { 4, 13, 1, {1,1,4,1,4,1,4,4,4,4,4,1,1} },
+             // 3.5: Variable resolution rotate Latitude/Longitude
+         { 5, 16, 1, {1,1,4,1,4,1,4,4,4,4,4,1,1,-4,4,4} },
+             // 3.12: Transverse Mercator
+         {12, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,1,4,4,-4,-4,-4,-4} },
+             // 3.101: General unstructured grid
+         {101, 4, 0, {1,4,1,-4} },
+             // 3.140: Lambert Azimuthal Equal Area Projection
+         {140, 17, 0, {1,1,4,1,4,1,4,4,4,-4,4,4,4,1,4,4,1} },
+//
              // 3.10: Mercator
-//       {10, 19, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,-4,4,1,4,4,4} },
-         {10, 19, 0, {1,1,4,1,4,1,4,4,4,-4,-4,1,-4,-4,-4,1,4,4,4} },
+         {10, 19, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,-4,4,1,4,4,4} },
              // 3.20: Polar Stereographic Projection
-//       {20, 18, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1} },
-         {20, 18, 0, {1,1,4,1,4,1,4,4,4,-4,-4,1,-4,-4,4,4,1,1} },
+         {20, 18, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1} },
              // 3.30: Lambert Conformal
-//       {30, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1,-4,-4,-4,4} },
-         {30, 22, 0, {1,1,4,1,4,1,4,4,4,-4,-4,1,-4,-4,4,4,1,1,-4,-4,-4,-4} },
+         {30, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1,-4,-4,-4,4} },
              // 3.31: Albers equal area
          {31, 22, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,-4,4,4,4,1,1,-4,-4,-4,4} },
-             // 3.40: Gaussian Lat/Lon
+             // 3.40: Guassian Lat/Lon
          {40, 19, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1} },
              // 3.41: Rotated Gaussian Lat/Lon
          {41, 22, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,-4,4,4} },
@@ -47,6 +56,12 @@ static const struct gridtemplate templatesgrid[MAXGRIDTEMP] = {
          {110, 16, 0, {1,1,4,1,4,1,4,4,4,-4,4,1,4,4,1,1} },
              // 3.120: Azimuth-range projection
          {120, 7, 1, {4,4,-4,4,4,4,1} },
+             // 3.204: Curvilinear Orthogonal Grid
+         {204, 19, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1} },
+             // 3.32768: Rot Lat/Lon E-grid (Arakawa)
+         {32768, 19, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1} },
+             // 3.32769: Rot Lat/Lon Non-E Staggered grid (Arakawa)
+         {32769, 21, 0, {1,1,4,1,4,1,4,4,4,4,4,-4,4,1,-4,4,4,4,1,4,4} },
              // 3.1000: Cross Section Grid
          {1000, 20, 1, {1,1,4,1,4,1,4,4,4,4,-4,4,1,4,4,1,2,1,1,2} },
              // 3.1100: Hovmoller Diagram Grid
@@ -73,6 +88,11 @@ g2int getgridindex(g2int number)
 !
 ! PROGRAM HISTORY LOG:
 ! 2001-06-28  Gilbert
+! 2007-08-16  Vuong     -  Added GDT 3.204  Curvilinear Orthogonal Grid
+! 2008-07-08  Vuong     -  Added GDT 3.32768 Rotate Lat/Lon E-grid (Arakawa)
+! 2009-01-14  Vuong     -  Changed structure name template to gtemplate
+! 2010-05-11  Vuong     -  Added GDT 3.32769 Rotate Lat/Lon Non-E Staggered grid (Arakawa)
+! 2013-08-06  Vuong     -  Added GDT 3.4,3.5,3.12,3.101,3.140
 !
 ! USAGE:    index=getgridindex(number)
 !   INPUT ARGUMENT LIST:
@@ -102,7 +122,7 @@ g2int getgridindex(g2int number)
            return(l_getgridindex);
 }
 
-xxtemplate *getgridtemplate(g2int number)
+gtemplate *getgridtemplate(g2int number)
 /*!$$$  SUBPROGRAM DOCUMENTATION BLOCK
 !                .      .    .                                       .
 ! SUBPROGRAM:    getgridtemplate
@@ -116,6 +136,10 @@ xxtemplate *getgridtemplate(g2int number)
 !
 ! PROGRAM HISTORY LOG:
 ! 2000-05-09  Gilbert
+! 2007-08-16  Vuong     -  Added GDT 3.204  Curvilinear Orthogonal Grid
+! 2008-07-08  Vuong     -  Added GDT 3.32768 Rotate Lat/Lon E-grid (Arakawa)
+! 2010-05-11  Vuong     -  Added GDT 3.32769 Rotate Lat/Lon Non-E Staggered grid (Arakawa)
+! 2009-01-14  Vuong     -  Changed structure name template to gtemplate
 !
 ! USAGE:    template *getgridtemplate(number)
 !   INPUT ARGUMENT LIST:
@@ -135,12 +159,12 @@ xxtemplate *getgridtemplate(g2int number)
 !$$$*/
 {
            g2int l_index;
-           xxtemplate *new;
+           gtemplate *new;
 
            l_index=getgridindex(number);
 
            if (l_index != -1) {
-              new=(xxtemplate *)malloc(sizeof(xxtemplate));
+              new=(gtemplate *)malloc(sizeof(gtemplate));
               new->type=3;
               new->num=templatesgrid[l_index].template_num;
               new->maplen=templatesgrid[l_index].mapgridlen;
@@ -159,7 +183,7 @@ xxtemplate *getgridtemplate(g2int number)
 }
 
 
-xxtemplate *extgridtemplate(g2int number,g2int *list)
+gtemplate *extgridtemplate(g2int number,g2int *list)
 /*!$$$  SUBPROGRAM DOCUMENTATION BLOCK
 !                .      .    .                                       .
 ! SUBPROGRAM:    extgridtemplate
@@ -173,6 +197,10 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
 !
 ! PROGRAM HISTORY LOG:
 ! 2000-05-09  Gilbert
+! 2008-07-08  Vuong     -  Added GDT 3.32768 Rotate Lat/Lon E-grid (Arakawa)
+! 2009-01-14  Vuong     -  Changed structure name template to gtemplate
+! 2010-05-11  Vuong     -  Added GDT 3.32769 Rotate Lat/Lon Non-E Staggered grid (Arakawa)
+! 2013-08-06  Vuong     -  Added GDT 3.4,3.5,3.12,3.101,3.140
 !
 ! USAGE:    CALL extgridtemplate(number,list)
 !   INPUT ARGUMENT LIST:
@@ -191,7 +219,7 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
 !
 !$$$*/
 {
-           xxtemplate *new;
+           gtemplate *new;
            g2int l_index,i;
 
            l_index=getgridindex(number);
@@ -218,6 +246,33 @@ xxtemplate *extgridtemplate(g2int number,g2int *list)
                  }
               }
            }
+#if 0
+           /* Commented out by GDAL: memory leaks... */
+           else if ( number == 4 ) {
+              new->extlen=list[7];
+              new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
+              for (i=0;i<new->extlen;i++) {
+                 new->ext[i]=4;
+              }
+              new->extlen=list[8];
+              new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
+              for (i=0;i<new->extlen;i++) {
+                 new->ext[i]=-4;
+              }
+           }
+           else if ( number == 5 ) {
+              new->extlen=list[7];
+              new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
+              for (i=0;i<new->extlen;i++) {
+                 new->ext[i]=4;
+              }
+              new->extlen=list[8];
+              new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
+              for (i=0;i<new->extlen;i++) {
+                 new->ext[i]=-4;
+              }
+           }
+#endif
            else if ( number == 1000 ) {
                /* Not sure of the threshold, but 100000 looks to be large */
               /* enough */

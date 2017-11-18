@@ -54,7 +54,7 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
       g2int ierr,needext,i,j,nbits,isecnum;
       g2int lensec,isign,newlen;
       g2int *lidrstmpl=0;
-      xxtemplate *mapdrs;
+      gtemplate *mapdrs;
       int ret=0;
 #ifdef GRIB_MAX_POINTS
       const int knMaxPoints = GRIB_MAX_POINTS;
@@ -133,9 +133,9 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
       //
       //   Check to see if the Data Representation Template needs to be
       //   extended.
-      //   The number of values in a specific template may vary
+      //   The number of values in a specific gtemplate may vary
       //   depending on data specified in the "static" part of the
-      //   template.
+      //   gtemplate.
       //
       if ( needext == 1 ) {
         free(mapdrs);

@@ -27,13 +27,23 @@
 //   be considered.  The number of octets used to store the data value
 //   in this case would be the absolute value of the negative value in
 //   mappds[].
-//
-// 2005-12-08  Gilbert  -  Allow negative scale factors and limits for
-//                         Templates 4.5 and 4.9
+//  
+// 2005-12-08  Gilbert   Allow negative scale factors and limits for
+//                       Templates 4.5 and 4.9
+// 2009-12-15  Vuong     Added Product Definition Template 4.31
+//                       Added Product Definition Template 4.15
+// 2010-08-03  Vuong     Added Product Definition Template 4.40,4.41,4.42,4.43
+// 2010-12-08  Vuong     Corrected Definition Template 4.42,4.43
+// 2010-12-08  Vuong     Corrected Definition Template 4.42,4.43
+// 2012-03-29  Vuong     Added Templates 4.44,4.45,4.46,4.47,4.48,4.50,
+//                       4.51,4.91,4.32 and 4.52
+// 2013-08-05  Vuong     Corrected 4.91 and added Templates 4.33,4.34,4.53,4.54
+// 2015-10-07  Vuong     Added Templates 4.57, 4.60, 4.61 and
+//                       allow a forecast time to be negative
 //
 //$$$
 
-      #define MAXPDSTEMP 25           // maximum number of templates
+      #define MAXPDSTEMP 47           // maximum number of templates
       #define MAXPDSMAPLEN 200        // maximum template map length
 
       struct pdstemplate

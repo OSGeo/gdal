@@ -15,6 +15,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
 //
 // PROGRAM HISTORY LOG:
 // 2002-10-31  Gilbert
+// 2009-01-14  Vuong     Changed structure name template to gtemplate
 //
 // USAGE:    int g2_unpack4(unsigned char *cgrib,g2int *iofst,g2int *ipdsnum,
 //                          g2int **ipdstmpl,g2int *mappdslen,
@@ -61,7 +62,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
       g2int *coordieee;
       g2int *lipdstmpl=0;
       g2float *lcoordlist;
-      xxtemplate *mappds;
+      gtemplate *mappds;
 
       ierr=0;
       *ipdstmpl=0;    // NULL
