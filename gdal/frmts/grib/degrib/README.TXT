@@ -31,10 +31,10 @@ Status:
             src/degrib/inventory.h
             src/degrib/metaname.c
             src/degrib/metaname.h
-
-        TODO:
             src/degrib/metaparse.c
             src/degrib/metaprint.c
+
+        TODO:
             src/degrib/myassert.c
             src/degrib/myassert.h
             src/degrib/myerror.c

@@ -1201,7 +1201,7 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
  *          instead of 0.
  *
  * NOTES
- * http://www.nco.ncep..noaagov/pmb/docs/on388/table4.html
+ * http://www.nco.ncep.noaa.gov/pmb/docs/on388/table4.html
  *****************************************************************************
  */
 int ParseSect4Time2secV1 (sInt4 time, int unit, double *ans)
@@ -1596,6 +1596,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    switch (meta->pds2.sect4.templat) {
       case GS4_ANALYSIS: /* 4.0 */
+      case GS4_ERROR: /* 4.7 */
          break;
       case GS4_ENSEMBLE: /* 4.1 */
          if (ns4 < 37) {
@@ -1802,6 +1803,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          break;
       case GS4_PERCENT_PNT: /* 4.6 */
+         if( ns4 < 35) {
+            return -1;
+         }
          meta->pds2.sect4.percentile = is4[34];
          break;
       case GS4_PERCENT_TIME: /* 4.10 */
@@ -1817,7 +1821,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
                            msg);
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
-                           "Template 4.8\n");
+                           "Template 4.10\n");
                free (msg);
                return -1;
             }
@@ -2186,8 +2190,8 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
                              meta->pds2.sect4.foreSec -
                              meta->pds2.refTime) / 3600);
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 0) {
-          lenTime = (sInt4) (meta->pds2.sect4.Interval[0].lenTime / 60.);
-          timeRangeUnit = 1;
+         lenTime = (sInt4) (meta->pds2.sect4.Interval[0].lenTime / 60.);
+         timeRangeUnit = 1;
       } else if (meta->pds2.sect4.Interval[0].timeRangeUnit == 1) {
          lenTime = meta->pds2.sect4.Interval[0].lenTime;
          timeRangeUnit = 1;
