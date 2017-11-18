@@ -1278,12 +1278,18 @@ int ParseSect4Time2sec (double refTime, sInt4 delt, int unit, double *ans)
                *ans = Clock_AddMonthYear (refTime, 0, delt) - refTime;
                return 0;
             case 5: /* decade */
+               if( delt < INT_MIN / 10 || delt > INT_MAX / 10 )
+                   return -1;
                *ans = Clock_AddMonthYear (refTime, 0, delt * 10) - refTime;
                return 0;
             case 6: /* normal (30 year) */
+               if( delt < INT_MIN / 30 || delt > INT_MAX / 30 )
+                   return -1;
                *ans = Clock_AddMonthYear (refTime, 0, delt * 30) - refTime;
                return 0;
             case 7: /* century (100 year) */
+               if( delt < INT_MIN / 100 || delt > INT_MAX / 100 )
+                   return -1;
                *ans = Clock_AddMonthYear (refTime, 0, delt * 100) - refTime;
                return 0;
          }
