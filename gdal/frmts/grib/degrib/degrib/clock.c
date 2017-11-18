@@ -2464,7 +2464,7 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    Clock_Epoch2YearDay (totDay, &day, &year);
    month = Clock_MonthNum (day, year);
    day = day - Clock_NumDay (month, 1, year, 1) + 1;
-   d_remain = refTime - totDay * 3600 * 24.0;
+   d_remain = refTime - (double)totDay * 3600 * 24.0;
 
    /* Add the month */
    if (incrMonth != 0) {
