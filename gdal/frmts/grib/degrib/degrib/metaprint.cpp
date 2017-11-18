@@ -313,9 +313,9 @@ static void PrintSect2 (sect2_type * sect2)
                 sect2->wx.dataLen);
          for (i = 0; i < sect2->wx.dataLen; i++) {
             if (sect2->wx.ugly[i].validIndex != -1) {
-                sprintf (buffer, "Elem %3d  Is Used", (int) i);
+               sprintf (buffer, "Elem %3d  Is Used", (int) i);
             } else {
-                sprintf (buffer, "Elem %3d NOT Used", (int) i);
+               sprintf (buffer, "Elem %3d NOT Used", (int) i);
             }
             Print ("PDS-S2", buffer, Prt_S, sect2->wx.data[i]);
          }
@@ -324,7 +324,7 @@ static void PrintSect2 (sect2_type * sect2)
          Print ("PDS-S2", "Number of Elements in Section 2", Prt_D,
                 sect2->unknown.dataLen);
          for (i = 0; i < sect2->unknown.dataLen; i++) {
-             sprintf (buffer, "Element %d", (int) i);
+            sprintf (buffer, "Element %d", (int) i);
             Print ("PDS-S2", buffer, Prt_F, sect2->unknown.data[i]);
          }
          break;
@@ -356,6 +356,32 @@ static void PrintSect2 (sect2_type * sect2)
  * NOTES
  *****************************************************************************
  */
+static void PrintSect4_Category_OAR (uChar cat) {
+   if (cat == 2) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Lightning Products");
+   } else if (cat == 3) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Severe Weather Products");
+   } else if (cat == 4) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Satellite Products");
+   } else if (cat == 5) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Forecast Products");
+   } else if (cat == 6) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Precipitation Products");
+   } else if (cat == 7) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Model-based Products");
+   } else if (cat == 8) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Intermediate Products");
+   } else if (cat == 9) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "3D Reflectivity Mosaics");
+   } else if (cat == 10) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Composite Reflectivity Mosaics");
+   } else if (cat == 11) {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "Other Reflectivity Mosaics");
+   } else  {
+      Print ("PDS-S4", "Category Description", Prt_DS, cat, "unknown");
+   }
+}
+
 static void PrintSect4_Category (grib_MetaData *meta)
 {
    sect4_type *sect4 = &(meta->pds2.sect4);
@@ -368,7 +394,8 @@ static void PrintSect4_Category (grib_MetaData *meta)
       "Moisture Probabilities", "Momentum Probabilities",
       "Mass Probabilities", "Aerosols", "Trace gases (e.g. ozone, C02)",
       "Radar", "Forecast Radar Imagery", "Electro-dynamics",
-      "Nuclear/radiology", "Physical atmospheric properties"
+      "Nuclear/radiology", "Physical atmospheric properties",
+      "Atmospheric chemical Constituents",
    };
    /* Based on Grib2 Code Table 4.1 discipline 1 */
    static const char * const tbl41_1[] = {
@@ -388,7 +415,15 @@ static void PrintSect4_Category (grib_MetaData *meta)
       "Waves", "Currents", "Ice", "Surface Properties",
       "Sub-surface Properties"
    };
-
+   
+   if (meta->pds2.mstrVersion == 255) {
+      if (meta->center == 161) {
+         PrintSect4_Category_OAR(sect4->cat);
+      } else {
+         Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat, "unknown");
+      }
+      return;  
+   }
    switch (meta->pds2.prodType) {
       case 0:          /* Meteo category. */
          switch (sect4->cat) {
@@ -399,6 +434,10 @@ static void PrintSect4_Category (grib_MetaData *meta)
             case 191:
                Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
                       "Miscellaneous");
+               break;
+            case 192:
+               Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
+                      "Covariance");
                break;
             default:
                Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
@@ -414,12 +453,26 @@ static void PrintSect4_Category (grib_MetaData *meta)
                 Lookup (tbl41_2, sizeof (tbl41_2), sect4->cat));
          break;
       case 3:          /* Space */
-         Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
-                Lookup (tbl41_3, sizeof (tbl41_3), sect4->cat));
+         switch (sect4->cat) {
+            case 192:
+               Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
+                      "Forecast Satellite Imagery");
+               break;
+            default:
+               Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
+                      Lookup (tbl41_3, sizeof (tbl41_3), sect4->cat));
+         }
          break;
       case 10:         /* Oceanographic */
-         Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
-                Lookup (tbl41_10, sizeof (tbl41_10), sect4->cat));
+         switch (sect4->cat) {
+            case 191:
+               Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
+                      "Miscellaneous");
+               break;
+            default:
+               Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat,
+                      Lookup (tbl41_10, sizeof (tbl41_10), sect4->cat));
+         }
          break;
       default:
          Print ("PDS-S4", "PrintSect4() does not handle this prodType",
@@ -475,6 +528,8 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
       "Derived forecast based on ensemble members at a horizontal layer at a"
             " point in time",
       "Probability forecast at a horizontal layer or level at a point in "
+            "time",
+      "Percentile forecasts at a horizontal layer or level at a point in "
             "time",
       "Statistically processed data at a horizontal layer or level in a time"
             " interval",
@@ -538,7 +593,9 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
       "Difference (Value at end of time minus beginning)",
       "Root mean square", "Standard deviation",
       "Covariance (Temporal variance)",
-      "Difference (Value at beginning of time minus end)", "Ratio"
+      "Difference (Value at beginning of time minus end)", "Ratio",
+      "Standardized Anomaly", "Summation", "Confidence Index",
+      "Quality Indicator"
    };
 
    /* Based on Grib2 Code Table 4.11 */
@@ -563,6 +620,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
 
    switch (sect4->templat) {
       case GS4_ANALYSIS:
+      case GS4_ERROR:
       case GS4_ENSEMBLE:
       case GS4_DERIVED:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat,
@@ -571,31 +629,34 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
       case GS4_PROBABIL_PNT:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[3]);
          break;
-      case GS4_STATISTIC:
+      case GS4_PERCENT_PNT:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[4]);
          break;
-      case GS4_PROBABIL_TIME:
+      case GS4_STATISTIC:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[5]);
          break;
-      case GS4_PERCENTILE:
+      case GS4_PROBABIL_TIME:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[6]);
          break;
-      case GS4_ENSEMBLE_STAT:
+      case GS4_PERCENT_TIME:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[7]);
          break;
-      case GS4_DERIVED_INTERVAL:
+      case GS4_ENSEMBLE_STAT:
          Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[8]);
+         break;
+      case GS4_DERIVED_INTERVAL:
+         Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[9]);
          break;
 /*
  * The following lines were removed until such time that the rest of this
  * procedure can properly handle this template type.
  *
       case GS4_RADAR:
-         Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[9]);
+         Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[10]);
          break;
 */
       case GS4_SATELLITE:
-         Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[10]);
+         Print ("PDS-S4", "Product type", Prt_DS, sect4->templat, tbl40[11]);
          break;
       default:
          Print ("PDS-S4", "Product type", Prt_D, sect4->templat);
@@ -674,6 +735,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
    }
    switch (sect4->templat) {
       case GS4_ANALYSIS:
+      case GS4_ERROR:
          break;
       case GS4_ENSEMBLE:
          Print ("PDS-S4", "Type of Ensemble forecast", Prt_DS,
@@ -779,7 +841,10 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                 pow (10.0, -1 * sect4->upperLimit.factor), buffer);
 /*         printf ("Hello world 1\n");*/
          break;
-      case GS4_PERCENTILE:
+      case GS4_PERCENT_PNT:
+         Print ("PDS-S4", "Percentile", Prt_DS, sect4->percentile, "[%]");
+         break;
+      case GS4_PERCENT_TIME:
          Print ("PDS-S4", "Percentile", Prt_DS, sect4->percentile, "[%]");
 /*         strftime (buffer, 100, "%m/%d/%Y %H:%M:%S UTC",
                    gmtime (&(sect4->validTime)));*/
