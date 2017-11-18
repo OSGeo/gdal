@@ -1525,6 +1525,7 @@ static double Clock_ScanColon (char *ptr)
    char *ptr3;
 
    ptr3 = strchr (ptr, ':');
+   if( !ptr3 ) return 0;
    *ptr3 = '\0';
    hour = atoi (ptr);
    *ptr3 = ':';
@@ -1578,6 +1579,7 @@ static int Clock_ScanSlash (char *word, int *mon, int *day, sInt4 *year,
    char *ptr = word;
 
    ptr3 = strchr (ptr, '/');
+   if( !ptr3 ) return -1;
    *ptr3 = '\0';
    *mon = atoi (ptr);
    *ptr3 = '/';
@@ -1632,6 +1634,7 @@ static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
    sInt4 offset;
 
    ptr3 = strchr (ptr, '-');
+   if( !ptr3 ) return -1;
    *ptr3 = '\0';
    *year = atoi (ptr);
    *ptr3 = '-';
@@ -2127,7 +2130,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
                goto errorReturn;
             }
             lenStack--;
-            day = Stack[lenStack].val;
+            if( Stack ) day = Stack[lenStack].val;
             /* Put the next word back under consideration. */
             wordType = WT_MONTH;
             ptr2 = ptr3;
@@ -2153,7 +2156,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
                   goto errorReturn;
                }
                lenStack--;
-               day = Stack[lenStack].val;
+               if( Stack ) day = Stack[lenStack].val;
             }
          }
          f_monthWord = 1;
@@ -2210,7 +2213,7 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
          Rel[lenRel - 1].relUnit = l_index;
          Rel[lenRel - 1].amount = 1;
          Rel[lenRel - 1].f_negate = 0;
-         if (lastWordType == WT_INTEGER) {
+         if (lastWordType == WT_INTEGER && Stack) {
             lenStack--;
             Rel[lenRel - 1].amount = Stack[lenStack].val;
          }
@@ -2282,6 +2285,8 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
             f_slashWord = 1;
             if ((month < 1) || (month > 12) || (day < 1) || (day > 31)) {
                printf ("Unable to deduce the integer value\n");
+               free( Rel );
+               free( Stack );
                return -1;
             }
          } else {

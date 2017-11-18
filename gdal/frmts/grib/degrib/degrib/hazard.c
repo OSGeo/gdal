@@ -4,6 +4,8 @@
 #include "hazard.h"
 #include "myassert.h"
 
+#include "cpl_port.h"
+
 /*
  * Uncomment the following to have error messages sent to stdout.
  */
@@ -11,7 +13,7 @@
 #undef VERBOSE
 
 typedef struct {
-   char *abrev, *name;
+   const char *abrev, *name;
    uChar number;
 } HazTable;
 
@@ -603,11 +605,11 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_HI) && (sig == SIG_W)) return 16;
    if ((haz == HAZ_SS) && (sig == SIG_W)) return 17; /* Added MPA 1/2017 */
    if ((haz == HAZ_HU) && (sig == SIG_W)) return 18;
-   if ((haz == HAZ_HU) && (sig == SIG_W)) return 19;
+   //if ((haz == HAZ_HU) && (sig == SIG_W)) return 19;
    if ((haz == HAZ_TY) && (sig == SIG_W)) return 20; /* Added MPA 3/2017 */
-   if ((haz == HAZ_TY) && (sig == SIG_W)) return 21;
+   //if ((haz == HAZ_TY) && (sig == SIG_W)) return 21;
    if ((haz == HAZ_MA) && (sig == SIG_W)) return 22;
-   if ((haz == HAZ_MA) && (sig == SIG_W)) return 23;
+   //if ((haz == HAZ_MA) && (sig == SIG_W)) return 23;
    if ((haz == HAZ_BZ) && (sig == SIG_W)) return 24;
    if ((haz == HAZ_IS) && (sig == SIG_W)) return 25;
    if ((haz == HAZ_TI) && (sig == SIG_W)) return 26;
@@ -615,7 +617,7 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_WS) && (sig == SIG_W)) return 28;
    if ((haz == HAZ_HW) && (sig == SIG_W)) return 29;
    if ((haz == HAZ_TR) && (sig == SIG_W)) return 30;
-   if ((haz == HAZ_TR) && (sig == SIG_W)) return 31;
+   //if ((haz == HAZ_TR) && (sig == SIG_W)) return 31;
    if ((haz == HAZ_SR) && (sig == SIG_W)) return 32;
    if ((haz == HAZ_TS) && (sig == SIG_A)) return 33;
 
@@ -630,16 +632,16 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_EH) && (sig == SIG_W)) return 44;
    if ((haz == HAZ_DS) && (sig == SIG_W)) return 45;
    if ((haz == HAZ_TO) && (sig == SIG_A)) return 46;
-   if ((haz == HAZ_TO) && (sig == SIG_A)) return 47;
+   //if ((haz == HAZ_TO) && (sig == SIG_A)) return 47;
    if ((haz == HAZ_SV) && (sig == SIG_A)) return 48;
-   if ((haz == HAZ_SV) && (sig == SIG_A)) return 49;
+   //if ((haz == HAZ_SV) && (sig == SIG_A)) return 49;
    if ((haz == HAZ_FF) && (sig == SIG_A)) return 50;
-   if ((haz == HAZ_TO) && (sig == SIG_W)) return 51;
-   if ((haz == HAZ_SV) && (sig == SIG_W)) return 52;
-   if ((haz == HAZ_FF) && (sig == SIG_W)) return 53;
+   //if ((haz == HAZ_TO) && (sig == SIG_W)) return 51;
+   //if ((haz == HAZ_SV) && (sig == SIG_W)) return 52;
+   //if ((haz == HAZ_FF) && (sig == SIG_W)) return 53;
    if ((haz == HAZ_GL) && (sig == SIG_W)) return 54;
-   if ((haz == HAZ_FA) && (sig == SIG_W)) return 55;
-   if ((haz == HAZ_FL) && (sig == SIG_W)) return 56;
+   //if ((haz == HAZ_FA) && (sig == SIG_W)) return 55;
+   //if ((haz == HAZ_FL) && (sig == SIG_W)) return 56;
    if ((haz == HAZ_TS) && (sig == SIG_Y)) return 57; /* Added MPA 3/2017 */
    if ((haz == HAZ_WC) && (sig == SIG_W)) return 58;
    if ((haz == HAZ_EC) && (sig == SIG_W)) return 59;
@@ -665,11 +667,11 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_WC) && (sig == SIG_Y)) return 77;
    if ((haz == HAZ_HT) && (sig == SIG_Y)) return 78;
    if ((haz == HAZ_FA) && (sig == SIG_Y)) return 79;
-   if ((haz == HAZ_FA) && (sig == SIG_Y)) return 80;
-   if ((haz == HAZ_FA) && (sig == SIG_Y)) return 81;
-   if ((haz == HAZ_FA) && (sig == SIG_Y)) return 82; 
+   //if ((haz == HAZ_FA) && (sig == SIG_Y)) return 80;
+   //if ((haz == HAZ_FA) && (sig == SIG_Y)) return 81;
+   //if ((haz == HAZ_FA) && (sig == SIG_Y)) return 82; 
    if ((haz == HAZ_FL) && (sig == SIG_Y)) return 83; /* Added MPA 3/2017 */
-   if ((haz == HAZ_FA) && (sig == SIG_Y)) return 84;
+   //if ((haz == HAZ_FA) && (sig == SIG_Y)) return 84;
    if ((haz == HAZ_LS) && (sig == SIG_Y)) return 85;
    if ((haz == HAZ_CF) && (sig == SIG_Y)) return 86;
    if ((haz == HAZ_SU) && (sig == SIG_Y)) return 87;
@@ -785,7 +787,7 @@ static void Hazard2English (HazardStringType * haz)
       if (haz->haz[i] == HAZ_NONE) {
          strcat (buffer, "<None>");
       } else {
-         strcat (buffer, HazCode[haz->haz[i]].name);
+         snprintf (buffer, sizeof(buffer), "%s", HazCode[haz->haz[i]].name);
          switch (haz->sig[i]) {
             case SIG_A:
                strcat (buffer, " Watch");
