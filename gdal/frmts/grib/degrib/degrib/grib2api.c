@@ -786,9 +786,9 @@ is required for each GRIB2 message.
  */
 void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3,
                  sInt4 *idat, sInt4 *nidat, float *rdat, sInt4 *nrdat,
-                 sInt4 *is0, sInt4 *ns0, sInt4 *is1, sInt4 *ns1,
+                 sInt4 *is0, CPL_UNUSED sInt4 *ns0, sInt4 *is1, CPL_UNUSED sInt4 *ns1,
                  sInt4 *is2, sInt4 *ns2, sInt4 *is3, sInt4 *ns3,
-                 sInt4 *is4, sInt4 *ns4, sInt4 *is5, sInt4 *ns5,
+                 sInt4 *is4, sInt4 *ns4, sInt4 *is5, CPL_UNUSED sInt4 *ns5,
                  sInt4 *is6, CPL_UNUSED sInt4 *ns6, sInt4 *is7, CPL_UNUSED sInt4 *ns7,
                  sInt4 *ib, sInt4 *ibitmap, unsigned char *c_ipack,
                  sInt4 *nd5, float *xmissp, float *xmisss,
