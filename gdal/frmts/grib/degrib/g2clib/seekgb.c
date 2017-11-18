@@ -66,7 +66,7 @@ void seekgb(FILE *lugb,g2int iseek,g2int mseek,g2int *lskip,g2int *lgrib)
             if (vers == 2) gbit(cbuf,&lengrib,(k+12)*8,4*8);
             /* ret= */ fseek(lugb,ipos+k+lengrib-4,SEEK_SET);
 //          Hard code to 4 instead of sizeof(g2int)
-            k4=fread(&end,4,1,lugb);
+            k4=(g2int)fread(&end,4,1,lugb);
             if (k4 == 1 && end == 926365495) {      //GRIB message found
                 *lskip=ipos+k;
                 *lgrib=lengrib;
