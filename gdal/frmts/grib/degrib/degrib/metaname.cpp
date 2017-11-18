@@ -62,7 +62,7 @@ const char *centerLookup (unsigned short int center)
       {22, "ACMAD"},
       {23, "Mozambique"},
       {24, "Pretoria"},
-      {25, "La R\xE9" "union"},
+      {25, "La R\xC3\xA9" "union"},
       {26, "Khabarovsk"},
       {27, ") Khabarovsk"},
       {28, "New Delhi"},
@@ -119,8 +119,8 @@ const char *centerLookup (unsigned short int center)
       {79, ") Offenbach"},
       {80, "Rome"},
       {81, ") Rome"},
-      {82, "Norrk\xF6" "ping"},
-      {83, ") Norrk\xF6" "ping"},
+      {82, "Norrk\xC3\xB6" "ping"},
+      {83, ") Norrk\xC3\xB6" "ping"},
       {84, "Toulouse"},
       {85, "Toulouse"},
       {86, "Helsinki"},
@@ -252,7 +252,7 @@ const char *centerLookup (unsigned short int center)
       {212, "Lisboa"},
       {213, "Reykiavik"},
       {214, "Madrid"},
-      {215, "Z\xFC" "rich"},
+      {215, "Z\xC3\xBC" "rich"},
       {216, "Service ARGOS Toulouse"},
       {217, "Bratislava"},
       {218, "Budapest"},
@@ -385,7 +385,7 @@ const char *subCenterLookup(unsigned short int center,
       {74, 27, "Nordic Commission of Geodesy (Norway)"},
       {74, 28, "Nordic Commission of Geodesy (Sweden)"},
       {74, 29, "Institute de Geodesie National (France)"},
-      {74, 30, "Bundesamt f\xFC" "r Kartographie und Geod\xE4" "sie (Germany)"},
+      {74, 30, "Bundesamt f\xC3\xBC" "r Kartographie und Geod\xC3\xA4" "sie (Germany)"},
       {74, 31, "Institute of Engineering Satellite Surveying and Geodesy (U.K.)"},
       {254, 10, "Tromso (Norway)"}, {254, 10, "Maspalomas (Spain)"},
       {254, 30, "Kangerlussuaq (Greenland)"}, {254, 40, "Edmonton (Canada)"},
@@ -597,7 +597,7 @@ static const GRIB2ParmTable MeteoMoist[] = {
    /* 3 */ {"PWAT", "Precipitable water", "kg/(m^2)", UC_NONE},
    /* 4 */ {"VAPP", "Vapor pressure", "Pa", UC_NONE},
    /* 5 */ {"SATD", "Saturation deficit", "Pa", UC_NONE},
-   /* 6 */ {"EVP", "Evaporation", "kg/(m^2)", UC_NONE},
+   /* 6 */ {"EVP", "Evaporation", "kg/(m^2)", UC_InchWater},
    /* 7 */ {"PRATE", "Precipitation rate", "kg/(m^2 s)", UC_NONE},
    /* 8 */ {"APCP", "Total precipitation", "kg/(m^2)", UC_InchWater}, /* Need NDFD override QPF */
    /* 9 */ {"NCPCP", "Large scale precipitation", "kg/(m^2)", UC_NONE},
@@ -1244,7 +1244,7 @@ static const GRIB2ParmTable OceanWaves[] = {
    /* 0 */ {"WVSP1", "Wave spectra (1)", "-", UC_NONE},
    /* 1 */ {"WVSP2", "Wave spectra (2)", "-", UC_NONE},
    /* 2 */ {"WVSP3", "Wave spectra (3)", "-", UC_NONE},
-   /* 3 */ {"HTSGW", "Significant height of combined wind waves and swell", "m", UC_NONE},
+   /* 3 */ {"HTSGW", "Significant height of combined wind waves and swell", "m", UC_NONE}, /* NDFD override needed WaveHeight */
    /* 4 */ {"WVDIR", "Direction of wind waves", "Degree true", UC_NONE},
    /* 5 */ {"WVHGT", "Significant height of wind waves", "m", UC_M2Feet}, /* NDFD override needed WaveHeight */
    /* 6 */ {"WVPER", "Mean period of wind waves", "s", UC_NONE},
@@ -1496,19 +1496,21 @@ static const NDFD_AbrevOverideTable NDFD_Overide[] = {
    /*  9 */ {"WVHGT", "WaveHeight"},
    /* 10 */ {"ASNOW", "SnowAmt"},
    /* 11 */ {"GUST", "WindGust"},
-   /* 12 */ {"MAXRH", "MaxRH"},                /* Mike added 201202 */
+   /* 12 */ {"MAXRH", "MaxRH"},                /* MPA added 201202 */
+   /* 13 */ {"HTSGW", "WaveHeight"},           /* MPA added 201709 */      
 };
 
 static const GRIB2LocalTable NDFD_LclTable[] = {
    /* 0 */ {0, 0, 193, "ApparentT", "Apparent Temperature", "K", UC_K2F},
    /* 1 */ {0, 1, 192, "Wx", "Weather string", "-", UC_NONE},
+           {0, 1, 193, "PPI", "Precipitation Potential Index", "%", UC_NONE},
            {0, 1, 227, "IceAccum", "Ice Accumulation", "kg/m^2", UC_InchWater},
    /* grandfather'ed in a NDFD choice for POP. */
    /* 2 */ {0, 10, 8, "PoP12", "Prob of 0.01 In. of Precip", "%", UC_NONE},
            {0, 13, 194, "smokes", "Surface level smoke from fires",
-            "log10(µg/m^3)", UC_LOG10},
+            "log10(10^-6g/m^3)", UC_LOG10},
            {0, 13, 195, "smokec", "Average vertical column smoke from fires",
-            "log10(µg/m^3)", UC_LOG10},
+            "log10(10^-6g/m^3)", UC_LOG10},
    /* 3 */ {0, 14, 192, "O3MR", "Ozone Mixing Ratio", "kg/kg", UC_NONE},
    /* 4 */ {0, 14, 193, "OZCON", "Ozone Concentration", "PPB", UC_NONE},
    /* Arthur adopted NCEP ozone values from NCEP local table to NDFD local tables. (11/14/2009) */
@@ -1525,6 +1527,10 @@ static const GRIB2LocalTable NDFD_LclTable[] = {
            {0, 19, 215, "TotalSvrProb", "Total Probability of Severe Thunderstorms", "%", UC_NONE},
            {0, 19, 216, "TotalXtrmProb", "Total Probability of Extreme Severe Thunderstorms", "%", UC_NONE},
            {0, 19, 217, "WWA", "Watch Warning Advisory", "-", UC_NONE},
+           {0, 19, 235, "TCWind", "Tropical Cyclone Wind Threat", "0=none; 4=low; 6=moderate; 8=high; 10=extreme", UC_NONE},
+           {0, 19, 236, "TCSurge", "Tropical Cyclone Storm Surge Threat", "0=none; 4=low; 6=moderate; 8=high; 10=extreme", UC_NONE},          
+           {0, 19, 238, "TCRain", "Tropical Cyclone Flooding Rain Threat", "0=none; 4=low; 6=moderate; 8=high; 10=extreme", UC_NONE},
+           {0, 19, 239, "TCTornado", "Tropical Cyclone Tornado Threat", "0=none; 4=low; 6=moderate; 8=high; 10=extreme", UC_NONE},
 /* Leaving next two lines in for grandfathering sake. 9/19/2007... Probably can remove in future. */
            {0, 19, 203, "TotalSvrProb", "Total Probability of Severe Thunderstorms", "%", UC_NONE},
            {0, 19, 204, "TotalXtrmProb", "Total Probability of Extreme Severe Thunderstorms", "%", UC_NONE},
@@ -1535,12 +1541,129 @@ static const GRIB2LocalTable NDFD_LclTable[] = {
    /* Arthur Added this to both NDFD and NCEP local tables. (5/1/2006) */
            {10, 3, 192, "Surge", "Hurricane Storm Surge", "m", UC_M2Feet},
            {10, 3, 193, "ETSurge", "Extra Tropical Storm Surge", "m", UC_M2Feet},
+           {10, 3, 250, "StormTide", "Storm Surge and Tide", "m", UC_M2Feet},
+           {10, 3, 251, "Tide", "Tide", "m", UC_M2Feet},
    /* Mike added 2/2012 */
            {0, 1, 198, "MinRH", "Minimum Relative Humidity", "%", UC_NONE}
 };
 
 static const GRIB2LocalTable HPC_LclTable[] = {
    /* 0 */ {0, 1, 192, "HPC-Wx", "HPC Code", "-", UC_NONE},
+};
+
+/* See ./degrib/MRMS folder (specifically run ./reformat.tcl > degribtab.c) */
+/* 10/21/2014 */
+static const GRIB2LocalTable MRMS_LclTable[] = {
+   /* 0 */ {209, 2, 0, "LightningDensityNLDN1min", "CG Lightning Density 1-min - NLDN", "flashes/km^2/min", UC_NONE},
+   /* 1 */ {209, 2, 1, "LightningDensityNLDN5min", "CG Lightning Density 5-min - NLDN", "flashes/km^2/min", UC_NONE},
+   /* 2 */ {209, 2, 2, "LightningDensityNLDN15min", "CG Lightning Density 15-min - NLDN", "flashes/km^2/min", UC_NONE},
+   /* 3 */ {209, 2, 3, "LightningDensityNLDN30min", "CG Lightning Density 30-min - NLDN", "flashes/km^2/min", UC_NONE},
+   /* 4 */ {209, 2, 4, "LightningProbabilityNext30min", "Lightning Probability 0-30 minutes - NLDN", "%", UC_NONE},
+   /* 5 */ {209, 3, 0, "MergedAzShear0to2kmAGL", "Azimuth Shear 0-2km AGL", ".001/s", UC_NONE},
+   /* 6 */ {209, 3, 1, "MergedAzShear3to6kmAGL", "Azimuth Shear 3-6km AGL", ".001/s", UC_NONE},
+   /* 7 */ {209, 3, 2, "RotationTrack30min", "Rotation Track 0-2km AGL 30-min", ".001/s", UC_NONE},
+   /* 8 */ {209, 3, 3, "RotationTrack60min", "Rotation Track 0-2km AGL 60-min", ".001/s", UC_NONE},
+   /* 9 */ {209, 3, 4, "RotationTrack120min", "Rotation Track 0-2km AGL 120-min", ".001/s", UC_NONE},
+   /* 10 */ {209, 3, 5, "RotationTrack240min", "Rotation Track 0-2km AGL 240-min", ".001/s", UC_NONE},
+   /* 11 */ {209, 3, 6, "RotationTrack360min", "Rotation Track 0-2km AGL 360-min", ".001/s", UC_NONE},
+   /* 12 */ {209, 3, 7, "RotationTrack1440min", "Rotation Track 0-2km AGL 1440-min", ".001/s", UC_NONE},
+   /* 13 */ {209, 3, 14, "RotationTrackML30min", "Rotation Track 0-2km AGL 30-min", ".001/s", UC_NONE},
+   /* 14 */ {209, 3, 15, "RotationTrackML60min", "Rotation Track 0-2km AGL 60-min", ".001/s", UC_NONE},
+   /* 15 */ {209, 3, 16, "RotationTrackML120min", "Rotation Track 0-2km AGL 120-min", ".001/s", UC_NONE},
+   /* 16 */ {209, 3, 17, "RotationTrackML240min", "Rotation Track 0-2km AGL 240-min", ".001/s", UC_NONE},
+   /* 17 */ {209, 3, 18, "RotationTrackML360min", "Rotation Track 0-2km AGL 360-min", ".001/s", UC_NONE},
+   /* 18 */ {209, 3, 19, "RotationTrackML1440min", "Rotation Track 0-2km AGL 1440-min", ".001/s", UC_NONE},
+   /* 19 */ {209, 3, 26, "SHI", "Severe Hail Index", "index", UC_NONE},
+   /* 20 */ {209, 3, 27, "POSH", "Prob of Severe Hail", "%", UC_NONE},
+   /* 21 */ {209, 3, 28, "MESH", "Maximum Estimated Size of Hail (MESH)", "mm", UC_NONE},
+   /* 22 */ {209, 3, 29, "MESHMax30min", "MESH Hail Swath 30-min", "mm", UC_NONE},
+   /* 23 */ {209, 3, 30, "MESHMax60min", "MESH Hail Swath 60-min", "mm", UC_NONE},
+   /* 24 */ {209, 3, 31, "MESHMax120min", "MESH Hail Swath 120-min", "mm", UC_NONE},
+   /* 25 */ {209, 3, 32, "MESHMax240min", "MESH Hail Swath 240-min", "mm", UC_NONE},
+   /* 26 */ {209, 3, 33, "MESHMax360min", "MESH Hail Swath 360-min", "mm", UC_NONE},
+   /* 27 */ {209, 3, 34, "MESHMax1440min", "MESH Hail Swath 1440-min", "mm", UC_NONE},
+   /* 28 */ {209, 3, 41, "VIL", "Vertically Integrated Liquid", "kg/m^2", UC_NONE},
+   /* 29 */ {209, 3, 42, "VILDensity", "Vertically Integrated Liquid Density", "g/m^3", UC_NONE},
+   /* 30 */ {209, 3, 43, "VII", "Vertically Integrated Ice", "kg/m^2", UC_NONE},
+   /* 31 */ {209, 3, 44, "EchoTop18", "Echo Top - 18 dBZ", "km", UC_NONE},
+   /* 32 */ {209, 3, 45, "EchoTop30", "Echo Top - 30 dBZ", "km", UC_NONE},
+   /* 33 */ {209, 3, 46, "EchoTop50", "Echo Top - 50 dBZ", "km", UC_NONE},
+   /* 34 */ {209, 3, 47, "EchoTop60", "Echo Top - 60 dBZ", "km", UC_NONE},
+   /* 35 */ {209, 3, 48, "H50AboveM20C", "Thickness [50 dBZ top - (-20C)]", "km", UC_NONE},
+   /* 36 */ {209, 3, 49, "H50Above0C", "Thickness [50 dBZ top - 0C]", "km", UC_NONE},
+   /* 37 */ {209, 3, 50, "H60AboveM20C", "Thickness [60 dBZ top - (-20C)]", "km", UC_NONE},
+   /* 38 */ {209, 3, 51, "H60Above0C", "Thickness [60 dBZ top - 0C]", "km", UC_NONE},
+   /* 39 */ {209, 3, 52, "Reflectivity0C", "Isothermal Reflectivity at 0C", "dBZ", UC_NONE},
+   /* 40 */ {209, 3, 53, "ReflectivityM5C", "Isothermal Reflectivity at -5C", "dBZ", UC_NONE},
+   /* 41 */ {209, 3, 54, "ReflectivityM10C", "Isothermal Reflectivity at -10C", "dBZ", UC_NONE},
+   /* 42 */ {209, 3, 55, "ReflectivityM15C", "Isothermal Reflectivity at -15C", "dBZ", UC_NONE},
+   /* 43 */ {209, 3, 56, "ReflectivityM20C", "Isothermal Reflectivity at -20C", "dBZ", UC_NONE},
+   /* 44 */ {209, 3, 57, "ReflectivityAtLowestAltitude", "ReflectivityAtLowestAltitude", "dBZ", UC_NONE},
+   /* 45 */ {209, 3, 58, "MergedReflectivityAtLowestAltitude", "Non Quality Controlled Reflectivity At Lowest Altitude", "dBZ", UC_NONE},
+   /* 46 */ {209, 4, 0, "IRband4", "Infrared (E/W blend)", "K", UC_NONE},
+   /* 47 */ {209, 4, 1, "Visible", "Visible (E/W blend)", "non-dim", UC_NONE},
+   /* 48 */ {209, 4, 2, "WaterVapor", "Water Vapor (E/W blend)", "K", UC_NONE},
+   /* 49 */ {209, 4, 3, "CloudCover", "Cloud Cover", "K", UC_NONE},
+   /* 50 */ {209, 6, 0, "PrecipFlag", "Surface Precipitation Type (Convective; Stratiform; Tropical; Hail; Snow)", "flag", UC_NONE},
+   /* 51 */ {209, 6, 1, "PrecipRate", "Radar Precipitation Rate", "mm/hr", UC_NONE},
+   /* 52 */ {209, 6, 2, "RadarOnlyQPE01H", "Radar Precipitation Accumulation 1-hour", "mm", UC_NONE},
+   /* 53 */ {209, 6, 3, "RadarOnlyQPE03H", "Radar Precipitation Accumulation 3-hour", "mm", UC_NONE},
+   /* 54 */ {209, 6, 4, "RadarOnlyQPE06H", "Radar Precipitation Accumulation 6-hour", "mm", UC_NONE},
+   /* 55 */ {209, 6, 5, "RadarOnlyQPE12H", "Radar Precipitation Accumulation 12-hour", "mm", UC_NONE},
+   /* 56 */ {209, 6, 6, "RadarOnlyQPE24H", "Radar Precipitation Accumulation 24-hour", "mm", UC_NONE},
+   /* 57 */ {209, 6, 7, "RadarOnlyQPE48H", "Radar Precipitation Accumulation 48-hour", "mm", UC_NONE},
+   /* 58 */ {209, 6, 8, "RadarOnlyQPE72H", "Radar Precipitation Accumulation 72-hour", "mm", UC_NONE},
+   /* 59 */ {209, 6, 9, "GaugeCorrQPE01H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 1-hour", "mm", UC_NONE},
+   /* 60 */ {209, 6, 10, "GaugeCorrQPE03H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 3-hour", "mm", UC_NONE},
+   /* 61 */ {209, 6, 11, "GaugeCorrQPE06H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 6-hour", "mm", UC_NONE},
+   /* 62 */ {209, 6, 12, "GaugeCorrQPE12H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 12-hour", "mm", UC_NONE},
+   /* 63 */ {209, 6, 13, "GaugeCorrQPE24H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 24-hour", "mm", UC_NONE},
+   /* 64 */ {209, 6, 14, "GaugeCorrQPE48H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 48-hour", "mm", UC_NONE},
+   /* 65 */ {209, 6, 15, "GaugeCorrQPE72H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 72-hour", "mm", UC_NONE},
+   /* 66 */ {209, 6, 16, "GaugeOnlyQPE01H", "Gauge Only Precipitation Accumulation 1-hour", "mm", UC_NONE},
+   /* 67 */ {209, 6, 17, "GaugeOnlyQPE03H", "Gauge Only Precipitation Accumulation 3-hour", "mm", UC_NONE},
+   /* 68 */ {209, 6, 18, "GaugeOnlyQPE06H", "Gauge Only Precipitation Accumulation 6-hour", "mm", UC_NONE},
+   /* 69 */ {209, 6, 19, "GaugeOnlyQPE12H", "Gauge Only Precipitation Accumulation 12-hour", "mm", UC_NONE},
+   /* 70 */ {209, 6, 20, "GaugeOnlyQPE24H", "Gauge Only Precipitation Accumulation 24-hour", "mm", UC_NONE},
+   /* 71 */ {209, 6, 21, "GaugeOnlyQPE48H", "Gauge Only Precipitation Accumulation 48-hour", "mm", UC_NONE},
+   /* 72 */ {209, 6, 22, "GaugeOnlyQPE72H", "Gauge Only Precipitation Accumulation 72-hour", "mm", UC_NONE},
+   /* 73 */ {209, 6, 23, "MountainMapperQPE01H", "Mountain Mapper Precipitation Accumulation 1-hour", "mm", UC_NONE},
+   /* 74 */ {209, 6, 24, "MountainMapperQPE03H", "Mountain Mapper Precipitation Accumulation 3-hour", "mm", UC_NONE},
+   /* 75 */ {209, 6, 25, "MountainMapperQPE06H", "Mountain Mapper Precipitation Accumulation 6-hour", "mm", UC_NONE},
+   /* 76 */ {209, 6, 26, "MountainMapperQPE12H", "Mountain Mapper Precipitation Accumulation 12-hour", "mm", UC_NONE},
+   /* 77 */ {209, 6, 27, "MountainMapperQPE24H", "Mountain Mapper Precipitation Accumulation 24-hour", "mm", UC_NONE},
+   /* 78 */ {209, 6, 28, "MountainMapperQPE48H", "Mountain Mapper Precipitation Accumulation 48-hour", "mm", UC_NONE},
+   /* 79 */ {209, 6, 29, "MountainMapperQPE72H", "Mountain Mapper Precipitation Accumulation 72-hour", "mm", UC_NONE},
+   /* 80 */ {209, 7, 0, "ModelSurfaceTemp", "Model Surface Temperature [RAP 13km]", "C", UC_NONE},
+   /* 81 */ {209, 7, 1, "ModelWetBulbTemp", "Model Surface Wet Bulb Temperature [RAP 13km]", "C", UC_NONE},
+   /* 82 */ {209, 7, 2, "WarmRainProbability", "Probability of Warm Rain [RAP 13km derived]", "%", UC_NONE},
+   /* 83 */ {209, 7, 3, "ModelHeight0C", "Model Freezing Level Height [RAP 13km]", "m", UC_NONE},
+   /* 84 */ {209, 7, 4, "BrightBandTopHeight", "Brightband Top Radar [RAP 13km derived]", "m", UC_NONE},
+   /* 85 */ {209, 7, 5, "BrightBandBottomHeight", "Brightband Bottom Radar [RAP 13km derived]", "m", UC_NONE},
+   /* 86 */ {209, 8, 0, "RadarQualityIndex", "Radar Quality Index", "non-dim", UC_NONE},
+   /* 87 */ {209, 8, 1, "GaugeInflIndex01H", "Gauge Influence Index for 1-hour QPE", "non-dim", UC_NONE},
+   /* 88 */ {209, 8, 2, "GaugeInflIndex03H", "Gauge Influence Index for 3-hour QPE", "non-dim", UC_NONE},
+   /* 89 */ {209, 8, 3, "GaugeInflIndex06H", "Gauge Influence Index for 6-hour QPE", "non-dim", UC_NONE},
+   /* 90 */ {209, 8, 4, "GaugeInflIndex12H", "Gauge Influence Index for 12-hour QPE", "non-dim", UC_NONE},
+   /* 91 */ {209, 8, 5, "GaugeInflIndex24H", "Gauge Influence Index for 24-hour QPE", "non-dim", UC_NONE},
+   /* 92 */ {209, 8, 6, "GaugeInflIndex48H", "Gauge Influence Index for 48-hour QPE", "non-dim", UC_NONE},
+   /* 93 */ {209, 8, 7, "GaugeInflIndex72H", "Gauge Influence Index for 72-hour QPE", "non-dim", UC_NONE},
+   /* 94 */ {209, 8, 8, "SeamlessHSR", "Seamless Hybrid Scan Reflectivity with VPR Correction", "dBZ", UC_NONE},
+   /* 95 */ {209, 8, 9, "SeamlessHSRHeight", "Height of Seamless Hybrid Scan Reflectivity", "km", UC_NONE},
+   /* 96 */ {209, 9, 0, "CONUSMergedReflectivityQC", "WSR-88D 3D Reflectivity Mosaic - 33 CAPPIS (500-19000m)", "dBZ", UC_NONE},
+   /* 97 */ {209, 9, 1, "CONUSPlusMergedReflectivityQC", "All Radar 3D Reflectivity Mosaic - 33 CAPPIS (500-19000m)", "dBZ", UC_NONE},
+   /* 98 */ {209, 10, 0, "MergedReflectivityQCComposite", "Composite Reflectivity Mosaic (optimal method)", "dBZ", UC_NONE},
+   /* 99 */ {209, 10, 1, "HeightCompositeReflectivity", "Height of Composite Reflectivity Mosaic (optimal method)", "m", UC_NONE},
+   /* 100 */ {209, 10, 2, "LowLevelCompositeReflectivity", "Low-Level Composite Reflectivity Mosaic (0-4 km)", "dBZ", UC_NONE},
+   /* 101 */ {209, 10, 3, "HeightLowLevelCompositeReflectivity", "Height of Low-Level Composite Reflectivity Mosaic (0-4 km)", "m", UC_NONE},
+   /* 102 */ {209, 10, 4, "LayerCompositeReflectivity_Low", "Layer Composite Reflectivity Mosaic 0-24kft (low altitude)", "dBZ", UC_NONE},
+   /* 103 */ {209, 10, 5, "LayerCompositeReflectivity_High", "Layer Composite Reflectivity Mosaic 24-60kft (highest altitude)", "dBZ", UC_NONE},
+   /* 104 */ {209, 10, 6, "LayerCompositeReflectivity_Super", "Layer Composite Reflectivity Mosaic 33-60kft (super high altitude)", "dBZ", UC_NONE},
+   /* 105 */ {209, 10, 7, "ReflectivityCompositeHourlyMax", "Composite Reflectivity Hourly Maximum", "dBZ", UC_NONE},
+   /* 106 */ {209, 10, 8, "ReflectivityMaxAboveM10C", "Maximum Reflectivity at -10 deg C height and above", "dBZ", UC_NONE},
+   /* 107 */ {209, 11, 0, "MergedBaseReflectivityQC", "Mosaic Base Reflectivity (optimal method)", "dBZ", UC_NONE},
+   /* 108 */ {209, 11, 1, "MergedReflectivityComposite", "UnQC'd Composite Reflectivity Mosaic (max ref)", "dBZ", UC_NONE},
+   /* 109 */ {209, 11, 2, "MergedReflectivityQComposite", "Composite Reflectivity Mosaic (max ref)", "dBZ", UC_NONE},
 };
 
 /*
@@ -1707,12 +1830,12 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
             {0, 7, 197, "UPHL", "Updraft Helicity", "m^2/s^2", UC_NONE},
             {0, 7, 198, "LAI", "Leaf area index", "-", UC_NONE},
 
-            {0, 13, 192, "PMTC", "Particulate matter (coarse)", "µg/m^3", UC_NONE},
-            {0, 13, 193, "PMTF", "Particulate matter (fine)", "µg/m^3", UC_NONE},
+            {0, 13, 192, "PMTC", "Particulate matter (coarse)", "10^-6g/m^3", UC_NONE},
+            {0, 13, 193, "PMTF", "Particulate matter (fine)", "10^-6g/m^3", UC_NONE},
             {0, 13, 194, "LPMTF", "Particulate matter (fine)",
-             "log10(µg/m^3)", UC_LOG10},
+             "log10(10^-6g/m^3)", UC_LOG10},
             {0, 13, 195, "LIPMF", "Integrated column particulate matter " /* over-ride in the code based on surface */
-             "(fine)", "log10(µg/m^3)", UC_LOG10},
+             "(fine)", "log10(10^-6g/m^3)", UC_LOG10},
 
    /* 42 */ {0, 14, 192, "O3MR", "Ozone Mixing Ratio", "kg/kg", UC_NONE},
    /* 43 */ {0, 14, 193, "OZCON", "Ozone Concentration", "PPB", UC_NONE},
@@ -1724,8 +1847,8 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
             {0, 14, 199, "POZO", "Ozone Production from Column Ozone Term", "kg/kg/s", UC_NONE},
             {0, 14, 200, "OZMAX1", "Ozone Daily Max from 1-hour Average", "ppbV", UC_NONE},
             {0, 14, 201, "OZMAX8", "Ozone Daily Max from 8-hour Average", "ppbV", UC_NONE},
-            {0, 14, 202, "PDMAX1", "PM 2.5 Daily Max from 1-hour Average", "ug/(m^3)", UC_NONE},
-            {0, 14, 203, "PDMAX24", "PM 2.5 Daily Max from 24-hour Average", "ug/(m^3)", UC_NONE},
+            {0, 14, 202, "PDMAX1", "PM 2.5 Daily Max from 1-hour Average", "(10^-6g/(m^3)", UC_NONE},
+            {0, 14, 203, "PDMAX24", "PM 2.5 Daily Max from 24-hour Average", "(10^-6g/(m^3)", UC_NONE},
 
             {0, 16, 192, "REFZR", "Derived radar reflectivity backscatter from rain", "mm^6/m^3", UC_NONE},
             {0, 16, 193, "REFZI", "Derived radar reflectivity backscatter from ice", "mm^6/m^3", UC_NONE},
@@ -1946,122 +2069,6 @@ static const GRIB2LocalTable NCEP_LclTable[] = {
            {10, 4, 197, "OHC", "Ocean Heat Content", "J/m^2", UC_NONE},
 };
 
-/*
-  From http://www.nssl.noaa.gov/projects/mrms/operational/tables.php
-*/
-static const GRIB2LocalTable MRMS_LclTable[] = {
-   /* 0 */ {209, 2, 0, "LightningDensityNLDN1min", "CG Lightning Density 1-min - NLDN", "flashes/km^2/min", UC_NONE},
-   /* 1 */ {209, 2, 1, "LightningDensityNLDN5min", "CG Lightning Density 5-min - NLDN", "flashes/km^2/min", UC_NONE},
-   /* 2 */ {209, 2, 2, "LightningDensityNLDN15min", "CG Lightning Density 15-min - NLDN", "flashes/km^2/min", UC_NONE},
-   /* 3 */ {209, 2, 3, "LightningDensityNLDN30min", "CG Lightning Density 30-min - NLDN", "flashes/km^2/min", UC_NONE},
-   /* 4 */ {209, 2, 4, "LightningProbabilityNext30min", "Lightning Probability 0-30 minutes - NLDN", "%", UC_NONE},
-   /* 5 */ {209, 3, 0, "MergedAzShear0to2kmAGL", "Azimuth Shear 0-2km AGL", ".001/s", UC_NONE},
-   /* 6 */ {209, 3, 1, "MergedAzShear3to6kmAGL", "Azimuth Shear 3-6km AGL", ".001/s", UC_NONE},
-   /* 7 */ {209, 3, 2, "RotationTrack30min", "Rotation Track 0-2km AGL 30-min", ".001/s", UC_NONE},
-   /* 8 */ {209, 3, 3, "RotationTrack60min", "Rotation Track 0-2km AGL 60-min", ".001/s", UC_NONE},
-   /* 9 */ {209, 3, 4, "RotationTrack120min", "Rotation Track 0-2km AGL 120-min", ".001/s", UC_NONE},
-   /* 10 */ {209, 3, 5, "RotationTrack240min", "Rotation Track 0-2km AGL 240-min", ".001/s", UC_NONE},
-   /* 11 */ {209, 3, 6, "RotationTrack360min", "Rotation Track 0-2km AGL 360-min", ".001/s", UC_NONE},
-   /* 12 */ {209, 3, 7, "RotationTrack1440min", "Rotation Track 0-2km AGL 1440-min", ".001/s", UC_NONE},
-   /* 13 */ {209, 3, 14, "RotationTrackML30min", "Rotation Track 0-2km AGL 30-min", ".001/s", UC_NONE},
-   /* 14 */ {209, 3, 15, "RotationTrackML60min", "Rotation Track 0-2km AGL 60-min", ".001/s", UC_NONE},
-   /* 15 */ {209, 3, 16, "RotationTrackML120min", "Rotation Track 0-2km AGL 120-min", ".001/s", UC_NONE},
-   /* 16 */ {209, 3, 17, "RotationTrackML240min", "Rotation Track 0-2km AGL 240-min", ".001/s", UC_NONE},
-   /* 17 */ {209, 3, 18, "RotationTrackML360min", "Rotation Track 0-2km AGL 360-min", ".001/s", UC_NONE},
-   /* 18 */ {209, 3, 19, "RotationTrackML1440min", "Rotation Track 0-2km AGL 1440-min", ".001/s", UC_NONE},
-   /* 19 */ {209, 3, 26, "SHI", "Severe Hail Index", "index", UC_NONE},
-   /* 20 */ {209, 3, 27, "POSH", "Prob of Severe Hail", "%", UC_NONE},
-   /* 21 */ {209, 3, 28, "MESH", "Maximum Estimated Size of Hail (MESH)", "mm", UC_NONE},
-   /* 22 */ {209, 3, 29, "MESHMax30min", "MESH Hail Swath 30-min", "mm", UC_NONE},
-   /* 23 */ {209, 3, 30, "MESHMax60min", "MESH Hail Swath 60-min", "mm", UC_NONE},
-   /* 24 */ {209, 3, 31, "MESHMax120min", "MESH Hail Swath 120-min", "mm", UC_NONE},
-   /* 25 */ {209, 3, 32, "MESHMax240min", "MESH Hail Swath 240-min", "mm", UC_NONE},
-   /* 26 */ {209, 3, 33, "MESHMax360min", "MESH Hail Swath 360-min", "mm", UC_NONE},
-   /* 27 */ {209, 3, 34, "MESHMax1440min", "MESH Hail Swath 1440-min", "mm", UC_NONE},
-   /* 28 */ {209, 3, 41, "VIL", "Vertically Integrated Liquid", "kg/m^2", UC_NONE},
-   /* 29 */ {209, 3, 42, "VILDensity", "Vertically Integrated Liquid Density", "g/m^3", UC_NONE},
-   /* 30 */ {209, 3, 43, "VII", "Vertically Integrated Ice", "kg/m^2", UC_NONE},
-   /* 31 */ {209, 3, 44, "EchoTop18", "Echo Top - 18 dBZ", "km", UC_NONE},
-   /* 32 */ {209, 3, 45, "EchoTop30", "Echo Top - 30 dBZ", "km", UC_NONE},
-   /* 33 */ {209, 3, 46, "EchoTop50", "Echo Top - 50 dBZ", "km", UC_NONE},
-   /* 34 */ {209, 3, 47, "EchoTop60", "Echo Top - 60 dBZ", "km", UC_NONE},
-   /* 35 */ {209, 3, 48, "H50AboveM20C", "Thickness [50 dBZ top - (-20C)]", "km", UC_NONE},
-   /* 36 */ {209, 3, 49, "H50Above0C", "Thickness [50 dBZ top - 0C]", "km", UC_NONE},
-   /* 37 */ {209, 3, 50, "H60AboveM20C", "Thickness [60 dBZ top - (-20C)]", "km", UC_NONE},
-   /* 38 */ {209, 3, 51, "H60Above0C", "Thickness [60 dBZ top - 0C]", "km", UC_NONE},
-   /* 39 */ {209, 3, 52, "Reflectivity0C", "Isothermal Reflectivity at 0C", "dBZ", UC_NONE},
-   /* 40 */ {209, 3, 53, "ReflectivityM5C", "Isothermal Reflectivity at -5C", "dBZ", UC_NONE},
-   /* 41 */ {209, 3, 54, "ReflectivityM10C", "Isothermal Reflectivity at -10C", "dBZ", UC_NONE},
-   /* 42 */ {209, 3, 55, "ReflectivityM15C", "Isothermal Reflectivity at -15C", "dBZ", UC_NONE},
-   /* 43 */ {209, 3, 56, "ReflectivityM20C", "Isothermal Reflectivity at -20C", "dBZ", UC_NONE},
-   /* 44 */ {209, 3, 57, "ReflectivityAtLowestAltitude", "ReflectivityAtLowestAltitude", "dBZ", UC_NONE},
-   /* 45 */ {209, 3, 58, "MergedReflectivityAtLowestAltitude", "Non Quality Controlled Reflectivity At Lowest Altitude", "dBZ", UC_NONE},
-   /* 46 */ {209, 4, 0, "IRband4", "Infrared (E/W blend)", "K", UC_NONE},
-   /* 47 */ {209, 4, 1, "Visible", "Visible (E/W blend)", "non-dim", UC_NONE},
-   /* 48 */ {209, 4, 2, "WaterVapor", "Water Vapor (E/W blend)", "K", UC_NONE},
-   /* 49 */ {209, 4, 3, "CloudCover", "Cloud Cover", "K", UC_NONE},
-   /* 50 */ {209, 6, 0, "PrecipFlag", "Surface Precipitation Type (Convective; Stratiform; Tropical; Hail; Snow)", "flag", UC_NONE},
-   /* 51 */ {209, 6, 1, "PrecipRate", "Radar Precipitation Rate", "mm/hr", UC_NONE},
-   /* 52 */ {209, 6, 2, "RadarOnlyQPE01H", "Radar Precipitation Accumulation 1-hour", "mm", UC_NONE},
-   /* 53 */ {209, 6, 3, "RadarOnlyQPE03H", "Radar Precipitation Accumulation 3-hour", "mm", UC_NONE},
-   /* 54 */ {209, 6, 4, "RadarOnlyQPE06H", "Radar Precipitation Accumulation 6-hour", "mm", UC_NONE},
-   /* 55 */ {209, 6, 5, "RadarOnlyQPE12H", "Radar Precipitation Accumulation 12-hour", "mm", UC_NONE},
-   /* 56 */ {209, 6, 6, "RadarOnlyQPE24H", "Radar Precipitation Accumulation 24-hour", "mm", UC_NONE},
-   /* 57 */ {209, 6, 7, "RadarOnlyQPE48H", "Radar Precipitation Accumulation 48-hour", "mm", UC_NONE},
-   /* 58 */ {209, 6, 8, "RadarOnlyQPE72H", "Radar Precipitation Accumulation 72-hour", "mm", UC_NONE},
-   /* 59 */ {209, 6, 9, "GaugeCorrQPE01H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 1-hour", "mm", UC_NONE},
-   /* 60 */ {209, 6, 10, "GaugeCorrQPE03H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 3-hour", "mm", UC_NONE},
-   /* 61 */ {209, 6, 11, "GaugeCorrQPE06H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 6-hour", "mm", UC_NONE},
-   /* 62 */ {209, 6, 12, "GaugeCorrQPE12H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 12-hour", "mm", UC_NONE},
-   /* 63 */ {209, 6, 13, "GaugeCorrQPE24H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 24-hour", "mm", UC_NONE},
-   /* 64 */ {209, 6, 14, "GaugeCorrQPE48H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 48-hour", "mm", UC_NONE},
-   /* 65 */ {209, 6, 15, "GaugeCorrQPE72H", "Local Gauge Bias Corrected Radar Precipitation Accumulation 72-hour", "mm", UC_NONE},
-   /* 66 */ {209, 6, 16, "GaugeOnlyQPE01H", "Gauge Only Precipitation Accumulation 1-hour", "mm", UC_NONE},
-   /* 67 */ {209, 6, 17, "GaugeOnlyQPE03H", "Gauge Only Precipitation Accumulation 3-hour", "mm", UC_NONE},
-   /* 68 */ {209, 6, 18, "GaugeOnlyQPE06H", "Gauge Only Precipitation Accumulation 6-hour", "mm", UC_NONE},
-   /* 69 */ {209, 6, 19, "GaugeOnlyQPE12H", "Gauge Only Precipitation Accumulation 12-hour", "mm", UC_NONE},
-   /* 70 */ {209, 6, 20, "GaugeOnlyQPE24H", "Gauge Only Precipitation Accumulation 24-hour", "mm", UC_NONE},
-   /* 71 */ {209, 6, 21, "GaugeOnlyQPE48H", "Gauge Only Precipitation Accumulation 48-hour", "mm", UC_NONE},
-   /* 72 */ {209, 6, 22, "GaugeOnlyQPE72H", "Gauge Only Precipitation Accumulation 72-hour", "mm", UC_NONE},
-   /* 73 */ {209, 6, 23, "MountainMapperQPE01H", "Mountain Mapper Precipitation Accumulation 1-hour", "mm", UC_NONE},
-   /* 74 */ {209, 6, 24, "MountainMapperQPE03H", "Mountain Mapper Precipitation Accumulation 3-hour", "mm", UC_NONE},
-   /* 75 */ {209, 6, 25, "MountainMapperQPE06H", "Mountain Mapper Precipitation Accumulation 6-hour", "mm", UC_NONE},
-   /* 76 */ {209, 6, 26, "MountainMapperQPE12H", "Mountain Mapper Precipitation Accumulation 12-hour", "mm", UC_NONE},
-   /* 77 */ {209, 6, 27, "MountainMapperQPE24H", "Mountain Mapper Precipitation Accumulation 24-hour", "mm", UC_NONE},
-   /* 78 */ {209, 6, 28, "MountainMapperQPE48H", "Mountain Mapper Precipitation Accumulation 48-hour", "mm", UC_NONE},
-   /* 79 */ {209, 6, 29, "MountainMapperQPE72H", "Mountain Mapper Precipitation Accumulation 72-hour", "mm", UC_NONE},
-   /* 80 */ {209, 7, 0, "ModelSurfaceTemp", "Model Surface Temperature [RAP 13km]", "C", UC_NONE},
-   /* 81 */ {209, 7, 1, "ModelWetBulbTemp", "Model Surface Wet Bulb Temperature [RAP 13km]", "C", UC_NONE},
-   /* 82 */ {209, 7, 2, "WarmRainProbability", "Probability of Warm Rain [RAP 13km derived]", "%", UC_NONE},
-   /* 83 */ {209, 7, 3, "ModelHeight0C", "Model Freezing Level Height [RAP 13km]", "m", UC_NONE},
-   /* 84 */ {209, 7, 4, "BrightBandTopHeight", "Brightband Top Radar [RAP 13km derived]", "m", UC_NONE},
-   /* 85 */ {209, 7, 5, "BrightBandBottomHeight", "Brightband Bottom Radar [RAP 13km derived]", "m", UC_NONE},
-   /* 86 */ {209, 8, 0, "RadarQualityIndex", "Radar Quality Index", "non-dim", UC_NONE},
-   /* 87 */ {209, 8, 1, "GaugeInflIndex01H", "Gauge Influence Index for 1-hour QPE", "non-dim", UC_NONE},
-   /* 88 */ {209, 8, 2, "GaugeInflIndex03H", "Gauge Influence Index for 3-hour QPE", "non-dim", UC_NONE},
-   /* 89 */ {209, 8, 3, "GaugeInflIndex06H", "Gauge Influence Index for 6-hour QPE", "non-dim", UC_NONE},
-   /* 90 */ {209, 8, 4, "GaugeInflIndex12H", "Gauge Influence Index for 12-hour QPE", "non-dim", UC_NONE},
-   /* 91 */ {209, 8, 5, "GaugeInflIndex24H", "Gauge Influence Index for 24-hour QPE", "non-dim", UC_NONE},
-   /* 92 */ {209, 8, 6, "GaugeInflIndex48H", "Gauge Influence Index for 48-hour QPE", "non-dim", UC_NONE},
-   /* 93 */ {209, 8, 7, "GaugeInflIndex72H", "Gauge Influence Index for 72-hour QPE", "non-dim", UC_NONE},
-   /* 94 */ {209, 8, 8, "SeamlessHSR", "Seamless Hybrid Scan Reflectivity with VPR Correction", "dBZ", UC_NONE},
-   /* 95 */ {209, 8, 9, "SeamlessHSRHeight", "Height of Seamless Hybrid Scan Reflectivity", "km", UC_NONE},
-   /* 96 */ {209, 9, 0, "CONUSMergedReflectivityQC", "WSR-88D 3D Reflectivity Mosaic - 33 CAPPIS (500-19000m)", "dBZ", UC_NONE},
-   /* 97 */ {209, 9, 1, "CONUSPlusMergedReflectivityQC", "All Radar 3D Reflectivity Mosaic - 33 CAPPIS (500-19000m)", "dBZ", UC_NONE},
-   /* 98 */ {209, 10, 0, "MergedReflectivityQCComposite", "Composite Reflectivity Mosaic (optimal method)", "dBZ", UC_NONE},
-   /* 99 */ {209, 10, 1, "HeightCompositeReflectivity", "Height of Composite Reflectivity Mosaic (optimal method)", "m", UC_NONE},
-   /* 100 */ {209, 10, 2, "LowLevelCompositeReflectivity", "Low-Level Composite Reflectivity Mosaic (0-4 km)", "dBZ", UC_NONE},
-   /* 101 */ {209, 10, 3, "HeightLowLevelCompositeReflectivity", "Height of Low-Level Composite Reflectivity Mosaic (0-4 km)", "m", UC_NONE},
-   /* 102 */ {209, 10, 4, "LayerCompositeReflectivity_Low", "Layer Composite Reflectivity Mosaic 0-24kft (low altitude)", "dBZ", UC_NONE},
-   /* 103 */ {209, 10, 5, "LayerCompositeReflectivity_High", "Layer Composite Reflectivity Mosaic 24-60kft (highest altitude)", "dBZ", UC_NONE},
-   /* 104 */ {209, 10, 6, "LayerCompositeReflectivity_Super", "Layer Composite Reflectivity Mosaic 33-60kft (super high altitude)", "dBZ", UC_NONE},
-   /* 105 */ {209, 10, 7, "ReflectivityCompositeHourlyMax", "Composite Reflectivity Hourly Maximum", "dBZ", UC_NONE},
-   /* 106 */ {209, 10, 8, "ReflectivityMaxAboveM10C", "Maximum Reflectivity at -10 deg C height and above", "dBZ", UC_NONE},
-   /* 107 */ {209, 11, 0, "MergedBaseReflectivityQC", "Mosaic Base Reflectivity (optimal method)", "dBZ", UC_NONE},
-   /* 108 */ {209, 11, 1, "MergedReflectivityComposite", "UnQC'd Composite Reflectivity Mosaic (max ref)", "dBZ", UC_NONE},
-   /* 109 */ {209, 11, 2, "MergedReflectivityQComposite", "Composite Reflectivity Mosaic (max ref)", "dBZ", UC_NONE},
-};
-
 /* *INDENT-ON* */
 
 int IsData_NDFD (unsigned short int center, unsigned short int subcenter)
@@ -2185,7 +2192,7 @@ static const GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
  *****************************************************************************
  */
 /* Deal with probability templates 2/16/2006 */
-static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
+static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, int prodType,
                           CPL_UNUSED int templat,
                           uChar cat, uChar subcat, sInt4 lenTime,
                           uChar timeRangeUnit,
@@ -2374,8 +2381,13 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
       }
    }
 
-   /* Generic tables. */
-   table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   /* Only look at Generic tables if mstrVersion is not 255. */
+   if (mstrVersion != 255) {
+      table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   } else {
+      table = NULL;
+   }
+   
    if (table != NULL) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
@@ -2542,7 +2554,7 @@ static void ElemNameProb (uShort2 center, uShort2 subcenter, int prodType,
 }
 
 /* Deal with percentile templates 5/1/2006 */
-static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
+static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, int prodType,
                           CPL_UNUSED int templat,
                           uChar cat, uChar subcat, sInt4 lenTime,
                           uChar timeRangeUnit,
@@ -2555,8 +2567,13 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
    size_t i;
    size_t len;
 
-   /* Generic tables. */
-   table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   /* Only look at Generic tables if mstrVersion is not 255. */
+   if (mstrVersion != 255) {
+      table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   } else {
+      table = NULL;
+   }
+   
    if (table != NULL) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
@@ -2661,7 +2678,7 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
 
    *name = (char *) malloc (strlen ("unknown") + 1);
    strcpy (*name, "unknown");
-   mallocSprintf (comment, "(prodType %d, cat %d, subcat %d) [-]", prodType,
+   mallocSprintf (comment, "(prodType %d, cat %d, subcat %d)", prodType,
                   cat, subcat);
    *unit = (char *) malloc (strlen ("[-]") + 1);
    strcpy (*unit, "[-]");
@@ -2670,9 +2687,9 @@ static void ElemNamePerc (uShort2 center, uShort2 subcenter, int prodType,
 }
 
 /* Deal with non-prob templates 2/16/2006 */
-static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
+static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, int prodType,
                           int templat, uChar cat, uChar subcat, sInt4 lenTime,
-                          uChar timeRangeUnit,
+                          uChar timeRangeUnit, uChar statProcessID, 
                           CPL_UNUSED uChar timeIncrType,
                           CPL_UNUSED uChar genID,
                           CPL_UNUSED uChar probType,
@@ -2688,6 +2705,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
    size_t tableLen;
    size_t i;
    sChar f_accum;
+   /* float delt; */
 
    /* Check for over-ride case for ozone.  Originally just for NDFD, but I
     * think it is useful for ozone data that originated elsewhere. */
@@ -2727,8 +2745,8 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                   strcpy (*name, "dusts");
                   *comment = (char *) malloc (strlen ("Surface level dust") + 1);
                   strcpy (*comment, "Surface level dust");
-                  *unit = (char *) malloc (strlen ("[log10(µg/m^3)]") + 1);
-                  strcpy (*unit, "[log10(µg/m^3)]");
+                  *unit = (char *) malloc (strlen ("[log10(10^-6g/m^3)]") + 1);
+                  strcpy (*unit, "[log10(10^-6g/m^3)]");
                   *convert = UC_LOG10;
                   return;
                } else if ((delt <= 5000) && (delt >= -5000)) {
@@ -2736,8 +2754,8 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                   strcpy (*name, "dustc");
                   *comment = (char *) malloc (strlen ("Average vertical column dust") + 1);
                   strcpy (*comment, "Average vertical column dust");
-                  *unit = (char *) malloc (strlen ("[log10(µg/m^3)]") + 1);
-                  strcpy (*unit, "[log10(µg/m^3)]");
+                  *unit = (char *) malloc (strlen ("[log10(10^-6g/m^3)]") + 1);
+                  strcpy (*unit, "[log10(10^-6g/m^3)]");
                   *convert = UC_LOG10;
                   return;
                }
@@ -2750,8 +2768,8 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                   strcpy (*name, "smokes");
                   *comment = (char *) malloc (strlen ("Surface level smoke from fires") + 1);
                   strcpy (*comment, "Surface level smoke from fires");
-                  *unit = (char *) malloc (strlen ("[log10(µg/m^3)]") + 1);
-                  strcpy (*unit, "[log10(µg/m^3)]");
+                  *unit = (char *) malloc (strlen ("[log10(10^-6g/m^3)]") + 1);
+                  strcpy (*unit, "[log10(10^-6g/m^3)]");
                   *convert = UC_LOG10;
                   return;
                } else if ((delt <= 5000) && (delt >= -5000)) {
@@ -2759,8 +2777,8 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
                   strcpy (*name, "smokec");
                   *comment = (char *) malloc (strlen ("Average vertical column smoke from fires") + 1);
                   strcpy (*comment, "Average vertical column smoke from fires");
-                  *unit = (char *) malloc (strlen ("[log10(µg/m^3)]") + 1);
-                  strcpy (*unit, "[log10(µg/m^3)]");
+                  *unit = (char *) malloc (strlen ("[log10(10^-6g/m^3)]") + 1);
+                  strcpy (*unit, "[log10(10^-6g/m^3)]");
                   *convert = UC_LOG10;
                   return;
                }
@@ -2769,8 +2787,13 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
       }
    }
 
-   /* Generic tables. */
-   table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   /* Only look at Generic tables if mstrVersion is not 255. */
+   if (mstrVersion != 255) {
+      table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
+   } else {
+      table = NULL;
+   }
+   
    if (table != NULL) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
@@ -2813,6 +2836,19 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
             }
          }
          if (IsData_NDFD (center, subcenter) || IsData_MOS (center, subcenter)) {
+            if (strcmp (table[subcat].name, "EVP") == 0) {
+               if (statProcessID == 10) {
+                  mallocSprintf (name, "%s%02d", "EvpDep", lenTime);
+                  mallocSprintf (comment, "%02d hr Evapo-Transpiration departure from normal", 
+                                 lenTime);
+               } else {
+                  mallocSprintf (name, "%s%02d", "Evp", lenTime);              
+                  mallocSprintf (comment, "%02d hr Evapo-Transpiration", lenTime);
+               }
+               mallocSprintf (unit, "[%s]", table[subcat].unit);
+               *convert = table[subcat].convert;
+               return;
+            }   
             for (i = 0; i < (sizeof (NDFD_Overide) /
                              sizeof (NDFD_AbrevOverideTable)); i++) {
                if (strcmp (NDFD_Overide[i].GRIB2name, table[subcat].name) ==
@@ -2897,7 +2933,7 @@ static void ElemNameNorm (uShort2 center, uShort2 subcenter, int prodType,
 
    *name = (char *) malloc (strlen ("unknown") + 1);
    strcpy (*name, "unknown");
-   mallocSprintf (comment, "(prodType %d, cat %d, subcat %d) [-]", prodType,
+   mallocSprintf (comment, "(prodType %d, cat %d, subcat %d)", prodType,
                   cat, subcat);
    *unit = (char *) malloc (strlen ("[-]") + 1);
    strcpy (*unit, "[-]");
@@ -2924,22 +2960,22 @@ void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcen
    if ((templat == GS4_PROBABIL_TIME) || (templat == GS4_PROBABIL_PNT)) {
       if (f_isNdfd && (prodType == 0) && (cat == 19)) {
          /* don't use ElemNameProb. */
-         ElemNameNorm (center, subcenter, prodType, templat, cat, subcat,
-                       lenTime, timeRangeUnit, timeIncrType, genID, probType, lowerProb,
+         ElemNameNorm (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
+                       lenTime, timeRangeUnit, statProcessID, timeIncrType, genID, probType, lowerProb,
                        upperProb, name, comment, unit, convert, f_fstValue, fstSurfValue,
                        f_sndValue, sndSurfValue);
 
       } else {
-         ElemNameProb (center, subcenter, prodType, templat, cat, subcat,
+         ElemNameProb (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
                        lenTime, timeRangeUnit, timeIncrType, genID, probType, lowerProb,
                        upperProb, name, comment, unit, convert);
       }
    } else if ((templat == GS4_PERCENT_TIME) || (templat == GS4_PERCENT_PNT)) {
-      ElemNamePerc (center, subcenter, prodType, templat, cat, subcat,
+      ElemNamePerc (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
                     lenTime, timeRangeUnit, percentile, name, comment, unit, convert);
    } else {
-      ElemNameNorm (center, subcenter, prodType, templat, cat, subcat,
-                    lenTime, timeRangeUnit, timeIncrType, genID, probType, lowerProb,
+      ElemNameNorm (mstrVersion, center, subcenter, prodType, templat, cat, subcat,
+                    lenTime, timeRangeUnit, statProcessID, timeIncrType, genID, probType, lowerProb,
                     upperProb, name, comment, unit, convert, f_fstValue, fstSurfValue,
                        f_sndValue, sndSurfValue);
    }
