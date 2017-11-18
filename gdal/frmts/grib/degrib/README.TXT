@@ -25,10 +25,10 @@ Status:
             src/degrib/meta.h
             src/mdl_g2c/engribapi.c
             src/mdl_g2c/engribapi.h
+            src/mdl_g2c/mdl_g2c.h -> grib2api.h
+            src/mdl_g2c/grib2api.c
 
         TODO:
-            src/mdl_g2c/grib2api.h
-            src/mdl_g2c/grib2api.c
             src/degrib/inventory.c
             src/degrib/inventory.h
             src/degrib/metaname.c
