@@ -514,8 +514,13 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
                   for (j=0;j<lgfld->ngrdpts;j++) {
                       if (lgfld->bmap[j]==1)
                       {
-                          /* shouldn't happen given test done before g2_unpack7() */
-                          assert( n < lgfld->ndpts );
+                          if( n >= lgfld->ndpts )
+                          {
+                              printf("g2_getfld: overflow of lgfld->fld array\n");
+                              ierr=14;
+                              free(newfld);
+                              return(ierr);
+                          }
                           newfld[j]=lgfld->fld[n++];
                       }
                   }
