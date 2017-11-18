@@ -284,6 +284,38 @@ def grib_11():
 
     return 'success'
 
+###############################################################################
+# Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
+def grib_online_1():
+
+    jp2drv_found = False
+    for i in range(gdal.GetDriverCount()):
+        if gdal.GetDriver(i).ShortName.startswith('JP2'):
+            jp2drv_found = True
+            break
+    if not jp2drv_found:
+        return 'skip'
+
+    filename = 'CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2'
+    if not gdaltest.download_file('http://download.osgeo.org/gdal/data/grib/' + filename):
+        return 'skip'
+
+    ds = gdal.Open('tmp/cache/' + filename)
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs == 0:
+        gdaltest.post_reason('Could not open file')
+        print(cs)
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1510920000 sec UTC', 'GRIB_VALID_TIME': '  1510923600 sec UTC', 'GRIB_FORECAST_SECONDS': '3600 sec', 'GRIB_UNIT': '[kg/(m^2 s)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '1 7 2 50 50 0 0 0 0 0 0 0 60 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Precipitation rate [kg/(m^2 s)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'PRATE'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     grib_1,
     grib_2,
@@ -295,7 +327,8 @@ gdaltest_list = [
     grib_8,
     grib_9,
     grib_10,
-    grib_11
+    grib_11,
+    grib_online_1
     ]
 
 if __name__ == '__main__':
