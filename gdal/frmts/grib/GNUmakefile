@@ -28,32 +28,32 @@ CPPFLAGS	:=	 $(CPPFLAGS) $(EXTRAFLAGS)
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
 ../o/%.$(OBJ_EXT):	degrib/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib-1.0.4 $< -o $@
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
 
 ../o/%.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	degrib/g2clib-1.0.4/%.c
+../o/%.$(OBJ_EXT):	degrib/g2clib/%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	degrib/g2clib-1.0.4/%.cpp
+../o/%.$(OBJ_EXT):	degrib/g2clib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 %.$(OBJ_EXT):	degrib/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib-1.0.4 $< -o $@
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
 
 %.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	degrib/g2clib-1.0.4/%.c
+%.$(OBJ_EXT):	degrib/g2clib/%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	degrib/g2clib-1.0.4/%.cpp
+%.$(OBJ_EXT):	degrib/g2clib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 defaultold:	$(OBJ:.o=.$(OBJ_EXT))
 	(cd degrib/degrib; $(MAKE)); cd ../..
-	(cd degrib/g2clib-1.0.4; $(MAKE))
+	(cd degrib/g2clib; $(MAKE))
 clean:
 	rm -f *.o $(O_OBJ)
 
