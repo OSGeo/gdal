@@ -318,6 +318,9 @@ int OGRMDBJavaEnv::Init()
         jvm = jvm_static;
     }
 
+    if( jvm == NULL )
+        return FALSE;
+
     if (jvm->GetEnv((void **)&env, JNI_VERSION_1_2) == JNI_EDETACHED )
     {
         jvm->AttachCurrentThread((void **)&env, NULL);
