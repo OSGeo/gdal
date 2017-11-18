@@ -285,6 +285,31 @@ def grib_11():
     return 'success'
 
 ###############################################################################
+# GRIB2 file with all 0 data
+
+def grib_12():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    # From http://dd.weather.gc.ca/model_wave/great_lakes/erie/grib2/00/CMC_rdwps_lake-erie_ICEC_SFC_0_latlon0.05x0.05_2017111800_P000.grib2
+    ds = gdal.Open('data/CMC_rdwps_lake-erie_ICEC_SFC_0_latlon0.05x0.05_2017111800_P000.grib2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 0:
+        gdaltest.post_reason('Could not open file')
+        print(cs)
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1510963200 sec UTC', 'GRIB_VALID_TIME': '  1510963200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[Proportion]', 'GRIB_PDS_TEMPLATE_NUMBERS': '2 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Ice cover [Proportion]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'ICEC'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 def grib_online_1():
 
@@ -328,6 +353,7 @@ gdaltest_list = [
     grib_9,
     grib_10,
     grib_11,
+    grib_12,
     grib_online_1
     ]
 
