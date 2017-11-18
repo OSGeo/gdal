@@ -205,7 +205,9 @@ typedef struct gribfield gribfield;
 #define G2_UNKNOWN_SIZE -1
 
 /*  Prototypes for unpacking API  */
+#if 0
 void seekgb(FILE *,g2int ,g2int ,g2int *,g2int *);
+#endif
 g2int g2_info(unsigned char *,g2int *,g2int *,g2int *,g2int *);
 g2int g2_getfld(unsigned char *,g2int cgrib_length,g2int ,g2int ,g2int ,gribfield **);
 void g2_free(gribfield *);
