@@ -492,7 +492,7 @@ int myGlob (CPL_UNUSED const char *dirName,
             CPL_UNUSED char ***Argv)
 {
 return 0; // TODO: reimplement for Win32
-/*
+#if 0
    size_t argc = 0;     // Local copy of Argc
    char **argv = NULL;  // Local copy of Argv
    struct dirent *dp;
@@ -505,7 +505,7 @@ return 0; // TODO: reimplement for Win32
       return -1;
 
    while ((dp = readdir (dir)) != NULL) {
-      // Skip self and parent.
+      /* Skip self and parent. */
       if (strcmp (dp->d_name, ".") == 0 || strcmp (dp->d_name, "..") == 0)
          continue;
       if (FileMatch (dp->d_name, filter)) {
@@ -520,7 +520,7 @@ return 0; // TODO: reimplement for Win32
    *Argc = argc;
    *Argv = argv;
    return 0;
-*/
+#endif
 }
 #endif
 
@@ -692,9 +692,8 @@ double myRound (double data, uChar place)
  */
 void strTrim (char *str)
 {
-   size_t i;            /* loop counter for traversing str. */
-   size_t len;          /* The length of str. */
    char *ptr;           /* Pointer to where first non-white space is. */
+   char *ptr2;          /* Pointer to just past last non-white space. */
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);
@@ -702,23 +701,22 @@ void strTrim (char *str)
       return;
    }
 
-   /* Remove the trailing white space before working on the leading ones. */
-   len = strlen (str);
-   if (len == 0) {
-       return;
+   /* Trim the string to the left first. */
+   for (ptr = str; isspace (*ptr); ptr++) {
    }
-   for (i = len - 1; i > 0 && isspace ((unsigned char)str[i]); i--) {
+   /* Did we hit the end of an all space string? */
+   if (*ptr == '\0') {
+      *str = '\0';
+      return;
    }
-   if (i == 0 && str[i] == ' ') {
-       str[0] = '\0';
-       return;
-   }
-   len = i + 1;
-   str[len] = '\0';
 
-   /* Find first non-white space char. */
-   for (ptr = str; (*ptr != '\0') && (isspace ((unsigned char)*ptr)); ptr++) {
+   /* now work on the right side. */
+   for (ptr2 = ptr + (strlen (ptr) - 1); isspace (*ptr2); ptr2--) {
    }
+
+   /* adjust the pointer to add the null byte. */
+   ptr2++;
+   *ptr2 = '\0';
 
    if (ptr != str) {
       /* Can't do a strcpy here since we don't know that they start at left
@@ -751,20 +749,16 @@ void strTrim (char *str)
  */
 void strTrimRight (char *str, char c)
 {
-   size_t i;            /* loop counter for traversing str. */
-   const size_t len = str == NULL ? 0 : strlen(str);
+   int i;               /* loop counter for traversing str. */
 
    /* str shouldn't be null, but if it is, we want to handle it. */
    myAssert (str != NULL);
-   if (len == 0) {
+   if (str == NULL) {
       return;
    }
 
    for (i = strlen (str) - 1;
-        i > 0 && (isspace ((unsigned char)str[i]) || str[i] == c); i--) {
-   }
-   if (i == 0 && (isspace ((unsigned char)str[i]) || str[i] == c)) {
-     str[i] = '\0';
+        ((i >= 0) && (((unsigned char)isspace (str[i])) || (str[i] == c))); i--) {
    }
    str[i + 1] = '\0';
 }
@@ -1008,7 +1002,7 @@ int strcmpNoCase (const char *str1, const char *str2)
  * Arthur Taylor / MDL
  *
  * PURPOSE
- *   Looks through a list of strings (with a NUL value at the end) for a
+ *   Looks through a list of strings (with a NULL value at the end) for a
  * given string.  Returns the index where it found it.
  *
  * ARGUMENTS

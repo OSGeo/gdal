@@ -54,7 +54,7 @@
  *  scan & GRIB2BIT_4 => adjacent rows scan in opposite directions.
  *****************************************************************************
  */
-void ScanIndex2XY (sInt4 row, sInt4 * X, sInt4 * Y, uChar scan, sInt4 Nx,
+void ScanIndex2XY (sInt4 row, sInt4 *X, sInt4 *Y, uChar scan, sInt4 Nx,
                    sInt4 Ny)
 {
    sInt4 x;             /* local copy of x */
@@ -122,7 +122,7 @@ void ScanIndex2XY (sInt4 row, sInt4 * X, sInt4 * Y, uChar scan, sInt4 Nx,
  *  scan & GRIB2BIT_4 => adjacent rows scan in opposite directions.
  *****************************************************************************
  */
-void XY2ScanIndex (sInt4 * Row, sInt4 x, sInt4 y, uChar scan, sInt4 Nx,
+void XY2ScanIndex (sInt4 *Row, sInt4 x, sInt4 y, uChar scan, sInt4 Nx,
                    sInt4 Ny)
 {
    sInt4 row;           /* local copy of row */

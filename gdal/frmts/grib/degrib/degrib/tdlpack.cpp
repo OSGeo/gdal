@@ -47,7 +47,7 @@ static const TDLP_TableType TDLP_V_Table[4] = {
 };
 
 static const TDLP_TableType TDLP_T_Table[3] = {
-   /* 0 */ {0, "No nolinear transform"},  // TODO: "No no"?
+   /* 0 */ {0, "No nolinear transform"},
    /* 1 */ {1, "Square transform"},
    /* 2 */ {2, "Square root transform"},
 };
@@ -4209,10 +4209,7 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
 
    /* --- Start Writing record. --- */
    /* First write FORTRAN record information */
-   const size_t read_size = fread(&(recSize), sizeof (sInt4), 1, fp);
-   if (read_size != 1) {
-     fprintf(stderr, "WARNING: tdlpack.cpp read of recSize failed.\n");
-   }
+   FWRITE_BIG (&(recSize), sizeof (sInt4), 1, fp);
    li_temp = 0;
    FWRITE_BIG (&(li_temp), sizeof (sInt4), 1, fp);
    li_temp = recSize - 8; /* FORTRAN rec length. */
