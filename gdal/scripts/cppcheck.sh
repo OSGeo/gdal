@@ -170,9 +170,9 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib/g2clib-1.0.4" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib/g2clib-1.0.4 ignored"
+grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib/g2clib" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib/g2clib ignored"
 
-grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib/g2clib-1.0.4"
+grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib/g2clib"
 if [[ $? -eq 0 ]] ; then
     echo "uninitdata check failed"
     ret_code=1
@@ -424,7 +424,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib/g2clib-1.0.4 | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng
+grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib/g2clib | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignment check failed"
     ret_code=1
@@ -465,7 +465,7 @@ grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2159,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2208,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
-    grep -v "frmts/grib/degrib/g2clib-1.0.4" | \
+    grep -v "frmts/grib/degrib/g2clib" | \
     grep -v "is invalid C code"
 
 if [[ $? -eq 0 ]] ; then
