@@ -39,7 +39,7 @@ my $setup = {
             "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
             "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
             "-oo OffsetsPositive=TRUE -oo NrOffsets=2 -oo NoGridAxisSwap=TRUE",
-            "-oo GridAxisLabelSwap=TRUE",
+            "",
             ],
         Projwin => "-projwin 10 45 15 35",
         Outsize => "-outsize $size 0",

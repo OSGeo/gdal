@@ -43,6 +43,8 @@
 #include "wcsdataset.h"
 #include "wcsutils.h"
 
+using namespace WCSUtils;
+
 /************************************************************************/
 /*                         GetExtent()                                  */
 /*                                                                      */
@@ -113,7 +115,7 @@ std::vector<double> WCSDataset110::GetExtent(int nXOff, int nYOff,
 
 CPLString WCSDataset110::GetCoverageRequest(bool scaled,
                                             CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize,
-                                            std::vector<double> extent,
+                                            const std::vector<double> &extent,
                                             CPLString osBandList)
 {
     CPLString osRequest, osRangeSubset;
@@ -158,9 +160,9 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
         bbox_3 = extent[3]; // max Y
 
     if (axis_order_swap) {
-        bbox_0 = extent[1], // min Y
-        bbox_1 = extent[0], // min X
-        bbox_2 = extent[3], // max Y
+        bbox_0 = extent[1]; // min Y
+        bbox_1 = extent[0]; // min X
+        bbox_2 = extent[3]; // max Y
         bbox_3 = extent[2]; // max X
     }
     CPLString request = CPLGetXMLValue( psService, "ServiceURL", "" );

@@ -2,7 +2,7 @@
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of utilities.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Ari Jolma <ari dot jolma at gmail dot com>
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam
@@ -33,46 +33,48 @@
 #include "cpl_minixml.h"
 #include <vector>
 
+namespace WCSUtils {
+
 void Swap(double &a, double &b);
 
 CPLString URLEncode(CPLString str);
 
-CPLString URLRemoveKey(const char *url, CPLString key);
+CPLString URLRemoveKey(const char *url, const CPLString &key);
 
-std::vector<CPLString> SwapFirstTwo(std::vector<CPLString> array);
+std::vector<CPLString> &SwapFirstTwo(std::vector<CPLString> &array);
 
 std::vector<CPLString> Split(const char *value,
                              const char *delim,
                              bool swap_the_first_two = false);
 
-CPLString Join(std::vector<CPLString> array,
+CPLString Join(const std::vector<CPLString> &array,
                const char *delim,
                bool swap_the_first_two = false);
 
-std::vector<int> Ilist(std::vector<CPLString> array,
+std::vector<int> Ilist(const std::vector<CPLString> &array,
                        unsigned int from = 0,
                        size_t count = std::string::npos);
 
-std::vector<double> Flist(std::vector<CPLString> array,
+std::vector<double> Flist(const std::vector<CPLString> &array,
                           unsigned int from = 0,
                           size_t count = std::string::npos);
 
-int IndexOf(CPLString str, std::vector<CPLString> array); // index of str in array
+int IndexOf(CPLString str, const std::vector<CPLString> &array); // index of str in array
 int IndexOf(int i, std::vector<int> array);
 
-std::vector<int> IndexOf(std::vector<CPLString> strs, std::vector<CPLString> array); // index of strs in array
+std::vector<int> IndexOf(const std::vector<CPLString> &strs,
+                         const std::vector<CPLString> &array); // index of strs in array
 
-bool Contains(std::vector<int> array, int value);
+bool Contains(const std::vector<int> &array, int value);
 
-CPLString FromParenthesis(CPLString s);
+CPLString FromParenthesis(const CPLString &s);
 
-std::vector<CPLString> ParseSubset(std::vector<CPLString>
-                                   subset_array,
-                                   CPLString dim);
+std::vector<CPLString> ParseSubset(const std::vector<CPLString> &subset_array,
+                                   const CPLString &dim);
 
-bool FileIsReadable(CPLString filename);
+bool FileIsReadable(const CPLString &filename);
 
-bool MakeDir(CPLString dirname);
+bool MakeDir(const CPLString &dirname);
 
 CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value);
 
@@ -83,33 +85,36 @@ bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value
 bool SetupCache(CPLString &cache_dir,
                 bool clear);
 
-bool DeleteEntryFromCache(CPLString cache_dir,
-                          CPLString  key,
-                          CPLString value);
+bool DeleteEntryFromCache(const CPLString &cache_dir,
+                          const CPLString &key,
+                          const CPLString &value);
 
-int FromCache(CPLString cache_dir,
-              CPLString &filename,
-              CPLString url);
+bool FromCache(const CPLString &cache_dir,
+               CPLString &filename,
+               const CPLString &url,
+               bool &found);
 
 CPLXMLNode *AddSimpleMetaData(char ***metadata,
                               CPLXMLNode *node,
                               CPLString &path,
-                              CPLString from,
-                              std::vector<CPLString> keys);
+                              const CPLString &from,
+                              const std::vector<CPLString> &keys);
 
 CPLString GetKeywords(CPLXMLNode *root,
-                      CPLString path,
-                      CPLString kw);
+                      const CPLString &path,
+                      const CPLString &kw);
 
 CPLString ParseCRS(CPLXMLNode *node);
 
-bool CRS2Projection(CPLString crs,
+bool CRS2Projection(const CPLString &crs,
                     OGRSpatialReference *sr,
                     char **projection);
 
-bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection = NULL);
+bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection = NULL);
     
 std::vector<std::vector<int> > ParseGridEnvelope(CPLXMLNode *node,
                                                 bool swap_the_first_two = false);
 
 std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node);
+
+}

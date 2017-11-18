@@ -35,9 +35,12 @@
 /* ==================================================================== */
 /************************************************************************/
 
+#include "cpl_string.h"
+#include "gdal_pam.h"
+
 class WCSRasterBand;
 
-class CPL_DLL WCSDataset : public GDALPamDataset
+class WCSDataset : public GDALPamDataset
 {
   friend class WCSRasterBand;
   friend class WCSDataset100;
@@ -91,7 +94,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
 
     virtual CPLString   GetCoverageRequest( bool scaled,
                                             int nBufXSize, int nBufYSize,
-                                            std::vector<double> extent,
+                                            const std::vector<double> &extent,
                                             CPLString osBandList) = 0;
 
     CPLErr      GetCoverage( int nXOff, int nYOff,
@@ -145,14 +148,14 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     virtual char **GetMetadata( const char *pszDomain ) override;
 };
 
-class CPL_DLL WCSDataset100 : public WCSDataset
+class WCSDataset100 : public WCSDataset
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,
                                   int nBufXSize, int nBufYSize) override;
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
-                                    std::vector<double> extent,
+                                    const std::vector<double> &extent,
                                     CPLString osBandList) override;
     CPLString   DescribeCoverageRequest() override;
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
@@ -165,14 +168,14 @@ class CPL_DLL WCSDataset100 : public WCSDataset
     WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
 };
 
-class CPL_DLL WCSDataset110 : public WCSDataset
+class WCSDataset110 : public WCSDataset
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,
                                   int nBufXSize, int nBufYSize) override;
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
-                                    std::vector<double> extent,
+                                    const std::vector<double> &extent,
                                     CPLString osBandList) override;
     CPLString   DescribeCoverageRequest() override;
     CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) override;
@@ -185,18 +188,18 @@ class CPL_DLL WCSDataset110 : public WCSDataset
     WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {}
 };
 
-class CPL_DLL WCSDataset201 : public WCSDataset110
+class WCSDataset201 : public WCSDataset110
 {
     std::vector<double> GetExtent(int nXOff, int nYOff,
                                   int nXSize, int nYSize,
                                   int nBufXSize, int nBufYSize) override;
-    CPLString   GetSubdataset(CPLString coverage);
+    CPLString   GetSubdataset(const CPLString &coverage);
     bool        SetFormat(CPLXMLNode *coverage);
     static bool ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder);
     int         ParseRange(CPLXMLNode *coverage, char ***metadata);
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
-                                    std::vector<double> extent,
+                                    const std::vector<double> &extent,
                                     CPLString osBandList) override;
     CPLString   DescribeCoverageRequest() override;
     bool        GridOffsets(CPLXMLNode *grid,

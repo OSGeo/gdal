@@ -42,7 +42,7 @@
 #include "wcsrasterband.h"
 #include "wcsutils.h"
 
-CPL_CVSID("$Id: wcsdataset.cpp 39343 2017-06-27 20:57:02Z rouault $")
+using namespace WCSUtils;
 
 /************************************************************************/
 /*                             WCSDataset()                             */
@@ -878,14 +878,17 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
         return NULL;
     }
     CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
+    CPLHTTPDestroyResult(psResult);
     if (doc.get() == NULL) {
-        CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    // to avoid hardcoding the name of the Capabilities element
-    // we assume it is the next of the possible <?xml> element
     CPLXMLNode *capabilities = doc.get();
-    if (EQUAL(capabilities->pszValue, "?xml")) {
+    // to avoid hardcoding the name of the Capabilities element
+    // we skip the Declaration and assume the next is the body
+    while (capabilities != NULL
+           && (capabilities->eType != CXT_Element
+               || capabilities->pszValue[0] == '?') )
+    {
         capabilities = capabilities->psNext;
     }
     // get version
@@ -912,7 +915,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
         delete poDS;
         return NULL;
     }
-    CPLHTTPDestroyResult(psResult);
     poDS->SetDescription(path);
     poDS->TrySaveXML();
     return poDS;
@@ -978,20 +980,29 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
 
 // master filename is the capabilities basename
 // filename is the subset/coverage basename
-static void CreateServiceMetadata(CPLString coverage, CPLString master_filename, CPLString filename)
+static void CreateServiceMetadata(const CPLString &coverage,
+                                  CPLString master_filename,
+                                  CPLString filename)
 {
     master_filename += ".aux.xml";
     filename += ".aux.xml";
 
-    CPLXMLNode *metadata = CPLParseXMLFile(master_filename);
-    // remove other subdataset than the current
+    CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
+    CPLXMLNode *metadata = doc.get();
+    // remove other subdatasets than the current
     int subdataset = 0;
     CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+    if (domain == NULL) {
+        return;
+    }
     for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
         if (node->eType != CXT_Element) {
             continue;
         }
         CPLString key = CPLGetXMLValue(node, "key", "");
+        if (!STARTS_WITH(key, "SUBDATASET_")) {
+            continue;
+        }
         CPLString value = CPLGetXMLValue(node, NULL, "");
         if (value.find(coverage) != std::string::npos) {
             key.erase(0, 11); // SUBDATASET_
@@ -1021,9 +1032,9 @@ static void CreateServiceMetadata(CPLString coverage, CPLString master_filename,
 /*                          CreateService()                             */
 /************************************************************************/
 
-static CPLXMLNode *CreateService(CPLString base_url,
-                                 CPLString version,
-                                 CPLString coverage)
+static CPLXMLNode *CreateService(const CPLString &base_url,
+                                 const CPLString &version,
+                                 const CPLString &coverage)
 {
     // construct WCS_GDAL XML into psService
     CPLString xml = "<WCS_GDAL>";
@@ -1156,8 +1167,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         // Capabilities (.xml) and PAM metadata file (.aux.xml)
         // or DescribeCoverage (.DC.xml) and WCS_GDAL (.xml)
         CPLString filename;
-        int cached = FromCache(cache, filename, url);
-        if (cached == -1) { // error
+        bool cached;
+        if (!FromCache(cache, filename, url, cached)) { // error
             return NULL;
         }
         cached = cached && FileIsReadable(filename + ".xml");
@@ -1190,7 +1201,10 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             CPLString pam_url = URLRemoveKey(url, "coverage");
             CPLString pam_filename;
-            bool pam_in_cache = FromCache(cache, pam_filename, pam_url) != 1;
+            bool pam_in_cache;
+            if (!FromCache(cache, pam_filename, pam_url, pam_in_cache)) {
+                return NULL;
+            }
 
             // even if we have coverage we need global PAM metadata
             // if we don't have it we need to create it

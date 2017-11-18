@@ -2,7 +2,7 @@
  *
  * Project:  WCS Client Driver
  * Purpose:  Implementation of utilities.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Ari Jolma <ari dot jolma at gmail dot com>
  *
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam
@@ -35,6 +35,8 @@
 
 #define DIGITS "0123456789"
 
+namespace WCSUtils {
+
 void Swap(double &a, double &b)
 {
     double tmp = a;
@@ -50,12 +52,12 @@ CPLString URLEncode(CPLString str)
     return str2;
 }
 
-CPLString URLRemoveKey(const char *url, CPLString key)
+CPLString URLRemoveKey(const char *url, const CPLString &key)
 {
     CPLString retval = url;
-    key += "=";
+    CPLString key_is = key + "=";
     while (true) {
-        size_t pos = retval.ifind(key);
+        size_t pos = retval.ifind(key_is);
         if (pos != std::string::npos) {
             size_t end = retval.find("&", pos);
             retval.erase(pos, end - pos + 1);
@@ -69,7 +71,7 @@ CPLString URLRemoveKey(const char *url, CPLString key)
     return retval;
 }
 
-std::vector<CPLString> SwapFirstTwo(std::vector<CPLString> array)
+std::vector<CPLString> &SwapFirstTwo(std::vector<CPLString> &array)
 {
     if (array.size() >= 2) {
         CPLString tmp = array[0];
@@ -96,7 +98,7 @@ std::vector<CPLString> Split(const char *value, const char *delim, bool swap_the
     return array;
 }
 
-CPLString Join(std::vector<CPLString> array, const char *delim, bool swap_the_first_two)
+CPLString Join(const std::vector<CPLString> &array, const char *delim, bool swap_the_first_two)
 {
     CPLString str;
     for (unsigned int i = 0; i < array.size(); ++i) {
@@ -116,7 +118,7 @@ CPLString Join(std::vector<CPLString> array, const char *delim, bool swap_the_fi
     return str;
 }
 
-std::vector<int> Ilist(std::vector<CPLString> array,
+std::vector<int> Ilist(const std::vector<CPLString> &array,
                        unsigned int from,
                        size_t count)
 {
@@ -127,7 +129,7 @@ std::vector<int> Ilist(std::vector<CPLString> array,
     return retval;
 }
 
-std::vector<double> Flist(std::vector<CPLString> array,
+std::vector<double> Flist(const std::vector<CPLString> &array,
                           unsigned int from,
                           size_t count)
 {
@@ -138,7 +140,7 @@ std::vector<double> Flist(std::vector<CPLString> array,
     return retval;
 }
 
-int IndexOf(CPLString str, std::vector<CPLString> array)
+int IndexOf(CPLString str, const std::vector<CPLString> &array)
 {
     int index = -1;
     for (unsigned int i = 0; i < array.size(); ++i) {
@@ -162,7 +164,7 @@ int IndexOf(int i, std::vector<int> array)
     return index;
 }
 
-std::vector<int> IndexOf(std::vector<CPLString> strs, std::vector<CPLString> array)
+std::vector<int> IndexOf(const std::vector<CPLString> &strs, const std::vector<CPLString> &array)
 {
     std::vector<int> retval;
     for (unsigned int i = 0; i < strs.size(); ++i) {
@@ -171,7 +173,7 @@ std::vector<int> IndexOf(std::vector<CPLString> strs, std::vector<CPLString> arr
     return retval;
 }
 
-bool Contains(std::vector<int> array, int value)
+bool Contains(const std::vector<int> &array, int value)
 {
     for (unsigned int i = 0; i < array.size(); ++i) {
         if (array[i] == value) {
@@ -181,7 +183,7 @@ bool Contains(std::vector<int> array, int value)
     return false;
 }
 
-CPLString FromParenthesis(CPLString s)
+CPLString FromParenthesis(const CPLString &s)
 {
     size_t beg = s.find_first_of("(");
     size_t end = s.find_last_of(")");
@@ -191,7 +193,7 @@ CPLString FromParenthesis(CPLString s)
     return s.substr(beg + 1, end - beg - 1);
 }
 
-std::vector<CPLString> ParseSubset(std::vector<CPLString> subset_array, CPLString dim)
+std::vector<CPLString> ParseSubset(const std::vector<CPLString> &subset_array, const CPLString &dim)
 {
     // array is SUBSET defs, a SUBSET def is dim[,crs](low[,high])
     std::vector<CPLString> retval;
@@ -228,7 +230,7 @@ std::vector<CPLString> ParseSubset(std::vector<CPLString> subset_array, CPLStrin
 /*      FileIsReadable                                                  */
 /* -------------------------------------------------------------------- */
 
-bool FileIsReadable(CPLString filename)
+bool FileIsReadable(const CPLString &filename)
 {
     VSILFILE *file = VSIFOpenL(filename, "r");
     if (file) {
@@ -242,7 +244,7 @@ bool FileIsReadable(CPLString filename)
 /*      MakeDir                                                         */
 /* -------------------------------------------------------------------- */
 
-bool MakeDir(CPLString dirname)
+bool MakeDir(const CPLString &dirname)
 {
     VSIStatBufL stat;
     if (VSIStatL(dirname, &stat) != 0) {
@@ -296,6 +298,7 @@ bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value
 
 /* -------------------------------------------------------------------- */
 /*      SetupCache                                                      */
+/*      Cache is a directory                                            */
 /* -------------------------------------------------------------------- */
 
 bool SetupCache(CPLString &cache_dir, bool clear)
@@ -329,7 +332,7 @@ bool SetupCache(CPLString &cache_dir, bool clear)
         char **folder = VSIReadDir(cache_dir);
         int size = folder ? CSLCount(folder) : 0;
         for (int i = 0; i < size; i++) {
-            if (*folder[i] == '.') {
+            if (folder[i][0] == '.') {
                 continue;
             }
             CPLString filepath = CPLFormFilename(cache_dir, folder[i], NULL);
@@ -342,9 +345,15 @@ bool SetupCache(CPLString &cache_dir, bool clear)
 
 /* -------------------------------------------------------------------- */
 /*      DeleteEntryFromCache                                            */
+/*      Examines the 'db' file in the cache, which contains             */
+/*      unique key=value pairs, one per line. This function             */
+/*      deletes pairs based on the given key and/or value.              */
+/*      If key or value is empty it is not considered.                  */
+/*      The key is taken as a basename of a file in the cache           */
+/*      and all files with the basename is deleted.                     */
 /* -------------------------------------------------------------------- */
 
-bool DeleteEntryFromCache(CPLString cache_dir, CPLString  key, CPLString value)
+bool DeleteEntryFromCache(const CPLString &cache_dir, const CPLString &key, const CPLString &value)
 {
     // depending on which one of key & value is not "" delete the relevant entry
     CPLString db_name = CPLFormFilename(cache_dir, "db", NULL);
@@ -379,7 +388,7 @@ bool DeleteEntryFromCache(CPLString cache_dir, CPLString  key, CPLString value)
         char **folder = VSIReadDir(cache_dir);
         int size = folder ? CSLCount(folder) : 0;
         for (int i = 0; i < size; i++) {
-            if (*folder[i] == '.') {
+            if (folder[i][0] == '.') {
                 continue;
             }
             CPLString name = folder[i];
@@ -395,11 +404,17 @@ bool DeleteEntryFromCache(CPLString cache_dir, CPLString  key, CPLString value)
 
 /* -------------------------------------------------------------------- */
 /*      FromCache                                                       */
+/*      The key,value pairs in the cache index file 'db' is searched    */
+/*      for the first pair, where the value is the given url. If one    */
+/*      is found, the filename is formed from the cache directory name  */
+/*      and the key. If one is not found, a new unique key is generated */
+/*      and inserted into the index file; and the filename is formed    */
+/*      from the cache directory name and the key.                      */
 /* -------------------------------------------------------------------- */
 
-int FromCache(CPLString cache_dir, CPLString &filename, CPLString url)
+bool FromCache(const CPLString &cache_dir, CPLString &filename, const CPLString &url, bool &found)
 {
-    int retval = 0;
+    found = false;
     CPLString db_name = CPLFormFilename(cache_dir, "db", NULL);
     VSILFILE *db = VSIFOpenL(db_name, "r");
     if (db) {
@@ -412,17 +427,17 @@ int FromCache(CPLString cache_dir, CPLString &filename, CPLString url)
             }
             if (strcmp(url, value + 1) == 0) {
                 filename = line;
-                retval = 1;
+                found = true;
                 break;
             }
         }
         VSIFCloseL(db);
     }
-    if (retval == 0) {
+    if (!found) {
         db = VSIFOpenL(db_name, "a");
         if (!db) {
             CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db_name.c_str(), errno);
-            return -1;
+            return false;
         }
         // using tempnam is not a good solution
         char *path = tempnam(cache_dir, "");
@@ -433,14 +448,18 @@ int FromCache(CPLString cache_dir, CPLString &filename, CPLString url)
         VSIFCloseL(db);
     }
     filename = CPLFormFilename(cache_dir, filename, NULL);
-    return retval;
+    return true;
 }
 
+// steps into element 'from' and adds values of elements 'keys' into the metadata
+// 'path' is the key that is used for metadata and it is appended with 'from'
+// path may be later used to get metadata from elements below 'from' so
+// it is returned in the appended form
 CPLXMLNode *AddSimpleMetaData(char ***metadata,
                               CPLXMLNode *node,
                               CPLString &path,
-                              CPLString from,
-                              std::vector<CPLString> keys)
+                              const CPLString &from,
+                              const std::vector<CPLString> &keys)
 {
     CPLXMLNode *node2 = CPLGetXMLNode(node, from);
     if (node2) {
@@ -459,8 +478,8 @@ CPLXMLNode *AddSimpleMetaData(char ***metadata,
 }
 
 CPLString GetKeywords(CPLXMLNode *root,
-                      CPLString path,
-                      CPLString kw)
+                      const CPLString &path,
+                      const CPLString &kw)
 {
     CPLString words = "";
     CPLXMLNode *keywords = (path != "") ? CPLGetXMLNode(root, path) : root;
@@ -585,7 +604,7 @@ CPLString ParseCRS(CPLXMLNode *node)
 // if appropriate, try to create WKT description from CRS name
 // return false if failure
 // appropriate means, that the name is a real CRS
-bool CRS2Projection(CPLString crs, OGRSpatialReference *sr, char **projection)
+bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projection)
 {
     if (*projection != NULL) {
         CPLFree(projection);
@@ -604,29 +623,30 @@ bool CRS2Projection(CPLString crs, OGRSpatialReference *sr, char **projection)
         // not a map projection
         return true;
     }
+    CPLString crs2 = crs;
     // rasdaman uses urls, which return gml:ProjectedCRS XML, which is not recognized by GDAL currently
-    if (crs.find("EPSG") != std::string::npos) { // ...EPSG...(\d+)
-        size_t pos1 = crs.find_last_of(DIGITS);
+    if (crs2.find("EPSG") != std::string::npos) { // ...EPSG...(\d+)
+        size_t pos1 = crs2.find_last_of(DIGITS);
         if (pos1 != std::string::npos) {
             size_t pos2 = pos1 - 1;
-            char c = crs.at(pos2);
+            char c = crs2.at(pos2);
             while (strchr(DIGITS, c)) {
                 pos2 = pos2 - 1;
-                c = crs.at(pos2);
+                c = crs2.at(pos2);
             }
-            crs = "EPSGA:" + crs.substr(pos2 + 1, pos1 - pos2);
+            crs2 = "EPSGA:" + crs2.substr(pos2 + 1, pos1 - pos2);
         }
     }
     OGRSpatialReference local_sr;
     OGRSpatialReference *sr_pointer = sr != NULL ? sr : &local_sr;
-    if (sr_pointer->SetFromUserInput(crs) == OGRERR_NONE) {
+    if (sr_pointer->SetFromUserInput(crs2) == OGRERR_NONE) {
         sr_pointer->exportToWkt(projection);
         return true;
     }
     return false;
 }
 
-bool CRSImpliesAxisOrderSwap(CPLString crs, bool &swap, char **projection)
+bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection)
 {
     OGRSpatialReference oSRS;
     char *tmp = NULL;
@@ -696,4 +716,6 @@ std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node)
         bbox.push_back(uc);
     }
     return bbox;
+}
+
 }

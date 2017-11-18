@@ -43,6 +43,8 @@
 #include "wcsdataset.h"
 #include "wcsutils.h"
 
+using namespace WCSUtils;
+
 /************************************************************************/
 /*                         GetExtent()                                  */
 /*                                                                      */
@@ -50,7 +52,7 @@
 
 std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
                                              int nXSize, int nYSize,
-                                             CPL_UNUSED int nBufXSize, CPL_UNUSED int nBufYSize)
+                                             CPL_UNUSED int, CPL_UNUSED int)
 {
     std::vector<double> extent;
     // WCS 1.0 extents are the outer edges of outer pixels.
@@ -72,7 +74,7 @@ std::vector<double> WCSDataset100::GetExtent(int nXOff, int nYOff,
 
 CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                              int nBufXSize, int nBufYSize,
-                                             std::vector<double> extent,
+                                             const std::vector<double> &extent,
                                              CPLString osBandList )
 {
 
