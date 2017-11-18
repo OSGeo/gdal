@@ -186,7 +186,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     if (axis_order_swap) {
         origin_1 = extent[3]; // max Y
         origin_2 = extent[0]; // min X
-        offset_1 = extent[5], // dY
+        offset_1 = extent[5]; // dY
         offset_2 = extent[4]; // dX
     }
     CPLString offsets;
