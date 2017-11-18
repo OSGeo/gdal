@@ -376,17 +376,17 @@ static int GRIB2SectJump (DataSource &fp,
    if (*sect == -1) {
       *sect = sectNum;
    } else if (sectNum != *sect) {
-       errSprintf ("ERROR: Section %d mislabeled\n", *sect);
-       return -2;
+      errSprintf ("ERROR: Section %d mislabeled\n", *sect);
+      return -2;
    }
    /* Since fseek does not give an error if we jump outside the file, we test
     * it by using fgetc / ungetc. */
    fp.DataSourceFseek (*secLen - 5, SEEK_CUR);
    if ((c = fp.DataSourceFgetc()) == EOF) {
-       errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
-       return -1;
+      errSprintf ("ERROR: Ran out of file in Section %d\n", *sect);
+      return -1;
    } else {
-       fp.DataSourceUngetc(c);
+      fp.DataSourceUngetc(c);
    }
    return 0;
 }
@@ -504,22 +504,24 @@ static int GRIB2Inventory2to7 (sChar sectNum, DataSource &fp, sInt4 gribLen,
    }
 /*
 enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
-   GS4_STATISTIC = 8, GS4_PROBABIL_TIME = 9, GS4_PERCENTILE = 10,
-   GS4_RADAR = 20, GS4_SATELLITE = 30, GS4_SATELLITE_SYNTHETIC = 32
+   GS4_PERCENT_PNT, GS4_STATISTIC = 8, GS4_PROBABIL_TIME = 9,
+   GS4_PERCENT_TIME = 10, GS4_RADAR = 20, GS4_SATELLITE = 30
 };
 */
    /* Parse the interesting data out of sect 4. */
    MEMCPY_BIG (&templat, *buffer + 8 - 5, sizeof (short int));
    if ((templat != GS4_ANALYSIS) && (templat != GS4_ENSEMBLE)
        && (templat != GS4_DERIVED)
-       && (templat != GS4_PROBABIL_PNT) && (templat != GS4_STATISTIC)
+       && (templat != GS4_PROBABIL_PNT) && (templat != GS4_PERCENT_PNT)
+       && (templat != GS4_ERROR)
+       && (templat != GS4_STATISTIC)
        && (templat != GS4_PROBABIL_TIME) && (templat != GS4_PERCENT_TIME)
        && (templat != GS4_ENSEMBLE_STAT)
        && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_SATELLITE_SYNTHETIC)
        && (templat != GS4_DERIVED_INTERVAL)) {
-      errSprintf ("This was only designed for templates 0, 1, 2, 5, 8, 9, "
+      errSprintf ("This was only designed for templates 0, 1, 2, 5, 6, 7, 8, 9, "
                   "10, 11, 12, 15, 20, 30, 32. Template found = %d\n", templat);
       return -8;
    }
@@ -559,13 +561,20 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             if( *buffLen < 44 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
-            factor = (sChar) (*buffer)[38 - 5];
+            factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
             MEMCPY_BIG (&value, *buffer + 39 - 5, sizeof (sInt4));
+            value = sbit_2Comp_fourByte(value);
             lowerProb = value * pow (10.0, -1 * factor);
-            factor = (sChar) (*buffer)[43 - 5];
+            factor = sbit_2Comp_oneByte((sChar) (*buffer)[43 - 5]);
             MEMCPY_BIG (&value, *buffer + 44 - 5, sizeof (sInt4));
+            value = sbit_2Comp_fourByte(value);
             upperProb = value * pow (10.0, -1 * factor);
             break;
+
+         case GS4_PERCENT_PNT: /* 4.6 */
+            percentile = (*buffer)[35 - 5];
+            break;
+
          case GS4_DERIVED_INTERVAL: /* 4.12 */
             if( *buffLen < 52 - 5 + 4)
                 return -8;
@@ -584,6 +593,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             }
 */
             break;
+
          case GS4_PERCENT_TIME: /* 4.10 */
             if( *buffLen < 51 - 5 + 4)
                 return -8;
@@ -644,20 +654,13 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             if( *buffLen < 63 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
-            if ((uChar) (*buffer)[38 - 5] > 128) {
-               factor = 128 - (uChar) (*buffer)[38 - 5];
-            } else {
-               factor = (*buffer)[38 - 5];
-            }
+            factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
             MEMCPY_BIG (&value, *buffer + 39 - 5, sizeof (sInt4));
+            value = sbit_2Comp_fourByte(value);
             lowerProb = value * pow (10.0, -1 * factor);
-
-            if ((uChar) (*buffer)[43 - 5] > 128) {
-               factor = 128 - (uChar) (*buffer)[43 - 5];
-            } else {
-               factor = (*buffer)[43 - 5];
-            }
+            factor = sbit_2Comp_oneByte((sChar) (*buffer)[43 - 5]);
             MEMCPY_BIG (&value, *buffer + 44 - 5, sizeof (sInt4));
+            value = sbit_2Comp_fourByte(value);
             upperProb = value * pow (10.0, -1 * factor);
 
             if (InventoryParseTime (*buffer + 48 - 5, &(inv->validTime)) != 0) {
@@ -712,6 +715,45 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    } else if (timeRangeUnit == 13) {
       lenTime = (sInt4) (lenTime / 3600.);
       timeRangeUnit = 1;
+   } else if (timeRangeUnit == 3) {  /* month */
+      /* Actually use the timeRangeUnit == 3 */
+/*
+      lenTime = (inv->validTime - Clock_AddMonthYear (inv->validTime, -1 * lenTime, 0)) / 3600.;
+      timeRangeUnit = 1;
+*/
+   } else if (timeRangeUnit == 4) {  /* month */
+      /* Actually use the timeRangeUnit == 4 */
+/*
+      lenTime = (inv->validTime - Clock_AddMonthYear (inv->validTime, 0, -1 * lenTime)) / 3600.;
+      timeRangeUnit = 1;
+*/
+   } else if (timeRangeUnit == 5) {  /* decade */
+      if( lenTime < INT_MIN / 10 || lenTime > INT_MAX / 10 )
+          return -8;
+      lenTime = lenTime * 10;
+      timeRangeUnit = 4;
+/*
+      lenTime = (inv->validTime - Clock_AddMonthYear (inv->validTime, 0, -10 * lenTime)) / 3600.;
+      timeRangeUnit = 1;
+*/
+   } else if (timeRangeUnit == 6) {  /* normal */
+      if( lenTime < INT_MIN / 30 || lenTime > INT_MAX / 30 )
+          return -8;
+      lenTime = lenTime * 30;
+      timeRangeUnit = 4;
+/*
+      lenTime = (inv->validTime - Clock_AddMonthYear (inv->validTime, 0, -30 * lenTime)) / 3600.;
+      timeRangeUnit = 1;
+*/
+   } else if (timeRangeUnit == 7) {  /* century */
+      if( lenTime < INT_MIN / 100 || lenTime > INT_MAX / 100 )
+          return -8;
+      lenTime = lenTime * 100;
+      timeRangeUnit = 4;
+/*
+      lenTime = (inv->validTime - Clock_AddMonthYear (inv->validTime, 0, -100 * lenTime)) / 3600.;
+      timeRangeUnit = 1;
+*/
    } else {
       printf ("Can't handle this timeRangeUnit\n");
       //myAssert (timeRangeUnit == 1);
@@ -925,8 +967,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       }
 #endif
 */
-      /* Make it so the second, third, etc messages have no limit to finding
-       * the "GRIB" keyword. */
+      /* Allow  2nd, 3rd, etc messages to have no limit to finding "GRIB". */
       if (msgNum > 1) {
          grib_limit = -1;
       }
@@ -958,6 +999,8 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             free (buffer);
             free (buff);
             //fclose (fp);
+            msgNum --;
+            *MsgNum = msgNum;
             return msgNum;
          }
       }
