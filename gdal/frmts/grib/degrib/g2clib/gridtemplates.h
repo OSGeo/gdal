@@ -27,11 +27,18 @@
 //   be considered.  The number of octets used to store the data value
 //   in this case would be the absolute value of the negative value in
 //   mapgrid[].
+//  
+// PROGRAM HISTORY LOG:
 //
+// 2001-10-26  Gilbert
+// 2007-08-16  Vuong     -  Added GDT 3.204  Curvilinear Orthogonal Grid
+// 2008-07-08  Vuong     -  Added GDT 3.32768 Rot Lat/Lon E-grid (Arakawa)
+// 2010-05-11  Vuong     -  Added GDT 3.32769 Rotate Lat/Lon Non-E Staggered grid (Arakawa)
+// 2013-08-06  Vuong     -  Added GDT 3.4,3.5,3.12,3.101,3.140
 //
 ////////////////////////////////////////////////////////////////////
 
-      #define MAXGRIDTEMP 23              // maximum number of templates
+      #define MAXGRIDTEMP 31              // maximum number of templates
       #define MAXGRIDMAPLEN 200           // maximum template map length
 
       struct gridtemplate

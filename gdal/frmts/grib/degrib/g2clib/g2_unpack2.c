@@ -13,6 +13,8 @@ g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char
 //
 // PROGRAM HISTORY LOG:
 // 2002-10-31  Gilbert
+// 2008-12-23  Wesley   - Initialize lencsec2 Length of Local Use data
+// 2010-08-05  Vuong    - If section 2 has zero length, ierr=0
 //
 // USAGE:    int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,
 //                          unsigned char **csec2)
@@ -61,7 +63,12 @@ g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char
          return(ierr);
       }
 
-      *csec2=(unsigned char *)malloc(*lencsec2);
+      if (*lencsec2 == 0) {
+         ierr = 0;
+         return(ierr);
+      }
+
+      *csec2=(unsigned char *)malloc(*lencsec2+1);
       if (*csec2 == 0) {
          ierr=6;
          *lencsec2=0;

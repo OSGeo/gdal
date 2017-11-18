@@ -70,7 +70,7 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
       g2int ierr,i,j,nbits,isecnum;
       g2int lensec,ibyttem=0,isign,newlen;
       g2int *ligds,*ligdstmpl=0,*lideflist=0;
-      xxtemplate *mapgrid;
+      gtemplate *mapgrid;
 
       ierr=0;
       *igds=0;       // NULL

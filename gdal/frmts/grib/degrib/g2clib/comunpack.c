@@ -134,17 +134,23 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
 //
       if (idrsnum == 3) {
          if (nbitsd != 0) {
-              gbit(cpack,&isign,iofst,1);
-              iofst=iofst+1;
-              gbit(cpack,&ival1,iofst,nbitsd-1);
-              iofst=iofst+nbitsd-1;
-              if (isign == 1) ival1=-ival1;
+// wne mistake here shoujld be unsigned int
+              gbit(cpack,&ival1,iofst,nbitsd);
+              iofst=iofst+nbitsd;
+//              gbit(cpack,&isign,iofst,1);
+//              iofst=iofst+1
+//              gbit(cpack,&ival1,iofst,nbitsd-1);
+//              iofst=iofst+nbitsd-1;
+//              if (isign == 1) ival1=-ival1;
               if (idrstmpl[16] == 2) {
-                 gbit(cpack,&isign,iofst,1);
-                 iofst=iofst+1;
-                 gbit(cpack,&ival2,iofst,nbitsd-1);
-                 iofst=iofst+nbitsd-1;
-                 if (isign == 1) ival2=-ival2;
+// wne mistake here shoujld be unsigned int
+                 gbit(cpack,&ival2,iofst,nbitsd);
+                 iofst=iofst+nbitsd;
+//                 gbit(cpack,&isign,iofst,1);
+//                 iofst=iofst+1;
+//                 gbit(cpack,&ival2,iofst,nbitsd-1);
+//                 iofst=iofst+nbitsd-1;
+//                 if (isign == 1) ival2=-ival2;
               }
               gbit(cpack,&isign,iofst,1);
               iofst=iofst+1;
@@ -175,6 +181,13 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
       }
+#if 0
+      else {
+         for (j=0;j<ngroups;j++)
+              gref[j]=0;
+      }
+#endif
+
 //
 //  Extract Each Group's bit width
 //
@@ -191,6 +204,12 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
       }
+#if 0
+      else {
+         for (j=0;j<ngroups;j++)
+                gwidth[j]=0;
+      }
+#endif
 
       for (j=0;j<ngroups;j++)
       {
@@ -230,6 +249,12 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
          iofst=iofst+itemp;
          if (itemp%8 != 0) iofst=iofst+(8-(itemp%8));
       }
+#if 0
+      else {
+         for (j=0;j<ngroups;j++)
+              glen[j]=0;
+      }
+#endif
 
       for (j=0;j<ngroups;j++)
       {

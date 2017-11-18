@@ -2,7 +2,7 @@
 #include "grib2.h"
 #include "drstemplates.h"
 
-
+/* GDAL: in original g2clib, this is in drstemplates.h */
 static const struct drstemplate templatesdrs[MAXDRSTEMP] = {
              // 5.0: Grid point data - Simple Packing
          { 0, 5, 0, {4,-2,-2,1,1} },
@@ -12,7 +12,7 @@ static const struct drstemplate templatesdrs[MAXDRSTEMP] = {
          { 3, 18, 0, {4,-2,-2,1,1,1,1,4,4,4,1,1,4,1,4,1,1,1} },
              // 5.50: Spectral Data - Simple Packing
          { 50, 5, 0, {4,-2,-2,1,4} },
-             // 5.51: Spherical Harmonics data - Complex packing
+             // 5.51: Spherical Harmonics data - Complex packing 
          { 51, 10, 0, {4,-2,-2,1,-4,2,2,2,4,1} },
 //           // 5.1: Matrix values at gridpoint - Simple packing
 //         { 1, 15, 1, {4,-2,-2,1,1,1,4,2,2,1,1,1,1,1,1} },
@@ -73,7 +73,7 @@ g2int getdrsindex(g2int number)
 }
 
 
-xxtemplate *getdrstemplate(g2int number)
+gtemplate *getdrstemplate(g2int number)
 /*!$$$  SUBPROGRAM DOCUMENTATION BLOCK
 !                .      .    .                                       .
 ! SUBPROGRAM:    getdrstemplate
@@ -87,6 +87,7 @@ xxtemplate *getdrstemplate(g2int number)
 !
 ! PROGRAM HISTORY LOG:
 ! 2000-05-11  Gilbert
+! 2009-01-14  Vuong     Changed structure name template to gtemplate
 !
 ! USAGE:    new=getdrstemplate(number);
 !   INPUT ARGUMENT LIST:
@@ -106,12 +107,12 @@ xxtemplate *getdrstemplate(g2int number)
 !$$$*/
 {
            g2int l_index;
-           xxtemplate *new;
+           gtemplate *new;
 
            l_index=getdrsindex(number);
 
            if (l_index != -1) {
-              new=(xxtemplate *)malloc(sizeof(xxtemplate));
+              new=(gtemplate *)malloc(sizeof(gtemplate));
               new->type=5;
               new->num=templatesdrs[l_index].template_num;
               new->maplen=templatesdrs[l_index].mapdrslen;
@@ -129,7 +130,7 @@ xxtemplate *getdrstemplate(g2int number)
          return(0);        //NULL
 }
 
-xxtemplate *extdrstemplate(g2int number,g2int *list)
+gtemplate *extdrstemplate(g2int number,g2int *list)
 /*!$$$  SUBPROGRAM DOCUMENTATION BLOCK
 !                .      .    .                                       .
 ! SUBPROGRAM:    extdrstemplate
@@ -143,6 +144,7 @@ xxtemplate *extdrstemplate(g2int number,g2int *list)
 !
 ! PROGRAM HISTORY LOG:
 ! 2000-05-11  Gilbert
+! 2009-01-14  Vuong     Changed structure name template to gtemplate
 !
 ! USAGE:    new=extdrstemplate(number,list);
 !   INPUT ARGUMENT LIST:
@@ -161,7 +163,7 @@ xxtemplate *extdrstemplate(g2int number,g2int *list)
 !
 !$$$*/
 {
-           xxtemplate *new;
+           gtemplate *new;
            g2int l_index,i;
 
            l_index=getdrsindex(number);

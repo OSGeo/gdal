@@ -117,7 +117,7 @@ int enc_jpeg2000(unsigned char *cin,g2int width,g2int height,g2int nbits,
        opts[0]=(char)0;
     }
     else {
-       sprintf(opts,"mode=real\nrate=%f",1.0/(float)ratio);
+       snprintf(opts,MAXOPTSSIZE,"mode=real\nrate=%f",1.0/(float)ratio);
     }
     if ( retry == 1 ) {             // option to increase number of guard bits
        strcat(opts,"\nnumgbits=4");
