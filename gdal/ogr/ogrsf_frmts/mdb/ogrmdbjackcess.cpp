@@ -29,7 +29,7 @@
 #include "ogr_mdb.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if JVM_LIB_DLOPEN
 #include <limits.h>
@@ -317,6 +317,9 @@ int OGRMDBJavaEnv::Init()
     {
         jvm = jvm_static;
     }
+
+    if( jvm == NULL )
+        return FALSE;
 
     if (jvm->GetEnv((void **)&env, JNI_VERSION_1_2) == JNI_EDETACHED )
     {
