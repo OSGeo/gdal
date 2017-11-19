@@ -2756,6 +2756,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
     CPLString osBlockName;
 
     bool bHasAttribs = false;
+    // TODO change this to use smart pointers when C++11 mode is enabled
     std::queue<OGRDXFFeature *> apoAttribs;
 
 /* -------------------------------------------------------------------- */
@@ -2886,6 +2887,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             papszAttribs[iIndex] = NULL;
 
             poFeature->SetField( "BlockAttributes", papszAttribs );
+        }
+        else
+        {
+            while( !apoAttribs.empty() )
+            {
+                delete apoAttribs.front();
+                apoAttribs.pop();
+            }
         }
     }
     // Otherwise, try inlining the contents of this block
