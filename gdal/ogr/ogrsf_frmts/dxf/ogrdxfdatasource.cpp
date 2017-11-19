@@ -620,10 +620,13 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(
     const char *pszTextStyle, const char *pszProperty, const char *pszDefault )
 
 {
+    if( !pszTextStyle )
+        return pszDefault;
+
     CPLString osTextStyleUpper = pszTextStyle;
     osTextStyleUpper.toupper();
 
-    if( pszTextStyle && pszProperty &&
+    if( pszProperty &&
         oTextStyleTable.count( osTextStyleUpper ) > 0 &&
         oTextStyleTable[pszTextStyle].count( pszProperty ) > 0 )
     {
