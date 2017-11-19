@@ -118,12 +118,6 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
         if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
 
-#define READ_SIZE(pabyData, pabyDataLimit, nSize) \
-    { \
-        READ_VARUINT32(pabyData, pabyDataLimit, nSize); \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
-    }
-
 #endif
 
 /************************************************************************/
@@ -161,6 +155,12 @@ static GUIntBig ReadVarUInt64(GByte** ppabyData)
     }
 }
 
+#define READ_VARUINT64(pabyData, pabyDataLimit, nVal)  \
+    { \
+        nVal = ReadVarUInt64(&pabyData); \
+        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+    }
+
 #define READ_VARINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = (GIntBig)ReadVarUInt64(&pabyData); \
@@ -178,6 +178,12 @@ static GUIntBig ReadVarUInt64(GByte** ppabyData)
     { \
         GUIntBig l_nVal = ReadVarUInt64(&pabyData); \
         nVal = ((l_nVal & 1) == 0) ? (GIntBig)(l_nVal >> 1) : -(GIntBig)(l_nVal >> 1)-1; \
+    }
+
+#define READ_SIZE64(pabyData, pabyDataLimit, nSize) \
+    { \
+        READ_VARUINT64(pabyData, pabyDataLimit, nSize); \
+        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
     }
 
 /************************************************************************/
