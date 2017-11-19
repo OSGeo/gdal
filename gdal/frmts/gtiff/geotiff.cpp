@@ -16955,7 +16955,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GTIFF_CopyFromJPEG_WriteAdditionalTags(l_hTIFF,
                                                poSrcDS);
     }
-#endif
 
 #if !defined(BIGTIFF_SUPPORT)
     /* -------------------------------------------------------------------- */
@@ -16986,6 +16985,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
         l_bDontReloadFirstBlock = true;
     }
+#endif
 #endif
 
 /* -------------------------------------------------------------------- */
