@@ -140,6 +140,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
         //   Unpack the rest of the Product Definition Template
         j=0;
         for (i=*mappdslen;i<newlen;i++) {
+#ifdef notneeded
           if( mappds->ext[j] < INT_MIN / 8 || mappds->ext[j] > INT_MAX / 8 )
           {
               ierr=6;
@@ -152,6 +153,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
               free(lipdstmpl);
               return(ierr);
           }
+#endif
           nbits=abs(mappds->ext[j])*8;
           if ( mappds->ext[j] >= 0 ) {
             gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst,nbits);
