@@ -505,7 +505,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 32 ) {
-              new->extlen=list[9]*10;
+              new->extlen=list[9]*5; /* ERO: was 10, but wrong given the below loop */
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               for (i=0;i<list[9];i++) {
                  l=i*5;
