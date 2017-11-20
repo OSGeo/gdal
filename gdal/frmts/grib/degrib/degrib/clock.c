@@ -2460,7 +2460,7 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    double d_remain;
    int i;
 
-   if( !(fabs(refTime) < SEC_DAY * 365 * 10000) )
+   if( !(fabs(refTime) < (double)SEC_DAY * 365 * 10000) )
        return 0;
 
    totDay = (sInt4) floor (refTime / SEC_DAY);
