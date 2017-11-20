@@ -1575,6 +1575,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     const char *pszProjection = poSRS->GetAttrValue( "PROJECTION" );
     bool bWritePEString = false;
+    bool bUnknownProjection = false;
 
     if( nPCS != KvUserDefined )
     {
@@ -2339,6 +2340,7 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
     else
     {
         bWritePEString = true;
+        bUnknownProjection = true;
     }
 
     // Note that VERTCS is an ESRI "spelling" of VERT_CS so we assume if
@@ -2354,9 +2356,15 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 
     if( bWritePEString )
     {
-        // Anyhing we can't map, store as an ESRI PE string with a citation key.
+        // Anything we can't map, store as an ESRI PE string with a citation key.
         char *pszPEString = NULL;
-        poSRS->morphToESRI();
+        // We shit a bit, but if we have a custom_proj4, do not morph to ESRI
+        // so as to keep the EXTENSION PROJ4 node
+        if( !(bUnknownProjection &&
+              poSRS->GetExtension("PROJCS", "PROJ4", NULL) != NULL) )
+        {
+            poSRS->morphToESRI();
+        }
         poSRS->exportToWkt( &pszPEString );
         const int peStrLen = static_cast<int>(strlen(pszPEString));
         if(peStrLen > 0)
