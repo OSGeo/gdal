@@ -78,10 +78,11 @@ class VSISparseFileFilesystemHandler;
 class VSISparseFileHandle : public VSIVirtualHandle
 {
     VSISparseFileFilesystemHandler* m_poFS;
+    bool               bEOF;
 
   public:
     explicit VSISparseFileHandle(VSISparseFileFilesystemHandler* poFS) :
-                            m_poFS(poFS), nOverallLength(0), nCurOffset(0) {}
+                m_poFS(poFS), bEOF(false), nOverallLength(0), nCurOffset(0) {}
 
     GUIntBig           nOverallLength;
     GUIntBig           nCurOffset;
@@ -164,6 +165,7 @@ int VSISparseFileHandle::Close()
 int VSISparseFileHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
+    bEOF = false;
     if( nWhence == SEEK_SET )
         nCurOffset = nOffset;
     else if( nWhence == SEEK_CUR )
@@ -200,6 +202,12 @@ vsi_l_offset VSISparseFileHandle::Tell()
 size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
+    if( nCurOffset >= nOverallLength )
+    {
+        bEOF = true;
+        return 0;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find what region we are in, searching linearly from the         */
 /*      start.                                                          */
@@ -214,42 +222,53 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
             break;
     }
 
+    size_t nBytesRequested = nSize * nCount;
+    if( nBytesRequested == 0 )
+    {
+        return 0;
+    }
+    if( nCurOffset + nBytesRequested > nOverallLength )
+    {
+        nBytesRequested = static_cast<size_t>(nOverallLength - nCurOffset);
+        bEOF = true;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Default to zeroing the buffer if no corresponding region was    */
 /*      found.                                                          */
 /* -------------------------------------------------------------------- */
     if( iRegion == aoRegions.size() )
     {
-        memset( pBuffer, 0, nSize * nCount );
-        nCurOffset += nSize * nSize;
-        return nCount;
+        memset( pBuffer, 0, nBytesRequested);
+        nCurOffset += nBytesRequested;
+        return nBytesRequested / nSize;
     }
 
 /* -------------------------------------------------------------------- */
 /*      If this request crosses region boundaries, split it into two    */
 /*      requests.                                                       */
 /* -------------------------------------------------------------------- */
-    size_t nReturnCount = nCount;
-    GUIntBig nBytesRequested = nSize * nCount;
-    const GUIntBig nBytesAvailable =
+    size_t nBytesReturnCount = 0;
+    const GUIntBig nEndOffsetOfRegion =
         aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength;
 
-    if( nCurOffset + nBytesRequested > nBytesAvailable )
+    if( nCurOffset + nBytesRequested > nEndOffsetOfRegion )
     {
         const size_t nExtraBytes =
-            static_cast<size_t>(nCurOffset + nBytesRequested - nBytesAvailable);
+            static_cast<size_t>(nCurOffset + nBytesRequested - nEndOffsetOfRegion);
         // Recurse to get the rest of the request.
 
         const GUIntBig nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
+        bool bEOFSave = bEOF;
+        bEOF = false;
         const size_t nBytesRead =
             this->Read( ((char *) pBuffer) + nBytesRequested - nExtraBytes,
                         1, nExtraBytes );
         nCurOffset = nCurOffsetSave;
+        bEOF = bEOFSave;
 
-        if( nBytesRead < nExtraBytes )
-            nReturnCount -= (nExtraBytes-nBytesRead) / nSize;
-
+        nBytesReturnCount += nBytesRead;
         nBytesRequested -= nExtraBytes;
     }
 
@@ -260,6 +279,8 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
     {
         memset( pBuffer, aoRegions[iRegion].byValue,
                 static_cast<size_t>(nBytesRequested) );
+
+        nBytesReturnCount += nBytesRequested;
     }
 
 /* -------------------------------------------------------------------- */
@@ -299,13 +320,12 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
                        aoRegions[iRegion].fp );
         m_poFS->DecRecCounter();
 
-        if( nBytesAvailable < nBytesRequested )
-            nReturnCount = nBytesRead / nSize;
+        nBytesReturnCount += nBytesRead;
     }
 
-    nCurOffset += nReturnCount * nSize;
+    nCurOffset += nBytesReturnCount;
 
-    return nReturnCount;
+    return nBytesReturnCount / nSize;
 }
 
 /************************************************************************/
@@ -327,7 +347,7 @@ size_t VSISparseFileHandle::Write( const void * /* pBuffer */,
 int VSISparseFileHandle::Eof()
 
 {
-    return nCurOffset >= nOverallLength;
+    return bEOF ? 1 : 0;
 }
 
 /************************************************************************/
