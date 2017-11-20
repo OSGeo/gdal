@@ -1,3 +1,106 @@
+= GDAL/OGR 2.2.3 Release Notes = 
+
+The 2.2.3 release is a bug fix release.
+
+== Build ==
+
+ * nmake.opt: Ensure PDB is included in release DLL if WITH_PDB requested (#7055)
+
+== Port ==
+
+ * /vsicurl/ and derived filesystems: redirect ReadDir() to ReadDirEx() (#7045)
+ * /vsis3/: fix to avoid invalid content to be sent if Write() writes more than 50 MB in a single call (#7058)
+
+== Algorithms ==
+
+== GDAL core ==
+
+== GDAL utilities ==
+
+== GDAL drivers ==
+
+GeoRaster driver:
+
+GPKG driver:
+
+GSAG driver:
+
+GTiff driver:
+
+GTX driver:
+
+HF2 driver:
+
+IDRISI driver:
+
+ISIS3 driver:
+
+JP2KAK driver:
+ * fix unix build with Kakadu 7.A and later (#7048)
+
+JPEG2000 driver:
+
+JP2OpenJPEG driver:
+
+netCDF driver:
+
+PDF driver:
+
+PDS driver:
+
+SRTMHGT driver:
+
+VRT driver:
+ * avoid error being emitted when opening a VRTRawRasterBand in a .zip files (#7056)
+
+== OGR core ==
+
+== OGRSpatialReference ==
+
+== OGR utilities ==
+
+ * ogrtindex: fix crash when using -f SQLITE -t_srs XXXX (#7053)
+
+== OGR drivers ==
+
+AVCBin driver:
+
+DXF driver:
+
+GeoJSON driver:
+
+GML driver:
+ * fix FORCE_SRS_DETECTION=YES effect on feature count and SRS reporting on gml files with .gfs (#7046)
+ * do not try to open kml files (#7061)
+
+GMLAS driver:
+
+GPKG driver:
+
+KML / LIBKML drivers:
+
+MSSQLSpatial driver:
+
+OCI driver:
+
+OpenFileGDB driver:
+
+OSM driver:
+
+Shapefile driver:
+
+
+SQLite/Spatialite driver:
+
+== Python bindings ==
+
+ *  remove 'from . import _gdal_array' line from gdal_array.py that is not necessary with normal execution of the bindings, and cause errors with PyInstaller (#7044)
+
+== Security oriented fixes ==
+
+Note: this is only a very partial backport of more extensive fixes done in GDAL trunk. Credit to OSS-Fuzz for all of them. (oss-fuzz#XXXX is a shortcut to
+https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=XXXX)
+
 = GDAL/OGR 2.2.2 Release Notes = 
 
 The 2.2.2 release is a bug fix release.
