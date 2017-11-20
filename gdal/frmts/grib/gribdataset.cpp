@@ -914,8 +914,8 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         oSRS.SetExtension(
             "PROJCS", "PROJ4",
             CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=0 "
-                       "+o_lat_p=%.18g +a=%.18g +to_meter=0.0174532925199 +wktext",
-                       meta->gds.southLon, -meta->gds.southLat, a));
+                       "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+                       meta->gds.southLon, -meta->gds.southLat, a, b));
     }
 
     CPLFree(pszProjection);
