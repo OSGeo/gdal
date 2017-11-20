@@ -916,14 +916,14 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
 #endif
 */
 #ifdef DEBUG
-   if (gds[1] != 255) {
+   /*if (gds[1] != 255) {
       printf ("\n\tCaution: GRIB1 GDS: FOR ALL NWS products, PV should be "
               "255 rather than %u\n", gds[1]);
-   }
+   }*/
 #endif
    if ((gds[1] != 255) && (gds[1] > 6)) {
-      errSprintf ("GRIB1 GDS: Expect PV = 255 != %d\n", gds[1]);
-      return -2;
+      //errSprintf ("GRIB1 GDS: Expect PV = 255 != %d\n", gds[1]);
+      //return -2;
    }
    gds += 2;
    gridType = *(gds++);
@@ -931,9 +931,13 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
       case GB1S2_LATLON: // Latitude/Longitude Grid
       case GB1S2_GAUSSIAN_LATLON: // Gaussian Latitude/Longitude
       case GB1S2_ROTATED: // Rotated Latitude/Longitude
-         /* Rotated appears to be 42 bytes long and packed by norway. */
-         if ((sectLen != 32) && (sectLen != 42) && (sectLen != 52)) {
-            errSprintf ("For LatLon GDS, should have 32 or 42 or 52 bytes "
+         if( gridType == GB1S2_ROTATED && (sectLen < 42)) {
+            errSprintf ("For Rotated LatLon GDS, should have at least 42 bytes "
+                        "of data\n");
+            return -1;
+         }
+         if ((sectLen < 32)) {
+            errSprintf ("For LatLon GDS, should have at least 32 bytes "
                         "of data\n");
             return -1;
          }
@@ -957,6 +961,12 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          gdsMeta->center = 0;
 
          gdsMeta->Nx = GRIB_UNSIGN_INT2 (*gds, gds[1]);
+         if( gdsMeta->Nx == 65535 )
+         {
+             /* https://rda.ucar.edu/docs/formats/grib/gribdoc/llgrid.html */
+             errSprintf ("Quasi rectangular grid with varying number of grids points per row are not supported\n");
+             return -1;
+         }
          gds += 2;
          gdsMeta->Ny = GRIB_UNSIGN_INT2 (*gds, gds[1]);
          gds += 2;
@@ -1000,7 +1010,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          printf ("sectLen %ld\n", sectLen);
 */
 #endif
-         if (sectLen == 42) {
+         if (gridType == GB1S2_ROTATED && sectLen >= 42) {
             /* Check if all 0's or all 1's, which means f_typeLatLon == 0 */
             f_allZero = 1;
             f_allOne = 1;
@@ -1011,8 +1021,32 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
                   f_allOne = 0;
             }
             if (!f_allZero && !f_allOne) {
-               gdsMeta->f_typeLatLon = 1;
+               gdsMeta->f_typeLatLon = 3;
                gds += 5;
+               gdsMeta->southLat = (GRIB_SIGN_INT3 (*gds, gds[1], gds[2]) *
+                                   unit);
+               gds += 3;
+               gdsMeta->southLon = (GRIB_SIGN_INT3 (*gds, gds[1], gds[2]) *
+                                   unit);
+               gds += 3;
+               MEMCPY_BIG (&uli_temp, gds, sizeof (sInt4));
+               gdsMeta->angleRotate = fval_360 (uli_temp);
+            }
+         }
+#if 0
+         else if (gridType == GB1S2_STRETCHED && sectLen >= 42) {
+            gds += 5;
+            /* Check if all 0's or all 1's, which means f_typeLatLon == 0 */
+            f_allZero = 1;
+            f_allOne = 1;
+            for (i = 0; i < 20; i++) {
+               if (gds[i] != 0)
+                  f_allZero = 0;
+               if (gds[i] != 255)
+                  f_allOne = 0;
+            }
+            if (!f_allZero && !f_allOne) {
+               gdsMeta->f_typeLatLon = 1;
                gdsMeta->poleLat = (GRIB_SIGN_INT3 (*gds, gds[1], gds[2]) *
                                    unit);
                gds += 3;
@@ -1022,7 +1056,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
                MEMCPY_BIG (&uli_temp, gds, sizeof (sInt4));
                gdsMeta->stretchFactor = fval_360 (uli_temp);
             }
-         } else if (sectLen == 52) {
+         else if (gridType == GB1S2_ROTATED_STRETCHED && sectLen >= 52) {
             gds += 5;
             /* Check if all 0's or all 1's, which means f_typeLatLon == 0 */
             f_allZero = 1;
@@ -1053,24 +1087,12 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
                MEMCPY_BIG (&uli_temp, gds, sizeof (sInt4));
                gdsMeta->stretchFactor = fval_360 (uli_temp);
             }
-#ifdef DEBUG
-/*
-            if (gdsMeta->lon2 == 360.25)
-               gdsMeta->lon2 = 359.75;
-*/
-/*
-            printf ("south %f %f rotate %f pole %f %f stretch %f\n",
-                    gdsMeta->southLat, gdsMeta->southLon,
-                    gdsMeta->angleRotate, gdsMeta->poleLat, gdsMeta->poleLon,
-                    gdsMeta->stretchFactor);
-            printf ("lat/lon type %d \n", gdsMeta->f_typeLatLon);
-*/
 #endif
-         }
+
          break;
 
       case GB1S2_POLAR:
-         if (sectLen != 32) {
+         if (sectLen < 32) {
             errSprintf ("For Polar GDS, should have 32 bytes of data\n");
             return -1;
          }
@@ -1119,7 +1141,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          break;
 
       case GB1S2_LAMBERT:
-         if (sectLen != 42) {
+         if (sectLen < 42) {
             errSprintf ("For Lambert GDS, should have 42 bytes of data\n");
             return -1;
          }
@@ -1166,7 +1188,7 @@ static int ReadGrib1Sect2 (uChar *gds, uInt4 gribLen, uInt4 *curLoc,
          break;
 
       case GB1S2_MERCATOR:
-         if (sectLen != 42) {
+         if (sectLen < 42) {
             errSprintf ("For Mercator GDS, should have 42 bytes of data\n");
             return -1;
          }

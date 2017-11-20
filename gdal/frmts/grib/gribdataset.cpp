@@ -731,6 +731,14 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     case GS3_GAUSSIAN_LATLON:
         // No projection, only latlon system (geographic).
         break;
+    case GS3_ROTATED_LATLON:
+        CPLDebug("GRIB", "angleRotate=%f, southLat=%f, southLon=%f, poleLat=%f, poleLon=%f",
+                 meta->gds.angleRotate,
+                 meta->gds.southLat,
+                 meta->gds.southLon,
+                 meta->gds.poleLat,
+                 meta->gds.poleLon);
+        break;
     case GS3_MERCATOR:
         oSRS.SetMercator(meta->gds.meshLat, meta->gds.orientLon, 1.0, 0.0, 0.0);
         break;
@@ -898,6 +906,17 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     adfGeoTransform[3] = rMaxY;
     adfGeoTransform[1] = rPixelSizeX;
     adfGeoTransform[5] = -rPixelSizeY;
+
+    if( meta->gds.projType == GS3_ROTATED_LATLON &&
+        meta->gds.angleRotate == 0 )
+    {
+        oSRS.SetProjection( "Rotated_pole" );
+        oSRS.SetExtension(
+            "PROJCS", "PROJ4",
+            CPLSPrintf("+proj=ob_tran +lon_0=%.18g +o_proj=longlat +o_lon_p=0 "
+                       "+o_lat_p=%.18g +a=%.18g +to_meter=0.0174532925199 +wktext",
+                       meta->gds.southLon, -meta->gds.southLat, a));
+    }
 
     CPLFree(pszProjection);
     pszProjection = NULL;
