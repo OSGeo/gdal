@@ -9,53 +9,75 @@ The 2.2.3 release is a bug fix release.
 == Port ==
 
  * /vsicurl/ and derived filesystems: redirect ReadDir() to ReadDirEx() (#7045)
+ * /vsicurl/: enable redirection optimization on signed URLs of Google Cloud Storage. Helps for the PLScenes driver (#7067)
+ * /vsicurl/: fix 2.2 regression regarding retrieval of file size of FTP file (#7088)
  * /vsis3/: fix to avoid invalid content to be sent if Write() writes more than 50 MB in a single call (#7058)
+ * /vsis3/: fix Seek(Tell(), SEEK_SET) fails if current position is not 0 (#7062)
+ * /vsis3/: fix support of non-ASCII characters in keys (#7143, #7146)
+ * Fix CPLCopyTree() that doesn't properly on MSVC 2015 (and possibly other platforms) (#7070)
 
 == Algorithms ==
 
-== GDAL core ==
+ * RPC transformer: set output coordinates to HUGE_VAL when failure occurs, so that a following coordinate transformation can detect the error too (#7090)
+ * GDALGrid() with linear algorithm: avoid assertions/segmentation fault when GDALTriangulationFindFacetDirected() fails (#7101)
+ * GDALComputeProximity(): fix int32 overflow when computing distances on large input datasets (#7102)
+ * GDALResampleChunk32R_Gauss: fix potential out of bounds access (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4056)
 
 == GDAL utilities ==
+
+ * gdalwarp: fix issue with GDALAdjustValueToDataType(Float32, +/- inf)  that didn't preserve infinity, which affected gdalwarp -dstnodata inf (#7097)
+ * gdalwarp -crop_to_cutline: reduce number of iterations to find the appropriate densification (#7119)
+ * gdal_contour: return with non-0 code if field creation or contour generation failed (#7147)
 
 == GDAL drivers ==
 
 GeoRaster driver:
+ * fix int overflow (#6999)
 
 GPKG driver:
+ *  speed-up statistics retrieval on non-Byte datasets (#7096)
+
+GRIB driver:
+ * if GRIB_ADJUST_LONGITUDE_RANGE config option is set to YES, adjust the longitude range to be close to [-180,180] when possible for products whose left origin is close to 180deg. (#7103)
 
 GSAG driver:
+ * avoid assertion on some files with nul characters (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=3726)
 
 GTiff driver:
+ * make sure that -co PHOTOMETRIC=RGB overrides the color interpretation of the first 3 bands of the source datasets (#7064)
+ * on reading use GeogTOWGS84GeoKey to override the defaults TOWGS84 values coming from EPSG code (#7144)
+ * fix potential crash when reading in RGBA mode with internal libtiff (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4157)
+ * fix potential crash with old-jpeg compression and internal libtiff (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4180)
 
-GTX driver:
-
-HF2 driver:
-
-IDRISI driver:
-
-ISIS3 driver:
+HTTP driver:
+ * do not open the underlying dataset with GDAL_OF_SHARED, to avoid later assertion
 
 JP2KAK driver:
- * fix unix build with Kakadu 7.A and later (#7048)
+ * fix unix build with Kakadu 7.A and later (#7048, #7081)
 
-JPEG2000 driver:
+JPEG driver:
+ * Add compatibility with libjpeg-turbo 1.5.2 that honours max_memory_to_use (cf https://github.com/libjpeg-turbo/libjpeg-turbo/issues/162)
 
 JP2OpenJPEG driver:
+ * Add support for openjpeg 2.3 (#7074)
 
 netCDF driver:
+ * fix raster read as nodata with Byte datatype, (valid_range={0,255} or _Unsigned = True) and negative _FillValue (#7069)
+ * be more tolerant on the formatting of standard parallel (space separated instead of {x,y,...} syntax), and accept up to 2/1000 error on spacing to consider a regular grid, to be able to read files provided by the national weather institute of Netherlands (KNMI) (#7086)
 
 PDF driver:
+ * round to upper integer when computing a DPI such that page size remains within limits accepted by Acrobat (#7083)
 
-PDS driver:
-
-SRTMHGT driver:
+Sentinel2 driver:
+ * add support for direct opening of .zip files of new safe_compact L1C products (#7085)
 
 VRT driver:
  * avoid error being emitted when opening a VRTRawRasterBand in a .zip files (#7056)
 
 == OGR core ==
 
-== OGRSpatialReference ==
+ * Fix OGR[Curve]Polygon::Intersects(OGRPoint*) to return true when point is on polygon boundary (#7091)
+ * importFromWkt(): fix import of GEOMETRYCOLLECTION ending with POINT EMPTY or LINESTRING EMPTY (#7128, 2.1 regression)
 
 == OGR utilities ==
 
@@ -63,43 +85,76 @@ VRT driver:
 
 == OGR drivers ==
 
-AVCBin driver:
+Amigocloud driver:
+ * Fixed data field types (https://github.com/OSGeo/gdal/pull/246)
+ * Output list of datasets if dataset id is not provided.
+ * Implemented waiting for job to complete on the server. This will improve write to AmigoCloud reliability.
+ * Updated documentation. 
 
-DXF driver:
+FileGDB driver:
+ * remove erroneous ODsCCreateGeomFieldAfterCreateLayer capability declaration (https://github.com/OSGeo/gdal/pull/247)
 
 GeoJSON driver:
+ * ESRIJson: recognize documents that lack geometry fields (#7071)
+ * ESRIJson: recognize documents starting with a very long fieldAliases list (#7107)
+
+GeoRSS driver:
+ * fix detection of field type (#7108)
 
 GML driver:
  * fix FORCE_SRS_DETECTION=YES effect on feature count and SRS reporting on gml files with .gfs (#7046)
  * do not try to open kml files (#7061)
-
-GMLAS driver:
+ * GML geometry parsing: fix robustness issue with gml:PolyhedralSurface
+ * do not report gml:name / gml:description of features as layer metadata
 
 GPKG driver:
+ * do not try to update extent on gpkg_contents after GetExtent() on a empty layer of a datasource opened in read-only mode
+
+GTM driver:
+ * fix null pointer dereference in case of read error (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4047)
 
 KML / LIBKML drivers:
 
-MSSQLSpatial driver:
+MDB driver:
+ * fix multi-thread support (https://issues.qgis.org/issues/16039)
+
+MITAB driver
+ * do not emit error if the .ind file is missing, just a debug message (#7094)
+
+MySQL:
+ * fix build with MariaDB 10.2 (#7079)
 
 OCI driver:
+ * initialize in multi-threaded compatible mode to fix QGIS related crashes (https://issues.qgis.org/issues/17311), and fix a few memleaks
 
-OpenFileGDB driver:
+ODS driver:
+ * avoid using CPLSPrintf() return directly with VSIFOpenL() as the temp buffer might be later recycled (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4050)
 
-OSM driver:
+PLScenes driver:
+ * backport data/plscenesconf.json from trunk to add SkySatScene fields
 
 Shapefile driver:
-
+ *  Fix GetFeatureCount() to properly take into account spatial filter when attribute filter also in effect (#7123)
 
 SQLite/Spatialite driver:
+ * don't invalidate statistics when running a PRAGMA (https://issues.qgis.org/issues/17424)
+ * SQLite dialect: support SQLite 3.21, and LIKE, <>, IS NOT, IS NOT NULL, IS NULL and IS operators (#7149)
 
+XLS driver:
+ * workaround opening filenames with incompatible character set on Windows (https://issues.qgis.org/issues/9301)
+
+XLSX driver:
+ * fix non working detection of Date/Time fields in some documents (#7073)
+ * fix opening of documents with x: namespace in xl/workbook.xml (#7110)
+ * avoid using CPLSPrintf() return directly with VSIFOpenL() as the temp buffer might be later recycled (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4050)
+
+== SWIG bindings ==
+
+ * map GRA_Max, GRA_Min, GRA_Med, GRA_Q1 and GRA_Q3 (#7153)
+ 
 == Python bindings ==
 
- *  remove 'from . import _gdal_array' line from gdal_array.py that is not necessary with normal execution of the bindings, and cause errors with PyInstaller (#7044)
-
-== Security oriented fixes ==
-
-Note: this is only a very partial backport of more extensive fixes done in GDAL trunk. Credit to OSS-Fuzz for all of them. (oss-fuzz#XXXX is a shortcut to
-https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=XXXX)
+ * remove 'from . import _gdal_array' line from gdal_array.py that is not necessary with normal execution of the bindings, and cause errors with PyInstaller (#7044)
 
 = GDAL/OGR 2.2.2 Release Notes = 
 
