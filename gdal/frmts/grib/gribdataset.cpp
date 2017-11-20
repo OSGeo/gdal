@@ -138,16 +138,32 @@ void GRIBRasterBand::FindPDSTemplate()
 {
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
 
-    // Collect section 4 octet information.  We read the file
-    // ourselves since the GRIB API does not appear to preserve all
-    // this for us.
+
     GIntBig nOffset = VSIFTellL(poGDS->fp);
 
-    VSIFSeekL(poGDS->fp, start + 16, SEEK_SET);
+    // Read section 0
+    GByte abySection0[16];
+    VSIFSeekL(poGDS->fp, start, SEEK_SET);
+    VSIFReadL(abySection0, 16, 1, poGDS->fp);
+    GByte nDiscipline = abySection0[7 - 1]; 
+    CPLString osDiscipline;
+    osDiscipline = CPLString().Printf("%d", nDiscipline);
+    if( nDiscipline == 0 )
+        osDiscipline += " (Meteorological)";
+    else if( nDiscipline == 1 )
+        osDiscipline += " (Hydrological)";
+    else if( nDiscipline == 2 )
+        osDiscipline += " (Land Surface)";
+    else if( nDiscipline == 3 || nDiscipline == 4 )
+        osDiscipline += " (Space Products)";
+    else if( nDiscipline == 10 )
+        osDiscipline += " (Oceanographic)";
+    SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
 
     GByte abyHead[5] = { 0 };
     VSIFReadL(abyHead, 5, 1, poGDS->fp);
 
+    // Skip to section 4
     GUInt32 nSectSize = 0;
     while( abyHead[4] != 4 )
     {
@@ -160,6 +176,9 @@ void GRIBRasterBand::FindPDSTemplate()
             break;
     }
 
+    // Collect section 4 octet information.  We read the file
+    // ourselves since the GRIB API does not appear to preserve all
+    // this for us.
     if( abyHead[4] == 4 )
     {
         memcpy(&nSectSize, abyHead, 4);
