@@ -238,6 +238,21 @@ GRA_Average = _gdalconst.GRA_Average
 _gdalconst.GRA_Mode_swigconstant(_gdalconst)
 GRA_Mode = _gdalconst.GRA_Mode
 
+_gdalconst.GRA_Max_swigconstant(_gdalconst)
+GRA_Max = _gdalconst.GRA_Max
+
+_gdalconst.GRA_Min_swigconstant(_gdalconst)
+GRA_Min = _gdalconst.GRA_Min
+
+_gdalconst.GRA_Med_swigconstant(_gdalconst)
+GRA_Med = _gdalconst.GRA_Med
+
+_gdalconst.GRA_Q1_swigconstant(_gdalconst)
+GRA_Q1 = _gdalconst.GRA_Q1
+
+_gdalconst.GRA_Q3_swigconstant(_gdalconst)
+GRA_Q3 = _gdalconst.GRA_Q3
+
 _gdalconst.GPI_Gray_swigconstant(_gdalconst)
 GPI_Gray = _gdalconst.GPI_Gray
 
