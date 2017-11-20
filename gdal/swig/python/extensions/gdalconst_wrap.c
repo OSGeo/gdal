@@ -3617,6 +3617,61 @@ SWIGINTERN PyObject *GRA_Mode_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObj
 }
 
 
+SWIGINTERN PyObject *GRA_Max_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRA_Max",SWIG_From_int((int)(GRA_Max)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *GRA_Min_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRA_Min",SWIG_From_int((int)(GRA_Min)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *GRA_Med_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRA_Med",SWIG_From_int((int)(GRA_Med)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *GRA_Q1_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRA_Q1",SWIG_From_int((int)(GRA_Q1)));
+  return SWIG_Py_Void();
+}
+
+
+SWIGINTERN PyObject *GRA_Q3_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "GRA_Q3",SWIG_From_int((int)(GRA_Q3)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *GPI_Gray_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -4680,6 +4735,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"GRA_Lanczos_swigconstant", GRA_Lanczos_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GRA_Average_swigconstant", GRA_Average_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GRA_Mode_swigconstant", GRA_Mode_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRA_Max_swigconstant", GRA_Max_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRA_Min_swigconstant", GRA_Min_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRA_Med_swigconstant", GRA_Med_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRA_Q1_swigconstant", GRA_Q1_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"GRA_Q3_swigconstant", GRA_Q3_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GPI_Gray_swigconstant", GPI_Gray_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GPI_RGB_swigconstant", GPI_RGB_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"GPI_CMYK_swigconstant", GPI_CMYK_swigconstant, METH_VARARGS, NULL},
