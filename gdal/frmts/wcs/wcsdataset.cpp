@@ -140,10 +140,12 @@ void WCSDataset::SetGeometry(const std::vector<int> &size,
     adfGeoTransform[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
     adfGeoTransform[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
 
-    adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
-    adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
-    adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
-    adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+    if (!CPLGetXMLBoolean(psService, "OriginAtBoundary")) {
+        adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
+        adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
+        adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
+        adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+    }
 }
 
 /************************************************************************/
@@ -250,6 +252,11 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
 
+    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
+    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
+    filename = "/tmp/" + filename + ".tiff";
+    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
+
     if( poTileDS == NULL )
         return CE_Failure;
 
@@ -272,9 +279,12 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    if( (!osBandIdentifier.empty() && poTileDS->GetRasterCount() != nBandCount)
-        || (osBandIdentifier.empty() && poTileDS->GetRasterCount() !=
-            GetRasterCount() ) )
+    if( ( !osBandIdentifier.empty()
+          && osBandIdentifier != "none"
+          && poTileDS->GetRasterCount() != nBandCount)
+        ||
+        ( osBandIdentifier.empty()
+          && poTileDS->GetRasterCount() != GetRasterCount() ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Returned tile does not match expected band count." );
@@ -357,6 +367,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     bool scaled = nBufXSize != nXSize || nBufYSize != nYSize;
     CPLString osRequest = GetCoverageRequest(scaled, nBufXSize, nBufYSize,
                                              extent, osBandList);
+    fprintf(stderr, "URL=%s\n", osRequest.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -577,6 +588,10 @@ int WCSDataset::EstablishRasterDetails()
 
     if( poDS == NULL )
         return false;
+
+    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
+    CPLString filename = "/tmp/result0.tiff";
+    dr->CreateCopy(filename, poDS, TRUE, NULL, NULL, NULL);
 
     const char* pszPrj = poDS->GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
@@ -817,8 +832,6 @@ static int WCSParseVersion( const char *version )
         return 110;
     if( EQUAL(version, "1.0.0") )
         return 100;
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "WCS Version '%s' not supported.", version );
     return 0;
 }
 
@@ -891,13 +904,11 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     {
         capabilities = capabilities->psNext;
     }
-    // get version
-    // it may be that the version in the URL in cache (user's request)
-    // is different from the version in the XML (server's response)
-    // but that is probably not a problem
+    // get version, this version will overwrite the user's request
     int version_from_server = WCSParseVersion(CPLGetXMLValue(capabilities, "version", ""));
     if (version_from_server == 0) {
-        return NULL;
+        // broken server, assume 1.0.0
+        version_from_server = 100;
     }
 
     CPLSerializeXMLTreeToFile(capabilities, (path + ".xml").c_str());
@@ -1057,23 +1068,24 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
     const char *keys[] = {
         "PreferredFormat",
         "Interpolation",
+        "Range",
+        "BandIdentifier",
         "BandCount",
         "BandType",
+        "NoDataValue",
         "BlockXSize",
         "BlockYSize",
-        "NoDataValue",
         "Timeout",
         "UserPwd",
         "HttpAuth",
         "OverviewCount",
         "GetCoverageExtra",
         "DescribeCoverageExtra",
-        "FieldName",
         "Domain",
         "Dimensions",
         "DimensionToBand",
         "DefaultTime",
-        "OriginNotCenter100",
+        "OriginAtBoundary",
         "OuterExtents",
         "BufSizeAdjust",
         "OffsetsPositive",
@@ -1133,6 +1145,12 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
         CPLString version = CPLURLGetValue(url, "version");
         url = URLRemoveKey(url, "version");
+
+        // the default version, the aim is to have version explicitly in cache values
+        if (WCSParseVersion(version) == 0) {
+            version = "2.0.1";
+        }
+        
         CPLString coverage = CPLURLGetValue(url, "coverageid"); // 2.0
         if (coverage == "") {
             coverage = CPLURLGetValue(url, "identifiers"); // 1.1
@@ -1215,6 +1233,17 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                     if (!pam) {
                         return NULL;
                     }
+                    // the version may have changed
+                    version = pam->Version();
+                    url = URLRemoveKey(url, "version");
+                    url = CPLURLAddKVP(url, "version", version);
+                    url = URLRemoveKey(url, "coverage");
+                    url = CPLURLAddKVP(url, "coverage", coverage);
+                    if (!FromCache(cache, filename, url, cached)) { // error
+                        return NULL;
+                    }
+                    filename += ".xml";
+                    cached = cached && FileIsReadable(filename);
                     delete pam;
                 }
                 CreateServiceMetadata(coverage, pam_filename, filename);
@@ -1318,6 +1347,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nVersion == 0 )
     {
+        
         CSLDestroy( papszModifiers );
         CPLDestroyXMLNode( service );
         return NULL;

@@ -104,10 +104,12 @@ std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff,
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
 
+    /*
     extent[2] -= adfGeoTransform[1] * 0.5;
     extent[0] += adfGeoTransform[1] * 0.5;
     extent[1] -= adfGeoTransform[5] * 0.5;
     extent[3] += adfGeoTransform[5] * 0.5;
+    */
 
     return extent;
 }
@@ -205,7 +207,7 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         request += "&INTERPOLATION=" + interpolation;
     }
 
-    CPLString range = CPLGetXMLValue(psService, "FieldName", "");
+    CPLString range = CPLGetXMLValue(psService, "Range", "");
     if (range != "" && range != "*") {
         request += "&RANGESUBSET=" + range;
     }
@@ -459,9 +461,9 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, char ***metadata)
     // Default is to include all (types permitting?)
     // Can also be controlled with Range parameter
 
-    // assuming here that the attributes are defined by swe:DataRecord
-    CPLString path = "rangeType";
-    CPLXMLNode *record = CPLGetXMLNode(coverage, (path + ".DataRecord").c_str());
+    // The contents of a rangeType is a swe:DataRecord
+    CPLString path = "rangeType.DataRecord";
+    CPLXMLNode *record = CPLGetXMLNode(coverage, path);
     if (!record) {
         CPLError(CE_Failure, CPLE_AppDefined, "Attributes are not defined in a DataRecord, giving up.");
         return 0;
@@ -471,7 +473,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, char ***metadata)
     // so we should be able to give those
 
     // if Range is set remove those not in it
-    std::vector<CPLString> range = Split(CPLGetXMLValue(psService, "FieldName", ""), ",");
+    std::vector<CPLString> range = Split(CPLGetXMLValue(psService, "Range", ""), ",");
     // todo: add check for range subsetting profile existence in server metadata here
     unsigned int range_index = 0; // index for reading from range
     bool in_band_range = false;

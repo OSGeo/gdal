@@ -118,7 +118,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
                                             const std::vector<double> &extent,
                                             CPLString osBandList)
 {
-    CPLString osRequest, osRangeSubset;
+    CPLString osRequest;
 
 /* -------------------------------------------------------------------- */
 /*      URL encode strings that could have questionable characters.     */
@@ -135,23 +135,29 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     osFormat = pszEncoded;
     CPLFree( pszEncoded );
 
+    CPLString osRangeSubset = CPLGetXMLValue(psService, "FieldName", "");
 
-    osRangeSubset.Printf("&RangeSubset=%s",
-                         CPLGetXMLValue(psService,"FieldName",""));
+    // todo: MapServer seems to require interpolation
 
-    if( CPLGetXMLValue( psService, "Resample", NULL ) )
-    {
-        osRangeSubset += ":";
-        osRangeSubset += CPLGetXMLValue( psService, "Resample", "");
+    CPLString interpolation = CPLGetXMLValue( psService, "Interpolation", "" );
+    if (interpolation == "") {
+        interpolation = CPLGetXMLValue( psService, "Resample", "" );
+    }
+    if (interpolation != "") {
+        osRangeSubset += ":" + interpolation;
     }
 
     if( osBandList != "" )
     {
-        osRangeSubset +=
-            CPLString().Printf( "[%s[%s]]",
-                                osBandIdentifier.c_str(),
-                                osBandList.c_str() );
+        if (osBandIdentifier != "" && osBandIdentifier != "none") {
+            osRangeSubset +=
+                CPLString().Printf( "[%s[%s]]",
+                                    osBandIdentifier.c_str(),
+                                    osBandList.c_str() );
+        }
     }
+
+    osRangeSubset = "&RangeSubset=" + URLEncode(osRangeSubset);
 
     double
         bbox_0 = extent[0], // min X
@@ -564,11 +570,13 @@ bool WCSDataset110::ExtractGridInfo()
 /*      Do we have a "Band" axis?  If so try to grab the bandcount      */
 /*      and data type from it.                                          */
 /* -------------------------------------------------------------------- */
+    osBandIdentifier = CPLGetXMLValue( psService, "BandIdentifier", "" );
     CPLXMLNode * psAxis = CPLGetXMLNode(
         psService, "CoverageDescription.Range.Field.Axis" );
 
-    if( (EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
-         || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
+    if( osBandIdentifier.empty()
+        && (EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
+            || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
         && CPLGetXMLNode(psAxis,"AvailableKeys") != NULL )
     {
         osBandIdentifier = CPLGetXMLValue(psAxis,"Identifier","");

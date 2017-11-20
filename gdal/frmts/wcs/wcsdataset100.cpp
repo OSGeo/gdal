@@ -115,10 +115,12 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
                                   osCRS.c_str(),
                                   CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
 
-    if( CPLGetXMLValue( psService, "Resample", NULL ) )
-    {
-        request += "&INTERPOLATION=";
-        request += CPLGetXMLValue( psService, "Resample", "" );
+    CPLString interpolation = CPLGetXMLValue( psService, "Interpolation", "" );
+    if (interpolation == "") {
+        interpolation = CPLGetXMLValue( psService, "Resample", "" );
+    }
+    if (interpolation != "") {
+        request += "&INTERPOLATION=" + interpolation;
     }
     
     if( osTime != "" )
@@ -126,8 +128,8 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
         request += "&time=";
         request += osTime;
     }
-    
-    if( osBandList != "" )
+
+    if( osBandList != "" && osBandIdentifier != "none" )
     {
         request += CPLString().Printf( "&%s=%s",
                                        osBandIdentifier.c_str(),
@@ -212,8 +214,8 @@ bool WCSDataset100::ExtractGridInfo()
                              adfGeoTransform, &pszProjection ) != CE_None )
         return FALSE;
 
-    // Some MapServers have origin at pixel boundary
-    if (CPLGetXMLBoolean(psService, "OriginNotCenter100")) {
+    // MapServer have origin at pixel boundary
+    if (CPLGetXMLBoolean(psService, "OriginAtBoundary")) {
         adfGeoTransform[0] += adfGeoTransform[1]*0.5;
         adfGeoTransform[0] += adfGeoTransform[2]*0.5;
         adfGeoTransform[3] += adfGeoTransform[4]*0.5;

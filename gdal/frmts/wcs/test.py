@@ -154,7 +154,7 @@ try:
                 coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
                             'GeoServer': 'smartsea:eusm2016-EPSG2393',
                             'ArcGIS': '2'}
-                server_options = {'MapServer': ['OriginNotCenter100=TRUE'],
+                server_options = {'MapServer': ['OriginAtBoundary'],
                                   'GeoServer': [],
                                   'ArcGIS': []}
             elif version == '1.1.0':

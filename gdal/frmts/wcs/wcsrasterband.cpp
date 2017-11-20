@@ -157,6 +157,10 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poTileDS == NULL )
         return CE_Failure;
 
+    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
+    CPLString filename = "/tmp/result1.tiff";
+    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
+
 /* -------------------------------------------------------------------- */
 /*      Verify configuration.                                           */
 /* -------------------------------------------------------------------- */
@@ -176,12 +180,23 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if( (strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
+    if( (strlen(poODS->osBandIdentifier) && poODS->osBandIdentifier != "none" && poTileDS->GetRasterCount() != 1)
         || (!strlen(poODS->osBandIdentifier)
             && poTileDS->GetRasterCount() != poODS->GetRasterCount()) )
     {
+        CPLString msg;
+        if (strlen(poODS->osBandIdentifier)
+            && poODS->osBandIdentifier != "none"
+            && poTileDS->GetRasterCount() != 1)
+        {
+            msg.Printf("Got %d bands instead of one although the coverage has band range type.\n",
+                       poTileDS->GetRasterCount());
+        } else {
+            msg.Printf("Response has %d bands while this dataset has %d bands.\n",
+                       poTileDS->GetRasterCount(), poODS->GetRasterCount());
+        }
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Returned tile does not match expected band configuration.");
+                  "Returned tile does not match expected band configuration.\n%s", msg.c_str());
         delete poTileDS;
         return CE_Failure;
     }

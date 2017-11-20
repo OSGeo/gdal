@@ -20,39 +20,40 @@ can control the contents of the service file using options.<p>
 The dataset name is either the service description file or (starting
 at version 2.3) <tt>"WCS:&lt;URL&gt;"</tt>, where the &lt;URL&gt; is
 the URL of the server potentially appended with version, coverage, and
-extra parameter strings. In that case the service description file is
-managed by the driver in a cache directory along with GDAL metadata
-files and servers' capability responses and coverage descriptions.<p>
+extra parameter strings. In the latter case the service description
+file is managed by the driver in a cache directory along with GDAL
+metadata files and servers' capability responses and coverage
+descriptions.<p>
 
 In the case of initial use of the "WCS:&lt;URL&gt;" dataset name
 without a coverage name, the driver attempts to fetch the capabilities
 document from the server, save it to the cache, parse it, create
 metadata describing the service and coverage offering, save that to
 the cache (same key is used), and show it to the user. Coverages are
-recorded as subdatasets. Subsequent use of the driver using the "WCS:"
-format will reuse the metadata obtained from the Capabilities file
+shown as subdatasets. Subsequent use of the driver using the "WCS:"
+syntax will reuse the metadata obtained from the Capabilities file
 unless asked to refresh or recreate. Note that the version string is a
 part of the key that is used to match capabilities to coverage
 descriptions.<p>
 
 If the URL in the "WCS:&lt;URL&gt;" dataset name contains a coverage
-name key value pair, the driver creates an initial service description
-file into the cache. If a matching capabilities document is not found,
-it will be fetched first.<p>
+parameter, the driver creates an initial service description file into
+the cache. If a matching capabilities document is not found, it will
+be fetched first.<p>
 
-Despite how the service description file was obtained, when it is
-first used, GDAL will fetch the coverage description, and a small test
-image to establish details about the raster.  This information will be
-cached in the service description file to make future opens faster -
-no server access should be required till imagery is read for future
-opens.<p>
+Despite how the service description file was obtained, GDAL will fetch
+the coverage description, and a small test image to establish details
+about the raster, at its first use. Information obtained from those
+will be saved to the service description file to make future opens
+faster - no server access should be required till imagery is read for
+future opens.<p>
 
-However, with service version 2.0.1 (for which support is available
-starting at GDAL version 2.3), it may be that the coverage has more
-than two dimensions. In that case, the driver will append the coverage
-metadata and show zero bands. At that point, the user must use options
-to further instruct the driver how to deal with extra dimensions and
-data fields.<p>
+With service version 2.0.1 (for which support is available starting at
+GDAL version 2.3), it may be that the coverage has more than two
+dimensions. In that case, the driver will append the coverage metadata
+and show zero bands. At that point, the user must use options to
+further instruct the driver how to deal with extra dimensions and data
+fields.<p>
 
 The WCS driver supports WCS versions 1.0.0, 1.1.0, 1.1.1, 1.1.2, and
 2.0.1 at basic level (version 0.7 is not supported). Any return format
@@ -63,23 +64,27 @@ user may set the preferred format. Coordinate systems are read from
 the DescribeCoverage result, and are expected to be in the form of
 <tt>EPSG:n</tt> in the <tt>&lt;supportedCRSs&gt;</tt> element.<p>
 
-The service description file has the following additional elements as
-immediate children of the <tt>WCS_GDAL</tt> element that may be
-optionally set. When the "WCS:&lt;URL&gt;" format dataset name is
-used, the contents of the service description file is meant to be
-modified by using options.<p>
+The service description file has the following elements as immediate
+children of the document element. When the "WCS:&lt;URL&gt;" syntax
+dataset name is used, the contents of the service description file is
+meant to be modified by using options.<p>
 
 <ul>
-<li> <b>PreferredFormat</b>: The format to use for GetCoverage calls.
+<li> <b>ServiceURL</b>: URL of the service without parameters</li>
 
-<li> <b>Interpolation</b>: The interpolation method used when scaling
-(requires WCS version 2.0.1).
+<li> <b>Version</b>: The WCS version that is used in the
+communication.  If the dataset name syntax WCS:URL is used the default
+is 2.0.1 and the server's response may change the user request,
+otherwise defaults to 1.0.0. Versions 1.0.0, 1.1.0, 1.1.1, 1.1.2, and
+2.0.1 are supported.</li>
 
-<li> <b>BandCount</b>: Number of bands in the dataset, normally
-captured from the sample request.
+<li> <b>CoverageName</b>: The coverage that is used for the dataset.</li>
 
-<li> <b>BandType</b>: The pixel data type to use.  Normally
-established from the sample request.
+<li> <b>?</b>: If same coverage is used for multiple datasets, this is
+used to distinguish between them.</li>
+
+<li> <b>PreferredFormat</b>: The format to use for GetCoverage
+calls. If not set, selected by the driver.
 
 <li> <b>BlockXSize</b>: The block width to use for block cached remote
 access.
@@ -87,10 +92,62 @@ access.
 <li> <b>BlockYSize</b>: The block height to use for block cached
 remote access.
 
+<li> <b>OverviewCount</b>: The number of overviews to represent bands
+as having.  Defaults to a number such that the top overview is fairly
+smaller (less than 1K x 1K or so).</li><p>
+
+<li> <b>Elements for controlling the domain:</b>
+
+<li> <b>Domain</b>: The axes that are used for the spatial
+dimensions. The default is to use the first two axes given by the
+server. The axis order swap may apply. Syntax:
+<i>axis_name,axis_name</i> A <i>field_name:field_name</i> in the list
+denotes a range of fields. (Used only with version 2.0.1)</li>
+
+<li><b>Dimensions</b>: Trim or slice a dimension when fetching data
+from the server. Syntax:
+<i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
+(Used only with version 2.0.1)</li>
+
+<li><b>DimensionToBand</b>: Map the given dimension, for example
+'time', into bands. Syntax: <i>axis_name</i> (Used only with version
+2.0.1)</li>
+
+<li> <b>DefaultTime</b>: A timePosition to use by default when
+accessing coverages with a time dimension.  Populated with the last
+offered time position by default. (Used only with version 1.0.0)<p>
+
+<li> <b>Elements for controlling the range:</b>
+
+<li> <b>Interpolation</b>: The interpolation method used when scaling.
+Should be one of the server supported values. (Note: the old name for
+this element was Resample, which is still supported but
+deprecated.).</li>
+
+<li> <b>Range</b>: In version 2.0.1 (range subsetting extension
+version 1.0) the range consists of one or more fields, which are all
+scalar valued. If the server supports range subsetting, this parameter
+can be used to select a subset of fields to the dataset. Syntax:
+<i>field_name,field_name:field_name,..</i></li>
+
+<li> <b>FieldName</b>: Name of the field being accessed. Used only
+with version 1.1. Defaults to the first field in the
+DescribeCoverage. In version 1.1 the range consists of one or more
+fields, which may be scalar or vector. A vector field contains one or
+more bands. (See BandIdentifier below)
+
+<li> <b>BandCount</b>: Number of bands in the dataset, normally
+determined by the driver.
+
+<li> <b>BandType</b>: The pixel data type to use.  Normally
+determined by the driver.
+
 <li> <b>NoDataValue</b>: The nodata value to use for all the bands
-(blank for none). Normally defaulted from CoverageOffering info. In
-WCS version 2.0.1 this may be a comma separated list of values, one
-for each band.
+(blank for none). Normally determined by the driver. With version
+2.0.1 this may be a comma separated list of values, one for each
+band.</li><p>
+
+<li> <b>Elements for controlling the communication:</b>
 
 <li> <b>Timeout</b>: The timeout to use for remote service requests.
 If not provided, the libcurl default is used.
@@ -101,49 +158,24 @@ pass a userid and password to the remote server.
 <li> <b>HttpAuth</b>: May be BASIC, NTLM or ANY to control the
 authentication scheme to be used.
 
-<li> <b>OverviewCount</b>: The number of overviews to represent bands
-as having.  Defaults to a number such that the top overview is fairly
-smaller (less than 1K x 1K or so).
-
 <li> <b>GetCoverageExtra</b>: An additional set of keywords to add to
 GetCoverage requests in URL encoded form.
 eg. "&RESAMPLE=BILINEAR&Band=1"
 
 <li> <b>DescribeCoverageExtra</b>: An additional set of keywords to
 add to DescribeCoverage requests in URL encoded form.
-eg. "&CustNo=775"
+eg. "&CustNo=775"</li><p>
 
-<li> <b>Version</b>: Set a specific WCS version to use.  Currently
-defaults to 1.0.0 or to the server default (if WCS: name format is
-used) and 1.1.0, 1.1.1, 1.1.2, and 2.0.1 are also supported.
+<li> <b>Elements that may be needed to deal with server quirks:</b>
 
-<li> <b>FieldName</b>: Name of the field being accessed.  Used only
-with WCS 1.1.0+.  Defaults to the first field in the DescribeCoverage
-result. Format (in 2.0.1) <i>field_name,field_name:field_name,..</i>
+<li> <b>BandIdentifier</b>: Set to 'none' to instruct the server to
+not try range subsetting in version 1. Needed for accessing MapServer
+in some cases.
 
-<li> <b>Domain</b>: The axes that are used for the spatial
-dimensions. The default is to use the first two axes given by the
-server. The axis order swap may apply. Format:
-<i>axis_name,axis_name</i> A <i>field_name:field_name</i> in the list
-denotes a range of fields. (Requires WCS 2.0.1)</li>
-
-<li><b>Dimensions</b>: Trim or slice a dimension when fetching data
-from the server. Format:
-<i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
-(Requires WCS 2.0.1)</li>
-
-<li><b>DimensionToBand</b>: Map the given dimension, for example
-'time', into bands. Format: <i>axis_name</i> (Requires WCS 2.0.1)</li>
-
-<li> <b>DefaultTime</b>: A timePosition to use by default when
-accessing coverages with a time dimension.  Populated with the last
-offered time position by default. (Only for version 1.0.0)<p>
-
-<li> <b>Elements that may be needed to deal with server quirks</b>
-
-<li><b>OriginNotCenter100</b>: Set to consider WCS version 1.0.0 grid
+<li><b>OriginAtBoundary</b>: Set this flag if the server reports grid
 origin to be at the pixel boundary instead of the pixel center. (Use
-for MapServer versions <= 7.0.7)</li>
+for MapServer versions <= 7.0.7 with WCS versions 1.0.0 and
+2.0.1)</li>
 
 <li><b>OuterExtents</b>: Set to consider WCS 1.1 extents as boundaries
 of outer pixels instead of centers of outer pixels. (Use for
@@ -186,7 +218,7 @@ GetCoverage request. Required when the server is ArcGIS.</li>
 
 <h3>Open options</h3>
 
-When the "WCS:&lt;URL&gt;" dataset name format is used, open options
+When the "WCS:&lt;URL&gt;" dataset name syntax is used, open options
 are used to control the driver and the contents of the service
 description file.  In the case the URL does not contain coverage name,
 the service description file is not used and thus in that case the
@@ -212,7 +244,7 @@ driver.  In the case of flags the option should formally be
 
 <h3>The cache</h3>
 
-When the "WCS:&lt;URL&gt;" dataset name format is used, the server
+When the "WCS:&lt;URL&gt;" dataset name syntax is used, the server
 responses, the service description file, and the metadata files are
 stored in a cache. Generally, if the needed resource is in the cache,
 it will be used and no extra calls to the server are done.<p>
@@ -239,7 +271,7 @@ elements given as options.</li>
 
 </ul>
 
-<h3>The WCS: dataset name format</h3>
+<h3>The WCS: dataset name syntax</h3>
 
 The URL in the dataset name is not a complete WCS request URL. The
 request URL, specifically, its query part, for GetCapabilities,
