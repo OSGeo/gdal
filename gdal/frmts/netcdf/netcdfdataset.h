@@ -221,6 +221,9 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_PP_VERT_PERSP             "vertical_perspective" /*not used yet */
 #define CF_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
 #define CF_PP_SWEEP_ANGLE_AXIS        "sweep_angle_axis"
+#define CF_PP_GRID_NORTH_POLE_LONGITUDE "grid_north_pole_longitude"
+#define CF_PP_GRID_NORTH_POLE_LATITUDE  "grid_north_pole_latitude"
+#define CF_PP_NORTH_POLE_GRID_LONGITUDE "north_pole_grid_longitude"
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -562,11 +565,7 @@ static const oNetcdfSRS_PP poPSmappings[] = {
 //    * grid_north_pole_longitude
 //    * north_pole_grid_longitude - This parameter is optional (default is 0.).
 
-/* TODO: No GDAL equivalent of rotated pole? Doesn't seem to have an EPSG
-   code or WKT ... so unless some advanced proj4 features can be used
-   seems to rule out.
-   see GDAL bug #4285 for a possible fix or workaround
-*/
+// No WKT equivalent
 
 // Stereographic
 //
