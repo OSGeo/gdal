@@ -1061,7 +1061,13 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             return -4;
          }
          /* InventoryParseTime reads 7 bytes */
-         InventoryParseTime (buffer + 13 - 5, &(inv->refTime));
+         if( InventoryParseTime (buffer + 13 - 5, &(inv->refTime)) < 0 )
+         {
+            errSprintf ("ERROR: Problems with section 1: invalid refTime\n");
+            free (buffer);
+            free (buff);
+            return -4;
+         }
          MEMCPY_BIG (&center, buffer + 6 - 5, sizeof (short int));
          MEMCPY_BIG (&subcenter, buffer + 8 - 5, sizeof (short int));
          MEMCPY_BIG (&mstrVersion, buffer + 10 - 5, sizeof (uChar));
