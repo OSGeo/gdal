@@ -2736,6 +2736,8 @@ void CPL_DLL GDALRegister_KMLSUPEROVERLAY()
                                "Byte Int16 UInt16 Int32 UInt32 Float32 Float64 "
                                "CInt16 CInt32 CFloat32 CFloat64" );
 
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "kml kmz"); 
+
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='NAME' type='string' description='Overlay name'/>"

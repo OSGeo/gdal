@@ -522,7 +522,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
 
 struct GDALRasterizeOptions
 {
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! the progress function to use */
@@ -641,10 +641,25 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
     GDALDriverH hDriver = NULL;
     if (bCreateOutput)
     {
+        CPLString osFormat;
+        if( psOptions->pszFormat == NULL )
+        {
+            osFormat = GetOutputDriverForRaster(pszDest);
+            if( osFormat.empty() )
+            {
+                GDALRasterizeOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+        }
+        else
+        {
+            osFormat = psOptions->pszFormat;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-        hDriver = GDALGetDriverByName( psOptions->pszFormat );
+        hDriver = GDALGetDriverByName( osFormat );
         char** papszDriverMD = hDriver ? GDALGetMetadata(hDriver, NULL): NULL;
         if( hDriver == NULL
             || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE") )
@@ -652,7 +667,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Output driver `%s' not recognised or does not support "
-                      "direct output file creation.", psOptions->pszFormat);
+                      "direct output file creation.", osFormat.c_str());
             GDALRasterizeOptionsFree(psOptionsToFree);
             return NULL;
         }
@@ -815,7 +830,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
 {
     GDALRasterizeOptions *psOptions = new GDALRasterizeOptions;
 
-    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pszFormat = NULL;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = NULL;
     psOptions->bCreateOutput = false;
@@ -853,10 +868,6 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
             psOptions->bCreateOutput = true;
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -1195,7 +1206,8 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     if( psOptionsForBinary )
     {
         psOptionsForBinary->bCreateOutput = psOptions->bCreateOutput;
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+        if( psOptions->pszFormat )
+            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
     }
 
     return psOptions;

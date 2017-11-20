@@ -211,49 +211,6 @@ static void GDALVectorTranslateOptionsForBinaryFree( GDALVectorTranslateOptionsF
     }
 }
 
-/* -------------------------------------------------------------------- */
-/*                  CheckDestDataSourceNameConsistency()                */
-/* -------------------------------------------------------------------- */
-
-static
-void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
-                                        const char* pszDriverName)
-{
-    char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
-
-    if( EQUAL(pszDriverName, "GMT") )
-        pszDriverName = "OGR_GMT";
-    CheckExtensionConsistency(pszDestFilename, pszDriverName);
-
-    static const char* apszBeginName[][2] =  { { "PG:"      , "PostgreSQL" },
-                                               { "MySQL:"   , "MySQL" },
-                                               { "CouchDB:" , "CouchDB" },
-                                               { "GFT:"     , "GFT" },
-                                               { "MSSQL:"   , "MSSQLSpatial" },
-                                               { "ODBC:"    , "ODBC" },
-                                               { "OCI:"     , "OCI" },
-                                               { "SDE:"     , "SDE" },
-                                               { "WFS:"     , "WFS" },
-                                               { NULL, NULL }
-                                             };
-
-    for(int i=0; apszBeginName[i][0] != NULL; i++)
-    {
-        if (EQUALN(pszDestFilename, apszBeginName[i][0], strlen(apszBeginName[i][0])) &&
-            !EQUAL(pszDriverName, apszBeginName[i][1]))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                    "The target file has a name which is normally recognized by the %s driver,\n"
-                    "but the requested output driver is %s. Is it really what you want ?\n",
-                    apszBeginName[i][1],
-                    pszDriverName);
-            break;
-        }
-    }
-
-    CPLFree(pszDestExtension);
-}
-
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -338,12 +295,6 @@ MAIN_START(nArgc, papszArgv)
     if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
         psOptionsForBinary->bQuiet = TRUE;
 
-    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet &&
-        psOptionsForBinary->eAccessMode == ACCESS_CREATION)
-    {
-        CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
-                                           psOptionsForBinary->pszFormat);
-    }
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
@@ -406,7 +357,7 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    if( hODS != NULL )
+    if( hODS != NULL && psOptionsForBinary->pszFormat != NULL )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 

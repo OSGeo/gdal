@@ -230,9 +230,6 @@ MAIN_START(argc, argv)
         }
     }
 
-    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
-
 /* -------------------------------------------------------------------- */
 /*      Attempt to open source file.                                    */
 /* -------------------------------------------------------------------- */

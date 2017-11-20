@@ -57,7 +57,7 @@ static void Usage(const char* pszErrorMsg)
             "  % gdaltindex doq_index.shp doq/*.tif\n"
             "\n"
             "NOTES:\n"
-            "  o The shapefile (index_file) will be created if it doesn't already exist.\n"
+            "  o The index will be created if it doesn't already exist.\n"
             "  o The default tile index field is 'location'.\n"
             "  o Raster filenames will be put in the file exactly as they are specified\n"
             "    on the commandline unless the option -write_absolute_path is used.\n"
@@ -118,7 +118,7 @@ MAIN_START(argc, argv)
     const char* pszIndexLayerName = NULL;
     const char *index_filename = NULL;
     const char *tile_index = "location";
-    const char* pszDriverName = "ESRI Shapefile";
+    const char* pszDriverName = NULL;
     size_t nMaxFieldSize = 254;
     bool write_absolute_path = false;
     char* current_path = NULL;
@@ -147,8 +147,6 @@ MAIN_START(argc, argv)
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszDriverName = argv[++iArg];
-            if( !EQUAL(pszDriverName, "ESRI Shapefile") )
-                nMaxFieldSize = 0;
         }
         else if( strcmp(argv[iArg],"-lyr_name") == 0 )
         {
@@ -238,13 +236,19 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Open or create the target datasource                            */
 /* -------------------------------------------------------------------- */
-    OGRDataSourceH hTileIndexDS = OGROpen( index_filename, TRUE, NULL );
+    GDALDatasetH hTileIndexDS = GDALOpenEx(
+        index_filename, GDAL_OF_VECTOR | GDAL_OF_UPDATE, NULL, NULL, NULL );
     OGRLayerH hLayer = NULL;
+    CPLString osFormat;
     if( hTileIndexDS != NULL )
     {
-        if( OGR_DS_GetLayerCount(hTileIndexDS) == 1 )
+        GDALDriverH hDriver = GDALGetDatasetDriver(hTileIndexDS);
+        if( hDriver )
+            osFormat = GDALGetDriverShortName(hDriver);
+
+        if( GDALDatasetGetLayerCount(hTileIndexDS) == 1 )
         {
-            hLayer = OGR_DS_GetLayer(hTileIndexDS, 0);
+            hLayer = GDALDatasetGetLayer(hTileIndexDS, 0);
         }
         else
         {
@@ -254,21 +258,51 @@ MAIN_START(argc, argv)
                 exit( 1 );
             }
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            hLayer = OGR_DS_GetLayerByName(hTileIndexDS, pszIndexLayerName);
+            hLayer = GDALDatasetGetLayerByName(hTileIndexDS, pszIndexLayerName);
             CPLPopErrorHandler();
         }
     }
     else
     {
         printf( "Creating new index file...\n" );
-        OGRSFDriverH hDriver = OGRGetDriverByName( pszDriverName );
+        if( pszDriverName == NULL )
+        {
+            std::vector<CPLString> aoDrivers =
+                GetOutputDriversFor(index_filename, GDAL_OF_VECTOR);
+            if( aoDrivers.empty() )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Cannot guess driver for %s", index_filename);
+                exit( 10 );
+            }
+            else
+            {
+                if( aoDrivers.size() > 1 )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Several drivers matching %s extension. Using %s",
+                            CPLGetExtension(index_filename), aoDrivers[0].c_str() );
+                }
+                osFormat = aoDrivers[0];
+            }
+        }
+        else
+        {
+            osFormat = pszDriverName;
+        }
+        if( !EQUAL(osFormat, "ESRI Shapefile") )
+            nMaxFieldSize = 0;
+
+
+        GDALDriverH hDriver = GDALGetDriverByName( osFormat.c_str() );
         if( hDriver == NULL )
         {
-            printf( "%s driver not available.\n", pszDriverName );
+            printf( "%s driver not available.\n", osFormat.c_str() );
             exit( 1 );
         }
 
-        hTileIndexDS = OGR_Dr_CreateDataSource( hDriver, index_filename, NULL );
+        hTileIndexDS = 
+            GDALCreate( hDriver, index_filename, 0, 0, 0, GDT_Unknown, NULL );
     }
 
     if( hTileIndexDS != NULL && hLayer == NULL )
@@ -278,7 +312,7 @@ MAIN_START(argc, argv)
         if( pszIndexLayerName == NULL )
         {
             VSIStatBuf sStat;
-            if( EQUAL(pszDriverName, "ESRI Shapefile") ||
+            if( EQUAL(osFormat, "ESRI Shapefile") ||
                 VSIStat(index_filename, &sStat) == 0 )
             {
                 pszLayerName = CPLStrdup(CPLGetBasename(index_filename));
@@ -315,7 +349,7 @@ MAIN_START(argc, argv)
         }
 
         hLayer =
-            OGR_DS_CreateLayer( hTileIndexDS, pszLayerName, hSpatialRef,
+            GDALDatasetCreateLayer( hTileIndexDS, pszLayerName, hSpatialRef,
                                 wkbPolygon, NULL );
         CPLFree(pszLayerName);
         if( hSpatialRef )
@@ -697,7 +731,7 @@ MAIN_START(argc, argv)
     if ( hTargetSRS )
         OSRDestroySpatialReference( hTargetSRS );
 
-    OGR_DS_Destroy( hTileIndexDS );
+    GDALClose( hTileIndexDS );
 
     GDALDestroyDriverManager();
     OGRCleanupAll();

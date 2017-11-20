@@ -90,7 +90,7 @@ MAIN_START(argc, argv)
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
-    const char *pszFormat = "ESRI Shapefile";
+    const char *pszFormat = NULL;
     char **papszDSCO = NULL;
     char **papszLCO = NULL;
     double adfFixedLevels[1000];
@@ -259,14 +259,41 @@ MAIN_START(argc, argv)
         hSRS = OSRNewSpatialReference( pszWKT );
 
 /* -------------------------------------------------------------------- */
-/*      Create the output file.                                          */
+/*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    OGRSFDriverH hDriver = OGRGetDriverByName( pszFormat );
+    CPLString osFormat;
+    if( pszFormat == NULL )
+    {
+        std::vector<CPLString> aoDrivers =
+            GetOutputDriversFor(pszDstFilename, GDAL_OF_VECTOR);
+        if( aoDrivers.empty() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot guess driver for %s", pszDstFilename);
+            exit( 10 );
+        }
+        else
+        {
+            if( aoDrivers.size() > 1 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Several drivers matching %s extension. Using %s",
+                        CPLGetExtension(pszDstFilename), aoDrivers[0].c_str() );
+            }
+            osFormat = aoDrivers[0];
+        }
+    }
+    else
+    {
+        osFormat = pszFormat;
+    }
+
+    OGRSFDriverH hDriver = OGRGetDriverByName( osFormat.c_str() );
 
     if( hDriver == NULL )
     {
         fprintf( stderr, "Unable to find format driver named %s.\n",
-                 pszFormat );
+                 osFormat.c_str() );
         exit( 10 );
     }
 

@@ -249,7 +249,7 @@ def Info(ds, **kwargs):
     return ret
 
 
-def TranslateOptions(options = [], format = 'GTiff',
+def TranslateOptions(options = [], format = None,
               outputType = GDT_Unknown, bandList = None, maskBand = None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
               xRes = 0.0, yRes = 0.0,
@@ -299,7 +299,8 @@ def TranslateOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if maskBand != None:
@@ -391,7 +392,7 @@ def Translate(destName, srcDS, **kwargs):
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
-def WarpOptions(options = [], format = 'GTiff',
+def WarpOptions(options = [], format = None,
          outputBounds = None,
          outputBoundsSRS = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
@@ -455,7 +456,8 @@ def WarpOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if workingType != GDT_Unknown:
@@ -577,7 +579,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
-def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
+def VectorTranslateOptions(options = [], format = None,
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
          SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
@@ -626,7 +628,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-f', format]
+        if format is not None:
+            new_options += ['-f', format]
         if srcSRS is not None:
             new_options += ['-s_srs', str(srcSRS) ]
         if dstSRS is not None:
@@ -713,7 +716,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
-def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
+def DEMProcessingOptions(options = [], colorFilename = None, format = None,
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
               zFactor = None, scale = None, azimuth = None, altitude = None,
               combined = False, multiDirectional = False,
@@ -748,7 +751,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -801,7 +805,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
 
-def NearblackOptions(options = [], format = 'GTiff',
+def NearblackOptions(options = [], format = None,
          creationOptions = None, white = False, colors = None,
          maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
          callback = None, callback_data = None):
@@ -825,7 +829,8 @@ def NearblackOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -873,7 +878,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def GridOptions(options = [], format = 'GTiff',
+def GridOptions(options = [], format = None,
               outputType = GDT_Unknown,
               width = 0, height = 0,
               creationOptions = None,
@@ -917,7 +922,8 @@ def GridOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if width != 0 or height != 0:

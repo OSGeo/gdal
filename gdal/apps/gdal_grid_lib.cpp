@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "commonutils.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -64,7 +65,7 @@ CPL_CVSID("$Id$")
  */
 struct GDALGridOptions
 {
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! allow or suppress progress monitor and other non-error output */
@@ -766,11 +767,26 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
+    CPLString osFormat;
+    if( psOptions->pszFormat == NULL )
+    {
+        osFormat = GetOutputDriverForRaster(pszDest);
+        if( osFormat.empty() )
+        {
+            GDALGridOptionsFree(psOptionsToFree);
+            return NULL;
+        }
+    }
+    else
+    {
+        osFormat = psOptions->pszFormat;
+    }
+
+    GDALDriverH hDriver = GDALGetDriverByName( osFormat );
     if( hDriver == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Output driver `%s' not recognised.", psOptions->pszFormat );
+                 "Output driver `%s' not recognised.", osFormat.c_str() );
         fprintf( stderr,
         "The following format drivers are configured and support output:\n" );
         for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
@@ -978,7 +994,7 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
     GDALGridOptions *psOptions =
         static_cast<GDALGridOptions *>(CPLCalloc(1, sizeof(GDALGridOptions)));
 
-    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pszFormat = NULL;
     psOptions->bQuiet = true;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = NULL;
@@ -1026,10 +1042,6 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
             ++i;
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -1326,7 +1338,10 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
 
     if( psOptionsForBinary )
     {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+        if( psOptions->pszFormat )
+        {
+            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+        }
     }
 
     return psOptions;

@@ -104,7 +104,7 @@ typedef struct
 struct GDALTranslateOptions
 {
 
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! allow or suppress progress monitor and other non-error output */
@@ -429,7 +429,7 @@ GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOp
     GDALTranslateOptions* psOptions = static_cast<GDALTranslateOptions*>(
         CPLMalloc(sizeof(GDALTranslateOptions)));
     memcpy(psOptions, psOptionsIn, sizeof(GDALTranslateOptions));
-    psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
+    if( psOptionsIn->pszFormat ) psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
     if( psOptionsIn->panBandList )
     {
         psOptions->panBandList =
@@ -835,6 +835,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
+    if( psOptions->pszFormat == NULL )
+    {
+        CPLString osFormat = GetOutputDriverForRaster(pszDest);
+        if( osFormat.empty() )
+        {
+            GDALTranslateOptionsFree(psOptions);
+            return NULL;
+        }
+        psOptions->pszFormat = CPLStrdup(osFormat);
+    }
+
     GDALDriverH hDriver = GDALGetDriverByName(psOptions->pszFormat);
     if( hDriver == NULL )
     {
@@ -1915,7 +1926,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     GDALTranslateOptions *psOptions = static_cast<GDALTranslateOptions *>(
         CPLCalloc( 1, sizeof(GDALTranslateOptions)));
 
-    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pszFormat = NULL;
     psOptions->bQuiet = true;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = NULL;
@@ -1982,10 +1993,6 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             ++i;
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -2443,7 +2450,8 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
 
     if( psOptionsForBinary )
     {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
+        if( psOptions->pszFormat )
+            psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
     }
 
     return psOptions;

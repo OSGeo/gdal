@@ -68,7 +68,7 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
     int nFirstSourceDataset = -1;
     bool bLayersWildcarded = true;
-    const char *pszFormat = "ESRI Shapefile";
+    const char *pszFormat = NULL;
     const char *pszTileIndexField = "LOCATION";
     const char *pszOutputName = NULL;
     bool write_absolute_path = false;
@@ -97,8 +97,6 @@ MAIN_START(nArgc, papszArgv)
         else if( iArg < nArgc-1 && (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             pszFormat = papszArgv[++iArg];
-            if( !EQUAL(pszFormat, "ESRI Shapefile") )
-                nMaxFieldSize = 0;
         }
         else if( EQUAL(papszArgv[iArg],"-write_absolute_path"))
         {
@@ -199,38 +197,62 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
     if( poDstDS == NULL )
     {
-        OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-        GDALDriver *poDriver = NULL;
-
-        for( int iDriver = 0;
-             iDriver < poR->GetDriverCount() && poDriver == NULL;
-             iDriver++ )
+        CPLString osFormat;
+        if( pszFormat == NULL )
         {
-            if( EQUAL(poR->GetDriver(iDriver)->GetDescription(),pszFormat) )
+            std::vector<CPLString> aoDrivers =
+                GetOutputDriversFor(pszOutputName, GDAL_OF_VECTOR);
+            if( aoDrivers.empty() )
             {
-                poDriver = poR->GetDriver(iDriver);
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Cannot guess driver for %s", pszOutputName);
+                exit( 10 );
+            }
+            else
+            {
+                if( aoDrivers.size() > 1 )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Several drivers matching %s extension. Using %s",
+                            CPLGetExtension(pszOutputName), aoDrivers[0].c_str() );
+                }
+                osFormat = aoDrivers[0];
             }
         }
-
-        if( poDriver == NULL )
+        else
         {
-            fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
-            fprintf( stderr, "The following drivers are available:\n" );
+            osFormat = pszFormat;
+        }
+        if( !EQUAL(osFormat, "ESRI Shapefile") )
+            nMaxFieldSize = 0;
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+
+        GDALDriverH hDriver = GDALGetDriverByName( osFormat.c_str() );
+        if( hDriver == NULL )
+        {
+            GDALDriverManager *poDM = GetGDALDriverManager();
+            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
             {
-                fprintf( stderr, "  -> `%s'\n",
-                         poR->GetDriver(iDriver)->GetDescription() );
+                fprintf( stderr,  "Unable to find driver `%s'.\n", osFormat.c_str() );
+                fprintf( stderr,  "The following drivers are available:\n" );
+
+                GDALDriver* poIter = poDM->GetDriver(iDriver);
+                char** papszDriverMD = poIter->GetMetadata();
+                if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) &&
+                    CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) )
+                {
+                    fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+                }
             }
             exit( 1 );
         }
 
-        if( !CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                               GDAL_DCAP_CREATE, "FALSE") ) )
+        if( !CPLTestBool( CSLFetchNameValueDef( GDALGetMetadata(hDriver, NULL),
+                            GDAL_DCAP_CREATE, "FALSE" ) ) )
         {
             fprintf( stderr,
                      "%s driver does not support data source creation.\n",
-                     pszFormat );
+                     osFormat.c_str() );
             exit( 1 );
         }
 
@@ -238,11 +260,12 @@ MAIN_START(nArgc, papszArgv)
 /*      Now create it.                                                  */
 /* -------------------------------------------------------------------- */
 
-        poDstDS = poDriver->Create( pszOutputName, 0, 0, 0, GDT_Unknown, NULL );
+        poDstDS = reinterpret_cast<GDALDataset*>(
+            GDALCreate( hDriver, pszOutputName, 0, 0, 0, GDT_Unknown, NULL ));
         if( poDstDS == NULL )
         {
             fprintf( stderr, "%s driver failed to create %s\n",
-                    pszFormat, pszOutputName );
+                    osFormat.c_str(), pszOutputName );
             exit( 1 );
         }
 
@@ -778,8 +801,7 @@ static void Usage()
             "           in the tile index.\n" );
     printf( "  -lname name: Add the layer named 'name' from each source file\n"
             "               in the tile index.\n" );
-    printf( "  -f output_format: Select an output format name.  The default\n"
-            "                    is to create a shapefile.\n" );
+    printf( "  -f output_format: Select an output format name.\n" );
     printf( "  -tileindex field_name: The name to use for the dataset name.\n"
             "                         Defaults to LOCATION.\n" );
     printf( "  -write_absolute_path: Filenames are written with absolute paths.\n" );

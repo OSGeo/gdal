@@ -57,10 +57,9 @@ Select the format to create the new file as.  The formats are assigned short
 names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of
 all format codes can be listed with the <b>\-\-formats</b> switch.  Only
 formats list as "(rw)" (read-write) can be written.<p>
-Many utilities default
-to creating GeoTIFF files if a format is not specified.  File extensions
-are not used to guess output format, nor are extensions generally added
-by GDAL if not indicated in the filename by the user.
+Starting with GDAL 2.3, if not specified, the format is guessed from the
+extension (previously was generally GTiff for raster, or ESRI Shapefile for
+vector).
 </dd>
 
 <dt> <b>-co</b> <i>NAME=VALUE</i></dt><dd>
@@ -342,8 +341,9 @@ resampling, and rescaling pixels in the process.
 indicated data type.</dd>
 <dt> <b>-strict</b>:</dt><dd> Don't be forgiving of mismatches and lost data
 when translating to the output format.</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for
 output. Bands are numbered from 1. Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
@@ -677,7 +677,9 @@ tileindex.
 
 <dl>
 <dt><b>-f</b> format:</dt><dd> (GDAL >= 1.11)
-<p>The OGR format of the output tile index file. Default is ESRI Shapefile.</p>
+<p>The OGR format of the output tile index file. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). </p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
 <dd><p>The output field name to hold the file path/location to the indexed rasters. The default tile index field name is <code>location</code>.</p>
@@ -984,7 +986,9 @@ clockwise around a top.
  Input pixel value to treat as "nodata". </dd>
 
 <dt> <b>-f</b> <em>format</em>:</dt> <dd>
-create output in a particular format, default is shapefiles.</dd>
+Create output in a particular format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). </dd>
 
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b> <em>NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
@@ -1113,8 +1117,9 @@ the native SQL of an RDBMS by passing OGRSQL. Starting with GDAL 1.10, the
 "SQLITE" dialect can also be used with any datasource.</dd>
 
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL >= 1.8.0)
-Select the output format.  The default is GeoTIFF (GTiff).  Use the short format
-name.</dd>
+Select the output format.  Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd> (GDAL >= 1.8.0)
 Assign a specified nodata value to output bands.</dd>
@@ -1243,8 +1248,9 @@ color table.  Defaults to 256.  Must be between 2 and 256. </dd>
 <i>palette_file</i> instead of computing it. Can be used to have a consistent
 color table for multiple files.  The <i>palette_file</i> must be a raster file
 in a GDAL supported format with a palette.</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
-semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name. Only output formats
 supporting pseudo-color tables should be used. </dd>
 <dt> <i>source_file</i>:</dt><dd> The input RGB file. </dd>
 <dt> <i>dest_file</i>:</dt><dd> The output pseudo-colored file that will be
@@ -1309,7 +1315,9 @@ This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format.
 
 <dl>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd>
 Band to convert to RGB, defaults to 1.</dd>
 <dt> <b>-rgba:</b></dt><dd> Generate a RGBA file (instead of a RGB file by default).</dd>
@@ -1458,9 +1466,10 @@ can be treated as transparent when mosaicing.
 
 <dl>
 <dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be
-created.  Newly created files are created with the HFA driver by default
-(Erdas Imagine - .img)</dd>
+created.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
+Starting with GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ERDAS Imagine .img). 
 Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
@@ -1551,7 +1560,9 @@ the last image will be copied over earlier ones.
 <dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file,
 which will be created if it does not already exist (defaults to "out.tif").</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd>
-Output format, defaults to GeoTIFF (GTiff).
+Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.
 </dd>
 <dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd>
 Creation option for output file.  Multiple options can be specified.
@@ -1932,8 +1943,9 @@ computer.
 <dt> <b>-ot</b> <i>type</i>:</dt><dd> For the output bands to be of the
 indicated data type.</dd>
 
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 
 <dt> <b>-txe</b> <em>xmin xmax</em>:</dt><dd> Set georeferenced
 X extents of output file to be created.</dd>
@@ -2353,8 +2365,9 @@ The following general options are available :
 <dl>
 <dt> <i>input_dem</i>:</dt><dd> The input DEM raster to be processed</dd>
 <dt> <i>output_xxx_map</i>:</dt><dd> The output raster produced</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 <dt> <b>-compute_edges</b>:</dt><dd> (GDAL >= 1.8.0) Do the computation at raster edges and near nodata values</dd>
 <dt> <b>-alg</b> <i>ZevenbergenThorne</i>:</dt><dd> (GDAL >= 1.8.0) Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
@@ -2810,8 +2823,9 @@ pan-sharpening operation.
 More details can be found in the <a href="gdal_vrttut.html#gdal_vrttut_pansharpen">VRT tutorial</a>.
 
 <dl>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff). "VRT" can also be used. Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd>Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name. "VRT" can also be used.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select band <i>band</i> from the input spectral
 bands for output. Bands are numbered from 1 in the order spectral bands are specified.
 Multiple <b>-b</b> switches may be used.

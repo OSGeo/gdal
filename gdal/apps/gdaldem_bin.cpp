@@ -117,7 +117,6 @@ static void GDALDEMProcessingOptionsForBinaryFree(
         CPLFree(psOptionsForBinary->pszSrcFilename);
         CPLFree(psOptionsForBinary->pszColorFilename);
         CPLFree(psOptionsForBinary->pszDstFilename);
-        CPLFree(psOptionsForBinary->pszFormat);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -184,13 +183,6 @@ MAIN_START(argc, argv)
     if( psOptionsForBinary->pszDstFilename == NULL )
     {
         Usage("Missing destination.");
-    }
-
-    if( !psOptionsForBinary->bQuiet &&
-        !psOptionsForBinary->bFormatExplicitlySet)
-    {
-        CheckExtensionConsistency(psOptionsForBinary->pszDstFilename,
-                                  psOptionsForBinary->pszFormat);
     }
 
     // Open Dataset and get raster band.

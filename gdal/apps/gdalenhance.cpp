@@ -88,8 +88,7 @@ MAIN_START(argc, argv)
 {
     GDALDatasetH        hDataset, hOutDS;
     int                 i;
-    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
-    int bFormatExplicitlySet = FALSE;
+    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = NULL;
     GDALDriverH         hDriver;
     GDALDataType        eOutputType = GDT_Unknown;
     char                **papszCreateOptions = NULL;
@@ -102,7 +101,6 @@ MAIN_START(argc, argv)
     int               **papanLUTs = NULL;
     int                 iBand;
     const char         *pszConfigFile = NULL;
-    int                 bQuiet = FALSE;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -130,7 +128,6 @@ MAIN_START(argc, argv)
         else if( i < argc-1 && (EQUAL(argv[i],"-of") || EQUAL(argv[i],"-f")) )
         {
             pszFormat = argv[++i];
-            bFormatExplicitlySet = TRUE;
         }
 
         else if( i < argc-1 && EQUAL(argv[i],"-ot") )
@@ -191,7 +188,6 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-quiet") )
         {
             pfnProgress = GDALDummyProgress;
-            bQuiet = TRUE;
         }
 
         else if( argv[i][0] == '-' )
@@ -241,12 +237,27 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
-    hDriver = GDALGetDriverByName( pszFormat );
+    CPLString osFormat;
+    if( pszFormat == NULL )
+    {
+        osFormat = GetOutputDriverForRaster(pszDest);
+        if( osFormat.empty() )
+        {
+            GDALDestroyDriverManager();
+            exit( 1 );
+        }
+    }
+    else
+    {
+        osFormat = pszFormat;
+    }
+
+    hDriver = GDALGetDriverByName( osFormat );
     if( hDriver == NULL )
     {
         int iDr;
 
-        printf( "Output driver `%s' not recognised.\n", pszFormat );
+        printf( "Output driver `%s' not recognised.\n", osFormat.c_str() );
         printf( "The following format drivers are configured and support output:\n" );
         for( iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
@@ -264,9 +275,6 @@ MAIN_START(argc, argv)
         printf( "\n" );
         Usage();
     }
-
-    if (!bQuiet && pszDest != NULL && !bFormatExplicitlySet)
-        CheckExtensionConsistency(pszDest, pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      If histogram equalization is requested, do it now.              */
