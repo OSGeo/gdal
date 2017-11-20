@@ -310,6 +310,46 @@ def grib_12():
     return 'success'
 
 ###############################################################################
+# GRIB1 file with rotate pole lonlat
+
+def grib_13():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('/vsisparse/data/rotated_pole.grb.xml')
+
+    if ds.RasterXSize != 726 or ds.RasterYSize != 550:
+        gdaltest.post_reason('Did not get expected dimensions')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +lon_0=-15 +o_proj=longlat +o_lon_p=0 +o_lat_p=30 +a=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-30.25, 0.1, 0.0, 24.15, 0.0, -0.1)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1503295200 sec UTC', 'GRIB_VALID_TIME': '  1503295200 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[m^2/s^2]', 'GRIB_COMMENT': 'Geopotential [m^2/s^2]', 'GRIB_SHORT_NAME': '0-HTGL', 'GRIB_ELEMENT': 'GP'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 def grib_online_1():
 
@@ -354,6 +394,7 @@ gdaltest_list = [
     grib_10,
     grib_11,
     grib_12,
+    grib_13,
     grib_online_1
     ]
 

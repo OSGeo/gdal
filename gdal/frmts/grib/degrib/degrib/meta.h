@@ -498,7 +498,7 @@ typedef struct {
    /* Following is for stretched Lat/Lon grids. */
    double poleLat, poleLon;   /* Pole of stretching. */
    double stretchFactor;      /* Factor of stretching. */
-   int f_typeLatLon;          /* 0 regular, 1 stretch, 2 stretch / rotate. */
+   int f_typeLatLon;          /* 0 regular, 1 stretch, 2 stretch / rotate, 3 rotate. */
    double angleRotate;        /* Rotation angle. */
 /* following is just to track the datum. */
    uChar hdatum;              /* horizontal datum to use.  0=undefined (use
