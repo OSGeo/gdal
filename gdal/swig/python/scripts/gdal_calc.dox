@@ -24,7 +24,7 @@ Options:
   --NoDataValue=value   output nodata value (default datatype specific value)
   --type=datatype       output datatype, must be one of ['Int32', 'Int16',
                         'Float64', 'UInt16', 'Byte', 'UInt32', 'Float32']
-  --format=gdal_format  GDAL format for output file (default 'GTiff')
+  --format=gdal_format  GDAL format for output file
   --creation-option=option, --co=option
                         Passes a creation option to the output format driver.
                         Multiple options may be listed. See format specific

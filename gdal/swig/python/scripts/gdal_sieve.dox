@@ -67,7 +67,9 @@ non-zero is valid).
 
 <dt> <i>dstfile</i></dt><dd> The new file to create with the filtered result.  If not provided, the source band is updated in place.</dd>
 
-<dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
+<dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name. </dd>
 
 </dl>
 

@@ -165,9 +165,7 @@ MAIN_START(argc, argv)
 
     if( psOptionsForBinary->pszDest == NULL )
         psOptionsForBinary->pszDest = CPLStrdup(psOptionsForBinary->pszSource);
-    else if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */

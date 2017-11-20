@@ -31,6 +31,7 @@
 # anssi.pekkarinen@fao.org
 
 import math
+import os.path
 import sys
 import time
 
@@ -44,6 +45,51 @@ except:
 __version__ = '$id$'[5:-1]
 verbose = 0
 quiet = 0
+
+def DoesDriverHandleExtension(drv, ext):
+    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
+    return exts is not None and exts.lower().find(ext.lower()) >= 0
+
+def GetExtension(filename):
+    ext = os.path.splitext(filename)[1]
+    if ext.startswith('.'):
+        ext = ext[1:]
+    return ext
+
+def GetOutputDriversFor(filename):
+    drv_list = []
+    ext = GetExtension(filename)
+    for i in range(gdal.GetDriverCount()):
+        drv = gdal.GetDriver(i)
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
+           drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
+            if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
+                drv_list.append( drv.ShortName )
+            else:
+                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
+                if prefix is not None and filename.lower().startswith(prefix.lower()):
+                    drv_list.append( drv.ShortName )
+
+    # GMT is registered before netCDF for opening reasons, but we want
+    # netCDF to be used by default for output.
+    if ext.lower() == 'nc' and len(drv_list) == 0 and \
+       drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
+           drv_list = [ 'NETCDF', 'GMT' ]
+
+    return drv_list
+
+def GetOutputDriverFor(filename):
+    drv_list = GetOutputDriversFor(filename)
+    if len(drv_list) == 0:
+        ext = GetExtension(filename)
+        if len(ext) == 0:
+            return 'GTiff'
+        else:
+            raise Exception("Cannot guess driver for %s" % filename)
+    elif len(drv_list) > 1:
+        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+    return drv_list[0]
 
 
 # =============================================================================
@@ -291,7 +337,7 @@ def main( argv=None ):
     verbose = 0
     quiet = 0
     names = []
-    format = 'GTiff'
+    format = None
     out_file = 'out.tif'
 
     ulx = None
@@ -399,6 +445,9 @@ def main( argv=None ):
         print('No input files selected.')
         Usage()
         sys.exit( 1 )
+
+    if format is None:
+        format = GetOutputDriverFor(out_file)
 
     Driver = gdal.GetDriverByName(format)
     if Driver is None:

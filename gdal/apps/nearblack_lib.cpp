@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "commonutils.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -51,7 +52,7 @@ typedef std::vector< Color > Colors;
 
 struct GDALNearblackOptions
 {
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! the progress function to use */
@@ -154,9 +155,25 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Do we need to create output file?                               */
 /* -------------------------------------------------------------------- */
+
     if( hDstDS == NULL )
     {
-        GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
+        CPLString osFormat;
+        if( psOptions->pszFormat == NULL )
+        {
+            osFormat = GetOutputDriverForRaster(pszDest);
+            if( osFormat.empty() )
+            {
+                GDALNearblackOptionsFree(psOptionsToFree);
+                return NULL;
+            }
+        }
+        else
+        {
+            osFormat = psOptions->pszFormat;
+        }
+
+        GDALDriverH hDriver = GDALGetDriverByName( osFormat );
         if (hDriver == NULL)
         {
             GDALNearblackOptionsFree(psOptionsToFree);
@@ -746,7 +763,7 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
 {
     GDALNearblackOptions *psOptions = new GDALNearblackOptions;
 
-    psOptions->pszFormat = CPLStrdup("HFA");
+    psOptions->pszFormat = NULL;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = NULL;
     psOptions->papszCreationOptions = NULL;
@@ -767,10 +784,6 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             ++i;
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -874,11 +887,6 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             GDALNearblackOptionsFree(psOptions);
             return NULL;
         }
-    }
-
-    if( psOptionsForBinary )
-    {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
     }
 
     return psOptions;

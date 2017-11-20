@@ -78,7 +78,6 @@ static void GDALRasterizeOptionsForBinaryFree(
 
     CPLFree(psOptionsForBinary->pszSource);
     CPLFree(psOptionsForBinary->pszDest);
-    CPLFree(psOptionsForBinary->pszFormat);
     CPLFree(psOptionsForBinary);
 }
 /************************************************************************/
@@ -164,7 +163,8 @@ MAIN_START(argc, argv)
         CPLPopErrorHandler();
     }
 
-    if( psOptionsForBinary->bCreateOutput || hDstDS == NULL )
+    if( psOptionsForBinary->pszFormat != NULL &&
+        (psOptionsForBinary->bCreateOutput || hDstDS == NULL) )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
         GDALDriver *poDriver =
@@ -201,11 +201,6 @@ MAIN_START(argc, argv)
             exit(1);
         }
     }
-
-    if (hDstDS == NULL && !psOptionsForBinary->bQuiet &&
-        !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDest,
-                                  psOptionsForBinary->pszFormat);
 
     int bUsageError = FALSE;
     GDALDatasetH hRetDS = GDALRasterize(psOptionsForBinary->pszDest,

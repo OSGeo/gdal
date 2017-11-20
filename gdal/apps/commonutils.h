@@ -77,11 +77,19 @@ extern "C" int wmain( int argc, wchar_t ** argv_w, wchar_t ** /* envp */ );
 
 CPL_C_START
 
-void CPL_DLL CheckExtensionConsistency( const char* pszDestFilename,
-                                        const char* pszDriverName );
-
 void CPL_DLL EarlySetConfigOptions( int argc, char ** argv );
 
 CPL_C_END
+
+#ifdef __cplusplus
+
+#include "cpl_string.h"
+#include <vector>
+
+std::vector<CPLString> CPL_DLL GetOutputDriversFor(const char* pszDestFilename,
+                                                   int nFlagRasterVector);
+CPLString CPL_DLL GetOutputDriverForRaster(const char* pszDestFilename);
+
+#endif /* __cplusplus */
 
 #endif /* COMMONUTILS_H_INCLUDED */

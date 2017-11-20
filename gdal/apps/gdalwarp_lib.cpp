@@ -122,7 +122,7 @@ struct GDALWarpAppOptions
     /*! Prevent a source alpha band from being considered as such */
     bool bDisableSrcAlpha;
 
-    /*! output format. The default is GeoTIFF (GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     bool bCreateOutput;
@@ -477,7 +477,7 @@ GDALWarpAppOptions* GDALWarpAppOptionsClone(const GDALWarpAppOptions *psOptionsI
     GDALWarpAppOptions* psOptions = static_cast<GDALWarpAppOptions *>(
         CPLMalloc(sizeof(GDALWarpAppOptions)));
     memcpy(psOptions, psOptionsIn, sizeof(GDALWarpAppOptions));
-    psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
+    if( psOptionsIn->pszFormat) psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
     psOptions->papszCreateOptions = CSLDuplicate(psOptionsIn->papszCreateOptions);
     psOptions->papszWarpOptions = CSLDuplicate(psOptionsIn->papszWarpOptions);
     if( psOptionsIn->pszSrcNodata ) psOptions->pszSrcNodata = CPLStrdup(psOptionsIn->pszSrcNodata);
@@ -772,7 +772,8 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
                                          "STRIP_VERT_CS", "YES");
 
-    if( EQUAL(psOptions->pszFormat,"VRT") )
+    if( (psOptions->pszFormat == NULL && EQUAL(CPLGetExtension(pszDest), "VRT")) ||
+        (psOptions->pszFormat != NULL && EQUAL(psOptions->pszFormat,"VRT")) )
     {
         if( hDstDS != NULL )
         {
@@ -938,6 +939,19 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
     if( hDstDS == NULL )
     {
+        if( psOptions->pszFormat == NULL )
+        {
+            CPLString osFormat = GetOutputDriverForRaster(pszDest);
+            if( osFormat.empty() )
+            {
+                GDALDestroyTransformer( hUniqueTransformArg );
+                GDALWarpAppOptionsFree(psOptions);
+                OGR_G_DestroyGeometry( hCutline );
+                return NULL;
+            }
+            psOptions->pszFormat = CPLStrdup(osFormat);
+        }
+
         if( nSrcCount == 1 && pahSrcDS[0] != NULL && !psOptions->bDisableSrcAlpha )
         {
             if( GDALGetRasterCount(pahSrcDS[0]) > 0 &&
@@ -1095,13 +1109,15 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 CSLDestroy(papszMetadataNew);
 
                 /* ISIS3 -> ISIS3 special case */
-                if( EQUAL(psOptions->pszFormat, "ISIS3") )
+                if( psOptions->pszFormat != NULL &&
+                    EQUAL(psOptions->pszFormat, "ISIS3") )
                 {
                     char** papszMD_ISIS3 = GDALGetMetadata( hSrcDS, "json:ISIS3");
                     if( papszMD_ISIS3 != NULL)
                         GDALSetMetadata(hDstDS, papszMD_ISIS3, "json:ISIS3");
                 }
-                else if( EQUAL(psOptions->pszFormat, "PDS4") )
+                else if( psOptions->pszFormat != NULL &&
+                         EQUAL(psOptions->pszFormat, "PDS4") )
                 {
                     char** papszMD_PDS4 = GDALGetMetadata( hSrcDS, "xml:PDS4");
                     if( papszMD_PDS4 != NULL)
@@ -2969,7 +2985,7 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
     psOptions->bEnableDstAlpha = false;
     psOptions->bEnableSrcAlpha = false;
     psOptions->bDisableSrcAlpha = false;
-    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pszFormat = NULL;
     psOptions->bCreateOutput = false;
     psOptions->papszWarpOptions = NULL;
     psOptions->dfErrorThreshold = -1;
@@ -3049,10 +3065,6 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[++i]);
             psOptions->bCreateOutput = true;
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
         else if( EQUAL(papszArgv[i],"-t_srs") && i+1 < argc )
         {
@@ -3396,9 +3408,6 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 
     if( psOptionsForBinary )
         psOptionsForBinary->bCreateOutput = psOptions->bCreateOutput;
-
-    if( psOptionsForBinary )
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      The last filename in the file list is really our destination    */
