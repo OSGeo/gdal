@@ -2687,7 +2687,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 PrepareFeatureStyle( poSubFeature, poFeature );
 
                 ACAdjustText( oTransformer.dfAngle * 180 / M_PI,
-                    oTransformer.dfXScale, poSubFeature );
+                    oTransformer.dfXScale, oTransformer.dfYScale, poSubFeature );
 
                 if ( !EQUAL( poFeature->GetFieldAsString( "EntityHandle" ), "" ) )
                 {
