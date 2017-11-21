@@ -1202,7 +1202,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
    double refTime1;
 
    grib_limit = GRIB_LIMIT;
-   if (filename != NULL) {
+   /*if (filename != NULL)*/ {
       //if ((fp = fopen (filename, "rb")) == NULL) {
       //   errSprintf ("ERROR: Problems opening %s for read.", filename);
       //   return -1;
@@ -1214,9 +1214,9 @@ int GRIB2RefTime (const char *filename, double *refTime)
             grib_limit = 5000;
          }
       }
-   } else {
+   }// else {
       // fp = stdin; // TODO!!
-   }
+   //}
    msgNum = 0;
 
    buff = NULL;
@@ -1292,7 +1292,8 @@ int GRIB2RefTime (const char *filename, double *refTime)
             return -4;
          }
          /* Parse the interesting data out of sect 1. */
-         InventoryParseTime (buffer + 13 - 5, &(refTime1));
+         if( InventoryParseTime (buffer + 13 - 5, &(refTime1)) < 0 )
+             refTime1 = 0.0;
       }
       if (msgNum == 1) {
          *refTime = refTime1;

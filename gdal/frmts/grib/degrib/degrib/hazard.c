@@ -706,7 +706,7 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_HF) && (sig == SIG_A)) return 117;
    if ((haz == HAZ_HI) && (sig == SIG_A)) return 118;
    if ((haz == HAZ_TR) && (sig == SIG_A)) return 119;
-   if ((haz == HAZ_TR) && (sig == SIG_A)) return 120;
+   //if ((haz == HAZ_TR) && (sig == SIG_A)) return 120;
    if ((haz == HAZ_SR) && (sig == SIG_A)) return 121;
    if ((haz == HAZ_GL) && (sig == SIG_A)) return 122;
    if ((haz == HAZ_WS) && (sig == SIG_A)) return 123;
