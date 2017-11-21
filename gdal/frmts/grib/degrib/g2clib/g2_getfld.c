@@ -328,7 +328,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
           break;
         }
         //     Get length of Section and Section number
-        iofst=(ipos-1)*8;
+        //iofst=(ipos-1)*8;
         iofst=ipos*8;
         gbit(cgrib,&lensec,iofst,32);        // Get Length of Section
         iofst=iofst+32;
