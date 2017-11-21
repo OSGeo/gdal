@@ -354,7 +354,7 @@ bool SetupCache(CPLString &cache, bool clear)
             VSIFCloseL(f2);
         }
     }
-    srand(time(NULL)); // not to have the same names in the cache
+    srand((unsigned int)time(NULL)); // not to have the same names in the cache
     return true;
 }
 
