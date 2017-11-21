@@ -58,6 +58,9 @@
 #include "degrib/degrib/meta.h"
 #include "degrib/degrib/myerror.h"
 #include "degrib/degrib/type.h"
+CPL_C_START
+#include "degrib/g2clib/grib2.h"
+CPL_C_END
 #include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -186,32 +189,80 @@ void GRIBRasterBand::FindPDSTemplate()
         if( nSectSize >= 9 &&
             nSectSize <= 100000  /* arbitrary upper limit */ )
         {
-            GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize - 5));
-            VSIFReadL(pabyBody, 1, nSectSize - 5, poGDS->fp);
+            GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize));
+            memcpy(pabyBody, abyHead, 5);
+            VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
 
             GUInt16 nCoordCount = 0;
-            memcpy(&nCoordCount, pabyBody + 5 - 5, 2);
+            memcpy(&nCoordCount, pabyBody + 6-1, 2);
             CPL_MSBPTR16(&nCoordCount);
 
             GUInt16 nPDTN = 0;
-            memcpy(&nPDTN, pabyBody + 7 - 5, 2);
+            memcpy(&nPDTN, pabyBody + 8-1, 2);
             CPL_MSBPTR16(&nPDTN);
 
             SetMetadataItem("GRIB_PDS_PDTN", CPLString().Printf("%d", nPDTN));
 
             CPLString osOctet;
-            for( int i = 9; i < static_cast<int>(nSectSize); i++ )
+            const int nTemplateFoundByteCount =
+                static_cast<int>(nSectSize - 9 - nCoordCount * 4);
+            for( int i = 0; i < nTemplateFoundByteCount; i++ )
             {
                 char szByte[10] = { '\0' };
 
-                if( i == 9 )
-                    snprintf(szByte, sizeof(szByte), "%d", pabyBody[i - 5]);
+                if( i == 0 )
+                    snprintf(szByte, sizeof(szByte), "%d", pabyBody[i+9]);
                 else
-                    snprintf(szByte, sizeof(szByte), " %d", pabyBody[i - 5]);
+                    snprintf(szByte, sizeof(szByte), " %d", pabyBody[i+9]);
                 osOctet += szByte;
             }
 
             SetMetadataItem("GRIB_PDS_TEMPLATE_NUMBERS", osOctet);
+
+            g2int iofst = 0;
+            g2int pdsnum = 0;
+            g2int *pdstempl = NULL;
+            g2int mappdslen = 0;
+            g2float *coordlist = NULL;
+            g2int numcoord = 0;
+            if( g2_unpack4(pabyBody,nSectSize,&iofst,
+                           &pdsnum,&pdstempl,&mappdslen,
+                           &coordlist,&numcoord) == 0 )
+            {
+                gtemplate* mappds=extpdstemplate(pdsnum,pdstempl);
+                if( mappds )
+                {
+                    int nTemplateByteCount = 0;
+                    for( int i = 0; i < mappds->maplen; i++ )
+                        nTemplateByteCount += abs(mappds->map[i]);
+                    for( int i = 0; i < mappds->extlen; i++ )
+                        nTemplateByteCount += abs(mappds->ext[i]);
+                    if( nTemplateByteCount == nTemplateFoundByteCount )
+                    {
+                        CPLString osValues;
+                        for(g2int i = 0; i < mappdslen; i++)
+                        {
+                            if( i > 0 ) osValues += " ";
+                            osValues += CPLSPrintf("%d", pdstempl[i]);
+                        }
+                        SetMetadataItem("GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES", osValues);
+                    }
+                    else
+                    {
+                        CPLDebug("GRIB",
+                                 "Cannot expose GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES "
+                                 "as we would expect %d bytes from the "
+                                 "tables, but only %d are available",
+                                 nTemplateByteCount,
+                                 nTemplateFoundByteCount);
+                    }
+
+                    free( mappds->ext );
+                    free( mappds );
+                }
+            }
+            free(pdstempl);
+            free(coordlist);
 
             CPLFree(pabyBody);
         }
