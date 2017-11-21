@@ -847,15 +847,13 @@ const char *WCSDataset::Version() const
 }
 
 /************************************************************************/
-/*                      CreateFromCapabilities()                        */
+/*                      FetchCapabilities()                             */
 /************************************************************************/
 
-WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLString cache, CPLString path, CPLString url)
+static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLString path)
 {
-    // request Capabilities, later code will write PAM to cache
     url = CPLURLAddKVP(url, "SERVICE", "WCS");
     url = CPLURLAddKVP(url, "REQUEST", "GetCapabilities");
-
     CPLString extra = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GetCapabilitiesExtra", "");
     if (extra != "") {
         std::vector<CPLString> pairs = Split(extra, "&");
@@ -864,7 +862,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
             url = CPLURLAddKVP(url, pair[0], pair[1]);
         }
     }
-
     char **options = NULL;
     const char *keys[] = {
         "TIMEOUT",
@@ -880,10 +877,28 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     if (psResult == NULL || psResult->nDataLen == 0) {
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return false;
     }
     CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
+    if (doc.get() == NULL) {
+        return false;
+    }
+    CPLXMLNode *capabilities = doc.get();
+    CPLSerializeXMLTreeToFile(capabilities, path);
+    return true;
+}
+
+/************************************************************************/
+/*                      CreateFromCapabilities()                        */
+/************************************************************************/
+
+WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
+                                               CPLString path,
+                                               CPLString url)
+{
+    
+    CPLXMLTreeCloser doc(CPLParseXMLFile(path));
     if (doc.get() == NULL) {
         return NULL;
     }
@@ -902,9 +917,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
         // broken server, assume 1.0.0
         version_from_server = 100;
     }
-
-    CPLSerializeXMLTreeToFile(capabilities, (path + ".xml").c_str());
-
     WCSDataset *poDS;
     if (version_from_server == 201) {
         poDS = new WCSDataset201(cache);
@@ -914,11 +926,10 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
         poDS = new WCSDataset100(cache);
     }
     if (poDS->ParseCapabilities(capabilities, url) != CE_None) {
-        poDS->ProcessError(psResult);
         delete poDS;
         return NULL;
     }
-    poDS->SetDescription(path);
+    poDS->SetDescription(RemoveExt(path));
     poDS->TrySaveXML();
     return poDS;
 }
@@ -930,9 +941,8 @@ WCSDataset *WCSDataset::CreateFromCapabilities(GDALOpenInfo * poOpenInfo, CPLStr
 WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString path)
 {
     WCSDataset *poDS;
-    // try to read the PAM XML from path + metadata extension
-    if (FileIsReadable(path + ".aux.xml")) {
-        CPLXMLTreeCloser doc(CPLParseXMLFile((path + ".aux.xml").c_str()));
+    if (FileIsReadable(path)) {
+        CPLXMLTreeCloser doc(CPLParseXMLFile((path).c_str()));
         CPLXMLNode *metadata = doc.get();
         if (metadata == NULL) {
             return NULL;
@@ -954,6 +964,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
             CPLError(CE_Failure, CPLE_AppDefined, "The metadata does not contain version. RECREATE_META?");
             return NULL;
         }
+        path = RemoveExt(RemoveExt(path));
         poDS->SetDescription(path);
         poDS->TryLoadXML(); // todo: avoid reload
     } else {
@@ -961,7 +972,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
         // processing the Capabilities file
         // so we show it to the user
         GByte *pabyOut = NULL;
-        path += ".xml";
+        path = RemoveExt(RemoveExt(path)) + ".xml";
         if( !VSIIngestFile( NULL, path, &pabyOut, NULL, -1 ) )
             return NULL;
         CPLString error = reinterpret_cast<char *>(pabyOut);
@@ -977,18 +988,48 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
     return poDS;
 }
 
+static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &cache, const CPLString &url)
+{
+    // do we have the capabilities file
+    CPLString filename;
+    // we should lock the cache for our use in case we need to add an entry
+    bool cached;
+    if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
+        return NULL; // error in cache
+    }
+    if (!cached) {
+        filename = "XXXXX";
+        if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
+            // release the cache lock
+            return NULL; // error in cache
+        }
+        if (!FetchCapabilities(poOpenInfo, url, filename)) {
+            // release the cache lock
+            return NULL;
+        }
+        // release the cache lock
+        return WCSDataset::CreateFromCapabilities(cache, filename, url);
+    }
+    // release the cache lock
+    filename = RemoveExt(filename) + ".aux.xml";
+    bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
+    if (FileIsReadable(filename) && !recreate_meta) {
+        return WCSDataset::CreateFromMetadata(cache, filename);
+    }
+    // we capabilities but not meta
+    return WCSDataset::CreateFromCapabilities(cache, filename, url);
+}
+
 /************************************************************************/
 /*                        CreateServiceMetadata()                       */
 /************************************************************************/
 
-// master filename is the capabilities basename
-// filename is the subset/coverage basename
+// master filename is the name of the global metadata file
+// filename is the name of the metadata file of the service file
 static void CreateServiceMetadata(const CPLString &coverage,
-                                  CPLString master_filename,
-                                  CPLString filename)
+                                  const CPLString &master_filename,
+                                  const CPLString &meta_filename)
 {
-    master_filename += ".aux.xml";
-    filename += ".aux.xml";
 
     CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
     CPLXMLNode *metadata = doc.get();
@@ -1028,7 +1069,7 @@ static void CreateServiceMetadata(const CPLString &coverage,
             }
         }
     }
-    CPLSerializeXMLTreeToFile(metadata, filename);
+    CPLSerializeXMLTreeToFile(metadata, meta_filename);
 }
 
 /************************************************************************/
@@ -1141,7 +1182,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         if (WCSParseVersion(version) == 0) {
             version = "2.0.1";
         }
-        
+
         CPLString coverage = CPLURLGetValue(url, "coverageid"); // 2.0
         if (coverage == "") {
             coverage = CPLURLGetValue(url, "identifiers"); // 1.1
@@ -1158,10 +1199,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             url += "?";
         }
         CPLString base_url = url;
-        url = base_url;
-        if (version != "") {
-            url = CPLURLAddKVP(url, "version", version);
-        }
+        url = CPLURLAddKVP(base_url, "version", version);
         if (coverage != "") {
             url = CPLURLAddKVP(url, "coverage", coverage);
         }
@@ -1170,33 +1208,13 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             DeleteEntryFromCache(cache, "", url);
         }
 
-        // cache is a hash of basename => URL
-        // below 'cached' means the URL is in cache
-        // for basename there may be either
-        // Capabilities (.xml) and PAM metadata file (.aux.xml)
-        // or DescribeCoverage (.DC.xml), WCS_GDAL (.xml), and metadata file (.aux.xml)
-        CPLString filename;
-        bool cached;
-        if (!FromCache(cache, filename, url, cached)) { // error
-            return NULL;
-        }
-        cached = cached && FileIsReadable(filename + ".xml");
-
-        bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
-
-        // the general policy for service documents in cache is
-        // that they are not user editable
-        // users should use options and possibly RECREATE options
-
         if (coverage == "") {
             // Open a dataset with subdataset(s)
             // Information is in PAM file (<basename>.aux.xml)
             // which is made from the Capabilities file (<basename>.xml)
 
-            if (cached && !recreate_meta) {
-                return WCSDataset::CreateFromMetadata(cache, filename);
-            }
-            return WCSDataset::CreateFromCapabilities(poOpenInfo, cache, filename, url);
+            return BootstrapGlobal(poOpenInfo, cache, url);
+            
         } else {
             // Open a subdataset
             // Metadata is in (<basename>.xml.aux.xml)
@@ -1204,41 +1222,52 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             // which is made from options and URL
             // and a Coverage description file (<basename>.DC.xml)
 
-            filename += ".xml";
-            CPLFree(poOpenInfo->pszFilename);
-            poOpenInfo->pszFilename = CPLStrdup(filename);
-
-            CPLString pam_url = URLRemoveKey(url, "coverage");
-            CPLString pam_filename;
-            bool pam_in_cache;
-            if (!FromCache(cache, pam_filename, pam_url, pam_in_cache)) {
-                return NULL;
+            // do we have the service file
+            CPLString filename;
+            bool cached;
+            if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
+                return NULL; // error in cache
+            }
+            if (!cached) {
+                filename = "XXXXX";
+                if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
+                    return NULL; // error in cache
+                }
             }
 
             // even if we have coverage we need global PAM metadata
             // if we don't have it we need to create it
-            if (recreate_meta || !FileIsReadable((filename + ".aux.xml").c_str())) {
-                if (!pam_in_cache || !FileIsReadable((pam_filename + ".aux.xml").c_str())) {
-                    // if we don't have it, fetch it first
-                    WCSDataset *pam = CreateFromCapabilities(poOpenInfo, cache, pam_filename, pam_url);
+            CPLString pam_url = URLRemoveKey(url, "coverage");
+            pam_url = URLRemoveKey(pam_url, "service"); // service is in the subset name
+            CPLString pam_filename;
+            bool pam_cached;
+            if (SearchCache(cache, pam_url, pam_filename, ".aux.xml", pam_cached) != CE_None) {
+                return NULL; // error in cache
+            }
+            CPLString meta_filename = RemoveExt(filename) + ".xml.aux.xml";
+            bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
+            if (recreate_meta || !FileIsReadable(meta_filename)) {
+                if (!pam_cached || !FileIsReadable(pam_filename)) {
+                    WCSDataset *pam = BootstrapGlobal(poOpenInfo, cache, pam_url);
                     if (!pam) {
                         return NULL;
                     }
                     // the version may have changed
                     version = pam->Version();
-                    url = URLRemoveKey(url, "version");
-                    url = CPLURLAddKVP(url, "version", version);
-                    url = URLRemoveKey(url, "coverage");
+                    url = CPLURLAddKVP(base_url, "version", version);
                     url = CPLURLAddKVP(url, "coverage", coverage);
-                    if (!FromCache(cache, filename, url, cached)) { // error
-                        return NULL;
+                    if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
+                        delete pam;
+                        return NULL; // error in cache
                     }
-                    filename += ".xml";
-                    cached = cached && FileIsReadable(filename);
-                    delete pam;
                 }
-                CreateServiceMetadata(coverage, pam_filename, filename);
+                CreateServiceMetadata(coverage, pam_filename, meta_filename);
             }
+
+            // filename is now the name of the service file
+            // it may or may not be cached
+            CPLFree(poOpenInfo->pszFilename);
+            poOpenInfo->pszFilename = CPLStrdup(filename);
 
             bool recreate_service = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_SERVICE", false);
 
@@ -1338,7 +1367,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nVersion == 0 )
     {
-        
+
         CSLDestroy( papszModifiers );
         CPLDestroyXMLNode( service );
         return NULL;

@@ -439,8 +439,6 @@ bool WCSDataset201::ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &ax
         CPLString sequenceRule = CPLGetXMLValue(function, path, "");
         path += ".axisOrder";
         axisOrder = Ilist(Split(CPLGetXMLValue(function, path, ""), " "));
-        path = "startPoint";
-        std::vector<CPLString> startPoint = Split(CPLGetXMLValue(function, path, ""), " ");
         // for now require simple
         if (sequenceRule != "Linear") {
             CPLError(CE_Failure, CPLE_AppDefined, "Can't handle '%s' coverages.", sequenceRule.c_str());
@@ -730,7 +728,6 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
     // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
     std::vector<std::vector<double> > domain_trim;
-    std::vector<CPLString> dimension_to_band_trim;
 
     // are all dimensions that are not x/y domain and dimension to band sliced?
     // if not, bands can't be defined, see below
@@ -750,7 +747,6 @@ bool WCSDataset201::ExtractGridInfo()
             continue;
         }
         if (axes[i] == dimension_to_band) {
-            dimension_to_band_trim = params;
             continue;
         }
         // size == 1 => sliced
@@ -758,9 +754,7 @@ bool WCSDataset201::ExtractGridInfo()
             dimensions_are_ok = false;
         }
     }
-    if (domain_trim.size() > 0) {
-        // todo: BoundGeometry(domain_trim);
-    }
+    // todo: BoundGeometry(domain_trim) if domain_trim.size() > 0
 
     // check for CRS override
     CPLString crs = CPLGetXMLValue(psService, "SRS", "");

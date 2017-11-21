@@ -74,6 +74,8 @@ std::vector<CPLString> ParseSubset(const std::vector<CPLString> &subset_array,
 
 bool FileIsReadable(const CPLString &filename);
 
+CPLString RemoveExt(const CPLString &filename);
+
 bool MakeDir(const CPLString &dirname);
 
 CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value);
@@ -82,17 +84,23 @@ bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath);
 
 bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value);
     
-bool SetupCache(CPLString &cache_dir,
+bool SetupCache(CPLString &cache,
                 bool clear);
 
-bool DeleteEntryFromCache(const CPLString &cache_dir,
+bool DeleteEntryFromCache(const CPLString &cache,
                           const CPLString &key,
                           const CPLString &value);
 
-bool FromCache(const CPLString &cache_dir,
-               CPLString &filename,
-               const CPLString &url,
-               bool &found);
+CPLErr SearchCache(const CPLString &cache,
+                   const CPLString &url,
+                   CPLString &filename,
+                   const CPLString &ext,
+                   bool &found);
+
+CPLErr AddEntryToCache(const CPLString &cache,
+                       const CPLString &url,
+                       CPLString &filename,
+                       const CPLString &ext);
 
 CPLXMLNode *AddSimpleMetaData(char ***metadata,
                               CPLXMLNode *node,

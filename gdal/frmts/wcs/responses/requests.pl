@@ -330,8 +330,8 @@ sub test_scaled {
         push @full_output, $line;
     }
     say $server.'-'.$version.' scaled '.$ok;
+    push @not_ok, $server.'-'.$version.' scaled '." not ok" if $ok eq 'not ok';
     if ($ok eq 'not ok' or $do{say}) {
-        push @not_ok, $server.'-'.$version.' scaled '." not ok";
         say "===";
         for (@full_output) {
             say "$_" if $do{say_all} || /URL/;

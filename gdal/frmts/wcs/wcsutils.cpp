@@ -240,6 +240,15 @@ bool FileIsReadable(const CPLString &filename)
     return false;
 }
 
+CPLString RemoveExt(const CPLString &filename)
+{
+    size_t pos = filename.find_last_of(".");
+    if (pos != std::string::npos) {
+        return filename.substr(0, pos);
+    }
+    return filename;
+}
+
 /* -------------------------------------------------------------------- */
 /*      MakeDir                                                         */
 /* -------------------------------------------------------------------- */
@@ -301,16 +310,16 @@ bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value
 /*      Cache is a directory                                            */
 /* -------------------------------------------------------------------- */
 
-bool SetupCache(CPLString &cache_dir, bool clear)
+bool SetupCache(CPLString &cache, bool clear)
 {
-    if (cache_dir == "") {
+    if (cache == "") {
 #ifdef WIN32
         const char* home = CPLGetConfigOption("USERPROFILE", NULL);
 #else
         const char* home = CPLGetConfigOption("HOME", NULL);
 #endif
         if (home) {
-            cache_dir = CPLFormFilename(home, ".gdal", NULL);
+            cache = CPLFormFilename(home, ".gdal", NULL);
         } else {
             const char *dir = CPLGetConfigOption("CPL_TMPDIR", NULL);
             if (!dir) dir = CPLGetConfigOption( "TMPDIR", NULL );
@@ -320,26 +329,32 @@ bool SetupCache(CPLString &cache_dir, bool clear)
             if (dir && username) {
                 CPLString subdir = ".gdal_";
                 subdir += username;
-                cache_dir = CPLFormFilename(dir, subdir, NULL);
+                cache = CPLFormFilename(dir, subdir, NULL);
             }
         }
-        cache_dir = CPLFormFilename(cache_dir, "wcs_cache", NULL);
+        cache = CPLFormFilename(cache, "wcs_cache", NULL);
     }
-    if (!MakeDir(cache_dir)) {
+    if (!MakeDir(cache)) {
         return false;
     }
     if (clear) {
-        char **folder = VSIReadDir(cache_dir);
+        char **folder = VSIReadDir(cache);
         int size = folder ? CSLCount(folder) : 0;
         for (int i = 0; i < size; i++) {
             if (folder[i][0] == '.') {
                 continue;
             }
-            CPLString filepath = CPLFormFilename(cache_dir, folder[i], NULL);
+            CPLString filepath = CPLFormFilename(cache, folder[i], NULL);
             remove(filepath);
         }
         CSLDestroy(folder);
+        CPLString db = CPLFormFilename(cache, "db", NULL);
+        VSILFILE *f2 = VSIFOpenL(db, "w");
+        if (f2) {
+            VSIFCloseL(f2);
+        }
     }
+    srand(time(NULL)); // not to have the same names in the cache
     return true;
 }
 
@@ -353,11 +368,11 @@ bool SetupCache(CPLString &cache_dir, bool clear)
 /*      and all files with the basename is deleted.                     */
 /* -------------------------------------------------------------------- */
 
-bool DeleteEntryFromCache(const CPLString &cache_dir, const CPLString &key, const CPLString &value)
+bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CPLString &value)
 {
     // depending on which one of key & value is not "" delete the relevant entry
-    CPLString db_name = CPLFormFilename(cache_dir, "db", NULL);
-    char **data = CSLLoad(db_name); // returns NULL in error and for empty files
+    CPLString db = CPLFormFilename(cache, "db", NULL);
+    char **data = CSLLoad(db); // returns NULL in error and for empty files
     char **data2 = CSLAddNameValue(NULL, "foo", "bar");
     CPLString filename = "";
     if (data) {
@@ -382,10 +397,10 @@ bool DeleteEntryFromCache(const CPLString &cache_dir, const CPLString &key, cons
         }
         CSLDestroy(data);
     }
-    CSLSave(data2, db_name); // returns 0 in error and for empty arrays
+    CSLSave(data2, db); // returns 0 in error and for empty arrays
     CSLDestroy(data2);
     if (filename != "") {
-        char **folder = VSIReadDir(cache_dir);
+        char **folder = VSIReadDir(cache);
         int size = folder ? CSLCount(folder) : 0;
         for (int i = 0; i < size; i++) {
             if (folder[i][0] == '.') {
@@ -393,7 +408,7 @@ bool DeleteEntryFromCache(const CPLString &cache_dir, const CPLString &key, cons
             }
             CPLString name = folder[i];
             if (name.find(filename) != std::string::npos) {
-                CPLString filepath = CPLFormFilename(cache_dir, name, NULL);
+                CPLString filepath = CPLFormFilename(cache, name, NULL);
                 remove(filepath);
             }
         }
@@ -403,52 +418,95 @@ bool DeleteEntryFromCache(const CPLString &cache_dir, const CPLString &key, cons
 }
 
 /* -------------------------------------------------------------------- */
-/*      FromCache                                                       */
+/*      SearchCache                                                     */
 /*      The key,value pairs in the cache index file 'db' is searched    */
-/*      for the first pair, where the value is the given url. If one    */
-/*      is found, the filename is formed from the cache directory name  */
-/*      and the key. If one is not found, a new unique key is generated */
-/*      and inserted into the index file; and the filename is formed    */
-/*      from the cache directory name and the key.                      */
+/*      for the first pair where the value is the given url. If one     */
+/*      is found, the filename is formed from the cache directory name, */
+/*      the key, and the ext.                                           */
 /* -------------------------------------------------------------------- */
 
-bool FromCache(const CPLString &cache_dir, CPLString &filename, const CPLString &url, bool &found)
+CPLErr SearchCache(const CPLString &cache,
+                   const CPLString &url,
+                   CPLString &filename,
+                   const CPLString &ext,
+                   bool &found)
 {
     found = false;
-    CPLString db_name = CPLFormFilename(cache_dir, "db", NULL);
-    VSILFILE *db = VSIFOpenL(db_name, "r");
-    if (db) {
-        while (const char *line = CPLReadLineL(db)) {
-            char *value = strchr((char *)line, '=');
-            if (*value == '=') {
-                *value = '\0';
-            } else {
-                continue;
-            }
-            if (strcmp(url, value + 1) == 0) {
-                filename = line;
-                found = true;
-                break;
+    CPLString db = CPLFormFilename(cache, "db", NULL);
+    VSILFILE *f = VSIFOpenL(db, "r");
+    if (!f) {
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
+        return CE_Failure;
+    }
+    while (const char *line = CPLReadLineL(f)) {
+        char *value = strchr((char *)line, '=');
+        if (*value == '=') {
+            *value = '\0';
+        } else {
+            continue;
+        }
+        if (strcmp(url, value + 1) == 0) {
+            filename = line;
+            found = true;
+            break;
+        }
+    }
+    VSIFCloseL(f);
+    if (found) {
+        filename = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
+        found = FileIsReadable(filename);
+        // if not readable, we should delete the entry
+    }
+    return CE_None;
+}
+
+/* -------------------------------------------------------------------- */
+/*      AddEntryToCache                                                 */
+/*      A new unique key is created into the database based on the      */
+/*      filename replacing X with a random ascii character.             */
+/*      The returned filename is a path formed from the cache directory */
+/*      name, the filename, and the ext.                                */
+/* -------------------------------------------------------------------- */
+
+CPLErr AddEntryToCache(const CPLString &cache,
+                       const CPLString &url,
+                       CPLString &filename,
+                       const CPLString &ext)
+{
+    // assuming the cache was locked to us and the url is not in the cache
+    CPLString store = filename;
+    CPLString db = CPLFormFilename(cache, "db", NULL);
+    VSILFILE *f = VSIFOpenL(db, "a");
+    if (!f) {
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
+        return CE_Failure;
+    }
+        
+    // create a new file into the cache using filename as template
+    CPLString path = "";
+    VSIStatBufL stat;
+    do {
+        filename = store;
+        static const char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (size_t i = 0; i < filename.length(); ++i) {
+            if (filename.at(i) == 'X') {
+                filename.replace(i, 1, 1, chars[rand() % sizeof(chars)]);
             }
         }
-        VSIFCloseL(db);
+        // replace X with random character from a-zA-Z
+        path = CPLFormFilename(cache, filename, NULL);
+    } while (VSIStatExL(path, &stat, VSI_STAT_EXISTS_FLAG) == 0);
+    VSILFILE *f2 = VSIFOpenL(path, "w");
+    if (f2) {
+        VSIFCloseL(f2);
     }
-    if (!found) {
-        db = VSIFOpenL(db_name, "a");
-        if (!db) {
-            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db_name.c_str(), errno);
-            return false;
-        }
-        // using tempnam is not a good solution
-        char *path = tempnam(cache_dir, "");
-        filename = CPLGetFilename(path);
-        free(path);
-        CPLString entry = filename + "=" + url + "\n"; // '=' for compatibility with CSL
-        VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), db);
-        VSIFCloseL(db);
-    }
-    filename = CPLFormFilename(cache_dir, filename, NULL);
-    return true;
+    
+    CPLString entry = filename + "=" + url + "\n"; // '=' for compatibility with CSL
+    VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), f);
+    VSIFCloseL(f);
+
+    filename = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
+    return CE_None;
 }
 
 // steps into element 'from' and adds values of elements 'keys' into the metadata

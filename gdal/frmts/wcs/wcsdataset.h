@@ -136,7 +136,7 @@ class WCSDataset : public GDALPamDataset
     virtual ~WCSDataset();
 
     static WCSDataset *CreateFromMetadata( const CPLString&, CPLString );
-    static WCSDataset *CreateFromCapabilities(GDALOpenInfo *, CPLString, CPLString, CPLString );
+    static WCSDataset *CreateFromCapabilities(CPLString, CPLString, CPLString );
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
@@ -165,7 +165,7 @@ class WCSDataset100 : public WCSDataset
     
   public:
 
-    WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
+    explicit WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
 };
 
 class WCSDataset110 : public WCSDataset
@@ -215,7 +215,7 @@ class WCSDataset201 : public WCSDataset110
     
  public:
     
-    WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {}
+    explicit WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {}
     
 };
 
