@@ -441,7 +441,7 @@ class VSICurlHandle : public VSIVirtualHandle
                                 const struct curl_slist* /* psExistingHeaders */)
         { return NULL; }
     virtual bool AllowAutomaticRedirection() { return true; }
-    virtual bool CanRestartOnError( const char*, bool ) { return false; }
+    virtual bool CanRestartOnError( const char*, const char*, bool ) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
     virtual bool IsDirectoryFromExists( const char* /*pszVerb*/, int /*response_code*/ ) { return false; }
     virtual void ProcessGetFileSizeResult(const char* /* pszContent */ ) {}
@@ -1336,6 +1336,7 @@ retry:
             if( UseLimitRangeGetInsteadOfHead() &&
                 sWriteFuncData.pBuffer != NULL &&
                 CanRestartOnError(sWriteFuncData.pBuffer,
+                                  sWriteFuncHeaderData.pBuffer,
                                   bSetError) )
             {
                 bHasComputedFileSize = false;
@@ -1648,7 +1649,8 @@ retry:
         sWriteFuncHeaderData.bError )
     {
         if( sWriteFuncData.pBuffer != NULL &&
-            CanRestartOnError((const char*)sWriteFuncData.pBuffer, false) )
+            CanRestartOnError((const char*)sWriteFuncData.pBuffer,
+                              (const char*)sWriteFuncHeaderData.pBuffer, false) )
         {
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
@@ -4610,7 +4612,7 @@ class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
   protected:
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
                     const struct curl_slist* psExistingHeaders ) override;
-        virtual bool CanRestartOnError( const char*, bool ) override;
+        virtual bool CanRestartOnError( const char*, const char*, bool ) override;
         virtual bool AllowAutomaticRedirection() override
             { return m_poS3HandleHelper->AllowAutomaticRedirection(); }
 
@@ -4845,6 +4847,12 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
         void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
@@ -4856,7 +4864,9 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         if( response_code != 200 || sWriteFuncData.pBuffer == NULL )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                      sWriteFuncHeaderData.pBuffer,
+                                                      false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -4901,6 +4911,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         }
 
         CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -5307,6 +5318,12 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
         void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
@@ -5318,7 +5335,9 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         if( response_code != 200 )
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
+                m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                      sWriteFuncHeaderData.pBuffer,
+                                                      false) )
             {
                 m_poFS->UpdateMapFromHandle(m_poS3HandleHelper);
                 bGoOn = true;
@@ -5341,6 +5360,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         }
 
         CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -5819,6 +5839,12 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
         void* old_handler = CPLHTTPIgnoreSigPipe();
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
@@ -5831,7 +5857,9 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         if( response_code != 204 && response_code != 202)
         {
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                    sWriteFuncHeaderData.pBuffer,
+                                                    false) )
             {
                 UpdateMapFromHandle(poS3HandleHelper);
                 bGoOn = true;
@@ -5859,6 +5887,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         }
 
         CPLFree(sWriteFuncData.pBuffer);
+        CPLFree(sWriteFuncHeaderData.pBuffer);
 
         curl_easy_cleanup(hCurlHandle);
     }
@@ -5947,6 +5976,12 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
+        WriteFuncStruct sWriteFuncHeaderData;
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
+        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                         VSICurlHandleWriteFunc);
+
         char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
         curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf );
 
@@ -5972,13 +6007,16 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         {
             bool bUpdateMap = true;
             if( sWriteFuncData.pBuffer != NULL &&
-                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer, false, &bUpdateMap) )
+                poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
+                                                    sWriteFuncHeaderData.pBuffer,
+                                                    false, &bUpdateMap) )
             {
                 if( bUpdateMap )
                 {
                     UpdateMapFromHandle(poS3HandleHelper);
                 }
                 CPLFree(sWriteFuncData.pBuffer);
+                CPLFree(sWriteFuncHeaderData.pBuffer);
             }
             else
             {
@@ -5986,6 +6024,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
                          sWriteFuncData.pBuffer
                          ? sWriteFuncData.pBuffer : "(null)");
                 CPLFree(sWriteFuncData.pBuffer);
+                CPLFree(sWriteFuncHeaderData.pBuffer);
                 delete poS3HandleHelper;
                 curl_easy_cleanup(hCurlHandle);
                 return NULL;
@@ -6003,6 +6042,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
                                osNextMarker );
 
             CPLFree(sWriteFuncData.pBuffer);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
 
             if( osNextMarker.empty() )
             {
@@ -6089,10 +6129,12 @@ struct curl_slist* VSIS3Handle::GetCurlHeaders( const CPLString& osVerb,
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
+bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg,
+                                    const char* pszHeaders, bool bSetError)
 {
     bool bUpdateMap = false;
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError, &bUpdateMap) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
+                                              bSetError, &bUpdateMap) )
     {
         if( bUpdateMap )
         {
@@ -7152,7 +7194,7 @@ class VSIOSSHandle CPL_FINAL : public IVSIS3LikeHandle
   protected:
         virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
                     const struct curl_slist* psExistingHeaders ) override;
-        virtual bool CanRestartOnError( const char*, bool ) override;
+        virtual bool CanRestartOnError( const char*, const char*, bool ) override;
 
     public:
         VSIOSSHandle( VSIOSSFSHandler* poFS,
@@ -7344,9 +7386,11 @@ struct curl_slist* VSIOSSHandle::GetCurlHeaders( const CPLString& osVerb,
 /*                          CanRestartOnError()                         */
 /************************************************************************/
 
-bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg, bool bSetError)
+bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg,
+                                     const char* pszHeaders, bool bSetError)
 {
-    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, bSetError, NULL) )
+    if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
+                                            bSetError, NULL) )
     {
         static_cast<VSIOSSFSHandler *>(poFS)->
             UpdateMapFromHandle(m_poHandleHelper);
