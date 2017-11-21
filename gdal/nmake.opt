@@ -365,6 +365,7 @@ JPEG12_SUPPORTED = 1
 #TD_FLAGS = -D_TOOLKIT_IN_DLL_
 #TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
 # The following works for Teigha 4.2.2
+# In TD_INCLUDE, add /D_TOOLKIT_IN_DLL_ if linking against the .dll
 #TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices -I$(TD_BASE)\Dgn\include -I$(TD_BASE)\Dgn\Extensions\ExServices
 #TD_LIBDIR = $(TD_BASE)\lib\vc14dll
 #TD_LIBS =  \

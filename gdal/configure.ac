@@ -3762,6 +3762,7 @@ dnl Check for Teigha.
 dnl ---------------------------------------------------------------------------
 
 TEIGHA_DIR=
+TEIGHA_CPPFLAGS=
 
 AC_MSG_CHECKING(Checking for Teigha)
 AC_ARG_WITH(teigha,
@@ -3790,6 +3791,9 @@ else
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
+            TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
+        fi
     else
         AC_MSG_ERROR([--with-teigha-plt not specified])
     fi
@@ -3797,6 +3801,7 @@ fi
 
 AC_SUBST(TEIGHA_DIR)
 AC_SUBST(HAVE_TEIGHA)
+AC_SUBST(TEIGHA_CPPFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Select Informix DataBlade support

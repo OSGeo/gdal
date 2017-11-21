@@ -695,6 +695,7 @@ SDE_ENABLED
 IDB_LIB
 IDB_INC
 HAVE_IDB
+TEIGHA_CPPFLAGS
 HAVE_TEIGHA
 TEIGHA_DIR
 HAVE_PCRE
@@ -30156,6 +30157,7 @@ fi
 
 
 TEIGHA_DIR=
+TEIGHA_CPPFLAGS=
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for Teigha" >&5
 $as_echo_n "checking Checking for Teigha... " >&6; }
@@ -30193,10 +30195,14 @@ fi
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
+            TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
+        fi
     else
         as_fn_error $? "--with-teigha-plt not specified" "$LINENO" 5
     fi
 fi
+
 
 
 
