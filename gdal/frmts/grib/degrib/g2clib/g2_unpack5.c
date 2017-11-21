@@ -160,8 +160,8 @@ g2int g2_unpack5(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ndp
         }
         *mapdrslen=newlen;
       }
-      if( mapdrs->ext != 0 ) free(mapdrs->ext);
-      if( mapdrs != 0 ) free(mapdrs);
+      free(mapdrs->ext);
+      free(mapdrs);
 
       return(ierr);    // End of Section 5 processing
 

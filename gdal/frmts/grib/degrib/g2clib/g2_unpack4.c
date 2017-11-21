@@ -168,8 +168,8 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
         }
         *mappdslen=newlen;
       }
-      if( mappds->ext != 0 ) free(mappds->ext);
-      if( mappds != 0 ) free(mappds);
+      free(mappds->ext);
+      free(mappds);
       //
       //   Get Optional list of vertical coordinate values
       //   after the Product Definition Template, if necessary.

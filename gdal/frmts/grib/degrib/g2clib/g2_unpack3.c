@@ -184,8 +184,8 @@ g2int g2_unpack3(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int **ig
           }
           *mapgridlen=newlen;
         }
-        if( mapgrid->ext != 0 ) free(mapgrid->ext);
-        if( mapgrid != 0 ) free(mapgrid);
+        free(mapgrid->ext);
+        free(mapgrid);
         if( ierr != 0 )
         {
             *idefnum=0;
