@@ -1612,7 +1612,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.perturbNum = (uChar) is4[35];
          meta->pds2.sect4.numberFcsts = (uChar) is4[36];
          break;
-      case GS4_ENSEMBLE_STAT: /* 4.1 */
+      case GS4_ENSEMBLE_STAT: /* 4.11 */
          if (ns4 < 46) {
             return -1;
          }
