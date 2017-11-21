@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<wcs:CoverageDescriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/gml/3.2" xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:swe="http://www.opengis.net/swe/2.0" xmlns:wcscrs="http://www.opengis.net/wcs/service-extension/crs/1.0" xsi:schemaLocation="http://schemas.opengis.net/wcs/2.0 http://www.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd">
+<wcs:CoverageDescriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns="http://www.opengis.net/gml/3.2"
+ xmlns:wcs="http://www.opengis.net/wcs/2.0"
+ xmlns:ows="http://www.opengis.net/ows/2.0"
+ xmlns:gml="http://www.opengis.net/gml/3.2"
+ xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:swe="http://www.opengis.net/swe/2.0"
+ xmlns:wcscrs="http://www.opengis.net/wcs/service-extension/crs/1.0"
+ xsi:schemaLocation="http://schemas.opengis.net/wcs/2.0 http://www.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd">
   <wcs:CoverageDescription gml:id="Coverage2">
     <gml:boundedBy>
       <gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/3067" axisLabels="x y" uomLabels="" srsDimension="2">
@@ -9,7 +18,7 @@
     </gml:boundedBy>
     <wcs:CoverageId>Coverage2</wcs:CoverageId>
     <gml:domainSet>
-      <gml:RectifiedGrid gml:id="grid_Coverage2" dimension="2">
+      <gml:RectifiedGrid gml:id="grid_Coverage2" dimension = "2">
         <gml:limits>
           <gml:GridEnvelope>
             <gml:low>0 0</gml:low>
@@ -31,7 +40,7 @@
         <swe:field name="band_1">
           <swe:Quantity>
             <swe:description>Band 1</swe:description>
-            <swe:uom code="unknown" />
+            <swe:uom code="unknown"/>
             <swe:constraint>
               <swe:AllowedValues>
                 <swe:interval>0.0 255.0</swe:interval>

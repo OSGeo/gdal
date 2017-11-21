@@ -47,7 +47,7 @@
                     <ows:City>Bremen</ows:City>
                     <ows:PostalCode>28717</ows:PostalCode>
                     <ows:Country>Germany</ows:Country>
-                    <ows:ElectronicMailAddress>p.baumann</ows:ElectronicMailAddress>
+                    <ows:ElectronicMailAddress>p.baumann@jacobs-university.de</ows:ElectronicMailAddress>
                 </ows:Address>
             </ows:ContactInfo>
             <ows:Role>pointOfContact</ows:Role>

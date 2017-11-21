@@ -157,10 +157,6 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poTileDS == NULL )
         return CE_Failure;
 
-    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    CPLString filename = "/tmp/result1.tiff";
-    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
-
 /* -------------------------------------------------------------------- */
 /*      Verify configuration.                                           */
 /* -------------------------------------------------------------------- */

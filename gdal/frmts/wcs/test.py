@@ -35,8 +35,8 @@
 # test setting and unsetting options
 
 import sys
-sys.path.insert(0,'/home/ajolma/github/gdal/autotest/pymod/')
-cache = 'CACHE_DIR=/home/ajolma/github/gdal/gdal/frmts/wcs/cache'
+sys.path.insert(0,'../../../autotest/pymod/')
+cache = 'CACHE=wcs_cache'
 
 try:
     from BaseHTTPServer import HTTPServer

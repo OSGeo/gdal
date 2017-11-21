@@ -323,8 +323,8 @@ bool SetupCache(CPLString &cache_dir, bool clear)
                 cache_dir = CPLFormFilename(dir, subdir, NULL);
             }
         }
+        cache_dir = CPLFormFilename(cache_dir, "wcs_cache", NULL);
     }
-    cache_dir = CPLFormFilename(cache_dir, "wcs_cache", NULL);
     if (!MakeDir(cache_dir)) {
         return false;
     }

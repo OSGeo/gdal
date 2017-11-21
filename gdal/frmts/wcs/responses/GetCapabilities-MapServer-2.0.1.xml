@@ -47,7 +47,7 @@
           <ows:AdministrativeArea>Nottinghamshire</ows:AdministrativeArea>
           <ows:PostalCode>NG12 5GG</ows:PostalCode>
           <ows:Country>United Kingdom</ows:Country>
-          <ows:ElectronicMailAddress>enquiries</ows:ElectronicMailAddress>
+          <ows:ElectronicMailAddress>enquiries@bgs.ac.uk</ows:ElectronicMailAddress>
         </ows:Address>
         <ows:OnlineResource xlink:type="simple" xlink:href="http://www.emodnet.eu/"/>
         <ows:HoursOfService>Mon-Fri, 09:00-17:00</ows:HoursOfService>

@@ -252,11 +252,6 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
 
-    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    CPLString filename = CPLGetXMLValue(psService, "filename", "result");
-    filename = "/tmp/" + filename + ".tiff";
-    dr->CreateCopy(filename, poTileDS, TRUE, NULL, NULL, NULL);
-
     if( poTileDS == NULL )
         return CE_Failure;
 
@@ -367,7 +362,8 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     bool scaled = nBufXSize != nXSize || nBufYSize != nYSize;
     CPLString osRequest = GetCoverageRequest(scaled, nBufXSize, nBufYSize,
                                              extent, osBandList);
-    fprintf(stderr, "URL=%s\n", osRequest.c_str());
+    // for the test setup we need the actual URLs this driver generates
+    // fprintf(stdout, "URL=%s\n", osRequest.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -588,10 +584,6 @@ int WCSDataset::EstablishRasterDetails()
 
     if( poDS == NULL )
         return false;
-
-    GDALDriver *dr = (GDALDriver*)GDALGetDriverByName("GTiff");
-    CPLString filename = "/tmp/result0.tiff";
-    dr->CreateCopy(filename, poDS, TRUE, NULL, NULL, NULL);
 
     const char* pszPrj = poDS->GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
@@ -1095,8 +1087,7 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
         "GridAxisLabelSwap",
         "SubsetAxisSwap",
         "UseScaleFactor",
-        "CRS",
-        "filename"
+        "CRS"
     };
     for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
         const char *value;
@@ -1120,7 +1111,7 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
 GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    CPLString cache = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE_DIR", "");
+    CPLString cache = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "");
     if (!SetupCache(cache,
                     CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
     {
@@ -1183,7 +1174,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         // below 'cached' means the URL is in cache
         // for basename there may be either
         // Capabilities (.xml) and PAM metadata file (.aux.xml)
-        // or DescribeCoverage (.DC.xml) and WCS_GDAL (.xml)
+        // or DescribeCoverage (.DC.xml), WCS_GDAL (.xml), and metadata file (.aux.xml)
         CPLString filename;
         bool cached;
         if (!FromCache(cache, filename, url, cached)) { // error
