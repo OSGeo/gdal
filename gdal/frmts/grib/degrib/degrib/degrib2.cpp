@@ -1254,12 +1254,14 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    y2 = Ny;
    f_subGrid = 0;
 
+#ifdef deadcode
    /* Figure out if we need iain or ain, and set it to Grib_Data.  At the
     * same time handle any bitmaps, and compute some statistics. */
    if ((f_subGrid) && (meta->gds.scan != 64)) {
       errSprintf ("Can not do a subgrid of non scanmode 64 grid yet.\n");
       return -3;
    }
+#endif
 
    if (strcmp (meta->element, "Wx") != 0) {
       if (strcmp (meta->element, "WWA") != 0) {

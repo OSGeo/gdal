@@ -1836,7 +1836,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             meta->pds2.sect4.validTime = (time_t) (meta->pds2.refTime +
                                                    meta->pds2.sect4.foreSec);
             printf ("Most likely they didn't complete bytes 35-41 of "
-                    "Template 4.8\n");
+                    "Template 4.10\n");
          } else {
             meta->pds2.sect4.numInterval = (uChar) is4[42];
          }
