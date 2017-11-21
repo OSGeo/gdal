@@ -3051,7 +3051,7 @@ def ogr_dxf_46():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:1,s:0.18g,c:#000000,a:0)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:1,s:0.18g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on DIMENSION text from block' )
         f.DumpReadable()
         return 'fail'
@@ -3222,7 +3222,7 @@ def ogr_dxf_48():
 
     # Like the dimension extension lines, the text is ByBlock (#7099)
     f = lyr.GetFeature(7)
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.141 (2C)",s:0.4g,p:5,c:#ff00ff,a:0)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.141 (2C)",s:0.4g,p:5,c:#ff00ff)':
         gdaltest.post_reason( 'Wrong style string on feature 7' )
         f.DumpReadable()
         return 'fail'
@@ -3349,7 +3349,7 @@ def ogr_dxf_50():
     # Text in Times New Roman bold italic, stretched 190%, color ByLayer
     # inside block inserted on a blue layer
     f = lyr.GetFeature(0)
-    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151,dy:4.88825,c:#0000ff,a:0)':
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151,dy:4.88825,c:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 0' )
         f.DumpReadable()
         return 'fail'
@@ -3379,7 +3379,7 @@ def ogr_dxf_50():
 
     # MTEXT stretched 250%, color ByLayer inside block inserted on a blue layer
     f = lyr.GetFeature(4)
-    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice MTEXT",s:10g,w:250,p:8,c:#0000ff,a:0)':
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice MTEXT",s:10g,w:250,p:8,c:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 4' )
         f.DumpReadable()
         return 'fail'
@@ -3391,6 +3391,33 @@ def ogr_dxf_50():
         gdaltest.post_reason( 'Wrong style string on feature 5' )
         f.DumpReadable()
         return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test transformation of text inside blocks (ACAdjustText function)
+
+def ogr_dxf_51():
+
+    ds = ogr.Open('data/text-block-transform.dxf')
+
+    lyr = ds.GetLayer(0)
+
+    wanted_style = ['a:330','c:#000000','dx:1.96672','dy:-1.13549','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
+
+    # Three text features, all with the same effective geometry and style
+    for x in range(3):
+        f = lyr.GetNextFeature()
+
+        if ogrtest.check_feature_geometry(f, 'POINT Z (2.83231568033604 5.98356393304499 0)') != 0:
+            gdaltest.post_reason( 'Wrong geometry on feature %d' % x )
+            f.DumpReadable()
+            return 'fail'
+
+        if sorted( f.GetStyleString()[6:-1].split(',') ) != wanted_style:
+            gdaltest.post_reason( 'Wrong style string on feature %d' % x )
+            f.DumpReadable()
+            return 'fail'
 
     return 'success'
 
@@ -3457,6 +3484,7 @@ gdaltest_list = [
     ogr_dxf_48,
     ogr_dxf_49,
     ogr_dxf_50,
+    ogr_dxf_51,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':

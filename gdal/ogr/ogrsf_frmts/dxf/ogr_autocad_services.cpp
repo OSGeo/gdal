@@ -503,7 +503,8 @@ const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
 /*      adjusting the style string.                                     */
 /************************************************************************/
 
-void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
+void ACAdjustText( const double dfAngle, const double dfScaleX,
+    const double dfScaleY, OGRFeature* const poFeature )
 
 {
 /* -------------------------------------------------------------------- */
@@ -514,80 +515,108 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
     CPLString osOldStyle = poFeature->GetStyleString();
 
-    if( strstr(osOldStyle,"LABEL") == NULL )
+    if( !STARTS_WITH( osOldStyle, "LABEL(" ) )
         return;
 
+    // Split the style string up into its parts
+    osOldStyle.erase( 0, 6 );
+    osOldStyle.erase( osOldStyle.size() - 1 );
+    char **papszTokens = CSLTokenizeString2( osOldStyle, ",",
+        CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES );
+
 /* -------------------------------------------------------------------- */
-/*      Is there existing angle text?                                   */
+/*      Update the text angle.                                          */
 /* -------------------------------------------------------------------- */
-    double dfOldAngle = 0.0;
-    CPLString osPreAngle, osPostAngle;
-    size_t nAngleOff = osOldStyle.find( ",a:" );
+    char szBuffer[64];
 
-    if( nAngleOff != std::string::npos )
+    if( dfAngle != 0.0 )
     {
-        size_t nEndOfAngleOff = osOldStyle.find( ",", nAngleOff + 1 );
+        double dfOldAngle = 0.0;
 
-        if( nEndOfAngleOff == std::string::npos )
-            nEndOfAngleOff = osOldStyle.find( ")", nAngleOff + 1 );
+        const char *pszAngle = CSLFetchNameValue( papszTokens, "a" );
+        if( pszAngle )
+            dfOldAngle = CPLAtof( pszAngle );
 
-        osPreAngle.assign( osOldStyle, 0, nAngleOff );
-        osPostAngle.assign( osOldStyle, nEndOfAngleOff, std::string::npos );
-
-        dfOldAngle = CPLAtof( osOldStyle.c_str() + nAngleOff + 3 );
-    }
-    else
-    {
-        CPLAssert( osOldStyle.back() == ')' );
-        osPreAngle.assign( osOldStyle, 0, osOldStyle.size() - 1 );
-        osPostAngle = ")";
+        CPLsnprintf( szBuffer, sizeof(szBuffer), "%.3g", dfOldAngle + dfAngle );
+        papszTokens = CSLSetNameValue( papszTokens, "a", szBuffer );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format with the new angle.                                      */
+/*      Update the text width and height.                               */
 /* -------------------------------------------------------------------- */
-    CPLString osNewStyle;
 
-    osNewStyle.Printf( "%s,a:%g%s",
-                       osPreAngle.c_str(),
-                       dfOldAngle + dfAngle,
-                       osPostAngle.c_str() );
-
-    osOldStyle = osNewStyle;
-
-/* -------------------------------------------------------------------- */
-/*      Is there existing scale text?                                   */
-/* -------------------------------------------------------------------- */
-    double dfOldScale = 1.0;
-    CPLString osPreScale, osPostScale;
-    size_t nScaleOff = osOldStyle.find( ",s:" );
-
-    if( nScaleOff != std::string::npos )
+    if( dfScaleY != 1.0 )
     {
-        size_t nEndOfScaleOff = osOldStyle.find( ",", nScaleOff + 1 );
+        const char *pszHeight = CSLFetchNameValue( papszTokens, "s" );
+        if( pszHeight )
+        {
+            const double dfOldHeight = CPLAtof( pszHeight );
 
-        if( nEndOfScaleOff == std::string::npos )
-            nEndOfScaleOff = osOldStyle.find( ")", nScaleOff + 1 );
-
-        osPreScale.assign( osOldStyle, 0, nScaleOff );
-        osPostScale.assign( osOldStyle, nEndOfScaleOff, std::string::npos );
-
-        dfOldScale = CPLAtof( osOldStyle.c_str() + nScaleOff + 3 );
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.3gg",
+                dfOldHeight * dfScaleY );
+            papszTokens = CSLSetNameValue( papszTokens, "s", szBuffer );
+        }
     }
-    else
+
+    if( dfScaleX != dfScaleY && dfScaleY != 0.0 )
     {
-        CPLAssert( osOldStyle.back() == ')' );
-        osPreScale.assign( osOldStyle, 0, osOldStyle.size() - 1 );
-        osPostScale = ")";
+        const double dfWidthFactor = dfScaleX / dfScaleY;
+        double dfOldWidth = 100.0;
+
+        const char *pszWidth = CSLFetchNameValue( papszTokens, "w" );
+        if( pszWidth )
+            dfOldWidth = CPLAtof( pszWidth );
+
+        CPLsnprintf( szBuffer, sizeof(szBuffer), "%.4g",
+            dfOldWidth * dfWidthFactor );
+        papszTokens = CSLSetNameValue( papszTokens, "w", szBuffer );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format with the new scale.                                      */
+/*      Update the text offsets.                                        */
 /* -------------------------------------------------------------------- */
-    osNewStyle.Printf( "%s,s:%gg%s",
-                       osPreScale.c_str(),
-                       dfOldScale * dfScale,
-                       osPostScale.c_str() );
+
+    if( dfScaleX != 1.0 || dfScaleY != 1.0 || dfAngle != 0.0 )
+    {
+        double dfOldDx = 0.0;
+        double dfOldDy = 0.0;
+
+        const char *pszDx = CSLFetchNameValue( papszTokens, "dx" );
+        if( pszDx )
+            dfOldDx = CPLAtof( pszDx );
+        const char *pszDy = CSLFetchNameValue( papszTokens, "dy" );
+        if( pszDy )
+            dfOldDy = CPLAtof( pszDy );
+
+        if( dfOldDx != 0.0 || dfOldDy != 0.0 )
+        {
+            const double dfAngleRadians = dfAngle * M_PI / 180.0;
+
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+                dfScaleX * dfOldDx * cos( dfAngleRadians ) +
+                dfScaleY * dfOldDy * -sin( dfAngleRadians ) );
+            papszTokens = CSLSetNameValue( papszTokens, "dx", szBuffer );
+
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+                dfScaleX * dfOldDx * sin( dfAngleRadians ) +
+                dfScaleY * dfOldDy * cos( dfAngleRadians ) );
+            papszTokens = CSLSetNameValue( papszTokens, "dy", szBuffer );
+        }
+    }
+
+    CSLSetNameValueSeparator( papszTokens, ":" );
+
+    CPLString osNewStyle = "LABEL(";
+    int iIndex = 0;
+    while( papszTokens[iIndex] )
+    {
+        if( iIndex > 0 )
+            osNewStyle += ",";
+        osNewStyle += papszTokens[iIndex++];
+    }
+    osNewStyle += ")";
 
     poFeature->SetStyleString( osNewStyle );
+
+    CSLDestroy( papszTokens );
 }
