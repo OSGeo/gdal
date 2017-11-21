@@ -291,6 +291,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
         { return NULL; }
     virtual bool StopReceivingBytesOnError() { return true; }
     virtual bool CanRestartOnError( const char* /*pszErrorMsg*/,
+                                    const char* /*pszHeaders*/,
                                     bool /*bSetError*/ ) { return false; }
     virtual bool InterpretRedirect() { return true; }
     void SetURL( const char* pszURL );
@@ -1423,7 +1424,9 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize,
                                      nErrorBufferMaxSize - nRead);
         pabyErrorBuffer[nErrorBufferSize] = 0;
         StopDownload();
-        if( CanRestartOnError(reinterpret_cast<char *>(pabyErrorBuffer), true) )
+        if( CanRestartOnError(reinterpret_cast<char *>(pabyErrorBuffer),
+                              reinterpret_cast<char *>(pabyHeaderData),
+                              true) )
         {
             curOffset = 0;
             nRingBufferFileOffset = 0;
@@ -1776,6 +1779,7 @@ class VSIS3LikeStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
                                 const struct curl_slist* psExistingHeaders) override;
     virtual bool StopReceivingBytesOnError() override { return false; }
     virtual bool CanRestartOnError( const char* pszErrorMsg,
+                                    const char* pszHeaders,
                                     bool bSetError ) override;
     virtual bool InterpretRedirect() override { return false; }
 
@@ -1839,9 +1843,11 @@ VSIS3LikeStreamingHandle::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIS3LikeStreamingHandle::CanRestartOnError( const char* pszErrorMsg,
-                                              bool bSetError )
+                                                  const char* pszHeaders,
+                                                  bool bSetError )
 {
-    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, bSetError) )
+    if( m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
+                                              bSetError) )
     {
         static_cast<IVSIS3LikeStreamingFSHandler*>(m_poFS)->
             UpdateMapFromHandle(m_poS3HandleHelper);

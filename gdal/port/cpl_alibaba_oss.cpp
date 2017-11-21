@@ -281,6 +281,7 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
+                                            const char*,
                                             bool bSetError,
                                             bool* pbUpdateMap )
 {
