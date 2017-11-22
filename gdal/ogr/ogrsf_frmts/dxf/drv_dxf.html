@@ -97,12 +97,11 @@ a POINT for the text.
 
 <li> LEADER, MULTILEADER: <p>
 <ul>
-<li>(GDAL &gt;= 2.3.x) The leader line is
-translated as a LINESTRING. An arrowhead, if present, is translated as one or
+<li>(GDAL &gt;= 2.3.x) The leader line is translated as a LINESTRING (LEADER) or
+MULTILINESTRING (MULTILEADER). Arrowheads, if present, are translated as one or
 more additional features. Text for MULTILEADER entities is translated into a
-POINT feature with a label. <i>Note: Spline paths are not supported for either
-type of leader, and only MULTILEADERs with a single leader line and text content
-are supported for MULTILEADERs (block content is unsupported).</i>
+POINT feature with a label. Block content for MULTILEADERS is treated as for
+INSERT. Spline paths are not supported for either type of leader.
 <li>(GDAL &lt;= 2.2.x) No support.
 </ul>
 
@@ -118,6 +117,11 @@ linestrings is done by splitting the arcs into subarcs of no more than a
 threshold angle.  This angle is the OGR_ARC_STEPSIZE.  This defaults to
 four degrees, but may be overridden by setting the configuration variable
 OGR_ARC_STEPSIZE.<p>
+
+Object coordinate systems (OCS), also known as "extrusions", are supported for
+all entities to which they apply as per the DXF specification, except DIMENSION,
+LEADER and MULTILEADER. These three entity types also currently lack support for
+elevations; the geometries will always be 2D.<p>
 
 <h2>DXF_INLINE_BLOCKS</h2>
 
@@ -144,7 +148,8 @@ coordinate system (OCS) of the INSERT entity.
 point.
 <li> BlockAttributes (GDAL &gt;= 2.3.x): The text content of attributes
 associated with this block. Each entry in this string list contains an attribute
-tag, followed by a space, followed by the text for that attribute.
+tag, followed by a space, followed by the text for that attribute (which may be
+empty).
 </ul>
 <li> INSERT entities will populate these new fields with the corresponding
 information (they are null for all other entities).

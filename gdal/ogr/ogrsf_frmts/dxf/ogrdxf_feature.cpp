@@ -121,13 +121,41 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Work out the color for this feature.                            */
+/*      MULTILEADER entities store colors by directly outputting        */
+/*      the AcCmEntityColor struct as a 32-bit integer.                 */
 /* -------------------------------------------------------------------- */
 
     int nColor = 256;
 
     if( oStyleProperties.count("Color") > 0 )
         nColor = atoi(oStyleProperties["Color"]);
+
+    const unsigned char byColorMethod = ( nColor & 0xFF000000 ) >> 24;
+    switch( byColorMethod )
+    {
+      // ByLayer
+      case 0xC0:
+        nColor = 256;
+        break;
+
+      // ByBlock
+      case 0xC1:
+        nColor = 0;
+        break;
+
+      // RGB true color
+      case 0xC2:
+        return CPLString().Printf( "#%06x", nColor & 0xFFFFFF );
+
+      // Indexed color
+      case 0xC3:
+        nColor &= 0xFF;
+        break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the indexed color for this feature.                    */
+/* -------------------------------------------------------------------- */
 
     // Use ByBlock color?
     if( nColor < 1 && poBlockFeature )
