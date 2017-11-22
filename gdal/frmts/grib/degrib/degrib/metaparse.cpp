@@ -1075,6 +1075,29 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
             meta->gds.Dx = meta->gds.Dy;
          }
          break;
+      case GS3_TRANSVERSE_MERCATOR: /* 12: Transverse mercator */
+         if (ns3 < 84) {
+            return -1;
+         }
+         meta->gds.latitude_of_origin = is3[38] * unit;
+         meta->gds.central_meridian = is3[42] * unit;
+         meta->gds.resFlag = (uChar) is3[46];
+         {
+             float fTemp;
+             memcpy(&fTemp, &is3[47], 4);
+             meta->gds.scaleLat1 = fTemp;
+         }
+         meta->gds.x0 = is3[51] / 100.0;
+         meta->gds.y0 = is3[55] / 100.0;
+         meta->gds.scan = (uChar) is3[59];
+         meta->gds.Dx = is3[60] / 100.0;
+         meta->gds.Dy = is3[64] / 100.0;
+         meta->gds.x1 = is3[68] / 100.0;
+         meta->gds.y1 = is3[72] / 100.0;
+         meta->gds.x2 = is3[76] / 100.0;
+         meta->gds.y2 = is3[80] / 100.0;
+         break;
+
       case GS3_POLAR:  /* 20: Polar Stereographic grid. */
          if (ns3 < 65) {
             return -1;

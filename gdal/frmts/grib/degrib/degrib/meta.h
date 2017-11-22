@@ -453,7 +453,7 @@ typedef struct {
  * Definition Section. In GRIB2 the GDS was in section 3, in GRIB1 it was in
  * section 2.
  */
-enum { GS3_LATLON = 0, GS3_MERCATOR = 10, GS3_POLAR = 20,
+enum { GS3_LATLON = 0, GS3_MERCATOR = 10, GS3_TRANSVERSE_MERCATOR = 12, GS3_POLAR = 20,
        GS3_LAMBERT = 30, GS3_GAUSSIAN_LATLON = 40, GS3_ORTHOGRAPHIC = 90,
        GS3_ROTATED_LATLON = 100, GS3_EQUATOR_EQUIDIST = 110, GS3_AZIMUTH_RANGE = 120};
 
@@ -500,6 +500,15 @@ typedef struct {
    double stretchFactor;      /* Factor of stretching. */
    int f_typeLatLon;          /* 0 regular, 1 stretch, 2 stretch / rotate, 3 rotate. */
    double angleRotate;        /* Rotation angle. */
+/* Specific to transverse mercator */
+   double latitude_of_origin;
+   double central_meridian;
+   double x0;
+   double y0;
+   double x1;
+   double y1;
+   double x2;
+   double y2;
 /* following is just to track the datum. */
    uChar hdatum;              /* horizontal datum to use.  0=undefined (use
                                * grid dataum) 1=WGS84 */
