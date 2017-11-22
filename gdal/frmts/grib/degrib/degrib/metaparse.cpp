@@ -1491,7 +1491,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
        (is4[7] != GS4_STATISTIC) && (is4[7] != GS4_PROBABIL_TIME) &&
        (is4[7] != GS4_PERCENT_TIME) && (is4[7] != GS4_ENSEMBLE_STAT) &&
        (is4[7] != GS4_SATELLITE) && (is4[7] != GS4_SATELLITE_SYNTHETIC) &&
-       (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA)) {
+       (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA) &&
+       (is4[7] != GS4_ANALYSIS_CHEMICAL)) {
 #ifdef DEBUG
       printf ("Un-supported Template. %d\n", is4[7]);
 #endif
@@ -1508,7 +1509,8 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
    }
    meta->pds2.sect4.cat = (uChar) is4[9];
    meta->pds2.sect4.subcat = (uChar) is4[10];
-   meta->pds2.sect4.genProcess = (uChar) is4[11];
+   int nOffset = (is4[7] != GS4_ANALYSIS_CHEMICAL) ? 0 : 2;
+   meta->pds2.sect4.genProcess = (uChar) is4[11 + nOffset];
 
    /* Initialize variables prior to parsing the specific templates. */
    meta->pds2.sect4.typeEnsemble = 0;
@@ -1578,23 +1580,23 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
       return 0;
    }
 
-   meta->pds2.sect4.bgGenID = (uChar) is4[12];
-   meta->pds2.sect4.genID = (uChar) is4[13];
-   if ((is4[14] == GRIB2MISSING_u2) || (is4[16] == GRIB2MISSING_u1)) {
+   meta->pds2.sect4.bgGenID = (uChar) is4[12 + nOffset];
+   meta->pds2.sect4.genID = (uChar) is4[13 + nOffset];
+   if ((is4[14 + nOffset] == GRIB2MISSING_u2) || (is4[16 + nOffset] == GRIB2MISSING_u1)) {
       meta->pds2.sect4.f_validCutOff = 0;
       meta->pds2.sect4.cutOff = 0;
    } else {
       meta->pds2.sect4.f_validCutOff = 1;
-      meta->pds2.sect4.cutOff = is4[14] * 3600 + is4[16] * 60;
+      meta->pds2.sect4.cutOff = is4[14 + nOffset] * 3600 + is4[16 + nOffset] * 60;
    }
-   if (is4[18] == GRIB2MISSING_s4) {
+   if (is4[18 + nOffset] == GRIB2MISSING_s4) {
       errSprintf ("Missing 'forecast' time?\n");
       return -5;
    }
-   meta->pds2.sect4.foreUnit = is4[17];
-   if (ParseSect4Time2sec (meta->pds2.refTime, is4[18], is4[17],
+   meta->pds2.sect4.foreUnit = is4[17 + nOffset];
+   if (ParseSect4Time2sec (meta->pds2.refTime, is4[18 + nOffset], is4[17 + nOffset],
                            &(meta->pds2.sect4.foreSec)) != 0) {
-      errSprintf ("Unable to convert this TimeUnit: %ld\n", is4[17]);
+      errSprintf ("Unable to convert this TimeUnit: %ld\n", is4[17 + nOffset]);
       return -5;
    }
 
@@ -1605,23 +1607,23 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
     * Following is based on what was needed to get correct Radius of Earth in
     * section 3.  (Hopefully they are consistent).
     */
-   meta->pds2.sect4.fstSurfType = (uChar) is4[22];
-   if ((is4[24] == GRIB2MISSING_s4) || (is4[23] == GRIB2MISSING_s1) ||
+   meta->pds2.sect4.fstSurfType = (uChar) is4[22 + nOffset];
+   if ((is4[24 + nOffset] == GRIB2MISSING_s4) || (is4[23 + nOffset] == GRIB2MISSING_s1) ||
        (meta->pds2.sect4.fstSurfType == GRIB2MISSING_u1)) {
       meta->pds2.sect4.fstSurfScale = GRIB2MISSING_s1;
       meta->pds2.sect4.fstSurfValue = 0;
    } else {
-      meta->pds2.sect4.fstSurfScale = is4[23];
-      meta->pds2.sect4.fstSurfValue = is4[24] / pow (10.0, is4[23]);
+      meta->pds2.sect4.fstSurfScale = is4[23 + nOffset];
+      meta->pds2.sect4.fstSurfValue = is4[24 + nOffset] / pow (10.0, is4[23 + nOffset]);
    }
-   meta->pds2.sect4.sndSurfType = (uChar) is4[28];
-   if ((is4[30] == GRIB2MISSING_s4) || (is4[29] == GRIB2MISSING_s1) ||
+   meta->pds2.sect4.sndSurfType = (uChar) is4[28 + nOffset];
+   if ((is4[30 + nOffset] == GRIB2MISSING_s4) || (is4[29 + nOffset] == GRIB2MISSING_s1) ||
        (meta->pds2.sect4.sndSurfType == GRIB2MISSING_u1)) {
       meta->pds2.sect4.sndSurfScale = GRIB2MISSING_s1;
       meta->pds2.sect4.sndSurfValue = 0;
    } else {
-      meta->pds2.sect4.sndSurfScale = is4[29];
-      meta->pds2.sect4.sndSurfValue = is4[30] / pow (10.0, is4[29]);
+      meta->pds2.sect4.sndSurfScale = is4[29 + nOffset];
+      meta->pds2.sect4.sndSurfValue = is4[30 + nOffset] / pow (10.0, is4[29 + nOffset]);
    }
    switch (meta->pds2.sect4.templat) {
       case GS4_ANALYSIS: /* 4.0 */
@@ -1974,6 +1976,9 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             // 35 Statistical process used within the spatial area defined by octet 36 (see Code Table 4.10)
             // 36 Type of spatial processing used to arrive at given data value from source data (see Code Table 4.15)
             // 37 Number of data points used in spatial processing defined in octet 36
+            break;
+      case GS4_ANALYSIS_CHEMICAL: /* 4.40 */
+            // TODO
             break;
       default:
          errSprintf ("Un-supported Template. %ld\n", is4[7]);

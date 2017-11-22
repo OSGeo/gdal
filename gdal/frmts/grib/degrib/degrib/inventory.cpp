@@ -520,14 +520,25 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_STATISTIC_SPATIAL_AREA)
        && (templat != GS4_RADAR) && (templat != GS4_SATELLITE)
        && (templat != GS4_SATELLITE_SYNTHETIC)
-       && (templat != GS4_DERIVED_INTERVAL)) {
+       && (templat != GS4_DERIVED_INTERVAL)
+       && (templat != GS4_ANALYSIS_CHEMICAL) ) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 6, 7, 8, 9, "
-                  "10, 11, 12, 15, 20, 30, 32. Template found = %d\n", templat);
+                  "10, 11, 12, 15, 20, 30, 32, 40. Template found = %d\n", templat);
       return -8;
    }
+   if( *buffLen < 19 - 5 + 4 )
+       return -8;
+
    cat = (*buffer)[10 - 5];
    subcat = (*buffer)[11 - 5];
-   genProcess = (*buffer)[12 - 5];
+   if( templat == GS4_ANALYSIS_CHEMICAL )
+   {
+        if( *buffLen < 21 - 5 + 4 )
+            return -8;
+        genProcess = (*buffer)[14 - 5];
+   }
+   else
+        genProcess = (*buffer)[12 - 5];
    genID = 0;
    probType = 0;
    lowerProb = 0;
@@ -540,10 +551,14 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       timeRangeUnit = 255;
       lenTime = 0;
    } else {
-      genID = (*buffer)[14 - 5];
+      int nOffset = 0;
+      if( templat == GS4_ANALYSIS_CHEMICAL ) {
+          nOffset = 2;
+      }
+      genID = (*buffer)[nOffset + 14 - 5];
       /* Compute forecast time. */
-      foreTimeUnit = (*buffer)[18 - 5];
-      MEMCPY_BIG (&foreTime, *buffer + 19 - 5, sizeof (sInt4));
+      foreTimeUnit = (*buffer)[nOffset + 18 - 5];
+      MEMCPY_BIG (&foreTime, *buffer + nOffset + 19 - 5, sizeof (sInt4));
       if (ParseSect4Time2sec (inv->refTime, foreTime, foreTimeUnit, &(inv->foreSec)) != 0) {
          errSprintf ("unable to convert TimeUnit: %d \n", foreTimeUnit);
          return -8;
@@ -773,11 +788,19 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       sndSurfValue = 0;
       f_sndValue = 0;
    } else {
-        if( *buffLen < 31 - 5 + 4)
+      unsigned int nOffset = 0;
+      if( templat == GS4_ANALYSIS_CHEMICAL ) {
+          nOffset = 2;
+      }
+
+      if( *buffLen < nOffset + 31 - 5 + 4)
             return -8;
-      fstSurfType = (*buffer)[23 - 5];
-      scale = (*buffer)[24 - 5];
-      MEMCPY_BIG (&value, *buffer + 25 - 5, sizeof (sInt4));
+      fstSurfType = (*buffer)[nOffset + 23 - 5];
+      unsigned char u_scale = ((unsigned char*)(*buffer))[nOffset + 24 - 5];
+      scale = (u_scale & 0x80) ? -(u_scale & 0x7f) : u_scale;
+      unsigned int u_value;
+      MEMCPY_BIG (&u_value, *buffer + nOffset + 25 - 5, sizeof (u_value));
+      value = (u_value & 0x80000000U) ? -(u_value & 0x7fffffff) : u_value;
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (fstSurfType == GRIB2MISSING_u1)) {
          fstSurfValue = 0;
@@ -786,9 +809,11 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
          fstSurfValue = value * pow (10.0, (int) (-1 * scale));
          f_fstValue = 1;
       }
-      sndSurfType = (*buffer)[29 - 5];
-      scale = (*buffer)[30 - 5];
-      MEMCPY_BIG (&value, *buffer + 31 - 5, sizeof (sInt4));
+      sndSurfType = (*buffer)[nOffset + 29 - 5];
+      u_scale = ((unsigned char*)(*buffer))[nOffset + 30 - 5];
+      scale = (u_scale & 0x80) ? -(u_scale & 0x7f) : u_scale;
+      MEMCPY_BIG (&u_value, *buffer + nOffset + 31 - 5, sizeof (u_value));
+      value = (u_value & 0x80000000U) ? -(u_value & 0x7fffffff) : u_value;
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (sndSurfType == GRIB2MISSING_u1)) {
          sndSurfValue = 0;

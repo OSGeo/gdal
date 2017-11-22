@@ -359,6 +359,35 @@ def grib_13():
     return 'success'
 
 ###############################################################################
+# Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
+
+def grib_14():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    # We could use some other encoding that JP2K...
+    jp2drv_found = False
+    for i in range(gdal.GetDriverCount()):
+        if gdal.GetDriver(i).ShortName.startswith('JP2'):
+            jp2drv_found = True
+            break
+    if not jp2drv_found:
+        return 'skip'
+
+    # First band extracted from http://nomads.ncep.noaa.gov/pub/data/nccf/com/hur/prod/hwrf.2017102006/twenty-se27w.2017102006.hwrfsat.core.0p02.f000.grb2
+    ds = gdal.Open('data/template_4_40.grb2')
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1505088000 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647', 'GRIB_VALID_TIME': '  1505088000 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[kg/(m^3)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '40', 'GRIB_COMMENT': 'Mass Density (Concentration) [kg/(m^3)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MASSDEN'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 def grib_online_1():
 
@@ -404,6 +433,7 @@ gdaltest_list = [
     grib_11,
     grib_12,
     grib_13,
+    grib_14,
     grib_online_1
     ]
 
