@@ -551,6 +551,7 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
     char szLineBuf[257];
     int nCode = 0;
 
+    CPLString osStyleHandle;
     CPLString osStyleName;
     bool bInsideAcadSection = false;
 
@@ -558,6 +559,10 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
     {
         switch( nCode )
         {
+          case 5:
+            osStyleHandle = szLineBuf;
+            break;
+
           case 2:
             osStyleName = CPLString(szLineBuf).Recode( GetEncoding(),
                 CPL_ENC_UTF8 ).toupper();
@@ -609,6 +614,10 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
 
     if( nCode == 0 )
         UnreadValue();
+
+    if( osStyleHandle != "" )
+        oTextStyleHandles[osStyleHandle] = osStyleName;
+
     return true;
 }
 
@@ -636,6 +645,24 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(
     {
         return pszDefault;
     }
+}
+
+/************************************************************************/
+/*                      GetTextStyleNameByHandle()                      */
+/*                                                                      */
+/*      Find the name of the text style with the given STYLE table      */
+/*      handle. If there is no such style, an empty string is returned. */
+/************************************************************************/
+
+CPLString OGRDXFDataSource::GetTextStyleNameByHandle( const char *pszID )
+
+{
+    CPLString l_osID = pszID;
+
+    if( oTextStyleHandles.count( l_osID ) == 0 )
+        return "";
+    else
+        return oTextStyleHandles[l_osID];
 }
 
 /************************************************************************/

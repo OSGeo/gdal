@@ -384,6 +384,7 @@ class OGRDXFDataSource : public OGRDataSource
     // indexed by style name, then by property name.
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oTextStyleTable;
+    std::map<CPLString,CPLString> oTextStyleHandles;
 
     // indexed by dimstyle name, then by DIM... variable name
     std::map< CPLString, std::map<CPLString,CPLString> >
@@ -440,6 +441,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     std::vector<double> LookupLineType( const char *pszName );
+    CPLString           GetTextStyleNameByHandle( const char *pszID );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
 
