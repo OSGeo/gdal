@@ -394,15 +394,15 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                      pszFilename, pszLockName);
             return FALSE;
         }
-        fp = VSIFOpenL( pszFilename, "rb+" );
+        fp = VSIFOpenExL( pszFilename, "rb+", true );
     }
     else
     {
-        fp = VSIFOpenL( pszFilename, "rb" );
+        fp = VSIFOpenExL( pszFilename, "rb", true );
     }
 
     if( fp == NULL ) {
-        CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s, %s.", pszFilename, VSIStrerror( errno ) );
+        CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s.", VSIGetLastErrorMsg() );
         return FALSE;
     }
     if( !bUpdate && strstr(pszFilename, "/vsigzip/") == NULL && strstr(pszFilename, "/vsizip/") == NULL ) fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
