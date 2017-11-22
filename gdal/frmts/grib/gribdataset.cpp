@@ -616,6 +616,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     if( !Identify(poOpenInfo) )
         return NULL;
 #endif
+    if( poOpenInfo->fpL == NULL )
+        return NULL;
 
     // A fast "probe" on the header that is partially read in memory.
     char *buff = NULL;
@@ -650,27 +652,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     // Create a corresponding GDALDataset.
     GRIBDataset *poDS = new GRIBDataset();
 
-    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "r");
-
-    // Check the return values.
-    if (!poDS->fp) {
-        // We have no FP, so we don't have anywhere to read from.
-        char *errMsg = errSprintf(NULL);
-        if( errMsg != NULL )
-            CPLDebug("GRIB", "%s", errMsg);
-        free(errMsg);
-
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Error (%d) opening file %s", errno, poOpenInfo->pszFilename);
-        // Release hGRIBMutex otherwise we'll deadlock with GDALDataset own
-        // hGRIBMutex.
-        CPLReleaseMutex(hGRIBMutex);
-        delete poDS;
-        CPLAcquireMutex(hGRIBMutex, 1000.0);
-        return NULL;
-    }
-
-    // Read the header.
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 
     // Make an inventory of the GRIB file.
     // The inventory does not contain all the information needed for
