@@ -375,7 +375,8 @@ def grib_14():
     if not jp2drv_found:
         return 'skip'
 
-    # First band extracted from http://nomads.ncep.noaa.gov/pub/data/nccf/com/hur/prod/hwrf.2017102006/twenty-se27w.2017102006.hwrfsat.core.0p02.f000.grb2
+    # First band extracted from https://download.regional.atmosphere.copernicus.eu/services/CAMS50?token=__M0bChV6QsoOFqHz31VRqnpr4GhWPtcpaRy3oeZjBNSg__&grid=0.1&model=ENSEMBLE&package=ANALYSIS_PM10_SURFACE&time=-24H-1H&referencetime=2017-09-12T00:00:00Z&format=GRIB2&licence=yes
+    # with data nullified
     ds = gdal.Open('data/template_4_40.grb2')
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'GRIB_REF_TIME': '  1505088000 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647', 'GRIB_VALID_TIME': '  1505088000 sec UTC', 'GRIB_FORECAST_SECONDS': '0 sec', 'GRIB_UNIT': '[kg/(m^3)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '40', 'GRIB_COMMENT': 'Mass Density (Concentration) [kg/(m^3)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MASSDEN'}
