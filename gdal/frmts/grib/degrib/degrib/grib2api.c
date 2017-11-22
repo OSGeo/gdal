@@ -1041,6 +1041,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
          nyIndex = 35 - 1;
          break;
       case 10:
+      case 12: // Transverse Mercator
          scanIndex = 60 - 1;
          nxIndex = 31 - 1;
          nyIndex = 35 - 1;
