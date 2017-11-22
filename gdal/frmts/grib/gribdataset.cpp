@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, ITC
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2017, Even Rouault <even dot rouault at spatialys dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -99,7 +99,11 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     m_Grib_Data(NULL),
     m_Grib_MetaData(NULL),
     nGribDataXSize(poDSIn->nRasterXSize),
-    nGribDataYSize(poDSIn->nRasterYSize)
+    nGribDataYSize(poDSIn->nRasterYSize),
+    m_bHasLookedForNoData(false),
+    m_dfNoData(0.0),
+    m_bHasNoData(false)
+
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -140,9 +144,6 @@ void GRIBRasterBand::FindPDSTemplate()
 
 {
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
-
-
-    GIntBig nOffset = VSIFTellL(poGDS->fp);
 
     // Read section 0
     GByte abySection0[16];
@@ -265,10 +266,119 @@ void GRIBRasterBand::FindPDSTemplate()
             free(coordlist);
 
             CPLFree(pabyBody);
+
+            FindNoDataGrib2(false);
         }
     }
+}
 
-    VSIFSeekL(poGDS->fp, nOffset, SEEK_SET);
+/************************************************************************/
+/*                        FindNoDataGrib2()                             */
+/************************************************************************/
+
+void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
+{
+    // There is no easy way in the degrib API to retrieve the nodata value
+    // without decompressing the data point section (which is slow), so
+    // retrieve nodata value by parsing section 5 (Data Representation Section)
+    GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+    CPLAssert( poGDS->nGribVersion == 2 );
+
+    if( m_bHasLookedForNoData )
+        return;
+    m_bHasLookedForNoData = true;
+
+    if( bSeekToStart )
+    {
+        // Skip over section 0
+        VSIFSeekL(poGDS->fp, start + 16, SEEK_SET);
+    }
+
+    GByte abyHead[5] = { 0 };
+    VSIFReadL(abyHead, 5, 1, poGDS->fp);
+
+    // Skip to section 5
+    GUInt32 nSectSize = 0;
+    while( abyHead[4] != 5 )
+    {
+        memcpy(&nSectSize, abyHead, 4);
+        CPL_MSBPTR32(&nSectSize);
+
+        if( nSectSize < 5 ||
+            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR) != 0 ||
+            VSIFReadL(abyHead, 5, 1, poGDS->fp) != 1 )
+            break;
+    }
+
+    // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_sect5.shtml
+    if( abyHead[4] == 5 )
+    {
+        memcpy(&nSectSize, abyHead, 4);
+        CPL_MSBPTR32(&nSectSize);
+        if( nSectSize >= 10 &&
+            nSectSize <= 100000  /* arbitrary upper limit */ )
+        {
+            GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize));
+            memcpy(pabyBody, abyHead, 5);
+            VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
+
+            GUInt16 nDRTN = 0;
+            memcpy(&nDRTN, pabyBody + 10-1, 2);
+            CPL_MSBPTR16(&nDRTN);
+
+            // 2 = Grid Point Data - Complex Packing
+            // 3 = Grid Point Data - Complex Packing and Spatial Differencing
+            if( (nDRTN == 2 || nDRTN == 3) && nSectSize >= 31 )
+            {
+                const int nMiss = pabyBody[23-1];
+                if( nMiss == 1 || nMiss == 2 )
+                {
+                    double dfSecondaryNoData = 0.0;
+                    const int nNoDataType = pabyBody[21-1];
+                    if( nNoDataType == 0 ) // Floating Point
+                    {
+                        float fTemp;
+                        memcpy(&fTemp, &pabyBody[24-1], 4);
+                        CPL_MSBPTR32(&fTemp);
+                        m_dfNoData = fTemp;
+                        m_bHasNoData = true;
+
+                        memcpy(&fTemp, &pabyBody[28-1], 4);
+                        CPL_MSBPTR32(&fTemp);
+                        dfSecondaryNoData = fTemp;
+                    }
+                    else if( nNoDataType == 1 ) // Integer
+                    {
+                        int nTemp;
+                        memcpy(&nTemp, &pabyBody[24-1], 4);
+                        CPL_MSBPTR32(&nTemp);
+                        m_dfNoData = nTemp;
+                        m_bHasNoData = true;
+
+                        memcpy(&nTemp, &pabyBody[28-1], 4);
+                        CPL_MSBPTR32(&nTemp);
+                        dfSecondaryNoData = nTemp;
+                    }
+                    else
+                    {
+                        CPLDebug("GRIB",
+                                 "Unhandled Type of original field values = %d",
+                                 nNoDataType);
+                    }
+
+                    if( nMiss == 2 )
+                    {
+                        // What TODO?
+                        CPLDebug("GRIB",
+                                 "Secondary missing value also set for band %d : %f",
+                                 nBand, dfSecondaryNoData);
+                    }
+                }
+            }
+
+            CPLFree(pabyBody);
+        }
+    }
 }
 
 /************************************************************************/
@@ -423,6 +533,19 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
 
 double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 {
+    GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
+    if( poGDS->nGribVersion == 2 && !m_bHasLookedForNoData )
+    {
+        FindNoDataGrib2();
+    }
+
+    if( m_bHasLookedForNoData )
+    {
+        if( pbSuccess )
+            *pbSuccess = m_bHasNoData;
+        return m_dfNoData;
+    }
+
     CPLErr eErr = LoadData();
     if (eErr != CE_None ||
         m_Grib_MetaData == NULL ||
@@ -535,6 +658,7 @@ GRIBRasterBand::~GRIBRasterBand()
 GRIBDataset::GRIBDataset() :
     fp(NULL),
     pszProjection(CPLStrdup("")),
+    nGribVersion(0),
     nCachedBytes(0),
     // Switch caching strategy once 100 MB threshold is reached.
     // Why 100 MB? --> Why not.
@@ -651,6 +775,7 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
     // Create a corresponding GDALDataset.
     GRIBDataset *poDS = new GRIBDataset();
+    poDS->nGribVersion = version;
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
@@ -694,6 +819,27 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         inventoryType *psInv = oInventories.get(i);
         GRIBRasterBand *gribBand = NULL;
         uInt4 bandNr = i + 1;
+
+        // GRIB messages can be preceded by "garbage". GRIB2Inventory()
+        // does not return the offset to the real start of the message
+        GByte abyHeader[1024 + 1];
+        VSIFSeekL( poDS->fp, psInv->start, SEEK_SET );
+        size_t nRead = VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, poDS->fp );
+        abyHeader[nRead] = 0;
+        // Find the real offset of the fist message
+        const char *pasHeader = reinterpret_cast<char *>(abyHeader);
+        int nOffsetFirstMessage = 0;
+        for(int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
+        {
+            if(STARTS_WITH_CI(pasHeader + j, "GRIB") ||
+               STARTS_WITH_CI(pasHeader + j, "TDLP"))
+            {
+                nOffsetFirstMessage = j;
+                break;
+            }
+        }
+        psInv->start += nOffsetFirstMessage;
+
         if (bandNr == 1)
         {
             // Important: set DataSet extents before creating first RasterBand

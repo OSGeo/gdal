@@ -95,6 +95,15 @@ def grib_4():
     ds = gdal.Open('data/ds.mint.bin')
     if ds.GetRasterBand(1).GetNoDataValue() != 9999:
         return 'fail'
+    if ds.GetRasterBand(2).GetNoDataValue() != 9999:
+        return 'fail'
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0 (Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
 
     return 'success'
 

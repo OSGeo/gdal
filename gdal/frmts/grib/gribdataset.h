@@ -92,6 +92,7 @@ class GRIBDataset : public GDALPamDataset
     char *pszProjection;
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
+    int    nGribVersion;
 
     GIntBig nCachedBytes;
     GIntBig nCachedBytesThreshold;
@@ -123,6 +124,7 @@ public:
 
 private:
     CPLErr       LoadData();
+    void    FindNoDataGrib2(bool bSeekToStart = true);
 
     static void ReadGribData( DataSource &, sInt4, int, double **,
                               grib_MetaData ** );
@@ -135,6 +137,10 @@ private:
 
     int nGribDataXSize;
     int nGribDataYSize;
+
+    bool    m_bHasLookedForNoData;
+    double  m_dfNoData;
+    bool    m_bHasNoData;
 };
 
 namespace gdal {
