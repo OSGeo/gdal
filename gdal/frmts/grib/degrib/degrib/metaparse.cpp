@@ -1084,7 +1084,8 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.resFlag = (uChar) is3[46];
          {
              float fTemp;
-             memcpy(&fTemp, &is3[47], 4);
+             GUInt32 nTemp = is3[47] < 0 ? (-is3[47]) | 0x80000000U : is3[47];
+             memcpy(&fTemp, &nTemp, 4);
              meta->gds.scaleLat1 = fTemp;
          }
          meta->gds.x0 = is3[51] / 100.0;
