@@ -129,7 +129,7 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
         request += osTime;
     }
 
-    if( osBandList != "" && osBandIdentifier != "none" )
+    if( osBandList != "" )
     {
         request += CPLString().Printf( "&%s=%s",
                                        osBandIdentifier.c_str(),
@@ -461,8 +461,8 @@ bool WCSDataset100::ExtractGridInfo()
         if( !osBandIdentifier.empty() )
         {
             bServiceDirty = true;
-            CPLCreateXMLElementAndValue( psService, "BandIdentifier",
-                                         osBandIdentifier );
+            CPLSetXMLValue( psService, "BandIdentifier",
+                            osBandIdentifier );
         }
     }
 

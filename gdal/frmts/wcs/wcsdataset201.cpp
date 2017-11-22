@@ -574,7 +574,7 @@ bool WCSDataset201::ExtractGridInfo()
     CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
 
     if (coverage == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service. RECREATE_SERVICE?");
+        CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service.");
         return false;
     }
 

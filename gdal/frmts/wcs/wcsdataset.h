@@ -50,7 +50,7 @@ class WCSDataset : public GDALPamDataset
     CPLString   m_cache_dir;
     bool        bServiceDirty;
     CPLXMLNode *psService;
-        
+
     char       *apszCoverageOfferingMD[2];
 
     char      **papszSDSModifiers;
@@ -107,7 +107,7 @@ class WCSDataset : public GDALPamDataset
     virtual CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) = 0;
 
     int         DescribeCoverage();
-    
+
     virtual bool        ExtractGridInfo() = 0;
 
     int         EstablishRasterDetails();
@@ -115,15 +115,15 @@ class WCSDataset : public GDALPamDataset
     virtual CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) = 0;
 
     virtual const char *ExceptionNodeName() = 0;
-    
+
     int         ProcessError( CPLHTTPResult *psResult );
-    
+
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
-    
+
     void        FlushMemoryResult();
-    
+
     CPLString   osResultFilename;
-    
+
     GByte      *pabySavedDataBuffer;
 
     char      **papszHttpOptions;
@@ -137,6 +137,7 @@ class WCSDataset : public GDALPamDataset
 
     static WCSDataset *CreateFromMetadata( const CPLString&, CPLString );
     static WCSDataset *CreateFromCapabilities(CPLString, CPLString, CPLString );
+
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
 
@@ -162,7 +163,7 @@ class WCSDataset100 : public WCSDataset
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
     const char *ExceptionNodeName() override;
-    
+
   public:
 
     explicit WCSDataset100(const char *cache_dir) : WCSDataset(100, cache_dir) {}
@@ -182,7 +183,7 @@ class WCSDataset110 : public WCSDataset
     bool        ExtractGridInfo() override;
     CPLErr      ParseCapabilities( CPLXMLNode *, CPLString ) override;
     const char *ExceptionNodeName() override;
-    
+
   public:
 
     WCSDataset110(int version, const char *cache_dir) : WCSDataset(version, cache_dir) {}
@@ -212,12 +213,11 @@ class WCSDataset201 : public WCSDataset110
     bool        Offset2GeoTransform(std::vector<double> origin,
                                     std::vector<std::vector<double> > offset);
     bool        ExtractGridInfo() override;
-    
+
  public:
-    
+
     explicit WCSDataset201(const char *cache_dir) : WCSDataset110(201, cache_dir) {}
-    
+
 };
 
 #define DIGIT_ZERO '0'
-

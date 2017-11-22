@@ -86,6 +86,11 @@ used to distinguish between them.</li>
 <li> <b>PreferredFormat</b>: The format to use for GetCoverage
 calls. If not set, selected by the driver.
 
+<li> <b>Interpolation</b>: The interpolation method used when scaling.
+Should be one of the server supported values. (Note: the old name for
+this element was Resample, which is still supported but
+deprecated.).</li>
+
 <li> <b>BlockXSize</b>: The block width to use for block cached remote
 access.
 
@@ -119,11 +124,6 @@ offered time position by default. (Used only with version 1.0.0)<p>
 
 <li> <b>Elements for controlling the range:</b>
 
-<li> <b>Interpolation</b>: The interpolation method used when scaling.
-Should be one of the server supported values. (Note: the old name for
-this element was Resample, which is still supported but
-deprecated.).</li>
-
 <li> <b>Range</b>: In version 2.0.1 (range subsetting extension
 version 1.0) the range consists of one or more fields, which are all
 scalar valued. If the server supports range subsetting, this parameter
@@ -134,7 +134,7 @@ can be used to select a subset of fields to the dataset. Syntax:
 with version 1.1. Defaults to the first field in the
 DescribeCoverage. In version 1.1 the range consists of one or more
 fields, which may be scalar or vector. A vector field contains one or
-more bands. (See BandIdentifier below)
+more bands.
 
 <li> <b>BandCount</b>: Number of bands in the dataset, normally
 determined by the driver.
@@ -168,9 +168,8 @@ eg. "&CustNo=775"</li><p>
 
 <li> <b>Elements that may be needed to deal with server quirks:</b>
 
-<li> <b>BandIdentifier</b>: Set to 'none' to instruct the server to
-not try range subsetting in version 1. Needed for accessing MapServer
-in some cases.
+<b>Note:</b> The options are not propagated to the subdataset
+with the switch -sd.<p>   
 
 <li><b>OriginAtBoundary</b>: Set this flag if the server reports grid
 origin to be at the pixel boundary instead of the pixel center. (Use
@@ -260,14 +259,6 @@ deleted.)</li>
 
 <li><b>REFRESH_CACHE</b> (The cache entry, either capabilities or coverage,
 depending on the call at hand, is deleted.)</li>
-
-<li><b>RECREATE_META</b> (The metadata file (.aux.xml) is recreated,
-either the server or the coverage related metadata file depending on
-the call at hand.)</li>
-
-<li><b>RECREATE_SERVICE</b> (The service description file is
-re-initialized. Note that the service file is always updated with
-elements given as options.</li>
 
 </ul>
 

@@ -140,12 +140,22 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLErr eErr;
     CPLHTTPResult *psResult = NULL;
 
+    // if INTERLEAVE is set to PIXEL, then we'll request all bands.
+    // That is necessary at least with MapServer, which seems to often
+    // return all bands instead of requested.
+    // todo: in 2.0.1 the band list in this dataset may be user-defined
+    
+    int band_count = 1;
+    if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL")) {
+        band_count = 0;
+    }
+
     eErr = poODS->GetCoverage( nBlockXOff * nBlockXSize * nResFactor,
                                nBlockYOff * nBlockYSize * nResFactor,
                                nBlockXSize * nResFactor,
                                nBlockYSize * nResFactor,
                                nBlockXSize, nBlockYSize,
-                               1, &nBand, &psResult );
+                               band_count, &nBand, &psResult );
     if( eErr != CE_None )
         return eErr;
 
@@ -176,14 +186,13 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    if( (strlen(poODS->osBandIdentifier) && poODS->osBandIdentifier != "none" && poTileDS->GetRasterCount() != 1)
-        || (!strlen(poODS->osBandIdentifier)
-            && poTileDS->GetRasterCount() != poODS->GetRasterCount()) )
+    if( band_count == 1
+        && ((strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
+            || (!strlen(poODS->osBandIdentifier)
+                && poTileDS->GetRasterCount() != poODS->GetRasterCount())) )
     {
         CPLString msg;
-        if (strlen(poODS->osBandIdentifier)
-            && poODS->osBandIdentifier != "none"
-            && poTileDS->GetRasterCount() != 1)
+        if (strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
         {
             msg.Printf("Got %d bands instead of one although the coverage has band range type.\n",
                        poTileDS->GetRasterCount());
@@ -210,7 +219,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         GDALRasterBand *poTileBand = poTileDS->GetRasterBand( iBand+1 );
 
-        if( iBand+1 == GetBand() || strlen(poODS->osBandIdentifier) )
+        if( iBand+1 == GetBand() || (band_count == 1 && strlen(poODS->osBandIdentifier)) )
         {
             eErr = poTileBand->RasterIO( GF_Read,
                                          0, 0, nBlockXSize, nBlockYSize,

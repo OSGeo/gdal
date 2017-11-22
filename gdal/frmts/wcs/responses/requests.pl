@@ -71,11 +71,7 @@ for my $server (sort keys %$setup) {
         $options = $options->[$i] if ref $options;
 
         $options .= " -oo CACHE=$cache";
-        if ($first_call) {
-            $options .= " -oo CLEAR_CACHE";
-            $first_call = 0;
-        }
-
+        
         # test that the origin of the 2 x 2 non-scaled piece obtained with gdal_translate
         # is the top left boundary of the BBOX in DC
         # tests implicitly many things
@@ -90,15 +86,17 @@ for my $server (sort keys %$setup) {
     }
 }
 
-open(my $fh, ">", "urls");
-for my $key (sort keys %urls) {
-    say $fh $key;
-    say $fh 'non-scaled: ',$urls{$key}{non_scaled} if $urls{$key}{non_scaled};
-    say $fh 'non-scaled: ',$urls{$key}{non_scaled2} if $urls{$key}{non_scaled2};
-    say $fh 'scaled: ',$urls{$key}{scaled} if $urls{$key}{scaled};
-    say $fh 'scaled: ',$urls{$key}{scaled2} if $urls{$key}{scaled2};
+if ($do{urls}) {
+    open(my $fh, ">", "urls");
+    for my $key (sort keys %urls) {
+        say $fh $key;
+        say $fh 'non-scaled: ',$urls{$key}{non_scaled} if $urls{$key}{non_scaled};
+        say $fh 'non-scaled: ',$urls{$key}{non_scaled2} if $urls{$key}{non_scaled2};
+        say $fh 'scaled: ',$urls{$key}{scaled} if $urls{$key}{scaled};
+        say $fh 'scaled: ',$urls{$key}{scaled2} if $urls{$key}{scaled2};
+    }
+    close $fh;
 }
-close $fh;
 
 if (@not_ok) {
     say "Failed tests were:";
@@ -257,6 +255,10 @@ sub test_non_scaled {
     my $o = "$options -srcwin 0 0 2 2";
     my $url = $setup->{$server}->{URL};
     say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{say};
+    if ($first_call) {
+        $o .= " -oo CLEAR_CACHE";
+        $first_call = 0;
+    }
     my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1);
     say $output if $do{say_all};
     foreach my $line (split /[\r\n]+/, $output) {
@@ -309,6 +311,10 @@ sub test_scaled {
     }
     my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize}";
     say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{say};
+    if ($first_call) {
+        $o .= " -oo CLEAR_CACHE";
+        $first_call = 0;
+    }
     my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1);
     my @full_output;
     foreach my $line (split /[\r\n]+/, $output) {

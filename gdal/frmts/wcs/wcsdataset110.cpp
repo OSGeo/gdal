@@ -149,7 +149,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
 
     if( osBandList != "" )
     {
-        if (osBandIdentifier != "" && osBandIdentifier != "none") {
+        if (osBandIdentifier != "") {
             osRangeSubset +=
                 CPLString().Printf( "[%s[%s]]",
                                     osBandIdentifier.c_str(),
@@ -605,14 +605,14 @@ bool WCSDataset110::ExtractGridInfo()
         {
             if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL ) {
                 bServiceDirty = true;
-                CPLCreateXMLElementAndValue( psService, "BandIdentifier",
-                                             osBandIdentifier );
+                CPLSetXMLValue( psService, "BandIdentifier",
+                                osBandIdentifier );
             }
 
             if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL ) {
                 bServiceDirty = true;
-                CPLCreateXMLElementAndValue( psService, "BandCount",
-                                             CPLString().Printf("%d",iBand-1));
+                CPLSetXMLValue( psService, "BandCount",
+                                CPLString().Printf("%d",iBand-1));
             }
         }
 

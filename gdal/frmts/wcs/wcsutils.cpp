@@ -490,11 +490,11 @@ CPLErr AddEntryToCache(const CPLString &cache,
         static const char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         for (size_t i = 0; i < filename.length(); ++i) {
             if (filename.at(i) == 'X') {
-                filename.replace(i, 1, 1, chars[rand() % sizeof(chars)]);
+                filename.replace(i, 1, 1, chars[rand() % (sizeof(chars)-1)]);
             }
         }
         // replace X with random character from a-zA-Z
-        path = CPLFormFilename(cache, filename, NULL);
+        path = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
     } while (VSIStatExL(path, &stat, VSI_STAT_EXISTS_FLAG) == 0);
     VSILFILE *f2 = VSIFOpenL(path, "w");
     if (f2) {
@@ -505,7 +505,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
     VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), f);
     VSIFCloseL(f);
 
-    filename = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
+    filename = path;
     return CE_None;
 }
 
