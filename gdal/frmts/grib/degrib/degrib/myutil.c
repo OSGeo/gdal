@@ -758,7 +758,7 @@ void strTrimRight (char *str, char c)
    }
 
    for (i = (int)strlen (str) - 1;
-        ((i >= 0) && (((unsigned char)isspace (str[i])) || (str[i] == c))); i--) {
+        ((i >= 0) && ((isspace ((unsigned char)str[i])) || (str[i] == c))); i--) {
    }
    str[i + 1] = '\0';
 }
