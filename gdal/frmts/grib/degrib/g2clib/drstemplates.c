@@ -10,6 +10,8 @@ static const struct drstemplate templatesdrs[MAXDRSTEMP] = {
          { 2, 16, 0, {4,-2,-2,1,1,1,1,4,4,4,1,1,4,1,4,1} },
              // 5.3: Grid point data - Complex Packing and spatial differencing
          { 3, 18, 0, {4,-2,-2,1,1,1,1,4,4,4,1,1,4,1,4,1,1,1} },
+             // 5.4: Grid point data - IEEE Floating Point Data
+         { 4, 1, 0, {1} },
              // 5.50: Spectral Data - Simple Packing
          { 50, 5, 0, {4,-2,-2,1,4} },
              // 5.51: Spherical Harmonics data - Complex packing 

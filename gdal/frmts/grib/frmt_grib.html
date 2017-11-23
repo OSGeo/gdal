@@ -40,12 +40,15 @@ similar to this:
     GRIB_FORECAST_SECONDS=3600 sec
 </pre>
 
-GRIB2 files may also include an extract of the <a href="http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_sect4.shtml">product definition</a> template
+GRIB2 files may also include an extract of other metadata, such as the
+<a href="http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_sect1.shtml">identification section</a>,
+<a href="http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_sect4.shtml">product definition</a> template
 number (GRIB_PDS_PDTN, octet 8-9), and the product definition template values (GRIB_PDS_TEMPLATE_NUMBERS, octet 10+)
 as metadata like this:
 
 <pre>
-    GRIB_DISCIPLINE=0 (Meteorological)
+    GRIB_DISCIPLINE=0(Meteorological)
+    GRIB_IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=8 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) YEAR=2017 MONTH=10 DAY=20 HOUR=6 MINUTE=0 SECOND=0 PROD_STATUS=0(Operational) TYPE=1(Forecast)
     GRIB_PDS_PDTN=32
     GRIB_PDS_TEMPLATE_NUMBERS=5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217
     GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145
@@ -54,6 +57,9 @@ as metadata like this:
 <p>GRIB_DISCIPLINE was added in GDAL 2.3.0 and is the
 <a href="http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table0-0.shtml">Discipline</a> field of the
 Section 0 of the message.</p>
+
+<p>GRIB_IDS was added in GDAL 2.3.0 and is the
+<a href="http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table0-0.shtml">identification section</a> / Section 1 of the message.</p>
 
 <p>GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES was added in GDAL 2.3.0, and use template
 definitions to assemble several bytes that make a template item into a 16 or 32

@@ -31,7 +31,7 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-      #define MAXDRSTEMP 9              // maximum number of templates
+      #define MAXDRSTEMP 10             // maximum number of templates
       #define MAXDRSMAPLEN 200          // maximum template map length
 
       struct drstemplate
