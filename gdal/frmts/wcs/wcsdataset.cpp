@@ -1300,17 +1300,18 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                     vanilla_filename = vanilla->GetDescription();
                     delete vanilla;
                     service = CPLParseXMLFile(vanilla_filename);
-                    CPLSetXMLValue(service, "Parameters", parameters);
                 }
             }
 /* -------------------------------------------------------------------- */
 /*          The filename for the new service file.                      */
 /* -------------------------------------------------------------------- */
+            // should we make sure the full_url contains version?
             filename = "XXXXX";
             if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
                 return NULL; // error in cache
             }
             CreateServiceMetadata(coverage, global_meta, filename + ".aux.xml");
+            CPLSetXMLValue(service, "Parameters", parameters);
             updated = true;
         }
         CPLFree(poOpenInfo->pszFilename);
@@ -1400,7 +1401,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nVersion == 0 )
     {
-
         CSLDestroy( papszModifiers );
         CPLDestroyXMLNode( service );
         return NULL;
@@ -1421,7 +1421,9 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psService = service;
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->papszSDSModifiers = papszModifiers;
-    poDS->TryLoadXML(); // we need the PAM metadata already in ExtractGridInfo
+    // WCS:URL => basic metadata was already made
+    // Metadata is needed in ExtractGridInfo
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Capture HTTP parameters.                                        */
@@ -1514,8 +1516,25 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    for( iBand = 0; iBand < nBandCount; iBand++ )
-        poDS->SetBand( iBand+1, new WCSRasterBand( poDS, iBand+1, -1 ) );
+    for( iBand = 0; iBand < nBandCount; iBand++ ) {
+        WCSRasterBand *band = new WCSRasterBand(poDS, iBand+1, -1);
+        // copy band specific metadata to the band
+        char **md_from = poDS->GetMetadata("SUBDATASETS");
+        char **md_to = NULL;
+        CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
+        for (char **from = md_from; *from != NULL; ++from) {
+            std::vector<CPLString> kv = Split(*from, "=");
+            if (kv.size() > 1 && STARTS_WITH(kv[0], our_key)) {
+                CPLString key = kv[0];
+                CPLString value = kv[1];
+                key.erase(0, our_key.length());
+                md_to = CSLSetNameValue(md_to, key, value);
+            }
+        }
+        band->SetMetadata(md_to, "");
+        CSLDestroy(md_to);
+        poDS->SetBand(iBand+1, band);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set time metadata on the dataset if we are selecting a          */

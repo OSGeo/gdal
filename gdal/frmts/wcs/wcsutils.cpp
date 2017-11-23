@@ -391,10 +391,19 @@ bool SetupCache(CPLString &cache, bool clear)
             remove(filepath);
         }
         CSLDestroy(folder);
-        CPLString db = CPLFormFilename(cache, "db", NULL);
-        VSILFILE *f2 = VSIFOpenL(db, "w");
-        if (f2) {
-            VSIFCloseL(f2);
+    }
+    // make sure the index exists and is writable
+    CPLString db = CPLFormFilename(cache, "db", NULL);
+    VSILFILE *f = VSIFOpenL(db, "r");
+    if (f) {
+        VSIFCloseL(f);
+    } else {
+        f = VSIFOpenL(db, "w");
+        if (f) {
+            VSIFCloseL(f);
+        } else {
+            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
+            return CE_Failure;
         }
     }
     srand((unsigned int)time(NULL)); // not to have the same names in the cache
