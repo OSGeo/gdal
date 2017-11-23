@@ -955,7 +955,11 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         sComps[iBand].vstep = 1;
         sComps[iBand].width = nXSize;
         sComps[iBand].height = nYSize;
-        sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
+        const char* pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+        if( pszNBITS && atoi(pszNBITS) > 0 )
+            sComps[iBand].prec = atoi(pszNBITS);
+        else
+            sComps[iBand].prec = GDALGetDataTypeSize( poBand->GetRasterDataType() );
         switch ( poBand->GetRasterDataType() )
         {
             case GDT_Int16:
@@ -1040,7 +1044,9 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     };
 
     const char *pszFormatName = CSLFetchNameValue( papszOptions, "FORMAT" );
-    if ( !pszFormatName ||
+    if( pszFormatName == NULL && EQUAL(CPLGetExtension(pszFilename), "J2K") )
+        pszFormatName = "jpc";
+    else if ( !pszFormatName ||
          (!STARTS_WITH_CI(pszFormatName, "jp2") &&
           !STARTS_WITH_CI(pszFormatName, "jpc") ) )
         pszFormatName = "jp2";
@@ -1412,6 +1418,7 @@ void GDALRegister_JPEG2000()
 "   <Option name='GMLJP2' type='boolean' description='Whether to emit a GMLJP2 v1 box' default='YES'/>"
 "   <Option name='GMLJP2V2_DEF' type='string' description='Definition file to describe how a GMLJP2 v2 box should be generated. If set to YES, a minimal instance will be created'/>"
 "   <Option name='WORLDFILE' type='boolean' description='Whether to write a worldfile .wld' default='NO'/>"
+"   <Option name='NBITS' type='int' description='Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
 "   <Option name='imgareatlx' type='string' />"
 "   <Option name='imgareatly' type='string' />"
 "   <Option name='tilegrdtlx' type='string' />"
