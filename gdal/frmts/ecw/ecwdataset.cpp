@@ -3707,6 +3707,7 @@ void GDALRegister_JP2ECW()
 "       <Value>RPCL</Value>"
 "   </Option>"
 "   <Option name='CODESTREAM_ONLY' type='boolean' description='No JP2 wrapper'/>"
+"   <Option name='NBITS' type='int' description='Bits (precision) for sub-byte files (1-7), sub-uint16 (9-15)'/>"
 "   <Option name='LEVELS' type='int'/>"
 "   <Option name='LAYERS' type='int'/>"
 "   <Option name='PRECINCT_WIDTH' type='int'/>"
