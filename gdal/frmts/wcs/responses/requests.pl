@@ -3,7 +3,7 @@ use warnings;
 use v5.10;
 use XML::LibXML;
 
-# args: server name (or all_servers), 
+# args: server name (or all_servers),
 # version (or all_versions),
 # test_scaled, test_non_scaled, or test_all
 # clear_all: remove all XMLs and TIFFs
@@ -33,10 +33,10 @@ for my $server (sort keys %$setup) {
     next unless $do{$server} || $do{all_servers};
     for my $i (0..$#{$setup->{$server}->{Versions}}) {
 
-        my $url = $setup->{$server}->{URL};
         my $v = $setup->{$server}{Versions}[$i];
         my $version = int($v / 100) . '.' . int($v % 100 / 10) . '.' . ($v % 10);
         next unless $do{$version} || $do{all_versions};
+
         my $coverage = $setup->{$server}{Coverage};
         $coverage = $coverage->[$i] if ref $coverage;
 
@@ -50,39 +50,45 @@ for my $server (sort keys %$setup) {
 
         my $gc = "GetCapabilities-$server-$version.xml";
         my $dc = "DescribeCoverage-$server-$version.xml";
-        
+
         if ($do{clear_all}) {
             unlink($gc, $dc);
         }
 
         # download GC and DC unless they exist
-        
+        my $url = $setup->{$server}->{URL};
+
         my $gc_request = "$url?SERVICE=WCS&VERSION=$version&REQUEST=GetCapabilities";
         unless (-e $gc) {
             system "wget \"$gc_request\" -O $gc"
         }
-        
+
         my $dc_request = "$url?SERVICE=WCS&VERSION=$version&REQUEST=DescribeCoverage&$coverage_param=$coverage";
         unless (-e $dc) {
             system "wget \"$dc_request\" -O $dc"
         }
-        
+
         my $options = $setup->{$server}{Options};
         $options = $options->[$i] if ref $options;
 
         $options .= " -oo CACHE=$cache";
-        
+
         # test that the origin of the 2 x 2 non-scaled piece obtained with gdal_translate
         # is the top left boundary of the BBOX in DC
         # tests implicitly many things
-        test_non_scaled($server, $version, $dc, $coverage, $options) 
+        test_non_scaled($server, $version, $dc, $coverage, $options)
             if $do{test_non_scaled} || $do{test_all};
 
         # test that the width of the scaled piece obtained with gdal_translate
         # is what it was asked
         # tests implicitly many things
-        test_scaled($server, $version, $coverage, $options) 
+        test_scaled($server, $version, $coverage, $options)
             if $do{test_scaled} || $do{test_all};
+
+        # test range subsetting with 2.0.1
+        test_range_subsetting($server, $version, $coverage, $options)
+            if $do{test_range_subsetting} || $do{test_all};
+
     }
 }
 
@@ -112,22 +118,22 @@ sub get_setup {
         SimpleGeoServer => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "", 
-                "-oo OuterExtents", 
-                "-oo OuterExtents", 
+                "",
+                "-oo OuterExtents",
+                "-oo OuterExtents",
                 ""
                 ],
             Projwin => "-projwin 145300 6737500 209680 6688700",
             Outsize => "-outsize $size 0",
             Coverage => [
-                'smartsea:eusm2016', 'smartsea:eusm2016', 
+                'smartsea:eusm2016', 'smartsea:eusm2016',
                 'smartsea:eusm2016', 'smartsea__eusm2016'],
             Versions => [100, 110, 111, 201],
-        }, 
+        },
         GeoServer2 => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "", 
+                "",
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap"
@@ -136,11 +142,12 @@ sub get_setup {
             Outsize => "-outsize $size 0",
             Coverage => ['smartsea:south', 'smartsea:south', 'smartsea:south', 'smartsea__south'],
             Versions => [100, 110, 111, 201],
-        }, 
+            Range => [qw/GREEN_BAND BLUE_BAND/]
+        },
         GeoServer => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "", 
+                "",
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
                 "-oo NoGridAxisSwap -oo SubsetAxisSwap",
@@ -148,7 +155,7 @@ sub get_setup {
             Projwin => "-projwin 3200000 6670000 3280000 6620000",
             Outsize => "-outsize $size 0",
             Coverage => [
-                'smartsea:eusm2016-EPSG2393', 'smartsea:eusm2016-EPSG2393', 
+                'smartsea:eusm2016-EPSG2393', 'smartsea:eusm2016-EPSG2393',
                 'smartsea:eusm2016-EPSG2393', 'smartsea__eusm2016-EPSG2393'],
             Versions => [100, 110, 111, 201]
         },
@@ -189,6 +196,26 @@ sub get_setup {
             Versions => [100, 110, 111, 112, 201]
         }
     };
+}
+
+sub test_range_subsetting {
+    my ($server, $version, $coverage, $options) = @_;
+    return unless $setup->{$server}->{Range};
+    return unless $version eq '2.0.1';
+    my $o = "$options -srcwin 0 0 2 2";
+    if ($first_call) {
+        $o .= " -oo CLEAR_CACHE";
+        $first_call = 0;
+    }
+    my $url = $setup->{$server}->{URL};
+    $url .= "?version=$version&coverage=$coverage";
+    my $range = join(',', @{$setup->{$server}->{Range}});
+    $url .= "&rangesubset=$range";
+    my $result = 'x.tiff';
+    my $cmd = "gdal_translate $o \"WCS:$url\" $result 2>&1";
+    say $cmd if $do{say};
+    my $output = `$cmd`;
+    say $output if $do{say_all};
 }
 
 sub test_non_scaled {
@@ -247,19 +274,20 @@ sub test_non_scaled {
         unshift @high, $high[1];
         delete $high[2];
     }
-        
+
     my $result = "$server-$version.tiff";
     if ($do{clear_all}) {
         unlink($result);
     }
     my $o = "$options -srcwin 0 0 2 2";
     my $url = $setup->{$server}->{URL};
-    say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{say};
+    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
+    say $cmd if $do{say};
     if ($first_call) {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;
     }
-    my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1);
+    my $output = `$cmd`;
     say $output if $do{say_all};
     foreach my $line (split /[\r\n]+/, $output) {
         if ($line =~ /URL=(.*)/) {
@@ -288,7 +316,7 @@ sub test_non_scaled {
         say "origin = @origin";
         say "pixel_size = @pixel_size";
     }
-    
+
     # origin is x,y; low and high are OGC
     print $server.'-'.$version.' non-scaled ';
     my $eps = 0.000001;
@@ -310,12 +338,13 @@ sub test_scaled {
         unlink($result);
     }
     my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize}";
-    say "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result" if $do{say};
+    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
+    say $cmd if $do{say};
     if ($first_call) {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;
     }
-    my $output = qx(gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1);
+    my $output = `$cmd`;
     my @full_output;
     foreach my $line (split /[\r\n]+/, $output) {
         if ($line =~ /URL=(.*)/) {

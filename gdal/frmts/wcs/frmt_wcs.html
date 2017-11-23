@@ -80,9 +80,6 @@ otherwise defaults to 1.0.0. Versions 1.0.0, 1.1.0, 1.1.1, 1.1.2, and
 
 <li> <b>CoverageName</b>: The coverage that is used for the dataset.</li>
 
-<li> <b>?</b>: If same coverage is used for multiple datasets, this is
-used to distinguish between them.</li>
-
 <li> <b>PreferredFormat</b>: The format to use for GetCoverage
 calls. If not set, selected by the driver.
 
@@ -99,9 +96,14 @@ remote access.
 
 <li> <b>OverviewCount</b>: The number of overviews to represent bands
 as having.  Defaults to a number such that the top overview is fairly
-smaller (less than 1K x 1K or so).</li><p>
+smaller (less than 1K x 1K or so).</li>
 
-<li> <b>Elements for controlling the domain:</b>
+<li> <b>NoDataValue</b>: The nodata value to use for all the bands
+(blank for none). Normally determined by the driver. With version
+2.0.1 this may be a comma separated list of values, one for each
+band.</li><p>
+
+<li> <b>Elements for controlling the range and domain:</b>
 
 <li> <b>Domain</b>: The axes that are used for the spatial
 dimensions. The default is to use the first two axes given by the
@@ -109,26 +111,9 @@ server. The axis order swap may apply. Syntax:
 <i>axis_name,axis_name</i> A <i>field_name:field_name</i> in the list
 denotes a range of fields. (Used only with version 2.0.1)</li>
 
-<li><b>Dimensions</b>: Trim or slice a dimension when fetching data
-from the server. Syntax:
-<i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
-(Used only with version 2.0.1)</li>
-
-<li><b>DimensionToBand</b>: Map the given dimension, for example
-'time', into bands. Syntax: <i>axis_name</i> (Used only with version
-2.0.1)</li>
-
 <li> <b>DefaultTime</b>: A timePosition to use by default when
 accessing coverages with a time dimension.  Populated with the last
 offered time position by default. (Used only with version 1.0.0)<p>
-
-<li> <b>Elements for controlling the range:</b>
-
-<li> <b>Range</b>: In version 2.0.1 (range subsetting extension
-version 1.0) the range consists of one or more fields, which are all
-scalar valued. If the server supports range subsetting, this parameter
-can be used to select a subset of fields to the dataset. Syntax:
-<i>field_name,field_name:field_name,..</i></li>
 
 <li> <b>FieldName</b>: Name of the field being accessed. Used only
 with version 1.1. Defaults to the first field in the
@@ -141,11 +126,6 @@ determined by the driver.
 
 <li> <b>BandType</b>: The pixel data type to use.  Normally
 determined by the driver.
-
-<li> <b>NoDataValue</b>: The nodata value to use for all the bands
-(blank for none). Normally determined by the driver. With version
-2.0.1 this may be a comma separated list of values, one for each
-band.</li><p>
 
 <li> <b>Elements for controlling the communication:</b>
 
@@ -212,6 +192,58 @@ order swap.</li>
 <li><b>UseScaleFactor</b>: Set to tell the driver to use scale by
 factor approach instead of scale to size when making a WCS 2.0.1
 GetCoverage request. Required when the server is ArcGIS.</li>
+
+</ul>
+
+<h3>Range and dimension subsetting</h3>
+
+When WCS version 2.0.1 is used, the range (fields/bands) and the
+dimension can and/or may need to be subsetted. If the data model of
+the coverage contains dimensions beyond the two geographic or map
+coordinates, those dimensions must be either sliced or converted to
+bands (only one can be converted) for GDAL. The coverage may also
+contain a large number of fields, from which only a subset is wanted
+in the GDAL dataset. Also, if a dimension is converted to a band,
+only one field can be in the range.<p>
+
+Range and dimension subsetting must be done via URL parameters since
+from one coverage it is possible to create more than one different
+GDAL datasets. In the WCS cache this means that there may be the
+sets of files related to a GDAL dataset:
+
+<ol>
+
+<li>server Capabilities file and a GDAL dataset metadata file made
+from it (key = URL with WCS version number)
+
+<li>server DescribeCoverage file, a template GDAL service file made
+from it, and a GDAL dataset metadata file made for it (key = URL with
+WCS version number and coverage name)
+
+<li>the GDAL service file specifically for this dataset, and a GDAL
+dataset metadata file (key = URL with WCS version number, coverage
+name, and range and dimension subsetting parameters)
+
+</ol>
+
+The following URL parameters are used to control the range and dimension
+subsetting.
+
+<ul>
+
+<li> <b>RangeSubset</b>: Used to select a subset of coverage fields to
+the dataset. Syntax: <i>field_name,field_name:field_name,..</i> (Note:
+requires that the server implements the range subsetting
+extension.)</li>
+
+<li><b>DimensionSubset</b>: Trim or slice a dimension when fetching data
+from the server. Syntax:
+<i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
+</li>
+
+<li><b>DimensionToBand</b>: Map the given dimension, for example
+'time', into bands. Syntax: <i>axis_name</i> (Note: this is not a
+standard WCS GetCoverage parameter.)</li>
 
 </ul>
 

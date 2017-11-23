@@ -103,14 +103,6 @@ std::vector<double> WCSDataset201::GetExtent(int nXOff, int nYOff,
                      (nXOff + nXSize) * adfGeoTransform[1]);
     extent.push_back(adfGeoTransform[3] +
                      (nYOff) * adfGeoTransform[5]);
-
-    /*
-    extent[2] -= adfGeoTransform[1] * 0.5;
-    extent[0] += adfGeoTransform[1] * 0.5;
-    extent[1] -= adfGeoTransform[5] * 0.5;
-    extent[3] += adfGeoTransform[5] * 0.5;
-    */
-
     return extent;
 }
 
@@ -166,8 +158,24 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
 
     request += CPLString().Printf("&SUBSET=%s%%28%s,%s%%29", y, a.c_str(), b.c_str());
 
+    // Dimension and range parameters:
+    std::vector<CPLString> parameters = Split(CPLGetXMLValue(psService, "Parameters", ""), "&");
+    std::vector<CPLString> dimensions;
+    CPLString range;
+    for (unsigned int i = 0; i < parameters.size(); ++i) {
+        std::vector<CPLString> kv = Split(parameters[i], "=");
+        if (kv.size() < 2) {
+            continue;
+        }
+        transform(kv[0].begin(), kv[0].end(), kv[0].begin(), toupper);
+        if (kv[0] == "RANGESUBSET") {
+            range = kv[1];
+        } else if (kv[0] == "DIMENSIONSUBSET") {
+            dimensions = Split(kv[1], ";");
+        }
+    }
+
     // set subsets for axis other than x/y
-    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
     for (unsigned int i = 0; i < dimensions.size(); ++i) {
         size_t pos = dimensions[i].find("(");
         CPLString dim = dimensions[i].substr(0, pos);
@@ -207,7 +215,6 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         request += "&INTERPOLATION=" + interpolation;
     }
 
-    CPLString range = CPLGetXMLValue(psService, "Range", "");
     if (range != "" && range != "*") {
         request += "&RANGESUBSET=" + range;
     }
@@ -471,7 +478,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, char ***metadata)
     // so we should be able to give those
 
     // if Range is set remove those not in it
-    std::vector<CPLString> range = Split(CPLGetXMLValue(psService, "Range", ""), ",");
+    std::vector<CPLString> range = Split(CPLGetXMLValue(psService, "RangeSubset", ""), ",");
     // todo: add check for range subsetting profile existence in server metadata here
     unsigned int range_index = 0; // index for reading from range
     bool in_band_range = false;
@@ -725,7 +732,7 @@ bool WCSDataset201::ExtractGridInfo()
     }
 
     // has the user set slicing or trimming?
-    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "Dimensions", ""), ";");
+    std::vector<CPLString> dimensions = Split(CPLGetXMLValue(psService, "DimensionSubset", ""), ";");
     // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
     std::vector<std::vector<double> > domain_trim;
 
