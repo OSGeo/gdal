@@ -2207,15 +2207,19 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #ifdef KAKADU_JPX
     jpx_family_tgt jpx_family;
     jpx_target jpx_out;
-    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename), "jpf");
+    const bool bIsJPX = !EQUAL(CPLGetExtension(pszFilename), "jpf") &&
+                        !EQUAL(CPLGetExtension(pszFilename), "jpc") &&
+                        !EQUAL(CPLGetExtension(pszFilename), "j2k");
 #else
     const bool bIsJPX = false;
 #endif
 
     kdu_compressed_target *poOutputFile = NULL;
     jp2_target jp2_out;
-    const bool bIsJP2 = !EQUAL(CPLGetExtension(pszFilename), "jpc") && !bIsJPX &&
-        EQUAL(CSLFetchNameValueDef(papszOptions, "CODEC", "JP2"), "JP2");
+    const char* pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", NULL);
+    const bool bIsJP2 = (!EQUAL(CPLGetExtension(pszFilename), "jpc") &&
+                         !EQUAL(CPLGetExtension(pszFilename), "j2k") && !bIsJPX) ||
+                        (pszCodec != NULL && EQUAL(pszCodec, "JP2"));
     kdu_codestream oCodeStream;
 
     vsil_target oVSILTarget;
@@ -2687,7 +2691,7 @@ void GDALRegister_JP2KAK()
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_jp2kak.html");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 UInt16");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2 j2k");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
