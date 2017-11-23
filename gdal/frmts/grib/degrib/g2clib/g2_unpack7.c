@@ -155,21 +155,23 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
               for(i=0;i<ndpts;i++)
               {
                   unsigned char temp[8];
+                  double d;
                   {
                     int j;
                     for(j = 0; j < 8; j++ )
                       temp[j] = src[i * 8 + 7 - j];
                   }
-                  lfld[i] = (float) (*(double*)temp);
+                  memcpy(&d, temp, 8);
+                  lfld[i] = (float)d;
               }
           }
           else
           {
               for(i=0;i<ndpts;i++)
               {
-                  unsigned char temp[8];
-                  memcpy(temp, src + i * 8, 8);
-                  lfld[i] = (float) (*(double*)temp);
+                  double d;
+                  memcpy(&d, src + i * 8, 8);
+                  lfld[i] = (float)d;
               }
           }
         }
