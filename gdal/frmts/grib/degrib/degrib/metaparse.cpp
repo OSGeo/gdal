@@ -898,15 +898,15 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.majEarth = 6378.160;
          meta->gds.minEarth = 6356.775;
          break;
-      case 4:
+      case 4: // GRS80
          meta->gds.f_sphere = 0;
          meta->gds.majEarth = 6378.137;
-         meta->gds.minEarth = 6356.752314;
+         meta->gds.minEarth = meta->gds.majEarth * (1 - 1 / 298.257222101);
          break;
-      case 5:
+      case 5: // WGS84
          meta->gds.f_sphere = 0;
          meta->gds.majEarth = 6378.137;
-         meta->gds.minEarth = 6356.7523;
+         meta->gds.minEarth = meta->gds.majEarth * (1 - 1 / 298.257223563);
          break;
       case 3:
          meta->gds.f_sphere = 0;
@@ -1133,15 +1133,23 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.scan = (uChar) is3[64];
          break;
       case GS3_LAMBERT: /* 30: Lambert Conformal grid. */
+      case GS3_ALBERS_EQUAL_AREA: /* 31: Albers equal area */
          if (ns3 < 81) {
             return -1;
          }
          if ((is3[38] == GRIB2MISSING_s4) || (is3[42] == GRIB2MISSING_s4) ||
              (is3[47] == GRIB2MISSING_s4) || (is3[51] == GRIB2MISSING_s4) ||
-             (is3[65] == GRIB2MISSING_s4) || (is3[69] == GRIB2MISSING_s4) ||
-             (is3[73] == GRIB2MISSING_s4) || (is3[77] == GRIB2MISSING_s4)) {
-            errSprintf ("Lambert Conformal grid is not defined "
-                        "completely.\n");
+             (is3[65] == GRIB2MISSING_s4) || (is3[69] == GRIB2MISSING_s4)) {
+            if( is3[12] == GS3_LAMBERT )
+            {
+                errSprintf ("Lambert Conformal grid is not defined "
+                            "completely.\n");
+            }
+            else
+            {
+                errSprintf ("Albers Equal Area grid is not defined "
+                            "completely.\n");
+            }
             return -2;
          }
          meta->gds.lat1 = is3[38] * unit;
@@ -1156,10 +1164,18 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
          meta->gds.scan = (uChar) is3[64];
          meta->gds.scaleLat1 = is3[65] * unit;
          meta->gds.scaleLat2 = is3[69] * unit;
-         meta->gds.southLat = is3[73] * unit;
-         meta->gds.southLon = is3[77] * unit;
+         if( (is3[73] == GRIB2MISSING_s4) || (is3[77] == GRIB2MISSING_s4) )
+         {
+             meta->gds.southLat = 0.0;
+             meta->gds.southLon = 0.0;
+         }
+         else
+         {
+            meta->gds.southLat = is3[73] * unit;
+            meta->gds.southLon = is3[77] * unit;
+         }
          break;
-			case GS3_ORTHOGRAPHIC: /* 90: Orthographic grid. */
+    case GS3_ORTHOGRAPHIC: /* 90: Orthographic grid. */
 				 // Misusing gdsType elements (gdsType needs extension)
          meta->gds.lat1 = is3[38];
          meta->gds.lon1 = is3[42];
@@ -1175,7 +1191,17 @@ static int ParseSect3 (sInt4 *is3, sInt4 ns3, grib_MetaData *meta)
 
          meta->gds.southLon = is3[72]; /* x0 - X-coordinateOrigin */
          meta->gds.southLat = is3[76]; /* y0 - Y-coordinateOrigin */
-				 break;
+         break;
+    case GS3_LAMBERT_AZIMUTHAL: /* 140: Lambert Azimuthal Equal Area Projection */
+         meta->gds.lat1 = is3[38] * unit;
+         meta->gds.lon1 = is3[42] * unit;
+         meta->gds.meshLat = is3[46] * unit;
+         meta->gds.orientLon = is3[50] * unit;
+         meta->gds.resFlag = (uChar) is3[54];
+         meta->gds.Dx = is3[55] / 1000.; /* mm -> m */
+         meta->gds.Dy = is3[59] / 1000.; /* mm -> m */
+         meta->gds.scan = (uChar) is3[63];
+         break;
       default:
          errSprintf ("Un-supported Map Projection. %ld\n", is3[12]);
 				 // Don't abandon the conversion only because of an unknown projection

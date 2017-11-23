@@ -36,6 +36,7 @@ import shutil
 from osgeo import gdal
 
 sys.path.append( '../pymod' )
+sys.path.append( '../osr' )
 
 import gdaltest
 
@@ -47,6 +48,10 @@ def grib_1():
     gdaltest.grib_drv = gdal.GetDriverByName('GRIB')
     if gdaltest.grib_drv is None:
         return 'skip'
+
+    # Test proj4 presence
+    import osr_ct
+    osr_ct.osr_ct_1()
 
     tst = gdaltest.GDALTest( 'GRIB', 'ds.mint.bin', 2, 46927 )
     return tst.testOpen()
@@ -67,7 +72,7 @@ def grib_2():
 # This file has different raster sizes for some of the products, which
 # we sort-of-support per ticket Test a small GRIB 1 sample file.
 
-def grib_3():
+def grib_read_different_sizes_messages():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -87,7 +92,7 @@ def grib_3():
 ###############################################################################
 # Check nodata
 
-def grib_4():
+def grib_grib2_read_nodata():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -98,7 +103,7 @@ def grib_4():
     if ds.GetRasterBand(2).GetNoDataValue() != 9999:
         return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
-    expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0 (Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
+    expected_md = {'GRIB_REF_TIME': '  1203613200 sec UTC', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES': '0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0', 'GRIB_VALID_TIME': '  1203681600 sec UTC', 'GRIB_FORECAST_SECONDS': '68400 sec', 'GRIB_UNIT': '[C]', 'GRIB_PDS_TEMPLATE_NUMBERS': '0 5 2 0 0 0 255 255 1 0 0 0 19 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 22 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0', 'GRIB_DISCIPLINE': '0(Meteorological)', 'GRIB_PDS_PDTN': '8', 'GRIB_COMMENT': 'Minimum temperature [C]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'MinT'}
     for k in expected_md:
         if k not in md or md[k] != expected_md[k]:
             gdaltest.post_reason('Did not get expected metadata')
@@ -110,7 +115,7 @@ def grib_4():
 ###############################################################################
 # Check grib units (#3606)
 
-def grib_5():
+def grib_read_units():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -160,13 +165,13 @@ def grib_5():
 # grib files had one cell in either direction for geographic projections.  See
 # ticket #5532
 
-def grib_6():
+def grib_read_geotransform_one_n_or_n_one():
 
     if gdaltest.grib_drv is None:
         return 'skip'
 
     ds = gdal.Open('data/one_one.grib2')
-    egt = (245.750, 0.5, 0.0, 47.250, 0.0, -0.5)
+    egt = (-114.25, 0.5, 0.0, 47.250, 0.0, -0.5)
     gt = ds.GetGeoTransform()
     ds = None
     if gt != egt:
@@ -180,7 +185,7 @@ def grib_6():
 # come up with a pure /vsizip/ test case, so here's a real world use
 # case (#5530).
 
-def grib_7():
+def grib_read_vsizip():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -194,7 +199,7 @@ def grib_7():
 ###############################################################################
 # Write PDS numbers to all bands
 
-def grib_8():
+def grib_grib2_test_grib_pds_all_bands():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -224,7 +229,7 @@ def grib_8():
 ###############################################################################
 # Test support for template 4.15 (#5768)
 
-def grib_9():
+def grib_grib2_read_template_4_15():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -251,7 +256,7 @@ def grib_9():
 ###############################################################################
 # Test support for PNG compressed
 
-def grib_10():
+def grib_grib2_read_png():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -271,7 +276,7 @@ def grib_10():
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 32, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for synthetic satellite data.
 
-def grib_11():
+def grib_grib2_read_template_4_32():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -296,7 +301,7 @@ def grib_11():
 ###############################################################################
 # GRIB2 file with all 0 data
 
-def grib_12():
+def grib_grib2_read_all_zero_data():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -321,7 +326,7 @@ def grib_12():
 ###############################################################################
 # GRIB1 file with rotate pole lonlat
 
-def grib_13():
+def grib_grib2_read_rotated_pole_lonlat():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -361,7 +366,7 @@ def grib_13():
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
 
-def grib_14():
+def grib_grib2_read_template_4_40():
 
     if gdaltest.grib_drv is None:
         return 'skip'
@@ -389,8 +394,206 @@ def grib_14():
     return 'success'
 
 ###############################################################################
+# Test reading GRIB2 Transverse Mercator grid
+
+def grib_grib2_read_transverse_mercator():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/transverse_mercator.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Sphere",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 Mercator grid
+
+def grib_grib2_read_mercator():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/mercator.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-13095853.598139772, 72.237, 0.0, 3991876.4600486886, 0.0, -72.237)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 Lambert Conformal Conic grid
+
+def grib_grib2_read_lcc():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/lambert_conformal_conic.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (8974734.737685828, 60.021, 0.0, 6235918.9698001575, 0.0, -60.021)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 Polar Stereographic grid
+
+def grib_grib2_read_polar_stereo():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/polar_stereographic.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",60],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-5621962.072511509, 71.86, 0.0, 2943991.8007649644, 0.0, -71.86)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 Albers Equal Area grid
+
+def grib_grib2_read_aea():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/albers_equal_area.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",34],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (8974979.714292033, 60.022, 0.0, 6235686.52464211, 0.0, -60.022)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 Lambert Azimuthal Equal Area grid
+
+def grib_grib2_read_laea():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/lambert_azimuthal_equal_area.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",33.5],PARAMETER["longitude_of_center",243],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-59384.01063035424, 60.021, 0.0, 44812.5792223211, 0.0, -60.021)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading GRIB2 with Grid point data - IEEE Floating Point Data (template 5.4)
+
+def grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/ieee754_single.grb2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4727:
+        gdaltest.post_reason('Did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open('data/ieee754_double.grb2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4727:
+        gdaltest.post_reason('Did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
-def grib_online_1():
+def grib_online_grib2_jpeg2000_single_line():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
 
     jp2drv_found = False
     for i in range(gdal.GetDriverCount()):
@@ -423,19 +626,26 @@ def grib_online_1():
 gdaltest_list = [
     grib_1,
     grib_2,
-    grib_3,
-    grib_4,
-    grib_5,
-    grib_6,
-    grib_7,
-    grib_8,
-    grib_9,
-    grib_10,
-    grib_11,
-    grib_12,
-    grib_13,
-    grib_14,
-    grib_online_1
+    grib_read_different_sizes_messages,
+    grib_grib2_read_nodata,
+    grib_read_units,
+    grib_read_geotransform_one_n_or_n_one,
+    grib_read_vsizip,
+    grib_grib2_test_grib_pds_all_bands,
+    grib_grib2_read_template_4_15,
+    grib_grib2_read_png,
+    grib_grib2_read_template_4_32,
+    grib_grib2_read_all_zero_data,
+    grib_grib2_read_rotated_pole_lonlat,
+    grib_grib2_read_template_4_40,
+    grib_grib2_read_transverse_mercator,
+    grib_grib2_read_mercator,
+    grib_grib2_read_lcc,
+    grib_grib2_read_polar_stereo,
+    grib_grib2_read_aea,
+    grib_grib2_read_laea,
+    grib_grib2_read_template_5_4_grid_point_ieee_floating_point,
+    grib_online_grib2_jpeg2000_single_line
     ]
 
 if __name__ == '__main__':

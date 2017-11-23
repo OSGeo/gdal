@@ -119,6 +119,65 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
           return 7;
         }
       }
+      else if( idrsnum == 4 ) {
+        // Grid point data - IEEE Floating Point Data
+        static const int one = 1;
+        int is_lsb = *((char*)&one) == 1;
+        if (idrstmpl[0] == 1) {
+          // IEEE754 single precision
+          if( cgrib_length-ipos < 4 * ndpts )
+             return 7;
+          memcpy(lfld, cgrib+ipos, 4 * ndpts );
+          if( is_lsb )
+          {
+              int i;
+              unsigned char* ch_fld = (unsigned char*) lfld;
+              for(i=0;i<ndpts;i++)
+              {
+                  unsigned char temp = ch_fld[i*4];
+                  ch_fld[i*4] = ch_fld[i*4+3];
+                  ch_fld[i*4+3] = temp;
+                  temp = ch_fld[i*4+1];
+                  ch_fld[i*4+1] = ch_fld[i*4+2];
+                  ch_fld[i*4+2] = temp;
+              }
+          }
+        }
+        else if( idrstmpl[0] == 2) {
+          // IEEE754 double precision
+          // FIXME? due to the interface: we downgrade it to float
+          int i;
+          unsigned char* src = cgrib+ipos;
+          if( cgrib_length-ipos < 8 * ndpts )
+             return 7;
+          if( is_lsb )
+          {
+              for(i=0;i<ndpts;i++)
+              {
+                  unsigned char temp[8];
+                  {
+                    int j;
+                    for(j = 0; j < 8; j++ )
+                      temp[j] = src[i * 8 + 7 - j];
+                  }
+                  lfld[i] = (float) (*(double*)temp);
+              }
+          }
+          else
+          {
+              for(i=0;i<ndpts;i++)
+              {
+                  unsigned char temp[8];
+                  memcpy(temp, src + i * 8, 8);
+                  lfld[i] = (float) (*(double*)temp);
+              }
+          }
+        }
+        else
+        {
+            fprintf(stderr,"g2_unpack7: Invalid precision=%d for Data Section 5.4.\n", idrstmpl[0]);
+        }
+      }
       else if (idrsnum == 50) {            // Spectral Simple
         if( ndpts > 0 )
         {

@@ -56,6 +56,7 @@
 #include "degrib/degrib/inventory.h"
 #include "degrib/degrib/memorydatasource.h"
 #include "degrib/degrib/meta.h"
+#include "degrib/degrib/metaname.h"
 #include "degrib/degrib/myerror.h"
 #include "degrib/degrib/type.h"
 CPL_C_START
@@ -152,23 +153,145 @@ void GRIBRasterBand::FindPDSTemplate()
     GByte nDiscipline = abySection0[7 - 1]; 
     CPLString osDiscipline;
     osDiscipline = CPLString().Printf("%d", nDiscipline);
-    if( nDiscipline == 0 )
-        osDiscipline += " (Meteorological)";
-    else if( nDiscipline == 1 )
-        osDiscipline += " (Hydrological)";
-    else if( nDiscipline == 2 )
-        osDiscipline += " (Land Surface)";
-    else if( nDiscipline == 3 || nDiscipline == 4 )
-        osDiscipline += " (Space Products)";
-    else if( nDiscipline == 10 )
-        osDiscipline += " (Oceanographic)";
+    static const char * const table00[] = {
+        "Meteorological",
+        "Hydrological",
+        "Land Surface",
+        "Space products",
+        "Space products",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Reserved",
+        "Oceanographic Products"
+    };
+    if( nDiscipline < CPL_ARRAYSIZE(table00) )
+    {
+        osDiscipline += CPLString("(") +
+            CPLString(table00[nDiscipline]).replaceAll(' ','_') + ")";
+    }
+
     SetMetadataItem("GRIB_DISCIPLINE", osDiscipline.c_str());
 
     GByte abyHead[5] = { 0 };
     VSIFReadL(abyHead, 5, 1, poGDS->fp);
 
-    // Skip to section 4
     GUInt32 nSectSize = 0;
+    if( abyHead[4] == 1 )
+    {
+        memcpy(&nSectSize, abyHead, 4);
+        CPL_MSBPTR32(&nSectSize);
+        if( nSectSize >= 21 &&
+            nSectSize <= 100000  /* arbitrary upper limit */ )
+        {
+            GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize));
+            memcpy(pabyBody, abyHead, 5);
+            VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
+
+            CPLString osIDS;
+            osIDS += "CENTER=";
+            int nCenter = pabyBody[6-1] * 256 + pabyBody[7-1];
+            osIDS += CPLSPrintf("%d", nCenter);
+            const char* pszCenter = centerLookup(nCenter);
+            if( pszCenter )
+                osIDS += CPLString("(")+pszCenter+")";
+            osIDS += " ";
+            osIDS += "SUBCENTER=";
+            int nSubCenter = pabyBody[8-1] * 256 + pabyBody[9-1];
+            osIDS += CPLSPrintf("%d", nSubCenter);
+            const char* pszSubCenter = subCenterLookup(nCenter, nSubCenter);
+            if( pszSubCenter )
+                osIDS += CPLString("(")+pszSubCenter+")";
+            osIDS += " ";
+            osIDS += "MASTER_TABLE=";
+            osIDS += CPLSPrintf("%d", pabyBody[10-1]);
+            osIDS += " ";
+            osIDS += "LOCAL_TABLE=";
+            osIDS += CPLSPrintf("%d", pabyBody[11-1]);
+            osIDS += " ";
+            osIDS += "SIGNF_REF_TIME=";
+            unsigned nSignRefTime = pabyBody[12-1];
+            osIDS += CPLSPrintf("%d", nSignRefTime);
+            static const char * const table12[] = {
+                "Analysis",
+                "Start of Forecast",
+                "Verifying time of forecast",
+                "Observation time"
+            };
+            if( nSignRefTime < CPL_ARRAYSIZE(table12) )
+            {
+                osIDS += CPLString("(") +
+                    CPLString(table12[nSignRefTime]).replaceAll(' ','_') + ")";
+            }
+            osIDS += " ";
+            osIDS += "YEAR=";
+            osIDS += CPLSPrintf("%d", pabyBody[13-1] * 256 + pabyBody[14-1]);
+            osIDS += " ";
+            osIDS += "MONTH=";
+            osIDS += CPLSPrintf("%d", pabyBody[15-1]);
+            osIDS += " ";
+            osIDS += "DAY=";
+            osIDS += CPLSPrintf("%d", pabyBody[16-1]);
+            osIDS += " ";
+            osIDS += "HOUR=";
+            osIDS += CPLSPrintf("%d", pabyBody[17-1]);
+            osIDS += " ";
+            osIDS += "MINUTE=";
+            osIDS += CPLSPrintf("%d", pabyBody[18-1]);
+            osIDS += " ";
+            osIDS += "SECOND=";
+            osIDS += CPLSPrintf("%d", pabyBody[19-1]);
+            osIDS += " ";
+            osIDS += "PROD_STATUS=";
+            unsigned nProdStatus = pabyBody[20-1];
+            osIDS += CPLSPrintf("%d", nProdStatus);
+            static const char * const table13[] = {
+                "Operational",
+                "Operational test",
+                "Research",
+                "Re-analysis",
+                "TIGGE",
+                "TIGGE test",
+                "S2S operational",
+                "S2S test",
+                "UERRA",
+                "UERRA test"
+            };
+            if( nProdStatus < CPL_ARRAYSIZE(table13) )
+            {
+                osIDS += CPLString("(") +
+                    CPLString(table13[nProdStatus]).replaceAll(' ','_') + ")";
+            }
+            osIDS += " ";
+            osIDS += "TYPE=";
+            unsigned nType = pabyBody[21-1];
+            osIDS += CPLSPrintf("%d", nType);
+            static const char * const table14[] = { "Analysis",
+                "Forecast",
+                "Analysis and forecast",
+                "Control forecast",
+                "Perturbed forecast",
+                "Control and perturbed forecast",
+                "Processed satellite observations",
+                "Processed radar observations",
+                "Event Probability"
+            };
+            if( nType < CPL_ARRAYSIZE(table14) )
+            {
+                osIDS += CPLString("(") +
+                    CPLString(table14[nType]).replaceAll(' ','_') + ")";
+            }
+
+            SetMetadataItem("GRIB_IDS", osIDS);
+
+            CPLFree(pabyBody);
+        }
+
+        VSIFReadL(abyHead, 5, 1, poGDS->fp);
+    }
+
+    // Skip to section 4
     while( abyHead[4] != 4 )
     {
         memcpy(&nSectSize, abyHead, 4);
@@ -939,15 +1062,36 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
                  meta->gds.poleLon);
         break;
     case GS3_MERCATOR:
-        oSRS.SetMercator(meta->gds.meshLat, meta->gds.orientLon, 1.0, 0.0, 0.0);
+        if( meta->gds.orientLon == 0.0 )
+        {
+            oSRS.SetMercator(meta->gds.meshLat, 0.0, 1.0, 0.0, 0.0);
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Orientation of the grid != 0 not supported");
+            return;
+        }
+        break;
+    case GS3_TRANSVERSE_MERCATOR:
+        oSRS.SetTM(meta->gds.latitude_of_origin,
+                   meta->gds.central_meridian,
+                   std::abs(meta->gds.scaleLat1 - 0.9996) < 1e8 ?
+                        0.9996 : meta->gds.scaleLat1,
+                   meta->gds.x0,
+                   meta->gds.y0);
         break;
     case GS3_POLAR:
-        oSRS.SetPS(meta->gds.meshLat, meta->gds.orientLon, meta->gds.scaleLat1,
+        oSRS.SetPS(meta->gds.meshLat, meta->gds.orientLon, 1.0,
                    0.0, 0.0);
         break;
     case GS3_LAMBERT:
         oSRS.SetLCC(meta->gds.scaleLat1, meta->gds.scaleLat2, meta->gds.meshLat,
-                    meta->gds.orientLon, 0.0, 0.0);  // Set projection.
+                    meta->gds.orientLon, 0.0, 0.0);
+        break;
+    case GS3_ALBERS_EQUAL_AREA:
+        oSRS.SetACEA(meta->gds.scaleLat1, meta->gds.scaleLat2, meta->gds.meshLat,
+                    meta->gds.orientLon, 0.0, 0.0); 
         break;
 
     case GS3_ORTHOGRAPHIC:
@@ -961,6 +1105,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // TODO: Hardcoded for now. How to parse the meta->gds section?
         oSRS.SetGEOS(0, 35785831, 0, 0);
         break;
+    case GS3_LAMBERT_AZIMUTHAL:
+        oSRS.SetLAEA(meta->gds.meshLat, meta->gds.orientLon, 0.0, 0.0);
+        break;
+
     case GS3_EQUATOR_EQUIDIST:
         break;
     case GS3_AZIMUTH_RANGE:
@@ -981,8 +1129,29 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     else
     {
         const double fInv = a / (a - b);
-        oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
-                       "Spheroid imported from GRIB file", a, fInv);
+            if( std::abs(a-6378137.0) < 0.01
+             && std::abs(fInv-298.257223563) < 1e-9 ) // WGS84
+        {
+            if( meta->gds.projType == GS3_LATLON )
+                oSRS.SetFromUserInput( SRS_WKT_WGS84 );
+            else
+            {
+                oSRS.SetGeogCS("Coordinate System imported from GRIB file",
+                               "WGS_1984",
+                               "WGS 84", 6378137., 298.257223563);
+            }
+        }
+        else if( std::abs(a-6378137.0) < 0.01
+                && std::abs(fInv-298.257222101) < 1e-9 ) // GRS80
+        {
+            oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
+                           "GRS80", 6378137., 298.257222101);
+        }
+        else
+        {
+            oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
+                        "Spheroid imported from GRIB file", a, fInv);
+        }
     }
 
     OGRSpatialReference oLL;  // Construct the "geographic" part of oSRS.
@@ -1004,6 +1173,13 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         rMaxY = geosExtentInMeters / 2;
         rPixelSizeX = geosExtentInMeters / meta->gds.Nx;
         rPixelSizeY = geosExtentInMeters / meta->gds.Ny;
+    }
+    else if( meta->gds.projType == GS3_TRANSVERSE_MERCATOR )
+    {
+        rMinX = meta->gds.x1;
+        rMaxY = meta->gds.y2;
+        rPixelSizeX = meta->gds.Dx;
+        rPixelSizeY = meta->gds.Dy;
     }
     else if( oSRS.IsProjected() )
     {
@@ -1086,7 +1262,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         // Longitude origin of GRIB files is sometimes funny. Try to shift as close
         // as possible to the traditional [-180,180] longitude range
         // See https://trac.osgeo.org/gdal/ticket/7103
-        if( rMinX >= 179 && rPixelSizeX * meta->gds.Nx > 10 &&
+        if( ((rMinX >= 179 && rPixelSizeX * meta->gds.Nx > 10) || rMinX >= 180) &&
             CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")) )
         {
             CPLDebug("GRIB", "Adjusting longitude origin from %f to %f",
@@ -1151,7 +1327,7 @@ void GDALRegister_GRIB()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "grb grb2");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GRIBDataset::Open;
