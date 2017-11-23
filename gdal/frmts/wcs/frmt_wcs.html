@@ -15,38 +15,21 @@ description file that contains one <tt>&lt;WCS_GDAL&gt;</tt> XML
 element.  It is important that there is no spaces or other content
 outside that element. Starting at version 2.3 the service description
 file is meant to be managed by the driver in a cache directory. User
-can control the contents of the service file using options.<p>
+should control the contents of the service file using options. The
+dataset name is <tt>"WCS:&lt;URL&gt;"</tt>, where the &lt;URL&gt; is
+the URL of the server potentially appended with WCS version and
+coverage parameters. If the WCS version is 2.0.1 further parameters
+can be given to control how the data model of the coverage is mapped
+to the GDAL data model.<p>
 
-The dataset name is either the service description file or (starting
-at version 2.3) <tt>"WCS:&lt;URL&gt;"</tt>, where the &lt;URL&gt; is
-the URL of the server potentially appended with version, coverage, and
-extra parameter strings. In the latter case the service description
-file is managed by the driver in a cache directory along with GDAL
-metadata files and servers' capability responses and coverage
-descriptions.<p>
-
-In the case of initial use of the "WCS:&lt;URL&gt;" dataset name
-without a coverage name, the driver attempts to fetch the capabilities
-document from the server, save it to the cache, parse it, create
-metadata describing the service and coverage offering, save that to
-the cache (same key is used), and show it to the user. Coverages are
-shown as subdatasets. Subsequent use of the driver using the "WCS:"
-syntax will reuse the metadata obtained from the Capabilities file
-unless asked to refresh or recreate. Note that the version string is a
-part of the key that is used to match capabilities to coverage
-descriptions.<p>
-
-If the URL in the "WCS:&lt;URL&gt;" dataset name contains a coverage
-parameter, the driver creates an initial service description file into
-the cache. If a matching capabilities document is not found, it will
-be fetched first.<p>
-
-Despite how the service description file was obtained, GDAL will fetch
-the coverage description, and a small test image to establish details
-about the raster, at its first use. Information obtained from those
-will be saved to the service description file to make future opens
-faster - no server access should be required till imagery is read for
-future opens.<p>
+If the URL does not contain a coverage name, the driver attempts to
+fetch the capabilities document from the server, parse it, and show
+the resulting metadata to the user. Coverages are shown as
+subdatasets. If the URL contains a coverage name as parameter (the key
+'coverage' can be used with and WCS version), the driver attempts to
+fetch the coverage description document from the server, parse it, and
+create service description file. A small test GetCoverage request may
+be done to obtain details of the served data.<p>
 
 With service version 2.0.1 (for which support is available starting at
 GDAL version 2.3), it may be that the coverage has more than two
@@ -61,13 +44,12 @@ that is a single file, and is in a format supported by GDAL should
 work. The driver will prefer a format with "tiff" in the name,
 otherwise it will fallback to the first offered format. However, the
 user may set the preferred format. Coordinate systems are read from
-the DescribeCoverage result, and are expected to be in the form of
-<tt>EPSG:n</tt> in the <tt>&lt;supportedCRSs&gt;</tt> element.<p>
+the DescribeCoverage result.<p>
 
 The service description file has the following elements as immediate
-children of the document element. When the "WCS:&lt;URL&gt;" syntax
-dataset name is used, the contents of the service description file is
-meant to be modified by using options.<p>
+children of the document element. Note that when the "WCS:&lt;URL&gt;"
+syntax for dataset name is used, the contents of the service description
+file is meant to be modified by using options.<p>
 
 <ul>
 <li> <b>ServiceURL</b>: URL of the service without parameters</li>
@@ -113,7 +95,7 @@ denotes a range of fields. (Used only with version 2.0.1)</li>
 
 <li> <b>DefaultTime</b>: A timePosition to use by default when
 accessing coverages with a time dimension.  Populated with the last
-offered time position by default. (Used only with version 1.0.0)<p>
+offered time position by default. (Used only with version 1.0.0)
 
 <li> <b>FieldName</b>: Name of the field being accessed. Used only
 with version 1.1. Defaults to the first field in the
@@ -125,7 +107,7 @@ more bands.
 determined by the driver.
 
 <li> <b>BandType</b>: The pixel data type to use.  Normally
-determined by the driver.
+determined by the driver.<p>
 
 <li> <b>Elements for controlling the communication:</b>
 
@@ -148,7 +130,7 @@ eg. "&CustNo=775"</li><p>
 
 <li> <b>Elements that may be needed to deal with server quirks:</b>
 
-<b>Note:</b> The options are not propagated to the subdataset
+<br><b>Note:</b> The options are not propagated to the subdataset
 with the switch -sd.<p>   
 
 <li><b>OriginAtBoundary</b>: Set this flag if the server reports grid
@@ -231,7 +213,7 @@ subsetting.
 
 <ul>
 
-<li> <b>RangeSubset</b>: Used to select a subset of coverage fields to
+<li><b>RangeSubset</b>: Used to select a subset of coverage fields to
 the dataset. Syntax: <i>field_name,field_name:field_name,..</i> (Note:
 requires that the server implements the range subsetting
 extension.)</li>
@@ -307,7 +289,7 @@ use different keys. 'coverage' is also always used in the cache key.<p>
 The user may add non-standard extra parameters to the URL. However,
 when that is done, it should be noted that the URL is a cache database
 key and capability documents are linked to coverage documents through
-the key. Please consider using the *Extra open options.<p>
+the key. Please consider using the Extra open options.<p>
 
 <h3>Time</h3>
 
