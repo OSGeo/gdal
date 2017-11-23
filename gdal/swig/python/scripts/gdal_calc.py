@@ -45,6 +45,7 @@
 
 from optparse import OptionParser, Values
 import os
+import os.path
 import sys
 
 import numpy
@@ -60,6 +61,51 @@ AlphaList=["A","B","C","D","E","F","G","H","I","J","K","L","M",
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup={'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':4294967293, 'Int32':-2147483647, 'Float32':3.402823466E+38, 'Float64':1.7976931348623158E+308}
 
+def DoesDriverHandleExtension(drv, ext):
+    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
+    return exts is not None and exts.lower().find(ext.lower()) >= 0
+
+def GetExtension(filename):
+    ext = os.path.splitext(filename)[1]
+    if ext.startswith('.'):
+        ext = ext[1:]
+    return ext
+
+def GetOutputDriversFor(filename):
+    drv_list = []
+    ext = GetExtension(filename)
+    for i in range(gdal.GetDriverCount()):
+        drv = gdal.GetDriver(i)
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
+           drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
+            if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
+                drv_list.append( drv.ShortName )
+            else:
+                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
+                if prefix is not None and filename.lower().startswith(prefix.lower()):
+                    drv_list.append( drv.ShortName )
+
+    # GMT is registered before netCDF for opening reasons, but we want
+    # netCDF to be used by default for output.
+    if ext.lower() == 'nc' and len(drv_list) == 0 and \
+       drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
+           drv_list = [ 'NETCDF', 'GMT' ]
+
+    return drv_list
+
+def GetOutputDriverFor(filename):
+    drv_list = GetOutputDriversFor(filename)
+    if len(drv_list) == 0:
+        ext = GetExtension(filename)
+        if len(ext) == 0:
+            return 'GTiff'
+        else:
+            raise Exception("Cannot guess driver for %s" % filename)
+    elif len(drv_list) > 1:
+        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+    return drv_list[0]
+
 ################################################################
 def doit(opts, args):
 
@@ -74,6 +120,9 @@ def doit(opts, args):
         raise Exception("No calculation provided.")
     elif not opts.outF:
         raise Exception("No output file provided.")
+
+    if opts.format is None:
+        opts.format = GetOutputDriverFor(opts.outF)
 
     ################################################################
     # fetch details of input layers
@@ -308,7 +357,7 @@ def doit(opts, args):
     return
 
 ################################################################
-def Calc(calc, outfile, NoDataValue=None, type=None, format='GTiff', creation_options=[], allBands='', overwrite=False, debug=False, quiet=False, **input_files):
+def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_options=[], allBands='', overwrite=False, debug=False, quiet=False, **input_files):
     """ Perform raster calculations with numpy syntax.
     Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical
     operators such as >. Note that all files must have the same dimensions, but no projection checking is performed.
@@ -363,7 +412,7 @@ def main():
     parser.add_option("--outfile", dest="outF", help="output file to generate or fill", metavar="filename")
     parser.add_option("--NoDataValue", dest="NoDataValue", type=float, help="output nodata value (default datatype specific value)", metavar="value")
     parser.add_option("--type", dest="type", help="output datatype, must be one of %s" % list(DefaultNDVLookup.keys()), metavar="datatype")
-    parser.add_option("--format", dest="format", default="GTiff", help="GDAL format for output file (default 'GTiff')", metavar="gdal_format")
+    parser.add_option("--format", dest="format", help="GDAL format for output file", metavar="gdal_format")
     parser.add_option(
         "--creation-option", "--co", dest="creation_options", default=[], action="append",
         help="Passes a creation option to the output format driver. Multiple "

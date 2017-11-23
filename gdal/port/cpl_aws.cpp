@@ -1106,10 +1106,12 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
+                                           const char* pszHeaders,
                                            bool bSetError, bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
+    CPLDebug("S3", "%s", pszHeaders ? pszHeaders : "");
 #endif
 
     if( pbUpdateMap != NULL )
@@ -1189,6 +1191,31 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             strncmp(pszEndpoint, m_osBucket.c_str(), m_osBucket.size()) == 0 &&
             pszEndpoint[m_osBucket.size()] == '.' )
         {
+            /* If we have a body with
+            <Error><Code>PermanentRedirect</Code><Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message><Bucket>bucket.with.dot</Bucket><Endpoint>bucket.with.dot.s3.amazonaws.com</Endpoint></Error>
+            and headers like
+            x-amz-bucket-region: eu-west-1
+            and the bucket name has dot in it,
+            then we must use s3.$(x-amz-bucket-region).amazon.com as endpoint.
+            See #7154 */
+            const char* pszRegionPtr = (pszHeaders != NULL) ?
+                strstr(pszHeaders, "x-amz-bucket-region: "): NULL;
+            if( strchr(m_osBucket.c_str(), '.') != NULL && pszRegionPtr != NULL )
+            {
+                CPLString osRegion(pszRegionPtr + strlen("x-amz-bucket-region: "));
+                size_t nPos = osRegion.find('\r');
+                if( nPos != std::string::npos )
+                    osRegion.resize(nPos);
+                SetEndpoint( CPLSPrintf("s3.%s.amazonaws.com", osRegion.c_str()) );
+                SetRegion(osRegion.c_str());
+                CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
+                CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
+                CPLDestroyXMLNode(psTree);
+                if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+                    *pbUpdateMap = false;
+                return true;
+            }
+
             m_bUseVirtualHosting = true;
             CPLDebug("S3", "Switching to virtual hosting");
         }

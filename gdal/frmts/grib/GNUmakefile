@@ -1,14 +1,14 @@
 
 
-EXTRAFLAGS = -Idegrib18/degrib
+EXTRAFLAGS = -Idegrib/degrib
 
 include ../../GDALmake.opt
 
 OBJ	=	gribdataset.o \
                 clock.o \
                 degrib1.o \
-                degrib2.o inventory.o metaname.o myerror.o tdlpack.o filedatasource.o memorydatasource.o grib1tab.o myutil.o metaparse.o weather.o metaprint.o engribapi.o grib2api.o myassert.o scan.o memendian.o fileendian.o gridtemplates.o drstemplates.o pdstemplates.o gbits.o g2_free.o g2_unpack1.o g2_unpack2.o g2_unpack3.o g2_unpack4.o g2_unpack5.o g2_unpack6.o g2_unpack7.o g2_info.o g2_getfld.o simunpack.o comunpack.o pack_gp.o reduce.o specpack.o specunpack.o rdieee.o mkieee.o int_power.o simpack.o compack.o cmplxpack.o misspack.o g2_create.o g2_addlocal.o g2_addgrid.o g2_addfield.o g2_gribend.o getdim.o g2_miss.o getpoly.o seekgb.o \
-		dec_jpeg2000.o jpcunpack.o jpcpack.o enc_jpeg2000.o
+                degrib2.o inventory.o metaname.o myerror.o tdlpack.o filedatasource.o memorydatasource.o grib1tab.o myutil.o metaparse.o weather.o metaprint.o engribapi.o grib2api.o myassert.o scan.o tendian.o gridtemplates.o drstemplates.o pdstemplates.o gbits.o g2_free.o g2_unpack1.o g2_unpack2.o g2_unpack3.o g2_unpack4.o g2_unpack5.o g2_unpack6.o g2_unpack7.o g2_info.o g2_getfld.o simunpack.o comunpack.o pack_gp.o reduce.o specpack.o specunpack.o rdieee.o mkieee.o int_power.o simpack.o compack.o cmplxpack.o misspack.o g2_create.o g2_addlocal.o g2_addgrid.o g2_addfield.o g2_gribend.o getdim.o g2_miss.o getpoly.o \
+		dec_jpeg2000.o jpcunpack.o jpcpack.o enc_jpeg2000.o hazard.o
 
 ifeq ($(PNG_SETTING),internal)
 EXTRAFLAGS      :=      $(EXTRAFLAGS) -I../png/libpng -DUSE_PNG
@@ -27,33 +27,33 @@ CPPFLAGS	:=	 $(CPPFLAGS) $(EXTRAFLAGS)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 
-../o/%.$(OBJ_EXT):	degrib18/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib18/g2clib-1.0.4 $< -o $@
+../o/%.$(OBJ_EXT):	degrib/degrib/%.c
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
 
-../o/%.$(OBJ_EXT):	degrib18/degrib/%.cpp
+../o/%.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.c
+../o/%.$(OBJ_EXT):	degrib/g2clib/%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-../o/%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.cpp
+../o/%.$(OBJ_EXT):	degrib/g2clib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	degrib18/degrib/%.c
-	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib18/g2clib-1.0.4 $< -o $@
+%.$(OBJ_EXT):	degrib/degrib/%.c
+	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) -Idegrib/g2clib $< -o $@
 
-%.$(OBJ_EXT):	degrib18/degrib/%.cpp
+%.$(OBJ_EXT):	degrib/degrib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.c
+%.$(OBJ_EXT):	degrib/g2clib/%.c
 	$(CC) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
-%.$(OBJ_EXT):	degrib18/g2clib-1.0.4/%.cpp
+%.$(OBJ_EXT):	degrib/g2clib/%.cpp
 	$(CXX) -c $(GDAL_INCLUDE) $(CPPFLAGS) $(CXXFLAGS) $< -o $@
 
 defaultold:	$(OBJ:.o=.$(OBJ_EXT))
-	(cd degrib18/degrib; $(MAKE)); cd ../..
-	(cd degrib18/g2clib-1.0.4; $(MAKE))
+	(cd degrib/degrib; $(MAKE)); cd ../..
+	(cd degrib/g2clib; $(MAKE))
 clean:
 	rm -f *.o $(O_OBJ)
 

@@ -50,14 +50,14 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "degrib18/degrib/datasource.h"
-#include "degrib18/degrib/degrib2.h"
-#include "degrib18/degrib/filedatasource.h"
-#include "degrib18/degrib/inventory.h"
-#include "degrib18/degrib/memorydatasource.h"
-#include "degrib18/degrib/meta.h"
-#include "degrib18/degrib/myerror.h"
-#include "degrib18/degrib/type.h"
+#include "degrib/degrib/datasource.h"
+#include "degrib/degrib/degrib2.h"
+#include "degrib/degrib/filedatasource.h"
+#include "degrib/degrib/inventory.h"
+#include "degrib/degrib/memorydatasource.h"
+#include "degrib/degrib/meta.h"
+#include "degrib/degrib/myerror.h"
+#include "degrib/degrib/type.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -92,6 +92,7 @@ class GRIBDataset : public GDALPamDataset
     char *pszProjection;
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
+    int    nGribVersion;
 
     GIntBig nCachedBytes;
     GIntBig nCachedBytesThreshold;
@@ -123,6 +124,7 @@ public:
 
 private:
     CPLErr       LoadData();
+    void    FindNoDataGrib2(bool bSeekToStart = true);
 
     static void ReadGribData( DataSource &, sInt4, int, double **,
                               grib_MetaData ** );
@@ -135,6 +137,10 @@ private:
 
     int nGribDataXSize;
     int nGribDataYSize;
+
+    bool    m_bHasLookedForNoData;
+    double  m_dfNoData;
+    bool    m_bHasNoData;
 };
 
 namespace gdal {

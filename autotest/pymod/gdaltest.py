@@ -31,6 +31,7 @@
 
 import contextlib
 import os
+import os.path
 import stat
 import sys
 import time
@@ -1261,9 +1262,11 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
+def download_file(url, filename = None, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
 
-    if filename.startswith(base_dir + '/'):
+    if filename is None:
+        filename = os.path.basename(url)
+    elif filename.startswith(base_dir + '/'):
         filename = filename[len(base_dir + '/'):]
 
     global count_skipped_tests_download

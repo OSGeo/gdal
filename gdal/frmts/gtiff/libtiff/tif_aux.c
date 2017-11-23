@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.30 2017-09-07 14:02:52 erouault Exp $ */
+/* $Id: tif_aux.c,v 1.31 2017-11-17 20:21:00 erouault Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -361,7 +361,7 @@ _TIFFUInt64ToDouble(uint64 ui64)
 
 int _TIFFSeekOK(TIFF* tif, toff_t off)
 {
-    /* Huge offsets, expecially -1 / UINT64_MAX, can cause issues */
+    /* Huge offsets, especially -1 / UINT64_MAX, can cause issues */
     /* See http://bugzilla.maptools.org/show_bug.cgi?id=2726 */
     return off <= (~(uint64)0)/2 && TIFFSeekFile(tif,off,SEEK_SET)==off;
 }

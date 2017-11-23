@@ -1211,7 +1211,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
-        ACAdjustText( dfAngle, oScale.sx, poSubFeature );
+        ACAdjustText( dfAngle, oScale.sx, oScale.sy, poSubFeature );
 
 #ifdef notdef
         osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );

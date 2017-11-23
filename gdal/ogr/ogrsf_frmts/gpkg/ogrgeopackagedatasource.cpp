@@ -258,6 +258,11 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
         return NULL;
     }
 
+    // HACK. We don't handle 3D GEOGCS right now, so hardcode 3D WGS 84 to
+    // return 2D WGS 84.
+    if( iSrsId == 4979 )
+        iSrsId = 4326;
+
     std::map<int, OGRSpatialReference*>::const_iterator oIter =
                                                 m_oMapSrsIdToSrs.find(iSrsId);
     if( oIter != m_oMapSrsIdToSrs.end() )
@@ -267,11 +272,6 @@ OGRSpatialReference* GDALGeoPackageDataset::GetSpatialRef(int iSrsId)
         oIter->second->Reference();
         return oIter->second;
     }
-
-    // HACK. We don't handle 3D GEOGCS right now, so hardcode 3D WGS 84 to
-    // return 2D WGS 84.
-    if( iSrsId == 4979 )
-        iSrsId = 4326;
 
     CPLString oSQL;
     oSQL.Printf( "SELECT definition, organization, organization_coordsys_id "
@@ -1081,9 +1081,20 @@ int GDALGeoPackageDataset::Open( GDALOpenInfo* poOpenInfo )
 
             m_papoLayers = (OGRGeoPackageTableLayer**)CPLMalloc(sizeof(OGRGeoPackageTableLayer*) * oResult.nRowCount);
 
+            std::set<CPLString> oSetTables;
             for ( int i = 0; i < oResult.nRowCount; i++ )
             {
                 const char *pszTableName = SQLResultGetValue(&oResult, 0, i);
+                if( oSetTables.find(pszTableName) != oSetTables.end() )
+                {
+                    // This should normally not happen if all constraints are properly set
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Table %s appearing several times in "
+                             "gpkg_contents and/or gpkg_geometry_columns",
+                             pszTableName);
+                    continue;
+                }
+                oSetTables.insert(pszTableName);
                 bool bIsSpatial = CPL_TO_BOOL(SQLResultGetValueAsInteger(&oResult, 2, i));
                 const char* pszGeomColName = SQLResultGetValue(&oResult, 3, i);
                 const char* pszGeomType = SQLResultGetValue(&oResult, 4, i);

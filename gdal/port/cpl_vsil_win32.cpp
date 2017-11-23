@@ -143,6 +143,7 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
     case ERROR_DRIVE_LOCKED:        /* The disk is in use or locked by another process. */
     case ERROR_LOCK_FAILED:         /* Unable to lock a region of a file. */
     case ERROR_SEEK_ON_DEVICE:      /* The file pointer cannot be set on the specified device or file. */
+    case ERROR_SHARING_VIOLATION:   /* The process cannot access the file because it is being used by another process. */
         err = EACCES;
         break;
     case ERROR_INVALID_HANDLE:      /* The handle is invalid. */
@@ -605,13 +606,14 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*      converting to wide characters to open.                          */
 /* -------------------------------------------------------------------- */
     DWORD nLastError = 0;
+    bool bShared = CPLTestBool(CPLGetConfigOption( "GDAL_SHARED_FILE", "YES" ) );
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         hFile = CreateFileW( pwszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         if ( hFile == INVALID_HANDLE_VALUE &&
@@ -628,6 +630,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                     case ERROR_BAD_PATHNAME:        CPLDebug("VSI", "ERROR_BAD_PATHNAME"); break;
                     case ERROR_BAD_NETPATH:         CPLDebug("VSI", "ERROR_BAD_NETPATH"); break;
                     case ERROR_FILENAME_EXCED_RANGE: CPLDebug("VSI", "ERROR_FILENAME_EXCED_RANGE"); break;
+                    case ERROR_SHARING_VIOLATION:   CPLDebug("VSI", "ERROR_SHARING_VIOLATION"); break;
                     default:  CPLDebug("VSI", "other error %d", nLastError); break;
             }
 #endif
@@ -638,7 +641,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             VSIWin32TryLongFilename(pwszFilename);
             nLastError = 0;
             hFile = CreateFileW( pwszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         }
@@ -647,17 +650,20 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     else
     {
         hFile = CreateFile( pszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
     }
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
+        nLastError = GetLastError();
         const int nError = ErrnoFromGetLastError(nLastError);
         if( bSetError && nError != 0 )
         {
-            VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError));
+            VSIError(VSIE_FileError, "%s: %s", pszFilename,
+                     (nLastError == ERROR_SHARING_VIOLATION) ?
+                        "file used by other process": strerror(nError));
         }
         errno = nError;
         return NULL;

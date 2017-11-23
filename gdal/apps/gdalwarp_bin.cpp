@@ -370,7 +370,6 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
         CPLFree(psOptionsForBinary->pszDstFilename);
         CSLDestroy(psOptionsForBinary->papszOpenOptions);
         CSLDestroy(psOptionsForBinary->papszDestOpenOptions);
-        CPLFree(psOptionsForBinary->pszFormat);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -578,9 +577,6 @@ MAIN_START(argc, argv)
     {
         GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, NULL);
     }
-
-    if (hDstDS == NULL && !psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDstFilename, psOptionsForBinary->pszFormat);
 
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALWarp(psOptionsForBinary->pszDstFilename, hDstDS,

@@ -30,6 +30,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
+import os.path
 import sys
 
 from osgeo import gdal
@@ -44,11 +45,50 @@ gdal_polygonize [-8] [-nomask] [-mask filename] raster_file [-b band|mask]
 """)
     sys.exit(1)
 
+def DoesDriverHandleExtension(drv, ext):
+    exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
+    return exts is not None and exts.lower().find(ext.lower()) >= 0
+
+def GetExtension(filename):
+    ext = os.path.splitext(filename)[1]
+    if ext.startswith('.'):
+        ext = ext[1:]
+    return ext
+
+def GetOutputDriversFor(filename):
+    drv_list = []
+    ext = GetExtension(filename)
+    for i in range(gdal.GetDriverCount()):
+        drv = gdal.GetDriver(i)
+        if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
+            drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
+           drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
+            if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
+                drv_list.append( drv.ShortName )
+            else:
+                prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
+                if prefix is not None and filename.lower().startswith(prefix.lower()):
+                    drv_list.append( drv.ShortName )
+
+    return drv_list
+
+def GetOutputDriverFor(filename):
+    drv_list = GetOutputDriversFor(filename)
+    if len(drv_list) == 0:
+        ext = GetExtension(filename)
+        if len(ext) == 0:
+            return 'ESRI Shapefile'
+        else:
+            raise Exception("Cannot guess driver for %s" % filename)
+    elif len(drv_list) > 1:
+        print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
+    return drv_list[0]
+
 # =============================================================================
 # 	Mainline
 # =============================================================================
 
-format = 'GML'
+format = None
 options = []
 quiet_flag = 0
 src_filename = None
@@ -114,6 +154,9 @@ while i < len(argv):
 
 if src_filename is None or dst_filename is None:
     Usage()
+
+if format is None:
+    format = GetOutputDriverFor(dst_filename)
 
 if dst_layername is None:
     dst_layername = 'out'

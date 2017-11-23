@@ -365,6 +365,11 @@ const char *CPLGetExtension( const char *pszFullFilename )
     if( iExtStart == iFileStart )
         iExtStart = strlen(pszFullFilename)-1;
 
+    // If the extension is too long, it is very much likely not an extension,
+    // but another component of the path
+    if( strlen(pszFullFilename+iExtStart+1) > strlen("sg-grd-z") )
+        return "";
+
     if( CPLStrlcpy( pszStaticResult, pszFullFilename+iExtStart+1,
                     CPL_PATH_BUF_SIZE )
         >= static_cast<size_t>( CPL_PATH_BUF_SIZE ) )

@@ -89,6 +89,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "commonutils.h"
 
 #include <cfloat>
 #include <cmath>
@@ -129,7 +130,7 @@ typedef enum
 
 struct GDALDEMProcessingOptions
 {
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! the progress function to use */
@@ -3356,14 +3357,28 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
 
     GDALGetGeoTransform(hSrcDataset, adfGeoTransform);
 
-    GDALDriverH hDriver = GDALGetDriverByName(psOptions->pszFormat);
+    CPLString osFormat;
+    if( psOptions->pszFormat == NULL )
+    {
+        osFormat = GetOutputDriverForRaster(pszDest);
+        if( osFormat.empty() )
+        {
+            GDALDEMProcessingOptionsFree(psOptionsToFree);
+            return NULL;
+        }
+    }
+    else
+    {
+        osFormat = psOptions->pszFormat;
+    }
+    GDALDriverH hDriver = GDALGetDriverByName(osFormat);
     if( hDriver == NULL
         || (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL &&
             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Output driver `%s' not recognised to have output support.",
-                 psOptions->pszFormat );
+                 osFormat.c_str() );
         fprintf( stderr, "The following format drivers are configured\n"
                  "and support output:\n" );
 
@@ -3526,7 +3541,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
         ? GDT_Byte
         : GDT_Float32;
 
-    if( EQUAL(psOptions->pszFormat, "VRT") )
+    if( EQUAL(osFormat, "VRT") )
     {
         if( eUtilityMode == COLOR_RELIEF )
         {
@@ -3558,7 +3573,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
     GDALProgressFunc pfnProgress = psOptions->pfnProgress;
     void* pProgressData = psOptions->pProgressData;
 
-    if( EQUAL(psOptions->pszFormat, "GTiff") )
+    if( EQUAL(osFormat, "GTiff") )
     {
         if( !EQUAL(CSLFetchNameValueDef(psOptions->papszCreateOptions, "COMPRESS", "NONE"), "NONE") &&
             CPLTestBool(CSLFetchNameValueDef(psOptions->papszCreateOptions, "TILED", "NO")) )
@@ -3767,7 +3782,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             CPLCalloc(1, sizeof(GDALDEMProcessingOptions)));
     Algorithm eUtilityMode = INVALID;
 
-    psOptions->pszFormat = CPLStrdup("GTiff");
+    psOptions->pszFormat = NULL;
     psOptions->pfnProgress = GDALDummyProgress;
     psOptions->pProgressData = NULL;
     psOptions->z = 1.0;
@@ -3812,10 +3827,6 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
             ++i;
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
         else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
@@ -4003,11 +4014,6 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
                     "-multidirectional and -az cannot be used together");
         GDALDEMProcessingOptionsFree(psOptions);
         return NULL;
-    }
-
-    if( psOptionsForBinary )
-    {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
     }
 
     return psOptions;

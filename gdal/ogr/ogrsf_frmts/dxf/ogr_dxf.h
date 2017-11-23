@@ -220,8 +220,6 @@ class OGRDXFFeature : public OGRFeature
 
     OGRDXFFeature    *CloneDXFFeature();
 
-    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
-
     DXFTriple GetOCS() const { return oOCS; }
     bool IsBlockReference() const { return bIsBlockReference; }
     CPLString GetBlockName() const { return osBlockName; }
@@ -229,6 +227,10 @@ class OGRDXFFeature : public OGRFeature
     DXFTriple GetBlockScale() const { return oBlockScale; }
     DXFTriple GetInsertOCSCoords() const { return oOriginalCoords; }
     CPLString GetAttributeTag() const { return osAttributeTag; }
+
+    void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
+    const CPLString   GetColor( OGRDXFDataSource* const poDS,
+                                OGRDXFFeature* const poBlockFeature = NULL );
 };
 
 /************************************************************************/
@@ -269,7 +271,7 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     Translate3DFACE();
     OGRDXFFeature *     TranslateINSERT();
     OGRDXFFeature *     TranslateMTEXT();
-    OGRDXFFeature *     TranslateTEXT();
+    OGRDXFFeature *     TranslateTEXT( const bool bIsAttribOrAttdef );
     OGRDXFFeature *     TranslateDIMENSION();
     OGRDXFFeature *     TranslateHATCH();
     OGRDXFFeature *     TranslateSOLID();
@@ -379,6 +381,11 @@ class OGRDXFDataSource : public OGRDataSource
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oLayerTable;
 
+    // indexed by style name, then by property name.
+    std::map< CPLString, std::map<CPLString,CPLString> >
+                        oTextStyleTable;
+    std::map<CPLString,CPLString> oTextStyleHandles;
+
     // indexed by dimstyle name, then by DIM... variable name
     std::map< CPLString, std::map<CPLString,CPLString> >
                         oDimStyleTable;
@@ -424,12 +431,17 @@ class OGRDXFDataSource : public OGRDataSource
     bool                ReadTablesSection();
     bool                ReadLayerDefinition();
     bool                ReadLineTypeDefinition();
+    bool                ReadTextStyleDefinition();
     bool                ReadDimStyleDefinition();
     const char         *LookupLayerProperty( const char *pszLayer,
                                              const char *pszProperty );
+    const char         *LookupTextStyleProperty( const char *pszTextStyle,
+                                                 const char *pszProperty,
+                                                 const char *pszDefault );
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     std::vector<double> LookupLineType( const char *pszName );
+    CPLString           GetTextStyleNameByHandle( const char *pszID );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
 

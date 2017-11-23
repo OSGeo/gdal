@@ -683,6 +683,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
     papszOptions = CSLAddString(papszOptions, GetUserAgentOption().c_str());
 
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
+    CSLDestroy( papszOptions );
     if( psResult == NULL ) {
         return NULL;
     }

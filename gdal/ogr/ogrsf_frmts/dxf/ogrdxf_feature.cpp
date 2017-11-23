@@ -87,3 +87,122 @@ void OGRDXFFeature::ApplyOCSTransformer( OGRGeometry* const poGeometry ) const
 {
     OGRDXFLayer::ApplyOCSTransformer( poGeometry, oOCS );
 }
+
+/************************************************************************/
+/*                              GetColor()                              */
+/*                                                                      */
+/*      Gets the hex color string for this feature, using the given     */
+/*      data source to fetch layer properties.                          */
+/*                                                                      */
+/*      For usage info about poBlockFeature, see                        */
+/*      OGRDXFLayer::PrepareFeatureStyle.                               */
+/************************************************************************/
+
+const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+{
+    const CPLString osLayer = GetFieldAsString("Layer");
+
+/* -------------------------------------------------------------------- */
+/*      Is the layer or object disabled/hidden/frozen/off?              */
+/* -------------------------------------------------------------------- */
+
+    bool bHidden = false;
+
+    if( oStyleProperties.count("Hidden") > 0 &&
+        atoi(oStyleProperties["Hidden"]) == 1 )
+    {
+        bHidden = true;
+    }
+    else
+    {
+        const char* pszHidden = poDS->LookupLayerProperty( osLayer, "Hidden" );
+        bHidden = pszHidden && EQUAL(pszHidden, "1");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      MULTILEADER entities store colors by directly outputting        */
+/*      the AcCmEntityColor struct as a 32-bit integer.                 */
+/* -------------------------------------------------------------------- */
+
+    int nColor = 256;
+
+    if( oStyleProperties.count("Color") > 0 )
+        nColor = atoi(oStyleProperties["Color"]);
+
+    const unsigned char byColorMethod = ( nColor & 0xFF000000 ) >> 24;
+    switch( byColorMethod )
+    {
+      // ByLayer
+      case 0xC0:
+        nColor = 256;
+        break;
+
+      // ByBlock
+      case 0xC1:
+        nColor = 0;
+        break;
+
+      // RGB true color
+      case 0xC2:
+        return CPLString().Printf( "#%06x", nColor & 0xFFFFFF );
+
+      // Indexed color
+      case 0xC3:
+        nColor &= 0xFF;
+        break;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the indexed color for this feature.                    */
+/* -------------------------------------------------------------------- */
+
+    // Use ByBlock color?
+    if( nColor < 1 && poBlockFeature )
+    {
+        if( poBlockFeature->oStyleProperties.count("Color") > 0 )
+        {
+            // Inherit color from the owning block
+            nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
+
+            // Use the inherited color if we regenerate the style string
+            // again during block insertion
+            oStyleProperties["Color"] =
+                poBlockFeature->oStyleProperties["Color"];
+        }
+        else
+        {
+            // If the owning block has no explicit color, assume ByLayer
+            nColor = 256;
+        }
+    }
+
+    // Use layer color?
+    if( nColor > 255 )
+    {
+        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
+        if( pszValue != NULL )
+            nColor = atoi(pszValue);
+    }
+
+    // If no color is available, use the default black/white color
+    if( nColor < 1 || nColor > 255 )
+        nColor = 7;
+
+/* -------------------------------------------------------------------- */
+/*      Translate the DWG/DXF color index to a hex color string.        */
+/* -------------------------------------------------------------------- */
+
+    const unsigned char *pabyDXFColors = ACGetColorTable();
+
+    CPLString osResult;
+    osResult.Printf( "#%02x%02x%02x",
+        pabyDXFColors[nColor*3+0],
+        pabyDXFColors[nColor*3+1],
+        pabyDXFColors[nColor*3+2] );
+
+    if( bHidden )
+        osResult += "00";
+
+    return osResult;
+}

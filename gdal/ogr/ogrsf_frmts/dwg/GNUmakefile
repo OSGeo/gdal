@@ -14,7 +14,7 @@ OBJ	=	ogrdwgdriver.o ogrdwgdatasource.o ogrdwglayer.o \
 		ogrdgnv8driver.o ogrdgnv8datasource.o ogrdgnv8layer.o \
 		ogrteigha.o
 
-CPPFLAGS	:=	 -I../dxf $(TDXXFLAGS) $(CPPFLAGS)
+CPPFLAGS	:=	 -I../dxf $(TDXXFLAGS) $(CPPFLAGS) $(TEIGHA_CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

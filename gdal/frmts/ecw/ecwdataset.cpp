@@ -1602,10 +1602,10 @@ CPLErr ECWDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                        RunDeferedAdviseRead()                        */
+/*                        RunDeferredAdviseRead()                        */
 /************************************************************************/
 
-CPLErr ECWDataset::RunDeferedAdviseRead()
+CPLErr ECWDataset::RunDeferredAdviseRead()
 {
     CPLAssert(m_nAdviseReadXOff >= 0);
 
@@ -1746,7 +1746,7 @@ int ECWDataset::TryWinRasterIO( CPL_UNUSED GDALRWFlag eFlag,
         if( nXOff == m_nAdviseReadXOff && nXSize == m_nAdviseReadXSize &&
             nBufXSize == m_nAdviseReadBufXSize )
         {
-            if( RunDeferedAdviseRead() != CE_None )
+            if( RunDeferredAdviseRead() != CE_None )
                 return FALSE;
         }
         if( !bWinActive )

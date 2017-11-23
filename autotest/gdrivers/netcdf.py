@@ -3068,7 +3068,39 @@ def netcdf_80():
 
     test = gdaltest.GDALTest( 'NETCDF', '../data/byte.tif', 1, 4672 )
     return test.testCreateCopy(new_filename = 'test\xc3\xa9.nc', check_gt=0, check_srs=0, check_minmax = 0)
-    
+
+###############################################################################
+# netCDF file in rotated_pole projection
+
+def netcdf_81():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/rotated_pole.nc')
+
+    if ds.RasterXSize != 137 or ds.RasterYSize != 108:
+        gdaltest.post_reason('Did not get expected dimensions')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6367470,594.3130483479559]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-35.47, 0.44, 0.0, 23.65, 0.0, -0.44)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 ###############################################################################
@@ -3159,7 +3191,8 @@ gdaltest_list = [
     netcdf_77,
     netcdf_78,
     netcdf_79,
-    netcdf_80
+    netcdf_80,
+    netcdf_81
 ]
 
 ###############################################################################

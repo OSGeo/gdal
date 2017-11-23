@@ -675,13 +675,13 @@ bool OGRCSVDataSource::OpenTable( const char *pszFilename,
     VSILFILE *fp = NULL;
 
     if( bUpdate )
-        fp = VSIFOpenL(pszFilename, "rb+");
+        fp = VSIFOpenExL(pszFilename, "rb+", true);
     else
-        fp = VSIFOpenL(pszFilename, "rb");
+        fp = VSIFOpenExL(pszFilename, "rb", true);
     if( fp == NULL )
     {
-        CPLError(CE_Warning, CPLE_OpenFailed, "Failed to open %s, %s.",
-                 pszFilename, VSIStrerror(errno));
+        CPLError(CE_Warning, CPLE_OpenFailed, "Failed to open %s.",
+                 VSIGetLastErrorMsg());
         return false;
     }
 

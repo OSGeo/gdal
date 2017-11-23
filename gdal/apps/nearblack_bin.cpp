@@ -67,7 +67,6 @@ static void GDALNearblackOptionsForBinaryFree( GDALNearblackOptionsForBinary* ps
     {
         CPLFree(psOptionsForBinary->pszInFile);
         CPLFree(psOptionsForBinary->pszOutFile);
-        CPLFree(psOptionsForBinary->pszFormat);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -127,8 +126,6 @@ MAIN_START(argc, argv)
 
     if( psOptionsForBinary->pszOutFile == NULL )
         psOptionsForBinary->pszOutFile = CPLStrdup(psOptionsForBinary->pszInFile);
-    else if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszOutFile, psOptionsForBinary->pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */

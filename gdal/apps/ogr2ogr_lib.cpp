@@ -117,7 +117,7 @@ struct GDALVectorTranslateOptions
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet;
 
-    /*! output file format name (default is ESRI Shapefile) */
+    /*! output file format name */
     char *pszFormat;
 
     /*! list of layers of the source dataset which needs to be selected */
@@ -1179,7 +1179,7 @@ GDALVectorTranslateOptions* GDALVectorTranslateOptionsClone(const GDALVectorTran
             CPLMalloc(sizeof(GDALVectorTranslateOptions)));
     memcpy(psOptions, psOptionsIn, sizeof(GDALVectorTranslateOptions));
 
-    psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
+    if( psOptionsIn->pszFormat) psOptions->pszFormat = CPLStrdup(psOptionsIn->pszFormat);
     if( psOptionsIn->pszOutputSRSDef ) psOptions->pszOutputSRSDef = CPLStrdup(psOptionsIn->pszOutputSRSDef);
     if( psOptionsIn->pszSourceSRSDef ) psOptions->pszSourceSRSDef = CPLStrdup(psOptionsIn->pszSourceSRSDef);
     if( psOptionsIn->pszNewLayerName ) psOptions->pszNewLayerName = CPLStrdup(psOptionsIn->pszNewLayerName);
@@ -2082,7 +2082,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         }
     }
     else if( !bUpdate && strcmp(osDestFilename, poDS->GetDescription()) == 0 &&
-             !EQUAL(psOptions->pszFormat, "Memory") )
+             (psOptions->pszFormat == NULL || !EQUAL(psOptions->pszFormat, "Memory")) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Source and destination datasets must be different "
@@ -2094,6 +2094,21 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /* -------------------------------------------------------------------- */
 /*      Try opening the output datasource as an existing, writable      */
 /* -------------------------------------------------------------------- */
+    std::vector<CPLString> aoDrivers;
+    if( poODS == NULL && psOptions->pszFormat == NULL )
+    {
+        aoDrivers = GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
+        if( !bUpdate && aoDrivers.size() == 1 )
+        {
+            GDALDriverH hDriver = GDALGetDriverByName(aoDrivers[0]);
+            const char* pszPrefix = GDALGetMetadataItem(hDriver,
+                    GDAL_DMD_CONNECTION_PREFIX, NULL);
+            if( pszPrefix && STARTS_WITH_CI(pszDest, pszPrefix) )
+            {
+                bUpdate = true;
+            }
+        }
+    }
 
     if( bUpdate && poODS == NULL )
     {
@@ -2146,6 +2161,36 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     if( !bUpdate )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
+
+        if( psOptions->pszFormat == NULL )
+        {
+            if( aoDrivers.empty() )
+            {
+                if( EQUAL(CPLGetExtension(pszDest), "") )
+                {
+                    psOptions->pszFormat = CPLStrdup("ESRI Shapefile");
+                }
+                else
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                            "Cannot guess driver for %s", pszDest);
+                    GDALVectorTranslateOptionsFree(psOptions);
+                    return NULL;
+                }
+            }
+            else
+            {
+                if( aoDrivers.size() > 1 )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Several drivers matching %s extension. Using %s",
+                            CPLGetExtension(pszDest), aoDrivers[0].c_str() );
+                }
+                psOptions->pszFormat = CPLStrdup(aoDrivers[0]);
+            }
+            CPLDebug("GDAL", "Using %s driver",
+                     psOptions->pszFormat);
+        }
 
         const char* pszOGRCompatFormat = psOptions->pszFormat;
         // Special processing for non-unified drivers that have the same name
@@ -4720,7 +4765,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
     psOptions->nGroupTransactions = 20000;
     psOptions->nFIDToFetch = OGRNullFID;
     psOptions->bQuiet = false;
-    psOptions->pszFormat = CPLStrdup("ESRI Shapefile");
+    psOptions->pszFormat = NULL;
     psOptions->papszLayers = NULL;
     psOptions->papszDSCO = NULL;
     psOptions->papszLCO = NULL;
@@ -4791,10 +4836,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             CPLFree(psOptions->pszFormat);
             const char* pszFormatArg = papszArgv[++i];
             psOptions->pszFormat = CPLStrdup(pszFormatArg);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
         else if( i+1 < nArgc && EQUAL(papszArgv[i],"-dsco") )
         {
@@ -5377,8 +5418,9 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
 
     if( psOptionsForBinary )
     {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
         psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
+        if( psOptions->pszFormat )
+            psOptionsForBinary->pszFormat = CPLStrdup( psOptions->pszFormat );
 
         if( !(CPLTestBool(CSLFetchNameValueDef(
                 psOptionsForBinary->papszOpenOptions, "NATIVE_DATA",

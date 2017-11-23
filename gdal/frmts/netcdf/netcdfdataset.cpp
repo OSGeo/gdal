@@ -2246,6 +2246,18 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                  "%s#%s", szGridMappingValue, CF_GRD_MAPPING_NAME);
         pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 
+        // Some files such as http://www.ecad.eu/download/ensembles/data/Grid_0.44deg_rot/tg_0.44deg_rot_v16.0.nc.gz
+        // lack an explicit projection_var:grid_mapping_name attribute
+        if( pszValue == NULL )
+        {
+            snprintf(szTemp, sizeof(szTemp),
+                     "%s#%s", szGridMappingValue, CF_PP_GRID_NORTH_POLE_LONGITUDE);
+            if( CSLFetchNameValue(poDS->papszMetadata, szTemp) != NULL )
+            {
+                pszValue = "rotated_latitude_longitude";
+            }
+        }
+
         if( pszValue != NULL )
         {
             // Check for datum/spheroid information.
@@ -2859,6 +2871,32 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                                       "PROJ4", osProj4);
                     CPLFree(pszProj4);
                 }
+            }
+
+            else if( EQUAL(pszValue, "rotated_latitude_longitude") )
+            {
+                double dfGridNorthPoleLong =
+                    poDS->FetchCopyParm(szGridMappingValue,
+                                        CF_PP_GRID_NORTH_POLE_LONGITUDE,0.0);
+                double dfGridNorthPoleLat =
+                    poDS->FetchCopyParm(szGridMappingValue,
+                                        CF_PP_GRID_NORTH_POLE_LATITUDE,0.0);
+                double dfNorthPoleGridLong =
+                    poDS->FetchCopyParm(szGridMappingValue,
+                                        CF_PP_NORTH_POLE_GRID_LONGITUDE,0.0);
+
+                // Hack
+                oSRS.SetProjection( "Rotated_pole" );
+                oSRS.SetExtension(oSRS.GetRoot()->GetValue(),
+                    "PROJ4",
+                    CPLSPrintf("+proj=ob_tran +o_proj=longlat +lon_0=%.18g "
+                               "+o_lon_p=%.18g +o_lat_p=%.18g +a=%.18g "
+                               "+b=%.18g +to_meter=0.0174532925199 +wktext",
+                               180.0 + dfGridNorthPoleLong,
+                               dfNorthPoleGridLong,
+                               dfGridNorthPoleLat,
+                               dfEarthRadius,
+                               dfEarthRadius));
             }
 
         // Is this Latitude/Longitude Grid, default?

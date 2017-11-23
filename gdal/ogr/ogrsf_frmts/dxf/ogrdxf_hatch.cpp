@@ -155,56 +155,11 @@ void OGRDXFLayer::PrepareHatchStyle( OGRDXFFeature* const poFeature,
     OGRDXFFeature* const poBlockFeature /* = NULL */ )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Work out the color for this feature.  For now we just assume    */
-/*      solid fill.  We cannot trivially translate the various sorts    */
-/*      of hatching.                                                    */
-/* -------------------------------------------------------------------- */
-    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+    CPLString osStyle = "BRUSH(fc:";
+    osStyle += poFeature->GetColor( poDS, poBlockFeature );
+    osStyle += ")";
 
-    int nColor = 256;
-
-    if( poFeature->oStyleProperties.count("Color") > 0 )
-        nColor = atoi(poFeature->oStyleProperties["Color"]);
-
-    // Use ByBlock color?
-    if( nColor < 1 )
-    {
-        if( poBlockFeature &&
-            poBlockFeature->oStyleProperties.count("Color") > 0 )
-        {
-            // Inherit color from the owning block
-            nColor = atoi(poBlockFeature->oStyleProperties["Color"]);
-        }
-        else
-        {
-            // Default to black/white
-            nColor = 7;
-        }
-    }
-    // Use layer color?
-    else if( nColor > 255 )
-    {
-        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
-            nColor = atoi(pszValue);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Setup the style string.                                         */
-/* -------------------------------------------------------------------- */
-    if( nColor >= 1 && nColor <= 255 )
-    {
-        CPLString osStyle;
-        const unsigned char *pabyDXFColors = ACGetColorTable();
-
-        osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
-                        pabyDXFColors[nColor*3+0],
-                        pabyDXFColors[nColor*3+1],
-                        pabyDXFColors[nColor*3+2] );
-
-        poFeature->SetStyleString( osStyle );
-    }
+    poFeature->SetStyleString( osStyle );
 }
 
 /************************************************************************/
