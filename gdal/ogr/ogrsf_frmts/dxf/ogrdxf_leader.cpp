@@ -550,6 +550,13 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         poLine = NULL;
     }
 
+    // delete any lines left in a stray, unclosed LEADER{...} group
+    while( !oLeader.apoLeaderLines.empty() )
+    {
+        delete oLeader.apoLeaderLines.back();
+        oLeader.apoLeaderLines.pop_back();
+    }
+
     if( nCode < 0 )
     {
         DXF_LAYER_READER_ERROR();
