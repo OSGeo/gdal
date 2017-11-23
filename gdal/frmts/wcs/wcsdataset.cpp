@@ -1249,7 +1249,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (coverage == "") {
                 return global;
             }
-            CPLString global_meta = RemoveExt(global->GetDescription()) + ".aux.xml";
+            CPLString global_meta = CPLString(global->GetDescription()) + ".aux.xml";
             delete global;
             url2 = CPLURLAddKVP(url2, "coverage", coverage);
             CPLString vanilla_filename;

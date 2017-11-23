@@ -44,6 +44,49 @@ void Swap(double &a, double &b)
     b = tmp;
 }
 
+int CompareNumbers(const CPLString &a, const CPLString &b)
+{
+    size_t a_dot = a.find(".");
+    size_t b_dot = b.find(".");
+    CPLString a_p = a.substr(0, a_dot);
+    CPLString b_p = b.substr(0, b_dot);
+    int d = a_p.length() - b_p.length();
+    if (d < 0) {
+        for (int i = 0; i < -1*d; ++i) {
+            a_p = "0" + a_p;
+        }
+    } else if (d > 0) {
+        for (int i = 0; i < d; ++i) {
+            b_p = "0" + b_p;
+        }
+    }
+    int c = strcmp(a_p, b_p);
+    if (c < 0) {
+        return -1;
+    } else if (c > 0) {
+        return 1;
+    }
+    a_p = a.substr(a_dot+1, std::string::npos);
+    b_p = b.substr(b_dot+1, std::string::npos);
+    d = a_p.length() - b_p.length();
+    if (d < 0) {
+        for (int i = 0; i < -1*d; ++i) {
+            a_p = a_p + "0";
+        }
+    } else if (d > 0) {
+        for (int i = 0; i < d; ++i) {
+            b_p = b_p + "0";
+        }
+    }
+    c = strcmp(a_p, b_p);
+    if (c < 0) {
+        return -1;
+    } else if (c > 0) {
+        return 1;
+    }
+    return 0;
+}
+   
 CPLString URLEncode(CPLString str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );

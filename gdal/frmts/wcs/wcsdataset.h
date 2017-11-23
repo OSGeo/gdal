@@ -197,7 +197,7 @@ class WCSDataset201 : public WCSDataset110
     CPLString   GetSubdataset(const CPLString &coverage);
     bool        SetFormat(CPLXMLNode *coverage);
     static bool ParseGridFunction(CPLXMLNode *coverage, std::vector<int> &axisOrder);
-    int         ParseRange(CPLXMLNode *coverage, char ***metadata);
+    int         ParseRange(CPLXMLNode *coverage, const CPLString &range_subset, char ***metadata);
     CPLString   GetCoverageRequest( bool scaled,
                                     int nBufXSize, int nBufYSize,
                                     const std::vector<double> &extent,

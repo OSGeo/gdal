@@ -89,6 +89,10 @@ for my $server (sort keys %$setup) {
         test_range_subsetting($server, $version, $coverage, $options)
             if $do{test_range_subsetting} || $do{test_all};
 
+        # test dimension subsetting with 2.0.1
+        test_dimension_subsetting($server, $version, $coverage, $options)
+            if $do{test_dimension_subsetting} || $do{test_all};
+
     }
 }
 
@@ -181,6 +185,15 @@ sub get_setup {
             Coverage => 'BlueMarbleCov',
             Versions => [201]
         },
+        Rasdaman2 => {
+            URL => 'http://ows.rasdaman.org/rasdaman/ows',
+            Options => "",
+            Projwin => "-projwin 10 45 15 35",
+            Outsize => "-outsize $size 0",
+            Coverage => 'test_irr_cube_2',
+            Versions => [201],
+            Dimension => "unix(\"2008-01-05T01:58:30.000Z\")"
+        },
         ArcGIS => {
             URL => 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
             Options => [
@@ -196,6 +209,25 @@ sub get_setup {
             Versions => [100, 110, 111, 112, 201]
         }
     };
+}
+
+sub test_dimension_subsetting {
+    my ($server, $version, $coverage, $options) = @_;
+    return unless $setup->{$server}->{Dimension};
+    return unless $version eq '2.0.1';
+    my $o = "$options -srcwin 0 0 2 2";
+    if ($first_call) {
+        $o .= " -oo CLEAR_CACHE";
+        $first_call = 0;
+    }
+    my $url = $setup->{$server}->{URL};
+    $url .= "?version=$version&coverage=$coverage";
+    $url .= "&subset=$setup->{$server}->{Dimension}";
+    my $result = 'x.tiff';
+    my $cmd = "gdal_translate $o \"WCS:$url\" $result 2>&1";
+    say $cmd if $do{say};
+    my $output = `$cmd`;
+    say $output if $do{say_all};
 }
 
 sub test_range_subsetting {

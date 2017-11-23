@@ -37,6 +37,8 @@ namespace WCSUtils {
 
 void Swap(double &a, double &b);
 
+int CompareNumbers(const CPLString &a, const CPLString &b);
+
 CPLString URLEncode(CPLString str);
 
 CPLString URLRemoveKey(const char *url, const CPLString &key);
