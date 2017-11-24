@@ -180,6 +180,11 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     vsi_l_offset nTileOffset =
         poGDS->GetFileOffset( poGDS->paiTiles[2 * nTile] );
 
+    if( nTileOffset == 0 )
+    {
+        return CE_None;
+    }
+
     if( VSIFSeekL( poGDS->fp, nTileOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
