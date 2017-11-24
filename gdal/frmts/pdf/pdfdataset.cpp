@@ -6008,6 +6008,29 @@ int PDFDataset::ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMe
 
         GDALPDFDictionary* poVPEltDict = poVPElt->GetDictionary();
 
+        GDALPDFObject* poMeasure = poVPEltDict->Get("Measure");
+        if( poMeasure == NULL ||
+            poMeasure->GetType() != PDFObjectType_Dictionary )
+        {
+            continue;
+        }
+/* -------------------------------------------------------------------- */
+/*      Extract Subtype attribute                                       */
+/* -------------------------------------------------------------------- */
+        GDALPDFDictionary* poMeasureDict = poMeasure->GetDictionary();
+        GDALPDFObject* poSubtype = poMeasureDict->Get("Subtype");
+        if( poSubtype == NULL ||
+            poSubtype->GetType() != PDFObjectType_Name )
+        {
+            continue;
+        }
+
+        CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
+        if( !EQUAL(poSubtype->GetName(), "GEO") )
+        {
+            continue;
+        }
+
         GDALPDFObject* poBBox = poVPEltDict->Get("BBox");
         if( poBBox == NULL ||
             poBBox->GetType() != PDFObjectType_Array )
@@ -6125,6 +6148,8 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
     }
 
     CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
+    if( !EQUAL(poSubtype->GetName(), "GEO") )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Extract Bounds attribute (optional)                             */
