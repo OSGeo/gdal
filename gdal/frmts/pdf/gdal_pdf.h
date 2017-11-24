@@ -321,7 +321,8 @@ private:
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
                                                              GDALPDFObject* poResources,
-                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer);
+                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
+                                                             OGRPDFLayer* poSingleLayer);
     void                ExploreContentsNonStructured(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     int                 UnstackTokens(const char* pszToken,

@@ -410,7 +410,10 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y,
                                             double& X, double &Y)
 {
     x = x / dfPageWidth * nRasterXSize;
-    y = (1 - y / dfPageHeight) * nRasterYSize;
+    if( bGeoTransformValid )
+        y = (1 - y / dfPageHeight) * nRasterYSize;
+    else
+        y = (y / dfPageHeight) * nRasterYSize;
 
     X = adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2];
     Y = adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5];
@@ -1533,8 +1536,9 @@ void PDFDataset::ExploreContents(GDALPDFObject* poObj,
 /************************************************************************/
 
 void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
-                                                            GDALPDFObject* poResources,
-                                                            std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer)
+                                                      GDALPDFObject* poResources,
+                                                      std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
+                                                      OGRPDFLayer* poSingleLayer)
 {
     if (poContents->GetType() == PDFObjectType_Array)
     {
@@ -1565,7 +1569,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
             CPLFree(pszStr);
         }
         if( pszConcatStr )
-            ParseContent(pszConcatStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
+            ParseContent(pszConcatStr, poResources, FALSE, FALSE, oMapPropertyToLayer, poSingleLayer);
         CPLFree(pszConcatStr);
         return;
     }
@@ -1580,7 +1584,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
     char* pszStr = poStream->GetBytes();
     if( !pszStr )
         return;
-    ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
+    ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer, poSingleLayer);
     CPLFree(pszStr);
 }
 
@@ -1666,12 +1670,29 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
         }
     }
 
+    OGRPDFLayer* poSingleLayer = NULL;
     if( nLayers == 0 )
-        return;
+    {
+        if( CPLTestBool(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) )
+        {
+            OGRPDFLayer *poLayer =
+                new OGRPDFLayer(this, "content", NULL, wkbUnknown);
+            papoLayers = (OGRLayer**)
+                CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+            papoLayers[nLayers] = poLayer;
+            nLayers ++;
+            poSingleLayer = poLayer;
+        }
+        else
+        {
+            return;
+        }
+    }
 
     ExploreContentsNonStructuredInternal(poContents,
                                          poResources,
-                                         oMapPropertyToLayer);
+                                         oMapPropertyToLayer,
+                                         poSingleLayer);
 
     /* Remove empty layers */
     int i = 0;

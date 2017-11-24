@@ -216,6 +216,34 @@ def ogr_pdf_4_podofo():
         return 'skip'
 
 ###############################################################################
+# Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
+
+def ogr_pdf_5():
+
+    if ogr.GetDriverByName('PDF') is None:
+        return 'skip'
+
+    # Check read support
+    gdal_pdf_drv = gdal.GetDriverByName('PDF')
+    md = gdal_pdf_drv.GetMetadata()
+    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
+        return 'skip'
+
+    with gdaltest.config_option('OGR_PDF_READ_NON_STRUCTURED', 'YES'):
+        ds = ogr.Open('data/drawing.pdf')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Note: the circle is wrongly drawned as a diamond
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 8:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test read support with a non-OGR datasource
 
 def ogr_pdf_online_1():
@@ -297,6 +325,7 @@ gdaltest_list = [
     ogr_pdf_3,
     ogr_pdf_4,
     ogr_pdf_4_podofo,
+    ogr_pdf_5,
     ogr_pdf_online_1,
     ogr_pdf_cleanup
 ]
