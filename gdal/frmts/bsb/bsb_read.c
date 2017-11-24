@@ -498,8 +498,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
         /* that last row (the end of line psInfo->nYSize - 1 is the start */
         /* of the index table), so we can decrement psInfo->nYSize. */
         if( nOffsetIndexTable <= 0 ||
-            psInfo->nYSize - 1 > INT_MAX / 4 ||
-            4 * (psInfo->nYSize - 1) > INT_MAX - nOffsetIndexTable )
+            psInfo->nYSize > INT_MAX / 4 ||
+            4 * psInfo->nYSize > INT_MAX - nOffsetIndexTable )
         {
             /* int32 overflow */
             BSBClose( psInfo );
