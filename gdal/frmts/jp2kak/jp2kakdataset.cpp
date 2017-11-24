@@ -1884,9 +1884,10 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                 {
                     kdu_sample16 *dest = lines[c].get_buf16();
                     kdu_byte *sp = pabyBuffer;
+                    const kdu_int16 nOffset = 1 << (nBits - 1);
 
                     for( int n = nXSize; n > 0; n--, dest++, sp++ )
-                        dest->ival = ((kdu_int16)(*sp)) - 128;
+                        dest->ival = ((kdu_int16)(*sp)) - nOffset;
                 }
                 else if( bReversible && eType == GDT_Int16 )
                 {
@@ -1902,9 +1903,10 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                     // GDT_UInt16 reversible compression.
                     kdu_sample32 *dest = lines[c].get_buf32();
                     GUInt16 *sp = reinterpret_cast<GUInt16 *>(pabyBuffer);
+                    const kdu_int32 nOffset = 1 << (nBits - 1);
 
                     for( int n=nXSize; n > 0; n--, dest++, sp++ )
-                        dest->ival = static_cast<kdu_int32>(*sp) - 32768;
+                        dest->ival = static_cast<kdu_int32>(*sp) - nOffset;
                 }
                 else if( eType == GDT_Byte )
                 {
