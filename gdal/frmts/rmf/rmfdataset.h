@@ -158,12 +158,15 @@ class RMFDataset : public GDALDataset
     static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
     int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
 
+    std::vector<GDALDataset*>   poOvrDatasets;
+
   public:
                 RMFDataset();
         virtual ~RMFDataset();
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
     static GDALDataset  *Open( GDALOpenInfo * );
+    static GDALDataset  *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
     virtual void        FlushCache() override;
@@ -175,6 +178,7 @@ class RMFDataset : public GDALDataset
 
     vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
     GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
+    bool                OpenOverviews( RMFDataset* poParentDS, GDALOpenInfo* );
 };
 
 /************************************************************************/
@@ -209,4 +213,6 @@ class RMFRasterBand : public GDALRasterBand
     virtual GDALColorTable  *GetColorTable() override;
     virtual CPLErr          SetUnitType( const char * ) override;
     virtual CPLErr          SetColorTable( GDALColorTable * ) override;
+    virtual int             GetOverviewCount() override;
+    virtual GDALRasterBand* GetOverview( int i ) override;
 };
