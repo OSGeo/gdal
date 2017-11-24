@@ -73,7 +73,7 @@ g2int simunpack(unsigned char *cpack,g2int cpack_length,g2int *idrstmpl,g2int nd
       }
       else {
          for (j=0;j<ndpts;j++) {
-           fld[j]=ref;
+           fld[j]=ref * dscale;
          }
       }
 

@@ -145,6 +145,13 @@ void pngpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
 
       }
       else {
+        /* Force E and D to 0 to avoid compatibility issues */
+        idrstmpl[1]=0;
+        idrstmpl[2]=0;
+        if( dscale != 1.0 )
+        {
+          rmin = (float)floor(rmin * dscale) / dscale;
+        }
         nbits=0;
         *lcpack=0;
       }

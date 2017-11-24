@@ -40,15 +40,14 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
 
       g2int  *ifld;
       g2int  j,nbits,iret = 0,width,height;
-      g2float  refD, refV,bscale,dscale;
+      g2float  refD, refV,bscale,dscale, bdscale;
       unsigned char *ctemp;
 
       rdieee(idrstmpl+0,&refV,1);
       bscale = (g2float)int_power(2.0,idrstmpl[1]);
       dscale = (g2float)int_power(10.0,-idrstmpl[2]);
-      bscale *= dscale;
-      refV *= dscale;
-      refD = refV;
+      bdscale = bscale * dscale;
+      refD = refV * dscale;
 
       nbits = idrstmpl[3];
 //
@@ -75,7 +74,7 @@ g2int pngunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
          iret=(g2int)dec_png(cpack,len,&width,&height,ctemp, ndpts, nbits);
          gbits(ctemp,ndpts*nbytes,ifld,0,nbits,0,ndpts);
          for (j=0;j<ndpts;j++) {
-            fld[j] = refD + bscale*(g2float)(ifld[j]);
+            fld[j] = refD + bdscale*(g2float)(ifld[j]);
          }
          free(ctemp);
          free(ifld);
