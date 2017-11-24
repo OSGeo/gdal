@@ -108,7 +108,8 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //  value (rmin) is the value for each point in the field and
 //  set nbits to 0.
 //
-      if ( rmax_dscaled - rmin_dscaled >= 1 ) {
+      if ( (rmax_dscaled - rmin_dscaled >= 1) ||
+           (rmin != rmax && nbits!=0 && idrstmpl[1]==0) ) {
         int done = 0;
         //
         //  Determine which algorithm to use based on user-supplied
@@ -129,7 +130,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            }
            else
            {
-                temp=(float)(log(rmax_dscaled - rmin_dscaled + 1)/alog2);
+                temp=(float)(log(ceil(rmax_dscaled - rmin_dscaled))/alog2);
                 nbits=(g2int)ceil(temp);
                 //   scale data
                 if( nbits > 31 )
@@ -152,7 +153,7 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            //  adjust binary scaling factor to accommodate data.
            //
            maxnum=int_power(2.0,nbits)-1;
-           temp=(float)(log(maxnum/(rmax_dscaled-rmin_dscaled + 1))/alog2);
+           temp=(float)(log(maxnum/(rmax_dscaled-rmin_dscaled))/alog2);
            idrstmpl[1]=(g2int)ceil(-1.0*temp);
            bscale=(float)int_power(2.0,-idrstmpl[1]);
            //   scale data
