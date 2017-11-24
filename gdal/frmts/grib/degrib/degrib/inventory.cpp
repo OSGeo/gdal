@@ -800,7 +800,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       scale = (u_scale & 0x80) ? -(u_scale & 0x7f) : u_scale;
       unsigned int u_value;
       MEMCPY_BIG (&u_value, *buffer + nOffset + 25 - 5, sizeof (u_value));
-      value = (u_value & 0x80000000U) ? -(u_value & 0x7fffffff) : u_value;
+      value = (u_value & 0x80000000U) ? -static_cast<int>(u_value & 0x7fffffff) : static_cast<int>(u_value);
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (fstSurfType == GRIB2MISSING_u1)) {
          fstSurfValue = 0;
@@ -813,7 +813,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
       u_scale = ((unsigned char*)(*buffer))[nOffset + 30 - 5];
       scale = (u_scale & 0x80) ? -(u_scale & 0x7f) : u_scale;
       MEMCPY_BIG (&u_value, *buffer + nOffset + 31 - 5, sizeof (u_value));
-      value = (u_value & 0x80000000U) ? -(u_value & 0x7fffffff) : u_value;
+      value = (u_value & 0x80000000U) ? -static_cast<int>(u_value & 0x7fffffff) : static_cast<int>(u_value);
       if ((value == GRIB2MISSING_s4) || (scale == GRIB2MISSING_s1) ||
           (sndSurfType == GRIB2MISSING_u1)) {
          sndSurfValue = 0;
