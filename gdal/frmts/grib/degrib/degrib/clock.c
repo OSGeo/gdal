@@ -2461,7 +2461,10 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    int i;
 
    if( !(fabs(refTime) < (double)SEC_DAY * 365 * 10000) )
+   {
+       fprintf(stderr, "invalid refTime = %f\n", refTime);
        return 0;
+   }
 
    totDay = (sInt4) floor (refTime / SEC_DAY);
    Clock_Epoch2YearDay (totDay, &day, &year);
@@ -2471,6 +2474,16 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
 
    /* Add the month */
    if (incrMonth != 0) {
+      if( incrMonth > 0 && month > INT_MAX - incrMonth )
+      {
+          fprintf(stderr, "invalid incrMonth = %d\n", incrMonth);
+          return 0;
+      }
+      if( incrMonth < 0 && month < INT_MIN - incrMonth )
+      {
+          fprintf(stderr, "invalid incrMonth = %d\n", incrMonth);
+          return 0;
+      }
       month += incrMonth;
       while (month > 12) {
          year++;
