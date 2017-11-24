@@ -191,14 +191,16 @@ void GRIBRasterBand::FindPDSTemplate()
 
             CPLString osIDS;
             osIDS += "CENTER=";
-            int nCenter = pabyBody[6-1] * 256 + pabyBody[7-1];
+            unsigned short nCenter = static_cast<unsigned short>(
+                                        pabyBody[6-1] * 256 + pabyBody[7-1]);
             osIDS += CPLSPrintf("%d", nCenter);
             const char* pszCenter = centerLookup(nCenter);
             if( pszCenter )
                 osIDS += CPLString("(")+pszCenter+")";
             osIDS += " ";
             osIDS += "SUBCENTER=";
-            int nSubCenter = pabyBody[8-1] * 256 + pabyBody[9-1];
+            unsigned short nSubCenter = static_cast<unsigned short>(
+                                        pabyBody[8-1] * 256 + pabyBody[9-1]);
             osIDS += CPLSPrintf("%d", nSubCenter);
             const char* pszSubCenter = subCenterLookup(nCenter, nSubCenter);
             if( pszSubCenter )
