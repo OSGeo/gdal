@@ -176,14 +176,21 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
     request = CPLURLAddKVP(request, "SERVICE", "WCS");
     request += CPLString().Printf(
         "&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
-        "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s%s",
+        "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s",
         CPLGetXMLValue( psService, "Version", "" ),
         osCoverage.c_str(),
         osFormat.c_str(),
         bbox_0, bbox_1, bbox_2, bbox_3,
         osCRS.c_str(),
-        osRangeSubset.c_str(),
-        CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
+        osRangeSubset.c_str() );
+    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     double
         origin_1 = extent[0], // min X
         origin_2 = extent[3], // max Y

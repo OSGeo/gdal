@@ -109,11 +109,18 @@ CPLString WCSDataset100::GetCoverageRequest( CPL_UNUSED bool scaled,
     request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "1.0.0" ));
     request = CPLURLAddKVP(request, "COVERAGE", osCoverage.c_str());
     request = CPLURLAddKVP(request, "FORMAT", osFormat.c_str());
-    request += CPLString().Printf("&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
+    request += CPLString().Printf("&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
                                   extent[0], extent[1], extent[2], extent[3],
                                   nBufXSize, nBufYSize,
-                                  osCRS.c_str(),
-                                  CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
+                                  osCRS.c_str() );
+    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
 
     CPLString interpolation = CPLGetXMLValue( psService, "Interpolation", "" );
     if (interpolation == "") {

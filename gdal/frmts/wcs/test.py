@@ -35,6 +35,10 @@
 # test setting and unsetting options
 
 import sys
+import numbers
+import collections
+import re
+
 sys.path.insert(0,'../../../autotest/pymod/')
 cache = 'CACHE=wcs_cache'
 
@@ -47,7 +51,7 @@ except:
 import urlparse
 
 from osgeo import gdal
-    
+
 import webserver
 
 do_log = False
@@ -59,16 +63,10 @@ content = f.read()
 f.close()
 i = 1
 for line in content.splitlines():
-    if i == 1:
-        key = line
-    elif i == 3:
-        urls[key] = line
-    i += 1
-    if i == 4:
-        i = 1
+    items = line.split()
+    urls[items[0]] = {}
+    urls[items[0]][items[1]] = items[2]
 
-scaled = False
-        
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
@@ -79,10 +77,10 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', type)
         self.end_headers()
 
-    def Respond(self, request, brand, version):
+    def Respond(self, request, brand, version, test):
         try:
             fname = 'responses/'
-            if request == 'GetCoverage' and scaled:
+            if request == 'GetCoverage' and test == "scaled":
                 suffix = '.tiff'
                 fname += brand + '-' + version + '-scaled' + suffix
             elif request == 'GetCoverage':
@@ -91,6 +89,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             else:
                 suffix = '.xml'
                 fname += request + '-' + brand + '-' + version + suffix
+            #print 'test '+test+' return '+fname
             f = open(fname, 'rb')
             content = f.read()
             f.close()
@@ -100,6 +99,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
+        #print self.path
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -112,113 +112,191 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         server = query2['server'][0]
         version = query2['version'][0]
         request = query2['request'][0]
-        if scaled:
-            tmp, have = self.path.split('SERVICE=WCS')
-            sys.stdout.write('test ' + server + ' WCS ' + version + ' ')
+        test = ''
+        if 'test' in query2:
+            test = query2['test'][0]
+        if test == "scaled":
+            tmp, got = self.path.split('SERVICE=WCS')
+            got = re.sub('\&test=.*', '', got)
             key = server + '-' + version
-            tmp, should_be = urls[key].split('SERVICE=WCS')
-            if have == should_be:
-                test = 'ok'
+            tmp, should_be = urls[key][test].split('SERVICE=WCS')
+            if got == should_be:
+                ok = 'ok'
             else:
-                test = "not ok\n" + have + "\n" + should_be
-            print(test)
-        self.Respond(request, server, version)
+                ok = "not ok\ngot:  " + got + "\nhave: " + should_be
+            print('test ' + server + ' WCS ' + version + ' '+ok)
+        self.Respond(request, server, version, test)
         return
 
+port = 8080
+
 if len(sys.argv) > 1 and sys.argv[1] == "server":
-    port = 8080
     server = HTTPServer(('', port), WCSHTTPHandler)
     try:
         print "Starting server"
-        server.serve_forever()    
+        server.serve_forever()
     except KeyboardInterrupt:
         print "Closing server"
         server.server_close()
     sys.exit(0)
 
-
-(process, port) = webserver.launch(handler = WCSHTTPHandler)
-
 url = "http://127.0.0.1:" + str(port)
 first_call = True
-try:
-    servers = ['MapServer', 'GeoServer', 'Rasdaman', 'ArcGIS']
-    versions = ['1.0.0', '1.1.0', '1.1.1', '1.1.2', '2.0.1']
-    for server in servers:
-        for version in versions:
-            if server == 'GeoServer' and version == '1.1.2':
-                continue
-            if server == 'Rasdaman' and version != '2.0.1':
-                continue
-            if version == '1.0.0':
-                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '2'}
-                server_options = {'MapServer': ['OriginAtBoundary'],
-                                  'GeoServer': [],
-                                  'ArcGIS': []}
-            elif version == '1.1.0':
-                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '2'}
-                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
-                                  'GeoServer': ['GridCRS', 'OuterExtents', 'BufSizeAdjust=0.5', 'NoGridAxisSwap'],
-                                  'ArcGIS': ['NrOffsets=2']}
-            elif version == '1.1.1':
-                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'GeoServer': 'smartsea:eusm2016-EPSG2393',
-                            'ArcGIS': '2'}
-                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
-                                  'GeoServer': ['GridCRS', 'OuterExtents', 'BufSizeAdjust=0.5', 'NoGridAxisSwap'],
-                                  'ArcGIS': ['NrOffsets=2']}
-            elif version == '1.1.2':
-                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'ArcGIS': '2'}
-                server_options = {'MapServer': ['OffsetsPositive', 'NrOffsets=2', 'NoGridAxisSwap'],
-                                  'ArcGIS': ['NrOffsets=2']}
-            elif version == '2.0.1':
-                coverage = {'MapServer': 'BGS_EMODNET_CentralMed-MCol',
-                            'GeoServer': 'smartsea__eusm2016-EPSG2393',
-                            'Rasdaman': 'BlueMarbleCov',
-                            'ArcGIS': 'Coverage2'}
-                server_options = {'MapServer': ['GridAxisLabelSwap'],
-                                  'GeoServer': ['NoGridAxisSwap', 'SubsetAxisSwap'],
-                                  'Rasdaman': [],
-                                  'ArcGIS': ['UseScaleFactor']}
+size = 60
+
+def test():
+    try:
+        setup = setupFct()
+        servers = []
+        for server in setup:
+            servers.append(server)
+        for server in sorted(servers):
+            #if server != "Rasdaman2":
+            #    continue
+            #print "** SERVER: "+server
+            i = 0
+            for v in setup[server]['Versions']:
+                version = str(int(v / 100)) + '.' + str(int(v % 100 / 10)) + '.' + str((v % 10))
+                options = [cache]
+                global first_call
+                if first_call:
+                    options.append('CLEAR_CACHE')
+                    first_call = False
+                # get capabilities
+                query = '&version=' + version
+                options.append('GetCapabilitiesExtra=server=' + server)
+                ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
+                                 open_options = options)
+
+                coverage = setup[server]['Coverage']
+                if isinstance(coverage, list):
+                    coverage = coverage[i]
+                if isinstance(coverage, numbers.Number):
+                    coverage = str(coverage)
+                query += '&coverage=' + coverage
+
+                options = [cache]
+                if isinstance(setup[server]['Options'], list):
+                    oo = setup[server]['Options'][i]
+                else:
+                    oo = setup[server]['Options']
+                oo = oo.split();
+                for o in oo:
+                    if o != '-oo':
+                        options.append(o)
+                options.append('DescribeCoverageExtra=server=' + server)
+                options.append('GetCoverageExtra=test=none&server=' + server)
                 
-            projwin = {'MapServer': [10, 45, 15, 35],
-                       'GeoServer': [3200000, 6670000, 3280000, 6620000],
-                       'ArcGIS': [181000, 7005000, 200000, 6980000],
-                       'Rasdaman': [10, 45, 15, 35]}
-            
-            options = [cache]
-            if first_call:
-                options.append('CLEAR_CACHE')
-                first_call = False
+                ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
+                                 open_options = options)
 
-            scaled = False
-            # get capabilities
-            query = 'server=' + server
-            query += '&version=' + version                     
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
-            
-            options = [cache]
-            options += server_options[server]
-            query += '&coverage=' + coverage[server]
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
-            # delete ds
-            ds = 0
+                # delete ds
+                ds = 0
+                options = [cache]
+                options.append('GetCoverageExtra=test=scaled&server=' + server)
+                ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
+                                 open_options = options)
+                projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
+                ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size)
+                i = i + 1
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        webserver.server_stop(process, port)
+        sys.exit(0)
 
-            scaled = True
-            options = [cache]
-            ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
-                             open_options = options)
-            ds = gdal.Translate('output.tif', ds, projWin = projwin[server], width = 60)
-except:
-    print "Unexpected error:", sys.exc_info()[0]
-    webserver.server_stop(process, port)
-    sys.exit(0)
+def setupFct():
+    return {
+        'SimpleGeoServer' : {
+            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options' : [
+                "",
+                "-oo OuterExtents",
+                "-oo OuterExtents",
+                ""
+                ],
+            'Projwin' : "-projwin 145300 6737500 209680 6688700",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : [
+                'smartsea:eusm2016', 'smartsea:eusm2016',
+                'smartsea:eusm2016', 'smartsea__eusm2016'],
+            'Versions' : [100, 110, 111, 201],
+        },
+        'GeoServer2' : {
+            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options' : [
+                "",
+                "-oo OuterExtents -oo NoGridAxisSwap",
+                "-oo OuterExtents -oo NoGridAxisSwap",
+                "-oo NoGridAxisSwap -oo SubsetAxisSwap"
+                ],
+            'Projwin' : "-projwin 145300 6737500 209680 6688700",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : ['smartsea:south', 'smartsea:south', 'smartsea:south', 'smartsea__south'],
+            'Versions' : [100, 110, 111, 201],
+            'Range' : ['GREEN_BAND', 'BLUE_BAND']
+        },
+        'GeoServer' : {
+            'URL' : 'https://msp.smartsea.fmi.fi/geoserver/wcs',
+            'Options' : [
+                "",
+                "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
+                "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
+                "-oo NoGridAxisSwap -oo SubsetAxisSwap",
+                ],
+            'Projwin' : "-projwin 3200000 6670000 3280000 6620000",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : [
+                'smartsea:eusm2016-EPSG2393', 'smartsea:eusm2016-EPSG2393',
+                'smartsea:eusm2016-EPSG2393', 'smartsea__eusm2016-EPSG2393'],
+            'Versions' : [100, 110, 111, 201]
+        },
+        'MapServer' : {
+            'URL' : 'http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows',
+            'Options' : [
+                "-oo INTERLEAVE=PIXEL -oo OriginAtBoundary -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo OriginAtBoundary",
+                ],
+            'Projwin' : "-projwin 10 45 15 35",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : 'BGS_EMODNET_CentralMed-MCol',
+            'Versions' : [100, 110, 111, 112, 201]
+        },
+        'Rasdaman' : {
+            'URL' : 'http://ows.rasdaman.org/rasdaman/ows',
+            'Options' : "",
+            'Projwin' : "-projwin 10 45 15 35",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : 'BlueMarbleCov',
+            'Versions' : [201]
+        },
+        'Rasdaman2' : {
+            'URL' : 'http://ows.rasdaman.org/rasdaman/ows',
+            'Options' : '-oo subset=unix("2008-01-05T01:58:30.000Z")',
+            'Projwin' : "-projwin 100000 5400000 150000 5100000",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : 'test_irr_cube_2',
+            'Versions' : [201],
+            'Dimension' : "unix(\"2008-01-05T01:58:30.000Z\")"
+        },
+        'ArcGIS' : {
+            'URL' : 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
+            'Options' : [
+                "",
+                "-oo NrOffsets=2",
+                "-oo NrOffsets=2",
+                "-oo NrOffsets=2",
+                "-oo UseScaleFactor"
+                ],
+            'Projwin' : "-projwin 181000 7005000 200000 6980000",
+            'Outsize' : "-outsize $size 0",
+            'Coverage' : [2, 2, 2, 2, 'Coverage2'],
+            'Versions' : [100, 110, 111, 112, 201]
+        }
+    }
 
+(process, port) = webserver.launch(handler = WCSHTTPHandler)
+test()
 webserver.server_stop(process, port)

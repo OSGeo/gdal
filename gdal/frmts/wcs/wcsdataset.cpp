@@ -374,7 +374,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
     CPLString osRequest = GetCoverageRequest(scaled, nBufXSize, nBufYSize,
                                              extent, osBandList);
     // for the test setup we need the actual URLs this driver generates
-    fprintf(stdout, "URL=%s\n", osRequest.c_str());
+    // fprintf(stdout, "URL=%s\n", osRequest.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
@@ -1111,7 +1111,7 @@ static CPLXMLNode *CreateService(const CPLString &base_url,
 
 #define WCS_SERVICE_OPTIONS "PreferredFormat", "NoDataValue",           \
         "BlockXSize", "BlockYSize", "OverviewCount",                    \
-        "GetCoverageExtra", "DescribeCoverageExtra"                     \
+        "GetCoverageExtra", "DescribeCoverageExtra",                    \
         "Domain", "BandCount", "BandType", "DefaultTime", "CRS"
 
 #define WCS_TWEAK_OPTIONS "OriginAtBoundary", "OuterExtents", "BufSizeAdjust", \
