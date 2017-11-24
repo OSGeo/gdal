@@ -33,6 +33,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
+import gdal
 
 ###############################################################################
 # Perform simple read tests.
@@ -109,6 +110,42 @@ def rmf_10():
     return tst.testOpen()
 
 ###############################################################################
+# Overviews
+
+def rmf_11():
+
+    test_fn = '/vsigzip/data/overviews.rsw.gz'
+    src_ds = gdal.Open(test_fn)
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    band1 = src_ds.GetRasterBand(1)
+
+    if band1.GetOverviewCount() != 3:
+        gdaltest.post_reason( 'overviews is missing' )
+        return 'fail'
+
+    ovr_n = ( 0, 1, 2 )
+    ovr_size = ( 16, 64, 256 )
+    ovr_checksum = ( 3192, 51233, 32756 )
+
+    for i in ovr_n:
+        ovr_band = band1.GetOverview(i)
+        if ovr_band.XSize != ovr_size[i] or ovr_band.YSize != ovr_size[i]:
+            msg = 'overview wrong size: overview %d, size = %d * %d,' % (i, ovr_band.XSize, ovr_band.YSize)
+            gdaltest.post_reason( msg )
+            return 'fail'
+
+        if ovr_band.Checksum() != ovr_checksum[i]:
+            msg = 'overview wrong checkum: overview %d, checksum = %d,' % (i, ovr_band.Checksum())
+            gdaltest.post_reason( msg )
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -120,7 +157,8 @@ gdaltest_list = [
     rmf_7,
     rmf_8,
     rmf_9,
-    rmf_10
+    rmf_10,
+    rmf_11
 ]
 
 if __name__ == '__main__':
