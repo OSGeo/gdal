@@ -41,7 +41,6 @@ sys.path.append( '../osr' )
 import gdaltest
 
 def has_jp2kdrv():
-    jp2drv_found = False
     for i in range(gdal.GetDriverCount()):
         if gdal.GetDriver(i).ShortName.startswith('JP2'):
             return True
