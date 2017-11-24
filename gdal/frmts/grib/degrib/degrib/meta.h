@@ -523,7 +523,7 @@ typedef struct {
    double majEarth, minEarth; /* semi major and minor axis of earth in km. */
 } gdsType2;
 
-enum { GS5_SIMPLE = 0, GS5_CMPLX = 2, GS5_CMPLXSEC = 3, GS5_JPEG2000 = 40,
+enum { GS5_SIMPLE = 0, GS5_CMPLX = 2, GS5_CMPLXSEC = 3, GS5_IEEE = 4, GS5_JPEG2000 = 40,
        GS5_PNG = 41, GS5_SPECTRAL = 50, GS5_HARMONIC = 51,
        GS5_JPEG2000_ORG = 40000, GS5_PNG_ORG = 40010
 };

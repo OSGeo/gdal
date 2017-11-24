@@ -2054,7 +2054,8 @@ static int ParseSect5 (sInt4 *is5, sInt4 ns5, grib_MetaData *meta,
       return -2;
    }
    if ((is5[9] != GS5_SIMPLE) && (is5[9] != GS5_CMPLX) &&
-       (is5[9] != GS5_CMPLXSEC) && (is5[9] != GS5_SPECTRAL) &&
+       (is5[9] != GS5_CMPLXSEC) && (is5[9] != GS5_IEEE) &&
+       (is5[9] != GS5_SPECTRAL) &&
        (is5[9] != GS5_HARMONIC) && (is5[9] != GS5_JPEG2000) &&
        (is5[9] != GS5_PNG) && (is5[9] != GS5_JPEG2000_ORG) &&
        (is5[9] != GS5_PNG_ORG)) {
@@ -2065,7 +2066,7 @@ static int ParseSect5 (sInt4 *is5, sInt4 ns5, grib_MetaData *meta,
    meta->gridAttrib.f_maxmin = 0;
    meta->gridAttrib.missPri = xmissp;
    meta->gridAttrib.missSec = xmisss;
-   if ((is5[9] == GS5_SPECTRAL) || (is5[9] == GS5_HARMONIC)) {
+   if ( (is5[9] == GS5_IEEE) || (is5[9] == GS5_SPECTRAL) || (is5[9] == GS5_HARMONIC)) {
       meta->gridAttrib.fieldType = 0;
       meta->gridAttrib.f_miss = 0;
       return 0;
@@ -2078,24 +2079,25 @@ static int ParseSect5 (sInt4 *is5, sInt4 ns5, grib_MetaData *meta,
    meta->gridAttrib.ESF = is5[15];
    meta->gridAttrib.DSF = is5[17];
    meta->gridAttrib.fieldType = (uChar) is5[20];
-   if ((is5[9] == GS5_JPEG2000) || (is5[9] == GS5_JPEG2000_ORG) ||
+   if ((is5[9] == GS5_SIMPLE) ||
+       (is5[9] == GS5_JPEG2000) || (is5[9] == GS5_JPEG2000_ORG) ||
        (is5[9] == GS5_PNG) || (is5[9] == GS5_PNG_ORG)) {
       meta->gridAttrib.f_miss = 0;
       return 0;
    }
-   if (meta->gridAttrib.packType == 0) {
-      meta->gridAttrib.f_miss = 0;
-   } else {
-      if (ns5 < 23) {
-         return -1;
-      }
-      if (is5[22] > 2) {
-         errSprintf ("Invalid missing management type, f_miss = %ld\n",
-                     is5[22]);
-         return -2;
-      }
-      meta->gridAttrib.f_miss = (uChar) is5[22];
+
+   myAssert( (is5[9] == GS5_CMPLX) || (is5[9] == GS5_CMPLXSEC) );
+
+   if (ns5 < 23) {
+       return -1;
    }
+   if (is5[22] > 2) {
+       errSprintf ("Invalid missing management type, f_miss = %ld\n",
+                   is5[22]);
+       return -2;
+   }
+   meta->gridAttrib.f_miss = (uChar) is5[22];
+
    return 0;
 }
 
