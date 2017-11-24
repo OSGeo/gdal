@@ -40,6 +40,13 @@ sys.path.append( '../osr' )
 
 import gdaltest
 
+def has_jp2kdrv():
+    jp2drv_found = False
+    for i in range(gdal.GetDriverCount()):
+        if gdal.GetDriver(i).ShortName.startswith('JP2'):
+            return True
+    return False
+
 ###############################################################################
 # Do a simple checksum on our test file (with a faked imagery.tif).
 
@@ -372,12 +379,7 @@ def grib_grib2_read_template_4_40():
         return 'skip'
 
     # We could use some other encoding that JP2K...
-    jp2drv_found = False
-    for i in range(gdal.GetDriverCount()):
-        if gdal.GetDriver(i).ShortName.startswith('JP2'):
-            jp2drv_found = True
-            break
-    if not jp2drv_found:
+    if not has_jp2kdrv():
         return 'skip'
 
     # First band extracted from https://download.regional.atmosphere.copernicus.eu/services/CAMS50?token=__M0bChV6QsoOFqHz31VRqnpr4GhWPtcpaRy3oeZjBNSg__&grid=0.1&model=ENSEMBLE&package=ANALYSIS_PM10_SURFACE&time=-24H-1H&referencetime=2017-09-12T00:00:00Z&format=GRIB2&licence=yes
@@ -589,18 +591,46 @@ def grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
     return 'success'
 
 ###############################################################################
+# Test reading GRIB2 with NBITS=0 and DECIMAL_SCALE !=0
+
+def grib_grib2_read_section_5_nbits_zero_decimal_scaled():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/simple_packing_nbits_zero_decimal_scaled.grb2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 5:
+        gdaltest.post_reason('Did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    if gdal.GetDriverByName('PNG') is not None:
+        ds = gdal.Open('data/png_nbits_zero_decimal_scaled.grb2')
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 5:
+            gdaltest.post_reason('Did not get expected checksum')
+            print(cs)
+            return 'fail'
+
+    if has_jp2kdrv():
+        ds = gdal.Open('data/jpeg2000_nbits_zero_decimal_scaled.grb2')
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 5:
+            gdaltest.post_reason('Did not get expected checksum')
+            print(cs)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 def grib_online_grib2_jpeg2000_single_line():
 
     if gdaltest.grib_drv is None:
         return 'skip'
 
-    jp2drv_found = False
-    for i in range(gdal.GetDriverCount()):
-        if gdal.GetDriver(i).ShortName.startswith('JP2'):
-            jp2drv_found = True
-            break
-    if not jp2drv_found:
+    if not has_jp2kdrv():
         return 'skip'
 
     filename = 'CMC_hrdps_continental_PRATE_SFC_0_ps2.5km_2017111712_P001-00.grib2'
@@ -645,6 +675,7 @@ gdaltest_list = [
     grib_grib2_read_aea,
     grib_grib2_read_laea,
     grib_grib2_read_template_5_4_grid_point_ieee_floating_point,
+    grib_grib2_read_section_5_nbits_zero_decimal_scaled,
     grib_online_grib2_jpeg2000_single_line
     ]
 

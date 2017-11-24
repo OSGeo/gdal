@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
+#include <float.h>
 #include "grib2.h"
 
 
@@ -61,8 +63,8 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 
       const g2int zero=0;
       g2int  *ifld;
-      g2int  j,nbits,imin,imax,maxdif,nbittot,left;
-      g2float  bscale,dscale,rmax,rmin,temp;
+      g2int  j,nbits,maxdif,nbittot,left;
+      g2float  bscale,dscale,rmax,rmin,temp, ref, rmin_dscaled, rmax_dscaled;
       double maxnum;
       const g2float alog2=0.69314718f;       //  ln(2.0)
 
@@ -81,15 +83,33 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         if (fld[j] > rmax) rmax=fld[j];
         if (fld[j] < rmin) rmin=fld[j];
       }
+      if( !(floor(rmin*dscale) >= -FLT_MAX && floor(rmin*dscale) <= FLT_MAX) )
+      {
+         fprintf(stderr,
+                    "Scaled min value not representable on IEEE754 "
+                    "single precision float\n");
+        *lcpack = -1;
+        return;
+      }
+      rmin_dscaled = rmin*dscale;
+      rmax_dscaled = rmax*dscale;
 
       ifld=calloc(ndpts,sizeof(g2int));
+      if( ifld == NULL )
+      {
+          fprintf(stderr, "cannot allocated ifld in simpack()\n");
+          *lcpack = -1;
+          return;
+      }
+
 //
 //  If max and min values are not equal, pack up field.
 //  If they are equal, we have a constant field, and the reference
 //  value (rmin) is the value for each point in the field and
 //  set nbits to 0.
 //
-      if (rmin != rmax) {
+      if ( rmax_dscaled - rmin_dscaled >= 1 ) {
+        int done = 0;
         //
         //  Determine which algorithm to use based on user-supplied
         //  binary scale factor and number of bits.
@@ -99,44 +119,59 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            //  No binary scaling and calculate minimum number of
            //  bits in which the data will fit.
            //
-           imin=(g2int)RINT(rmin*dscale);
-           imax=(g2int)RINT(rmax*dscale);
-           maxdif=imax-imin;
-           temp=(float)(log((double)(maxdif+1))/alog2);
-           nbits=(g2int)ceil(temp);
-           rmin=(g2float)imin;
-           //   scale data
-           for(j=0;j<ndpts;j++)
-             ifld[j]=(g2int)RINT(fld[j]*dscale)-imin;
+           if( dscale != 1.0 )
+           {
+              rmin_dscaled = (float)floor(rmin_dscaled);
+           }
+           if( rmax_dscaled - rmin_dscaled > INT_MAX )
+           {
+                nbits = 31;
+           }
+           else
+           {
+                temp=(float)(log(rmax_dscaled - rmin_dscaled + 1)/alog2);
+                nbits=(g2int)ceil(temp);
+                //   scale data
+                if( nbits > 31 )
+                {
+                    nbits = 31;
+                }
+                else
+                {
+                    done = 1;
+                    for(j=0;j<ndpts;j++)
+                        ifld[j]=(g2int)RINT(fld[j]*dscale -rmin_dscaled);
+                    ref = rmin_dscaled;
+                }
+           }
         }
-        else if (nbits!=0 && idrstmpl[1]==0) {
+
+        if (!done && nbits!=0 && idrstmpl[1]==0) {
            //
-           //  Use minimum number of bits specified by user and
+           //  Use number of bits specified by user and
            //  adjust binary scaling factor to accommodate data.
            //
-           rmin=rmin*dscale;
-           rmax=rmax*dscale;
            maxnum=int_power(2.0,nbits)-1;
-           temp=(float)(log(maxnum/(rmax-rmin))/alog2);
+           temp=(float)(log(maxnum/(rmax_dscaled-rmin_dscaled + 1))/alog2);
            idrstmpl[1]=(g2int)ceil(-1.0*temp);
            bscale=(float)int_power(2.0,-idrstmpl[1]);
            //   scale data
            for (j=0;j<ndpts;j++)
-             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
+             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin_dscaled)*bscale);
+           ref=rmin_dscaled;
         }
         else if (nbits==0 && idrstmpl[1]!=0) {
            //
            //  Use binary scaling factor and calculate minimum number of
            //  bits in which the data will fit.
            //
-           rmin=rmin*dscale;
-           rmax=rmax*dscale;
-           maxdif=(g2int)RINT((rmax-rmin)*bscale);
+           maxdif=(g2int)RINT((rmax_dscaled-rmin_dscaled)*bscale);
            temp=(float)(log((double)(maxdif+1))/alog2);
            nbits=(g2int)ceil(temp);
            //   scale data
            for (j=0;j<ndpts;j++)
-             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
+             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin_dscaled)*bscale);
+           ref=rmin_dscaled;
         }
         else if (nbits!=0 && idrstmpl[1]!=0) {
            //
@@ -145,10 +180,10 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            //  information if binary scale factor and nbits not set
            //  properly by user.
            //
-           rmin=rmin*dscale;
            //   scale data
            for (j=0;j<ndpts;j++)
-             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin)*bscale);
+             ifld[j]=(g2int)RINT(((fld[j]*dscale)-rmin_dscaled)*bscale);
+           ref=rmin_dscaled;
         }
         //
         //  Pack data, Pad last octet with Zeros, if necessary,
@@ -164,6 +199,17 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         *lcpack=nbittot/8;
       }
       else {
+        /* Force E and D to 0 to avoid compatibility issues */
+        idrstmpl[1]=0;
+        idrstmpl[2]=0;
+        if( dscale != 1.0 )
+        {
+          ref = (float)floor(rmin * dscale) / dscale;
+        }
+        else
+        {
+          ref = rmin;
+        }
         nbits=0;
         *lcpack=0;
       }
@@ -171,8 +217,8 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
 //
 //  Fill in ref value and number of bits in Template 5.0
 //
-      //printf("SAGmkieee %f\n",rmin);
-      mkieee(&rmin,idrstmpl+0,1);   // ensure reference value is IEEE format
+      //printf("SAGmkieee %f\n",ref);
+      mkieee(&ref,idrstmpl+0,1);   // ensure reference value is IEEE format
       //printf("SAGmkieee %ld\n",idrstmpl[0]);
       idrstmpl[3]=nbits;
       idrstmpl[4]=0;         // original data were reals
