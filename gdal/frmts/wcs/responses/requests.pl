@@ -120,9 +120,9 @@ sub get_setup {
         SimpleGeoServer => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "",
-                "-oo OuterExtents",
-                "-oo OuterExtents",
+                "-oo INTERLEAVE=PIXEL ",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents",
                 ""
                 ],
             Projwin => "-projwin 145300 6737500 209680 6688700",
@@ -135,10 +135,10 @@ sub get_setup {
         GeoServer2 => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "",
-                "-oo OuterExtents -oo NoGridAxisSwap",
-                "-oo OuterExtents -oo NoGridAxisSwap",
-                "-oo NoGridAxisSwap -oo SubsetAxisSwap"
+                "-oo INTERLEAVE=PIXEL ",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents -oo NoGridAxisSwap",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents -oo NoGridAxisSwap",
+                "-oo INTERLEAVE=PIXEL -oo NoGridAxisSwap -oo SubsetAxisSwap"
                 ],
             Projwin => "-projwin 145300 6737500 209680 6688700",
             Outsize => "-outsize $size 0",
@@ -149,10 +149,10 @@ sub get_setup {
         GeoServer => {
             URL => 'https://msp.smartsea.fmi.fi/geoserver/wcs',
             Options => [
-                "",
-                "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
-                "-oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
-                "-oo NoGridAxisSwap -oo SubsetAxisSwap",
+                "-oo INTERLEAVE=PIXEL",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
+                "-oo INTERLEAVE=PIXEL -oo OuterExtents -oo BufSizeAdjust=0.5 -oo NoGridAxisSwap",
+                "-oo INTERLEAVE=PIXEL -oo NoGridAxisSwap -oo SubsetAxisSwap",
                 ],
             Projwin => "-projwin 3200000 6670000 3280000 6620000",
             Outsize => "-outsize $size 0",
@@ -195,10 +195,10 @@ sub get_setup {
         ArcGIS => {
             URL => 'http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer',
             Options => [
-                "",
-                "-oo NrOffsets=2",
-                "-oo NrOffsets=2",
-                "-oo NrOffsets=2",
+                "-oo INTERLEAVE=PIXEL ",
+                "-oo INTERLEAVE=PIXEL -oo NrOffsets=2",
+                "-oo INTERLEAVE=PIXEL -oo NrOffsets=2",
+                "-oo INTERLEAVE=PIXEL -oo NrOffsets=2",
                 "-oo UseScaleFactor"
                 ],
             Projwin => "-projwin 181000 7005000 200000 6980000",

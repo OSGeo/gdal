@@ -38,9 +38,7 @@ import sys
 import numbers
 import collections
 import re
-
-sys.path.insert(0,'../../../autotest/pymod/')
-cache = 'CACHE=wcs_cache'
+import urlparse
 
 try:
     from BaseHTTPServer import HTTPServer
@@ -48,24 +46,30 @@ try:
 except:
     from http.server import BaseHTTPRequestHandler
 
-import urlparse
-
-from osgeo import gdal
+sys.path.insert(0,'../../../autotest/pymod/')
 
 import webserver
 
-do_log = False
+from osgeo import gdal
 
-urls = {}
-fname = 'responses/urls'
-f = open(fname, 'rb')
-content = f.read()
-f.close()
-i = 1
-for line in content.splitlines():
-    items = line.split()
-    urls[items[0]] = {}
-    urls[items[0]][items[1]] = items[2]
+
+do_log = False
+cache = 'CACHE=wcs_cache'
+
+def read_urls():
+    retval = {}
+    fname = 'responses/urls'
+    f = open(fname, 'rb')
+    content = f.read()
+    f.close()
+    i = 1
+    for line in content.splitlines():
+        items = line.split()
+        retval[items[0]] = {}
+        retval[items[0]][items[1]] = items[2]
+    return retval
+
+urls = read_urls()
 
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
@@ -151,19 +155,23 @@ def test():
         for server in setup:
             servers.append(server)
         for server in sorted(servers):
-            #if server != "Rasdaman2":
+            #if server != "MapServer":
             #    continue
             #print "** SERVER: "+server
-            i = 0
-            for v in setup[server]['Versions']:
+            for i, v in enumerate(setup[server]['Versions']):
+                #if v != 110:
+                #    continue
                 version = str(int(v / 100)) + '.' + str(int(v % 100 / 10)) + '.' + str((v % 10))
+                if not server + '-' + version in urls:
+                    print "Error: " + server + '-' + version + " not in urls"
+                    continue
                 options = [cache]
                 global first_call
                 if first_call:
                     options.append('CLEAR_CACHE')
                     first_call = False
                 # get capabilities
-                query = '&version=' + version
+                query = 'version=' + version
                 options.append('GetCapabilitiesExtra=server=' + server)
                 ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                                  open_options = options)
@@ -194,11 +202,14 @@ def test():
                 ds = 0
                 options = [cache]
                 options.append('GetCoverageExtra=test=scaled&server=' + server)
+                options.append('INTERLEAVE=PIXEL')
                 ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                                  open_options = options)
                 projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
+                for i, c in enumerate(projwin):
+                    projwin[i] = int(c)
+                #print projwin
                 ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size)
-                i = i + 1
     except:
         print "Unexpected error:", sys.exc_info()[0]
         webserver.server_stop(process, port)

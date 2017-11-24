@@ -183,14 +183,6 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
         bbox_0, bbox_1, bbox_2, bbox_3,
         osCRS.c_str(),
         osRangeSubset.c_str() );
-    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
-    if (extra != "") {
-        std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
-            std::vector<CPLString> pair = Split(pairs[i], "=");
-            request = CPLURLAddKVP(request, pair[0], pair[1]);
-        }
-    }
     double
         origin_1 = extent[0], // min X
         origin_2 = extent[3], // max Y
@@ -231,6 +223,14 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
             origin_1, origin_2,
             offsets.c_str()
             );
+    }
+    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
     }
     return request;
 }
