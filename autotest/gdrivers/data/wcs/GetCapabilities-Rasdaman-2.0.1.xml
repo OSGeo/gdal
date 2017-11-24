@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wcs:Capabilities version="2.0.1"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:ows="http://www.opengis.net/ows/2.0"
+    xmlns:wcs="http://www.opengis.net/wcs/2.0"
+    xmlns:wcscrs="http://www.opengis.net/wcs/service-extension/crs/1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd">
+    <ows:ServiceIdentification xmlns:ows="http://www.opengis.net/ows/2.0">
+        <ows:Title>rasdaman</ows:Title>
+        <ows:Abstract>rasdaman server - free download from www.rasdaman.org</ows:Abstract>
+        <ows:ServiceType>OGC WCS</ows:ServiceType>
+        <ows:ServiceTypeVersion>2.0.1</ows:ServiceTypeVersion>
+        <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/gml</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/gml-coverage</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_coverage-encoding_geotiff/1.0/</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/GMLJP2/2.0/</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_coverage-encoding_jpeg2000/1.0/</ows:Profile>
+        <ows:Profile>https://www.ietf.org/rfc/rfc4180.txt</ows:Profile>
+        <ows:Profile>https://www.www.json.org/</ows:Profile>
+        <ows:Profile>https://www.w3.org/Graphics/JPEG/</ows:Profile>
+        <ows:Profile>http://www.w3.org/TR/PNG/</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_coverage-encoding_netcdf/1.0/</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/multipart</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_interpolation/1.0/conf/interpolation</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_range-subsetting/1.0/conf/record-subsetting</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_scaling/1.0/conf/scaling</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_processing/2.0/conf/processing</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0/conf/get-kvp</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_soap/1.0</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_transaction/2.0/conf/insert+delete</ows:Profile>
+        <ows:Profile>http://www.opengis.net/spec/WCS_service-extension_crs/1.0/conf/crs</ows:Profile>
+    </ows:ServiceIdentification>
+    <ows:ServiceProvider xmlns:ows="http://www.opengis.net/ows/2.0">
+        <ows:ProviderName>Jacobs University Bremen</ows:ProviderName>
+        <ows:ProviderSite xlink:href="http://rasdaman.org/" xmlns:xlink="http://www.w3.org/1999/xlink"/>
+        <ows:ServiceContact>
+            <ows:IndividualName>Prof. Dr. Peter Baumann</ows:IndividualName>
+            <ows:PositionName>Project Leader</ows:PositionName>
+            <ows:ContactInfo>
+                <ows:Phone>
+                    <ows:Voice>+49 421 20040</ows:Voice>
+                </ows:Phone>
+                <ows:Address>
+                    <ows:DeliveryPoint>Campus Ring 1</ows:DeliveryPoint>
+                    <ows:City>Bremen</ows:City>
+                    <ows:PostalCode>28717</ows:PostalCode>
+                    <ows:Country>Germany</ows:Country>
+                    <ows:ElectronicMailAddress>p.baumann@jacobs-university.de</ows:ElectronicMailAddress>
+                </ows:Address>
+            </ows:ContactInfo>
+            <ows:Role>pointOfContact</ows:Role>
+        </ows:ServiceContact>
+    </ows:ServiceProvider>
+    <ows:OperationsMetadata xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <ows:Operation name="GetCapabilities">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Post xlink:href="http://localhost:8080/rasdaman/ows"/>
+                    <ows:Get xlink:href="http://localhost:8080/rasdaman/ows"/>
+                </ows:HTTP>
+            </ows:DCP>
+            <ows:Constraint name="PostEncoding">
+                <ows:AllowedValues>
+                    <ows:Value>XML</ows:Value>
+                    <ows:Value>SOAP</ows:Value>
+                </ows:AllowedValues>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Operation name="DescribeCoverage">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Post xlink:href="http://localhost:8080/rasdaman/ows"/>
+                    <ows:Get xlink:href="http://localhost:8080/rasdaman/ows"/>
+                </ows:HTTP>
+            </ows:DCP>
+            <ows:Constraint name="PostEncoding">
+                <ows:AllowedValues>
+                    <ows:Value>XML</ows:Value>
+                    <ows:Value>SOAP</ows:Value>
+                </ows:AllowedValues>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Operation name="GetCoverage">
+            <ows:DCP>
+                <ows:HTTP>
+                    <ows:Post xlink:href="http://localhost:8080/rasdaman/ows"/>
+                    <ows:Get xlink:href="http://localhost:8080/rasdaman/ows"/>
+                </ows:HTTP>
+            </ows:DCP>
+            <ows:Constraint name="PostEncoding">
+                <ows:AllowedValues>
+                    <ows:Value>XML</ows:Value>
+                    <ows:Value>SOAP</ows:Value>
+                </ows:AllowedValues>
+            </ows:Constraint>
+        </ows:Operation>
+        <ows:Constraint name="PostEncoding">
+            <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+                <ows:Value>SOAP</ows:Value>
+            </ows:AllowedValues>
+        </ows:Constraint>
+    </ows:OperationsMetadata>
+    <wcs:ServiceMetadata xmlns:wcs="http://www.opengis.net/wcs/2.0">
+        <wcs:formatSupported>application/gml+xml</wcs:formatSupported>
+        <wcs:formatSupported>image/jpeg</wcs:formatSupported>
+        <wcs:formatSupported>image/png</wcs:formatSupported>
+        <wcs:formatSupported>image/tiff</wcs:formatSupported>
+        <wcs:formatSupported>image/bmp</wcs:formatSupported>
+        <wcs:formatSupported>image/jp2</wcs:formatSupported>
+        <wcs:formatSupported>application/netcdf</wcs:formatSupported>
+        <wcs:formatSupported>text/csv</wcs:formatSupported>
+        <wcs:formatSupported>application/json</wcs:formatSupported>
+        <wcs:formatSupported>application/dem</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-dted</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-ehdr</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-elas</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-envi</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-ers</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-fit</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-fits</wcs:formatSupported>
+        <wcs:formatSupported>image/gif</wcs:formatSupported>
+        <wcs:formatSupported>application/x-netcdf-gmt</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-gs7bg</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-gsag</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-gsbg</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-gta</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-hf2</wcs:formatSupported>
+        <wcs:formatSupported>application/x-erdas-hfa</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-ida</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-ingr</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-isis2</wcs:formatSupported>
+        <wcs:formatSupported>application/x-erdas-lan</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-mff2</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-nitf</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-paux</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-pcidsk</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-pcraster</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-pdf</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-pnm</wcs:formatSupported>
+        <wcs:formatSupported>text/x-r</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-rmf</wcs:formatSupported>
+        <wcs:formatSupported>image/x-sgi</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-vrt</wcs:formatSupported>
+        <wcs:formatSupported>image/xpm</wcs:formatSupported>
+        <wcs:formatSupported>application/x-ogc-zmap</wcs:formatSupported>
+        <wcs:Extension>
+            <int:InterpolationMetadata xmlns:int="http://www.opengis.net/wcs/interpolation/1.0">
+                <int:InterpolationSupported>http://www.opengis.net/def/interpolation/OGC/1.0/nearest-neighbor</int:InterpolationSupported>
+            </int:InterpolationMetadata>
+        </wcs:Extension>
+    </wcs:ServiceMetadata>
+    <wcs:Contents xmlns:wcs="http://www.opengis.net/wcs/2.0">
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">test_irr_cube_2</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>75042.7273594 5094865.55794 "2008-01-01T02:01:20+00:00"</ows:LowerCorner>
+                <ows:UpperCorner>705042.727359 5454865.55794 1199750578</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">NIR</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index2D"
+                dimensions="2" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>0 0</ows:LowerCorner>
+                <ows:UpperCorner>1916 1076</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">RadianceColor</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2002-07-01T00:00:00.000Z"</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-01-01T00:00:00.000Z"</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">BlueMarbleCov</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/EPSG/0/4326"
+                dimensions="2" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180</ows:LowerCorner>
+                <ows:UpperCorner>90 180</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">NN3_1</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index1D"
+                dimensions="1" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>0</ows:LowerCorner>
+                <ows:UpperCorner>126</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">multiband</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/EPSG/0/32632"
+                dimensions="2" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>234989.6219400902 5816800.1278943575</ows:LowerCorner>
+                <ows:UpperCorner>500467.1219399674 6097439.6278945765</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">lena</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/OGC/0/Index2D"
+                dimensions="2" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>0 0</ows:LowerCorner>
+                <ows:UpperCorner>161 161</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">NN3_2</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index1D"
+                dimensions="1" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5</ows:LowerCorner>
+                <ows:UpperCorner>125.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">test_AverageChloro</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate?axis-label=&quot;unix&quot;"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90.0 -180.0 "2015-01-01T00:00:00+00:00"</ows:LowerCorner>
+                <ows:UpperCorner>90.0 180.0 151392</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">AvgLandTemp</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2000-02-01T00:00:00.000Z"</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-06-01T00:00:00.000Z"</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">climate_earth</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index3D"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5 -0.5 -0.5</ows:LowerCorner>
+                <ows:UpperCorner>719.5 360.5 60.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">Temperature4D</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate&amp;3=http://ows.rasdaman.org/def/crs/OGC/0/Index1D?axis-label=&quot;elev&quot;"
+                dimensions="4" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2013-12-17T00:00:00.000Z" 0</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-01-11T00:00:00.000Z" 1500</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">AvgTemperatureColorScaled</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2000-02-01T00:00:00.000Z"</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-07-01T00:00:00.000Z"</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">visible_human</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index3D"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5 -0.5 -0.5</ows:LowerCorner>
+                <ows:UpperCorner>1023.5 607.5 1882.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">meris_lai</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate&amp;2=http://ows.rasdaman.org/def/crs/EPSG/0/4326"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>"2003-01-01T00:00:00.000Z" 40.000027885 -89.999999885</ows:LowerCorner>
+                <ows:UpperCorner>"2003-12-21T00:00:00.000Z" 49.999999885 -80.000027885</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">test_mean_summer_airtemp</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/EPSG/0/4326"
+                dimensions="2" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-44.525 111.975</ows:LowerCorner>
+                <ows:UpperCorner>-8.975 156.275</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">NN3_3</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index1D"
+                dimensions="1" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5</ows:LowerCorner>
+                <ows:UpperCorner>125.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">AverageChloroColorScaled</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2002-07-01T00:00:00.000Z"</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-05-01T00:00:00.000Z"</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">NN3_4</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index1D"
+                dimensions="1" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5</ows:LowerCorner>
+                <ows:UpperCorner>125.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">climate_cloud</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">RectifiedGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs/OGC/0/Index3D"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-0.5 -0.5 -0.5</ows:LowerCorner>
+                <ows:UpperCorner>719.5 360.5 59.5</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+        <wcs:CoverageSummary>
+            <CoverageId xmlns="http://www.opengis.net/wcs/2.0">RadianceColorScaled</CoverageId>
+            <CoverageSubtype xmlns="http://www.opengis.net/wcs/2.0">ReferenceableGridCoverage</CoverageSubtype>
+            <ows:BoundingBox
+                crs="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/4326&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/AnsiDate"
+                dimensions="3" xmlns:ows="http://www.opengis.net/ows/2.0">
+                <ows:LowerCorner>-90 -180 "2002-07-01T00:00:00.000Z"</ows:LowerCorner>
+                <ows:UpperCorner>90 180 "2015-01-01T00:00:00.000Z"</ows:UpperCorner>
+            </ows:BoundingBox>
+        </wcs:CoverageSummary>
+    </wcs:Contents>
+</wcs:Capabilities>
