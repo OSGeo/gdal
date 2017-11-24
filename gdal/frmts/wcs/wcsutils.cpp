@@ -87,7 +87,7 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     return 0;
 }
    
-CPLString URLEncode(CPLString str)
+CPLString URLEncode(const CPLString &str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );
     CPLString str2 = pszEncoded;
@@ -183,7 +183,7 @@ std::vector<double> Flist(const std::vector<CPLString> &array,
     return retval;
 }
 
-int IndexOf(CPLString str, const std::vector<CPLString> &array)
+int IndexOf(const CPLString &str, const std::vector<CPLString> &array)
 {
     int index = -1;
     for (unsigned int i = 0; i < array.size(); ++i) {
@@ -195,7 +195,7 @@ int IndexOf(CPLString str, const std::vector<CPLString> &array)
     return index;
 }
 
-int IndexOf(int i, std::vector<int> array)
+int IndexOf(int i, const std::vector<int> &array)
 {
     int index = -1;
     for (unsigned int j = 0; j < array.size(); ++j) {
@@ -214,6 +214,18 @@ std::vector<int> IndexOf(const std::vector<CPLString> &strs, const std::vector<C
         retval.push_back(IndexOf(strs[i], array));
     }
     return retval;
+}
+
+int IndexOf(const CPLString &key, const std::vector<std::vector<CPLString> > &kvps)
+{
+    int index = -1;
+    for (unsigned int i = 0; i < kvps.size(); ++i) {
+        if (kvps[i].size() > 1 && key == kvps[i][0]) {
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
 
 bool Contains(const std::vector<int> &array, int value)

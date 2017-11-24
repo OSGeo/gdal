@@ -1109,9 +1109,10 @@ static CPLXMLNode *CreateService(const CPLString &base_url,
 /*                          UpdateService()                             */
 /************************************************************************/
 
-#define WCS_SERVICE_BASIC "PreferredFormat", "Interpolation", "BlockXSize", \
-        "BlockYSize", "OverviewCount", "GetCoverageExtra", "DescribeCoverageExtra" \
-        "NoDataValue", "Domain"
+#define WCS_SERVICE_OPTIONS "PreferredFormat", "NoDataValue",           \
+        "BlockXSize", "BlockYSize", "OverviewCount",                    \
+        "GetCoverageExtra", "DescribeCoverageExtra"                     \
+        "Domain", "BandCount", "BandType", "DefaultTime", "CRS"
 
 #define WCS_TWEAK_OPTIONS "OriginAtBoundary", "OuterExtents", "BufSizeAdjust", \
         "OffsetsPositive", "NrOffsets", "GridCRSOptional", "NoGridAxisSwap", \
@@ -1122,11 +1123,9 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
     bool updated = false;
     // descriptions in frmt_wcs.html
     const char *keys[] = {
-        WCS_SERVICE_BASIC,
-        "BandCount",
-        "BandType",
-        "DefaultTime",
-        "CRS",
+        "Subset", "RangeSubsetting",
+        WCS_URL_PARAMETERS,
+        WCS_SERVICE_OPTIONS,
         WCS_TWEAK_OPTIONS,
         WCS_HTTP_OPTIONS
     };
@@ -1274,10 +1273,11 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                     char **options = NULL;
                     const char *keys[] = {
                         "CACHE",
-                        WCS_SERVICE_BASIC,
-                        WCS_HTTP_OPTIONS,
+                        "Subset", "RangeSubsetting",
+                        WCS_URL_PARAMETERS,
+                        WCS_SERVICE_OPTIONS,
                         WCS_TWEAK_OPTIONS,
-                        "CRS"
+                        WCS_HTTP_OPTIONS
                     };
                     for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
                         const char *value;

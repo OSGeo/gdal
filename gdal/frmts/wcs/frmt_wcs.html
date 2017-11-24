@@ -62,13 +62,14 @@ otherwise defaults to 1.0.0. Versions 1.0.0, 1.1.0, 1.1.1, 1.1.2, and
 
 <li> <b>CoverageName</b>: The coverage that is used for the dataset.</li>
 
+<li> <b>Format</b>: The format to use for GetCoverage calls. If not
+set, selected by the driver. (WCS version 2.0)
+
 <li> <b>PreferredFormat</b>: The format to use for GetCoverage
-calls. If not set, selected by the driver.
+calls. If not set, selected by the driver. (WCS versions 1.0 and 1.1)
 
 <li> <b>Interpolation</b>: The interpolation method used when scaling.
-Should be one of the server supported values. (Note: the old name for
-this element was Resample, which is still supported but
-deprecated.).</li>
+Should be one of the server supported values.</li>
 
 <li> <b>BlockXSize</b>: The block width to use for block cached remote
 access.
@@ -122,7 +123,8 @@ authentication scheme to be used.
 
 <li> <b>GetCoverageExtra</b>: An additional set of keywords to add to
 GetCoverage requests in URL encoded form.
-eg. "&RESAMPLE=BILINEAR&Band=1"
+eg. "&RESAMPLE=BILINEAR&Band=1". Note that the extra parameters
+should not be known parameters (see below).
 
 <li> <b>DescribeCoverageExtra</b>: An additional set of keywords to
 add to DescribeCoverage requests in URL encoded form.
@@ -182,11 +184,9 @@ GetCoverage request. Required when the server is ArcGIS.</li>
 When WCS version 2.0.1 is used, the range (fields/bands) and the
 dimension can and/or may need to be subsetted. If the data model of
 the coverage contains dimensions beyond the two geographic or map
-coordinates, those dimensions must be either sliced or converted to
-bands (only one can be converted) for GDAL. The coverage may also
-contain a large number of fields, from which only a subset is wanted
-in the GDAL dataset. Also, if a dimension is converted to a band,
-only one field can be in the range.<p>
+coordinates, those dimensions must be sliced for GDAL. The coverage
+may also contain a large number of fields, from which only a subset is
+wanted in the GDAL dataset.<p>
 
 Range and dimension subsetting must be done via URL parameters since
 from one coverage it is possible to create more than one different
@@ -208,8 +208,9 @@ name, and range and dimension subsetting parameters)
 
 </ol>
 
-The following URL parameters are used to control the range and dimension
-subsetting.
+The following URL parameters are used to control the range and
+dimension subsetting. Note that these can also be set through options
+into the service file. The ones in URL take precedence.
 
 <ul>
 
@@ -221,12 +222,27 @@ extension.)</li>
 <li><b>Subset</b>: Trim or slice a dimension when fetching data
 from the server. Syntax:
 <i>axis_name(trim_begin_value,trim_end_value);axis_name(slice_value)</i>
+Note that trimming the geographic/map coordinates is done by the driver.
 </li>
 
-<li><b>DimensionToBand</b>: Map the given dimension, for example
-'time', into bands. Syntax: <i>axis_name</i> (Note: this is not a
-standard WCS GetCoverage parameter.)</li>
+</ul>
 
+<h3>Other WCS parameters</h3>
+
+The following WCS (version 2.0.1) parameters are recognized besides
+what has been described above. These all can be set either through
+options or directly into the URL. The ones in URL take
+precedence. Note that it is up to the server to support/recognize
+these.
+<ul>
+<li>MediaType
+<li>UpdateSequence
+<li>GEOTIFF:COMPRESSION
+<li>GEOTIFF:JPEG_QUALITY
+<li>GEOTIFF:PREDICTOR
+<li>GEOTIFF:INTERLEAVE
+<li>GEOTIFF:TILING
+<li>GEOTIFF:TILEWIDTH
 </ul>
 
 <h3>Open options</h3>

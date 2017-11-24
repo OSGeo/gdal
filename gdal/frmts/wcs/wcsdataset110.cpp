@@ -141,6 +141,7 @@ CPLString WCSDataset110::GetCoverageRequest(bool scaled,
 
     CPLString interpolation = CPLGetXMLValue( psService, "Interpolation", "" );
     if (interpolation == "") {
+        // old undocumented key for interpolation in service
         interpolation = CPLGetXMLValue( psService, "Resample", "" );
     }
     if (interpolation != "") {

@@ -39,7 +39,7 @@ void Swap(double &a, double &b);
 
 int CompareNumbers(const CPLString &a, const CPLString &b);
 
-CPLString URLEncode(CPLString str);
+CPLString URLEncode(const CPLString &str);
 
 CPLString URLRemoveKey(const char *url, const CPLString &key);
 
@@ -61,12 +61,15 @@ std::vector<double> Flist(const std::vector<CPLString> &array,
                           unsigned int from = 0,
                           size_t count = std::string::npos);
 
-int IndexOf(CPLString str, const std::vector<CPLString> &array); // index of str in array
-int IndexOf(int i, std::vector<int> array);
-
+// index of string or integer in an array
+// indexes of strings in an array
+// index of key in a key value pairs    
+int IndexOf(const CPLString &str, const std::vector<CPLString> &array);
+int IndexOf(int i, const std::vector<int> &array);
 std::vector<int> IndexOf(const std::vector<CPLString> &strs,
-                         const std::vector<CPLString> &array); // index of strs in array
-
+                         const std::vector<CPLString> &array);
+int IndexOf(const CPLString &key, const std::vector<std::vector<CPLString> > &kvps);
+    
 bool Contains(const std::vector<int> &array, int value);
 
 CPLString FromParenthesis(const CPLString &s);

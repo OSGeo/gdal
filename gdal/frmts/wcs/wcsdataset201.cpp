@@ -90,8 +90,8 @@ static CPLXMLNode *GetGridNode(CPLXMLNode *coverage, const CPLString &subtype)
 
 static void ParseParameters(CPLXMLNode *service,
                             std::vector<CPLString> &dimensions,
-                            CPLString &dimension_to_band,
-                            CPLString &range)
+                            CPLString &range,
+                            std::vector<std::vector<CPLString> > &others)
 {
     std::vector<CPLString> parameters = Split(CPLGetXMLValue(service, "Parameters", ""), "&");
     for (unsigned int i = 0; i < parameters.size(); ++i) {
@@ -104,9 +104,19 @@ static void ParseParameters(CPLXMLNode *service,
             range = kv[1];
         } else if (kv[0] == "SUBSET") {
             dimensions = Split(kv[1], ";");
-        } else if (kv[0] == "DIMENSIONTOBAND") {
-            dimension_to_band = kv[1];
+        } else {
+            std::vector<CPLString> kv2;
+            kv2.push_back(kv[0]);
+            kv2.push_back(kv[1]);
+            others.push_back(kv2);
         }
+    }
+    // fallback to service values, if any
+    if (range == "") {
+        range = CPLGetXMLValue(service, "RangeSubset", "");
+    }
+    if (dimensions.size() == 0) {
+        dimensions = Split(CPLGetXMLValue(service, "Subset", ""), ";");
     }
 }
 
@@ -147,14 +157,13 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
     request += "&REQUEST=GetCoverage";
     request += "&VERSION=" + CPLString(CPLGetXMLValue(psService, "Version", ""));
     request += "&COVERAGEID=" + URLEncode(CPLGetXMLValue(psService, "CoverageName", ""));
+
+    // note: native_crs is not really supported
     if (!native_crs) {
         CPLString crs = URLEncode(CPLGetXMLValue(psService, "SRS", ""));
         request += "&OUTPUTCRS=" + crs;
         request += "&SUBSETTINGCRS=" + crs;
     }
-    request += "&FORMAT=" + URLEncode(CPLGetXMLValue(psService, "PreferredFormat", ""));
-
-    // todo: updatesequence
 
     std::vector<CPLString> domain = Split(CPLGetXMLValue(psService, "Domain", ""), ",");
     if (domain.size() < 2) {
@@ -208,8 +217,9 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
 
     // Dimension and range parameters:
     std::vector<CPLString> dimensions;
-    CPLString dimension_to_band, range;
-    ParseParameters(psService, dimensions, dimension_to_band, range);
+    CPLString range;
+    std::vector<std::vector<CPLString> > others;
+    ParseParameters(psService, dimensions, range, others);
 
     // set subsets for axis other than x/y
     for (unsigned int i = 0; i < dimensions.size(); ++i) {
@@ -246,25 +256,37 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         request += tmp;
     }
 
-    CPLString interpolation = CPLGetXMLValue(psService, "Interpolation", "");
-    if (interpolation != "") {
-        request += "&INTERPOLATION=" + interpolation;
-    }
-
     if (range != "" && range != "*") {
         request += "&RANGESUBSET=" + range;
     }
 
-    CPLString extra = CPLGetXMLValue(psService, "GetCoverageExtra", "");
-    if (extra != "") {
-        std::vector<CPLString> pairs = Split(extra, "&");
-        for (unsigned int i = 0; i < pairs.size(); ++i) {
-            std::vector<CPLString> pair = Split(pairs[i], "=");
+    // other parameters may come from
+    // 1) URL (others)
+    // 2) Service file
+    const char *keys[] = {
+        WCS_URL_PARAMETERS
+    };
+    for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
+        CPLString value;
+        int ix = IndexOf(CPLString(keys[i]).toupper(), others);
+        if (ix >= 0) {
+            value = others[ix][1];
+        } else {
+            value = CPLGetXMLValue(psService, keys[i], "");
+        }
+        if (value != "") {
+            request = CPLURLAddKVP(request, keys[i], value);
+        }
+    }
+    // add extra parameters
+    // note that these should not be known parameters
+    std::vector<CPLString> pairs = Split(CPLGetXMLValue(psService, "GetCoverageExtra", ""), "&");
+    for (unsigned int i = 0; i < pairs.size(); ++i) {
+        std::vector<CPLString> pair = Split(pairs[i], "=");
+        if (pair.size() > 1) {
             request = CPLURLAddKVP(request, pair[0], pair[1]);
         }
     }
-
-    // todo other stuff, e.g., GeoTIFF encoding
 
     return request;
 
@@ -431,9 +453,9 @@ CPLString WCSDataset201::GetSubdataset(const CPLString &coverage)
 
 bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
 {
-    // set the PreferredFormat value in service,
+    // set the Format value in service,
     // unless it is set by the user
-    CPLString format = CPLGetXMLValue(psService, "PreferredFormat", "");
+    CPLString format = CPLGetXMLValue(psService, "Format", "");
 
     // todo: check the value against list of supported formats?
     if (format != "") {
@@ -461,7 +483,7 @@ bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
         }
     }
     if (format != "") {
-        CPLSetXMLValue(psService, "PreferredFormat", format);
+        CPLSetXMLValue(psService, "Format", format);
         bServiceDirty = true;
         return true;
     } else {
@@ -759,25 +781,16 @@ bool WCSDataset201::ExtractGridInfo()
 
     // subsetting and dimension to bands
     std::vector<CPLString> dimensions;
-    CPLString dimension_to_band, range;
-    ParseParameters(psService, dimensions, dimension_to_band, range);
-
-    int dimension_to_band_index = IndexOf(dimension_to_band, axes);
-    if (IndexOf(dimension_to_band_index, domain_indexes) != -1) {
-        CPLError(CE_Failure, CPLE_AppDefined, "'Dimension to band' can't be x nor y dimension.");
-        return false;
-    }
-    if (dimension_to_band != "" && dimension_to_band_index == -1) {
-        CPLError(CE_Failure, CPLE_AppDefined, "Given 'dimension to band' does not exist in the coverage.");
-        return false;
-    }
+    CPLString range;
+    std::vector<std::vector<CPLString> > others;
+    ParseParameters(psService, dimensions, range, others);
 
     // it is ok to have trimming or even slicing for x/y, it just affects our bounding box
     // but that is a todo item
     // todo: BoundGeometry(domain_trim) if domain_trim.size() > 0
     std::vector<std::vector<double> > domain_trim;
 
-    // are all dimensions that are not x/y domain and dimension to band sliced?
+    // are all dimensions that are not x/y domain sliced?
     // if not, bands can't be defined, see below
     bool dimensions_are_ok = true;
     for (unsigned int i = 0; i < axes.size(); ++i) {
@@ -792,9 +805,6 @@ bool WCSDataset201::ExtractGridInfo()
         if (domain_index != -1) {
             std::vector<double> trim = Flist(params, 0, 2);
             domain_trim.push_back(trim);
-            continue;
-        }
-        if (axes[i] == dimension_to_band) {
             continue;
         }
         // size == 1 => sliced
@@ -839,24 +849,12 @@ bool WCSDataset201::ExtractGridInfo()
     // determine the band count
     int bands = 0;
     if (dimensions_are_ok) {
-        // must not have a loose dimension
-        if (dimension_to_band != "") {
-            if (fields == 1) {
-                bands = size[1][dimension_to_band_index] - size[0][dimension_to_band_index] + 1;
-                // set the values as band metadata
-            } else {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "The range must be limited to one field if a dimension is mapped to bands.");
-                return false;
-            }
-        } else {
-            bands = fields;
-        }
+        bands = fields;
     }
     bServiceDirty = CPLUpdateXML(psService, "BandCount", CPLString().Printf("%d",bands))
         || bServiceDirty;
 
-    // set the PreferredFormat value in service, unless it is set
+    // set the Format value in service, unless it is set
     // by the user, either through direct edit or options
     if (!SetFormat(coverage)) {
         // all attempts to find a format have failed...

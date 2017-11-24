@@ -221,3 +221,17 @@ class WCSDataset201 : public WCSDataset110
 };
 
 #define DIGIT_ZERO '0'
+
+// The WCS URL parameters that can be set 
+// - through options to the service file
+// - to the URL
+// These are also inherited from template service file.
+// Fundamental URL parameters (service, version, request, coverage)
+// and parameters that require more work from the driver's part, such
+// as subsetting parameters (subset, rangesubset) are not in this
+// list.
+
+#define WCS_URL_PARAMETERS "Format", "Interpolation", "MediaType",      \
+        "UpdateSequence", "GEOTIFF:COMPRESSION", "GEOTIFF:JPEG_QUALITY", \
+        "GEOTIFF:PREDICTOR", "GEOTIFF:INTERLEAVE", "GEOTIFF:TILING",    \
+        "GEOTIFF:TILEWIDTH"

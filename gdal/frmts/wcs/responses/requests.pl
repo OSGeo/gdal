@@ -99,11 +99,9 @@ for my $server (sort keys %$setup) {
 if ($do{urls}) {
     open(my $fh, ">", "urls");
     for my $key (sort keys %urls) {
-        say $fh $key;
-        say $fh 'non-scaled: ',$urls{$key}{non_scaled} if $urls{$key}{non_scaled};
-        say $fh 'non-scaled: ',$urls{$key}{non_scaled2} if $urls{$key}{non_scaled2};
-        say $fh 'scaled: ',$urls{$key}{scaled} if $urls{$key}{scaled};
-        say $fh 'scaled: ',$urls{$key}{scaled2} if $urls{$key}{scaled2};
+        for my $test (sort keys %{$urls{$key}}) {
+            say $fh $key,' ',$test,' ',$urls{$key}{$test};
+        }
     }
     close $fh;
 }
@@ -166,10 +164,10 @@ sub get_setup {
         MapServer => {
             URL => 'http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows',
             Options => [
-                "-oo OriginAtBoundary -oo BandIdentifier=none",
-                "-oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
-                "-oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
-                "-oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OriginAtBoundary -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
+                "-oo INTERLEAVE=PIXEL -oo OffsetsPositive -oo NrOffsets=2 -oo NoGridAxisSwap -oo BandIdentifier=none",
                 "-oo OriginAtBoundary",
                 ],
             Projwin => "-projwin 10 45 15 35",
@@ -187,8 +185,8 @@ sub get_setup {
         },
         Rasdaman2 => {
             URL => 'http://ows.rasdaman.org/rasdaman/ows',
-            Options => "",
-            Projwin => "-projwin 10 45 15 35",
+            Options => "-oo \"subset=unix(\"2008-01-05T01:58:30.000Z\")\"",
+            Projwin => "-projwin 100000 5400000 150000 5100000",
             Outsize => "-outsize $size 0",
             Coverage => 'test_irr_cube_2',
             Versions => [201],
@@ -228,6 +226,13 @@ sub test_dimension_subsetting {
     say $cmd if $do{say};
     my $output = `$cmd`;
     say $output if $do{say_all};
+    foreach my $line (split /[\r\n]+/, $output) {
+        if ($line =~ /URL=(.*)/) {
+            my $key = 'dimension_subsetting';
+            $key .= '2' if $urls{$server.'-'.$version}{$key};
+            $urls{$server.'-'.$version}{$key} = $1;
+        }
+    }
 }
 
 sub test_range_subsetting {
@@ -248,6 +253,13 @@ sub test_range_subsetting {
     say $cmd if $do{say};
     my $output = `$cmd`;
     say $output if $do{say_all};
+    foreach my $line (split /[\r\n]+/, $output) {
+        if ($line =~ /URL=(.*)/) {
+            my $key = 'range_subsetting';
+            $key .= '2' if $urls{$server.'-'.$version}{$key};
+            $urls{$server.'-'.$version}{$key} = $1;
+        }
+    }
 }
 
 sub test_non_scaled {
@@ -312,19 +324,19 @@ sub test_non_scaled {
         unlink($result);
     }
     my $o = "$options -srcwin 0 0 2 2";
-    my $url = $setup->{$server}->{URL};
-    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
-    say $cmd if $do{say};
     if ($first_call) {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;
     }
+    my $url = $setup->{$server}->{URL};
+    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
+    say $cmd if $do{say};
     my $output = `$cmd`;
     say $output if $do{say_all};
     foreach my $line (split /[\r\n]+/, $output) {
         if ($line =~ /URL=(.*)/) {
             my $key = 'non_scaled';
-            $key = 'non_scaled2' if $urls{$server.'-'.$version}{$key};
+            $key .= '2' if $urls{$server.'-'.$version}{$key};
             $urls{$server.'-'.$version}{$key} = $1;
         }
     }
@@ -370,18 +382,18 @@ sub test_scaled {
         unlink($result);
     }
     my $o = "$options $setup->{$server}->{Projwin} $setup->{$server}->{Outsize}";
-    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
-    say $cmd if $do{say};
     if ($first_call) {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;
     }
+    my $cmd = "gdal_translate $o \"WCS:$url?version=$version&coverage=$coverage\" $result 2>&1";
+    say $cmd if $do{say};
     my $output = `$cmd`;
     my @full_output;
     foreach my $line (split /[\r\n]+/, $output) {
         if ($line =~ /URL=(.*)/) {
             my $key = 'scaled';
-            $key = 'scaled2' if $urls{$server.'-'.$version}{$key};
+            $key .= '2' if $urls{$server.'-'.$version}{$key};
             $urls{$server.'-'.$version}{$key} = $1;
         }
         push @full_output, $line;
