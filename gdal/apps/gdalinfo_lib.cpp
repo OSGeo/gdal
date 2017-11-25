@@ -55,6 +55,7 @@
 #include "ogr_api.h"
 #include "ogr_json_header.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonwriter.h"
 
@@ -591,6 +592,20 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             else
             {
                 hLatLong = OSRCloneGeogCS( hProj );
+                if( hLatLong )
+                {
+                    // Drop GEOGCS|UNIT child to be sure to output as degrees
+                    OGRSpatialReference* poLatLong = reinterpret_cast<
+                        OGRSpatialReference*>(hLatLong);
+                    OGR_SRSNode *poGEOGCS = poLatLong->GetRoot();
+                    if( poGEOGCS )
+                    {
+                        const int iUnitChild =
+                            poGEOGCS->FindChild("UNIT");
+                        if( iUnitChild != -1 )
+                            poGEOGCS->DestroyChild(iUnitChild);
+                    }
+                }
             }
         }
 

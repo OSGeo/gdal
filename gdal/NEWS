@@ -113,8 +113,6 @@ GPKG driver:
 GTM driver:
  * fix null pointer dereference in case of read error (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=4047)
 
-KML / LIBKML drivers:
-
 MDB driver:
  * fix multi-thread support (https://issues.qgis.org/issues/16039)
 
