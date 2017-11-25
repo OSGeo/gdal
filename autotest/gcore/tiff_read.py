@@ -3481,6 +3481,32 @@ def tiff_read_jpeg_too_big_last_stripe():
 
     return 'success'
 
+
+###############################################################################
+# Test reading GeoTIFF file with negative ScaleY in GeoPixelScale tag
+
+def tiff_read_negative_scaley():
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.error_handler():
+        if ds.GetGeoTransform()[5] != -60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'NO'):
+        if ds.GetGeoTransform()[5] != -60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'YES'):
+        if ds.GetGeoTransform()[5] != 60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 for item in init_list:
@@ -3601,6 +3627,7 @@ gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
 gdaltest_list.append( (tiff_read_old_style_lzw) )
 gdaltest_list.append( (tiff_read_mmap_interface) )
 gdaltest_list.append( (tiff_read_jpeg_too_big_last_stripe) )
+gdaltest_list.append( (tiff_read_negative_scaley) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
