@@ -122,14 +122,30 @@ bool OGRDXFDataSource::ReadBlocksSection()
         PushBlockInsertion( osBlockName );
 
         OGRDXFFeature *poFeature = NULL;
+        int nIters = 0;
+        const int nMaxIters = atoi(
+            CPLGetConfigOption("OGR_DXF_FEATURE_LIMIT_PER_BLOCK", "10000"));
         while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
         {
+            if( nMaxIters >= 0 && nIters == nMaxIters )
+            {
+                delete poFeature;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                     "Limit of %d features for block %s reached. "
+                     "If you need more, set the "
+                     "OGR_DXF_FEATURE_LIMIT_PER_BLOCK configuration "
+                     "option to the maximum value (or -1 for no limit)",
+                     nMaxIters, osBlockName.c_str());
+                break;
+            }
+
             // Apply the base point translation
             OGRGeometry *poFeatureGeom = poFeature->GetGeometryRef();
             if( poFeatureGeom )
                 poFeatureGeom->transform( &oBasePointTransformer );
 
             oBlockMap[osBlockName].apoFeatures.push_back( poFeature );
+            nIters ++;
         }
 
         PopBlockInsertion();
