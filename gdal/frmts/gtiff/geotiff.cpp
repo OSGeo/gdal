@@ -10767,11 +10767,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
     }
 
 /* -------------------------------------------------------------------- */
-/*      If the geotransform is the default, don't bother writing it.    */
+/*      Write geotransform if valid.                                    */
 /* -------------------------------------------------------------------- */
-    if( adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0
-        || adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0
-        || adfGeoTransform[4] != 0.0 || std::abs(adfGeoTransform[5]) != 1.0 )
+    if( bGeoTransformValid )
     {
         bNeedsRewrite = true;
 
@@ -12614,11 +12612,7 @@ void GTiffDataset::ApplyPamInfo()
           m_nGeoTransformGeorefSrcIndex < 0 || !bGeoTransformValid) )
     {
         double adfPamGeoTransform[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None
-            && (adfPamGeoTransform[0] != 0.0 || adfPamGeoTransform[1] != 1.0
-                || adfPamGeoTransform[2] != 0.0 || adfPamGeoTransform[3] != 0.0
-                || adfPamGeoTransform[4] != 0.0
-                || adfPamGeoTransform[5] != 1.0 ))
+        if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None )
         {
             if( m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEGeorefSrcIndex )
                 osGeorefFilename.clear();
@@ -16757,10 +16751,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const char *l_pszProjection = NULL;
     double l_adfGeoTransform[6] = { 0.0 };
 
-    if( poSrcDS->GetGeoTransform( l_adfGeoTransform ) == CE_None
-        && (l_adfGeoTransform[0] != 0.0 || l_adfGeoTransform[1] != 1.0
-            || l_adfGeoTransform[2] != 0.0 || l_adfGeoTransform[3] != 0.0
-            || l_adfGeoTransform[4] != 0.0 || l_adfGeoTransform[5] != 1.0 ))
+    if( poSrcDS->GetGeoTransform( l_adfGeoTransform ) == CE_None )
     {
         if( bGeoTIFF )
         {
@@ -17636,19 +17627,20 @@ CPLErr GTiffDataset::SetGeoTransform( double * padfTransform )
             pasGCPList = NULL;
         }
         else if( padfTransform[0] == 0.0 &&
-            padfTransform[1] == 1.0 &&
-            padfTransform[2] == 0.0 &&
-            padfTransform[3] == 0.0 &&
-            padfTransform[4] == 0.0 &&
-            padfTransform[5] == 1.0 &&
-          !(adfGeoTransform[0] == 0.0 &&
-            adfGeoTransform[1] == 1.0 &&
-            adfGeoTransform[2] == 0.0 &&
-            adfGeoTransform[3] == 0.0 &&
-            adfGeoTransform[4] == 0.0 &&
-            adfGeoTransform[5] == 1.0) )
+                 padfTransform[1] == 0.0 &&
+                 padfTransform[2] == 0.0 &&
+                 padfTransform[3] == 0.0 &&
+                 padfTransform[4] == 0.0 &&
+                 padfTransform[5] == 0.0 )
         {
-            bForceUnsetGTOrGCPs = true;
+            if( bGeoTransformValid )
+            {
+                bForceUnsetGTOrGCPs = true;
+                bGeoTIFFInfoChanged = true;
+            }
+            bGeoTransformValid = false;
+            memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
+            return CE_None;
         }
 
         memcpy( adfGeoTransform, padfTransform, sizeof(double)*6 );
@@ -17727,12 +17719,7 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             bForceUnsetGTOrGCPs = true;
         }
         else if( nGCPCountIn > 0 &&
-                 !(adfGeoTransform[0] == 0.0 &&
-                   adfGeoTransform[1] == 1.0 &&
-                   adfGeoTransform[2] == 0.0 &&
-                   adfGeoTransform[3] == 0.0 &&
-                   adfGeoTransform[4] == 0.0 &&
-                   adfGeoTransform[5] == 1.0) )
+                 bGeoTransformValid )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "A geotransform previously set is going to be cleared "
