@@ -2759,7 +2759,7 @@ def ogr_dxf_42():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'POINT Z (0 0 0)') != 0:
+    if ogrtest.check_feature_geometry(f, 'POINT Z (8.0 2.5 6)') != 0:
         gdaltest.post_reason( 'Wrong geometry for first insertion point' )
         f.DumpReadable()
         return 'fail'
