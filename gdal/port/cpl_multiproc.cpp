@@ -1075,8 +1075,9 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         static_cast<char *>(CPLMalloc(strlen(pszPath) + 30));
     snprintf( pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath );
 
+    // FIXME: use CreateFileW()
     HANDLE hLockFile =
-        CreateFile(pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
+        CreateFileA(pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
                    FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL);
 
     while( GetLastError() == ERROR_ALREADY_EXISTS
@@ -1087,7 +1088,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         dfWaitInSeconds -= 0.125;
 
         hLockFile =
-            CreateFile( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
+            CreateFileA( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE,
                         NULL );
     }

@@ -74,7 +74,7 @@ int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
     }
     else
     {
-        if( GetModuleFileName( NULL, pszPathBuf, nMaxLength ) == 0 )
+        if( GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
             return FALSE;
         else
             return TRUE;

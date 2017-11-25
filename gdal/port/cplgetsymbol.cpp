@@ -161,7 +161,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     else
 #endif
     {
-        pLibrary = LoadLibrary(pszLibrary);
+        pLibrary = LoadLibraryA(pszLibrary);
     }
 
     if( pLibrary <= (void*)HINSTANCE_ERROR )
