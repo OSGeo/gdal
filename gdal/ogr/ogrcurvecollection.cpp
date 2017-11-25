@@ -644,6 +644,20 @@ void OGRCurveCollection::setMeasured( OGRGeometry* poGeom,
 }
 
 /************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCurveCollection::assignSpatialReference( OGRGeometry* poGeom,
+                                                 OGRSpatialReference * poSR )
+{
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        papoCurves[iGeom]->assignSpatialReference( poSR );
+    }
+    poGeom->OGRGeometry::assignSpatialReference( poSR );
+}
+
+/************************************************************************/
 /*                          getNumCurves()                              */
 /************************************************************************/
 

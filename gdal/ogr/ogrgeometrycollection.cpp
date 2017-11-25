@@ -1266,6 +1266,17 @@ OGRBoolean OGRGeometryCollection::IsEmpty() const
 }
 
 /************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRGeometryCollection::assignSpatialReference( OGRSpatialReference * poSR )
+{
+    OGRGeometry::assignSpatialReference(poSR);
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+        papoGeoms[iGeom]->assignSpatialReference(poSR);
+}
+
+/************************************************************************/
 /*              OGRGeometryCollection::segmentize()                     */
 /************************************************************************/
 
