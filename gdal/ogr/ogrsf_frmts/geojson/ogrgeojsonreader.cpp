@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 
 static
 OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
-                                     OGRSpatialReference* poLayerSRS );
+                                     OGRSpatialReference* poParentSRS );
 
 const size_t MAX_OBJECT_SIZE = 100 * 1024 * 1024;
 const size_t ESTIMATE_BASE_OBJECT_SIZE = sizeof(struct json_object);
@@ -2594,11 +2594,37 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj )
     return OGRGeoJSONReadGeometry(poObj, NULL);
 }
 
+static
 OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
-                                     OGRSpatialReference* poLayerSRS )
+                                     OGRSpatialReference* poParentSRS )
 {
 
     OGRGeometry* poGeometry = NULL;
+    OGRSpatialReference* poSRS = NULL;
+    lh_entry* entry = OGRGeoJSONFindMemberEntryByName( poObj, "crs" );
+    if (entry != NULL )
+    {
+        json_object* poObjSrs = (json_object*)entry->v;
+        if( poObjSrs != NULL )
+        {
+            poSRS = OGRGeoJSONReadSpatialReference(poObj);
+        }
+    }
+
+    OGRSpatialReference* poSRSToAssign = NULL;
+    if ( entry != NULL )
+    {
+        poSRSToAssign = poSRS;
+    }
+    else if( poParentSRS )
+    {
+        poSRSToAssign = poParentSRS;
+    }
+    else
+    {
+        // Assign WGS84 if no CRS defined on geometry.
+        poSRSToAssign = OGRSpatialReference::GetWGS84SRS();
+    }
 
     GeoJSONObject::Type objType = OGRGeoJSONGetType( poObj );
     if( GeoJSONObject::ePoint == objType )
@@ -2614,39 +2640,20 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
     else if( GeoJSONObject::eMultiPolygon == objType )
         poGeometry = OGRGeoJSONReadMultiPolygon( poObj );
     else if( GeoJSONObject::eGeometryCollection == objType )
-        poGeometry = OGRGeoJSONReadGeometryCollection( poObj );
+        poGeometry = OGRGeoJSONReadGeometryCollection( poObj, poSRSToAssign );
     else
     {
         CPLDebug( "GeoJSON",
                   "Unsupported geometry type detected. "
                   "Feature gets NULL geometry assigned." );
     }
-    // If we have a crs object in the current object, let's try and set it too.
-    if( poGeometry != NULL )
-    {
-        lh_entry* entry = OGRGeoJSONFindMemberEntryByName( poObj, "crs" );
-        if (entry != NULL ) {
-            json_object* poObjSrs = (json_object*)entry->v;
-            if( poObjSrs != NULL )
-            {
-                OGRSpatialReference* poSRS = OGRGeoJSONReadSpatialReference(poObj);
-                if( poSRS != NULL )
-                {
-                    poGeometry->assignSpatialReference(poSRS);
-                    poSRS->Release();
-                }
-            }
-        }
-        else if( poLayerSRS )
-        {
-            poGeometry->assignSpatialReference(poLayerSRS);
-        }
-        else
-        {
-            // Assign WGS84 if no CRS defined on geometry.
-            poGeometry->assignSpatialReference(OGRSpatialReference::GetWGS84SRS());
-        }
-    }
+
+    if( poGeometry && GeoJSONObject::eGeometryCollection != objType )
+        poGeometry->assignSpatialReference(poSRSToAssign);
+
+    if( poSRS )
+        poSRS->Release();
+
     return poGeometry;
 }
 
@@ -3084,7 +3091,8 @@ OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj )
 /*                           OGRGeoJSONReadGeometryCollection           */
 /************************************************************************/
 
-OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
+OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj,
+                                                         OGRSpatialReference* poSRS )
 {
     CPLAssert( NULL != poObj );
 
@@ -3105,6 +3113,7 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj )
         if( nGeoms > 0 )
         {
             poCollection = new OGRGeometryCollection();
+            poCollection->assignSpatialReference(poSRS);
         }
 
         for( int i = 0; i < nGeoms; ++i )
