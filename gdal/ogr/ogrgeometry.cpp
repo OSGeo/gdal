@@ -5759,6 +5759,24 @@ void OGRGeometry::swapXY()
 }
 
 /************************************************************************/
+/*                               swapXY()                               */
+/************************************************************************/
+
+/**
+ * \brief Swap x and y coordinates.
+ *
+ * @param hGeom geometry.
+ * @since OGR 2.3.0
+ */
+
+void OGR_G_SwapXY( OGRGeometryH hGeom )
+{
+    VALIDATE_POINTER0( hGeom, "OGR_G_SwapXY" );
+
+    reinterpret_cast<OGRGeometry *>(hGeom)->swapXY();
+}
+
+/************************************************************************/
 /*                        Prepared geometry API                         */
 /************************************************************************/
 

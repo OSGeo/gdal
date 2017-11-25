@@ -240,6 +240,7 @@ void   CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                                   void* pabyY, int nYStride,
                                   void* pabyZ, int nZStride,
                                   void* pabyM, int nMStride );
+void   CPL_DLL OGR_G_SwapXY( OGRGeometryH hGeom );
 
 /* Methods for getting/setting rings and members collections */
 

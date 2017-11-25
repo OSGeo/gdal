@@ -4308,6 +4308,17 @@ def ogr_geom_assignspatialref():
     return 'success'
 
 ###############################################################################
+def ogr_geom_swapxy():
+
+    g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(1 2,2 3),POLYGON((0 0,0 1,1 1,0 0)),COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0)),POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0))))')
+    g.SwapXY()
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (2 1),LINESTRING (2 1,3 2),POLYGON ((0 0,1 0,1 1,0 0)),COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,0 2)),POLYHEDRALSURFACE (((0 0,1 0,1 1,0 0))))':
+        print(g)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -4377,6 +4388,7 @@ gdaltest_list = [
     ogr_geom_polygon_intersects_point,
     ogr_geom_geometrycollection,
     ogr_geom_assignspatialref,
+    ogr_geom_swapxy,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]

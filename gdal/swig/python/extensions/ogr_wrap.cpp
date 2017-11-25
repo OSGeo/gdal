@@ -5159,6 +5159,9 @@ SWIGINTERN void OGRGeometryShadow_SetPointZM(OGRGeometryShadow *self,int point,d
 SWIGINTERN void OGRGeometryShadow_SetPoint_2D(OGRGeometryShadow *self,int point,double x,double y){
     OGR_G_SetPoint_2D(self, point, x, y);
   }
+SWIGINTERN void OGRGeometryShadow_SwapXY(OGRGeometryShadow *self){
+    OGR_G_SwapXY(self);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetGeometryRef(OGRGeometryShadow *self,int geom){
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
@@ -26157,6 +26160,45 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_SwapXY(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_SwapXY",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SwapXY" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRGeometryShadow_SwapXY(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_GetGeometryRef(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -34809,6 +34851,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_SetPointM", (PyCFunction) _wrap_Geometry_SetPointM, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_SetPointM(Geometry self, int point, double x, double y, double m)"},
 	 { (char *)"Geometry_SetPointZM", (PyCFunction) _wrap_Geometry_SetPointZM, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_SetPointZM(Geometry self, int point, double x, double y, double z, double m)"},
 	 { (char *)"Geometry_SetPoint_2D", (PyCFunction) _wrap_Geometry_SetPoint_2D, METH_VARARGS | METH_KEYWORDS, (char *)"Geometry_SetPoint_2D(Geometry self, int point, double x, double y)"},
+	 { (char *)"Geometry_SwapXY", _wrap_Geometry_SwapXY, METH_VARARGS, (char *)"Geometry_SwapXY(Geometry self)"},
 	 { (char *)"Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef, METH_VARARGS, (char *)"Geometry_GetGeometryRef(Geometry self, int geom) -> Geometry"},
 	 { (char *)"Geometry_Simplify", _wrap_Geometry_Simplify, METH_VARARGS, (char *)"\n"
 		"Geometry_Simplify(Geometry self, double tolerance) -> Geometry\n"

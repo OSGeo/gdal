@@ -6432,6 +6432,11 @@ class Geometry(_object):
         return _ogr.Geometry_SetPoint_2D(self, *args, **kwargs)
 
 
+    def SwapXY(self, *args):
+        """SwapXY(Geometry self)"""
+        return _ogr.Geometry_SwapXY(self, *args)
+
+
     def GetGeometryRef(self, *args):
         """GetGeometryRef(Geometry self, int geom) -> Geometry"""
         return _ogr.Geometry_GetGeometryRef(self, *args)
