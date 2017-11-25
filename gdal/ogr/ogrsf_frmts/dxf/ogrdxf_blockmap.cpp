@@ -124,7 +124,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
         OGRDXFFeature *poFeature = NULL;
         int nIters = 0;
         const int nMaxIters = atoi(
-            CPLGetConfigOption("OGR_DXF_FEATURE_LIMIT_PER_BLOCK", "10000"));
+            CPLGetConfigOption("DXF_FEATURE_LIMIT_PER_BLOCK", "10000"));
         while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
         {
             if( nMaxIters >= 0 && nIters == nMaxIters )
@@ -133,7 +133,7 @@ bool OGRDXFDataSource::ReadBlocksSection()
                 CPLError(CE_Warning, CPLE_AppDefined,
                      "Limit of %d features for block %s reached. "
                      "If you need more, set the "
-                     "OGR_DXF_FEATURE_LIMIT_PER_BLOCK configuration "
+                     "DXF_FEATURE_LIMIT_PER_BLOCK configuration "
                      "option to the maximum value (or -1 for no limit)",
                      nMaxIters, osBlockName.c_str());
                 break;
