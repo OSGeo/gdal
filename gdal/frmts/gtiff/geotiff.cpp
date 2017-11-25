@@ -14355,7 +14355,38 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
                 {
                     adfGeoTransform[1] = padfScale[0];
-                    adfGeoTransform[5] = -std::abs(padfScale[1]);
+                    if( padfScale[1] < 0 )
+                    {
+                        const char* pszOptionVal =
+                            CPLGetConfigOption("GTIFF_HONOUR_NEGATIVE_SCALEY",
+                                               NULL);
+                        if( pszOptionVal == NULL )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                "File with negative value for ScaleY in "
+                                "GeoPixelScale tag. This is rather "
+                                "unusual. GDAL, contrary to the GeoTIFF "
+                                "specification, assumes that the file "
+                                "was intended to be north-up, and will "
+                                "treat this file as if ScaleY was "
+                                "positive. You may override this behaviour "
+                                "by setting the GTIFF_HONOUR_NEGATIVE_SCALEY "
+                                "configuration option to YES");
+                            adfGeoTransform[5] = padfScale[1];
+                        }
+                        else if( CPLTestBool(pszOptionVal) )
+                        {
+                            adfGeoTransform[5] = -padfScale[1];
+                        }
+                        else
+                        {
+                            adfGeoTransform[5] = padfScale[1];
+                        }
+                    }
+                    else
+                    {
+                        adfGeoTransform[5] = -padfScale[1];
+                    }
 
                     if( TIFFGetField(hTIFF, TIFFTAG_GEOTIEPOINTS,
                                      &nCount, &padfTiePoints )
