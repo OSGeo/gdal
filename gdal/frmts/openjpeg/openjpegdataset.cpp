@@ -2847,11 +2847,16 @@ GDALDataset * JP2OpenJPEGDataset::CreateCopy( const char * pszFilename,
         oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
 
         if( bGMLJP2Option && CPLGetConfigOption("GMLJP2OVERRIDE", NULL) != NULL )
+        {
+            // Force V1 since this is the branch in which the hack is
+            // implemented
+            nGMLJP2Version = 1;
             bGeoreferencingCompatOfGMLJP2 = TRUE;
+        }
     }
 
     if( CSLFetchNameValue( papszOptions, "GMLJP2" ) != NULL && bGMLJP2Option &&
-        !bGeoreferencingCompatOfGMLJP2 && nGMLJP2Version == 1 )
+        !bGeoreferencingCompatOfGMLJP2 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GMLJP2 box was explicitly required but cannot be written due "
