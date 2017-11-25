@@ -440,6 +440,11 @@ void OGR_G_DumpReadable( OGRGeometryH hGeom, FILE *fp, const char *pszPrefix )
  * geometry.  Note that assigning a spatial reference increments the
  * reference count on the OGRSpatialReference, but does not copy it.
  *
+ * Starting with GDAL 2.3, this will also assign the spatial reference to
+ * potential sub-geometries of the geometry (OGRGeometryCollection,
+ * OGRCurvePolygon/OGRPolygon, OGRCompoundCurve, OGRPolyhedralSurface and their
+ * derived classes).
+ *
  * This is similar to the SFCOM IGeometry::put_SpatialReference() method.
  *
  * This method is the same as the C function OGR_G_AssignSpatialReference().
@@ -469,6 +474,11 @@ void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
  * being reprojected.  It is just changing the interpretation of the existing
  * geometry.  Note that assigning a spatial reference increments the
  * reference count on the OGRSpatialReference, but does not copy it.
+ *
+ * Starting with GDAL 2.3, this will also assign the spatial reference to
+ * potential sub-geometries of the geometry (OGRGeometryCollection,
+ * OGRCurvePolygon/OGRPolygon, OGRCompoundCurve, OGRPolyhedralSurface and their
+ * derived classes).
  *
  * This is similar to the SFCOM IGeometry::put_SpatialReference() method.
  *
