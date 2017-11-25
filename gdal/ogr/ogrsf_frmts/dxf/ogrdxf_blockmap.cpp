@@ -66,17 +66,33 @@ bool OGRDXFDataSource::ReadBlocksSection()
         // first entity.
         CPLString osBlockName;
         CPLString osBlockRecordHandle;
+        OGRDXFInsertTransformer oBasePointTransformer;
 
         while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > 0 )
         {
-            if( nCode == 2 )
+            switch( nCode )
+            {
+              case 2:
                 osBlockName = szLineBuf;
+                break;
 
-            // get the block record handle as well, for arrowheads
-            else if( nCode == 330 )
+              case 330:
+                // get the block record handle as well, for arrowheads
                 osBlockRecordHandle = szLineBuf;
+                break;
 
-            // anything else we want?
+              case 10:
+                oBasePointTransformer.dfXOffset = -CPLAtof( szLineBuf );
+                break;
+
+              case 20:
+                oBasePointTransformer.dfYOffset = -CPLAtof( szLineBuf );
+                break;
+
+              case 30:
+                oBasePointTransformer.dfZOffset = -CPLAtof( szLineBuf );
+                break;
+            }
         }
         if( nCode < 0 )
         {
@@ -107,7 +123,14 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
         OGRDXFFeature *poFeature = NULL;
         while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
+        {
+            // Apply the base point translation
+            OGRGeometry *poFeatureGeom = poFeature->GetGeometryRef();
+            if( poFeatureGeom )
+                poFeatureGeom->transform( &oBasePointTransformer );
+
             oBlockMap[osBlockName].apoFeatures.push_back( poFeature );
+        }
 
         PopBlockInsertion();
     }
