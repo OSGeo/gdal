@@ -255,7 +255,12 @@ def gdal_edit(argv):
         ds.SetGeoTransform(gt)
 
     if unsetgt:
-        ds.SetGeoTransform([0,1,0,0,0,1])
+        # For now only the GTiff drivers understands full-zero as a hint
+        # to unset the geotransform
+        if ds.GetDriver().ShortName == 'GTiff':
+            ds.SetGeoTransform([0,0,0,0,0,0])
+        else:
+            ds.SetGeoTransform([0,1,0,0,0,1])
 
     if len(gcp_list) > 0:
         if wkt is None:

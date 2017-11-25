@@ -7551,6 +7551,26 @@ def tiff_write_163():
     return 'success'
 
 ###############################################################################
+# Test that we handle [0,1,0,0,0,1] geotransform as a regular geotransform
+
+def tiff_write_164():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1)
+    ds.SetGeoTransform([0,1,0,0,0,1])
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    gt = ds.GetGeoTransform(can_return_null = True)
+    ds = None
+
+    if gt != (0,1,0,0,0,1):
+        gdaltest.post_reason('fail')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7743,6 +7763,7 @@ gdaltest_list = [
     tiff_write_161,
     tiff_write_162,
     tiff_write_163,
+    tiff_write_164,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

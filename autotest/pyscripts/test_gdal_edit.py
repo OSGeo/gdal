@@ -126,10 +126,10 @@ def test_gdal_edit_py_2():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     wkt = ds.GetProjectionRef()
-    gt = ds.GetGeoTransform()
+    gt = ds.GetGeoTransform(can_return_null = True)
     ds = None
 
-    if gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
+    if gt is not None:
         gdaltest.post_reason('fail')
         print(gt)
         return 'fail'

@@ -5831,10 +5831,7 @@ HFADataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
     // Copy projection information.
     double adfGeoTransform[6] = {};
 
-    if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
-         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
-         adfGeoTransform[4] != 0.0 || fabs(adfGeoTransform[5]) != 1.0) )
+    if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None )
         poDS->SetGeoTransform(adfGeoTransform);
 
     const char *pszProj = poSrcDS->GetProjectionRef();
