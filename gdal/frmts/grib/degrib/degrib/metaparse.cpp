@@ -1390,6 +1390,8 @@ sInt4 sbit_2Comp_fourByte(sInt4 data)
    if ((data == GRIB2MISSING_s4) || (data >= 0)) {
       return data;
    }
+   if( data == INT_MIN ) // doesn't make sense since it is negative 0 in sign bit logic
+      return 0;
    x = ~data + 1;
    y = data & 0x7fffffff;
    if (x < y) {
