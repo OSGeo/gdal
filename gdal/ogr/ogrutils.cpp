@@ -1110,7 +1110,8 @@ int OGRParseDate( const char *pszInput,
             if( !(*pszInput >= '0' && *pszInput <= '9') )
                 return FALSE;
             const double dfSeconds = CPLAtof(pszInput);
-            if (dfSeconds > 61.0 || dfSeconds < 0.0) return FALSE;
+            // We accept second=60 for leap seconds
+            if (dfSeconds > 60.0 || dfSeconds < 0.0) return FALSE;
             psField->Date.Second = static_cast<float>(dfSeconds);
 
             while( (*pszInput >= '0' && *pszInput <= '9')
