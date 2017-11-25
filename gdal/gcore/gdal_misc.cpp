@@ -56,6 +56,7 @@
 #include "gdal_version.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
+#include "ogr_geos.h"
 
 CPL_CVSID("$Id$")
 
@@ -2113,7 +2114,12 @@ const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
         osBuildInfo += "PAM_ENABLED=YES\n";
 #endif
         osBuildInfo += "OGR_ENABLED=YES\n";  // Deprecated.  Always yes.
-
+#ifdef HAVE_GEOS
+        osBuildInfo += "GEOS_ENABLED=YES\n";
+#ifdef GEOS_CAPI_VERSION
+        osBuildInfo += CPLString("GEOS_VERSION=") + GEOS_CAPI_VERSION + "\n";
+#endif
+#endif
         CPLFree(CPLGetTLS(CTLS_VERSIONINFO));
         CPLSetTLS(CTLS_VERSIONINFO, CPLStrdup(osBuildInfo), TRUE );
         return static_cast<char *>( CPLGetTLS(CTLS_VERSIONINFO) );
