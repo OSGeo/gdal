@@ -2908,6 +2908,11 @@ public:
     OGR_G_SetPoint_2D(self, point, x, y);
   }
 
+  /* OGR >= 2.3 */
+  void SwapXY() {
+    OGR_G_SwapXY(self);
+  }
+
   /* Geometries own their internal geometries */
   OGRGeometryShadow* GetGeometryRef(int geom) {
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
