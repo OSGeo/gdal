@@ -5412,7 +5412,28 @@ CPLErr GTiffRasterBand::SetNoDataValue( double dfNoData )
     poGDS->LoadGeoreferencingAndPamIfNeeded();
 
     if( poGDS->bNoDataSet && poGDS->dfNoDataValue == dfNoData )
+    {
+        bNoDataSet = true;
+        dfNoDataValue = dfNoData;
         return CE_None;
+    }
+
+    if( poGDS->nBands > 1 && poGDS->osProfile == szPROFILE_GDALGeoTIFF )
+    {
+        int bOtherBandHasNoData = FALSE;
+        const int nOtherBand = nBand > 1 ? 1 : 2;
+        double dfOtherNoData = poGDS->GetRasterBand(nOtherBand)->
+                                    GetNoDataValue(&bOtherBandHasNoData);
+        if( bOtherBandHasNoData && dfOtherNoData != dfNoData )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                 "Setting nodata to %.18g on band %d, but band %d has nodata "
+                 "at %.18g. The TIFFTAG_GDAL_NODATA only support one value "
+                 "per dataset. This value of %.18g will be used for all bands "
+                 "on re-opening",
+                 dfNoData, nBand, nOtherBand, dfOtherNoData, dfNoData);
+        }
+    }
 
     if( poGDS->bStreamingOut && poGDS->bCrystalized )
     {

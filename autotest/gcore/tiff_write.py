@@ -7571,6 +7571,51 @@ def tiff_write_164():
     return 'success'
 
 ###############################################################################
+# Test the current behaviour of per-band nodata vs per-dataset serialization
+
+def tiff_write_165():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1, 3)
+    ret = ds.GetRasterBand(1).SetNoDataValue(100)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(2).SetNoDataValue(200)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('warning expected, but not emitted')
+        return 'fail'
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 100:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    nd = ds.GetRasterBand(2).GetNoDataValue()
+    if nd != 200:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if nd != 200:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7764,6 +7809,7 @@ gdaltest_list = [
     tiff_write_162,
     tiff_write_163,
     tiff_write_164,
+    tiff_write_165,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
