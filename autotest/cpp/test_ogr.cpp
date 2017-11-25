@@ -100,20 +100,28 @@ namespace tut
     {
         ensure("GetReferenceCount expected to be 1 before copies", 1 == poSRS->GetReferenceCount());
         {
+            int nCurCount;
+            int nLastCount = 1;
             T value;
             value.assignSpatialReference(poSRS);
-            ensure("SRS reference count not incremented by assignSpatialReference", 2 == poSRS->GetReferenceCount());
+            nCurCount = poSRS->GetReferenceCount();
+            ensure("SRS reference count not incremented by assignSpatialReference", nCurCount > nLastCount );
+            nLastCount = nCurCount;
 
             T value2(value);
-            ensure("SRS reference count not incremented by copy constructor", 3 == poSRS->GetReferenceCount());
+            nCurCount = poSRS->GetReferenceCount();
+            ensure("SRS reference count not incremented by copy constructor", nCurCount > nLastCount );
+            nLastCount = nCurCount;
 
             T value3;
             value3 = value;
-            ensure("SRS reference count not incremented by assignment operator", 4 == poSRS->GetReferenceCount());
+            nCurCount = poSRS->GetReferenceCount();
+            ensure("SRS reference count not incremented by assignment operator", nCurCount > nLastCount );
+            nLastCount = nCurCount;
 
             value3 = value;
             ensure( "SRS reference count incremented by assignment operator",
-                    4 == poSRS->GetReferenceCount() );
+                    nLastCount == poSRS->GetReferenceCount() );
 
         }
         ensure( "GetReferenceCount expected to be decremented by destructors",
