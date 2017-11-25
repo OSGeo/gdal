@@ -709,6 +709,15 @@ void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
 }
 
 /************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCurvePolygon::assignSpatialReference( OGRSpatialReference * poSR )
+{
+    oCC.assignSpatialReference( this, poSR );
+}
+
+/************************************************************************/
 /*                               IsEmpty()                              */
 /************************************************************************/
 
