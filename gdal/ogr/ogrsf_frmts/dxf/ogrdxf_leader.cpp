@@ -557,10 +557,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         oLeader.apoLeaderLines.pop_back();
     }
 
-    if( nCode < 0 )
+    // if we don't need any leaders, delete them
+    if( nCode < 0 || nLeaderLineType == 0 )
     {
-        DXF_LAYER_READER_ERROR();
-        delete poOverallFeature;
         while( !aoLeaders.empty() )
         {
             std::vector<OGRLineString *>& apoLeaderLines =
@@ -572,6 +571,12 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             }
             aoLeaders.pop_back();
         }
+    }
+
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poOverallFeature;
         return NULL;
     }
     if( nCode == 0 )
