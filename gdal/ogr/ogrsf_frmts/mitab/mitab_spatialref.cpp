@@ -231,7 +231,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    161, "NOAA GCS_Sphere",            55, 0, 0, 0, 0, 0, 0, 0, 0 },
 { 0,    1000,"DHDN_Potsdam_Rauenberg",     10,582,  105, 414, -1.04, -0.35, 3.08, 8.3, 0},
 { 6284, 1001,"Pulkovo_1942",               3, 24,   -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
-{ 6275, 1002,"NTF_Paris_Meridian",         30,-168, -60, 320, 0, 0, 0, 0, 2.337229166667},
+{ 6807, 1002,"NTF_Paris_Meridian",         30,-168, -60, 320, 0, 0, 0, 0, 2.337229166667},
 { 6149, 1003,"Switzerland_CH_1903",        10,660.077,13.551, 369.344, 0.804816, 0.577692, 0.952236, 5.66,0},
 { 6237, 1004,"Hungarian_Datum_1972",       21,-56,  75.77, 15.31, -0.37, -0.2, -0.21, -1.01, 0},
 { 0,    1005,"Cape_7_Parameter",           28,-134.73,-110.92, -292.66, 0, 0, 0, 1, 0},
@@ -1758,6 +1758,12 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
+  }
+
+  else if( pszProjection != NULL )
+  {
+      CPLError(CE_Warning, CPLE_AppDefined,
+               "No translation from %s to MapInfo known", pszProjection);
   }
 
     /* ==============================================================
