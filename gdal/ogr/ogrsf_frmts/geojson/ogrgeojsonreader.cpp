@@ -3125,7 +3125,7 @@ OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj,
                 continue;
             }
 
-            OGRGeometry* poGeometry = OGRGeoJSONReadGeometry( poObjGeom );
+            OGRGeometry* poGeometry = OGRGeoJSONReadGeometry( poObjGeom, poSRS );
             if( NULL != poGeometry )
             {
                 poCollection->addGeometryDirectly( poGeometry );
