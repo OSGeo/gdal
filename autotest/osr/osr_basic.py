@@ -725,6 +725,69 @@ def osr_basic_20():
     return 'success'
 
 ###############################################################################
+# Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
+
+def osr_basic_21():
+
+    wkt1 = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000],
+    PARAMETER["standard_parallel_1",4.45405154589751]]"""
+
+    wkt2 = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["scale_factor",0.997],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000]]"""
+
+    wkt2_not_equivalent = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["scale_factor",0.998],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000]]"""
+
+    sr1 = osr.SpatialReference()
+    sr1.ImportFromWkt(wkt1)
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromWkt(wkt2)
+
+    if sr1.IsSame(sr2) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if sr2.IsSame(sr1) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sr2_not_equivalent = osr.SpatialReference()
+    sr2_not_equivalent.ImportFromWkt(wkt2_not_equivalent)
+
+    if sr1.IsSame(sr2_not_equivalent) == 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_basic_1,
@@ -747,6 +810,7 @@ gdaltest_list = [
     osr_basic_18,
     osr_basic_19,
     osr_basic_20,
+    osr_basic_21,
     None ]
 
 if __name__ == '__main__':
