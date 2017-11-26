@@ -394,6 +394,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     bool                bInlineBlocks;
     bool                bMergeBlockGeometries;
+    bool                bTranslateEscapeSequences;
 
     OGRDXFReader        oReader;
 
@@ -416,6 +417,7 @@ class OGRDXFDataSource : public OGRDataSource
 
     bool                InlineBlocks() const { return bInlineBlocks; }
     bool                ShouldMergeBlockGeometries() const { return bMergeBlockGeometries; }
+    bool                ShouldTranslateEscapes() const { return bTranslateEscapeSequences; }
     void                AddStandardFields( OGRFeatureDefn *poDef );
 
     // Implemented in ogrdxf_blockmap.cpp

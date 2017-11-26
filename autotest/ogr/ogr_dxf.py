@@ -1105,21 +1105,30 @@ def ogr_dxf_21():
 
 def ogr_dxf_22():
 
-    # Read TEXT feature
+    # Read MTEXT feature
     ds = ogr.Open('data/text.dxf')
     lyr = ds.GetLayer(0)
 
+    if version_info >= (3,0,0):
+        test_text = 'test\ttext ab/c~d\u00B1ef^g.h#i jklm'
+    else:
+        exec("test_text = u'test\ttext ab/c~d\u00B1ef^g.h#i jklm'")
+        test_text = test_text.encode('utf-8')
+
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('Text') != 'test_text':
+    if feat.GetFieldAsString('Text') != test_text:
         gdaltest.post_reason('bad attribute')
+        feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"test_text",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
         gdaltest.post_reason('bad style')
+        feat.DumpReadable()
         print(style)
         return 'fail'
     if ogrtest.check_feature_geometry( feat, 'POINT(1 2 3)' ):
         gdaltest.post_reason('bad geometry')
+        feat.DumpReadable()
         return 'fail'
 
     # Write text feature
@@ -1140,21 +1149,38 @@ def ogr_dxf_22():
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
-    if feat.GetFieldAsString('Text') != 'test_text':
+    if feat.GetFieldAsString('Text') != test_text:
         gdaltest.post_reason('bad attribute')
+        feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"test_text",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
         gdaltest.post_reason('bad style')
+        feat.DumpReadable()
         print(style)
         return 'fail'
     if ogrtest.check_feature_geometry( feat, 'POINT(1 2 3)' ):
         gdaltest.post_reason('bad geometry')
+        feat.DumpReadable()
         return 'fail'
 
     ds = None
 
     gdal.Unlink('/vsimem/ogr_dxf_22.dxf')
+
+    # Now try reading in the MTEXT feature without translating escape sequences
+    gdal.SetConfigOption('DXF_TRANSLATE_ESCAPE_SEQUENCES', 'FALSE')
+    ds = ogr.Open('data/text.dxf')
+    gdal.SetConfigOption('DXF_TRANSLATE_ESCAPE_SEQUENCES', None)
+    lyr = ds.GetLayer(0)
+
+    feat = lyr.GetNextFeature()
+    if feat.GetFieldAsString('Text') != '\A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m':
+        gdaltest.post_reason('bad attribute with DXF_TRANSLATE_ESCAPE_SEQUENCES = FALSE')
+        feat.DumpReadable()
+        return 'fail'
+
+    ds = None
 
     return 'success'
 

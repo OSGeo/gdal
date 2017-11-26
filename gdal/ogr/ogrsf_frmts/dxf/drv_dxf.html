@@ -41,11 +41,18 @@ The following entity types are supported:<p>
 style string may include the following parameters: f s t a c w p dx dy bo it.
 Text positioning might not precisely match CAD software (especially the vertical
 alignment of MTEXT), as calculation of the exact position would require GDAL to
-be aware of the font metrics.
+be aware of the font metrics.<p>
+By default, character escapes such as %%p are honored where applicable, and
+MTEXT control sequences like \Wx.xx; are stripped. To disable this behavior and
+retrieve the raw text values, set the configuration option
+DXF_TRANSLATE_ESCAPE_SEQUENCES to FALSE.
 
 <li> LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
 polylines (those with their vertices' budge attributes set) will be tessellated.
 Single-vertex polylines are translated to POINT.
+
+<li> SPLINE: Translated as a LINESTRING, tessellating the curve into line
+segments. Fit points and start/end tangents are not supported.
 
 <li> CIRCLE, ELLIPSE, ARC:  Translated as a LINESTRING, tessellating the
 arc into line segments.
@@ -197,10 +204,15 @@ on the styling information.
 <li>Point features without LABEL styling are written as POINT entities.
 
 <li>LineString and MultiLineString features are written as one or more
-LWPOLYLINE entities, closed in the case of polygon rings.  An effort is
-made to preserve line width and color.
+LWPOLYLINE entities, closed in the case of polygon rings. If the geometry does
+not have a constant elevation, a POLYLINE entity is written. An effort is made
+to preserve line width and color.
 
-<li>Polygon and MultiPolygon features are written as HATCH entities.
+<li>Polygon, Triangle and MultiPolygon features are written as HATCH entities by
+default. To write these features as LWPOLYLINE/POLYLINE entities instead, set
+the configuration option DXF_WRITE_HATCH to FALSE. You may need to do this if
+your geometries do not have a constant elevation, as the DXF HATCH entity
+cannot represent such geometries.
 </ul>
 
 The dataset creation supports the following dataset creation options:<p>
@@ -288,7 +300,11 @@ For changing the units edit $MEASUREMENT and $INSUNITS variables in the header t
 
 <h3>See also</h2>
 
-<a href="http://www.autodesk.com/techpubs/autocad/acad2000/dxf/">AutoCAD 2000 DXF Reference</a><p>
+<a href="http://www.autodesk.com/techpubs/autocad/acad2000/dxf/">AutoCAD 2000
+DXF Reference</a><p>
+
+<a href="http://images.autodesk.com/adsk/files/
+autocad_2014_pdf_dxf_reference_enu.pdf">AutoCAD 2014 DXF Reference</a><p>
 
 <a href="http://www.autodesk.com/techpubs/autocad/acad2000/dxf/header_section_group_codes_dxf_02.htm">DXF header reference</a>
 </body>

@@ -43,7 +43,8 @@ OGRDXFDataSource::OGRDXFDataSource() :
     fp(NULL),
     iEntitiesSectionOffset(0),
     bInlineBlocks(false),
-    bMergeBlockGeometries(false)
+    bMergeBlockGeometries(false),
+    bTranslateEscapeSequences(false)
 {}
 
 /************************************************************************/
@@ -109,6 +110,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
     bMergeBlockGeometries = CPLTestBool(
         CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
+    bTranslateEscapeSequences = CPLTestBool(
+        CPLGetConfigOption( "DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
