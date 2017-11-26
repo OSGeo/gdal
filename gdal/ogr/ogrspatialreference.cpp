@@ -6809,8 +6809,16 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
         bool bIgnoreScaleFactor = false;
         bool bIgnoreStdParallel12 = false;
 
-        if( pszValue1 && EQUAL(pszValue1, SRS_PT_MERCATOR_1SP) &&
-            pszValue2 && EQUAL(pszValue2, SRS_PT_MERCATOR_2SP) )
+        if( pszValue1 == NULL || pszValue2 == NULL )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different PROJECTION");
+#endif
+            return FALSE;
+        }
+
+        if( EQUAL(pszValue1, SRS_PT_MERCATOR_1SP) &&
+            EQUAL(pszValue2, SRS_PT_MERCATOR_2SP) )
         {
             // Try to find if Mercator_1SP and Mercator_2SP are equivalent
             const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
@@ -6838,14 +6846,13 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
             bIgnoreScaleFactor = true;
             bIgnoreStdParallel12 = true;
         }
-        else if(  pszValue1 && EQUAL(pszValue1, SRS_PT_MERCATOR_2SP) &&
-                  pszValue2 && EQUAL(pszValue2, SRS_PT_MERCATOR_1SP) )
+        else if(  EQUAL(pszValue1, SRS_PT_MERCATOR_2SP) &&
+                  EQUAL(pszValue2, SRS_PT_MERCATOR_1SP) )
         {
             // go to above case
             return poOtherSRS->IsSame(this, papszOptions);
         }
-        else if( pszValue1 == NULL || pszValue2 == NULL
-            || !EQUAL(pszValue1, pszValue2) )
+        else if( !EQUAL(pszValue1, pszValue2) )
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("OSR", "Different PROJECTION");
