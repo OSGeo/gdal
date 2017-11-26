@@ -1760,7 +1760,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         nParmCount = 4;
   }
 
-  else if( pszProjection != NULL )
+  else
   {
       CPLError(CE_Warning, CPLE_AppDefined,
                "No translation from %s to MapInfo known", pszProjection);
