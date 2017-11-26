@@ -434,11 +434,26 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
     for( int i = 0; panInput[i] != 0; i++ )
     {
         if( panInput[i] == '\n' )
+        {
             osResult += "\\P";
+        }
         else if( panInput[i] == ' ' )
+        {
             osResult += "\\~";
+        }
         else if( panInput[i] == '\\' )
+        {
             osResult += "\\\\";
+        }
+        else if( panInput[i] == '^' )
+        {
+            osResult += "^ ";
+        }
+        else if( panInput[i] < ' ' )
+        {
+            osResult += '^';
+            osResult += static_cast<char>( panInput[i] + '@' );
+        }
         else if( panInput[i] > 255 )
         {
             CPLString osUnicode;
@@ -446,7 +461,9 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
             osResult += osUnicode;
         }
         else
+        {
             osResult += (char) panInput[i];
+        }
     }
 
     CPLFree(panInput);

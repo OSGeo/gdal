@@ -58,23 +58,82 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
     const char *pszInput = osInput.c_str();
 
 /* -------------------------------------------------------------------- */
-/*      Now translate escape sequences.  They are all plain ascii       */
-/*      characters and won't have been affected by the UTF8             */
+/*      Now translate low-level escape sequences.  They are all plain   */
+/*      ASCII characters and won't have been affected by the UTF8       */
 /*      recoding.                                                       */
 /* -------------------------------------------------------------------- */
     while( *pszInput != '\0' )
     {
-        if( bIsMText && pszInput[0] == '\\' && pszInput[1] == 'P' )
+        if( pszInput[0] == '^' && pszInput[1] != '\0' )
         {
-            osResult += '\n';
+            if( pszInput[1] == ' ' )
+                osResult += '^';
+            else
+                osResult += static_cast<char>( toupper(pszInput[1]) ) ^ 0x40;
             pszInput++;
         }
-        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == '~' )
+        else if( STARTS_WITH_CI(pszInput, "%%c")
+            || STARTS_WITH_CI(pszInput, "%%d")
+            || STARTS_WITH_CI(pszInput, "%%p") )
         {
-            osResult += ' ';
+            wchar_t anWCharString[2];
+
+            anWCharString[1] = 0;
+
+            // These are special symbol representations for AutoCAD.
+            if( STARTS_WITH_CI(pszInput, "%%c") )
+                anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
+            else if( STARTS_WITH_CI(pszInput, "%%d") )
+                anWCharString[0] = 0x00B0; // degree
+            else if( STARTS_WITH_CI(pszInput, "%%p") )
+                anWCharString[0] = 0x00B1; // plus/minus
+
+            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
+                CPL_ENC_UCS2,
+                CPL_ENC_UTF8 );
+
+            osResult += pszUTF8Char;
+            CPLFree( pszUTF8Char );
+
+            pszInput += 2;
+        }
+        else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
+            || STARTS_WITH_CI(pszInput, "%%o") ) )
+        {
+            // Underline and overline markers. These have no effect in MTEXT
+            pszInput += 2;
+        }
+        else
+        {
+            osResult += pszInput[0];
+        }
+
+        pszInput++;
+    }
+
+    if( !bIsMText )
+        return osResult;
+
+/* -------------------------------------------------------------------- */
+/*      If this is MTEXT, or something similar (e.g. DIMENSION text),   */
+/*      do a second pass to strip additional MTEXT format codes.        */
+/* -------------------------------------------------------------------- */
+    pszInput = osResult.c_str();
+    CPLString osMtextResult;
+
+    while( *pszInput != '\0' )
+    {
+        if( pszInput[0] == '\\' && pszInput[1] == 'P' )
+        {
+            osMtextResult += '\n';
             pszInput++;
         }
-        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == 'U'
+        else if( pszInput[0] == '\\' && pszInput[1] == '~' )
+        {
+            osMtextResult += ' ';
+            pszInput++;
+        }
+        else if( pszInput[0] == '\\' && pszInput[1] == 'U'
                  && pszInput[2] == '+' && CPLStrnlen(pszInput, 7) >= 7 )
         {
             CPLString osHex;
@@ -91,70 +150,74 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
                                                     CPL_ENC_UCS2,
                                                     CPL_ENC_UTF8 );
 
-            osResult += pszUTF8Char;
+            osMtextResult += pszUTF8Char;
             CPLFree( pszUTF8Char );
 
             pszInput += 6;
         }
-        else if( bIsMText && pszInput[0] == '\\'
-                 && (pszInput[1] == 'W'
-                     || pszInput[1] == 'T'
-                     || pszInput[1] == 'A' ) )
+        else if( pszInput[0] == '{' || pszInput[0] == '}' )
+        {
+            // Skip braces, which are used for grouping
+        }
+        else if( pszInput[0] == '\\'
+                 && strchr( "WTAHFfCcQp", pszInput[1] ) != NULL )
         {
             // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
             // See data/dwg/EP/42002.dwg
-            // \W is for width and \T is for tracking, but we skip them.
-            // According to qcad rs_text.cpp, \A values are vertical
-            // alignment, 0=bottom, 1=mid, 2=top but we ignore for now.
+            // These are all inline formatting codes which take an argument
+            // up to the first semicolon (\W for width, \f for font, etc)
 
             while( *pszInput != ';' && *pszInput != '\0' )
                 pszInput++;
             if( *pszInput == '\0' )
                 break;
         }
-        else if( bIsMText && pszInput[0] == '\\' && pszInput[1] == '\\' )
+        else if( pszInput[0] == '\\'
+                && strchr( "KkLlOo", pszInput[1] ) != NULL )
         {
-            osResult += '\\';
+            // Inline formatting codes that don't take an argument
+
             pszInput++;
         }
-        else if( STARTS_WITH_CI(pszInput, "%%c")
-                 || STARTS_WITH_CI(pszInput, "%%d")
-                 || STARTS_WITH_CI(pszInput, "%%p") )
+        else if( pszInput[0] == '\\' && pszInput[1] == 'S' )
         {
-            wchar_t anWCharString[2];
-
-            anWCharString[1] = 0;
-
-            // These are special symbol representations for AutoCAD.
-            if( STARTS_WITH_CI(pszInput, "%%c") )
-                anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
-            else if( STARTS_WITH_CI(pszInput, "%%d") )
-                anWCharString[0] = 0x00B0; // degree
-            else if( STARTS_WITH_CI(pszInput, "%%p") )
-                anWCharString[0] = 0x00B1; // plus/minus
-
-            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
-                                                    CPL_ENC_UCS2,
-                                                    CPL_ENC_UTF8 );
-
-            osResult += pszUTF8Char;
-            CPLFree( pszUTF8Char );
+            // Stacked text. Normal escapes don't work inside a stack
 
             pszInput += 2;
+            while( *pszInput != ';' && *pszInput != '\0' )
+            {
+                if( pszInput[0] == '\\' &&
+                    strchr( "^/#~", pszInput[1] ) != NULL )
+                {
+                    osMtextResult += pszInput[1];
+                    pszInput++;
+                }
+                else if( strchr( "^/#~", pszInput[0] ) == NULL )
+                {
+                    osMtextResult += pszInput[0];
+                }
+                pszInput++;
+            }
+            if( pszInput[0] == ';' )
+                pszInput++;
         }
-        else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
-            || STARTS_WITH_CI(pszInput, "%%o") ) )
+        else if( pszInput[0] == '\\'
+                 && strchr( "\\{}", pszInput[1] ) != NULL )
         {
-            // Underline and overline markers, which have no effect in MTEXT
-            pszInput += 2;
+            // MTEXT character escapes
+
+            osMtextResult += pszInput[1];
+            pszInput++;
         }
         else
-            osResult += *pszInput;
+        {
+            osMtextResult += *pszInput;
+        }
 
         pszInput++;
     }
 
-    return osResult;
+    return osMtextResult;
 }
 
 /************************************************************************/

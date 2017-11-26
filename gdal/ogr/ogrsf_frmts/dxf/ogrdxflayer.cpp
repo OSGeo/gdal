@@ -548,7 +548,10 @@ CPLString OGRDXFLayer::TextRecode( const char *pszInput )
 CPLString OGRDXFLayer::TextUnescape( const char *pszInput, bool bIsMText )
 
 {
-    return ACTextUnescape( pszInput, poDS->GetEncoding(), bIsMText );
+    if( poDS->ShouldTranslateEscapes() )
+        return ACTextUnescape( pszInput, poDS->GetEncoding(), bIsMText );
+
+    return TextRecode( pszInput );
 }
 
 /************************************************************************/
@@ -927,12 +930,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
             nAnchorPosition += nHorizontalAlignment;
         // TODO other alignment options
     }
-
-/* -------------------------------------------------------------------- */
-/*      Translate text from Win-1252 to UTF8.  We approximate this      */
-/*      by treating Win-1252 as Latin-1.                                */
-/* -------------------------------------------------------------------- */
-    osText.Recode( poDS->GetEncoding(), CPL_ENC_UTF8 );
 
     poFeature->SetField( "Text", osText );
 
