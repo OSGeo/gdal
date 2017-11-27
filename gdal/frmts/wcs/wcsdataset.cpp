@@ -1224,7 +1224,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // The goal is to get the service XML and a filename for it
 
-        bool updated;
+        bool updated = false;
         if (cached) {
 /* -------------------------------------------------------------------- */
 /*          The fast route, service file is in cache.                   */

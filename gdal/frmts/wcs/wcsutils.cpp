@@ -415,7 +415,7 @@ bool SetupCache(CPLString &cache, bool clear)
             VSIFCloseL(f);
         } else {
             CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
-            return CE_Failure;
+            return false;
         }
     }
     srand((unsigned int)time(NULL)); // not to have the same names in the cache
