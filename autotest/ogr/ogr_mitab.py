@@ -2453,6 +2453,67 @@ def ogr_mitab_47():
     return 'success'
 
 ###############################################################################
+#Test writing and reading LCC_1SP
+
+def ogr_mitab_48():
+
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource('/vsimem/test.mif')
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["NTF (Paris) / France IV (deprecated)",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
+                AUTHORITY["EPSG","7011"]],
+            TOWGS84[-168,-60,320,0,0,0,0],
+            AUTHORITY["EPSG","6807"]],
+        PRIMEM["Paris",2.33722917,
+            AUTHORITY["EPSG","8903"]],
+        UNIT["grad",0.01570796326794897,
+            AUTHORITY["EPSG","9105"]],
+        AUTHORITY["EPSG","4807"]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.85],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    AUTHORITY["EPSG","27584"]]""")
+    lyr = ds.CreateLayer('foo', srs = sr)
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    ds = None
+
+    ds = ogr.Open('/vsimem/test.mif')
+    lyr = ds.GetLayer(0)
+    sr_got = lyr.GetSpatialRef()
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource('/vsimem/test.mif')
+    sr_expected = osr.SpatialReference()
+    sr_expected.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["unnamed",
+        DATUM["NTF_Paris_Meridian",
+            SPHEROID["Clarke 1880 (modified for IGN)",6378249.2,293.4660213],
+            TOWGS84[-168,-60,320,0,0,0,0]],
+        PRIMEM["Paris",2.33722917],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",42.165],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]""")
+
+    if sr_got.IsSame(sr_expected) == 0:
+        print(sr_got)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2517,6 +2578,7 @@ gdaltest_list = [
     ogr_mitab_45,
     ogr_mitab_46,
     ogr_mitab_47,
+    ogr_mitab_48,
     ogr_mitab_cleanup
     ]
 
