@@ -692,7 +692,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         osQube = "\"";
         osQube += GetKeywordSub( osPrefix + "^" + osImageKeyword, 1 );
         osQube +=  "\"";
-        nDetachedOffset = atoi(GetKeywordSub( osPrefix + "^" + osImageKeyword, 2, "1")) - 1;
+        nDetachedOffset = atoi(GetKeywordSub( osPrefix + "^" + osImageKeyword, 2, "1"));
+        if( nDetachedOffset >= 1 )
+            nDetachedOffset -= 1;
 
         // If this is not explicitly in bytes, then it is assumed to be in
         // records, and we need to translate to bytes.
