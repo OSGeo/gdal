@@ -958,7 +958,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
 
     poDS->pGrd->fp = poDS->fp;
     strncpy(poDS->pGrd->szFileName, pszFilename,
-            sizeof(poDS->pGrd->szFileName));
+            sizeof(poDS->pGrd->szFileName)-1);
     poDS->pGrd->szFileName[sizeof(poDS->pGrd->szFileName) - 1] = '\0';
 
 // Seek to the start of the file and enter the default header info

@@ -186,7 +186,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }

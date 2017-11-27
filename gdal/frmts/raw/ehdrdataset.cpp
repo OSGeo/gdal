@@ -345,9 +345,9 @@ static const char*OSR_GDS( char* pszResult, int nResultLen,
     char **papszTokens = CSLTokenizeString(papszNV[iLine]);
 
     if( CSLCount(papszTokens) > 1 )
-        strncpy(pszResult, papszTokens[1], nResultLen);
+        strncpy(pszResult, papszTokens[1], nResultLen-1);
     else
-        strncpy(pszResult, pszDefaultValue, nResultLen);
+        strncpy(pszResult, pszDefaultValue, nResultLen-1);
     pszResult[nResultLen - 1] = '\0';
 
     CSLDestroy(papszTokens);

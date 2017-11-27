@@ -223,7 +223,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             return NULL;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }
