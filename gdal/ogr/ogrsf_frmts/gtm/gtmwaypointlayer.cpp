@@ -187,7 +187,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     appendUShort(pBufferAux, (unsigned short) commentLength);
 
     /* Write waypoint string comment to buffer */
-    strncpy((char*)pBuffer+12, pszcomment, commentLength);
+    memcpy((char*)pBuffer+12, pszcomment, commentLength);
 
     /* Write icon to buffer */
     pBufferAux = (char*)pBuffer+12+commentLength;

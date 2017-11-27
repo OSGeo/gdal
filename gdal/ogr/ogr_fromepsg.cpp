@@ -176,7 +176,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
                 {
                     szSeconds[1] = pszDecimal[4];
                     szSeconds[2] = '.';
-                    strncpy( szSeconds+3, pszDecimal + 5, sizeof(szSeconds)-3 );
+                    strncpy( szSeconds+3, pszDecimal + 5, sizeof(szSeconds)-3-1 );
                     szSeconds[sizeof(szSeconds)-1] = 0;
                 }
                 else

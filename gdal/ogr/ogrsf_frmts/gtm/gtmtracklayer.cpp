@@ -159,7 +159,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     pBufferAux = (char*)pBufferAux + 2;
 
     /* Write track name */
-    strncpy((char*)pBufferAux, psztrackname, trackNameLength);
+    memcpy((char*)pBufferAux, psztrackname, trackNameLength);
     pBufferAux = (char*)pBufferAux + trackNameLength;
 
     /* Write track type */

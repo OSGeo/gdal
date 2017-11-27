@@ -2010,7 +2010,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       unitLen = static_cast<int>(strlen (unitName));
       meta->unitName = (char *) realloc ((void *) (meta->unitName),
                                          1 + unitLen * sizeof (char));
-      strncpy (meta->unitName, unitName, unitLen);
+      memcpy (meta->unitName, unitName, unitLen);
       meta->unitName[unitLen] = '\0';
    }
 

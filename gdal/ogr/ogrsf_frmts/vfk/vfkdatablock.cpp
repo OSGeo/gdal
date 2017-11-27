@@ -148,7 +148,8 @@ void IVFKDataBlock::SetProperties(const char *poLine)
     }
 
     pszType = (char *) CPLRealloc(pszType, nLength + 1);
-    strncpy(pszType, poProp, nLength);
+    if( nLength > 0 )
+        strncpy(pszType, poProp, nLength);
     pszType[nLength] = '\0';
 
     /* add property */

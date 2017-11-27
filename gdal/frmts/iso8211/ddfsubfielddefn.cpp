@@ -943,7 +943,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
           {
             char chFillChar = '0'; /* ASCII zero intended */
             memset( pachData, chFillChar, nSize );
-            strncpy( pachData + nSize - strlen(szWork), szWork,
+            memcpy( pachData + nSize - strlen(szWork), szWork,
                      strlen(szWork) );
             break;
           }
@@ -1031,7 +1031,7 @@ int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
             const char chFillZeroASCII = '0'; /* ASCII zero intended */
             /* coverity[bad_memset] */
             memset( pachData, chFillZeroASCII, nSize );
-            strncpy( pachData + nSize - strlen(szWork), szWork,
+            memcpy( pachData + nSize - strlen(szWork), szWork,
                      strlen(szWork) );
         }
         else

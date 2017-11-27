@@ -776,7 +776,7 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     const size_t size = std::min(
         static_cast<size_t>(psCtx->nLastErrMsgMax-1), strlen(pszMsg) );
     char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
-    strncpy( pszLastErrMsg, pszMsg, size );
+    memcpy( pszLastErrMsg, pszMsg, size );
     pszLastErrMsg[size] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
