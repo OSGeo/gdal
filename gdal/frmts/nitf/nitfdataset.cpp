@@ -5515,27 +5515,27 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                 // assume any year number greater then 94 (the year NITF2.0
                 // spec published), will be 1900s, otherwise, it's 2000s.
                 char achNewDate[] = "20021216151629";
-                if (nYear > 94) strncpy(achNewDate,"19",2);
-                else strncpy(achNewDate,"20",2);
+                if (nYear > 94) memcpy(achNewDate,"19",2);
+                else memcpy(achNewDate,"20",2);
 
-                strncpy(achNewDate+6, achOrigDate,8); // copy cover DDhhmmss
-                strncpy(achNewDate+2, achOrigDate+12,2); // copy over years
+                memcpy(achNewDate+6, achOrigDate,8); // copy cover DDhhmmss
+                memcpy(achNewDate+2, achOrigDate+12,2); // copy over years
 
                 // Perform month conversion
                 char *pszOrigMonth = achOrigDate+9;
                 char *pszNewMonth = achNewDate+4;
 
-                if (STARTS_WITH(pszOrigMonth, "JAN")) strncpy(pszNewMonth,"01",2);
-                else if (STARTS_WITH(pszOrigMonth, "FEB")) strncpy(pszNewMonth,"02",2);
-                else if (STARTS_WITH(pszOrigMonth, "MAR")) strncpy(pszNewMonth,"03",2);
-                else if (STARTS_WITH(pszOrigMonth, "APR")) strncpy(pszNewMonth,"04",2);
-                else if (STARTS_WITH(pszOrigMonth, "MAY")) strncpy(pszNewMonth,"05",2);
-                else if (STARTS_WITH(pszOrigMonth, "JUN")) strncpy(pszNewMonth,"07",2);
-                else if (STARTS_WITH(pszOrigMonth, "AUG")) strncpy(pszNewMonth,"08",2);
-                else if (STARTS_WITH(pszOrigMonth, "SEP")) strncpy(pszNewMonth,"09",2);
-                else if (STARTS_WITH(pszOrigMonth, "OCT")) strncpy(pszNewMonth,"10",2);
-                else if (STARTS_WITH(pszOrigMonth, "NOV")) strncpy(pszNewMonth,"11",2);
-                else if (STARTS_WITH(pszOrigMonth, "DEC")) strncpy(pszNewMonth,"12",2);
+                if (STARTS_WITH(pszOrigMonth, "JAN")) memcpy(pszNewMonth,"01",2);
+                else if (STARTS_WITH(pszOrigMonth, "FEB")) memcpy(pszNewMonth,"02",2);
+                else if (STARTS_WITH(pszOrigMonth, "MAR")) memcpy(pszNewMonth,"03",2);
+                else if (STARTS_WITH(pszOrigMonth, "APR")) memcpy(pszNewMonth,"04",2);
+                else if (STARTS_WITH(pszOrigMonth, "MAY")) memcpy(pszNewMonth,"05",2);
+                else if (STARTS_WITH(pszOrigMonth, "JUN")) memcpy(pszNewMonth,"07",2);
+                else if (STARTS_WITH(pszOrigMonth, "AUG")) memcpy(pszNewMonth,"08",2);
+                else if (STARTS_WITH(pszOrigMonth, "SEP")) memcpy(pszNewMonth,"09",2);
+                else if (STARTS_WITH(pszOrigMonth, "OCT")) memcpy(pszNewMonth,"10",2);
+                else if (STARTS_WITH(pszOrigMonth, "NOV")) memcpy(pszNewMonth,"11",2);
+                else if (STARTS_WITH(pszOrigMonth, "DEC")) memcpy(pszNewMonth,"12",2);
 
                 PLACE( achTSH+ 12, TXTDT         , achNewDate                );
             }

@@ -210,7 +210,6 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     jmgr.empty_output_buffer = empty_output_buffer;
     jmgr.term_destination = init_or_terminate_destination;
 
-    memset(&sJPEGStruct, 0, sizeof(sJPEGStruct));
     memset(&cinfo, 0, sizeof(cinfo));
 
     // Look at the source of this, some interesting tidbits
@@ -488,7 +487,6 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
     mask.set_packer(&packer);
 
     memset(&cinfo, 0, sizeof(cinfo));
-    memset(&sJPEGStruct, 0, sizeof(sJPEGStruct));
     // Pass the mask address to the decompressor
     sJPEGStruct.mask = &mask;
 

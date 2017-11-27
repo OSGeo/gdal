@@ -3231,7 +3231,7 @@ void NAD83to27( char *pszOutRef, char *pszInRef)
     pOutput = pOutput +3;
     pInput = pInput +3;
 
-    strncpy(pOutput, "27", 2);
+    memcpy(pOutput, "27", 2);
     pOutput = pOutput +2;
     pInput = pInput +2;
     strcpy(pOutput, pInput);

@@ -2589,16 +2589,12 @@ GetConnectionInfo(const char * pszFilename,
     /***************************************
      * Construct a valid connection string
      ***************************************/
-    *ppszConnectionString = (char*) CPLCalloc(strlen(pszFilename),
-            sizeof (char));
+    CPLString osConnectionString;
     for (i = 0; i < CSLCount(papszParams); i++) {
-        *ppszConnectionString =
-            strncat(*ppszConnectionString, papszParams[i],
-                strlen(papszParams[i]));
-
-        *ppszConnectionString =
-            strncat(*ppszConnectionString, " ", strlen(" "));
+        osConnectionString += papszParams[i];
+        osConnectionString += " ";
     }
+    *ppszConnectionString = CPLStrdup(osConnectionString);
 
     nPos = CSLFindName(papszParams, "host");
     if (nPos != -1) {
