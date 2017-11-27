@@ -1115,10 +1115,21 @@ def osr_basic_24():
 def osr_basic_25():
 
     sr = osr.SpatialReference()
+    sr.SetFromUserInput("""GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563]],
+            UNIT["degree",0.0174532925199433]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
     sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
-                SPHEROID["WGS 84",6378137,298.257223563]]],
+                SPHEROID["WGS 84",6378137,298.257223563]],
+            UNIT["degree",0.0174532925199433]],
         PROJECTION["Mercator_1SP"],
         PARAMETER["central_meridian",0],
         PARAMETER["scale_factor",0.5],
