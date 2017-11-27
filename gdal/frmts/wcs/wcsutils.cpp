@@ -50,7 +50,7 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     size_t b_dot = b.find(".");
     CPLString a_p = a.substr(0, a_dot);
     CPLString b_p = b.substr(0, b_dot);
-    unsigned long d = a_p.length() - b_p.length();
+    int d = (int)(a_p.length()) - (int)(b_p.length());
     if (d < 0) {
         for (int i = 0; i < -1*d; ++i) {
             a_p = "0" + a_p;
@@ -68,7 +68,7 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     }
     a_p = a.substr(a_dot+1, std::string::npos);
     b_p = b.substr(b_dot+1, std::string::npos);
-    d = a_p.length() - b_p.length();
+    d = (int)(a_p.length()) - (int)(b_p.length());
     if (d < 0) {
         for (int i = 0; i < -1*d; ++i) {
             a_p = a_p + "0";
