@@ -473,7 +473,7 @@ def wcs_6():
         for i, v in enumerate(setup[server]['Versions']):
             version = str(int(v / 100)) + '.' + str(int(v % 100 / 10)) + '.' + str((v % 10))
             if not server + '-' + version in urls:
-                print "Error: " + server + '-' + version + " not in urls"
+                print("Error: " + server + '-' + version + " not in urls")
                 continue
             options = [cache]
             if first_call:
