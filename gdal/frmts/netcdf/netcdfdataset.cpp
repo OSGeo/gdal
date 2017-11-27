@@ -151,7 +151,8 @@ class netCDFRasterBand : public GDALPamRasterBand
     bool        bSignedData;
     bool        bCheckLongitude;
 
-    CPLErr          CreateBandMetadata( const int *paDimIds );
+    CPLErr          CreateBandMetadata( const int *paDimIds,
+                                        const int* panExtraDimVarIds );
     template <class T> void CheckData ( void *pImage, void *pImageNC,
                                         size_t nTmpBlockXSize,
                                         size_t nTmpBlockYSize,
@@ -168,7 +169,8 @@ class netCDFRasterBand : public GDALPamRasterBand
                       const int *panBandZLen,
                       const int *panBandPos,
                       const int *paDimIds,
-                      int nBand );
+                      int nBand,
+                      const int *panExtraDimVarIds );
     netCDFRasterBand( netCDFDataset *poDS,
                       GDALDataType eType,
                       int nBand,
@@ -207,7 +209,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
                                     const int *panBandZLevIn,
                                     const int *panBandZPosIn,
                                     const int *paDimIds,
-                                    int nBandIn ) :
+                                    int nBandIn,
+                                    const int *panExtraDimVarIds ) :
     nc_datatype(NC_NAT),
     cdfid(poNCDFDS->GetCDFID()),
     nZId(nZIdIn),
@@ -469,7 +472,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
     SetNoDataValue(dfNoData);
 
     // Create Band Metadata.
-    CreateBandMetadata(paDimIds);
+    CreateBandMetadata(paDimIds, panExtraDimVarIds);
 
     // Attempt to fetch the scale_factor and add_offset attributes for the
     // variable and set them.  If these values are not available, set
@@ -1117,10 +1120,80 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML( const char * /* pszUnused */ )
 }
 
 /************************************************************************/
+/*               Get1DVariableIndexedByDimension()                      */
+/************************************************************************/
+
+static int Get1DVariableIndexedByDimension( int cdfid, int nDimId,
+                                            const char* pszDimName,
+                                            bool bVerboseError )
+{
+    int nVarID;
+    // First try to find a variable whose name is identical to the dimension
+    // name, and check that it is indeed indexed by this dimension
+    if( nc_inq_varid(cdfid, pszDimName, &nVarID) == NC_NOERR )
+    {
+        int nDimCountOfVariable = 0;
+        nc_inq_varndims(cdfid, nVarID, &nDimCountOfVariable);
+        if( nDimCountOfVariable == 1 )
+        {
+            int nDimIdOfVariable = -1;
+            nc_inq_vardimid(cdfid, nVarID, &nDimIdOfVariable);
+            if( nDimIdOfVariable == nDimId )
+            {
+                return nVarID;
+            }
+        }
+    }
+
+    // Otherwise iterate over the variables to find potential candidates
+    int nvars = 0;
+    CPL_IGNORE_RET_VAL( nc_inq(cdfid, NULL, &nvars, NULL, NULL) );
+
+    int nCountCandidateVars = 0;
+    int nCandidateVarID = -1;
+    for( int k = 0; k < nvars; k++ )
+    {
+        int nDimCountOfVariable = 0;
+        nc_inq_varndims(cdfid, k, &nDimCountOfVariable);
+        if( nDimCountOfVariable == 1 )
+        {
+            int nDimIdOfVariable = -1;
+            nc_inq_vardimid(cdfid, k, &nDimIdOfVariable);
+            if( nDimIdOfVariable == nDimId )
+            {
+                nCountCandidateVars ++;
+                nCandidateVarID = k;
+            }
+        }
+    }
+    if( nCountCandidateVars > 1 )
+    {
+        if( bVerboseError )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                 "Several 1D variables are indexed by dimension %s",
+                 pszDimName);
+        }
+        return -1;
+    }
+    else if( nCandidateVarID < 0 )
+    {
+        if( bVerboseError )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                 "No 1D variable is indexed by dimension %s",
+                 pszDimName);
+        }
+    }
+    return nCandidateVarID;
+}
+
+/************************************************************************/
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
+CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds,
+                                             const int* panExtraDimVarIds )
 
 {
     netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
@@ -1149,7 +1222,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
     }
 
     // Loop over non-spatial dimensions.
-    int nVarID = -1;
     int result = 0;
     int Taken = 0;
 
@@ -1172,131 +1244,131 @@ CPLErr netCDFRasterBand::CreateBandMetadata( const int *paDimIds )
         snprintf(szVarName, sizeof(szVarName), "%s",
                  l_poDS->papszDimName[paDimIds[panBandZPos[i]]]);
 
-        // TODO: Make sure all the status checks make sense.
+        char szMetaName[NC_MAX_NAME + 1 + 32];
+        snprintf(szMetaName, sizeof(szMetaName), "NETCDF_DIM_%s", szVarName);
 
-        status = nc_inq_varid(cdfid, szVarName, &nVarID);
-        if( status != NC_NOERR )
+        int nVarID = panExtraDimVarIds[i];
+        if( nVarID < 0 )
         {
-            // Try to uppercase the first letter of the variable.
-            // Note: Why is this needed?  Leaving for safety.
-            szVarName[0] = static_cast<char>(toupper(szVarName[0]));
-            /* status = */ nc_inq_varid(cdfid, szVarName, &nVarID);
-        }
-
-        nc_type nVarType = NC_NAT;
-        /* status = */ nc_inq_vartype(cdfid, nVarID, &nVarType);
-
-        int nDims = 0;
-        /* status = */ nc_inq_varndims(cdfid, nVarID, &nDims);
-
-        char szMetaTemp[256] = {};
-        if( nDims == 1 )
-        {
-            size_t count[1] = { 1 };
-            size_t start[1] = { static_cast<size_t>(result) };
-
-            switch( nVarType )
-            {
-                case NC_BYTE:
-                    // TODO: Check for signed/unsigned byte.
-                    signed char cData;
-                    /* status = */ nc_get_vara_schar(cdfid, nVarID,
-                                                 start,
-                                                 count, &cData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", cData);
-                    break;
-                case NC_SHORT:
-                    short sData;
-                    /* status = */ nc_get_vara_short(cdfid, nVarID,
-                                                 start,
-                                                 count, &sData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", sData);
-                    break;
-                case NC_INT:
-                {
-                    int nData;
-                    /* status = */ nc_get_vara_int(cdfid, nVarID,
-                                               start,
-                                               count, &nData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", nData);
-                    break;
-                }
-                case NC_FLOAT:
-                    float fData;
-                    /* status = */ nc_get_vara_float(cdfid, nVarID,
-                                                 start,
-                                                 count, &fData);
-                    CPLsnprintf(szMetaTemp, sizeof(szMetaTemp),
-                                 "%.8g", fData);
-                    break;
-                case NC_DOUBLE:
-                    double dfData;
-                    /* status = */ nc_get_vara_double(cdfid, nVarID,
-                                                  start,
-                                                  count, &dfData);
-                    CPLsnprintf(szMetaTemp, sizeof(szMetaTemp),
-                                 "%.16g", dfData);
-                    break;
-#ifdef NETCDF_HAS_NC4
-                case NC_UBYTE:
-                    unsigned char ucData;
-                    /* status = */ nc_get_vara_uchar(cdfid, nVarID,
-                                                 start,
-                                                 count, &ucData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", ucData);
-                    break;
-                case NC_USHORT:
-                    unsigned short usData;
-                    /* status = */ nc_get_vara_ushort(cdfid, nVarID,
-                                                  start,
-                                                  count, &usData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", usData);
-                    break;
-                case NC_UINT:
-                {
-                    unsigned int unData;
-                    /* status = */ nc_get_vara_uint(cdfid, nVarID,
-                                                start,
-                                                count, &unData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", unData);
-                    break;
-                }
-                case NC_INT64:
-                {
-                    long long nData;
-                    /* status = */ nc_get_vara_longlong(cdfid, nVarID,
-                                                start,
-                                                count, &nData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GIB, nData);
-                    break;
-                }
-                case NC_UINT64:
-                {
-                    unsigned long long unData;
-                    /* status = */ nc_get_vara_ulonglong(cdfid, nVarID,
-                                                start,
-                                                count, &unData);
-                    snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GUIB, unData);
-                    break;
-                }
-#endif
-                default:
-                    CPLDebug("GDAL_netCDF", "invalid dim %s, type=%d",
-                             szMetaTemp, nVarType);
-                    break;
-            }
+            SetMetadataItem(szMetaName, CPLSPrintf("%d", result + 1));
         }
         else
         {
-            snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", result + 1);
+            // TODO: Make sure all the status checks make sense.
+
+            nc_type nVarType = NC_NAT;
+            /* status = */ nc_inq_vartype(cdfid, nVarID, &nVarType);
+
+            int nDims = 0;
+            /* status = */ nc_inq_varndims(cdfid, nVarID, &nDims);
+
+            char szMetaTemp[256] = {};
+            if( nDims == 1 )
+            {
+                size_t count[1] = { 1 };
+                size_t start[1] = { static_cast<size_t>(result) };
+
+                switch( nVarType )
+                {
+                    case NC_BYTE:
+                        // TODO: Check for signed/unsigned byte.
+                        signed char cData;
+                        /* status = */ nc_get_vara_schar(cdfid, nVarID,
+                                                    start,
+                                                    count, &cData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", cData);
+                        break;
+                    case NC_SHORT:
+                        short sData;
+                        /* status = */ nc_get_vara_short(cdfid, nVarID,
+                                                    start,
+                                                    count, &sData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", sData);
+                        break;
+                    case NC_INT:
+                    {
+                        int nData;
+                        /* status = */ nc_get_vara_int(cdfid, nVarID,
+                                                start,
+                                                count, &nData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", nData);
+                        break;
+                    }
+                    case NC_FLOAT:
+                        float fData;
+                        /* status = */ nc_get_vara_float(cdfid, nVarID,
+                                                    start,
+                                                    count, &fData);
+                        CPLsnprintf(szMetaTemp, sizeof(szMetaTemp),
+                                    "%.8g", fData);
+                        break;
+                    case NC_DOUBLE:
+                        double dfData;
+                        /* status = */ nc_get_vara_double(cdfid, nVarID,
+                                                    start,
+                                                    count, &dfData);
+                        CPLsnprintf(szMetaTemp, sizeof(szMetaTemp),
+                                    "%.16g", dfData);
+                        break;
+    #ifdef NETCDF_HAS_NC4
+                    case NC_UBYTE:
+                        unsigned char ucData;
+                        /* status = */ nc_get_vara_uchar(cdfid, nVarID,
+                                                    start,
+                                                    count, &ucData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", ucData);
+                        break;
+                    case NC_USHORT:
+                        unsigned short usData;
+                        /* status = */ nc_get_vara_ushort(cdfid, nVarID,
+                                                    start,
+                                                    count, &usData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", usData);
+                        break;
+                    case NC_UINT:
+                    {
+                        unsigned int unData;
+                        /* status = */ nc_get_vara_uint(cdfid, nVarID,
+                                                    start,
+                                                    count, &unData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%u", unData);
+                        break;
+                    }
+                    case NC_INT64:
+                    {
+                        long long nData;
+                        /* status = */ nc_get_vara_longlong(cdfid, nVarID,
+                                                    start,
+                                                    count, &nData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GIB, nData);
+                        break;
+                    }
+                    case NC_UINT64:
+                    {
+                        unsigned long long unData;
+                        /* status = */ nc_get_vara_ulonglong(cdfid, nVarID,
+                                                    start,
+                                                    count, &unData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GUIB, unData);
+                        break;
+                    }
+    #endif
+                    default:
+                        CPLDebug("GDAL_netCDF", "invalid dim %s, type=%d",
+                                szMetaTemp, nVarType);
+                        break;
+                }
+            }
+            else
+            {
+                snprintf(szMetaTemp, sizeof(szMetaTemp), "%d", result + 1);
+            }
+
+            // Save dimension value.
+            // NOTE: removed #original_units as not part of CF-1.
+
+            SetMetadataItem(szMetaName, szMetaTemp);
         }
-
-        // Save dimension value.
-        // NOTE: removed #original_units as not part of CF-1.
-
-        char szMetaName[NC_MAX_NAME + 1 + 32];
-        snprintf(szMetaName, sizeof(szMetaName), "NETCDF_DIM_%s", szVarName);
-        SetMetadataItem(szMetaName, szMetaTemp);
 
         // Avoid int32 overflow. Perhaps something more sensible to do here ?
         if( result > 0 && Sum > INT_MAX / result )
@@ -7530,6 +7602,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     nc_type nType = NC_NAT;
 
     CPLString osExtraDimNames;
+    int anExtraDimVarIds[NC_MAX_NAME] = { -1 };
 
     if( nd > 2 )
     {
@@ -7548,7 +7621,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 nc_inq_dimlen(cdfid, paDimIds[j], &lev_count);
                 nTotLevCount *= lev_count;
                 panBandZLev[nDim - 2] = static_cast<int>(lev_count);
-                panBandDimPos[nDim++] = j;  // Save Position of ZDim
+                panBandDimPos[nDim] = j;  // Save Position of ZDim
                 // Save non-spatial dimension names.
                 if( nc_inq_dimname(cdfid, paDimIds[j], szDimName)
                     == NC_NOERR )
@@ -7558,25 +7631,40 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                     {
                         osExtraDimNames += ",";
                     }
-                    nc_inq_varid(cdfid, szDimName, &nVarID);
-                    nc_inq_vartype(cdfid, nVarID, &nType);
-                    char szExtraDimDef[NC_MAX_NAME + 1];
-                    snprintf(szExtraDimDef, sizeof(szExtraDimDef), "{%ld,%d}",
-                             (long)lev_count, nType);
-                    char szTemp[NC_MAX_NAME + 32 + 1];
-                    snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
-                             szDimName);
-                    poDS->papszMetadata = CSLSetNameValue(
-                        poDS->papszMetadata, szTemp, szExtraDimDef);
-                    if( NCDFGet1DVar(cdfid, nVarID, &pszTemp) == CE_None )
+
+                    int nIdxVarID = Get1DVariableIndexedByDimension(cdfid,
+                                                            paDimIds[j],
+                                                            szDimName,
+                                                            true);
+                    anExtraDimVarIds[nDim-2] = nIdxVarID;
+
+                    if( nIdxVarID >= 0 )
                     {
-                        snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES",
-                                 szDimName);
+                        nc_inq_vartype(cdfid, nIdxVarID, &nType);
+                        char szExtraDimDef[NC_MAX_NAME + 1];
+                        snprintf(szExtraDimDef, sizeof(szExtraDimDef), "{%ld,%d}",
+                                (long)lev_count, nType);
+                        char szTemp[NC_MAX_NAME + 32 + 1];
+                        snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_DEF",
+                                szDimName);
                         poDS->papszMetadata = CSLSetNameValue(
-                            poDS->papszMetadata, szTemp, pszTemp);
-                        CPLFree(pszTemp);
+                            poDS->papszMetadata, szTemp, szExtraDimDef);
+                        if( NCDFGet1DVar(cdfid, nIdxVarID, &pszTemp) == CE_None )
+                        {
+                            snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES",
+                                    szDimName);
+                            poDS->papszMetadata = CSLSetNameValue(
+                                poDS->papszMetadata, szTemp, pszTemp);
+                            CPLFree(pszTemp);
+                        }
                     }
                 }
+                else
+                {
+                    anExtraDimVarIds[nDim-2] = -1;
+                }
+
+                nDim ++;
             }
         }
         osExtraDimNames += "}";
@@ -7623,7 +7711,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         netCDFRasterBand *poBand =
             new netCDFRasterBand(poDS, var, nDim, lev, panBandZLev,
-                                 panBandDimPos, paDimIds, lev + 1);
+                                 panBandDimPos, paDimIds, lev + 1,
+                                 anExtraDimVarIds);
         poDS->SetBand(lev + 1, poBand);
     }
 
