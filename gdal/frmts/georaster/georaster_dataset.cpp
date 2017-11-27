@@ -2202,70 +2202,70 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_AZIMUTH) ) != NULL )
         {
-            strncpy( pszStart, "Azimuth", strlen(SRS_PP_AZIMUTH) );
+            memcpy( pszStart, "Azimuth", strlen(SRS_PP_AZIMUTH) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_CENTRAL_MERIDIAN) ) != NULL )
         {
-            strncpy( pszStart, "Central_Meridian",
+            memcpy( pszStart, "Central_Meridian",
                                         strlen(SRS_PP_CENTRAL_MERIDIAN) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_EASTING) ) != NULL )
         {
-            strncpy( pszStart, "False_Easting", strlen(SRS_PP_FALSE_EASTING) );
+            memcpy( pszStart, "False_Easting", strlen(SRS_PP_FALSE_EASTING) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_FALSE_NORTHING) ) != NULL )
         {
-            strncpy( pszStart, "False_Northing",
+            memcpy( pszStart, "False_Northing",
                                         strlen(SRS_PP_FALSE_NORTHING) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_CENTER) ) != NULL )
         {
-            strncpy( pszStart, "Latitude_Of_Center",
+            memcpy( pszStart, "Latitude_Of_Center",
                                         strlen(SRS_PP_LATITUDE_OF_CENTER) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LATITUDE_OF_ORIGIN) ) != NULL )
         {
-            strncpy( pszStart, "Latitude_Of_Origin",
+            memcpy( pszStart, "Latitude_Of_Origin",
                                         strlen(SRS_PP_LATITUDE_OF_ORIGIN) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_LONGITUDE_OF_CENTER) ) != NULL )
         {
-            strncpy( pszStart, "Longitude_Of_Center",
+            memcpy( pszStart, "Longitude_Of_Center",
                                         strlen(SRS_PP_LONGITUDE_OF_CENTER) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_PSEUDO_STD_PARALLEL_1) ) != NULL )
         {
-            strncpy( pszStart, "Pseudo_Standard_Parallel_1",
+            memcpy( pszStart, "Pseudo_Standard_Parallel_1",
                                         strlen(SRS_PP_PSEUDO_STD_PARALLEL_1) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_SCALE_FACTOR) ) != NULL )
         {
-            strncpy( pszStart, "Scale_Factor", strlen(SRS_PP_SCALE_FACTOR) );
+            memcpy( pszStart, "Scale_Factor", strlen(SRS_PP_SCALE_FACTOR) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_1) ) != NULL )
         {
-            strncpy( pszStart, "Standard_Parallel_1",
+            memcpy( pszStart, "Standard_Parallel_1",
                                         strlen(SRS_PP_STANDARD_PARALLEL_1) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
-            strncpy( pszStart, "Standard_Parallel_2",
+            memcpy( pszStart, "Standard_Parallel_2",
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
         }
 
         if( ( pszStart = strstr(pszCloneWKT, SRS_PP_STANDARD_PARALLEL_2) ) != NULL )
         {
-            strncpy( pszStart, "Standard_Parallel_2",
+            memcpy( pszStart, "Standard_Parallel_2",
                                         strlen(SRS_PP_STANDARD_PARALLEL_2) );
         }
 
@@ -2275,7 +2275,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 
         if( ( pszStart = strstr(pszCloneWKT, "metre") ) != NULL )
         {
-            strncpy( pszStart, SRS_UL_METER, strlen(SRS_UL_METER) );
+            memcpy( pszStart, SRS_UL_METER, strlen(SRS_UL_METER) );
         }
     }
 

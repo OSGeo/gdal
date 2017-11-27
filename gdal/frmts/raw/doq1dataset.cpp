@@ -84,8 +84,10 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 {
     char szWork[128] = { ' ' };
 
-    strncpy( szWork, "USGS GeoTIFF DOQ 1:12000 Q-Quad of ", 35 );
-    strncpy( szWork + 35, reinterpret_cast<const char *>( pabyData + 0 ), 38 );
+    const char* pszDescBegin =  "USGS GeoTIFF DOQ 1:12000 Q-Quad of ";
+    memcpy( szWork, pszDescBegin, strlen(pszDescBegin) );
+    memcpy( szWork + strlen(pszDescBegin),
+             reinterpret_cast<const char *>( pabyData + 0 ), 38 );
 
     int i = 0;
     while ( *(szWork + 72 - i) == ' ' ) {
@@ -93,9 +95,9 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
     }
     i--;
 
-    strncpy(
+    memcpy(
         szWork + 73 - i, reinterpret_cast<const char *>( pabyData + 38 ), 2 );
-    strncpy(
+    memcpy(
         szWork + 76 - i, reinterpret_cast<const char *>( pabyData + 44 ), 2 );
     szWork[77-i] = '\0';
 

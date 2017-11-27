@@ -1605,7 +1605,7 @@ GDALDataset *GDALMRFDataset::CreateCopy(const char *pszFilename,
         // Finally write the XML in the right file name
         poDS->Crystalize();
     }
-    catch (CPLString(e)) {
+    catch (const CPLString& e) {
         if (poDS)
             delete poDS;
         CPLError(CE_Failure, CPLE_ObjectNull, "%s", e.c_str());

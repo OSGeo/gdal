@@ -65,7 +65,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
           CPLRealloc( paoATID, sizeof(SDTSModId)*(nAttributes+1) ) );
 
         SDTSModId *poModId = paoATID + nAttributes;
-        memset(poModId, 0, sizeof(SDTSModId));
+        *poModId = SDTSModId();
 
         if( bUsualFormat )
         {
