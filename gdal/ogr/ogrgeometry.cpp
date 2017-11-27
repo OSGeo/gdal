@@ -6299,11 +6299,11 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
         }
         // Accept LINESTRING(), but this is an extension to the BNF, also
         // accepted by PostGIS.
-        else if( (bAllowLineString && EQUAL(szToken, "LINESTRING")) ||
-                 (bAllowCurve && !EQUAL(szToken, "LINESTRING") &&
-                  !EQUAL(szToken, "COMPOUNDCURVE") &&
+        else if( (bAllowLineString && STARTS_WITH_CI(szToken, "LINESTRING")) ||
+                 (bAllowCurve && !STARTS_WITH_CI(szToken, "LINESTRING") &&
+                  !STARTS_WITH_CI(szToken, "COMPOUNDCURVE") &&
                   OGR_GT_IsCurve(OGRFromOGCGeomType(szToken))) ||
-                 (bAllowCompoundCurve && EQUAL(szToken, "COMPOUNDCURVE")) )
+                 (bAllowCompoundCurve && STARTS_WITH_CI(szToken, "COMPOUNDCURVE")) )
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;

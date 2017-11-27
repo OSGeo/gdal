@@ -206,8 +206,8 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
         // We accept POLYGON() but this is an extension to the BNF, also
         // accepted by PostGIS.
-        else if( EQUAL(szToken, "POLYGON") ||
-                 EQUAL(szToken, "CURVEPOLYGON") )
+        else if( STARTS_WITH_CI(szToken, "POLYGON") ||
+                 STARTS_WITH_CI(szToken, "CURVEPOLYGON") )
         {
             OGRGeometry* poGeom = NULL;
             pszInput = pszInputBefore;

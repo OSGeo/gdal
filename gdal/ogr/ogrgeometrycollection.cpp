@@ -748,7 +748,7 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
     /* -------------------------------------------------------------------- */
     /*      Do the import.                                                  */
     /* -------------------------------------------------------------------- */
-        if( EQUAL(szToken, "GEOMETRYCOLLECTION") )
+        if( STARTS_WITH_CI(szToken, "GEOMETRYCOLLECTION") )
         {
             poGeom = new OGRGeometryCollection();
             eErr = ((OGRGeometryCollection*)poGeom)->
