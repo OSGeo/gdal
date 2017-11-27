@@ -513,7 +513,8 @@ def wcs_6():
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
-            ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size, options = [])
+            options = [cache]
+            ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size, options = options)
     webserver.server_stop(process, port)    
     return 'success'
 
