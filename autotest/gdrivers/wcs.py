@@ -456,6 +456,8 @@ def setupFct():
 ###############################################################################
 
 def wcs_6():
+    if gdaltest.wcs_drv is None:
+	    return 'skip'
     print("Generating various URLs from the driver and comparing them to ones")
     print("that have worked.")
     first_call = True
@@ -501,7 +503,7 @@ def wcs_6():
                 if o != '-oo':
                     options.append(o)
             options.append('DescribeCoverageExtra=server=' + server)
-            options.append('GetCoverageExtra=test=none&server=' + server)                
+            options.append('GetCoverageExtra=test=none&server=' + server)
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
             ds = 0
@@ -510,13 +512,16 @@ def wcs_6():
             options.append('INTERLEAVE=PIXEL')
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
+            if not ds:
+                print("OpenEx failed: WCS:" + url + "/?" + query)
+                break
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
             print ds
             ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size, options = options)
-    webserver.server_stop(process, port)    
+    webserver.server_stop(process, port)
     return 'success'
 
 ###############################################################################
@@ -550,4 +555,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
