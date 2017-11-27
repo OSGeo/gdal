@@ -2943,6 +2943,62 @@ double OSRGetInvFlattening( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 }
 
 /************************************************************************/
+/*                           GetEccentricity()                          */
+/************************************************************************/
+
+/**
+ * \brief Get spheroid eccentricity
+ *
+ * @return eccentricity (or -1 in case of error)
+ * @since GDAL 2.3
+ */
+
+double OGRSpatialReference::GetEccentricity() const
+
+{
+    OGRErr eErr = OGRERR_NONE;
+    const double dfInvFlattening = GetInvFlattening(&eErr);
+    if( eErr != OGRERR_NONE )
+    {
+        return -1.0;
+    }
+    if( dfInvFlattening == 0.0 )
+        return 0.0;
+    if( dfInvFlattening < 0.5 )
+        return -1.0;
+    return sqrt(2.0 / dfInvFlattening -
+                    1.0 / (dfInvFlattening * dfInvFlattening));
+}
+
+/************************************************************************/
+/*                      GetSquaredEccentricity()                        */
+/************************************************************************/
+
+/**
+ * \brief Get spheroid squared eccentricity
+ *
+ * @return squared eccentricity (or -1 in case of error)
+ * @since GDAL 2.3
+ */
+
+double OGRSpatialReference::GetSquaredEccentricity() const
+
+{
+    OGRErr eErr = OGRERR_NONE;
+    const double dfInvFlattening = GetInvFlattening(&eErr);
+    if( eErr != OGRERR_NONE )
+    {
+        return -1.0;
+    }
+    if( dfInvFlattening == 0.0 )
+        return 0.0;
+    if( dfInvFlattening < 0.5 )
+        return -1.0;
+    return 2.0 / dfInvFlattening -
+                    1.0 / (dfInvFlattening * dfInvFlattening);
+}
+
+/************************************************************************/
 /*                            GetSemiMinor()                            */
 /************************************************************************/
 
@@ -6806,9 +6862,6 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
         const char *pszValue1 = this->GetAttrValue( "PROJECTION" );
         const char *pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
 
-        bool bIgnoreScaleFactor = false;
-        bool bIgnoreStdParallel12 = false;
-
         if( pszValue1 == NULL || pszValue2 == NULL )
         {
 #ifdef DEBUG_VERBOSE
@@ -6817,49 +6870,35 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
             return FALSE;
         }
 
-        if( EQUAL(pszValue1, SRS_PT_MERCATOR_1SP) &&
-            EQUAL(pszValue2, SRS_PT_MERCATOR_2SP) )
+        if( !EQUAL(pszValue1, pszValue2) )
         {
-            // Try to find if Mercator_1SP and Mercator_2SP are equivalent
-            const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
-
-            const double dfInvFlattening = GetInvFlattening();
-            double e2 = 0.0;
-            if( dfInvFlattening != 0.0 )
+            OGRSpatialReference* poThisInOtherProj =
+                convertToOtherProjection(pszValue2);
+            if( poThisInOtherProj )
             {
-                const double f = 1.0 / dfInvFlattening;
-                e2 = 2 * f - f * f;
+                int bRet = poThisInOtherProj->IsSame(poOtherSRS);
+                delete poThisInOtherProj;
+                return bRet;
             }
-            const double dfStdP1Lat =
-                acos( sqrt( (1.0 - e2) / ((1.0 / (dfK0 * dfK0)) - e2)) ) /
-                M_PI * 180.0;
-
-            double dfOtherVal = poOtherSRS->GetProjParm( SRS_PP_STANDARD_PARALLEL_1 );
-            if( !IsRelativeErrorSmaller(dfStdP1Lat, dfOtherVal, 1e-8) )
+            else
             {
-#ifdef DEBUG_VERBOSE
-                CPLDebug("OSR", "Relative error for %s too big",
-                         SRS_PP_STANDARD_PARALLEL_1);
-#endif
-                return FALSE;
+                OGRSpatialReference* poOtherSRSInThisProj =
+                    poOtherSRS->convertToOtherProjection(pszValue1);
+                if( poOtherSRSInThisProj )
+                {
+                    int bRet = IsSame(poOtherSRSInThisProj);
+                    delete poOtherSRSInThisProj;
+                    return bRet;
+                }
             }
-            bIgnoreScaleFactor = true;
-            bIgnoreStdParallel12 = true;
-        }
-        else if(  EQUAL(pszValue1, SRS_PT_MERCATOR_2SP) &&
-                  EQUAL(pszValue2, SRS_PT_MERCATOR_1SP) )
-        {
-            // go to above case
-            return poOtherSRS->IsSame(this, papszOptions);
-        }
-        else if( !EQUAL(pszValue1, pszValue2) )
-        {
+
 #ifdef DEBUG_VERBOSE
             CPLDebug("OSR", "Different PROJECTION");
 #endif
             return FALSE;
         }
 
+        bool bIgnoreStdParallel12 = false;
         bool bIgnoreRectifiedGridAngle = false;
         if( EQUAL(pszValue1, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
         {
@@ -6904,12 +6943,6 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
                 continue;
 
             const char* pszParamName = poNode->GetChild(0)->GetValue();
-            if( bIgnoreScaleFactor &&
-                EQUAL( pszParamName, SRS_PP_SCALE_FACTOR ) )
-            {
-                continue;
-            }
-
             if( bIgnoreStdParallel12 &&
                 (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
                  EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
@@ -6962,12 +6995,6 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
                 continue;
 
             const char* pszParamName = poNode->GetChild(0)->GetValue();
-            if( bIgnoreScaleFactor &&
-                EQUAL( pszParamName, SRS_PP_SCALE_FACTOR ) )
-            {
-                continue;
-            }
-
             if( bIgnoreStdParallel12 &&
                 (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
                  EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
@@ -7042,6 +7069,356 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS1)->IsSame(
         reinterpret_cast<OGRSpatialReference *>(hSRS2) );
+}
+
+/************************************************************************/
+/*                               tsfn()                                 */
+/************************************************************************/
+
+static double tsfn(double phi, double ec)
+{
+    const double sinphi = sin(phi);
+    const double sinphi_ec = sinphi * ec;
+    return tan(0.5 * (M_PI/2 - phi)) /
+               pow( (1.0 - sinphi_ec) / (1.0 + sinphi_ec), 0.5 * ec);
+}
+
+/************************************************************************/
+/*                               msfn()                                 */
+/************************************************************************/
+
+static double msfn(double phi, double ec)
+{
+    const double sinphi = sin(phi);
+    const double cosphi = cos(phi);
+    const double sinphi_ec = sinphi * ec;
+    return cosphi / sqrt(1.0 - sinphi_ec * sinphi_ec);
+}
+
+/************************************************************************/
+/*                         lcc_1sp_to_2sp_f()                           */
+/************************************************************************/
+
+// Function whose zeroes are the sin of the standard parallels of LCC_2SP
+static double lcc_1sp_to_2sp_f(double sinphi, double K, double ec, double n)
+{
+    const double x = sinphi;
+    const double ecx = ec * x;
+    return ( 1 - x* x ) / (1 - ecx * ecx) -
+        K * K * pow((1.0 - x ) / (1.0 + x) *
+                    pow( (1.0 + ecx)/(1.0 - ecx), ec), n);
+}
+
+/************************************************************************/
+/*                    find_zero_lcc_1sp_to_2sp_f()                      */
+/************************************************************************/
+
+// Find the sin of the standard parallels of LCC_2SP
+static double find_zero_lcc_1sp_to_2sp_f(double sinphi0, bool bNorth,
+                                         double K, double ec)
+{
+    double a, b;
+    double f_a;
+    if( bNorth )
+    {
+        // Look for zero above phi0
+        a = sinphi0;
+        b = 1.0; // sin(North pole)
+        f_a = 1.0; // some positive value, but we only care about the sign
+    }
+    else
+    {
+        // Look for zero below phi0
+        a = -1.0; // sin(South pole)
+        b = sinphi0;
+        f_a = -1.0; // minus infinity in fact, but we only care about the sign
+    }
+    // We use dichotomy search. lcc_1sp_to_2sp_f() is positive at sinphi_init,
+    // has a zero in ]-1,sinphi0[ and ]sinphi0,1[ ranges
+    for( int N=0; N<100; N++ )
+    {
+        double c = (a + b) / 2;
+        double f_c = lcc_1sp_to_2sp_f(c, K, ec, sinphi0);
+        if ( f_c == 0.0 || (b-a) < 1e-18 )
+        {
+            return c;
+        }
+        if( (f_c > 0 && f_a > 0) || (f_c < 0 && f_a < 0) )
+        {
+            a = c;
+            f_a = f_c;
+        }
+        else
+        {
+            b = c;
+        }
+    }
+    return (a + b) / 2;
+}
+
+static double DegToRad(double x) { return x / 180.0 * M_PI; }
+static double RadToDeg(double x) { return x / M_PI * 180.0; }
+
+/************************************************************************/
+/*                    convertToOtherProjection()                        */
+/************************************************************************/
+
+/**
+ * \brief Convert to another equivalent projection
+ * 
+ * Currently implemented:
+ * <ul>
+ * <li>SRS_PT_MERCATOR_1SP to SRS_PT_MERCATOR_2SP</li>
+ * <li>SRS_PT_MERCATOR_2SP to SRS_PT_MERCATOR_1SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP</li>
+ * </ul>
+ *
+ * @param pszTargetProjection target projection.
+ * @param papszOptions lists of options. None supported currently.
+ * @return a new SRS, or NULL in case of error.
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReference* OGRSpatialReference::convertToOtherProjection(
+                            const char* pszTargetProjection,
+                            CPL_UNUSED const char* const* papszOptions ) const
+{
+    const char *pszProjection = GetAttrValue( "PROJECTION" );
+    if( pszProjection == NULL || pszTargetProjection == NULL )
+        return NULL;
+
+    if( EQUAL(pszProjection, pszTargetProjection) )
+        return Clone();
+
+    if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_MERCATOR_2SP) &&
+        GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+    {
+        const double k0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        if( !(k0 > 0 && k0 <= 1.0+ 1e-10) )
+            return NULL;
+        const double e2 = GetSquaredEccentricity();
+        if( e2 < 0 )
+            return NULL;
+        const double dfStdP1Lat = ( k0 >= 1.0 ) ? 0.0 :
+            RadToDeg(acos( sqrt( (1.0 - e2) / ((1.0 / (k0 * k0)) - e2)) ));
+        OGRSpatialReference* poMerc2SP = new OGRSpatialReference();
+        poMerc2SP->CopyGeogCSFrom(this);
+        poMerc2SP->SetMercator2SP(
+                              dfStdP1Lat,
+                              GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        return poMerc2SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_MERCATOR_1SP) &&
+        GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+    {
+        const double dfStdP1Lat =
+            GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+        const double phi1 = DegToRad(dfStdP1Lat);
+        if( !(fabs(phi1) < M_PI / 2) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double k0 = msfn(phi1, ec);
+        OGRSpatialReference* poMerc1SP = new OGRSpatialReference();
+        poMerc1SP->CopyGeogCSFrom(this);
+        poMerc1SP->SetMercator(
+                              GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              k0,
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        return poMerc1SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+        // Notations m0, t0, n, m1, t1, F are those of the EPSG guidance
+        // "1.3.1.1 Lambert Conic Conformal (2SP)" and
+        // "1.3.1.2 Lambert Conic Conformal (1SP)" and
+        // or Snyder pages 106-109
+        const double dfLatitudeOfOrigin =
+            GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+        const double phi0 = DegToRad(dfLatitudeOfOrigin);
+        const double k0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        if( !(fabs(phi0) < M_PI / 2) )
+            return NULL;
+        if( !(k0 > 0 && k0 <= 1.0+ 1e-10) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double m0 = msfn(phi0, ec);
+        const double t0 = tsfn(phi0, ec);
+        const double n = sin(phi0);
+        OGRSpatialReference* poLCC2SP = new OGRSpatialReference();
+        poLCC2SP->CopyGeogCSFrom(this);
+        if( fabs(k0 - 1.0) <= 1e-10 )
+        {
+            poLCC2SP->SetLCC( dfLatitudeOfOrigin,
+                              dfLatitudeOfOrigin,
+                              dfLatitudeOfOrigin,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        }
+        else
+        {
+            const double K = k0 * m0 / pow(t0, n);
+            const double phi1 =
+                asin(find_zero_lcc_1sp_to_2sp_f(n, true, K, ec));
+            const double phi2 =
+                asin(find_zero_lcc_1sp_to_2sp_f(n, false, K, ec));
+            double phi1Deg = RadToDeg(phi1);
+            double phi2Deg = RadToDeg(phi2);
+
+            // Try to round to hundreth of degree if very close to it
+            if( fabs(phi1Deg * 1000 - floor(phi1Deg * 1000 + 0.5)) < 1e-8 )
+                phi1Deg = floor(phi1Deg * 1000 + 0.5) / 1000;
+            if( fabs(phi2Deg * 1000 - floor(phi2Deg * 1000 + 0.5)) < 1e-8 )
+                phi2Deg = floor(phi2Deg * 1000 + 0.5) / 1000;
+
+            // The following improvement is too turn the LCC1SP equivalent of
+            // EPSG:2154 to the real LCC2SP
+            // If the computed latitude of origin is close to .0 or .5 degrees
+            // then check if rounding it to it will get a false northing
+            // close to an integer
+            const double FN = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+            if( fabs(dfLatitudeOfOrigin * 2 -
+                     floor(dfLatitudeOfOrigin * 2 + 0.5)) < 0.2 )
+            {
+                const double dfRoundedLatOfOrig =
+                    floor(dfLatitudeOfOrigin * 2 + 0.5) / 2;
+                const double m1 = msfn(phi1, ec);
+                const double t1 = tsfn(phi1, ec);
+                const double F = m1 / (n * pow(t1, n));
+                const double a = GetSemiMajor();
+                const double tRoundedLatOfOrig =
+                    tsfn(DegToRad(dfRoundedLatOfOrig), ec);
+                const double FN_correction =
+                    a * F * (pow(tRoundedLatOfOrig, n) - pow(t0, n));
+                const double FN_corrected = FN - FN_correction;
+                const double FN_corrected_rounded = floor(FN_corrected + 0.5);
+                if( fabs(FN_corrected - FN_corrected_rounded) < 1e-8 )
+                {
+                    poLCC2SP->SetLCC(
+                              phi1Deg,
+                              phi2Deg,
+                              dfRoundedLatOfOrig,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              FN_corrected_rounded );
+                    return poLCC2SP;
+                }
+            }
+
+            poLCC2SP->SetLCC( phi1Deg,
+                              phi2Deg,
+                              dfLatitudeOfOrigin,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              FN );
+        }
+        return poLCC2SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        // Notations m0, t0, m1, t1, m2, t2 n, F are those of the EPSG guidance
+        // "1.3.1.1 Lambert Conic Conformal (2SP)" and
+        // "1.3.1.2 Lambert Conic Conformal (1SP)" and
+        // or Snyder pages 106-109
+        const double phiF =
+            DegToRad(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        const double phi1 =
+            DegToRad(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        const double phi2 =
+            DegToRad(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+        if( !(fabs(phiF) < M_PI / 2) )
+            return NULL;
+        if( !(fabs(phi1) < M_PI / 2) )
+            return NULL;
+        if( !(fabs(phi2) < M_PI / 2) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double m1 = msfn(phi1, ec);
+        const double m2 = msfn(phi2, ec);
+        const double t1 = tsfn(phi1, ec);
+        const double t2 = tsfn(phi2, ec);
+        const double n = (phi1 == phi2) ? sin(phi1) :
+                                (log(m1) - log(m2)) / (log(t1) - log(t2));
+        const double F = m1 / (n * pow(t1, n));
+        const double phi0 = asin(n);
+        const double m0 = msfn(phi0, ec);
+        const double t0 = tsfn(phi0, ec);
+        const double F0 = m0 / (n * pow(t0, n));
+        const double k0 = F / F0;
+        const double a = GetSemiMajor();
+        const double tF = tsfn(phiF, ec);
+        const double FN_correction = a * F * (pow(tF, n) - pow(t0, n));
+
+        OGRSpatialReference* poLCC1SP = new OGRSpatialReference();
+        poLCC1SP->CopyGeogCSFrom(this);
+        double phi0Deg = RadToDeg(phi0);
+        // Try to round to thousandth of degree if very close to it
+        if( fabs(phi0Deg * 1000 - floor(phi0Deg * 1000 + 0.5)) < 1e-8 )
+            phi0Deg = floor(phi0Deg * 1000 + 0.5) / 1000;
+        poLCC1SP->SetLCC1SP(
+                phi0Deg,
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                k0,
+                GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) +
+                    (fabs(FN_correction) > 1e-8 ? FN_correction : 0) );
+        return poLCC1SP;
+    }
+
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                    OSRConvertToOtherProjection()                     */
+/************************************************************************/
+
+/**
+ * \brief Convert to another equivalent projection
+ * 
+ * Currently implemented:
+ * <ul>
+ * <li>SRS_PT_MERCATOR_1SP to SRS_PT_MERCATOR_2SP</li>
+ * <li>SRS_PT_MERCATOR_2SP to SRS_PT_MERCATOR_1SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP</li>
+ * </ul>
+ *
+ * @param hSRS source SRS 
+ * @param pszTargetProjection target projection.
+ * @param papszOptions lists of options. None supported currently.
+ * @return a new SRS, or NULL in case of error.
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReferenceH OSRConvertToOtherProjection(
+                                    OGRSpatialReferenceH hSRS,
+                                    const char* pszTargetProjection,
+                                    const char* const* papszOptions )
+{
+    VALIDATE_POINTER1( hSRS, "OSRConvertToOtherProjection", NULL );
+    return reinterpret_cast<OGRSpatialReferenceH>(
+        reinterpret_cast<OGRSpatialReference*>(hSRS)->
+            convertToOtherProjection(pszTargetProjection, papszOptions));
 }
 
 /************************************************************************/
