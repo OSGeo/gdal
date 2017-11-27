@@ -33,11 +33,9 @@
 import os
 import sys
 import numbers
-import collections
 import re
 import urlparse
 try:
-    from BaseHTTPServer import HTTPServer
     from BaseHTTPServer import BaseHTTPRequestHandler
 except:
     from http.server import BaseHTTPRequestHandler
@@ -293,7 +291,6 @@ def read_urls():
     f = open(fname, 'rb')
     content = f.read()
     f.close()
-    i = 1
     for line in content.splitlines():
         items = line.split()
         retval[items[0]] = {}
@@ -459,8 +456,8 @@ def setupFct():
 ###############################################################################
 
 def wcs_6():
-    print "Generating various URLs from the driver and comparing them to ones"
-    print "that have worked."
+    print("Generating various URLs from the driver and comparing them to ones")
+    print("that have worked.")
     first_call = True
     size = 60
     cache = 'CACHE=wcs_cache'
@@ -516,7 +513,7 @@ def wcs_6():
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
-            ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size)
+            ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size, options = [])
     webserver.server_stop(process, port)    
     return 'success'
 

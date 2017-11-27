@@ -50,7 +50,7 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     size_t b_dot = b.find(".");
     CPLString a_p = a.substr(0, a_dot);
     CPLString b_p = b.substr(0, b_dot);
-    int d = a_p.length() - b_p.length();
+    unsigned long d = a_p.length() - b_p.length();
     if (d < 0) {
         for (int i = 0; i < -1*d; ++i) {
             a_p = "0" + a_p;
