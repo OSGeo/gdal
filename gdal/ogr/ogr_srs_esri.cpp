@@ -1385,6 +1385,22 @@ OGRErr OGRSpatialReference::morphToESRI()
             return eErr;
     }
 
+    OGRSpatialReference oSRSEquivalent;
+    bool bHasEquivalentMerc2SP = false;
+    const char *pszProjection = GetAttrValue("PROJECTION");
+    if( pszProjection != NULL &&
+             EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
+    {
+        OGRSpatialReference* poMerc2SP =
+            convertToOtherProjection(SRS_PT_MERCATOR_2SP);
+        if( poMerc2SP )
+        {
+            bHasEquivalentMerc2SP = true;
+            oSRSEquivalent = *poMerc2SP;
+            delete poMerc2SP;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
 /* -------------------------------------------------------------------- */
@@ -1401,7 +1417,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /*      There is a special case for Hotine Oblique Mercator to split    */
 /*      out the case with an angle to rectified grid.  Bug 423          */
 /* -------------------------------------------------------------------- */
-    const char *pszProjection = GetAttrValue("PROJECTION");
+    pszProjection = GetAttrValue("PROJECTION");
 
     if( pszProjection != NULL
         && EQUAL(pszProjection, SRS_PT_HOTINE_OBLIQUE_MERCATOR)
@@ -1723,25 +1739,14 @@ OGRErr OGRSpatialReference::morphToESRI()
         if( (poProjCS = GetAttrNode( "PROJCS" )) != NULL )
             poProjCSNodeChild = poProjCS->GetChild(0);
 
-        const double dfK0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
-
-        const double dfInvFlattening = GetInvFlattening();
-        double e2 = 0.0;
-        if( dfInvFlattening != 0.0 )
-        {
-            const double f = 1.0 / dfInvFlattening;
-            e2 = 2 * f - f * f;
-        }
-        const double dfStdP1Lat =
-            acos( sqrt( (1.0 - e2) / ((1.0 / (dfK0 * dfK0)) - e2)) ) /
-            M_PI * 180.0;
-        if( poProjCS )
+        if( bHasEquivalentMerc2SP )
         {
             const int iScaleFactorChild =
                 FindProjParm( SRS_PP_SCALE_FACTOR, poProjCS );
             if( iScaleFactorChild != -1 )
                 poProjCS->DestroyChild( iScaleFactorChild);
-            SetProjParm(SRS_PP_STANDARD_PARALLEL_1, dfStdP1Lat);
+            SetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,
+                oSRSEquivalent.GetNormProjParm( SRS_PP_STANDARD_PARALLEL_1 ));
             FixupOrdering();
         }
     }
