@@ -220,6 +220,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
 
+    OGRSpatialReference* convertToOtherProjection(
+                                    const char* pszTargetProjection,
+                                    const char* const* papszOptions = NULL ) const;
+
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
     OGRErr      StripVertical();
@@ -311,6 +315,8 @@ class CPL_DLL OGRSpatialReference
     double      GetSemiMajor( OGRErr * = NULL ) const;
     double      GetSemiMinor( OGRErr * = NULL ) const;
     double      GetInvFlattening( OGRErr * = NULL ) const;
+    double      GetEccentricity() const;
+    double      GetSquaredEccentricity() const;
 
     OGRErr      SetAuthority( const char * pszTargetKey,
                               const char * pszAuthority,

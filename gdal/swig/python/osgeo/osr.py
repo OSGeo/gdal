@@ -1242,6 +1242,11 @@ class SpatialReference(_object):
         """MorphFromESRI(SpatialReference self) -> OGRErr"""
         return _osr.SpatialReference_MorphFromESRI(self, *args)
 
+
+    def ConvertToOtherProjection(self, *args):
+        """ConvertToOtherProjection(SpatialReference self, char const * other_projection, char ** options=None) -> SpatialReference"""
+        return _osr.SpatialReference_ConvertToOtherProjection(self, *args)
+
 SpatialReference_swigregister = _osr.SpatialReference_swigregister
 SpatialReference_swigregister(SpatialReference)
 GetProjectionMethods = _osr.GetProjectionMethods

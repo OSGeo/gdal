@@ -956,6 +956,11 @@ public:
     return OSRMorphFromESRI(self);
   }
 
+%newobject ConvertToOtherProjection;
+  OSRSpatialReferenceShadow* ConvertToOtherProjection(const char* other_projection, char **options = NULL) {
+    return OSRConvertToOtherProjection(self, other_projection, options);
+  }
+
 } /* %extend */
 };
 
