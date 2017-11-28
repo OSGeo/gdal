@@ -1093,13 +1093,15 @@ static void CreateServiceMetadata(const CPLString &coverage,
 
 static CPLXMLNode *CreateService(const CPLString &base_url,
                                  const CPLString &version,
-                                 const CPLString &coverage)
+                                 const CPLString &coverage,
+                                 const CPLString &parameters)
 {
     // construct WCS_GDAL XML into psService
     CPLString xml = "<WCS_GDAL>";
     xml += "<ServiceURL>" + base_url + "</ServiceURL>";
     xml += "<Version>" + version + "</Version>";
     xml += "<CoverageName>" + coverage + "</CoverageName>";
+    xml += "<Parameters>" + parameters + "</Parameters>";
     xml += "</WCS_GDAL>";
     CPLXMLNode *psService = CPLParseXMLString(xml);
     return psService;
@@ -1238,9 +1240,10 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         } else {
 /* -------------------------------------------------------------------- */
-/*          Check 1) capabilities, 2) vanilla coverage                  */
+/*          Get capabilities.                                           */
 /* -------------------------------------------------------------------- */
             CPLString url2 = CPLURLAddKVP(url, "version", version);
+            url2 += "&" + parameters;
             WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
             if (!global) {
                 return NULL;
@@ -1248,64 +1251,15 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (coverage == "") {
                 return global;
             }
+            if (version == "") {
+                version = global->Version();
+            }
             CPLString global_meta = CPLString(global->GetDescription()) + ".aux.xml";
             delete global;
-            url2 = CPLURLAddKVP(url2, "coverage", coverage);
-            CPLString vanilla_filename;
-            if (SearchCache(cache, url2, vanilla_filename, ".xml", cached) != CE_None) {
-                return NULL; // error in cache
-            }
-            if (cached) {
-                service = CPLParseXMLFile(vanilla_filename);
-            } else {
-                if (parameters == "") {
-/* -------------------------------------------------------------------- */
-/*                  We're making vanilla.                               */
-/* -------------------------------------------------------------------- */
-                    service = CreateService(url, version, coverage);
-                } else {
-/* -------------------------------------------------------------------- */
-/*                  Bootstrap the vanilla version                       */
-/*                  and build on its service file.                      */
-/* -------------------------------------------------------------------- */
-                    vanilla_filename = "WCS:" + url2;
-                    GDALOpenInfo open_info(vanilla_filename, GA_ReadOnly, NULL);
-                    char **options = NULL;
-                    const char *keys[] = {
-                        "CACHE",
-                        "Subset", "RangeSubsetting",
-                        WCS_URL_PARAMETERS,
-                        WCS_SERVICE_OPTIONS,
-                        WCS_TWEAK_OPTIONS,
-                        WCS_HTTP_OPTIONS
-                    };
-                    for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
-                        const char *value;
-                        if (CSLFindString(poOpenInfo->papszOpenOptions, keys[i]) != -1) {
-                            value = "TRUE";
-                        } else {
-                            value = CSLFetchNameValue(poOpenInfo->papszOpenOptions, keys[i]);
-                            if (value == NULL) {
-                                continue;
-                            }
-                        }
-                        options = CSLSetNameValue(options, keys[i], value);
-                    }
-                    open_info.papszOpenOptions = options;
-                    CSLPrint(options, stdout);
-                    GDALDataset *vanilla = WCSDataset::Open(&open_info);
-                    if (vanilla == NULL) {
-                        return vanilla;
-                    }
-                    vanilla_filename = vanilla->GetDescription();
-                    delete vanilla;
-                    service = CPLParseXMLFile(vanilla_filename);
-                }
-            }
+            service = CreateService(url, version, coverage, parameters);
 /* -------------------------------------------------------------------- */
 /*          The filename for the new service file.                      */
 /* -------------------------------------------------------------------- */
-            // should we make sure the full_url contains version?
             filename = "XXXXX";
             if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
                 return NULL; // error in cache

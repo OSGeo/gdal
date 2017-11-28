@@ -279,7 +279,14 @@ CPLString WCSDataset201::GetCoverageRequest(bool scaled,
         }
     }
     // add extra parameters
-    // note that these should not be known parameters
+    CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
     std::vector<CPLString> pairs = Split(CPLGetXMLValue(psService, "GetCoverageExtra", ""), "&");
     for (unsigned int i = 0; i < pairs.size(); ++i) {
         std::vector<CPLString> pair = Split(pairs[i], "=");
@@ -305,7 +312,15 @@ CPLString WCSDataset201::DescribeCoverageRequest()
     request = CPLURLAddKVP(request, "VERSION", CPLGetXMLValue( psService, "Version", "2.0.1" ));
     request = CPLURLAddKVP(request, "COVERAGEID", CPLGetXMLValue( psService, "CoverageName", "" ));
     request = CPLURLAddKVP(request, "FORMAT", "text/xml");
-    CPLString extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
+    CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            request = CPLURLAddKVP(request, pair[0], pair[1]);
+        }
+    }
+    extra = CPLGetXMLValue(psService, "DescribeCoverageExtra", "");
     if (extra != "") {
         std::vector<CPLString> pairs = Split(extra, "&");
         for (unsigned int i = 0; i < pairs.size(); ++i) {
