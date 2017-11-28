@@ -450,6 +450,35 @@ def grib_grib2_read_mercator():
     return 'success'
 
 ###############################################################################
+# Test reading GRIB2 Mercator grid
+
+def grib_grib2_read_mercator_2sp():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    if gdaltest.have_proj4 == 0:
+        return 'skip'
+
+    ds = gdal.Open('data/mercator_2sp.grb2')
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.5],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-10931598.94836207, 60.299, 0.0, 3332168.629121481, 0.0, -60.299)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading GRIB2 Lambert Conformal Conic grid
 
 def grib_grib2_read_lcc():
@@ -669,6 +698,7 @@ gdaltest_list = [
     grib_grib2_read_template_4_40,
     grib_grib2_read_transverse_mercator,
     grib_grib2_read_mercator,
+    grib_grib2_read_mercator_2sp,
     grib_grib2_read_lcc,
     grib_grib2_read_polar_stereo,
     grib_grib2_read_aea,
