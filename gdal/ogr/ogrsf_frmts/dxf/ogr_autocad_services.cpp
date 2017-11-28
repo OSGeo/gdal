@@ -200,6 +200,8 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
             }
             if( pszInput[0] == ';' )
                 pszInput++;
+            if( pszInput[0] == '\0' )
+                break;
         }
         else if( pszInput[0] == '\\'
                  && strchr( "\\{}", pszInput[1] ) != NULL )
