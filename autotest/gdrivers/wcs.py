@@ -321,7 +321,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             else:
                 suffix = '.xml'
                 fname += request + '-' + brand + '-' + version + suffix
-            #print 'test '+test+' return '+fname
+            #sys.stderr.write('test '+test+' return '+fname+"\n")
             f = open(fname, 'rb')
             content = f.read()
             f.close()
@@ -331,7 +331,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
-        #print self.path
+        #sys.stderr.write(self.path+"\n")
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -351,11 +351,12 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             tmp, got = self.path.split('SERVICE=WCS')
             got = re.sub('\&test=.*', '', got)
             key = server + '-' + version
-            tmp, should_be = urls[key][test].split('SERVICE=WCS')
-            if got == should_be:
+            tmp, have = urls[key][test].split('SERVICE=WCS')
+            have += '&server=' + server
+            if got == have:
                 ok = 'ok'
             else:
-                ok = "not ok\ngot:  " + got + "\nhave: " + should_be
+                ok = "not ok\ngot:  " + got + "\nhave: " + have
             print('test ' + server + ' WCS ' + version + ' '+ok)
         self.Respond(request, server, version, test)
         return
@@ -482,8 +483,7 @@ def wcs_6():
             if first_call:
                 options.append('CLEAR_CACHE')
                 first_call = False
-            query = 'version=' + version
-            options.append('GetCapabilitiesExtra=server=' + server)
+            query = 'server=' + server + '&version=' + version
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
 
@@ -503,13 +503,12 @@ def wcs_6():
             for o in oo:
                 if o != '-oo':
                     options.append(o)
-            options.append('DescribeCoverageExtra=server=' + server)
-            options.append('GetCoverageExtra=test=none&server=' + server)
+            options.append('GetCoverageExtra=test=none')
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
             ds = 0
             options = [cache]
-            options.append('GetCoverageExtra=test=scaled&server=' + server)
+            options.append('GetCoverageExtra=test=scaled')
             options.append('INTERLEAVE=PIXEL')
             ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
                              open_options = options)
@@ -520,7 +519,7 @@ def wcs_6():
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
-            ds = gdal.Translate('output.tif', ds, projWin = projwin, width = size, options = options)
+            ds = gdal.Translate("/vsimem/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
     webserver.server_stop(process, port)
     return 'success'
 
