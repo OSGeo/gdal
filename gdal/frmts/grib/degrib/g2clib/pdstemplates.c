@@ -423,7 +423,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 13 ) {
-              new->extlen=((list[37]-1)*6)+list[26];
+              new->extlen=(list[37] > 1 ? ((list[37]-1)*6) : 0)+list[26];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               if ( list[37] > 1 ) {
                  for (j=2;j<=list[37];j++) {
@@ -440,7 +440,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 14 ) {
-              new->extlen=((list[36]-1)*6)+list[25];
+              new->extlen=(list[36] > 1 ? ((list[36]-1)*6) : 0) +list[25];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               if ( list[36] > 1 ) {
                  for (j=2;j<=list[36];j++) {
@@ -561,7 +561,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 34 ) {
-              new->extlen=((list[24]-1)*6)+list[9];
+              new->extlen=(list[24] > 1 ? ((list[24]-1)*6) : 0)+list[9];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               if ( list[24] > 1 ) {
                  for (j=2;j<=list[24];j++) {
@@ -592,7 +592,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 91 ) {
-              new->extlen=((list[28]-1)*6)+list[15];
+              new->extlen=(list[28] > 1 ? ((list[28]-1)*6) : 0)+list[15];
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               if ( list[28] > 1 ) {
                  for (j=2;j<=list[28];j++) {
