@@ -48,7 +48,7 @@ as metadata like this:
 
 <pre>
     GRIB_DISCIPLINE=0(Meteorological)
-    GRIB_IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=8 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) YEAR=2017 MONTH=10 DAY=20 HOUR=6 MINUTE=0 SECOND=0 PROD_STATUS=0(Operational) TYPE=1(Forecast)
+    GRIB_IDS=CENTER=7(US-NCEP) SUBCENTER=0 MASTER_TABLE=8 LOCAL_TABLE=1 SIGNF_REF_TIME=1(Start_of_Forecast) REF_TIME=2017-10-20T06:00:00Z PROD_STATUS=0(Operational) TYPE=1(Forecast)
     GRIB_PDS_PDTN=32
     GRIB_PDS_TEMPLATE_NUMBERS=5 7 2 0 0 0 0 0 1 0 0 0 0 1 0 31 1 29 67 140 2 0 0 238 217
     GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 1 31 285 17292 2 61145
@@ -72,7 +72,10 @@ bit signed/unsigned integers, whereas GRIB_PDS_TEMPLATE_NUMBERS expose raw bytes
 This paragraph lists the configuration options that can be set to alter the default behaviour of the GRIB driver.
 
 <ul>
-<li>GRIB_NORMALIZE_UNITS : (GDAL >= 1.9.0) Can be set to NO to avoid gdal to normalize units to metric.</li>
+<li>GRIB_NORMALIZE_UNITS=YES/NO : (GDAL >= 1.9.0) Default to YES.
+Can be set to NO to avoid gdal to normalize units to metric.
+By default (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree Celcius (°C).
+With GRIB_NORMALIZE_UNITS=NO, they are reported in degree Kelvin (°K).</li>
 </ul>
 </p>
 
