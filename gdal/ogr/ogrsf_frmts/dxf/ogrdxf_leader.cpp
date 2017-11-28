@@ -695,17 +695,17 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         oBlockTransformer.dfXScale *= dfScale;
         oBlockTransformer.dfYScale *= dfScale;
 
+        DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
+
         std::map<OGRDXFFeature *, CPLString> oBlockAttributeValues;
 
         // If we have block attributes and will need to output them,
         // go through all the features on this block, looking for
         // ATTDEFs whose handle is in our list of attribute handles
-        if( !oBlockAttributes.empty() &&
+        if( poBlock && !oBlockAttributes.empty() &&
             ( poDS->InlineBlocks() ||
             poOverallFeature->GetFieldIndex( "BlockAttributes" ) != -1 ) )
         {
-            DXFBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
-
             for( std::vector<OGRDXFFeature *>::iterator oIt =
                 poBlock->apoFeatures.begin();
                 oIt != poBlock->apoFeatures.end();
