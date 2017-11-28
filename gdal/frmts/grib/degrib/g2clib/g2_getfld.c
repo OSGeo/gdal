@@ -409,7 +409,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
             jerr=g2_unpack4(cgrib,cgrib_length,&iofst,&lgfld->ipdtnum,
                             &lgfld->ipdtmpl,&lgfld->ipdtlen,&lgfld->coord_list,
                             &lgfld->num_coord);
-            if (jerr == 0)
+            if (jerr == 0 || jerr == 5 )
               have4=1;
             else {
               ierr=11;

@@ -61,6 +61,7 @@
 #include "degrib/degrib/type.h"
 CPL_C_START
 #include "degrib/g2clib/grib2.h"
+#include "degrib/g2clib/pdstemplates.h"
 CPL_C_END
 #include "gdal.h"
 #include "gdal_frmts.h"
@@ -351,7 +352,13 @@ void GRIBRasterBand::FindPDSTemplate()
             g2int mappdslen = 0;
             g2float *coordlist = NULL;
             g2int numcoord = 0;
-            if( g2_unpack4(pabyBody,nSectSize,&iofst,
+            if( getpdsindex(nPDTN) < 0 )
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Template 4.%d is not recognized currently",
+                         nPDTN);
+            }
+            else if ( g2_unpack4(pabyBody,nSectSize,&iofst,
                            &pdsnum,&pdstempl,&mappdslen,
                            &coordlist,&numcoord) == 0 )
             {

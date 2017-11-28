@@ -395,6 +395,26 @@ def grib_grib2_read_template_4_40():
     return 'success'
 
 ###############################################################################
+# Test support for a unhandled GRIB2 Section 4 Template 
+
+def grib_grib2_read_template_4_unhandled():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/template_4_65535.grb2')
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_PDS_TEMPLATE_NUMBERS': '0 1 2 3 4 5', 'GRIB_PDS_PDTN': '65535'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test reading GRIB2 Transverse Mercator grid
 
 def grib_grib2_read_transverse_mercator():
@@ -696,6 +716,7 @@ gdaltest_list = [
     grib_grib2_read_all_zero_data,
     grib_grib2_read_rotated_pole_lonlat,
     grib_grib2_read_template_4_40,
+    grib_grib2_read_template_4_unhandled,
     grib_grib2_read_transverse_mercator,
     grib_grib2_read_mercator,
     grib_grib2_read_mercator_2sp,

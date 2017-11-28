@@ -1081,6 +1081,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
    is4[5] = gfld->num_coord;
    is4[7] = gfld->ipdtnum;
    pdsIndex = getpdsindex(gfld->ipdtnum);
+#if 0
    if (pdsIndex == -1) {
       jer[8 + *ndjer] = 2;
       jer[8] = 2004;    /* undefined sect 4 template */
@@ -1088,6 +1089,9 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
       g2_free(gfld);
       return;
    }
+#endif
+   if( pdsIndex >= 0 )
+   {
    curIndex = 9;
    for (i = 0; i < gfld->ipdtlen; i++) {
       const struct pdstemplate *templatespds = get_templatespds();
@@ -1106,6 +1110,7 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
         return;
       }
       curIndex += abs(templatespds[pdsIndex].mappds[i]);
+   }
    }
 
    is5[4] = 5;

@@ -524,7 +524,34 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
        && (templat != GS4_ANALYSIS_CHEMICAL) ) {
       errSprintf ("This was only designed for templates 0, 1, 2, 5, 6, 7, 8, 9, "
                   "10, 11, 12, 15, 20, 30, 32, 40. Template found = %d\n", templat);
-      return -8;
+
+      inv->validTime = 0;
+      inv->foreSec = 0;
+      reallocSprintf (&(inv->element), "unknown");
+      reallocSprintf (&(inv->comment), "unknown");
+      reallocSprintf (&(inv->unitName), "unknown");
+      reallocSprintf (&(inv->shortFstLevel), "unknown");
+      reallocSprintf (&(inv->longFstLevel), "unknown");
+
+        /* Jump past section 5. */
+        sectNum = 5;
+        if (GRIB2SectJump (fp, gribLen, &sectNum, &secLen) != 0) {
+            errSprintf ("ERROR: Problems Jumping past section 5\n");
+            return -9;
+        }
+        /* Jump past section 6. */
+        sectNum = 6;
+        if (GRIB2SectJump (fp, gribLen, &sectNum, &secLen) != 0) {
+            errSprintf ("ERROR: Problems Jumping past section 6\n");
+            return -10;
+        }
+        /* Jump past section 7. */
+        sectNum = 7;
+        if (GRIB2SectJump (fp, gribLen, &sectNum, &secLen) != 0) {
+            errSprintf ("ERROR: Problems Jumping past section 7\n");
+            return -11;
+        }
+        return 1;
    }
    if( *buffLen < 19 - 5 + 4 )
        return -8;
@@ -1102,7 +1129,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             /* Look at sections 2 to 7 */
             if ((ans = GRIB2Inventory2to7 (sectNum, fp, gribLen, &bufferLen,
                                            &buffer, inv, prodType, center,
-                                           subcenter, mstrVersion)) != 0) {
+                                           subcenter, mstrVersion)) < 0) {
                //fclose (fp);
                free (buffer);
                free (buff);
