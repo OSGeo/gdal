@@ -1018,6 +1018,31 @@ def osr_proj4_28_missing_proj_epsg_dict():
         return 'fail'
     return 'success'
 
+
+def osr_proj4_error_cases_export_mercator():
+
+    srs = osr.SpatialReference()
+
+    # latitude_of_origin != 0.0 and scale != 1.0
+    srs.SetMercator(30.0, 0.0, 0.99, 0.0, 0.0)
+    with gdaltest.error_handler():
+        got = srs.ExportToProj4()
+    if got != '':
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    # latitude_of_origin != 0.0
+    srs.SetMercator2SP(0.0, 40.0, 0.0, 0.0, 0.0)
+    with gdaltest.error_handler():
+        got = srs.ExportToProj4()
+    if got != '':
+        gdaltest.post_reason( 'fail' )
+        print(got)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     osr_proj4_1,
     osr_proj4_2,
@@ -1047,7 +1072,8 @@ gdaltest_list = [
     osr_proj4_26,
     osr_proj4_27,
     osr_proj4_28,
-    osr_proj4_28_missing_proj_epsg_dict
+    osr_proj4_28_missing_proj_epsg_dict,
+    osr_proj4_error_cases_export_mercator,
 ]
 
 

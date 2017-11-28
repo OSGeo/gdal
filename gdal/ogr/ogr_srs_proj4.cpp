@@ -1687,13 +1687,24 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) )
     {
-        CPLsnprintf(
-            szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
-            "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
-            GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
-            GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
-            GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
-            GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        if( GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+        {
+            CPLsnprintf(
+                szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
+                "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Mercator_2SP with "
+                     "latitude of origin != 0, not supported by PROJ.4.");
+            *ppszProj4 = CPLStrdup("");
+            return OGRERR_UNSUPPORTED_SRS;
+        }
     }
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
     {
