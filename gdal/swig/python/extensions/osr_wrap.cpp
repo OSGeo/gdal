@@ -4020,6 +4020,9 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMercator(OSRSpatialReferenceShado
     return OSRSetMercator( self, clat, clong,
                            scale, fe, fn );
   }
+SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMercator2SP(OSRSpatialReferenceShadow *self,double stdp1,double clat,double clong,double fe,double fn){
+    return OSRSetMercator2SP( self, stdp1, clat, clong, fe, fn );
+  }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetMollweide(OSRSpatialReferenceShadow *self,double cm,double fe,double fn){
     return OSRSetMollweide( self, cm,
                             fe, fn );
@@ -11191,6 +11194,106 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_SpatialReference_SetMercator2SP(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+  double arg2 ;
+  double arg3 ;
+  double arg4 ;
+  double arg5 ;
+  double arg6 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  double val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "stdp1",(char *) "clat",(char *) "clong",(char *) "fe",(char *) "fn", NULL 
+  };
+  OGRErr result;
+  
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOOO:SpatialReference_SetMercator2SP",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_SetMercator2SP" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpatialReference_SetMercator2SP" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_double(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SpatialReference_SetMercator2SP" "', argument " "3"" of type '" "double""'");
+  } 
+  arg3 = static_cast< double >(val3);
+  ecode4 = SWIG_AsVal_double(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "SpatialReference_SetMercator2SP" "', argument " "4"" of type '" "double""'");
+  } 
+  arg4 = static_cast< double >(val4);
+  ecode5 = SWIG_AsVal_double(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "SpatialReference_SetMercator2SP" "', argument " "5"" of type '" "double""'");
+  } 
+  arg5 = static_cast< double >(val5);
+  ecode6 = SWIG_AsVal_double(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "SpatialReference_SetMercator2SP" "', argument " "6"" of type '" "double""'");
+  } 
+  arg6 = static_cast< double >(val6);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    result = (OGRErr)OSRSpatialReferenceShadow_SetMercator2SP(arg1,arg2,arg3,arg4,arg5,arg6);
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_SpatialReference_SetMollweide(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
@@ -16350,6 +16453,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"SpatialReference_SetLCCB", (PyCFunction) _wrap_SpatialReference_SetLCCB, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetLCCB(SpatialReference self, double stdp1, double stdp2, double clat, double clong, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetMC", (PyCFunction) _wrap_SpatialReference_SetMC, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetMC(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetMercator", (PyCFunction) _wrap_SpatialReference_SetMercator, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetMercator(SpatialReference self, double clat, double clong, double scale, double fe, double fn) -> OGRErr"},
+	 { (char *)"SpatialReference_SetMercator2SP", (PyCFunction) _wrap_SpatialReference_SetMercator2SP, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetMercator2SP(SpatialReference self, double stdp1, double clat, double clong, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetMollweide", (PyCFunction) _wrap_SpatialReference_SetMollweide, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetMollweide(SpatialReference self, double cm, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetNZMG", (PyCFunction) _wrap_SpatialReference_SetNZMG, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetNZMG(SpatialReference self, double clat, double clong, double fe, double fn) -> OGRErr"},
 	 { (char *)"SpatialReference_SetOS", (PyCFunction) _wrap_SpatialReference_SetOS, METH_VARARGS | METH_KEYWORDS, (char *)"SpatialReference_SetOS(SpatialReference self, double dfOriginLat, double dfCMeridian, double scale, double fe, double fn) -> OGRErr"},

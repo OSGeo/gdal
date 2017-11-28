@@ -978,6 +978,11 @@ class SpatialReference(_object):
         return _osr.SpatialReference_SetMercator(self, *args, **kwargs)
 
 
+    def SetMercator2SP(self, *args, **kwargs):
+        """SetMercator2SP(SpatialReference self, double stdp1, double clat, double clong, double fe, double fn) -> OGRErr"""
+        return _osr.SpatialReference_SetMercator2SP(self, *args, **kwargs)
+
+
     def SetMollweide(self, *args, **kwargs):
         """SetMollweide(SpatialReference self, double cm, double fe, double fn) -> OGRErr"""
         return _osr.SpatialReference_SetMollweide(self, *args, **kwargs)

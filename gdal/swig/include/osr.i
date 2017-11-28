@@ -649,6 +649,13 @@ public:
                            scale, fe, fn );
   }
 
+%feature( "kwargs" ) SetMercator2SP;
+  OGRErr SetMercator2SP( double stdp1,
+                         double clat, double clong,
+                         double fe, double fn ) {
+    return OSRSetMercator2SP( self, stdp1, clat, clong, fe, fn );
+  }
+
 %feature( "kwargs" ) SetMollweide;
   OGRErr  SetMollweide( double cm,
                       double fe, double fn ) {
