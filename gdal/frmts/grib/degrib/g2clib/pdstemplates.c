@@ -288,7 +288,7 @@ gtemplate *getpdstemplate(g2int number)
               return(new);
            }
            else {
-             printf("getpdstemplate: PDS Template 4.%d not defined.\n",(int)number);
+             //printf("getpdstemplate: PDS Template 4.%d not defined.\n",(int)number);
              return(0);        //NULL
            }
 

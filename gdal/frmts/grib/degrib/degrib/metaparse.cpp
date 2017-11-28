@@ -1523,7 +1523,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
        (is4[7] != GS4_DERIVED_INTERVAL) && (is4[7] != GS4_STATISTIC_SPATIAL_AREA) &&
        (is4[7] != GS4_ANALYSIS_CHEMICAL)) {
 #ifdef DEBUG
-      printf ("Un-supported Template. %d\n", is4[7]);
+      //printf ("Un-supported Template. %d\n", is4[7]);
 #endif
       errSprintf ("Un-supported Template. %d\n", is4[7]);
       return -4;
