@@ -1066,7 +1066,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     case GS3_MERCATOR:
         if( meta->gds.orientLon == 0.0 )
         {
-            oSRS.SetMercator(meta->gds.meshLat, 0.0, 1.0, 0.0, 0.0);
+            if( meta->gds.meshLat == 0.0 )
+                oSRS.SetMercator(0.0, 0.0, 1.0, 0.0, 0.0);
+            else
+                oSRS.SetMercator2SP(meta->gds.meshLat, 0.0, 0.0, 0.0, 0.0);
         }
         else
         {
