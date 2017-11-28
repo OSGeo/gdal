@@ -456,7 +456,8 @@ def setupFct():
 ###############################################################################
 
 def wcs_6():
-    if gdaltest.wcs_drv is None:
+    driver = gdal.GetDriverByName('WCS')
+    if driver is None:
 	    return 'skip'
     print("Generating various URLs from the driver and comparing them to ones")
     print("that have worked.")
