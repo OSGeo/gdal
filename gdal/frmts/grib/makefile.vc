@@ -1,5 +1,5 @@
 
-OBJ	=	gribdataset.obj
+OBJ	=	gribdataset.obj gribcreatecopy.obj
 
 GDAL_ROOT	=	..\..
 

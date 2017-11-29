@@ -152,6 +152,10 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
            //  Use number of bits specified by user and
            //  adjust binary scaling factor to accommodate data.
            //
+           if( dscale != 1.0 )
+           {
+              rmin_dscaled = (float)floor(rmin_dscaled);
+           }
            maxnum=int_power(2.0,nbits)-1;
            temp=(float)(log(maxnum/(rmax_dscaled-rmin_dscaled))/alog2);
            idrstmpl[1]=(g2int)ceil(-1.0*temp);
