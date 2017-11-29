@@ -89,7 +89,7 @@ test_script:
   - SET PROJ_LIB=%SDK_BIN%\proj\SHARE
   - SET CPL_DEBUG=ON
   - cd autotest
-  - cd gdriver
+  - cd gdrivers
   - python wcs.py
 
 deploy: off
