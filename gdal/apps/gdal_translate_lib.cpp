@@ -1659,6 +1659,14 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                           !psOptions->bStats && !bFilterOutStatsMetadata,
                           !psOptions->bUnscale,
                           !psOptions->bSetNoData && !psOptions->bUnsetNoData );
+            if( psOptions->nScaleRepeat == 0 &&
+                psOptions->nExponentRepeat == 0 &&
+                EQUAL(psOptions->pszFormat, "GRIB") )
+            {
+                char** papszMD_GRIB = poSrcBand->GetMetadata("GRIB");
+                if( papszMD_GRIB != NULL)
+                    poVRTBand->SetMetadata( papszMD_GRIB, "GRIB" );
+            }
         }
 
 /* -------------------------------------------------------------------- */

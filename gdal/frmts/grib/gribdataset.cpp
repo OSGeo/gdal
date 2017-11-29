@@ -44,6 +44,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -466,6 +467,45 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
             memcpy(&nDRTN, pabyBody + 10-1, 2);
             CPL_MSBPTR16(&nDRTN);
 
+            GDALRasterBand::SetMetadataItem("DRS_DRTN",
+                                            CPLSPrintf("%d", nDRTN),
+                                            "GRIB");
+            if( (nDRTN == GS5_SIMPLE ||
+                 nDRTN == GS5_CMPLX ||
+                 nDRTN == GS5_CMPLXSEC ||
+                 nDRTN == GS5_JPEG2000 ||
+                 nDRTN == GS5_PNG) && nSectSize >= 20 )
+            {
+                float fRef;
+                memcpy(&fRef, pabyBody + 12 - 1, 4);
+                CPL_MSBPTR32(&fRef);
+                GDALRasterBand::SetMetadataItem("DRS_REF_VALUE",
+                                                CPLSPrintf("%.10f", fRef),
+                                                "GRIB");
+
+                GUInt16 nBinaryScaleFactorUnsigned;
+                memcpy(&nBinaryScaleFactorUnsigned, pabyBody + 16 - 1, 2);
+                CPL_MSBPTR16(&nBinaryScaleFactorUnsigned);
+                const int nBSF = (nBinaryScaleFactorUnsigned & 0x8000) ?
+                    - static_cast<int>(nBinaryScaleFactorUnsigned & 0x7FFF) :
+                    static_cast<int>(nBinaryScaleFactorUnsigned);
+                GDALRasterBand::SetMetadataItem("DRS_BINARY_SCALE_FACTOR",
+                    CPLSPrintf("%d", nBSF), "GRIB");
+
+                GUInt16 nDecimalScaleFactorUnsigned;
+                memcpy(&nDecimalScaleFactorUnsigned, pabyBody + 18 - 1, 2);
+                CPL_MSBPTR16(&nDecimalScaleFactorUnsigned);
+                const int nDSF = (nDecimalScaleFactorUnsigned & 0x8000) ?
+                    - static_cast<int>(nDecimalScaleFactorUnsigned & 0x7FFF) :
+                    static_cast<int>(nDecimalScaleFactorUnsigned);
+                GDALRasterBand::SetMetadataItem("DRS_DECIMAL_SCALE_FACTOR",
+                    CPLSPrintf("%d", nDSF), "GRIB");
+
+                const int nBits = pabyBody[20-1];
+                GDALRasterBand::SetMetadataItem("DRS_NBITS",
+                    CPLSPrintf("%d", nBits), "GRIB");
+            }
+
             // 2 = Grid Point Data - Complex Packing
             // 3 = Grid Point Data - Complex Packing and Spatial Differencing
             if( (nDRTN == GS5_CMPLX || nDRTN == GS5_CMPLXSEC) && nSectSize >= 31 )
@@ -491,6 +531,14 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
                                  nBand, dfSecondaryNoData);
                     }
                 }
+            }
+
+            if( nDRTN == GS5_CMPLXSEC && nSectSize >= 48 )
+            {
+                const int nOrder = pabyBody[48-1];
+                GDALRasterBand::SetMetadataItem(
+                    "DRS_SPATIAL_DIFFERENCING_ORDER",
+                    CPLSPrintf("%d", nOrder), "GRIB");
             }
 
             CPLFree(pabyBody);
@@ -1326,6 +1374,175 @@ static void GDALDeregister_GRIB( GDALDriver * )
 }
 
 /************************************************************************/
+/*                          GDALGRIBDriver                              */
+/************************************************************************/
+
+class GDALGRIBDriver: public GDALDriver
+{
+            bool bHasFullInitMetadata;
+            CPLStringList aosMetadata;
+        public:
+            GDALGRIBDriver();
+
+            virtual char**      GetMetadata(const char* pszDomain) override;
+            virtual const char* GetMetadataItem(
+                const char* pszName, const char* pszDomain) override;
+            virtual CPLErr      SetMetadataItem(
+                const char* pszName, const char* pszValue,
+                const char* pszDomain) override;
+};
+
+/************************************************************************/
+/*                          GDALGRIBDriver()                            */
+/************************************************************************/
+
+GDALGRIBDriver::GDALGRIBDriver() : bHasFullInitMetadata(false)
+{
+    aosMetadata.SetNameValue(GDAL_DCAP_RASTER, "YES");
+    aosMetadata.SetNameValue(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
+    aosMetadata.SetNameValue(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
+    aosMetadata.SetNameValue(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
+    aosMetadata.SetNameValue(GDAL_DCAP_VIRTUALIO, "YES");
+
+    aosMetadata.SetNameValue( GDAL_DMD_CREATIONDATATYPES,
+                            "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                            "Float64" );
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
+{
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        // Defer until necessary the setting of the CreationOptionList
+        // to let a chance to JPEG2000 drivers to have been loaded.
+        if( !bHasFullInitMetadata )
+        {
+            bHasFullInitMetadata = true;
+
+            std::vector<CPLString> aosJ2KDrivers;
+            for( size_t i = 0; i < CPL_ARRAYSIZE(apszJ2KDrivers); i++ )
+            {
+                if( GDALGetDriverByName(apszJ2KDrivers[i]) != NULL )
+                {
+                    aosJ2KDrivers.push_back(apszJ2KDrivers[i]);
+                }
+            }
+
+            CPLString osCreationOptionList(
+"<CreationOptionList>"
+"   <Option name='DATA_ENCODING' type='string-select' default='AUTO' "
+    "description='How data is encoded internally'>"
+"       <Value>AUTO</Value>"
+"       <Value>SIMPLE_PACKING</Value>"
+"       <Value>COMPLEX_PACKING</Value>"
+"       <Value>IEEE_FLOATING_POINT</Value>");
+            if( GDALGetDriverByName("PNG") != NULL )
+                osCreationOptionList +=
+"       <Value>PNG</Value>";
+            if( !aosJ2KDrivers.empty() )
+                osCreationOptionList +=
+"       <Value>JPEG2000</Value>";
+            osCreationOptionList += 
+"   </Option>"
+"   <Option name='NBITS' type='int' default='0' "
+    "description='Number of bits per value'/>"
+"   <Option name='DECIMAL_SCALE_FACTOR' type='int' default='0' "
+    "description='Value such that raw values are multiplied by "
+    "10^DECIMAL_SCALE_FACTOR before integer encoding'/>"
+"   <Option name='SPATIAL_DIFFERENCING_ORDER' type='int' default='0' "
+    "description='Order of spatial difference' min='0' max='2'/>";
+            if( !aosJ2KDrivers.empty() )
+            {
+                osCreationOptionList +=
+"   <Option name='COMPRESSION_RATIO' type='int' default='1' min='1' max='100'"
+    "description='N:1 target compression ratio for JPEG2000'/>"
+"   <Option name='JPEG2000_DRIVER' type='string-select' "
+    "description='Explicitly select a JPEG2000 driver'>";
+                for( size_t i = 0; i < aosJ2KDrivers.size(); i++ )
+                {
+                    osCreationOptionList +=
+"       <Value>" + aosJ2KDrivers[i] + "</Value>";
+                }
+                osCreationOptionList +=
+"   </Option>";
+            }
+            osCreationOptionList +=
+"   <Option name='DISCIPLINE' type='int' "
+        "description='Discipline of the processed data'/>"
+"   <Option name='IDS' type='string' "
+        "description='String equivalent to the GRIB_IDS metadata item'/>"
+"   <Option name='IDS_CENTER' type='int' "
+        "description='Originating/generating center'/>"
+"   <Option name='IDS_SUBCENTER' type='int' "
+        "description='Originating/generating subcenter'/>"
+"   <Option name='IDS_MASTER_TABLE' type='int' "
+        "description='GRIB master tables version number'/>"
+"   <Option name='IDS_SIGNF_REF_TIME' type='int' "
+        "description='Significance of Reference Time'/>"
+"   <Option name='IDS_REF_TIME' type='string' "
+        "description='Reference time as YYYY-MM-DDTHH:MM:SSZ'/>"
+"   <Option name='IDS_PROD_STATUS' type='int' "
+        "description='Production Status of Processed data'/>"
+"   <Option name='IDS_TYPE' type='int' "
+        "description='Type of processed data'/>"
+"   <Option name='PDS_PDTN' type='int' "
+        "description='Product Definition Template Number'/>"
+"   <Option name='PDS_TEMPLATE_NUMBERS' type='string' "
+        "description='Product definition template raw numbers'/>"
+"   <Option name='PDS_TEMPLATE_ASSEMBLED_VALUES' type='string' "
+        "description='Product definition template assembled values'/>"
+"   <Option name='INPUT_UNIT' type='string' "
+        "description='Unit of input values. Only for temperatures. C or K'/>"
+"   <Option name='BAND_*' type='string' "
+    "description='Override options at band level'/>"
+"</CreationOptionList>";
+
+            aosMetadata.SetNameValue( GDAL_DMD_CREATIONOPTIONLIST,
+                                      osCreationOptionList );
+        }
+        return aosMetadata.List();
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char* GDALGRIBDriver::GetMetadataItem(const char* pszName,
+                                            const char* pszDomain)
+{
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        // Defer until necessary the setting of the CreationOptionList
+        // to let a chance to JPEG2000 drivers to have been loaded.
+        if( !EQUAL( pszName, GDAL_DMD_CREATIONOPTIONLIST ) )
+            return CSLFetchNameValue(aosMetadata, pszName);
+    }
+    return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr GDALGRIBDriver::SetMetadataItem(
+                const char* pszName, const char* pszValue,
+                const char* pszDomain)
+{
+    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    {
+        aosMetadata.SetNameValue(pszName, pszValue);
+        return CE_None;
+    }
+    return GDALDriver::SetMetadataItem(pszName, pszValue, pszDomain);
+}
+
+/************************************************************************/
 /*                         GDALRegister_GRIB()                          */
 /************************************************************************/
 
@@ -1335,17 +1552,13 @@ void GDALRegister_GRIB()
     if( GDALGetDriverByName("GRIB") != NULL )
         return;
 
-    GDALDriver *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALGRIBDriver();
 
     poDriver->SetDescription("GRIB");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GRIdded Binary (.grb, .grb2)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_grib.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "grb grb2 grib2");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GRIBDataset::Open;
     poDriver->pfnIdentify = GRIBDataset::Identify;
+    poDriver->pfnCreateCopy = GRIBDataset::CreateCopy;
     poDriver->pfnUnloadDriver = GDALDeregister_GRIB;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

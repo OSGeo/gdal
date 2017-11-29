@@ -30,6 +30,9 @@
  *
  */
 
+#ifndef GRIBDATASET_H
+#define GRIBDATASET_H
+
 #include "cpl_port.h"
 
 #include <cerrno>
@@ -82,6 +85,11 @@ class GRIBDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 
     CPLErr      GetGeoTransform( double *padfTransform ) override;
     const char *GetProjectionRef() override;
@@ -188,3 +196,8 @@ class InventoryWrapper {
 
 }  // namespace grib
 }  // namespace gdal
+
+const char* const apszJ2KDrivers[] =
+        { "JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW" };
+
+#endif // GRIBDATASET_H
