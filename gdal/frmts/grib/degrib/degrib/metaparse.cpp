@@ -3078,11 +3078,13 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
          missCnt = 0;
          /* Figure out a missing value. */
          xmissp = 9999;
+#ifdef unreachable
          if (attrib->f_maxmin) {
             if ((xmissp <= attrib->max) && (xmissp >= attrib->min)) {
                xmissp = attrib->max + 1;
             }
          }
+#endif
          /* embed the missing value. */
          for (scanIndex = 0; scanIndex < (uInt4)nd2x3 && scanIndex < Nx * Ny; scanIndex++) {
             ScanIndex2XY (scanIndex, &x, &y, scan, Nx, Ny);
