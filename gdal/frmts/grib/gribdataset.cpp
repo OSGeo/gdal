@@ -103,6 +103,7 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     m_Grib_MetaData(NULL),
     nGribDataXSize(poDSIn->nRasterXSize),
     nGribDataYSize(poDSIn->nRasterYSize),
+    m_nGribVersion(psInv->GribVersion),
     m_bHasLookedForNoData(false),
     m_dfNoData(0.0),
     m_bHasNoData(false)
@@ -423,7 +424,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
     // retrieve nodata value by parsing section 5 (Data Representation Section)
     // We also check section 6 to see if there is a bitmap
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
-    CPLAssert( poGDS->nGribVersion == 2 );
+    CPLAssert( m_nGribVersion == 2 );
 
     if( m_bHasLookedForNoData )
         return;
@@ -715,8 +716,7 @@ CPLErr GRIBRasterBand::IReadBlock( int /* nBlockXOff */,
 
 double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
-    if( poGDS->nGribVersion == 2 && !m_bHasLookedForNoData )
+    if( m_nGribVersion == 2 && !m_bHasLookedForNoData )
     {
         FindNoDataGrib2();
     }
@@ -840,7 +840,6 @@ GRIBRasterBand::~GRIBRasterBand()
 GRIBDataset::GRIBDataset() :
     fp(NULL),
     pszProjection(CPLStrdup("")),
-    nGribVersion(0),
     nCachedBytes(0),
     // Switch caching strategy once 100 MB threshold is reached.
     // Why 100 MB? --> Why not.
@@ -957,7 +956,6 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
     // Create a corresponding GDALDataset.
     GRIBDataset *poDS = new GRIBDataset();
-    poDS->nGribVersion = version;
 
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = NULL;
