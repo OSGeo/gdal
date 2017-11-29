@@ -533,7 +533,7 @@ int main (int argc, char **argv)
  *   12/2006 Bas Retsios (ITC): Created.
  *****************************************************************************
  */
-#ifdef unused_by_GDAL
+#ifdef BIG_ENDIAN
 size_t norfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
 {
 	return fp.DataSourceFread(Dst, elem_size, num_elem);
