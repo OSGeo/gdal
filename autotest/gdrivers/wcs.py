@@ -519,7 +519,7 @@ def wcs_6():
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
-            ds = gdal.Translate("/vsimem/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
+            #ds = gdal.Translate("/vsimem/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
     webserver.server_stop(process, port)
     return 'success'
 
