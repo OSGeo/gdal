@@ -191,15 +191,17 @@ void GRIBRasterBand::FindPDSTemplate()
             VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
 
             CPLString osIDS;
-            osIDS += "CENTER=";
             unsigned short nCenter = static_cast<unsigned short>(
                                         pabyBody[6-1] * 256 + pabyBody[7-1]);
-            osIDS += CPLSPrintf("%d", nCenter);
-            const char* pszCenter = centerLookup(nCenter);
-            if( pszCenter )
-                osIDS += CPLString("(")+pszCenter+")";
-            osIDS += " ";
-            osIDS += "SUBCENTER=";
+            if( nCenter != GRIB2MISSING_u1 && nCenter != GRIB2MISSING_u2 )
+            {
+                osIDS += "CENTER=";
+                osIDS += CPLSPrintf("%d", nCenter);
+                const char* pszCenter = centerLookup(nCenter);
+                if( pszCenter )
+                    osIDS += CPLString("(")+pszCenter+")";
+            }
+
             unsigned short nSubCenter = static_cast<unsigned short>(
                                         pabyBody[8-1] * 256 + pabyBody[9-1]);
             if( nSubCenter != GRIB2MISSING_u2 )
@@ -452,7 +454,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
     {
         memcpy(&nSectSize, abyHead, 4);
         CPL_MSBPTR32(&nSectSize);
-        if( nSectSize >= 10 &&
+        if( nSectSize >= 11 &&
             nSectSize <= 100000  /* arbitrary upper limit */ )
         {
             GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize));
