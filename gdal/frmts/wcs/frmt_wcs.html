@@ -278,17 +278,27 @@ responses, the service description file, and the metadata files are
 stored in a cache. Generally, if the needed resource is in the cache,
 it will be used and no extra calls to the server are done.<p>
 
+The default location of the cache directory is $HOME/.gdal/wcs_cache<p>
+
+The cache contents can be seen as subdatasets using an empty URL:<p>
+
+<pre>
+gdalinfo "WCS:"
+</pre>
+
 The cache control options/flags are
 <ul>
 
-<li><b>CACHE=path</b> (The default location of the cache directory is
-$HOME/.gdal/wcs_cache)</li>
+<li><b>CACHE=path</b> Overrides the default cache location.</li>
 
-<li><b>CLEAR_CACHE</b> (The cache is completely initialized and all files are
-deleted.)</li>
+<li><b>CLEAR_CACHE</b> The cache is completely initialized and all files are
+deleted.</li>
 
-<li><b>REFRESH_CACHE</b> (The cache entry, either capabilities or coverage,
-depending on the call at hand, is deleted.)</li>
+<li><b>REFRESH_CACHE</b> The cache entry, either capabilities or coverage,
+depending on the call at hand, is deleted.</li>
+
+<li><b>DELETE_FROM_CACHE=k</b> The cache entry (subdataset k), is
+deleted.</li>
 
 </ul>
 
@@ -302,10 +312,11 @@ address the version and coverage parameters. The string 'coverage' can
 be used as the coverage parameter key although different WCS versions
 use different keys. 'coverage' is also always used in the cache key.<p>
 
-The user may add non-standard extra parameters to the URL. However,
-when that is done, it should be noted that the URL is a cache database
-key and capability documents are linked to coverage documents through
-the key. Please consider using the Extra open options.<p>
+The user may add arbitrary standard and non-standard extra parameters
+to the URL. However, when that is done, it should be noted that the
+URL is a cache database key and capability documents are linked to
+coverage documents through the key. Please consider using the Extra
+open options.<p>
 
 <h3>Time</h3>
 

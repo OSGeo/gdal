@@ -2255,3 +2255,20 @@ void CPLCleanXMLElementName( char *pszTarget )
         }
     }
 }
+
+/************************************************************************/
+/*            CPLXMLTreeCloser::getDocumentElement()                    */
+/************************************************************************/
+
+CPLXMLNode* CPLXMLTreeCloser::getDocumentElement()
+{
+    CPLXMLNode *doc = get();
+    // skip the Declaration and assume the next is the root element
+    while (doc != NULL
+           && (doc->eType != CXT_Element
+               || doc->pszValue[0] == '?') )
+    {
+        doc = doc->psNext;
+    }
+    return doc;
+}

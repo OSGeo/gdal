@@ -86,7 +86,7 @@ int CompareNumbers(const CPLString &a, const CPLString &b)
     }
     return 0;
 }
-   
+
 CPLString URLEncode(const CPLString &str)
 {
     char *pszEncoded = CPLEscapeString(str, -1, CPLES_URL );
@@ -422,6 +422,32 @@ bool SetupCache(CPLString &cache, bool clear)
     return true;
 }
 
+static bool CompareStrings(const CPLString &a, const CPLString &b)
+{
+    return strcmp(a, b) < 0;
+}
+
+std::vector<CPLString> ReadCache(const CPLString &cache)
+{
+    std::vector<CPLString> contents;
+    CPLString db = CPLFormFilename(cache, "db", NULL);
+    char **data = CSLLoad(db);
+    if (data) {
+        for (int i = 0; data[i]; ++i) {
+            char *val = strchr(data[i], '=');
+            if (*val == '=') {
+                val += 1;
+                if (strcmp(val, "bar") != 0) {
+                    contents.push_back(val);
+                }
+            }
+        }
+        CSLDestroy(data);
+    }
+    std::sort(contents.begin(), contents.end(), CompareStrings);
+    return contents;
+}
+
 /* -------------------------------------------------------------------- */
 /*      DeleteEntryFromCache                                            */
 /*      Examines the 'db' file in the cache, which contains             */
@@ -545,7 +571,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
         CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
         return CE_Failure;
     }
-        
+
     // create a new file into the cache using filename as template
     CPLString path = "";
     VSIStatBufL stat;
@@ -564,7 +590,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
     if (f2) {
         VSIFCloseL(f2);
     }
-    
+
     CPLString entry = filename + "=" + url + "\n"; // '=' for compatibility with CSL
     VSIFWriteL(entry.c_str(), sizeof(char), entry.size(), f);
     VSIFCloseL(f);

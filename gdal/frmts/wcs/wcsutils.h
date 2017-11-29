@@ -92,6 +92,8 @@ bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value
 bool SetupCache(CPLString &cache,
                 bool clear);
 
+std::vector<CPLString> ReadCache(const CPLString &cache);
+
 bool DeleteEntryFromCache(const CPLString &cache,
                           const CPLString &key,
                           const CPLString &value);

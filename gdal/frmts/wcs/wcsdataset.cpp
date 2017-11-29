@@ -908,19 +908,13 @@ WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
                                                CPLString path,
                                                CPLString url)
 {
-
     CPLXMLTreeCloser doc(CPLParseXMLFile(path));
     if (doc.get() == NULL) {
         return NULL;
     }
-    CPLXMLNode *capabilities = doc.get();
-    // to avoid hardcoding the name of the Capabilities element
-    // we skip the Declaration and assume the next is the body
-    while (capabilities != NULL
-           && (capabilities->eType != CXT_Element
-               || capabilities->pszValue[0] == '?') )
-    {
-        capabilities = capabilities->psNext;
+    CPLXMLNode *capabilities = doc.getDocumentElement();
+    if (capabilities == NULL) {
+        return NULL;
     }
     // get version, this version will overwrite the user's request
     int version_from_server = WCSParseVersion(CPLGetXMLValue(capabilities, "version", ""));
@@ -1047,7 +1041,7 @@ static void CreateServiceMetadata(const CPLString &coverage,
 {
 
     CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
-    CPLXMLNode *metadata = doc.get();
+    CPLXMLNode *metadata = doc.getDocumentElement();
     // remove other subdatasets than the current
     int subdataset = 0;
     CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
@@ -1147,6 +1141,31 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
 }
 
 /************************************************************************/
+/*                          CreateFromCache()                           */
+/************************************************************************/
+
+static WCSDataset *CreateFromCache(const CPLString &cache)
+{
+    WCSDataset *ds = new WCSDataset201(cache);
+    if (!ds) {
+        return NULL;
+    }
+    char **metadata = NULL;
+    std::vector<CPLString> contents = ReadCache(cache);
+    CPLString path = "SUBDATASET_";
+    unsigned int index = 1;
+    for (unsigned int i = 0; i < contents.size(); ++i) {
+        CPLString name = path + CPLString().Printf("%d_", index) + "NAME";
+        CPLString value = "WCS:" + contents[i];
+        metadata = CSLSetNameValue(metadata, name, value);
+        index += 1;
+    }
+    ds->SetMetadata(metadata, "SUBDATASETS");
+    CSLDestroy(metadata);
+    return ds;
+}
+
+/************************************************************************/
 /*                              ParseURL()                              */
 /************************************************************************/
 
@@ -1202,6 +1221,19 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Filename is WCS:URL                                             */
 /* -------------------------------------------------------------------- */
         CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
+
+        const char *del = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DELETE_FROM_CACHE");
+        if (del != NULL) {
+            int k = atoi(del);
+            std::vector<CPLString> contents = ReadCache(cache);
+            if (k > 0 && k <= (int)contents.size()) {
+                DeleteEntryFromCache(cache, "", contents[k-1]);
+            }
+        }
+
+        if (url == "") {
+            return CreateFromCache(cache);
+        }
 
         if (CPLFetchBool(poOpenInfo->papszOpenOptions, "REFRESH_CACHE", false)) {
             DeleteEntryFromCache(cache, "", url);
