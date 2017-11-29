@@ -18,6 +18,7 @@
 #define GRIB_SIGN_INT3(a,b,c) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 127) << 16)+(b<<8)+c))
 #define GRIB_SIGN_INT2(a,b) ((1-(int) ((unsigned) (a & 0x80) >> 6)) * (int) (((a & 0x7f) << 8) + b))
 
+#ifdef unused_by_GDAL
 /* *INDENT-OFF* */
 static const TDLP_TableType TDLP_B_Table[5] = {
    /* 0 */ {0, "Continuous field"},
@@ -80,6 +81,7 @@ static const TDLP_TableType TDLP_S_Table[6] = {
    /* 5 */ {5, "168-point smoothing"},
 };
 /* *INDENT-ON*  */
+#endif
 
 typedef struct {
    sInt4 min;           /* Minimum value in a group. Can cause problems if
@@ -269,6 +271,7 @@ static int ReadTDLPSect1 (uChar *pds, sInt4 tdlpLen, sInt4 *curLoc,
    return 0;
 }
 
+#ifdef unused_by_GDAL
 /*****************************************************************************
  * TDLP_TableLookUp() --
  *
@@ -392,6 +395,7 @@ void PrintPDS_TDLP (pdsTDLPType * pds)
           TDLP_TableLookUp (TDLP_S_Table, sizeof (TDLP_S_Table), pds->S));
    Print ("PDS-TDLP", "ID4-G", Prt_D, pds->G);
 }
+#endif // unused_by_GDAL
 
 /*****************************************************************************
  * TDLP_ElemSurfUnit() --
@@ -1651,6 +1655,8 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
    }
    return 0;
 }
+
+#ifdef unused_by_GDAL
 
 /*****************************************************************************
  * TDL_ScaleData() --
@@ -4495,3 +4501,5 @@ int WriteTDLPRecord (FILE * fp, double *Data, sInt4 DataLen, int DSF,
    free (group);
    return 0;
 }
+
+#endif // unused_by_GDAL

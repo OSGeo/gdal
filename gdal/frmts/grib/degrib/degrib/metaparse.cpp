@@ -3117,6 +3117,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    attrib->numMiss = missCnt;
 }
 
+#ifdef unused_by_GDAL
 typedef struct {
    double value;
    int cnt;
@@ -3183,3 +3184,4 @@ void FreqPrint (char **ans, double *Data, sInt4 DataLen, sInt4 Nx,
    }
    free (freq);
 }
+#endif

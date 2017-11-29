@@ -1495,6 +1495,7 @@ static int FindTemplateIDs(sInt4 *ipack, sInt4 nd5, int subgNum,
  *
  *****************************************************************************
  */
+#ifdef unused_by_GDAL
 void unpk_grib2(sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3,
                 sInt4 *idat, sInt4 *nidat, float *rdat, sInt4 *nrdat,
                 sInt4 *is0, sInt4 *ns0, sInt4 *is1, sInt4 *ns1,
@@ -1533,6 +1534,7 @@ void unpk_grib2(sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3,
    memswp(ipack, sizeof(sInt4), *nd5);
 #endif
 }
+#endif
 
 /*****************************************************************************
  * C_pkGrib2() --

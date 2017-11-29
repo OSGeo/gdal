@@ -420,6 +420,7 @@ const char *subCenterLookup(unsigned short int center,
    return NULL;
 }
 
+#ifdef unused_by_GDAL
 const char *processLookup (unsigned short int center, unsigned char process)
 {
    /* see: http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablea.html I typed
@@ -543,6 +544,7 @@ const char *processLookup (unsigned short int center, unsigned char process)
    }
    return NULL;
 }
+#endif
 
 typedef struct {
    const char *name, *comment, *unit;
