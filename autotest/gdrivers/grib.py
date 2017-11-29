@@ -708,6 +708,11 @@ def grib_online_grib2_jpeg2000_single_line():
         gdaltest.post_reason('Could not open file')
         print(cs)
         return 'fail'
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 9999:
+        gdaltest.post_reason('Bad nodata value')
+        print(nd)
+        return 'fail'
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {'GRIB_REF_TIME': '  1510920000 sec UTC', 'GRIB_VALID_TIME': '  1510923600 sec UTC', 'GRIB_FORECAST_SECONDS': '3600 sec', 'GRIB_UNIT': '[kg/(m^2 s)]', 'GRIB_PDS_TEMPLATE_NUMBERS': '1 7 2 50 50 0 0 0 0 0 0 0 60 1 0 0 0 0 0 255 255 255 255 255 255', 'GRIB_PDS_PDTN': '0', 'GRIB_COMMENT': 'Precipitation rate [kg/(m^2 s)]', 'GRIB_SHORT_NAME': '0-SFC', 'GRIB_ELEMENT': 'PRATE'}
     for k in expected_md:

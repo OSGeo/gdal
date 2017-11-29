@@ -420,6 +420,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
     // There is no easy way in the degrib API to retrieve the nodata value
     // without decompressing the data point section (which is slow), so
     // retrieve nodata value by parsing section 5 (Data Representation Section)
+    // We also check section 6 to see if there is a bitmap
     GRIBDataset *poGDS = static_cast<GRIBDataset *>(poDS);
     CPLAssert( poGDS->nGribVersion == 2 );
 
@@ -493,6 +494,23 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
             }
 
             CPLFree(pabyBody);
+        }
+        else if( nSectSize > 5 )
+        {
+            VSIFSeekL(poGDS->fp, nSectSize - 5, SEEK_CUR);
+        }
+    }
+
+    if( !m_bHasNoData )
+    {
+        // Check bitmap section
+        GByte abySection6[6] = { 0 };
+        VSIFReadL(abySection6, 6, 1, poGDS->fp);
+        // Is there a bitmap ?
+        if( abySection6[4] == 6 && abySection6[5] == 0 )
+        {
+            m_dfNoData = 9999.0; // Same value as in metaparse.cpp:ParseGrid()
+            m_bHasNoData = true;
         }
     }
 }
