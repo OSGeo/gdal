@@ -49,6 +49,7 @@
  * 2) Could try this with exclusive or?
  *****************************************************************************
  */
+#ifdef unused_by_GDAL
 void memswp (void *Data, const size_t elem_size, const size_t num_elem)
 {
    size_t j;            /* Element count */
@@ -70,6 +71,7 @@ void memswp (void *Data, const size_t elem_size, const size_t num_elem)
       }
    }
 }
+#endif
 
 /*****************************************************************************
  * revmemcpy() -- Review 12/2002
@@ -142,6 +144,7 @@ void *revmemcpy (void *Dst, void *Src, const size_t len)
  * 1) Assumes that Dst is allocated to a size of Src.
  *****************************************************************************
  */
+#ifdef unused_by_GDAL
 void *revmemcpyRay (void *Dst, void *Src, const size_t elem_size,
                     const size_t num_elem)
 {
@@ -162,6 +165,7 @@ void *revmemcpyRay (void *Dst, void *Src, const size_t elem_size,
    }
    return Dst;
 }
+#endif // unused_by_GDAL
 
 /*****************************************************************************
  * memBitRead() --
@@ -333,6 +337,7 @@ char memBitRead (void *Dst, size_t dstLen, void *Src, size_t numBits,
  * 2) Assumes that Dst is already zero'ed out.
  *****************************************************************************
  */
+#ifdef unused_by_GDAL
 char memBitWrite (void *Src, size_t srcLen, void *Dst, size_t numBits,
                   uChar * bufLoc, size_t * numUsed)
 {
@@ -432,6 +437,7 @@ char memBitWrite (void *Src, size_t srcLen, void *Dst, size_t numBits,
    }
    return 0;
 }
+#endif // unused_by_GDAL
 
 /*****************************************************************************
  * main() --
@@ -527,11 +533,12 @@ int main (int argc, char **argv)
  *   12/2006 Bas Retsios (ITC): Created.
  *****************************************************************************
  */
-
+#ifdef unused_by_GDAL
 size_t norfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
 {
 	return fp.DataSourceFread(Dst, elem_size, num_elem);
 }
+#endif
 
 /*****************************************************************************
  * revfread() -- Review 12/2002
@@ -589,6 +596,8 @@ size_t revfread (void *Dst, size_t elem_size, size_t num_elem, DataSource &fp)
    }
    return ans;
 }
+
+#ifdef unused_by_GDAL
 
 /*****************************************************************************
  * revfwrite() -- Review 12/2002
@@ -1075,3 +1084,5 @@ char fileBitWrite (void *Src, size_t srcLen, uShort2 numBits, FILE * fp,
    *pbuf = buf;
    return 0;
 }
+
+#endif // unused_by_GDAL

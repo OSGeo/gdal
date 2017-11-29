@@ -1461,6 +1461,7 @@ void Clock_PrintMonth (int mon, char *buffer, CPL_UNUSED int buffLen)
  *****************************************************************************
  */
 
+#ifdef unused_by_GDAL
 static int Clock_ScanWeekday (char *ptr)
 {
    switch (*ptr) {
@@ -1723,6 +1724,7 @@ static int Clock_ScanDash (char *word, int *mon, int *day, sInt4 *year,
    *ptime = sec + min * 60 + hour * 3600 - offset;
    return 0;
 }
+#endif // unused_by_GDAL
 
 /*****************************************************************************
  * Clock_ScanDate() --
@@ -1810,6 +1812,8 @@ void Clock_ScanDate (double *l_clock, sInt4 year, int mon, int day)
    }
    *l_clock = *l_clock + ((double) (totDay)) * 24 * 3600;
 }
+
+#ifdef unused_by_GDAL
 
 int Clock_ScanDateNumber (double *l_clock, char *buffer)
 {
@@ -2450,6 +2454,8 @@ int Clock_Scan (double *l_clock, char *buffer, char f_gmt)
    free (Rel);
    return -1;
 }
+
+#endif // unused_by_GDAL
 
 double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
 {

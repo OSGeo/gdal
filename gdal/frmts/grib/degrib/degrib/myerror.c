@@ -450,6 +450,7 @@ void preErrSprintf (const char *fmt, ...)
    return;
 }
 
+#ifdef unused_by_GDAL
 /*****************************************************************************
  * _myWarn() -- Arthur Taylor / MDL
  *
@@ -784,6 +785,7 @@ sChar myWarnLevel ()
 {
    return warnLevel;
 }
+#endif // unused_by_GDAL
 
 #ifdef TEST_MYERROR
 /*****************************************************************************
