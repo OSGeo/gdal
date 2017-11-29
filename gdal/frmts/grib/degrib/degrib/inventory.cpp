@@ -614,6 +614,8 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             break;
 
          case GS4_PERCENT_PNT: /* 4.6 */
+            if( *buffLen < 35 - 5 + 1)
+                return -8;
             percentile = (*buffer)[35 - 5];
             break;
 
