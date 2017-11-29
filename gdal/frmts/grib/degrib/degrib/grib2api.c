@@ -1552,6 +1552,7 @@ void unpk_grib2(sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3,
  *****************************************************************************
  */
 
+#ifdef unused_by_GDAL
 int C_pkGrib2(unsigned char *cgrib, sInt4 *sec0, sInt4 *sec1,
               unsigned char *csec2, sInt4 lcsec2,
               sInt4 *igds, sInt4 *igdstmpl, sInt4 *ideflist,
@@ -1591,3 +1592,4 @@ int C_pkGrib2(unsigned char *cgrib, sInt4 *sec0, sInt4 *sec1,
 
    return ierr;
 }
+#endif /* unused_by_GDAL */
