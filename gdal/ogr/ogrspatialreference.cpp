@@ -7259,7 +7259,7 @@ OGRSpatialReference* OGRSpatialReference::convertToOtherProjection(
         const double m0 = msfn(phi0, ec);
         const double t0 = tsfn(phi0, ec);
         const double n = sin(phi0);
-        if( n == 0.0 )
+        if( fabs(n) < 1e-10 )
             return NULL;
         OGRSpatialReference* poLCC2SP = new OGRSpatialReference();
         poLCC2SP->CopyGeogCSFrom(this);
@@ -7360,7 +7360,7 @@ OGRSpatialReference* OGRSpatialReference::convertToOtherProjection(
         const double t2 = tsfn(phi2, ec);
         const double n = (phi1 == phi2) ? sin(phi1) :
                                 (log(m1) - log(m2)) / (log(t1) - log(t2));
-        if( n == 0.0 )
+        if( fabs(n) < 1e-10 )
             return NULL;
         const double F = m1 / (n * pow(t1, n));
         const double phi0 = asin(n);
