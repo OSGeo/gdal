@@ -872,6 +872,18 @@ def grib_grib2_write_creation_options():
     ds = None
     gdal.Unlink(tmpfilename)
 
+     # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
+    with gdaltest.error_handler():
+        out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
+                   creationOptions = [
+        "PDS_PDTN=65535",
+        "PDS_TEMPLATE_ASSEMBLED_VALUES=1 2 3 4 5"
+                   ])
+    if out_ds is not None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    gdal.Unlink(tmpfilename)
+
     # Test with PDS_PDTN != 0 without template numbers
     with gdaltest.error_handler():
         out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
@@ -964,6 +976,24 @@ def grib_grib2_write_projections():
 
         out_ds = None
         gdal.Unlink(tmpfilename)
+
+    # Test writing GRS80
+    src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
+    src_ds.SetGeoTransform([2,1,0,49,0,-1])
+    src_ds.SetProjection("""GEOGCS["GRS 1980(IUGG, 1980)",
+    DATUM["unknown",
+        SPHEROID["GRS80",6378137,298.257222101]],
+    PRIMEM["Greenwich",0],
+    UNIT["degree",0.0174532925199433]]""")
+    tmpfilename = '/vsimem/out.grb2'
+    out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds)
+    wkt = out_ds.GetProjectionRef()
+    out_ds = None
+    gdal.Unlink(tmpfilename)
+    if wkt.find('SPHEROID["GRS80",6378137,298.257222101]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
 
     # Test writing Mercator_1SP with scale != 1 (will be read as Mercator_2SP)
     src_ds = gdal.Warp('', 'data/byte.tif', format = 'MEM', dstSRS = """PROJCS["unnamed",
