@@ -832,6 +832,24 @@ def grib_grib2_write_creation_options():
         return 'fail'
     gdal.Unlink(tmpfilename)
 
+    # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and extra elements
+    with gdaltest.error_handler():
+        gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
+                   creationOptions = [
+        "PDS_PDTN=32",
+        "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145 0extra"
+                   ])
+    ds = gdal.Open(tmpfilename)
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {'GRIB_PDS_PDTN': '32', 'GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES' : '5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2 61145'}
+    for k in expected_md:
+        if k not in md or md[k] != expected_md[k]:
+            gdaltest.post_reason('Did not get expected metadata')
+            print(md)
+            return 'fail'
+    ds = None
+    gdal.Unlink(tmpfilename)
+
     # Test with PDS_TEMPLATE_NUMBERS with variable number of elements
     gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
                    creationOptions = [
@@ -1198,6 +1216,13 @@ def grib_grib2_write_data_encodings():
     nodata_never_hit_ds.GetRasterBand(1).SetNoDataValue(1)
 
     tests += [ [ nodata_never_hit_ds, [], 0, GS5_SIMPLE ] ]
+
+    all_nodata_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    all_nodata_ds.SetGeoTransform([2,1,0,49,0,-1])
+    all_nodata_ds.SetProjection( sr.ExportToWkt() )
+    all_nodata_ds.GetRasterBand(1).SetNoDataValue(0)
+
+    tests += [ [ all_nodata_ds, [ 'DATA_ENCODING=COMPLEX_PACKING'  ], 0, GS5_CMPLX ] ]
 
     for (filename, options, expected_cs, expected_section5_template_number) in tests:
         tmpfilename = '/vsimem/out.grb2'
