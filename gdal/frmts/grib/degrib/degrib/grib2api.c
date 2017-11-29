@@ -1175,9 +1175,9 @@ void unpk_g2ncep(CPL_UNUSED sInt4 *kfildo, float *ain, sInt4 *iain, sInt4 *nd2x3
    }
    f_ignoreScan = 0;
    /* Check if integer type... is5[20] == 1 implies integer (code table 5.1),
-    * but only for certain templates. (0,1,2,3,40,41,40000,40010). (not 50,51) 
+    * but only for certain templates. (0,1,2,3,40,41,40000,40010). (not 4,50,51) 
     */
-   if ((is5[20] == 1) && ((is5[9] != 50) && (is5[9] != 51))) {
+   if ((is5[20] == 1) && ((is5[9] != 4) && (is5[9] != 50) && (is5[9] != 51))) {
       /* integer data, use iain */
       if ((scanIndex < 0) || (nxIndex < 0) || (nyIndex < 0)) {
          ierr = TransferInt(gfld->fld, gfld->ngrdpts, *ibitmap, gfld->bmap,
