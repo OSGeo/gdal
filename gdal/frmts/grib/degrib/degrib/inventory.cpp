@@ -508,6 +508,9 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
    GS4_PERCENT_TIME = 10, GS4_RADAR = 20, GS4_SATELLITE = 30
 };
 */
+   if( secLen < 11 )
+       return -8;
+
    /* Parse the interesting data out of sect 4. */
    MEMCPY_BIG (&templat, *buffer + 8 - 5, sizeof (short int));
    if ((templat != GS4_ANALYSIS) && (templat != GS4_ENSEMBLE)
@@ -553,14 +556,14 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
         }
         return 1;
    }
-   if( *buffLen < 19 - 5 + 4 )
+   if( secLen < 19 - 5 + 4 )
        return -8;
 
    cat = (*buffer)[10 - 5];
    subcat = (*buffer)[11 - 5];
    if( templat == GS4_ANALYSIS_CHEMICAL )
    {
-        if( *buffLen < 21 - 5 + 4 )
+        if( secLen < 21 - 5 + 4 )
             return -8;
         genProcess = (*buffer)[14 - 5];
    }
@@ -600,7 +603,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
                    inv->foreSec / 3600.0)));
       switch (templat) {
          case GS4_PROBABIL_PNT: /* 4.5 */
-            if( *buffLen < 44 - 5 + 4)
+            if( secLen < 44 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
             factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
@@ -614,13 +617,13 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             break;
 
          case GS4_PERCENT_PNT: /* 4.6 */
-            if( *buffLen < 35 - 5 + 1)
+            if( secLen < 35 - 5 + 1)
                 return -8;
             percentile = (*buffer)[35 - 5];
             break;
 
          case GS4_DERIVED_INTERVAL: /* 4.12 */
-            if( *buffLen < 52 - 5 + 4)
+            if( secLen < 52 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 37 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.12 bytes 37-43\n");
@@ -639,7 +642,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
             break;
 
          case GS4_PERCENT_TIME: /* 4.10 */
-            if( *buffLen < 51 - 5 + 4)
+            if( secLen < 51 - 5 + 4)
                 return -8;
             percentile = (*buffer)[35 - 5];
             if (InventoryParseTime (*buffer + 36 - 5, &(inv->validTime)) != 0) {
@@ -658,7 +661,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_STATISTIC: /* 4.8 */
-            if( *buffLen < 50 - 5 + 4)
+            if( secLen < 50 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 35 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.8 bytes 35-41\n");
@@ -677,7 +680,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_ENSEMBLE_STAT: /* 4.11 */
-            if( *buffLen < 53 - 5 + 4)
+            if( secLen < 53 - 5 + 4)
                 return -8;
             if (InventoryParseTime (*buffer + 38 - 5, &(inv->validTime)) != 0) {
                printf ("Warning: Investigate Template 4.11 bytes 38-44\n");
@@ -695,7 +698,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
 */
             break;
          case GS4_PROBABIL_TIME: /* 4.9 */
-            if( *buffLen < 63 - 5 + 4)
+            if( secLen < 63 - 5 + 4)
                 return -8;
             probType = (*buffer)[37 - 5];
             factor = sbit_2Comp_oneByte((sChar) (*buffer)[38 - 5]);
@@ -822,7 +825,7 @@ enum { GS4_ANALYSIS, GS4_ENSEMBLE, GS4_DERIVED, GS4_PROBABIL_PNT = 5,
           nOffset = 2;
       }
 
-      if( *buffLen < nOffset + 31 - 5 + 4)
+      if( secLen < nOffset + 31 - 5 + 4)
             return -8;
       fstSurfType = (*buffer)[nOffset + 23 - 5];
       unsigned char u_scale = ((unsigned char*)(*buffer))[nOffset + 24 - 5];
