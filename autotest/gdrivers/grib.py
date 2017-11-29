@@ -672,6 +672,23 @@ def grib_grib2_read_section_5_nbits_zero_decimal_scaled():
     return 'success'
 
 ###############################################################################
+# Test reading GRIB2 with complex packing and spatial differencing of order 1
+
+def grib_grib2_read_spatial_differencing_order_1():
+
+    if gdaltest.grib_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/spatial_differencing_order_1.grb2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 46650:
+        gdaltest.post_reason('Did not get expected checksum')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
 def grib_online_grib2_jpeg2000_single_line():
 
@@ -726,6 +743,7 @@ gdaltest_list = [
     grib_grib2_read_laea,
     grib_grib2_read_template_5_4_grid_point_ieee_floating_point,
     grib_grib2_read_section_5_nbits_zero_decimal_scaled,
+    grib_grib2_read_spatial_differencing_order_1,
     grib_online_grib2_jpeg2000_single_line
     ]
 
