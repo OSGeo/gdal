@@ -2256,6 +2256,15 @@ static int UglyLookUp (UglyStringType * ugly, char *data, uChar word,
  * 2) Instead of static buffer, we could use myerror.c :: AllocSprintf.
  *****************************************************************************
  */
+
+static void safe_strcat(char* target, size_t target_size,
+                        const char* string_to_append)
+{
+    size_t target_length = strlen(target);
+    if( target_length + strlen(string_to_append) < target_size )
+        strcat(target + target_length, string_to_append);
+}
+
 static void Ugly2English (UglyStringType * ugly)
 {
    int i;               /* Loop counter over number of words. */
@@ -2271,15 +2280,15 @@ static void Ugly2English (UglyStringType * ugly)
       buffer[0] = '\0';
       /* Handle Coverage. */
       if (ugly->cover[i] != 0) {
-         strcat (buffer, WxCover[ugly->cover[i]].name);
-         strcat (buffer, " ");
+         safe_strcat (buffer, sizeof(buffer), WxCover[ugly->cover[i]].name);
+         safe_strcat (buffer, sizeof(buffer), " ");
       }
       /* Handle Intensity. */
       if (ugly->intens[i] != 0) {
-         strcat (buffer, WxIntens[ugly->intens[i]].name);
-         strcat (buffer, " ");
+         safe_strcat (buffer, sizeof(buffer), WxIntens[ugly->intens[i]].name);
+         safe_strcat (buffer, sizeof(buffer), " ");
       }
-      strcat (buffer, WxCode[ugly->wx[i]].name);
+      safe_strcat (buffer, sizeof(buffer), WxCode[ugly->wx[i]].name);
       /* Handle Attributes. */
       f_first = 1;
       for (j = 0; j < NUM_UGLY_ATTRIB; j++) {
@@ -2287,12 +2296,12 @@ static void Ugly2English (UglyStringType * ugly)
             /* Fixed by GDAL */
             if (ugly->f_priority[i] == 0) {
                if (f_first) {
-                  strcat (buffer, " with ");
+                  safe_strcat (buffer, sizeof(buffer), " with ");
                   f_first = 0;
                } else {
-                  strcat (buffer, ", ");
+                  safe_strcat (buffer, sizeof(buffer), ", ");
                }
-               strcat (buffer, WxAttrib[ugly->attrib[i][j]].name);
+               safe_strcat (buffer, sizeof(buffer), WxAttrib[ugly->attrib[i][j]].name);
             }
          }
       }
