@@ -370,7 +370,7 @@ bool WCSDataset110::ExtractGridInfo()
     for (unsigned int i = 0; i < n / 2; ++i) {
         CPLString s = offset_1.back();
         CPLDebug("WCS", "offset %d %s.", i, s.c_str());
-        offset_1.erase(offset_1.end());
+        offset_1.erase(offset_1.end() - 1);
         offset_2.insert(offset_2.begin(), s);
     }
     std::vector<std::vector<double> > offsets;
