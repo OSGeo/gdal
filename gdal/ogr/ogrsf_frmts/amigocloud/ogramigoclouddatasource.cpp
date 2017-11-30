@@ -373,7 +373,7 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
+            CPLError( CE_Warning, CPLE_AppDefined,
                       "Layer %s already exists", papoLayers[0]->GetDatasetId() );
         }
         // Return existing layer, do not create a new layer.
