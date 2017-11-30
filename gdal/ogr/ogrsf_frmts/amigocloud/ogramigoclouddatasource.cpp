@@ -103,7 +103,6 @@ int OGRAmigoCloudDataSource::TestCapability( const char * pszCap )
 /************************************************************************/
 
 OGRLayer *OGRAmigoCloudDataSource::GetLayer( int iLayer )
-
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
@@ -145,7 +144,6 @@ bool OGRAmigoCloudDataSource::ListDatasets()
 {
     std::stringstream url;
     url << std::string(GetAPIURL()) << "/users/0/projects/" << std::string(GetProjetcId()) << "/datasets/?summary";
-
     json_object* result = RunGET(url.str().c_str());
     if( result == NULL ) {
         CPLError(CE_Failure, CPLE_AppDefined, "AmigoCloud:get failed.");
@@ -257,8 +255,10 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         char** papszTables = CSLTokenizeString2(osDatasets, ",", 0);
         for(int i=0;papszTables && papszTables[i];i++)
         {
+
             papoLayers = (OGRAmigoCloudTableLayer**) CPLRealloc(
                 papoLayers, (nLayers + 1) * sizeof(OGRAmigoCloudTableLayer*));
+
             papoLayers[nLayers ++] = new OGRAmigoCloudTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
@@ -357,12 +357,30 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
         return NULL;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we already have this layer?  If so, should we blow it        */
-/*      away?                                                           */
-/* -------------------------------------------------------------------- */
     CPLString osName(pszNameIn);
 
+    if (nLayers > 1) {
+        // We cannot have more then one destination dataset (layer).
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Multiple destination datasets are not allowed.");
+        return NULL;
+    } else if (nLayers == 1) {
+        // If layer already exists, and OVERWRITE: YES, truncate the layer.
+        if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL  &&
+            !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+        {
+            TruncateDataset(papoLayers[0]->GetTableName());
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Layer %s already exists", papoLayers[0]->GetDatasetId() );
+        }
+        // Return existing layer, do not create a new layer.
+        return papoLayers[0];
+    }
+
+    // If no destination dataset specified, create a new one.
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
@@ -418,8 +436,6 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
         std::stringstream url;
         url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
         json_object *poObj = RunDELETE(url.str().c_str());
-
-//        json_object* poObj = RunSQL(osSQL);
         if( poObj == NULL )
             return OGRERR_FAILURE;
         json_object_put(poObj);
@@ -452,9 +468,13 @@ json_object* OGRAmigoCloudDataSource::RunPOST(const char*pszURL, const char *psz
     /* -------------------------------------------------------------------- */
     if( !osAPIKey.empty() )
     {
-        osURL += "?token=";
+        if(osURL.find("?") == std::string::npos)
+            osURL += "?token=";
+        else
+            osURL += "&token=";
         osURL += osAPIKey;
     }
+
     char** papszOptions=NULL;
     CPLString osPOSTFIELDS("POSTFIELDS=");
     if (pszPostData)
@@ -571,6 +591,25 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
     return false;
 }
 
+bool OGRAmigoCloudDataSource::TruncateDataset(const CPLString &tableName)
+{
+    std::stringstream changeset;
+    changeset << "[{\"type\":\"DML\",\"entity\":\"" << tableName << "\",";
+    changeset << "\"parent\":null,\"action\":\"TRUNCATE\",\"data\":null}]";
+    SubmitChangeset(changeset.str());
+    return true;
+}
+
+void OGRAmigoCloudDataSource::SubmitChangeset(const CPLString &json)
+{
+    std::stringstream url;
+    url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/submit_changeset";
+    std::stringstream changeset;
+    changeset << "{\"changeset\":\"" << json_encode(json) << "\"}";
+    json_object* poObj = RunPOST(url.str().c_str(), changeset.str().c_str());
+    if( poObj != NULL )
+        json_object_put(poObj);
+}
 
 /************************************************************************/
 /*                               RunDELETE()                               */
@@ -585,9 +624,13 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     /* -------------------------------------------------------------------- */
     if( !osAPIKey.empty() )
     {
-        osURL += "?token=";
+        if(osURL.find("?") == std::string::npos)
+            osURL += "?token=";
+        else
+            osURL += "&token=";
         osURL += osAPIKey;
     }
+
     char** papszOptions=NULL;
     CPLString osPOSTFIELDS("CUSTOMREQUEST=DELETE");
     papszOptions = CSLAddString(papszOptions, osPOSTFIELDS);
@@ -765,8 +808,7 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
     /* -------------------------------------------------------------------- */
     if( !osAPIKey.empty() )
     {
-        osSQL += "?token=";
-        osSQL += osAPIKey;
+        osSQL += "?token=" + osAPIKey;
     }
 
     osSQL += "&query=";
@@ -804,13 +846,13 @@ json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    if (psResult->pszErrBuf != NULL)
+    if (psResult->pszErrBuf != NULL && psResult->pabyData != NULL )
     {
-        CPLDebug( "AMIGOCLOUD", "RunSQL Error Message:%s", psResult->pszErrBuf );
+        CPLError( CE_Failure, CPLE_AppDefined, "GET Response: %s", psResult->pabyData );
     }
     else if (psResult->nStatus != 0)
     {
-        CPLDebug( "AMIGOCLOUD", "RunSQL Error Status:%d", psResult->nStatus );
+        CPLDebug( "AMIGOCLOUD", "RunGET Error Status:%d", psResult->nStatus );
     }
 
     if( psResult->pabyData == NULL )
