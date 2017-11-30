@@ -321,7 +321,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             else:
                 suffix = '.xml'
                 fname += request + '-' + brand + '-' + version + suffix
-            #sys.stderr.write('test '+test+' return '+fname+"\n")
+            sys.stderr.write('test '+test+' return '+fname+"\n")
             f = open(fname, 'rb')
             content = f.read()
             f.close()
@@ -331,7 +331,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
-        #sys.stderr.write(self.path+"\n")
+        sys.stderr.write("GET "+self.path+"\n")
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -359,6 +359,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
                 ok = "not ok\ngot:  " + got + "\nhave: " + have
             print('test ' + server + ' WCS ' + version + ' '+ok)
         self.Respond(request, server, version, test)
+        sys.stderr.write("GET done\n")
         return
 
 def setupFct():
