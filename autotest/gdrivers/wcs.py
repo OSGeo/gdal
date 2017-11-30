@@ -526,9 +526,7 @@ def wcs_6():
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
-            ds2 = gdal.Translate("tmp/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
-            ds = 0
-            ds2 = 0
+            gdal.Translate("tmp/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
 
             if os.path.isfile('data/wcs/' + server + '-' + version + '-non_scaled.tiff'):
                 options = [cache]
@@ -540,9 +538,7 @@ def wcs_6():
                     print("OpenEx failed: WCS:" + url + "/?" + query)
                     break
                 options = [cache]
-                ds2 = gdal.Translate("tmp/"+server+version+".tiff", ds, srcWin = [0,0,2,2], options = options)
-                ds = 0
-                ds2 = 0
+                gdal.Translate("tmp/"+server+version+".tiff", ds, srcWin = [0,0,2,2], options = options)
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
