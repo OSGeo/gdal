@@ -1459,6 +1459,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      the coverage description and/or service description             */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
+    CPLDebug("WCS", "ExtractGridInfo.");
     if( !poDS->ExtractGridInfo() ) {
         delete poDS;
         return NULL;
@@ -1482,6 +1483,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract band count and type from a sample.                      */
 /* -------------------------------------------------------------------- */
+    CPLDebug("WCS", "EstablishRasterDetails.");
     if( !poDS->EstablishRasterDetails() ) // todo: do this only if missing info
     {
         delete poDS;
