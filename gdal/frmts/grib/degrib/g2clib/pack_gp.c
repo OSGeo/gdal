@@ -334,7 +334,11 @@ typedef g2int logical;
 
 /*        MISSLX( ) was AN AUTOMATIC ARRAY. */
     misslx = (integer *)calloc(*ndg,sizeof(integer));
-
+    if( misslx == NULL )
+    {
+        *ier = -1;
+        return 0;
+    }
 
     /* Parameter adjustments */
     --ic;
@@ -1431,10 +1435,9 @@ L420:
 
     }
 
-    if ( misslx != 0 ) {
-         free(misslx);
-         misslx=0;
-    }
+    free(misslx);
+    misslx=0;
+
 /*     CALL TIMPR(KFILDO,KFILDO,'END   PACK_GP        ') */
     if (iersav != 0) {
 	*ier = iersav;
@@ -1444,7 +1447,7 @@ L420:
 /* 900  IF(IER.NE.0)RETURN1 */
 
 L900:
-    if ( misslx != 0 ) free(misslx);
+    free(misslx);
     return 0;
 } /* pack_gp__ */
 

@@ -53,7 +53,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //                    .
 //                    .
 //     cpack    - The packed data field (character*1 array)
-//     *lcpack   - length of packed field cpack().
+//     *lcpack   - length of packed field cpack(). (or -1 in case of error)
 //
 // REMARKS: None
 //
@@ -74,7 +74,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       g2int  nglenref, nglenlast, nbitsglen /* , ij */;
       g2int  j, missopt, nonmiss, itemp, maxorig, nbitorig, miss1, miss2;
       g2int  ngroups, ng, num0, num1, num2;
-      g2int  imax, lg, mtemp, ier, igmax;
+      g2int  imax, lg, mtemp, ier = 0, igmax;
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
       g2float  rmissp, rmisss, bscale, dscale, rmin, temp;
       const g2int simple_alg = 0;
@@ -98,6 +98,11 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //  AND set up missing value mapping of the field.
 //
       ifldmiss = calloc(ndpts,sizeof(g2int));
+      if( ifldmiss == NULL )
+      {
+          *lcpack = -1;
+          return;
+      }
       rmin=1E+37f;
       if ( missopt ==  1 ) {        // Primary missing value only
          for ( j=0; j<ndpts; j++) {
@@ -139,6 +144,18 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         gref = calloc(ndpts,sizeof(g2int));
         gwidth = calloc(ndpts,sizeof(g2int));
         glen = calloc(ndpts,sizeof(g2int));
+        if( ifld == NULL || jfld == NULL || gref == NULL || gwidth == NULL ||
+            glen == NULL )
+        {
+            free(ifld);
+            free(jfld);
+            free(ifldmiss);
+            free(gref);
+            free(gwidth);
+            free(glen);
+            *lcpack = -1;
+            return;
+        }
         //
         //  Scale original data
         //
@@ -305,6 +322,17 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            free(jmin);
            free(jmax);
            free(lbit);
+           if( ier != 0 )
+           {
+                free(ifld);
+                free(jfld);
+                free(ifldmiss);
+                free(gref);
+                free(gwidth);
+                free(glen);
+                *lcpack = -1;
+                return;
+           }
         }
         //
         //  For each group, find the group's reference value (min)
@@ -496,12 +524,12 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         }
         *lcpack=iofst/8;
         //
-        if ( ifld != 0 ) free(ifld);
-        if ( jfld != 0 ) free(jfld);
-        if ( ifldmiss != 0 ) free(ifldmiss);
-        if ( gref != 0 ) free(gref);
-        if ( gwidth != 0 ) free(gwidth);
-        if ( glen != 0 ) free(glen);
+        free(ifld);
+        free(jfld);
+        free(ifldmiss);
+        free(gref);
+        free(gwidth);
+        free(glen);
       //}
       //else {          //   Constant field ( max = min )
       //  nbits=0;
