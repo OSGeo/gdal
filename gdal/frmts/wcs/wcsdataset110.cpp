@@ -354,6 +354,7 @@ bool WCSDataset110::ExtractGridInfo()
     CPLDebug("WCS", "Geometry.");
     const char *pszGridType = CPLGetXMLValue( psGCRS, "GridType",
                                               "urn:ogc:def:method:WCS::2dSimpleGrid" );
+    CPLDebug("WCS", "Grid type %s.", pszGridType);
     bool swap = axis_order_swap && !CPLGetXMLBoolean(psService, "NoGridAxisSwap");
     std::vector<double> origin = Flist(Split(CPLGetXMLValue(psGCRS, "GridOrigin", ""), " ", swap));
 
@@ -368,6 +369,7 @@ bool WCSDataset110::ExtractGridInfo()
     }
     for (unsigned int i = 0; i < n / 2; ++i) {
         CPLString s = offset_1.back();
+        CPLDebug("WCS", "offset %d %s.", i, s.c_str());
         offset_1.erase(offset_1.end());
         offset_2.insert(offset_2.begin(), s);
     }
@@ -379,6 +381,7 @@ bool WCSDataset110::ExtractGridInfo()
         offsets.push_back(Flist(offset_1));
         offsets.push_back(Flist(offset_2));
     }
+    CPLDebug("WCS", "Grid type tests.");
 
     if( strstr(pszGridType,":2dGridIn2dCrs")
         || strstr(pszGridType,":2dGridin2dCrs") )
