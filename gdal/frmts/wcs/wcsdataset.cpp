@@ -421,6 +421,7 @@ int WCSDataset::DescribeCoverage()
         if( ProcessError( psResult ) ) {
             return FALSE;
         }
+        CPLDebug("WCS", "Save the DC to %s.", dc_filename.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
