@@ -53,7 +53,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
 //                    .
 //                    .
 //     cpack    - The packed data field
-//     lcpack   - length of packed field cpack.
+//     lcpack   - length of packed field cpack (or -1 in case of error)
 //
 // REMARKS: None
 //
@@ -69,12 +69,12 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       g2int  *jmin, *jmax, *lbit;
       g2int  i,j,n, /* nbits, */ imin,imax,left;
       g2int  isd,itemp,ilmax,ngwidthref=0,nbitsgwidth=0;
-      g2int  nglenref=0,nglenlast=0,iofst,ival1,ival2;
+      g2int  nglenref=0,nglenlast=0,iofst,ival1,ival2=0;
       g2int  minsd,nbitsd=0,maxorig,nbitorig,ngroups;
       g2int  lg,ng,igmax,iwmax,nbitsgref;
       g2int  glength,grpwidth,nbitsglen=0;
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
-      g2int  missopt, miss1, miss2, ier;
+      g2int  missopt, miss1, miss2, ier = 0;
       g2float  bscale,dscale,rmax,rmin,temp;
       const g2int simple_alg = 0;
       const g2float alog2=0.69314718f;       //  ln(2.0)
@@ -104,6 +104,15 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         gref=calloc(ndpts,sizeof(g2int));
         gwidth=calloc(ndpts,sizeof(g2int));
         glen=calloc(ndpts,sizeof(g2int));
+        if( ifld == NULL || gref == NULL || gwidth == NULL || glen == NULL )
+        {
+            free(ifld);
+            free(gref);
+            free(gwidth);
+            free(glen);
+            *lcpack = -1;
+            return;
+        }
         //
         //  Scale original data
         //
@@ -233,6 +242,19 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            jmin = calloc(maxgrps,sizeof(g2int));
            jmax = calloc(maxgrps,sizeof(g2int));
            lbit = calloc(maxgrps,sizeof(g2int));
+           if( ifld == NULL || gref == NULL || gwidth == NULL || glen == NULL )
+           {
+                free(jmin);
+                free(jmax);
+                free(lbit);
+
+                free(ifld);
+                free(gref);
+                free(gwidth);
+                free(glen);
+                *lcpack = -1;
+                return;
+           }
            missopt=0;
            pack_gp(&kfildo,ifld,&ndpts,&missopt,&minpk,&inc,&miss1,&miss2,
                         jmin,jmax,lbit,glen,&maxgrps,&ngroups,&ibit,&jbit,
@@ -242,6 +264,15 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            free(jmin);
            free(jmax);
            free(lbit);
+           if( ier != 0 )
+           {
+                free(ifld);
+                free(gref);
+                free(gwidth);
+                free(glen);
+                *lcpack = -1;
+                return;
+           }
         }
         //
         //  For each group, find the group's reference value
@@ -379,10 +410,10 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         }
         *lcpack=iofst/8;
         //
-        if ( ifld!=0 ) free(ifld);
-        if ( gref!=0 ) free(gref);
-        if ( gwidth!=0 ) free(gwidth);
-        if ( glen!=0 ) free(glen);
+        free(ifld);
+        free(gref);
+        free(gwidth);
+        free(glen);
       }
       else {          //   Constant field ( max = min )
         /* nbits=0; */
