@@ -293,7 +293,10 @@ def read_urls():
     f.close()
     for line in content.splitlines():
         items = line.split()
-        retval[items[0]] = {}
+        if items[1].endswith('2'):
+            items[1] = items[1][:-1]
+        if not items[0] in retval:
+            retval[items[0]] = {}
         retval[items[0]][items[1]] = items[2]
     return retval
 
@@ -314,24 +317,28 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             fname = 'data/wcs/'
             if request == 'GetCoverage' and test == "scaled":
                 suffix = '.tiff'
+                self.Headers('image/tiff')
                 fname += brand + '-' + version + '-scaled' + suffix
+            elif request == 'GetCoverage' and test == "non_scaled":
+                suffix = '.tiff'
+                self.Headers('image/tiff')
+                fname += brand + '-' + version + '-non_scaled' + suffix
             elif request == 'GetCoverage':
                 suffix = '.tiff'
+                self.Headers('image/tiff')
                 fname += brand + '-' + version + suffix
             else:
                 suffix = '.xml'
+                self.Headers('application/xml')
                 fname += request + '-' + brand + '-' + version + suffix
-            sys.stderr.write('test '+test+' return '+fname+"\n")
             f = open(fname, 'rb')
             content = f.read()
             f.close()
-            self.Headers('application/xml')
             self.wfile.write(content)
         except IOError:
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
 
     def do_GET(self):
-        sys.stderr.write("GET "+self.path+"\n")
         if do_log:
             f = open('/tmp/log.txt', 'a')
             f.write('GET %s\n' % self.path)
@@ -347,19 +354,18 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
         test = ''
         if 'test' in query2:
             test = query2['test'][0]
-        if test == "scaled":
+        key = server + '-' + version
+        if key in urls and test in urls[key]:
             tmp, got = self.path.split('SERVICE=WCS')
             got = re.sub('\&test=.*', '', got)
-            key = server + '-' + version
             tmp, have = urls[key][test].split('SERVICE=WCS')
             have += '&server=' + server
             if got == have:
                 ok = 'ok'
             else:
                 ok = "not ok\ngot:  " + got + "\nhave: " + have
-            print('test ' + server + ' WCS ' + version + ' '+ok)
+            print('test ' + server + ' ' + test + ' WCS ' + version + ' '+ok)
         self.Respond(request, server, version, test)
-        sys.stderr.write("GET done\n")
         return
 
 def setupFct():
@@ -521,7 +527,24 @@ def wcs_6():
                 projwin[i] = int(c)
             options = [cache]
             ds2 = gdal.Translate("tmp/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
+            ds = 0
             ds2 = 0
+
+            if os.path.isfile('data/wcs/' + server + '-' + version + '-non_scaled.tiff'):
+                options = [cache]
+                options.append('GetCoverageExtra=test=non_scaled')
+                options.append('INTERLEAVE=PIXEL')
+                ds = gdal.OpenEx(utf8_path = "WCS:" + url + "/?" + query,
+                                 open_options = options)
+                if not ds:
+                    print("OpenEx failed: WCS:" + url + "/?" + query)
+                    break
+                options = [cache]
+                ds2 = gdal.Translate("tmp/"+server+version+".tiff", ds, srcWin = [0,0,2,2], options = options)
+                ds = 0
+                ds2 = 0
+            else:
+                print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
     return 'success'
 

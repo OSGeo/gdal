@@ -13,7 +13,7 @@ $do{say} = 1 if $do{say_all};
 
 my $cache = 'wcs_cache';
 my $size = 60;
-my $first_call = 1;
+my $first_call = $do{clear_cache} ? 1 : 0;
 
 my @not_ok;
 
@@ -323,7 +323,7 @@ sub test_non_scaled {
     if ($do{clear_all}) {
         unlink($result);
     }
-    my $o = "$options -srcwin 0 0 2 2";
+    my $o = "$options -oo \"filename=$server-$version-non_scaled.tiff\" -srcwin 0 0 2 2";
     if ($first_call) {
         $o .= " -oo CLEAR_CACHE";
         $first_call = 0;

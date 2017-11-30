@@ -310,7 +310,6 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Verify we have a SpatialDomain and GridCRS.                     */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "SpatialDomain.");
     CPLXMLNode *psSD =
         CPLGetXMLNode( psCO, "Domain.SpatialDomain" );
     CPLXMLNode *psGCRS =
@@ -329,7 +328,6 @@ bool WCSDataset110::ExtractGridInfo()
 /*   This is needed before geometry since we may have axis order swap.  */
 /* -------------------------------------------------------------------- */
     CPLString crs = ParseCRS(psGCRS);
-    CPLDebug("WCS", "CRS=%s.", crs.c_str());
 
     if (crs.empty()) {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -351,10 +349,8 @@ bool WCSDataset110::ExtractGridInfo()
 /*      Extract Geotransform from GridCRS.                              */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "Geometry.");
     const char *pszGridType = CPLGetXMLValue( psGCRS, "GridType",
                                               "urn:ogc:def:method:WCS::2dSimpleGrid" );
-    CPLDebug("WCS", "Grid type %s.", pszGridType);
     bool swap = axis_order_swap && !CPLGetXMLBoolean(psService, "NoGridAxisSwap");
     std::vector<double> origin = Flist(Split(CPLGetXMLValue(psGCRS, "GridOrigin", ""), " ", swap));
 
@@ -369,7 +365,6 @@ bool WCSDataset110::ExtractGridInfo()
     }
     for (unsigned int i = 0; i < n / 2; ++i) {
         CPLString s = offset_1.back();
-        CPLDebug("WCS", "offset %d %s.", i, s.c_str());
         offset_1.erase(offset_1.end() - 1);
         offset_2.insert(offset_2.begin(), s);
     }
@@ -381,7 +376,6 @@ bool WCSDataset110::ExtractGridInfo()
         offsets.push_back(Flist(offset_1));
         offsets.push_back(Flist(offset_2));
     }
-    CPLDebug("WCS", "Grid type tests.");
 
     if( strstr(pszGridType,":2dGridIn2dCrs")
         || strstr(pszGridType,":2dGridin2dCrs") )
@@ -432,7 +426,6 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Search for an ImageCRS for raster size.                         */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "Size.");
     std::vector<int> size;
     CPLXMLNode *psNode;
 
@@ -500,7 +493,6 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "SRS override.");
     const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
 
     if( pszProjOverride )
@@ -526,7 +518,6 @@ bool WCSDataset110::ExtractGridInfo()
 /*      falling back to the first supported format.  Should we          */
 /*      consider preferring the nativeFormat if available?              */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "Format.");
     if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
     {
         CPLString osPreferredFormat;
@@ -603,7 +594,6 @@ bool WCSDataset110::ExtractGridInfo()
 /*      Do we have a "Band" axis?  If so try to grab the bandcount      */
 /*      and data type from it.                                          */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "Band.");
     osBandIdentifier = CPLGetXMLValue( psService, "BandIdentifier", "" );
     CPLXMLNode * psAxis = CPLGetXMLNode(
         psService, "CoverageDescription.Range.Field.Axis" );

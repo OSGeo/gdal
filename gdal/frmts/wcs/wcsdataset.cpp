@@ -272,10 +272,6 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     if( poTileDS->GetRasterXSize() != nBufXSize
         || poTileDS->GetRasterYSize() != nBufYSize )
     {
-        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBufXSize, nBufYSize );
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Returned tile does not match expected configuration.\n"
                   "Got %dx%d instead of %dx%d.",
@@ -421,7 +417,6 @@ int WCSDataset::DescribeCoverage()
         if( ProcessError( psResult ) ) {
             return FALSE;
         }
-        CPLDebug("WCS", "Save the DC to %s.", dc_filename.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
@@ -704,6 +699,12 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the result.                           */
 /* -------------------------------------------------------------------- */
+    CPLString xfn = CPLGetXMLValue(psService, "filename", "");
+    if (xfn != "") {
+        VSILFILE *fpTemp = VSIFOpenL( xfn, "wb" );
+        VSIFWriteL( pabyData, nDataLen, 1, fpTemp );
+        VSIFCloseL( fpTemp );
+    }
     // Eventually we should be looking at mime info and stuff to figure
     // out an optimal filename, but for now we just use a fixed one.
     osResultFilename.Printf( "/vsimem/wcs/%p/wcsresult.dat",
@@ -866,7 +867,6 @@ const char *WCSDataset::Version() const
 
 static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLString path)
 {
-    CPLDebug("WCS", "Fetch capabilities from %s to %s.", url.c_str(), path.c_str());
     url = CPLURLAddKVP(url, "SERVICE", "WCS");
     url = CPLURLAddKVP(url, "REQUEST", "GetCapabilities");
     CPLString extra = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GetCapabilitiesExtra", "");
@@ -910,7 +910,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
                                                CPLString path,
                                                CPLString url)
 {
-    CPLDebug("WCS", "Create from capabilities at %s.", path.c_str());
     CPLXMLTreeCloser doc(CPLParseXMLFile(path));
     if (doc.get() == NULL) {
         return NULL;
@@ -948,7 +947,6 @@ WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
 
 WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString path)
 {
-    CPLDebug("WCS", "Create from metadata at %s.", path.c_str());
     WCSDataset *poDS;
     if (FileIsReadable(path)) {
         CPLXMLTreeCloser doc(CPLParseXMLFile((path).c_str()));
@@ -1003,7 +1001,6 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
 
 static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &cache, const CPLString &url)
 {
-    CPLDebug("WCS", "Bootstrap global %s.", url.c_str());
     // do we have the capabilities file
     CPLString filename;
     // we should lock the cache for our use in case we need to add an entry
@@ -1044,7 +1041,6 @@ static void CreateServiceMetadata(const CPLString &coverage,
                                   const CPLString &master_filename,
                                   const CPLString &meta_filename)
 {
-    CPLDebug("WCS", "Create service metadata from %s to %s.", master_filename.c_str(), meta_filename.c_str());
     CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
     CPLXMLNode *metadata = doc.getDocumentElement();
     // remove other subdatasets than the current
@@ -1128,7 +1124,8 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
         WCS_URL_PARAMETERS,
         WCS_SERVICE_OPTIONS,
         WCS_TWEAK_OPTIONS,
-        WCS_HTTP_OPTIONS
+        WCS_HTTP_OPTIONS,
+        "filename"
     };
     for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
         const char *value;
@@ -1226,8 +1223,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Filename is WCS:URL                                             */
 /* -------------------------------------------------------------------- */
         CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
-
-        CPLDebug("WCS", "Open %s.", url.c_str());
 
         const char *del = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DELETE_FROM_CACHE");
         if (del != NULL) {
@@ -1459,7 +1454,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      the coverage description and/or service description             */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "ExtractGridInfo.");
     if( !poDS->ExtractGridInfo() ) {
         delete poDS;
         return NULL;
@@ -1483,7 +1477,6 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract band count and type from a sample.                      */
 /* -------------------------------------------------------------------- */
-    CPLDebug("WCS", "EstablishRasterDetails.");
     if( !poDS->EstablishRasterDetails() ) // todo: do this only if missing info
     {
         delete poDS;

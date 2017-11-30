@@ -144,7 +144,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     // That is necessary at least with MapServer, which seems to often
     // return all bands instead of requested.
     // todo: in 2.0.1 the band list in this dataset may be user-defined
-    
+
     int band_count = 1;
     if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL")) {
         band_count = 0;
@@ -173,10 +173,6 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poTileDS->GetRasterXSize() != nBlockXSize
         || poTileDS->GetRasterYSize() != nBlockYSize )
     {
-        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBlockXSize, nBlockYSize );
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Returned tile does not match expected configuration.\n"
                   "Got %dx%d instead of %dx%d.",
@@ -332,4 +328,3 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
     else
         return papoOverviews[iOverviewIn];
 }
-
