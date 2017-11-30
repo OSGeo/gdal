@@ -57,6 +57,8 @@ install:
 - echo KMLSUPEROVERLAY_SUPPORTED = YES >> nmake.local
 - echo MINIZIP_INCLUDE = -I$(SDK_INC) >> nmake.local
 - echo MINIZIP_LIBRARY = $(SDK_LIB)\minizip.lib >> nmake.local
+- echo MYSQL_INC_DIR=$(SDK_INC) >> nmake.local
+- echo MYSQL_LIB=$(SDK_LIB)\libmysql.lib advapi32.lib >> nmake.local
 - echo XERCES_DIR=bla >> nmake.local
 - echo XERCES_INCLUDE=-I$(SDK_INC) -I$(SDK_INC)\xercesc >> nmake.local
 - echo XERCES_LIB=$(SDK_LIB)\xerces-c_3.lib >> nmake.local
@@ -64,6 +66,36 @@ install:
 - echo EXPAT_DIR=bla >> nmake.local
 - echo EXPAT_INCLUDE=-I$(SDK_INC) >> nmake.local
 - echo EXPAT_LIB=$(SDK_LIB)\expat.lib >> nmake.local
+- echo LIBKML_DIR=bla >> nmake.local
+- echo LIBKML_INCLUDE=-I$(SDK_INC) >> nmake.local
+- echo LIBKML_LIBS=$(SDK_LIB)\libkmlbase.lib $(SDK_LIB)\libkmlconvenience.lib $(SDK_LIB)\libkmldom.lib $(SDK_LIB)\libkmlengine.lib $(SDK_LIB)\libkmlregionator.lib $(SDK_LIB)\libkmlxsd.lib $(SDK_LIB)\expat.lib $(SDK_LIB)\zdll.lib >> nmake.local
+- echo POPPLER_ENABLED = YES >> nmake.local
+- echo POPPLER_CFLAGS = -I$(SDK_INC) -I$(SDK_INC)\poppler >> nmake.local
+- echo POPPLER_HAS_OPTCONTENT = YES >> nmake.local
+- echo POPPLER_0_20_OR_LATER = YES >> nmake.local
+- echo POPPLER_0_23_OR_LATER = YES >> nmake.local
+- echo POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES >> nmake.local
+- echo POPPLER_LIBS = $(SDK_LIB)\poppler.lib $(SDK_LIB)\freetype2411.lib advapi32.lib gdi32.lib >> nmake.local
+- echo OPENJPEG_ENABLED = YES >> nmake.local
+- echo OPENJPEG_CFLAGS = -I$(SDK_INC)\openjpeg-2.1 >> nmake.local
+- echo OPENJPEG_LIB = $(SDK_LIB)\openjp2.lib >> nmake.local
+- echo ECWDIR=bla >> nmake.local
+- echo ECWLIB=$(SDK_LIB)\libecwj2.lib >> nmake.local
+- echo ECWFLAGS=-DECWSDK_VERSION=33 -I$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI >> nmake.local
+#- echo LIBICONV_DIR = bla >> nmake.local
+#- echo LIBICONV_INCLUDE = -I$(SDK_INC) >> nmake.local
+#- echo LIBICONV_LIBRARY = $(SDK_LIB)\iconv.lib >> nmake.local
+#- echo LIBICONV_CFLAGS = -DICONV_CONST=const >> nmake.local
+#- echo HDF4_DIR = $(SDK_PREFIX) >> nmake.local
+#- echo HDF4_LIB = $(SDK_LIB)\hdfdll.lib $(SDK_LIB)\mfhdfdll.lib Ws2_32.lib >> nmake.local
+- echo HDF5_DIR = $(SDK_PREFIX) >> nmake.local
+- echo HDF5_LIB = $(SDK_LIB)\hdf5.lib  >> nmake.local
+- echo KEA_CFLAGS = -I$(SDK_INC) >> nmake.local
+- echo KEA_LIB = $(SDK_LIB)\libkea.lib >> nmake.local
+- echo NETCDF_SETTING=yes >> nmake.local
+- echo NETCDF_LIB=$(SDK_LIB)\netcdf.lib >> nmake.local
+- echo NETCDF_INC_DIR=$(SDK_INC) >> nmake.local
+- echo NETCDF_HAS_NC4 = yes >> nmake.local
 - nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd apps
 - nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
@@ -87,10 +119,15 @@ test_script:
   - SET PATH=%CD%\gdal;%CD%\gdal\apps;%SDK_BIN%;%PATH%
   - SET GDAL_DATA=%CD%\gdal\data
   - SET PROJ_LIB=%SDK_BIN%\proj\SHARE
-  - SET CPL_DEBUG=ON
   - cd autotest
-  - cd gdrivers
-  - python wcs.py
+  - cd cpp
+  - SET DO_NOT_FAIL_ON_RECODE_ERRORS=YES
+# The ca-bundle.crt file which we could point to is invalid in the current SDK
+# See https://github.com/gisinternals/buildsystem/issues/104
+  - SET GDAL_HTTP_UNSAFESSL=YES
+  - nmake /f makefile.vc check MSVC_VER=%MSVC_VER% %WIN64_ARG%
+  - cd ..
+  - python run_all.py
 
 deploy: off
 
