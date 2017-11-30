@@ -650,9 +650,9 @@ static int HazardRank4 (uChar haz, uChar sig)
    if ((haz == HAZ_FW) && (sig == SIG_W)) return 62;
    if ((haz == HAZ_SS) && (sig == SIG_A)) return 63; /* Added MPA 1/2017 */
    if ((haz == HAZ_HU) && (sig == SIG_A)) return 64;
-   if ((haz == HAZ_HU) && (sig == SIG_A)) return 65;
+   //if ((haz == HAZ_HU) && (sig == SIG_A)) return 65;
    if ((haz == HAZ_TY) && (sig == SIG_A)) return 66;
-   if ((haz == HAZ_TY) && (sig == SIG_A)) return 67; /* Added MPA 3/2017 */
+   //if ((haz == HAZ_TY) && (sig == SIG_A)) return 67; /* Added MPA 3/2017 */
    if ((haz == HAZ_HU) && (sig == SIG_S)) return 68;
 /* Added MPA 3/2017 */
    if ((haz == HAZ_TY) && (sig == SIG_S)) return 69;
