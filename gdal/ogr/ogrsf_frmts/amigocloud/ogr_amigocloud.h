@@ -44,7 +44,7 @@
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);
 CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr);
 CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr);
-std::string json_encode(const std::string &value);
+std::string OGRAMIGOCLOUDJsonEncode(const std::string &value);
 
 /************************************************************************/
 /*                      OGRAmigoCloudGeomFieldDefn                         */

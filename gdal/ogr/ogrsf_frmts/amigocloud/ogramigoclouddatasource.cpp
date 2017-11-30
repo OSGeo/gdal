@@ -367,14 +367,8 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
     } else if (nLayers == 1) {
         // If layer already exists, and OVERWRITE: YES, truncate the layer.
         if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL  &&
-            !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
-        {
+            CPLFetchBool(papszOptions, "OVERWRITE", "NO") ) {
             TruncateDataset(papoLayers[0]->GetTableName());
-        }
-        else
-        {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Layer %s already exists", papoLayers[0]->GetDatasetId() );
         }
         // Return existing layer, do not create a new layer.
         return papoLayers[0];
@@ -605,7 +599,7 @@ void OGRAmigoCloudDataSource::SubmitChangeset(const CPLString &json)
     std::stringstream url;
     url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/submit_changeset";
     std::stringstream changeset;
-    changeset << "{\"changeset\":\"" << json_encode(json) << "\"}";
+    changeset << "{\"changeset\":\"" << OGRAMIGOCLOUDJsonEncode(json) << "\"}";
     json_object* poObj = RunPOST(url.str().c_str(), changeset.str().c_str());
     if( poObj != NULL )
         json_object_put(poObj);

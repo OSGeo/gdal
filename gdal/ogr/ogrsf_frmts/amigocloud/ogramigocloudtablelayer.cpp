@@ -76,7 +76,7 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
     return osStr;
 }
 
-std::string json_encode(const std::string &value) {
+std::string OGRAMIGOCLOUDJsonEncode(const std::string &value) {
     std::stringstream escaped;
     escaped.fill('0');
     escaped << std::hex;
@@ -341,7 +341,7 @@ void OGRAmigoCloudTableLayer::FlushDeferredInsert()
     query << "]}";
 
     std::stringstream changeset;
-    changeset << "{\"change\": \"" << json_encode(query.str()) << "\"}";
+    changeset << "{\"change\": \"" << OGRAMIGOCLOUDJsonEncode(query.str()) << "\"}";
 
     json_object* poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
     if( poObj != NULL )
@@ -624,7 +624,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
                             aFID.osAmigoId.c_str());
 
         std::stringstream changeset;
-        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
         url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
@@ -685,7 +685,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
                      aFID.osAmigoId.c_str());
 
         std::stringstream changeset;
-        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
         url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
