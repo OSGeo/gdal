@@ -249,7 +249,6 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         CPLString           osCurrentSchema;
         // TODO(schwehr): Can bHasOGRMetadataFunction be a bool?
         int                 bHasOGRMetadataFunction;
-        bool                bOverwrite;
 
     public:
         OGRAmigoCloudDataSource();
