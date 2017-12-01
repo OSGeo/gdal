@@ -120,10 +120,6 @@ OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char * pszLayerName)
     if (nLayers > 1) {
         return OGRDataSource::GetLayerByName(pszLayerName);
     } else if (nLayers == 1) {
-        // If OVERWRITE: YES, truncate the layer.
-        if( bOverwrite ) {
-            TruncateDataset(papoLayers[0]->GetTableName());
-        }
         return papoLayers[0];
     }
     return NULL;
@@ -271,7 +267,10 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
             papoLayers[nLayers ++] = new OGRAmigoCloudTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
-        bOverwrite = CPLTestBool(CPLGetConfigOption("OVERWRITE", "NO"));
+        // If OVERWRITE: YES, truncate the layer.
+        if( nLayers==1 && CPLTestBool(CPLGetConfigOption("OVERWRITE", "NO")) ) {
+            TruncateDataset(papoLayers[0]->GetTableName());
+        }
         return TRUE;
     } else {
         // If 'datasets' word is in the filename, but no datasets specified,
