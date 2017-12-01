@@ -1799,6 +1799,74 @@ def nitf_58():
     return 'success'
 
 ###############################################################################
+# Test reading IMRFCA and IMASDA
+
+def nitf_read_IMRFCA_IMASDA():
+
+    # Create a fake NITF file with fake IMRFCA and IMASDA TRE
+    IMRFCA='0' * 1760
+    IMASDA='0' * 242
+
+    tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md is None or md == {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMRFCA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMASDA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMRFCA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA[0:-1], 'TRE=IMASDA=' + IMASDA])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMASDA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA[0:-1]])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test georeferencing through .nfw and .hdr files
 
 def nitf_59():
@@ -2840,6 +2908,18 @@ def nitf_75():
 
     return 'success'
 
+###############################################################################
+# Test reading C4 compressed file
+
+def nitf_read_C4():
+
+    ds = gdal.Open('data/RPFTOC01.ON2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 53599:
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -3840,6 +3920,7 @@ gdaltest_list = [
     nitf_56,
     nitf_57,
     nitf_58,
+    nitf_read_IMRFCA_IMASDA,
     nitf_59,
     nitf_60,
     nitf_61,
@@ -3857,6 +3938,7 @@ gdaltest_list = [
     nitf_73,
     nitf_74,
     nitf_75,
+    nitf_read_C4,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,
