@@ -1219,6 +1219,26 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 papszIter++;
         }
     }
+
+    // Remove NITF_BLOCKA_ stuff if georeferencing is changed
+    if( !(psOptions->adfSrcWin[0] == 0 && psOptions->adfSrcWin[1] == 0 &&
+          psOptions->adfSrcWin[2] == GDALGetRasterXSize(hSrcDataset) &&
+          psOptions->adfSrcWin[3] == GDALGetRasterYSize(hSrcDataset) &&
+          psOptions->nGCPCount == 0 && !bGotBounds) )
+    {
+        char** papszIter = papszMetadata;
+        while(papszIter && *papszIter)
+        {
+            if (STARTS_WITH_CI(*papszIter, "NITF_BLOCKA_"))
+            {
+                CPLFree(*papszIter);
+                memmove(papszIter, papszIter+1, sizeof(char*) * (CSLCount(papszIter+1)+1));
+            }
+            else
+                papszIter++;
+        }
+    }
+
     poVDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
     AttachMetadata( (GDALDatasetH) poVDS, psOptions->papszMetadataOptions );
