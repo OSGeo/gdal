@@ -721,7 +721,6 @@ def nitf_30():
 
     src_ds = gdal.Open( 'data/fake_nsif.ntf' )
     ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
-    src_ds = None
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
@@ -751,6 +750,82 @@ def nitf_30():
     ds = None
 
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
+
+    # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['BLOCKA_BLOCK_INSTANCE_01=01',
+                   'BLOCKA_BLOCK_COUNT=01',
+                   'BLOCKA_N_GRAY_01=00000',
+                   'BLOCKA_L_LINES_01=01000',
+                   'BLOCKA_LAYOVER_ANGLE_01=000',
+                   'BLOCKA_SHADOW_ANGLE_01=000',
+                   'BLOCKA_FRLC_LOC_01=+42.319331+020.078400',
+                   'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
+                   'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
+                   'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test that gdal_translate -ullr doesn't propagate BLOCKA
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
+
+    # Test USE_SRC_NITF_METADATA=NO
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_no_src_md.ntf', src_ds,
+                                            options = ['USE_SRC_NITF_METADATA=NO'])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
 
     return 'success'
 

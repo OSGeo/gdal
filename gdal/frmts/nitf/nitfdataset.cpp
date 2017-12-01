@@ -4245,14 +4245,29 @@ NITFDataset::NITFCreateCopy(
 
 /* -------------------------------------------------------------------- */
 /*      Copy over other source metadata items as creation options       */
-/*      that seem useful.                                               */
+/*      that seem useful, unless they are already set as creation       */
+/*      options.                                                        */
 /* -------------------------------------------------------------------- */
+    const bool bUseSrcNITFMetadata = CPLFetchBool(papszOptions,
+                                            "USE_SRC_NITF_METADATA", true);
     char **papszSrcMD = poSrcDS->GetMetadata();
 
-    for( int iMD = 0; papszSrcMD && papszSrcMD[iMD]; iMD++ )
+    for( int iMD = 0;
+            bUseSrcNITFMetadata && papszSrcMD && papszSrcMD[iMD]; iMD++ )
     {
-        if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_BLOCKA")
-            || STARTS_WITH_CI(papszSrcMD[iMD], "NITF_FHDR") )
+        bool bPreserveSrcMDAsCreationOption = false;
+        if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_BLOCKA") )
+        {
+            bPreserveSrcMDAsCreationOption =
+                CSLPartialFindString(papszOptions, "BLOCKA_") < 0 &&
+                CSLPartialFindString(papszOptions, "TRE=BLOCKA=") < 0;
+        }
+        else if( STARTS_WITH_CI(papszSrcMD[iMD], "NITF_FHDR") )
+        {
+            bPreserveSrcMDAsCreationOption =
+                CSLFetchNameValue(papszOptions, "FHDR") == NULL; 
+        }
+        if( bPreserveSrcMDAsCreationOption )
         {
             char *pszName = NULL;
             const char *pszValue = CPLParseNameValue( papszSrcMD[iMD],
@@ -4266,11 +4281,13 @@ NITFDataset::NITFCreateCopy(
     }
 
 /* -------------------------------------------------------------------- */
-/*      Copy TRE definitions as creation options.                       */
+/*      Copy TRE definitions as creation options, unless they are       */
+/*      already set as creation options.                                */
 /* -------------------------------------------------------------------- */
     papszSrcMD = poSrcDS->GetMetadata( "TRE" );
 
-    for( int iMD = 0; papszSrcMD && papszSrcMD[iMD]; iMD++ )
+    for( int iMD = 0;
+            bUseSrcNITFMetadata && papszSrcMD && papszSrcMD[iMD]; iMD++ )
     {
         CPLString osTRE;
 
@@ -4282,11 +4299,24 @@ NITFDataset::NITFCreateCopy(
             /* No chance that they make sense in the new NITF file */
             continue;
         }
+        if( STARTS_WITH_CI(papszSrcMD[iMD], "BLOCKA") &&
+            CSLPartialFindString(papszOptions, "BLOCKA_") >= 0 )
+        {
+            /* Do not copy BLOCKA TRE if there are BLOCKA_ creation options */
+            continue;
+        }
 
         osTRE = "TRE=";
         osTRE += papszSrcMD[iMD];
 
-        papszFullOptions = CSLAddString( papszFullOptions, osTRE );
+        char *pszName = NULL;
+        CPLParseNameValue( papszSrcMD[iMD], &pszName );
+        if( pszName != NULL && 
+            CSLPartialFindString(papszOptions, CPLSPrintf("TRE=%s", pszName)) < 0 )
+        {
+            papszFullOptions = CSLAddString( papszFullOptions, osTRE );
+        }
+        CPLFree(pszName);
     }
 
 /* -------------------------------------------------------------------- */
@@ -4525,9 +4555,11 @@ NITFDataset::NITFCreateCopy(
 /*      Do we have RPC information?                                     */
 /* -------------------------------------------------------------------- */
     int nGCIFFlags = GCIF_PAM_DEFAULT;
+    if( !bUseSrcNITFMetadata )
+        nGCIFFlags &= ~GCIF_METADATA;
 
     char** papszRPC = poSrcDS->GetMetadata("RPC");
-    if( papszRPC != NULL &&
+    if( papszRPC != NULL && bUseSrcNITFMetadata &&
         CPLFetchBool(papszFullOptions, "RPC00B", true))
     {
         if( CSLPartialFindString(papszFullOptions, "TRE=RPC00B=") >= 0 )
@@ -4943,11 +4975,30 @@ NITFDataset::NITFCreateCopy(
     if( (nGCIFFlags & GCIF_METADATA) == 0 )
     {
         const int nSavedMOFlags = poDstDS->GetMOFlags();
-        if( poSrcDS->GetMetadata() != NULL )
+        papszSrcMD = poSrcDS->GetMetadata();
+        if( papszSrcMD != NULL )
         {
-            if( CSLCount(poDstDS->GetMetadata()) != CSLCount(poSrcDS->GetMetadata()) )
+            if( !bUseSrcNITFMetadata )
             {
-                poDstDS->SetMetadata( poSrcDS->GetMetadata() );
+                char** papszNewMD = CSLDuplicate(poDstDS->GetMetadata());
+                bool bAdded = false;
+                for( char** papszIter = papszSrcMD; *papszIter; ++papszIter )
+                {
+                    if( !STARTS_WITH(*papszIter, "NITF_") )
+                    {
+                        bAdded = true;
+                        papszNewMD = CSLAddString(papszNewMD, *papszIter);
+                    }
+                }
+                if( bAdded )
+                {
+                    poDstDS->SetMetadata( papszNewMD );
+                }
+                CSLDestroy(papszNewMD);
+            }
+            else if( CSLCount(poDstDS->GetMetadata()) != CSLCount(papszSrcMD) )
+            {
+                poDstDS->SetMetadata( papszSrcMD );
             }
         }
         poDstDS->SetMOFlags(nSavedMOFlags);
@@ -6074,7 +6125,8 @@ void GDALRegister_NITF()
     osCreationOptions +=
 "   <Option name='SDE_TRE' type='boolean' description='Write GEOLOB and GEOPSB TREs (only geographic SRS for now)' default='NO'/>"
 "   <Option name='RPC00B' type='boolean' description='Write RPC00B TRE (either from source TRE, or from RPC metadata)' default='YES'/>"
-"   <Option name='RPCTXT' type='boolean' description='Write out _RPC.TXT file' default='NO'/>";
+"   <Option name='RPCTXT' type='boolean' description='Write out _RPC.TXT file' default='NO'/>"
+"   <Option name='USE_SRC_NITF_METADATA' type='boolean' description='Whether to use NITF source metadata in NITF-to-NITF conversions' default='YES'/>";
     osCreationOptions += "</CreationOptionList>";
 
     GDALDriver *poDriver = new GDALDriver();
