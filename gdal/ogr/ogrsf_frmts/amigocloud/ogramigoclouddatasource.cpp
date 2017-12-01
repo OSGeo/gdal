@@ -47,8 +47,7 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     bReadWrite(false),
     bUseHTTPS(false),
     bMustCleanPersistent(false),
-    bHasOGRMetadataFunction(-1),
-    bOverwrite(false)
+    bHasOGRMetadataFunction(-1)
 {}
 
 /************************************************************************/
