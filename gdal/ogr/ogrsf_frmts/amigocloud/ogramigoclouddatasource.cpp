@@ -368,23 +368,6 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
     }
 
     CPLString osName(pszNameIn);
-
-//    if (nLayers > 1) {
-//        // We cannot have more then one destination dataset (layer).
-//        CPLError( CE_Failure, CPLE_AppDefined,
-//                  "Multiple destination datasets are not allowed.");
-//        return NULL;
-//    } else if (nLayers == 1) {
-//        // If layer already exists, and OVERWRITE: YES, truncate the layer.
-//        if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL  &&
-//            CPLFetchBool(papszOptions, "OVERWRITE", "NO") ) {
-//            TruncateDataset(papoLayers[0]->GetTableName());
-//        }
-//        // Return existing layer, do not create a new layer.
-//        return papoLayers[0];
-//    }
-
-    // If no destination dataset specified, create a new one.
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
