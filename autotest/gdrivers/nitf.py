@@ -548,7 +548,11 @@ def nitf_27():
 # Test Create() with IC=C8 compression with the JP2ECW driver
 
 def nitf_28_jp2ecw():
+
     gdaltest.nitf_28_jp2ecw_is_ok = False
+    if gdal.GetDriverByName('JP2ECW') is None:
+        return 'skip'
+
     import ecw
     if not ecw.has_write_support():
         return 'skip'
@@ -561,6 +565,18 @@ def nitf_28_jp2ecw():
         if ret == 'success':
             gdaltest.nitf_28_jp2ecw_is_ok = True
     else:
+        ret = 'fail'
+
+    tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (256,256): # 256 since this is hardcoded as such in the ECW driver
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -658,6 +674,18 @@ def nitf_28_jp2openjpeg_bis():
     if nitf_create([ 'ICORDS=G', 'IC=C8', 'QUALITY=25' ], set_inverted_color_interp = False, createcopy = True) == 'success':
         ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp = False)
     else:
+        ret = 'fail'
+
+    tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (1024,1024):
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
