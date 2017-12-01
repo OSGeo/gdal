@@ -45,7 +45,7 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     papoLayers(NULL),
     nLayers(0),
     bReadWrite(false),
-    bUseHTTPS(false),
+    bUseHTTPS(true),
     bMustCleanPersistent(false),
     bHasOGRMetadataFunction(-1)
 {}
@@ -206,19 +206,14 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
-    if( CSLFetchNameValue(papszOpenOptionsIn, "PROJECTID") )
-        pszProjetctId = CPLStrdup(CSLFetchNameValue(papszOpenOptionsIn, "PROJECTID"));
-    else
+    pszProjetctId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
+    char* pchSpace = strchr(pszProjetctId, ' ');
+    if( pchSpace )
+        *pchSpace = '\0';
+    if( pszProjetctId[0] == 0 )
     {
-        pszProjetctId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
-        char* pchSpace = strchr(pszProjetctId, ' ');
-        if( pchSpace )
-            *pchSpace = '\0';
-        if( pszProjetctId[0] == 0 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Missing projetc id");
-            return FALSE;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing projetc id");
+        return FALSE;
     }
 
     osAPIKey = CSLFetchNameValueDef(papszOpenOptionsIn, "AMIGOCLOUD_API_KEY",
@@ -233,8 +228,6 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined, "AMIGOCLOUD_API_KEY is not defined.\n");
         return FALSE;
     }
-
-    bUseHTTPS = CPLTestBool(CPLGetConfigOption("AMIGOCLOUD_HTTPS", "YES"));
 
     OGRLayer* poSchemaLayer = ExecuteSQLInternal("SELECT current_schema()");
     if( poSchemaLayer )
@@ -266,13 +259,16 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
             papoLayers[nLayers ++] = new OGRAmigoCloudTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
+
         // If OVERWRITE: YES, truncate the layer.
-        if( nLayers==1 && CPLTestBool(CPLGetConfigOption("OVERWRITE", "NO")) ) {
-            TruncateDataset(papoLayers[0]->GetTableName());
+        if( nLayers==1 && CSLFetchNameValue( papszOpenOptionsIn, "OVERWRITE" ) != NULL  &&
+            CPLFetchBool(papszOpenOptionsIn, "OVERWRITE", "NO") )
+        {
+           TruncateDataset(papoLayers[0]->GetTableName());
         }
         return TRUE;
     } else {
-        // If 'datasets' word is in the filename, but no datasets specified,
+        // If 'datasets' word is in the filename, but no dataset id specified,
         // print the list of available datasets
         if(std::string(pszFilename).find("datasets") != std::string::npos)
             ListDatasets();
