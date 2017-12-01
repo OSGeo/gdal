@@ -796,24 +796,29 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                 poAttribFeature->SetField( "Text", oIt->second );
 
                 // Replace text in the style string
-                CPLString osNewStyle = poAttribFeature->GetStyleString();
-                const size_t nTextStartPos = osNewStyle.rfind( ",t:\"" );
-                if( nTextStartPos != std::string::npos )
+                const char* poStyleString = poAttribFeature->GetStyleString();
+                if( poStyleString && STARTS_WITH(poStyleString, "LABEL(") )
                 {
-                    size_t nTextEndPos = nTextStartPos + 4;
-                    while( nTextEndPos < osNewStyle.size() &&
-                        osNewStyle[nTextEndPos] != '\"' )
+                    CPLString osNewStyle = poStyleString;
+                    const size_t nTextStartPos = osNewStyle.find( ",t:\"" );
+                    if( nTextStartPos != std::string::npos )
                     {
-                        nTextEndPos++;
-                        if( osNewStyle[nTextEndPos] == '\\' )
+                        size_t nTextEndPos = nTextStartPos + 4;
+                        while( nTextEndPos < osNewStyle.size() &&
+                            osNewStyle[nTextEndPos] != '\"' )
+                        {
                             nTextEndPos++;
-                    }
+                            if( osNewStyle[nTextEndPos] == '\\' )
+                                nTextEndPos++;
+                        }
 
-                    if( nTextEndPos < osNewStyle.size() )
-                    {
-                        osNewStyle.replace( nTextStartPos + 4,
-                            nTextEndPos - ( nTextStartPos + 4 ), oIt->second );
-                        poAttribFeature->SetStyleString( osNewStyle );
+                        if( nTextEndPos < osNewStyle.size() )
+                        {
+                            osNewStyle.replace( nTextStartPos + 4,
+                                nTextEndPos - ( nTextStartPos + 4 ),
+                                oIt->second );
+                            poAttribFeature->SetStyleString( osNewStyle );
+                        }
                     }
                 }
 
