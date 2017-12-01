@@ -47,7 +47,8 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     bReadWrite(false),
     bUseHTTPS(false),
     bMustCleanPersistent(false),
-    bHasOGRMetadataFunction(-1)
+    bHasOGRMetadataFunction(-1),
+    bOverwrite(false)
 {}
 
 /************************************************************************/
@@ -88,7 +89,7 @@ std::string  OGRAmigoCloudDataSource::GetUserAgentOption()
 int OGRAmigoCloudDataSource::TestCapability( const char * pszCap )
 
 {
-    if( bReadWrite && EQUAL(pszCap, ODsCCreateLayer) )
+    if( bReadWrite && EQUAL(pszCap, ODsCCreateLayer) && nLayers == 0 )
         return TRUE;
     else if( bReadWrite && EQUAL(pszCap, ODsCDeleteLayer) )
         return TRUE;
@@ -116,8 +117,16 @@ OGRLayer *OGRAmigoCloudDataSource::GetLayer( int iLayer )
 
 OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char * pszLayerName)
 {
-    OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszLayerName);
-    return poLayer;
+    if (nLayers > 1) {
+        return OGRDataSource::GetLayerByName(pszLayerName);
+    } else if (nLayers == 1) {
+        // If OVERWRITE: YES, truncate the layer.
+        if( bOverwrite ) {
+            TruncateDataset(papoLayers[0]->GetTableName());
+        }
+        return papoLayers[0];
+    }
+    return NULL;
 }
 
 /************************************************************************/
@@ -262,6 +271,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
             papoLayers[nLayers ++] = new OGRAmigoCloudTableLayer(this, papszTables[i]);
         }
         CSLDestroy(papszTables);
+        bOverwrite = CPLTestBool(CPLGetConfigOption("OVERWRITE", "NO"));
         return TRUE;
     } else {
         // If 'datasets' word is in the filename, but no datasets specified,
@@ -359,20 +369,20 @@ OGRLayer   *OGRAmigoCloudDataSource::ICreateLayer( const char *pszNameIn,
 
     CPLString osName(pszNameIn);
 
-    if (nLayers > 1) {
-        // We cannot have more then one destination dataset (layer).
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Multiple destination datasets are not allowed.");
-        return NULL;
-    } else if (nLayers == 1) {
-        // If layer already exists, and OVERWRITE: YES, truncate the layer.
-        if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL  &&
-            CPLFetchBool(papszOptions, "OVERWRITE", "NO") ) {
-            TruncateDataset(papoLayers[0]->GetTableName());
-        }
-        // Return existing layer, do not create a new layer.
-        return papoLayers[0];
-    }
+//    if (nLayers > 1) {
+//        // We cannot have more then one destination dataset (layer).
+//        CPLError( CE_Failure, CPLE_AppDefined,
+//                  "Multiple destination datasets are not allowed.");
+//        return NULL;
+//    } else if (nLayers == 1) {
+//        // If layer already exists, and OVERWRITE: YES, truncate the layer.
+//        if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL  &&
+//            CPLFetchBool(papszOptions, "OVERWRITE", "NO") ) {
+//            TruncateDataset(papoLayers[0]->GetTableName());
+//        }
+//        // Return existing layer, do not create a new layer.
+//        return papoLayers[0];
+//    }
 
     // If no destination dataset specified, create a new one.
     OGRAmigoCloudTableLayer* poLayer = new OGRAmigoCloudTableLayer(this, osName);
@@ -429,10 +439,9 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
     {
         std::stringstream url;
         url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
-        json_object *poObj = RunDELETE(url.str().c_str());
-        if( poObj == NULL )
+        if( !RunDELETE(url.str().c_str()) ) {
             return OGRERR_FAILURE;
-        json_object_put(poObj);
+        }
     }
 
     return OGRERR_NONE;
@@ -609,7 +618,7 @@ void OGRAmigoCloudDataSource::SubmitChangeset(const CPLString &json)
 /*                               RunDELETE()                               */
 /************************************************************************/
 
-json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
+bool OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
 {
     CPLString osURL(pszURL);
 
@@ -633,7 +642,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     CPLHTTPResult * psResult = CPLHTTPFetch( osURL.c_str(), papszOptions);
     CSLDestroy(papszOptions);
     if( psResult == NULL )
-        return NULL;
+        return false;
 
     if (psResult->pszContentType &&
         strncmp(psResult->pszContentType, "text/html", 9) == 0)
@@ -642,7 +651,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server:%s", psResult->pabyData);
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return false;
     }
     if (psResult->pszErrBuf != NULL && psResult->pabyData != NULL )
     {
@@ -653,48 +662,7 @@ json_object* OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
         CPLDebug( "AMIGOCLOUD", "DELETE Error Status:%d", psResult->nStatus );
     }
 
-    if( psResult->pabyData == NULL )
-    {
-        CPLHTTPDestroyResult(psResult);
-        return NULL;
-    }
-
-    json_object* poObj = NULL;
-    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
-    if( !OGRJSonParse(pszText, &poObj, true) )
-    {
-        CPLHTTPDestroyResult(psResult);
-        return NULL;
-    }
-
-    CPLHTTPDestroyResult(psResult);
-
-    if( poObj != NULL )
-    {
-        if( json_object_get_type(poObj) == json_type_object )
-        {
-            json_object* poError = CPL_json_object_object_get(poObj, "error");
-            if( poError != NULL && json_object_get_type(poError) == json_type_array &&
-                json_object_array_length(poError) > 0 )
-            {
-                poError = json_object_array_get_idx(poError, 0);
-                if( poError != NULL && json_object_get_type(poError) == json_type_string )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error returned by server : %s", json_object_get_string(poError));
-                    json_object_put(poObj);
-                    return NULL;
-                }
-            }
-        }
-        else
-        {
-            json_object_put(poObj);
-            return NULL;
-        }
-    }
-
-    return poObj;
+    return true;
 }
 
 /************************************************************************/

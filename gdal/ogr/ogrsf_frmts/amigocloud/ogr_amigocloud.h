@@ -249,6 +249,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         CPLString           osCurrentSchema;
         // TODO(schwehr): Can bHasOGRMetadataFunction be a bool?
         int                 bHasOGRMetadataFunction;
+        bool                bOverwrite;
 
     public:
         OGRAmigoCloudDataSource();
@@ -283,7 +284,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
         json_object*                RunGET(const char*pszURL);
-        json_object*                RunDELETE(const char*pszURL);
+        bool                        RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
         static int                  FetchSRSId( OGRSpatialReference * poSRS );
