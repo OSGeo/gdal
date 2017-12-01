@@ -7358,8 +7358,9 @@ OGRSpatialReference* OGRSpatialReference::convertToOtherProjection(
         const double m2 = msfn(phi2, ec);
         const double t1 = tsfn(phi1, ec);
         const double t2 = tsfn(phi2, ec);
-        const double n = (phi1 == phi2) ? sin(phi1) :
-                                (log(m1) - log(m2)) / (log(t1) - log(t2));
+        const double n_denom = log(t1) - log(t2);
+        const double n = (fabs(n_denom) < 1e-10) ? sin(phi1) :
+                                (log(m1) - log(m2)) / n_denom;
         if( fabs(n) < 1e-10 )
             return NULL;
         const double F = m1 / (n * pow(t1, n));

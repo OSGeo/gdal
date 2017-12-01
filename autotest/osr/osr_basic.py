@@ -1380,6 +1380,25 @@ def osr_basic_25():
         print(sr2)
         return 'fail'
 
+    # LCC_2SP -> LCC_1SP : stdp1 ~= stdp2 ~= 0
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",.0000000000000001],
+    PARAMETER["standard_parallel_2",.0000000000000002],
+    PARAMETER["latitude_of_origin",10],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
     # LCC_2SP -> LCC_1SP : Invalid eccentricity
     sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
