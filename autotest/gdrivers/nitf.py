@@ -1305,6 +1305,11 @@ def nitf_43(driver_to_test, options):
     else:
         ret = 'fail'
     out_ds = None
+
+    if open('tmp/nitf_43.ntf', 'rb').read().decode('LATIN1').find('<gml') >= 0:
+        print('GMLJP2 detected !')
+        ret = 'fail'
+
     gdal.GetDriverByName('NITF').Delete('tmp/nitf_43.ntf')
 
     gdaltest.reregister_all_jpeg2000_drivers()
