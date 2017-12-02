@@ -918,6 +918,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1125,6 +1126,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE}'
@@ -1377,6 +1379,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1514,7 +1525,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1667,6 +1678,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1713,7 +1725,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --without-cpp14         Disable C++14 compiler options
+  --with-cpp14            Enable C++14 compiler options
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -5408,7 +5420,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if use C++14 compiler options" >&5
 $as_echo_n "checking if use C++14 compiler options... " >&6; }
-if test "$with_cpp14" = "yes" -o "$with_cpp14" = "" ; then
+if test "$with_cpp14" = "yes"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler compatibility with C++14" >&5
 $as_echo_n "checking C++ compiler compatibility with C++14... " >&6; }
           ax_cxx_compile_cxx14_required=false
@@ -6638,8 +6650,10 @@ $as_echo "$ax_cv_cxx_compile_cxx11" >&6; }
     ac_success=yes
   fi
 
+
+
     if test x$ac_success = xno; then
-    for switch in -std=gnu++11 -std=gnu++0x; do
+                for switch in -std=c++11 -std=c++0x +std=c++11 "-h std=c++11"; do
       cachevar=`$as_echo "ax_cv_cxx_compile_cxx11_$switch" | $as_tr_sh`
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features with $switch" >&5
 $as_echo_n "checking whether $CXX supports C++11 features with $switch... " >&6; }
@@ -6958,8 +6972,6 @@ $as_echo "$ac_res" >&6; }
       fi
     done
   fi
-
-
   ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'

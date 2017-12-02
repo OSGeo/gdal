@@ -125,14 +125,14 @@ AC_LANG_POP([C++])
 
 CXX14_SUPPORT=no
 AC_ARG_WITH([cpp14],
-	    AS_HELP_STRING([--without-cpp14],
-	       [Disable C++14 compiler options]),,)
+	    AS_HELP_STRING([--with-cpp14],
+	       [Enable C++14 compiler options]),,)
 
 AC_MSG_CHECKING([if use C++14 compiler options])
-if test "$with_cpp14" = "yes" -o "$with_cpp14" = "" ; then
+if test "$with_cpp14" = "yes"; then
     dnl Check C++ compiler compatibility with C++14
     AC_MSG_CHECKING([C++ compiler compatibility with C++14])
-    AX_CXX_COMPILE_STDCXX([14],[ext],[optional])
+    AX_CXX_COMPILE_STDCXX([14],[noext],[optional])
 
     if [test "$HAVE_CXX14" = "1"]; then
         CXX14_SUPPORT=yes
@@ -144,7 +144,7 @@ fi
 AC_SUBST(CXX14_SUPPORT,$CXX14_SUPPORT)
 
 if [test "$CXX14_SUPPORT" = "no"]; then
-    AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+    AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 fi
 
 dnl Available in GCC 5.1
