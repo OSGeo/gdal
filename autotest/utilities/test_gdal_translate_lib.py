@@ -469,6 +469,52 @@ def test_gdal_translate_lib_104():
     return 'success'
 
 ###############################################################################
+# Test GCPs propagation in "VRT path"
+
+def test_gdal_translate_lib_gcp_vrt_path():
+
+    src_ds = gdal.Open( '../gcore/data/gcps.vrt' )
+    ds = gdal.Translate('', src_ds, format = 'MEM', metadataOptions = ['FOO=BAR'])
+    if len(ds.GetGCPs()) != len(src_ds.GetGCPs()):
+        return 'fail'
+    for i in range(len(src_ds.GetGCPs())):
+        if ds.GetGCPs()[i].GCPX != src_ds.GetGCPs()[i].GCPX:
+            return 'fail'
+        if ds.GetGCPs()[i].GCPY != src_ds.GetGCPs()[i].GCPY:
+            return 'fail'
+        if ds.GetGCPs()[i].GCPPixel != src_ds.GetGCPs()[i].GCPPixel:
+            return 'fail'
+        if ds.GetGCPs()[i].GCPLine != src_ds.GetGCPs()[i].GCPLine:
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test RPC propagation in "VRT path"
+
+def test_gdal_translate_lib_rcp_vrt_path():
+
+    src_ds = gdal.Open( '../gcore/data/rpc.vrt' )
+    ds = gdal.Translate('', src_ds, format = 'MEM', metadataOptions = ['FOO=BAR'])
+    if ds.GetMetadata('RPC') != src_ds.GetMetadata('RPC'):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test GeoLocation propagation in "VRT path"
+
+def test_gdal_translate_lib_geolocation_vrt_path():
+
+    src_ds = gdal.Open( '../gcore/data/sstgeo.vrt' )
+    ds = gdal.Translate('/vsimem/temp.vrt', src_ds, format = 'VRT', metadataOptions = ['FOO=BAR'])
+    if ds.GetMetadata('GEOLOCATION') != src_ds.GetMetadata('GEOLOCATION'):
+        return 'fail'
+    gdal.Unlink('/vsimem/temp.vrt')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -504,6 +550,9 @@ gdaltest_list = [
     test_gdal_translate_lib_102,
     test_gdal_translate_lib_103,
     test_gdal_translate_lib_104,
+    test_gdal_translate_lib_gcp_vrt_path,
+    test_gdal_translate_lib_rcp_vrt_path,
+    test_gdal_translate_lib_geolocation_vrt_path,
     test_gdal_translate_lib_cleanup
     ]
 
