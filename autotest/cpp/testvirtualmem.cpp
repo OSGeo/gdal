@@ -111,7 +111,7 @@ static int test_two_pages()
 {
     CPLVirtualMem* ctxt;
     volatile char* addr;
-    void* hThread;
+    CPLJoinableThread* hThread;
 
     printf("test_two_pages()\n");
 
