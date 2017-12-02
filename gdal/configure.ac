@@ -318,6 +318,7 @@ AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime;
 AC_LANG_POP(C++)
 
 AC_MSG_CHECKING([for uselocale])
+AC_LANG_PUSH(C++)
 AC_TRY_COMPILE(
   [
 #define _XOPEN_SOURCE 700
@@ -336,6 +337,7 @@ AC_TRY_COMPILE(
   ], [
     AC_MSG_RESULT([no])
 ])
+AC_LANG_POP(C++)
 
 
 OPT_GDAL_FORMATS=
