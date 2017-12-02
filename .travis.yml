@@ -122,13 +122,13 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise_32bit
+        - BUILD_NAME=trusty_32bit
         - DETAILS=""
     - osx_image: xcode8
       language: objective-c
