@@ -179,8 +179,11 @@
 /*      Which versions of C++ are available.                            */
 /* -------------------------------------------------------------------- */
 
+/* MSVC fails to define a decent value of __cplusplus. Try to target VS2013 */
+/* as a minimum */
+
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#  if __cplusplus < 201103L
+#  if !(__cplusplus >= 201103L || _MSC_VER >= 1800)
 #    error Must have C++11 or newer.
 #  endif
 #  if __cplusplus >= 201402L
