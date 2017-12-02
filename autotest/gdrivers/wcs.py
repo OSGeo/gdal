@@ -301,6 +301,7 @@ def read_urls():
     return retval
 
 do_log = False
+wcs_6_ok = True
 
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
@@ -364,6 +365,8 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
                 ok = 'ok'
             else:
                 ok = "not ok\ngot:  " + got + "\nhave: " + have
+                global wcs_6_ok
+                wcs_6_ok = False
             print('test ' + server + ' ' + test + ' WCS ' + version + ' '+ok)
         self.Respond(request, server, version, test)
         return
@@ -467,8 +470,8 @@ def wcs_6():
     driver = gdal.GetDriverByName('WCS')
     if driver is None:
 	    return 'skip'
-    print("Generating various URLs from the driver and comparing them to ones")
-    print("that have worked.")
+    # Generating various URLs from the driver and comparing them to ones
+    # that have worked.
     first_call = True
     size = 60
     cache = 'CACHE=wcs_cache'
@@ -526,7 +529,9 @@ def wcs_6():
             for i, c in enumerate(projwin):
                 projwin[i] = int(c)
             options = [cache]
-            gdal.Translate("tmp/"+server+version+".tiff", ds, projWin = projwin, width = size, options = options)
+            tmpfile = "tmp/"+server+version+".tiff"
+            gdal.Translate(tmpfile, ds, projWin = projwin, width = size, options = options)
+            os.remove(tmpfile)
 
             if os.path.isfile('data/wcs/' + server + '-' + version + '-non_scaled.tiff'):
                 options = [cache]
@@ -538,11 +543,15 @@ def wcs_6():
                     print("OpenEx failed: WCS:" + url + "/?" + query)
                     break
                 options = [cache]
-                gdal.Translate("tmp/"+server+version+".tiff", ds, srcWin = [0,0,2,2], options = options)
+                gdal.Translate(tmpfile, ds, srcWin = [0,0,2,2], options = options)
+                os.remove(tmpfile)
             else:
                 print(server + ' ' + version + ' non_scaled skipped (no response file)')
     webserver.server_stop(process, port)
-    return 'success'
+    if wcs_6_ok:
+        return 'success'
+    else:
+        return 'fail'
 
 ###############################################################################
 def wcs_cleanup():
