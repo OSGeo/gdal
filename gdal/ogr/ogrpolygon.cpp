@@ -869,6 +869,8 @@ int OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
         poPoint->setY( poInsidePoint->getY() );
     }
 
+    delete poInsidePoint;
+
     return OGRERR_NONE;
 }
 
