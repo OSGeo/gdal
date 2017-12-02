@@ -179,7 +179,7 @@ void FromR(GDALDataType intype, ConstantType inval, ConstantType invali, GDALDat
 #define CST_3000000000 (((GIntBig)3000) * 1000 * 1000)
 #define CST_5000000000 (((GIntBig)5000) * 1000 * 1000)
 
-void check_GDT_Byte()
+static void check_GDT_Byte()
 {
     /* GDT_Byte */
     for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
@@ -214,7 +214,7 @@ void check_GDT_Byte()
 
 }
 
-void check_GDT_Int16()
+static void check_GDT_Int16()
 {
     /* GDT_Int16 */
     FROM_R(GDT_Int16, -32000, GDT_Byte, 0); /* clamp */
@@ -246,7 +246,7 @@ void check_GDT_Int16()
     FROM_R(GDT_Int16, 32000, GDT_CFloat64, 32000);
 }
 
-void check_GDT_UInt16()
+static void check_GDT_UInt16()
 {
     /* GDT_UInt16 */
     for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
@@ -268,7 +268,7 @@ void check_GDT_UInt16()
     FROM_R(GDT_UInt16, 65000, GDT_CFloat64, 65000);
 }
 
-void check_GDT_Int32()
+static void check_GDT_Int32()
 {
     /* GDT_Int32 */
     FROM_R(GDT_Int32, -33000, GDT_Byte, 0); /* clamp */
@@ -300,7 +300,7 @@ void check_GDT_Int32()
     FROM_R(GDT_Int32, 67000, GDT_CFloat64, 67000);
 }
 
-void check_GDT_UInt32()
+static void check_GDT_UInt32()
 {
     /* GDT_UInt32 */
     for(GDALDataType outtype=GDT_Byte; outtype<=GDT_CFloat64;outtype = (GDALDataType)(outtype + 1))
@@ -322,7 +322,7 @@ void check_GDT_UInt32()
     FROM_R(GDT_UInt32, 3000000000U, GDT_CFloat64, 3000000000U);
 }
 
-void check_GDT_Float32and64()
+static void check_GDT_Float32and64()
 {
     /* GDT_Float32 and GDT_Float64 */
     for(int i=0;i<2;i++)
@@ -390,7 +390,7 @@ void check_GDT_Float32and64()
     }
 }
 
-void check_GDT_CInt16()
+static void check_GDT_CInt16()
 {
     /* GDT_CInt16 */
     FROM_C(GDT_CInt16, -32000, -32500, GDT_Byte, 0, 0); /* clamp */
@@ -422,7 +422,7 @@ void check_GDT_CInt16()
     FROM_C(GDT_CInt16, 32000, 32500, GDT_CFloat64, 32000, 32500);
 }
 
-void check_GDT_CInt32()
+static void check_GDT_CInt32()
 {
     /* GDT_CInt32 */
     FROM_C(GDT_CInt32, -33000, -33500, GDT_Byte, 0, 0); /* clamp */
@@ -454,7 +454,7 @@ void check_GDT_CInt32()
     FROM_C(GDT_CInt32, 67000, 67500, GDT_CFloat64, 67000, 67500);
 }
 
-void check_GDT_CFloat32and64()
+static void check_GDT_CFloat32and64()
 {
     /* GDT_CFloat32 and GDT_CFloat64 */
     for(int i=0;i<2;i++)
@@ -588,7 +588,7 @@ void CheckPacked(GDALDataType eIn, GDALDataType eOut)
 
 
 
-void CheckPacked(GDALDataType eIn, GDALDataType eOut)
+static void CheckPacked(GDALDataType eIn, GDALDataType eOut)
 {
     switch(eIn)
     {

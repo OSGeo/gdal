@@ -80,12 +80,12 @@ public:
         init();
     }
 
-    void run_started()
+    void run_started() CPL_OVERRIDE
     {
         init();
     }
 
-    void test_completed(const tut::test_result& tr)
+    void test_completed(const tut::test_result& tr) CPL_OVERRIDE
     {
         if (tr.group != current_group)
         {
@@ -124,7 +124,7 @@ public:
         }
     }
 
-    void run_completed()
+    void run_completed() CPL_OVERRIDE
     {
         os << std::endl;
 

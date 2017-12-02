@@ -49,7 +49,7 @@ namespace tut
     std::string const common::data_basedir("data");
     std::string const common::tmp_basedir("tmp");
 
-    void check_test_group(char const* name)
+    static void check_test_group(char const* name)
     {
         std::string grpname(name);
         if (grpname.empty())

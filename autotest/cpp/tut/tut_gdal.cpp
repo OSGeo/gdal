@@ -23,6 +23,8 @@
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "cpl_port.h"
+
 #include <tut.hpp> // TUT
 #include <tut_gdal.h>
 #include <ogr_api.h> // GDAL

@@ -195,7 +195,7 @@ namespace tut
         CPLHashSetDestroy(set);
     }
 
-    int sumValues(void* elt, void* user_data)
+    static int sumValues(void* elt, void* user_data)
     {
         int* pnSum = (int*)user_data;
         *pnSum += *(int*)elt;
@@ -1355,27 +1355,27 @@ namespace tut
         public:
             CPLJSonStreamingParserDump() {}
 
-            virtual void Reset()
+            virtual void Reset() CPL_OVERRIDE
             {
                 m_osSerialized.clear();
                 m_osException.clear();
                 CPLJSonStreamingParser::Reset();
             }
 
-            virtual void String(const char* pszValue, size_t);
-            virtual void Number(const char* pszValue, size_t);
-            virtual void Boolean(bool bVal) ;
-            virtual void Null() ;
+            virtual void String(const char* pszValue, size_t) CPL_OVERRIDE;
+            virtual void Number(const char* pszValue, size_t) CPL_OVERRIDE;
+            virtual void Boolean(bool bVal) CPL_OVERRIDE;
+            virtual void Null() CPL_OVERRIDE;
 
-            virtual void StartObject() ;
-            virtual void EndObject() ;
-            virtual void StartObjectMember(const char* pszKey, size_t);
+            virtual void StartObject() CPL_OVERRIDE;
+            virtual void EndObject() CPL_OVERRIDE;
+            virtual void StartObjectMember(const char* pszKey, size_t) CPL_OVERRIDE;
 
-            virtual void StartArray();
-            virtual void EndArray();
-            virtual void StartArrayMember();
+            virtual void StartArray() CPL_OVERRIDE;
+            virtual void EndArray() CPL_OVERRIDE;
+            virtual void StartArrayMember() CPL_OVERRIDE;
 
-            virtual void Exception(const char* pszMessage);
+            virtual void Exception(const char* pszMessage) CPL_OVERRIDE;
 
             const CPLString& GetSerialized() const { return m_osSerialized; }
             const CPLString& GetException() const { return m_osException; }

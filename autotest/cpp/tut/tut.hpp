@@ -292,7 +292,7 @@ public:
         // register all tests
         tests_registerer<test_object<Data>, test_group,
             MaxTestsInGroup>::reg(*this);
-    };
+    }
 
     /**
      * Registers test method under given number.
@@ -305,7 +305,7 @@ public:
     /**
      * Reset test position before first test.
      */
-    void rewind()
+    void rewind() CPL_OVERRIDE
     {
         current_test_ = tests_.begin();
     }
@@ -313,7 +313,7 @@ public:
     /**
      * Runs next test.
      */
-    bool run_next(test_result &tr)
+    bool run_next(test_result &tr) CPL_OVERRIDE
     {
         if (current_test_ == tests_.end())
         {
@@ -338,7 +338,7 @@ public:
     /**
      * Runs one test by position.
      */
-    bool run_test(int n, test_result &tr)
+    bool run_test(int n, test_result &tr) CPL_OVERRIDE
     {
         if (tests_.rbegin() == tests_.rend() ||
             tests_.rbegin()->first < n)
