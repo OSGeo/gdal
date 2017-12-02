@@ -242,7 +242,7 @@ void compack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            jmin = calloc(maxgrps,sizeof(g2int));
            jmax = calloc(maxgrps,sizeof(g2int));
            lbit = calloc(maxgrps,sizeof(g2int));
-           if( ifld == NULL || gref == NULL || gwidth == NULL || glen == NULL )
+           if( jmin == NULL || jmax == NULL || lbit == NULL )
            {
                 free(jmin);
                 free(jmax);
