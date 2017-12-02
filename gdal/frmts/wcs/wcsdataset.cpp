@@ -699,12 +699,15 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the result.                           */
 /* -------------------------------------------------------------------- */
+#ifdef DEBUG_WCS
+    // this facility is used by requests.pl to generate files for the test server
     CPLString xfn = CPLGetXMLValue(psService, "filename", "");
     if (xfn != "") {
         VSILFILE *fpTemp = VSIFOpenL( xfn, "wb" );
         VSIFWriteL( pabyData, nDataLen, 1, fpTemp );
         VSIFCloseL( fpTemp );
     }
+#endif
     // Eventually we should be looking at mime info and stuff to figure
     // out an optimal filename, but for now we just use a fixed one.
     osResultFilename.Printf( "/vsimem/wcs/%p/wcsresult.dat",
@@ -1124,8 +1127,10 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
         WCS_URL_PARAMETERS,
         WCS_SERVICE_OPTIONS,
         WCS_TWEAK_OPTIONS,
-        WCS_HTTP_OPTIONS,
-        "filename"
+        WCS_HTTP_OPTIONS
+#ifdef DEBUG_WCS
+        ,"filename"
+#endif
     };
     for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
         const char *value;
