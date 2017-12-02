@@ -238,6 +238,7 @@ SDTSLineReader *SDTSTransfer::GetLayerLineReader( int iEntry )
     if( !poLineReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poLineReader;
         return NULL;
     }
@@ -264,6 +265,7 @@ SDTSPointReader *SDTSTransfer::GetLayerPointReader( int iEntry )
     if( !poPointReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poPointReader;
         return NULL;
     }
@@ -290,6 +292,7 @@ SDTSPolygonReader *SDTSTransfer::GetLayerPolygonReader( int iEntry )
     if( !poPolyReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poPolyReader;
         return NULL;
     }
@@ -316,6 +319,7 @@ SDTSAttrReader *SDTSTransfer::GetLayerAttrReader( int iEntry )
     if( !poAttrReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poAttrReader;
         return NULL;
     }
@@ -357,6 +361,7 @@ SDTSRasterReader *SDTSTransfer::GetLayerRasterReader( int iEntry )
     if( !poRasterReader->Open( &oCATD, &oIREF,
                          oCATD.GetEntryModule(panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poRasterReader;
         return NULL;
     }
@@ -381,6 +386,7 @@ DDFModule *SDTSTransfer::GetLayerModuleReader( int iEntry )
     if( !poModuleReader->Open(
                         oCATD.GetEntryFilePath( panLayerCATDEntry[iEntry] ) ) )
     {
+        panLayerCATDEntry[iEntry] = SLTUnknown; // to prevent further attempt
         delete poModuleReader;
         return NULL;
     }
