@@ -599,14 +599,18 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointInRing(const OGRPoint* poPoint) - "
                   "passed point is NULL!" );
-        return 0;
+        return FALSE;
+    }
+    if( poPoint->IsEmpty() )
+    {
+        return FALSE;
     }
 
     const int iNumPoints = getNumPoints();
 
     // Simple validation
     if( iNumPoints < 4 )
-        return 0;
+        return FALSE;
 
     const double dfTestX = poPoint->getX();
     const double dfTestY = poPoint->getY();
@@ -619,7 +623,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
         if( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
                && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
         {
-            return 0;
+            return FALSE;
         }
     }
 
