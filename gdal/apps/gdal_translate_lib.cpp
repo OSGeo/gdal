@@ -1421,17 +1421,11 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                 pszMin != NULL && pszMax != NULL )
             {
                 const bool bSrcIsInteger =
-                    eSrcBandType == GDT_Byte ||
-                    eSrcBandType == GDT_Int16 ||
-                    eSrcBandType == GDT_UInt16 ||
-                    eSrcBandType == GDT_Int32 ||
-                    eSrcBandType == GDT_UInt32;
+                    CPL_TO_BOOL(GDALDataTypeIsInteger(eSrcBandType) &&
+                                !GDALDataTypeIsComplex(eSrcBandType));
                 const bool bDstIsInteger =
-                    eBandType == GDT_Byte ||
-                    eBandType == GDT_Int16 ||
-                    eBandType == GDT_UInt16 ||
-                    eBandType == GDT_Int32 ||
-                    eBandType == GDT_UInt32;
+                    CPL_TO_BOOL(GDALDataTypeIsInteger(eBandType) &&
+                                !GDALDataTypeIsComplex(eBandType));
                 if( bSrcIsInteger && bDstIsInteger )
                 {
                     GInt32 nDstMin = 0;
