@@ -826,7 +826,7 @@ bool GRIB2Section567Writer::WriteSimplePacking()
         return false;
 
     const int nBitCorrectionForDec = static_cast<int>(
-        ceil(m_nDecimalScaleFactor * log(10) / log(2)));
+        ceil(m_nDecimalScaleFactor * log(10.0) / log(2.0)));
     const int nMaxBitsPerElt = std::max(1, std::min(31, (m_nBits > 0) ? m_nBits:
                 GDALGetDataTypeSize(m_eDT)+ nBitCorrectionForDec));
     if( nMaxBitsPerElt > 0 &&
@@ -979,7 +979,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     }
 
     const int nBitCorrectionForDec = static_cast<int>(
-        ceil(m_nDecimalScaleFactor * log(10) / log(2)));
+        ceil(m_nDecimalScaleFactor * log(10.0) / log(2.0)));
     const int nMaxBitsPerElt = std::max(1, std::min(31, (m_nBits > 0) ? m_nBits:
                 GDALGetDataTypeSize(m_eDT)+ nBitCorrectionForDec));
     if( nMaxBitsPerElt > 0 &&
@@ -1005,11 +1005,11 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     const double dfScaledMaxDiff = (m_fMax-m_fMin)* m_dfDecimalScale;
     if( m_nBits == 0 )
     {
-        double dfTemp = log(ceil(dfScaledMaxDiff))/log(2);
+        double dfTemp = log(ceil(dfScaledMaxDiff))/log(2.0);
         m_nBits = std::max(1, std::min(31, static_cast<int>(ceil(dfTemp))));
     }
     const int nMaxNum = (m_nBits == 31) ? INT_MAX : ((1 << m_nBits) - 1);
-    double dfTemp = log(nMaxNum/dfScaledMaxDiff)/log(2);
+    double dfTemp = log(nMaxNum/dfScaledMaxDiff)/log(2.0);
     int nBinaryScaleFactor = static_cast<GInt16>(ceil(-dfTemp));
 
     // Indices expected by cmplxpack()
@@ -1286,7 +1286,7 @@ GUInt16* GetScaledData(GUInt32 nDataPoints, const float* pafData,
     const double dfScaledMaxDiff = (fMax-fMin)* dfDecimalScale;
     if (nBits==0 )
     {
-        nBits=(g2int)ceil(log(ceil(dfScaledMaxDiff))/log(2));
+        nBits=(g2int)ceil(log(ceil(dfScaledMaxDiff))/log(2.0));
         if( nBits > 16 )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -1317,7 +1317,7 @@ GUInt16* GetScaledData(GUInt32 nDataPoints, const float* pafData,
             nBits = 16;
         }
         const int nMaxNum = (1 << nBits) - 1;
-        double dfTemp = log(nMaxNum/dfScaledMaxDiff)/log(2);
+        double dfTemp = log(nMaxNum/dfScaledMaxDiff)/log(2.0);
         nBinaryScaleFactor = static_cast<GInt16>(ceil(-dfTemp));
         double dfBinaryScale = pow(2.0, -1.0 * nBinaryScaleFactor);
         for( GUInt32 i = 0; i < nDataPoints; i++ )
