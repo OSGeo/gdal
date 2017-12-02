@@ -239,8 +239,8 @@ namespace tut
     class FakeBand: public GDALRasterBand
     {
         protected:
-            virtual CPLErr IReadBlock(int, int, void*) { return CE_None; }
-            virtual CPLErr IWriteBlock( int, int, void * ) { return CE_None; }
+            virtual CPLErr IReadBlock(int, int, void*) CPL_OVERRIDE { return CE_None; }
+            virtual CPLErr IWriteBlock( int, int, void * ) CPL_OVERRIDE { return CE_None; }
 
         public:
                     FakeBand(int nXSize, int nYSize) { nBlockXSize = nXSize;
@@ -253,15 +253,15 @@ namespace tut
         public:
             DatasetWithErrorInFlushCache() : bHasFlushCache(false) { }
            ~DatasetWithErrorInFlushCache() { FlushCache(); }
-            virtual void FlushCache(void)
+            virtual void FlushCache(void) CPL_OVERRIDE
             {
                 if( !bHasFlushCache)
                     CPLError(CE_Failure, CPLE_AppDefined, "some error");
                 GDALDataset::FlushCache();
                 bHasFlushCache = true;
             }
-            virtual CPLErr SetProjection(const char*) { return CE_None; }
-            virtual CPLErr SetGeoTransform(double*) { return CE_None; }
+            virtual CPLErr SetProjection(const char*) CPL_OVERRIDE { return CE_None; }
+            virtual CPLErr SetGeoTransform(double*) CPL_OVERRIDE { return CE_None; }
 
             static GDALDataset* CreateCopy(const char*, GDALDataset*,
                                     int, char **,

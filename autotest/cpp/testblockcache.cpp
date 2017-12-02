@@ -40,7 +40,7 @@
 
 CPLLock* psLock = NULL;
 
-void Usage()
+static void Usage()
 {
     printf("Usage: testblockcache [-threads X] [-loops X] [-max_requests X] [-strategy random|line|block]\n");
     printf("                      [-migrate] [ filename |\n");
@@ -91,7 +91,7 @@ static Resource* psGlobalResourceLast = NULL;
 /* according to rand() man page, POSIX.1-2001 proposes the following implementation */
 /* RAND_MAX assumed to be 32767 */
 #define MYRAND_MAX 32767
-int myrand_r(unsigned long* pseed) {
+static int myrand_r(unsigned long* pseed) {
     *pseed = *pseed * 1103515245 + 12345;
     return((unsigned)((*pseed/65536UL) % (MYRAND_MAX+1)));
 }

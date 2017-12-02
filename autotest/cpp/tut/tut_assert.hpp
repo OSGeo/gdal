@@ -114,7 +114,7 @@ void ensure_equals(const M& msg, const char* actual,const char* expected)
   ensure_equals(msg, std::string(actual), std::string(expected));
 }
 
-void ensure_equals(const char* actual,const char* expected)
+inline void ensure_equals(const char* actual,const char* expected)
 {
   ensure_equals(0,actual,expected);
 }

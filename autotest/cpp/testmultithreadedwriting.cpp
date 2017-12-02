@@ -29,7 +29,7 @@
 #include "gdal_alg.h"
 #include "gdal_priv.h"
 
-void thread_func(void* ptr)
+static void thread_func(void* ptr)
 {
     int num = *(int*)ptr;
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");

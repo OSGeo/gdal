@@ -35,7 +35,7 @@
 
 #include <cassert>
 
-void thread_func(void* /* unused */)
+static void thread_func(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0.6");
@@ -48,7 +48,7 @@ void thread_func(void* /* unused */)
 }
 
 
-void thread_func2(void* /* unused */)
+static void thread_func2(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0.6");
@@ -58,7 +58,7 @@ void thread_func2(void* /* unused */)
 }
 
 
-void thread_func3(void* /* unused */)
+static void thread_func3(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSleep(0.3);
@@ -68,7 +68,7 @@ void thread_func3(void* /* unused */)
 }
 
 
-void thread_func4(void* /* unused */)
+static void thread_func4(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0.6");

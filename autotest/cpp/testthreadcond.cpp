@@ -50,7 +50,7 @@ int nThreadTotal = 0;
 int bProducedFinished = 0;
 int bVerbose = FALSE;
 
-void ProducerThread(void * /* unused */)
+static void ProducerThread(void * /* unused */)
 {
     int i;
     int jobNumber = 0;
@@ -85,7 +85,7 @@ void ProducerThread(void * /* unused */)
     CPLReleaseMutex(hClientMutex);
 }
 
-void ConsumerThread(void* pIndex)
+static void ConsumerThread(void* pIndex)
 {
     int nJobNumber;
     int nThreadIndex;

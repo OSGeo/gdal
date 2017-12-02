@@ -22,7 +22,7 @@ struct tut_error : public std::exception
         return test_result::ex;
     }
 
-    const char* what() const throw()
+    const char* what() const throw() CPL_OVERRIDE
     {
         return err_msg.c_str();
     }
@@ -62,7 +62,7 @@ struct bad_ctor : public tut_error
     {
     }
 
-    test_result::result_type result() const
+    test_result::result_type result() const CPL_OVERRIDE
     {
         return test_result::ex_ctor;
     }
@@ -82,7 +82,7 @@ struct failure : public tut_error
     {
     }
 
-    test_result::result_type result() const
+    test_result::result_type result() const CPL_OVERRIDE
     {
         return test_result::fail;
     }
@@ -102,7 +102,7 @@ struct warning : public tut_error
     {
     }
 
-    test_result::result_type result() const
+    test_result::result_type result() const CPL_OVERRIDE
     {
         return test_result::warn;
     }
@@ -122,7 +122,7 @@ struct seh : public tut_error
     {
     }
 
-    virtual test_result::result_type result() const
+    virtual test_result::result_type result() const CPL_OVERRIDE
     {
         return test_result::term;
     }
@@ -142,7 +142,7 @@ struct rethrown : public failure
     {
     }
 
-    virtual test_result::result_type result() const
+    virtual test_result::result_type result() const CPL_OVERRIDE
     {
         return test_result::rethrown;
     }
