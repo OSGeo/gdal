@@ -30,6 +30,7 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include "cpl_http.h"
+#include "gmlutils.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
@@ -37,422 +38,25 @@
 
 #include <algorithm>
 
-#define DIGIT_ZERO '0'
-
-CPL_CVSID("$Id$")
-
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              WCSDataset                              */
-/* ==================================================================== */
-/************************************************************************/
-
-class WCSRasterBand;
-
-class CPL_DLL WCSDataset : public GDALPamDataset
-{
-    friend class WCSRasterBand;
-
-    int         bServiceDirty;
-    CPLXMLNode *psService;
-
-    char       *apszCoverageOfferingMD[2];
-
-    char      **papszSDSModifiers;
-
-    int         nVersion;  // eg 100 for 1.0.0, 110 for 1.1.0
-
-    CPLString   osCRS;
-
-    char        *pszProjection;
-    double      adfGeoTransform[6];
-
-    CPLString   osBandIdentifier;
-
-    CPLString   osDefaultTime;
-    std::vector<CPLString> aosTimePositions;
-
-    int         TestUseBlockIO( int, int, int, int, int, int );
-    CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                int, int *,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GSpacing nBandSpace,
-                                GDALRasterIOExtraArg* psExtraArg);
-    CPLErr      GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
-                             int nBufXSize, int nBufYSize,
-                             int nBandCount, int *panBandList,
-                             CPLHTTPResult **ppsResult );
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int *,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GSpacing nBandSpace,
-                              GDALRasterIOExtraArg* psExtraArg) override;
-
-    int         DescribeCoverage();
-    int         ExtractGridInfo100();
-    int         ExtractGridInfo();
-    int         EstablishRasterDetails();
-
-    static int         ProcessError( CPLHTTPResult *psResult );
-    GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
-    void        FlushMemoryResult();
-    CPLString   osResultFilename;
-    GByte      *pabySavedDataBuffer;
-
-    char      **papszHttpOptions;
-
-    int         nMaxCols;
-    int         nMaxRows;
-
-  public:
-                WCSDataset();
-    virtual ~WCSDataset();
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int Identify( GDALOpenInfo * );
-
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual char **GetFileList(void) override;
-
-    virtual char      **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char *pszDomain ) override;
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            WCSRasterBand                             */
-/* ==================================================================== */
-/************************************************************************/
-
-class WCSRasterBand : public GDALPamRasterBand
-{
-    friend class WCSDataset;
-
-    int            iOverview;
-    int            nResFactor;
-
-    WCSDataset    *poODS;
-
-    int            nOverviewCount;
-    WCSRasterBand **papoOverviews;
-
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
-
-  public:
-
-                   WCSRasterBand( WCSDataset *, int nBand, int iOverview );
-    virtual ~WCSRasterBand();
-
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview(int) override;
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-};
-
-/************************************************************************/
-/*                           WCSRasterBand()                            */
-/************************************************************************/
-
-WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
-                              int iOverviewIn ) :
-    iOverview(iOverviewIn),
-    nResFactor(1 << (iOverviewIn+1)), // iOverview == -1 is base layer
-    poODS(poDSIn),
-    nOverviewCount(0),
-    papoOverviews(NULL)
-{
-    poDS = poDSIn;
-    nBand = nBandIn;
-
-    eDataType = GDALGetDataTypeByName(
-        CPLGetXMLValue( poDSIn->psService, "BandType", "Byte" ) );
-
-/* -------------------------------------------------------------------- */
-/*      Establish resolution reduction for this overview level.         */
-/* -------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------- */
-/*      Establish block size.                                           */
-/* -------------------------------------------------------------------- */
-    nRasterXSize = poDS->GetRasterXSize() / nResFactor;
-    nRasterYSize = poDS->GetRasterYSize() / nResFactor;
-
-    nBlockXSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockXSize", "0" ) );
-    nBlockYSize = atoi(CPLGetXMLValue( poDSIn->psService, "BlockYSize", "0" ) );
-
-    if( nBlockXSize < 1 )
-    {
-        if( nRasterXSize > 1800 )
-            nBlockXSize = 1024;
-        else
-            nBlockXSize = nRasterXSize;
-    }
-
-    if( nBlockYSize < 1 )
-    {
-        if( nRasterYSize > 900 )
-            nBlockYSize = 512;
-        else
-            nBlockYSize = nRasterYSize;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If this is the base layer, create the overview layers.          */
-/* -------------------------------------------------------------------- */
-    if( iOverview == -1 )
-    {
-        nOverviewCount = atoi(CPLGetXMLValue(poODS->psService,"OverviewCount",
-                                             "-1"));
-        if( nOverviewCount < 0 )
-        {
-            for( nOverviewCount = 0;
-                 (std::max(nRasterXSize, nRasterYSize) /
-                  (1 << nOverviewCount)) > 900;
-                 nOverviewCount++ ) {}
-        }
-        else if( nOverviewCount > 30 )
-        {
-            /* There's no reason to have more than 30 overviews, because */
-            /* 2^(30+1) overflows a int32 */
-            nOverviewCount = 30;
-        }
-
-        papoOverviews = (WCSRasterBand **)
-            CPLCalloc( nOverviewCount, sizeof(void*) );
-
-        for( int i = 0; i < nOverviewCount; i++ )
-            papoOverviews[i] = new WCSRasterBand( poODS, nBand, i );
-    }
-}
-
-/************************************************************************/
-/*                           ~WCSRasterBand()                           */
-/************************************************************************/
-
-WCSRasterBand::~WCSRasterBand()
-
-{
-    FlushCache();
-
-    if( nOverviewCount > 0 )
-    {
-        for( int i = 0; i < nOverviewCount; i++ )
-            delete papoOverviews[i];
-
-        CPLFree( papoOverviews );
-    }
-}
-
-/************************************************************************/
-/*                             IReadBlock()                             */
-/************************************************************************/
-
-CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void * pImage )
-
-{
-    CPLErr eErr;
-    CPLHTTPResult *psResult = NULL;
-
-    eErr = poODS->GetCoverage( nBlockXOff * nBlockXSize * nResFactor,
-                               nBlockYOff * nBlockYSize * nResFactor,
-                               nBlockXSize * nResFactor,
-                               nBlockYSize * nResFactor,
-                               nBlockXSize, nBlockYSize,
-                               1, &nBand, &psResult );
-    if( eErr != CE_None )
-        return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Try and open result as a dataset.                               */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poTileDS = poODS->GDALOpenResult( psResult );
-
-    if( poTileDS == NULL )
-        return CE_Failure;
-
-/* -------------------------------------------------------------------- */
-/*      Verify configuration.                                           */
-/* -------------------------------------------------------------------- */
-    if( poTileDS->GetRasterXSize() != nBlockXSize
-        || poTileDS->GetRasterYSize() != nBlockYSize )
-    {
-        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBlockXSize, nBlockYSize );
-
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Returned tile does not match expected configuration.\n"
-                  "Got %dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBlockXSize, nBlockYSize );
-        delete poTileDS;
-        return CE_Failure;
-    }
-
-    if( (strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
-        || (!strlen(poODS->osBandIdentifier)
-            && poTileDS->GetRasterCount() != poODS->GetRasterCount()) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Returned tile does not match expected band configuration.");
-        delete poTileDS;
-        return CE_Failure;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Process all bands of memory result, copying into pBuffer, or    */
-/*      pushing into cache for other bands.                             */
-/* -------------------------------------------------------------------- */
-    int iBand;
-    eErr = CE_None;
-
-    for( iBand = 0;
-         iBand < poTileDS->GetRasterCount() && eErr == CE_None;
-         iBand++ )
-    {
-        GDALRasterBand *poTileBand = poTileDS->GetRasterBand( iBand+1 );
-
-        if( iBand+1 == GetBand() || strlen(poODS->osBandIdentifier) )
-        {
-            eErr = poTileBand->RasterIO( GF_Read,
-                                         0, 0, nBlockXSize, nBlockYSize,
-                                         pImage, nBlockXSize, nBlockYSize,
-                                         eDataType, 0, 0, NULL );
-        }
-        else
-        {
-            GDALRasterBand *poTargBand = poODS->GetRasterBand( iBand+1 );
-
-            if( iOverview != -1 )
-                poTargBand = poTargBand->GetOverview( iOverview );
-
-            GDALRasterBlock *poBlock = poTargBand->GetLockedBlockRef(
-                nBlockXOff, nBlockYOff, TRUE );
-
-            if( poBlock != NULL )
-            {
-                eErr = poTileBand->RasterIO( GF_Read,
-                                            0, 0, nBlockXSize, nBlockYSize,
-                                            poBlock->GetDataRef(),
-                                            nBlockXSize, nBlockYSize,
-                                            eDataType, 0, 0, NULL );
-                poBlock->DropLock();
-            }
-            else
-                eErr = CE_Failure;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup                                                         */
-/* -------------------------------------------------------------------- */
-    delete poTileDS;
-
-    poODS->FlushMemoryResult();
-
-    return eErr;
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/************************************************************************/
-
-CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg* psExtraArg)
-
-{
-    if( (poODS->nMaxCols > 0 && poODS->nMaxCols < nBufXSize)
-        ||  (poODS->nMaxRows > 0 && poODS->nMaxRows < nBufYSize) )
-        return CE_Failure;
-
-    if( poODS->TestUseBlockIO( nXOff, nYOff, nXSize, nYSize,
-                               nBufXSize,nBufYSize ) )
-        return GDALPamRasterBand::IRasterIO(
-            eRWFlag, nXOff, nYOff, nXSize, nYSize,
-            pData, nBufXSize, nBufYSize, eBufType,
-            nPixelSpace, nLineSpace, psExtraArg );
-    else
-        return poODS->DirectRasterIO(
-            eRWFlag,
-            nXOff * nResFactor, nYOff * nResFactor,
-            nXSize * nResFactor, nYSize * nResFactor,
-            pData, nBufXSize, nBufYSize, eBufType,
-            1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg );
-}
-
-/************************************************************************/
-/*                           GetNoDataValue()                           */
-/************************************************************************/
-
-double WCSRasterBand::GetNoDataValue( int *pbSuccess )
-
-{
-    const char *pszSV = CPLGetXMLValue( poODS->psService, "NoDataValue", NULL);
-
-    if( pszSV == NULL )
-        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
-    else
-    {
-        if( pbSuccess )
-            *pbSuccess = TRUE;
-        return CPLAtof(pszSV);
-    }
-}
-
-/************************************************************************/
-/*                          GetOverviewCount()                          */
-/************************************************************************/
-
-int WCSRasterBand::GetOverviewCount()
-
-{
-    return nOverviewCount;
-}
-
-/************************************************************************/
-/*                            GetOverview()                             */
-/************************************************************************/
-
-GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
-
-{
-    if( iOverviewIn < 0 || iOverviewIn >= nOverviewCount )
-        return NULL;
-    else
-        return papoOverviews[iOverviewIn];
-}
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            WCSDataset                                */
-/* ==================================================================== */
-/************************************************************************/
+#include "wcsdataset.h"
+#include "wcsrasterband.h"
+#include "wcsutils.h"
+
+using namespace WCSUtils;
 
 /************************************************************************/
 /*                             WCSDataset()                             */
 /************************************************************************/
 
-WCSDataset::WCSDataset() :
-    bServiceDirty(FALSE),
+WCSDataset::WCSDataset(int version, const char *cache_dir) :
+    m_cache_dir(cache_dir),
+    bServiceDirty(false),
     psService(NULL),
     papszSDSModifiers(NULL),
-    nVersion(0),
+    m_Version(version),
     pszProjection(NULL),
+    native_crs(true),
+    axis_order_swap(false),
     pabySavedDataBuffer(NULL),
     papszHttpOptions(NULL),
     nMaxCols(-1),
@@ -480,7 +84,7 @@ WCSDataset::~WCSDataset()
     if( bServiceDirty && !STARTS_WITH_CI(GetDescription(), "<WCS_GDAL>") )
     {
         CPLSerializeXMLTreeToFile( psService, GetDescription() );
-        bServiceDirty = FALSE;
+        bServiceDirty = false;
     }
 
     CPLDestroyXMLNode( psService );
@@ -494,6 +98,54 @@ WCSDataset::~WCSDataset()
     CPLFree( apszCoverageOfferingMD[0] );
 
     FlushMemoryResult();
+}
+
+/************************************************************************/
+/*                           SetCRS()                                   */
+/*                                                                      */
+/*      Set the name and the WKT of the projection of this dataset.     */
+/*      Based on the projection, sets the axis order flag.              */
+/*      Also set the native flag.                                       */
+/************************************************************************/
+
+bool WCSDataset::SetCRS(const CPLString &crs, bool native)
+{
+    osCRS = crs;
+    if (!CRSImpliesAxisOrderSwap(osCRS, axis_order_swap, &pszProjection)) {
+        return false;
+    }
+    native_crs = native;
+    return true;
+}
+
+/************************************************************************/
+/*                           SetGeometry()                              */
+/*                                                                      */
+/*      Set GeoTransform and RasterSize from the coverage envelope,     */
+/*      axis_order, grid size, and grid offsets.                        */
+/************************************************************************/
+
+void WCSDataset::SetGeometry(const std::vector<int> &size,
+                             const std::vector<double> &origin,
+                             const std::vector<std::vector<double> > &offsets)
+{
+    // note that this method is not used by wcsdataset100.cpp
+    nRasterXSize = size[0];
+    nRasterYSize = size[1];
+
+    adfGeoTransform[0] = origin[0];
+    adfGeoTransform[1] = offsets[0][0];
+    adfGeoTransform[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
+    adfGeoTransform[3] = origin[1];
+    adfGeoTransform[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
+    adfGeoTransform[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
+
+    if (!CPLGetXMLBoolean(psService, "OriginAtBoundary")) {
+        adfGeoTransform[0] -= adfGeoTransform[1] * 0.5;
+        adfGeoTransform[0] -= adfGeoTransform[2] * 0.5;
+        adfGeoTransform[3] -= adfGeoTransform[4] * 0.5;
+        adfGeoTransform[3] -= adfGeoTransform[5] * 0.5;
+    }
 }
 
 /************************************************************************/
@@ -587,10 +239,21 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Get the coverage.                                               */
 /* -------------------------------------------------------------------- */
+
+    // if INTERLEAVE is set to PIXEL, then we'll request all bands.
+    // That is necessary at least with MapServer, which seems to often
+    // return all bands instead of requested.
+    // todo: in 2.0.1 the band list in this dataset may be user-defined
+
+    int band_count = nBandCount;
+    if (EQUAL(CPLGetXMLValue(psService, "INTERLEAVE", ""), "PIXEL")) {
+        band_count = 0;
+    }
+
     CPLHTTPResult *psResult = NULL;
     CPLErr eErr =
         GetCoverage( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
-                     nBandCount, panBandMap, &psResult );
+                     band_count, panBandMap, &psResult );
 
     if( eErr != CE_None )
         return eErr;
@@ -609,10 +272,6 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
     if( poTileDS->GetRasterXSize() != nBufXSize
         || poTileDS->GetRasterYSize() != nBufYSize )
     {
-        CPLDebug( "WCS", "Got size=%dx%d instead of %dx%d.",
-                  poTileDS->GetRasterXSize(), poTileDS->GetRasterYSize(),
-                  nBufXSize, nBufYSize );
-
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Returned tile does not match expected configuration.\n"
                   "Got %dx%d instead of %dx%d.",
@@ -622,9 +281,12 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    if( (!osBandIdentifier.empty() && poTileDS->GetRasterCount() != nBandCount)
-        || (osBandIdentifier.empty() && poTileDS->GetRasterCount() !=
-            GetRasterCount() ) )
+    if( band_count != 0
+        && ( ( !osBandIdentifier.empty()
+               && poTileDS->GetRasterCount() != nBandCount)
+             ||
+             ( osBandIdentifier.empty()
+               && poTileDS->GetRasterCount() != GetRasterCount() ) ))
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Returned tile does not match expected band count." );
@@ -681,23 +343,13 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Figure out the georeferenced extents.                           */
 /* -------------------------------------------------------------------- */
-    double dfMinX, dfMaxX, dfMinY, dfMaxY;
-
-    // WCS 1.0 extents are the outer edges of outer pixels.
-    dfMinX = adfGeoTransform[0] +
-        (nXOff) * adfGeoTransform[1];
-    dfMaxX = adfGeoTransform[0] +
-        (nXOff + nXSize) * adfGeoTransform[1];
-    dfMaxY = adfGeoTransform[3] +
-        (nYOff) * adfGeoTransform[5];
-    dfMinY = adfGeoTransform[3] +
-        (nYOff + nYSize) * adfGeoTransform[5];
+    std::vector<double> extent = GetExtent(nXOff, nYOff, nXSize, nYSize,
+                                           nBufXSize, nBufYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Build band list if we have the band identifier.                 */
 /* -------------------------------------------------------------------- */
     CPLString osBandList;
-    int       bSelectingBands = FALSE;
 
     if( !osBandIdentifier.empty() && nBandCount > 0 && panBandList != NULL )
     {
@@ -709,152 +361,21 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
                 osBandList += ",";
             osBandList += CPLString().Printf( "%d", panBandList[iBand] );
         }
-
-        bSelectingBands = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      URL encode strings that could have questionable characters.     */
+/*      Construct a KVP GetCoverage request.                            */
 /* -------------------------------------------------------------------- */
-    CPLString osCoverage = CPLGetXMLValue( psService, "CoverageName", "" );
-
-    char *pszEncoded = CPLEscapeString( osCoverage, -1, CPLES_URL );
-    osCoverage = pszEncoded;
-    CPLFree( pszEncoded );
-
-    CPLString osFormat = CPLGetXMLValue( psService, "PreferredFormat", "" );
-
-    pszEncoded = CPLEscapeString( osFormat, -1, CPLES_URL );
-    osFormat = pszEncoded;
-    CPLFree( pszEncoded );
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a time we want to use?                               */
-/* -------------------------------------------------------------------- */
-    CPLString osTime;
-
-    osTime = CSLFetchNameValueDef( papszSDSModifiers, "time", osDefaultTime );
-
-/* -------------------------------------------------------------------- */
-/*      Construct a "simple" GetCoverage request (WCS 1.0).             */
-/* -------------------------------------------------------------------- */
-    CPLString osRequest;
-
-    if( nVersion == 100 )
-    {
-        osRequest.Printf(
-            "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-            "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s%s",
-            CPLGetXMLValue( psService, "ServiceURL", "" ),
-            osCoverage.c_str(),
-            osFormat.c_str(),
-            dfMinX, dfMinY, dfMaxX, dfMaxY,
-            nBufXSize, nBufYSize,
-            osCRS.c_str(),
-            CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
-
-        if( CPLGetXMLValue( psService, "Resample", NULL ) )
-        {
-            osRequest += "&INTERPOLATION=";
-            osRequest += CPLGetXMLValue( psService, "Resample", "" );
-        }
-
-        if( osTime != "" )
-        {
-            osRequest += "&time=";
-            osRequest += osTime;
-        }
-
-        if( bSelectingBands )
-        {
-            osRequest += CPLString().Printf( "&%s=%s",
-                                             osBandIdentifier.c_str(),
-                                             osBandList.c_str() );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Construct a "simple" GetCoverage request (WCS 1.1+).            */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        CPLString osRangeSubset;
-
-        osRangeSubset.Printf("&RangeSubset=%s",
-                             CPLGetXMLValue(psService,"FieldName",""));
-
-        if( CPLGetXMLValue( psService, "Resample", NULL ) )
-        {
-            osRangeSubset += ":";
-            osRangeSubset += CPLGetXMLValue( psService, "Resample", "");
-        }
-
-        if( bSelectingBands )
-        {
-            osRangeSubset +=
-                CPLString().Printf( "[%s[%s]]",
-                                    osBandIdentifier.c_str(),
-                                    osBandList.c_str() );
-        }
-
-        // WCS 1.1 extents are centers of outer pixels.
-        dfMaxX -= adfGeoTransform[1] * 0.5;
-        dfMinX += adfGeoTransform[1] * 0.5;
-        dfMinY -= adfGeoTransform[5] * 0.5;
-        dfMaxY += adfGeoTransform[5] * 0.5;
-
-        // Carefully adjust bounds for pixel centered values at new
-        // sampling density.
-
-        double dfXStep = adfGeoTransform[1];
-        double dfYStep = adfGeoTransform[5];
-
-        if( nBufXSize != nXSize || nBufYSize != nYSize )
-        {
-            dfXStep = (nXSize/(double)nBufXSize) * adfGeoTransform[1];
-            dfYStep = (nYSize/(double)nBufYSize) * adfGeoTransform[5];
-
-            dfMinX  = nXOff * adfGeoTransform[1] + adfGeoTransform[0]
-                    + dfXStep * 0.5;
-            dfMaxX  = dfMinX + (nBufXSize - 1) * dfXStep;
-
-            dfMaxY  = nYOff * adfGeoTransform[5] + adfGeoTransform[3]
-                    + dfYStep * 0.5;
-            dfMinY  = dfMaxY + (nBufYSize - 1) * dfYStep;
-        }
-
-        osRequest.Printf(
-            "%sSERVICE=WCS&VERSION=%s&REQUEST=GetCoverage&IDENTIFIER=%s"
-            "&FORMAT=%s&BOUNDINGBOX=%.15g,%.15g,%.15g,%.15g,%s%s%s",
-            CPLGetXMLValue( psService, "ServiceURL", "" ),
-            CPLGetXMLValue( psService, "Version", "" ),
-            osCoverage.c_str(),
-            osFormat.c_str(),
-            dfMinX, dfMinY, dfMaxX, dfMaxY,
-            osCRS.c_str(),
-            osRangeSubset.c_str(),
-            CPLGetXMLValue( psService, "GetCoverageExtra", "" ) );
-
-        if( nBufXSize != nXSize || nBufYSize != nYSize )
-        {
-            osRequest += CPLString().Printf(
-                "&GridBaseCRS=%s"
-                "&GridCS=%s"
-                "&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs"
-                "&GridOrigin=%.15g,%.15g"
-                "&GridOffsets=%.15g,%.15g",
-                osCRS.c_str(),
-                osCRS.c_str(),
-                dfMinX, dfMaxY,
-                dfXStep, dfYStep );
-        }
-    }
+    bool scaled = nBufXSize != nXSize || nBufYSize != nYSize;
+    CPLString osRequest = GetCoverageRequest(scaled, nBufXSize, nBufYSize,
+                                             extent, osBandList);
+    // for the test setup we need the actual URLs this driver generates
+    //fprintf(stdout, "URL=%s\n", osRequest.c_str());
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-
     *ppsResult = CPLHTTPFetch( osRequest, papszHttpOptions );
 
     if( ProcessError( *ppsResult ) )
@@ -878,48 +399,47 @@ int WCSDataset::DescribeCoverage()
 /* -------------------------------------------------------------------- */
 /*      Fetch coverage description for this coverage.                   */
 /* -------------------------------------------------------------------- */
-    if( nVersion == 100 )
-        osRequest.Printf(
-            "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&COVERAGE=%s%s",
-            CPLGetXMLValue( psService, "ServiceURL", "" ),
-            CPLGetXMLValue( psService, "Version", "1.0.0" ),
-            CPLGetXMLValue( psService, "CoverageName", "" ),
-            CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
-    else
-        osRequest.Printf(
-            "%sSERVICE=WCS&REQUEST=DescribeCoverage&VERSION=%s&IDENTIFIERS=%s%s&FORMAT=text/xml",
-            CPLGetXMLValue( psService, "ServiceURL", "" ),
-            CPLGetXMLValue( psService, "Version", "1.0.0" ),
-            CPLGetXMLValue( psService, "CoverageName", "" ),
-            CPLGetXMLValue( psService, "DescribeCoverageExtra", "" ) );
 
-    CPLErrorReset();
+    CPLXMLNode *psDC = NULL;
 
-    CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, papszHttpOptions );
+    // if it is in cache, get it from there
+    CPLString dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
+    dc_filename.erase(dc_filename.length()-4, 4);
+    dc_filename += ".DC.xml";
+    if (FileIsReadable(dc_filename)) {
+        psDC = CPLParseXMLFile(dc_filename);
+    }
 
-    if( ProcessError( psResult ) )
-        return FALSE;
+    if (!psDC) {
+        osRequest = DescribeCoverageRequest();
+        CPLErrorReset();
+        CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, papszHttpOptions );
+        if( ProcessError( psResult ) ) {
+            return FALSE;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psDC = CPLParseXMLString( (const char *) psResult->pabyData );
-    CPLHTTPDestroyResult( psResult );
+        psDC = CPLParseXMLString( (const char *) psResult->pabyData );
+        CPLHTTPDestroyResult( psResult );
 
-    if( psDC == NULL )
-        return FALSE;
+        if( psDC == NULL ) {
+            return FALSE;
+        }
+
+        // if we have cache, put it there
+        if (dc_filename != "") {
+            CPLSerializeXMLTreeToFile(psDC, dc_filename);
+        }
+    }
 
     CPLStripXMLNamespace( psDC, NULL, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Did we get a CoverageOffering?                                  */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psCO;
-
-    if( nVersion == 100 )
-        psCO = CPLGetXMLNode( psDC, "=CoverageDescription.CoverageOffering" );
-    else
-        psCO =CPLGetXMLNode( psDC,"=CoverageDescriptions.CoverageDescription");
+    CPLXMLNode *psCO = CoverageOffering(psDC);
 
     if( !psCO )
     {
@@ -938,762 +458,11 @@ int WCSDataset::DescribeCoverage()
     psCO->psNext = NULL;
 
     CPLAddXMLChild( psService, CPLCloneXMLTree( psCO ) );
-    bServiceDirty = TRUE;
+    bServiceDirty = true;
 
     psCO->psNext = psNext;
 
     CPLDestroyXMLNode( psDC );
-    return TRUE;
-}
-
-/************************************************************************/
-/*                         ExtractGridInfo100()                         */
-/*                                                                      */
-/*      Collect info about grid from describe coverage for WCS 1.0.0    */
-/*      and above.                                                      */
-/************************************************************************/
-
-int WCSDataset::ExtractGridInfo100()
-
-{
-    CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
-
-    if( psCO == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      We need to strip off name spaces so it is easier to             */
-/*      searchfor plain gml names.                                      */
-/* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psCO, NULL, TRUE );
-
-/* -------------------------------------------------------------------- */
-/*      Verify we have a Rectified Grid.                                */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psRG =
-        CPLGetXMLNode( psCO, "domainSet.spatialDomain.RectifiedGrid" );
-
-    if( psRG == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find RectifiedGrid in CoverageOffering,\n"
-                  "unable to process WCS Coverage." );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Extract size, geotransform and coordinate system.               */
-/* -------------------------------------------------------------------- */
-    if( WCSParseGMLCoverage( psRG, &nRasterXSize, &nRasterYSize,
-                             adfGeoTransform, &pszProjection ) != CE_None )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Fallback to nativeCRSs declaration.                             */
-/* -------------------------------------------------------------------- */
-    const char *pszNativeCRSs =
-        CPLGetXMLValue( psCO, "supportedCRSs.nativeCRSs", NULL );
-
-    if( pszNativeCRSs == NULL )
-        pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestResponseCRSs", NULL );
-
-    if( pszNativeCRSs == NULL )
-        pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestCRSs", NULL );
-
-    if( pszNativeCRSs == NULL )
-        pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.responseCRSs", NULL );
-
-    if( pszNativeCRSs != NULL
-        && (pszProjection == NULL || strlen(pszProjection) == 0) )
-    {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszNativeCRSs ) == OGRERR_NONE )
-        {
-            CPLFree( pszProjection );
-            oSRS.exportToWkt( &pszProjection );
-        }
-        else
-            CPLDebug( "WCS",
-                      "<nativeCRSs> element contents not parsable:\n%s",
-                      pszNativeCRSs );
-    }
-
-    // We should try to use the services name for the CRS if possible.
-    if( pszNativeCRSs != NULL
-        && ( STARTS_WITH_CI(pszNativeCRSs, "EPSG:")
-             || STARTS_WITH_CI(pszNativeCRSs, "AUTO:")
-             || STARTS_WITH_CI(pszNativeCRSs, "Image ")
-             || STARTS_WITH_CI(pszNativeCRSs, "Engineering ")
-             || STARTS_WITH_CI(pszNativeCRSs, "OGC:") ) )
-    {
-        osCRS = pszNativeCRSs;
-
-        size_t nDivider = osCRS.find( " " );
-
-        if( nDivider != std::string::npos )
-            osCRS.resize( nDivider-1 );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a coordinate system override?                        */
-/* -------------------------------------------------------------------- */
-    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
-
-    if( pszProjOverride )
-    {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "<SRS> element contents not parsable:\n%s",
-                      pszProjOverride );
-            return FALSE;
-        }
-
-        CPLFree( pszProjection );
-        oSRS.exportToWkt( &pszProjection );
-
-        if( STARTS_WITH_CI(pszProjOverride, "EPSG:")
-            || STARTS_WITH_CI(pszProjOverride, "AUTO:")
-            || STARTS_WITH_CI(pszProjOverride, "OGC:")
-            || STARTS_WITH_CI(pszProjOverride, "Image ")
-            || STARTS_WITH_CI(pszProjOverride, "Engineering ") )
-            osCRS = pszProjOverride;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Build CRS name to use.                                          */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
-    const char *pszAuth;
-
-    if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
-    {
-        oSRS.SetFromUserInput( pszProjection );
-        pszAuth = oSRS.GetAuthorityName(NULL);
-
-        if( pszAuth != NULL && EQUAL(pszAuth,"EPSG") )
-        {
-            pszAuth = oSRS.GetAuthorityCode(NULL);
-            if( pszAuth )
-            {
-                osCRS = "EPSG:";
-                osCRS += pszAuth;
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Unable to define CRS to use." );
-                return FALSE;
-            }
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Pick a format type if we don't already have one selected.       */
-/*                                                                      */
-/*      We will prefer anything that sounds like TIFF, otherwise        */
-/*      falling back to the first supported format.  Should we          */
-/*      consider preferring the nativeFormat if available?              */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
-    {
-        CPLXMLNode *psSF = CPLGetXMLNode( psCO, "supportedFormats" );
-        CPLXMLNode *psNode;
-        char **papszFormatList = NULL;
-        CPLString osPreferredFormat;
-        int iFormat;
-
-        if( psSF == NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "No <PreferredFormat> tag in service definition file, and no\n"
-                      "<supportedFormats> in coverageOffering." );
-            return FALSE;
-        }
-
-        for( psNode = psSF->psChild; psNode != NULL; psNode = psNode->psNext )
-        {
-            if( psNode->eType == CXT_Element
-                && EQUAL(psNode->pszValue,"formats")
-                && psNode->psChild != NULL
-                && psNode->psChild->eType == CXT_Text )
-            {
-                // This check is looking for deprecated WCS 1.0 capabilities
-                // with multiple formats space delimited in a single <formats>
-                // element per GDAL ticket 1748 (done by MapServer 4.10 and
-                // earlier for instance).
-                if( papszFormatList == NULL
-                    && psNode->psNext == NULL
-                    && strstr(psNode->psChild->pszValue," ") != NULL
-                    && strstr(psNode->psChild->pszValue,";") == NULL )
-                {
-                    char **papszSubList =
-                        CSLTokenizeString( psNode->psChild->pszValue );
-                    papszFormatList = CSLInsertStrings( papszFormatList,
-                                                        -1, papszSubList );
-                    CSLDestroy( papszSubList );
-                }
-                else
-                {
-                    papszFormatList = CSLAddString( papszFormatList,
-                                                    psNode->psChild->pszValue);
-                }
-            }
-        }
-
-        for( iFormat = 0;
-             papszFormatList != NULL && papszFormatList[iFormat] != NULL;
-             iFormat++ )
-        {
-            if( osPreferredFormat.empty() )
-                osPreferredFormat = papszFormatList[iFormat];
-
-            if( strstr(papszFormatList[iFormat],"tiff") != NULL
-                    || strstr(papszFormatList[iFormat],"TIFF") != NULL
-                    || strstr(papszFormatList[iFormat],"Tiff") != NULL )
-            {
-                osPreferredFormat = papszFormatList[iFormat];
-                break;
-            }
-        }
-
-        CSLDestroy( papszFormatList );
-
-        if( !osPreferredFormat.empty() )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "PreferredFormat",
-                                         osPreferredFormat );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try to identify a nodata value.  For now we only support the    */
-/*      singleValue mechanism.                                          */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "NoDataValue", NULL ) == NULL )
-    {
-        const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", NULL );
-
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "NoDataValue",
-                                         pszSV );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a Band range type.  For now we look for a fairly     */
-/*      specific configuration.  The rangeset my have one axis named    */
-/*      "Band", with a set of ascending numerical values.               */
-/* -------------------------------------------------------------------- */
-    osBandIdentifier = CPLGetXMLValue( psService, "BandIdentifier", "" );
-    CPLXMLNode * psAD = CPLGetXMLNode( psService,
-      "CoverageOffering.rangeSet.RangeSet.axisDescription.AxisDescription" );
-    CPLXMLNode *psValues;
-
-    if( osBandIdentifier.empty()
-        && psAD != NULL
-        && (EQUAL(CPLGetXMLValue(psAD,"name",""),"Band")
-            || EQUAL(CPLGetXMLValue(psAD,"name",""),"Bands"))
-        && ( (psValues = CPLGetXMLNode( psAD, "values" )) != NULL ) )
-    {
-        CPLXMLNode *psSV;
-        int iBand;
-
-        osBandIdentifier = CPLGetXMLValue(psAD,"name","");
-
-        for( psSV = psValues->psChild, iBand = 1;
-             psSV != NULL;
-             psSV = psSV->psNext, iBand++ )
-        {
-            if( psSV->eType != CXT_Element
-                || !EQUAL(psSV->pszValue,"singleValue")
-                || psSV->psChild == NULL
-                || psSV->psChild->eType != CXT_Text
-                || atoi(psSV->psChild->pszValue) != iBand )
-            {
-                osBandIdentifier = "";
-                break;
-            }
-        }
-
-        if( !osBandIdentifier.empty() )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "BandIdentifier",
-                                         osBandIdentifier );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a temporal domain?  If so, try to identify a         */
-/*      default time value.                                             */
-/* -------------------------------------------------------------------- */
-    osDefaultTime = CPLGetXMLValue( psService, "DefaultTime", "" );
-    CPLXMLNode * psTD =
-        CPLGetXMLNode( psService, "CoverageOffering.domainSet.temporalDomain" );
-    CPLString osServiceURL = CPLGetXMLValue( psService, "ServiceURL", "" );
-    CPLString osCoverageExtra = CPLGetXMLValue( psService, "GetCoverageExtra", "" );
-
-    if( psTD != NULL )
-    {
-        CPLXMLNode *psTime;
-
-        // collect all the allowed time positions.
-
-        for( psTime = psTD->psChild; psTime != NULL; psTime = psTime->psNext )
-        {
-            if( psTime->eType == CXT_Element
-                && EQUAL(psTime->pszValue,"timePosition")
-                && psTime->psChild != NULL
-                && psTime->psChild->eType == CXT_Text )
-                aosTimePositions.push_back( psTime->psChild->pszValue );
-        }
-
-        // we will default to the last - likely the most recent - entry.
-
-        if( !aosTimePositions.empty()
-            && osDefaultTime.empty()
-            && osServiceURL.ifind("time=") == std::string::npos
-            && osCoverageExtra.ifind("time=") == std::string::npos )
-        {
-            osDefaultTime = aosTimePositions.back();
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "DefaultTime",
-                                         osDefaultTime );
-        }
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
-/*                          ParseBoundingBox()                          */
-/************************************************************************/
-
-static int ParseBoundingBox( CPLXMLNode *psBoundingBox, CPLString &osCRS,
-                             double &dfLowerX, double &dfLowerY,
-                             double &dfUpperX, double &dfUpperY )
-
-{
-    int nRet = TRUE;
-
-    osCRS = CPLGetXMLValue( psBoundingBox, "crs", "" );
-
-    char **papszLC = CSLTokenizeStringComplex(
-        CPLGetXMLValue( psBoundingBox, "LowerCorner", ""),
-        " ", FALSE, FALSE );
-    char **papszUC = CSLTokenizeStringComplex(
-        CPLGetXMLValue( psBoundingBox, "UpperCorner", ""),
-        " ", FALSE, FALSE );
-
-    if( CSLCount(papszLC) >= 2 && CSLCount(papszUC) >= 2 )
-    {
-        dfLowerX = CPLAtof(papszLC[0]);
-        dfLowerY = CPLAtof(papszLC[1]);
-        dfUpperX = CPLAtof(papszUC[0]);
-        dfUpperY = CPLAtof(papszUC[1]);
-    }
-    else
-        nRet = FALSE;
-
-    CSLDestroy( papszUC );
-    CSLDestroy( papszLC );
-
-    return nRet;
-}
-
-/************************************************************************/
-/*                          ExtractGridInfo()                           */
-/*                                                                      */
-/*      Collect info about grid from describe coverage for WCS 1.1      */
-/*      and above.                                                      */
-/************************************************************************/
-
-int WCSDataset::ExtractGridInfo()
-
-{
-    if( nVersion == 100 )
-        return ExtractGridInfo100();
-
-    CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageDescription" );
-
-    if( psCO == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      We need to strip off name spaces so it is easier to             */
-/*      searchfor plain gml names.                                      */
-/* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psCO, NULL, TRUE );
-
-/* -------------------------------------------------------------------- */
-/*      Verify we have a SpatialDomain and GridCRS.                     */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psSD =
-        CPLGetXMLNode( psCO, "Domain.SpatialDomain" );
-    CPLXMLNode *psGCRS =
-        CPLGetXMLNode( psSD, "GridCRS" );
-
-    if( psSD == NULL || psGCRS == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find GridCRS in CoverageDescription,\n"
-                  "unable to process WCS Coverage." );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Extract Geotransform from GridCRS.                              */
-/* -------------------------------------------------------------------- */
-    const char *pszGridType = CPLGetXMLValue( psGCRS, "GridType",
-                                              "urn:ogc:def:method:WCS::2dSimpleGrid" );
-
-    char **papszOriginTokens =
-        CSLTokenizeStringComplex( CPLGetXMLValue( psGCRS, "GridOrigin", ""),
-                                  " ", FALSE, FALSE );
-    char **papszOffsetTokens =
-        CSLTokenizeStringComplex( CPLGetXMLValue( psGCRS, "GridOffsets", ""),
-                                  " ", FALSE, FALSE );
-
-    if( strstr(pszGridType,":2dGridIn2dCrs")
-        || strstr(pszGridType,":2dGridin2dCrs") )
-    {
-        if( CSLCount(papszOffsetTokens) == 4
-            && CSLCount(papszOriginTokens) == 2 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[2]);
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[3]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dGridIn2dCrs does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return FALSE;
-        }
-    }
-
-    else if( strstr(pszGridType,":2dGridIn3dCrs") )
-    {
-        if( CSLCount(papszOffsetTokens) == 6
-            && CSLCount(papszOriginTokens) == 3 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = CPLAtof(papszOffsetTokens[1]);
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = CPLAtof(papszOffsetTokens[3]);
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[4]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dGridIn3dCrs does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return FALSE;
-        }
-    }
-
-    else if( strstr(pszGridType,":2dSimpleGrid") )
-    {
-        if( CSLCount(papszOffsetTokens) == 2
-            && CSLCount(papszOriginTokens) == 2 )
-        {
-            adfGeoTransform[0] = CPLAtof(papszOriginTokens[0]);
-            adfGeoTransform[1] = CPLAtof(papszOffsetTokens[0]);
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = CPLAtof(papszOriginTokens[1]);
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = CPLAtof(papszOffsetTokens[1]);
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "2dSimpleGrid does not have expected GridOrigin or\n"
-                      "GridOffsets values - unable to process WCS coverage.");
-            CSLDestroy( papszOffsetTokens );
-            CSLDestroy( papszOriginTokens );
-            return FALSE;
-        }
-    }
-
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unrecognized GridCRS.GridType value '%s',\n"
-                  "unable to process WCS coverage.",
-                  pszGridType );
-        CSLDestroy( papszOffsetTokens );
-        CSLDestroy( papszOriginTokens );
-        return FALSE;
-    }
-
-    CSLDestroy( papszOffsetTokens );
-    CSLDestroy( papszOriginTokens );
-
-    // GridOrigin is center of pixel ... offset half pixel to adjust.
-
-    adfGeoTransform[0] -= (adfGeoTransform[1]+adfGeoTransform[2]) * 0.5;
-    adfGeoTransform[3] -= (adfGeoTransform[4]+adfGeoTransform[5]) * 0.5;
-
-/* -------------------------------------------------------------------- */
-/*      Establish our coordinate system.                                */
-/* -------------------------------------------------------------------- */
-    osCRS = CPLGetXMLValue( psGCRS, "GridBaseCRS", "" );
-
-    if( osCRS.empty() )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Unable to find GridCRS.GridBaseCRS" );
-        return FALSE;
-    }
-    else if( strstr(osCRS,":imageCRS") )
-    {
-        // raw image.
-    }
-    else
-    {
-        OGRSpatialReference oSRS;
-        if( oSRS.importFromURN( osCRS ) == OGRERR_NONE )
-        {
-            CPLFree( pszProjection );
-            oSRS.exportToWkt( &pszProjection );
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to interpret GridBaseCRS '%s'.",
-                      osCRS.c_str() );
-            return FALSE;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Search for an ImageCRS for raster size.                         */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psNode;
-
-    nRasterXSize = -1;
-    nRasterYSize = -1;
-    for( psNode = psSD->psChild;
-         psNode != NULL && nRasterXSize == -1;
-         psNode = psNode->psNext )
-    {
-        if( psNode->eType != CXT_Element
-            || !EQUAL(psNode->pszValue,"BoundingBox") )
-            continue;
-
-        double dfLX, dfLY, dfUX, dfUY;
-        CPLString osBBCRS;
-
-        if( ParseBoundingBox( psNode, osBBCRS, dfLX, dfLY, dfUX, dfUY )
-            && strstr(osBBCRS,":imageCRS")
-            && dfLX == 0 && dfLY == 0 )
-        {
-            nRasterXSize = (int) (dfUX + 1.01);
-            nRasterYSize = (int) (dfUY + 1.01);
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Otherwise we search for a bounding box in our coordinate        */
-/*      system and derive the size from that.                           */
-/* -------------------------------------------------------------------- */
-    for( psNode = psSD->psChild;
-         psNode != NULL && nRasterXSize == -1;
-         psNode = psNode->psNext )
-    {
-        if( psNode->eType != CXT_Element
-            || !EQUAL(psNode->pszValue,"BoundingBox") )
-            continue;
-
-        double dfLX, dfLY, dfUX, dfUY;
-        CPLString osBBCRS;
-
-        if( ParseBoundingBox( psNode, osBBCRS, dfLX, dfLY, dfUX, dfUY )
-            && osBBCRS == osCRS
-            && adfGeoTransform[2] == 0.0
-            && adfGeoTransform[4] == 0.0 )
-        {
-            nRasterXSize =
-                (int) ((dfUX - dfLX) / adfGeoTransform[1] + 1.01);
-            nRasterYSize =
-                (int) ((dfUY - dfLY) / fabs(adfGeoTransform[5]) + 1.01);
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a coordinate system override?                        */
-/* -------------------------------------------------------------------- */
-    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
-
-    if( pszProjOverride )
-    {
-        OGRSpatialReference oSRS;
-
-        if( oSRS.SetFromUserInput( pszProjOverride ) != OGRERR_NONE )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "<SRS> element contents not parsable:\n%s",
-                      pszProjOverride );
-            return FALSE;
-        }
-
-        CPLFree( pszProjection );
-        oSRS.exportToWkt( &pszProjection );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Pick a format type if we don't already have one selected.       */
-/*                                                                      */
-/*      We will prefer anything that sounds like TIFF, otherwise        */
-/*      falling back to the first supported format.  Should we          */
-/*      consider preferring the nativeFormat if available?              */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
-    {
-        CPLString osPreferredFormat;
-
-        for( psNode = psCO->psChild; psNode != NULL; psNode = psNode->psNext )
-        {
-            if( psNode->eType == CXT_Element
-                && EQUAL(psNode->pszValue,"SupportedFormat")
-                && psNode->psChild
-                && psNode->psChild->eType == CXT_Text )
-            {
-                if( osPreferredFormat.empty() )
-                    osPreferredFormat = psNode->psChild->pszValue;
-
-                if( strstr(psNode->psChild->pszValue,"tiff") != NULL
-                    || strstr(psNode->psChild->pszValue,"TIFF") != NULL
-                    || strstr(psNode->psChild->pszValue,"Tiff") != NULL )
-                {
-                    osPreferredFormat = psNode->psChild->pszValue;
-                    break;
-                }
-            }
-        }
-
-        if( !osPreferredFormat.empty() )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "PreferredFormat",
-                                         osPreferredFormat );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try to identify a nodata value.  For now we only support the    */
-/*      singleValue mechanism.                                          */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "NoDataValue", NULL ) == NULL )
-    {
-        const char *pszSV =
-            CPLGetXMLValue( psCO, "Range.Field.NullValue", NULL );
-
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "NoDataValue",
-                                         pszSV );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Grab the field name, if possible.                               */
-/* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "FieldName", NULL ) == NULL )
-    {
-        CPLString osFieldName =
-            CPLGetXMLValue( psCO, "Range.Field.Identifier", "" );
-
-        if( !osFieldName.empty() )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "FieldName",
-                                         osFieldName );
-        }
-        else
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Unable to find required Identifier name %s for Range Field.",
-                      osCRS.c_str() );
-            return FALSE;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Do we have a "Band" axis?  If so try to grab the bandcount      */
-/*      and data type from it.                                          */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode * psAxis = CPLGetXMLNode(
-        psService, "CoverageDescription.Range.Field.Axis" );
-
-    if( (EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
-         || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
-        && CPLGetXMLNode(psAxis,"AvailableKeys") != NULL )
-    {
-        osBandIdentifier = CPLGetXMLValue(psAxis,"Identifier","");
-
-        // verify keys are ascending starting at 1
-        CPLXMLNode *psValues = CPLGetXMLNode(psAxis,"AvailableKeys");
-        CPLXMLNode *psSV;
-        int iBand;
-
-        for( psSV = psValues->psChild, iBand = 1;
-             psSV != NULL;
-             psSV = psSV->psNext, iBand++ )
-        {
-            if( psSV->eType != CXT_Element
-                || !EQUAL(psSV->pszValue,"Key")
-                || psSV->psChild == NULL
-                || psSV->psChild->eType != CXT_Text
-                || atoi(psSV->psChild->pszValue) != iBand )
-            {
-                osBandIdentifier = "";
-                break;
-            }
-        }
-
-        if( !osBandIdentifier.empty() )
-        {
-            bServiceDirty = TRUE;
-            if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL )
-                CPLCreateXMLElementAndValue( psService, "BandIdentifier",
-                                             osBandIdentifier );
-
-            if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
-                CPLCreateXMLElementAndValue( psService, "BandCount",
-                                             CPLString().Printf("%d",iBand-1));
-        }
-
-        // Is this an ESRI server returning a GDAL recognised data type?
-        CPLString osDataType = CPLGetXMLValue( psAxis, "DataType", "" );
-        if( GDALGetDataTypeByName(osDataType) != GDT_Unknown
-            && CPLGetXMLValue(psService,"BandType",NULL) == NULL )
-        {
-            bServiceDirty = TRUE;
-            CPLCreateXMLElementAndValue( psService, "BandType", osDataType );
-        }
-    }
-
     return TRUE;
 }
 
@@ -1748,20 +517,10 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
     {
         CPLXMLNode *psTree = CPLParseXMLString( (const char *)
                                                 psResult->pabyData );
-        const char *pszMsg = NULL;
 
         CPLStripXMLNamespace( psTree, NULL, TRUE );
 
-        // VERSION 1.0.0
-        if( psTree != NULL )
-            pszMsg = CPLGetXMLValue(psTree,
-                                    "=ServiceExceptionReport.ServiceException",
-                                    NULL );
-        // VERSION 1.1.0
-        if( pszMsg == NULL )
-            pszMsg = CPLGetXMLValue(psTree,
-                                    "=ExceptionReport.Exception.ExceptionText",
-                                    NULL );
+        const char *pszMsg = CPLGetXMLValue(psTree, this->ExceptionNodeName(), NULL);
 
         if( pszMsg )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1783,7 +542,7 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
     if( CPLGetLastErrorNo() != 0 )
         return TRUE;
 
-    return FALSE;
+    return false;
 }
 
 /************************************************************************/
@@ -1823,7 +582,7 @@ int WCSDataset::EstablishRasterDetails()
 
     eErr = GetCoverage( 0, 0, 2, 2, 2, 2, 0, NULL, &psResult );
     if( eErr != CE_None )
-        return FALSE;
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Try and open result as a dataset.                               */
@@ -1831,7 +590,7 @@ int WCSDataset::EstablishRasterDetails()
     GDALDataset *poDS = GDALOpenResult( psResult );
 
     if( poDS == NULL )
-        return FALSE;
+        return false;
 
     const char* pszPrj = poDS->GetProjectionRef();
     if( pszPrj && strlen(pszPrj) > 0 )
@@ -1848,7 +607,7 @@ int WCSDataset::EstablishRasterDetails()
     if( poDS->GetRasterCount() < 1 )
     {
         delete poDS;
-        return FALSE;
+        return false;
     }
 
     if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
@@ -1860,7 +619,7 @@ int WCSDataset::EstablishRasterDetails()
         psService, "BandType",
         GDALGetDataTypeName(poDS->GetRasterBand(1)->GetRasterDataType()) );
 
-    bServiceDirty = TRUE;
+    bServiceDirty = true;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -1940,6 +699,15 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the result.                           */
 /* -------------------------------------------------------------------- */
+#ifdef DEBUG_WCS
+    // this facility is used by requests.pl to generate files for the test server
+    CPLString xfn = CPLGetXMLValue(psService, "filename", "");
+    if (xfn != "") {
+        VSILFILE *fpTemp = VSIFOpenL( xfn, "wb" );
+        VSIFWriteL( pabyData, nDataLen, 1, fpTemp );
+        VSIFCloseL( fpTemp );
+    }
+#endif
     // Eventually we should be looking at mime info and stuff to figure
     // out an optimal filename, but for now we just use a fixed one.
     osResultFilename.Printf( "/vsimem/wcs/%p/wcsresult.dat",
@@ -2026,6 +794,14 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
+/*      Filename is WCS:URL                                             */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes == 0
+        && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS:") )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Is this a WCS_GDAL service description file or "in url"         */
 /*      equivalent?                                                     */
 /* -------------------------------------------------------------------- */
@@ -2049,29 +825,508 @@ int WCSDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                            WCSParseVersion()                         */
+/************************************************************************/
+
+static int WCSParseVersion( const char *version )
+{
+    if( EQUAL(version, "2.0.1") )
+        return 201;
+    if( EQUAL(version, "1.1.2") )
+        return 112;
+    if( EQUAL(version, "1.1.1") )
+        return 111;
+    if( EQUAL(version, "1.1.0") )
+        return 110;
+    if( EQUAL(version, "1.0.0") )
+        return 100;
+    return 0;
+}
+
+/************************************************************************/
+/*                             Version()                                */
+/************************************************************************/
+
+const char *WCSDataset::Version() const
+{
+    if( this->m_Version == 201 )
+        return "2.0.1";
+    if( this->m_Version == 112 )
+        return "1.1.2";
+    if( this->m_Version == 111 )
+        return "1.1.1";
+    if( this->m_Version == 110 )
+        return "1.1.0";
+    if( this->m_Version == 100 )
+        return "1.0.0";
+    return "";
+}
+
+/************************************************************************/
+/*                      FetchCapabilities()                             */
+/************************************************************************/
+
+#define WCS_HTTP_OPTIONS "TIMEOUT", "USERPWD", "HTTPAUTH"
+
+static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLString path)
+{
+    url = CPLURLAddKVP(url, "SERVICE", "WCS");
+    url = CPLURLAddKVP(url, "REQUEST", "GetCapabilities");
+    CPLString extra = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "GetCapabilitiesExtra", "");
+    if (extra != "") {
+        std::vector<CPLString> pairs = Split(extra, "&");
+        for (unsigned int i = 0; i < pairs.size(); ++i) {
+            std::vector<CPLString> pair = Split(pairs[i], "=");
+            url = CPLURLAddKVP(url, pair[0], pair[1]);
+        }
+    }
+    char **options = NULL;
+    const char *keys[] = {
+        WCS_HTTP_OPTIONS
+    };
+    for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
+        CPLString value = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, keys[i], "");
+        if (value != "") {
+            options = CSLSetNameValue(options, keys[i], value);
+        }
+    }
+    CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
+    if (psResult == NULL || psResult->nDataLen == 0) {
+        CPLHTTPDestroyResult(psResult);
+        return false;
+    }
+    CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
+    CPLHTTPDestroyResult(psResult);
+    if (doc.get() == NULL) {
+        return false;
+    }
+    CPLXMLNode *capabilities = doc.get();
+    CPLSerializeXMLTreeToFile(capabilities, path);
+    return true;
+}
+
+/************************************************************************/
+/*                      CreateFromCapabilities()                        */
+/************************************************************************/
+
+WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
+                                               CPLString path,
+                                               CPLString url)
+{
+    CPLXMLTreeCloser doc(CPLParseXMLFile(path));
+    if (doc.get() == NULL) {
+        return NULL;
+    }
+    CPLXMLNode *capabilities = doc.getDocumentElement();
+    if (capabilities == NULL) {
+        return NULL;
+    }
+    // get version, this version will overwrite the user's request
+    int version_from_server = WCSParseVersion(CPLGetXMLValue(capabilities, "version", ""));
+    if (version_from_server == 0) {
+        // broken server, assume 1.0.0
+        version_from_server = 100;
+    }
+    WCSDataset *poDS;
+    if (version_from_server == 201) {
+        poDS = new WCSDataset201(cache);
+    } else if (version_from_server/10 == 11) {
+        poDS = new WCSDataset110(version_from_server, cache);
+    } else {
+        poDS = new WCSDataset100(cache);
+    }
+    if (poDS->ParseCapabilities(capabilities, url) != CE_None) {
+        delete poDS;
+        return NULL;
+    }
+    poDS->SetDescription(RemoveExt(path));
+    poDS->TrySaveXML();
+    return poDS;
+}
+
+/************************************************************************/
+/*                        CreateFromMetadata()                          */
+/************************************************************************/
+
+WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString path)
+{
+    WCSDataset *poDS;
+    if (FileIsReadable(path)) {
+        CPLXMLTreeCloser doc(CPLParseXMLFile((path).c_str()));
+        CPLXMLNode *metadata = doc.get();
+        if (metadata == NULL) {
+            return NULL;
+        }
+        int version_from_metadata =
+            WCSParseVersion(
+                CPLGetXMLValue(
+                    SearchChildWithValue(
+                        SearchChildWithValue(metadata, "domain", ""),
+                        "key", "WCS_GLOBAL#version"),
+                    NULL, ""));
+        if (version_from_metadata == 201) {
+            poDS = new WCSDataset201(cache);
+        } else if (version_from_metadata/10 == 11) {
+            poDS = new WCSDataset110(version_from_metadata, cache);
+        } else if (version_from_metadata/10 == 10) {
+            poDS = new WCSDataset100(cache);
+        } else {
+            CPLError(CE_Failure, CPLE_AppDefined, "The metadata does not contain version. RECREATE_META?");
+            return NULL;
+        }
+        path = RemoveExt(RemoveExt(path));
+        poDS->SetDescription(path);
+        poDS->TryLoadXML(); // todo: avoid reload
+    } else {
+        // obviously there was an error
+        // processing the Capabilities file
+        // so we show it to the user
+        GByte *pabyOut = NULL;
+        path = RemoveExt(RemoveExt(path)) + ".xml";
+        if( !VSIIngestFile( NULL, path, &pabyOut, NULL, -1 ) )
+            return NULL;
+        CPLString error = reinterpret_cast<char *>(pabyOut);
+        if( error.size() > 2048 ) {
+            error.resize( 2048 );
+        }
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error:\n%s",
+                  error.c_str() );
+        CPLFree(pabyOut);
+        return NULL;
+    }
+    return poDS;
+}
+
+/************************************************************************/
+/*                        BootstrapGlobal()                             */
+/************************************************************************/
+
+static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &cache, const CPLString &url)
+{
+    // do we have the capabilities file
+    CPLString filename;
+    // we should lock the cache for our use in case we need to add an entry
+    bool cached;
+    if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
+        return NULL; // error in cache
+    }
+    if (!cached) {
+        filename = "XXXXX";
+        if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
+            // release the cache lock
+            return NULL; // error in cache
+        }
+        if (!FetchCapabilities(poOpenInfo, url, filename)) {
+            // release the cache lock
+            return NULL;
+        }
+        // release the cache lock
+        return WCSDataset::CreateFromCapabilities(cache, filename, url);
+    }
+    // release the cache lock
+    filename = RemoveExt(filename) + ".aux.xml";
+    bool recreate_meta = CPLFetchBool(poOpenInfo->papszOpenOptions, "RECREATE_META", false);
+    if (FileIsReadable(filename) && !recreate_meta) {
+        return WCSDataset::CreateFromMetadata(cache, filename);
+    }
+    // we capabilities but not meta
+    return WCSDataset::CreateFromCapabilities(cache, filename, url);
+}
+
+/************************************************************************/
+/*                        CreateServiceMetadata()                       */
+/************************************************************************/
+
+// master filename is the name of the global metadata file
+// filename is the name of the metadata file of the service file
+static void CreateServiceMetadata(const CPLString &coverage,
+                                  const CPLString &master_filename,
+                                  const CPLString &meta_filename)
+{
+    CPLXMLTreeCloser doc(CPLParseXMLFile(master_filename));
+    CPLXMLNode *metadata = doc.getDocumentElement();
+    // remove other subdatasets than the current
+    int subdataset = 0;
+    CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+    if (domain == NULL) {
+        return;
+    }
+    for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+        if (node->eType != CXT_Element) {
+            continue;
+        }
+        CPLString key = CPLGetXMLValue(node, "key", "");
+        if (!STARTS_WITH(key, "SUBDATASET_")) {
+            continue;
+        }
+        CPLString value = CPLGetXMLValue(node, NULL, "");
+        if (value.find(coverage) != std::string::npos) {
+            key.erase(0, 11); // SUBDATASET_
+            key.erase(key.find("_"), std::string::npos);
+            subdataset = atoi(key);
+            break;
+        }
+    }
+    if (subdataset > 0) {
+        CPLXMLNode *next = NULL;
+        for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
+            next = node->psNext;
+            if (node->eType != CXT_Element) {
+                continue;
+            }
+            CPLString key = CPLGetXMLValue(node, "key", "");
+            if (key.find(CPLString().Printf("SUBDATASET_%i_", subdataset)) == std::string::npos) {
+                CPLRemoveXMLChild(domain, node);
+                CPLDestroyXMLNode(node);
+            }
+        }
+    }
+    CPLSerializeXMLTreeToFile(metadata, meta_filename);
+}
+
+/************************************************************************/
+/*                          CreateService()                             */
+/************************************************************************/
+
+static CPLXMLNode *CreateService(const CPLString &base_url,
+                                 const CPLString &version,
+                                 const CPLString &coverage,
+                                 const CPLString &parameters)
+{
+    // construct WCS_GDAL XML into psService
+    CPLString xml = "<WCS_GDAL>";
+    xml += "<ServiceURL>" + base_url + "</ServiceURL>";
+    xml += "<Version>" + version + "</Version>";
+    xml += "<CoverageName>" + coverage + "</CoverageName>";
+    xml += "<Parameters>" + parameters + "</Parameters>";
+    xml += "</WCS_GDAL>";
+    CPLXMLNode *psService = CPLParseXMLString(xml);
+    return psService;
+}
+
+/************************************************************************/
+/*                          UpdateService()                             */
+/************************************************************************/
+
+#define WCS_SERVICE_OPTIONS "PreferredFormat", "NoDataValue",           \
+        "BlockXSize", "BlockYSize", "OverviewCount",                    \
+        "GetCoverageExtra", "DescribeCoverageExtra",                    \
+        "Domain", "BandCount", "BandType", "DefaultTime", "CRS"
+
+#define WCS_TWEAK_OPTIONS "OriginAtBoundary", "OuterExtents", "BufSizeAdjust", \
+        "OffsetsPositive", "NrOffsets", "GridCRSOptional", "NoGridAxisSwap", \
+        "GridAxisLabelSwap", "SubsetAxisSwap", "UseScaleFactor", "INTERLEAVE"
+
+static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
+{
+    bool updated = false;
+    // descriptions in frmt_wcs.html
+    const char *keys[] = {
+        "Subset", "RangeSubsetting",
+        WCS_URL_PARAMETERS,
+        WCS_SERVICE_OPTIONS,
+        WCS_TWEAK_OPTIONS,
+        WCS_HTTP_OPTIONS
+#ifdef DEBUG_WCS
+        ,"filename"
+#endif
+    };
+    for (unsigned int i = 0; i < CPL_ARRAYSIZE(keys); i++) {
+        const char *value;
+        if (CSLFindString(poOpenInfo->papszOpenOptions, keys[i]) != -1) {
+            value = "TRUE";
+        } else {
+            value = CSLFetchNameValue(poOpenInfo->papszOpenOptions, keys[i]);
+            if (value == NULL) {
+                continue;
+            }
+        }
+        updated = CPLUpdateXML(service, keys[i], value) || updated;
+    }
+    return updated;
+}
+
+/************************************************************************/
+/*                          CreateFromCache()                           */
+/************************************************************************/
+
+static WCSDataset *CreateFromCache(const CPLString &cache)
+{
+    WCSDataset *ds = new WCSDataset201(cache);
+    if (!ds) {
+        return NULL;
+    }
+    char **metadata = NULL;
+    std::vector<CPLString> contents = ReadCache(cache);
+    CPLString path = "SUBDATASET_";
+    unsigned int index = 1;
+    for (unsigned int i = 0; i < contents.size(); ++i) {
+        CPLString name = path + CPLString().Printf("%d_", index) + "NAME";
+        CPLString value = "WCS:" + contents[i];
+        metadata = CSLSetNameValue(metadata, name, value);
+        index += 1;
+    }
+    ds->SetMetadata(metadata, "SUBDATASETS");
+    CSLDestroy(metadata);
+    return ds;
+}
+
+/************************************************************************/
+/*                              ParseURL()                              */
+/************************************************************************/
+
+static void ParseURL(CPLString &url, CPLString &version, CPLString &coverage, CPLString &parameters)
+{
+    version = CPLURLGetValue(url, "version");
+    url = URLRemoveKey(url, "version");
+    // the default version, the aim is to have version explicitly in cache keys
+    if (WCSParseVersion(version) == 0) {
+        version = "2.0.1";
+    }
+    coverage = CPLURLGetValue(url, "coverageid"); // 2.0
+    if (coverage == "") {
+        coverage = CPLURLGetValue(url, "identifiers"); // 1.1
+        if (coverage == "") {
+            coverage = CPLURLGetValue(url, "coverage"); // 1.0
+            url = URLRemoveKey(url, "coverage");
+        } else {
+            url = URLRemoveKey(url, "identifiers");
+        }
+    } else {
+        url = URLRemoveKey(url, "coverageid");
+    }
+    size_t pos = url.find("?");
+    if (pos == std::string::npos) {
+        url += "?";
+        return;
+    }
+    parameters = url.substr(pos + 1, std::string::npos);
+    url.erase(pos + 1, std::string::npos);
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    CPLString cache = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "");
+    if (!SetupCache(cache,
+                    CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
+    {
+        return NULL;
+    }
+    CPLXMLNode *service = NULL;
     char **papszModifiers = NULL;
 
+    if( poOpenInfo->nHeaderBytes == 0
+        && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS:") )
+    {
+/* -------------------------------------------------------------------- */
+/*      Filename is WCS:URL                                             */
+/* -------------------------------------------------------------------- */
+        CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
+
+        const char *del = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DELETE_FROM_CACHE");
+        if (del != NULL) {
+            int k = atoi(del);
+            std::vector<CPLString> contents = ReadCache(cache);
+            if (k > 0 && k <= (int)contents.size()) {
+                DeleteEntryFromCache(cache, "", contents[k-1]);
+            }
+        }
+
+        if (url == "") {
+            return CreateFromCache(cache);
+        }
+
+        if (CPLFetchBool(poOpenInfo->papszOpenOptions, "REFRESH_CACHE", false)) {
+            DeleteEntryFromCache(cache, "", url);
+        }
+
+        // the cache:
+        // db = key=URL database
+        // key.xml = service file
+        // key.xml.aux.xml = metadata file
+        // key.xml = Capabilities response
+        // key.aux.xml = Global metadata
+        // key.DC.xml = DescribeCoverage response
+
+        CPLString filename;
+        bool cached;
+        if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
+            return NULL; // error in cache
+        }
+
+        CPLString full_url = url, version, coverage, parameters;
+        ParseURL(url, version, coverage, parameters);
+
+        // The goal is to get the service XML and a filename for it
+
+        bool updated = false;
+        if (cached) {
+/* -------------------------------------------------------------------- */
+/*          The fast route, service file is in cache.                   */
+/* -------------------------------------------------------------------- */
+            if (coverage == "") {
+                CPLString url2 = CPLURLAddKVP(url, "version", version);
+                WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
+                return global;
+            }
+            service = CPLParseXMLFile(filename);
+
+        } else {
+/* -------------------------------------------------------------------- */
+/*          Get capabilities.                                           */
+/* -------------------------------------------------------------------- */
+            CPLString url2 = CPLURLAddKVP(url, "version", version);
+            url2 += "&" + parameters;
+            WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
+            if (!global) {
+                return NULL;
+            }
+            if (coverage == "") {
+                return global;
+            }
+            if (version == "") {
+                version = global->Version();
+            }
+            CPLString global_meta = CPLString(global->GetDescription()) + ".aux.xml";
+            delete global;
+            service = CreateService(url, version, coverage, parameters);
+/* -------------------------------------------------------------------- */
+/*          The filename for the new service file.                      */
+/* -------------------------------------------------------------------- */
+            filename = "XXXXX";
+            if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
+                return NULL; // error in cache
+            }
+            CreateServiceMetadata(coverage, global_meta, filename + ".aux.xml");
+            CPLSetXMLValue(service, "Parameters", parameters);
+            updated = true;
+        }
+        CPLFree(poOpenInfo->pszFilename);
+        poOpenInfo->pszFilename = CPLStrdup(filename);
+        updated = UpdateService(service, poOpenInfo) || updated;
+        if (updated || !cached) {
+            CPLSerializeXMLTreeToFile(service, filename);
+        }
+    }
 /* -------------------------------------------------------------------- */
 /*      Is this a WCS_GDAL service description file or "in url"         */
 /*      equivalent?                                                     */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psService = NULL;
-
-    if( poOpenInfo->nHeaderBytes == 0
-        && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
+    else if( poOpenInfo->nHeaderBytes == 0
+             && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "<WCS_GDAL>") )
     {
-        psService = CPLParseXMLString( poOpenInfo->pszFilename );
+        service = CPLParseXMLString( poOpenInfo->pszFilename );
     }
     else if( poOpenInfo->nHeaderBytes >= 10
              && STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "<WCS_GDAL>") )
     {
-        psService = CPLParseXMLFile( poOpenInfo->pszFilename );
+        service = CPLParseXMLFile( poOpenInfo->pszFilename );
     }
 /* -------------------------------------------------------------------- */
 /*      Is this apparently a subdataset?                                */
@@ -2087,7 +1342,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         iLast = CSLCount(papszModifiers)-1;
         if( iLast >= 0 )
         {
-            psService = CPLParseXMLFile( papszModifiers[iLast] );
+            service = CPLParseXMLFile( papszModifiers[iLast] );
             CPLFree( papszModifiers[iLast] );
             papszModifiers[iLast] = NULL;
         }
@@ -2096,7 +1351,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Success so far?                                                 */
 /* -------------------------------------------------------------------- */
-    if( psService == NULL )
+    if( service == NULL )
     {
         CSLDestroy( papszModifiers );
         return NULL;
@@ -2108,7 +1363,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_Update )
     {
         CSLDestroy( papszModifiers );
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The WCS driver does not support update access to existing"
                   " datasets.\n" );
@@ -2118,38 +1373,29 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for required minimum fields.                              */
 /* -------------------------------------------------------------------- */
-    if( !CPLGetXMLValue( psService, "ServiceURL", NULL )
-        || !CPLGetXMLValue( psService, "CoverageName", NULL ) )
+    if( !CPLGetXMLValue( service, "ServiceURL", NULL )
+        || !CPLGetXMLValue( service, "CoverageName", NULL ) )
     {
         CSLDestroy( papszModifiers );
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Missing one or both of ServiceURL and CoverageName elements.\n"
                   "See WCS driver documentation for details on service description file format." );
 
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         return NULL;
     }
 
 /* -------------------------------------------------------------------- */
 /*      What version are we working with?                               */
 /* -------------------------------------------------------------------- */
-    const char *pszVersion = CPLGetXMLValue( psService, "Version", "1.0.0" );
-    int nVersion;
+    const char *pszVersion = CPLGetXMLValue( service, "Version", "1.0.0" );
 
-    if (EQUAL(pszVersion, "1.1.2") )
-        nVersion = 112;
-    else if( EQUAL(pszVersion,"1.1.1") )
-        nVersion = 111;
-    else if( EQUAL(pszVersion,"1.1.0") )
-        nVersion = 110;
-    else if( EQUAL(pszVersion,"1.0.0") )
-        nVersion = 100;
-    else
+    int nVersion = WCSParseVersion(pszVersion);
+
+    if( nVersion == 0 )
     {
         CSLDestroy( papszModifiers );
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "WCS Version '%s' not supported.", pszVersion );
-        CPLDestroyXMLNode( psService );
+        CPLDestroyXMLNode( service );
         return NULL;
     }
 
@@ -2157,13 +1403,20 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     WCSDataset *poDS;
+    if (nVersion == 201) {
+        poDS = new WCSDataset201(cache);
+    } else if (nVersion/10 == 11) {
+        poDS = new WCSDataset110(nVersion, cache);
+    } else {
+        poDS = new WCSDataset100(cache);
+    }
 
-    poDS = new WCSDataset();
-
-    poDS->psService = psService;
+    poDS->psService = service;
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->nVersion = nVersion;
     poDS->papszSDSModifiers = papszModifiers;
+    // WCS:URL => basic metadata was already made
+    // Metadata is needed in ExtractGridInfo
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Capture HTTP parameters.                                        */
@@ -2173,15 +1426,15 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->papszHttpOptions =
         CSLSetNameValue(poDS->papszHttpOptions,
                         "TIMEOUT",
-                        CPLGetXMLValue( psService, "Timeout", "30" ) );
+                        CPLGetXMLValue( service, "Timeout", "30" ) );
 
-    pszParm = CPLGetXMLValue( psService, "HTTPAUTH", NULL );
+    pszParm = CPLGetXMLValue( service, "HTTPAUTH", NULL );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
                              "HTTPAUTH", pszParm );
 
-    pszParm = CPLGetXMLValue( psService, "USERPWD", NULL );
+    pszParm = CPLGetXMLValue( service, "USERPWD", NULL );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
@@ -2191,8 +1444,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If we don't have the DescribeCoverage result for this           */
 /*      coverage, fetch it now.                                         */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psService, "CoverageOffering" ) == NULL
-        && CPLGetXMLNode( psService, "CoverageDescription" ) == NULL )
+    if( CPLGetXMLNode( service, "CoverageOffering" ) == NULL
+        && CPLGetXMLNode( service, "CoverageDescription" ) == NULL )
     {
         if( !poDS->DescribeCoverage() )
         {
@@ -2206,32 +1459,75 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      the coverage description and/or service description             */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
-    if( !poDS->ExtractGridInfo() )
+    if( !poDS->ExtractGridInfo() ) {
+        delete poDS;
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Leave now or there may be a GetCoverage call.                   */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+    int nBandCount = -1;
+    CPLString sBandCount = CPLGetXMLValue(service, "BandCount", "");
+    if (sBandCount != "") {
+        nBandCount = atoi(sBandCount);
+    }
+    if (CPLFetchBool(poOpenInfo->papszOpenOptions, "SKIP_GETCOVERAGE", false)
+        || nBandCount == 0)
+    {
+        return poDS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extract band count and type from a sample.                      */
+/* -------------------------------------------------------------------- */
+    if( !poDS->EstablishRasterDetails() ) // todo: do this only if missing info
     {
         delete poDS;
         return NULL;
     }
 
-    if( !poDS->EstablishRasterDetails() )
+/* -------------------------------------------------------------------- */
+/*      It is ok to not have bands. The user just needs to supply       */
+/*      more information.                                               */
+/* -------------------------------------------------------------------- */
+    nBandCount = atoi(CPLGetXMLValue(service, "BandCount", "0"));
+    if (nBandCount == 0)
     {
-        delete poDS;
-        return NULL;
+        return poDS;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    int nBandCount = atoi(CPLGetXMLValue(psService,"BandCount","1"));
     int iBand;
 
-    if (!GDALCheckBandCount(nBandCount, 0))
+    if (!GDALCheckBandCount(nBandCount, FALSE))
     {
         delete poDS;
         return NULL;
     }
 
-    for( iBand = 0; iBand < nBandCount; iBand++ )
-        poDS->SetBand( iBand+1, new WCSRasterBand( poDS, iBand+1, -1 ) );
+    for( iBand = 0; iBand < nBandCount; iBand++ ) {
+        WCSRasterBand *band = new WCSRasterBand(poDS, iBand+1, -1);
+        // copy band specific metadata to the band
+        char **md_from = poDS->GetMetadata("SUBDATASETS");
+        char **md_to = NULL;
+        CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
+        for (char **from = md_from; *from != NULL; ++from) {
+            std::vector<CPLString> kv = Split(*from, "=");
+            if (kv.size() > 1 && STARTS_WITH(kv[0], our_key)) {
+                CPLString key = kv[0];
+                CPLString value = kv[1];
+                key.erase(0, our_key.length());
+                md_to = CSLSetNameValue(md_to, key, value);
+            }
+        }
+        band->SetMetadata(md_to, "");
+        CSLDestroy(md_to);
+        poDS->SetBand(iBand+1, band);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set time metadata on the dataset if we are selecting a          */
@@ -2247,7 +1543,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have a band identifier to select only a subset of bands?  */
 /* -------------------------------------------------------------------- */
-    poDS->osBandIdentifier = CPLGetXMLValue(psService,"BandIdentifier","");
+    poDS->osBandIdentifier = CPLGetXMLValue(service,"BandIdentifier","");
 
 /* -------------------------------------------------------------------- */
 /*      Do we have time based subdatasets?  If so, record them in       */
@@ -2268,8 +1564,8 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             osName.Printf( "SUBDATASET_%d_NAME", iTime+1 );
             osValue.Printf( "WCS_SDS:time=\"%s\",%s",
-                           poDS->aosTimePositions[iTime].c_str(),
-                           poOpenInfo->pszFilename );
+                            poDS->aosTimePositions[iTime].c_str(),
+                            poOpenInfo->pszFilename );
             papszSubdatasets = CSLSetNameValue( papszSubdatasets,
                                                 osName, osValue );
 

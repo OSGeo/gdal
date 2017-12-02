@@ -33,7 +33,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$")
+CPL_CVSID("$Id: httpdriver.cpp 40504 2017-10-19 22:08:34Z rouault $")
 
 /************************************************************************/
 /*               HTTPFetchContentDispositionFilename()                 */
@@ -85,7 +85,6 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-
     CPLHTTPResult *psResult = CPLHTTPFetch( poOpenInfo->pszFilename, NULL );
 
 /* -------------------------------------------------------------------- */

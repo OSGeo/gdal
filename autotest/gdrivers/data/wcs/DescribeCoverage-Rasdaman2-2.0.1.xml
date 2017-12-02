@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wcs:CoverageDescriptions xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+    xmlns:ows="http://www.opengis.net/ows/2.0"
+    xmlns:swe="http://www.opengis.net/swe/2.0"
+    xmlns:wcs="http://www.opengis.net/wcs/2.0"
+    xmlns:wcsgs="http://www.geoserver.org/wcsgs/2.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd">
+    <wcs:CoverageDescription gml:id="test_irr_cube_2"
+        xmlns="http://www.opengis.net/gml/3.2"
+        xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0">
+        <boundedBy>
+            <Envelope axisLabels="E N unix" srsDimension="3"
+                srsName="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime" uomLabels="metre metre s">
+                <lowerCorner>75042.7273594 5094865.55794 "2008-01-01T02:01:20.000Z"</lowerCorner>
+                <upperCorner>705042.727359 5454865.55794 "2008-01-08T00:02:58.000Z"</upperCorner>
+            </Envelope>
+        </boundedBy>
+        <wcs:CoverageId>test_irr_cube_2</wcs:CoverageId>
+        <coverageFunction>
+            <GridFunction>
+                <sequenceRule axisOrder="+1 +2 +3">Linear</sequenceRule>
+                <startPoint>0 0 0</startPoint>
+            </GridFunction>
+        </coverageFunction>
+        <gmlcov:metadata/>
+        <domainSet>
+            <gmlrgrid:ReferenceableGridByVectors dimension="3"
+                gml:id="test_irr_cube_2-grid"
+                xmlns:gmlrgrid="http://www.opengis.net/gml/3.3/rgrid" xsi:schemaLocation="http://www.opengis.net/gml/3.3/rgrid http://schemas.opengis.net/gml/3.3/referenceableGrid.xsd">
+                <limits>
+                    <GridEnvelope>
+                        <low>0 0 0</low>
+                        <high>62 35 3</high>
+                    </GridEnvelope>
+                </limits>
+                <axisLabels>E N unix</axisLabels>
+                <gmlrgrid:origin>
+                    <Point gml:id="test_irr_cube_2-origin" srsName="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime">
+                        <pos>80042.7273594 5449865.55794 "2008-01-01T02:01:20.000Z"</pos>
+                    </Point>
+                </gmlrgrid:origin>
+                <gmlrgrid:generalGridAxis>
+                    <gmlrgrid:GeneralGridAxis>
+                        <gmlrgrid:offsetVector srsName="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime">10000 0 0</gmlrgrid:offsetVector>
+                        <gmlrgrid:coefficients/>
+                        <gmlrgrid:gridAxesSpanned>E</gmlrgrid:gridAxesSpanned>
+                        <gmlrgrid:sequenceRule axisOrder="+1">Linear</gmlrgrid:sequenceRule>
+                    </gmlrgrid:GeneralGridAxis>
+                </gmlrgrid:generalGridAxis>
+                <gmlrgrid:generalGridAxis>
+                    <gmlrgrid:GeneralGridAxis>
+                        <gmlrgrid:offsetVector srsName="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime">0 -10000 0</gmlrgrid:offsetVector>
+                        <gmlrgrid:coefficients/>
+                        <gmlrgrid:gridAxesSpanned>N</gmlrgrid:gridAxesSpanned>
+                        <gmlrgrid:sequenceRule axisOrder="+1">Linear</gmlrgrid:sequenceRule>
+                    </gmlrgrid:GeneralGridAxis>
+                </gmlrgrid:generalGridAxis>
+                <gmlrgrid:generalGridAxis>
+                    <gmlrgrid:GeneralGridAxis>
+                        <gmlrgrid:offsetVector srsName="http://ows.rasdaman.org/def/crs-compound?1=http://ows.rasdaman.org/def/crs/EPSG/0/32633&amp;2=http://ows.rasdaman.org/def/crs/OGC/0/UnixTime">0 0 1</gmlrgrid:offsetVector>
+                        <gmlrgrid:coefficients>"2008-01-01T02:01:20.000Z" "2008-01-03T23:59:55.000Z" "2008-01-05T01:58:30.000Z" "2008-01-08T00:02:58.000Z"</gmlrgrid:coefficients>
+                        <gmlrgrid:gridAxesSpanned>unix</gmlrgrid:gridAxesSpanned>
+                        <gmlrgrid:sequenceRule axisOrder="+1">Linear</gmlrgrid:sequenceRule>
+                    </gmlrgrid:GeneralGridAxis>
+                </gmlrgrid:generalGridAxis>
+            </gmlrgrid:ReferenceableGridByVectors>
+        </domainSet>
+        <gmlcov:rangeType>
+            <swe:DataRecord>
+                <swe:field name="b1">
+                    <swe:Quantity xmlns:swe="http://www.opengis.net/swe/2.0">
+                        <swe:label>b1</swe:label>
+                        <swe:uom code="10^0"/>
+                    </swe:Quantity>
+                </swe:field>
+                <swe:field name="b2">
+                    <swe:Quantity xmlns:swe="http://www.opengis.net/swe/2.0">
+                        <swe:label>b2</swe:label>
+                        <swe:uom code="10^0"/>
+                    </swe:Quantity>
+                </swe:field>
+            </swe:DataRecord>
+        </gmlcov:rangeType>
+        <wcs:ServiceParameters>
+            <wcs:CoverageSubtype>ReferenceableGridCoverage</wcs:CoverageSubtype>
+            <wcs:nativeFormat>application/octet-stream</wcs:nativeFormat>
+        </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+</wcs:CoverageDescriptions>

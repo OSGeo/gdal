@@ -42,7 +42,7 @@
 #include "ogr_spatialref.h"
 #include "gmlcoverage.h"
 
-CPL_CVSID("$Id$")
+CPL_CVSID("$Id: gmlcoverage.cpp 40604 2017-11-01 12:40:39Z ajolma $")
 
 /************************************************************************/
 /*                        ParseGMLCoverageDesc()                        */
@@ -181,7 +181,6 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
         padfGeoTransform[3] -= padfGeoTransform[5]*0.5;
 
         bSuccess = true;
-        //bHaveGeoTransform = TRUE;
     }
 
     CSLDestroy( papszOffset1Tokens );
