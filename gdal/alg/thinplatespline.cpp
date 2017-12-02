@@ -435,13 +435,13 @@ static void VizGeorefSpline2DBase_func4( double* res,
                                          const double* xr, const double* yr )
 {
     double dist0  = SQ( xr[0] - pxy[0] ) + SQ( yr[0] - pxy[1] );
-    res[0] = dist0 ? dist0 * log(dist0) : 0.0;
+    res[0] = dist0 != 0.0 ? dist0 * log(dist0) : 0.0;
     double dist1  = SQ( xr[1] - pxy[0] ) + SQ( yr[1] - pxy[1] );
-    res[1] = dist1 ? dist1 * log(dist1) : 0.0;
+    res[1] = dist1 != 0.0 ? dist1 * log(dist1) : 0.0;
     double dist2  = SQ( xr[2] - pxy[0] ) + SQ( yr[2] - pxy[1] );
-    res[2] = dist2 ? dist2 * log(dist2) : 0.0;
+    res[2] = dist2 != 0.0 ? dist2 * log(dist2) : 0.0;
     double dist3  = SQ( xr[3] - pxy[0] ) + SQ( yr[3] - pxy[1] );
-    res[3] = dist3 ? dist3 * log(dist3) : 0.0;
+    res[3] = dist3 != 0.0 ? dist3 * log(dist3) : 0.0;
 }
 #endif // defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 
