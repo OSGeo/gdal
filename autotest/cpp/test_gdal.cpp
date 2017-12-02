@@ -413,4 +413,55 @@ namespace tut
         ensure( !GDALIsValueInRange<GByte>(CPLAtof("nan")) );
     }
 
+    // Test GDALDataTypeIsInteger()
+    template<> template<> void object::test<13>()
+    {
+        ensure( !GDALDataTypeIsInteger(GDT_Unknown) );
+        ensure( GDALDataTypeIsInteger(GDT_Byte) );
+        ensure( GDALDataTypeIsInteger(GDT_UInt16) );
+        ensure( GDALDataTypeIsInteger(GDT_Int16) );
+        ensure( GDALDataTypeIsInteger(GDT_UInt32) );
+        ensure( GDALDataTypeIsInteger(GDT_Int32) );
+        ensure( !GDALDataTypeIsInteger(GDT_Float32) );
+        ensure( !GDALDataTypeIsInteger(GDT_Float64) );
+        ensure( GDALDataTypeIsInteger(GDT_CInt16) );
+        ensure( GDALDataTypeIsInteger(GDT_CInt32) );
+        ensure( !GDALDataTypeIsInteger(GDT_CFloat32) );
+        ensure( !GDALDataTypeIsInteger(GDT_CFloat64) );
+    }
+
+    // Test GDALDataTypeIsFloating()
+    template<> template<> void object::test<14>()
+    {
+        ensure( !GDALDataTypeIsFloating(GDT_Unknown) );
+        ensure( !GDALDataTypeIsFloating(GDT_Byte) );
+        ensure( !GDALDataTypeIsFloating(GDT_UInt16) );
+        ensure( !GDALDataTypeIsFloating(GDT_Int16) );
+        ensure( !GDALDataTypeIsFloating(GDT_UInt32) );
+        ensure( !GDALDataTypeIsFloating(GDT_Int32) );
+        ensure( GDALDataTypeIsFloating(GDT_Float32) );
+        ensure( GDALDataTypeIsFloating(GDT_Float64) );
+        ensure( !GDALDataTypeIsFloating(GDT_CInt16) );
+        ensure( !GDALDataTypeIsFloating(GDT_CInt32) );
+        ensure( GDALDataTypeIsFloating(GDT_CFloat32) );
+        ensure( GDALDataTypeIsFloating(GDT_CFloat64) );
+    }
+
+    // Test GDALDataTypeIsComplex()
+    template<> template<> void object::test<15>()
+    {
+        ensure( !GDALDataTypeIsComplex(GDT_Unknown) );
+        ensure( !GDALDataTypeIsComplex(GDT_Byte) );
+        ensure( !GDALDataTypeIsComplex(GDT_UInt16) );
+        ensure( !GDALDataTypeIsComplex(GDT_Int16) );
+        ensure( !GDALDataTypeIsComplex(GDT_UInt32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Int32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Float32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Float64) );
+        ensure( GDALDataTypeIsComplex(GDT_CInt16) );
+        ensure( GDALDataTypeIsComplex(GDT_CInt32) );
+        ensure( GDALDataTypeIsComplex(GDT_CFloat32) );
+        ensure( GDALDataTypeIsComplex(GDT_CFloat64) );
+    }
+
 } // namespace tut

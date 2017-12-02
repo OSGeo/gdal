@@ -414,9 +414,10 @@ int CPL_STDCALL GDALDataTypeIsComplex( GDALDataType eDataType )
 /************************************************************************/
 
 /**
- * \brief Is data type floating?
+ * \brief Is data type floating? (might be complex)
  *
- * @return TRUE if the passed type is floating
+ * @return TRUE if the passed type is floating (one of GDT_Float32, GDT_Float64,
+ * GDT_CFloat32, GDT_CFloat64)
  * @since GDAL 2.3
  */
 
@@ -428,6 +429,37 @@ int CPL_STDCALL GDALDataTypeIsFloating( GDALDataType eDataType )
       case GDT_Float64:
       case GDT_CFloat32:
       case GDT_CFloat64:
+        return TRUE;
+
+      default:
+        return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                       GDALDataTypeIsInteger()                        */
+/************************************************************************/
+
+/**
+ * \brief Is data type integer? (might be complex)
+ *
+ * @return TRUE if the passed type is integer (one of GDT_Byte, GDT_Int16,
+ * GDT_UInt16, GDT_Int32, GDT_UInt32, GDT_CInt16, GDT_CInt32).
+ * @since GDAL 2.3
+ */
+
+int CPL_STDCALL GDALDataTypeIsInteger( GDALDataType eDataType )
+
+{
+    switch( eDataType )
+    {
+      case GDT_Byte:
+      case GDT_Int16:
+      case GDT_UInt16:
+      case GDT_Int32:
+      case GDT_UInt32:
+      case GDT_CInt16:
+      case GDT_CInt32:
         return TRUE;
 
       default:

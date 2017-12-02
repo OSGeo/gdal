@@ -77,6 +77,7 @@ int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits( GDALDataType eDataType );
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsInteger( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsFloating( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsSigned( GDALDataType );
 const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
