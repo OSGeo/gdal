@@ -181,7 +181,6 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
         padfGeoTransform[3] -= padfGeoTransform[5]*0.5;
 
         bSuccess = true;
-        //bHaveGeoTransform = TRUE;
     }
 
     CSLDestroy( papszOffset1Tokens );

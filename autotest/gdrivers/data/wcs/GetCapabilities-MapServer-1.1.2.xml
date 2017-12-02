@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" version="1.1.2" updateSequence="2015-04-14T14:29:00Z" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsGetCapabilities.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
+  <ows:ServiceIdentification>
+    <ows:Title>BGS EMODnet bathymetry</ows:Title>
+    <ows:Abstract>The European Marine Observation and Data Network (EMODnet) is a long term marine data initiative from the European Commission Directorate-General for Maritime Affairs and Fisheries (DG MARE) underpinning its Marine Knowledge 2020 strategy. EMODnet is a consortium of organisations assembling European marine data, data products and metadata from diverse sources in a uniform way. The main purpose of EMODnet is to unlock fragmented and hidden marine data resources and to make these available to individuals and organisations (public and private), and to facilitate investment in sustainable coastal and offshore activities through improved access to quality-assured, standardised and harmonised marine data which are interoperable and free of restrictions on use.</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>OneGeology</ows:Keyword>
+      <ows:Keyword>infoCoverageAccessService</ows:Keyword>
+      <ows:Keyword>Europe</ows:Keyword>
+      <ows:Keyword>EMODnet</ows:Keyword>
+      <ows:Keyword>Bathymetry</ows:Keyword>
+      <ows:Keyword>MD_LANG@ENG</ows:Keyword>
+      <ows:Keyword>MD_DATE@2015-04-14</ows:Keyword>
+    </ows:Keywords>
+    <ows:ServiceType codeSpace="OGC">OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.1.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+    <ows:Fees>none</ows:Fees>
+    <ows:AccessConstraints>none</ows:AccessConstraints>
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName>British Geological Survey (BGS)</ows:ProviderName>
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://www.emodnet.eu/"/>
+    <ows:ServiceContact>
+      <ows:IndividualName>Mr Matthew Harrison</ows:IndividualName>
+      <ows:PositionName>Science Director Informatics</ows:PositionName>
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice>+44 (0)115 936 3100</ows:Voice>
+          <ows:Facsimile>+44 (0)115 936 3200</ows:Facsimile>
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint>Environmental Science Centre</ows:DeliveryPoint>
+          <ows:City>Keyworth</ows:City>
+          <ows:AdministrativeArea>Nottinghamshire</ows:AdministrativeArea>
+          <ows:PostalCode>NG12 5GG</ows:PostalCode>
+          <ows:Country>United Kingdom</ows:Country>
+          <ows:ElectronicMailAddress>enquiries@bgs.ac.uk</ows:ElectronicMailAddress>
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://www.emodnet.eu/"/>
+        <ows:HoursOfService>Mon-Fri, 09:00-17:00</ows:HoursOfService>
+        <ows:ContactInstructions></ows:ContactInstructions>
+      </ows:ContactInfo>
+      <ows:Role>pointOfContact</ows:Role>
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.2</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.2</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="identifiers">
+        <ows:AllowedValues>
+          <ows:Value>BGS_EMODNET_CentralMed-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_AegeanLevantineSeas-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_BayBiscayIberianCoast-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_CelticSeas-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_GreaterNorthSea-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_WesternMed-MCol</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://194.66.252.155/cgi-bin/BGS_EMODnet_bathymetry/ows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.2</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="Identifier">
+        <ows:AllowedValues>
+          <ows:Value>BGS_EMODNET_CentralMed-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_AegeanLevantineSeas-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_BayBiscayIberianCoast-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_CelticSeas-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_GreaterNorthSea-MCol</ows:Value>
+          <ows:Value>BGS_EMODNET_WesternMed-MCol</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="InterpolationType">
+        <ows:AllowedValues>
+          <ows:Value>NEAREST_NEIGHBOUR</ows:Value>
+          <ows:Value>BILINEAR</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="format">
+        <ows:AllowedValues>
+          <ows:Value>image/png</ows:Value>
+          <ows:Value>image/x-aaigrid</ows:Value>
+          <ows:Value>image/jpeg</ows:Value>
+          <ows:Value>image/png; mode=8bit</ows:Value>
+          <ows:Value>image/tiff</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="store">
+        <ows:AllowedValues>
+          <ows:Value>false</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="GridBaseCRS">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:def:crs:epsg::4326</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <Contents>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Adriatic Sea - Ionian Sea - Central Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Adriatic Sea - Ionian Sea - Central Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Adriatic Sea and Ionian Sea and Central Mediterranean</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>9.83125 30.01040372</ows:LowerCorner>
+        <ows:UpperCorner>22.23542659 46.18958333</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_CentralMed-MCol</Identifier>
+    </CoverageSummary>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Aegean Sea - Levantine Sea region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Aegean Sea - Levantine Sea region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Aegean Sea and Levantine Sea</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>22.23541667 30.39790787</ows:LowerCorner>
+        <ows:UpperCorner>36.73542827 41.38958333</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_AegeanLevantineSeas-MCol</Identifier>
+    </CoverageSummary>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Bay of Biscay - Iberian Coast region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Bay of Biscay - Iberian Coast region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Bay of Biscay and Iberian Coast</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-26.11458333 32.58123877</ows:LowerCorner>
+        <ows:UpperCorner>-0.489562830000001 46.61458333</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_BayBiscayIberianCoast-MCol</Identifier>
+    </CoverageSummary>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Celtic Seas region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Celtic Seas region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Celtic Seas</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-26.11458333 46.61456967</ows:LowerCorner>
+        <ows:UpperCorner>-0.489562830000001 63.69791667</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_CelticSeas-MCol</Identifier>
+    </CoverageSummary>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Greater North Sea region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Greater North Sea region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Greater North Sea</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-0.48958333 48.8104034</ows:LowerCorner>
+        <ows:UpperCorner>13.76042807 65.38958333</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_GreaterNorthSea-MCol</Identifier>
+    </CoverageSummary>
+    <CoverageSummary>
+      <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Western Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Title>
+      <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Western Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>OneGeology</ows:Keyword>
+        <ows:Keyword>continent@Europe</ows:Keyword>
+        <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+        <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+        <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+        <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+        <ows:Keyword>Bathymetry</ows:Keyword>
+        <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+        <ows:Keyword>geographicarea@Western Mediterranean</ows:Keyword>
+      </ows:Keywords>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-0.48958333 35.21874234</ows:LowerCorner>
+        <ows:UpperCorner>9.83125826 44.78958333</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <Identifier>BGS_EMODNET_WesternMed-MCol</Identifier>
+    </CoverageSummary>
+  </Contents>
+</Capabilities>

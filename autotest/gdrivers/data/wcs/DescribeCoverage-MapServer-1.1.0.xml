@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CoverageDescriptions xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsDescribeCoverage.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
+  <CoverageDescription>
+    <ows:Title>European Marine Observation and Data Network (EMODnet) bathymetry for the Adriatic Sea - Ionian Sea - Central Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Title>
+    <ows:Abstract>European Marine Observation and Data Network (EMODnet) bathymetry for the Adriatic Sea - Ionian Sea - Central Mediterranean region.  Native data is multi-colour GeoTiff.</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>OneGeology</ows:Keyword>
+      <ows:Keyword>continent@Europe</ows:Keyword>
+      <ows:Keyword>dataprovider@EMODnet</ows:Keyword>
+      <ows:Keyword>serviceprovider@British Geological Survey</ows:Keyword>
+      <ows:Keyword>DS_TOPIC@geoscientificInformation</ows:Keyword>
+      <ows:Keyword>DS_DATE@2011-06-30</ows:Keyword>
+      <ows:Keyword>Bathymetry</ows:Keyword>
+      <ows:Keyword>CRS_SUPPORTED@EPSG:4326 EPSG:3031 EPSG:3034 EPSG:3413 EPSG:3857 EPSG:4258</ows:Keyword>
+      <ows:Keyword>geographicarea@Adriatic Sea and Ionian Sea and Central Mediterranean</ows:Keyword>
+    </ows:Keywords>
+    <Identifier>BGS_EMODNET_CentralMed-MCol</Identifier>
+    <Domain>
+      <SpatialDomain>
+        <ows:BoundingBox crs="urn:ogc:def:crs:OGC::imageCRS" dimensions="2">
+          <ows:LowerCorner>0 0</ows:LowerCorner>
+          <ows:UpperCorner>2976 3882</ows:UpperCorner>
+        </ows:BoundingBox>
+        <ows:BoundingBox crs="urn:ogc:def:crs:EPSG::4326" dimensions="2">
+          <ows:LowerCorner>30.01040372 9.83125</ows:LowerCorner>
+          <ows:UpperCorner>46.18958333 22.23542659</ows:UpperCorner>
+        </ows:BoundingBox>
+        <ows:WGS84BoundingBox dimensions="2">
+          <ows:LowerCorner>9.83125 30.01040372</ows:LowerCorner>
+          <ows:UpperCorner>22.23542659 46.18958333</ows:UpperCorner>
+        </ows:WGS84BoundingBox>
+        <GridCRS>
+          <GridBaseCRS>urn:ogc:def:crs:EPSG::4326</GridBaseCRS>
+          <GridType>urn:ogc:def:method:WCS:1.1:2dSimpleGrid</GridType>
+          <GridOrigin>9.833333335 46.187499995</GridOrigin>
+          <GridOffsets>0.00416667 -0.00416667</GridOffsets>
+          <GridCS>urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS</GridCS>
+        </GridCRS>
+      </SpatialDomain>
+    </Domain>
+    <Range>
+      <Field>
+        <ows:Title>Red/Green/Blue colour interpretations</ows:Title>
+        <Identifier>band</Identifier>
+        <Definition>
+          <ows:AnyValue/>
+        </Definition>
+        <InterpolationMethods>
+          <InterpolationMethod>bilinear</InterpolationMethod>
+          <Default>nearest neighbor</Default>
+        </InterpolationMethods>
+        <Axis identifier="bands">
+          <AvailableKeys>
+            <Key>1</Key>
+            <Key>2</Key>
+            <Key>3</Key>
+          </AvailableKeys>
+        </Axis>
+      </Field>
+    </Range>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::3031</SupportedCRS>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::3034</SupportedCRS>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::3413</SupportedCRS>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::3857</SupportedCRS>
+    <SupportedCRS>urn:ogc:def:crs:EPSG::4258</SupportedCRS>
+    <SupportedFormat>image/tiff</SupportedFormat>
+  </CoverageDescription>
+</CoverageDescriptions>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WCS_Capabilities xmlns="http://www.opengis.net/wcs"
+ xmlns:gml="http://www.opengis.net/gml"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengeospatial.net/wcs/1.0.0/wcsCapabilities.xsd" version="1.0.0">
+  <Service>
+    <name>Velmu_wcs_testi</name>
+    <label>Velmu_wcs_testi</label>
+    <responsibleParty>
+      <organisationName></organisationName>
+      <contactInfo>
+        <phone>
+        </phone>
+        <address>
+        </address>
+        <onlineResource xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer"/>
+      </contactInfo>
+    </responsibleParty>
+    <fees>NONE</fees>
+    <accessConstraints>NONE</accessConstraints>
+  </Service>
+  <Capability>
+    <Request>
+      <GetCapabilities>
+        <DCPType><HTTP><Get><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Get></HTTP></DCPType>
+        <DCPType><HTTP><Post><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Post></HTTP></DCPType>
+      </GetCapabilities>
+      <DescribeCoverage>
+        <DCPType><HTTP><Get><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Get></HTTP></DCPType>
+        <DCPType><HTTP><Post><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Post></HTTP></DCPType>
+      </DescribeCoverage>
+      <GetCoverage>
+        <DCPType><HTTP><Get><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Get></HTTP></DCPType>
+        <DCPType><HTTP><Post><OnlineResource xlink:type ="simple" xlink:href="http://paikkatieto.ymparisto.fi/arcgis/services/Testit/Velmu_wcs_testi/MapServer/WCSServer?"/></Post></HTTP></DCPType>
+      </GetCoverage>
+    </Request>
+    <Exception>
+      <Format>application/vnd.ogc.se_xml</Format>
+    </Exception>
+  </Capability>
+  <ContentMetadata>
+    <CoverageOfferingBrief>
+    <name>1</name>
+    <label>Näkinpartaisniityt_1</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos dimension="2">17.483058091685201 59.36197532178339</gml:pos>
+      <gml:pos dimension="2">27.956287922334681 65.841210879037476</gml:pos>
+    </lonLatEnvelope>
+    </CoverageOfferingBrief>
+    <CoverageOfferingBrief>
+    <name>2</name>
+    <label>Rakko- ja itämerenhauruvaltaiset pohjat, Fucus spp._2</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos dimension="2">17.483058091685198 59.361975321783405</gml:pos>
+      <gml:pos dimension="2">27.956287922334674 65.841210879037476</gml:pos>
+    </lonLatEnvelope>
+    </CoverageOfferingBrief>
+    <CoverageOfferingBrief>
+    <name>3</name>
+    <label>Avoimuusindeksi merenpohjalla_3</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos dimension="2">17.483058091685201 58.78220036767393</gml:pos>
+      <gml:pos dimension="2">27.956287922334681 65.841210879037476</gml:pos>
+    </lonLatEnvelope>
+    </CoverageOfferingBrief>
+  </ContentMetadata>
+</WCS_Capabilities>

@@ -1379,6 +1379,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
         while( *pszNext != '\n' && *pszNext != '\r' && *pszNext != '\0' )
         {
+            if( !STARTS_WITH(pszNext, "Content-") ) {
+                break;
+            }
             char *pszEOL = strstr(pszNext, "\n");
 
             if( pszEOL == NULL )
