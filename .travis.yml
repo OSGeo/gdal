@@ -38,18 +38,6 @@ matrix:
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=mingw
-        - DETAILS="debug build, libtool"
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
-      dist: precise
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
         - BUILD_NAME=mingw_w64
         - DETAILS="optimized build, libtool"
     - os: linux
