@@ -316,6 +316,10 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
     def Respond(self, request, brand, version, test):
         try:
             fname = 'data/wcs/'
+            if request == 'GetCapabilities':
+                # *2 and Simple* are different coverages from same server
+                brand = brand.replace('2', '')
+                brand = brand.replace('Simple', '')
             if request == 'GetCoverage' and test == "scaled":
                 suffix = '.tiff'
                 self.Headers('image/tiff')
@@ -338,6 +342,8 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(content)
         except IOError:
             self.send_error(404, 'File Not Found: ' + request + ' ' + brand + ' ' + version)
+            global wcs_6_ok
+            wcs_6_ok = False
 
     def do_GET(self):
         if do_log:
@@ -488,6 +494,8 @@ def wcs_6():
             version = str(int(v / 100)) + '.' + str(int(v % 100 / 10)) + '.' + str((v % 10))
             if not server + '-' + version in urls:
                 print("Error: " + server + '-' + version + " not in urls")
+                global wcs_6_ok
+                wcs_6_ok = False
                 continue
             options = [cache]
             if first_call:
@@ -524,6 +532,8 @@ def wcs_6():
                              open_options = options)
             if not ds:
                 print("OpenEx failed: WCS:" + url + "/?" + query)
+                global wcs_6_ok
+                wcs_6_ok = False
                 break
             projwin = setup[server]['Projwin'].replace('-projwin ', '').split()
             for i, c in enumerate(projwin):
@@ -541,6 +551,8 @@ def wcs_6():
                                  open_options = options)
                 if not ds:
                     print("OpenEx failed: WCS:" + url + "/?" + query)
+                    global wcs_6_ok
+                    wcs_6_ok = False
                     break
                 options = [cache]
                 gdal.Translate(tmpfile, ds, srcWin = [0,0,2,2], options = options)
