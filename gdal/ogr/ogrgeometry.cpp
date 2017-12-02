@@ -5262,6 +5262,8 @@ OGRErr OGRGeometry::PointOnSurfaceInternal( OGRPoint * poPoint ) const
         poPoint->setY( poInsidePoint->getY() );
     }
 
+    OGR_G_DestroyGeometry(hInsidePoint);
+
     return OGRERR_NONE;
 }
 //! @endcond
