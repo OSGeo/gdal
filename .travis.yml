@@ -32,7 +32,7 @@ matrix:
       compiler: clang
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
