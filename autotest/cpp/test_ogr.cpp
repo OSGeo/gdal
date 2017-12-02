@@ -583,4 +583,32 @@ namespace tut
         ensure(!OGRParseDate("2017-01-01T00:00:a", &sField, 0));
     }
 
+    // Test OGRPolygon::IsPointOnSurface()
+    template<>
+    template<>
+    void object::test<9>()
+    {
+        OGRPolygon oPoly;
+
+        OGRPoint oEmptyPoint;
+        ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
+
+        OGRPoint oPoint;
+        oPoint.setX(1);
+        oPoint.setY(1);
+        ensure( !oPoly.IsPointOnSurface(&oPoint) );
+
+        const char* pszPolyWkt = "POLYGON((0 0,0 10,10 10,10 0,0 0),(4 4,4 6,6 6,6 4,4 4))";
+        char* pszWktChar = const_cast<char*>(pszPolyWkt);
+        oPoly.importFromWkt(&pszWktChar);
+
+        ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
+
+        ensure( oPoly.IsPointOnSurface(&oPoint) );
+
+        oPoint.setX(5);
+        oPoint.setY(5);
+        ensure( !oPoly.IsPointOnSurface(&oPoint) );
+    }
+
 } // namespace tut

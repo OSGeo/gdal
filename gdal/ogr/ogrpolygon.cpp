@@ -784,15 +784,31 @@ OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt ) const
     if( NULL == pt)
         return FALSE;
 
+    bool bOnSurface = false;
+    // The point must be in the outer ring, but not in the inner rings
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
         if( ((OGRLinearRing*)oCC.papoCurves[iRing])->isPointInRing(pt) )
         {
-            return TRUE;
+            if( iRing == 0 )
+            {
+                bOnSurface = true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if( iRing == 0 )
+            {
+                return false;
+            }
         }
     }
 
-    return FALSE;
+    return bOnSurface;
 }
 
 /************************************************************************/
