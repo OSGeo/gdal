@@ -809,22 +809,22 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles( const char*
     {
         // Add here any missing filesystem supporting sparse files.
         // See http://en.wikipedia.org/wiki/Comparison_of_file_systems
-        switch( sStatFS.f_type )
+        switch( static_cast<unsigned>(sStatFS.f_type) )
         {
             // Codes from http://man7.org/linux/man-pages/man2/statfs.2.html
-            case 0xef53:  // ext2, 3, 4
-            case 0x52654973:  // reiser
-            case 0x58465342:  // xfs
-            case 0x3153464a:  // jfs
-            case 0x5346544e:  // ntfs
-            case 0x9123683e:  // brfs
+            case 0xef53U:  // ext2, 3, 4
+            case 0x52654973U:  // reiser
+            case 0x58465342U:  // xfs
+            case 0x3153464aU:  // jfs
+            case 0x5346544eU:  // ntfs
+            case 0x9123683eU:  // brfs
             // nfs: NFS < 4.2 supports creating sparse files (but reading them
             // not efficiently).
-            case 0x6969:
-            case 0x01021994:  // tmpfs
+            case 0x6969U:
+            case 0x01021994U:  // tmpfs
                 return TRUE;
 
-            case 0x4d44: // msdos
+            case 0x4d44U: // msdos
                 return FALSE;
 
             default:
