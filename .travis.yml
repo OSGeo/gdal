@@ -2,6 +2,7 @@
 # with Travis-ci.org
 
 language: cpp
+dist: precise
 
 # We use clang, --without-libtool and --with-debug for faster build
 compiler:
