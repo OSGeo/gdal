@@ -100,6 +100,8 @@ install:
 - cd apps
 - nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
 - cd ..
+- SET DISTUTILS_USE_SDK=1
+- SET MSSdk=1
 - cd swig\python
 - python setup.py build
 - python setup.py install
