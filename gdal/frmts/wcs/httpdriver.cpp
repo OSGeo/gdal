@@ -85,7 +85,6 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-
     CPLHTTPResult *psResult = CPLHTTPFetch( poOpenInfo->pszFilename, NULL );
 
 /* -------------------------------------------------------------------- */
