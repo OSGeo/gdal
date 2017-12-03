@@ -77,7 +77,7 @@ g2int specunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2int JJ,
 //
 //   Calculate Laplacian scaling factors for each possible wave number.
 //
-         pscale=(g2float *)malloc((JJ+MM+1)*sizeof(g2float));
+         pscale=(g2float *)calloc((JJ+MM+1),sizeof(g2float));
          tscale=(g2float)(idrstmpl[4]*1E-6);
          for (n=Js;n<=JJ+MM;n++)
               pscale[n]=(float)pow((g2float)(n*(n+1)),-tscale);

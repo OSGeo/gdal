@@ -264,6 +264,7 @@ g2int g2_getfld(unsigned char *cgrib,g2int cgrib_length, g2int ifldnum,g2int unp
       lgfld->coord_list=0;
       lgfld->bmap=0;
       lgfld->fld=0;
+      lgfld->ngrdpts=0;
 //
 //  Check for valid request number
 //
