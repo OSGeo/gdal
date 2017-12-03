@@ -299,9 +299,9 @@ struct _GCExportFileH {
   char*                 path;
   char*                 bn;
   char*                 ext;
-  FILE*                 H;
+  VSILFILE*                 H;
   GCExportFileMetadata* header;
-  long                  coff;
+  vsi_l_offset          coff;
   unsigned long         clin;
   unsigned long         nbObjects;
   GCAccessMode          mode;

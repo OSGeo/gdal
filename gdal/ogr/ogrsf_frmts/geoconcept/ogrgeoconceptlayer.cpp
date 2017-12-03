@@ -75,6 +75,7 @@ OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
     {
       _poFeatureDefn = reinterpret_cast<OGRFeatureDefn *>(
           GetSubTypeFeatureDefn_GCIO(_gcFeature) );
+      SetDescription( _poFeatureDefn->GetName() );
       _poFeatureDefn->Reference();
     }
     else

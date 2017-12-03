@@ -88,7 +88,7 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
                                                       char** papszOptions )
 
 {
-    VSIStatBuf  stat;
+    VSIStatBufL  sStat;
     /* int bSingleNewFile = FALSE; */
 
     if( pszName==NULL || strlen(pszName)==0 )
@@ -101,9 +101,9 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszName, &stat ) == 0 )
+    if( VSIStatL( pszName, &sStat ) == 0 )
     {
-        if( !VSI_ISDIR(stat.st_mode) )
+        if( !VSI_ISDIR(sStat.st_mode) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s is not a valid existing directory.",
@@ -125,23 +125,6 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Otherwise try to create a new directory.                        */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        VSIStatBuf  sStat;
-
-        if( VSIStat( pszName, &sStat ) == 0 )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Attempt to create datasource named %s, "
-                      "but that is an existing directory.",
-                      pszName );
-            return NULL;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
@@ -160,11 +143,11 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
 OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
 
 {
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
     static const char * const apszExtensions[] =
         { "gxt", "txt", "gct", "gcm", "gcr", NULL };
 
-    if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
+    if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a file or directory.",
@@ -183,7 +166,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
                                                     apszExtensions[iExt] );
-            if( VSIStat( pszFile, &sStatBuf ) == 0 )
+            if( VSIStatL( pszFile, &sStatBuf ) == 0 )
                 VSIUnlink( pszFile );
         }
     }
@@ -258,6 +241,7 @@ void RegisterOGRGeoconcept()
 "the Name found in the GCT file for a sub-type section within the previous "
 "type section'/>"
 "</LayerCreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

@@ -89,10 +89,10 @@ int OGRGeoconceptDataSource::Open( const char* pszName, bool bTestOpen,
 /* -------------------------------------------------------------------- */
 /*      Is the given path a directory or a regular file?                */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf  stat;
+    VSIStatBufL  sStat;
 
-    if( CPLStat( pszName, &stat ) != 0
-        || (!VSI_ISDIR(stat.st_mode) && !VSI_ISREG(stat.st_mode)) )
+    if( VSIStatL( pszName, &sStat ) != 0
+        || (!VSI_ISDIR(sStat.st_mode) && !VSI_ISREG(sStat.st_mode)) )
     {
         if( !bTestOpen )
         {
@@ -105,7 +105,7 @@ int OGRGeoconceptDataSource::Open( const char* pszName, bool bTestOpen,
         return FALSE;
     }
 
-    if( VSI_ISDIR(stat.st_mode) )
+    if( VSI_ISDIR(sStat.st_mode) )
     {
         CPLDebug( "GEOCONCEPT",
                   "%s is a directory, Geoconcept access is not yet supported.",
@@ -114,7 +114,7 @@ int OGRGeoconceptDataSource::Open( const char* pszName, bool bTestOpen,
         return FALSE;
     }
 
-    if( VSI_ISREG(stat.st_mode) )
+    if( VSI_ISREG(sStat.st_mode) )
     {
         _bSingleNewFile = false;
         _bUpdate = bUpdate;
