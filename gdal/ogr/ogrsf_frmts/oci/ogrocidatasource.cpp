@@ -844,7 +844,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;
-        poSRS = NULL;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -992,7 +992,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      We got it!  Return it.                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != NULL && papszResult[0] != NULL && papszResult[1] == NULL )
     {
         CPLFree( pszWKT );
         return atoi( papszResult[0] );
@@ -1011,7 +1011,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     else
         papszResult = NULL;
 
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != NULL && papszResult[0] != NULL && papszResult[1] == NULL )
         nSRSId = atoi(papszResult[0]) + 1;
     else
         nSRSId = 1;
