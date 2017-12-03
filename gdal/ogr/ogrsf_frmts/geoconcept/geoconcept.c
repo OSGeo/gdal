@@ -2494,7 +2494,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO (
   GCExportFileMetadata* Meta;
   GCSubType* theSubType;
   GCDim d;
-  long coff;
+  vsi_l_offset coff;
   OGREnvelope bbox, *pszBbox= &bbox;
 
   Meta= GetGCMeta_GCIO(H);
@@ -2503,7 +2503,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO (
 
   d= vUnknown3D_GCIO;
   theSubType= NULL;
-  coff= -1L;
+  coff= (vsi_l_offset)EOF;
 reloop:
   /* TODO: Switch to C++ casts below. */
   if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vComType_GCIO )
@@ -2541,7 +2541,7 @@ reloop:
       return Meta;
     goto reloop;
   }
-  if( coff==-1L) coff= GetGCCurrentOffset_GCIO(H);
+  if( coff==(vsi_l_offset)EOF) coff= GetGCCurrentOffset_GCIO(H);
   if( !_buildOGRFeature_GCIO(H,&theSubType,d,pszBbox) )
   {
     return NULL;
