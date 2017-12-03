@@ -303,6 +303,7 @@ protected:
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
+    int                 nDefaultStringSize;
 
     OGRSpatialReference *poSRS;
 
@@ -331,6 +332,8 @@ public:
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
+    void                SetDefaultStringSize( int nSize )
+                                { nDefaultStringSize = nSize; }
 };
 
 /************************************************************************/
