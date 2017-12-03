@@ -2111,6 +2111,23 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
         }
     }
 
+    size_t nHeaderSize( RMF_HEADER_SIZE );
+    GByte * pabyNewHeader;
+    pabyNewHeader = static_cast<GByte *>( CPLRealloc(poOpenInfo->pabyHeader,
+                                                     nHeaderSize + 1) );
+    if( pabyNewHeader == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Can't allocate buffer for overview header" );
+        return NULL;
+    }
+
+    poOpenInfo->pabyHeader = pabyNewHeader;
+    memset( poOpenInfo->pabyHeader, 0, nHeaderSize + 1 );
+    VSIFSeekL( fp, nSubOffset, SEEK_SET );
+    poOpenInfo->nHeaderBytes = static_cast<int>( VSIFReadL( poOpenInfo->pabyHeader,
+                                                 1, nHeaderSize, fp ) );
+
     RMFDataset* poSub = (RMFDataset*)Open( poOpenInfo, poParent, nSubOffset );
 
     if( poSub == NULL )
