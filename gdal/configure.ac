@@ -2616,9 +2616,17 @@ else
         [OPENJPEG_VERSION=;])
 
   if test -n "$OPENJPEG_CFLAGS"; then
-    HAVE_OPENJPEG=yes
-    EXTRA_INCLUDES="$OPENJPEG_CFLAGS $EXTRA_INCLUDES"
-    LIBS="$OPENJPEG_LIBS $LIBS"
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$OPENJPEG_LIBS"
+    AC_CHECK_LIB(openjp2,opj_setup_decoder, [HAVE_OPENJPEG=yes], [HAVE_OPENJPEG=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_OPENJPEG" = "yes"; then
+        EXTRA_INCLUDES="$OPENJPEG_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$OPENJPEG_LIBS $LIBS"
+    fi
   fi
 fi
 
