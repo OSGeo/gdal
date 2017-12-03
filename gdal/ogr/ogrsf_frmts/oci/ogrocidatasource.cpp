@@ -506,7 +506,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /*      Get the default string size                                     */
 /* -------------------------------------------------------------------- */
 
-    int nDefaultStringSize = 100;
+    int nDefaultStringSize = DEFAULT_STRING_SIZE;
 
     if (CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) != NULL)
     {

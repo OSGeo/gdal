@@ -54,6 +54,7 @@ OGROCIWritableLayer::OGROCIWritableLayer()
 
     bLaunderColumnNames = TRUE;
     bPreservePrecision = FALSE;
+    nDefaultStringSize = DEFAULT_STRING_SIZE;
     bTruncationReported = FALSE;
     poSRS = NULL;
 
