@@ -1328,6 +1328,19 @@ do {                                                                    \
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
     }
 
+    if( poParentDS != NULL )
+    {
+        if( 0 != memcmp( poDS->sHeader.bySignature,
+                         poParentDS->sHeader.bySignature,
+                         RMF_SIGNATURE_SIZE ) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Invalid subheader signature." );
+            delete poDS;
+            return NULL;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*  Read the extended header.                                           */
 /* -------------------------------------------------------------------- */
