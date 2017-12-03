@@ -89,6 +89,8 @@ typedef struct
 #define ORA_GTYPE_SOLID           8
 #define ORA_GTYPE_MULTISOLID      9
 
+#define DEFAULT_STRING_SIZE 100
+
 /************************************************************************/
 /*                            OGROCISession                             */
 /************************************************************************/
