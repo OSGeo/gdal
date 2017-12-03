@@ -75,7 +75,7 @@ using namespace std;
 int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 {
     char bufferPre[255];
-    size_t dHeaderVarsSectionLength = 0;
+    unsigned dHeaderVarsSectionLength = 0;
     const size_t dSizeOfSectionSize = 4;
 
     pFileIO->Seek( sectionLocatorRecords[0].dSeeker, CADFileIO::SeekOrigin::BEG );
@@ -99,7 +99,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     readSize = pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
         DebugMsg( "Header variables section length: %d\n",
                   static_cast<int>(dHeaderVarsSectionLength) );
-    if(dHeaderVarsSectionLength > 65536) //NOTE: maybe header section may be bigger
+    if(readSize != dSizeOfSectionSize || dHeaderVarsSectionLength > 65536) //NOTE: maybe header section may be bigger
     {
         DebugMsg( "File is corrupted (HEADER_VARS section length too big)" );
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
