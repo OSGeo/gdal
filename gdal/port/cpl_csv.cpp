@@ -171,7 +171,9 @@ static CSVTable *CSVAccess( const char * pszFilename )
     psTable->nFields = CSLCount(psTable->papszFieldNames);
     psTable->panFieldNamesLength = static_cast<int*>(
         CPLMalloc(sizeof(int) * psTable->nFields));
-    for(int i = 0; i < psTable->nFields; i++ )
+    for(int i = 0; i < psTable->nFields &&
+        /* null-pointer check to avoid a false positve from CLang S.A. */
+                   psTable->papszFieldNames != NULL; i++ )
     {
         psTable->panFieldNamesLength[i] = static_cast<int>(
             strlen(psTable->papszFieldNames[i]));
