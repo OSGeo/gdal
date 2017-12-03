@@ -2905,8 +2905,8 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
              (subcat == local[i].subcat)) {
             /* Allow specific products with non-zero lenTime to reflect that.
              */
-            f_accum = 0;
 #ifdef deadcode
+            f_accum = 0;
             if (f_accum && (lenTime > 0)) {
                if (timeRangeUnit == 3) {
                   mallocSprintf (name, "%s%02dm", local[i].name, lenTime);

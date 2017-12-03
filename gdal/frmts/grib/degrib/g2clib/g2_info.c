@@ -185,6 +185,6 @@ g2int g2_info(unsigned char *cgrib,g2int *listsec0,g2int *listsec1,
 
       }
 
-      return(0);
+      return(ierr);
 
 }
