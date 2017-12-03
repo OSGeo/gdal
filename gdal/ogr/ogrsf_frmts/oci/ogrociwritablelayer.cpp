@@ -290,7 +290,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR2(2047)" );
+            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
         else
             snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", oField.GetWidth() );
     }
@@ -309,7 +309,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR2(2047)" );
+        snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
     }
     else
     {
