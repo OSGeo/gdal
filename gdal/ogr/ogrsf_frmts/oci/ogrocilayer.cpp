@@ -747,14 +747,9 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
     else if( nEType == 4  || nEType % 100 == 5 )
     {
         int nSubElementCount = nInterpretation;
-        OGRLineString *poLS, *poElemLS;
+        OGRLineString *poLS;
         int nElemCount, nTotalOrdCount;
         OGROCISession      *poSession = poDS->GetSession();
-
-        if( nEType == 4 )
-            poLS = new OGRLineString();
-        else
-            poLS = new OGRLinearRing();
 
         if( poSession->Failed(
             OCICollSize( poSession->hEnv, poSession->hError,
@@ -768,6 +763,11 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
             "OCICollSize(sdo_ordinates)" ) )
             return NULL;
 
+        if( nEType == 4 )
+            poLS = new OGRLineString();
+        else
+            poLS = new OGRLinearRing();
+
         for( *piElement += 3; nSubElementCount-- > 0;  *piElement += 3 )
         {
             LoadElementInfo( *piElement, nElemCount, nTotalOrdCount,
@@ -779,10 +779,11 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
                 nElemOrdCount += nDimension;
 
             // translate element.
-            poElemLS = (OGRLineString *)
+            OGRGeometry* poGeom =
                 TranslateGeometryElement( piElement, nGType, nDimension,
                                           nEType, nInterpretation,
                                           nStartOrdinal - 1, nElemOrdCount );
+            OGRLineString* poElemLS = dynamic_cast<OGRLineString *>(poGeom);
 
             // Try to append to our aggregate linestring/ring
             if( poElemLS )
@@ -797,9 +798,8 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
                 }
                 else
                     poLS->addSubLineString( poElemLS, 0 );
-
-                delete poElemLS;
             }
+            delete poGeom;
         }
 
         *piElement -= 3;
