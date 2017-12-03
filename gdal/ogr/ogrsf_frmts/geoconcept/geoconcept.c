@@ -592,7 +592,7 @@ static void GCIOAPI_CALL _InitSubType_GCIO (
   SetSubTypeDim_GCIO(theSubType, v2D_GCIO);
   SetSubTypeNbFields_GCIO(theSubType, -1);
   SetSubTypeNbFeatures_GCIO(theSubType, 0L);
-  SetSubTypeBOF_GCIO(theSubType, -1L);
+  SetSubTypeBOF_GCIO(theSubType, (vsi_l_offset)EOF);
   SetSubTypeBOFLinenum_GCIO(theSubType, 0L);
   SetSubTypeExtent_GCIO(theSubType, NULL);
   SetSubTypeHeaderWritten_GCIO(theSubType, FALSE);
@@ -2546,13 +2546,13 @@ reloop:
   {
     return NULL;
   }
-  if( GetSubTypeBOF_GCIO(theSubType)==-1L )
+  if( GetSubTypeBOF_GCIO(theSubType)== (vsi_l_offset)EOF )
   {
     SetSubTypeBOF_GCIO(theSubType,coff);/* Begin Of Features for the Class.Subclass */
     SetSubTypeBOFLinenum_GCIO(theSubType, GetGCCurrentLinenum_GCIO(H));
     CPLDebug("GEOCONCEPT","Feature Type [%s] starts at #%ld, line %ld\n",
                           GetSubTypeName_GCIO(theSubType),
-                          GetSubTypeBOF_GCIO(theSubType),
+                          (long)GetSubTypeBOF_GCIO(theSubType),
                           GetSubTypeBOFLinenum_GCIO(theSubType));
   }
   SetSubTypeNbFeatures_GCIO(theSubType, GetSubTypeNbFeatures_GCIO(theSubType)+1L);

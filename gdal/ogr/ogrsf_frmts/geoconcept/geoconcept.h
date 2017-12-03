@@ -261,7 +261,7 @@ struct _tSubType_GCIO {
   GCExtent*       frame;
   OGRFeatureDefnH _poFeaDefn;
   long            id;
-  long            _foff;     /* offset 1st feature */
+  vsi_l_offset    _foff;     /* offset 1st feature */
   unsigned long   _flin;     /* 1st ligne 1st feature */
   unsigned long   _nFeatures;
   GCTypeKind      knd;
