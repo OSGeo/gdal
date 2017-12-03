@@ -261,7 +261,7 @@ static void EXIFPrintData(char* pszData, GUInt16 type,
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
     for(;count>0;count--) {
-      snprintf(szTemp, sizeof(szTemp), "%s%#02x", sep, *data++);
+      snprintf(szTemp, sizeof(szTemp), "%s0x%02x", sep, *data++);
       sep = " ";
       if (strlen(szTemp) + pszDataEnd - pszData >= MAXSTRINGLENGTH)
           break;
