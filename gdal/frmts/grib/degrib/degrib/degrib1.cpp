@@ -1972,7 +1972,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
 
    /* Get the Bit Map Section. */
    if (f_bms) {
-      bitmap = (uChar *) malloc (meta->gds.numPts * sizeof (char));
+      bitmap = (uChar *) malloc (meta->gds.numPts * sizeof (uChar));
       if (ReadGrib1Sect3 (c_ipack + curLoc, gribLen, &curLoc, bitmap,
                           meta->gds.numPts) != 0) {
          free (bitmap);
