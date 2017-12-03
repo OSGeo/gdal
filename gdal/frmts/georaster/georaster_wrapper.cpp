@@ -1729,8 +1729,8 @@ bool GeoRasterWrapper::InitializeIO( void )
     {
         int nRBS = nRowBlockSize;
         int nCBS = nColumnBlockSize;
-        int nTCB = nTotalColumnBlocks;
-        int nTRB = nTotalRowBlocks;
+        int nTCB;
+        int nTRB;
 
         // --------------------------------------------------------------------
         // Calculate the actual size of a lower resolution block
