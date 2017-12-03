@@ -52,8 +52,8 @@ private:
                 << tr.exception_typeid << "\n";
             std::copy( tr.message.begin(), tr.message.end(), std::ostreambuf_iterator<char>(ss.rdbuf()) );
 
-            int size = ss.str().length();
-            int w = write(obj->get_pipe_(), ss.str().c_str(), size);
+            int size = static_cast<int>(ss.str().length());
+            int w = static_cast<int>(write(obj->get_pipe_(), ss.str().c_str(), size));
             ensure_errno("write() failed", w == size);
         }
     }
