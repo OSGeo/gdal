@@ -128,8 +128,8 @@ def rmf_11():
         return 'fail'
 
     ovr_n = ( 0, 1, 2 )
-    ovr_size = ( 16, 64, 256 )
-    ovr_checksum = ( 3192, 51233, 32756 )
+    ovr_size = ( 256, 64, 16 )
+    ovr_checksum = ( 32756, 51233, 3192 )
 
     for i in ovr_n:
         ovr_band = band1.GetOverview(i)
