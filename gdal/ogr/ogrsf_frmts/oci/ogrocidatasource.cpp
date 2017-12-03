@@ -503,6 +503,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
 
 /* -------------------------------------------------------------------- */
+/*      Get the default string size                                     */
+/* -------------------------------------------------------------------- */
+
+    int nDefaultStringSize = 100;
+
+    if (CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) != NULL)
+    {
+        nDefaultStringSize = atoi( 
+            CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
@@ -637,6 +649,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
+    poLayer->SetDefaultStringSize( nDefaultStringSize );
 
     const char* pszDIM = CSLFetchNameValue(papszOptions,"DIM");
     if( pszDIM != NULL )

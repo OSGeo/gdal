@@ -97,6 +97,8 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 
     panWriteFIDs = NULL;
 
+    nDefaultStringSize = 4000;
+
     ResetReading();
 }
 
@@ -1820,7 +1822,7 @@ int OGROCITableLayer::AllocAndBindForWrite()
         }
         else
         {
-            int nEachBufSize = 4001;
+            int nEachBufSize = nDefaultStringSize + 1;
 
             if( poFldDefn->GetType() == OFTString
                 && poFldDefn->GetWidth() != 0 )
@@ -2045,7 +2047,8 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
 
         else
         {
-            int nEachBufSize = 4001, nLen;
+            int nLen = 1;
+            int nEachBufSize = nDefaultStringSize + 1;
             const char *pszStrValue = poFeature->GetFieldAsString(i);
 
             if( poFldDefn->GetType() == OFTString
