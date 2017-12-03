@@ -868,11 +868,11 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    int j;               /* Counter used to find the desired subgrid. */
    sInt4 kfildo = 5;    /* FORTRAN Unit number for diagnostic info. Ignored,
                          * unless library is compiled a particular way. */
-   sInt4 ibitmap;       /* 0 means no bitmap returned, otherwise 1. */
-   float xmissp;        /* The primary missing value.  If iclean = 0, this
+   sInt4 ibitmap = 0;   /* 0 means no bitmap returned, otherwise 1. */
+   float xmissp = 0.0f; /* The primary missing value.  If iclean = 0, this
                          * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
-   float xmisss;        /* The secondary missing value.  If iclean = 0, this
+   float xmisss = 0.0f; /* The secondary missing value.  If iclean = 0, this
                          * value is embedded in grid, otherwise it is the
                          * value returned from the GRIB message. */
    sInt4 jer[UNPK_NUM_ERRORS * 2]; /* Any Error codes along with their *
