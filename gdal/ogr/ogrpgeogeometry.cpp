@@ -1904,9 +1904,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
         else if( pasCurves[i].eType == CURVE_BEZIER &&
                   nStartPointIdx+1 < nPartStartIdx + nPartPoints )
         {
-            const int nSteps = 100;
             OGRLineString *poLine = new OGRLineString();
-            poLine->setNumPoints(nSteps + 1);
             const double dfX0 = padfX[nStartPointIdx];
             const double dfY0 = padfY[nStartPointIdx];
             const double dfX1 = pasCurves[i].u.Bezier.dfX1;
@@ -1915,6 +1913,28 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             const double dfY2 = pasCurves[i].u.Bezier.dfY2;
             const double dfX3 = padfX[nStartPointIdx+1];
             const double dfY3 = padfY[nStartPointIdx+1];
+            double dfStartAngle = atan2(dfY1 - dfY0, dfX1 - dfX0);
+            double dfEndAngle = atan2(dfY3 - dfY2, dfX3 - dfX2);
+            if( dfStartAngle + M_PI < dfEndAngle )
+                dfStartAngle += 2 * M_PI;
+            else if( dfEndAngle + M_PI < dfStartAngle )
+                dfEndAngle += 2 * M_PI;
+            const double dfStepSizeRad =
+                CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4")) / 180.0 * M_PI;
+            const double dfLengthTangentStart = (dfX1 - dfX0) * (dfX1 - dfX0) +
+                                                (dfY1 - dfY0) * (dfY1 - dfY0);
+            const double dfLengthTangentEnd  =  (dfX3 - dfX2) * (dfX3 - dfX2) +
+                                                (dfY3 - dfY2) * (dfY3 - dfY2);
+            const double dfLength            =  (dfX3 - dfX0) * (dfX3 - dfX0) +
+                                                (dfY3 - dfY0) * (dfY3 - dfY0);
+            // Heuristics to compute number of steps: we take into account the
+            // angular difference between the start and end tangent. And we
+            // also take into account the relative length of the tangent vs
+            // the length of the straight segment
+            const int nSteps = static_cast<int>(ceil(
+                std::max(2.0, fabs(dfEndAngle - dfStartAngle) / dfStepSizeRad) *
+                std::max(1.0, 5.0 * (dfLengthTangentStart + dfLengthTangentEnd) / dfLength) ));
+            poLine->setNumPoints(nSteps + 1);
             poLine->setPoint(0, dfX0, dfY0,
                              padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
                              padfM != NULL ? padfM[nStartPointIdx] : 0.0);
