@@ -486,6 +486,19 @@ def vrtwarp_11():
     return 'success'
 
 ###############################################################################
+# Test reading a regular VRT whose source is a warped VRT inlined
+
+def vrtwarp_read_vrt_of_warped_vrt():
+
+    ds = gdal.Open('data/vrt_of_warped_vrt.vrt')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4672:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Test different nodata values on bands and partial blocks (#6581)
 
 gdaltest_list = [
@@ -499,7 +512,8 @@ gdaltest_list = [
     vrtwarp_8,
     vrtwarp_9,
     vrtwarp_10,
-    vrtwarp_11
+    vrtwarp_11,
+    vrtwarp_read_vrt_of_warped_vrt
      ]
 
 
