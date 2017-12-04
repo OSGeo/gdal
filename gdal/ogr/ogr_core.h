@@ -717,7 +717,7 @@ typedef union {
 inline int OGR_GET_MS(float fSec) {
   if( fSec >= 999 ) return 999;
   if( fSec <= 0 ) return 0;
-  const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5;
+  const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
   return static_cast<int>(fValue);
 }
 #endif  // __cplusplus
