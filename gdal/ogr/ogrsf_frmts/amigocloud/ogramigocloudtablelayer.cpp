@@ -76,7 +76,7 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr)
     return osStr;
 }
 
-static std::string json_encode(const std::string &value) {
+std::string OGRAMIGOCLOUDJsonEncode(const std::string &value) {
     std::stringstream escaped;
     escaped.fill('0');
     escaped << std::hex;
@@ -109,7 +109,7 @@ OGRAmigoCloudTableLayer::OGRAmigoCloudTableLayer(
 {
     osTableName = CPLString("dataset_") + osDatasetId;
     SetDescription( osDatasetId );
-
+    osName = osDatasetId;
     nMaxChunkSize = atoi(
         CPLGetConfigOption(
             "AMIGOCLOUD_MAX_CHUNK_SIZE", "15" ) ) * 1024 * 1024;
@@ -341,7 +341,7 @@ void OGRAmigoCloudTableLayer::FlushDeferredInsert()
     query << "]}";
 
     std::stringstream changeset;
-    changeset << "{\"change\": \"" << json_encode(query.str()) << "\"}";
+    changeset << "{\"change\": \"" << OGRAMIGOCLOUDJsonEncode(query.str()) << "\"}";
 
     json_object* poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
     if( poObj != NULL )
@@ -624,7 +624,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
                             aFID.osAmigoId.c_str());
 
         std::stringstream changeset;
-        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
         url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
@@ -685,7 +685,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
                      aFID.osAmigoId.c_str());
 
         std::stringstream changeset;
-        changeset << "{\"query\": \"" << json_encode(osSQL) << "\"}";
+        changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
         url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
@@ -1069,9 +1069,7 @@ CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField)
 bool OGRAmigoCloudTableLayer::IsDatasetExists()
 {
     std::stringstream url;
-
     url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId;
-
     json_object* result = poDS->RunGET(url.str().c_str());
     if( result == NULL )
         return false;
@@ -1106,15 +1104,10 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
     if( !bDeferredCreation )
         return OGRERR_NONE;
     bDeferredCreation = FALSE;
-
     std::stringstream json;
-
     json << "{ \"name\":\"" << osDatasetId << "\",";
-
     json << "\"schema\": \"[";
-
     int counter=0;
-
     OGRwkbGeometryType eGType = GetGeomType();
     if( eGType != wkbNone )
     {
@@ -1173,14 +1166,18 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
     {
         if(json_object_get_type(result) == json_type_object)
         {
-            json_object *poId = CPL_json_object_object_get(result, "id");
-            if(poId!=NULL)
+            json_object *poName = CPL_json_object_object_get(result, "name");
+            if(poName!=NULL)
             {
+                osName = json_object_to_json_string(poName);
+            }
+
+            json_object *poId = CPL_json_object_object_get(result, "id");
+            if(poId!=NULL) {
                 osTableName = CPLString("dataset_") + json_object_to_json_string(poId);
                 osDatasetId = json_object_to_json_string(poId);
-                int retry=10;
-                while(!IsDatasetExists() && retry >= 0)
-                {
+                int retry = 10;
+                while (!IsDatasetExists() && retry >= 0) {
                     retry--;
                 }
                 json_object_put(result);
