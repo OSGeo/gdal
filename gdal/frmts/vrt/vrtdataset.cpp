@@ -886,8 +886,10 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
         return NULL;
     }
 
-    const bool bIsPansharpened
-        = strstr( pszXML, "VRTPansharpenedDataset" ) != NULL;
+    const char* pszSubClass = CPLGetXMLValue(psRoot, "subClass", "");
+
+    const bool bIsPansharpened =
+        strcmp(pszSubClass, "VRTPansharpenedDataset" ) == 0;
 
     if( !bIsPansharpened &&
         (CPLGetXMLNode( psRoot, "rasterXSize" ) == NULL
@@ -915,7 +917,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath,
     }
 
     VRTDataset *poDS = NULL;
-    if( strstr(pszXML,"VRTWarpedDataset") != NULL )
+    if( strcmp(pszSubClass, "VRTWarpedDataset") == 0 )
         poDS = new VRTWarpedDataset( nXSize, nYSize );
     else if( bIsPansharpened )
         poDS = new VRTPansharpenedDataset( nXSize, nYSize );
