@@ -41,7 +41,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename, const char* pszOp
 
 OGRAmigoCloudDataSource::OGRAmigoCloudDataSource() :
     pszName(NULL),
-    pszProjetctId(NULL),
+    pszProjectId(NULL),
     papoLayers(NULL),
     nLayers(0),
     bReadWrite(false),
@@ -71,7 +71,7 @@ OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
     }
 
     CPLFree( pszName );
-    CPLFree(pszProjetctId);
+    CPLFree(pszProjectId);
 }
 
 std::string  OGRAmigoCloudDataSource::GetUserAgentOption()
@@ -147,7 +147,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char* pszFilename,
 bool OGRAmigoCloudDataSource::ListDatasets()
 {
     std::stringstream url;
-    url << std::string(GetAPIURL()) << "/users/0/projects/" << std::string(GetProjetcId()) << "/datasets/?summary";
+    url << std::string(GetAPIURL()) << "/users/0/projects/" << std::string(GetProjectId()) << "/datasets/?summary";
     json_object* result = RunGET(url.str().c_str());
     if( result == NULL ) {
         CPLError(CE_Failure, CPLE_AppDefined, "AmigoCloud:get failed.");
@@ -163,7 +163,7 @@ bool OGRAmigoCloudDataSource::ListDatasets()
             if(poResults != NULL) {
                 array_list *res = json_object_get_array(poResults);
                 if(res != NULL) {
-                    CPLprintf("List of available datasets for project id: %s\n", GetProjetcId());
+                    CPLprintf("List of available datasets for project id: %s\n", GetProjectId());
                     CPLprintf("| id \t | name\n");
                     CPLprintf("|--------|-------------------\n");
                     for(int i = 0; i < res->length; i++) {
@@ -206,13 +206,13 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
     bReadWrite = CPL_TO_BOOL(bUpdateIn);
 
     pszName = CPLStrdup( pszFilename );
-    pszProjetctId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
-    char* pchSpace = strchr(pszProjetctId, ' ');
+    pszProjectId = CPLStrdup(pszFilename + strlen("AMIGOCLOUD:"));
+    char* pchSpace = strchr(pszProjectId, ' ');
     if( pchSpace )
         *pchSpace = '\0';
-    if( pszProjetctId[0] == 0 )
+    if( pszProjectId[0] == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Missing projetc id");
+        CPLError(CE_Failure, CPLE_AppDefined, "Missing project id");
         return FALSE;
     }
 
@@ -415,7 +415,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
     if( !bDeferredCreation )
     {
         std::stringstream url;
-        url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/datasets/"+ osDatasetId.c_str();
+        url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjectId()) + "/datasets/"+ osDatasetId.c_str();
         if( !RunDELETE(url.str().c_str()) ) {
             return OGRERR_FAILURE;
         }
@@ -583,7 +583,7 @@ bool OGRAmigoCloudDataSource::TruncateDataset(const CPLString &tableName)
 void OGRAmigoCloudDataSource::SubmitChangeset(const CPLString &json)
 {
     std::stringstream url;
-    url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjetcId()) + "/submit_changeset";
+    url << std::string(GetAPIURL()) << "/users/0/projects/" + std::string(GetProjectId()) + "/submit_changeset";
     std::stringstream changeset;
     changeset << "{\"changeset\":\"" << OGRAMIGOCLOUDJsonEncode(json) << "\"}";
     json_object* poObj = RunPOST(url.str().c_str(), changeset.str().c_str());
@@ -740,7 +740,7 @@ json_object* OGRAmigoCloudDataSource::RunGET(const char*pszURL)
 json_object* OGRAmigoCloudDataSource::RunSQL(const char* pszUnescapedSQL)
 {
     CPLString osSQL;
-    osSQL = "/users/0/projects/" + CPLString(pszProjetctId) + "/sql";
+    osSQL = "/users/0/projects/" + CPLString(pszProjectId) + "/sql";
 
     /* -------------------------------------------------------------------- */
     /*      Provide the API Key                                             */

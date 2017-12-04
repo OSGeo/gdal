@@ -234,7 +234,7 @@ class OGRAmigoCloudResultLayer : public OGRAmigoCloudLayer
 class OGRAmigoCloudDataSource : public OGRDataSource
 {
         char*               pszName;
-        char*               pszProjetctId;
+        char*               pszProjectId;
 
         OGRAmigoCloudTableLayer**  papoLayers;
         int                 nLayers;
@@ -279,7 +279,7 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         const char*                 GetAPIURL() const;
         bool                        IsReadWrite() const { return bReadWrite; }
-        const char*                 GetProjetcId() { return pszProjetctId;}
+        const char*                 GetProjectId() { return pszProjectId;}
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
         json_object*                RunGET(const char*pszURL);
