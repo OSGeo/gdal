@@ -395,7 +395,7 @@ void GDALRegister_VRT()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OptionList>"
-"  <on name='ROOT_PATH' type='string' description='Root path to evaluate "
+"  <Option name='ROOT_PATH' type='string' description='Root path to evaluate "
 "relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory "
 "VRT, where their own directory does not make sense'/>"
 "</OptionList>" );
