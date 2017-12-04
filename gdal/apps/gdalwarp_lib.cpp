@@ -2086,6 +2086,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             osThisTargetSRS = pszThisTargetSRS;
     }
 
+    CPLStringList aoTOList(papszTO, FALSE);
+
     for( int iSrc = 0; iSrc < nSrcCount; iSrc++ )
     {
         if( pahSrcDS[iSrc] == NULL )
@@ -2134,22 +2136,26 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         }
 
 /* -------------------------------------------------------------------- */
-/*      Get the sourcesrs from the dataset, if not set already.         */
+/*      If we are processing the first file, get the source srs from    */
+/*      dataset, if not set already.                                    */
 /* -------------------------------------------------------------------- */
-        const char* pszThisSourceSRS = GetSrcDSProjection(
+        if( iSrc == 0 && osThisTargetSRS.empty() )
+        {
+            const char* pszThisSourceSRS = GetSrcDSProjection(
                                                     pahSrcDS[iSrc], papszTO );
-        if( pszThisSourceSRS == NULL )
-            pszThisSourceSRS = "";
-
-        if( osThisTargetSRS.empty() )
-            osThisTargetSRS = pszThisSourceSRS;
+            if( pszThisSourceSRS != NULL && pszThisSourceSRS[0] != '\0' )
+            {
+                osThisTargetSRS = pszThisSourceSRS;
+                aoTOList.SetNameValue("DST_SRS", pszThisSourceSRS);
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         hTransformArg =
-            GDALCreateGenImgProjTransformer2( pahSrcDS[iSrc], NULL, papszTO );
+            GDALCreateGenImgProjTransformer2( pahSrcDS[iSrc], NULL, aoTOList.List() );
 
         if( hTransformArg == NULL )
         {
