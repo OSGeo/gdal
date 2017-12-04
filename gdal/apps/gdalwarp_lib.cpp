@@ -2012,6 +2012,8 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             osThisTargetSRS = pszThisTargetSRS;
     }
 
+    CPLStringList aoTOList(papszTO, FALSE);
+
     for( iSrc = 0; iSrc < nSrcCount; iSrc++ )
     {
         const char *pszThisSourceSRS = CSLFetchNameValue(papszTO,"SRC_SRS");
@@ -2062,9 +2064,10 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
         }
 
 /* -------------------------------------------------------------------- */
-/*      Get the sourcesrs from the dataset, if not set already.         */
+/*      If we are processing the first file, get the source srs from    */
+/*      dataset, if not set already.                                    */
 /* -------------------------------------------------------------------- */
-        if( pszThisSourceSRS == NULL )
+        if( iSrc == 0 && osThisTargetSRS.empty() )
         {
             const char *pszMethod = CSLFetchNameValue( papszTO, "METHOD" );
 
@@ -2082,17 +2085,20 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
                 pszThisSourceSRS = SRS_WKT_WGS84;
             else
                 pszThisSourceSRS = "";
-        }
 
-        if( osThisTargetSRS.empty() )
-            osThisTargetSRS = pszThisSourceSRS;
+            if( pszThisSourceSRS != NULL && pszThisSourceSRS[0] != '\0' )
+            {
+                osThisTargetSRS = pszThisSourceSRS;
+                aoTOList.SetNameValue("DST_SRS", pszThisSourceSRS);
+            }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         hTransformArg =
-            GDALCreateGenImgProjTransformer2( pahSrcDS[iSrc], NULL, papszTO );
+            GDALCreateGenImgProjTransformer2( pahSrcDS[iSrc], NULL, aoTOList.List() );
 
         if( hTransformArg == NULL )
         {
