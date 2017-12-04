@@ -34,6 +34,7 @@
 #include "cpl_port.h"
 #include "ogrpgeogeometry.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
