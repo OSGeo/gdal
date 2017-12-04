@@ -129,18 +129,48 @@ Show list of datasets.
     </pre>
 
 <li>
-Accessing data from a public table:
-<pre>
-ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
-</pre>
-<p>
+    Accessing data from a list of datasets:
+    <pre>
+    ogrinfo -ro "AmigoCloud:1234 datasets=1234,1235"
+    </pre>
+    <p>
 
 <li>
-Creating and populating a table from a shapefile:
-<pre>
-ogr2ogr --config AMIGOCLOUD_API_KEY abcdefghijklmnopqrstuvw -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
-</pre>
-<p>
+    Creating and populating a table from a shapefile:
+    <pre>
+    ogr2ogr -f AmigoCloud "AmigoCloud:1234" myshapefile.shp
+    </pre>
+    <p>
+
+<li>
+    Append the data to an existing table (dataset id: 12345) from a shapefile:
+    <pre>
+    ogr2ogr -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
+        or
+    ogr2ogr -append -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
+    </pre>
+    <p>
+
+<li>
+    Overwriting the data of an existing table (dataset id: 12345) with data from a shapefile:
+    <pre>
+    ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
+    </pre>
+    <p>
+
+<li>
+    Delete existing dataset (dataset id: 12345) and create a new one with data from a shapefile:
+    <pre>
+    ogr2ogr -overwrite -f AmigoCloud "AmigoCloud:1234 datasets=12345" myshapefile.shp
+    </pre>
+    <p>
+
+<li>
+    Overwriting the data of an existing table (dataset id: 12345) with data from a shapefile. Filter the only the records with values of the field "visited_on" after 2017-08-20
+    <pre>
+    ogr2ogr -append -doo OVERWRITE=YES -f AmigoCloud "AmigoCloud:1234 datasets=12345" -where "visited_on > '2017-08-20'" myshapefile.shp
+    </pre>
+    <p>
 
 <h2>See Also</h2>
 
