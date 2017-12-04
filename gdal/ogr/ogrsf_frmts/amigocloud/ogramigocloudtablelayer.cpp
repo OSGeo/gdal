@@ -323,7 +323,7 @@ void OGRAmigoCloudTableLayer::FlushDeferredInsert()
         return;
 
     std::stringstream url;
-    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId +"/submit_change";
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjectId()) + "/datasets/"+ osDatasetId +"/submit_change";
 
     std::stringstream query;
 
@@ -626,7 +626,7 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature( OGRFeature *poFeature )
         std::stringstream changeset;
         changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
-        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
+        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjectId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
 
         if(poObj != NULL)
@@ -687,7 +687,7 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature( GIntBig nFID )
         std::stringstream changeset;
         changeset << "{\"query\": \"" << OGRAMIGOCLOUDJsonEncode(osSQL) << "\"}";
         std::stringstream url;
-        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/sql";
+        url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjectId()) + "/sql";
         json_object *poObj = poDS->RunPOST(url.str().c_str(), changeset.str().c_str());
         if(poObj != NULL)
         {
@@ -1069,7 +1069,7 @@ CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn& oField)
 bool OGRAmigoCloudTableLayer::IsDatasetExists()
 {
     std::stringstream url;
-    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/"+ osDatasetId;
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjectId()) + "/datasets/"+ osDatasetId;
     json_object* result = poDS->RunGET(url.str().c_str());
     if( result == NULL )
         return false;
@@ -1159,7 +1159,7 @@ OGRErr OGRAmigoCloudTableLayer::RunDeferredCreationIfNecessary()
     json << " ] \" }";
 
     std::stringstream url;
-    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjetcId()) + "/datasets/create";
+    url << std::string(poDS->GetAPIURL()) << "/users/0/projects/" + std::string(poDS->GetProjectId()) + "/datasets/create";
 
     json_object* result = poDS->RunPOST(url.str().c_str(), json.str().c_str());
     if( result != NULL )
