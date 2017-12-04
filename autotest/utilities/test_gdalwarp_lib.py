@@ -1667,6 +1667,35 @@ def test_gdalwarp_lib_136():
     return 'success'
 
 ###############################################################################
+# Test warping two input datasets with different SRS, with no explicit target SRS
+
+def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs():
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    src_ds_32611_left = gdal.Translate('', src_ds, format = 'MEM',
+                                       srcWin = [0,0,10,20],
+                                       outputSRS = 'EPSG:32611')
+    src_ds_32611_right = gdal.Translate('', src_ds, format = 'MEM',
+                                       srcWin = [10,0,10,20],
+                                       outputSRS = 'EPSG:32611')
+    src_ds_4326_right = gdal.Warp('', src_ds_32611_right, format = 'MEM',
+                                  dstSRS = 'EPSG:4326')
+    out_ds = gdal.Warp('', [src_ds_4326_right, src_ds_32611_left], format = 'MEM')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.RasterXSize != 23:
+        gdaltest.post_reason('fail')
+        print(out_ds.RasterXSize)
+        return 'fail'
+    cs = out_ds.GetRasterBand(1).Checksum()
+    if cs != 5048:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1751,6 +1780,7 @@ gdaltest_list = [
     test_gdalwarp_lib_134,
     test_gdalwarp_lib_135,
     test_gdalwarp_lib_136,
+    test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
     test_gdalwarp_lib_cleanup,
     ]
 
