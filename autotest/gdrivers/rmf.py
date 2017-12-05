@@ -128,8 +128,8 @@ def rmf_11():
         return 'fail'
 
     ovr_n = ( 0, 1, 2 )
-    ovr_size = ( 16, 64, 256 )
-    ovr_checksum = ( 3192, 51233, 32756 )
+    ovr_size = ( 256, 64, 16 )
+    ovr_checksum = ( 32756, 51233, 3192 )
 
     for i in ovr_n:
         ovr_band = band1.GetOverview(i)
@@ -146,6 +146,38 @@ def rmf_11():
     return 'success'
 
 ###############################################################################
+# Check file open with cucled header offsets .
+
+def rmf_12a():
+
+    tst = gdaltest.GDALTest( 'rmf', 'cucled-1.rsw', 1, 4672 )
+    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
+###############################################################################
+# Check file open with cucled header offsets .
+
+def rmf_12b():
+
+    tst = gdaltest.GDALTest( 'rmf', 'cucled-2.rsw', 1, 4672 )
+    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
+###############################################################################
+# Check file open with invalid subheader marker.
+
+def rmf_12c():
+
+    tst = gdaltest.GDALTest( 'rmf', 'invalid-subheader.rsw', 1, 4672 )
+    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
+###############################################################################
+# Check file open with corrupted subheader.
+
+def rmf_12d():
+
+    tst = gdaltest.GDALTest( 'rmf', 'corrupted-subheader.rsw', 1, 4672 )
+    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -158,7 +190,11 @@ gdaltest_list = [
     rmf_8,
     rmf_9,
     rmf_10,
-    rmf_11
+    rmf_11,
+    rmf_12a,
+    rmf_12b,
+    rmf_12c,
+    rmf_12d
 ]
 
 if __name__ == '__main__':
