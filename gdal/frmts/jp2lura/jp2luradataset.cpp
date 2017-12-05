@@ -756,11 +756,16 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
         if (bGMLJP2Option &&
             CPLGetConfigOption("GMLJP2OVERRIDE", NULL) != NULL)
-                bGeoreferencingCompatOfGMLJP2 = true;
+        {
+            // Force V1 since this is the branch in which the hack is
+            // implemented
+            nGMLJP2Version = 1;
+            bGeoreferencingCompatOfGMLJP2 = TRUE;
+        }
     }
 
     if (CSLFetchNameValue(papszOptions, "GMLJP2") != NULL && bGMLJP2Option &&
-        !bGeoreferencingCompatOfGMLJP2 && nGMLJP2Version == 1)
+        !bGeoreferencingCompatOfGMLJP2)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                 "GMLJP2 box was explicitly required but cannot be written due "
@@ -1238,7 +1243,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 bUseXLBoxes =
                     CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) ||
                     (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
-                                    dfRates[adfRates.size() - 1] > 4e9;*/
+                                    dfRates.back() > 4e9;*/
             GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
             CPL_MSBPTR32(&nLBox);
             VSIFWriteL(&nLBox, 1, 4, fp);
@@ -1340,6 +1345,11 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             {
                 if (RATE == 0 && QUALITY != 0)
                 {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                        "Using QUALITY option will also affect the REVERSIBLE "
+                        "sign and exponent band, as the SDK can only apply "
+                        "the QUALITY parameter the whole image. Thus numeric "
+                        "Float pixels will be affected");
                     SetPropGeneral(cJP2_Prop_Rate_Quality, QUALITY);
                 }
                 if (QUALITY == 0 && RATE != 0)
@@ -1389,12 +1399,20 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
                 if (REVERSIBLE == 0)
                 {
-                    SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
-                                      cJP2_Waveleta[channel], channel);
-                    if (cJP2_Waveleta[channel] == cJP2_Wavelet_9_7 )
+                    if(QUALITY==0 && RATE==0)
                     {
-                        SetPropPerChannel(cJP2_Prop_Quantization_Style,
-                                          cJP2_Quanta[channel], channel);
+                        SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
+                                        cJP2_Waveleta[channel], channel);
+                        if (cJP2_Waveleta[channel] == cJP2_Wavelet_9_7 )
+                        {
+                            SetPropPerChannel(cJP2_Prop_Quantization_Style,
+                                            cJP2_Quanta[channel], channel);
+                        }
+                    }
+                    else
+                    {
+                        SetPropPerChannel(cJP2_Prop_Wavelet_Filter,
+                                          cJP2_Wavelet_9_7, channel);
                     }
                 }
                 else
@@ -1488,12 +1506,6 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         idata.poSrcDS = poSrcDS;
         idata.pProgressData = pProgressData;
         idata.pfnProgress = pfnProgress;
-#if SIZEOF_UNSIGNED_LONG == 8
-        idata.bLinux64Hack = CPLTestBool(
-                        CPLGetConfigOption("JP2LURA_LINUX64_HACK", "YES"));
-#else
-        idata.bLinux64Hack = false;
-#endif
 
         SetPropGeneral(cJP2_Prop_Input_Parameter,
                        reinterpret_cast<JP2_Property_Value>(&idata));
@@ -2229,13 +2241,6 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                     ulTileH, poDS->nRasterYSize);
         ulTileH = poDS->nRasterYSize;
     }
-
-#if SIZEOF_UNSIGNED_LONG == 8
-    poDS->sOutputData.bLinux64Hack = CPLTestBool(
-                        CPLGetConfigOption("JP2LURA_LINUX64_HACK", "YES"));
-#else
-    poDS->sOutputData.bLinux64Hack = false;
-#endif
 
     int nTileW = static_cast<int>(ulTileW);
     int nTileH = static_cast<int>(ulTileH);

@@ -27,9 +27,9 @@
  ****************************************************************************/
 
 #include "ogr_xplane_apt_reader.h"
-#include "ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRXPlaneCreateAptFileReader                       */
@@ -512,9 +512,9 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
 
         double adfLat[2];
         double adfLon[2];
-        OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2,
+        OGR_GreatCircle_ExtendPosition(dfLat, dfLon, dfLength / 2,
                                  dfTrueHeading + 180, &adfLat[0], &adfLon[0]);
-        OGRXPlane_ExtendPosition(dfLat, dfLon, dfLength / 2,
+        OGR_GreatCircle_ExtendPosition(dfLat, dfLon, dfLength / 2,
                                  dfTrueHeading, &adfLat[1], &adfLon[1]);
 
         int abReil[2];
@@ -549,9 +549,9 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
             if (poWaterRunwayThresholdLayer)
             {
                 poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[0], dfLength,
-                                            OGRXPlane_Track(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
+                                            OGR_GreatCircle_InitialHeading(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
                 poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[1], dfLength,
-                                            OGRXPlane_Track(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
+                                            OGR_GreatCircle_InitialHeading(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
             }
 
             if (poWaterRunwayLayer)
@@ -609,7 +609,7 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
                 {
                     if (adfStopwayLength[i] != 0)
                     {
-                        double dfHeading = OGRXPlane_Track(adfLat[i], adfLon[i],
+                        double dfHeading = OGR_GreatCircle_InitialHeading(adfLat[i], adfLon[i],
                                                            adfLat[1-i], adfLon[1-i]);
                         poStopwayLayer->AddFeature(osAptICAO, aosRwyNum[i],
                             adfLat[i], adfLon[i], dfHeading, dfWidth, adfStopwayLength[i]);
@@ -723,7 +723,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
     }
 
     const double dfLength
-        = OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
+        = OGR_GreatCircle_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
     if (poRunwayThresholdLayer)
     {
         OGRFeature* apoRunwayThreshold[2] = { NULL, NULL };
@@ -750,9 +750,9 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
                       RunwayREILEnumeration.GetText(eREIL) );
         }
         poRunwayThresholdLayer->SetRunwayLengthAndHeading(apoRunwayThreshold[0], dfLength,
-                                    OGRXPlane_Track(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
+                                    OGR_GreatCircle_InitialHeading(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
         poRunwayThresholdLayer->SetRunwayLengthAndHeading(apoRunwayThreshold[1], dfLength,
-                                    OGRXPlane_Track(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
+                                    OGR_GreatCircle_InitialHeading(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
         if (adfDisplacedThresholdLength[0] != 0)
             poRunwayThresholdLayer->AddFeatureFromNonDisplacedThreshold(apoRunwayThreshold[0]);
         if (adfDisplacedThresholdLength[1] != 0)
@@ -778,7 +778,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
             if (adfStopwayLength[i] != 0)
             {
                 const double dfHeading =
-                    OGRXPlane_Track(adfLat[i], adfLon[i],
+                    OGR_GreatCircle_InitialHeading(adfLat[i], adfLon[i],
                                     adfLat[1-i], adfLon[1-i]);
                 poStopwayLayer->AddFeature(osAptICAO, aosRunwayId[i],
                     adfLat[i], adfLon[i], dfHeading, dfWidth, adfStopwayLength[i]);
@@ -810,7 +810,7 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
     }
 
     const double dfLength =
-        OGRXPlane_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
+        OGR_GreatCircle_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
 
     if (poWaterRunwayThresholdLayer)
     {
@@ -823,9 +823,9 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
                       bBuoys );
         }
         poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[0], dfLength,
-                                    OGRXPlane_Track(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
+                                    OGR_GreatCircle_InitialHeading(adfLat[0], adfLon[0], adfLat[1], adfLon[1]));
         poWaterRunwayThresholdLayer->SetRunwayLengthAndHeading(apoWaterRunwayThreshold[1], dfLength,
-                                    OGRXPlane_Track(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
+                                    OGR_GreatCircle_InitialHeading(adfLat[1], adfLon[1], adfLat[0], adfLon[0]));
     }
 
     if (poWaterRunwayLayer)
@@ -2107,7 +2107,7 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
     OGRPoint* poPoint = (OGRPoint*)poFeature->GetGeometryRef();
     double dfLatDisplaced = 0.0;
     double dfLonDisplaced = 0.0;
-    OGRXPlane_ExtendPosition(poPoint->getY(), poPoint->getX(),
+    OGR_GreatCircle_ExtendPosition(poPoint->getY(), poPoint->getX(),
                              dfDisplacedThresholdLength, dfTrueHeading,
                              &dfLatDisplaced, &dfLonDisplaced);
     poPoint->setX(dfLonDisplaced);
@@ -2198,16 +2198,16 @@ OGRFeature*
     int nCount = 0;
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    const double dfLength = OGRXPlane_Distance(dfLat1, dfLon1, dfLat2, dfLon2);
-    const double dfTrack12 = OGRXPlane_Track(dfLat1, dfLon1, dfLat2, dfLon2);
-    const double dfTrack21 = OGRXPlane_Track(dfLat2, dfLon2, dfLat1, dfLon1);
+    const double dfLength = OGR_GreatCircle_Distance(dfLat1, dfLon1, dfLat2, dfLon2);
+    const double dfTrack12 = OGR_GreatCircle_InitialHeading(dfLat1, dfLon1, dfLat2, dfLon2);
+    const double dfTrack21 = OGR_GreatCircle_InitialHeading(dfLat2, dfLon2, dfLat1, dfLon1);
     double adfLat[4];
     double adfLon[4];
 
-    OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90, &adfLat[0], &adfLon[0]);
-    OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90, &adfLat[1], &adfLon[1]);
-    OGRXPlane_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90, &adfLat[2], &adfLon[2]);
-    OGRXPlane_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90, &adfLat[3], &adfLon[3]);
+    OGR_GreatCircle_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90, &adfLat[0], &adfLon[0]);
+    OGR_GreatCircle_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90, &adfLat[1], &adfLon[1]);
+    OGR_GreatCircle_ExtendPosition(dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90, &adfLat[2], &adfLon[2]);
+    OGR_GreatCircle_ExtendPosition(dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90, &adfLat[3], &adfLon[3]);
 
     OGRLinearRing* linearRing = new OGRLinearRing();
     linearRing->setNumPoints(5);
@@ -2283,16 +2283,16 @@ OGRFeature*
     double adfLat[4] = {};
     double adfLon[4] = {};
 
-    OGRXPlane_ExtendPosition( dfLatThreshold, dfLonThreshold, dfStopwayLength,
+    OGR_GreatCircle_ExtendPosition( dfLatThreshold, dfLonThreshold, dfStopwayLength,
                               180 + dfRunwayHeading, &dfLat2, &dfLon2);
 
-    OGRXPlane_ExtendPosition( dfLatThreshold, dfLonThreshold, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfLatThreshold, dfLonThreshold, dfWidth / 2,
                               dfRunwayHeading - 90, &adfLat[0], &adfLon[0]);
-    OGRXPlane_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading - 90,
+    OGR_GreatCircle_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading - 90,
                               &adfLat[1], &adfLon[1]);
-    OGRXPlane_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading + 90,
+    OGR_GreatCircle_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfRunwayHeading + 90,
                               &adfLat[2], &adfLon[2]);
-    OGRXPlane_ExtendPosition( dfLatThreshold, dfLonThreshold, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfLatThreshold, dfLonThreshold, dfWidth / 2,
                               dfRunwayHeading + 90, &adfLat[3], &adfLon[3]);
 
     OGRLinearRing* linearRing = new OGRLinearRing();
@@ -2440,19 +2440,19 @@ OGRFeature*
 {
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
 
-    const double dfLength = OGRXPlane_Distance(dfLat1, dfLon1, dfLat2, dfLon2);
-    const double dfTrack12 = OGRXPlane_Track(dfLat1, dfLon1, dfLat2, dfLon2);
-    const double dfTrack21 = OGRXPlane_Track(dfLat2, dfLon2, dfLat1, dfLon1);
+    const double dfLength = OGR_GreatCircle_Distance(dfLat1, dfLon1, dfLat2, dfLon2);
+    const double dfTrack12 = OGR_GreatCircle_InitialHeading(dfLat1, dfLon1, dfLat2, dfLon2);
+    const double dfTrack21 = OGR_GreatCircle_InitialHeading(dfLat2, dfLon2, dfLat1, dfLon1);
     double adfLat[4] = {};
     double adfLon[4] = {};
 
-    OGRXPlane_ExtendPosition( dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90,
+    OGR_GreatCircle_ExtendPosition( dfLat1, dfLon1, dfWidth / 2, dfTrack12 - 90,
                               &adfLat[0], &adfLon[0]);
-    OGRXPlane_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90,
+    OGR_GreatCircle_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfTrack21 + 90,
                               &adfLat[1], &adfLon[1]);
-    OGRXPlane_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90,
+    OGR_GreatCircle_ExtendPosition( dfLat2, dfLon2, dfWidth / 2, dfTrack21 - 90,
                               &adfLat[2], &adfLon[2]);
-    OGRXPlane_ExtendPosition( dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90,
+    OGR_GreatCircle_ExtendPosition( dfLat1, dfLon1, dfWidth / 2, dfTrack12 + 90,
                               &adfLat[3], &adfLon[3]);
 
     OGRLinearRing* linearRing = new OGRLinearRing();
@@ -2638,18 +2638,18 @@ OGRFeature*
     double adfLat[4] = {};
     double adfLon[4] = {};
 
-    OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
+    OGR_GreatCircle_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
                               &dfBeforeLat, &dfBeforeLon);
-    OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading,
+    OGR_GreatCircle_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading,
                               &dfAfterLat, &dfAfterLon);
 
-    OGRXPlane_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
                               dfTrueHeading - 90, &adfLat[0], &adfLon[0]);
-    OGRXPlane_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
                               dfTrueHeading - 90, &adfLat[1], &adfLon[1]);
-    OGRXPlane_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
                               dfTrueHeading + 90, &adfLat[2], &adfLon[2]);
-    OGRXPlane_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
                               dfTrueHeading + 90, &adfLat[3], &adfLon[3]);
 
     OGRLinearRing* linearRing = new OGRLinearRing();
@@ -2741,18 +2741,18 @@ OGRFeature*
     double adfLat[4] = {};
     double adfLon[4] = {};
 
-    OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
+    OGR_GreatCircle_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading + 180,
                               &dfBeforeLat, &dfBeforeLon);
-    OGRXPlane_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading,
+    OGR_GreatCircle_ExtendPosition( dfLat, dfLon, dfLength / 2, dfTrueHeading,
                               &dfAfterLat, &dfAfterLon);
 
-    OGRXPlane_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
                               dfTrueHeading - 90, &adfLat[0], &adfLon[0]);
-    OGRXPlane_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
                               dfTrueHeading - 90, &adfLat[1], &adfLon[1]);
-    OGRXPlane_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfAfterLat, dfAfterLon, dfWidth / 2,
                               dfTrueHeading + 90, &adfLat[2], &adfLon[2]);
-    OGRXPlane_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
+    OGR_GreatCircle_ExtendPosition( dfBeforeLat, dfBeforeLon, dfWidth / 2,
                               dfTrueHeading + 90, &adfLat[3], &adfLon[3]);
 
     OGRLinearRing* linearRing = new OGRLinearRing();

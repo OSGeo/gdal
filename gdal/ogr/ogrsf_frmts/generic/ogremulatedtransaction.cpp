@@ -31,7 +31,7 @@
 #include <map>
 #include <set>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class OGRDataSourceWithTransaction;
 

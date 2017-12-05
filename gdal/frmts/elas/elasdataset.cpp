@@ -35,7 +35,7 @@
 
 using std::fill;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef struct ELASHeader {
     ELASHeader();
@@ -194,7 +194,7 @@ CPLErr ELASRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 
     ELASDataset *poGDS = (ELASDataset *) poDS;
 
-    int nDataSize = GDALGetDataTypeSize(eDataType) * poGDS->GetRasterXSize() / 8;
+    int nDataSize = GDALGetDataTypeSizeBytes(eDataType) * poGDS->GetRasterXSize();
     long nOffset = poGDS->nLineOffset * nBlockYOff + 1024 + (nBand-1) * nDataSize;
 
 /* -------------------------------------------------------------------- */
@@ -227,7 +227,7 @@ CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 
     ELASDataset *poGDS = (ELASDataset *) poDS;
 
-    int nDataSize = GDALGetDataTypeSize(eDataType) * poGDS->GetRasterXSize() / 8;
+    int nDataSize = GDALGetDataTypeSizeBytes(eDataType) * poGDS->GetRasterXSize();
     long nOffset = poGDS->nLineOffset * nBlockYOff + 1024 + (nBand-1) * nDataSize;
 
     if( VSIFSeekL( poGDS->fp, nOffset, SEEK_SET ) != 0
@@ -373,11 +373,23 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int nStart = CPL_MSBWORD32( poDS->sHeader.IL );
     int nEnd = CPL_MSBWORD32( poDS->sHeader.LL );
-    poDS->nRasterYSize = nEnd - nStart + 1;
+    GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    if( nDiff <= 0 || nDiff > INT_MAX )
+    {
+        delete poDS;
+        return NULL;
+    }
+    poDS->nRasterYSize = static_cast<int>(nDiff);
 
     nStart = CPL_MSBWORD32( poDS->sHeader.IE );
     nEnd = CPL_MSBWORD32( poDS->sHeader.LE );
-    poDS->nRasterXSize = nEnd - nStart + 1;
+    nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    if( nDiff <= 0 || nDiff > INT_MAX )
+    {
+        delete poDS;
+        return NULL;
+    }
+    poDS->nRasterXSize = static_cast<int>(nDiff);
 
     poDS->nBands = CPL_MSBWORD32( poDS->sHeader.NC );
 
@@ -412,8 +424,25 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Band offsets are always multiples of 256 within a multi-band    */
 /*      scanline of data.                                               */
 /* -------------------------------------------------------------------- */
+    if( GDALGetDataTypeSizeBytes(poDS->eRasterDataType) >
+                                    (INT_MAX - 256) / poDS->nRasterXSize )
+    {
+        delete poDS;
+        return NULL;
+    }
     poDS->nBandOffset =
-        (poDS->nRasterXSize * GDALGetDataTypeSize(poDS->eRasterDataType)/8);
+        (poDS->nRasterXSize * GDALGetDataTypeSizeBytes(poDS->eRasterDataType));
+
+    if( poDS->nBandOffset > 1000000 )
+    {
+        VSIFSeekL( poDS->fp, 0, SEEK_END );
+        if( VSIFTellL( poDS->fp ) < static_cast<vsi_l_offset>(poDS->nBandOffset) )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "File too short");
+            delete poDS;
+            return NULL;
+        }
+    }
 
     if( poDS->nBandOffset % 256 != 0 )
     {
@@ -525,7 +554,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      How long will each band of a scanline be?                       */
 /* -------------------------------------------------------------------- */
-    int nBandOffset = nXSize * GDALGetDataTypeSize(eType)/8;
+    int nBandOffset = nXSize * GDALGetDataTypeSizeBytes(eType);
 
     if( nBandOffset % 256 != 0 )
     {
@@ -539,8 +568,6 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /*      big endian on little endian platforms.                          */
 /* -------------------------------------------------------------------- */
     ELASHeader sHeader;
-
-    memset( &sHeader, 0, 1024 );
 
     sHeader.NBIH = CPL_MSBWORD32(1024);
 
@@ -558,7 +585,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 
     sHeader.IH19[0] = 0x04;
     sHeader.IH19[1] = 0xd2;
-    sHeader.IH19[3] = (GByte) (GDALGetDataTypeSize(eType) / 8);
+    sHeader.IH19[3] = (GByte) (GDALGetDataTypeSizeBytes(eType));
 
     if( eType == GDT_Byte )
         sHeader.IH19[2] = 1 << 2;

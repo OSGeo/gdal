@@ -27,7 +27,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-import gdal
+from osgeo import gdal
 import gdalnumeric
 try:
     import numpy
@@ -61,5 +61,3 @@ for class_info in class_defs:
     dst_image = numpy.choose( mask, (dst_image,class_value) )
 
 gdalnumeric.SaveArray( dst_image, 'classes.tif' )
-
-

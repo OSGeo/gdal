@@ -39,7 +39,7 @@
 #include "cpl_string.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 /************************************************************************/

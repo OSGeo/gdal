@@ -249,6 +249,14 @@ def tiff_read_ojpeg():
         print('Expected checksum = %d. Got = %d' % (expected_cs, got_cs))
         return 'fail'
 
+    #
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/zackthecat_corrupted.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    gdal.PopErrorHandler()
+    if cs != 0:
+        print('Should be 0 with internal libtiff')
+
     return 'success'
 
 ###############################################################################
@@ -2459,6 +2467,89 @@ def tiff_read_logl_as_rgba():
 
 ###############################################################################
 #
+def tiff_read_strip_separate_as_rgba():
+
+    if not gdaltest.supports_force_rgba:
+        return 'skip'
+
+    # 3 band
+    gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
+                   'data/rgbsmall.tif', options = '-co INTERLEAVE=BAND')
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [21212,21053,21349,30658]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+
+    # 3 band with PHOTOMETRIC_MINISBLACK to trigger gtStripSeparate() to
+    # use the single band code path
+    gdal.Translate('/vsimem/tiff_read_strip_separate_as_rgba.tif',
+                   'data/rgbsmall.tif', options = '-co INTERLEAVE=BAND -co PHOTOMETRIC=MINISBLACK')
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [21212,21212,21212,30658]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_strip_separate_as_rgba.tif')
+
+    return 'success'
+
+###############################################################################
+#
+def tiff_read_tiled_separate_as_rgba():
+
+    if not gdaltest.supports_force_rgba:
+        return 'skip'
+
+    # 3 band
+    gdal.Translate('/vsimem/tiff_read_tiled_separate_as_rgba.tif',
+                   'data/rgbsmall.tif', options = '-co TILED=YES -co INTERLEAVE=BAND')
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [21212,21053,21349,30658]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
+
+    # Single band
+    gdal.Translate('/vsimem/tiff_read_tiled_separate_as_rgba.tif',
+                   'data/byte.tif', options = '-co TILED=YES -co INTERLEAVE=BAND')
+
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', 'YES')
+    ds = gdal.Open('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
+    gdal.SetConfigOption('GTIFF_FORCE_RGBA', None)
+    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount) ]
+    if got_cs != [4672,4672,4672,4873]:
+        gdaltest.post_reason( 'fail')
+        print(got_cs)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_tiled_separate_as_rgba.tif')
+
+    return 'success'
+
+###############################################################################
+#
 def tiff_read_scanline_more_than_2GB():
 
     with gdaltest.error_handler():
@@ -2763,6 +2854,660 @@ def tiff_read_corrupted_jpeg_cloud_optimized():
     return 'success'
 
 ###############################################################################
+# Test reading YCbCr images with LZW compression
+
+def tiff_read_ycbcr_lzw():
+
+    tests = [ ('ycbcr_11_lzw.tif', 13459, 12939, 12414),
+              ('ycbcr_12_lzw.tif', 13565, 13105, 12660),
+              ('ycbcr_14_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_21_lzw.tif', 13587, 13297, 12760),
+              ('ycbcr_22_lzw.tif', 13393, 13137, 12656),
+              ('ycbcr_24_lzw.tif', 0, 0, 0), # not supported
+              ('ycbcr_41_lzw.tif', 13218, 12758, 12592),
+              ('ycbcr_42_lzw.tif', 13277, 12779, 12614),
+              ('ycbcr_42_lzw_optimized.tif', 19918, 20120, 19087),
+              ('ycbcr_44_lzw.tif', 12994, 13229, 12149),
+              ('ycbcr_44_lzw_optimized.tif', 19666, 19860, 18836) ]
+
+    for (filename, cs1, cs2, cs3) in tests:
+        ds = gdal.Open('data/' + filename)
+        if cs1 == 0:
+            gdal.PushErrorHandler()
+        got_cs1 = ds.GetRasterBand(1).Checksum()
+        got_cs2 = ds.GetRasterBand(2).Checksum()
+        got_cs3 = ds.GetRasterBand(3).Checksum()
+        if cs1 == 0:
+            gdal.PopErrorHandler()
+        if got_cs1 != cs1 or got_cs2 != cs2 or got_cs3 != cs3:
+            gdaltest.post_reason('failure')
+            print(filename, got_cs1, got_cs2, got_cs3)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading YCbCr images with nbits > 8
+
+def tiff_read_ycbcr_int12():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/int12_ycbcr_contig.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Cannot open TIFF file with') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading band unit from VERT_CS unit (#6675)
+
+def tiff_read_unit_from_srs():
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_read_unit_from_srs.tif', 1, 1)
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:4326+3855')
+    ds.SetProjection(sr.ExportToWkt())
+    ds = None
+
+    ds = gdal.Open('/vsimem/tiff_read_unit_from_srs.tif')
+    unit = ds.GetRasterBand(1).GetUnitType()
+    if unit != 'metre':
+        gdaltest.post_reason('fail')
+        print(unit)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/tiff_read_unit_from_srs.tif')
+
+    return 'success'
+
+###############################################################################
+# Test reading ArcGIS 9.3 .aux.xml
+
+def tiff_read_arcgis93_geodataxform_gcp():
+
+    ds = gdal.Open('data/arcgis93_geodataxform_gcp.tif')
+    if ds.GetGCPProjection().find('26712') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetGCPCount() != 16:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gcp = ds.GetGCPs()[0]
+    if abs(gcp.GCPPixel - 565) > 1e-5 or \
+       abs(gcp.GCPLine - 11041) > 1e-5 or \
+       abs(gcp.GCPX - 500000) > 1e-5 or \
+       abs(gcp.GCPY - 4705078.79016612) > 1e-5 or \
+       abs(gcp.GCPZ - 0) > 1e-5:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test reading file with block size > signed int 32 bit
+
+def tiff_read_block_width_above_32bit():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/block_width_above_32bit.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test reading file with image size > signed int 32 bit
+
+def tiff_read_image_width_above_32bit():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/image_width_above_32bit.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+# Test reading file with image size > signed int 32 bit
+
+def tiff_read_second_image_width_above_32bit():
+
+    ds = gdal.Open('data/second_image_width_above_32bit.tif')
+    with gdaltest.error_handler():
+        if ds.GetMetadata("SUBDATASETS") != {}:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:2:data/second_image_width_above_32bit.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading file with minimal number of warnings without warning
+
+def tiff_read_minimum_tiff_tags_no_warning():
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/minimum_tiff_tags_no_warning.tif')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading file with minimal number of warnings but warning
+
+def tiff_read_minimum_tiff_tags_with_warning():
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/minimum_tiff_tags_with_warning.tif')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+
+def check_libtiff_internal_or_greater(expected_maj,expected_min,expected_micro):
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] == 'INTERNAL':
+        return True
+    if md['LIBTIFF'].startswith('LIBTIFF, Version '):
+        version = md['LIBTIFF'][len('LIBTIFF, Version '):]
+        version = version[0:version.find('\n')]
+        got_maj, got_min, got_micro = version.split('.')
+        got_maj = int(got_maj)
+        got_min = int(got_min)
+        got_micro = int(got_micro)
+        if got_maj > expected_maj:
+            return True
+        if got_maj < expected_maj:
+            return False
+        if got_min > expected_min:
+            return True
+        if got_min < expected_min:
+            return False
+        return got_micro >= expected_micro
+    return False
+
+###############################################################################
+
+def tiff_read_leak_ZIPSetupDecode():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/leak-ZIPSetupDecode.tif')
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_excessive_memory_TIFFFillStrip():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/excessive-memory-TIFFFillStrip.tif')
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_excessive_memory_TIFFFillStrip2():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/excessive-memory-TIFFFillStrip2.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_excessive_memory_TIFFFillTile():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/excessive-memory-TIFFFillTile.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_big_strip():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 2676:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+# (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT 
+
+def tiff_read_big_strip_chunky_way():
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 1000 2001  -co blockysize=2001 -r bilinear')
+    ds = gdal.Open('/vsimem/test.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 38337:
+        print(cs)
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_big_tile():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 2676:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_huge_number_strips():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/huge-number-strips.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_many_blocks():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/test.tif', 1, 2000000, options = ['BLOCKYSIZE=1'])
+    ds = None
+    ds = gdal.Open('/vsimem/test.tif')
+    if ds.GetRasterBand(1).Checksum() != 0:
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/test.tif')
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_many_blocks_truncated():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['LIBTIFF'] != 'INTERNAL':
+        return 'skip'
+
+    ds = gdal.Open('data/many_blocks_truncated.tif')
+    with gdaltest.error_handler():
+        ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2000000', 'TIFF')
+    if gdal.GetLastErrorMsg() != 'File too short':
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading  images with nbits > 32
+
+def tiff_read_uint33():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/uint33.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.GetLastErrorMsg().find('Unsupported TIFF configuration') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1545
+def tiff_read_corrupted_deflate_singlestrip():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/corrupted_deflate_singlestrip.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1563
+
+def tiff_read_packbits_not_enough_data():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/packbits-not-enough-data.tif')
+        ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+# Test reading images with more than 2billion blocks for a single band
+
+def tiff_read_toomanyblocks():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/toomanyblocks.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test reading images with more than 2billion blocks for all bands
+
+def tiff_read_toomanyblocks_separate():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/toomanyblocks_separate.tif')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading images where the number of items in StripByteCounts/StripOffsets
+# tag is lesser than the number of strips
+
+def tiff_read_size_of_stripbytecount_lower_than_stripcount():
+
+    ds = gdal.Open('data/size_of_stripbytecount_lower_than_stripcount.tif')
+    # There are 3 strips but StripByteCounts has just two elements;
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_1', 'TIFF') != '171':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_1', 'TIFF') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_OFFSET_0_2', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_2', 'TIFF') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('data/size_of_stripbytecount_at_1_and_lower_than_stripcount.tif')
+    # There are 3 strips but StripByteCounts has just one element;
+    if ds.GetRasterBand(1).GetMetadataItem('BLOCK_SIZE_0_0', 'TIFF') != '1':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test different datatypes for StripOffsets tag with little/big, classic/bigtiff
+
+def tiff_read_stripoffset_types():
+
+    tests = [
+        ('data/classictiff_one_block_byte.tif', []), # unsupported
+        ('data/classictiff_one_block_long.tif', [158]),
+        ('data/classictiff_one_block_be_long.tif', [158]),
+        ('data/classictiff_one_strip_long.tif', [146]),
+        ('data/classictiff_one_strip_be_long.tif', [146]),
+        ('data/classictiff_two_strip_short.tif', [162, 163]),
+        ('data/classictiff_two_strip_be_short.tif', [162, 163]),
+        ('data/classictiff_four_strip_short.tif', [178, 179, 180, 181]),
+        ('data/classictiff_four_strip_be_short.tif', [178, 179, 180, 181]),
+        ('data/bigtiff_four_strip_short.tif', [316, 317, 318, 319]),
+        ('data/bigtiff_four_strip_be_short.tif', [316, 317, 318, 319]),
+        ('data/bigtiff_one_block_long8.tif', [272]),
+        ('data/bigtiff_one_block_be_long8.tif', [272]),
+        ('data/bigtiff_one_strip_long.tif', [252]),
+        ('data/bigtiff_one_strip_be_long.tif', [252]),
+        ('data/bigtiff_one_strip_long8.tif', [252]),
+        ('data/bigtiff_one_strip_be_long8.tif', [252]),
+        ('data/bigtiff_two_strip_long.tif', [284, 285]),
+        ('data/bigtiff_two_strip_be_long.tif', [284, 285]),
+        ('data/bigtiff_two_strip_long8.tif', [284, 285]),
+        ('data/bigtiff_two_strip_be_long8.tif', [284, 285]),
+    ]
+
+    for (filename, expected_offsets) in tests:
+
+        # Only when built against internal libtiff we reject byte datatype
+        if len(expected_offsets) == 0 and \
+           gdal.GetDriverByName('GTiff').GetMetadataItem('LIBTIFF') != 'INTERNAL':
+            continue
+
+        ds = gdal.Open(filename)
+        offsets = []
+        for row in range(4):
+            with gdaltest.error_handler():
+                mdi = ds.GetRasterBand(1).GetMetadataItem(
+                    'BLOCK_OFFSET_0_%d' % row, 'TIFF')
+            if mdi is None:
+                break
+            offsets.append(int(mdi))
+        if offsets != expected_offsets:
+            print(filename, expected_offsets, offsets)
+
+    return 'success'
+
+###############################################################################
+# Test reading a JPEG-in-TIFF file that contains the 2 denial of service
+# vulnerabilities listed in 
+# http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
+
+def tiff_read_progressive_jpeg_denial_of_service():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    # Should error out with 'JPEGPreDecode:Reading this strip would require
+    #libjpeg to allocate at least...' 
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+        if cs != 0 or gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Should error out with 'TIFFjpeg_progress_monitor:Scan number...
+    gdal.ErrorReset()
+    ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
+    with gdaltest.error_handler():
+        os.environ['LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC'] = 'YES'
+        os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER'] = '10'
+        cs = ds.GetRasterBand(1).Checksum()
+        del os.environ['LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC']
+        del os.environ['LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER']
+        if gdal.GetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test reading old-style LZW
+
+def tiff_read_old_style_lzw():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    ds = gdal.Open('data/quad-lzw-old-style.tif')
+    # Shut down warning about old style LZW
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 34282:
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test libtiff mmap interface (actually not using mmap, but our /vsimem
+# mmap emulation)
+
+def tiff_read_mmap_interface():
+
+    src_ds = gdal.Open('data/byte.tif')
+    tmpfile = '/vsimem/tiff_read_mmap_interface.tif'
+    for options in [ [], ['TILED=YES'],
+                     ['COMPRESS=LZW'], ['COMPRESS=LZW', 'TILED=YES'] ]:
+        gdal.GetDriverByName('GTiff').CreateCopy(tmpfile,
+                                                 src_ds,
+                                                 options = options)
+        gdal.SetConfigOption('GTIFF_USE_MMAP', 'YES')
+        ds = gdal.Open(tmpfile)
+        cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GTIFF_USE_MMAP', None)
+        if cs != 4672:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+
+        f = gdal.VSIFOpenL(tmpfile, "rb")
+        data = gdal.VSIFReadL(1, gdal.VSIStatL(tmpfile).size-1, f)
+        gdal.VSIFCloseL(f)
+        f = gdal.VSIFOpenL(tmpfile, "wb")
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+        gdal.SetConfigOption('GTIFF_USE_MMAP', 'YES')
+        with gdaltest.error_handler():
+            ds = gdal.Open(tmpfile)
+            cs = ds.GetRasterBand(1).Checksum()
+        gdal.SetConfigOption('GTIFF_USE_MMAP', None)
+        if cs != 0:
+            gdaltest.post_reason('fail')
+            print(options, cs)
+            return 'fail'
+        gdal.Unlink(tmpfile)
+
+    gdal.Unlink(tmpfile)
+
+    return 'success'
+
+
+###############################################################################
+# Test reading JPEG compressed file whole last strip height is the full
+# strip height, instead of just the number of lines needed to reach the
+# image height.
+
+def tiff_read_jpeg_too_big_last_stripe():
+
+    if not check_libtiff_internal_or_greater(4,0,8):
+        return 'skip'
+
+    ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4557:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    ds = gdal.Open('data/tif_jpeg_ycbcr_too_big_last_stripe.tif')
+    with gdaltest.error_handler():
+        cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4557:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test reading GeoTIFF file with negative ScaleY in GeoPixelScale tag
+
+def tiff_read_negative_scaley():
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.error_handler():
+        if ds.GetGeoTransform()[5] != -60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'NO'):
+        if ds.GetGeoTransform()[5] != -60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    ds = gdal.Open('data/negative_scaley.tif')
+    with gdaltest.config_option('GTIFF_HONOUR_NEGATIVE_SCALEY', 'YES'):
+        if ds.GetGeoTransform()[5] != 60:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -2821,12 +3566,12 @@ gdaltest_list.append( (tiff_read_readdir_limit_on_open) )
 gdaltest_list.append( (tiff_read_minisblack_as_rgba) )
 gdaltest_list.append( (tiff_read_colortable_as_rgba) )
 gdaltest_list.append( (tiff_read_logl_as_rgba) )
+gdaltest_list.append( (tiff_read_strip_separate_as_rgba) )
+gdaltest_list.append( (tiff_read_tiled_separate_as_rgba) )
 gdaltest_list.append( (tiff_read_scanline_more_than_2GB) )
 gdaltest_list.append( (tiff_read_wrong_number_extrasamples) )
 gdaltest_list.append( (tiff_read_one_strip_no_bytecount) )
 
-gdaltest_list.append( (tiff_read_online_1) )
-gdaltest_list.append( (tiff_read_online_2) )
 gdaltest_list.append( (tiff_read_md1) )
 gdaltest_list.append( (tiff_read_md2) )
 gdaltest_list.append( (tiff_read_md3) )
@@ -2851,7 +3596,43 @@ gdaltest_list.append( (tiff_read_one_band_from_two_bands) )
 gdaltest_list.append( (tiff_read_jpeg_cloud_optimized) )
 gdaltest_list.append( (tiff_read_corrupted_jpeg_cloud_optimized) )
 
-#gdaltest_list = [ tiff_read_aux ]
+gdaltest_list.append( (tiff_read_ycbcr_lzw) )
+gdaltest_list.append( (tiff_read_ycbcr_int12) )
+
+gdaltest_list.append( (tiff_read_unit_from_srs) )
+gdaltest_list.append( (tiff_read_arcgis93_geodataxform_gcp) )
+gdaltest_list.append( (tiff_read_block_width_above_32bit) )
+gdaltest_list.append( (tiff_read_image_width_above_32bit) )
+gdaltest_list.append( (tiff_read_second_image_width_above_32bit) )
+gdaltest_list.append( (tiff_read_minimum_tiff_tags_no_warning) )
+gdaltest_list.append( (tiff_read_minimum_tiff_tags_with_warning) )
+gdaltest_list.append( (tiff_read_leak_ZIPSetupDecode) )
+gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
+gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
+gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillTile) )
+gdaltest_list.append( (tiff_read_big_strip) )
+gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
+gdaltest_list.append( (tiff_read_big_tile) )
+gdaltest_list.append( (tiff_read_huge_number_strips) )
+gdaltest_list.append( (tiff_read_many_blocks) )
+gdaltest_list.append( (tiff_read_many_blocks_truncated) )
+gdaltest_list.append( (tiff_read_uint33) )
+gdaltest_list.append( (tiff_read_corrupted_deflate_singlestrip) )
+gdaltest_list.append( (tiff_read_packbits_not_enough_data) )
+gdaltest_list.append( (tiff_read_toomanyblocks) )
+gdaltest_list.append( (tiff_read_toomanyblocks_separate) )
+gdaltest_list.append( (tiff_read_size_of_stripbytecount_lower_than_stripcount) )
+gdaltest_list.append( (tiff_read_stripoffset_types) )
+gdaltest_list.append( (tiff_read_progressive_jpeg_denial_of_service) )
+gdaltest_list.append( (tiff_read_old_style_lzw) )
+gdaltest_list.append( (tiff_read_mmap_interface) )
+gdaltest_list.append( (tiff_read_jpeg_too_big_last_stripe) )
+gdaltest_list.append( (tiff_read_negative_scaley) )
+
+gdaltest_list.append( (tiff_read_online_1) )
+gdaltest_list.append( (tiff_read_online_2) )
+
+# gdaltest_list = [ tiff_read_mmap_interface ]
 
 if __name__ == '__main__':
 

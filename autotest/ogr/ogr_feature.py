@@ -719,7 +719,7 @@ def ogr_feature_cp_stringlist():
 
 
 ###############################################################################
-# Test SetField() with unicode string
+# Test SetField() / GetField() with unicode string
 
 def ogr_feature_unicode():
     if sys.version_info >= (3,0,0):
@@ -730,9 +730,24 @@ def ogr_feature_unicode():
     field_def = ogr.FieldDefn( 'field_string', ogr.OFTString )
     feat_def.AddFieldDefn( field_def )
 
+    field_def = ogr.FieldDefn( 'field_integer64', ogr.OFTInteger64 )
+    feat_def.AddFieldDefn( field_def )
+
     src_feature = ogr.Feature( feat_def )
     src_feature.SetField( 'field_string', 'abc def'.decode('utf-8') )
     if src_feature.GetField('field_string') != 'abc def':
+        return 'fail'
+    if src_feature.GetField('field_string'.decode('utf-8')) != 'abc def':
+        return 'fail'
+
+    src_feature = ogr.Feature( feat_def )
+    src_feature.SetField( 'field_string'.decode('utf-8'), 'abc def'.decode('utf-8') )
+    if src_feature.GetField('field_string') != 'abc def':
+        return 'fail'
+
+    src_feature = ogr.Feature( feat_def )
+    src_feature.SetField( 'field_integer64'.decode('utf-8'), 1 )
+    if src_feature.GetField('field_integer64') != 1:
         return 'fail'
 
     return 'success'
@@ -926,10 +941,8 @@ def ogr_feature_default():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.PushErrorHandler()
     field_def.SetDefault("'a")
-    gdal.PopErrorHandler()
-    if field_def.GetDefault() is not None:
+    if field_def.GetDefault() != "'a":
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1101,6 +1114,104 @@ def ogr_feature_set_geometry_self():
 
     return 'success'
 
+###############################################################################
+# Test SetFieldNull(), IsFieldNull()
+
+def ogr_feature_null_field():
+
+    feat_def = ogr.FeatureDefn( 'test' )
+    field_def = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    feat_def.AddFieldDefn(field_def)
+    f = ogr.Feature(feat_def)
+    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull("field_string"):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f.SetFieldNull(feat_def.GetFieldIndex("field_string"))
+    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f.SetField("field_string", "foo")
+    if f.IsFieldNull("field_string"):
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f.SetFieldNull("field_string")
+    if f.IsFieldNull(feat_def.GetFieldIndex("field_string")) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = None
+
+    field_def = ogr.FieldDefn( 'field_binary', ogr.OFTBinary )
+    feat_def.AddFieldDefn( field_def )
+
+    field_def = ogr.FieldDefn( 'field_integerlist', ogr.OFTIntegerList )
+    feat_def.AddFieldDefn( field_def )
+
+    field_def = ogr.FieldDefn( 'field_integer64list', ogr.OFTInteger64List )
+    feat_def.AddFieldDefn( field_def )
+
+    field_def = ogr.FieldDefn( 'field_reallist', ogr.OFTRealList )
+    feat_def.AddFieldDefn( field_def )
+
+    field_def = ogr.FieldDefn( 'field_stringlist', ogr.OFTStringList )
+    feat_def.AddFieldDefn( field_def )
+
+    f = ogr.Feature(feat_def)
+    f.SetFieldBinaryFromHexString( 'field_binary', '0123465789ABCDEF' )
+    f.field_integerlist = '(3:10,20,30)'
+    f.field_integer64list = [9876543210]
+    f.field_reallist = [123.5,567.0]
+    f.field_stringlist = ['abc','def']
+    if f.IsFieldNull('field_binary') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_integerlist') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_integer64list') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_reallist') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_stringlist') != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f.SetField('field_binary', None)
+    f.SetFieldNull('field_integerlist')
+    f.SetFieldNull('field_integer64list')
+    f.SetFieldNull('field_reallist')
+    f.SetFieldNull('field_stringlist')
+    if f.IsFieldNull('field_binary') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_integerlist') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_integer64list') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_reallist') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.IsFieldNull('field_stringlist') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f_clone = f.Clone()
+    if f_clone.IsFieldNull('field_binary') == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if not f.Equal(f_clone):
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = None
+
+    return 'success'
+
 def ogr_feature_cleanup():
 
     gdaltest.src_feature = None
@@ -1127,6 +1238,7 @@ gdaltest_list = [
     ogr_feature_default,
     ogr_feature_native_data,
     ogr_feature_set_geometry_self,
+    ogr_feature_null_field,
     ogr_feature_cleanup ]
 
 if __name__ == '__main__':

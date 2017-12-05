@@ -412,6 +412,11 @@ def test_gdaldem_lib_color_relief():
         gdaltest.post_reason('Bad projection')
         return 'fail'
 
+    ds = gdal.DEMProcessing('', src_ds, 'color-relief', format = 'MEM', colorFilename = 'data/color_file.txt', addAlpha = True)
+    if ds.RasterCount != 4:
+        gdaltest.post_reason('Bad RasterCount')
+        return 'fail'
+
     src_ds = None
     ds = None
 

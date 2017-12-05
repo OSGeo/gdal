@@ -35,6 +35,7 @@ Contributors:  Thomas Maurer
 #include <typeinfo>
 #include <cfloat>
 #include <cmath>
+#include <limits>
 
 NAMESPACE_LERC_START
 
@@ -93,11 +94,11 @@ public:
     void RawInit()  { memset(this, 0, sizeof(struct HeaderInfo)); }
   };
 
-  bool GetHeaderInfo(const Byte* pByte, struct HeaderInfo& headerInfo) const;
+  bool GetHeaderInfo(const Byte* pByte, size_t srcSize, struct HeaderInfo& headerInfo) const;
 
   /// does not allocate memory;  byte ptr is moved like a file pointer
   template<class T>
-  bool Decode(const Byte** ppByte, T* arr, Byte* pMaskBits = 0);    // if mask ptr is not 0, mask bits are returned (even if all valid or same as previous)
+  bool Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* pMaskBits = 0);    // if mask ptr is not 0, mask bits are returned (even if all valid or same as previous)
 
 private:
   int         m_currentVersion,
@@ -115,21 +116,21 @@ private:
   static std::string FileKey() { return "Lerc2 "; }
   void Init();
   bool WriteHeader(Byte** ppByte) const;
-  bool ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const;
+  bool ReadHeader(const Byte** ppByte, size_t& nRemainingBytes, struct HeaderInfo& headerInfo) const;
   bool WriteMask(Byte** ppByte) const;
-  bool ReadMask(const Byte** ppByte);
+  bool ReadMask(const Byte** ppByte, size_t& nRemainingBytes);
 
   template<class T>
   bool WriteDataOneSweep(const T* data, Byte** ppByte) const;
 
   template<class T>
-  bool ReadDataOneSweep(const Byte** ppByte, T* data) const;
+  bool ReadDataOneSweep(const Byte** ppByte, size_t& nRemainingBytes, T* data) const;
 
   template<class T>
   bool WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMinA, double& zMaxA) const;
 
   template<class T>
-  bool ReadTiles(const Byte** ppByte, T* data) const;
+  bool ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) const;
 
   template<class T>
   bool ComputeStats(const T* data, int i0, int i1, int j0, int j1,
@@ -155,7 +156,8 @@ private:
                  const std::vector<Quant >& sortedQuantVec) const;
 
   template<class T>
-  bool ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j1,
+  bool ReadTile(const Byte** ppByte, size_t& nRemainingBytes,
+                T* data, int i0, int i1, int j0, int j1,
                 std::vector<unsigned int>& bufferVec) const;
 
   template<class T>
@@ -165,7 +167,7 @@ private:
 
   static bool WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed);
 
-  static double ReadVariableDataType(const Byte** ppByte, DataType dtUsed);
+  static bool ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, DataType dtUsed, double* pdfOutVal);
 
   // cppcheck-suppress functionStatic
   template<class T> DataType GetDataType(T z) const;
@@ -182,7 +184,7 @@ private:
   bool EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) const;
 
   template<class T>
-  bool DecodeHuffman(const Byte** ppByte, T* data) const;
+  bool DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytes, T* data) const;
 };
 
 // -------------------------------------------------------------------------- ;
@@ -327,15 +329,15 @@ bool Lerc2::Encode(const T* arr, Byte** ppByte) const
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::Decode(const Byte** ppByte, T* arr, Byte* pMaskBits)
+bool Lerc2::Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* pMaskBits)
 {
   if (!arr || !ppByte)
     return false;
 
-  if (!ReadHeader(ppByte, m_headerInfo))
+  if (!ReadHeader(ppByte, nRemainingBytes, m_headerInfo))
     return false;
 
-  if (!ReadMask(ppByte))
+  if (!ReadMask(ppByte, nRemainingBytes))
     return false;
 
   if (pMaskBits)    // return proper mask bits even if they were not stored
@@ -359,18 +361,30 @@ bool Lerc2::Decode(const Byte** ppByte, T* arr, Byte* pMaskBits)
     return true;
   }
 
+  if( nRemainingBytes < 1 )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   Byte readDataOneSweep = **ppByte;    // read flag
   (*ppByte)++;
+  nRemainingBytes -= 1;
 
   if (!readDataOneSweep)
   {
-    if (!ReadTiles(ppByte, arr))
+    if (!ReadTiles(ppByte, nRemainingBytes, arr))
+    {
+      LERC_BRKPNT();
       return false;
+    }
   }
   else
   {
-    if (!ReadDataOneSweep(ppByte, arr))
+    if (!ReadDataOneSweep(ppByte, nRemainingBytes, arr))
+    {
+      LERC_BRKPNT();
       return false;
+    }
   }
 
   return true;
@@ -403,9 +417,10 @@ bool Lerc2::WriteDataOneSweep(const T* data, Byte** ppByte) const
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::ReadDataOneSweep(const Byte** ppByte, T* data) const
+bool Lerc2::ReadDataOneSweep(const Byte** ppByte, size_t& nRemainingBytesInOut, T* data) const
 {
   const T* srcPtr = (const T*)(*ppByte);
+  size_t nRemainingBytes = nRemainingBytesInOut;
   int cntPixel = 0;
 
   for (int i = 0; i < m_headerInfo.nRows; i++)
@@ -414,12 +429,19 @@ bool Lerc2::ReadDataOneSweep(const Byte** ppByte, T* data) const
     for (int j = 0; j < m_headerInfo.nCols; j++, k++)
       if (m_bitMask.IsValid(k))
       {
+        if( nRemainingBytes < sizeof(T) )
+        {
+          LERC_BRKPNT();
+          return false;
+        }
         data[k] = *srcPtr++;
+        nRemainingBytes -= sizeof(T);
         cntPixel++;
       }
   }
 
   (*ppByte) += cntPixel * sizeof(T);
+  nRemainingBytesInOut -= cntPixel * sizeof(T);
   return true;
 }
 
@@ -578,7 +600,7 @@ bool Lerc2::WriteTiles(const T* data, Byte** ppByte, int& numBytes, double& zMin
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::ReadTiles(const Byte** ppByte, T* data) const
+bool Lerc2::ReadTiles(const Byte** ppByte, size_t& nRemainingBytes, T* data) const
 {
   if (!data || !ppByte || !(*ppByte))
     return false;
@@ -588,18 +610,24 @@ bool Lerc2::ReadTiles(const Byte** ppByte, T* data) const
     && (m_headerInfo.dt == DT_Byte || m_headerInfo.dt == DT_Char)    // try Huffman coding
     && m_headerInfo.maxZError == 0.5)    // for lossless only, maybe later extend to lossy, but Byte and lossy is rare
   {
+    if (nRemainingBytes < 1 )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     Byte flag = **ppByte;    // read flag Huffman / Lerc2
     (*ppByte)++;
+    nRemainingBytes --;
 
     if (flag == 1)    // decode Huffman
     {
       Huffman huffman;
-      if (!huffman.ReadCodeTable(ppByte))    // header and code table
+      if (!huffman.ReadCodeTable(ppByte, nRemainingBytes))    // header and code table
         return false;
 
       m_huffmanCodes = huffman.GetCodes();
 
-      if (!DecodeHuffman(ppByte, data))    // data
+      if (!DecodeHuffman(ppByte, nRemainingBytes, data))    // data
         return false;
 
       return true;    // done.
@@ -614,8 +642,15 @@ bool Lerc2::ReadTiles(const Byte** ppByte, T* data) const
   int height = m_headerInfo.nRows;
   int width = m_headerInfo.nCols;
 
-  int numTilesVert = (height + mbSize - 1) / mbSize;
-  int numTilesHori = (width + mbSize - 1) / mbSize;
+  if( mbSize <= 0 || height < 0 || width < 0 ||
+      height > std::numeric_limits<int>::max() - (mbSize - 1) ||
+      width > std::numeric_limits<int>::max() - (mbSize - 1) )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
+  int numTilesVert = height / mbSize + ((height % mbSize) != 0 ? 1 : 0);
+  int numTilesHori = width / mbSize + ((width % mbSize) != 0 ? 1 : 0);
 
   for (int iTile = 0; iTile < numTilesVert; iTile++)
   {
@@ -631,8 +666,11 @@ bool Lerc2::ReadTiles(const Byte** ppByte, T* data) const
       if (jTile == numTilesHori - 1)
         tileW = width - j0;
 
-      if (!ReadTile(ppByte, data, i0, i0 + tileH, j0, j0 + tileW, bufferVec))
+      if (!ReadTile(ppByte, nRemainingBytes, data, i0, i0 + tileH, j0, j0 + tileW, bufferVec))
+      {
+        LERC_BRKPNT();
         return false;
+      }
     }
   }
 
@@ -909,13 +947,21 @@ bool Lerc2::WriteTile(const T* data, Byte** ppByte, int& numBytesWritten,
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j1,
+bool Lerc2::ReadTile(const Byte** ppByte, size_t& nRemainingBytesInOut,
+                     T* data, int i0, int i1, int j0, int j1,
                      std::vector<unsigned int>& bufferVec) const
 {
+  size_t nRemainingBytes = nRemainingBytesInOut;
   const Byte* ptr = *ppByte;
   int numPixel = 0;
 
+  if( nRemainingBytes < 1 )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   Byte comprFlag = *ptr++;
+  nRemainingBytes -= 1;
   int bits67 = comprFlag >> 6;
   //comprFlag &= 63;
 
@@ -936,6 +982,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
     }
 
     *ppByte = ptr;
+    nRemainingBytesInOut = nRemainingBytes;
     return true;
   }
 
@@ -949,7 +996,13 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
       for (int j = j0; j < j1; j++, k++)
         if (m_bitMask.IsValid(k))
         {
+          if( nRemainingBytes < sizeof(T) )
+          {
+            LERC_BRKPNT();
+            return false;
+          }
           data[k] = *srcPtr++;
+          nRemainingBytes -= sizeof(T);
           numPixel++;
         }
     }
@@ -960,7 +1013,12 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
   {
     // read z's as int arr bit stuffed
     DataType dtUsed = GetDataTypeUsed(bits67);
-    double offset = ReadVariableDataType(&ptr, dtUsed);
+    double offset;
+    if( !ReadVariableDataType(&ptr, nRemainingBytes, dtUsed, &offset) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
 
     if (comprFlag == 3)
     {
@@ -974,20 +1032,24 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
     }
     else
     {
-      if (!m_bitStuffer2.Decode(&ptr, bufferVec))
+      const size_t nMaxBufferVecElts = size_t((i1 - i0) * (j1 - j0));
+      if (!m_bitStuffer2.Decode(&ptr, nRemainingBytes, bufferVec, nMaxBufferVecElts))
+      {
+        LERC_BRKPNT();
         return false;
+      }
 
       double invScale = 2 * m_headerInfo.maxZError;    // for int types this is int
-      unsigned int* srcPtr = &bufferVec[0];
-
-      if (bufferVec.size() == size_t((i1 - i0) * (j1 - j0)))    // all valid
+      size_t bufferVecIdx = 0;
+      if (bufferVec.size() == nMaxBufferVecElts)    // all valid
       {
         for (int i = i0; i < i1; i++)
         {
           int k = i * m_headerInfo.nCols + j0;
           for (int j = j0; j < j1; j++, k++)
           {
-            double z = offset + *srcPtr++ * invScale;
+            double z = offset + bufferVec[bufferVecIdx] * invScale;
+            bufferVecIdx ++;
             data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
           }
         }
@@ -1000,7 +1062,13 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
           for (int j = j0; j < j1; j++, k++)
             if (m_bitMask.IsValid(k))
             {
-              double z = offset + *srcPtr++ * invScale;
+              if( bufferVecIdx == bufferVec.size() )
+              {
+                LERC_BRKPNT();
+                return false;
+              }
+              double z = offset + bufferVec[bufferVecIdx] * invScale;
+              bufferVecIdx ++;
               data[k] = (T)std::min(z, m_headerInfo.zMax);    // make sure we stay in the orig range
             }
         }
@@ -1009,6 +1077,7 @@ bool Lerc2::ReadTile(const Byte** ppByte, T* data, int i0, int i1, int j0, int j
   }
 
   *ppByte = ptr;
+  nRemainingBytesInOut = nRemainingBytes;
   return true;
 }
 
@@ -1135,7 +1204,7 @@ bool Lerc2::WriteVariableDataType(Byte** ppByte, double z, DataType dtUsed)
 // -------------------------------------------------------------------------- ;
 
 inline
-double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed)
+bool Lerc2::ReadVariableDataType(const Byte** ppByte, size_t& nRemainingBytes, DataType dtUsed, double* pdfOutVal)
 {
   const Byte* ptr = *ppByte;
 
@@ -1143,60 +1212,117 @@ double Lerc2::ReadVariableDataType(const Byte** ppByte, DataType dtUsed)
   {
     case DT_Char:
     {
+      if( nRemainingBytes < 1 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       char c = *((char*)ptr);
       *ppByte = ptr + 1;
-      return c;
+      *pdfOutVal = c;
+      nRemainingBytes -= 1;
+      return true;
     }
     case DT_Byte:
     {
+      if( nRemainingBytes < 1 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       Byte b = *((Byte*)ptr);
       *ppByte = ptr + 1;
-      return b;
+      *pdfOutVal = b;
+      nRemainingBytes -= 1;
+      return true;
     }
     case DT_Short:
     {
+      if( nRemainingBytes < 2 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       short s;
       memcpy(&s, ptr, sizeof(short));
       *ppByte = ptr + 2;
-      return s;
+      *pdfOutVal = s;
+      nRemainingBytes -= 2;
+      return true;
     }
     case DT_UShort:
     {
+      if( nRemainingBytes < 2 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       unsigned short us;
       memcpy(&us, ptr, sizeof(unsigned short));
       *ppByte = ptr + 2;
-      return us;
+      *pdfOutVal = us;
+      nRemainingBytes -= 2;
+      return true;
     }
     case DT_Int:
     {
+      if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       int i;
       memcpy(&i, ptr, sizeof(int));
       *ppByte = ptr + 4;
-      return i;
+      *pdfOutVal = i;
+      nRemainingBytes -= 4;
+      return true;
     }
     case DT_UInt:
     {
+      if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       unsigned int n;
       memcpy(&n, ptr, sizeof(unsigned int));
       *ppByte = ptr + 4;
-      return n;
+      *pdfOutVal = n;
+      nRemainingBytes -= 4;
+      return true;
     }
     case DT_Float:
     {
+      if( nRemainingBytes < 4 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       float f;
       memcpy(&f, ptr, sizeof(float));
       *ppByte = ptr + 4;
-      return f;
+      *pdfOutVal = f;
+      nRemainingBytes -= 4;
+      return true;
     }
     case DT_Double:
     {
+      if( nRemainingBytes < 8 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
       double d;
       memcpy(&d, ptr, sizeof(double));
       *ppByte = ptr + 8;
-      return d;
+      *pdfOutVal = d;
+      nRemainingBytes -= 8;
+      return true;
     }
     default:
-      return 0;
+      *pdfOutVal = 0;
+      return true;
   }
 }
 
@@ -1213,9 +1339,11 @@ Lerc2::DataType Lerc2::GetDataType(T z) const
   else if (ti == typeid(unsigned short))  return DT_UShort;
   else if (ti == typeid(int))             return DT_Int;
   else if (ti == typeid(long)
+      // cppcheck-suppress knownConditionTrueFalse
        && sizeof(long) == 4)              return DT_Int;
   else if (ti == typeid(unsigned int))    return DT_UInt;
   else if (ti == typeid(unsigned long)
+      // cppcheck-suppress knownConditionTrueFalse
        && sizeof(unsigned long) == 4)     return DT_UInt;
   else if (ti == typeid(float))           return DT_Float;
   else if (ti == typeid(double))          return DT_Double;
@@ -1363,9 +1491,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         if (32 - bitPos >= len)
         {
           if (bitPos == 0)
-            *dstPtr = 0;
+            Store(dstPtr, 0);
 
-          *dstPtr |= code << (32 - bitPos - len);
+          Store(dstPtr, Load(dstPtr) | (code << (32 - bitPos - len)));
           bitPos += len;
           if (bitPos == 32)
           {
@@ -1376,8 +1504,9 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
         else
         {
           bitPos += len - 32;
-          *dstPtr++ |= code >> bitPos;
-          *dstPtr = code << (32 - bitPos);
+          Store(dstPtr, Load(dstPtr) | (code >> bitPos));
+          dstPtr ++;
+          Store(dstPtr, code << (32 - bitPos));
         }
       }
   }
@@ -1390,7 +1519,7 @@ bool Lerc2::EncodeHuffman(const T* data, Byte** ppByte, T& zMinA, T& zMaxA) cons
 // -------------------------------------------------------------------------- ;
 
 template<class T>
-bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
+bool Lerc2::DecodeHuffman(const Byte** ppByte, size_t& nRemainingBytesInOut, T* data) const
 {
   if (!data || !ppByte || !(*ppByte))
     return false;
@@ -1402,6 +1531,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
 
   const unsigned int* arr = (const unsigned int*)(*ppByte);
   const unsigned int* srcPtr = arr;
+  size_t nRemainingBytesTmp = nRemainingBytesInOut;
   int bitPos = 0;
   int numBitsLUT = 0;
 
@@ -1415,7 +1545,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
       for (int j = 0; j < width; j++, k++)
       {
         int val = 0;
-        if (!huffman.DecodeOneValue(&srcPtr, bitPos, numBitsLUT, val))
+        if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytesTmp, bitPos, numBitsLUT, val))
           return false;
 
         T delta = (T)(val - offset);
@@ -1438,7 +1568,7 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
         if (m_bitMask.IsValid(k))
         {
           int val = 0;
-          if (!huffman.DecodeOneValue(&srcPtr, bitPos, numBitsLUT, val))
+          if (!huffman.DecodeOneValue(&srcPtr, nRemainingBytesTmp, bitPos, numBitsLUT, val))
             return false;
 
           T delta = (T)(val - offset);
@@ -1460,7 +1590,13 @@ bool Lerc2::DecodeHuffman(const Byte** ppByte, T* data) const
   }
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0) + 1;    // add one more as the decode LUT can read ahead
+  if( nRemainingBytesInOut < numUInts * sizeof(unsigned int))
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   *ppByte += numUInts * sizeof(unsigned int);
+  nRemainingBytesInOut -= numUInts * sizeof(unsigned int);
   return true;
 }
 

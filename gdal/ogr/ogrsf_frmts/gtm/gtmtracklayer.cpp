@@ -28,7 +28,7 @@
  ****************************************************************************/
 #include "ogr_gtm.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
                               OGRSpatialReference *poSRSIn,
@@ -119,7 +119,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-        if( poFeature->IsFieldSet( i ) )
+        if( poFeature->IsFieldSetAndNotNull( i ) )
         {
             const char* l_pszName = poFieldDefn->GetNameRef();
             /* track name */
@@ -159,7 +159,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
     pBufferAux = (char*)pBufferAux + 2;
 
     /* Write track name */
-    strncpy((char*)pBufferAux, psztrackname, trackNameLength);
+    memcpy((char*)pBufferAux, psztrackname, trackNameLength);
     pBufferAux = (char*)pBufferAux + trackNameLength;
 
     /* Write track type */

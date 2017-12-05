@@ -38,7 +38,7 @@
 
 const char* kPROVIDERNAME = "FME_OLEDB";
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef WIN32
 #define FMEDLL_NAME "fme.dll"

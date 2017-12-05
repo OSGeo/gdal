@@ -33,9 +33,13 @@
 #define HFA_P_H_INCLUDED
 
 #include "cpl_port.h"
+#include "hfa.h"
+
+#include <cstdio>
+#include <vector>
+
 #include "cpl_error.h"
 #include "cpl_vsi.h"
-#include <vector>
 
 #ifdef CPL_LSB
 #  define HFAStandard(n,p) {}
@@ -45,11 +49,11 @@
 
 #include "hfa.h"
 
-class HFAEntry;
-class HFAType;
-class HFADictionary;
 class HFABand;
+class HFADictionary;
+class HFAEntry;
 class HFASpillFile;
+class HFAType;
 
 /************************************************************************/
 /*      Flag indicating read/write, or read-only access to data.        */
@@ -355,7 +359,7 @@ class HFAField
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 
@@ -401,7 +405,7 @@ class HFAType
 
     const char *Initialize( const char * );
 
-    void        CompleteDefn( HFADictionary * );
+    bool        CompleteDefn( HFADictionary * );
 
     void        Dump( FILE * );
 
@@ -427,13 +431,6 @@ class HFAType
 class HFADictionary
 {
   public:
-    int         nTypes;
-    int         nTypesMax;
-    HFAType     **papoTypes;
-
-    CPLString   osDictionaryText;
-    bool        bDictionaryTextDirty;
-
     explicit     HFADictionary( const char *pszDict );
                 ~HFADictionary();
 
@@ -443,6 +440,16 @@ class HFADictionary
     static int  GetItemSize( char );
 
     void        Dump( FILE * );
+
+  private:
+    int         nTypes;
+    int         nTypesMax;
+    HFAType     **papoTypes;
+
+  public:
+    // TODO(schwehr): Make these members private.
+    CPLString   osDictionaryText;
+    bool        bDictionaryTextDirty;
 };
 
 /************************************************************************/
@@ -465,13 +472,13 @@ public:
   static bool QueryDataTypeSupported( EPTType eHFADataType );
 
   // Get methods - only valid after compressBlock has been called.
-  GByte*  getCounts() const { return m_pCounts; };
-  GUInt32 getCountSize() const { return m_nSizeCounts; };
-  GByte*  getValues() const { return m_pValues; };
-  GUInt32 getValueSize() const { return m_nSizeValues; };
-  GUInt32 getMin() const { return m_nMin; };
-  GUInt32 getNumRuns() const { return m_nNumRuns; };
-  GByte   getNumBits() const { return m_nNumBits; };
+  GByte*  getCounts() const { return m_pCounts; }
+  GUInt32 getCountSize() const { return m_nSizeCounts; }
+  GByte*  getValues() const { return m_pValues; }
+  GUInt32 getValueSize() const { return m_nSizeValues; }
+  GUInt32 getMin() const { return m_nMin; }
+  GUInt32 getNumRuns() const { return m_nNumRuns; }
+  GByte   getNumBits() const { return m_nNumBits; }
 
 private:
   static void makeCount( GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount );

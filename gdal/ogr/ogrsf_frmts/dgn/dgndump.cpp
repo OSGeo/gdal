@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void DGNDumpRawElement( DGNHandle hDGN, DGNElemCore *psCore,
                                FILE *fpOut );
@@ -76,7 +76,7 @@ int main( int argc, char ** argv )
         {
             bSummary = true;
         }
-        else if( strcmp(argv[iArg],"-e") == 0 && iArg < argc-4 )
+        else if( iArg < argc-4 && strcmp(argv[iArg],"-e") == 0 )
         {
             dfSFXMin = CPLAtof(argv[iArg+1]);
             dfSFYMin = CPLAtof(argv[iArg+2]);
@@ -84,7 +84,7 @@ int main( int argc, char ** argv )
             dfSFYMax = CPLAtof(argv[iArg+4]);
             iArg += 4;
         }
-        else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )
+        else if( iArg < argc-1 && strcmp(argv[iArg],"-r") == 0 )
         {
             achRaw[std::max(0, std::min(127, atoi(argv[iArg+1])))] = 1;
             bRaw = true;

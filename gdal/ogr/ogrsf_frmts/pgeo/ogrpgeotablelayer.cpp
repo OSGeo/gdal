@@ -31,7 +31,7 @@
 #include "ogr_pgeo.h"
 #include "ogrpgeogeometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRPGeoTableLayer()                         */
@@ -44,7 +44,6 @@ OGRPGeoTableLayer::OGRPGeoTableLayer( OGRPGeoDataSource *poDSIn ) :
     iNextShapeId = 0;
     nSRSId = -1;
     poFeatureDefn = NULL;
-    memset( &sExtent, 0, sizeof(sExtent) );
 }
 
 /************************************************************************/

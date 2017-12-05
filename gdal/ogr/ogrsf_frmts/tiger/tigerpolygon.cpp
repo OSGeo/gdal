@@ -30,7 +30,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const TigerFieldInfo rtA_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -474,7 +474,7 @@ bool TigerPolygon::SetModule( const char * pszModuleIn )
 OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 
 {
-  char        achRecord[OGR_TIGER_RECBUF_LEN];
+    char        achRecord[OGR_TIGER_RECBUF_LEN];
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
@@ -489,6 +489,13 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
 /* -------------------------------------------------------------------- */
     if( fpPrimary == NULL )
         return NULL;
+
+    if( nRecordLength > static_cast<int>(sizeof(achRecord)) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Record length too large" );
+        return NULL;
+    }
 
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
@@ -527,14 +534,18 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %sS",
                       nRecordId * nRTSRecLen, pszModule );
+            delete poFeature;
             return NULL;
         }
 
+        // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+        // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
         if( VSIFReadL( achRTSRec, psRTSInfo->nRecordLength, 1, fpRTS ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %sS",
                       nRecordId, pszModule );
+            delete poFeature;
             return NULL;
         }
 

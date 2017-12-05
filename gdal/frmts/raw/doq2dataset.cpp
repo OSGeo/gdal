@@ -31,7 +31,7 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char UTM_FORMAT[] =
     "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],"
@@ -165,9 +165,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszDatumLong = NULL;
     const char *pszDatumShort = NULL;
     const char *pszUnits = NULL;
-    char *pszQuadname = NULL;
-    char *pszQuadquad = NULL;
-    char *pszState = NULL;
     int nZone = 0;
     int nProjType = 0;
     int nSkipBytes = 0;
@@ -328,7 +325,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( nWidth < 500 || nWidth > 25000
         || nHeight < 500 || nHeight > 25000
         || nBandStorage < 0 || nBandStorage > 4
-        || nBandTypes < 1 || nBandTypes > 9 )
+        || nBandTypes < 1 || nBandTypes > 9
+        || nBytesPerPixel < 0 )
     {
         CSLDestroy( papszMetadata );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
@@ -379,10 +377,29 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute layout of data.                                         */
 /* -------------------------------------------------------------------- */
     if( nBandCount < 2 )
+    {
         nBandCount = nBytesPerPixel;
+        if( !GDALCheckBandCount(nBandCount, FALSE) )
+        {
+            delete poDS;
+            return NULL;
+        }
+    }
     else
+    {
+        if( nBytesPerPixel > INT_MAX / nBandCount )
+        {
+            delete poDS;
+            return NULL;
+        }
         nBytesPerPixel *= nBandCount;
+    }
 
+    if( nBytesPerPixel > INT_MAX / nWidth )
+    {
+        delete poDS;
+        return NULL;
+    }
     const int nBytesPerLine = nBytesPerPixel * nWidth;
 
 /* -------------------------------------------------------------------- */
@@ -398,9 +415,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
-            CPLFree( pszQuadname );
-            CPLFree( pszQuadquad );
-            CPLFree( pszState );
             return NULL;
         }
     }
@@ -424,10 +438,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->dfXPixelSize = dfXDim;
     poDS->dfYPixelSize = dfYDim;
-
-    CPLFree( pszQuadname );
-    CPLFree( pszQuadquad );
-    CPLFree( pszState );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */

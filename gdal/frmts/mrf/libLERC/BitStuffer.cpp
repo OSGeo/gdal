@@ -105,7 +105,7 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
     // save the 0-3 bytes not used in the last UInt
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
-    while (n2--)
+    for (;n2;--n2)
     {
       unsigned int dstValue;
       memcpy(&dstValue, dstPtr, sizeof(unsigned int));
@@ -129,13 +129,19 @@ bool BitStuffer::write(Byte** ppByte, const vector<unsigned int>& dataVec)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
+bool BitStuffer::read(Byte** ppByte, size_t& nRemainingBytes, vector<unsigned int>& dataVec, size_t nMaxBufferVecElts)
 {
   if (!ppByte)
     return false;
 
   Byte numBitsByte = **ppByte;
+  if( nRemainingBytes < 1 )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   (*ppByte)++;
+  nRemainingBytes -= 1;
 
   int bits67 = numBitsByte >> 6;
   int n = (bits67 == 0) ? 4 : 3 - bits67;
@@ -143,8 +149,16 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
   numBitsByte &= 63;    // bits 0-5;
 
   unsigned int numElements = 0;
-  if (!readUInt(ppByte, numElements, n))
+  if (!readUInt(ppByte, nRemainingBytes, numElements, n))
+  {
+    LERC_BRKPNT();
     return false;
+  }
+  if( numElements > nMaxBufferVecElts )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
 
   if (numBitsByte >= 32)
     return false;
@@ -156,6 +170,11 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
   if (numUInts > 0)    // numBits can be 0
   {
     unsigned int numBytes = numUInts * sizeof(unsigned int);
+    if( nRemainingBytes < numBytes )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     unsigned int* arr = (unsigned int*)(*ppByte);
 
     unsigned int* srcPtr = arr;
@@ -171,7 +190,7 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
     memcpy(&lastUInt, srcPtr, sizeof(unsigned int));
     unsigned int numBytesNotNeeded = numTailBytesNotNeeded(numElements, numBits);
     unsigned int n2 = numBytesNotNeeded;
-    while (n2--)
+    for (; n2; --n2)
     {
       unsigned int srcValue;
       memcpy(&srcValue, srcPtr, sizeof(unsigned int));
@@ -184,11 +203,17 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
     unsigned int* dstPtr = &dataVec[0];
     int bitPos = 0;
 
+    size_t nRemainingBytesTmp = nRemainingBytes;
     for (unsigned int i = 0; i < numElements; i++)
     {
       if (32 - bitPos >= numBits)
       {
         unsigned int srcValue;
+        if( nRemainingBytesTmp < sizeof(unsigned) )
+        {
+          LERC_BRKPNT();
+          return false;
+        }
         memcpy(&srcValue, srcPtr, sizeof(unsigned int));
         unsigned int n3 = srcValue << bitPos;
         *dstPtr++ = n3 >> (32 - numBits);
@@ -198,16 +223,28 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
         {
           bitPos = 0;
           srcPtr++;
+          nRemainingBytesTmp -= sizeof(unsigned);
         }
       }
       else
       {
         unsigned int srcValue;
+        if( nRemainingBytesTmp < sizeof(unsigned) )
+        {
+          LERC_BRKPNT();
+          return false;
+        }
         memcpy(&srcValue, srcPtr, sizeof(unsigned int));
         srcPtr ++;
+        nRemainingBytesTmp -= sizeof(unsigned);
         unsigned int n3 = srcValue << bitPos;
         *dstPtr = n3 >> (32 - numBits);
         bitPos -= (32 - numBits);
+        if( nRemainingBytesTmp < sizeof(unsigned) )
+        {
+          LERC_BRKPNT();
+          return false;
+        }
         memcpy(&srcValue, srcPtr, sizeof(unsigned int));
         *dstPtr++ |= srcValue >> (32 - bitPos);
       }
@@ -216,7 +253,13 @@ bool BitStuffer::read(Byte** ppByte, vector<unsigned int>& dataVec)
     if (numBytesNotNeeded > 0)
       memcpy(srcPtr, &lastUInt, sizeof(unsigned int)); // restore the last UInt
 
+    if( nRemainingBytes < numBytes - numBytesNotNeeded )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     *ppByte += numBytes - numBytesNotNeeded;
+     nRemainingBytes -= numBytes - numBytesNotNeeded;
   }
 
   return true;
@@ -274,16 +317,26 @@ bool BitStuffer::writeUInt(Byte** ppByte, unsigned int k, int numBytes)
 
 // -------------------------------------------------------------------------- ;
 
-bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes)
+bool BitStuffer::readUInt(Byte** ppByte, size_t& nRemainingBytes, unsigned int& k, int numBytes)
 {
   Byte* ptr = *ppByte;
 
   if (numBytes == 1)
   {
+    if( nRemainingBytes < static_cast<size_t>(numBytes) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     k = *ptr;
   }
   else if (numBytes == 2)
   {
+    if( nRemainingBytes < static_cast<size_t>(numBytes) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     unsigned short s;
     memcpy(&s, ptr, sizeof(unsigned short));
     SWAP_2(s);
@@ -291,6 +344,11 @@ bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes)
   }
   else if (numBytes == 4)
   {
+    if( nRemainingBytes < static_cast<size_t>(numBytes) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     memcpy(&k, ptr, sizeof(unsigned int));
     SWAP_4(k);
   }
@@ -298,6 +356,7 @@ bool BitStuffer::readUInt(Byte** ppByte, unsigned int& k, int numBytes)
     return false;
 
   *ppByte = ptr + numBytes;
+  nRemainingBytes -= numBytes;
   return true;
 }
 

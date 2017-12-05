@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGROCIWritableLayer()                         */
@@ -54,6 +54,7 @@ OGROCIWritableLayer::OGROCIWritableLayer()
 
     bLaunderColumnNames = TRUE;
     bPreservePrecision = FALSE;
+    nDefaultStringSize = DEFAULT_STRING_SIZE;
     bTruncationReported = FALSE;
     poSRS = NULL;
 
@@ -246,7 +247,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
 {
     OGROCISession      *poSession = poDS->GetSession();
     char                szFieldType[256];
-    char                szFieldName[30];     // specify at most 30 characters, see ORA-00972
+    char                szFieldName[128]; // 12.2 max identifier name
     OGRFieldDefn        oField( poFieldIn );
 
 /* -------------------------------------------------------------------- */
@@ -290,7 +291,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR2(2047)" );
+            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
         else
             snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", oField.GetWidth() );
     }
@@ -309,7 +310,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR2(2047)" );
+        snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
     }
     else
     {

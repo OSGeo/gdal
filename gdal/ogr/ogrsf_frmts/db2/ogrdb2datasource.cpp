@@ -29,7 +29,7 @@
 
 #include "ogr_db2.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static GPKGTileFormat GetTileFormat(const char* pszTF );
 
@@ -666,12 +666,12 @@ int OGRDB2DataSource::ParseValue(char** pszValue, char* pszSource,
     if ((*pszValue) == NULL && nStart + nLen < nNext &&
             EQUALN(pszSource + nStart, pszKey, nLen))
     {
-        *pszValue = (char*)CPLMalloc( sizeof(char)
-                                      * (nNext - nStart - nLen + 1) );
+        const int nSize = nNext - nStart - nLen;
+        *pszValue = (char*)CPLMalloc( nSize + 1 );
         if (*pszValue)
             strncpy(*pszValue, pszSource + nStart + nLen,
-                    nNext - nStart - nLen);
-        (*pszValue)[nNext - nStart - nLen] = 0;
+                    nSize);
+        (*pszValue)[nSize] = 0;
 
         if (bRemove)
         {
@@ -2583,21 +2583,21 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         return NULL;
     }
 
-    int bFound = FALSE;
     int nEPSGCode = 0;
-    size_t iScheme;
-    for(iScheme = 0;
-            iScheme < sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+    size_t iScheme = 0;
+    const size_t nTilingSchemeCount =
+        sizeof(asTilingShemes)/sizeof(asTilingShemes[0]);
+    for(;
+            iScheme < nTilingSchemeCount;
             iScheme++ )
     {
         if( EQUAL(pszTilingScheme, asTilingShemes[iScheme].pszName) )
         {
             nEPSGCode = asTilingShemes[iScheme].nEPSGCode;
-            bFound = TRUE;
             break;
         }
     }
-    if( !bFound )
+    if( iScheme == nTilingSchemeCount )
     {
         CSLDestroy(papszUpdatedOptions);
         return NULL;

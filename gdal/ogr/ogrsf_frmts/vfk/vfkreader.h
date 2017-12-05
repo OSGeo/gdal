@@ -54,8 +54,10 @@ typedef std::vector<VFKFeatureSQLite *> VFKFeatureSQLiteList;
 #define FID_COLUMN   "ogr_fid"
 #define GEOM_COLUMN  "geometry"
 
-#define VFK_DB_HEADER   "vfk_header"
-#define VFK_DB_TABLE    "vfk_tables"
+#define VFK_DB_HEADER_TABLE      "vfk_header"
+#define VFK_DB_TABLE             "vfk_tables"
+#define VFK_DB_GEOMETRY_TABLE    "geometry_columns"
+#define VFK_DB_SPATIAL_REF_TABLE "spatial_ref_sys"
 
 enum RecordType { RecordValid, RecordSkipped, RecordDuplicated };
 
@@ -67,13 +69,14 @@ class VFKProperty
 private:
     bool                    m_bIsNull;
 
-    int                     m_nValue;
+    GIntBig                 m_iValue;
     double                  m_dValue;
     CPLString               m_strValue;
 
 public:
     VFKProperty();
     explicit VFKProperty(int);
+    explicit VFKProperty(GIntBig);
     explicit VFKProperty(double);
     explicit VFKProperty(const char*);
     explicit VFKProperty(CPLString const&);
@@ -82,9 +85,10 @@ public:
     VFKProperty(VFKProperty const& other);
     VFKProperty& operator=(VFKProperty const& other);
 
-    bool                    IsNull()    const { return m_bIsNull; }
-    int                     GetValueI() const { return m_nValue; }
-    double                  GetValueD() const { return m_dValue; }
+    bool                    IsNull()      const { return m_bIsNull; }
+    int                     GetValueI()   const { return static_cast<int> (m_iValue); }
+    GIntBig                 GetValueI64() const { return m_iValue; }
+    double                  GetValueD()   const { return m_dValue; }
     const char             *GetValueS( bool = false ) const;
 };
 
@@ -207,7 +211,6 @@ public:
     int               GetPrecision() const { return m_nPrecision;  }
     OGRFieldType      GetType() const  { return m_eFType;  }
     CPLString         GetTypeSQL() const;
-    GBool             IsIntBig() const { return m_pszType[0] == 'N'; }
     const char       *GetEncoding() const { return  m_pszEncoding; }
 };
 
@@ -338,6 +341,9 @@ public:
     VFKFeatureSQLite    *GetFeature( const char **, GUIntBig *, int,
                                      bool = false);
     VFKFeatureSQLiteList GetFeatures(const char **, GUIntBig *, int);
+
+    int                  GetGeometrySQLType() const;
+
 };
 
 /************************************************************************/

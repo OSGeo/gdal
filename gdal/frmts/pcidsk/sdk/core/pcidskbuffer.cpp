@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "pcidsk_config.h"
 #include "pcidsk_buffer.h"
 #include "pcidsk_exception.h"
 #include "core/pcidsk_utils.h"
@@ -36,12 +37,6 @@
 #include <sstream>
 
 using namespace PCIDSK;
-
-#ifdef _MSC_VER
-#ifndef snprintf
-#define snprintf _snprintf
-#endif // !defined(snprintf)
-#endif
 
 /************************************************************************/
 /*                            PCIDSKBuffer()                            */
@@ -88,6 +83,13 @@ PCIDSKBuffer::~PCIDSKBuffer()
 void PCIDSKBuffer::SetSize( int size )
 
 {
+    if( size < 0 )
+    {
+        free( buffer );
+        buffer = NULL;
+        buffer_size = 0;
+        throw PCIDSKException( "Invalid buffer size: %d", size );
+    }
     buffer_size = size;
     char* new_buffer = (char *) realloc(buffer,size+1);
 
@@ -284,8 +286,11 @@ void PCIDSKBuffer::Put( double value, int offset, int size,
 PCIDSKBuffer &PCIDSKBuffer::operator=( const PCIDSKBuffer &src )
 
 {
-    SetSize( src.buffer_size );
-    memcpy( buffer, src.buffer, buffer_size );
+    if( this != &src )
+    {
+        SetSize( src.buffer_size );
+        memcpy( buffer, src.buffer, buffer_size );
+    }
 
     return *this;
 }

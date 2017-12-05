@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          ~OGRGmtDriver()                           */
@@ -110,5 +110,7 @@ void RegisterOGRGMT()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GMT ASCII Vectors (.gmt)" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gmt" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gmt.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

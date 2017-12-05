@@ -29,7 +29,7 @@
 
 #include "ogr_mssqlspatial.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRMSSQLSpatialDataSource()                 */
@@ -251,13 +251,16 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
         nCoordDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
 
+    int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
+                                    papszOptions, "EXTRACT_SCHEMA_FROM_LAYER_NAME", "YES"));
+
     /* MSSQL Schema handling:
        Extract schema name from input layer name or passed with -lco SCHEMA.
        Set layer name to "schema.table" or to "table" if schema is not
        specified
     */
     const char* pszDotPos = strstr(pszLayerName,".");
-    if ( pszDotPos != NULL )
+    if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
     {
       int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
@@ -272,7 +275,6 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     }
     else
     {
-      pszSchemaName = NULL;
       if( CPLFetchBool(papszOptions, "LAUNDER", TRUE) )
           pszTableName = LaunderName( pszLayerName ); //skip "."
       else
@@ -1018,7 +1020,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( "dbo", pszSQLCommand + 22, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
+            if( poLayer->Initialize( NULL, pszSQLCommand + 22, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize layer '%s'", pszSQLCommand + 22 );
@@ -1035,7 +1037,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( "dbo", pszSQLCommand + 24, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
+            if( poLayer->Initialize( NULL, pszSQLCommand + 24, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize layer '%s'", pszSQLCommand + 24 );

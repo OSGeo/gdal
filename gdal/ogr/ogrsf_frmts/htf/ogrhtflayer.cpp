@@ -32,7 +32,9 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+#define DIGIT_ZERO '0'
 
 /************************************************************************/
 /*                            OGRHTFLayer()                             */
@@ -164,7 +166,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone,
                     CPLMalloc(sizeof(int) * poFeatureDefn->GetFieldCount()) );
                 for( int i=0;i<poFeatureDefn->GetFieldCount();i++)
                 {
-                    panFieldPresence[i] = pszLine[1 + i] != '0';
+                    panFieldPresence[i] = pszLine[1 + i] != DIGIT_ZERO;
                     nFieldsPresent += panFieldPresence[i] ? 1 : 0;
                 }
             }

@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "ogr_rec.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static int nNextRecLine = 0;
 
@@ -121,8 +121,11 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
 const char *RECGetField( const char *pszSrc, int nStart, int nWidth )
 
 {
+    // FIXME non thread safe
     static char szWorkField[128] = {};
 
+    if( nWidth >= static_cast<int>(sizeof(szWorkField)) )
+        nWidth = sizeof(szWorkField)-1;
     strncpy( szWorkField, pszSrc + nStart - 1, nWidth );
     szWorkField[nWidth] = '\0';
 
@@ -183,7 +186,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }

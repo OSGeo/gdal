@@ -39,7 +39,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderKompsat()
@@ -188,11 +188,12 @@ char** GDALMDReaderKompsat::ReadTxtToList()
     for(i = 0; papszLines[i] != NULL; i++)
     {
         const char *pszLine = papszLines[i];
+        const size_t nLineLenLimited = CPLStrnlen(pszLine, 512);
 
         //check if this is begin block
         if(STARTS_WITH_CI(pszLine, "BEGIN_"))
         {
-            for(j = 6; j < CPLStrnlen(pszLine, 512); j++)
+            for(j = 6; j+1 < nLineLenLimited; j++)
             {
                 if(STARTS_WITH_CI(pszLine + j, "_BLOCK"))
                 {
@@ -201,6 +202,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
                 }
                 szName[j - 6] = pszLine[j];
             }
+            szName[j - 6] = '\0';
 
             soGroupName = szName;
 
@@ -215,7 +217,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         //get name and value
-        for(j = 0; j < CPLStrnlen(pszLine, 512); j++)
+        for(j = 0; j+1 < nLineLenLimited; j++)
         {
             if(pszLine[j] == '\t')
             {
@@ -232,6 +234,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
             }
             szName[j] = pszLine[j];
         }
+        szName[j] = '\0';
 
         // trim
         while( pszLine[j] == ' ' ) j++;

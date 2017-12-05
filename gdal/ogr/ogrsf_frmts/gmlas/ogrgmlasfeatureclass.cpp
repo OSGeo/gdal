@@ -31,7 +31,7 @@
 // Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              GMLASField()                            */
@@ -63,7 +63,8 @@ GMLASFieldType GMLASField::GetTypeFromString( const CPLString& osType )
     if( osType == szXS_STRING ||
         osType == szXS_TOKEN ||
         osType == szXS_NMTOKEN ||
-        osType == szXS_NCNAME )
+        osType == szXS_NCNAME ||
+        osType == szXS_QNAME )
     {
         // token has special processing by XML processor: all leading/trailing
         // white space is removed
@@ -98,6 +99,10 @@ GMLASFieldType GMLASField::GetTypeFromString( const CPLString& osType )
         return GMLAS_FT_DECIMAL;
     else if( osType == szXS_DATE )
         return GMLAS_FT_DATE;
+    else if( osType == szXS_GYEAR )
+        return GMLAS_FT_GYEAR;
+    else if( osType == szXS_GYEAR_MONTH )
+        return GMLAS_FT_GYEAR_MONTH;
     else if( osType == szXS_TIME )
         return GMLAS_FT_TIME;
     else if( osType == szXS_DATETIME )

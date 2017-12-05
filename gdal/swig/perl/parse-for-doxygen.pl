@@ -64,11 +64,13 @@ for my $pm (@pm) {
         }
         if ($package and /\@ISA/ and /=/) {
             my $isa = $_;
+            $isa =~ s/our //;
             $isa =~ s/\@ISA//;
             $isa =~ s/=//;
             $isa =~ s/qw//;
             $isa =~ s/\(//;
             $isa =~ s/\)//;
+            $isa =~ s/\///g;
             $isa =~ s/;//;
             my @isa = split /\s+/, $isa;
             for my $isa (@isa) {
@@ -217,6 +219,8 @@ for my $package (sort keys %package) {
         next if $sub =~ /^_/; # no use showing these
         next if $sub =~ /swig_/; # skip attribute setters and getters
         next if $sub =~ /GDAL_GCP_/; # skip GDAL::GCP package subroutines from class GDAL
+
+        next if $sub =~ /RELEASE_PARENT/;
 
         next if $sub =~ /GT_/; # done in methods geometry type test and modify
 

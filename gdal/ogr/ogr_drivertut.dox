@@ -1,5 +1,5 @@
 #ifndef DOXYGEN_SKIP
-/* $Id: gdal_drivertut.dox,v 1.4 2006/10/18 13:26:45 mloskot Exp $ */
+/* $Id$ */
 #endif /* DOXYGEN_SKIP */
 
 /*!
@@ -35,30 +35,25 @@ following placed in the same file as the driver class.
 
 \code
 void RegisterOGRSPF()
-
 {
-    GDALDriver  *poDriver;
+    if( GDALGetDriverByName("SPF") != NULL )
+        return;
 
-    if( GDALGetDriverByName( "SPF" ) == NULL )
-    {
-        poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-        poDriver->SetDescription( "SPF" );
-        poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Long name for SPF driver" );
-        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "spf" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "drv_spf.html" );
+    poDriver->SetDescription("SPF");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Long name for SPF driver");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "spf");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_spf.html");
 
-        poDriver->pfnOpen = OGRSPFDriverOpen;
-        poDriver->pfnIdentify = OGRSPFDriverIdentify;
-        poDriver->pfnCreate = OGRSPFDriverCreate;
+    poDriver->pfnOpen = OGRSPFDriverOpen;
+    poDriver->pfnIdentify = OGRSPFDriverIdentify;
+    poDriver->pfnCreate = OGRSPFDriverCreate;
 
-        poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }
 \endcode
 
@@ -87,9 +82,8 @@ static GDALDataset* OGRSPFDriverCreate(const char* pszName, int nXSize, int nYSi
 
 
 The Open() method is called by GDALOpenEx(). It should quietly return NULL if
-the passed
-filename is not of the format supported by the driver.  If it is the target
-format, then a new GDALDataset object for the dataset should be returned.
+the passed filename is not of the format supported by the driver.  If it is the
+target format, then a new GDALDataset object for the dataset should be returned.
 
 It is common for the Open() method to be delegated to an Open() method on
 the actual format's GDALDataset class.
@@ -100,14 +94,14 @@ static GDALDataset *OGRSPFDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !OGRSPFDriverIdentify(poOpenInfo) )
         return NULL;
 
-    OGRSPFDataSource   *poDS = new OGRSPFDataSource();
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    OGRSPFDataSource *poDS = new OGRSPFDataSource();
+    if( !poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update) )
     {
         delete poDS;
         return NULL;
     }
-    else
-        return poDS;
+
+    return poDS;
 }
 \endcode
 
@@ -116,13 +110,10 @@ The Identify() method is implemented as such :
 \code
 static int OGRSPFDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-// --------------------------------------------------------------------
-//      Does this appear to be an .spf file?
-// --------------------------------------------------------------------
-    return EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "spf" );
+    // Does this appear to be an .spf file?
+    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "spf");
 }
 \endcode
-
 
 Examples of the Create() method is left for the section on creation and update.
 
@@ -154,7 +145,7 @@ class OGRSPFDataSource : public GDALDataset
                         OGRSPFDataSource();
                         ~OGRSPFDataSource();
 
-    int                 Open( const char * pszFilename, int bUpdate );
+    int                 Open( const char *pszFilename, int bUpdate );
 
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
@@ -169,18 +160,16 @@ for orderly cleanup of layers.
 
 \code
 OGRSPFDataSource::OGRSPFDataSource()
-
 {
     papoLayers = NULL;
     nLayers = 0;
 }
 
 OGRSPFDataSource::~OGRSPFDataSource()
-
 {
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 }
 \endcode
 
@@ -200,24 +189,21 @@ so we always fail if bUpdate is FALSE.
 
 \code
 int  OGRSPFDataSource::Open( const char *pszFilename, int bUpdate )
-
 {
     if( bUpdate )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Update access not supported by the SPF driver." );
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Update access not supported by the SPF driver.");
         return FALSE;
     }
 
-// --------------------------------------------------------------------
-//      Create a corresponding layer.
-// --------------------------------------------------------------------
+    // Create a corresponding layer.
     nLayers = 1;
-    papoLayers = (OGRSPFLayer **) CPLMalloc(sizeof(void*));
+    papoLayers = static_cast<OGRSPFLayer **>(CPLMalloc(sizeof(void *)));
 
-    papoLayers[0] = new OGRSPFLayer( pszFilename );
+    papoLayers[0] = new OGRSPFLayer(pszFilename);
 
-    pszName = CPLStrdup( pszFilename );
+    pszName = CPLStrdup(pszFilename);
 
     return TRUE;
 }
@@ -228,12 +214,11 @@ is created in the Open() this is just a lookup with some safety testing.
 
 \code
 OGRLayer *OGRSPFDataSource::GetLayer( int iLayer )
-
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return NULL;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 \endcode
 
@@ -248,9 +233,7 @@ this:
 class OGRSPFLayer : public OGRLayer
 {
     OGRFeatureDefn     *poFeatureDefn;
-
     FILE               *fp;
-
     int                 nNextFID;
 
   public:
@@ -273,26 +256,25 @@ system for the layer.  In the SPF format the set of fields is fixed - a
 single string field and we have no coordinate system info to set.
 
 Pay particular attention to the reference counting of the OGRFeatureDefn.
-As OGRFeature's for this layer will also take a reference to this definition
+As OGRFeature's for this layer will also take a reference to this definition,
 it is important that we also establish a reference on behalf of the layer
 itself.
 
 \code
 OGRSPFLayer::OGRSPFLayer( const char *pszFilename )
-
 {
     nNextFID = 0;
 
-    poFeatureDefn = new OGRFeatureDefn( CPLGetBasename( pszFilename ) );
+    poFeatureDefn = new OGRFeatureDefn(CPLGetBasename(pszFilename));
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( wkbPoint );
+    poFeatureDefn->SetGeomType(wkbPoint);
 
-    OGRFieldDefn oFieldTemplate( "Name", OFTString );
+    OGRFieldDefn oFieldTemplate("Name", OFTString);
 
-    poFeatureDefn->AddFieldDefn( &oFieldTemplate );
+    poFeatureDefn->AddFieldDefn(&oFieldTemplate);
 
-    fp = VSIFOpenL( pszFilename, "r" );
+    fp = VSIFOpenL(pszFilename, "r");
     if( fp == NULL )
         return;
 }
@@ -306,11 +288,10 @@ be destroyed here (which is good!).
 
 \code
 OGRSPFLayer::~OGRSPFLayer()
-
 {
     poFeatureDefn->Release();
     if( fp != NULL )
-        VSIFCloseL( fp );
+        VSIFCloseL(fp);
 }
 \endcode
 
@@ -324,26 +305,17 @@ the SPF text file and establishing the x, y and name for the line.
 
 \code
 OGRFeature *OGRSPFLayer::GetNextFeature()
-
 {
-    // --------------------------------------------------------------------
-    //	Loop till we find a feature matching our requirements.
-    // --------------------------------------------------------------------
-    while( TRUE )
+    // Loop till we find a feature matching our requirements.
+    while( true )
     {
-        const char *pszLine;
-        const char *pszName;
-
-        pszLine = CPLReadLineL( fp );
+        const char *pszLine = CPLReadLineL(fp);
 
         // Are we at end of file (out of features)?
         if( pszLine == NULL )
             return NULL;
 
-        double dfX;
-        double dfY;
-
-        dfX = atof(pszLine);
+        const double dfX = atof(pszLine);
 
         pszLine = strstr(pszLine,"|");
         if( pszLine == NULL )
@@ -351,14 +323,15 @@ OGRFeature *OGRSPFLayer::GetNextFeature()
         else
             pszLine++;
 
-        dfY = atof(pszLine);
+        const double dfY = atof(pszLine);
 
         pszLine = strstr(pszLine,"|");
+
+        const char *pszName = NULL;
         if( pszLine == NULL )
             continue; // we should issue an error!
         else
-            pszName = pszLine+1;
-
+            pszName = pszLine + 1;
 \endcode
 
 The next section turns the x, y and name into a feature.  Also note that
@@ -366,11 +339,11 @@ we assign a linearly incremented feature id.  In our case we started at
 zero for the first feature, though some drivers start at 1.
 
 \code
-        OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+        OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
 
-        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
-        poFeature->SetField( 0, pszName );
-        poFeature->SetFID( nNextFID++ );
+        poFeature->SetGeometryDirectly(new OGRPoint(dfX, dfY));
+        poFeature->SetField(0, pszName);
+        poFeature->SetFID(nNextFID++);
 \endcode
 
 Next we check if the feature matches our current attribute or
@@ -385,10 +358,10 @@ If the feature meets our criteria we return it.  Otherwise we destroy it,
 and return to the top of the loop to fetch another to try.
 
 \code
-        if( (m_poFilterGeom == NULL
-             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
+        if( (m_poFilterGeom == NULL ||
+             FilterGeometry(poFeature->GetGeometryRef())) &&
+            (m_poAttrQuery == NULL ||
+             m_poAttrQuery->Evaluate(poFeature)) )
             return poFeature;
 
         delete poFeature;
@@ -403,16 +376,15 @@ back to the beginning of the file, and resetting our feature id counter.
 
 \code
 void OGRSPFLayer::ResetReading()
-
 {
-    VSIFSeekL( fp, 0, SEEK_SET );
+    VSIFSeekL(fp, 0, SEEK_SET);
     nNextFID = 0;
 }
 \endcode
 
 In this implementation we do not provide a custom implementation for the
 GetFeature() method.  This means an attempt to read a particular feature
-by it's feature id will result in many calls to GetNextFeature() till the
+by it's feature id will result in many calls to GetNextFeature() until the
 desired feature is found.  However, in a sequential text format like spf
 there is little else we could do anyway.
 

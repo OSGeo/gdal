@@ -169,6 +169,13 @@ def derived_test3():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    for function in [ 'real', 'imag', 'complex', 'mod', 'phase', 'conj',
+                      'sum', 'diff', 'mul', 'cmul', 'inv', 'intensity',
+                      'sqrt', 'log10', 'dB', 'dB2amp', 'dB2pow' ]:
+        ds = gdal.Open('<VRTDataset rasterXSize="1" rasterYSize="1"><VRTRasterBand subClass="VRTDerivedRasterBand"><PixelFunctionType>%s</PixelFunctionType></VRTRasterBand></VRTDataset>' % function)
+        with gdaltest.error_handler():
+            ds.GetRasterBand(1).Checksum()
+
     return 'success'
 
 gdaltest_list = [

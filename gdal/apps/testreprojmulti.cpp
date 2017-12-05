@@ -33,7 +33,7 @@
 #include "cpl_multiproc.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 double* padfRefX;
 double* padfRefY;
@@ -47,10 +47,10 @@ int nCountIter = 10000;
 
 void ReprojFunc(void* unused)
 {
-    double* padfResultX;
-    double* padfResultY;
-    padfResultX = (double*)CPLMalloc(1024 * sizeof(double));
-    padfResultY = (double*)CPLMalloc(1024 * sizeof(double));
+    double* padfResultX =
+        static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
+    double* padfResultY =
+        static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
     OGRCoordinateTransformation *poCTInThread;
     if (!bCreateCTInThread)
         poCTInThread = poCT;
@@ -77,8 +77,7 @@ int main(int argc, char* argv[])
 {
     int nThreads = 2;
 
-    int i;
-    for(i=0;i<argc;i++)
+    for(int i=0;i<argc;i++)
     {
         if (EQUAL(argv[i], "-threads") && i+1 < argc)
             nThreads = atoi(argv[++i]);
@@ -94,12 +93,12 @@ int main(int argc, char* argv[])
     if (poCT == NULL)
         return -1;
 
-    padfRefX = (double*)CPLMalloc(1024 * sizeof(double));
-    padfRefY = (double*)CPLMalloc(1024 * sizeof(double));
-    padfRefResultX = (double*)CPLMalloc(1024 * sizeof(double));
-    padfRefResultY = (double*)CPLMalloc(1024 * sizeof(double));
+    padfRefX = static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
+    padfRefY = static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
+    padfRefResultX = static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
+    padfRefResultY = static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
 
-    for(i=0;i<1024;i++)
+    for(int i=0;i<1024;i++)
     {
         padfRefX[i] = 2 + i / 1024.;
         padfRefY[i] = 49 + i / 1024.;
@@ -109,7 +108,7 @@ int main(int argc, char* argv[])
 
     poCT->TransformEx( 1024, padfRefResultX, padfRefResultY, NULL, NULL );
 
-    for(i=0;i<nThreads;i++)
+    for(int i=0;i<nThreads;i++)
         CPLCreateThread(ReprojFunc, NULL);
 
     while(nIter < nCountIter)

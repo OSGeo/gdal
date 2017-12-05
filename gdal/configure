@@ -631,6 +631,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+HAVE_OPENSSL_CRYPTO
 USE_ONLY_CRYPTODLL_ALG
 HAVE_CRYPTOPP
 HAVE_ARMADILLO
@@ -662,6 +663,7 @@ PODOFO_INC
 HAVE_PODOFO
 POPPLER_PLUGIN_LIB
 POPPLER_INC
+POPPLER_0_58_OR_LATER
 POPPLER_0_23_OR_LATER
 POPPLER_0_20_OR_LATER
 POPPLER_BASE_STREAM_HAS_TWO_ARGS
@@ -677,6 +679,11 @@ OPENCL_LIB
 OPENCL_FLAGS
 QHULL_INCLUDE_SUBDIR_IS_LIBQHULL
 QHULL_SETTING
+SFCGAL_CONFIG
+SFCGAL_VERSION
+HAVE_SFCGAL
+SFCGAL_CFLAGS
+SFCGAL_LIBS
 GEOS_CONFIG
 GEOS_VERSION
 HAVE_GEOS
@@ -688,9 +695,12 @@ SDE_ENABLED
 IDB_LIB
 IDB_INC
 HAVE_IDB
-DWGDIRECT
-DWG_PLT
+TEIGHA_CPPFLAGS
+HAVE_TEIGHA
+TEIGHA_DIR
 HAVE_PCRE
+RASTERLITE2_CFLAGS
+HAVE_RASTERLITE2
 SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE
 SQLITE_INC
@@ -759,8 +769,8 @@ ECW_SETTING
 FGDB_INC
 FGDB_LIB
 FGDB_ENABLED
-OPENJPEG_VERSION
-HAVE_OPENJPEG
+OPENJPEG_LIBS
+OPENJPEG_CFLAGS
 JASPER_FLAGS
 HAVE_JASPER
 NETCDF_HAS_HDF4
@@ -792,6 +802,8 @@ HAVE_OGDI
 GIF_SETTING
 TIFF_JPEG12_ENABLED
 JPEG12_ENABLED
+CHARLS_INC
+HAVE_CHARLS
 JPEG_SETTING
 GEOTIFF_INCLUDE
 GEOTIFF_SETTING
@@ -818,6 +830,7 @@ LIBLZMA_SETTING
 LTLIBICONV
 LIBICONV
 LIBZ_SETTING
+RENAME_INTERNAL_SHAPELIB_SYMBOLS
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS
 RENAME_INTERNAL_LIBTIFF_SYMBOLS
 HAVE_HIDE_INTERNAL_SYMBOLS
@@ -946,6 +959,7 @@ enable_lto
 with_hide_internal_symbols
 with_rename_internal_libtiff_symbols
 with_rename_internal_libgeotiff_symbols
+with_rename_internal_shapelib_symbols
 with_local
 with_threads
 with_libz
@@ -964,6 +978,7 @@ with_pcidsk
 with_libtiff
 with_geotiff
 with_jpeg
+with_charls
 with_jpeg12
 with_gif
 with_ogdi
@@ -1009,14 +1024,17 @@ with_xml2
 with_spatialite
 with_spatialite_soname
 with_sqlite3
+with_rasterlite2
 with_pcre
-with_dwgdirect
+with_teigha
+with_teigha_plt
 with_idb
 with_sde
 with_sde_version
 with_epsilon
 with_webp
 with_geos
+with_sfcgal
 with_qhull
 with_opencl
 with_opencl_include
@@ -1034,7 +1052,7 @@ with_pdfium_lib
 with_pdfium_extra_lib_for_test
 with_static_proj4
 with_gdal_ver
-with_
+with_macosx_framework
 with_perl
 with_php
 with_python
@@ -1045,6 +1063,9 @@ with_jvm_lib_add_rpath
 with_rasdaman
 with_armadillo
 with_cryptopp
+with_crypto
+with_mrf
+with_null
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1062,6 +1083,8 @@ CXXCPP
 PKG_CONFIG
 HDF5_CFLAGS
 HDF5_LIBS
+OPENJPEG_CFLAGS
+OPENJPEG_LIBS
 LIBKML_CFLAGS
 LIBKML_LIBS'
 
@@ -1716,6 +1739,7 @@ Optional Packages:
   --with-hide-internal-symbols=ARG Try to hide internal symbols (ARG=yes/no)
   --with-rename-internal-libtiff-symbols=ARG Prefix internal libtiff symbols with gdal_ (ARG=yes/no)
   --with-rename-internal-libgeotiff-symbols=ARG Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)
+  --with-rename-internal-shapelib-symbols=ARG Prefix internal shapelib symbols with gdal_ (ARG=yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
   --with-threads=ARG    Include thread safe support (ARG=yes(default), no or linkopt)
   --with-libz=ARG       Include libz support (ARG=internal or libz directory)
@@ -1736,6 +1760,7 @@ Optional Packages:
   --with-libtiff=ARG    Libtiff library to use (ARG=internal, yes or path)
   --with-geotiff=ARG    Libgeotiff library to use (ARG=internal, yes or path)
   --with-jpeg=ARG       Include JPEG support (ARG=internal, no or path)
+  --with-charls           Include JPEG-Lossless support
   --without-jpeg12        Disable JPEG 8/12bit TIFF support
   --with-gif=ARG        Include GIF support (ARG=internal, no or path)
   --with-ogdi=ARG       Include OGDI support (ARG=path)
@@ -1748,7 +1773,7 @@ Optional Packages:
   --with-kea=ARG      Include kealib (ARG=path to kea-config) [default=yes]
   --with-netcdf=ARG     Include netCDF support (ARG=no or netCDF tree prefix)
   --with-jasper=ARG     Include JPEG-2000 support via JasPer library (ARG=path)
-  --with-openjpeg=ARG     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)
+  --with-openjpeg     Include JPEG-2000 support via OpenJPEG 2.x library
   --with-fgdb=ARG        Include ESRI File Geodatabase support (ARG=FGDP API Path, yes or no)
   --with-ecw=ARG        Include ECW support (ARG=ECW SDK Path, yes or no)
   --with-kakadu=ARG     Include Kakadu/JPEG2000 support
@@ -1788,15 +1813,18 @@ Optional Packages:
   --with-spatialite-soname=ARG Spatialite shared object name (e.g. libspatialite.so), only used if --with-spatiliate=dlopen
   --with-sqlite3=[ARG]    use SQLite 3 library [default=yes], optionally
                           specify the prefix for sqlite3 library
+  --with-rasterlite2=ARG Include RasterLite2 support (ARG=no(default), yes or path)
   --with-pcre             Include libpcre support (REGEXP support for SQLite)
-  --with-dwgdirect=path Include DWG direct support
-  --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
+  --with-teigha=path Include Teigha DWG/DGN support
+  --with-teigha-plt=platform Teigha platform
   --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
   --with-epsilon=ARG    Include EPSILON support (ARG=no, yes or libepsilon install root path)
   --with-webp=ARG    Include WEBP support (ARG=no, yes or libwebp install root path)
   --with-geos=ARG         Include GEOS support (ARG=yes, no or geos-config
+                          path)
+  --with-sfcgal=ARG       Include SFCGAL support (ARG=yes, no or sfcgal-config
                           path)
   --with-qhull=ARG     Include QHull support (ARG=no, yes, internal)
   --with-opencl=ARG       Include OpenCL (GPU) support
@@ -1820,12 +1848,15 @@ Optional Packages:
   --with-python=ARG   Enable python bindings (ARG=yes, no, or path to python binary)
   --with-java       Include Java support (ARG=yes, no or JDK home path)  [default=no]
   --with-mdb       Include MDB driver
-  --with-jvm-lib=ARG        ARG points to Java libjvm path
+  --with-jvm-lib=ARG        ARG is dlopen or points to Java libjvm path
   --with-jvm-lib-add-rpath    Add the libjvm path to the RPATH (no by default)
   --with-rasdaman=DIR        Include rasdaman support (DIR is rasdaman's install dir).
   --with-armadillo=ARG       Include Armadillo support for faster TPS transform computation (ARG=yes/no/path to armadillo install root) [default=no]
   --with-cryptopp=ARG       Include cryptopp support (ARG=yes, no or path)
+  --with-crypto=ARG       Include crypto (from openssl) support (ARG=yes, no or path)
   --without-mrf           Disable MRF driver
+  --with-null             Enable NULL driver (only useful for development
+                          purposes
 
 Some influential environment variables:
   CC          C compiler command
@@ -1842,6 +1873,10 @@ Some influential environment variables:
   PKG_CONFIG  path to pkg-config utility
   HDF5_CFLAGS C compiler flags for HDF5, overriding pkg-config
   HDF5_LIBS   linker flags for HDF5, overriding pkg-config
+  OPENJPEG_CFLAGS
+              C compiler flags for OPENJPEG, overriding pkg-config
+  OPENJPEG_LIBS
+              linker flags for OPENJPEG, overriding pkg-config
   LIBKML_CFLAGS
               C compiler flags for LIBKML, overriding pkg-config
   LIBKML_LIBS linker flags for LIBKML, overriding pkg-config
@@ -4930,6 +4965,57 @@ if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
 else
   :
 fi
+
+
+
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wextra-semi" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Wextra-semi" >&5
+$as_echo_n "checking whether C++ compiler accepts -Wextra-semi... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wextra-semi"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wextra-semi"
+else
+  :
+fi
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wno-sign-compare" | $as_tr_sh`
@@ -17936,9 +18022,53 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-if test "x$CXX" == x ; then
+if test "x$CXX" = x ; then
   as_fn_error $? "\"You don't have a working C++ compiler.\"" "$LINENO" 5
 fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for std::isnan" >&5
+$as_echo_n "checking for std::isnan... " >&6; }
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <cmath>
+    int CPLIsNan(float f) { return std::isnan(f); }
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STD_IS_NAN 1
+_ACEOF
+
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 
 # Check whether --with-libtool was given.
@@ -18077,6 +18207,8 @@ fi
   if test "$with_ld_shared" != "" ; then
     if test "$with_ld_shared" = "no" ; then
       echo "user disabled shared library support."
+    elif test "$with_ld_shared" = "yes" ; then
+      as_fn_error $? "--with-ld-shared not supported" "$LINENO" 5
     else
       echo "using user supplied .so link command ... $with_ld_shared"
     fi
@@ -18698,7 +18830,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 $as_echo_n "checking for 64bit integer type... " >&6; }
 
   echo 'int main() { long long off=0; }' >> conftest.c
-  if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+  if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
 
 $as_echo "#define HAVE_LONG_LONG 1" >>confdefs.h
 
@@ -18730,7 +18862,7 @@ $as_echo_n "checking for 64bit file io... " >&6; }
     echo '#include <sys/types.h>' >> conftest.c
     echo '#include <sys/stat.h>' >> conftest.c
     echo 'int main() { struct __stat64 buf; _stat64( "", &buf ); return 0; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
         with_unix_stdio_64=no
 
 cat >>confdefs.h <<_ACEOF
@@ -18752,9 +18884,9 @@ _ACEOF
   fi
 
   if test x"$with_unix_stdio_64" = x"" ; then
-    echo '#include <stdio.h>' > conftest.cpp
+    echo '#include <stdio.h>' > conftest.c
     echo 'int main() { long long off=0; fseek64(NULL, off, SEEK_SET); off = ftell64(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
@@ -18764,9 +18896,9 @@ _ACEOF
 
 
   if test x"$with_unix_stdio_64" = x"" ; then
-    echo '#include <stdio.h>' > conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
-    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+    echo '#include <stdio.h>' > conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
@@ -18776,10 +18908,10 @@ _ACEOF
 
 
   if test x"$with_unix_stdio_64" = x"" ; then
-    echo '#define _LARGEFILE64_SOURCE' > conftest.c
-    echo '#include <stdio.h>' >> conftest.c
-    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.c
-    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+    echo '#define _LARGEFILE64_SOURCE' > conftest.cpp
+    echo '#include <stdio.h>' >> conftest.cpp
+    echo 'int main() { long long off=0; fseeko64(NULL, off, SEEK_SET); off = ftello64(NULL); return 0; }' >> conftest.cpp
+    if test -z "`${CXX} ${CXXFLAGS} -o conftest conftest.cpp 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
@@ -18805,7 +18937,7 @@ $as_echo "#define VSI_NEED_LARGEFILE64_SOURCE 1" >>confdefs.h
   if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { fpos_t off=0; fseeko(NULL, off, SEEK_SET); off = ftello(NULL); return 0; }' >> conftest.c
-    if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
+    if test -z "`${CC} ${CCFLAGS} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello
       VSI_FSEEK64=fseeko
@@ -19215,12 +19347,34 @@ _ACEOF
 fi
 done
 
+for ac_func in sigaction
+do :
+  ac_fn_c_check_func "$LINENO" "sigaction" "ac_cv_func_sigaction"
+if test "x$ac_cv_func_sigaction" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SIGACTION 1
+_ACEOF
+
+fi
+done
+
 for ac_func in statvfs
 do :
   ac_fn_c_check_func "$LINENO" "statvfs" "ac_cv_func_statvfs"
 if test "x$ac_cv_func_statvfs" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_STATVFS 1
+_ACEOF
+
+fi
+done
+
+for ac_func in statvfs64
+do :
+  ac_fn_c_check_func "$LINENO" "statvfs64" "ac_cv_func_statvfs64"
+if test "x$ac_cv_func_statvfs64" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_STATVFS64 1
 _ACEOF
 
 fi
@@ -19440,7 +19594,7 @@ else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-rm -f atomicbuiltins.* atomicbuiltins
+rm -rf atomicbuiltins.* atomicbuiltins
 
 HAVE_GCC_ATOMIC_BUILTINS=$HAVE_GCC_ATOMIC_BUILTINS
 
@@ -19466,7 +19620,7 @@ else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-rm -f bswapbuiltins.* bswapbuiltins
+rm -rf bswapbuiltins.* bswapbuiltins
 
 HAVE_GCC_BSWAP=$HAVE_GCC_BSWAP
 
@@ -19577,7 +19731,7 @@ $as_echo "no" >&6; }
         CXXFLAGS="-DHAVE_SSE_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectsse*
+    rm -rf detectsse*
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -19654,7 +19808,7 @@ $as_echo "no" >&6; }
         CXXFLAGS="-DHAVE_SSSE3_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectssse3*
+    rm -rf detectssse3*
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -19736,7 +19890,7 @@ $as_echo "no" >&6; }
         CXXFLAGS="-DHAVE_AVX_AT_COMPILE_TIME $CXXFLAGS"
     fi
 
-    rm -f detectavx*
+    rm -rf detectavx*
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -19857,6 +20011,10 @@ $as_echo_n "checking whether we should hide internal symbols... " >&6; }
 $as_echo "yes" >&6; }
         CFLAGS="$CFLAGS -fvisibility=hidden"
         CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+        CFLAGS_NOFTRAPV="$CFLAGS_NOFTRAPV -fvisibility=hidden"
+        CXXFLAGS_NOFTRAPV="$CXXFLAGS_NOFTRAPV -fvisibility=hidden"
+        CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT="$CXXFLAGS_NO_LTO_IF_AVX_NONDEFAULT -fvisibility=hidden"
+        CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT="$CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT -fvisibility=hidden"
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -19887,9 +20045,19 @@ if test "${with_rename_internal_libtiff_symbols+set}" = set; then :
   withval=$with_rename_internal_libtiff_symbols;
 fi
 
-if test "$with_rename_internal_libtiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libtiff_symbols=yes
+    if test "x$with_rename_internal_libtiff_symbols" = "x$no"; then
+        with_rename_internal_libtiff_symbols=no
+    fi
+else
     with_rename_internal_libtiff_symbols=no
+    if test "x$with_rename_internal_libtiff_symbols" = "x$yes" -o "x$with_rename_internal_libtiff_symbols" = "x"; then
+        with_rename_internal_libtiff_symbols=yes
+    fi
 fi
+
 RENAME_INTERNAL_LIBTIFF_SYMBOLS=$with_rename_internal_libtiff_symbols
 
 
@@ -19900,10 +20068,42 @@ if test "${with_rename_internal_libgeotiff_symbols+set}" = set; then :
   withval=$with_rename_internal_libgeotiff_symbols;
 fi
 
-if test "$with_rename_internal_libgeotiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libgeotiff_symbols=yes
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$no"; then
+        with_rename_internal_libgeotiff_symbols=no
+    fi
+else
     with_rename_internal_libgeotiff_symbols=no
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$yes" -o "x$with_rename_internal_libgeotiff_symbols" = "x"; then
+        with_rename_internal_libgeotiff_symbols=yes
+    fi
 fi
+
 RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS=$with_rename_internal_libgeotiff_symbols
+
+
+
+
+# Check whether --with-rename_internal_shapelib_symbols was given.
+if test "${with_rename_internal_shapelib_symbols+set}" = set; then :
+  withval=$with_rename_internal_shapelib_symbols;
+fi
+
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_shapelib_symbols=yes
+    if test "x$with_rename_internal_shapelib_symbols" = "x$no"; then
+        with_rename_internal_shapelib_symbols=no
+    fi
+else
+    with_rename_internal_shapelib_symbols=no
+    if test "x$with_rename_internal_shapelib_symbols" = "x$yes" -o "x$with_rename_internal_shapelib_symbols" = "x"; then
+        with_rename_internal_shapelib_symbols=yes
+    fi
+fi
+RENAME_INTERNAL_SHAPELIB_SYMBOLS=$with_rename_internal_shapelib_symbols
 
 
 
@@ -22876,6 +23076,85 @@ fi
 
 
 
+
+# Check whether --with-charls was given.
+if test "${with_charls+set}" = set; then :
+  withval=$with_charls;
+fi
+
+
+HAVE_CHARLS=no
+CHARLS_INC=
+
+if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
+
+  for ac_header in CharLS/interface.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "CharLS/interface.h" "ac_cv_header_CharLS_interface_h" "$ac_includes_default"
+if test "x$ac_cv_header_CharLS_interface_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CHARLS_INTERFACE_H 1
+_ACEOF
+
+fi
+
+done
+
+  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for JpegLsDecode in -lCharLS" >&5
+$as_echo_n "checking for JpegLsDecode in -lCharLS... " >&6; }
+if ${ac_cv_lib_CharLS_JpegLsDecode+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lCharLS  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char JpegLsDecode ();
+int
+main ()
+{
+return JpegLsDecode ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_CharLS_JpegLsDecode=yes
+else
+  ac_cv_lib_CharLS_JpegLsDecode=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_CharLS_JpegLsDecode" >&5
+$as_echo "$ac_cv_lib_CharLS_JpegLsDecode" >&6; }
+if test "x$ac_cv_lib_CharLS_JpegLsDecode" = xyes; then :
+  HAVE_CHARLS=yes
+fi
+
+    if test "$HAVE_CHARLS" = "yes"; then
+        LIBS="-lCharLS $LIBS"
+        CHARLS_INC="-DCHARLS_INTERFACE_H"
+    fi
+  fi
+fi
+
+HAVE_CHARLS=$HAVE_CHARLS
+
+CHARLS_INC=$CHARLS_INC
+
+
+
+
 # Check whether --with-jpeg12 was given.
 if test "${with_jpeg12+set}" = set; then :
   withval=$with_jpeg12;
@@ -23288,10 +23567,6 @@ HAVE_OGDI=$HAVE_OGDI
 
 OGDI_INCLUDE=$OGDI_INCLUDE
 
-
-if test "$HAVE_OGDI" != "no" ; then
-  OPT_GDAL_FORMATS="ogdi $OPT_GDAL_FORMATS"
-fi
 
 
 X_FME_HOME=
@@ -25038,24 +25313,204 @@ if test "$with_openjpeg" = "no" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: OpenJPEG (JPEG2000) support disabled." >&5
 $as_echo "$as_me: OpenJPEG (JPEG2000) support disabled." >&6;}
 
-elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
+else
 
-  for ac_header in openjpeg-2.0/openjpeg.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.0/openjpeg.h" "ac_cv_header_openjpeg_2_0_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_0_openjpeg_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_0_OPENJPEG_H 1
-_ACEOF
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ac_pt_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+if test -n "$ac_pt_PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_pt_PKG_CONFIG" >&5
+$as_echo "$ac_pt_PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_pt_PKG_CONFIG" = x; then
+    PKG_CONFIG=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    PKG_CONFIG=$ac_pt_PKG_CONFIG
+  fi
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.25
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking pkg-config is at least version $_pkg_min_version" >&5
+$as_echo_n "checking pkg-config is at least version $_pkg_min_version... " >&6; }
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		PKG_CONFIG=""
+	fi
 
 fi
 
-done
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPENJPEG" >&5
+$as_echo_n "checking for OPENJPEG... " >&6; }
 
-  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
-$as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
-if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
+if test -n "$PKG_CONFIG"; then
+    if test -n "$OPENJPEG_CFLAGS"; then
+        pkg_cv_OPENJPEG_CFLAGS="$OPENJPEG_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2 >= 2.1.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2 >= 2.1.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OPENJPEG_CFLAGS=`$PKG_CONFIG --cflags "libopenjp2 >= 2.1.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$OPENJPEG_LIBS"; then
+        pkg_cv_OPENJPEG_LIBS="$OPENJPEG_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libopenjp2 >= 2.1.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libopenjp2 >= 2.1.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OPENJPEG_LIBS=`$PKG_CONFIG --libs "libopenjp2 >= 2.1.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        OPENJPEG_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libopenjp2 >= 2.1.0"`
+        else
+	        OPENJPEG_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libopenjp2 >= 2.1.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$OPENJPEG_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                OPENJPEG_VERSION=;
+elif test $pkg_failed = untried; then
+	OPENJPEG_VERSION=;
+else
+	OPENJPEG_CFLAGS=$pkg_cv_OPENJPEG_CFLAGS
+	OPENJPEG_LIBS=$pkg_cv_OPENJPEG_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`
+fi
+
+  if test -n "$OPENJPEG_CFLAGS"; then
+
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$OPENJPEG_LIBS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_setup_decoder in -lopenjp2" >&5
+$as_echo_n "checking for opj_setup_decoder in -lopenjp2... " >&6; }
+if ${ac_cv_lib_openjp2_opj_setup_decoder+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -25069,167 +25524,44 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char opj_stream_set_user_data_length ();
+char opj_setup_decoder ();
 int
 main ()
 {
-return opj_stream_set_user_data_length ();
+return opj_setup_decoder ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=yes
+  ac_cv_lib_openjp2_opj_setup_decoder=yes
 else
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=no
+  ac_cv_lib_openjp2_opj_setup_decoder=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
-$as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
-if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_setup_decoder" >&5
+$as_echo "$ac_cv_lib_openjp2_opj_setup_decoder" >&6; }
+if test "x$ac_cv_lib_openjp2_opj_setup_decoder" = xyes; then :
   HAVE_OPENJPEG=yes
 else
   HAVE_OPENJPEG=no
 fi
+
+    LIBS="$saved_LIBS"
 
     if test "$HAVE_OPENJPEG" = "yes"; then
-        LIBS="-lopenjp2 $LIBS"
+        EXTRA_INCLUDES="$OPENJPEG_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$OPENJPEG_LIBS $LIBS"
     fi
-  else
-    for ac_header in openjpeg-2.1/openjpeg.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "openjpeg-2.1/openjpeg.h" "ac_cv_header_openjpeg_2_1_openjpeg_h" "$ac_includes_default"
-if test "x$ac_cv_header_openjpeg_2_1_openjpeg_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_OPENJPEG_2_1_OPENJPEG_H 1
-_ACEOF
-
-fi
-
-done
-
-    if test "$ac_cv_header_openjpeg_2_1_openjpeg_h" = "yes"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
-$as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
-if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lopenjp2  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opj_stream_set_user_data_length ();
-int
-main ()
-{
-return opj_stream_set_user_data_length ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=yes
-else
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
-$as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
-if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
-  HAVE_OPENJPEG=yes
-else
-  HAVE_OPENJPEG=no
-fi
-
-        if test "$HAVE_OPENJPEG" = "yes"; then
-            OPENJPEG_VERSION=20100
-            LIBS="-lopenjp2 $LIBS"
-        fi
-    fi
-  fi
-else
-
-  HAVE_OPENJPEG=yes
-  if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-2.1/openjpeg.h ; then
-    OPENJPEG_VERSION=20100
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  else
-    as_fn_error $? "openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1" "$LINENO" 5
-  fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for opj_stream_set_user_data_length in -lopenjp2" >&5
-$as_echo_n "checking for opj_stream_set_user_data_length in -lopenjp2... " >&6; }
-if ${ac_cv_lib_openjp2_opj_stream_set_user_data_length+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lopenjp2 -L$with_openjpeg/lib $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char opj_stream_set_user_data_length ();
-int
-main ()
-{
-return opj_stream_set_user_data_length ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=yes
-else
-  ac_cv_lib_openjp2_opj_stream_set_user_data_length=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&5
-$as_echo "$ac_cv_lib_openjp2_opj_stream_set_user_data_length" >&6; }
-if test "x$ac_cv_lib_openjp2_opj_stream_set_user_data_length" = xyes; then :
-  HAVE_OPENJPEG=yes
-else
-  HAVE_OPENJPEG=no
-fi
-
-
-  if test "$HAVE_OPENJPEG" = "yes"; then
-      LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: using OpenJPEG v2 library from $with_openjpeg." >&5
-$as_echo "$as_me: using OpenJPEG v2 library from $with_openjpeg." >&6;}
   fi
 fi
 
 if test "$HAVE_OPENJPEG" != "no" ; then
   OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
 fi
-
-HAVE_OPENJPEG=$HAVE_OPENJPEG
-
-OPENJPEG_VERSION=$OPENJPEG_VERSION
-
 
 
 
@@ -25240,6 +25572,7 @@ fi
 
 
 FGDB_ENABLED=no
+FGDB_LIB=
 
 if test "$with_fgdb" = "no" ; then
 
@@ -25297,6 +25630,51 @@ $as_echo "found." >&6; }
   else
     as_fn_error $? "not found." "$LINENO" 5
   fi
+
+fi
+
+if test "$FGDB_LIB" != ""; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pj_datums in -lFileGDBAPI" >&5
+$as_echo_n "checking for pj_datums in -lFileGDBAPI... " >&6; }
+if ${ac_cv_lib_FileGDBAPI_pj_datums+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lFileGDBAPI $FGDB_LIB $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pj_datums ();
+int
+main ()
+{
+return pj_datums ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_FileGDBAPI_pj_datums=yes
+else
+  ac_cv_lib_FileGDBAPI_pj_datums=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_FileGDBAPI_pj_datums" >&5
+$as_echo "$ac_cv_lib_FileGDBAPI_pj_datums" >&6; }
+if test "x$ac_cv_lib_FileGDBAPI_pj_datums" = xyes; then :
+  FGDB_HAS_PROJ4=yes
+else
+  FGDB_HAS_PROJ4=no
+fi
 
 fi
 
@@ -28366,7 +28744,7 @@ $as_echo "libdap $LIBDAP_VER" >&6; }
                         rm -f islibdappost310.*
         echo '#include "Connect.h"' > islibdappost310.cpp
         echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
-        if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
+        if test -z "`${CXX} ${CXXFLAGS} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
                     DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.10" >&5
 $as_echo "libdap >= 3.10" >&6; }
@@ -28379,7 +28757,7 @@ $as_echo "libdap < 3.10" >&6; }
             echo '#include "AttrTable.h"' >> islibdappre39.cpp
             echo 'using namespace libdap;' >> islibdappre39.cpp
             echo 'int main(int argc, char** argv) { DAS oDAS; AttrTable& oAttrTable = oDAS; } ' >> islibdappre39.cpp
-            if test -z "`${CXX} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
+            if test -z "`${CXX} ${CXXFLAGS} islibdappre39.cpp -c ${DODS_INC} 2>&1`" ; then
                             { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap < 3.9" >&5
 $as_echo "libdap < 3.9" >&6; }
             else
@@ -29598,6 +29976,148 @@ SQLITE_HAS_COLUMN_METADATA=$SQLITE_HAS_COLUMN_METADATA
 HAVE_SQLITE=$HAVE_SQLITE3
 
 
+
+# Check whether --with-rasterlite2 was given.
+if test "${with_rasterlite2+set}" = set; then :
+  withval=$with_rasterlite2;
+fi
+
+
+HAVE_RASTERLITE2=no
+RASTERLITE2_CFLAGS=
+
+if test -z "$with_rasterlite2" -o "$with_rasterlite2" = "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: rasterlite2 support disabled" >&5
+$as_echo "$as_me: rasterlite2 support disabled" >&6;}
+elif test "$with_rasterlite2" = "yes"; then
+    for ac_header in rasterlite2/rasterlite2.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "rasterlite2/rasterlite2.h" "ac_cv_header_rasterlite2_rasterlite2_h" "$ac_includes_default"
+if test "x$ac_cv_header_rasterlite2_rasterlite2_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_RASTERLITE2_RASTERLITE2_H 1
+_ACEOF
+
+fi
+
+done
+
+    if test "$ac_cv_header_rasterlite2_rasterlite2_h" = "yes"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrasterlite2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rl2_load_raw_tiles_into_dbms ();
+int
+main ()
+{
+return rl2_load_raw_tiles_into_dbms ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
+else
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" = xyes; then :
+  HAVE_RASTERLITE2=yes
+else
+  HAVE_RASTERLITE2=no
+fi
+
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            LIBS="$LIBS -lrasterlite2 -lsqlite3"
+        else
+            as_fn_error $? "did not find rl2_load_raw_tiles_into_dbms" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
+    fi
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for include/rasterlite2/rasterlite2.h" >&5
+$as_echo_n "checking for include/rasterlite2/rasterlite2.h... " >&6; }
+    if test -f "$with_rasterlite2/include/rasterlite2/rasterlite2.h"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: found" >&5
+$as_echo "found" >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2" >&5
+$as_echo_n "checking for rl2_load_raw_tiles_into_dbms in -lrasterlite2... " >&6; }
+if ${ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrasterlite2 -L$with_rasterlite2/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char rl2_load_raw_tiles_into_dbms ();
+int
+main ()
+{
+return rl2_load_raw_tiles_into_dbms ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=yes
+else
+  ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&5
+$as_echo "$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" >&6; }
+if test "x$ac_cv_lib_rasterlite2_rl2_load_raw_tiles_into_dbms" = xyes; then :
+  HAVE_RASTERLITE2=yes
+else
+  HAVE_RASTERLITE2=no
+fi
+
+        if test "$HAVE_RASTERLITE2" = "yes"; then
+            RASTERLITE2_CFLAGS="-I$with_rasterlite2/include"
+            LIBS="$LIBS -L$with_rasterlite2/lib -lrasterlite2 -lsqlite3"
+        else
+            as_fn_error $? "did not find rl2_load_raw_tiles_into_dbms" "$LINENO" 5
+        fi
+    else
+        as_fn_error $? "did not find rasterlite2.h" "$LINENO" 5
+    fi
+fi
+
+HAVE_RASTERLITE2=$HAVE_RASTERLITE2
+
+RASTERLITE2_CFLAGS=$RASTERLITE2_CFLAGS
+
+
+
 HAVE_PCRE=no
 
 
@@ -29685,40 +30205,53 @@ fi
 
 
 
-DWGDIRECT=
-DWG_PLT=
+TEIGHA_DIR=
+TEIGHA_CPPFLAGS=
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for DWGdirect" >&5
-$as_echo_n "checking Checking for DWGdirect... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Checking for Teigha" >&5
+$as_echo_n "checking Checking for Teigha... " >&6; }
 
-# Check whether --with-dwgdirect was given.
-if test "${with_dwgdirect+set}" = set; then :
-  withval=$with_dwgdirect;
+# Check whether --with-teigha was given.
+if test "${with_teigha+set}" = set; then :
+  withval=$with_teigha;
 fi
 
 
-if test -z "$with_dwgdirect" -o "$with_dwgdirect" = "no"; then
+if test -z "$with_teigha" -o "$with_teigha" = "no"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
-    HAVE_DWGDIRECT=no
+    HAVE_TEIGHA=no
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
 $as_echo "enabled" >&6; }
 
 
-# Check whether --with-dwgdirect was given.
-if test "${with_dwgdirect+set}" = set; then :
-  withval=$with_dwgdirect;
+# Check whether --with-teigha-plt was given.
+if test "${with_teigha_plt+set}" = set; then :
+  withval=$with_teigha_plt;
 fi
 
-    if test "x$with_dwg_plt" != "x" ; then
-        DWG_PLT=$with_dwg_plt
+    if test "x$with_teigha_plt" != "x" ; then
+        TEIGHA_DIR=$with_teigha
+        HAVE_TEIGHA=yes
+        TEIGHA_PLT=$with_teigha_plt
+        LIBS="${LIBS} ${TEIGHA_DIR}/bin/${TEIGHA_PLT}/TG_Db.tx"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTG_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_ExamplesCommon.a"
+        LIBS="${LIBS} ${TEIGHA_DIR}/lib/${TEIGHA_PLT}/libTD_Key.a"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Db"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_DbRoot"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
+        LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
+            TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
+        fi
     else
-        DWG_PLT=lnxX86
+        as_fn_error $? "--with-teigha-plt not specified" "$LINENO" 5
     fi
-    DWGDIRECT=$with_dwgdirect
-    HAVE_DWGDIRECT=yes
 fi
+
 
 
 
@@ -30655,6 +31188,281 @@ if test "${HAVE_GEOS}" = "yes" ; then
 $as_echo "$as_me: Using C API from GEOS $GEOS_VERSION" >&6;}
   LIBS="${GEOS_LIBS} ${LIBS}"
   HAVE_GEOS_RESULT="yes"
+fi
+
+
+
+
+
+
+
+
+
+# Check whether --with-sfcgal was given.
+if test "${with_sfcgal+set}" = set; then :
+  withval=$with_sfcgal;
+fi
+
+
+  ac_sfcgal_config_auto=no
+
+  if test x"$with_sfcgal" = x"no" ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: SFCGAL support disabled" >&5
+$as_echo "SFCGAL support disabled" >&6; }
+    SFCGAL_CONFIG=no
+
+  elif test x"$with_sfcgal" = x"yes" -o x"$with_sfcgal" = x"" ; then
+
+    # Extract the first word of "sfcgal-config", so it can be a program name with args.
+set dummy sfcgal-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_SFCGAL_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $SFCGAL_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SFCGAL_CONFIG="$SFCGAL_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SFCGAL_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_SFCGAL_CONFIG" && ac_cv_path_SFCGAL_CONFIG="no"
+  ;;
+esac
+fi
+SFCGAL_CONFIG=$ac_cv_path_SFCGAL_CONFIG
+if test -n "$SFCGAL_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SFCGAL_CONFIG" >&5
+$as_echo "$SFCGAL_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    ac_sfcgal_config_auto=yes
+
+  else
+
+   ac_sfcgal_config=`basename "$with_sfcgal"`
+   ac_sfcgal_config_dir=`$as_dirname -- "$with_sfcgal" ||
+$as_expr X"$with_sfcgal" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$with_sfcgal" : 'X\(//\)[^/]' \| \
+	 X"$with_sfcgal" : 'X\(//\)$' \| \
+	 X"$with_sfcgal" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$with_sfcgal" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)[^/].*/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+
+   # Extract the first word of ""$ac_sfcgal_config"", so it can be a program name with args.
+set dummy "$ac_sfcgal_config"; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_SFCGAL_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$SFCGAL_CONFIG"; then
+  ac_cv_prog_SFCGAL_CONFIG="$SFCGAL_CONFIG" # Let the user override the test.
+else
+  ac_prog_rejected=no
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in "$ac_sfcgal_config_dir"
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    if test "$as_dir/$ac_word$ac_exec_ext" = "
+   "; then
+       ac_prog_rejected=yes
+       continue
+     fi
+    ac_cv_prog_SFCGAL_CONFIG="$with_sfcgal"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+if test $ac_prog_rejected = yes; then
+  # We found a bogon in the path, so make sure we never use it.
+  set dummy $ac_cv_prog_SFCGAL_CONFIG
+  shift
+  if test $# != 0; then
+    # We chose a different compiler from the bogus one.
+    # However, it has the same basename, so the bogon will be chosen
+    # first if we set SFCGAL_CONFIG to just the basename; use the full file name.
+    shift
+    ac_cv_prog_SFCGAL_CONFIG="$as_dir/$ac_word${1+' '}$@"
+  fi
+fi
+  test -z "$ac_cv_prog_SFCGAL_CONFIG" && ac_cv_prog_SFCGAL_CONFIG="no"
+fi
+fi
+SFCGAL_CONFIG=$ac_cv_prog_SFCGAL_CONFIG
+if test -n "$SFCGAL_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SFCGAL_CONFIG" >&5
+$as_echo "$SFCGAL_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+  fi
+
+  if test x"$SFCGAL_CONFIG" != x"no" ; then
+
+    min_sfcgal_version=1.2.2
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SFCGAL version >= $min_sfcgal_version" >&5
+$as_echo_n "checking for SFCGAL version >= $min_sfcgal_version... " >&6; }
+
+    sfcgal_major_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1/'`
+    sfcgal_minor_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\2/'`
+    sfcgal_micro_version=`$SFCGAL_CONFIG --version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\3/'`
+
+    req_major=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\1/'`
+    req_minor=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\2/'`
+    req_micro=`echo $min_sfcgal_version | \
+       sed 's/\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*/\3/'`
+
+    version_ok="no"
+    ac_req_version=`expr $req_major \* 100000 \+  $req_minor \* 100 \+ $req_micro`
+    ac_sfcgal_version=`expr $sfcgal_major_version \* 100000 \+  $sfcgal_minor_version \* 100 \+ $sfcgal_micro_version`
+
+    if test $ac_req_version -le $ac_sfcgal_version; then
+        version_ok="yes"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    fi
+
+    if test $version_ok = "no"; then
+
+      HAVE_SFCGAL="no"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+      if test $ac_sfcgal_config_auto = "yes" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: SFCGAL was found on your system, but sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version. SFCGAL support disabled." >&5
+$as_echo "$as_me: WARNING: SFCGAL was found on your system, but sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version. SFCGAL support disabled." >&2;}
+      else
+        as_fn_error $? "sfcgal-config reports version ${sfcgal_major_version}.${sfcgal_minor_version}.${sfcgal_micro_version}, need at least $min_sfcgal_version or configure --without-sfcgal" "$LINENO" 5
+      fi
+
+    else
+
+      HAVE_SFCGAL="no"
+
+      SFCGAL_LIBS="`${SFCGAL_CONFIG} --libs`"
+      SFCGAL_CFLAGS="`${SFCGAL_CONFIG} --cflags`"
+      SFCGAL_VERSION="`${SFCGAL_CONFIG} --version`"
+
+      ax_save_LIBS="${LIBS}"
+      LIBS=${SFCGAL_LIBS}
+      ax_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${SFCGAL_CFLAGS}"
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sfcgal_version in -lSFCGAL" >&5
+$as_echo_n "checking for sfcgal_version in -lSFCGAL... " >&6; }
+if ${ac_cv_lib_SFCGAL_sfcgal_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lSFCGAL
+       $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sfcgal_version ();
+int
+main ()
+{
+return sfcgal_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_SFCGAL_sfcgal_version=yes
+else
+  ac_cv_lib_SFCGAL_sfcgal_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_SFCGAL_sfcgal_version" >&5
+$as_echo "$ac_cv_lib_SFCGAL_sfcgal_version" >&6; }
+if test "x$ac_cv_lib_SFCGAL_sfcgal_version" = xyes; then :
+  HAVE_SFCGAL="yes"
+else
+  HAVE_SFCGAL="no"
+fi
+
+
+
+      if test x"$HAVE_SFCGAL" = "xno"; then
+          SFCGAL_CFLAGS=""
+      fi
+
+      CFLAGS="${ax_save_CFLAGS}"
+      LIBS="${ax_save_LIBS}"
+
+    fi
+
+  fi
+
+HAVE_SFCGAL_RESULT="no"
+if test "${HAVE_SFCGAL}" = "yes" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Using C API from SFCGAL $SFCGAL_VERSION" >&5
+$as_echo "$as_me: Using C API from SFCGAL $SFCGAL_VERSION" >&6;}
+  LIBS="${SFCGAL_LIBS} ${LIBS}"
+  HAVE_SFCGAL_RESULT="yes"
 fi
 
 
@@ -31661,6 +32469,8 @@ HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
 POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
+POPPLER_0_23_OR_LATER=no
+POPPLER_0_58_OR_LATER=no
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for poppler" >&5
 $as_echo_n "checking for poppler... " >&6; }
@@ -31701,17 +32511,21 @@ $as_echo "yes" >&6; }
         POPPLER_INC=$TEST_POPPLER_INC
         POPPLER_PLUGIN_LIB="${TEST_POPPLER_LIB}"
 
-        # And now try another dirty thing, but this one is
-        # optional.
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Catalog::optContent exists" >&5
-$as_echo_n "checking if Catalog::optContent exists... " >&6; }
+        CHECK_OTHER_POPPLER_VERSION=yes
+
+        # And now we check if we have Poppler >= 0.58.0
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Object does have new API (>= 0.58.0)" >&5
+$as_echo_n "checking if Object does have new API (>= 0.58.0)... " >&6; }
         rm -f testpoppler.*
-        echo '#define private public' > testpoppler.cpp
-        echo '#include <poppler/Object.h>' >> testpoppler.cpp
-        echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
+        echo '#include <poppler/Object.h>' > testpoppler.cpp
+        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
         if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            POPPLER_0_58_OR_LATER=yes
+            POPPLER_0_23_OR_LATER=yes
+            POPPLER_0_20_OR_LATER=yes
+            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
             POPPLER_HAS_OPTCONTENT=yes
+            CHECK_OTHER_POPPLER_VERSION=no
             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
         else
@@ -31719,50 +32533,75 @@ $as_echo "yes" >&6; }
 $as_echo "no" >&6; }
         fi
 
-        # And now we check if we have Poppler >= 0.16.0
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if BaseStream constructor needs 2 arguments" >&5
-$as_echo_n "checking if BaseStream constructor needs 2 arguments... " >&6; }
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-        echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-        echo 'public:' >> testpoppler.cpp
-        echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-        echo '};' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
 
-            # And now we check if we have Poppler >= 0.20.0
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.20.0" >&5
-$as_echo_n "checking if we have Poppler >= 0.20.0... " >&6; }
+            # And now try another dirty thing, but this one is
+            # optional.
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if Catalog::optContent exists" >&5
+$as_echo_n "checking if Catalog::optContent exists... " >&6; }
             rm -f testpoppler.*
-            echo '#include <poppler/Error.h>' > testpoppler.cpp
-            echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
+            echo '#define private public' > testpoppler.cpp
+            echo '#include <poppler/Object.h>' >> testpoppler.cpp
+            echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
             if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_0_20_OR_LATER=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            else
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+            fi
+
+            # And now we check if we have Poppler >= 0.16.0
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking if BaseStream constructor needs 2 arguments" >&5
+$as_echo_n "checking if BaseStream constructor needs 2 arguments... " >&6; }
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+            echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+            echo 'public:' >> testpoppler.cpp
+            echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+            echo '};' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-                # And now we check if we have Poppler >= 0.23.0
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.23.0" >&5
-$as_echo_n "checking if we have Poppler >= 0.23.0... " >&6; }
+                # And now we check if we have Poppler >= 0.20.0
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.20.0" >&5
+$as_echo_n "checking if we have Poppler >= 0.20.0... " >&6; }
                 rm -f testpoppler.*
-                echo '#include <poppler/Object.h>' > testpoppler.cpp
-                echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-                echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-                echo 'public:' >> testpoppler.cpp
-                echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-                echo '  ~TestStream() {}' >> testpoppler.cpp
-                echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
-                echo '};' >> testpoppler.cpp
-                echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                echo '#include <poppler/Error.h>' > testpoppler.cpp
+                echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
                 if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                    POPPLER_0_23_OR_LATER=yes
+                    POPPLER_0_20_OR_LATER=yes
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+
+                    # And now we check if we have Poppler >= 0.23.0
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have Poppler >= 0.23.0" >&5
+$as_echo_n "checking if we have Poppler >= 0.23.0... " >&6; }
+                    rm -f testpoppler.*
+                    echo '#include <poppler/Object.h>' > testpoppler.cpp
+                    echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+                    echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+                    echo 'public:' >> testpoppler.cpp
+                    echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+                    echo '  ~TestStream() {}' >> testpoppler.cpp
+                    echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
+                    echo '};' >> testpoppler.cpp
+                    echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                    if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                        POPPLER_0_23_OR_LATER=yes
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                    else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                    fi
+
                 else
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -31772,10 +32611,6 @@ $as_echo "no" >&6; }
                 { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
             fi
-
-        else
-            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
         fi
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -31797,6 +32632,8 @@ POPPLER_BASE_STREAM_HAS_TWO_ARGS=$POPPLER_BASE_STREAM_HAS_TWO_ARGS
 POPPLER_0_20_OR_LATER=$POPPLER_0_20_OR_LATER
 
 POPPLER_0_23_OR_LATER=$POPPLER_0_23_OR_LATER
+
+POPPLER_0_58_OR_LATER=$POPPLER_0_58_OR_LATER
 
 POPPLER_INC=$POPPLER_INC
 
@@ -31837,7 +32674,7 @@ fi
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        ${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB} 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${PODOFO_LIB} 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
@@ -31877,7 +32714,7 @@ fi
         rm -f testpodofo.*
         echo '#include <podofo.h>' > testpodofo.cpp
         echo 'int main(int argc, char** argv) { PoDoFo::PdfError::EnableDebug( 0 ); return 0; } ' >> testpodofo.cpp
-        ${CXX} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testpodofo.cpp -o testpodofo ${TEST_PODOFO_INC} ${TEST_PODOFO_LIB} 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             HAVE_PODOFO=yes
@@ -32405,9 +33242,9 @@ if test ! -z "`uname | grep Darwin`" ; then
 
   MACOSX_FRAMEWORK=no
 
-# Check whether --with- was given.
-if test "${with_+set}" = set; then :
-  withval=$with_;
+# Check whether --with-macosx-framework was given.
+if test "${with_macosx_framework+set}" = set; then :
+  withval=$with_macosx_framework;
 fi
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Mac OS X Framework build" >&5
@@ -32441,7 +33278,7 @@ EXTRA_INCLUDES=$EXTRA_INCLUDES
 
 
 case "${host_os}" in
-    cygwin* | mingw32* | pw32*)
+    cygwin* | mingw* | pw32*)
       EXE_EXT=.exe
       SO_EXT=dll
       ;;
@@ -32791,7 +33628,14 @@ if test "${with_jvm_lib_add_rpath+set}" = set; then :
 fi
 
 
-    if test "x$with_jvm_lib" != "x"; then
+    if test "x$with_jvm_lib" = "xdlopen"; then
+
+cat >>confdefs.h <<_ACEOF
+#define JVM_LIB_DLOPEN 1
+_ACEOF
+
+        JVM_LIB="-ldl"
+    elif test "x$with_jvm_lib" != "x"; then
         if test -d "$with_jvm_lib"; then
             saved_LDFLAGS="$LDFLAGS"
             LDFLAGS="$LDFLAGS -L$with_jvm_lib"
@@ -33304,7 +34148,7 @@ elif test "$with_cryptopp" = "yes" -o "$with_cryptopp" = "" ; then
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} ${CXXFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -33328,7 +34172,7 @@ $as_echo_n "checking if cryptopp has all cipher methods builtin... " >&6; }
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} ${CXXFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -o testcryptopp -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
@@ -33350,7 +34194,7 @@ else
     # Catch issue with clang++ (https://groups.google.com/forum/#!topic/cryptopp-users/DfWHy3bT0KI)
     echo '#include <cryptopp/osrng.h>' >> testcryptopp.cpp
     echo 'int main(int argc, char** argv) { CryptoPP::AES::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-    ${CXX} ${CXXFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+    ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
     RETVAL=$?
     if test $RETVAL -eq 0; then
         HAVE_CRYPTOPP=yes
@@ -33372,7 +34216,7 @@ $as_echo_n "checking if cryptopp has all cipher methods builtin... " >&6; }
         rm -f testcryptopp.*
         echo '#include <cryptopp/blowfish.h>' > testcryptopp.cpp
         echo 'int main(int argc, char** argv) { CryptoPP::Blowfish::Encryption oEnc; return 0; } ' >> testcryptopp.cpp
-        ${CXX} ${CXXFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testcryptopp.cpp -I$with_cryptopp/include -o testcryptopp -L$with_cryptopp/lib -lcryptopp 2>/dev/null
         RETVAL=$?
         if test $RETVAL -eq 0; then
             USE_ONLY_CRYPTODLL_ALG=no
@@ -33396,10 +34240,93 @@ USE_ONLY_CRYPTODLL_ALG=$USE_ONLY_CRYPTODLL_ALG
 
 
 
+# Check whether --with-crypto was given.
+if test "${with_crypto+set}" = set; then :
+  withval=$with_crypto;
+fi
 
-# Check whether --with-grib was given.
-if test "${with_grib+set}" = set; then :
-  withval=$with_grib;
+
+HAVE_OPENSSL_CRYPTO=no
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for crypto" >&5
+$as_echo_n "checking for crypto... " >&6; }
+
+if test "$with_crypto" = "no" ; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+
+elif test "$with_crypto" = "yes" -o \( "$with_crypto" = "" -a "$HAVE_CRYPTOPP" = "no" \) ; then
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EVP_sha256 in -lcrypto" >&5
+$as_echo_n "checking for EVP_sha256 in -lcrypto... " >&6; }
+if ${ac_cv_lib_crypto_EVP_sha256+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcrypto  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EVP_sha256 ();
+int
+main ()
+{
+return EVP_sha256 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_crypto_EVP_sha256=yes
+else
+  ac_cv_lib_crypto_EVP_sha256=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_crypto_EVP_sha256" >&5
+$as_echo "$ac_cv_lib_crypto_EVP_sha256" >&6; }
+if test "x$ac_cv_lib_crypto_EVP_sha256" = xyes; then :
+  HAVE_OPENSSL_CRYPTO=yes
+fi
+
+    if test "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+        for ac_header in openssl/bio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "openssl/bio.h" "ac_cv_header_openssl_bio_h" "$ac_includes_default"
+if test "x$ac_cv_header_openssl_bio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENSSL_BIO_H 1
+_ACEOF
+
+fi
+
+done
+
+        if test "$ac_cv_header_openssl_bio_h" = "no"; then
+            HAVE_OPENSSL_CRYPTO=no
+        else
+            LIBS="-lcrypto $LIBS"
+        fi
+    fi
+fi
+
+HAVE_OPENSSL_CRYPTO=$HAVE_OPENSSL_CRYPTO
+
+
+
+
+# Check whether --with-mrf was given.
+if test "${with_mrf+set}" = set; then :
+  withval=$with_mrf;
 fi
 
 
@@ -33414,6 +34341,26 @@ else
     HAVE_MRF=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled by user" >&5
 $as_echo "disabled by user" >&6; }
+fi
+
+
+
+
+# Check whether --with-null was given.
+if test "${with_null+set}" = set; then :
+  withval=$with_null;
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for NULL" >&5
+$as_echo_n "checking for NULL... " >&6; }
+if test "$with_null" = "yes" ; then
+    OPT_GDAL_FORMATS="null $OPT_GDAL_FORMATS"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabled" >&5
+$as_echo "enabled" >&6; }
+else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
 fi
 
 
@@ -33438,6 +34385,36 @@ $as_echo "no" >&6; }
 fi
 rm -f testdeprecated.*
 rm -f testdeprecated
+
+case "${host_os}" in
+    mingw32*)
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if mingw supports wmain" >&5
+$as_echo_n "checking if mingw supports wmain... " >&6; }
+        rm -f testwmain*
+        echo '#include <wchar.h>' > testwmain.cpp
+        echo '#include <stdlib.h>' >> testwmain.cpp
+        echo 'extern "C" int wmain( int argc, wchar_t ** argv_w );' >> testwmain.cpp
+        echo 'extern "C" int wmain( int , wchar_t **  ) { return 0; } ' >> testwmain.cpp
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
+        RETVAL=$?
+        rm -f testwmain*
+        if test $RETVAL -eq 0; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
+            LDFLAGS="$LDFLAGS -municode"
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+        ;;
+    *)
+        ;;
+esac
+
+if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
+    as_fn_error $? "--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI" "$LINENO" 5
+fi
 
 ac_config_files="$ac_config_files GDALmake.opt"
 
@@ -35873,6 +36850,9 @@ echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
 echo "  cryptopp support:          ${HAVE_CRYPTOPP}"
 
 
+echo "  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}"
+
+
 echo "  GRASS support:             ${GRASS_SETTING}"
 
 
@@ -35907,6 +36887,9 @@ echo "  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}"
 
 
 echo "  LIBGIF support:            ${GIF_SETTING}"
+
+
+echo "  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}"
 
 
 echo "  OGDI support:              ${HAVE_OGDI}"
@@ -36037,13 +37020,19 @@ echo "  SpatiaLite shared obj name:${SPATIALITE_SONAME}"
 
 fi
 
-echo "  DWGdirect support          ${HAVE_DWGDIRECT}"
+echo "  RasterLite2 support:       ${HAVE_RASTERLITE2}"
+
+
+echo "  Teigha (DWG and DGNv8):    ${HAVE_TEIGHA}"
 
 
 echo "  INFORMIX DataBlade support:${HAVE_IDB}"
 
 
 echo "  GEOS support:              ${HAVE_GEOS_RESULT}"
+
+
+echo "  SFCGAL support:            ${HAVE_SFCGAL_RESULT}"
 
 
 echo "  QHull support:             ${QHULL_SETTING}"
@@ -36130,4 +37119,9 @@ fi
 if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&5
 $as_echo "$as_me: WARNING: --with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI" >&2;}
+fi
+
+if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: --with-crypto and --with-cryptopp available. This is unusual setup, but will work." >&5
+$as_echo "$as_me: WARNING: --with-crypto and --with-cryptopp available. This is unusual setup, but will work." >&2;}
 fi

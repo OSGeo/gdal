@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "io_selafin.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     OGRSelafinDriverIdentify()                       */

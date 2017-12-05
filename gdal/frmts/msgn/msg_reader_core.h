@@ -32,6 +32,7 @@
 
 #include "msg_basic_types.h"
 #include <stdio.h>
+#include "cpl_vsi.h"
 
 namespace msg_native_format {
 
@@ -61,8 +62,8 @@ typedef enum {
 class Msg_reader_core {
 public:
     explicit Msg_reader_core(const char* fname);
-    explicit Msg_reader_core(FILE* fp);
-    virtual ~Msg_reader_core() {};
+    explicit Msg_reader_core(VSILFILE* fp);
+    virtual ~Msg_reader_core() {}
 
     bool get_open_success() { return _open_success; }
 
@@ -104,7 +105,7 @@ public:
     CALIBRATION*  get_calibration_parameters() { return _calibration; }
 
 private:
-    void read_metadata_block(FILE* fp);
+    void read_metadata_block(VSILFILE* fp);
 
 protected:
 

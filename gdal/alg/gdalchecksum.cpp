@@ -39,7 +39,7 @@
 #include "gdal.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         GDALChecksumImage()                          */
@@ -83,7 +83,8 @@ GDALChecksumImage( GDALRasterBandH hBand,
         const GDALDataType eDstDataType = bComplex ? GDT_CFloat64 : GDT_Float64;
 
         double* padfLineData = static_cast<double *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(double) * 2));
+            VSI_MALLOC2_VERBOSE(nXSize,
+                                GDALGetDataTypeSizeBytes(eDstDataType)));
         if( padfLineData == NULL )
         {
             return 0;
@@ -142,7 +143,8 @@ GDALChecksumImage( GDALRasterBandH hBand,
         const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
 
         int *panLineData = static_cast<GInt32 *>(
-            VSI_MALLOC2_VERBOSE(nXSize, sizeof(GInt32) * 2));
+            VSI_MALLOC2_VERBOSE(nXSize,
+                                GDALGetDataTypeSizeBytes(eDstDataType)));
         if( panLineData == NULL )
         {
             return 0;

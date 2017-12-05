@@ -23,7 +23,7 @@ Prerequisites:
     new members. Only non-virtual methods can be added.
 
     It may also be helpful to check:
-      http://upstream-tracker.org/versions/gdal.html
+      https://abi-laboratory.pro/tracker/timeline/gdal/
 
 2) Delete existing fix_typos directory and run scripts/fix_typos.sh
 
@@ -41,6 +41,7 @@ Process :
       must also be edited before if new utilities/scripts are added/removed.
 
 2) Update the release date, and number information in gcore/gdal_version.h.
+   Note: the format of GDAL_RELEASE_DATE should be YYYYMMDD.
 
 3) Update the VERSION file.
 
@@ -150,23 +151,21 @@ index-servers = pypi
                 pypitest
 
 [pypi] # authentication details for live PyPI
-repository: https://pypi.python.org/pypi
+repository: https://upload.pypi.org/legacy/
 username: yourlogin
 password: yourpassword
 
 [pypitest] # authentication details for test PyPI
-repository: https://testpypi.python.org/pypi
+repository: https://test.pypi.org/legacy/
 username: yourlogin
 password: yourpassword
 
 b) cd swig/python
 
 c) For trial :
-    python setup.py register -r pypitest
     python setup.py sdist upload -r pypitest
 
 d) For real :
-    python setup.py register -r pypi
     python setup.py sdist upload -r pypi
 
 21) Build and bundle the java bindings.
@@ -272,5 +271,4 @@ f) Select the staging repository. If all is well You should see the option to
 e) Click the "Release" button and that is it! The release should be available in
    Maven Central shortly. You can verify this by going to search.maven.org and
    searching for "gdal".
-
 

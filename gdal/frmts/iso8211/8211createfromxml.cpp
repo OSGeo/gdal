@@ -33,7 +33,7 @@
 #include <map>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int main(int nArgc, char* papszArgv[])
 {
@@ -46,9 +46,13 @@ int main(int nArgc, char* papszArgv[])
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( pszFilename == NULL )
+        {
             pszFilename = papszArgv[iArg];
+        }
         else if( pszOutFilename == NULL )
+        {
             pszOutFilename = papszArgv[iArg];
+        }
         else
         {
             pszFilename = NULL;

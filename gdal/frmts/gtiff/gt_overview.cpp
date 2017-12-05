@@ -28,15 +28,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
+#include "cpl_port.h"
 #include "gt_overview.h"
+
+#include <cstdlib>
+#include <cstring>
+
+#include <algorithm>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 #include "gtiff.h"
+#include "tiff.h"
+#include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"
 
-#include <algorithm>
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // TODO(schwehr): Explain why 128 and not 127.
 static const int knMaxOverviews = 128;
@@ -65,7 +79,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panExtraSampleValues,
                             const char *pszMetadata,
                             const char* pszJPEGQuality,
-                            const char* pszJPEGTablesMode )
+                            const char* pszJPEGTablesMode,
+                            const char* pszNoData )
 
 {
     const toff_t nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
@@ -144,6 +159,21 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                                                                 "MINISBLACK",
                               pszJPEGQuality,
                               pszJPEGTablesMode );
+
+        if( nPhotometric == PHOTOMETRIC_YCBCR )
+        {
+            // Explicitly register the subsampling so that JPEGFixupTags
+            // is a no-op (helps for cloud optimized geotiffs)
+            TIFFSetField( hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 2, 2 );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write no data value if we have one.                             */
+/* -------------------------------------------------------------------- */
+    if( pszNoData != NULL )
+    {
+        TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszNoData );
     }
 
 /* -------------------------------------------------------------------- */
@@ -563,7 +593,7 @@ GTIFFBuildOverviews( const char * pszFilename,
         const char *pszBIGTIFF = CPLGetConfigOption( "BIGTIFF_OVERVIEW", NULL );
 
         if( pszBIGTIFF == NULL )
-            pszBIGTIFF = "IF_NEEDED";
+            pszBIGTIFF = "IF_SAFER";
 
         bool bCreateBigTIFF = false;
         if( EQUAL(pszBIGTIFF,"IF_NEEDED") )
@@ -705,6 +735,17 @@ GTIFFBuildOverviews( const char * pszFilename,
     int nOvrBlockXSize = 0;
     int nOvrBlockYSize = 0;
     GTIFFGetOverviewBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+
+    CPLString osNoData; // don't move this in inner scope
+    const char* pszNoData = NULL;
+    int bNoDataSet = FALSE;
+    const double dfNoDataValue = papoBandList[0]->GetNoDataValue(&bNoDataSet);
+    if( bNoDataSet )
+    {
+        osNoData = GTiffFormatGDALNoDataTagValue(dfNoDataValue);
+        pszNoData = osNoData.c_str();
+    }
+
     for( iOverview = 0; iOverview < nOverviews; iOverview++ )
     {
         const int nOXSize = (nXSize + panOverviewList[iOverview] - 1)
@@ -722,7 +763,8 @@ GTIFFBuildOverviews( const char * pszFilename,
                              NULL, // TODO: How can we fetch extrasamples?
                              osMetadata,
                              CPLGetConfigOption( "JPEG_QUALITY_OVERVIEW", NULL ),
-                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL )
+                             CPLGetConfigOption( "JPEG_TABLESMODE_OVERVIEW", NULL ),
+                             pszNoData
                            );
     }
 

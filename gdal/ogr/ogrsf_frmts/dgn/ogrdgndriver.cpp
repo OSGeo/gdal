@@ -29,7 +29,7 @@
 #include "ogr_dgn.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -128,6 +128,8 @@ void RegisterOGRDGN()
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
                                "<LayerCreationOptionList/>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRDGNDriverOpen;
     poDriver->pfnIdentify = OGRDGNDriverIdentify;

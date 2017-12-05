@@ -204,7 +204,7 @@ int GDALGeorefPamDataset::GetGCPCount()
         ((nGCPCount != 0 && nPAMIndex < m_nGCPGeorefSrcIndex) ||
          m_nGCPGeorefSrcIndex < 0 || nGCPCount == 0))
     {
-        int nPAMGCPCount = GDALPamDataset::GetGCPCount();
+        const int nPAMGCPCount = GDALPamDataset::GetGCPCount();
         if( nPAMGCPCount )
             return nPAMGCPCount;
     }

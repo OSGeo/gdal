@@ -49,7 +49,7 @@
 extern
 int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform );
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* -------------------------------------------------------------------- */
 /*      The following list comes from osrs/proj/src/pj_ellps.c.         */
@@ -681,8 +681,15 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
     }
     else if( EQUAL(pszProj, "utm") )
     {
-        SetUTM(static_cast<int>(OSR_GDV( papszNV, "zone", 0.0)),
-               static_cast<int>(OSR_GDV( papszNV, "south", 1.0)) );
+        const double dfZone = OSR_GDV(papszNV, "zone", 0.0);
+        const double dfSouth = OSR_GDV(papszNV, "south", 1.0);
+        if( dfZone > 60.0 || dfZone < 0.0 || CPLIsNan(dfZone) ||
+            dfSouth < 0.0 || dfSouth > 1.0 || CPLIsNan(dfSouth) )
+        {
+            CSLDestroy(papszNV);
+            return OGRERR_CORRUPT_DATA;
+        }
+        SetUTM(static_cast<int>(dfZone), static_cast<int>(dfSouth));
     }
     else if( EQUAL(pszProj, "merc")  // 2SP form.
              && OSR_GDV(papszNV, "lat_ts", 1000.0) < 999.0 )
@@ -922,6 +929,20 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                     OSR_GDV( papszNV, "x_0", 0.0 ),
                     OSR_GDV( papszNV, "y_0", 0.0 ) );
         }
+        else if( CSLFetchNameValue(papszNV, "lat_1") &&
+                 CSLFetchNameValue(papszNV, "lon_1") &&
+                 CSLFetchNameValue(papszNV, "lat_2") &&
+                 CSLFetchNameValue(papszNV, "lon_2") )
+        {
+            SetHOM2PNO( OSR_GDV( papszNV, "lat_0", 0.0 ),
+                        OSR_GDV( papszNV, "lat_1", 0.0 ),
+                        OSR_GDV( papszNV, "lon_1", 0.0 ),
+                        OSR_GDV( papszNV, "lat_2", 0.0 ),
+                        OSR_GDV( papszNV, "lon_2", 0.0 ),
+                        OSR_GDV( papszNV, "k", 1.0 ),
+                        OSR_GDV( papszNV, "x_0", 0.0 ),
+                        OSR_GDV( papszNV, "y_0", 0.0 ) );
+        }
         else
         {
             SetHOMAC( OSR_GDV( papszNV, "lat_0", 0.0 ),
@@ -1062,9 +1083,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             if( EQUAL(pszValue, ogr_pj_datums[i].pszPJ) )
             {
                 OGRSpatialReference oGCS;
-                oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG );
-                CopyGeogCSFrom( &oGCS );
-                bFullyDefined = true;
+                if( oGCS.importFromEPSG( ogr_pj_datums[i].nEPSG )
+                                                    == OGRERR_NONE &&
+                    CopyGeogCSFrom( &oGCS ) == OGRERR_NONE )
+                {
+                    bFullyDefined = true;
+                }
                 break;
             }
         }
@@ -1243,7 +1267,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
             else
             {
                 // This case is untranslatable.  Should add all proj.4 unts.
-                SetLinearUnits( pszValue, 1.0 );
+                SetLinearUnits( !EQUAL(pszValue, "AUTHORITY") ? pszValue : "unknown", 1.0 );
             }
         }
     }
@@ -1663,13 +1687,24 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) )
     {
-        CPLsnprintf(
-            szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
-            "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
-            GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
-            GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
-            GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
-            GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        if( GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+        {
+            CPLsnprintf(
+                szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
+                "+proj=merc +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Mercator_2SP with "
+                     "latitude of origin != 0, not supported by PROJ.4.");
+            *ppszProj4 = CPLStrdup("");
+            return OGRERR_UNSUPPORTED_SRS;
+        }
     }
     else if( EQUAL(pszProjection, SRS_PT_MERCATOR_AUXILIARY_SPHERE) )
     {
@@ -1912,12 +1947,22 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     }
     else if( EQUAL(pszProjection, SRS_PT_ROBINSON) )
     {
+        // Workaround a bug in proj.4 :
+        // https://github.com/OSGeo/proj.4/commit/
+        //                              bc7453d1a75aab05bdff2c51ed78c908e3efa3cd
+        const double dfLon0 = GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+        const double dfX0 = GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0);
+        const double dfY0 = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+        if( CPLIsNan(dfLon0) || CPLIsNan(dfX0) || CPLIsNan(dfY0) )
+        {
+            return OGRERR_FAILURE;
+        }
         CPLsnprintf(
              szProj4 + strlen(szProj4), sizeof(szProj4) - strlen(szProj4),
              "+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-             GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
-             GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
-             GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+             dfLon0,
+             dfX0,
+             dfY0 );
     }
     else if( EQUAL(pszProjection, SRS_PT_VANDERGRINTEN) )
     {

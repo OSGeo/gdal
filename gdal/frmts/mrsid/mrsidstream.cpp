@@ -35,7 +35,7 @@
 #include "cpl_error.h"
 #include "mrsidstream.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 LT_USE_NAMESPACE(LizardTech)
 

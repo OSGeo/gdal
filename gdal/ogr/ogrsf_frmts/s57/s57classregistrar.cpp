@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "s57.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef S57_BUILTIN_CLASSES
 #include "s57tables.h"

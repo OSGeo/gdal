@@ -27,15 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "vrtdataset.h"
-#include "cpl_minixml.h"
-#include "cpl_string.h"
 
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <memory>
+#include <vector>
+
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
 
 /*! @cond Doxygen_Suppress */
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -308,7 +322,8 @@ CPLErr VRTRasterBand::SetCategoryNames( char ** papszNewNames )
 /************************************************************************/
 
 CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
-                               const char *pszVRTPath )
+                               const char *pszVRTPath,
+                               void* pUniqueHandle )
 
 {
 /* -------------------------------------------------------------------- */
@@ -328,7 +343,14 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     const char* pszBand = CPLGetXMLValue( psTree, "band", NULL);
     if( pszBand != NULL )
     {
-        nBand = atoi(pszBand);
+        int nNewBand = atoi(pszBand);
+        if( nNewBand != nBand )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Invalid band number. Got %s, expected %d. Ignoring "
+                     "provided one, and using %d instead",
+                     pszBand, nBand, nBand);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -338,6 +360,12 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     if( pszDataType != NULL )
     {
         eDataType = GDALGetDataTypeByName(pszDataType);
+        if( eDataType == GDT_Unknown )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Invalid dataType = %s", pszDataType );
+            return CE_Failure;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -395,30 +423,31 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Collect a color table.                                          */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psTree, "ColorTable" ) != NULL )
+    if( CPLGetXMLNode(psTree, "ColorTable") != NULL )
     {
         GDALColorTable oTable;
-        int        iEntry = 0;
+        int iEntry = 0;
 
-        for( CPLXMLNode *psEntry = CPLGetXMLNode( psTree, "ColorTable" )->psChild;
+        for( CPLXMLNode *psEntry = CPLGetXMLNode(psTree, "ColorTable")->psChild;
              psEntry != NULL; psEntry = psEntry->psNext )
         {
-            if( !(psEntry->eType == CXT_Element &&
-                  EQUAL(psEntry->pszValue, "Entry")) )
+            if( psEntry->eType != CXT_Element ||
+                !EQUAL(psEntry->pszValue, "Entry") )
             {
                 continue;
             }
-            GDALColorEntry sCEntry;
 
-            sCEntry.c1 = (short) atoi(CPLGetXMLValue( psEntry, "c1", "0" ));
-            sCEntry.c2 = (short) atoi(CPLGetXMLValue( psEntry, "c2", "0" ));
-            sCEntry.c3 = (short) atoi(CPLGetXMLValue( psEntry, "c3", "0" ));
-            sCEntry.c4 = (short) atoi(CPLGetXMLValue( psEntry, "c4", "255" ));
+            const GDALColorEntry sCEntry = {
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c1", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c2", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c3", "0"))),
+                static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c4", "255")))
+            };
 
-            oTable.SetColorEntry( iEntry++, &sCEntry );
+            oTable.SetColorEntry(iEntry++, &sCEntry);
         }
 
-        SetColorTable( &oTable );
+        SetColorTable(&oTable);
     }
 
 /* -------------------------------------------------------------------- */
@@ -484,8 +513,8 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         const int nSrcBand = atoi(CPLGetXMLValue( psNode, "SourceBand", "1" ) );
 
         m_apoOverviews.resize( m_apoOverviews.size() + 1 );
-        m_apoOverviews[m_apoOverviews.size()-1].osFilename = pszSrcDSName;
-        m_apoOverviews[m_apoOverviews.size()-1].nBand = nSrcBand;
+        m_apoOverviews.back().osFilename = pszSrcDSName;
+        m_apoOverviews.back().nBand = nSrcBand;
 
         CPLFree( pszSrcDSName );
     }
@@ -531,9 +560,13 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
             break;
         }
 
-        if( poBand->XMLInit( psNode, pszVRTPath ) == CE_None )
+        if( poBand->XMLInit( psNode, pszVRTPath, pUniqueHandle ) == CE_None )
         {
             SetMaskBand(poBand);
+        }
+        else
+        {
+            delete poBand;
         }
 
         break;
@@ -1051,7 +1084,7 @@ GDALRasterBand *VRTRasterBand::GetOverview( int iOverview )
             && !m_apoOverviews[iOverview].bTriedToOpen )
         {
             m_apoOverviews[iOverview].bTriedToOpen = TRUE;
-
+            CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
             GDALDataset *poSrcDS = reinterpret_cast<GDALDataset *>(
                 GDALOpenShared( m_apoOverviews[iOverview].osFilename,
                                 GA_ReadOnly ) );

@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "records.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* --- ASAR record descriptors --------------------------------------------- */
 static const EnvisatFieldDescr ASAR_ANTENNA_ELEV_PATT_ADSR[] = {
@@ -1246,8 +1246,9 @@ const EnvisatRecordDescr* EnvisatFile_GetRecordDescriptor(
 CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                         const EnvisatFieldDescr* pField, char *szBuf, size_t nBufLen)
 {
+    int ret;
     int i, nOffset = 0;
-    const void *pData;
+    const GByte *pData;
 
     if ( pField->nOffset >= nRecLen )
     {
@@ -1258,7 +1259,7 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
         return CE_Failure;
     }
 
-    pData = (GByte*)pRecord + pField->nOffset;
+    pData = (const GByte*)pRecord + pField->nOffset;
 
     szBuf[0] = '\0';
 
@@ -1274,69 +1275,100 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
             {
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
+                ret = snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
                                    ((const char*)pData)[i]);
+                if( ret < 0 || ret >= (int)nBufLen - nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Int16:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GInt16 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
-                                   CPL_MSBWORD16(((const GInt16*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                ret = snprintf(szBuf + nOffset, nBufLen -nOffset, "%d",
+                                   CPL_MSBWORD16(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_UInt16:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GUInt16 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD16(((const GUInt16*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                                   CPL_MSBWORD16(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Int32:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GInt32 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD32(((const GInt32*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
+                                   CPL_MSBWORD32(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_UInt32:
             for (i = 0; i < pField->nCount; ++i)
             {
+                GUInt32 nVal;
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += snprintf(szBuf + nOffset, nBufLen -nOffset,"%d",
-                                   CPL_MSBWORD32(((const GUInt32*)pData)[i]));
+                memcpy(&nVal, pData + i * sizeof(nVal), sizeof(nVal));
+                ret = snprintf(szBuf + nOffset, nBufLen -nOffset,"%u",
+                                   CPL_MSBWORD32(nVal));
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Float32:
             for (i = 0; i < pField->nCount; ++i)
             {
-                float fValue = ((const float*)pData)[i];
+                float fValue;
+                memcpy(&fValue, pData + i * sizeof(fValue), sizeof(fValue));
 #ifdef CPL_LSB
                 CPL_SWAP32PTR( &fValue );
 #endif
 
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", fValue);
+                ret = CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", fValue);
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
         case EDT_Float64:
             for (i = 0; i < pField->nCount; ++i)
             {
-                double dfValue = ((const double*)pData)[i];
+                double dfValue;
+                memcpy(&dfValue, pData + i * sizeof(dfValue), sizeof(dfValue));
 #ifdef CPL_LSB
                 CPL_SWAPDOUBLE( &dfValue );
 #endif
                 if (i > 0)
                     szBuf[nOffset++] = ' ';
-                nOffset += CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", dfValue);
+                ret = CPLsnprintf(szBuf + nOffset, nBufLen -nOffset,"%f", dfValue);
+                if( ret < 0 || ret >= (int)nBufLen -nOffset )
+                    return CE_Failure;
+                nOffset += ret;
             }
             break;
 /*
@@ -1399,7 +1431,9 @@ CPLErr EnvisatFile_GetFieldAsString(const void *pRecord, int nRecLen,
                 seconds = CPL_MSBWORD32(((const GUInt32*)pData)[1]);
                 microseconds = CPL_MSBWORD32(((const GUInt32*)pData)[2]);
 
-                snprintf(szBuf, nBufLen, "%d, %u, %u", days, seconds, microseconds);
+                ret = snprintf(szBuf, nBufLen, "%d, %u, %u", days, seconds, microseconds);
+                if( ret < 0 || ret >= (int)nBufLen )
+                    return CE_Failure;
             }
             break;
         default:

@@ -33,8 +33,9 @@
 #include "ogr_libkml.h"
 #include "ogrlibkmlstyle.h"
 #include "ogr_p.h"
+#include "cpl_vsi_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using kmlbase::Attributes;
 using kmldom::ContainerPtr;
@@ -65,6 +66,22 @@ static const char OGRLIBKMLSRSWKT[] =
     "       UNIT[\"degree\",0.01745329251994328,"
     "           AUTHORITY[\"EPSG\",\"9122\"]],"
     "           AUTHORITY[\"EPSG\",\"4326\"]]";
+
+/************************************************************************/
+/*                           OGRLIBKMLParse()                           */
+/************************************************************************/
+
+static ElementPtr OGRLIBKMLParse(std::string oKml, std::string *posError)
+{
+    // To allow reading files using an explicit namespace prefix like <kml:kml>
+    // we need to use ParseNS (see #6981). But if we use ParseNS, we have
+    // issues reading gx: elements. So use ParseNS only when we have errors
+    // with Parse. This is not completely satisfactory...
+    ElementPtr element = kmldom::Parse(oKml, posError);
+    if( element == NULL )
+        element = kmldom::ParseNS(oKml, posError);
+    return element;
+}
 
 /******************************************************************************
  OGRLIBKMLDataSource Constructor
@@ -254,11 +271,12 @@ void OGRLIBKMLDataSource::WriteKml()
 
     if( !oKmlOut.empty() )
     {
-        VSILFILE* fp = VSIFOpenL( oKmlFilename.c_str(), "wb" );
+        VSILFILE* fp = VSIFOpenExL( oKmlFilename.c_str(), "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR writing %s", oKmlFilename.c_str() );
+                      "Error writing %s: %s", oKmlFilename.c_str(),
+                      VSIGetLastErrorMsg() );
             return;
         }
 
@@ -317,8 +335,9 @@ void OGRLIBKMLDataSource::WriteKmz()
 
     if( !hZIP )
     {
-        CPLError( CE_Failure, CPLE_NoWriteAccess, "ERROR creating %s",
-                  pszName );
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Error creating %s: %s",
+                  pszName, VSIGetLastErrorMsg() );
         return;
     }
 
@@ -465,11 +484,12 @@ void OGRLIBKMLDataSource::WriteDir()
 
         const char *pszOutfile = CPLFormFilename( pszName, "doc.kml", NULL );
 
-        VSILFILE* fp = VSIFOpenL( pszOutfile, "wb" );
+        VSILFILE* fp = VSIFOpenExL( pszOutfile, "wb", true );
         if( fp == NULL )
         {
             CPLError( CE_Failure, CPLE_FileIO,
-                      "ERROR Writing %s to %s", "doc.kml", pszName );
+                      "Error writing %s to %s: %s", "doc.kml", pszName,
+                      VSIGetLastErrorMsg() );
             return;
         }
 
@@ -731,6 +751,17 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     int bUpdateIn,
     int nGuess )
 {
+    // Build unique layer name
+    CPLString osUniqueLayername(pszLayerName);
+    int nIter = 2;
+    while( true )
+    {
+        if( GetLayerByName(osUniqueLayername) == NULL )
+            break;
+        osUniqueLayername = CPLSPrintf("%s (#%d)", pszLayerName, nIter);
+        nIter ++;
+    }
+
     /***** check to see if we have enough space to store the layer *****/
     if( nLayers == nAlloced )
     {
@@ -740,10 +771,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     }
 
     /***** create the layer *****/
-    const int iLayer = nLayers++;
-
-    OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer( pszLayerName,
-                                                      poSpatialRef,
+    OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer( osUniqueLayername,
                                                       eGType,
                                                       poOgrDS,
                                                       poKmlRoot,
@@ -754,7 +782,11 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
                                                       bUpdateIn );
 
     /***** add the layer to the array *****/
+    const int iLayer = nLayers++;
     papoLayers[iLayer] = poOgrLayer;
+
+    /***** check if any features are another layer *****/
+    ParseLayers( poKmlContainer, poSpatialRef );
 
     return poOgrLayer;
 }
@@ -900,7 +932,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(
 {
     /***** parse the kml into the dom *****/
     std::string oKmlErrors;
-    ElementPtr poKmlRoot = kmldom::Parse( *poKmlStyleKml, &oKmlErrors );
+    ElementPtr poKmlRoot = OGRLIBKMLParse( *poKmlStyleKml, &oKmlErrors );
 
     if( !poKmlRoot )
     {
@@ -970,7 +1002,7 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
 
-    ElementPtr poKmlRoot = kmldom::Parse( oKmlKml, &oKmlErrors );
+    ElementPtr poKmlRoot = OGRLIBKMLParse( oKmlKml, &oKmlErrors );
 
     if( !poKmlRoot )
     {
@@ -1086,7 +1118,7 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
 
     /***** parse the kml into the DOM *****/
     std::string oKmlErrors;
-    ElementPtr poKmlDocKmlRoot = kmldom::Parse( oKmlKml, &oKmlErrors );
+    ElementPtr poKmlDocKmlRoot = OGRLIBKMLParse( oKmlKml, &oKmlErrors );
 
     if( !poKmlDocKmlRoot )
     {
@@ -1154,7 +1186,7 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
             {
                 /***** parse the kml into the DOM *****/
                 oKmlErrors.clear();
-                ElementPtr poKmlLyrRoot = kmldom::Parse( oKml, &oKmlErrors );
+                ElementPtr poKmlLyrRoot = OGRLIBKMLParse( oKml, &oKmlErrors );
 
                 if( !poKmlLyrRoot )
                 {
@@ -1311,7 +1343,7 @@ int OGRLIBKMLDataSource::OpenDir( const char *pszFilename, int bUpdateIn )
 
         /***** parse the kml into the DOM *****/
         std::string oKmlErrors;
-        ElementPtr poKmlRoot = kmldom::Parse( oKmlKml, &oKmlErrors );
+        ElementPtr poKmlRoot = OGRLIBKMLParse( oKmlKml, &oKmlErrors );
 
         if( !poKmlRoot )
         {
@@ -1524,7 +1556,9 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
 {
     if( poKmlDocument != NULL )
     {
-        poKmlDocument->set_id("root_doc");
+        const char* pszDocumentId =
+            CSLFetchNameValueDef(m_papszOptions, "DOCUMENT_ID", "root_doc");
+        poKmlDocument->set_id(pszDocumentId);
 
         const char* pszAuthorName =
             CSLFetchNameValue(m_papszOptions, "AUTHOR_NAME");
@@ -1605,7 +1639,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
         CPLString osListStyleIconHref =
             CSLFetchNameValueDef(m_papszOptions, "LISTSTYLE_ICON_HREF", "");
         createkmlliststyle( m_poKmlFactory,
-                            "root_doc",
+                            pszDocumentId,
                             poKmlDocument,
                             poKmlDocument,
                             osListStyleType,

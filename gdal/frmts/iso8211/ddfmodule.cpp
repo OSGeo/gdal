@@ -40,7 +40,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             DDFModule()                              */
@@ -249,9 +249,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         _sizeFieldPos                 = DDFScanInt(achLeader+21,1);
         _sizeFieldTag                 = DDFScanInt(achLeader+23,1);
 
-        if( _recLength < nLeaderSize || _fieldControlLength == 0
-            || _fieldAreaStart < 24 || _sizeFieldLength == 0
-            || _sizeFieldPos == 0 || _sizeFieldTag == 0 )
+        if( _recLength < nLeaderSize || _fieldControlLength <= 0
+            || _fieldAreaStart < 24 || _sizeFieldLength <= 0
+            || _sizeFieldPos <= 0 || _sizeFieldTag <= 0 )
         {
             bValid = FALSE;
         }
@@ -288,6 +288,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
                       "Header record is short on DDF file `%s'.",
                       pszFilename );
 
+        CPLFree( pachRecord );
         return FALSE;
     }
 
@@ -298,7 +299,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 
     nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
 
-    for( i = nLeaderSize; i < _recLength; i += nFieldEntryWidth )
+    for( i = nLeaderSize; i + nFieldEntryWidth <= _recLength; i += nFieldEntryWidth )
     {
         if( pachRecord[i] == DDF_FIELD_TERMINATOR )
             break;
@@ -324,7 +325,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         nEntryOffset += _sizeFieldLength;
         nFieldPos = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldPos );
 
-        if (_fieldAreaStart+nFieldPos < 0 ||
+        if (nFieldPos < 0 ||
+            nFieldPos > INT_MAX - _fieldAreaStart ||
+            nFieldLength < 2 || // DDFFieldDefn::Initialize() assumes at least 2 bytes
             _recLength - (_fieldAreaStart+nFieldPos) < nFieldLength)
         {
             if( !bFailQuietly )
@@ -438,7 +441,7 @@ int DDFModule::Create( const char *pszFilename )
     achLeader[9] = _appIndicator;
     snprintf( achLeader+10, sizeof(achLeader)-10, "%02d", (int) _fieldControlLength );
     snprintf( achLeader+12, sizeof(achLeader)-12, "%05d", (int) _fieldAreaStart );
-    strncpy( achLeader+17, _extendedCharSet, 3 );
+    memcpy( achLeader+17, _extendedCharSet, 3 );
     snprintf( achLeader+20, sizeof(achLeader)-20, "%1d", (int) _sizeFieldLength );
     snprintf( achLeader+21, sizeof(achLeader)-21, "%1d", (int) _sizeFieldPos );
     achLeader[22] = '0';
@@ -561,7 +564,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
     {
         const char *pszThisName = papoFieldDefns[i]->GetName();
 
-        if( *pszThisName == *pszFieldName
+        if( *pszThisName == *pszFieldName && *pszFieldName != '\0'
             && strcmp( pszFieldName+1, pszThisName+1) == 0 )
             return papoFieldDefns[i];
     }

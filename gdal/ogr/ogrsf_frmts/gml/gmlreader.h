@@ -38,6 +38,9 @@
 
 #include <vector>
 
+// Special value to map to a NULL field
+#define OGR_GML_NULL "___OGR_GML_NULL___"
+
 typedef enum {
     GMLPT_Untyped = 0,
     GMLPT_String = 1,
@@ -248,12 +251,13 @@ public:
     void            SetGeometryDirectly( CPLXMLNode* psGeom );
     void            SetGeometryDirectly( int nIdx, CPLXMLNode* psGeom );
     void            AddGeometry( CPLXMLNode* psGeom );
+    int             GetGeometryCount() const { return m_nGeometryCount; }
     const CPLXMLNode* const * GetGeometryList() const { return m_papsGeometry; }
     const CPLXMLNode* GetGeometryRef( int nIdx ) const;
 
     void            SetPropertyDirectly( int i, char *pszValue );
 
-    const GMLProperty*GetProperty( int i ) const { return (i < m_nPropertyCount) ? &m_pasProperties[i] : NULL; }
+    const GMLProperty*GetProperty( int i ) const { return (i >= 0 && i < m_nPropertyCount) ? &m_pasProperties[i] : NULL; }
 
     const char      *GetFID() const { return m_pszFID; }
     void             SetFID( const char *pszFID );

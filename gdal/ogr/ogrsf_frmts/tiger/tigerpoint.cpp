@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             TigerPoint()                             */
@@ -70,6 +70,8 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
         return NULL;
     }
 
+    // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+    // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
     if( VSIFReadL( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sP",

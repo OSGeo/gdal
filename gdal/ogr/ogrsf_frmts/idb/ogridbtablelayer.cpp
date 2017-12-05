@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_idb.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 /************************************************************************/
 /*                          OGRIDBTableLayer()                         */
 /************************************************************************/
@@ -278,11 +278,32 @@ OGRErr OGRIDBTableLayer::ResetQuery()
         else
             sql += " AND";
 
-        sql.Printf( "%s XMAX > %.8f AND XMIN < %.8f"
+        CPLString sqlTmp;
+        sqlTmp.Printf( "%s XMAX > %.8f AND XMIN < %.8f"
                     " AND YMAX > %.8f AND YMIN < %.8f",
                     sql.c_str(),
                     m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxX,
                     m_sFilterEnvelope.MinY, m_sFilterEnvelope.MaxY );
+        sql = sqlTmp;
+    }
+    /* If we have a spatial filter and GeomColumn, query using st_intersects function */
+    else if( m_poFilterGeom != NULL && pszGeomColumn )
+    {
+        if( pszQuery == NULL )
+            sql += " WHERE";
+        else
+            sql += " AND";
+
+        CPLString sqlTmp;
+        sqlTmp.Printf(
+                "%s st_intersects(st_geomfromtext('POLYGON((%.8f %.8f, %.8f %.8f, %.8f %.8f, %.8f %.8f, %.8f %.8f))',0),%s)",
+                sql.c_str(),
+                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY,
+                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MinY,
+                m_sFilterEnvelope.MaxX, m_sFilterEnvelope.MaxY,
+                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxY,
+                m_sFilterEnvelope.MinX, m_sFilterEnvelope.MinY, pszGeomColumn );
+        sql = sqlTmp;
     }
 
     CPLDebug( "OGR_IDB", "Exec(%s)", sql.c_str() );
@@ -617,7 +638,7 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
             return eErr;
         }
 
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             if ( ! par->SetNull() )
             {
@@ -789,7 +810,7 @@ OGRErr OGRIDBTableLayer::ISetFeature( OGRFeature *poFeature )
         osFields += pszFieldName;
         osFields += "=";
 
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             osFields += "NULL";
             continue;
@@ -943,7 +964,7 @@ OGRErr OGRIDBTableLayer::ICreateFeature( OGRFeature *poFeature )
         const char * pszFieldName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
 
         // Skip NULL fields
-        if ( ! poFeature->IsFieldSet( i ) )
+        if ( ! poFeature->IsFieldSetAndNotNull( i ) )
         {
             continue;
         }

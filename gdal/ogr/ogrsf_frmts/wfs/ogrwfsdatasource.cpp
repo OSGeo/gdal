@@ -38,7 +38,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int DEFAULT_BASE_START_INDEX = 0;
 static const int DEFAULT_PAGE_SIZE = 100;

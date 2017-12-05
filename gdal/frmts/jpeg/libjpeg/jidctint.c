@@ -183,8 +183,9 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 	inptr[DCTSIZE*5] == 0 && inptr[DCTSIZE*6] == 0 &&
 	inptr[DCTSIZE*7] == 0) {
       /* AC terms all zero */
-      int dcval = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]) << PASS1_BITS;
-      
+      int dcval = (int)LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]),
+                             PASS1_BITS);
+
       wsptr[DCTSIZE*0] = dcval;
       wsptr[DCTSIZE*1] = dcval;
       wsptr[DCTSIZE*2] = dcval;
@@ -213,9 +214,9 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z2 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]);
     z3 = DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]);
 
-    tmp0 = (z2 + z3) << CONST_BITS;
-    tmp1 = (z2 - z3) << CONST_BITS;
-    
+    tmp0 = LEFT_SHIFT(z2 + z3, CONST_BITS);
+    tmp1 = LEFT_SHIFT(z2 - z3, CONST_BITS);
+
     tmp10 = tmp0 + tmp3;
     tmp13 = tmp0 - tmp3;
     tmp11 = tmp1 + tmp2;
@@ -314,10 +315,10 @@ jpeg_idct_islow (j_decompress_ptr cinfo, jpeg_component_info * compptr,
     z1 = MULTIPLY(z2 + z3, FIX_0_541196100);
     tmp2 = z1 + MULTIPLY(z3, - FIX_1_847759065);
     tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865);
-    
-    tmp0 = ((INT32) wsptr[0] + (INT32) wsptr[4]) << CONST_BITS;
-    tmp1 = ((INT32) wsptr[0] - (INT32) wsptr[4]) << CONST_BITS;
-    
+
+    tmp0 = LEFT_SHIFT((INT32) wsptr[0] + (INT32) wsptr[4], CONST_BITS);
+    tmp1 = LEFT_SHIFT((INT32) wsptr[0] - (INT32) wsptr[4], CONST_BITS);
+
     tmp10 = tmp0 + tmp3;
     tmp13 = tmp0 - tmp3;
     tmp11 = tmp1 + tmp2;

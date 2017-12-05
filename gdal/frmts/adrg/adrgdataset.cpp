@@ -31,9 +31,11 @@
 #include "iso8211.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
+
+#define DIGIT_ZERO '0'
 
 class ADRGDataset : public GDALPamDataset
 {
@@ -41,6 +43,7 @@ class ADRGDataset : public GDALPamDataset
 
     CPLString    osGENFileName;
     CPLString    osIMGFileName;
+    CPLString    osSRS;
 
     VSILFILE*        fdIMG;
     int*         TILEINDEX;
@@ -223,27 +226,27 @@ CPLErr ADRGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     CPLDebug("ADRG", "(%d,%d) -> nBlock = %d", nBlockXOff, nBlockYOff, nBlock);
 
-    int offset;
+    vsi_l_offset offset;
     if( l_poDS->TILEINDEX )
     {
-        if( l_poDS->TILEINDEX[nBlock] == 0 )
+        if( l_poDS->TILEINDEX[nBlock] <= 0 )
         {
             memset(pImage, 0, 128 * 128);
             return CE_None;
         }
-        offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
     }
     else
-        offset = l_poDS->offsetInIMG + nBlock * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(nBlock) * 128 * 128 * 3 + (nBand - 1) * 128 * 128;
 
     if( VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0 )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
     if( VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128 )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
 
@@ -729,11 +732,7 @@ char **ADRGDataset::GetMetadata( const char *pszDomain )
 
 const char* ADRGDataset::GetProjectionRef()
 {
-    return
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-        "AUTHORITY[\"EPSG\",\"4326\"]]";
+    return osSRS;
 }
 
 /************************************************************************/
@@ -952,6 +951,8 @@ ADRGDataset* ADRGDataset::OpenDataset(
 
         BRV = record->GetIntSubfield("GEN", 0, "BRV", 0);
         CPLDebug("ADRG", "BRV=%d", BRV);
+        if( ARV <= 0 || (ZNA != 9 && ZNA != 18 && BRV <= 0) )
+            return NULL;
 
         const char* pszLSO = record->GetStringSubfield("GEN", 0, "LSO", 0);
         if( pszLSO == NULL || strlen(pszLSO) != 11 )
@@ -1110,14 +1111,6 @@ ADRGDataset* ADRGDataset::OpenDataset(
         return NULL;
     }
 
-    if( ZNA == 9 || ZNA == 18 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Polar cases are not handled by ADRG driver");
-        VSIFCloseL(fdIMG);
-        delete[] TILEINDEX;
-        return NULL;
-    }
-
     /* Skip ISO8211 header of IMG file */
     int offsetInIMG = 0;
     char c;
@@ -1199,19 +1192,62 @@ ADRGDataset* ADRGDataset::OpenDataset(
     poDS->offsetInIMG = offsetInIMG;
     poDS->poOverviewDS = NULL;
 
-    poDS->adfGeoTransform[0] = LSO;
-    poDS->adfGeoTransform[1] = 360. / ARV;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = PSO;
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = - 360. / BRV;
+    if( ZNA == 9)
+    {
+        // North Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS =
+                "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else if (ZNA == 18)
+    {
+        // South Polar Case
+        poDS->adfGeoTransform[0] = 111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[1] = 40075016.68558 / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = -40075016.68558 / ARV;
+        poDS->osSRS = "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
+                "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
+                "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
+                "PROJECTION[\"Azimuthal_Equidistant\"],"
+                "PARAMETER[\"latitude_of_center\",-90],"
+                "PARAMETER[\"longitude_of_center\",0],"
+                "PARAMETER[\"false_easting\",0],"
+                "PARAMETER[\"false_northing\",0]]";
+    }
+    else
+    {
+        poDS->adfGeoTransform[0] = LSO;
+        poDS->adfGeoTransform[1] = 360. / ARV;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = PSO;
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = - 360. / BRV;
+        poDS->osSRS = SRS_WKT_WGS84;
+    }
 
     // if( isGIN )
     {
         char szValue[32];
         snprintf( szValue, sizeof(szValue), "%d", SCA);
         poDS->SetMetadataItem( "ADRG_SCA", szValue );
-    }
+        snprintf( szValue, sizeof(szValue), "%d", ZNA);
+        poDS->SetMetadataItem( "ADRG_ZNA", szValue );
+     }
 
     poDS->SetMetadataItem( "ADRG_NAM", osNAM.c_str() );
 
@@ -1632,8 +1668,8 @@ GDALDataset *ADRGDataset::Create( const char* pszFilename,
     }
 
     CPLString osBaseFileName(CPLGetBasename(pszFilename));
-    if( strlen(osBaseFileName) != 8 ||
-        osBaseFileName[6] != '0' ||
+    if( osBaseFileName.size() != 8 ||
+        osBaseFileName[6] != DIGIT_ZERO ||
         osBaseFileName[7] != '1' )
     {
         CPLError( CE_Failure, CPLE_NotSupported,

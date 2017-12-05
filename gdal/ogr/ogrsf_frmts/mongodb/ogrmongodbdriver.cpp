@@ -37,7 +37,7 @@
 #include <limits>
 
 // g++ -DDEBUG -g -Wall -fPIC -shared -o ogr_MongoDB.so -I/home/even/boost_1_53_0 -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/mongodb ogr/ogrsf_frmts/mongodb/*.c* -L. -lgdal -I/home/even/mongo-cxx-1.0.2-install/include -L/home/even/mongo-cxx-1.0.2-install/lib -lmongoclient -L/home/even/boost_1_53_0/stage/lib -lboost_system -lboost_thread -lboost_regex
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define MAX_DOCS_IN_BULK                1000
 
@@ -978,9 +978,8 @@ static void OGRMongoDBReaderSetField( OGRLayer* poLayer,
     BSONType eBSONType = poElt->type();
     OGRFieldType eType = poFieldDefn->GetType();
     if( eBSONType == jstNULL )
-        return;
-
-    if( eBSONType == NumberInt )
+        poFeature->SetFieldNull( nField );
+    else if( eBSONType == NumberInt )
         poFeature->SetField( nField, poElt->Int() );
     else if( eBSONType == NumberLong )
         poFeature->SetField( nField, poElt->Long() );
@@ -1415,7 +1414,7 @@ OGRErr OGRMongoDBLayer::CreateGeomField( OGRGeomFieldDefn *poFieldIn, CPL_UNUSED
                 pszIndexType = CPLGetConfigOption("OGR_MONGODB_SPAT_INDEX_TYPE", "2dsphere");
             m_poDS->GetConn()->createIndex(m_osQualifiedCollection,
                                          BSON( oFieldDefn.GetNameRef() << pszIndexType ));
-            m_aosGeomIndexes[m_aosGeomIndexes.size()-1] = pszIndexType;
+            m_aosGeomIndexes.back() = pszIndexType;
         }
         catch( const DBException &e )
         {
@@ -1439,7 +1438,11 @@ void OGRMongoDBLayer::SerializeField(BSONObjBuilder& b,
                                      const char* pszJSonField)
 {
     OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(iField)->GetType();
-    if( eType == OFTInteger )
+    if( poFeature->IsFieldNull(iField) )
+    {
+        b.appendNull( pszJSonField );
+    }
+    else if( eType == OFTInteger )
     {
         if( m_poFeatureDefn->GetFieldDefn(iField)->GetSubType() == OFSTBoolean )
             b.append( pszJSonField, CPL_TO_BOOL(poFeature->GetFieldAsInteger(iField)) );
@@ -1622,7 +1625,7 @@ void OGRMongoDBLayer::InsertInMap(IntOrMap* rootMap,
     intOrMap->bIsMap = FALSE;
     intOrMap->u.nField = nField;
     std::map< CPLString, IntOrMap* >* poPrevMap = aoMap[aosFieldPathPrev]->u.poMap;
-    const CPLString& osLastComponent(aosFieldPathFull[aosFieldPathFull.size() - 1]);
+    const CPLString& osLastComponent(aosFieldPathFull.back());
     CPLAssert( (*poPrevMap).find(osLastComponent) == (*poPrevMap).end() );
     (*(poPrevMap))[osLastComponent] = intOrMap;
 }
@@ -1636,7 +1639,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
     BSONObjBuilder b;
 
     int nJSonFieldIndex = m_poFeatureDefn->GetFieldIndex("_json");
-    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSet(nJSonFieldIndex) )
+    if( nJSonFieldIndex >= 0 && poFeature->IsFieldSetAndNotNull(nJSonFieldIndex) )
     {
         CPLString osJSon(poFeature->GetFieldAsString(nJSonFieldIndex));
 
@@ -1677,7 +1680,7 @@ BSONObj OGRMongoDBLayer::BuildBSONObjFromFeature(OGRFeature* poFeature, int bUpd
 
     CPLAssert((int)m_aaosFieldPaths.size() == m_poFeatureDefn->GetFieldCount());
 
-    if( !poFeature->IsFieldSet(0) || (!bUpdate && m_bIgnoreSourceID) )
+    if( !poFeature->IsFieldSetAndNotNull(0) || (!bUpdate && m_bIgnoreSourceID) )
     {
         const OID generated = OID::gen();
         b.append("_id", generated);
@@ -1802,7 +1805,7 @@ OGRErr OGRMongoDBLayer::ISetFeature( OGRFeature *poFeature )
     if( m_poBulkBuilder )
         SyncToDisk();
 
-    if( !poFeature->IsFieldSet(0) )
+    if( !poFeature->IsFieldSetAndNotNull(0) )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "_id field not set");
         return OGRERR_FAILURE;

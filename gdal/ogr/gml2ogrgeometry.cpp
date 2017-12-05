@@ -55,9 +55,9 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
-#include "ogrsf_frmts/xplane/ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if HAVE_CXX11
 constexpr double kdfD2R = M_PI / 180.0;
@@ -973,11 +973,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Polygon / PolygonPatch / Triangle / Rectangle                   */
+/*      Polygon / PolygonPatch / Rectangle                              */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "Polygon") ||
         EQUAL(pszBaseGeometry, "PolygonPatch") ||
-        EQUAL(pszBaseGeometry, "Triangle") ||
         EQUAL(pszBaseGeometry, "Rectangle"))
     {
         // Find outer ring.
@@ -1168,6 +1167,71 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Triangle                                                        */
+/* -------------------------------------------------------------------- */
+
+    if( EQUAL(pszBaseGeometry, "Triangle"))
+    {
+        // Find outer ring.
+        const CPLXMLNode *psChild =
+            FindBareXMLChild( psNode, "outerBoundaryIs" );
+        if( psChild == NULL )
+           psChild = FindBareXMLChild( psNode, "exterior");
+
+        psChild = GetChildElement(psChild);
+        if( psChild == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Empty Triangle");
+            return new OGRTriangle();
+        }
+
+        // Translate outer ring and add to Triangle.
+        OGRGeometry* poGeom =
+            GML2OGRGeometry_XMLNode_Internal(
+                psChild,
+                nPseudoBoolGetSecondaryGeometryOption,
+                nRecLevel + 1, nSRSDimension,
+                pszSRSName);
+        if( poGeom == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid exterior ring");
+            return NULL;
+        }
+
+        if( !OGR_GT_IsCurve(poGeom->getGeometryType()) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "%s: Got %.500s geometry as outerBoundaryIs.",
+                      pszBaseGeometry, poGeom->getGeometryName() );
+            delete poGeom;
+            return NULL;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString &&
+            !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
+        {
+            poGeom = OGRCurve::CastToLinearRing((OGRCurve*)poGeom);
+        }
+
+        if( poGeom == NULL || !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
+        {
+            delete poGeom;
+            return NULL;
+        }
+
+        OGRTriangle *poTriangle = new OGRTriangle();
+
+        if( poTriangle->addRingDirectly( (OGRCurve*)poGeom ) != OGRERR_NONE )
+        {
+            delete poTriangle;
+            delete poGeom;
+            return NULL;
+        }
+
+        return poTriangle;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      LinearRing                                                      */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "LinearRing") )
@@ -1323,7 +1387,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( poCC == NULL )
                     {
                         poCC = new OGRCompoundCurve();
-                        if( poCC->addCurveDirectly(poRing) != OGRERR_NONE )
+                        bool bIgnored = false;
+                        if( !GML2OGRGeometry_AddToCompositeCurve(poCC, poRing, bIgnored) )
                         {
                             delete poGeom;
                             delete poRing;
@@ -1357,12 +1422,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                 double dfDistance = 0.0;
                                 if( bLastCurveWasApproximateArcInvertedAxisOrder )
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getX(), p.getY(),
                                             p2.getX(), p2.getY());
                                 else
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getY(), p.getX(),
                                             p2.getY(), p2.getX());
                                 // CPLDebug("OGR", "%f %f",
@@ -1414,12 +1479,12 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                 double dfDistance = 0.0;
                                 if( bLastCurveWasApproximateArcInvertedAxisOrder )
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getX(), p.getY(),
                                             p2.getX(), p2.getY());
                                 else
                                     dfDistance =
-                                        OGRXPlane_Distance(
+                                        OGR_GreatCircle_Distance(
                                             p.getY(), p.getX(),
                                             p2.getY(), p2.getX());
                                 // CPLDebug(
@@ -1450,7 +1515,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         CPLError(CE_Fatal, CPLE_AppDefined,
                                  "dynamic_cast failed.  Expected OGRCurve.");
                     }
-                    if( poCC->addCurveDirectly(poCurve) != OGRERR_NONE )
+
+                    bool bIgnored = false;
+                    if( !GML2OGRGeometry_AddToCompositeCurve( poCC,
+                                                              poCurve,
+                                                              bIgnored ) )
                     {
                         delete poGeom;
                         delete poCC;
@@ -1524,7 +1593,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return NULL;
         }
 
-        if( poCC->getNumPoints() != 3 )
+        // Normally a gml:Arc has only 3 points of controls, but in the
+        // wild we sometimes find GML with 5 points, so accept any odd
+        // number >= 3 (ArcString should be used for > 3 points)
+        if( poCC->getNumPoints() < 3 || (poCC->getNumPoints() % 2) != 1 )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Bad number of points in Arc");
@@ -1625,7 +1697,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
     if( EQUAL(pszBaseGeometry, "ArcByBulge") )
     {
         const CPLXMLNode *psChild = FindBareXMLChild( psNode, "bulge");
-        if( psChild == NULL || psChild->eType != CXT_Element )
+        if( psChild == NULL || psChild->eType != CXT_Element ||
+            psChild->psChild == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing bulge element." );
@@ -1778,7 +1851,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 double dfLat = 0.0;
                 if( bInvertedAxisOrder )
                 {
-                    OGRXPlane_ExtendPosition(
+                    OGR_GreatCircle_ExtendPosition(
                        dfCenterX, dfCenterY,
                        dfDistance,
                        // Not sure of angle conversion here.
@@ -1789,7 +1862,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
                 else
                 {
-                    OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                              dfDistance, 90-dfAngle,
                                              &dfLat, &dfLong);
                     p.setX( dfLong );
@@ -1802,7 +1875,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             double dfLat = 0.0;
             if( bInvertedAxisOrder )
             {
-                OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
+                OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
                                          dfDistance,
                                          // Not sure of angle conversion here.
                                          90.0 - dfEndAngle,
@@ -1812,7 +1885,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
             else
             {
-                OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                          dfDistance, 90-dfEndAngle,
                                          &dfLat, &dfLong);
                 p.setX( dfLong );
@@ -1901,7 +1974,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 double dfLat = 0.0;
                 if( bInvertedAxisOrder )
                 {
-                    OGRXPlane_ExtendPosition(dfCenterX, dfCenterY,
+                    OGR_GreatCircle_ExtendPosition(dfCenterX, dfCenterY,
                                              dfDistance, dfAngle,
                                              &dfLat, &dfLong);
                     p.setY( dfLat );
@@ -1909,7 +1982,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 }
                 else
                 {
-                    OGRXPlane_ExtendPosition(dfCenterY, dfCenterX,
+                    OGR_GreatCircle_ExtendPosition(dfCenterY, dfCenterX,
                                              dfDistance, dfAngle,
                                              &dfLat, &dfLong);
                     p.setX( dfLong );
@@ -3352,12 +3425,14 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
 
         OGRMultiSurface* poMS = NULL;
-        OGRGeometry* poResult = NULL;
+        OGRGeometry* poResultPoly = NULL;
+        OGRGeometry* poResultTri = NULL;
+        OGRTriangulatedSurface *poTIN = NULL;
+        OGRGeometryCollection *poGC = NULL;
         for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
                 && (EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") ||
-                    EQUAL(BareGMLElement(psChild->pszValue), "Triangle") ||
                     EQUAL(BareGMLElement(psChild->pszValue), "Rectangle")))
             {
                 OGRGeometry *poGeom =
@@ -3366,20 +3441,20 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         nRecLevel + 1, nSRSDimension, pszSRSName );
                 if( poGeom == NULL )
                 {
-                    delete poResult;
+                    delete poResultPoly;
                     return NULL;
                 }
 
-                OGRwkbGeometryType eGeomType =
+                const OGRwkbGeometryType eGeomType =
                     wkbFlatten(poGeom->getGeometryType());
 
-                if( poResult == NULL )
-                    poResult = poGeom;
+                if( poResultPoly == NULL )
+                    poResultPoly = poGeom;
                 else
                 {
                     if( poMS == NULL )
                     {
-                        if( wkbFlatten(poResult->getGeometryType()) ==
+                        if( wkbFlatten(poResultPoly->getGeometryType()) ==
                             wkbPolygon &&
                             eGeomType == wkbPolygon )
                             poMS = new OGRMultiPolygon();
@@ -3388,9 +3463,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 #ifdef DEBUG
                         OGRErr eErr =
 #endif
-                          poMS->addGeometryDirectly( poResult );
+                          poMS->addGeometryDirectly( poResultPoly );
                         CPLAssert(eErr == OGRERR_NONE);
-                        poResult = poMS;
+                        poResultPoly = poMS;
                     }
                     else if( eGeomType != wkbPolygon &&
                              wkbFlatten(poMS->getGeometryType()) ==
@@ -3405,7 +3480,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                      "Expected OGRMultiPolygon.");
                         }
                         poMS = OGRMultiPolygon::CastToMultiSurface(poMultiPoly);
-                        poResult = poMS;
+                        poResultPoly = poMS;
                     }
 #ifdef DEBUG
                     OGRErr eErr =
@@ -3414,9 +3489,56 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     CPLAssert(eErr == OGRERR_NONE);
                 }
             }
+            else if( psChild->eType == CXT_Element
+                    && EQUAL(BareGMLElement(psChild->pszValue), "Triangle"))
+            {
+                OGRGeometry *poGeom =
+                    GML2OGRGeometry_XMLNode_Internal(
+                        psChild, nPseudoBoolGetSecondaryGeometryOption,
+                        nRecLevel + 1, nSRSDimension, pszSRSName );
+                if( poGeom == NULL )
+                {
+                    delete poResultTri;
+                    return NULL;
+                }
+
+                if( poResultTri == NULL )
+                    poResultTri = poGeom;
+                else
+                {
+                    if( poTIN == NULL )
+                    {
+                        poTIN = new OGRTriangulatedSurface();
+#ifdef DEBUG
+                        OGRErr eErr =
+#endif
+                          poTIN->addGeometryDirectly( poResultTri );
+                        CPLAssert(eErr == OGRERR_NONE);
+                        poResultTri = poTIN;
+                    }
+#ifdef DEBUG
+                    OGRErr eErr =
+#endif
+                      poTIN->addGeometryDirectly( poGeom );
+                    CPLAssert(eErr == OGRERR_NONE);
+                }
+            }
         }
 
-        return poResult;
+        if( poResultTri == NULL && poResultPoly == NULL )
+            return NULL;
+
+        if( poResultTri == NULL )
+            return poResultPoly;
+        else if( poResultPoly == NULL )
+            return poResultTri;
+        else if( poResultTri != NULL && poResultPoly != NULL )
+        {
+            poGC = new OGRGeometryCollection();
+            poGC->addGeometryDirectly(poResultTri);
+            poGC->addGeometryDirectly(poResultPoly);
+            return poGC;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -3439,50 +3561,141 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return NULL;
         }
 
-        OGRGeometry *poResult = NULL;
-
+        OGRTriangulatedSurface *poTIN = new OGRTriangulatedSurface();
         for( ; psChild != NULL; psChild = psChild->psNext )
         {
             if( psChild->eType == CXT_Element
                 && EQUAL(BareGMLElement(psChild->pszValue), "Triangle") )
             {
-                OGRGeometry *poPolygon =
+                OGRGeometry *poTriangle =
                     GML2OGRGeometry_XMLNode_Internal(
                         psChild, nPseudoBoolGetSecondaryGeometryOption,
                         nRecLevel + 1, nSRSDimension, pszSRSName );
-                if( poPolygon == NULL )
+                if( poTriangle == NULL )
+                {
+                    delete poTIN;
                     return NULL;
-
-                if( poResult == NULL )
-                {
-                    poResult = poPolygon;
-                }
-                else if( wkbFlatten(poResult->getGeometryType()) == wkbPolygon )
-                {
-                    OGRMultiPolygon *poMP = new OGRMultiPolygon();
-                    poMP->addGeometryDirectly( poResult );
-                    poMP->addGeometryDirectly( poPolygon );
-                    poResult = poMP;
                 }
                 else
                 {
-                    OGRMultiPolygon *poMP =
-                        dynamic_cast<OGRMultiPolygon *>(poResult);
-                    if( poMP == NULL )
-                    {
-                        CPLError(
-                            CE_Fatal, CPLE_AppDefined,
-                            "dynamic_cast failed.  Expected OGRMultiPolygon.");
-                    }
-                    else
-                    {
-                        poMP->addGeometryDirectly( poPolygon );
-                    }
+                    poTIN->addGeometryDirectly( poTriangle );
                 }
             }
         }
 
-        return poResult;
+        return poTIN;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      PolyhedralSurface                                               */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszBaseGeometry, "PolyhedralSurface") )
+    {
+        // Find polygonPatches.
+        const CPLXMLNode *psParent =
+            FindBareXMLChild( psNode, "polygonPatches" );
+        if( psParent == NULL )
+        {
+            if( GetChildElement(psNode) == NULL )
+            {
+                // This is empty PolyhedralSurface.
+                return new OGRPolyhedralSurface();
+            }
+            else
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Missing <polygonPatches> for %s.", pszBaseGeometry );
+                return NULL;
+            }
+        }
+
+        const CPLXMLNode *psChild = GetChildElement(psParent);
+        if( psChild == NULL )
+        {
+            // This is empty PolyhedralSurface.
+            return new OGRPolyhedralSurface();
+        }
+        else if( psChild != NULL &&
+                 !EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Missing <PolygonPatch> for %s.", pszBaseGeometry );
+            return NULL;
+        }
+
+        // Each psParent has the tags corresponding to <gml:polygonPatches>
+        // Each psChild has the tags corresponding to <gml:PolygonPatch>
+        // Each PolygonPatch has a set of polygons enclosed in a
+        // OGRPolyhedralSurface.
+        OGRPolyhedralSurface *poPS = NULL;
+        OGRGeometryCollection *poGC = new OGRGeometryCollection();
+        OGRGeometry *poResult = NULL;
+        for( ; psParent != NULL; psParent = psParent->psNext )
+        {
+            psChild = GetChildElement(psParent);
+            if( psChild == NULL )
+                continue;
+            poPS = new OGRPolyhedralSurface();
+            for( ; psChild != NULL; psChild = psChild->psNext )
+            {
+                if( psChild->eType == CXT_Element
+                    && EQUAL(BareGMLElement(psChild->pszValue), "PolygonPatch") )
+                {
+                    OGRGeometry *poPolygon =
+                        GML2OGRGeometry_XMLNode_Internal(
+                            psChild, nPseudoBoolGetSecondaryGeometryOption,
+                            nRecLevel + 1, nSRSDimension, pszSRSName );
+                    if( poPolygon == NULL )
+                    {
+                        delete poPS;
+                        delete poGC;
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Wrong geometry type for %s.",
+                                  pszBaseGeometry );
+                        return NULL;
+                    }
+
+                    else if( wkbFlatten(poPolygon->getGeometryType()) ==
+                             wkbPolygon )
+                    {
+                        poPS->addGeometryDirectly( poPolygon );
+                    }
+                    else if( wkbFlatten(poPolygon->getGeometryType()) ==
+                             wkbCurvePolygon )
+                    {
+                        poPS->addGeometryDirectly(
+                            OGRGeometryFactory::forceToPolygon(poPolygon) );
+                    }
+                    else
+                    {
+                        delete poPS;
+                        delete poGC;
+                        CPLError( CE_Failure, CPLE_AppDefined,
+                                  "Wrong geometry type for %s.",
+                                  pszBaseGeometry );
+                        return NULL;
+                    }
+                }
+            }
+            poGC->addGeometryDirectly(poPS);
+        }
+
+        if( poGC->getNumGeometries() == 0 )
+        {
+            delete poGC;
+            return NULL;
+        }
+        else if( poPS != NULL && poGC->getNumGeometries() == 1 )
+        {
+            poResult = poPS->clone();
+            delete poGC;
+            return poResult;
+        }
+        else
+        {
+            poResult = poGC;
+            return poResult;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -3490,15 +3703,67 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "Solid") )
     {
+        const CPLXMLNode *psChild = FindBareXMLChild( psNode, "interior");
+        if( psChild != NULL )
+        {
+            static bool bWarnedOnce = false;
+            if( !bWarnedOnce )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "<interior> elements of <Solid> are ignored");
+                bWarnedOnce = true;
+            }
+        }
+
         // Find exterior element.
-        const CPLXMLNode *psChild = FindBareXMLChild( psNode, "exterior");
+        psChild = FindBareXMLChild( psNode, "exterior");
+
+        if( nSRSDimension == 0 )
+            nSRSDimension = 3;
 
         psChild = GetChildElement(psChild);
         if( psChild == NULL )
         {
             // <gml:Solid/> and <gml:Solid><gml:exterior/></gml:Solid> are valid
             // GML.
-            return new OGRPolygon();
+            return new OGRPolyhedralSurface();
+        }
+
+        if( EQUAL(BareGMLElement(psChild->pszValue), "CompositeSurface") )
+        {
+            OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
+
+            // Iterate over children.
+            for( psChild = psChild->psChild;
+                 psChild != NULL;
+                 psChild = psChild->psNext )
+            {
+                const char* pszMemberElement = BareGMLElement(psChild->pszValue);
+                if( psChild->eType == CXT_Element
+                    && (EQUAL(pszMemberElement, "polygonMember") ||
+                        EQUAL(pszMemberElement, "surfaceMember")) )
+                {
+                    const CPLXMLNode* psSurfaceChild = GetChildElement(psChild);
+
+                    if( psSurfaceChild != NULL )
+                    {
+                        OGRGeometry* poGeom =
+                            GML2OGRGeometry_XMLNode_Internal( psSurfaceChild,
+                                nPseudoBoolGetSecondaryGeometryOption,
+                                nRecLevel + 1, nSRSDimension, pszSRSName );
+                        if( poGeom != NULL &&
+                            wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+                        {
+                            poPS->addGeometryDirectly(poGeom);
+                        }
+                        else
+                        {
+                            delete poGeom;
+                        }
+                    }
+                }
+            }
+            return poPS;
         }
 
         // Get the geometry inside <exterior>.
@@ -3510,18 +3775,6 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             CPLError( CE_Failure, CPLE_AppDefined, "Invalid exterior element");
             delete poGeom;
             return NULL;
-        }
-
-        psChild = FindBareXMLChild( psNode, "interior");
-        if( psChild != NULL )
-        {
-            static bool bWarnedOnce = false;
-            if( !bWarnedOnce )
-            {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "<interior> elements of <Solid> are ignored");
-                bWarnedOnce = true;
-            }
         }
 
         return poGeom;
@@ -3553,8 +3806,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 /*      (GML 3.3 compact encoding)                                      */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszBaseGeometry, "SimplePolygon") ||
-        EQUAL(pszBaseGeometry, "SimpleRectangle") ||
-        EQUAL(pszBaseGeometry, "SimpleTriangle") )
+        EQUAL(pszBaseGeometry, "SimpleRectangle") )
     {
         OGRLinearRing *poRing = new OGRLinearRing();
 
@@ -3569,6 +3821,23 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         OGRPolygon* poPolygon = new OGRPolygon();
         poPolygon->addRingDirectly(poRing);
         return poPolygon;
+    }
+
+    if( EQUAL(pszBaseGeometry, "SimpleTriangle") )
+    {
+        OGRLinearRing *poRing = new OGRLinearRing();
+
+        if( !ParseGMLCoordinates( psNode, poRing, nSRSDimension ) )
+        {
+            delete poRing;
+            return NULL;
+        }
+
+        poRing->closeRings();
+
+        OGRTriangle* poTriangle = new OGRTriangle();
+        poTriangle->addRingDirectly(poRing);
+        return poTriangle;
     }
 
 /* -------------------------------------------------------------------- */

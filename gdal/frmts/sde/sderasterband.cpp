@@ -31,7 +31,7 @@
 
 #include "sderasterband.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*  SDERasterBand implements a GDAL RasterBand for ArcSDE.  This class  */

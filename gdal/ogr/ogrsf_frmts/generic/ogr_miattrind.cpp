@@ -32,7 +32,7 @@
 #include "mitab/mitab_priv.h"
 #include "cpl_minixml.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRMIAttrIndex                            */
@@ -629,7 +629,7 @@ OGRErr OGRMILayerAttrIndex::AddToIndex( OGRFeature *poFeature,
         if( iTargetField != -1 && iTargetField != iField )
             continue;
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
             continue;
 
         eErr =

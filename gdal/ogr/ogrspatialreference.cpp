@@ -35,7 +35,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <string>
+#include <vector>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
@@ -49,7 +51,7 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // The current opinion is that WKT longitudes like central meridian
 // should be relative to Greenwich, not the prime meridian in use.
@@ -180,8 +182,7 @@ OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther) :
 OGRSpatialReference::~OGRSpatialReference()
 
 {
-    if( poRoot != NULL )
-        delete poRoot;
+    delete poRoot;
 }
 
 /************************************************************************/
@@ -240,9 +241,7 @@ void CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH hSRS )
 void OGRSpatialReference::Clear()
 
 {
-    if( poRoot )
-        delete poRoot;
-
+    delete poRoot;
     poRoot = NULL;
 
     bNormInfoSet = FALSE;
@@ -421,9 +420,7 @@ void OSRRelease( OGRSpatialReferenceH hSRS )
 void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
 
 {
-    if( poRoot != NULL )
-        delete poRoot;
-
+    delete poRoot;
     poRoot = poNewRoot;
 }
 
@@ -452,6 +449,15 @@ void OGRSpatialReference::SetRoot( OGR_SRSNode * poNewRoot )
 OGR_SRSNode *OGRSpatialReference::GetAttrNode( const char * pszNodePath )
 
 {
+    if( strchr(pszNodePath, '|') == NULL )
+    {
+        // Fast path
+        OGR_SRSNode *poNode = GetRoot();
+        if( poNode )
+            poNode = poNode->GetNode( pszNodePath );
+        return poNode;
+    }
+
     char **papszPathTokens =
         CSLTokenizeStringComplex(pszNodePath, "|", TRUE, FALSE);
 
@@ -606,7 +612,7 @@ void OGRSpatialReference::dumpReadable()
     char *pszPrettyWkt = NULL;
 
     exportToPrettyWkt( &pszPrettyWkt, FALSE );
-    printf( "%s\n", pszPrettyWkt );
+    printf( "%s\n", pszPrettyWkt );/*ok*/
     CPLFree( pszPrettyWkt );
 }
 
@@ -782,7 +788,7 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
         return poNewChild->importFromWkt( ppszInput );
     }
 
-    return eErr;  // TODO(schwehr): Always OGRERR_NONE.
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1246,6 +1252,9 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
                                                   double dfInMeters )
 
 {
+    if( dfInMeters <= 0.0 )
+        return OGRERR_FAILURE;
+
     bNormInfoSet = FALSE;
 
     OGR_SRSNode *poCS = NULL;
@@ -1267,7 +1276,9 @@ OGRErr OGRSpatialReference::SetTargetLinearUnits( const char *pszTargetKey,
         return OGRERR_FAILURE;
 
     char szValue[128] = { '\0' };
-    if( dfInMeters == static_cast<int>(dfInMeters) )
+    if( dfInMeters < std::numeric_limits<int>::max() &&
+        dfInMeters > std::numeric_limits<int>::min() &&
+        dfInMeters == static_cast<int>(dfInMeters) )
         snprintf( szValue, sizeof(szValue),
                   "%d", static_cast<int>(dfInMeters) );
     else
@@ -2142,6 +2153,7 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 /* -------------------------------------------------------------------- */
 /*      Try to open it as a file.                                       */
 /* -------------------------------------------------------------------- */
+    CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
     VSILFILE * const fp = VSIFOpenL( pszDefinition, "rt" );
     if( fp == NULL )
         return OGRERR_CORRUPT_DATA;
@@ -2437,11 +2449,7 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
 
 /* -------------------------------------------------------------------- */
 /*      Find code (ignoring version) out of string like:                */
@@ -2580,14 +2588,16 @@ OGRErr OGRSpatialReference::importFromCRSURL( const char *pszURL )
         return OGRERR_FAILURE;
     }
 
+    if( *pszCur == '\0' )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "URL %s malformed.", pszURL);
+        return OGRERR_FAILURE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
-    {
-        delete poRoot;
-        poRoot = NULL;
-    }
+    Clear();
 
     if( STARTS_WITH_CI(pszCur, "-compound?1=") )
     {
@@ -2930,6 +2940,62 @@ double OSRGetInvFlattening( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
     VALIDATE_POINTER1( hSRS, "OSRGetInvFlattening", 0 );
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS)->GetInvFlattening( pnErr );
+}
+
+/************************************************************************/
+/*                           GetEccentricity()                          */
+/************************************************************************/
+
+/**
+ * \brief Get spheroid eccentricity
+ *
+ * @return eccentricity (or -1 in case of error)
+ * @since GDAL 2.3
+ */
+
+double OGRSpatialReference::GetEccentricity() const
+
+{
+    OGRErr eErr = OGRERR_NONE;
+    const double dfInvFlattening = GetInvFlattening(&eErr);
+    if( eErr != OGRERR_NONE )
+    {
+        return -1.0;
+    }
+    if( dfInvFlattening == 0.0 )
+        return 0.0;
+    if( dfInvFlattening < 0.5 )
+        return -1.0;
+    return sqrt(2.0 / dfInvFlattening -
+                    1.0 / (dfInvFlattening * dfInvFlattening));
+}
+
+/************************************************************************/
+/*                      GetSquaredEccentricity()                        */
+/************************************************************************/
+
+/**
+ * \brief Get spheroid squared eccentricity
+ *
+ * @return squared eccentricity (or -1 in case of error)
+ * @since GDAL 2.3
+ */
+
+double OGRSpatialReference::GetSquaredEccentricity() const
+
+{
+    OGRErr eErr = OGRERR_NONE;
+    const double dfInvFlattening = GetInvFlattening(&eErr);
+    if( eErr != OGRERR_NONE )
+    {
+        return -1.0;
+    }
+    if( dfInvFlattening == 0.0 )
+        return 0.0;
+    if( dfInvFlattening < 0.5 )
+        return -1.0;
+    return 2.0 / dfInvFlattening -
+                    1.0 / (dfInvFlattening * dfInvFlattening);
 }
 
 /************************************************************************/
@@ -5672,10 +5738,11 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
         GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0);
     const double dfZone = (dfCentralMeridian + 186.0) / 6.0;
 
-    if( std::abs(dfZone - static_cast<int>(dfZone) - 0.5 ) > 0.00001
-        || dfCentralMeridian < -177.00001
-        || dfCentralMeridian > 177.000001 )
-        return 0;
+    if( dfCentralMeridian < -177.00001 ||
+        dfCentralMeridian > 177.000001 ||
+        CPLIsNan(dfZone) ||
+        std::abs(dfZone - static_cast<int>(dfZone) - 0.5 ) > 0.00001 )
+      return 0;
 
     return static_cast<int>(dfZone);
 }
@@ -6464,6 +6531,15 @@ OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 }
 
 /************************************************************************/
+/*                      IsRelativeErrorSmaller()                        */
+/************************************************************************/
+
+static bool IsRelativeErrorSmaller(double dfA, double dfB, double dfRelError)
+{
+    return fabs(dfA - dfB) <= dfRelError * fabs(dfA);
+}
+
+/************************************************************************/
 /*                            IsSameGeogCS()                            */
 /************************************************************************/
 
@@ -6480,6 +6556,25 @@ OGRSpatialReferenceH CPL_STDCALL OSRCloneGeogCS( OGRSpatialReferenceH hSource )
 int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) const
 
 {
+    return IsSameGeogCS( poOther, NULL );
+}
+
+/**
+ * \brief Do the GeogCS'es match?
+ *
+ * This method is the same as the C function OSRIsSameGeogCS().
+ *
+ * @param poOther the SRS being compared against.
+ * @param papszOptions options. DATUM=STRICT/IGNORE. TOWGS84=STRICT/ONLY_IF_IN_BOTH/IGNORE
+ *
+ * @return TRUE if they are the same or FALSE otherwise.
+ */
+
+int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther,
+                                       const char* const * papszOptions ) const
+
+{
+
     const char *pszThisValue, *pszOtherValue;
 
 /* -------------------------------------------------------------------- */
@@ -6489,23 +6584,42 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszThisValue = this->GetAttrValue( "DATUM" );
     pszOtherValue = poOther->GetAttrValue( "DATUM" );
 
+    const char* pszDatumRule =
+        CSLFetchNameValueDef( papszOptions, "DATUM", "STRICT");
     if( pszThisValue != NULL && pszOtherValue != NULL
-        && !EQUAL(pszThisValue, pszOtherValue) )
+        && !EQUAL(pszThisValue, pszOtherValue)
+        && EQUAL(pszDatumRule, "STRICT") )
+    {
+#if DEBUG_VERBOSE
+        CPLDebug("OSR", "DATUM names do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do the datum TOWGS84 values match if present?                   */
 /* -------------------------------------------------------------------- */
+    const char* pszTOWGS84Rule =
+        CSLFetchNameValueDef( papszOptions, "TOWGS84", "STRICT" );
     double adfTOWGS84[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double adfOtherTOWGS84[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    this->GetTOWGS84( adfTOWGS84, 7 );
-    poOther->GetTOWGS84( adfOtherTOWGS84, 7 );
-
-    for( int i = 0; i < 7; i++ )
+    bool bThisHasTOWGS84 = this->GetTOWGS84( adfTOWGS84, 7 ) == OGRERR_NONE;
+    bool bOtherHasTOWGS84 = poOther->GetTOWGS84( adfOtherTOWGS84, 7 ) == OGRERR_NONE;
+    if( EQUAL(pszTOWGS84Rule, "STRICT" ) ||
+        (bThisHasTOWGS84 && bOtherHasTOWGS84 &&
+         EQUAL(pszTOWGS84Rule, "ONLY_IF_IN_BOTH")) )
     {
-        if( fabs(adfTOWGS84[i] - adfOtherTOWGS84[i]) > 0.00001 )
-            return FALSE;
+        for( int i = 0; i < 7; i++ )
+        {
+            if( fabs(adfTOWGS84[i] - adfOtherTOWGS84[i]) > 0.00001 )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "TOWGS84 do not match");
+#endif
+                return FALSE;
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -6519,8 +6633,14 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = "0.0";
 
-    if( CPLAtof(pszOtherValue) != CPLAtof(pszThisValue) )
+    if( !IsRelativeErrorSmaller(CPLAtof(pszOtherValue),
+                                CPLAtof(pszThisValue), 1e-8) )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "PRIMEM do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do the units match?                                             */
@@ -6533,8 +6653,14 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     if( pszOtherValue == NULL )
         pszOtherValue = SRS_UA_DEGREE_CONV;
 
-    if( std::abs(CPLAtof(pszOtherValue) - CPLAtof(pszThisValue)) > 0.00000001 )
+    if( !IsRelativeErrorSmaller(CPLAtof(pszOtherValue),
+                                CPLAtof(pszThisValue), 1e-8) )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "GEOGCS|UNIT do not match");
+#endif
         return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Does the spheroid match.  Check semi major, and inverse         */
@@ -6544,13 +6670,23 @@ int OGRSpatialReference::IsSameGeogCS( const OGRSpatialReference *poOther ) cons
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 1 );
     if( pszThisValue != NULL && pszOtherValue != NULL
         && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.01 )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "SPHEROID major do not match");
+#endif
         return FALSE;
+    }
 
     pszThisValue = this->GetAttrValue( "SPHEROID", 2 );
     pszOtherValue = poOther->GetAttrValue( "SPHEROID", 2 );
     if( pszThisValue != NULL && pszOtherValue != NULL
         && std::abs(CPLAtof(pszThisValue) - CPLAtof(pszOtherValue)) > 0.0001 )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "SPHEROID inverse flattening do not match");
+#endif
         return FALSE;
+    }
 
     return TRUE;
 }
@@ -6638,6 +6774,18 @@ int OSRIsSameVertCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 }
 
 /************************************************************************/
+/*                        IsDefaultParameter()                          */
+/************************************************************************/
+
+static bool IsDefaultParameter(const char* pszParamName, double dfVal)
+{
+    if( STARTS_WITH_CI(pszParamName, "scale") )
+        return dfVal == 1.0;
+    else
+        return dfVal == 0.0;
+}
+
+/************************************************************************/
 /*                               IsSame()                               */
 /************************************************************************/
 
@@ -6652,16 +6800,27 @@ int OSRIsSameVertCS( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
 
 {
+    return IsSame(poOtherSRS, NULL);
+}
+
+
+/**
+ * \brief Do these two spatial references describe the same system ?
+ *
+ * @param poOtherSRS the SRS being compared to.
+ * @param papszOptions options. DATUM=STRICT/IGNORE. TOWGS84=STRICT/ONLY_IF_IN_BOTH/IGNORE
+ *
+ * @return TRUE if equivalent or FALSE otherwise.
+ */
+
+int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS,
+                                 const char* const * papszOptions ) const
+
+{
     if( GetRoot() == NULL && poOtherSRS->GetRoot() == NULL )
         return TRUE;
 
     if( GetRoot() == NULL || poOtherSRS->GetRoot() == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Compare geographic coordinate system.                           */
-/* -------------------------------------------------------------------- */
-    if( !IsSameGeogCS( poOtherSRS ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -6672,6 +6831,29 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
         return FALSE;
 
 /* -------------------------------------------------------------------- */
+/*      Compare proj.4 extensions.                                      */
+/* -------------------------------------------------------------------- */
+    const char* pszThisProj4Ext = GetExtension(NULL, "PROJ4", NULL);
+    const char* pszOtherProj4Ext = poOtherSRS->GetExtension(NULL, "PROJ4", NULL);
+    if( (pszThisProj4Ext == NULL && pszOtherProj4Ext != NULL) ||
+        (pszThisProj4Ext != NULL && pszOtherProj4Ext == NULL) ||
+        (pszThisProj4Ext != NULL && pszOtherProj4Ext != NULL &&
+         !EQUAL(CPLString(pszThisProj4Ext).Trim().replaceAll("  "," "),
+                CPLString(pszOtherProj4Ext).Trim().replaceAll("  "," "))) )
+    {
+#ifdef DEBUG_VERBOSE
+        CPLDebug("OSR", "Different EXTENSION");
+#endif
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Compare geographic coordinate system.                           */
+/* -------------------------------------------------------------------- */
+    if( !IsSameGeogCS( poOtherSRS, papszOptions ) )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
 /*      Compare projected coordinate system.                            */
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
@@ -6679,10 +6861,80 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
     {
         const char *pszValue1 = this->GetAttrValue( "PROJECTION" );
         const char *pszValue2 = poOtherSRS->GetAttrValue( "PROJECTION" );
-        if( pszValue1 == NULL || pszValue2 == NULL
-            || !EQUAL(pszValue1, pszValue2) )
-            return FALSE;
 
+        if( pszValue1 == NULL || pszValue2 == NULL )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different PROJECTION");
+#endif
+            return FALSE;
+        }
+
+        if( !EQUAL(pszValue1, pszValue2) )
+        {
+            OGRSpatialReference* poThisInOtherProj =
+                convertToOtherProjection(pszValue2);
+            if( poThisInOtherProj )
+            {
+                int bRet = poThisInOtherProj->IsSame(poOtherSRS);
+                delete poThisInOtherProj;
+                return bRet;
+            }
+            else
+            {
+                OGRSpatialReference* poOtherSRSInThisProj =
+                    poOtherSRS->convertToOtherProjection(pszValue1);
+                if( poOtherSRSInThisProj )
+                {
+                    int bRet = IsSame(poOtherSRSInThisProj);
+                    delete poOtherSRSInThisProj;
+                    return bRet;
+                }
+            }
+
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different PROJECTION");
+#endif
+            return FALSE;
+        }
+
+        bool bIgnoreStdParallel12 = false;
+        bool bIgnoreRectifiedGridAngle = false;
+        if( EQUAL(pszValue1, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+        {
+            double dfThis1 = GetProjParm(SRS_PP_STANDARD_PARALLEL_1);
+            double dfOther1 = poOtherSRS->GetProjParm(SRS_PP_STANDARD_PARALLEL_1);
+            double dfThis2 = GetProjParm(SRS_PP_STANDARD_PARALLEL_2);
+            double dfOther2 = poOtherSRS->GetProjParm(SRS_PP_STANDARD_PARALLEL_2);
+            if( !((IsRelativeErrorSmaller(dfThis1, dfOther1, 1e-8) &&
+                   IsRelativeErrorSmaller(dfThis2, dfOther2, 1e-8)) ||
+                  (IsRelativeErrorSmaller(dfThis1, dfOther2, 1e-8) &&
+                   IsRelativeErrorSmaller(dfThis2, dfOther1, 1e-8))) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for StdParallel1/2 too big");
+#endif
+                return FALSE;
+            }
+            bIgnoreStdParallel12 = true;
+        }
+        else if( EQUAL(pszValue1, SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
+        {
+            double dfAz = fmod(GetProjParm(SRS_PP_AZIMUTH) + 360.0, 360.0);
+            double dfRectToSkew = fmod(GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, dfAz) + 360.0, 360.0);
+            double dfAz2 = fmod(poOtherSRS->GetProjParm(SRS_PP_AZIMUTH) + 360.0, 360.0 );
+            double dfRectToSkew2 = fmod(poOtherSRS->GetProjParm(SRS_PP_RECTIFIED_GRID_ANGLE, dfAz2) + 360.0, 360.0);
+            if( !IsRelativeErrorSmaller(dfRectToSkew, dfRectToSkew2, 1e-8) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for rectified_grid_angle too big");
+#endif
+                return FALSE;
+            }
+            bIgnoreRectifiedGridAngle = true;
+        }
+
+        int nCountNonDefaultParameters = 0;
         for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
         {
             const OGR_SRSNode *poNode = poPROJCS->GetChild( iChild );
@@ -6690,10 +6942,85 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
                 || poNode->GetChildCount() != 2 )
                 continue;
 
-            // This this eventually test within some epsilon?
-            if( this->GetProjParm( poNode->GetChild(0)->GetValue() )
-                != poOtherSRS->GetProjParm( poNode->GetChild(0)->GetValue() ) )
+            const char* pszParamName = poNode->GetChild(0)->GetValue();
+            if( bIgnoreStdParallel12 &&
+                (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
+                 EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
+            {
+                continue;
+            }
+
+            if( bIgnoreRectifiedGridAngle &&
+                EQUAL( pszParamName, SRS_PP_RECTIFIED_GRID_ANGLE ) )
+            {
+                continue;
+            }
+
+            double dfVal = GetProjParm( pszParamName );
+            if( !IsDefaultParameter(pszParamName, dfVal) )
+            {
+                nCountNonDefaultParameters ++;
+            }
+
+            double dfOtherVal = poOtherSRS->GetProjParm( pszParamName,
+                STARTS_WITH_CI(pszParamName, "Scale") ? 1.0 : 0.0 );
+
+            if( EQUAL(pszParamName, SRS_PP_AZIMUTH) )
+            {
+                dfVal = fmod(dfVal + 360.0, 360.0);
+                dfOtherVal = fmod(dfOtherVal + 360.0, 360.0);
+            }
+
+            if( !IsRelativeErrorSmaller(dfVal, dfOtherVal, 1e-8) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for %s too big",
+                         pszParamName);
+#endif
                 return FALSE;
+            }
+        }
+
+        const OGR_SRSNode *poOtherPROJCS = poOtherSRS->GetAttrNode( "PROJCS" );
+        if( poOtherPROJCS == NULL )
+        {
+            return FALSE;
+        }
+        int nCounterOtherNonDefaultParameters = 0;
+        for( int iChild = 0; iChild < poOtherPROJCS->GetChildCount(); iChild++ )
+        {
+            const OGR_SRSNode *poNode = poOtherPROJCS->GetChild( iChild );
+            if( !EQUAL(poNode->GetValue(), "PARAMETER")
+                || poNode->GetChildCount() != 2 )
+                continue;
+
+            const char* pszParamName = poNode->GetChild(0)->GetValue();
+            if( bIgnoreStdParallel12 &&
+                (EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_1 ) ||
+                 EQUAL( pszParamName, SRS_PP_STANDARD_PARALLEL_2 )) )
+            {
+                continue;
+            }
+
+            if( bIgnoreRectifiedGridAngle &&
+                EQUAL( pszParamName, SRS_PP_RECTIFIED_GRID_ANGLE ) )
+            {
+                continue;
+            }
+
+            double dfVal = poOtherSRS->GetProjParm( pszParamName );
+            if( !IsDefaultParameter(pszParamName, dfVal) )
+            {
+                nCounterOtherNonDefaultParameters ++;
+            }
+        }
+
+        if( nCountNonDefaultParameters != nCounterOtherNonDefaultParameters )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OSR", "Different number of non default PARAMETER");
+#endif
+            return FALSE;
         }
     }
 
@@ -6704,10 +7031,15 @@ int OGRSpatialReference::IsSame( const OGRSpatialReference * poOtherSRS ) const
     {
         if( GetLinearUnits() != 0.0 )
         {
-            const double dfRatio =
-                poOtherSRS->GetLinearUnits() / GetLinearUnits();
-            if( dfRatio < 0.9999999999 || dfRatio > 1.000000001 )
+            // EPSG uses 0.201166195164 for Clarke's link, ESRI 0.2011661949 --> 1.3e-9 relative error
+            if( !IsRelativeErrorSmaller(poOtherSRS->GetLinearUnits(),
+                                        GetLinearUnits(), 1e-8 ) )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("OSR", "Relative error for linear unit too big");
+#endif
                 return FALSE;
+            }
         }
     }
 
@@ -6737,6 +7069,443 @@ int OSRIsSame( OGRSpatialReferenceH hSRS1, OGRSpatialReferenceH hSRS2 )
 
     return reinterpret_cast<OGRSpatialReference *>(hSRS1)->IsSame(
         reinterpret_cast<OGRSpatialReference *>(hSRS2) );
+}
+
+/************************************************************************/
+/*                               tsfn()                                 */
+/************************************************************************/
+
+static double tsfn(double phi, double ec)
+{
+    const double sinphi = sin(phi);
+    const double sinphi_ec = sinphi * ec;
+    return tan(0.5 * (M_PI/2 - phi)) /
+               pow( (1.0 - sinphi_ec) / (1.0 + sinphi_ec), 0.5 * ec);
+}
+
+/************************************************************************/
+/*                               msfn()                                 */
+/************************************************************************/
+
+static double msfn(double phi, double ec)
+{
+    const double sinphi = sin(phi);
+    const double cosphi = cos(phi);
+    const double sinphi_ec = sinphi * ec;
+    return cosphi / sqrt(1.0 - sinphi_ec * sinphi_ec);
+}
+
+/************************************************************************/
+/*                         lcc_1sp_to_2sp_f()                           */
+/************************************************************************/
+
+// Function whose zeroes are the sin of the standard parallels of LCC_2SP
+static double lcc_1sp_to_2sp_f(double sinphi, double K, double ec, double n)
+{
+    const double x = sinphi;
+    const double ecx = ec * x;
+    return ( 1 - x* x ) / (1 - ecx * ecx) -
+        K * K * pow((1.0 - x ) / (1.0 + x) *
+                    pow( (1.0 + ecx)/(1.0 - ecx), ec), n);
+}
+
+/************************************************************************/
+/*                    find_zero_lcc_1sp_to_2sp_f()                      */
+/************************************************************************/
+
+// Find the sin of the standard parallels of LCC_2SP
+static double find_zero_lcc_1sp_to_2sp_f(double sinphi0, bool bNorth,
+                                         double K, double ec)
+{
+    double a, b;
+    double f_a;
+    if( bNorth )
+    {
+        // Look for zero above phi0
+        a = sinphi0;
+        b = 1.0; // sin(North pole)
+        f_a = 1.0; // some positive value, but we only care about the sign
+    }
+    else
+    {
+        // Look for zero below phi0
+        a = -1.0; // sin(South pole)
+        b = sinphi0;
+        f_a = -1.0; // minus infinity in fact, but we only care about the sign
+    }
+    // We use dichotomy search. lcc_1sp_to_2sp_f() is positive at sinphi_init,
+    // has a zero in ]-1,sinphi0[ and ]sinphi0,1[ ranges
+    for( int N=0; N<100; N++ )
+    {
+        double c = (a + b) / 2;
+        double f_c = lcc_1sp_to_2sp_f(c, K, ec, sinphi0);
+        if ( f_c == 0.0 || (b-a) < 1e-18 )
+        {
+            return c;
+        }
+        if( (f_c > 0 && f_a > 0) || (f_c < 0 && f_a < 0) )
+        {
+            a = c;
+            f_a = f_c;
+        }
+        else
+        {
+            b = c;
+        }
+    }
+    return (a + b) / 2;
+}
+
+static double DegToRad(double x) { return x / 180.0 * M_PI; }
+static double RadToDeg(double x) { return x / M_PI * 180.0; }
+
+/************************************************************************/
+/*                    convertToOtherProjection()                        */
+/************************************************************************/
+
+/**
+ * \brief Convert to another equivalent projection
+ * 
+ * Currently implemented:
+ * <ul>
+ * <li>SRS_PT_MERCATOR_1SP to SRS_PT_MERCATOR_2SP</li>
+ * <li>SRS_PT_MERCATOR_2SP to SRS_PT_MERCATOR_1SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP</li>
+ * </ul>
+ *
+ * @param pszTargetProjection target projection.
+ * @param papszOptions lists of options. None supported currently.
+ * @return a new SRS, or NULL in case of error.
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReference* OGRSpatialReference::convertToOtherProjection(
+                            const char* pszTargetProjection,
+                            CPL_UNUSED const char* const* papszOptions ) const
+{
+    const char *pszProjection = GetAttrValue( "PROJECTION" );
+    if( pszProjection == NULL || pszTargetProjection == NULL )
+        return NULL;
+
+    if( EQUAL(pszProjection, pszTargetProjection) )
+        return Clone();
+
+    if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_MERCATOR_2SP) &&
+        GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+    {
+        const double k0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        if( !(k0 > 0 && k0 <= 1.0+ 1e-10) )
+            return NULL;
+        const double e2 = GetSquaredEccentricity();
+        if( e2 < 0 )
+            return NULL;
+        const double dfStdP1Lat = ( k0 >= 1.0 ) ? 0.0 :
+            RadToDeg(acos( sqrt( (1.0 - e2) / ((1.0 / (k0 * k0)) - e2)) ));
+        OGRSpatialReference* poMerc2SP = new OGRSpatialReference();
+        poMerc2SP->CopyGeogCSFrom(this);
+        poMerc2SP->SetMercator2SP(
+                              dfStdP1Lat,
+                              GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        return poMerc2SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_MERCATOR_1SP) &&
+        GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) == 0.0 )
+    {
+        const double dfStdP1Lat =
+            GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+        const double phi1 = DegToRad(dfStdP1Lat);
+        if( !(fabs(phi1) < M_PI / 2) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double k0 = msfn(phi1, ec);
+        OGRSpatialReference* poMerc1SP = new OGRSpatialReference();
+        poMerc1SP->CopyGeogCSFrom(this);
+        poMerc1SP->SetMercator(
+                              GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              k0,
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        return poMerc1SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+        // Notations m0, t0, n, m1, t1, F are those of the EPSG guidance
+        // "1.3.1.1 Lambert Conic Conformal (2SP)" and
+        // "1.3.1.2 Lambert Conic Conformal (1SP)" and
+        // or Snyder pages 106-109
+        const double dfLatitudeOfOrigin =
+            GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+        const double phi0 = DegToRad(dfLatitudeOfOrigin);
+        const double k0 = GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+        if( !(fabs(phi0) < M_PI / 2) )
+            return NULL;
+        if( !(k0 > 0 && k0 <= 1.0+ 1e-10) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double m0 = msfn(phi0, ec);
+        const double t0 = tsfn(phi0, ec);
+        const double n = sin(phi0);
+        if( fabs(n) < 1e-10 )
+            return NULL;
+        OGRSpatialReference* poLCC2SP = new OGRSpatialReference();
+        poLCC2SP->CopyGeogCSFrom(this);
+        if( fabs(k0 - 1.0) <= 1e-10 )
+        {
+            poLCC2SP->SetLCC( dfLatitudeOfOrigin,
+                              dfLatitudeOfOrigin,
+                              dfLatitudeOfOrigin,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) );
+        }
+        else
+        {
+            const double K = k0 * m0 / pow(t0, n);
+            const double phi1 =
+                asin(find_zero_lcc_1sp_to_2sp_f(n, true, K, ec));
+            const double phi2 =
+                asin(find_zero_lcc_1sp_to_2sp_f(n, false, K, ec));
+            double phi1Deg = RadToDeg(phi1);
+            double phi2Deg = RadToDeg(phi2);
+
+            // Try to round to hundreth of degree if very close to it
+            if( fabs(phi1Deg * 1000 - floor(phi1Deg * 1000 + 0.5)) < 1e-8 )
+                phi1Deg = floor(phi1Deg * 1000 + 0.5) / 1000;
+            if( fabs(phi2Deg * 1000 - floor(phi2Deg * 1000 + 0.5)) < 1e-8 )
+                phi2Deg = floor(phi2Deg * 1000 + 0.5) / 1000;
+
+            // The following improvement is too turn the LCC1SP equivalent of
+            // EPSG:2154 to the real LCC2SP
+            // If the computed latitude of origin is close to .0 or .5 degrees
+            // then check if rounding it to it will get a false northing
+            // close to an integer
+            const double FN = GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0);
+            if( fabs(dfLatitudeOfOrigin * 2 -
+                     floor(dfLatitudeOfOrigin * 2 + 0.5)) < 0.2 )
+            {
+                const double dfRoundedLatOfOrig =
+                    floor(dfLatitudeOfOrigin * 2 + 0.5) / 2;
+                const double m1 = msfn(phi1, ec);
+                const double t1 = tsfn(phi1, ec);
+                const double F = m1 / (n * pow(t1, n));
+                const double a = GetSemiMajor();
+                const double tRoundedLatOfOrig =
+                    tsfn(DegToRad(dfRoundedLatOfOrig), ec);
+                const double FN_correction =
+                    a * F * (pow(tRoundedLatOfOrig, n) - pow(t0, n));
+                const double FN_corrected = FN - FN_correction;
+                const double FN_corrected_rounded = floor(FN_corrected + 0.5);
+                if( fabs(FN_corrected - FN_corrected_rounded) < 1e-8 )
+                {
+                    poLCC2SP->SetLCC(
+                              phi1Deg,
+                              phi2Deg,
+                              dfRoundedLatOfOrig,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              FN_corrected_rounded );
+                    return poLCC2SP;
+                }
+            }
+
+            poLCC2SP->SetLCC( phi1Deg,
+                              phi2Deg,
+                              dfLatitudeOfOrigin,
+                              GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                              GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                              FN );
+        }
+        return poLCC2SP;
+    }
+
+    if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) &&
+        EQUAL(pszTargetProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        // Notations m0, t0, m1, t1, m2, t2 n, F are those of the EPSG guidance
+        // "1.3.1.1 Lambert Conic Conformal (2SP)" and
+        // "1.3.1.2 Lambert Conic Conformal (1SP)" and
+        // or Snyder pages 106-109
+        const double phiF =
+            DegToRad(GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+        const double phi1 =
+            DegToRad(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+        const double phi2 =
+            DegToRad(GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+        if( !(fabs(phiF) < M_PI / 2) )
+            return NULL;
+        if( !(fabs(phi1) < M_PI / 2) )
+            return NULL;
+        if( !(fabs(phi2) < M_PI / 2) )
+            return NULL;
+        const double ec = GetEccentricity();
+        if( ec < 0 )
+            return NULL;
+        const double m1 = msfn(phi1, ec);
+        const double m2 = msfn(phi2, ec);
+        const double t1 = tsfn(phi1, ec);
+        const double t2 = tsfn(phi2, ec);
+        const double n_denom = log(t1) - log(t2);
+        const double n = (fabs(n_denom) < 1e-10) ? sin(phi1) :
+                                (log(m1) - log(m2)) / n_denom;
+        if( fabs(n) < 1e-10 )
+            return NULL;
+        const double F = m1 / (n * pow(t1, n));
+        const double phi0 = asin(n);
+        const double m0 = msfn(phi0, ec);
+        const double t0 = tsfn(phi0, ec);
+        const double F0 = m0 / (n * pow(t0, n));
+        const double k0 = F / F0;
+        const double a = GetSemiMajor();
+        const double tF = tsfn(phiF, ec);
+        const double FN_correction = a * F * (pow(tF, n) - pow(t0, n));
+
+        OGRSpatialReference* poLCC1SP = new OGRSpatialReference();
+        poLCC1SP->CopyGeogCSFrom(this);
+        double phi0Deg = RadToDeg(phi0);
+        // Try to round to thousandth of degree if very close to it
+        if( fabs(phi0Deg * 1000 - floor(phi0Deg * 1000 + 0.5)) < 1e-8 )
+            phi0Deg = floor(phi0Deg * 1000 + 0.5) / 1000;
+        poLCC1SP->SetLCC1SP(
+                phi0Deg,
+                GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0),
+                k0,
+                GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) +
+                    (fabs(FN_correction) > 1e-8 ? FN_correction : 0) );
+        return poLCC1SP;
+    }
+
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                    OSRConvertToOtherProjection()                     */
+/************************************************************************/
+
+/**
+ * \brief Convert to another equivalent projection
+ * 
+ * Currently implemented:
+ * <ul>
+ * <li>SRS_PT_MERCATOR_1SP to SRS_PT_MERCATOR_2SP</li>
+ * <li>SRS_PT_MERCATOR_2SP to SRS_PT_MERCATOR_1SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP</li>
+ * <li>SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP to SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP</li>
+ * </ul>
+ *
+ * @param hSRS source SRS 
+ * @param pszTargetProjection target projection.
+ * @param papszOptions lists of options. None supported currently.
+ * @return a new SRS, or NULL in case of error.
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReferenceH OSRConvertToOtherProjection(
+                                    OGRSpatialReferenceH hSRS,
+                                    const char* pszTargetProjection,
+                                    const char* const* papszOptions )
+{
+    VALIDATE_POINTER1( hSRS, "OSRConvertToOtherProjection", NULL );
+    return reinterpret_cast<OGRSpatialReferenceH>(
+        reinterpret_cast<OGRSpatialReference*>(hSRS)->
+            convertToOtherProjection(pszTargetProjection, papszOptions));
+}
+
+/************************************************************************/
+/*                           OSRFindMatches()                           */
+/************************************************************************/
+
+/**
+ * \brief Try to identify a match between the passed SRS and a related SRS
+ * in a catalog (currently EPSG only)
+ *
+ * Matching may be partial, or may fail.
+ * Returned entries will be sorted by decreasing match confidence (first
+ * entry has the highest match confidence).
+ *
+ * The exact way matching is done may change in future versions.
+ *
+ * The current algorithm is:
+ * - try first AutoIdentifyEPSG(). If it succeeds, return the corresponding SRS
+ * - otherwise iterate over all SRS from the EPSG catalog (as found in GDAL
+ *   pcs.csv and gcs.csv files+esri_extra.wkt), and find those that match the
+ *   input SRS using the IsSame() function (ignoring TOWGS84 clauses)
+ * - if there is a single match using IsSame() or one of the matches has the
+ *   same SRS name, return it with 100% confidence
+ * - if a SRS has the same SRS name, but does not pass the IsSame() criteria,
+ *   return it with 50% confidence.
+ * - otherwise return all candidate SRS that pass the IsSame() criteria with a
+ *   90% confidence.
+ *
+ * A pre-built SRS cache in ~/.gdal/X.Y/srs_cache will be used if existing,
+ * otherwise it will be built at the first run of this function.
+ *
+ * This function is the same as OGRSpatialReference::FindMatches().
+ *
+ * @param hSRS SRS to match
+ * @param papszOptions NULL terminated list of options or NULL
+ * @param pnEntries Output parameter. Number of values in the returned array.
+ * @param ppanMatchConfidence Output parameter (or NULL). *ppanMatchConfidence
+ * will be allocated to an array of *pnEntries whose values between 0 and 100
+ * indicate the confidence in the match. 100 is the highest confidence level.
+ * The array must be freed with CPLFree().
+ * 
+ * @return an array of SRS that match the passed SRS, or NULL. Must be freed with
+ * OSRFreeSRSArray()
+ *
+ * @since GDAL 2.3
+ */
+OGRSpatialReferenceH* OSRFindMatches( OGRSpatialReferenceH hSRS,
+                                      char** papszOptions,
+                                      int* pnEntries,
+                                      int** ppanMatchConfidence )
+{
+    if( pnEntries )
+        *pnEntries = 0;
+    if( ppanMatchConfidence )
+        *ppanMatchConfidence = NULL;
+    VALIDATE_POINTER1( hSRS, "OSRFindMatches", NULL );
+
+    OGRSpatialReference* poSRS = reinterpret_cast<OGRSpatialReference*>(hSRS);
+    return poSRS->FindMatches(papszOptions, pnEntries,
+                              ppanMatchConfidence);
+}
+
+/************************************************************************/
+/*                           OSRFreeSRSArray()                          */
+/************************************************************************/
+
+/**
+ * \brief Free return of OSRIdentifyMatches()
+ *
+ * @param pahSRS array of SRS (must be NULL terminated)
+ * @since GDAL 2.3
+ */
+void OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS)
+{
+    if( pahSRS != NULL )
+    {
+        for( int i = 0; pahSRS[i] != NULL; ++i )
+        {
+            OSRRelease(pahSRS[i]);
+        }
+        CPLFree(pahSRS);
+    }
 }
 
 /************************************************************************/
@@ -7215,7 +7984,8 @@ OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey,
 CPL_C_START
 void CleanupESRIDatumMappingTable();
 CPL_C_END
-static void CleanupSRSWGS84Thread();
+static void CleanupSRSWGS84Mutex();
+void CleanupFindMatchesCacheAndMutex();
 
 /**
  * \brief Cleanup cached SRS related memory.
@@ -7229,7 +7999,8 @@ void OSRCleanup( void )
     CleanupESRIDatumMappingTable();
     CSVDeaccess( NULL );
     OCTCleanupProjMutex();
-    CleanupSRSWGS84Thread();
+    CleanupSRSWGS84Mutex();
+    CleanupFindMatchesCacheAndMutex();
 }
 
 /************************************************************************/
@@ -7675,10 +8446,10 @@ OGRSpatialReference* OGRSpatialReference::GetWGS84SRS()
 }
 
 /************************************************************************/
-/*                        CleanupSRSWGS84Thread()                       */
+/*                        CleanupSRSWGS84Mutex()                       */
 /************************************************************************/
 
-static void CleanupSRSWGS84Thread()
+static void CleanupSRSWGS84Mutex()
 {
     if( hMutex != NULL )
     {

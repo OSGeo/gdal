@@ -36,7 +36,7 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::vector;
 using std::wstring;
@@ -476,8 +476,6 @@ int FGdbDataSource::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,ODsCDeleteLayer) )
         return m_bUpdate;
-    else if( EQUAL(pszCap,ODsCCreateGeomFieldAfterCreateLayer) )
-        return TRUE;
     else if( EQUAL(pszCap,ODsCRandomLayerWrite) )
         return m_bUpdate;
 

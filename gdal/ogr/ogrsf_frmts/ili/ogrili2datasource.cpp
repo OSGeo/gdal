@@ -36,7 +36,7 @@
 
 using namespace std;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRILI2DataSource()                         */
@@ -96,10 +96,15 @@ int OGRILI2DataSource::Open( const char * pszNewName,
     else
     {
         char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
-
+        int nCount = CSLCount(filenames);
+        if( nCount == 0 )
+        {
+            CSLDestroy(filenames);
+            return FALSE;
+        }
         osBasename = filenames[0];
 
-        if( CSLCount(filenames) > 1 )
+        if( nCount > 1 )
             osModelFilename = filenames[1];
 
         CSLDestroy( filenames );
@@ -110,7 +115,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( pszName, "r" );
+    VSILFILE *fp = VSIFOpenL( pszName, "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -129,7 +134,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
     if( bTestOpen )
     {
         int nLen = static_cast<int>(
-            VSIFRead( szHeader, 1, sizeof(szHeader), fp ) );
+            VSIFReadL( szHeader, 1, sizeof(szHeader), fp ) );
         if (nLen == sizeof(szHeader))
             szHeader[sizeof(szHeader)-1] = '\0';
         else
@@ -139,7 +144,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
             || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
         {
             // "www.interlis.ch/INTERLIS2.3"
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return FALSE;
         }
     }
@@ -148,7 +153,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
 /*      We assume now that it is ILI2.  Close and instantiate a         */
 /*      ILI2Reader on it.                                               */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     poReader = CreateILI2Reader();
     if( poReader == NULL )
@@ -191,9 +196,8 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
     if( pszModelFilename == NULL )
     {
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "Model file '%s' (%s) not found : %s.",
-                  pszModelFilename, pszFilename, VSIStrerror( errno ) );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Model file not specified." );
         CSLDestroy(filenames);
         return FALSE;
     }
@@ -326,7 +330,7 @@ OGRLayer *OGRILI2DataSource::GetLayer( int iLayer )
         ++layerIt;
     }
 
-    if (i == iLayer) {
+    if (i == iLayer && layerIt != listLayer.end()) {
         OGRILI2Layer *tmpLayer = reinterpret_cast<OGRILI2Layer *>(*layerIt);
         return tmpLayer;
     }

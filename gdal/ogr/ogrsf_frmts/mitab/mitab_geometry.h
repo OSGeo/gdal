@@ -28,15 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_geometry.h,v $
- * Revision 1.2  2004-06-30 20:29:04  dmorissette
- * Fixed refs to old address danmo@videotron.ca
- *
- * Revision 1.1  2000/09/19 17:19:40  daniel
- * Initial Revision
- *
  **********************************************************************/
 
 #ifndef MITAB_GEOMETRY_H_INCLUDED

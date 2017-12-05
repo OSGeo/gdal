@@ -434,7 +434,8 @@ DestRect elements, but it also passes the data through a simple filtering
 kernel specified with the Kernel element.  The Kernel element should have
 two child elements, Size and Coefs and optionally the boolean attribute
 normalized (defaults to false=0).  The size must always be an odd number,
-and the Coefs must have Size * Size entries separated by spaces.
+and the Coefs must have Size * Size entries separated by spaces.  For now
+kernel is not applied to sub-sampled or over-sampled data.
 
 \code
     <KernelFilteredSource>
@@ -443,6 +444,23 @@ and the Coefs must have Size * Size entries separated by spaces.
       <Kernel normalized="1">
         <Size>3</Size>
         <Coefs>0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+\endcode
+
+Starting with GDAL 2.3, a separable kernel may also be used.  In this case the
+number of Coefs entries should correspond to the Size.  The Coefs specify a
+one-dimensional kernel which is applied along each axis in succession, resulting
+in far quicker execution. Many common image-processing filters are separable.
+For example, a Gaussian blur:
+
+\code
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel normalized="1">
+        <Size>13</Size>
+        <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
     </KernelFilteredSource>
 \endcode
@@ -1509,6 +1527,12 @@ pseudo panchromatic intensity, but not bound to an output band.
 \endcode
 
 \section gdal_vrttut_mt Multi-threading issues
+
+The below section applies to GDAL &lt;= 2.2. Starting with GDAL 2.3, the use
+of VRT datasets is subject to the standard GDAL dataset multi-threaded rules
+(that is a VRT dataset handle may only be used by a same thread at a time,
+but you may open several dataset handles on the same VRT file and use them
+in different threads)
 
 When using VRT datasets in a multi-threading environment, you should be
 careful to open the VRT dataset by the thread that will use it afterwards. The

@@ -30,16 +30,18 @@
 #include "ogr_autocad_services.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           ACTextUnescape()                           */
 /*                                                                      */
-/*      Unexcape DXF/DWG style escape sequences such as \P for newline  */
-/*      and \~ for space, and do the recoding to UTF8.                  */
+/*      Unexcape DXF/DWG style escape sequences such as %%d for the     */
+/*      degree sign, and do the recoding to UTF8.  Set bIsMText to      */
+/*      true to translate MTEXT-specific sequences like \P and \~.      */
 /************************************************************************/
 
-CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
+CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
+    bool bIsMText )
 
 {
     CPLString osResult;
@@ -56,24 +58,83 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
     const char *pszInput = osInput.c_str();
 
 /* -------------------------------------------------------------------- */
-/*      Now translate escape sequences.  They are all plain ascii       */
-/*      characters and won't have been affected by the UTF8             */
+/*      Now translate low-level escape sequences.  They are all plain   */
+/*      ASCII characters and won't have been affected by the UTF8       */
 /*      recoding.                                                       */
 /* -------------------------------------------------------------------- */
     while( *pszInput != '\0' )
     {
+        if( pszInput[0] == '^' && pszInput[1] != '\0' )
+        {
+            if( pszInput[1] == ' ' )
+                osResult += '^';
+            else
+                osResult += static_cast<char>( toupper(pszInput[1]) ) ^ 0x40;
+            pszInput++;
+        }
+        else if( STARTS_WITH_CI(pszInput, "%%c")
+            || STARTS_WITH_CI(pszInput, "%%d")
+            || STARTS_WITH_CI(pszInput, "%%p") )
+        {
+            wchar_t anWCharString[2];
+
+            anWCharString[1] = 0;
+
+            // These are special symbol representations for AutoCAD.
+            if( STARTS_WITH_CI(pszInput, "%%c") )
+                anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
+            else if( STARTS_WITH_CI(pszInput, "%%d") )
+                anWCharString[0] = 0x00B0; // degree
+            else if( STARTS_WITH_CI(pszInput, "%%p") )
+                anWCharString[0] = 0x00B1; // plus/minus
+
+            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
+                CPL_ENC_UCS2,
+                CPL_ENC_UTF8 );
+
+            osResult += pszUTF8Char;
+            CPLFree( pszUTF8Char );
+
+            pszInput += 2;
+        }
+        else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
+            || STARTS_WITH_CI(pszInput, "%%o") ) )
+        {
+            // Underline and overline markers. These have no effect in MTEXT
+            pszInput += 2;
+        }
+        else
+        {
+            osResult += pszInput[0];
+        }
+
+        pszInput++;
+    }
+
+    if( !bIsMText )
+        return osResult;
+
+/* -------------------------------------------------------------------- */
+/*      If this is MTEXT, or something similar (e.g. DIMENSION text),   */
+/*      do a second pass to strip additional MTEXT format codes.        */
+/* -------------------------------------------------------------------- */
+    pszInput = osResult.c_str();
+    CPLString osMtextResult;
+
+    while( *pszInput != '\0' )
+    {
         if( pszInput[0] == '\\' && pszInput[1] == 'P' )
         {
-            osResult += '\n';
+            osMtextResult += '\n';
             pszInput++;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == '~' )
         {
-            osResult += ' ';
+            osMtextResult += ' ';
             pszInput++;
         }
         else if( pszInput[0] == '\\' && pszInput[1] == 'U'
-                 && pszInput[2] == '+' )
+                 && pszInput[2] == '+' && CPLStrnlen(pszInput, 7) >= 7 )
         {
             CPLString osHex;
             unsigned int iChar = 0;
@@ -89,62 +150,80 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding )
                                                     CPL_ENC_UCS2,
                                                     CPL_ENC_UTF8 );
 
-            osResult += pszUTF8Char;
+            osMtextResult += pszUTF8Char;
             CPLFree( pszUTF8Char );
 
             pszInput += 6;
         }
+        else if( pszInput[0] == '{' || pszInput[0] == '}' )
+        {
+            // Skip braces, which are used for grouping
+        }
         else if( pszInput[0] == '\\'
-                 && (pszInput[1] == 'W'
-                     || pszInput[1] == 'T'
-                     || pszInput[1] == 'A' ) )
+                 && strchr( "WTAHFfCcQp", pszInput[1] ) != NULL )
         {
             // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
             // See data/dwg/EP/42002.dwg
-            // Not sure what \W and \T do, but we skip them.
-            // According to qcad rs_text.cpp, \A values are vertical
-            // alignment, 0=bottom, 1=mid, 2=top but we ignore for now.
+            // These are all inline formatting codes which take an argument
+            // up to the first semicolon (\W for width, \f for font, etc)
 
             while( *pszInput != ';' && *pszInput != '\0' )
                 pszInput++;
+            if( *pszInput == '\0' )
+                break;
         }
-        else if( pszInput[0] == '\\' && pszInput[1] == '\\' )
+        else if( pszInput[0] == '\\'
+                && strchr( "KkLlOo", pszInput[1] ) != NULL )
         {
-            osResult += '\\';
+            // Inline formatting codes that don't take an argument
+
             pszInput++;
         }
-        else if( STARTS_WITH_CI(pszInput, "%%c")
-                 || STARTS_WITH_CI(pszInput, "%%d")
-                 || STARTS_WITH_CI(pszInput, "%%p") )
+        else if( pszInput[0] == '\\' && pszInput[1] == 'S' )
         {
-            wchar_t anWCharString[2];
-
-            anWCharString[1] = 0;
-
-            // These are especial symbol representations for autocad.
-            if( STARTS_WITH_CI(pszInput, "%%c") )
-                anWCharString[0] = 0x2300; // diameter (0x00F8 is a good approx)
-            else if( STARTS_WITH_CI(pszInput, "%%d") )
-                anWCharString[0] = 0x00B0; // degree
-            else if( STARTS_WITH_CI(pszInput, "%%p") )
-                anWCharString[0] = 0x00B1; // plus/minus
-
-            char *pszUTF8Char = CPLRecodeFromWChar( anWCharString,
-                                                    CPL_ENC_UCS2,
-                                                    CPL_ENC_UTF8 );
-
-            osResult += pszUTF8Char;
-            CPLFree( pszUTF8Char );
+            // Stacked text. Normal escapes don't work inside a stack
 
             pszInput += 2;
+            while( *pszInput != ';' && *pszInput != '\0' )
+            {
+                if( pszInput[0] == '\\' &&
+                    strchr( "^/#~", pszInput[1] ) != NULL )
+                {
+                    osMtextResult += pszInput[1];
+                    pszInput++;
+                    if( pszInput[0] == '\0' )
+                        break;
+                }
+                else if( strchr( "^/#~", pszInput[0] ) == NULL )
+                {
+                    osMtextResult += pszInput[0];
+                }
+                pszInput++;
+            }
+            if( pszInput[0] == ';' )
+                pszInput++;
+            if( pszInput[0] == '\0' )
+                break;
+        }
+        else if( pszInput[0] == '\\'
+                 && strchr( "\\{}", pszInput[1] ) != NULL )
+        {
+            // MTEXT character escapes
+
+            osMtextResult += pszInput[1];
+            pszInput++;
+            if( pszInput[0] == '\0' )
+                break;
         }
         else
-            osResult += *pszInput;
+        {
+            osMtextResult += *pszInput;
+        }
 
         pszInput++;
     }
 
-    return osResult;
+    return osMtextResult;
 }
 
 /************************************************************************/
@@ -417,13 +496,84 @@ const unsigned char *ACGetColorTable()
 }
 
 /************************************************************************/
+/*                       ACGetKnownDimStyleCodes()                      */
+/*                                                                      */
+/*      Gets a list of the DIMSTYLE codes that we care about. Array     */
+/*      terminates with a zero value.                                   */
+/************************************************************************/
+
+const int* ACGetKnownDimStyleCodes()
+{
+    static const int aiKnownCodes[] = {
+        40, 41, 42, 44, 75, 76, 77, 140, 147, 271, 341, 0
+    };
+
+    return aiKnownCodes;
+}
+
+/************************************************************************/
+/*                      ACGetDimStylePropertyName()                     */
+/************************************************************************/
+
+const char *ACGetDimStylePropertyName( const int iDimStyleCode )
+
+{
+    // We are only interested in properties required by the DIMENSION
+    // and LEADER code. Return NULL for other properties.
+    switch (iDimStyleCode)
+    {
+        case 40: return "DIMSCALE";
+        case 41: return "DIMASZ";
+        case 42: return "DIMEXO";
+        case 44: return "DIMEXE";
+        case 75: return "DIMSE1";
+        case 76: return "DIMSE2";
+        case 77: return "DIMTAD";
+        case 140: return "DIMTXT";
+        case 147: return "DIMGAP";
+        case 271: return "DIMDEC";
+        case 341: return "DIMLDRBLK";
+        default: return NULL;
+    }
+}
+
+/************************************************************************/
+/*                    ACGetDimStylePropertyDefault()                    */
+/************************************************************************/
+
+const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
+
+{
+    // We are only interested in properties required by the DIMENSION
+    // and LEADER code. Return "0" for other, unknown properties.
+    // These defaults were obtained from the Express\defaults.scr file
+    // in an AutoCAD installation.
+    switch (iDimStyleCode)
+    {
+        case 40: return "1.0";
+        case 41: return "0.18";
+        case 42: return "0.0625";
+        case 44: return "0.18";
+        case 75: return "0";
+        case 76: return "0";
+        case 77: return "0";
+        case 140: return "0.18";
+        case 147: return "0.09";
+        case 271: return "4";
+        case 341: return "";
+        default: return "0";
+    }
+}
+
+/************************************************************************/
 /*                            ACAdjustText()                            */
 /*                                                                      */
 /*      Rotate and scale text features by the designated amount by      */
 /*      adjusting the style string.                                     */
 /************************************************************************/
 
-void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
+void ACAdjustText( const double dfAngle, const double dfScaleX,
+    const double dfScaleY, OGRFeature* const poFeature )
 
 {
 /* -------------------------------------------------------------------- */
@@ -434,80 +584,108 @@ void ACAdjustText( double dfAngle, double dfScale, OGRFeature *poFeature )
 
     CPLString osOldStyle = poFeature->GetStyleString();
 
-    if( strstr(osOldStyle,"LABEL") == NULL )
+    if( !STARTS_WITH( osOldStyle, "LABEL(" ) )
         return;
 
+    // Split the style string up into its parts
+    osOldStyle.erase( 0, 6 );
+    osOldStyle.erase( osOldStyle.size() - 1 );
+    char **papszTokens = CSLTokenizeString2( osOldStyle, ",",
+        CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES );
+
 /* -------------------------------------------------------------------- */
-/*      Is there existing angle text?                                   */
+/*      Update the text angle.                                          */
 /* -------------------------------------------------------------------- */
-    double dfOldAngle = 0.0;
-    CPLString osPreAngle, osPostAngle;
-    size_t nAngleOff = osOldStyle.find( ",a:" );
+    char szBuffer[64];
 
-    if( nAngleOff != std::string::npos )
+    if( dfAngle != 0.0 )
     {
-        size_t nEndOfAngleOff = osOldStyle.find( ",", nAngleOff + 1 );
+        double dfOldAngle = 0.0;
 
-        if( nEndOfAngleOff == std::string::npos )
-            nEndOfAngleOff = osOldStyle.find( ")", nAngleOff + 1 );
+        const char *pszAngle = CSLFetchNameValue( papszTokens, "a" );
+        if( pszAngle )
+            dfOldAngle = CPLAtof( pszAngle );
 
-        osPreAngle.assign( osOldStyle, 0, nAngleOff );
-        osPostAngle.assign( osOldStyle, nEndOfAngleOff, std::string::npos );
-
-        dfOldAngle = CPLAtof( osOldStyle.c_str() + nAngleOff + 3 );
-    }
-    else
-    {
-        CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
-        osPreAngle.assign( osOldStyle, 0, osOldStyle.size() - 1 );
-        osPostAngle = ")";
+        CPLsnprintf( szBuffer, sizeof(szBuffer), "%.3g", dfOldAngle + dfAngle );
+        papszTokens = CSLSetNameValue( papszTokens, "a", szBuffer );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format with the new angle.                                      */
+/*      Update the text width and height.                               */
 /* -------------------------------------------------------------------- */
-    CPLString osNewStyle;
 
-    osNewStyle.Printf( "%s,a:%g%s",
-                       osPreAngle.c_str(),
-                       dfOldAngle + dfAngle,
-                       osPostAngle.c_str() );
-
-    osOldStyle = osNewStyle;
-
-/* -------------------------------------------------------------------- */
-/*      Is there existing scale text?                                   */
-/* -------------------------------------------------------------------- */
-    double dfOldScale = 1.0;
-    CPLString osPreScale, osPostScale;
-    size_t nScaleOff = osOldStyle.find( ",s:" );
-
-    if( nScaleOff != std::string::npos )
+    if( dfScaleY != 1.0 )
     {
-        size_t nEndOfScaleOff = osOldStyle.find( ",", nScaleOff + 1 );
+        const char *pszHeight = CSLFetchNameValue( papszTokens, "s" );
+        if( pszHeight )
+        {
+            const double dfOldHeight = CPLAtof( pszHeight );
 
-        if( nEndOfScaleOff == std::string::npos )
-            nEndOfScaleOff = osOldStyle.find( ")", nScaleOff + 1 );
-
-        osPreScale.assign( osOldStyle, 0, nScaleOff );
-        osPostScale.assign( osOldStyle, nEndOfScaleOff, std::string::npos );
-
-        dfOldScale = CPLAtof( osOldStyle.c_str() + nScaleOff + 3 );
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.3gg",
+                dfOldHeight * dfScaleY );
+            papszTokens = CSLSetNameValue( papszTokens, "s", szBuffer );
+        }
     }
-    else
+
+    if( dfScaleX != dfScaleY && dfScaleY != 0.0 )
     {
-        CPLAssert( osOldStyle[osOldStyle.size()-1] == ')' );
-        osPreScale.assign( osOldStyle, 0, osOldStyle.size() - 1 );
-        osPostScale = ")";
+        const double dfWidthFactor = dfScaleX / dfScaleY;
+        double dfOldWidth = 100.0;
+
+        const char *pszWidth = CSLFetchNameValue( papszTokens, "w" );
+        if( pszWidth )
+            dfOldWidth = CPLAtof( pszWidth );
+
+        CPLsnprintf( szBuffer, sizeof(szBuffer), "%.4g",
+            dfOldWidth * dfWidthFactor );
+        papszTokens = CSLSetNameValue( papszTokens, "w", szBuffer );
     }
 
 /* -------------------------------------------------------------------- */
-/*      Format with the new scale.                                      */
+/*      Update the text offsets.                                        */
 /* -------------------------------------------------------------------- */
-    osNewStyle.Printf( "%s,s:%gg%s",
-                       osPreScale.c_str(),
-                       dfOldScale * dfScale,
-                       osPostScale.c_str() );
+
+    if( dfScaleX != 1.0 || dfScaleY != 1.0 || dfAngle != 0.0 )
+    {
+        double dfOldDx = 0.0;
+        double dfOldDy = 0.0;
+
+        const char *pszDx = CSLFetchNameValue( papszTokens, "dx" );
+        if( pszDx )
+            dfOldDx = CPLAtof( pszDx );
+        const char *pszDy = CSLFetchNameValue( papszTokens, "dy" );
+        if( pszDy )
+            dfOldDy = CPLAtof( pszDy );
+
+        if( dfOldDx != 0.0 || dfOldDy != 0.0 )
+        {
+            const double dfAngleRadians = dfAngle * M_PI / 180.0;
+
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+                dfScaleX * dfOldDx * cos( dfAngleRadians ) +
+                dfScaleY * dfOldDy * -sin( dfAngleRadians ) );
+            papszTokens = CSLSetNameValue( papszTokens, "dx", szBuffer );
+
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+                dfScaleX * dfOldDx * sin( dfAngleRadians ) +
+                dfScaleY * dfOldDy * cos( dfAngleRadians ) );
+            papszTokens = CSLSetNameValue( papszTokens, "dy", szBuffer );
+        }
+    }
+
+    CSLSetNameValueSeparator( papszTokens, ":" );
+
+    CPLString osNewStyle = "LABEL(";
+    int iIndex = 0;
+    while( papszTokens[iIndex] )
+    {
+        if( iIndex > 0 )
+            osNewStyle += ",";
+        osNewStyle += papszTokens[iIndex++];
+    }
+    osNewStyle += ")";
 
     poFeature->SetStyleString( osNewStyle );
+
+    CSLDestroy( papszTokens );
 }

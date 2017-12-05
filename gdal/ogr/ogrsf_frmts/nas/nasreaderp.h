@@ -65,6 +65,7 @@ class NASHandler : public DefaultHandler
     int        m_nGeomLen;
 
     int        m_nGeometryDepth;
+    int        m_nGeometryPropertyIndex;
     bool       IsGeometryElement( const char * );
 
     int        m_nDepth;
@@ -72,8 +73,9 @@ class NASHandler : public DefaultHandler
     bool       m_bIgnoreFeature;
     bool       m_bInUpdate;
     bool       m_bInUpdateProperty;
-    int        m_nDepthElement;
-    CPLString  m_osIgnoredElement;
+    int        m_nUpdateOrDeleteDepth;
+    int        m_nUpdatePropertyDepth;
+    int        m_nNameOrValueDepth;
 
     CPLString  m_osLastTypeName;
     CPLString  m_osLastReplacingFID;
@@ -171,6 +173,8 @@ private:
     GMLReadState *m_poState;
 
     GMLFeature   *m_poCompleteFeature;
+    VSILFILE     *m_fp;
+    InputSource  *m_GMLInputSource;
 
     bool          SetupParser();
     void          CleanupParser();

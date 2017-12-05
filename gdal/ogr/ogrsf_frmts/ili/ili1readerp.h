@@ -43,7 +43,7 @@ class OGRILI1Layer;
 class ILI1Reader : public IILI1Reader
 {
 private:
-    FILE         *fpItf;
+    VSILFILE    *fpItf;
     int          nLayers;
     OGRILI1Layer **papoLayers;
     OGRILI1Layer *curLayer;

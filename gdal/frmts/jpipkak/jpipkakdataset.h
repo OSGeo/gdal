@@ -278,7 +278,7 @@ public:
                                                      int* pnybufoff,
                                                      int* pnxbufsize,
                                                      int* pnybufsize) override;
-    void SetComplete(int bFinished){this->bComplete = bFinished;};
+    void SetComplete(int bFinished){this->bComplete = bFinished;}
 
     friend class JPIPKAKDataset;
 

@@ -30,13 +30,31 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "nitfdataset.h"
-#include "cpl_string.h"
-#include "cpl_csv.h"
 
+#include <climits>
+#include <cstring>
+#if HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <algorithm>
+#include <map>
+#include <utility>
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_pam.h"
+#include "gdal_priv.h"
+#include "nitflib.h"
+
+
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       NITFMakeColorTable()                           */
@@ -794,7 +812,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 3:
     {
       // unpacks 8 pixels (3 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 3 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 3 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
         pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
@@ -805,6 +825,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
         pUnpackData[i+7] = ((pDataSrc[k+2]) & 0x7);
       }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 5));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] >> 2) & 0x07);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+0] << 1) & 0x07) | (pDataSrc[k+1] >> 7);
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+1] >> 4) & 0x07);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+1] >> 1) & 0x07);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+1] << 2) & 0x07) | (pDataSrc[k+2] >> 6);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+2] >> 3) & 0x07);
+      }
 
       memcpy(pData, pUnpackData, n);
       break;
@@ -812,7 +848,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 5:
     {
       // unpacks 8 pixels (5 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 5 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 5 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
@@ -823,6 +861,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
         pUnpackData[i+7] = ((pDataSrc[k+4]) & 0x1f);
       }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 3));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 2) & 0x1f) | (pDataSrc[k+1] >> 6);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] >> 1) & 0x1f);
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+1] << 4) & 0x1f) | (pDataSrc[k+2] >> 4);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+2] << 1) & 0x1f) | (pDataSrc[k+3] >> 7);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+3] >> 2) & 0x1f);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+3] << 3) & 0x1f) | (pDataSrc[k+4] >> 5);
+      }
 
       memcpy(pData, pUnpackData, n);
       break;
@@ -830,12 +884,22 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 6:
     {
       // unpacks 4 pixels (3 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 4, k += 3 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 3 < n; i += 4, k += 3 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
         pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
         pUnpackData[i+3] = ((pDataSrc[k+2]) & 0x3f);
+      }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 2));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 4) & 0x3f) | (pDataSrc[k+1] >> 4);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] << 2) & 0x3f) | (pDataSrc[k+2] >> 6);
       }
 
       memcpy(pData, pUnpackData, n);
@@ -844,7 +908,9 @@ void NITFRasterBand::Unpack( GByte* pData )
     case 7:
     {
       // unpacks 8 pixels (7 bytes) at time
-      for( int i = 0, k = 0; i < n; i += 8, k += 7 )
+      int i = 0;
+      int k = 0;
+      for( ; i + 7 < n; i += 8, k += 7 )
       {
         pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
         pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
@@ -854,6 +920,22 @@ void NITFRasterBand::Unpack( GByte* pData )
         pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
         pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
         pUnpackData[i+7] = ((pDataSrc[k+6]) & 0x7f);
+      }
+      if( i < n )
+      {
+        pUnpackData[i+0] = ((pDataSrc[k+0] >> 1));
+        if( i + 1 < n )
+            pUnpackData[i+1] = ((pDataSrc[k+0] << 6) & 0x7f) | (pDataSrc[k+1] >> 2);
+        if( i + 2 < n )
+            pUnpackData[i+2] = ((pDataSrc[k+1] << 5) & 0x7f) | (pDataSrc[k+2] >> 3) ;
+        if( i + 3 < n )
+            pUnpackData[i+3] = ((pDataSrc[k+2] << 4) & 0x7f) | (pDataSrc[k+3] >> 4);
+        if( i + 4 < n )
+            pUnpackData[i+4] = ((pDataSrc[k+3] << 3) & 0x7f) | (pDataSrc[k+4] >> 5);
+        if( i + 5 < n )
+            pUnpackData[i+5] = ((pDataSrc[k+4] << 2) & 0x7f) | (pDataSrc[k+5] >> 6);
+        if( i + 6 < n )
+            pUnpackData[i+6] = ((pDataSrc[k+5] << 1) & 0x7f) | (pDataSrc[k+6] >> 7);
       }
 
       memcpy(pData, pUnpackData, n);

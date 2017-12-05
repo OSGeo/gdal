@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRSDELayer()                             */
@@ -813,7 +813,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
     {
         OGRFieldDefn   *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
 
-        if( !poFeature->IsFieldSet(i) )
+        if( !poFeature->IsFieldSetAndNotNull(i) )
             continue;
 
         // Skip FID and Geometry columns

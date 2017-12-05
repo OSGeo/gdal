@@ -44,7 +44,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -52,6 +52,7 @@ CPL_CVSID("$Id$");
 /*                             GDALJP2Box()                             */
 /************************************************************************/
 
+// GDALJP2Box does *not* take ownership of fpIn
 GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
     fpVSIL(fpIn),
 #if HAVE_CXX11
@@ -74,7 +75,8 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
 GDALJP2Box::~GDALJP2Box()
 
 {
-    // TODO(schwher): Need to close fpVSIL?
+    // Do not close fpVSIL. Ownership remains to the caller of GDALJP2Box
+    // constructor
     CPLFree( pabyData );
 }
 
@@ -182,16 +184,21 @@ int GDALJP2Box::ReadBox()
         if( VSIFReadL( abyXLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
-        if( sizeof(nBoxLength) == 8 )
+#ifdef CPL_HAS_GINT64
+        CPL_MSBPTR64( abyXLBox );
+        memcpy( &nBoxLength, abyXLBox, 8 );
+#else
+        // In case we lack a 64 bit integer type
+        if( abyXLBox[0] != 0 || abyXLBox[1] != 0 || abyXLBox[2] != 0 ||
+            abyXLBox[3] != 0 )
         {
-            CPL_MSBPTR64( abyXLBox );
-            memcpy( &nBoxLength, abyXLBox, 8 );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                        "Box size requires a 64 bit integer type");
+            return FALSE;
         }
-        else
-        {
-            CPL_MSBPTR32( abyXLBox+4 );
-            memcpy( &nBoxLength, abyXLBox+4, 4 );
-        }
+        CPL_MSBPTR32( abyXLBox+4 );
+        memcpy( &nBoxLength, abyXLBox+4, 4 );
+#endif
         if( nBoxLength < 0 )
         {
             CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);

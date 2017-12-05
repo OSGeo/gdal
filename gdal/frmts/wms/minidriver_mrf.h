@@ -29,20 +29,20 @@
 
 #include <vector>
 
-//
+namespace WMSMiniDriver_MRF_ns {
+
+    //
 // Almost like pread, but no thread safety
 // Unlike pread, the first argument is a pointer to an opaque structure
 // Return of zero means an error occurred (could be end of file)
 //
-typedef size_t (*pread_t)(void *user_data, void *buff, size_t count, off_t offset);
+typedef size_t(*pread_t)(void *user_data, void *buff, size_t count, off_t offset);
 
 //
 // A sector cache, for up to N sectors of a fixed size M
 // N has to be at least two, the user specifies extras
 // Used for session caching the remote index
 //
-namespace WMSMiniDriver_MRF_ns {
-
 class SectorCache {
 public:
     SectorCache(void *user_data,
@@ -74,17 +74,14 @@ private:
 
 // Size of an image, also used as a tile or pixel location
 struct ILSize {
-    ILSize():  x(0), y(0), z(0), c(0), l(0) {};
+    ILSize():  x(0), y(0), z(0), c(0), l(0) {}
     ILSize(GInt32 _x, GInt32 _y, GInt32 _z = 1, GInt32 _c = 1, GInt32 _l = -1) :
-        x(_x), y(_y), z(_z), c(_c), l(_l) {};
+        x(_x), y(_y), z(_z), c(_c), l(_l) {}
     GInt32 x, y, z, c;
     GIntBig l; // Dual use, sometimes it holds the number of pages
 };
 
-}; // namespace WMSMiniDriver_MRF
-
-using WMSMiniDriver_MRF_ns::SectorCache;
-using WMSMiniDriver_MRF_ns::ILSize;
+} // namespace WMSMiniDriver_MRF
 
 class WMSMiniDriver_MRF : public WMSMiniDriver {
 public:
@@ -94,8 +91,8 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
     virtual CPLErr EndInit() override;
 
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &url, 
-                                    const GDALWMSImageRequestInfo &iri, 
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &url,
+                                    const GDALWMSImageRequestInfo &iri,
                                     const GDALWMSTiledImageRequestInfo &tiri) override;
 
     enum { tMRF, tBundle, tEND };
@@ -111,10 +108,10 @@ private:
 
     VSILFILE *fp; // If index is a file
     WMSHTTPRequest *m_request; // If index is an URL
-    SectorCache *index_cache;
+    WMSMiniDriver_MRF_ns::SectorCache *index_cache;
 
     // Per level index offsets, level 0 being the full resolution
     std::vector<GUIntBig> offsets;
     // Matching pagecounts
-    std::vector<ILSize> pages;
+    std::vector<WMSMiniDriver_MRF_ns::ILSize> pages;
 };

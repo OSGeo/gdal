@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRGFTTableLayer()                           */
@@ -751,7 +751,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* If there's a geometry, let's use it in priority over the textual */
         /* content of the field. */
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
         {
             if (poGeom == NULL)
                 osCommand += "''";
@@ -778,7 +778,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
             continue;
         }
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
         {
             osCommand += "''";
         }
@@ -932,7 +932,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSet( iField )))
+            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
         {
             if (poGeom == NULL)
                 osCommand += "''";
@@ -959,7 +959,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
             continue;
         }
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
         {
             osCommand += "''";
         }
@@ -1292,9 +1292,9 @@ void OGRGFTTableLayer::BuildWhere()
             std::min(180.0, sEnvelope.MaxX + 1.0e-11));
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.empty() )
             osWHERE = "WHERE ";
         else
             osWHERE += " AND ";

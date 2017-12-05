@@ -24,17 +24,19 @@ Contributors:
 #include <utility>
 #include <cstddef>
 
-// This is useful when compiling within GDAL in DEBUG_BOOL mode, where a
-// MSVCPedanticBool class is used as an alias for the bool type, so as
-// to catch more easily int/bool misuses, even on Linux
-// Also for NULL_AS_NULLPTR mode where NULL is aliased to C++11 nullptr
-#if defined(DEBUG_BOOL) || defined(NULL_AS_NULLPTR)
+#if defined(GDAL_COMPILATION)
 #include "cpl_port.h"
 #endif
 
 // Compatibility hack for non-C++11 compilers
 #if !(__cplusplus >= 201103L || _MSC_VER >= 1500)
 #define override
+#endif
+
+#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 #endif
 
 #define NAMESPACE_LERC_START namespace LercNS {
@@ -88,5 +90,34 @@ struct Quant : public std::pair<unsigned int, unsigned int>
 
 #endif // SWAPB
 
+#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+inline void Store(unsigned int* dst, int val)
+{
+    memcpy(dst, &val, sizeof(unsigned int));
+}
+inline unsigned int Load(const unsigned int* src)
+{
+    unsigned int res;
+    memcpy(&res, src, sizeof(unsigned int));
+    return res;
+}
+#else
+inline void Store(unsigned int* dst, unsigned int val)
+{
+    *dst = val;
+}
+inline unsigned int Load(const unsigned int* src)
+{
+    return *src;
+}
+#endif
+
 NAMESPACE_LERC_END
+
+#ifdef DEBUG
+void LERC_BRKPNT();
+#else
+#define LERC_BRKPNT() do {} while(0)
+#endif
+
 #endif

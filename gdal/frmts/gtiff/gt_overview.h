@@ -49,7 +49,8 @@ toff_t GTIFFWriteDirectory( TIFF *hTIFF, int nSubfileType,
                             unsigned short *panExtraSampleValues,
                             const char *pszMetadata,
                             const char* pszJPEGQuality,
-                            const char* pszJPEGTablesMode );
+                            const char* pszJPEGTablesMode,
+                            const char* pszNoData );
 
 void GTIFFBuildOverviewMetadata( const char *pszResampling,
                                  GDALDataset *poBaseDS,

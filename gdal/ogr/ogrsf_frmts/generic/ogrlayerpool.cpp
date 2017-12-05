@@ -30,7 +30,7 @@
 
 #include "ogrlayerpool.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRAbstractProxiedLayer()                       */

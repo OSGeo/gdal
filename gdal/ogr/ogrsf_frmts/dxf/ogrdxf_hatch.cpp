@@ -32,9 +32,10 @@
 #include "cpl_conv.h"
 #include "ogr_api.h"
 
+#include <algorithm>
 #include "ogrdxf_polyline_smooth.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           TranslateHATCH()                           */
@@ -44,14 +45,15 @@ CPL_CVSID("$Id$");
 /*      preserve the actual details of the hatching.                    */
 /************************************************************************/
 
-OGRFeature *OGRDXFLayer::TranslateHATCH()
+OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
 
 {
     char szLineBuf[257];
     int nCode = 0;
-    OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
 
     CPLString osHatchPattern;
+    double dfElevation = 0.0;  // Z value to be used for EVERY point
     /* int nFillFlag = 0; */
     OGRGeometryCollection oGC;
 
@@ -59,6 +61,11 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
     {
         switch( nCode )
         {
+          case 30:
+            // Constant elevation.
+            dfElevation = CPLAtof( szLineBuf );
+            break;
+
           case 70:
             /* nFillFlag = atoi(szLineBuf); */
             break;
@@ -76,7 +83,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
                    iBoundary < nBoundaryPathCount;
                    iBoundary++ )
               {
-                  if (CollectBoundaryPath( &oGC ) != OGRERR_NONE)
+                  if (CollectBoundaryPath( &oGC, dfElevation ) != OGRERR_NONE)
                       break;
               }
           }
@@ -96,6 +103,20 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 
     if( nCode == 0 )
         poDS->UnreadValue();
+   
+/* -------------------------------------------------------------------- */
+/*      Obtain a tolerance value used when building the polygon.        */
+/* -------------------------------------------------------------------- */
+   double dfTolerance = atof( CPLGetConfigOption( "DXF_HATCH_TOLERANCE", "-1" ) );
+   if( dfTolerance < 0 )
+   {
+       // If the configuration variable isn't set, compute the bounding box
+       // and work out a tolerance from that
+       OGREnvelope oEnvelope;
+       oGC.getEnvelope( &oEnvelope );
+       dfTolerance = std::max( oEnvelope.MaxX - oEnvelope.MinX,
+           oEnvelope.MaxY - oEnvelope.MinY ) * 1e-7;
+   }
 
 /* -------------------------------------------------------------------- */
 /*      Try to turn the set of lines into something useful.             */
@@ -104,7 +125,7 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
 
     OGRGeometry* poFinalGeom = (OGRGeometry *)
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oGC,
-                                  TRUE, TRUE, 0.0000001, &eErr );
+                                  TRUE, TRUE, dfTolerance, &eErr );
     if( eErr != OGRERR_NONE )
     {
         delete poFinalGeom;
@@ -114,53 +135,39 @@ OGRFeature *OGRDXFLayer::TranslateHATCH()
         poFinalGeom = poMLS;
     }
 
-    ApplyOCSTransformer( poFinalGeom );
+    poFeature->ApplyOCSTransformer( poFinalGeom );
     poFeature->SetGeometryDirectly( poFinalGeom );
 
-/* -------------------------------------------------------------------- */
-/*      Work out the color for this feature.  For now we just assume    */
-/*      solid fill.  We cannot trivially translate the various sorts    */
-/*      of hatching.                                                    */
-/* -------------------------------------------------------------------- */
-    CPLString osLayer = poFeature->GetFieldAsString("Layer");
+    // This is used when hatches are inserted as part of a block, so we know
+    // to give a BRUSH(...) style string
+    poFeature->oStyleProperties["WantBrush"] = "1";
 
-    int nColor = 256;
-
-    if( oStyleProperties.count("Color") > 0 )
-        nColor = atoi(oStyleProperties["Color"]);
-
-    // Use layer color?
-    if( nColor < 1 || nColor > 255 )
-    {
-        const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
-            nColor = atoi(pszValue);
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Setup the style string.                                         */
-/* -------------------------------------------------------------------- */
-    if( nColor >= 1 && nColor <= 255 )
-    {
-        CPLString osStyle;
-        const unsigned char *pabyDXFColors = ACGetColorTable();
-
-        osStyle.Printf( "BRUSH(fc:#%02x%02x%02x)",
-                        pabyDXFColors[nColor*3+0],
-                        pabyDXFColors[nColor*3+1],
-                        pabyDXFColors[nColor*3+2] );
-
-        poFeature->SetStyleString( osStyle );
-    }
+    PrepareHatchStyle( poFeature );
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                         PrepareHatchStyle()                          */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareHatchStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
+    CPLString osStyle = "BRUSH(fc:";
+    osStyle += poFeature->GetColor( poDS, poBlockFeature );
+    osStyle += ")";
+
+    poFeature->SetStyleString( osStyle );
 }
 
 /************************************************************************/
 /*                        CollectBoundaryPath()                         */
 /************************************************************************/
 
-OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
+OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
+    const double dfElevation )
 
 {
     char szLineBuf[257];
@@ -181,7 +188,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /*      Handle polyline loops.                                          */
 /* ==================================================================== */
     if( nBoundaryPathType & 0x02 )
-        return CollectPolylinePath( poGC );
+        return CollectPolylinePath( poGC, dfElevation );
 
 /* ==================================================================== */
 /*      Handle non-polyline loops.                                      */
@@ -256,8 +263,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 
             OGRLineString *poLS = new OGRLineString();
 
-            poLS->addPoint( dfStartX, dfStartY );
-            poLS->addPoint( dfEndX, dfEndY );
+            poLS->addPoint( dfStartX, dfStartY, dfElevation );
+            poLS->addPoint( dfEndX, dfEndY, dfElevation );
 
             poGC->addGeometryDirectly( poLS );
         }
@@ -318,14 +325,23 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
                 dfEndAngle *= -1;
             }
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                dfCenterX, dfCenterY, 0.0,
-                dfRadius, dfRadius, 0.0,
-                dfStartAngle, dfEndAngle, 0.0 );
+            if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+            {
+                OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
+                    dfCenterX, dfCenterY, dfElevation,
+                    dfRadius, dfRadius, 0.0,
+                    dfStartAngle, dfEndAngle, 0.0 );
 
-            poArc->flattenTo2D();
+                // If the input was 2D, we assume we want to keep it that way
+                if( dfElevation == 0.0 )
+                    poArc->flattenTo2D();
 
-            poGC->addGeometryDirectly( poArc );
+                poGC->addGeometryDirectly( poArc );
+            }
+            else
+            {
+                // TODO: emit error ?
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -364,8 +380,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             double dfRatio = 0.0;
 
             if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 40 )
-                dfRatio = CPLAtof(szLineBuf) / 100.0;
-            else
+                dfRatio = CPLAtof(szLineBuf);
+            if( dfRatio == 0.0 )
                 break;
 
             double dfStartAngle = 0.0;
@@ -406,14 +422,31 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
             const double dfRotation =
                 -1 * atan2( dfMajorY, dfMajorX ) * 180 / M_PI;
 
-            OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
-                dfCenterX, dfCenterY, 0.0,
-                dfMajorRadius, dfMinorRadius, dfRotation,
-                dfStartAngle, dfEndAngle, 0.0 );
+            // The start and end angles are stored as circular angles. However,
+            // approximateArcAngles is expecting elliptical angles (what AutoCAD
+            // calls "parameters"), so let's transform them.
+            dfStartAngle = 180.0 * floor ( ( dfStartAngle + 90 ) / 180 ) +
+                    atan( ( 1.0 / dfRatio ) * tan( dfStartAngle * M_PI / 180 ) ) * 180 / M_PI;
+            dfEndAngle = 180.0 * floor ( ( dfEndAngle + 90 ) / 180 ) +
+                    atan( ( 1.0 / dfRatio ) * tan( dfEndAngle * M_PI / 180 ) ) * 180 / M_PI;
 
-            poArc->flattenTo2D();
+            if( fabs(dfEndAngle - dfStartAngle) <= 361.0 )
+            {
+                OGRGeometry *poArc = OGRGeometryFactory::approximateArcAngles(
+                    dfCenterX, dfCenterY, dfElevation,
+                    dfMajorRadius, dfMinorRadius, dfRotation,
+                    dfStartAngle, dfEndAngle, 0.0 );
 
-            poGC->addGeometryDirectly( poArc );
+                // If the input was 2D, we assume we want to keep it that way
+                if( dfElevation == 0.0 )
+                    poArc->flattenTo2D();
+
+                poGC->addGeometryDirectly( poArc );
+            }
+            else
+            {
+                // TODO: emit error ?
+            }
         }
         else
         {
@@ -457,7 +490,8 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC )
 /*                        CollectPolylinePath()                         */
 /************************************************************************/
 
-OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
+OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC,
+    const double dfElevation )
 
 {
     int nCode = 0;
@@ -497,7 +531,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
           case 10:
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+                oSmoothPolyline.AddPoint(dfX, dfY, dfElevation, dfBulge);
                 dfBulge = 0.0;
                 bHaveY = false;
             }
@@ -508,7 +542,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
           case 20:
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
             }
@@ -516,7 +550,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             bHaveY = true;
             if( bHaveX && bHaveY && !bHaveBulges )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
                 bHaveY = false;
@@ -527,7 +561,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
             dfBulge = CPLAtof(szLineBuf);
             if( bHaveX && bHaveY )
             {
-                oSmoothPolyline.AddPoint( dfX, dfY, 0.0, dfBulge );
+                oSmoothPolyline.AddPoint( dfX, dfY, dfElevation, dfBulge );
                 dfBulge = 0.0;
                 bHaveX = false;
                 bHaveY = false;
@@ -548,7 +582,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath( OGRGeometryCollection *poGC )
         poDS->UnreadValue();
 
     if( bHaveX && bHaveY )
-        oSmoothPolyline.AddPoint(dfX, dfY, 0.0, dfBulge);
+        oSmoothPolyline.AddPoint(dfX, dfY, dfElevation, dfBulge);
 
     if( bIsClosed )
         oSmoothPolyline.Close();

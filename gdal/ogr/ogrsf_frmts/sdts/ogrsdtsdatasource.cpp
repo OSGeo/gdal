@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRSDTSDataSource()                          */
@@ -110,22 +110,22 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE *fp = VSIFOpen( pszFilename, "rb" );
+        VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
         if( fp == NULL )
             return FALSE;
 
         char pachLeader[10] = {};
-        if( VSIFRead( pachLeader, 1, 10, fp ) != 10
+        if( VSIFReadL( pachLeader, 1, 10, fp ) != 10
             || (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
             || pachLeader[6] != 'L'
             || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return FALSE;
         }
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
     }
 
 /* -------------------------------------------------------------------- */

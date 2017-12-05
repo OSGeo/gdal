@@ -53,9 +53,9 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-template<typename T> T* HISTOGRAM( T *h, int n, int r, int g, int b )
+template<typename T> static T* HISTOGRAM( T *h, int n, int r, int g, int b )
 {
     const int index = (r * n + g) * n + b;
     return &h[index];
@@ -171,6 +171,7 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     }
     else
     {
+#ifdef CPL_HAS_GINT64
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
                                                NULL, NULL, NULL,
                                                pfnIncludePixel, nColors,
@@ -178,6 +179,9 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
                                                static_cast<GUIntBig * >(NULL),
                                                hColorTable,
                                                pfnProgress, pProgressArg);
+#else
+        return CE_Failure;
+#endif
     }
 }
 

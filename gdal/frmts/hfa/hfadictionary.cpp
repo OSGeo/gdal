@@ -28,10 +28,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "hfa_p.h"
-#include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+#include <cstdio>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+
+CPL_CVSID("$Id$")
 
 static const char * const apszDefDefn[] = {
     "Edsc_Table",
@@ -89,35 +98,30 @@ static const char * const apszDefDefn[] = {
 /*                           HFADictionary()                            */
 /************************************************************************/
 
-HFADictionary::HFADictionary( const char * pszString ) :
+HFADictionary::HFADictionary( const char *pszString ) :
     nTypes(0),
     nTypesMax(0),
     papoTypes(NULL),
     osDictionaryText(pszString),
     bDictionaryTextDirty(false)
 {
-
-/* -------------------------------------------------------------------- */
-/*      Read all the types.                                             */
-/* -------------------------------------------------------------------- */
+    // Read all the types.
     // TODO(schwehr): Refactor this approach to be more obvious.
     while( pszString != NULL && *pszString != '.' )
     {
         HFAType *poNewType = new HFAType();
-        pszString = poNewType->Initialize( pszString );
+        pszString = poNewType->Initialize(pszString);
 
         if( pszString != NULL )
-            AddType( poNewType );
+            AddType(poNewType);
         else
             delete poNewType;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Complete the definitions.                                       */
-/* -------------------------------------------------------------------- */
+    // Complete the definitions.
     for( int i = 0; i < nTypes; i++ )
     {
-        papoTypes[i]->CompleteDefn( this );
+        papoTypes[i]->CompleteDefn(this);
     }
 }
 
@@ -131,7 +135,7 @@ HFADictionary::~HFADictionary()
     for( int i = 0; i < nTypes; i++ )
         delete papoTypes[i];
 
-    CPLFree( papoTypes );
+    CPLFree(papoTypes);
 }
 
 /************************************************************************/
@@ -170,24 +174,26 @@ HFAType * HFADictionary::FindType( const char * pszName )
             return papoTypes[i];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check if this is a type have other knowledge of.  If so, add    */
-/*      it to the dictionary now.  I'm not sure how some files end      */
-/*      up being distributed using types not in the dictionary.         */
-/* -------------------------------------------------------------------- */
+    // Check if this is a type have other knowledge of.  If so, add
+    // it to the dictionary now.  I'm not sure how some files end
+    // up being distributed using types not in the dictionary.
     for( int i = 0; apszDefDefn[i] != NULL; i += 2 )
     {
-        if( strcmp( pszName, apszDefDefn[i] ) == 0 )
+        if( strcmp(pszName, apszDefDefn[i]) == 0 )
         {
             HFAType *poNewType = new HFAType();
 
-            poNewType->Initialize( apszDefDefn[i+1] );
-            AddType( poNewType );
-            poNewType->CompleteDefn( this );
+            poNewType->Initialize(apszDefDefn[i + 1]);
+            if( !poNewType->CompleteDefn(this) )
+            {
+                delete poNewType;
+                return NULL;
+            }
+            AddType(poNewType);
 
             if( !osDictionaryText.empty() )
-                osDictionaryText.erase( osDictionaryText.size() - 1, 1 );
-            osDictionaryText += apszDefDefn[i+1];
+                osDictionaryText.erase(osDictionaryText.size() - 1, 1);
+            osDictionaryText += apszDefDefn[i + 1];
             osDictionaryText += ",.";
 
             bDictionaryTextDirty = true;
@@ -210,40 +216,40 @@ int HFADictionary::GetItemSize( char chType )
 {
     switch( chType )
     {
-      case '1':
-      case '2':
-      case '4':
-      case 'c':
-      case 'C':
+    case '1':
+    case '2':
+    case '4':
+    case 'c':
+    case 'C':
         return 1;
 
-      case 'e':
-      case 's':
-      case 'S':
+    case 'e':
+    case 's':
+    case 'S':
         return 2;
 
-      case 't':
-      case 'l':
-      case 'L':
-      case 'f':
+    case 't':
+    case 'l':
+    case 'L':
+    case 'f':
         return 4;
 
-      case 'd':
-      case 'm':
+    case 'd':
+    case 'm':
         return 8;
 
-      case 'M':
+    case 'M':
         return 16;
 
-      case 'b':
+    case 'b':
         return -1;
 
-      case 'o':
-      case 'x':
+    case 'o':
+    case 'x':
         return 0;
 
-      default:
-        CPLAssert( false );
+    default:
+        CPLAssert(false);
     }
 
     return 0;
@@ -256,10 +262,10 @@ int HFADictionary::GetItemSize( char chType )
 void HFADictionary::Dump( FILE * fp )
 
 {
-    CPL_IGNORE_RET_VAL(VSIFPrintf( fp, "\nHFADictionary:\n" ));
+    CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "\nHFADictionary:\n"));
 
     for( int i = 0; i < nTypes; i++ )
     {
-        papoTypes[i]->Dump( fp );
+        papoTypes[i]->Dump(fp);
     }
 }

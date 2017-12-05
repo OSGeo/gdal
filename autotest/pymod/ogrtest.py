@@ -32,7 +32,7 @@ from osgeo import ogr
 import gdaltest
 
 geos_flag = None
-
+sfcgal_flag = None
 
 ###############################################################################
 def check_features_against_list( layer, field_name, value_list ):
@@ -65,15 +65,14 @@ def check_features_against_list( layer, field_name, value_list ):
 
 ###############################################################################
 def check_feature_geometry( feat, geom, max_error = 0.0001 ):
+    """ Returns 0 in case of success """
     try:
         f_geom = feat.GetGeometryRef()
     except:
         f_geom = feat
 
-    if isinstance(geom,type('a')):
+    if geom is not None and isinstance(geom,type('a')):
         geom = ogr.CreateGeometryFromWkt( geom )
-    else:
-        geom = geom.Clone()
 
     if (f_geom is not None and geom is None):
         gdaltest.post_reason( 'expected NULL geometry but got one.' )
@@ -82,6 +81,9 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
     if (f_geom is None and geom is not None):
         gdaltest.post_reason( 'expected geometry but got NULL.' )
         return 1
+
+    if f_geom is None and geom is None:
+        return 0
 
     if f_geom.GetGeometryName() != geom.GetGeometryName():
         gdaltest.post_reason( 'geometry names do not match.  "%s" ! = "%s"' %
@@ -129,8 +131,50 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
                 #print(geom.GetZ(i))
                 return 1
 
-    geom.Destroy()
     return 0
+
+###############################################################################
+def check_feature( feat, feat_ref, max_error = 0.0001, excluded_fields = None ):
+    """ Returns 0 in case of success """
+
+    for i in range(feat.GetGeomFieldCount()):
+        ret = check_feature_geometry(feat.GetGeomFieldRef(i),
+                                     feat_ref.GetGeomFieldRef(i),
+                                     max_error = max_error )
+        if ret != 0:
+            return ret
+
+    for i in range(feat.GetFieldCount()):
+        if excluded_fields is not None:
+            if feat.GetDefnRef().GetFieldDefn(i).GetName() in excluded_fields:
+                continue
+        if feat.GetField(i) != feat_ref.GetField(i):
+            gdaltest.post_reason('Field %d, expected val %s, got val %s' %
+                                 (i, str(feat_ref.GetField(i)),
+                                 str(feat.GetField(i))))
+            return 1
+
+    return 0
+
+###############################################################################
+def compare_layers( lyr, lyr_ref, excluded_fields = None ):
+
+    for f_ref in lyr_ref:
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            f_ref.DumpReadable()
+            return 'fail'
+        if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
+            f.DumpReadable()
+            f_ref.DumpReadable()
+            return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 def quick_create_layer_def( lyr, field_list):
@@ -182,3 +226,14 @@ def have_geos():
         geos_flag = pnt1.Union( pnt2 ) is not None
 
     return geos_flag
+
+###############################################################################
+def have_sfcgal():
+    global sfcgal_flag
+
+    if sfcgal_flag is None:
+        pnt1 = ogr.CreateGeometryFromWkt( 'POINT(10 20 30)' )
+        pnt2 = ogr.CreateGeometryFromWkt( 'POINT(40 50 60)' )
+        sfcgal_flag = pnt1.Distance3D( pnt2 ) >= 0
+
+    return sfcgal_flag

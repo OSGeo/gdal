@@ -34,12 +34,7 @@
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 
-#if ECWSDK_VERSION<50
-/* For NCSStrDup */
-#include "NCSUtil.h"
-#endif
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
@@ -749,7 +744,11 @@ CPLErr GDALECWCompressor::Initialize(
         NCSMalloc( sizeof(NCSFileBandInfo) * nBands, true );
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-        psClient->pBands[iBand].nBits = (UINT8) nBits;
+        const char* pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
+        if( pszNBITS && atoi(pszNBITS) > 0 )
+            psClient->pBands[iBand].nBits = (UINT8) atoi(pszNBITS);
+        else
+            psClient->pBands[iBand].nBits = (UINT8) nBits;
         psClient->pBands[iBand].bSigned = (BOOLEAN)bSigned;
 #if ECWSDK_VERSION >=50
         psClient->pBands[iBand].szDesc = NCSStrDup(papszBandDescriptions[iBand]);
@@ -782,6 +781,8 @@ CPLErr GDALECWCompressor::Initialize(
                 CNCSJP2FileView::JP2_COMPRESS_PROFILE_NITF_BIIF_EPJE );
 
         pszOption = CSLFetchNameValue(papszOptions, "CODESTREAM_ONLY" );
+        if( pszOption == NULL && EQUAL(CPLGetExtension(pszFilename), "j2k") )
+            pszOption = "YES";
         if( pszOption != NULL )
             SetParameter(
                 CNCSJP2FileView::JP2_COMPRESS_CODESTREAM_ONLY,

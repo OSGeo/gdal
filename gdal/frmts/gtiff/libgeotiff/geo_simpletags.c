@@ -152,10 +152,7 @@ static int ST_TypeSize( int st_type )
         return 1;
     else if( st_type == STT_SHORT )
         return 2;
-    /* cppcheck-suppress duplicateBranch */
-    else if( st_type == STT_DOUBLE )
-        return 8;
-    else
+    else /* if( st_type == STT_DOUBLE ) */
         return 8;
 }
 

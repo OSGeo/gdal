@@ -39,7 +39,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRLinearRing()                            */
@@ -151,9 +151,10 @@ int OGRLinearRing::WkbSize() const
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
-                                     CPL_UNUSED int nSize,
-                                     CPL_UNUSED OGRwkbVariant eWkbVariant )
+OGRErr OGRLinearRing::importFromWkb( const unsigned char * /*pabyData*/,
+                                     int /*nSize*/,
+                                     OGRwkbVariant /*eWkbVariant*/,
+                                     int& /* nBytesConsumedOut */ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -182,10 +183,12 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 
 //! @cond Doxygen_Suppress
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
-                                      unsigned char * pabyData,
-                                      int nBytesAvailable )
+                                      const unsigned char * pabyData,
+                                      int nBytesAvailable,
+                                      int& nBytesConsumedOut )
 
 {
+    nBytesConsumedOut = -1;
     if( nBytesAvailable < 4 && nBytesAvailable != -1 )
         return OGRERR_NOT_ENOUGH_DATA;
 
@@ -232,6 +235,9 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
         AddM();
     else
         RemoveM();
+
+
+    nBytesConsumedOut =  4 + nPointCount * nPointSize;
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertices                                                */
@@ -593,14 +599,18 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointInRing(const OGRPoint* poPoint) - "
                   "passed point is NULL!" );
-        return 0;
+        return FALSE;
+    }
+    if( poPoint->IsEmpty() )
+    {
+        return FALSE;
     }
 
     const int iNumPoints = getNumPoints();
 
     // Simple validation
     if( iNumPoints < 4 )
-        return 0;
+        return FALSE;
 
     const double dfTestX = poPoint->getX();
     const double dfTestY = poPoint->getY();
@@ -613,7 +623,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
         if( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
                && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
         {
-            return 0;
+            return FALSE;
         }
     }
 
@@ -728,6 +738,33 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
 }
 
 /************************************************************************/
+/*                             transform()                              */
+/************************************************************************/
+
+OGRErr OGRLinearRing::transform( OGRCoordinateTransformation *poCT )
+
+{
+    const bool bIsClosed = getNumPoints() > 2 && CPL_TO_BOOL(get_IsClosed());
+    OGRErr eErr = OGRLineString::transform(poCT);
+    if( bIsClosed && eErr == OGRERR_NONE && !get_IsClosed() )
+    {
+        CPLDebug("OGR", "Linearring is not closed after coordinate "
+                  "transformation. Forcing last point to be identical to "
+                  "first one");
+        // Force last point to be identical to first point.
+        // This is a safety belt in case the reprojection of the same coordinate
+        // isn't perfectly stable. This can for example happen in very rare cases
+        // when reprojecting a cutline with a RPC transform with a DEM that
+        // is a VRT whose sources are resampled...
+        OGRPoint oStartPoint;
+        StartPoint( &oStartPoint );
+
+        setPoint( getNumPoints()-1, &oStartPoint);
+    }
+    return eErr;
+}
+
+/************************************************************************/
 /*                          CastToLineString()                          */
 /************************************************************************/
 
@@ -750,17 +787,31 @@ OGRLineString* OGRLinearRing::CastToLineString( OGRLinearRing* poLR )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+OGRLineString* OGRLinearRing::CasterToLineString( OGRCurve* poCurve )
+{
+    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
+    CPLAssert(poLR);
+    return OGRLinearRing::CastToLineString(poLR);
+}
+
 OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 {
-    return (OGRCurveCasterToLineString) OGRLinearRing::CastToLineString;
+    return OGRLinearRing::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+static OGRLinearRing* CasterToLinearRing(OGRCurve* poCurve)
+{
+    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
+    CPLAssert(poLR);
+    return poLR;
+}
+
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const
 {
-    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
+    return ::CasterToLinearRing;
 }
 //! @endcond

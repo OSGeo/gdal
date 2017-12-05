@@ -28,7 +28,7 @@
 
 #include "gifabstractdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int InterlacedOffset[] = { 0, 4, 2, 1 };
 static const int InterlacedJumps[] = { 8, 8, 4, 2 };

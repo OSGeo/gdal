@@ -46,7 +46,7 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 class LayerDesc
 {
     public:
-        LayerDesc() {};
+        LayerDesc() {}
 
         bool operator < ( const LayerDesc& other ) const
         {

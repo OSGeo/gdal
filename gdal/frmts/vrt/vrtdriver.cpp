@@ -34,7 +34,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -136,7 +136,8 @@ void VRTDriver::AddSourceParser( const char *pszElementName,
 /*                            ParseSource()                             */
 /************************************************************************/
 
-VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
+VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath,
+                                   void* pUniqueHandle )
 
 {
 
@@ -161,7 +162,7 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
     if( pfnParser == NULL )
         return NULL;
 
-    return pfnParser( psSrc, pszVRTPath );
+    return pfnParser( psSrc, pszVRTPath, pUniqueHandle );
 }
 
 /************************************************************************/
@@ -369,11 +370,11 @@ VRTCreateCopy( const char * pszFilename,
 void GDALRegister_VRT()
 
 {
-    // First register the pixel functions
-    GDALRegisterDefaultPixelFunc();
-
     if( GDALGetDriverByName( "VRT" ) != NULL )
         return;
+
+    // First register the pixel functions
+    GDALRegisterDefaultPixelFunc();
 
     VRTDriver *poDriver = new VRTDriver();
 
@@ -394,7 +395,7 @@ void GDALRegister_VRT()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OptionList>"
-"  <on name='ROOT_PATH' type='string' description='Root path to evaluate "
+"  <Option name='ROOT_PATH' type='string' description='Root path to evaluate "
 "relative paths inside the VRT. Mainly useful for inlined VRT, or in-memory "
 "VRT, where their own directory does not make sense'/>"
 "</OptionList>" );

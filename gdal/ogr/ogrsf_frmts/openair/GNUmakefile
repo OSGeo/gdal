@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogropenairdriver.o ogropenairdatasource.o ogropenairlayer.o ogropenairlabellayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../xplane  $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

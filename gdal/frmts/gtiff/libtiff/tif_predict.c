@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.41 2016-11-20 22:31:22 erouault Exp $ */
+/* $Id: tif_predict.c,v 1.44 2017-06-18 10:31:50 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -117,6 +117,9 @@ PredictorSetupDecode(TIFF* tif)
 	TIFFPredictorState* sp = PredictorState(tif);
 	TIFFDirectory* td = &tif->tif_dir;
 
+	/* Note: when PredictorSetup() fails, the effets of setupdecode() */
+	/* will not be "cancelled" so setupdecode() might be robust to */
+	/* be called several times. */
 	if (!(*sp->setupdecode)(tif) || !PredictorSetup(tif))
 		return 0;
 
@@ -259,11 +262,12 @@ PredictorSetupEncode(TIFF* tif)
 
 #define REPEAT4(n, op)		\
     switch (n) {		\
-    default: { tmsize_t i; for (i = n-4; i > 0; i--) { op; } } \
-    case 4:  op;		\
-    case 3:  op;		\
-    case 2:  op;		\
-    case 1:  op;		\
+    default: { \
+        tmsize_t i; for (i = n-4; i > 0; i--) { op; } }  /*-fallthrough*/  \
+    case 4:  op; /*-fallthrough*/ \
+    case 3:  op; /*-fallthrough*/ \
+    case 2:  op; /*-fallthrough*/ \
+    case 1:  op; /*-fallthrough*/ \
     case 0:  ;			\
     }
 
@@ -273,6 +277,7 @@ PredictorSetupEncode(TIFF* tif)
 /* - when storing into the byte stream, we explicitly mask with 0xff so */
 /*   as to make icc -check=conversions happy (not necessary by the standard) */
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horAcc8(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -340,6 +345,7 @@ swabHorAcc16(TIFF* tif, uint8* cp0, tmsize_t cc)
         return horAcc16(tif, cp0, cc);
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horAcc16(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -374,6 +380,7 @@ swabHorAcc32(TIFF* tif, uint8* cp0, tmsize_t cc)
 	return horAcc32(tif, cp0, cc);
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horAcc32(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -499,6 +506,7 @@ PredictorDecodeTile(TIFF* tif, uint8* op0, tmsize_t occ0, uint16 s)
 		return 0;
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horDiff8(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -552,6 +560,7 @@ horDiff8(TIFF* tif, uint8* cp0, tmsize_t cc)
 	return 1;
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horDiff16(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -591,6 +600,7 @@ swabHorDiff16(TIFF* tif, uint8* cp0, tmsize_t cc)
     return 1;
 }
 
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 horDiff32(TIFF* tif, uint8* cp0, tmsize_t cc)
 {
@@ -633,6 +643,7 @@ swabHorDiff32(TIFF* tif, uint8* cp0, tmsize_t cc)
 /*
  * Floating point predictor differencing routine.
  */
+TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static int
 fpDiff(TIFF* tif, uint8* cp0, tmsize_t cc)
 {

@@ -29,7 +29,7 @@
 #include "dgnlibp.h"
 #include <cmath>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double DEG_TO_RAD = M_PI / 180.0;
 
@@ -307,7 +307,8 @@ int main( int argc, char ** argv )
 {
     if( argc != 5 )
     {
-        printf( "Usage: stroke primary_axis secondary_axis axis_rotation angle\n" );
+        printf(  // ok
+            "Usage: stroke primary_axis secondary_axis axis_rotation angle\n");
         exit( 1 );
     }
 
@@ -321,9 +322,9 @@ int main( int argc, char ** argv )
     ComputePointOnArc2D( dfPrimary, dfSecondary, dfAxisRotation, dfAngle,
                          &dfX, &dfY );
 
-    printf( "X=%.2f, Y=%.2f\n", dfX, dfY );
+    printf( "X=%.2f, Y=%.2f\n", dfX, dfY );  // ok
 
-    exit( 0 );
+    return 0;
 }
 
 #endif

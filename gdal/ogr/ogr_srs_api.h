@@ -536,6 +536,11 @@ OGRErr CPL_DLL OSRExportToERM( OGRSpatialReferenceH, char *, char *, char * );
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
 
+OGRSpatialReferenceH CPL_DLL OSRConvertToOtherProjection(
+                                    OGRSpatialReferenceH hSRS,
+                                    const char* pszTargetProjection,
+                                    const char* const* papszOptions );
+
 OGRErr CPL_DLL CPL_STDCALL OSRSetAttrValue( OGRSpatialReferenceH hSRS,
                                 const char * pszNodePath,
                                 const char * pszNewNodeValue );
@@ -630,6 +635,12 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits( OGRSpatialReferenceH hSRS,
                                           double dfOverrideUnit );
 OGRErr CPL_DLL OSRAutoIdentifyEPSG( OGRSpatialReferenceH hSRS );
 
+OGRSpatialReferenceH CPL_DLL *OSRFindMatches( OGRSpatialReferenceH hSRS,
+                                          char** papszOptions,
+                                          int* pnEntries,
+                                          int** ppanMatchConfidence );
+void CPL_DLL OSRFreeSRSArray(OGRSpatialReferenceH* pahSRS);
+
 int    CPL_DLL OSREPSGTreatsAsLatLong( OGRSpatialReferenceH hSRS );
 int    CPL_DLL OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS );
 const char CPL_DLL *OSRGetAxis( OGRSpatialReferenceH hSRS,
@@ -720,12 +731,14 @@ OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
                               double dfCenterLat, double dfCenterLong,
                             double dfFalseEasting, double dfFalseNorthing );
 
+#ifdef undef
 /** Oblique Mercator (aka HOM (variant B) */
 OGRErr CPL_DLL OSRSetOM( OGRSpatialReferenceH hSRS,
                          double dfCenterLat, double dfCenterLong,
                          double dfAzimuth, double dfRectToSkew,
                          double dfScale,
                          double dfFalseEasting, double dfFalseNorthing );
+#endif
 
 /** Hotine Oblique Mercator using azimuth angle */
 OGRErr CPL_DLL OSRSetHOM( OGRSpatialReferenceH hSRS,

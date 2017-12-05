@@ -1453,9 +1453,9 @@ def tiff_ovr_37():
     ds = None
 
     predictor2_size = os.stat('tmp/ovr37.dt0.ovr')[stat.ST_SIZE]
-    # 4131 : on little-endian host
+    # 3957 : on little-endian host
     # XXXX : on big-endian host ??? FIXME: To be updated
-    if predictor2_size != 4131:
+    if predictor2_size != 3957:
         print(predictor2_size)
         gdaltest.post_reason( 'did not get expected file size.' )
         return 'fail'
@@ -1948,6 +1948,23 @@ def tiff_ovr_48():
             print(i)
             return 'fail'
 
+
+    # But if we define GDAL_OVR_PROPAGATE_NODATA, a nodata value in source
+    # samples will cause the target pixel to be zeroed.
+    shutil.copy('data/rgba_with_alpha_0_and_255.tif', 'tmp')
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif')
+    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', 'YES')
+    ds.BuildOverviews('AVERAGE', [2])
+    gdal.SetConfigOption('GDAL_OVR_PROPAGATE_NODATA', None)
+    ds = None
+
+    ds = gdal.Open('tmp/rgba_with_alpha_0_and_255.tif.ovr')
+    for i in range(4):
+        cs = ds.GetRasterBand(i+1).Checksum()
+        if cs != 0:
+            print(i)
+            return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -2147,6 +2164,46 @@ def tiff_ovr_53():
     return 'success'
 
 ###############################################################################
+# Test external overviews building in several steps with jpeg compression
+
+def tiff_ovr_54():
+
+    drv = gdal.GetDriverByName( 'GTiff' )
+    md = drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('JPEG') == -1:
+        return 'skip'
+
+    src_ds = gdal.Open('../gdrivers/data/small_world.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/tiff_ovr_54.tif', src_ds)
+
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', 'JPEG')
+    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', 'YCBCR')
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', 'PIXEL')
+    ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
+    ds.BuildOverviews('AVERAGE', [2])
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
+    ds.BuildOverviews('AVERAGE', [4])
+    ds = None
+    gdal.SetConfigOption('COMPRESS_OVERVIEW', None)
+    gdal.SetConfigOption('PHOTOMETRIC_OVERVIEW', None)
+    gdal.SetConfigOption('INTERLEAVE_OVERVIEW', None)
+
+    ds = gdal.Open('/vsimem/tiff_ovr_54.tif')
+    cs0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds = None
+
+    gdal.GetDriverByName('GTiff').Delete('/vsimem/tiff_ovr_54.tif')
+
+    if cs0 == 0 or cs1 == 0:
+        gdaltest.post_reason('fail')
+        print(cs0, cs1)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def tiff_ovr_cleanup():
@@ -2263,7 +2320,8 @@ gdaltest_list.append(tiff_ovr_restore_endianness)
 
 gdaltest_list += [ tiff_ovr_51,
                    tiff_ovr_52,
-                   tiff_ovr_53 ]
+                   tiff_ovr_53,
+                   tiff_ovr_54 ]
 
 if __name__ == '__main__':
 

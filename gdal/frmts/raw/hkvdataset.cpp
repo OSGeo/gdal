@@ -39,7 +39,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -58,7 +58,7 @@ class HKVRasterBand : public RawRasterBand
                                unsigned int nImgOffset, int nPixelOffset,
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
-    virtual     ~HKVRasterBand() {};
+    virtual     ~HKVRasterBand() {}
 
     virtual CPLErr SetNoDataValue( double ) override;
 };
@@ -71,7 +71,7 @@ class HKVSpheroidList : public SpheroidList
 {
  public:
   HKVSpheroidList();
-  ~HKVSpheroidList() {};
+  ~HKVSpheroidList() {}
 };
 
 HKVSpheroidList :: HKVSpheroidList()
@@ -199,7 +199,7 @@ class HKVDataset : public RawDataset
                 HKVDataset();
     virtual     ~HKVDataset();
 
-    virtual int GetGCPCount() override /* const */ { return nGCPCount; };
+    virtual int GetGCPCount() override /* const */ { return nGCPCount; }
     virtual const char *GetGCPProjection() override;
     virtual const GDAL_GCP *GetGCPs() override;
 
@@ -495,19 +495,30 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         // Pass copies of projection info, not originals (pointers get updated
         // by importFromWkt).
-        char *pszPtemp = CPLStrdup(pszProjection);
+        char *pszPtemp = pszProjection;
         OGRSpatialReference oUTM;
         oUTM.importFromWkt(&pszPtemp);
-        char *pszGCPtemp = NULL;
-        oUTM.GetAttrNode("GEOGCS")->exportToWkt(&pszGCPtemp);
 
-        OGRSpatialReference oLL;
-        oLL.importFromWkt(&pszGCPtemp);
-        poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
-        if( poTransform == NULL )
+        OGR_SRSNode* poGEOGCS = oUTM.GetAttrNode("GEOGCS");
+        if( poGEOGCS )
+        {
+            char *pszGCPProj = NULL;
+            poGEOGCS->exportToWkt(&pszGCPProj);
+
+            OGRSpatialReference oLL;
+            char* pszGCPtemp = pszGCPProj;
+            oLL.importFromWkt(&pszGCPtemp);
+            CPLFree(pszGCPProj);
+            poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
+            if( poTransform == NULL )
+            {
+                bSuccess = false;
+                CPLErrorReset();
+            }
+        }
+        else
         {
             bSuccess = false;
-            CPLErrorReset();
         }
     }
     else if ((( CSLFetchNameValue( papszGeoref, "projection.name" ) != NULL ) &&
@@ -786,7 +797,7 @@ CPLErr HKVDataset::SetProjection( const char * pszNewProjection )
     // Update a georef file.
 
 #ifdef DEBUG_VERBOSE
-    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );
+    printf( "HKVDataset::SetProjection(%s)\n", pszNewProjection );/*ok*/
 #endif
 
     if( !STARTS_WITH_CI(pszNewProjection, "GEOGCS")

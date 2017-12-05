@@ -30,7 +30,7 @@
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRCouchDBLayer()                             */
@@ -264,7 +264,11 @@ void OGRCouchDBLayer::ParseFieldValue(OGRFeature* poFeature,
                     "Ignoring its value",
                     pszKey);
     }
-    else if (poValue != NULL)
+    else if (poValue == NULL)
+    {
+        poFeature->SetFieldNull( nField );
+    }
+    else
     {
         OGRFieldDefn* poFieldDefn = poFeature->GetFieldDefnRef(nField);
         CPLAssert(poFieldDefn != NULL);

@@ -270,7 +270,7 @@ def warp_3_float_downsize():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/utmsmall_cubic_2.vrt' )
+    ds = gdal.Open( 'data/utmsmall_cubic_2_float.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_cubic_2.tif' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
@@ -1050,10 +1050,12 @@ def warp_29():
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', 'ALL_CPUS')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
@@ -1061,10 +1063,12 @@ def warp_29():
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
@@ -1075,8 +1079,10 @@ def warp_29():
     ds = gdal.Open('data/byte_gcp.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     got_cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
@@ -1086,8 +1092,10 @@ def warp_29():
     ds = gdal.Open('data/byte_tps.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     got_cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
@@ -1790,6 +1798,21 @@ def warp_54():
 
     return 'success'
 
+###############################################################################
+# Test warped VRT with source overview, target GT != GenImgProjetion target GT
+# and subsampling (#6972)
+
+def warp_55():
+
+    ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if cs != 25128:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+    ds = None
+
+    return 'success'
 
 gdaltest_list = [
     warp_1,
@@ -1862,9 +1885,10 @@ gdaltest_list = [
     warp_51,
     warp_52,
     warp_53,
-    warp_54
+    warp_54,
+    warp_55
     ]
-#gdaltest_list = [ warp_54 ]
+#gdaltest_list = [ warp_55 ]
 
 if __name__ == '__main__':
 

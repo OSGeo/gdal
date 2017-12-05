@@ -41,7 +41,9 @@ static XSModel* getGrammarPool(XMLGrammarPool* pool)
 #include "ogr_gmlas.h"
 #include "ogr_pgdump.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef );
 
 /************************************************************************/
 /*                        IsCompatibleOfArray()                         */
@@ -67,13 +69,16 @@ static bool IsCompatibleOfArray( GMLASFieldType eType )
 class GMLASPrefixMappingHander: public DefaultHandler
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
+        const std::map<CPLString, CPLString>& m_oMapDocNSURIToPrefix;
         CPLString& m_osGMLVersionFound;
 
   public:
         GMLASPrefixMappingHander(
                         std::map<CPLString, CPLString>& oMapURIToPrefix,
+                        const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                         CPLString& osGMLVersionFound) :
             m_oMapURIToPrefix( oMapURIToPrefix ),
+            m_oMapDocNSURIToPrefix( oMapDocNSURIToPrefix ),
             m_osGMLVersionFound( osGMLVersionFound )
         {}
 
@@ -133,7 +138,16 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
                                                   const XMLCh* const uri)
 {
     const CPLString osURI( transcode(uri) );
-    const CPLString osPrefix( transcode(prefix) );
+    CPLString osPrefix( transcode(prefix) );
+    if( osPrefix.empty() )
+    {
+        std::map<CPLString, CPLString>::const_iterator oIter 
+            = m_oMapDocNSURIToPrefix.find( osURI );
+        if( oIter != m_oMapDocNSURIToPrefix.end() )
+        {
+            osPrefix = oIter->second;
+        }
+    }
     if( !osPrefix.empty() )
     {
         std::map<CPLString, CPLString>::iterator oIter =
@@ -161,6 +175,7 @@ static
 void CollectNamespacePrefixes(const char* pszXSDFilename,
                               VSILFILE* fpXSD,
                               std::map<CPLString, CPLString>& oMapURIToPrefix,
+                              const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                               CPLString& osGMLVersionFound)
 {
     GMLASInputSource oSource(pszXSDFilename, fpXSD, false);
@@ -169,7 +184,9 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
     // loadGrammar(), so we have to parse the doc twice.
     SAX2XMLReader* poReader = XMLReaderFactory::createXMLReader ();
 
-    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix, osGMLVersionFound);
+    GMLASPrefixMappingHander contentHandler(oMapURIToPrefix,
+                                            oMapDocNSURIToPrefix,
+                                            osGMLVersionFound);
     poReader->setContentHandler(&contentHandler);
 
     GMLASErrorHandler oErrorHandler;
@@ -186,13 +203,16 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
 class GMLASAnalyzerEntityResolver: public GMLASBaseEntityResolver
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
+        const std::map<CPLString, CPLString>& m_oMapDocNSURIToPrefix;
 
   public:
         GMLASAnalyzerEntityResolver(const CPLString& osBasePath,
                             std::map<CPLString, CPLString>& oMapURIToPrefix,
+                            const std::map<CPLString, CPLString>& oMapDocNSURIToPrefix,
                             GMLASXSDCache& oCache)
             : GMLASBaseEntityResolver(osBasePath, oCache)
             , m_oMapURIToPrefix(oMapURIToPrefix)
+            , m_oMapDocNSURIToPrefix(oMapDocNSURIToPrefix)
         {
         }
 
@@ -209,6 +229,7 @@ void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
                                              VSILFILE* fp)
 {
     CollectNamespacePrefixes(osFilename, fp, m_oMapURIToPrefix,
+                             m_oMapDocNSURIToPrefix,
                              m_osGMLVersionFound);
     VSIFSeekL(fp, 0, SEEK_SET);
 }
@@ -218,13 +239,24 @@ void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
 /************************************************************************/
 
 GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
-                            GMLASXPathMatcher& oIgnoredXPathMatcher )
+                            GMLASXPathMatcher& oIgnoredXPathMatcher,
+                            GMLASXPathMatcher& oChildrenElementsConstraintsXPathMatcher,
+                            const std::map<CPLString, std::vector<CPLString> >&
+                                                        oMapChildrenElementsConstraints,
+                            GMLASXPathMatcher& oForcedFlattenedXPathMatcher,
+                            GMLASXPathMatcher& oDisabledFlattenedXPathMatcher )
     : m_oIgnoredXPathMatcher(oIgnoredXPathMatcher)
+    , m_oChildrenElementsConstraintsXPathMatcher(oChildrenElementsConstraintsXPathMatcher)
+    , m_oForcedFlattenedXPathMatcher(oForcedFlattenedXPathMatcher)
+    , m_oDisabledFlattenedXPathMatcher(oDisabledFlattenedXPathMatcher)
+    , m_oMapChildrenElementsConstraints(oMapChildrenElementsConstraints)
     , m_bUseArrays(true)
+    , m_bUseNullState(false)
     , m_bInstantiateGMLFeaturesOnly(true)
     , m_nIdentifierMaxLength(0)
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
     , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
+    , m_nMaximumFieldsForFlattening(MAXIMUM_FIELDS_FLATTENING_DEFAULT)
 {
     // A few hardcoded namespace uri->prefix mappings
     m_oMapURIToPrefix[ szXMLNS_URI ] = szXMLNS_PREFIX;
@@ -849,8 +881,14 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     std::vector<CPLString> aoNamespaces;
     GMLASAnalyzerEntityResolver oXSDEntityResolver( CPLString(),
                                                     m_oMapURIToPrefix,
+                                                    m_oMapDocNSURIToPrefix,
                                                     oCache );
 
+    // In this first pass we load the schemas that are directly pointed by
+    // the user with the XSD open option, or that we found in the xsi:schemaLocation
+    // attribute
+    // The namespaces of those schemas are the "first choice" namespaces from
+    // which we will try to find elements to turn them into layers
     aoNamespaces.push_back("");
     for( size_t i = 0; i < aoXSDs.size(); i++ )
     {
@@ -920,6 +958,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     m_oSetSchemaURLs = oXSDEntityResolver.GetSchemaURLS();
 
     m_oIgnoredXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
+    m_oChildrenElementsConstraintsXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
+    m_oForcedFlattenedXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
+    m_oDisabledFlattenedXPathMatcher.SetDocumentMapURIToPrefix( m_oMapURIToPrefix );
 
     XSModel* poModel = getGrammarPool(poGrammarPool.get());
     CPLAssert(poModel); // should not be null according to doc
@@ -938,7 +979,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
 
     bool bFoundGMLFeature = false;
 
-    // Initial pass, in all namespaces, to figure out inheritance relationships
+    // Second pass, in all namespaces, to figure out inheritance relationships
     // and group models that have names
     std::map<CPLString, CPLString> oMapURIToPrefixWithEmpty(m_oMapURIToPrefix);
     oMapURIToPrefixWithEmpty[""] = "";
@@ -988,6 +1029,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
             const CPLString osEltXPath(
                             MakeXPath(transcode(poEltDecl->getNamespace()),
                                       transcode(poEltDecl->getName())));
+            m_oMapXPathToEltDecl[ osEltXPath ] = poEltDecl;
             if( poSubstGroup )
             {
                 m_oMapParentEltToChildElt[poSubstGroup].push_back(poEltDecl);
@@ -1020,6 +1062,46 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         XMLString::release(&xmlNamespace);
     }
 
+    // Check that we can find elements in the namespaces pointed in the
+    // xsi:schemaLocation of the document, then fallback to namespaces
+    // that might be indirectly imported by those first level namespaces
+    bool bFoundElementsInFirstChoiceNamespaces = false;
+    for( size_t iNS = 0; !bFoundElementsInFirstChoiceNamespaces &&
+                         iNS < aoNamespaces.size(); iNS++ )
+    {
+        XMLCh* xmlNamespace = XMLString::transcode(aoNamespaces[iNS].c_str());
+
+        XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
+            XSConstants::ELEMENT_DECLARATION, xmlNamespace);
+        bFoundElementsInFirstChoiceNamespaces = 
+            poMapElements != NULL && poMapElements->getLength() > 0;
+        XMLString::release(&xmlNamespace);
+    }
+    if( !bFoundElementsInFirstChoiceNamespaces )
+    {
+        CPLDebug("GMLAS", "Did not find element in 'first choice' namespaces. "
+                 "Falling back to the namespaces they import");
+        aoNamespaces.clear();
+        oIterNS = oMapURIToPrefixWithEmpty.begin();
+        for( ; oIterNS != oMapURIToPrefixWithEmpty.end(); ++oIterNS)
+        {
+            const CPLString& osNSURI(oIterNS->first);
+            if( osNSURI == szXS_URI ||
+                osNSURI == szXSI_URI ||
+                osNSURI == szXMLNS_URI ||
+                osNSURI == szXLINK_URI ||
+                osNSURI == szWFS_URI ||
+                osNSURI == szWFS20_URI ||
+                osNSURI == szGML_URI ||
+                osNSURI == szGML32_URI )
+            {
+                // Skip all boring namespaces
+                continue;
+            }
+            aoNamespaces.push_back(osNSURI);
+        }
+    }
+
     // Find which elements must be top levels (because referenced several
     // times)
     std::set<XSElementDeclaration*> oSetVisitedEltDecl;
@@ -1032,6 +1114,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     // inspire/geologicalunit/geologicalunit.gml test dataset.
     std::set<CPLString> aoSetXPathEltsForTopClass;
 
+    // Third and fourth passes
     for( int iPass = 0; iPass < 2; ++iPass )
     {
         for( size_t iNS = 0; iNS < aoNamespaces.size(); iNS++ )
@@ -1081,6 +1164,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                         else
                         {
                             bool bSimpleEnoughOut = true;
+                            int nSubCountSubEltOut = 0;
                             FindElementsWithMustBeToLevel(
                                     osXPath,
                                     poCT->getParticle()->getModelGroupTerm(),
@@ -1090,7 +1174,8 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                     oVectorEltsForTopClass,
                                     aoSetXPathEltsForTopClass,
                                     poModel,
-                                    bSimpleEnoughOut);
+                                    bSimpleEnoughOut,
+                                    nSubCountSubEltOut );
                         }
                     }
                 }
@@ -1280,7 +1365,23 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
             BuildMapCountOccurrencesOfSameName(
                 poCT->getParticle()->getModelGroupTerm(),
                 oMapCountOccurrencesOfSameName);
-            if( !ExploreModelGroup(
+
+            OGRwkbGeometryType eGeomType = wkbUnknown;
+            if( IsGMLNamespace(transcode(poCT->getNamespace())) &&
+                (eGeomType = GetOGRGeometryType(poCT)) != wkbNone )
+            {
+                GMLASField oField;
+                oField.SetName( "geometry" );
+                oField.SetMinOccurs( 1 );
+                oField.SetMaxOccurs( 1 );
+                oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
+                oField.SetGeomType( eGeomType );
+                oField.SetXPath( osXPath + szMATCH_ALL );
+                oField.SetIncludeThisEltInBlob( true );
+
+                oClass.AddField( oField );
+            }
+            else if( !ExploreModelGroup(
                                 poCT->getParticle()->getModelGroupTerm(),
                                 poCT->getAttributeUses(),
                                 oClass,
@@ -1477,6 +1578,12 @@ static bool IsAnyType(XSComplexTypeDefinition* poType)
                 }
             }
         }
+        else if( poType->getDerivationMethod() ==
+                                            XSConstants::DERIVATION_EXTENSION )
+        {
+            // swe:values case
+            return true;
+        }
     }
     return false;
 }
@@ -1556,21 +1663,86 @@ void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
 {
     tMapParentEltToChildElt::const_iterator oIter =
         m_oMapParentEltToChildElt.find( poParentElt );
-    if( oIter == m_oMapParentEltToChildElt.end() )
-        return;
-
-    for( size_t j = 0; j < oIter->second.size(); j++ )
+    if( oIter != m_oMapParentEltToChildElt.end() )
     {
-        XSElementDeclaration* poSubElt = oIter->second[j];
-        if( IsEltCompatibleOfFC(poSubElt) )
+        for( size_t j = 0; j < oIter->second.size(); j++ )
         {
-            if( !poSubElt->getAbstract() )
+            XSElementDeclaration* poSubElt = oIter->second[j];
+            if( IsEltCompatibleOfFC(poSubElt) )
             {
-                apoImplEltList.push_back(poSubElt);
+                if( !poSubElt->getAbstract() )
+                {
+                    apoImplEltList.push_back(poSubElt);
+                }
             }
             GetConcreteImplementationTypes(poSubElt, apoImplEltList);
         }
     }
+}
+
+/************************************************************************/
+/*                       GetConstraintChildrenElements()                */
+/************************************************************************/
+
+std::vector<XSElementDeclaration*>
+    GMLASSchemaAnalyzer::GetConstraintChildrenElements(const CPLString& osFullXPath)
+{
+
+    std::vector<XSElementDeclaration*> oVectorRes;
+    CPLString osMatched;
+    if( m_oChildrenElementsConstraintsXPathMatcher.MatchesRefXPath(
+                                                    osFullXPath, osMatched) )
+    {
+        const std::vector<CPLString>& oVector =
+                                m_oMapChildrenElementsConstraints[osMatched];
+        const std::map<CPLString, CPLString>& oMapPrefixToURI =
+                m_oChildrenElementsConstraintsXPathMatcher.GetMapPrefixToURI();
+        for( size_t j = 0; j < oVector.size(); ++j )
+        {
+            const CPLString& osSubElt(oVector[j]);
+            CPLString osSubEltPrefix;
+            CPLString osSubEltURI;
+            CPLString osSubEltType(osSubElt);
+            size_t nPos = osSubElt.find(":");
+            if( nPos != std::string::npos )
+            {
+                osSubEltPrefix = osSubElt.substr(0, nPos);
+                osSubEltType = osSubElt.substr(nPos+1);
+
+                std::map<CPLString, CPLString>::const_iterator oIter2 =
+                    oMapPrefixToURI.find(osSubEltPrefix);
+                if( oIter2 != oMapPrefixToURI.end() )
+                {
+                    osSubEltURI = oIter2->second;
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                            "Cannot find prefix of type constraint %s",
+                            osSubElt.c_str());
+                }
+            }
+
+            const CPLString osSubEltXPath(MakeXPath(osSubEltURI, osSubEltType));
+            std::map<CPLString, XSElementDeclaration*>::const_iterator oIter2 =
+                m_oMapXPathToEltDecl.find(osSubEltXPath);
+            if( oIter2 != m_oMapXPathToEltDecl.end() )
+            {
+                XSElementDeclaration* poSubElt = oIter2->second;
+                if( IsEltCompatibleOfFC(poSubElt) )
+                {
+                    oVectorRes.push_back(poSubElt);
+                }
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find element declaration of type constraint %s",
+                         osSubElt.c_str());
+            }
+        }
+    }
+    return oVectorRes;
 }
 
 /************************************************************************/
@@ -1606,6 +1778,7 @@ static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef )
         { "CompositeSurfacePropertyType", wkbSurface },
         { "CompositeSolidPropertyType", wkbUnknown },
         { "GeometricComplexPropertyType", wkbUnknown },
+        { "SolidPropertyType", wkbPolyhedralSurface }
     };
 
     CPLString osName(transcode(poTypeDef->getName()));
@@ -1624,7 +1797,6 @@ static OGRwkbGeometryType GetOGRGeometryType( XSTypeDefinition* poTypeDef )
   <complexType name="PolygonPatchArrayPropertyType">
   <complexType name="TrianglePatchArrayPropertyType">
   <complexType name="LineStringSegmentArrayPropertyType">
-  <complexType name="SolidPropertyType">
   <complexType name="SolidArrayPropertyType">
 #endif
 }
@@ -1677,8 +1849,12 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
                         std::vector<XSElementDeclaration*>& apoImplEltList,
                         GMLASFeatureClass& oClass,
                         int nMaxOccurs,
-                        bool bForceJunctionTable )
+                        bool bEltNameWillNeedPrefix,
+                        bool bForceJunctionTable,
+                        bool bCaseOfConstraintChildren )
 {
+    const CPLString osEltPrefix(
+                GetPrefix(transcode(poElt->getNamespace())));
     const CPLString osEltName(transcode(poElt->getName()));
     const CPLString osOnlyElementXPath(
                     MakeXPath(transcode(poElt->getNamespace()),
@@ -1686,7 +1862,7 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
     const CPLString osElementXPath( oClass.GetXPath() + "/" +
                                     osOnlyElementXPath );
 
-    if( !poElt->getAbstract() )
+    if( !poElt->getAbstract() && !bCaseOfConstraintChildren )
     {
         apoImplEltList.insert(apoImplEltList.begin(), poElt);
     }
@@ -1714,6 +1890,8 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             aoSetSubEltXPath.insert(osSubEltXPath);
 
             const CPLString osRealFullXPath( oClass.GetXPath() + "/" +
+                    ((bCaseOfConstraintChildren) ?
+                            osOnlyElementXPath + "/" : CPLString("")) +
                                              osSubEltXPath );
 
             if( IsIgnoredXPath( osRealFullXPath ) )
@@ -1726,18 +1904,24 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
             }
 
             GMLASField oField;
-            if( apoImplEltList.size() > 1 )
+            if( apoImplEltList.size() > 1 || bCaseOfConstraintChildren )
             {
-                if( m_oMapEltNamesToInstanceCount[osSubEltName] > 1 )
+                if( m_oMapEltNamesToInstanceCount[osSubEltName] > 1  )
                 {
                     CPLString osLaunderedXPath(osSubEltXPath);
                     osLaunderedXPath.replaceAll(':', '_');
-                    oField.SetName( transcode(poElt->getName()) + "_" +
+                    oField.SetName(
+                        ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                                    transcode(poElt->getName()) + "_" +
                                     osLaunderedXPath + "_pkid" );
                 }
                 else
                 {
-                    oField.SetName( transcode(poElt->getName()) + "_" +
+                    oField.SetName(
+                        ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                            transcode(poElt->getName()) + "_" +
                                     osSubEltName + "_pkid" );
                 }
             }
@@ -1800,8 +1984,13 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
 
             // Add an abstract field
             GMLASField oField;
-            oField.SetName( osEltName + "_" + osSubEltName );
+            oField.SetName(
+                ((bEltNameWillNeedPrefix) ? osEltPrefix + "_" :
+                                                                CPLString()) +
+                osEltName + "_" + osSubEltName );
             oField.SetXPath( oClass.GetXPath() + "/" +
+                    ((bCaseOfConstraintChildren) ?
+                            osOnlyElementXPath + "/" : CPLString("")) +
                                                 osSubEltXPath);
             oField.SetMinOccurs( 0 );
             oField.SetMaxOccurs( nMaxOccurs );
@@ -1889,7 +2078,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                                         oVectorEltsForTopClass,
                             std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
-                            bool& bSimpleEnoughOut)
+                            bool& bSimpleEnoughOut,
+                            int& nCountSubEltsOut )
 {
     const bool bAlreadyVisitedMG =
             ( oSetVisitedModelGroups.find(poModelGroup) !=
@@ -1905,19 +2095,22 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
         return false;
     }
 
+    {
+        CPLString osIgnored;
+        if( m_oDisabledFlattenedXPathMatcher.MatchesRefXPath(
+                                            osParentXPath, osIgnored))
+        {
+            bSimpleEnoughOut = false;
+        }
+    }
+
     XSParticleList* poParticles = poModelGroup->getParticles();
-    int nCountSubElts = 0;
     for(size_t i = 0; i < poParticles->size(); ++i )
     {
         XSParticle* poParticle = poParticles->elementAt(i);
 
         const bool bRepeatedParticle = poParticle->getMaxOccursUnbounded() ||
                                         poParticle->getMaxOccurs() > 1;
-
-        // This could be refined to detect if the repeated element might not
-        // be simplifiable as an array
-        if( bRepeatedParticle )
-            bSimpleEnoughOut = false;
 
         if( poParticle->getTermType() == XSParticle::TERM_ELEMENT )
         {
@@ -1942,14 +2135,29 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                 continue;
             }
 
-            // 10 is an arbitrary value, but we don't want to inline
-            // sub-classes with hundereds of attributes
-            nCountSubElts ++;
-            if( nCountSubElts > 10 )
+            // This could be refined to detect if the repeated element might not
+            // be simplifiable as an array
+            if( bSimpleEnoughOut && bRepeatedParticle )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GMLAS",
+                         "%s not inlinable because %s is repeated",
+                         osParentXPath.c_str(),
+                         osXPath.c_str()
+                        );
+#endif
                 bSimpleEnoughOut = false;
+            }
+
+            // We don't want to inline
+            // sub-classes with hundereds of attributes
+            nCountSubEltsOut ++;
 
             std::vector<XSElementDeclaration*> apoImplEltList;
             GetConcreteImplementationTypes(poElt, apoImplEltList);
+
+            std::vector<XSElementDeclaration*> apoChildrenElements =
+                GetConstraintChildrenElements(osFullXPath);
 
             // Special case for a GML geometry property
             if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
@@ -1972,9 +2180,13 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                 // Do nothing
             }
             // Are there substitution groups for this element ?
-            else if( !apoImplEltList.empty() )
+            else if( !apoImplEltList.empty() || !apoChildrenElements.empty() )
             {
-                if( !poElt->getAbstract() )
+                if( !apoChildrenElements.empty() )
+                {
+                    apoImplEltList = apoChildrenElements;
+                }
+                else if( !poElt->getAbstract() )
                 {
                     apoImplEltList.insert(apoImplEltList.begin(), poElt);
                 }
@@ -2002,10 +2214,14 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GMLAS", "%s (%s) must be exposed as "
-                                     "top-level (derived class)",
+                                     "top-level (%s of %s)",
                                 osSubEltXPath.c_str(),
                                 transcode(poSubElt->getTypeDefinition()->
-                                                            getName()).c_str());
+                                                            getName()).c_str(),
+                                apoChildrenElements.empty() ?
+                                                "derived class" : "child",
+                                osParentXPath.c_str()
+                                );
 #endif
 
                         oSetVisitedEltDecl.insert(poSubElt);
@@ -2020,6 +2236,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             poSubEltCT->getParticle() != NULL )
                         {
                             bool bSubSimpleEnoughOut = true;
+                            int nSubCountSubElt = 0;
                             if( !FindElementsWithMustBeToLevel(
                                             osSubEltXPath,
                                             poSubEltCT->getParticle()->
@@ -2030,7 +2247,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oVectorEltsForTopClass,
                                             aoSetXPathEltsForTopClass,
                                             poModel,
-                                            bSubSimpleEnoughOut ) )
+                                            bSubSimpleEnoughOut,
+                                            nSubCountSubElt ) )
                             {
                                 return false;
                             }
@@ -2042,12 +2260,23 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             else if( !poElt->getAbstract() &&
                 poTypeDef->getTypeCategory() == XSTypeDefinition::COMPLEX_TYPE )
             {
+                nCountSubEltsOut --;
+
                 XSComplexTypeDefinition* poEltCT = IsEltCompatibleOfFC(poElt);
                 if( poEltCT )
                 {
                     // Might be a bit extreme, but for now we don't inline
                     // classes that have subclasses.
-                    bSimpleEnoughOut = false;
+                    if( bSimpleEnoughOut )
+                    {
+#ifdef DEBUG_VERBOSE
+                        CPLDebug("GMLAS",
+                                  "%s not inlinable because %s field is complex",
+                                  osParentXPath.c_str(),
+                                 osXPath.c_str());
+#endif
+                        bSimpleEnoughOut = false;
+                    }
 
                     if( oSetVisitedEltDecl.find(poElt) !=
                                     oSetVisitedEltDecl.end() )
@@ -2055,20 +2284,25 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         if( m_oSetEltsForTopClass.find(poElt) ==
                                                 m_oSetEltsForTopClass.end() &&
                             m_oSetSimpleEnoughElts.find(poElt) ==
-                                                m_oSetSimpleEnoughElts.end() &&
+                                        m_oSetSimpleEnoughElts.end() &&
                             aoSetXPathEltsForTopClass.find( osXPath )
                                 == aoSetXPathEltsForTopClass.end() )
                         {
+                            CPLString osIgnored;
+                            if( !m_oForcedFlattenedXPathMatcher.MatchesRefXPath(
+                                                        osXPath, osIgnored))
+                            {
 #ifdef DEBUG_VERBOSE
-                            CPLDebug("GMLAS", "%s (%s) must be exposed as "
-                                     "top-level (multiple time referenced)",
-                                     osXPath.c_str(),
-                                     transcode(
-                                        poTypeDef->getNamespace()).c_str());
+                                CPLDebug("GMLAS", "%s (%s) must be exposed as "
+                                        "top-level (multiple time referenced)",
+                                        osXPath.c_str(),
+                                        transcode(
+                                            poTypeDef->getNamespace()).c_str());
 #endif
-                            m_oSetEltsForTopClass.insert(poElt);
-                            oVectorEltsForTopClass.push_back(poElt);
-                            aoSetXPathEltsForTopClass.insert( osXPath );
+                                m_oSetEltsForTopClass.insert(poElt);
+                                oVectorEltsForTopClass.push_back(poElt);
+                                aoSetXPathEltsForTopClass.insert( osXPath );
+                            }
                         }
                     }
                     else
@@ -2079,6 +2313,29 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             poEltCT->getParticle() != NULL )
                         {
                             bool bSubSimpleEnoughOut = true;
+                            int nSubCountSubElt = 0;
+
+                            // Process attributes
+                            XSAttributeUseList* poAttrList =
+                                                    poEltCT->getAttributeUses();
+                            const size_t nAttrListSize = (poAttrList != NULL) ?
+                                                                poAttrList->size(): 0;
+                            for(size_t j=0; bSubSimpleEnoughOut && j< nAttrListSize; ++j )
+                            {
+                                XSAttributeUse* poAttr = poAttrList->elementAt(j);
+                                GMLASField oField;
+                                SetFieldFromAttribute(oField, poAttr, osFullXPath);
+                                if( !IsIgnoredXPath( oField.GetXPath() ) &&
+                                    oField.GetFixedValue().empty() )
+                                {
+#ifdef DEBUG_SUPER_VERBOSE
+                                    CPLDebug("GMLAS", "FindElementsWithMustBeToLevel: %s",
+                                             oField.GetXPath().c_str());
+#endif
+                                    nSubCountSubElt ++;
+                                }
+                            }
+
                             if( !FindElementsWithMustBeToLevel(
                                             osFullXPath,
                                             poEltCT->getParticle()->
@@ -2089,17 +2346,62 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oVectorEltsForTopClass,
                                             aoSetXPathEltsForTopClass,
                                             poModel,
-                                            bSubSimpleEnoughOut ) )
+                                            bSubSimpleEnoughOut,
+                                            nSubCountSubElt ) )
                             {
                                 return false;
                             }
                             if( bSubSimpleEnoughOut )
                             {
+#ifdef DEBUG_VERBOSE
+                                CPLDebug("GMLAS",
+                                    "%s is inlinable: %d fields",
+                                    osXPath.c_str(),
+                                    nSubCountSubElt
+                                    );
+#endif
                                 m_oSetSimpleEnoughElts.insert(poElt);
+
+                                nCountSubEltsOut += nSubCountSubElt;
                             }
-                            else
+                            else if( bSimpleEnoughOut )
                             {
+#ifdef DEBUG_VERBOSE
+                                CPLDebug("GMLAS",
+                                    "%s not inlinable because %s is not inlinable",
+                                    osParentXPath.c_str(),
+                                    osXPath.c_str()
+                                    );
+#endif
                                 bSimpleEnoughOut = false;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if( transcode(poElt->getName()) != szFEATURE_COLLECTION )
+                    {
+                        poEltCT =
+                            reinterpret_cast<XSComplexTypeDefinition*>(poTypeDef);
+// Process attributes
+                        XSAttributeUseList* poAttrList =
+                                                poEltCT->getAttributeUses();
+                        const size_t nAttrListSize = (poAttrList != NULL) ?
+                                                            poAttrList->size(): 0;
+                        for(size_t j=0; bSimpleEnoughOut && j< nAttrListSize; ++j )
+                        {
+                            XSAttributeUse* poAttr = poAttrList->elementAt(j);
+                            GMLASField oField;
+                            SetFieldFromAttribute(oField, poAttr, osFullXPath);
+                            if( !IsIgnoredXPath( oField.GetXPath() ) &&
+                                oField.GetFixedValue().empty() )
+                            {
+#ifdef DEBUG_SUPER_VERBOSE
+                                CPLDebug("GMLAS", "FindElementsWithMustBeToLevel: %s",
+                                            oField.GetXPath().c_str());
+#endif
+                                nCountSubEltsOut ++;
                             }
                         }
                     }
@@ -2183,6 +2485,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             poTargetEltCT->getParticle() != NULL )
                         {
                             bool bSubSimpleEnoughOut = true;
+                            int nSubCountSubElt = 0;
                             if( !FindElementsWithMustBeToLevel(
                                             osTargetEltXPath,
                                             poTargetEltCT->getParticle()->
@@ -2193,7 +2496,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                             oVectorEltsForTopClass,
                                             aoSetXPathEltsForTopClass,
                                             poModel,
-                                            bSubSimpleEnoughOut) )
+                                            bSubSimpleEnoughOut,
+                                            nSubCountSubElt) )
                             {
                                 return false;
                             }
@@ -2205,6 +2509,18 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
         else if( !bAlreadyVisitedMG &&
                  poParticle->getTermType() == XSParticle::TERM_MODELGROUP )
         {
+            // This could be refined to detect if the repeated element might not
+            // be simplifiable as an array
+            if( bSimpleEnoughOut && bRepeatedParticle )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GMLAS",
+                        "%s not inlinable because there is a repeated particle",
+                        osParentXPath.c_str());
+#endif
+                bSimpleEnoughOut = false;
+            }
+
             XSModelGroup* psSubModelGroup = poParticle->getModelGroupTerm();
             if( !FindElementsWithMustBeToLevel(
                                     osParentXPath,
@@ -2215,10 +2531,42 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                     oVectorEltsForTopClass,
                                     aoSetXPathEltsForTopClass,
                                     poModel,
-                                    bSimpleEnoughOut) )
+                                    bSimpleEnoughOut,
+                                    nCountSubEltsOut) )
             {
                 return false;
             }
+        }
+        else
+        {
+            // This could be refined to detect if the repeated element might not
+            // be simplifiable as an array
+            if( bSimpleEnoughOut && bRepeatedParticle )
+            {
+#ifdef DEBUG_VERBOSE
+                CPLDebug("GMLAS",
+                        "%s not inlinable because there is a repeated particle",
+                        osParentXPath.c_str());
+#endif
+                bSimpleEnoughOut = false;
+            }
+        }
+    }
+
+    if( bSimpleEnoughOut &&
+        nCountSubEltsOut > m_nMaximumFieldsForFlattening )
+    {
+        CPLString osIgnored;
+        if( !m_oForcedFlattenedXPathMatcher.MatchesRefXPath(
+                                                osParentXPath, osIgnored))
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GMLAS",
+                        "%s not inlinable because it has more than %d fields",
+                        osParentXPath.c_str(),
+                        m_nMaximumFieldsForFlattening);
+#endif
+            bSimpleEnoughOut = false;
         }
     }
 
@@ -2332,7 +2680,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 CPLDebug("GMLAS", "%s is in ignored xpaths",
                         oField.GetXPath().c_str());
 #endif
-                if( !oField.GetFixedValue().empty() )
+                if( !oField.GetFixedValue().empty() ||
+                    !oField.GetDefaultValue().empty() )
                 {
                     oField.SetIgnored();
                 }
@@ -2368,7 +2717,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                         apoImplEltList,
                                         oClass,
                                         1,
-                                        true);
+                                        false, // doesn't need prefix
+                                        true, // force junction table
+                                        false // regular case
+                                       );
 
             return true;
         }
@@ -2400,6 +2752,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 oIter != oMapCountOccurrencesOfSameName.end() &&
                 oIter->second > 1;
             const CPLString osEltNS(transcode(poElt->getNamespace()));
+            const CPLString osPrefixedEltName(
+                (bEltNameWillNeedPrefix ? GetPrefix(osEltNS) + "_" : CPLString()) +
+                osEltName);
             const CPLString osOnlyElementXPath(MakeXPath(osEltNS, osEltName));
             const CPLString osElementXPath( oClass.GetXPath() + "/" +
                                             osOnlyElementXPath );
@@ -2442,13 +2797,29 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             std::vector<XSElementDeclaration*> apoImplEltList;
             GetConcreteImplementationTypes(poElt, apoImplEltList);
 
+            std::vector<XSElementDeclaration*> apoChildrenElements =
+                GetConstraintChildrenElements(osElementXPath);
+
             // Special case for a GML geometry property
             OGRwkbGeometryType eGeomType = wkbNone;
-            if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
+
+            if( !apoChildrenElements.empty() )
+            {
+                CreateNonNestedRelationship(poElt,
+                                            apoChildrenElements,
+                                            oClass,
+                                            nMaxOccurs,
+                                            bEltNameWillNeedPrefix,
+                                            false, // do not force junction table
+                                            true // special case for children elements
+                                           );
+            }
+
+            else if( IsGMLNamespace(transcode(poTypeDef->getNamespace())) &&
                 (eGeomType = GetOGRGeometryType(poTypeDef)) != wkbNone )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
                 oField.SetType( GMLAS_FT_GEOMETRY, szFAKEXS_GEOMETRY );
@@ -2473,7 +2844,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                                     != wkbNone )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
 
@@ -2497,7 +2868,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                      osEltName != "AbstractTimeObject" )
             {
                 GMLASField oField;
-                oField.SetName( osEltName );
+                oField.SetName( osPrefixedEltName );
                 oField.SetMinOccurs( nMinOccurs );
                 oField.SetMaxOccurs( nMaxOccurs );
                 if( osEltName == "AbstractGeometry" )
@@ -2528,14 +2899,19 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             // Are there substitution groups for this element ?
             // or is this element already identified as being a top-level one ?
             else if( !apoImplEltList.empty() ||
-                     m_oSetEltsForTopClass.find(poElt) !=
-                                                m_oSetEltsForTopClass.end() )
+                     (m_oSetEltsForTopClass.find(poElt) !=
+                                                m_oSetEltsForTopClass.end() &&
+                      m_oSetSimpleEnoughElts.find(poElt) ==
+                                                m_oSetSimpleEnoughElts.end()) )
             {
                 CreateNonNestedRelationship(poElt,
                                             apoImplEltList,
                                             oClass,
                                             nMaxOccurs,
-                                            false);
+                                            bEltNameWillNeedPrefix,
+                                            false, // do not force junction table
+                                            false // regular case
+                                           );
             }
 
             // Abstract element without realizations !
@@ -2543,6 +2919,9 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             {
                 // Do nothing with it since it cannot be instantiated
                 // in a valid way.
+                CPLDebug("GMLAS",
+                         "Ignoring %s that is abstract without realizations",
+                         osElementXPath.c_str());
             }
 
             // Simple type like string, int, etc...
@@ -2590,8 +2969,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                          ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                          osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     GMLASField oUniqueField;
                     oUniqueField.SetName("value");
@@ -2606,7 +2984,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     oClass.AddNestedClass( oNestedClass );
 
                     oField.SetType( GMLAS_FT_STRING, "" );
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     oField.SetCategory(
                                     GMLASField::PATH_TO_CHILD_ELEMENT_NO_LINK);
@@ -2615,7 +2993,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 }
                 else
                 {
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     if( !bIsChoice && nMinOccurs > 0 &&
                         !poElt->getNillable() )
@@ -2628,10 +3006,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     // need an extra field to be able to distinguish between the
                     // case of the missing element or the element with
                     // xsi:nil="true"
-                    if( nMinOccurs == 0 && poElt->getNillable() )
+                    if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                     {
                         GMLASField oFieldNil;
-                        oFieldNil.SetName( osEltName + "_" + szNIL );
+                        oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                         oFieldNil.SetXPath( osElementXPath + "/" +
                                             szAT_XSI_NIL );
                         oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2674,7 +3052,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     XSAttributeUse* poAttr = poAttrList->elementAt(j);
                     GMLASField oField;
                     CPLString osNamePrefix( bMoveNestedClassToTop ?
-                                osEltName : CPLString() );
+                        osPrefixedEltName : CPLString() );
                     SetFieldFromAttribute(oField, poAttr,
                                           osElementXPath,
                                           osNamePrefix);
@@ -2690,7 +3068,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         CPLDebug("GMLAS", "%s is in ignored xpaths",
                                  oField.GetXPath().c_str());
 #endif
-                        if( !oField.GetFixedValue().empty() )
+                        if( !oField.GetFixedValue().empty() ||
+                            !oField.GetDefaultValue().empty() )
                         {
                             oField.SetIgnored();
                         }
@@ -2716,7 +3095,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     }
                     else
                     {
-                        oField.SetName( osEltName + "_anyAttributes" );
+                        oField.SetName( osPrefixedEltName + "_anyAttributes" );
                     }
                     oField.SetXPath(  osElementXPath + "/" + szAT_ANY_ATTR );
                     oField.SetDocumentation( GetAnnotationDoc(
@@ -2740,7 +3119,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                     {
                         /* We have a complex type, but no attributes, and */
                         /* compatible of arrays, so move it to top level! */
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetArray( true );
                         oField.SetMinOccurs( nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
@@ -2763,7 +3142,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
                         }
 
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
 
@@ -2771,10 +3150,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         // need an extra field to be able to distinguish between the
                         // case of the missing element or the element with
                         // xsi:nil="true"
-                        if( nMinOccurs == 0 && poElt->getNillable() )
+                        if( nMinOccurs == 0 && poElt->getNillable() && !m_bUseNullState )
                         {
                             GMLASField oFieldNil;
-                            oFieldNil.SetName( osEltName + "_" + szNIL );
+                            oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                             oFieldNil.SetXPath( osElementXPath + "/" +
                                                 szAT_XSI_NIL );
                             oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2816,7 +3195,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
                         }
 
-                        oField.SetName( osEltName );
+                        oField.SetName( osPrefixedEltName );
                         oField.SetMinOccurs( nMinOccurs );
                         oField.SetMaxOccurs( nMaxOccurs );
                     }
@@ -2837,7 +3216,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                 oClass,
                                                 bMoveNestedClassToTop ? 1 :
                                                         MAXOCCURS_UNLIMITED,
-                                                true);
+                                                bEltNameWillNeedPrefix,
+                                                true, // force junction table
+                                                false // regular case
+                                               );
 
                     bNothingMoreToDo = true;
                 }
@@ -2846,8 +3228,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                          ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                          osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     oNestedClass.SetDocumentation( GetAnnotationDoc( poElt ) );
 
@@ -2899,10 +3280,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // need an extra field to be able to distinguish between the
                             // case of the missing element or the element with
                             // xsi:nil="true"
-                            if( poElt->getNillable() )
+                            if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
-                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                                 oFieldNil.SetXPath( osElementXPath + "/" +
                                                     szAT_XSI_NIL );
                                 oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2916,7 +3297,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oField.SetXPath(
                                 GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
                                             osElementXPath + "/" + szAT_XLINK_HREF));
-                            oField.SetName( osEltName + szPKID_SUFFIX );
+                            oField.SetName( osPrefixedEltName + szPKID_SUFFIX );
                             oField.SetMinOccurs(0);
                             oField.SetMaxOccurs(1);
                             oField.SetType( GMLAS_FT_STRING, szXS_STRING );
@@ -2931,10 +3312,10 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // need an extra field to be able to distinguish between the
                             // case of the missing element or the element with
                             // xsi:nil="true"
-                            if( poElt->getNillable() )
+                            if( poElt->getNillable() && !m_bUseNullState )
                             {
                                 GMLASField oFieldNil;
-                                oFieldNil.SetName( osEltName + "_" + szNIL );
+                                oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
                                 oFieldNil.SetXPath( osElementXPath + "/" +
                                                     szAT_XSI_NIL );
                                 oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
@@ -2985,8 +3366,8 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         for(size_t j = 0; j < osNestedClassFields.size(); j++ )
                         {
                             GMLASField oField(osNestedClassFields[j]);
-                            oField.SetName( osEltName +
-                                            "_" + oField.GetName() );
+                            oField.SetName( 
+                                osPrefixedEltName + "_" + oField.GetName() );
                             if( nMinOccurs == 0 ||
                                 (poEltCT->getParticle() != NULL &&
                                  poEltCT->getParticle()->getMinOccurs() == 0) )
@@ -3026,7 +3407,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             // no nested classes, then add an array attribute
                             // at the top-level
                             GMLASField oField (oNestedClass.GetFields()[0] );
-                            oField.SetName( osEltName + "_" +
+                            oField.SetName( osPrefixedEltName + "_" +
                                             oField.GetName() );
                             if( oField.GetMaxOccurs() == 1 &&
                                 bEltRepeatedParticle &&
@@ -3056,13 +3437,13 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 GMLASFeatureClass oIntermediateNestedClass;
                                 oIntermediateNestedClass.SetName(
                                         oClass.GetName() + "_" +
-                                        osEltName );
+                                        osPrefixedEltName );
                                 oIntermediateNestedClass.SetXPath( osElementXPath );
 
                                 oIntermediateNestedClass.PrependFields( aoFields );
 
                                 oNestedClass.SetName( oClass.GetName() + "_" +
-                                        osEltName + "_sequence" );
+                                        osPrefixedEltName + "_sequence" );
                                 oNestedClass.SetXPath( oNestedClass.GetXPath() +
                                         szEXTRA_SUFFIX + "sequence");
                                 oNestedClass.SetIsRepeatedSequence( true );
@@ -3092,7 +3473,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             }
 
                             GMLASField oField;
-                            oField.SetName( osEltName );
+                            oField.SetName( osPrefixedEltName );
                             oField.SetXPath( osElementXPath );
                             if( bRepeatedParticle )
                             {
@@ -3134,15 +3515,14 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 {
                     GMLASFeatureClass oNestedClass;
                     oNestedClass.SetName( oClass.GetName() + "_" +
-                                        ((bEltNameWillNeedPrefix) ? GetPrefix(osEltNS) + "_" : "") +
-                                        osEltName );
+                                          osPrefixedEltName );
                     oNestedClass.SetXPath( osElementXPath );
                     oNestedClass.AppendFields( aoFields );
                     oNestedClass.SetDocumentation( GetAnnotationDoc( poElt ) );
                     oClass.AddNestedClass( oNestedClass );
 
                     GMLASField oField;
-                    oField.SetName( osEltName );
+                    oField.SetName( osPrefixedEltName );
                     oField.SetXPath( osElementXPath );
                     oField.SetMinOccurs( (bIsChoice) ? 0 : nMinOccurs );
                     oField.SetMaxOccurs( nMaxOccurs );

@@ -30,7 +30,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRGTMDataSource()                           */
@@ -119,7 +119,7 @@ void OGRGTMDataSource::WriteWaypointStyles()
                 appendUShort(pBufferAux, 5);
                 pBufferAux = ((char*)pBufferAux) + 2;
                 // facename
-                strncpy((char*)pBufferAux, "Arial", 5);
+                memcpy((char*)pBufferAux, "Arial", 5);
                 pBufferAux = ((char*)pBufferAux) + 5;
                 // dspl
                 appendUChar(pBufferAux, (unsigned char) i);

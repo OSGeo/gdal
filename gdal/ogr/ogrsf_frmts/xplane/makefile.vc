@@ -1,5 +1,5 @@
 
-OBJ	=	ogrxplanedriver.obj ogrxplanedatasource.obj ogrxplanelayer.obj ogr_xplane_geo_utils.obj \
+OBJ	=	ogrxplanedriver.obj ogrxplanedatasource.obj ogrxplanelayer.obj \
 		ogr_xplane_reader.obj ogr_xplane_apt_reader.obj ogr_xplane_nav_reader.obj \
 		ogr_xplane_fix_reader.obj ogr_xplane_awy_reader.obj
 

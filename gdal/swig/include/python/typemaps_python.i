@@ -479,12 +479,18 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     }
 
     if (safeLen) safeLen--;
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else if (PyBytes_Check($input))
   {
     Py_ssize_t safeLen = 0;
     PyBytes_AsStringAndSize($input, (char**) &$2, &safeLen);
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else
@@ -497,6 +503,9 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   {
     Py_ssize_t safeLen = 0;
     PyString_AsStringAndSize($input, (char**) &$2, &safeLen);
+    if( safeLen > INT_MAX ) {
+      SWIG_exception( SWIG_RuntimeError, "too large buffer (>2GB)" );
+    }
     $1 = (int) safeLen;
   }
   else
@@ -604,7 +613,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsIntegerList()
  */
-%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList)
+%typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen = 0, int *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const int **pList) (int nLen, int *pList) */
   $1 = &nLen;
@@ -626,36 +635,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsInteger64List()
  */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
-{
-  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
-  $1 = &nLen;
-  $2 = &pList;
-}
-
-%typemap(argout) (int *nLen, const GIntBig **pList )
-{
-  /* %typemap(argout) (int *nLen, const GIntBig **pList ) */
-  Py_DECREF($result);
-  PyObject *out = PyList_New( *$1 );
-  for( int i=0; i<*$1; i++ ) {
-    char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
-    PyObject* val;
-%#if PY_VERSION_HEX>=0x03000000
-    val = PyLong_FromString(szTmp, NULL, 10);
-%#else
-    val = PyInt_FromString(szTmp, NULL, 10);
-%#endif
-    PyList_SetItem( out, i, val );
-  }
-  $result = out;
-}
-
-/*
- * Typemap argout used in Feature::GetFieldAsInteger64List()
- */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList)
+%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen = 0, GIntBig *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
   $1 = &nLen;
@@ -684,7 +664,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout used in Feature::GetFieldAsDoubleList()
  */
-%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList)
+%typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen = 0, double *pList = NULL)
 {
   /* %typemap(in,numinputs=0) (int *nLen, const double **pList) (int nLen, double *pList) */
   $1 = &nLen;
@@ -1136,7 +1116,12 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = PyList_Size(pyList) - 2;
+    if( PyList_Size(pyList) > INT_MAX )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+        return NULL;
+    }
+    nChildCount = static_cast<int>(PyList_Size(pyList)) - 2;
     if( nChildCount < 0 )
     {
         PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
@@ -1308,6 +1293,17 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 {
     /* %typemap(in) (GDALProgressFunc callback = NULL) */
     /* callback_func typemap */
+
+    /* In some cases 0 is passed instead of None. */
+    /* See https://github.com/OSGeo/gdal/pull/219 */
+    if ( PyLong_Check($input) || PyInt_Check($input) )
+    {
+        if( PyLong_AsLong($input) == 0 )
+        {
+            $input = Py_None;
+        }
+    }
+
     if ($input && $input != Py_None ) {
         void* cbfunction = NULL;
         CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( $input,
@@ -1844,7 +1840,10 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
   if (result == 0)
     $result = SWIG_NewPointerObj((void*)new_StatBuf( $1 ),SWIGTYPE_p_StatBuf,1);
   else
+  {
     $result = Py_None;
+    Py_INCREF($result);
+  }
 }
 
 %typemap(in,numinputs=0) (void** pptr, size_t* pnsize, GDALDataType* pdatatype, int* preadonly) (void* ptr, size_t nsize, GDALDataType datatype, int readonly)
@@ -1982,4 +1981,32 @@ DecomposeSequenceOfCoordinates( PyObject *seq, int nCount, double *x, double *y,
     $result = SWIG_Python_AppendOutput($result, PyFloat_FromDouble( *$2));
   }
 
+}
+
+
+%typemap(in,numinputs=0) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL) ( OGRSpatialReferenceH* pahSRS = NULL, int nvalues = 0, int* confidence_values = NULL )
+{
+  /* %typemap(in) (OSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+  $1 = &pahSRS;
+  $2 = &nvalues;
+  $3 = &confidence_values;
+}
+
+%typemap(argout) (OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL)
+{
+    /* %typemap(argout) (OOSRSpatialReferenceShadow***, int* nvalues, int** confidence_values)  */
+
+    Py_DECREF($result);
+
+    $result = PyList_New( *($2));
+    for( int i = 0; i < *($2); i++ )
+    {
+        PyObject *tuple = PyTuple_New( 2 );
+        PyTuple_SetItem( tuple, 0,
+            SWIG_NewPointerObj(SWIG_as_voidptr((*($1))[i]), SWIGTYPE_p_OSRSpatialReferenceShadow, 1 ) );
+        PyTuple_SetItem( tuple, 1, PyInt_FromLong((*($3))[i]) );
+        PyList_SetItem( $result, i, tuple );
+    }
+    CPLFree( *($1) );
+    CPLFree( *($3) );
 }

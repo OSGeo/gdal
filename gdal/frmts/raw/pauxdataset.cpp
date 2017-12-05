@@ -34,7 +34,7 @@
 
 #include <cmath>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -75,6 +75,8 @@ class PAuxDataset : public RawDataset
     virtual int    GetGCPCount() override;
     virtual const char *GetGCPProjection() override;
     virtual const GDAL_GCP *GetGCPs() override;
+
+    virtual char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -332,6 +334,18 @@ PAuxDataset::~PAuxDataset()
 
     CPLFree( pszAuxFilename );
     CSLDestroy( papszAuxLines );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **PAuxDataset::GetFileList()
+
+{
+    char **papszFileList = RawDataset::GetFileList();
+    papszFileList = CSLAddString( papszFileList, pszAuxFilename );
+    return papszFileList;
 }
 
 /************************************************************************/
@@ -1100,6 +1114,7 @@ void GDALRegister_PAux()
         "       <Value>PIXEL</Value>"
         "   </Option>"
         "</CreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = PAuxDataset::Open;
     poDriver->pfnCreate = PAuxDataset::Create;

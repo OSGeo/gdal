@@ -20,6 +20,7 @@
         <RemoveUnusedLayers>false</RemoveUnusedLayers>
         <RemoveUnusedFields>false</RemoveUnusedFields>
         <UseArrays>true</UseArrays>
+        <UseNullState>false</UseNullState>
         <GML>
             <IncludeGeometryXML>false</IncludeGeometryXML>
             <InstantiateGMLFeaturesOnly>true</InstantiateGMLFeaturesOnly>
@@ -34,7 +35,46 @@
         <!-- Launder identifiers like the OGR PG driver does.
              Note: this laundering is safe for other backends as well. -->
         <PostgreSQLIdentifierLaundering>true</PostgreSQLIdentifierLaundering>
+        <FlatteningRules>
+            <!-- Maximum number of fields allowed for element flattening -->
+            <MaximumNumberOfFields>10</MaximumNumberOfFields>
+
+            <Namespaces>
+                <Namespace prefix="swe" uri="http://www.opengis.net/swe/2.0"/>
+            </Namespaces>
+
+            <!-- Exception to MaximumNumberOfFields:
+                force this element(s) to be flattened even if they have more elements -->
+
+            <ForceFlatteningXPath>swe:values</ForceFlatteningXPath>
+
+            <!-- Exception to MaximumNumberOfFields:
+                prevent this element(s) from being flattened even if they have less elements -->
+            <!--
+            <DisableFlatteningXPath>...</DisableFlatteningXPath>
+            -->
+        </FlatteningRules>
+
+        <SWEProcessing>
+            <Activation>ifSWENamespaceFoundInTopElement</Activation>
+            <ProcessDataRecord>true</ProcessDataRecord>
+            <ProcessDataArray>true</ProcessDataArray>
+        </SWEProcessing>
     </LayerBuildingRules>
+
+    <!-- constraints typically expressed as schematrons -->
+    <TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="gwml2w" uri="http://www.opengis.net/gwml-well/2.2"/>
+            <Namespace prefix="om" uri="http://www.opengis.net/om/2.0"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>gwml2w:GW_GeologyLog/om:result</ContainerXPath>
+            <ChildrenElements>
+                <Element>gwml2w:GW_GeologyLogCoverage</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
 
     <XLinkResolution>
         <Timeout>10</Timeout> <!-- can be set with GDAL_HTTP_TIMEOUT -->
@@ -86,6 +126,7 @@
         <Namespaces>
             <Namespace prefix="gml" uri="http://www.opengis.net/gml"/>
             <Namespace prefix="gml32" uri="http://www.opengis.net/gml/3.2"/>
+            <Namespace prefix="swe" uri="http://www.opengis.net/swe/2.0"/>
         </Namespaces>
         <XPath warnIfIgnoredXPathFoundInDocInstance="false">gml:boundedBy</XPath>
         <XPath warnIfIgnoredXPathFoundInDocInstance="false">gml32:boundedBy</XPath>
@@ -99,6 +140,18 @@
         <XPath>@xlink:actuate</XPath>
         <XPath>@gml:remoteSchema</XPath>
         <XPath>@gml32:remoteSchema</XPath>
+        <XPath>swe:Quantity/swe:extension</XPath>
+        <XPath>swe:Quantity/@referenceFrame</XPath>
+        <XPath>swe:Quantity/@axisID</XPath>
+        <XPath>swe:Quantity/@updatable</XPath>
+        <XPath>swe:Quantity/@optional</XPath>
+        <XPath>swe:Quantity/@id</XPath>
+        <XPath>swe:Quantity/swe:identifier</XPath>
+        <!-- <XPath>swe:Quantity/@definition</XPath> -->
+        <XPath>swe:Quantity/swe:label</XPath>
+        <XPath>swe:Quantity/swe:nilValues</XPath>
+        <XPath>swe:Quantity/swe:constraint</XPath>
+        <XPath>swe:Quantity/swe:quality</XPath>
     </IgnoredXPaths>
 
     <!-- Section for GMLAS writer config -->

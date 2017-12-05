@@ -34,8 +34,9 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_vsi_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRKMLDataSource()                           */
@@ -145,7 +146,12 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Prescan the KML file so we can later work with the structure    */
 /* -------------------------------------------------------------------- */
-    poKMLFile_->parse();
+    if( !poKMLFile_->parse() )
+    {
+        delete poKMLFile_;
+        poKMLFile_ = NULL;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Classify the nodes                                              */
@@ -178,13 +184,13 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
     if( CPLGetConfigOption("KML_DEBUG",NULL) != NULL )
         poKMLFile_->print(3);
 
-    nLayers_ = poKMLFile_->getNumLayers();
+    const int nLayers = poKMLFile_->getNumLayers();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate memory for the Layers                                  */
 /* -------------------------------------------------------------------- */
     papoLayers_ = static_cast<OGRKMLLayer **>(
-        CPLMalloc( sizeof(OGRKMLLayer *) * nLayers_ ));
+        CPLMalloc( sizeof(OGRKMLLayer *) * nLayers ));
 
     OGRSpatialReference *poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
         "   DATUM[\"WGS_1984\","
@@ -200,7 +206,7 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /* -------------------------------------------------------------------- */
 /*      Create the Layers and fill them                                 */
 /* -------------------------------------------------------------------- */
-    for( int nCount = 0; nCount < nLayers_; nCount++ )
+    for( int nCount = 0; nCount < nLayers; nCount++ )
     {
         if( !poKMLFile_->selectLayer(nCount) )
         {
@@ -237,6 +243,20 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
         {
             sName.Printf( "Layer #%d", nCount );
         }
+        else
+        {
+            // Build unique layer name
+            int nIter = 2;
+            while( true )
+            {
+                if( GetLayerByName(sName) == NULL )
+                    break;
+                sName = CPLSPrintf("%s (#%d)",
+                                   poKMLFile_->getCurrentName().c_str(),
+                                   nIter);
+                nIter ++;
+            }
+        }
 
         OGRKMLLayer *poLayer =
             new OGRKMLLayer( sName.c_str(), poSRS, false, poGeotype, this );
@@ -247,6 +267,8 @@ int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
         papoLayers_[nCount] = poLayer;
+
+        nLayers_ = nCount + 1;
     }
 
     poSRS->Release();
@@ -313,11 +335,12 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     pszName_ = CPLStrdup( pszName );
 
-    fpOutput_ = VSIFOpenL( pszName, "wb" );
+    fpOutput_ = VSIFOpenExL( pszName, "wb", true );
     if( fpOutput_ == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to create KML file %s.", pszName );
+                  "Failed to create KML file %s: %s", pszName,
+                  VSIGetLastErrorMsg() );
         return FALSE;
     }
 
@@ -328,7 +351,8 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
 
     VSIFPrintfL( fpOutput_,
                  "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n"
-                 "<Document id=\"root_doc\">\n" );
+                 "<Document id=\"%s\">\n",
+                 CSLFetchNameValueDef(papszOptions, "DOCUMENT_ID", "root_doc") );
 
     return TRUE;
 }

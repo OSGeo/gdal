@@ -12,6 +12,10 @@
  * is shoved onto the user.
  */
 
+#ifdef _WIN32
+#define XMD_H // to avoid INT16 and INT32 to be defined by jmorecfg.h which can conflict with windows.h imported headers
+#endif
+
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
@@ -27,6 +31,65 @@ extern void free JPP((void *ptr));
 #ifndef SEEK_SET		/* pre-ANSI systems may not define this; */
 #define SEEK_SET  0		/* if not, assume 0 is correct */
 #endif
+
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+
+/* tmpfile() replacement for Windows.
+ *
+ * On Windows tmpfile() creates the file in the root directory. This
+ * may fail due to unsufficient privileges. 
+ *
+ * COPIED FROM cairo-misc.c in gtklibs
+ */
+static FILE *
+_win32_tmpfile (void)
+{
+    DWORD path_len;
+    WCHAR path_name[MAX_PATH + 1];
+    WCHAR file_name[MAX_PATH + 1];
+    HANDLE handle;
+    int fd;
+    FILE *fp;
+
+    path_len = GetTempPathW (MAX_PATH, path_name);
+    if (path_len <= 0 || path_len >= MAX_PATH)
+        return NULL;
+
+    if (GetTempFileNameW (path_name, L"gdal_", 0, file_name) == 0)
+        return NULL;
+
+    handle = CreateFileW (file_name,
+                          GENERIC_READ | GENERIC_WRITE,
+                          0,
+                          NULL,
+                          CREATE_ALWAYS,
+                          FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE,
+                        NULL);
+    if (handle == INVALID_HANDLE_VALUE) {
+        DeleteFileW (file_name);
+        return NULL;
+    }
+
+    fd = _open_osfhandle((intptr_t) handle, 0);
+    if (fd < 0) {
+        CloseHandle (handle);
+        return NULL;
+    }
+
+    fp = fdopen(fd, "w+b");
+    if (fp == NULL) {
+        _close(fd);
+        return NULL;
+    }
+
+    return fp;
+}
+
+#define tmpfile() _win32_tmpfile()
+
+#endif /* _WIN32 */
 
 
 /*

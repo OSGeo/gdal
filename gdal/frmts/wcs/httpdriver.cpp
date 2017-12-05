@@ -33,7 +33,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*               HTTPFetchContentDispositionFilename()                 */
@@ -85,7 +85,6 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-
     CPLHTTPResult *psResult = CPLHTTPFetch( poOpenInfo->pszFilename, NULL );
 
 /* -------------------------------------------------------------------- */
@@ -143,7 +142,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
     /* suppress errors as not all drivers support /vsimem */
     CPLPushErrorHandler( CPLQuietErrorHandler );
     GDALDataset *poDS = (GDALDataset *)
-        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags,
+        GDALOpenEx( osResultFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
                     poOpenInfo->papszAllowedDrivers,
                     poOpenInfo->papszOpenOptions, NULL);
     CPLPopErrorHandler();
@@ -171,7 +170,7 @@ static GDALDataset *HTTPOpen( GDALOpenInfo * poOpenInfo )
         else
         {
             poDS =  (GDALDataset *)
-                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags,
+                GDALOpenEx( osTempFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
                             poOpenInfo->papszAllowedDrivers,
                             poOpenInfo->papszOpenOptions, NULL );
             if( VSIUnlink( osTempFilename ) != 0 && poDS != NULL )

@@ -29,7 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(WIN32)
 
@@ -58,7 +58,7 @@ CPL_CVSID("$Id$");
 class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-
+    // TODO(schwehr): Fix Open call to remove the need for this using call.
     using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
@@ -143,6 +143,7 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
     case ERROR_DRIVE_LOCKED:        /* The disk is in use or locked by another process. */
     case ERROR_LOCK_FAILED:         /* Unable to lock a region of a file. */
     case ERROR_SEEK_ON_DEVICE:      /* The file pointer cannot be set on the specified device or file. */
+    case ERROR_SHARING_VIOLATION:   /* The process cannot access the file because it is being used by another process. */
         err = EACCES;
         break;
     case ERROR_INVALID_HANDLE:      /* The handle is invalid. */
@@ -244,8 +245,8 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        (LPTSTR) &lpMsgBuf, 0, NULL );
 
-        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );
-        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",
+        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
+        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",/*ok*/
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
         errno = ErrnoFromGetLastError();
@@ -466,17 +467,20 @@ static void VSIWin32TryLongFilename(wchar_t*& pwszFilename)
         pwszFilename[1] == ':' &&
         (pwszFilename[2] == '\\' || pwszFilename[2] == '/' ) )
     {
-        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
-                    (4 + nLen + 1) * sizeof(wchar_t));
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc( pwszFilename, (4 + nLen + 1) * sizeof(wchar_t)));
         memmove( pwszFilename + 4, pwszFilename, (nLen+1) * sizeof(wchar_t));
     }
     else
     {
-        wchar_t* pwszCurDir = (wchar_t*) CPLMalloc(32768 * sizeof(wchar_t));
+        // TODO(schwehr): 32768 should be a symbolic constant.
+        wchar_t* pwszCurDir =
+            static_cast<wchar_t *>(CPLMalloc(32768 * sizeof(wchar_t)));
         DWORD nCurDirLen = GetCurrentDirectoryW( 32768, pwszCurDir );
         CPLAssert(nCurDirLen < 32768);
-        pwszFilename = (wchar_t*) CPLRealloc( pwszFilename,
-                    (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t));
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc(pwszFilename,
+                       (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t)));
         int nOffset = 0;
         if( pwszFilename[0] == '.' &&
             (pwszFilename[1] == '/' || pwszFilename[1] == '\\') )
@@ -536,13 +540,15 @@ static bool VSIWin32IsLongFilename( const wchar_t* pwszFilename )
 
 VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess,
-                                                   bool /* bSetError */ )
+                                                   bool bSetError )
 
 {
-    DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
+    DWORD dwDesiredAccess;
+    DWORD dwCreationDisposition;
+    DWORD dwFlagsAndAttributes;
     HANDLE hFile;
 
-    // GENERICs are used instead of FILE_GENERIC_READ
+    // GENERICs are used instead of FILE_GENERIC_READ.
     dwDesiredAccess = GENERIC_READ;
     if (strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != NULL)
         dwDesiredAccess |= GENERIC_WRITE;
@@ -575,8 +581,11 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             }
             if( nVersion < 1 * 10000 + 7 * 100 + 4 )
             {
-                //CPLDebug("VSI", "Wine %s detected. Append mode needs FILE_WRITE_DATA",
-                //         pszWineVersion);
+#if DEBUG_VERBOSE
+                CPLDebug("VSI",
+                         "Wine %s detected. Append mode needs FILE_WRITE_DATA",
+                         pszWineVersion);
+#endif
                 dwDesiredAccess |= FILE_WRITE_DATA;
             }
         }
@@ -597,13 +606,14 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 /*      converting to wide characters to open.                          */
 /* -------------------------------------------------------------------- */
     DWORD nLastError = 0;
+    bool bShared = CPLTestBool(CPLGetConfigOption( "GDAL_SHARED_FILE", "YES" ) );
     if( CPLTestBool(CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar( pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2 );
 
         hFile = CreateFileW( pwszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         if ( hFile == INVALID_HANDLE_VALUE &&
@@ -620,6 +630,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                     case ERROR_BAD_PATHNAME:        CPLDebug("VSI", "ERROR_BAD_PATHNAME"); break;
                     case ERROR_BAD_NETPATH:         CPLDebug("VSI", "ERROR_BAD_NETPATH"); break;
                     case ERROR_FILENAME_EXCED_RANGE: CPLDebug("VSI", "ERROR_FILENAME_EXCED_RANGE"); break;
+                    case ERROR_SHARING_VIOLATION:   CPLDebug("VSI", "ERROR_SHARING_VIOLATION"); break;
                     default:  CPLDebug("VSI", "other error %d", nLastError); break;
             }
 #endif
@@ -630,7 +641,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             VSIWin32TryLongFilename(pwszFilename);
             nLastError = 0;
             hFile = CreateFileW( pwszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
         }
@@ -639,14 +650,22 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     else
     {
         hFile = CreateFile( pszFilename, dwDesiredAccess,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
                             NULL, dwCreationDisposition,  dwFlagsAndAttributes,
                             NULL );
     }
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
-        errno = ErrnoFromGetLastError(nLastError);
+        nLastError = GetLastError();
+        const int nError = ErrnoFromGetLastError(nLastError);
+        if( bSetError && nError != 0 )
+        {
+            VSIError(VSIE_FileError, "%s: %s", pszFilename,
+                     (nLastError == ERROR_SHARING_VIOLATION) ?
+                        "file used by other process": strerror(nError));
+        }
+        errno = nError;
         return NULL;
     }
 
@@ -719,7 +738,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
         {
             // _wstat64 doesn't like \\?\ paths, so do our poor-man
             // stat like.
-            //nResult = _wstat64( pwszFilename, pStatBuf );
+            // nResult = _wstat64( pwszFilename, pStatBuf );
 
             VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
             if( poHandle != NULL )

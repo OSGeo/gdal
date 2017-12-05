@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRXLSLayer()                             */
@@ -138,7 +138,7 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
         {
             if (freexl_get_cell_value(xlshandle, j, i, &sCellValue) == FREEXL_OK)
             {
-                OGRFieldType eType = (OGRFieldType) paeFieldTypes[i];
+                int eType = paeFieldTypes[i];
                 switch (sCellValue.type)
                 {
                     case FREEXL_CELL_INT:
@@ -168,9 +168,9 @@ void OGRXLSLayer::DetectColumnTypes(const void* xlshandle,
 
                 if (paeFieldTypes[i] < 0)
                 {
-                    paeFieldTypes[i] = (int) eType;
+                    paeFieldTypes[i] = eType;
                 }
-                else if ((int)eType != paeFieldTypes[i])
+                else if (eType != paeFieldTypes[i])
                 {
                     if ((paeFieldTypes[i] == OFTDate ||
                          paeFieldTypes[i] == OFTTime ||

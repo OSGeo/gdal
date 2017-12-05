@@ -67,6 +67,23 @@ struct TempKeyData {
 };
 typedef struct TempKeyData TempKeyData;
 
+struct gtiff;
+
+#ifndef GTIF_PRINT_FUNC_FORMAT
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define GTIF_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define GTIF_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+#endif
+
+#ifndef GTERRORCALLBACK_DEFINED
+#define GTERRORCALLBACK_DEFINED
+/* Defined in both geotiff.h and geo_kep.h */
+typedef void (*GTErrorCallback) (struct gtiff*,
+                                 int level,
+                                 const char* msg, ...) GTIF_PRINT_FUNC_FORMAT(3,4);
+#endif
 
 struct gtiff {
    tiff_t*    gt_tif;      /* TIFF file descriptor  */
@@ -87,6 +104,9 @@ struct gtiff {
    double*    gt_double;   /* array of DOUBLE vals  */
    int        gt_nshorts;  /* number of SHORT vals  */
    int        gt_ndoubles; /* number of DOUBLE vals */
+
+   GTErrorCallback  gt_error_callback;
+   void*      gt_user_data;
 };
 
 typedef enum {

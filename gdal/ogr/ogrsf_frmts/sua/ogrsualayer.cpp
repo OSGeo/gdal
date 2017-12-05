@@ -30,10 +30,10 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_p.h"
-#include "ogr_xplane_geo_utils.h"
+#include "ogr_geo_utils.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRSUALayer()                             */
@@ -278,13 +278,13 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
                 continue;
 
             const double dfStartDistance =
-                OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
+                OGR_GreatCircle_Distance(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
             const double dfEndDistance =
-                OGRXPlane_Distance(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
+                OGR_GreatCircle_Distance(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
             const double dfStartAngle =
-                OGRXPlane_Track(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
+                OGR_GreatCircle_InitialHeading(dfCenterLat, dfCenterLon, dfLastLat, dfLastLon);
             double dfEndAngle =
-                OGRXPlane_Track(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
+                OGR_GreatCircle_InitialHeading(dfCenterLat, dfCenterLon, dfToLat, dfToLon);
 
             if( bClockWise && dfEndAngle < dfStartAngle )
                 dfEndAngle += 360;
@@ -300,7 +300,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
                 const double dfDist = dfStartDistance * (1-pct) + dfEndDistance * pct;
                 double dfLat = 0.0;
                 double dfLon = 0.0;
-                OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon, dfDist, dfAngle, &dfLat, &dfLon);
+                OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon, dfDist, dfAngle, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
             }
             oLR.addPoint(dfToLon, dfToLat);
@@ -330,10 +330,10 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             double dfLon = 0.0;
             for( double dfAngle = 0; dfAngle < 360; dfAngle += 1 )
             {
-                OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon, dfRADIUS, dfAngle, &dfLat, &dfLon);
+                OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon, dfRADIUS, dfAngle, &dfLat, &dfLon);
                 oLR.addPoint(dfLon, dfLat);
             }
-            OGRXPlane_ExtendPosition(dfCenterLat, dfCenterLon, dfRADIUS, 0, &dfLat, &dfLon);
+            OGR_GreatCircle_ExtendPosition(dfCenterLat, dfCenterLon, dfRADIUS, 0, &dfLat, &dfLon);
             oLR.addPoint(dfLon, dfLat);
 
             dfLastLat = oLR.getY(oLR.getNumPoints() - 1);

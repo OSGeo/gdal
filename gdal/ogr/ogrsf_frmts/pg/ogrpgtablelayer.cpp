@@ -36,7 +36,7 @@
 
 #define PQexec this_is_an_error
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define USE_COPY_UNSET  -10
 
@@ -140,7 +140,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bPreservePrecision(TRUE),
     bUseCopy(USE_COPY_UNSET),  // unknown
     bCopyActive(FALSE),
-    bFIDColumnInCopyFields(FALSE),
+    bFIDColumnInCopyFields(false),
     bFirstInsertion(TRUE),
     bHasWarnedIncompatibleGeom(FALSE),
     // Just in provision for people yelling about broken backward compatibility.
@@ -154,6 +154,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     bInResetReading(FALSE),
     bAutoFIDOnCreateViaCopy(FALSE),
     bUseCopyByDefault(FALSE),
+    bNeedToUpdateSequence(false),
     bDeferredCreation(FALSE),
     iFIDAsRegularColumnIndex(-1)
 {
@@ -205,6 +206,8 @@ OGRPGTableLayer::~OGRPGTableLayer()
 {
     if( bDeferredCreation ) RunDeferredCreationIfNecessary();
     if( bCopyActive ) EndCopy();
+    UpdateSequenceIfNeeded();
+
     CPLFree( pszSqlTableName );
     CPLFree( pszTableName );
     CPLFree( pszSqlGeomParentTableName );
@@ -834,9 +837,9 @@ void OGRPGTableLayer::BuildWhere()
                        szBox3D_1, szBox3D_2, poGeomFieldDefn->nSRSId );
     }
 
-    if( strlen(osQuery) > 0 )
+    if( !osQuery.empty() )
     {
-        if( strlen(osWHERE) == 0 )
+        if( osWHERE.empty() )
         {
             osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
         }
@@ -863,10 +866,10 @@ void OGRPGTableLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
     pszQueryStatement = (char *)
-        CPLMalloc(strlen(osFields)+strlen(osWHERE)
+        CPLMalloc(osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40);
     snprintf( pszQueryStatement,
-              strlen(osFields)+strlen(osWHERE)
+              osFields.size()+osWHERE.size()
                   +strlen(pszSqlTableName) + 40,
              "SELECT %s FROM %s %s",
              osFields.c_str(), pszSqlTableName, osWHERE.c_str() );
@@ -1235,7 +1238,7 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
     /* In case the FID column has also been created as a regular field */
     if( iFIDAsRegularColumnIndex >= 0 )
     {
-        if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+        if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
             poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1364,6 +1367,8 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
     {
         if( iFIDAsRegularColumnIndex == i )
             continue;
+        if( !poFeature->IsFieldSet(i) )
+            continue;
         if( bNeedComma )
             osCommand += ", ";
         else
@@ -1372,16 +1377,18 @@ OGRErr OGRPGTableLayer::ISetFeature( OGRFeature *poFeature )
         osCommand = osCommand
             + OGRPGEscapeColumnName(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + " = ";
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( poFeature->IsFieldNull( i ) )
         {
             osCommand += "NULL";
         }
         else
         {
             OGRPGCommonAppendFieldValue(osCommand, poFeature, i,
-                                        (OGRPGCommonEscapeStringCbk)OGRPGEscapeString, hPGConn);
+                                        OGRPGEscapeString, hPGConn);
         }
     }
+    if( !bNeedComma ) // nothing to do
+        return OGRERR_NONE;
 
     /* Add the WHERE clause */
     osCommand += " WHERE ";
@@ -1445,7 +1452,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( nFID == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -1453,7 +1460,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != nFID )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1537,7 +1544,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            int bFIDSet = (pszFIDColumn != NULL && poFeature->GetFID() != OGRNullFID);
+            bool bFIDSet = (pszFIDColumn != NULL && poFeature->GetFID() != OGRNullFID);
             if( bCopyActive && bFIDSet != bFIDColumnInCopyFields )
             {
                 eErr = CreateFeatureViaInsert( poFeature );
@@ -1556,6 +1563,7 @@ OGRErr OGRPGTableLayer::ICreateFeature( OGRFeature *poFeature )
                     /* try to copy FID values from features. Otherwise, we will not */
                     /* do and assume that the FID column is an autoincremented column. */
                     bFIDColumnInCopyFields = bFIDSet;
+                    bNeedToUpdateSequence = bFIDSet;
                 }
 
                 eErr = CreateFeatureViaCopy( poFeature );
@@ -1604,11 +1612,12 @@ CPLString OGRPGEscapeColumnName(const char* pszColumnName)
 /*                         OGRPGEscapeString( )                         */
 /************************************************************************/
 
-CPLString OGRPGEscapeString(PGconn *hPGConn,
+CPLString OGRPGEscapeString(void *hPGConnIn,
                             const char* pszStrValue, int nMaxLength,
                             const char* pszTableName,
                             const char* pszFieldName )
 {
+    PGconn *hPGConn = reinterpret_cast<PGconn*>(hPGConnIn);
     CPLString osCommand;
 
     /* We need to quote and escape string fields. */
@@ -1697,11 +1706,17 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     /* Use case of ogr_pg_60 test */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
+        bNeedToUpdateSequence = true;
+
         if( bNeedComma )
             osCommand += ", ";
 
         osCommand = osCommand + OGRPGEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = TRUE;
+    }
+    else
+    {
+        UpdateSequenceIfNeeded();
     }
 
     int nFieldCount = poFeatureDefn->GetFieldCount();
@@ -1966,7 +1981,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRErr result = OGRERR_NONE;
 
     int copyResult = PQputCopyData(hPGConn, osCommand.c_str(),
-                                   static_cast<int>(strlen(osCommand.c_str())));
+                                   static_cast<int>(osCommand.size()));
 #ifdef DEBUG_VERBOSE
     CPLDebug("PG", "PQputCopyData(%s)", osCommand.c_str());
 #endif
@@ -2862,7 +2877,7 @@ OGRErr OGRPGTableLayer::StartCopy()
 
     CPLString osFields = BuildCopyFields();
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,
@@ -2937,7 +2952,31 @@ OGRErr OGRPGTableLayer::EndCopy()
     if( !bUseCopyByDefault )
         bUseCopy = USE_COPY_UNSET;
 
+    UpdateSequenceIfNeeded();
+
     return result;
+}
+
+/************************************************************************/
+/*                       UpdateSequenceIfNeeded()                       */
+/************************************************************************/
+
+void OGRPGTableLayer::UpdateSequenceIfNeeded()
+{
+    if( bNeedToUpdateSequence && pszFIDColumn != NULL )
+    {
+        PGconn *hPGConn = poDS->GetPGConn();
+        CPLString osCommand;
+        osCommand.Printf(
+            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s",
+            OGRPGEscapeString(hPGConn, pszSqlTableName).c_str(),
+            OGRPGEscapeString(hPGConn, pszFIDColumn).c_str(),
+            OGRPGEscapeColumnName(pszFIDColumn).c_str(),
+            pszSqlTableName);
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+        OGRPGClearResult( hResult );
+        bNeedToUpdateSequence = false;
+    }
 }
 
 /************************************************************************/

@@ -30,7 +30,7 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -40,7 +40,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 {
     printf(
-        "Usage: gdal_grid [--help-general] [--formats]\n"
+        "Usage: gdal_grid [--help-general]\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
@@ -89,7 +89,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 {
-    return (GDALGridOptionsForBinary*) CPLCalloc(  1, sizeof(GDALGridOptionsForBinary) );
+    return static_cast<GDALGridOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALGridOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -98,19 +99,20 @@ static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 
 static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszSource);
-        CPLFree(psOptionsForBinary->pszDest);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
+    if( psOptionsForBinary == NULL )
+        return;
+
+    CPLFree(psOptionsForBinary->pszSource);
+    CPLFree(psOptionsForBinary->pszDest);
+    CPLFree(psOptionsForBinary->pszFormat);
+    CPLFree(psOptionsForBinary);
 }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main(int argc, char** argv)
+MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -163,9 +165,7 @@ int main(int argc, char** argv)
 
     if( psOptionsForBinary->pszDest == NULL )
         psOptionsForBinary->pszDest = CPLStrdup(psOptionsForBinary->pszSource);
-    else if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
                                    psOptions, &bUsageError);
     if(bUsageError == TRUE)
         Usage();
-    int nRetCode = (hOutDS) ? 0 : 1;
+    int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);
     GDALClose(hOutDS);
@@ -192,3 +192,4 @@ int main(int argc, char** argv)
 
     return nRetCode;
 }
+MAIN_END

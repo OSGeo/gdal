@@ -29,7 +29,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -87,6 +87,8 @@ int OGRCurve::getDimension() const
  * Tests if a curve is closed. A curve is closed if its start point is
  * equal to its end point.
  *
+ * For equality tests, the M dimension is ignored.
+ *
  * This method relates to the SFCOM ICurve::get_IsClosed() method.
  *
  * @return TRUE if closed, else FALSE.
@@ -101,9 +103,33 @@ int OGRCurve::get_IsClosed() const
     OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
-    return
-        oStartPoint.getX() == oEndPoint.getX() &&
-        oStartPoint.getY() == oEndPoint.getY();
+    if (oStartPoint.Is3D() && oEndPoint.Is3D())
+    {
+        // XYZ type
+        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
+            && oStartPoint.getZ() == oEndPoint.getZ())
+        {
+            return TRUE;
+        }
+        else
+            return FALSE;
+    }
+
+    // one of the points is 3D
+    else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
+             ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
+    {
+        return FALSE;
+    }
+
+    else
+    {
+        // XY type
+        if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY() )
+            return TRUE;
+        else
+            return FALSE;
+    }
 }
 
 /**
@@ -370,6 +396,26 @@ OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
  */
 
 int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
+{
+    return -1;
+}
+
+/************************************************************************/
+/*                         IntersectsPoint()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns if a point intersects a (closed) curve.
+ *
+ * Final users should use OGRGeometry::Intersects() instead.
+ *
+ * @param p the point to test
+ * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
+ *
+ * @since GDAL 2.3
+ */
+
+int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
 {
     return -1;
 }

@@ -33,7 +33,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRKMLDriverIdentify()                       */
@@ -45,9 +45,10 @@ static int OGRKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->fpL == NULL )
         return FALSE;
 
-    return
-        strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-               "<kml") != NULL;
+    return strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                  "<kml") != NULL ||
+           strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                  "<kml:kml") != NULL;
 }
 
 /************************************************************************/
@@ -72,7 +73,7 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
         if( poDS->GetLayerCount() == 0 )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
-                "No layers in KML file: %s.", pszName );
+                "No layers in KML file: %s.", poOpenInfo->pszFilename );
 
             delete poDS;
             poDS = NULL;
@@ -136,6 +137,7 @@ void RegisterOGRKML()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='DOCUMENT_ID' type='string' description='Id of the root &lt;Document&gt; node' default='root_doc'/>'"
 "  <Option name='GPX_USE_EXTENSIONS' type='boolean' description='Whether to write non-GPX attributes in an <extensions> tag' default='NO'/>"
 "  <Option name='NameField' type='string' description='Field to use to fill the KML <name> element' default='Name'/>"
 "  <Option name='DescriptionField' type='string' description='Field to use to fill the KML <description> element' default='Description'/>"
@@ -151,6 +153,7 @@ void RegisterOGRKML()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Real String" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRKMLDriverOpen;
     poDriver->pfnIdentify = OGRKMLDriverIdentify;

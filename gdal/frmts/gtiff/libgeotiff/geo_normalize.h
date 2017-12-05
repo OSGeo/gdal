@@ -143,45 +143,45 @@ typedef struct {
 
 } GTIFDefn;
 
-int CPL_DLL GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
+int GTIF_DLL GTIFGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                             short *pnProjOp,
                             short *pnUOMLengthCode, short *pnGeogCS );
-int CPL_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
+int GTIF_DLL GTIFGetProjTRFInfo( int nProjTRFCode,
                                 char ** ppszProjTRFName,
                                 short * pnProjMethod,
                                 double * padfProjParms );
-int CPL_DLL GTIFGetGCSInfo( int nGCSCode, char **ppszName,
+int GTIF_DLL GTIFGetGCSInfo( int nGCSCode, char **ppszName,
                             short *pnDatum, short *pnPM, short *pnUOMAngle );
-int CPL_DLL GTIFGetDatumInfo( int nDatumCode, char **ppszName,
+int GTIF_DLL GTIFGetDatumInfo( int nDatumCode, char **ppszName,
                               short * pnEllipsoid );
-int CPL_DLL GTIFGetEllipsoidInfo( int nEllipsoid, char ** ppszName,
+int GTIF_DLL GTIFGetEllipsoidInfo( int nEllipsoid, char ** ppszName,
                                   double * pdfSemiMajor,
                                   double * pdfSemiMinor );
-int CPL_DLL GTIFGetPMInfo( int nPM, char **ppszName,
+int GTIF_DLL GTIFGetPMInfo( int nPM, char **ppszName,
                            double * pdfLongToGreenwich );
 
-double CPL_DLL GTIFAngleStringToDD( const char *pszAngle, int nUOMAngle );
-int CPL_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
+double GTIF_DLL GTIFAngleStringToDD( const char *pszAngle, int nUOMAngle );
+int GTIF_DLL GTIFGetUOMLengthInfo( int nUOMLengthCode,
                                   char **ppszUOMName,
                                   double * pdfInMeters );
-int CPL_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
+int GTIF_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
                                  char **ppszUOMName,
                                  double * pdfInDegrees );
-double CPL_DLL GTIFAngleToDD( double dfAngle, int nUOMAngle );
+double GTIF_DLL GTIFAngleToDD( double dfAngle, int nUOMAngle );
 
 
 /* this should be used to free strings returned by GTIFGet... funcs */
-void CPL_DLL GTIFFreeMemory( char * );
-void CPL_DLL GTIFDeaccessCSV( void );
+void GTIF_DLL GTIFFreeMemory( char * );
+void GTIF_DLL GTIFDeaccessCSV( void );
 
-int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
-void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
-GTIFDefn CPL_DLL *GTIFAllocDefn( void );
-void CPL_DLL GTIFFreeDefn( GTIFDefn * );
+int GTIF_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
+void GTIF_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
+GTIFDefn GTIF_DLL *GTIFAllocDefn( void );
+void GTIF_DLL GTIFFreeDefn( GTIFDefn * );
 
-void CPL_DLL SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) );
+void GTIF_DLL SetCSVFilenameHook( const char *(*CSVFileOverride)(const char *) );
 
-const char CPL_DLL *GTIFDecToDMS( double, const char *, int );
+const char GTIF_DLL *GTIFDecToDMS( double, const char *, int );
 
 /*
  * These are useful for recognising UTM and State Plane, with or without
@@ -193,20 +193,20 @@ const char CPL_DLL *GTIFDecToDMS( double, const char *, int );
 #define MapSys_State_Plane_27	-9003
 #define MapSys_State_Plane_83	-9004
 
-int CPL_DLL   GTIFMapSysToPCS( int MapSys, int Datum, int nZone );
-int CPL_DLL   GTIFMapSysToProj( int MapSys, int nZone );
-int CPL_DLL   GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone );
-int CPL_DLL   GTIFProjToMapSys( int ProjCode, int * pZone );
+int GTIF_DLL   GTIFMapSysToPCS( int MapSys, int Datum, int nZone );
+int GTIF_DLL   GTIFMapSysToProj( int MapSys, int nZone );
+int GTIF_DLL   GTIFPCSToMapSys( int PCSCode, int * pDatum, int * pZone );
+int GTIF_DLL   GTIFProjToMapSys( int ProjCode, int * pZone );
 
 /*
  * These are only useful if using libgeotiff with libproj (PROJ.4+).
  */
-char CPL_DLL *GTIFGetProj4Defn( GTIFDefn * );
+char GTIF_DLL *GTIFGetProj4Defn( GTIFDefn * );
 
-int  CPL_DLL  GTIFProj4ToLatLong( GTIFDefn *, int, double *, double * );
-int  CPL_DLL  GTIFProj4FromLatLong( GTIFDefn *, int, double *, double * );
+int  GTIF_DLL  GTIFProj4ToLatLong( GTIFDefn *, int, double *, double * );
+int  GTIF_DLL  GTIFProj4FromLatLong( GTIFDefn *, int, double *, double * );
 
-int  CPL_DLL  GTIFSetFromProj4( GTIF *gtif, const char *proj4 );
+int  GTIF_DLL  GTIFSetFromProj4( GTIF *gtif, const char *proj4 );
 
 #if defined(HAVE_LIBPROJ) && defined(HAVE_PROJECTS_H)
 #  define HAVE_GTIFPROJ4

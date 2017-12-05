@@ -30,10 +30,12 @@
 #include "gdal_alg.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static int nThreadCount = 4, nIterations = 1, bLockOnOpen = TRUE;
+static int nThreadCount = 4, nIterations = 1, bLockOnOpen = FALSE;
+static int bOpenInThreads = TRUE;
 static int nOpenIterations = 1;
 static volatile int nPendingThreads = 0;
 static const char *pszFilename = NULL;
@@ -49,8 +51,8 @@ static void WorkerFunc( void * );
 
 static void Usage()
 {
-    printf( "multireadtest [-nlo] [-t <thread#>]\n"
-            "              [-i <iterations>] [-oi <iterations>\n"
+    printf( "multireadtest [-lock_on_open] [-open_in_main] [-t <thread#>]\n"
+            "              [-i <iterations>] [-oi <iterations>]\n"
             "              filename\n" );
     exit( 1 );
 }
@@ -73,14 +75,16 @@ int main( int argc, char ** argv )
 
     for( iArg = 1; iArg < argc; iArg++ )
     {
-        if( EQUAL(argv[iArg],"-i") && iArg < argc-1 )
+        if( iArg < argc-1 && EQUAL(argv[iArg],"-i") )
             nIterations = atoi(argv[++iArg]);
-        else if( EQUAL(argv[iArg],"-oi") && iArg < argc-1 )
+        else if( iArg < argc-1 && EQUAL(argv[iArg],"-oi") )
             nOpenIterations = atoi(argv[++iArg]);
-        else if( EQUAL(argv[iArg],"-t") && iArg < argc-1 )
+        else if( iArg < argc-1 && EQUAL(argv[iArg],"-t") )
             nThreadCount = atoi(argv[++iArg]);
-        else if( EQUAL(argv[iArg],"-nlo") )
-            bLockOnOpen = FALSE;
+        else if( EQUAL(argv[iArg],"-lock_on_open") )
+            bLockOnOpen = TRUE;
+        else if( EQUAL(argv[iArg],"-open_in_main") )
+            bOpenInThreads = FALSE;
         else if( pszFilename == NULL )
             pszFilename = argv[iArg];
         else
@@ -108,16 +112,16 @@ int main( int argc, char ** argv )
     GDALAllRegister();
     for( int i = 0; i < 2; i++ )
     {
-    hDS = GDALOpen( pszFilename, GA_ReadOnly );
-    if( hDS == NULL )
-        exit( 1 );
+        hDS = GDALOpen( pszFilename, GA_ReadOnly );
+        if( hDS == NULL )
+            exit( 1 );
 
-    nChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ),
-                                   0, 0,
-                                   GDALGetRasterXSize( hDS ),
-                                   GDALGetRasterYSize( hDS ) );
+        nChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ),
+                                    0, 0,
+                                    GDALGetRasterXSize( hDS ),
+                                    GDALGetRasterYSize( hDS ) );
 
-    GDALClose( hDS );
+        GDALClose( hDS );
     }
 
     printf( "Got checksum %d, launching %d worker threads on %s, %d iterations.\n",
@@ -133,9 +137,21 @@ int main( int argc, char ** argv )
 
     nPendingThreads = nThreadCount;
 
+    std::vector<GDALDatasetH> aoDS;
     for( iThread = 0; iThread < nThreadCount; iThread++ )
     {
-        if( CPLCreateThread( WorkerFunc, NULL ) == -1 )
+        hDS = NULL;
+        if( !bOpenInThreads )
+        {
+            hDS =  GDALOpen( pszFilename, GA_ReadOnly );
+            if( !hDS )
+            {
+                printf( "GDALOpen() failed.\n" );
+                exit( 1 );
+            }
+            aoDS.push_back(hDS);
+        }
+        if( CPLCreateThread( WorkerFunc, hDS ) == -1 )
         {
             printf( "CPLCreateThread() failed.\n" );
             exit( 1 );
@@ -145,7 +161,10 @@ int main( int argc, char ** argv )
     while( nPendingThreads > 0 )
         CPLSleep( 0.5 );
 
-    CPLReleaseMutex( pGlobalMutex );
+    CPLDestroyMutex( pGlobalMutex );
+
+    for( size_t i = 0; i < aoDS.size(); ++i )
+        GDALClose(aoDS[i]);
 
     printf( "All threads complete.\n" );
 
@@ -160,21 +179,29 @@ int main( int argc, char ** argv )
 /*                             WorkerFunc()                             */
 /************************************************************************/
 
-static void WorkerFunc( void * )
+static void WorkerFunc( void * arg )
 
 {
+    GDALDatasetH hDSIn = static_cast<GDALDatasetH>(arg);
     GDALDatasetH hDS;
     int iIter, iOpenIter;
 
     for( iOpenIter = 0; iOpenIter < nOpenIterations; iOpenIter++ )
     {
-        if( bLockOnOpen )
-            CPLAcquireMutex( pGlobalMutex, 100.0 );
+        if( hDSIn != NULL )
+        {
+            hDS = hDSIn;
+        }
+        else
+        {
+            if( bLockOnOpen )
+                CPLAcquireMutex( pGlobalMutex, 100.0 );
 
-        hDS = GDALOpen( pszFilename, GA_ReadOnly );
+            hDS = GDALOpen( pszFilename, GA_ReadOnly );
 
-        if( bLockOnOpen )
-            CPLReleaseMutex( pGlobalMutex );
+            if( bLockOnOpen )
+                CPLReleaseMutex( pGlobalMutex );
+        }
 
         for( iIter = 0; iIter < nIterations && hDS != NULL; iIter++ )
         {
@@ -192,13 +219,17 @@ static void WorkerFunc( void * )
             }
         }
 
-        if( hDS )
+        if( hDS && hDSIn == NULL )
         {
             if( bLockOnOpen )
                 CPLAcquireMutex( pGlobalMutex, 100.0 );
             GDALClose( hDS );
             if( bLockOnOpen )
                 CPLReleaseMutex( pGlobalMutex );
+        }
+        else if ( hDSIn != NULL )
+        {
+            GDALFlushCache(hDSIn);
         }
     }
 

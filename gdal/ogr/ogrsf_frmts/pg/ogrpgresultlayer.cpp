@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "ogr_pg.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define PQexec this_is_an_error
 
@@ -161,10 +161,10 @@ void OGRPGResultLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    const size_t nLen = strlen(pszRawStatement) + strlen(osWHERE) + 40;
+    const size_t nLen = strlen(pszRawStatement) + osWHERE.size() + 40;
     pszQueryStatement = (char*) CPLMalloc(nLen);
 
-    if (strlen(osWHERE) == 0)
+    if (osWHERE.empty())
         strcpy(pszQueryStatement, pszRawStatement);
     else
         snprintf(pszQueryStatement, nLen, "SELECT * FROM (%s) AS ogrpgsubquery %s",

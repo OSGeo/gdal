@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define RIK_HEADER_DEBUG 0
 #define RIK_CLEAR_DEBUG 0
@@ -224,7 +224,7 @@ static int GetNextLZWCode( int codeBits,
     }
 
 #if RIK_PIXEL_DEBUG
-    printf( "c%03X\n", ret );
+    printf( "c%03X\n", ret );/*ok*/
 #endif
 
     return ret;
@@ -249,7 +249,7 @@ static void OutputPixel( GByte pixel,
     imagePos++;
 
 #if RIK_PIXEL_DEBUG
-    printf( "_%02X %d\n", pixel, imagePos );
+    printf( "_%02X %d\n", pixel, imagePos );/*ok*/
 #endif
 
     // Check if we need to change line
@@ -257,7 +257,7 @@ static void OutputPixel( GByte pixel,
     if( imagePos == lineBreak )
     {
 #if RIK_PIXEL_DEBUG
-        printf( "\n%d\n", imageLine );
+        printf( "\n%d\n", imageLine );/*ok*/
 #endif
 
         imagePos = 0;
@@ -840,6 +840,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPL_SWAP32PTR( &header.iHorBlocks );
         CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
+        if ( header.iMPPNum == 0 )
+            return NULL;
 
         VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fpL );
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fpL );
@@ -878,8 +880,11 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         if (!CPLIsFinite(header.fSouth) ||
             !CPLIsFinite(header.fWest) ||
             !CPLIsFinite(header.fNorth) ||
-            !CPLIsFinite(header.fEast))
+            !CPLIsFinite(header.fEast) ||
+            header.iMPPNum == 0)
+        {
             return NULL;
+        }
 
         const bool offsetBounds = header.fSouth < 4000000;
 
@@ -896,6 +901,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &header.iMPPDen );
 #endif
+            if( header.iMPPDen == 0 )
+                return NULL;
 
             headerType = "RIK1";
         }
@@ -1025,8 +1032,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
         vsi_l_offset nBigFileSize = VSIFTellL( poOpenInfo->fpL );
-        if( nBigFileSize > 0xFFFFFFFFU )
-            nBigFileSize = 0xFFFFFFFFU;
+        if( nBigFileSize > UINT_MAX )
+            nBigFileSize = UINT_MAX;
         GUInt32 fileSize = static_cast<GUInt32>(nBigFileSize);
 
         GUInt32 nBlocksFromFileSize = (fileSize - offsets[0]) / (header.iBlockWidth * header.iBlockHeight);

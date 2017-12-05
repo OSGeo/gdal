@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRMySQLLayer()                            */
@@ -171,8 +171,10 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 
         if( papszRow[iField] == NULL )
         {
-//            CPLDebug("MYSQL", "%s was null for %d", psMSField->name,
-//                     iNextShapeId);
+            const int iOGRField = poFeatureDefn->GetFieldIndex(psMSField->name);
+            if( iOGRField >= 0 )
+                poFeature->SetFieldNull( iOGRField );
+
             continue;
         }
 

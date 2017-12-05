@@ -9,7 +9,7 @@ SUBDIRS-yes	:= \
 	arcgen segukooa segy sxf openfilegdb wasp selafin jml vdv
 
 SUBDIRS-$(HAVE_DODS)	+= dods
-SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
+SUBDIRS-$(HAVE_TEIGHA)  += dwg
 SUBDIRS-$(HAVE_CAD)	+= cad
 SUBDIRS-$(HAVE_FME)	+= fme
 SUBDIRS-$(HAVE_GRASS)	+= grass

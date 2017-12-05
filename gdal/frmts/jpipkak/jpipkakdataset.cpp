@@ -35,7 +35,7 @@
 #include "gdal_frmts.h"
 #include "jpipkakdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
 ** The following are for testing premature stream termination support.
@@ -429,7 +429,11 @@ JPIPKAKDataset::JPIPKAKDataset()
 /*****************************************/
 JPIPKAKDataset::~JPIPKAKDataset()
 {
-    CPLHTTPCleanup();
+    char** papszOptions = NULL;
+    papszOptions = CSLSetNameValue(papszOptions,
+                        "CLOSE_PERSISTENT", CPLSPrintf("JPIPKAK:%p", this));
+    CPLHTTPFetch("", papszOptions);
+    CSLDestroy(papszOptions);
 
     Deinitialize();
 

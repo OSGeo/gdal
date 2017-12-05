@@ -37,6 +37,8 @@ from osgeo import osr
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
+    print('                 [-offset value] [-scale value]')
+    print('                 [-colorinterp_X red|green|blue|alpha|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
@@ -80,6 +82,9 @@ def gdal_edit(argv):
     molist = []
     gcp_list = []
     open_options = []
+    offset = None
+    scale = None
+    colorinterp = {}
 
     i = 1
     argc = len(argv)
@@ -105,6 +110,12 @@ def gdal_edit(argv):
             i = i + 1
         elif argv[i] == '-a_nodata' and i < len(argv)-1:
             nodata = float(argv[i+1])
+            i = i + 1
+        elif argv[i] == '-scale' and i < len(argv)-1:
+            scale = float(argv[i+1])
+            i = i + 1
+        elif argv[i] == '-offset' and i < len(argv)-1:
+            offset = float(argv[i+1])
             i = i + 1
         elif argv[i] == '-mo' and i < len(argv)-1:
             molist.append(argv[i+1])
@@ -141,6 +152,25 @@ def gdal_edit(argv):
         elif argv[i] == '-oo' and i < len(argv)-1:
             open_options.append(argv[i+1])
             i = i + 1
+        elif argv[i].startswith('-colorinterp_')and i < len(argv)-1:
+            band = int(argv[i][len('-colorinterp_'):])
+            val = argv[i+1]
+            if val.lower() == 'red':
+                val = gdal.GCI_RedBand
+            elif val.lower() == 'green':
+                val = gdal.GCI_GreenBand
+            elif val.lower() == 'blue':
+                val = gdal.GCI_BlueBand
+            elif val.lower() == 'alpha':
+                val = gdal.GCI_AlphaBand
+            elif val.lower() == 'undefined':
+                val = gdal.GCI_Undefined
+            else:
+                sys.stderr.write('Unsupported color interpretation %s.\n' % val + \
+                    'Only red, green, blue, alpha, undefined are supported.\n' )
+                return Usage()
+            colorinterp[band] = val
+            i = i + 1
         elif argv[i][0] == '-':
             sys.stderr.write('Unrecognized option : %s\n' % argv[i])
             return Usage()
@@ -157,7 +187,9 @@ def gdal_edit(argv):
 
     if (srs is None and lry is None and yres is None and not unsetgt
             and not unsetstats and not stats and nodata is None
-            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0 and not unsetnodata):
+            and len(molist) == 0 and not unsetmd and len(gcp_list) == 0
+            and not unsetnodata and len(colorinterp) == 0
+            and scale is None and offset is None):
         print('No option specified')
         print('')
         return Usage()
@@ -223,7 +255,12 @@ def gdal_edit(argv):
         ds.SetGeoTransform(gt)
 
     if unsetgt:
-        ds.SetGeoTransform([0,1,0,0,0,1])
+        # For now only the GTiff drivers understands full-zero as a hint
+        # to unset the geotransform
+        if ds.GetDriver().ShortName == 'GTiff':
+            ds.SetGeoTransform([0,0,0,0,0,0])
+        else:
+            ds.SetGeoTransform([0,1,0,0,0,1])
 
     if len(gcp_list) > 0:
         if wkt is None:
@@ -239,6 +276,14 @@ def gdal_edit(argv):
         for i in range(ds.RasterCount):
             ds.GetRasterBand(i+1).DeleteNoDataValue()
 
+    if scale is not None:
+        for i in range(ds.RasterCount):
+            ds.GetRasterBand(i+1).SetScale(scale)
+
+    if offset is not None:
+       for i in range(ds.RasterCount):
+           ds.GetRasterBand(i+1).SetOffset(offset)
+ 
     if unsetstats:
         for i in range(ds.RasterCount):
             band = ds.GetRasterBand(i+1)
@@ -262,6 +307,9 @@ def gdal_edit(argv):
         ds.SetMetadata(md)
     elif unsetmd:
         ds.SetMetadata({})
+
+    for band in colorinterp:
+        ds.GetRasterBand(band).SetColorInterpretation(colorinterp[band])
 
     ds = band = None
 

@@ -45,7 +45,7 @@
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 // TODO(schwehr): Why is this not in a header?
@@ -80,6 +80,21 @@ GDALDriver::~GDALDriver()
 {
     if( pfnUnloadDriver != NULL )
         pfnUnloadDriver( this );
+}
+
+/************************************************************************/
+/*                         GDALCreateDriver()                           */
+/************************************************************************/
+
+/**
+ * \brief Create a GDALDriver.
+ *
+ * Creates a driver in the GDAL heap.
+ */
+
+GDALDriverH CPL_STDCALL GDALCreateDriver()
+{
+    return new GDALDriver();
 }
 
 /************************************************************************/
@@ -222,7 +237,18 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 /*      it might just be a corrupt file or something.                   */
 /* -------------------------------------------------------------------- */
     if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
-        QuietDelete( pszFilename );
+    {
+        // Someone issuing Create("foo.tif") on a
+        // memory driver doesn't expect files with those names to be deleted
+        // on a file system...
+        // This is somewhat messy. Ideally there should be a way for the
+        // driver to overload the default behaviour
+        if( !EQUAL(GetDescription(), "MEM") &&
+            !EQUAL(GetDescription(), "Memory") )
+        {
+            QuietDelete( pszFilename );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Validate creation options.                                      */
@@ -664,7 +690,11 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
     if( eErr != CE_None )
     {
         delete poDstDS;
-        Delete( pszFilename );
+        if( !CPLFetchBool(papszOptions, "APPEND_SUBDATASET", false) )
+        {
+            // Only delete if creating a new file
+            Delete( pszFilename );
+        }
         return NULL;
     }
     else
@@ -693,6 +723,8 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
  * If the driver doesn't implement CreateCopy(), but does implement Create()
  * then the default CreateCopy() mechanism built on calling Create() will
  * be used.
+ * So to test if CreateCopy() is available, you can test if GDAL_DCAP_CREATECOPY
+ * or GDAL_DCAP_CREATE is set in the GDAL metadata.
  *
  * It is intended that CreateCopy() will often be used with a source dataset
  * which is a virtual dataset allowing configuration of band types, and other
@@ -778,7 +810,18 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( !bAppendSubdataset &&
         CPLFetchBool(const_cast<const char **>(papszOptions),
                      "QUIET_DELETE_ON_CREATE_COPY", true) )
-        QuietDelete( pszFilename );
+    {
+        // Someone issuing CreateCopy("foo.tif") on a
+        // memory driver doesn't expect files with those names to be deleted
+        // on a file system...
+        // This is somewhat messy. Ideally there should be a way for the
+        // driver to overload the default behaviour
+        if( !EQUAL(GetDescription(), "MEM") &&
+            !EQUAL(GetDescription(), "Memory") )
+        {
+            QuietDelete( pszFilename );
+        }
+    }
 
     char** papszOptionsToDelete = NULL;
     int iIdxQuietDeleteOnCreateCopy =
@@ -819,6 +862,23 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     if( CPLTestBool(
             CPLGetConfigOption("GDAL_VALIDATE_CREATION_OPTIONS", "YES") ) )
         GDALValidateCreationOptions( this, papszOptions );
+
+/* -------------------------------------------------------------------- */
+/*      Advise the source raster that we are going to read it completely */
+/* -------------------------------------------------------------------- */
+
+    const int nXSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
+    const int nBandCount = poSrcDS->GetRasterCount();
+    GDALDataType eDT = GDT_Unknown;
+    if( nBandCount > 0 )
+    {
+        GDALRasterBand* poSrcBand = poSrcDS->GetRasterBand(1);
+        if( poSrcBand )
+            eDT = poSrcBand->GetRasterDataType();
+    }
+    poSrcDS->AdviseRead( 0, 0, nXSize, nYSize, nXSize, nYSize, eDT,
+                         nBandCount, NULL, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      If the format provides a CreateCopy() method use that,          */
@@ -1003,13 +1063,14 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unable to determine files associated with %s, "
                   "delete fails.", pszFilename );
-
+        CSLDestroy( papszFileList );
         return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Delete all files.                                               */
 /* -------------------------------------------------------------------- */
+    CPLErr eErr = CE_None;
     for( int i = 0; papszFileList[i] != NULL; ++i )
     {
         if( VSIUnlink( papszFileList[i] ) != 0 )
@@ -1018,14 +1079,13 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
                       "Deleting %s failed:\n%s",
                       papszFileList[i],
                       VSIStrerror(errno) );
-            CSLDestroy( papszFileList );
-            return CE_Failure;
+            eErr = CE_Failure;
         }
     }
 
     CSLDestroy( papszFileList );
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -1623,7 +1683,8 @@ int GDALValidateOptions( const char* pszOptionList,
                       EQUAL(psChildSubNode->pszValue, "max") ||
                       EQUAL(psChildSubNode->pszValue, "default") ||
                       EQUAL(psChildSubNode->pszValue, "maxsize") ||
-                      EQUAL(psChildSubNode->pszValue, "required")) )
+                      EQUAL(psChildSubNode->pszValue, "required") ||
+                      EQUAL(psChildSubNode->pszValue, "scope")) )
                 {
                     /* Driver error */
                     CPLError(CE_Warning, CPLE_NotSupported,

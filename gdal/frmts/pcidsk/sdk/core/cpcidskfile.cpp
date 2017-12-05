@@ -63,6 +63,7 @@
 #include <string>
 
 #include <iostream>
+#include <limits>
 
 using namespace PCIDSK;
 
@@ -111,7 +112,14 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
 CPCIDSKFile::~CPCIDSKFile()
 
 {
-    Synchronize();
+    try
+    {
+        Synchronize();
+    }
+    catch( const PCIDSKException& e )
+    {
+        fprintf(stderr, "Exception in ~CPCIDSKFile(): %s", e.what()); // ok
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup last block buffer.                                      */
@@ -403,6 +411,39 @@ std::vector<PCIDSK::PCIDSKSegment *> CPCIDSKFile::GetSegments()
 }
 
 /************************************************************************/
+/*                        CheckFileBigEnough()                          */
+/************************************************************************/
+
+void CPCIDSKFile::CheckFileBigEnough( uint64 nBytesToRead )
+{
+    if( nBytesToRead > 100 * 1024 * 1024 )
+    {
+        bool bTooBig = false;
+        // Do not trust too big filesize from header
+        if( GetFileSize() * 512 > 100 * 1024 * 1024 )
+        {
+            MutexHolder oHolder( io_mutex );
+
+            interfaces.io->Seek( io_handle, 0, SEEK_END );
+            if( nBytesToRead > interfaces.io->Tell( io_handle ) )
+            {
+                bTooBig = true;
+            }
+        }
+        else if ( nBytesToRead > GetFileSize() * 512 )
+        {
+            bTooBig = true;
+        }
+        if( bTooBig )
+        {
+            ThrowPCIDSKException( 
+                "File too short to read " PCIDSK_FRMT_UINT64 " bytes "
+                "of scanline.", nBytesToRead );
+        }
+    }
+}
+
+/************************************************************************/
 /*                        InitializeFromHeader()                        */
 /************************************************************************/
 
@@ -438,7 +479,11 @@ void CPCIDSKFile::InitializeFromHeader()
 /*      try to avoid doing too much other processing on them.           */
 /* -------------------------------------------------------------------- */
     int segment_block_count = atoi(fh.Get(456,8));
-    
+    if( segment_block_count < 0 ||
+        segment_block_count > std::numeric_limits<int>::max() / 512 )
+        return ThrowPCIDSKException( "Invalid segment_block_count: %d",
+                                     segment_block_count );
+
     segment_count = (segment_block_count * 512) / 32;
     segment_pointers.SetSize( segment_block_count * 512 );
     segment_pointers_offset = atouint64(fh.Get(440,16)) * 512 - 512;
@@ -480,11 +525,21 @@ void CPCIDSKFile::InitializeFromHeader()
         block_size = static_cast<PCIDSK::uint64>(pixel_group_size) * width;
         if( block_size % 512 != 0 )
             block_size += 512 - (block_size % 512);
+        if( block_size != static_cast<size_t>(block_size) )
+        {
+             return ThrowPCIDSKException( 
+                "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
+                "buffer failed.", block_size );
+        }
+        CheckFileBigEnough(block_size);
 
-        last_block_data = malloc((size_t) block_size);
+        last_block_data = malloc(static_cast<size_t>(block_size));
         if( last_block_data == NULL )
-            return ThrowPCIDSKException( "Allocating %d bytes for scanline buffer failed.", 
-                                       (int) block_size );
+        {
+             return ThrowPCIDSKException( 
+                "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
+                "buffer failed.", block_size );
+        }
 
         last_block_mutex = interfaces.CreateMutex();
         image_offset = 0;
@@ -786,8 +841,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 
     edb_file_list.push_back( new_file );
 
-    *file_p = edb_file_list[edb_file_list.size()-1].file;
-    *io_mutex_p  = edb_file_list[edb_file_list.size()-1].io_mutex;
+    *file_p = edb_file_list.back().file;
+    *io_mutex_p  = edb_file_list.back().io_mutex;
 
     return new_file.writable;
 }
@@ -856,8 +911,8 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
 
     file_list.push_back( new_file );
 
-    *io_handle_pp = &(file_list[file_list.size()-1].io_handle);
-    *io_mutex_pp  = &(file_list[file_list.size()-1].io_mutex);
+    *io_handle_pp = &(file_list.back().io_handle);
+    *io_mutex_pp  = &(file_list.back().io_mutex);
 }
 
 /************************************************************************/

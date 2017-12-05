@@ -517,6 +517,10 @@ int32_t json_object_get_int(struct json_object *jso)
 	else
 		return (int32_t)cint64;
   case json_type_double:
+    if (jso->o.c_double <= INT32_MIN)
+      return INT32_MIN;
+    if (jso->o.c_double >= INT32_MAX)
+      return INT32_MAX;
     return (int32_t)jso->o.c_double;
   case json_type_boolean:
     return jso->o.c_boolean;
@@ -543,11 +547,16 @@ int64_t json_object_get_int64(struct json_object *jso)
   case json_type_int:
     return jso->o.c_int64;
   case json_type_double:
+    if (jso->o.c_double >= INT64_MAX)
+       return INT64_MAX;
+    if (jso->o.c_double <= INT64_MIN)
+       return INT64_MIN;
     return (int64_t)jso->o.c_double;
   case json_type_boolean:
     return jso->o.c_boolean;
   case json_type_string:
-	if (json_parse_int64(jso->o.c_string.str, &cint) == 0) return cint;
+    if (json_parse_int64(jso->o.c_string.str, &cint) == 0) return cint;
+    /* FALLTHRU */
   default:
     return 0;
   }
@@ -564,7 +573,9 @@ static int json_object_double_to_json_string(struct json_object* jso,
   char buf[128], *p, *q;
   int size;
 
-  size = snprintf(buf, 128, "%f", jso->o.c_double);
+  size = snprintf(buf, sizeof(buf), "%f", jso->o.c_double);
+  if( size < 0 || size > (int)sizeof(buf) )
+      size = (int)sizeof(buf);
   p = strchr(buf, ',');
   if (p) {
     *p = '.';

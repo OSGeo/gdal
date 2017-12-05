@@ -31,7 +31,7 @@
 #include "nasreaderp.h"
 #include "ogr_nas.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     OGRNASDriverIdentify()                           */
@@ -77,8 +77,7 @@ static int OGRNASDriverIdentify( GDALOpenInfo* poOpenInfo )
     char **papszIndicators = CSLTokenizeStringComplex(
         CPLGetConfigOption(
             "NAS_INDICATOR",
-            "NAS-Operationen.xsd;NAS-Operationen_optional.xsd;"
-            "AAA-Fachschema.xsd" ),
+            "NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite" ),
         ";", 0, 0 );
 
     bool bFound = false;
@@ -135,6 +134,7 @@ void RegisterOGRNAS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "NAS - ALKIS" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xml" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_nas.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRNASDriverOpen;
     poDriver->pfnIdentify = OGRNASDriverIdentify;

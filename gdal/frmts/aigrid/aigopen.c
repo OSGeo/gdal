@@ -30,7 +30,7 @@
 
 #include "aigrid.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -151,9 +151,11 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     psInfo->nTilesPerRow = (psInfo->nPixels-1) / psInfo->nTileXSize + 1;
     psInfo->nTilesPerColumn = (psInfo->nLines-1) / psInfo->nTileYSize + 1;
 
-    if (psInfo->nTilesPerRow > INT_MAX / psInfo->nTilesPerColumn)
+    /* Each tile map to a file and there are only 3 characters in the */
+    /* filename for the X and Y components. */
+    if (psInfo->nTilesPerRow > 1000 * 1000 / psInfo->nTilesPerColumn)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many tiles");
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many tiles");
         psInfo->nTilesPerRow = 0; /* to avoid int32 overflow in AIGClose() */
         psInfo->nTilesPerColumn = 0;
         AIGClose( psInfo );

@@ -26,20 +26,35 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "vrtdataset.h"
-
+#include "cpl_port.h"
 #include "gdal_vrt.h"
-#include "gdalpansharpen.h"
-#include "ogr_spatialref.h"
+#include "vrtdataset.h"
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <map>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdalpansharpen.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                    GDALCreatePansharpenedVRT()                       */
@@ -1608,17 +1623,6 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             nPixelSpace, nLineSpace, psExtraArg);
 
     return eErr;
-}
-
-/************************************************************************/
-/*                              XMLInit()                               */
-/************************************************************************/
-
-CPLErr VRTPansharpenedRasterBand::XMLInit( CPLXMLNode * psTree,
-                                  const char *pszVRTPathIn )
-
-{
-    return VRTRasterBand::XMLInit( psTree, pszVRTPathIn );
 }
 
 /************************************************************************/

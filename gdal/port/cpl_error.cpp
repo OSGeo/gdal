@@ -43,10 +43,14 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-#define TIMESTAMP_DEBUG
-//#define MEMORY_DEBUG
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
 
-CPL_CVSID("$Id$");
+#define TIMESTAMP_DEBUG
+// #define MEMORY_DEBUG
+
+CPL_CVSID("$Id$")
 
 static CPLMutex *hErrorMutex = NULL;
 static void *pErrorHandlerUserData = NULL;
@@ -55,11 +59,11 @@ static bool gbCatchDebug = true;
 
 static const int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
-  20000
+    20000
 #else
-  500
+    500
 #endif
-  ;
+    ;
 
 typedef struct errHandler
 {
@@ -75,6 +79,7 @@ typedef struct {
     CPLErrorHandlerNode *psHandlerStack;
     int     nLastErrMsgMax;
     int     nFailureIntoWarning;
+    GUInt32 nErrorCounter;
     char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
     // Do not add anything here. szLastErrMsg must be the last field.
     // See CPLRealloc() below.
@@ -87,6 +92,7 @@ static const CPLErrorContext sNoErrorContext =
     NULL,
     0,
     0,
+    0,
     ""
 };
 
@@ -95,6 +101,7 @@ static const CPLErrorContext sWarningContext =
     0,
     CE_Warning,
     NULL,
+    0,
     0,
     0,
     "A warning was emitted"
@@ -107,12 +114,26 @@ static const CPLErrorContext sFailureContext =
     NULL,
     0,
     0,
+    0,
     "A failure was emitted"
 };
 
 #define IS_PREFEFINED_ERROR_CTX(psCtxt) ( psCtx == &sNoErrorContext || \
                                           psCtx == &sWarningContext || \
                                           psCtxt == &sFailureContext )
+
+
+/************************************************************************/
+/*                     CPLErrorContextGetString()                       */
+/************************************************************************/
+
+// Makes clang -fsanitize=undefined happy since it doesn't like
+// dereferencing szLastErrMsg[i>=DEFAULT_LAST_ERR_MSG_SIZE]
+
+static char* CPLErrorContextGetString(CPLErrorContext* psCtxt)
+{
+    return psCtxt->szLastErrMsg;
+}
 
 /************************************************************************/
 /*                         CPLGetErrorContext()                         */
@@ -130,9 +151,10 @@ static CPLErrorContext *CPLGetErrorContext()
 
     if( psCtx == NULL )
     {
-        psCtx = reinterpret_cast<CPLErrorContext *>(
+        psCtx = static_cast<CPLErrorContext *>(
             VSICalloc( sizeof(CPLErrorContext), 1) );
-        if (psCtx == NULL) {
+        if( psCtx == NULL )
+        {
             fprintf(stderr, "Out of memory attempting to report error.\n");
             return NULL;
         }
@@ -207,7 +229,8 @@ void* CPL_STDCALL CPLGetErrorHandlerUserData(void)
  * similar to printf().
  */
 
-void CPLError(CPLErr eErrClass, CPLErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ...)
+void CPLError( CPLErr eErrClass, CPLErrorNum err_no,
+               CPL_FORMAT_STRING(const char *fmt), ... )
 {
     va_list args;
 
@@ -288,15 +311,16 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
                 {
                     psCtx->nLastErrMsgMax *= 3;
                     psCtx = static_cast<CPLErrorContext *> (
-                        CPLRealloc( psCtx,
-                                    sizeof(CPLErrorContext)
-                                    - DEFAULT_LAST_ERR_MSG_SIZE
-                                    + psCtx->nLastErrMsgMax + 1));
+                        CPLRealloc(psCtx,
+                                   sizeof(CPLErrorContext)
+                                   - DEFAULT_LAST_ERR_MSG_SIZE
+                                   + psCtx->nLastErrMsgMax + 1));
                     CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
                 }
-                psCtx->szLastErrMsg[nPreviousSize] = '\n';
-                psCtx->szLastErrMsg[nPreviousSize+1] = '0';
-                nPreviousSize ++;
+                char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
+                pszLastErrMsg[nPreviousSize] = '\n';
+                pszLastErrMsg[nPreviousSize+1] = '\0';
+                nPreviousSize++;
             }
         }
 
@@ -315,10 +339,10 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 #endif
             psCtx->nLastErrMsgMax *= 3;
             psCtx = static_cast<CPLErrorContext *> (
-                CPLRealloc( psCtx,
-                            sizeof(CPLErrorContext)
-                            - DEFAULT_LAST_ERR_MSG_SIZE
-                            + psCtx->nLastErrMsgMax + 1) );
+                CPLRealloc(psCtx,
+                           sizeof(CPLErrorContext)
+                           - DEFAULT_LAST_ERR_MSG_SIZE
+                           + psCtx->nLastErrMsgMax + 1));
             CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
         }
 
@@ -349,8 +373,12 @@ void CPLErrorV( CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
 /* -------------------------------------------------------------------- */
     psCtx->nLastErrNo = err_no;
     psCtx->eLastErrType = eErrClass;
+    if( psCtx->nErrorCounter == ~(0U) )
+        psCtx->nErrorCounter = 0;
+    else
+        psCtx->nErrorCounter ++;
 
-    if( CPLGetConfigOption("CPL_LOG_ERRORS",NULL) != NULL )
+    if( CPLGetConfigOption("CPL_LOG_ERRORS", NULL) != NULL )
         CPLDebug( "CPLError", "%s", psCtx->szLastErrMsg );
 
 /* -------------------------------------------------------------------- */
@@ -435,13 +463,13 @@ static int CPLGetProcessMemorySize()
         return -1;
     int nRet = -1;
     char szLine[128] = {};
-    while (fgets(szLine, sizeof(szLine), fp) != NULL)
+    while( fgets(szLine, sizeof(szLine), fp) != NULL )
     {
         if( STARTS_WITH(szLine, "VmSize:") )
         {
             const char* pszPtr = szLine;
             while( !(*pszPtr == '\0' || (*pszPtr >= '0' && *pszPtr <= '9')) )
-                 pszPtr ++;
+                 pszPtr++;
             nRet = atoi(pszPtr);
             break;
         }
@@ -455,6 +483,36 @@ static int CPLGetProcessMemorySize()
 
 #endif // def MEMORY_DEBUG
 
+
+
+/************************************************************************/
+/*                        CPLGettimeofday()                             */
+/************************************************************************/
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <sys/timeb.h>
+
+struct CPLTimeVal
+{
+  time_t  tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
+
+static void CPLGettimeofday(struct CPLTimeVal* tp, void* /* timezonep*/ )
+{
+  struct _timeb theTime;
+
+  _ftime(&theTime);
+  tp->tv_sec = static_cast<time_t>(theTime.time);
+  tp->tv_usec = theTime.millitm * 1000;
+}
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  CPLTimeVal timeval
+#  define  CPLGettimeofday(t,u) gettimeofday(t,u)
+#endif
+
+
 /************************************************************************/
 /*                              CPLDebug()                              */
 /************************************************************************/
@@ -465,7 +523,7 @@ static int CPLGetProcessMemorySize()
  * The category argument is used in conjunction with the CPL_DEBUG
  * environment variable to establish if the message should be displayed.
  * If the CPL_DEBUG environment variable is not set, no debug messages
- * are emitted (use CPLError(CE_Warning,...) to ensure messages are displayed).
+ * are emitted (use CPLError(CE_Warning, ...) to ensure messages are displayed).
  * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
  * debug messages are shown.  Otherwise only messages whose category appears
  * somewhere within the CPL_DEBUG value are displayed (as determined by
@@ -483,7 +541,8 @@ static int CPLGetProcessMemorySize()
 #ifdef WITHOUT_CPLDEBUG
 // Do not include CPLDebug.  Only available in custom builds.
 #else
-void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszFormat), ... )
+void CPLDebug( const char * pszCategory,
+               CPL_FORMAT_STRING(const char * pszFormat), ... )
 
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
@@ -504,7 +563,7 @@ void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszForma
         size_t i = 0;
         for( i = 0; pszDebug[i] != '\0'; i++ )
         {
-            if( EQUALN(pszCategory,pszDebug+i,nLen) )
+            if( EQUALN(pszCategory, pszDebug+i, nLen) )
                 break;
         }
 
@@ -529,17 +588,22 @@ void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszForma
 #ifdef TIMESTAMP_DEBUG
     if( CPLGetConfigOption( "CPL_TIMESTAMP", NULL ) != NULL )
     {
-        strcpy( pszMessage, VSICTime( VSITime(NULL) ) );
+        struct CPLTimeVal tv;
+        CPLGettimeofday(&tv, NULL);
+        strcpy( pszMessage, "[" );
+        strcat( pszMessage, VSICTime( static_cast<unsigned long>(tv.tv_sec) ) );
 
         // On windows anyway, ctime puts a \n at the end, but I'm not
         // convinced this is standard behaviour, so we'll get rid of it
         // carefully
 
-        if (pszMessage[strlen(pszMessage) -1 ] == '\n')
+        if( pszMessage[strlen(pszMessage) -1 ] == '\n' )
         {
             pszMessage[strlen(pszMessage) - 1] = 0; // blow it out
         }
-        strcat( pszMessage, ": " );
+        CPLsnprintf(pszMessage+strlen(pszMessage),
+                    ERROR_MAX - strlen(pszMessage),
+                    "].%06d: ", static_cast<int>(tv.tv_usec));
     }
 #endif
 
@@ -551,8 +615,6 @@ void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszForma
     CPLsprintf( szVmSize, "[VmSize: %d] ", CPLGetProcessMemorySize());
     strcat( pszMessage, szVmSize );
 #endif
-
-    // sprintf(pszMessage,"[%d] ", (int)getpid());
 
 /* -------------------------------------------------------------------- */
 /*      Add the category.                                               */
@@ -582,7 +644,7 @@ void CPLDebug( const char * pszCategory, CPL_FORMAT_STRING(const char * pszForma
         while( *pszIter != ' ' && *pszIter != '\0' )
         {
             *pszIter = 'X';
-            pszIter ++;
+            pszIter++;
         }
     }
 
@@ -664,6 +726,7 @@ void CPL_STDCALL CPLErrorReset()
     psCtx->nLastErrNo = CPLE_None;
     psCtx->szLastErrMsg[0] = '\0';
     psCtx->eLastErrType = CE_None;
+    psCtx->nErrorCounter = 0;
 }
 
 /**********************************************************************
@@ -710,10 +773,11 @@ void CPL_DLL CPLErrorSetState( CPLErr eErrClass, CPLErrorNum err_no,
     }
 
     psCtx->nLastErrNo = err_no;
-    strncpy(psCtx->szLastErrMsg, pszMsg, psCtx->nLastErrMsgMax);
-    psCtx->szLastErrMsg[
-        std::max(psCtx->nLastErrMsgMax-1,
-                 static_cast<int>( strlen(pszMsg) ))] = '\0';
+    const size_t size = std::min(
+        static_cast<size_t>(psCtx->nLastErrMsgMax-1), strlen(pszMsg) );
+    char* pszLastErrMsg = CPLErrorContextGetString(psCtx);
+    memcpy( pszLastErrMsg, pszMsg, size );
+    pszLastErrMsg[size] = '\0';
     psCtx->eLastErrType = eErrClass;
 }
 
@@ -789,6 +853,29 @@ const char* CPL_STDCALL CPLGetLastErrorMsg()
     return psCtx->szLastErrMsg;
 }
 
+/**********************************************************************
+ *                          CPLGetErrorCounter()
+ **********************************************************************/
+
+/**
+ * Get the error counter
+ *
+ * Fetches the number of errors emitted in the current error context,
+ * since the last call to CPLErrorReset()
+ *
+ * @return the error counter.
+ * @since GDAL 2.3
+ */
+
+GUInt32 CPL_STDCALL CPLGetErrorCounter()
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    if( psCtx == NULL )
+        return 0;
+
+    return psCtx->nErrorCounter;
+}
+
 /************************************************************************/
 /*                       CPLDefaultErrorHandler()                       */
 /************************************************************************/
@@ -801,7 +888,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     static int nCount = 0;
     static int nMaxErrors = -1;
 
-    if (eErrClass != CE_Debug)
+    if( eErrClass != CE_Debug )
     {
         if( nMaxErrors == -1 )
         {
@@ -810,7 +897,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         }
 
         nCount++;
-        if (nCount > nMaxErrors && nMaxErrors > 0 )
+        if( nCount > nMaxErrors && nMaxErrors > 0 )
             return;
     }
 
@@ -827,7 +914,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
             const char* pszAccess = "wt";
             if( CPLGetConfigOption( "CPL_LOG_APPEND", NULL ) != NULL )
                 pszAccess = "at";
-            fpLog = fopen( CPLGetConfigOption("CPL_LOG",""), pszAccess );
+            fpLog = fopen( CPLGetConfigOption("CPL_LOG", ""), pszAccess );
             if( fpLog == NULL )
                 fpLog = stderr;
         }
@@ -840,7 +927,7 @@ void CPL_STDCALL CPLDefaultErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
     else
         fprintf( fpLog, "ERROR %d: %s\n", nError, pszErrorMsg );
 
-    if (eErrClass != CE_Debug
+    if( eErrClass != CE_Debug
         && nMaxErrors > 0
         && nCount == nMaxErrors )
     {
@@ -889,15 +976,14 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
         const char *cpl_log = CPLGetConfigOption("CPL_LOG", NULL );
 
         fpLog = stderr;
-        if( cpl_log != NULL && EQUAL(cpl_log,"OFF") )
+        if( cpl_log != NULL && EQUAL(cpl_log, "OFF") )
         {
             fpLog = NULL;
         }
         else if( cpl_log != NULL )
         {
             size_t nPathLen = strlen(cpl_log) + 20;
-            char* pszPath
-                = static_cast<char *>( CPLMalloc(nPathLen) );
+            char* pszPath = static_cast<char *>(CPLMalloc(nPathLen));
             strcpy(pszPath, cpl_log);
 
             int i = 0;
@@ -906,7 +992,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                 fclose( fpLog );
 
                 // Generate sequenced log file names, inserting # before ext.
-                if (strrchr(cpl_log, '.') == NULL)
+                if( strrchr(cpl_log, '.') == NULL )
                 {
                     snprintf( pszPath, nPathLen, "%s_%d%s", cpl_log, i++,
                              ".log" );
@@ -916,7 +1002,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
                     size_t pos = 0;
                     char *cpl_log_base = CPLStrdup(cpl_log);
                     pos = strcspn(cpl_log_base, ".");
-                    if (pos > 0)
+                    if( pos > 0 )
                     {
                         cpl_log_base[pos] = '\0';
                     }
@@ -948,7 +1034,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, CPLErrorNum nError,
  *                      CPLTurnFailureIntoWarning()                   *
  **********************************************************************/
 
-/**  Whether failures should be turned into warnings.
+/** Whether failures should be turned into warnings.
  */
 void CPLTurnFailureIntoWarning( int bOn )
 {
@@ -959,7 +1045,7 @@ void CPLTurnFailureIntoWarning( int bOn )
         return;
     }
     psCtx->nFailureIntoWarning += (bOn) ? 1 : -1;
-    if (psCtx->nFailureIntoWarning < 0)
+    if( psCtx->nFailureIntoWarning < 0 )
     {
         CPLDebug( "CPL", "Wrong nesting of CPLTurnFailureIntoWarning(TRUE) / "
                   "CPLTurnFailureIntoWarning(FALSE)" );
@@ -974,7 +1060,7 @@ void CPLTurnFailureIntoWarning( int bOn )
  * Install custom error handle with user's data. This method is
  * essentially CPLSetErrorHandler with an added pointer to pUserData.
  * The pUserData is not returned in the CPLErrorHandler, however, and
- * must be fetched via CPLGetLastErrorUserData
+ * must be fetched via CPLGetErrorHandlerUserData.
  *
  * @param pfnErrorHandlerNew new error handler function.
  * @param pUserData User data to carry along with the error context.
@@ -1215,8 +1301,8 @@ void CPL_STDCALL _CPLAssert( const char * pszExpression, const char * pszFile,
 
 {
     CPLError( CE_Fatal, CPLE_AssertionFailed,
-              "Assertion `%s' failed\n"
-              "in file `%s', line %d\n",
+              "Assertion `%s' failed "
+              "in file `%s', line %d",
               pszExpression, pszFile, iLine );
 
     // Just to please compiler so it is aware the function does not return.

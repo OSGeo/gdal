@@ -100,7 +100,7 @@ class OGRILI1DataSource : public OGRDataSource
     char       *pszName;
     ImdReader  *poImdReader;
     IILI1Reader *poReader;
-    FILE       *fpTransfer;
+    VSILFILE   *fpTransfer;
     char       *pszTopic;
     int         nLayers;
     OGRILI1Layer** papoLayers;
@@ -117,7 +117,7 @@ class OGRILI1DataSource : public OGRDataSource
     OGRLayer   *GetLayer( int ) override;
     OGRILI1Layer *GetLayerByName( const char* ) override;
 
-    FILE       *GetTransferFile() { return fpTransfer; }
+    VSILFILE   *GetTransferFile() { return fpTransfer; }
 
     virtual OGRLayer *ICreateLayer( const char *,
                                       OGRSpatialReference * = NULL,

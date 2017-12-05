@@ -30,7 +30,7 @@
 #include "ogr_ods.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using namespace OGRODS;
 
@@ -39,68 +39,74 @@ using namespace OGRODS;
 // -Iogr/ogrsf_frmts/mem -Iogr/ogrsf_frmts/ods -L. -lgdal
 
 /************************************************************************/
-/*                           ~OGRODSDriver()                            */
+/*                              Identify()                              */
 /************************************************************************/
 
-OGRODSDriver::~OGRODSDriver() {}
-
-/************************************************************************/
-/*                              GetName()                               */
-/************************************************************************/
-
-const char *OGRODSDriver::GetName()
-
+static int OGRODSDriverIdentify( GDALOpenInfo* poOpenInfo )
 {
-    return "ODS";
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ODS:") )
+        return TRUE;
+
+    if( EQUAL(CPLGetFilename(poOpenInfo->pszFilename), "content.xml"))
+    {
+        return poOpenInfo->nHeaderBytes != 0 &&
+               strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
+                      "<office:document-content") != NULL;
+    }
+
+    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ODS") &&
+        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ODS}"))
+        return FALSE;
+
+    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
+        return poOpenInfo->eAccess == GA_ReadOnly;
+
+    return poOpenInfo->nHeaderBytes > 2 &&
+           memcmp(poOpenInfo->pabyHeader, "PK", 2) == 0;
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
+static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    CPLString osContentFilename;
-    const char* pszContentFilename = pszFilename;
+    if( !OGRODSDriverIdentify(poOpenInfo) )
+        return NULL;
+
+    const char* pszFilename = poOpenInfo->pszFilename;
+    CPLString osExt(CPLGetExtension(pszFilename));
+    CPLString osContentFilename(pszFilename);
 
     VSILFILE* fpContent = NULL;
     VSILFILE* fpSettings = NULL;
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
+    CPLString osPrefixedFilename("/vsizip/");
+    osPrefixedFilename += poOpenInfo->pszFilename;
+    if( STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") )
     {
-        VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == NULL)
-            return NULL;
-
-        bool bOK = false;
-        char szBuffer[1024];
-        if( VSIFReadL(szBuffer, sizeof(szBuffer), 1, fp) == 1 &&
-            memcmp(szBuffer, "PK", 2) == 0 )
-        {
-            bOK = true;
-        }
-
-        VSIFCloseL(fp);
-
-        if (!bOK)
-            return NULL;
-
-        osContentFilename.Printf("/vsizip/%s/content.xml", pszFilename);
-        pszContentFilename = osContentFilename.c_str();
+        osPrefixedFilename = poOpenInfo->pszFilename;
     }
-    else if (bUpdate) /* We cannot update the xml file, only the .ods */
+
+    if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS}"))
+    {
+        osContentFilename.Printf("%s/content.xml", osPrefixedFilename.c_str());
+    }
+    else if (poOpenInfo->eAccess == GA_Update) /* We cannot update the xml file, only the .ods */
     {
         return NULL;
     }
 
-    if (STARTS_WITH_CI(pszContentFilename, "ODS:") ||
-        EQUAL(CPLGetFilename(pszContentFilename), "content.xml"))
+    if (STARTS_WITH_CI(osContentFilename, "ODS:") ||
+        EQUAL(CPLGetFilename(osContentFilename), "content.xml"))
     {
-        if (STARTS_WITH_CI(pszContentFilename, "ODS:"))
-            pszContentFilename += 4;
+        if (STARTS_WITH_CI(osContentFilename, "ODS:"))
+            osContentFilename = osContentFilename.substr(4);
 
-        fpContent = VSIFOpenL(pszContentFilename, "rb");
+        fpContent = VSIFOpenL(osContentFilename, "rb");
         if (fpContent == NULL)
             return NULL;
 
@@ -122,15 +128,15 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
         return NULL;
     }
 
-    if (EQUAL(CPLGetExtension(pszFilename), "ODS"))
+    if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS)"))
     {
-        fpSettings =
-            VSIFOpenL(CPLSPrintf("/vsizip/%s/settings.xml", pszFilename), "rb");
+        CPLString osTmpFilename(CPLSPrintf("%s/settings.xml", osPrefixedFilename.c_str()));
+        fpSettings = VSIFOpenL(osTmpFilename, "rb");
     }
 
     OGRODSDataSource *poDS = new OGRODSDataSource();
 
-    if( !poDS->Open( pszFilename, fpContent, fpSettings, bUpdate ) )
+    if( !poDS->Open( pszFilename, fpContent, fpSettings, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = NULL;
@@ -140,11 +146,16 @@ OGRDataSource *OGRODSDriver::Open( const char * pszFilename, int bUpdate )
 }
 
 /************************************************************************/
-/*                          CreateDataSource()                          */
+/*                         OGRODSDriverCreate()                         */
 /************************************************************************/
 
-OGRDataSource *OGRODSDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+static
+GDALDataset *OGRODSDriverCreate( const char *pszName,
+                                 int /* nXSize */,
+                                 int /* nYSize */,
+                                 int /* nBands */,
+                                 GDALDataType /* eDT */,
+                                 char **papszOptions )
 
 {
     if (!EQUAL(CPLGetExtension(pszName), "ODS"))
@@ -182,41 +193,19 @@ OGRDataSource *OGRODSDriver::CreateDataSource( const char * pszName,
 }
 
 /************************************************************************/
-/*                         DeleteDataSource()                           */
-/************************************************************************/
-
-OGRErr OGRODSDriver::DeleteDataSource( const char *pszName )
-{
-    if (VSIUnlink( pszName ) == 0)
-        return OGRERR_NONE;
-
-    return OGRERR_FAILURE;
-}
-
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
-
-int OGRODSDriver::TestCapability( const char *pszCap )
-
-{
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
-        return TRUE;
-    if( EQUAL(pszCap,ODrCDeleteDataSource) )
-        return TRUE;
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                           RegisterOGRODS()                           */
 /************************************************************************/
 
 void RegisterOGRODS()
 
 {
-    OGRSFDriver* poDriver = new OGRODSDriver;
+    if( GDALGetDriverByName( "ODS" ) != NULL )
+        return;
 
+    GDALDriver *poDriver = new GDALDriver();
+
+    poDriver->SetDescription( "ODS" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "Open Document/ LibreOffice / "
                                "OpenOffice Spreadsheet " );
@@ -226,6 +215,11 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
                                "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    poDriver->pfnIdentify = OGRODSDriverIdentify;
+    poDriver->pfnOpen = OGRODSDriverOpen;
+    poDriver->pfnCreate = OGRODSDriverCreate;
+
+    GetGDALDriverManager()->RegisterDriver( poDriver );
 }

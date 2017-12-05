@@ -30,7 +30,7 @@
 #include "ogrgeojsonreader.h"
 #include "swq.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRCouchDBDataSource()                        */
@@ -218,7 +218,7 @@ int OGRCouchDBDataSource::Open( const char * pszFilename, int bUpdateIn)
         osURL = pszFilename;
     else
         osURL = pszFilename + 8;
-    if (!osURL.empty() && osURL[osURL.size() - 1] == '/')
+    if (!osURL.empty() && osURL.back() == '/')
         osURL.resize(osURL.size() - 1);
 
     const char* pszUserPwd = CPLGetConfigOption("COUCHDB_USERPWD", NULL);
@@ -1122,23 +1122,13 @@ json_object* OGRCouchDBDataSource::REQUEST(const char* pszVerb,
         return NULL;
     }
 
-    json_tokener* jstok = NULL;
     json_object* jsobj = NULL;
-
-    jstok = json_tokener_new();
-    jsobj = json_tokener_parse_ex(jstok, (const char*)psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &jsobj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err), jstok->char_offset);
-
-        json_tokener_free(jstok);
-
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
     return jsobj;

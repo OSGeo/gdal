@@ -102,9 +102,7 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 %}
 
 #if defined(SWIGPYTHON)
-%include python_exceptions.i
-%include python_strings.i
-%include typemaps_python.i
+%include gnm_python.i
 #elif defined(SWIGRUBY)
 //%include typemaps_ruby.i
 #elif defined(SWIGPHP4)

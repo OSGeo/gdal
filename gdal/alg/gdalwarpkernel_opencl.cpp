@@ -41,7 +41,7 @@
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define handleErr(err) if((err) != CL_SUCCESS) { \
     CPLError(CE_Failure, CPLE_AppDefined, "Error at file %s line %d: %s", __FILE__, __LINE__, getCLErrorString(err)); \
@@ -248,7 +248,7 @@ static const char* getCLDataTypeString( cl_channel_type dataType )
 
 /*
  Finds an appropriate OpenCL device. For debugging, it's
- always easier to use CL_DEVICE_TYPE_CPU because then printf() can be called
+ always easier to use CL_DEVICE_TYPE_CPU because then */ /*ok*/ /*printf() can be called
  from the kernel. If debugging is on, we can print the name and stats about the
  device we're using.
  */

@@ -227,7 +227,7 @@ class FileGDBTable
         int                         bHasReadGDBIndexes;
         std::vector<FileGDBIndex*>  apoIndexes;
 
-        GUInt32                     nOffsetFieldDesc;
+        GUIntBig                    nOffsetFieldDesc;
         GUInt32                     nFieldDescLength;
 
         GUInt32                     nTablxOffsetSize;
@@ -265,7 +265,7 @@ class FileGDBTable
 
         GUIntBig                    nFilterXMin, nFilterXMax, nFilterYMin, nFilterYMax;
 
-        GUInt32                     nOffsetHeaderEnd;
+        GUIntBig                    nOffsetHeaderEnd;
 
         int                         ReadTableXHeader();
         int                         IsLikelyFeatureAtOffset(
@@ -390,6 +390,6 @@ class FileGDBOGRGeometryConverter
 
 int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField);
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */
 
 #endif /* ndef FILEGDBTABLE_H_INCLUDED */

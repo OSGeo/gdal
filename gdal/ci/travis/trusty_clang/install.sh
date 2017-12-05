@@ -1,11 +1,24 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
 cd gdal
 # --with-mongocxx=/usr/local
 export CCACHE_CPP2=yes
-CC="ccache clang" CXX="ccache clang" LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-gta --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-openjpeg=/usr/local
+
+ARCH_FLAGS=""
+AVX2_AVAIL=1
+cat /proc/cpuinfo | grep avx2 >/dev/null || AVX2_AVAIL=0
+if [[ "${AVX2_AVAIL}" == "1" ]]; then
+        ARCH_FLAGS="-mavx2"
+        echo "AVX2 available on CPU"
+else
+        echo "AVX2 not available on CPU."
+        cat /proc/cpuinfo  | grep flags | head -n 1
+fi
+
+CFLAGS=$ARCH_FLAGS CXXFLAGS=$ARCH_FLAGS CC="ccache clang" CXX="ccache clang" LDFLAGS="-lstdc++" ./configure --prefix=/usr --without-libtool --with-jpeg12 --with-python --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-null
+# --with-gta
 # Those ln -s are weird but otherwise Python bindings build fail with clang not being found
 sudo ln -s /usr/local/clang-3.5.0/bin/clang /usr/bin/clang
 sudo ln -s /usr/local/clang-3.5.0/bin/clang++ /usr/bin/clang++
@@ -13,6 +26,7 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
+
 cd swig/java
 cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-8-openjdk-amd64\//" > java.opt.tmp
 mv java.opt.tmp java.opt
@@ -28,11 +42,18 @@ cd ../..
 sudo rm -f /usr/lib/libgdal.so*
 sudo rm -f /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h 
 sudo make install
+sudo ldconfig
+
+cd fuzzers
+make USER_DEFS="-Wextra -Werror" -j3
+cd tests
+make USER_DEFS="-Wextra -Werror" -j3 check
+cd ..
+cd ..
 
 # Check that override is not used in public headers
 if grep override /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h | grep -v "One can override" | grep -v cpl_port | grep -v "Use this file to override"; then echo "Error: override keyword found in public headers instead of CPL_OVERRIDE" && /bin/false; fi 
 
-sudo ldconfig
 cd ../autotest/cpp
 make -j3
 cd ../../gdal

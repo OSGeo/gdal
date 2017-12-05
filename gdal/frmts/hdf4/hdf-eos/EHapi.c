@@ -46,7 +46,7 @@ static int32 *EHXsdTable = NULL;
 #define MAX_RETRIES 10
 
 /* Function Prototypes */
-static intn EHmetalist(char *, char *);
+static intn EHmetalist(const char *, char *);
 static intn EHreset_maxopenfiles(intn);
 static intn EHget_maxopenfiles(intn *, intn *);
 static intn EHget_numfiles(void);
@@ -88,7 +88,7 @@ static intn EHget_numfiles(void);
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHopen(char *filename, intn access)
+EHopen(const char *filename, intn access)
 
 {
     intn            i;		/* Loop index */
@@ -492,7 +492,7 @@ EHopen(char *filename, intn access)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHchkfid(int32 fid, char *name, int32 * HDFfid, int32 * sdInterfaceID,
+EHchkfid(int32 fid, const char *name, int32 * HDFfid, int32 * sdInterfaceID,
 	 uint8 * access)
 
 {
@@ -1315,7 +1315,7 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHrevflds(char *dimlist, char *revdimlist)
+EHrevflds(const char *dimlist, char *revdimlist)
 {
     intn            status = 0;	/* routine return status variable */
 
@@ -1546,7 +1546,7 @@ EHcntGROUP(char *metabuf[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHmetalist(char *instring, char *outstring)
+EHmetalist(const char *instring, char *outstring)
 {
     intn            i;		/* Loop index */
     intn            status = 0;	/* routine return status variable */
@@ -1679,7 +1679,7 @@ EHmetalist(char *instring, char *outstring)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
+EHinsertmeta(int32 sdInterfaceID, const char *structname, const char *structcode,
 	     int32 metacode, char *metastr, int32 metadata[])
 {
     intn            i;		/* Loop index */
@@ -2398,7 +2398,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHgetmetavalue(char *metaptrs[], char *parameter, char *retstr)
+EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 {
     intn            status = 0;	/* routine return status variable */
 
@@ -2490,8 +2490,8 @@ EHgetmetavalue(char *metaptrs[], char *parameter, char *retstr)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 char           *
-EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
-	    char *groupname, char *metaptrs[])
+EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
+	    const char *groupname, char *metaptrs[])
 {
     intn            i;		/* Loop index */
 
@@ -3068,8 +3068,8 @@ EHbisect(float64(*func) (float64[]), float64 funcParms[], int32 nParms,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHattr(int32 fid, int32 attrVgrpID, char *attrname, int32 numbertype,
-       int32 count, char *wrcode, VOIDP datbuf)
+EHattr(int32 fid, int32 attrVgrpID, const char *attrname, int32 numbertype,
+       int32 count, const char *wrcode, VOIDP datbuf)
 
 {
     intn            status = 0;	/* routine return status variable */
@@ -3103,7 +3103,7 @@ EHattr(int32 fid, int32 attrVgrpID, char *attrname, int32 numbertype,
 	/* Write Attribute */
 	/* --------------- */
 	VSsetfields(vdataID, "AttrValues");
-	(void) VSsizeof(vdataID, "AttrValues");
+	(void) VSsizeof(vdataID, (char*) "AttrValues");
 	VSwrite(vdataID, datbuf, 1, FULL_INTERLACE);
 
 	VSdetach(vdataID);
@@ -3122,7 +3122,7 @@ EHattr(int32 fid, int32 attrVgrpID, char *attrname, int32 numbertype,
 	} else
 	{
 	    VSsetfields(vdataID, "AttrValues");
-	    (void) VSsizeof(vdataID, "AttrValues");
+	    (void) VSsizeof(vdataID, (char*) "AttrValues");
 	    VSread(vdataID, datbuf, 1, FULL_INTERLACE);
 	    VSdetach(vdataID);
 	}
@@ -3166,7 +3166,7 @@ EHattr(int32 fid, int32 attrVgrpID, char *attrname, int32 numbertype,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-EHattrinfo(int32 fid, int32 attrVgrpID, char *attrname, int32 * numbertype,
+EHattrinfo(int32 fid, int32 attrVgrpID, const char *attrname, int32 * numbertype,
 	   int32 * count)
 
 {
@@ -3189,7 +3189,7 @@ EHattrinfo(int32 fid, int32 attrVgrpID, char *attrname, int32 * numbertype,
 	/* Get attribute info */
 	/* ------------------ */
 	VSsetfields(vdataID, "AttrValues");
-	*count = VSsizeof(vdataID, "AttrValues");
+	*count = VSsizeof(vdataID, (char*) "AttrValues");
 	*numbertype = VFfieldtype(vdataID, 0);
 	VSdetach(vdataID);
     }
@@ -3359,7 +3359,7 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-EHinquire(char *filename, char *type, char *objectlist, int32 * strbufsize)
+EHinquire(const char *filename, const char *type, char *objectlist, int32 * strbufsize)
 {
     int32           HDFfid;	/* HDF file ID */
     int32           vgRef;	/* Vgroup reference number */

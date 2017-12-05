@@ -92,7 +92,7 @@ public:
     virtual OGRSpatialReference *GetSpatialRef() override;
     virtual const char* GetFIDColumn() override;
 
-    virtual GByte GetId() const { return nLayerID; };
+    virtual GByte GetId() const { return nLayerID; }
     virtual void AddClassifyCode(unsigned nClassCode, const char *szName = NULL);
     virtual bool AddRecord( long nFID, unsigned nClassCode,
                             vsi_l_offset nOffset, bool bHasSemantic,

@@ -195,7 +195,7 @@ class OGRGMLDataSource : public OGRDataSource
     bool                IsGML3DeegreeOutput() const { return bIsOutputGML3Deegree; }
     bool                IsGML32Output() const { return bIsOutputGML32; }
     OGRGMLSRSNameFormat GetSRSNameFormat() const { return eSRSNameFormat; }
-    int                 WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
+    bool                WriteSpaceIndentation() const { return bWriteSpaceIndentation; }
     const char         *GetGlobalSRSName();
 
     bool                GetInvertAxisOrderIfLatLong() const { return m_bInvertAxisOrderIfLatLong; }
@@ -210,10 +210,11 @@ class OGRGMLDataSource : public OGRDataSource
     OGRGMLLayer*        GetLastReadLayer() const { return poLastReadLayer; }
     void                SetLastReadLayer(OGRGMLLayer* poLayer) { poLastReadLayer = poLayer; }
 
-    const char         *GetAppPrefix();
-    bool                RemoveAppPrefix();
-    bool                WriteFeatureBoundedBy();
-    const char         *GetSRSDimensionLoc();
+    const char         *GetAppPrefix() const;
+    bool                RemoveAppPrefix() const;
+    bool                WriteFeatureBoundedBy() const;
+    const char         *GetSRSDimensionLoc() const;
+    bool                GMLFeatureCollection() const;
 
     virtual OGRLayer *          ExecuteSQL( const char *pszSQLCommand,
                                             OGRGeometry *poSpatialFilter,

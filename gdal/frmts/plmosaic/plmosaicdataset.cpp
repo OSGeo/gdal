@@ -36,7 +36,7 @@
 
 #include "ogrgeojsonreader.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // g++ -fPIC -g -Wall frmts/plmosaic/*.cpp -shared -o gdal_PLMOSAIC.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/geojson/libjson -L. -lgdal
 
@@ -458,7 +458,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
             CPLCalloc( 1, sizeof( CPLHTTPResult ) ) );
         vsi_l_offset nDataLength = 0;
         CPLString osURL(pszURL);
-        if( osURL[osURL.size()-1 ] == '/' )
+        if( osURL.back() == '/' )
             osURL.resize(osURL.size()-1);
         GByte* pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLength, FALSE);
         if( pabyBuf )
@@ -524,19 +524,13 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
         return NULL;
     }
 
-    json_tokener* jstok = json_tokener_new();
-    json_object* poObj
-        = json_tokener_parse_ex(jstok, (const char*) psResult->pabyData, -1);
-    if( jstok->err != json_tokener_success)
+    json_object* poObj = NULL;
+    const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
+    if( !OGRJSonParse(pszText, &poObj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err), jstok->char_offset);
-        json_tokener_free(jstok);
         CPLHTTPDestroyResult(psResult);
         return NULL;
     }
-    json_tokener_free(jstok);
 
     CPLHTTPDestroyResult(psResult);
 
@@ -734,7 +728,7 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
 int PLMosaicDataset::OpenMosaic()
 {
     CPLString osURL(osBaseURL);
-    if( osURL[osURL.size()-1] != '/' )
+    if( osURL.back() != '/' )
         osURL += '/';
     osURL += osMosaic;
     json_object* poObj = RunRequest(osURL);
@@ -1370,7 +1364,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
                 {
-                    if( poFeat->IsFieldSet(i) )
+                    if( poFeat->IsFieldSetAndNotNull(i) )
                     {
                         CPLXMLNode* psItem = CPLCreateXMLNode(psQuad,
                             CXT_Element, poFeat->GetFieldDefnRef(i)->GetNameRef());
@@ -1413,7 +1407,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
         OGRSpatialReference oSRSSrc, oSRSDst;
         oSRSSrc.SetFromUserInput(pszWKT);
-        oSRSDst.importFromEPSG(4326);
+        oSRSDst.SetFromUserInput(SRS_WKT_WGS84);
         OGRCoordinateTransformation* poCT = OGRCreateCoordinateTransformation(&oSRSSrc,
                                                                               &oSRSDst);
         double x = adfGeoTransform[0] + nPixel * adfGeoTransform[1];
@@ -1434,7 +1428,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                     CPLXMLNode* psScene = CPLCreateXMLNode(psScenes, CXT_Element, "Scene");
                     for(int i=0;i<poFeat->GetFieldCount();i++)
                     {
-                        if( poFeat->IsFieldSet(i) )
+                        if( poFeat->IsFieldSetAndNotNull(i) )
                         {
                             CPLXMLNode* psItem = CPLCreateXMLNode(psScene,
                                 CXT_Element, poFeat->GetFieldDefnRef(i)->GetNameRef());

@@ -36,7 +36,7 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Note, we implement no constructor for this class to make instantiation
 // cheaper.  It is required that the Initialize() be called before anything
@@ -242,6 +242,7 @@ int DDFField::GetRepeatCount()
 
     while( true )
     {
+        const int iOffsetBefore = iOffset;
         for( int iSF = 0; iSF < poDefn->GetSubfieldCount(); iSF++ )
         {
             DDFSubfieldDefn * poThisSFDefn = poDefn->GetSubfield( iSF );
@@ -257,6 +258,11 @@ int DDFField::GetRepeatCount()
             iOffset += nBytesConsumed;
             if( iOffset > nDataSize )
                 return iRepeatCount - 1;
+        }
+        if( iOffset == iOffsetBefore )
+        {
+            // Should probably emit error
+            return iRepeatCount - 1;
         }
 
         if( iOffset > nDataSize - 2 )

@@ -68,7 +68,7 @@ class OGRXLSXLayer : public OGRMemLayer
     bool                GetHasHeaderLine() const { return bHasHeaderLine; }
     void                SetHasHeaderLine( bool bIn ) { bHasHeaderLine = bIn; }
 
-    const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); };
+    const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); }
     OGRwkbGeometryType  GetGeomType() override { return wkbNone; }
     virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
 
@@ -86,8 +86,7 @@ class OGRXLSXLayer : public OGRMemLayer
     virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override
     { Init(); return OGRMemLayer::SetNextByIndex(nIndex); }
 
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override
-    { Init(); SetUpdated(); return OGRMemLayer::ICreateFeature(poFeature); }
+    virtual OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
 
     OGRFeatureDefn *    GetLayerDefn() override
     { Init(); return OGRMemLayer::GetLayerDefn(); }
@@ -153,9 +152,10 @@ public:
                                     eType(eTypeIn), bHasMS(bHasMSIn) {}
 };
 
-class OGRXLSXDataSource : public OGRDataSource
+class OGRXLSXDataSource : public GDALDataset
 {
     char*               pszName;
+    CPLString           osPrefixedFilename;
     bool                bUpdatable;
     bool                bUpdated;
 
@@ -221,14 +221,13 @@ class OGRXLSXDataSource : public OGRDataSource
                         virtual ~OGRXLSXDataSource();
 
     int                 Open( const char * pszFilename,
+                              const char * pszPrefixedFilename,
                               VSILFILE* fpWorkbook,
                               VSILFILE* fpWorkbookRels,
                               VSILFILE* fpSharedStrings,
                               VSILFILE* fpStyles,
                               int bUpdate );
     int                 Create( const char * pszName, char **papszOptions );
-
-    virtual const char*         GetName() override { return pszName; }
 
     virtual int                 GetLayerCount() override;
     virtual OGRLayer*           GetLayer( int ) override;
@@ -265,23 +264,5 @@ class OGRXLSXDataSource : public OGRDataSource
 };
 
 } /* end of OGRXLSX namespace */
-
-/************************************************************************/
-/*                             OGRXLSXDriver                             */
-/************************************************************************/
-
-class OGRXLSXDriver : public OGRSFDriver
-{
-  public:
-                virtual ~OGRXLSXDriver();
-
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual int                 TestCapability( const char * ) override;
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
-    virtual OGRErr      DeleteDataSource( const char *pszName ) override;
-};
 
 #endif /* ndef OGR_XLSX_H_INCLUDED */

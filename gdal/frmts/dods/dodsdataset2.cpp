@@ -44,7 +44,7 @@
 
 using namespace libdap;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /** Attribute names used to encode geo-referencing information. Note that
     these are not C++ objects to avoid problems with static global
@@ -190,7 +190,7 @@ private:
     DDS   *poDDS;
     BaseTypeFactory *poBaseTypeFactory;
 
-    AISConnect *connect_to_server() throw(Error);
+    AISConnect *connect_to_server() /*throw(Error)*/;
 
     static string      SubConstraint( string raw_constraint,
                                       string x_constraint,
@@ -315,7 +315,7 @@ DODSDataset::~DODSDataset()
 /************************************************************************/
 
 AISConnect *
-DODSDataset::connect_to_server() throw(Error)
+DODSDataset::connect_to_server() /*throw(Error)*/
 {
     // does the string start with 'http?'
     if (oURL.find("http://") == string::npos

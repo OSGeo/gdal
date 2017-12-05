@@ -35,7 +35,7 @@
 #include "ogr_api.h"
 #include "ogrpgeogeometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::string;
 
@@ -189,6 +189,13 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType, bool *ha
         case wkbMultiPolygon:
         {
             *gdbType = "esriGeometryPolygon";
+            break;
+        }
+
+        case wkbTIN:
+        case wkbPolyhedralSurface:
+        {
+            *gdbType = "esriGeometryMultiPatch";
             break;
         }
 
@@ -497,6 +504,29 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
 
     if (result == OGRERR_NONE)
     {
+        if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+        {
+            int nEntries = 0;
+            int* panConfidence = NULL;
+            OGRSpatialReferenceH* pahSRS =
+                (*ppSR)->FindMatches(NULL, &nEntries, &panConfidence);
+            if( nEntries == 1 && panConfidence[0] == 100 )
+            {
+                (*ppSR)->Release();
+                (*ppSR) = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                CPLFree(pahSRS);
+            }
+            else
+            {
+                OSRFreeSRSArray(pahSRS);
+            }
+            CPLFree(panConfidence);
+        }
+        else
+        {
+            (*ppSR)->AutoIdentifyEPSG();
+        }
+
         return true;
     }
     else

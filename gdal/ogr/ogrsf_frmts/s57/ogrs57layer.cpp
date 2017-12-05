@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_s57.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRS57Layer()                             */
@@ -282,7 +282,7 @@ OGRErr OGRS57Layer::ICreateFeature( OGRFeature *poFeature )
 
     if( iRCNMFld != -1 )
     {
-        if( !poFeature->IsFieldSet( iRCNMFld ) )
+        if( !poFeature->IsFieldSetAndNotNull( iRCNMFld ) )
             poFeature->SetField( iRCNMFld, nRCNM );
         else
         {
@@ -297,7 +297,7 @@ OGRErr OGRS57Layer::ICreateFeature( OGRFeature *poFeature )
     {
         const int iOBJLFld = poFeature->GetFieldIndex( "OBJL" );
 
-        if( !poFeature->IsFieldSet( iOBJLFld ) )
+        if( !poFeature->IsFieldSetAndNotNull( iOBJLFld ) )
             poFeature->SetField( iOBJLFld, nOBJL );
         else
         {

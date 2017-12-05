@@ -34,6 +34,7 @@
 import os
 import sys
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
@@ -2849,6 +2850,298 @@ def netcdf_69():
     return 'success'
 
 ###############################################################################
+# Test that we don't erroneously identify non-longitude axis as longitude (#6759)
+
+def netcdf_70():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/test6759.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = [304250.0, 250.0, 0.0, 4952500.0, 0.0, -250.0]
+    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-3:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that we take into account x and y offset and scaling
+# (https://github.com/OSGeo/gdal/pull/200)
+
+def netcdf_71():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/test_coord_scale_offset.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-690769.999174516, 1015.8812500000931, 0.0, 2040932.1838741193, 0.0, 1015.8812499996275)
+    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-3:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test int64 attributes / dim
+
+def netcdf_72():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if not gdaltest.netcdf_drv_has_nc4:
+        return 'skip'
+
+    ds = gdal.Open('data/int64dim.nc')
+    mdi = ds.GetRasterBand(1).GetMetadataItem('NETCDF_DIM_TIME')
+    if mdi != '123456789012':
+        print(mdi)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test geostationary with radian units (https://github.com/OSGeo/gdal/pull/220)
+
+def netcdf_73():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/geos_rad.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-5979486.362104082, 1087179.4077774752, 0.0, -5979487.123448145, 0.0, 1087179.4077774752)
+    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
+
+def netcdf_74():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/geos_microradian.nc')
+    gt = ds.GetGeoTransform()
+    expected_gt = (-5739675.119757546, 615630.8078590936, 0.0, -1032263.7666924844, 0.0, 615630.8078590936)
+    if max([abs(gt[i]-expected_gt[i]) for i in range(6)]) > 1:
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test opening a ncdump file
+
+def netcdf_75():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if gdaltest.netcdf_drv.GetMetadataItem("ENABLE_NCDUMP") != 'YES':
+        return 'skip'
+
+    tst = gdaltest.GDALTest( 'NetCDF', 'byte.nc.txt',
+                             1, 4672 )
+
+    wkt = """PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.9786982139006,
+                AUTHORITY["EPSG","7008"]],
+            AUTHORITY["EPSG","6267"]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433],
+        AUTHORITY["EPSG","4267"]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AUTHORITY["EPSG","26711"]]"""
+
+    return tst.testOpen( check_prj = wkt )
+
+###############################################################################
+# test opening a vector ncdump file
+
+def netcdf_76():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    if gdaltest.netcdf_drv.GetMetadataItem("ENABLE_NCDUMP") != 'YES':
+        return 'skip'
+
+    ds = ogr.Open('data/poly.nc.txt')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f is None or f.GetGeometryRef() is None:
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test opening a raster file that used to be confused with a vector file (#6974)
+
+def netcdf_77():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/fake_Oa01_radiance.nc')
+    subdatasets = ds.GetMetadata('SUBDATASETS')
+    if len(subdatasets) != 2 * 2:
+        gdaltest.post_reason('fail')
+        print(subdatasets)
+        return 'fail'
+
+    ds = gdal.Open('NETCDF:"data/fake_Oa01_radiance.nc":Oa01_radiance')
+    if len(ds.GetMetadata('GEOLOCATION')) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# test we handle correctly valid_range={0,255} for a byte dataset with
+# negative nodata value
+
+def netcdf_78():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_valid_range.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test we handle correctly _Unsigned="true" for a byte dataset with
+# negative nodata value
+
+def netcdf_79():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_neg_fillvalue_and_unsigned_hint.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test creating and opening with accent
+def netcdf_80():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    test = gdaltest.GDALTest( 'NETCDF', '../data/byte.tif', 1, 4672 )
+    return test.testCreateCopy(new_filename = 'test\xc3\xa9.nc', check_gt=0, check_srs=0, check_minmax = 0)
+
+###############################################################################
+# netCDF file in rotated_pole projection
+
+def netcdf_81():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/rotated_pole.nc')
+
+    if ds.RasterXSize != 137 or ds.RasterYSize != 108:
+        gdaltest.post_reason('Did not get expected dimensions')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6367470,594.3130483479559]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-35.47, 0.44, 0.0, 23.65, 0.0, -0.44)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# netCDF file with extra dimensions that are oddly indexed (1D variable
+# corresponding to the dimension but with a differentn ame, no corresponding
+# 1D variable, several corresponding variables)
+
+def netcdf_82():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/oddly_indexed_extra_dims.nc')
+    md = ds.GetMetadata()
+    expected_md = {
+        'NETCDF_DIM_extra_dim_with_var_of_different_name_VALUES': '{100,200}',
+        'NETCDF_DIM_EXTRA': '{extra_dim_with_several_variables,extra_dim_without_variable,extra_dim_with_var_of_different_name}',
+        'x#standard_name': 'projection_x_coordinate',
+        'NC_GLOBAL#Conventions': 'CF-1.5',
+        'y#standard_name': 'projection_y_coordinate',
+        'NETCDF_DIM_extra_dim_with_var_of_different_name_DEF': '{2,6}'
+    }
+    if md != expected_md:
+        gdaltest.post_reason('Did not get expected metadata')
+        print(md)
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {
+        'NETCDF_DIM_extra_dim_with_several_variables': '1',
+        'NETCDF_DIM_extra_dim_with_var_of_different_name': '100',
+        'NETCDF_DIM_extra_dim_without_variable': '1',
+        'NETCDF_VARNAME': 'data'
+    }
+    if md != expected_md:
+        gdaltest.post_reason('Did not get expected metadata')
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 ###############################################################################
 # main tests list
@@ -2927,7 +3220,20 @@ gdaltest_list = [
     netcdf_66_ncdump_check,
     netcdf_67,
     netcdf_68,
-    netcdf_69
+    netcdf_69,
+    netcdf_70,
+    netcdf_71,
+    netcdf_72,
+    netcdf_73,
+    netcdf_74,
+    netcdf_75,
+    netcdf_76,
+    netcdf_77,
+    netcdf_78,
+    netcdf_79,
+    netcdf_80,
+    netcdf_81,
+    netcdf_82
 ]
 
 ###############################################################################
@@ -2952,6 +3258,8 @@ gdaltest_list.append( (ut.testSetProjection, item[0]) )
 
 #SetMetadata() not supported
 #gdaltest_list.append( (ut.testSetMetadata, item[0]) )
+
+# gdaltest_list = [ netcdf_1, netcdf_82 ]
 
 # Others we do for each pixel type.
 for item in init_list:

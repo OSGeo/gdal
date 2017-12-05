@@ -1,0 +1,133 @@
+<n1:Level-1C_User_Product xmlns:n1="https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd">
+    <n1:General_Info>
+        <Product_Info>
+            <PRODUCT_START_TIME>2015-12-31T23:59:59.999Z</PRODUCT_START_TIME>
+            <PRODUCT_STOP_TIME>2015-12-31T23:59:59.999Z</PRODUCT_STOP_TIME>
+            <PRODUCT_URI/>
+            <PROCESSING_LEVEL>Level-1C</PROCESSING_LEVEL>
+            <PRODUCT_TYPE>S2MSI1C</PRODUCT_TYPE>
+            <PROCESSING_BASELINE>01.03</PROCESSING_BASELINE>
+            <GENERATION_TIME>2015-12-31T23:59:59.999Z</GENERATION_TIME>
+            <PREVIEW_IMAGE_URL>http://example.com</PREVIEW_IMAGE_URL>
+            <PREVIEW_GEO_INFO>BrowseImageFootprint</PREVIEW_GEO_INFO>
+            <Datatake datatakeIdentifier="GS2A_20151231T235959_000123_N01.03">
+      <SPACECRAFT_NAME>Sentinel-2A</SPACECRAFT_NAME>
+      <DATATAKE_TYPE>INS-NOBS</DATATAKE_TYPE>
+      <DATATAKE_SENSING_START>2015-12-31T23:59:59.999Z</DATATAKE_SENSING_START>
+      <SENSING_ORBIT_NUMBER>22</SENSING_ORBIT_NUMBER>
+      <SENSING_ORBIT_DIRECTION>DESCENDING</SENSING_ORBIT_DIRECTION>
+    </Datatake>
+<Query_Options completeSingleTile="true">
+<PRODUCT_FORMAT>SAFE_COMPACT</PRODUCT_FORMAT>
+</Query_Options>
+<Product_Organisation>
+                <Granule_List>
+                    <Granule datastripIdentifier="S2A_OPER_MSI_L1C_DS_MTI__20151231T235959_S20151231T235959_N01.03" granuleIdentifier="S2A_OPER_MSI_L1C_TL_MTI__20151231T235959_A007999_T30TXT_N01.03" imageFormat="JPEG2000">
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B01</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B06</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B10</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B08</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B07</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B09</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B05</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B12</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B11</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B04</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B03</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B02</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_B8A</IMAGE_FILE>
+                        <IMAGE_FILE>GRANULE/FOO/IMG_DATA/BAR_TCI</IMAGE_FILE>
+                    </Granule>
+                </Granule_List>
+</Product_Organisation>
+        </Product_Info>
+        <Product_Image_Characteristics>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>NODATA</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>1</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Special_Values>
+                <SPECIAL_VALUE_TEXT>SATURATED</SPECIAL_VALUE_TEXT>
+                <SPECIAL_VALUE_INDEX>0</SPECIAL_VALUE_INDEX>
+            </Special_Values>
+            <Image_Display_Order>
+                <RED_CHANNEL>3</RED_CHANNEL>
+                <GREEN_CHANNEL>2</GREEN_CHANNEL>
+                <BLUE_CHANNEL>1</BLUE_CHANNEL>
+            </Image_Display_Order>
+            <QUANTIFICATION_VALUE unit="none">1000</QUANTIFICATION_VALUE>
+            <Reflectance_Conversion>
+        <U>0.97</U>
+        <Solar_Irradiance_List>
+          <SOLAR_IRRADIANCE bandId="0" unit="W/m²/µm">1900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="1" unit="W/m²/µm">1900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="2" unit="W/m²/µm">1800</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="3" unit="W/m²/µm">1500</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="4" unit="W/m²/µm">1400</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="5" unit="W/m²/µm">1200</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="6" unit="W/m²/µm">1100</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="7" unit="W/m²/µm">1000</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="8" unit="W/m²/µm">900</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="9" unit="W/m²/µm">800</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="10" unit="W/m²/µm">300</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="11" unit="W/m²/µm">200</SOLAR_IRRADIANCE>
+          <SOLAR_IRRADIANCE bandId="12" unit="W/m²/µm">80</SOLAR_IRRADIANCE>
+        </Solar_Irradiance_List>
+      </Reflectance_Conversion>
+            <PHYSICAL_GAINS bandId="0">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="1">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="2">3</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="3">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="4">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="5">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="6">4</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="7">6</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="8">5</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="9">8</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="10">61</PHYSICAL_GAINS>
+            <PHYSICAL_GAINS bandId="11">37</PHYSICAL_GAINS>
+            <REFERENCE_BAND>0</REFERENCE_BAND>
+        </Product_Image_Characteristics>
+    </n1:General_Info>
+    <n1:Geometric_Info>
+        <Product_Footprint>
+            <Product_Footprint>
+                <Global_Footprint>
+                    <EXT_POS_LIST> 46 11 45 11 45 13 46 13 46 11</EXT_POS_LIST>
+                </Global_Footprint>
+            </Product_Footprint>
+            <RASTER_CS_TYPE>POINT</RASTER_CS_TYPE>
+            <PIXEL_ORIGIN>1</PIXEL_ORIGIN>
+        </Product_Footprint>
+        <Coordinate_Reference_System>
+            <GEO_TABLES version="1">EPSG</GEO_TABLES>
+            <HORIZONTAL_CS_TYPE>GEOGRAPHIC</HORIZONTAL_CS_TYPE>
+        </Coordinate_Reference_System>
+    </n1:Geometric_Info>
+    <n1:Auxiliary_Data_Info>
+        <GIPP_List>
+      <GIPP_FILENAME type="GIP_BLINDP" version="0003">S2A_OPER_GIP_BLINDP_MPC__20150605T094736_V20150622T000000_21000101T000000_B00</GIPP_FILENAME>
+    </GIPP_List>
+        <PRODUCTION_DEM_TYPE>S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000</PRODUCTION_DEM_TYPE>
+        <IERS_BULLETIN_FILENAME>S2__OPER_AUX_UT1UTC_PDMC_20151001T000000_V20151002T000000_20161001T000000</IERS_BULLETIN_FILENAME>
+        <GRI_FILENAME>S2A_OPER_AUX_GRI065_PDMC_20130621T120000_S20130101T000000</GRI_FILENAME>
+        <ECMWF_DATA_REF>S2__OPER_AUX_ECMWFD_FAKE_19800101T000000_V19800101T000000_19800101T000000</ECMWF_DATA_REF>
+    </n1:Auxiliary_Data_Info>
+    <n1:Quality_Indicators_Info>
+        <Cloud_Coverage_Assessment>0.0</Cloud_Coverage_Assessment>
+        <Technical_Quality_Assessment>
+            <DEGRADED_ANC_DATA_PERCENTAGE>0</DEGRADED_ANC_DATA_PERCENTAGE>
+            <DEGRADED_MSI_DATA_PERCENTAGE>0</DEGRADED_MSI_DATA_PERCENTAGE>
+        </Technical_Quality_Assessment>
+        <Quality_Control_Checks>
+            <Quality_Inspections>
+                <SENSOR_QUALITY_FLAG>PASSED</SENSOR_QUALITY_FLAG>
+                <GEOMETRIC_QUALITY_FLAG>PASSED</GEOMETRIC_QUALITY_FLAG>
+                <GENERAL_QUALITY_FLAG>PASSED</GENERAL_QUALITY_FLAG>
+                <FORMAT_CORRECTNESS_FLAG>PASSED</FORMAT_CORRECTNESS_FLAG>
+                <RADIOMETRIC_QUALITY_FLAG>PASSED</RADIOMETRIC_QUALITY_FLAG>
+            </Quality_Inspections>
+            <Failed_Inspections/>
+        </Quality_Control_Checks>
+    </n1:Quality_Indicators_Info>
+</n1:Level-1C_User_Product>

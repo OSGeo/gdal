@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "ogr_rec.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRRECLayer()                             */
@@ -53,6 +53,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */
@@ -222,7 +223,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
             return NULL;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }

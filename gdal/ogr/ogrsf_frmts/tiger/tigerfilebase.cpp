@@ -33,7 +33,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           TigerFileBase()                            */
@@ -287,7 +287,7 @@ bool TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
 
     CPLAssert( nEnd - nStart + 1 < (int) sizeof(szValue)-1 );
 
-    if( iField < 0 || !poFeature->IsFieldSet( iField ) )
+    if( iField < 0 || !poFeature->IsFieldSetAndNotNull( iField ) )
         return false;
 
     char szFormat[32];
@@ -365,7 +365,7 @@ bool TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
 
     /*
      * Prior to TIGER_2002, type 5 files lacked the version.  So write
-     * the version in the record iff we're using TIGER_2002 or higher,
+     * the version in the record if we're using TIGER_2002 or higher,
      * or if this is not type "5"
      */
     if ( (poDS->GetVersion() >= TIGER_2002) ||
@@ -573,6 +573,8 @@ OGRFeature *TigerFileBase::GetFeature( int nRecordId )
         return NULL;
     }
 
+    // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+    // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
     if( VSIFReadL( achRecord, psRTInfo->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,

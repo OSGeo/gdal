@@ -37,6 +37,19 @@
 #ifndef GDAL_PDF_H_INCLUDED
 #define GDAL_PDF_H_INCLUDED
 
+/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef bool GBool" */
+/* in include/poppler/goo/gtypes.h with the one defined in cpl_port.h */
+#define CPL_GBOOL_DEFINED
+#define OGR_FEATURESTYLE_INCLUDE
+#include "cpl_port.h"
+
+#include <map>
+#include <set>
+#include <stack>
+#include <utility>
+#include <bitset>   // For detecting usage of PDF library
+#include <algorithm>
+
 #include "pdfsdk_headers.h"
 
 #include "gdal_pam.h"
@@ -44,10 +57,6 @@
 
 #include "ogr_mem.h"
 #include "pdfobject.h"
-
-#include <map>
-#include <stack>
-#include <bitset>   // For detecting usage of PDF library
 
 #define     PDFLIB_POPPLER    0
 #define     PDFLIB_PODOFO     1
@@ -311,12 +320,15 @@ private:
 
     int                 bSetStyle;
 
-    void                ExploreTree(GDALPDFObject* poObj, int nRecLevel);
+    void                ExploreTree(GDALPDFObject* poObj,
+                                    std::set< std::pair<int,int> > aoSetAlreadyVisited,
+                                    int nRecLevel);
     void                ExploreContents(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     void                ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
                                                              GDALPDFObject* poResources,
-                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer);
+                                                             std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
+                                                             OGRPDFLayer* poSingleLayer);
     void                ExploreContentsNonStructured(GDALPDFObject* poObj, GDALPDFObject* poResources);
 
     int                 UnstackTokens(const char* pszToken,

@@ -37,7 +37,7 @@ CPL_C_START
 #include <blx.h>
 CPL_C_END
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class BLXDataset : public GDALPamDataset
 {

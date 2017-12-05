@@ -159,8 +159,8 @@ Win32IOInterface::Seek( void *io_handle, uint64 offset, int whence ) const
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
                        (LPTSTR) &lpMsgBuf, 0, NULL );
  
-        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );
-        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", 
+        printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
+        printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n", /*ok*/
                 (GUInt32) nOffset, nMoveLow, dwMoveHigh );
 #endif
         ThrowPCIDSKException( "Seek(%d,%d): %s (%d)", 

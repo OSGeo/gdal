@@ -31,6 +31,8 @@
 #ifndef CADFILEIO_H
 #define CADFILEIO_H
 
+#include "opencad.h"
+
 #include <cstddef>
 #include <string>
 
@@ -38,7 +40,7 @@
  * @brief The CADFileIO class provides in/out file operations as read, write,
  * seek, etc. This is abstract class.
  */
-class CADFileIO
+class OCAD_EXTERN CADFileIO
 {
 public:
     enum class SeekOrigin

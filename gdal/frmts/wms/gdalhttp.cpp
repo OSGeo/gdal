@@ -32,7 +32,7 @@
 #include "wmsdriver.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* CURLINFO_RESPONSE_CODE was known as CURLINFO_HTTP_CODE in libcurl 7.10.7 and earlier */
 #if LIBCURL_VERSION_NUM < 0x070a07
@@ -54,7 +54,7 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
         if (pabyNewData == NULL) {
             VSIFree(psRequest->pabyData);
             psRequest->pabyData = NULL;
-            psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.", 
+            psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.",
                 static_cast<unsigned int>(new_size));
             psRequest->nDataAlloc = 0;
             psRequest->nDataLen = 0;
@@ -84,19 +84,26 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     if (!psRequest->Range.empty())
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_RANGE, psRequest->Range.c_str());
 
-    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str()); 
+    curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_URL, psRequest->URL.c_str());
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEDATA, psRequest);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_WRITEFUNCTION, CPLHTTPWriteFunc);
 
     psRequest->m_curl_error.resize(CURL_ERROR_SIZE + 1);
     curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_ERRORBUFFER, &psRequest->m_curl_error[0]);
 
-    CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options);
+    psRequest->m_headers = static_cast<struct curl_slist*>(
+            CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options));
+    if( psRequest->m_headers != NULL )
+        curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
+                         psRequest->m_headers);
+
 }
 
 WMSHTTPRequest::~WMSHTTPRequest() {
     if (m_curl_handle != NULL)
         curl_easy_cleanup(m_curl_handle);
+    if( m_headers != NULL )
+        curl_slist_free_all(m_headers);
     if (pabyData != NULL)
         CPLFree(pabyData);
 }
@@ -126,7 +133,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     {
         for(i = 0; i< nRequestCount;i++)
         {
-            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].URL.c_str(), 
+            CPLHTTPResult* psResult = CPLHTTPFetch(pasRequest[i].URL.c_str(),
                                                     const_cast<char**>(pasRequest[i].options));
             pasRequest[i].pabyData = psResult->pabyData;
             pasRequest[i].nDataLen = psResult->nDataLen;
@@ -154,11 +161,12 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     // add at most max_conn requests
     for (conn_i = 0; conn_i < std::min(nRequestCount, max_conn); ++conn_i) {
         WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
-        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount, 
+        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, nRequestCount,
             pasRequest[conn_i].URL.c_str());
         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
     }
 
+    void* old_handler = CPLHTTPIgnoreSigPipe();
     while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
 
     while (still_running || (conn_i != nRequestCount)) {
@@ -171,11 +179,11 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         do {
             msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
             if (msg != NULL) {
-                if (msg->msg == CURLMSG_DONE) { 
+                if (msg->msg == CURLMSG_DONE) {
                     // transfer completed, add more handles if available
                     if (conn_i < nRequestCount) {
                         WMSHTTPRequest *const psRequest = &pasRequest[conn_i];
-                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1, 
+                        CPLDebug("HTTP", "Requesting [%d/%d] %s", conn_i + 1,
                                     nRequestCount, pasRequest[conn_i].URL.c_str());
                         curl_multi_add_handle(curl_multi, psRequest->m_curl_handle);
                         ++conn_i;
@@ -199,11 +207,27 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             }
         }
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if( CPLTestBool(CPLGetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST",  "NO")) )
+        {
+            // oss-fuzz has no network interface and apparently this causes
+            // endless loop here. There might be a better/more general way of
+            // detecting this, and avoid this oss-fuzz specific trick, but
+            // for now that's good enough.
+            break;
+        }
+#endif
+
         while (curl_multi_perform(curl_multi, &still_running) == CURLM_CALL_MULTI_PERFORM);
     }
+    CPLHTTPRestoreSigPipeHandler(old_handler);
 
     if (conn_i != nRequestCount) { // something gone really really wrong
-        CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
+        // oddly built libcurl or perhaps absence of network interface
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLHTTPFetchMulti(): conn_i != nRequestCount, this should never happen ...");
+        nRequestCount = conn_i;
+        ret = CE_Failure;
     }
 
     for (i = 0; i < nRequestCount; ++i) {
@@ -224,6 +248,14 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         /* error returned, patch the status code to be 200, as it would be for http:// */
         if (psRequest->nStatus == 0 && psRequest->Error.empty() && STARTS_WITH(psRequest->URL.c_str(), "file://"))
             psRequest->nStatus = 200;
+
+        // If there is an error with no error message, use the content if it is text
+        if (psRequest->Error.empty()
+            && psRequest->nStatus != 0
+            && psRequest->nStatus != 200
+            && strstr(psRequest->ContentType, "text")
+            && psRequest->pabyData != NULL )
+            psRequest->Error = reinterpret_cast<const char *>(psRequest->pabyData);
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",
                  i, psRequest->URL.c_str(), psRequest->nStatus,

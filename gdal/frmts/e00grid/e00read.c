@@ -355,6 +355,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
             if (pszLine)
             {
                 strncpy(psInfo->szInBuf, pszLine, E00_READ_BUF_SIZE);
+                psInfo->szInBuf[E00_READ_BUF_SIZE-1] = '\0';
             }
             else
             {
@@ -371,6 +372,7 @@ static void _ReadNextSourceLine(E00ReadPtr psInfo)
              */
             int nLen;
             nLen = (int)strlen(psInfo->szInBuf);
+            CPLAssert(nLen < E00_READ_BUF_SIZE);
             while(nLen > 0 && (psInfo->szInBuf[nLen-1] == '\n' ||
                                psInfo->szInBuf[nLen-1] == '\r'   ) )
             {
@@ -456,6 +458,18 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
 
     while(!bEOL && (c=_GetNextSourceChar(psInfo)) != '\0')
     {
+
+        if (iOutBufPtr < 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Corruption around line %d.",
+                     psInfo->nInputLineNo);
+            /* Force the program to abort by simulating a EOF
+             */
+            psInfo->bEOF = 1;
+            break;
+        }
+
         if (c != '~')
         {
             /* Normal character... just copy it */
@@ -478,7 +492,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                  */
                 c = _GetNextSourceChar(psInfo);
                 n = c - ' ';
-                for(i=0; i<n; i++)
+                for(i=0; i<n && iOutBufPtr <= 80; i++)
                     psInfo->szOutBuf[iOutBufPtr++] = ' ';
                 bPreviousCodeWasNumeric = 0;
             }
@@ -552,7 +566,7 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                  */
                 iCurDigit = 0;
                 while((c=_GetNextSourceChar(psInfo)) != '\0' &&
-                      c != ' ' && c != '~')
+                      c != ' ' && c != '~' && iOutBufPtr <= 80 )
                 {
                     n = c - '!';
                     if (n == 92 && (c=_GetNextSourceChar(psInfo)) != '\0')
@@ -578,12 +592,25 @@ static const char *_UncompressNextLine(E00ReadPtr psInfo)
                 /* If odd number of digits, then flush the last one
                  */
                 if (bOddNumDigits)
+                {
+                    if( iOutBufPtr == 0 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                "Input file possibly corrupt around line %d.",
+                                psInfo->nInputLineNo);
+                        /* Force the program to abort by simulating a EOF
+                        */
+                        psInfo->bEOF = 1;
+                        /*bEOL = 1;*/
+                        break;
+                    }
                     iOutBufPtr--;
+                }
 
                 /* Insert the exponent string before the 2 last digits
                  * (we assume the exponent string is 2 chars. long)
                  */
-                if (pszExp)
+                if (pszExp && iOutBufPtr >= 2)
                 {
                     for(i=0; i<2;i++)
                     {

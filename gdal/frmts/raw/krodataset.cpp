@@ -31,7 +31,7 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // http://www.autopano.net/wiki-en/Format_KRO
 
@@ -47,7 +47,7 @@ class KRODataset : public RawDataset
     VSILFILE    *fpImage;  // image data file.
 
   public:
-                    KRODataset() : fpImage(NULL) {};
+                    KRODataset() : fpImage(NULL) {}
                    ~KRODataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -249,6 +249,10 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create KRO file with unsupported data type '%s'.",
                   GDALGetDataTypeName( eType ) );
+        return NULL;
+    }
+    if( nXSize == 0 || nYSize == 0 || nBands == 0 )
+    {
         return NULL;
     }
 

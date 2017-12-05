@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_ili2.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRILI2Layer()                              */
@@ -68,13 +68,13 @@ OGRILI2Layer::~OGRILI2Layer()
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                             AddFeature()                             */
 /************************************************************************/
 
-OGRErr OGRILI2Layer::ISetFeature (OGRFeature *poFeature)
+void OGRILI2Layer::AddFeature (OGRFeature *poFeature)
 {
+    poFeature->SetFID( static_cast<GIntBig>(1 + listFeature.size()) );
     listFeature.push_back(poFeature);
-    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -318,7 +318,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
 
         OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
 
-        if( poFeature->IsFieldSet( iField ) )
+        if( poFeature->IsFieldSetAndNotNull( iField ) )
         {
             const char *pszRaw = poFeature->GetFieldAsString( iField );
             VSIFPrintfL(fp, "<%s>%s</%s>\n", poField->GetNameRef(), pszRaw, poField->GetNameRef());

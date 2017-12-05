@@ -34,7 +34,7 @@
 #include "stdio.h"
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const INGR_FormatDescription INGR_FormatTable[] = {
     {PackedBinary,            "Packed Binary",               GDT_Byte},
@@ -1672,7 +1672,7 @@ void    INGR_DGN2IEEEDouble(void * dbl)
 {
     double64_t  dt;
     GUInt32     sign;
-    GUInt32     exponent;
+    int     exponent;
     GUInt32     rndbits;
     unsigned char       *src;
     unsigned char       *dest;
@@ -1711,8 +1711,7 @@ void    INGR_DGN2IEEEDouble(void * dbl)
 /* -------------------------------------------------------------------- */
 /*      Adjust the exponent so that we may work with it                 */
 /* -------------------------------------------------------------------- */
-    exponent = dt.hi >> 23;
-    exponent = exponent & 0x000000ff;
+    exponent = (dt.hi >> 23) & 0x000000ff;
 
     if (exponent)
         exponent = exponent -129 + 1023;
@@ -1733,7 +1732,7 @@ void    INGR_DGN2IEEEDouble(void * dbl)
 /* -------------------------------------------------------------------- */
     dt.hi = dt.hi >> 3;
     dt.hi = dt.hi & 0x000fffff;
-    dt.hi = dt.hi | (exponent << 20) | sign;
+    dt.hi = dt.hi | ((GUInt32)exponent << 20) | sign;
 
 #ifdef CPL_LSB
 /* -------------------------------------------------------------------- */

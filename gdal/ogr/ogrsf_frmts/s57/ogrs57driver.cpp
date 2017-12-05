@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
 static CPLMutex* hS57RegistrarMutex = NULL;

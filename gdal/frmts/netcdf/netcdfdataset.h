@@ -31,6 +31,8 @@
 #define NETCDFDATASET_H_INCLUDED_
 
 #include <cfloat>
+#include <map>
+#include <vector>
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -39,6 +41,13 @@
 #include "netcdf.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
+// Whether to support opening a ncdump file as a file dataset
+// Useful for fuzzing purposes
+#define ENABLE_NCDUMP
+#endif
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -212,6 +221,9 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 #define CF_PP_VERT_PERSP             "vertical_perspective" /*not used yet */
 #define CF_PP_PERSPECTIVE_POINT_HEIGHT "perspective_point_height"
 #define CF_PP_SWEEP_ANGLE_AXIS        "sweep_angle_axis"
+#define CF_PP_GRID_NORTH_POLE_LONGITUDE "grid_north_pole_longitude"
+#define CF_PP_GRID_NORTH_POLE_LATITUDE  "grid_north_pole_latitude"
+#define CF_PP_NORTH_POLE_GRID_LONGITUDE "north_pole_grid_longitude"
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
@@ -553,11 +565,7 @@ static const oNetcdfSRS_PP poPSmappings[] = {
 //    * grid_north_pole_longitude
 //    * north_pole_grid_longitude - This parameter is optional (default is 0.).
 
-/* TODO: No GDAL equivalent of rotated pole? Doesn't seem to have an EPSG
-   code or WKT ... so unless some advanced proj4 features can be used
-   seems to rule out.
-   see GDAL bug #4285 for a possible fix or workaround
-*/
+// No WKT equivalent
 
 // Stereographic
 //
@@ -687,52 +695,52 @@ static const oNetcdfSRS_PT poNetcdfSRS_PT[] = {
 
 class netCDFWriterConfigAttribute
 {
-    public:
-        CPLString m_osName;
-        CPLString m_osType;
-        CPLString m_osValue;
+  public:
+    CPLString m_osName;
+    CPLString m_osType;
+    CPLString m_osValue;
 
-        bool Parse(CPLXMLNode* psNode);
+    bool Parse(CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigField
 {
-    public:
-        CPLString m_osName;
-        CPLString m_osNetCDFName;
-        CPLString m_osMainDim;
-        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+  public:
+    CPLString m_osName;
+    CPLString m_osNetCDFName;
+    CPLString m_osMainDim;
+    std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
 
-        bool Parse(CPLXMLNode* psNode);
+    bool Parse(CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigLayer
 {
-    public:
-        CPLString m_osName;
-        CPLString m_osNetCDFName;
-        std::map<CPLString, CPLString> m_oLayerCreationOptions;
-        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
-        std::map<CPLString, netCDFWriterConfigField> m_oFields;
+  public:
+    CPLString m_osName;
+    CPLString m_osNetCDFName;
+    std::map<CPLString, CPLString> m_oLayerCreationOptions;
+    std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+    std::map<CPLString, netCDFWriterConfigField> m_oFields;
 
-        bool Parse(CPLXMLNode* psNode);
+    bool Parse(CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfiguration
 {
-    public:
-        bool m_bIsValid;
-        std::map<CPLString, CPLString> m_oDatasetCreationOptions;
-        std::map<CPLString, CPLString> m_oLayerCreationOptions;
-        std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
-        std::map<CPLString, netCDFWriterConfigField> m_oFields;
-        std::map<CPLString, netCDFWriterConfigLayer> m_oLayers;
+  public:
+    bool m_bIsValid;
+    std::map<CPLString, CPLString> m_oDatasetCreationOptions;
+    std::map<CPLString, CPLString> m_oLayerCreationOptions;
+    std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
+    std::map<CPLString, netCDFWriterConfigField> m_oFields;
+    std::map<CPLString, netCDFWriterConfigLayer> m_oLayers;
 
-        netCDFWriterConfiguration() : m_bIsValid(false) {}
+    netCDFWriterConfiguration() : m_bIsValid(false) {}
 
-        bool Parse(const char* pszFilename);
-        static bool SetNameValue(CPLXMLNode* psNode,
-                                 std::map<CPLString,CPLString>& oMap);
+    bool Parse(const char *pszFilename);
+    static bool SetNameValue(CPLXMLNode *psNode,
+                             std::map<CPLString, CPLString> &oMap);
 };
 
 /************************************************************************/
@@ -758,6 +766,9 @@ class netCDFDataset : public GDALPamDataset
 
     /* basic dataset vars */
     CPLString     osFilename;
+#ifdef ENABLE_NCDUMP
+    bool          bFileToDestroyAtClosing;
+#endif
     int           cdfid;
     char          **papszSubDatasets;
     char          **papszMetadata;

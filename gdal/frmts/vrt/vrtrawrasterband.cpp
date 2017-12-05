@@ -27,12 +27,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_minixml.h"
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$");
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -202,6 +215,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try and open the file.  We always use the large file API.       */
 /* -------------------------------------------------------------------- */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     FILE *fp = CPLOpenShared( pszExpandedFilename, "rb+", TRUE );
 
     if( fp == NULL )
@@ -212,6 +226,8 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
     {
         fp = CPLOpenShared( pszExpandedFilename, "wb+", TRUE );
     }
+    CPLPopErrorHandler();
+    CPLErrorReset();
 
     if( fp == NULL )
     {
@@ -291,10 +307,11 @@ void VRTRawRasterBand::ClearRawLink()
 /************************************************************************/
 
 CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
-                                  const char *pszVRTPath )
+                                  const char *pszVRTPath,
+                                  void* pUniqueHandle )
 
 {
-    const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
+    const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath, pUniqueHandle );
     if( eErr != CE_None )
         return eErr;
 

@@ -118,14 +118,18 @@ fi
 
 cd ${CWD}
 
+# They currently require SWIG 1.3.X, which is not convenient as we need
+# newer SWIG for newer Python versions
+echo "SWIG C# interfaces *NOT* generated !"
+
 #
 # Generate SWIG interface for C#
 #
-echo "* Generating SWIG C# interfaces..."
-CWD=${PWD}
-cd gdal/swig/csharp
-./mkinterface.sh
-cd ${CWD}
+#echo "* Generating SWIG C# interfaces..."
+#CWD=${PWD}
+#cd gdal/swig/csharp
+#./mkinterface.sh
+#cd ${CWD}
 
 #
 # Generate SWIG interface for Perl

@@ -32,7 +32,7 @@
 
 /* http://code.google.com/intl/fr/apis/fusiontables/docs/developers_reference.html */
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRGFT();
 
@@ -117,5 +117,8 @@ void RegisterOGRGFT()
     OGRSFDriver* poDriver = new OGRGFTDriver;
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Google Fusion Tables" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_gft.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "GFT:");
+
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

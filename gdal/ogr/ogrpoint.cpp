@@ -41,7 +41,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              OGRPoint()                              */
@@ -295,11 +295,13 @@ int OGRPoint::WkbSize() const
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
+OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
                                 int nSize,
-                                OGRwkbVariant eWkbVariant )
+                                OGRwkbVariant eWkbVariant,
+                                int& nBytesConsumedOut )
 
 {
+    nBytesConsumedOut = -1;
     OGRwkbByteOrder eByteOrder = wkbNDR;
 
     flags = 0;
@@ -319,6 +321,9 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
         else if( nSize < 21 )
             return OGRERR_NOT_ENOUGH_DATA;
     }
+
+    nBytesConsumedOut = 5 + 8 * (2 + ((flags & OGR_G_3D) ? 1 : 0)+
+                                     ((flags & OGR_G_MEASURED) ? 1 : 0));
 
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
@@ -488,9 +493,6 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     if( bHasM ) flags |= OGR_G_MEASURED;
     if( bIsEmpty )
     {
-        // Should be at the end.
-        if( !((*ppszInput[0] == '\000') || (*ppszInput[0] == ',')) )
-            return OGRERR_CORRUPT_DATA;
         return OGRERR_NONE;
     }
     else

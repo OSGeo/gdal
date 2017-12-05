@@ -220,7 +220,7 @@ def CheckSetGetValues(fname):
     # write data
     nrows = rat.GetRowCount()
     for i in range(nrows):
-        # write some data slightly differrent
+        # write some data slightly different
         rat.SetValueAsInt(i, 0, int(INT_DATA[i] + 1))
         rat.SetValueAsDouble(i, 1, DOUBLE_DATA[i] + 1)
         s = STRING_DATA[i]

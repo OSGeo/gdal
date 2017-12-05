@@ -133,6 +133,6 @@ void FileGDBTablePrintError(const char* pszFile, int nLineNumber);
 #define returnErrorAndCleanupIf(expr, cleanup) \
     do { if( (expr) ) { cleanup; returnError(); } } while(0)
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */
 
 #endif /* FILEGDBTABLE_PRIV_H_INCLUDED */

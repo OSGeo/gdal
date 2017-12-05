@@ -15,7 +15,7 @@ sub DESTROY {
         Geo::modulec::delete_class($self);
         delete $OWNER{$self};
     }
-    $self->RELEASE_PARENTS();
+    $self->RELEASE_PARENT;
     if ($code) {
         Geo::GDAL::VSIStdoutUnsetRedirection();
         $code->close;

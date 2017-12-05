@@ -32,7 +32,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* ******************************************************************** */
 /*                               Usage()                                */
@@ -123,7 +123,7 @@ int main( int argc, char ** argv )
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(argv[i],"-of") && i < argc-1 )
+        else if( (EQUAL(argv[i],"-of") || EQUAL(argv[i],"-f")) && i < argc-1 )
             pszFormat = argv[++i];
 
         else if( EQUAL(argv[i],"-quiet") )
@@ -165,8 +165,8 @@ int main( int argc, char ** argv )
             }
 
             nBandCount++;
-            panBandList = (int *)
-                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList = static_cast<int *>(
+                CPLRealloc(panBandList, sizeof(int) * nBandCount));
             panBandList[nBandCount-1] = atoi(argv[++i]);
 
             if( panBandList[nBandCount-1] != nBandCount )
@@ -288,9 +288,9 @@ int main( int argc, char ** argv )
     }
     else
     {
-        nOXSize = (int) ((pszOXSize[strlen(pszOXSize)-1]=='%'
+        nOXSize = static_cast<int>((pszOXSize[strlen(pszOXSize)-1]=='%'
                           ? CPLAtof(pszOXSize)/100*anSrcWin[2] : atoi(pszOXSize)));
-        nOYSize = (int) ((pszOYSize[strlen(pszOYSize)-1]=='%'
+        nOYSize = static_cast<int>((pszOYSize[strlen(pszOYSize)-1]=='%'
                           ? CPLAtof(pszOYSize)/100*anSrcWin[3] : atoi(pszOYSize)));
     }
 
@@ -307,7 +307,7 @@ int main( int argc, char ** argv )
             exit(1 );
         }
 
-        panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
+        panBandList = static_cast<int *>(CPLMalloc(sizeof(int) * nBandCount));
         for( i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
     }
@@ -402,7 +402,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     const int nBytesPerPixel =
         nBandCount * GDALGetDataTypeSizeBytes(eOutputType);
-    void *pImage = VSIMalloc3( nOXSize, nOYSize, nBytesPerPixel );
+    void *pImage = VSIMalloc3(nOXSize, nOYSize, nBytesPerPixel);
 
     if( pImage == NULL )
     {

@@ -4,7 +4,7 @@ OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		rasterio.obj gdalrasterblock.obj gdal_rat.obj \
 		gdalcolortable.obj overview.obj gdaldefaultoverviews.obj \
 		gdalmajorobject.obj gdalpamdataset.obj gdalpamrasterband.obj \
-		gdaljp2metadata.obj gdaljp2box.obj gdalgmlcoverage.obj \
+		gdaljp2metadata.obj gdaljp2box.obj \
 		gdalmultidomainmetadata.obj gdalpamproxydb.obj \
 		gdalallvalidmaskband.obj gdalnodatamaskband.obj \
                 gdalproxydataset.obj gdalproxypool.obj \
@@ -26,7 +26,7 @@ GDAL_ROOT	=	..
 SSSE3_OBJ = rasterio_ssse3.obj
 !ENDIF
 
-EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\frmts\mem -I..\frmts\vrt -I..\ogr\ogrsf_frmts\generic -I../ogr/ogrsf_frmts/geojson -I..\ogr\ogrsf_frmts\geojson\libjson $(SQLITEDEF)
+EXTRAFLAGS =	$(PAM_SETTING) -I..\frmts\gtiff -I..\frmts\mem -I..\frmts\vrt -I..\ogr\ogrsf_frmts\generic -I../ogr/ogrsf_frmts/geojson -I..\ogr\ogrsf_frmts\geojson\libjson $(SQLITEDEF) $(GEOS_CFLAGS)
 
 !IFDEF SQLITE_LIB
 SQLITEDEF	=	-DSQLITE_ENABLED

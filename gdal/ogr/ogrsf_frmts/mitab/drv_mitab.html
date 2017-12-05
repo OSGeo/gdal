@@ -133,6 +133,11 @@ MapInfo version should be able to handle block sizes from 512 to 32256.
 <li><b>BOUNDS=xmin,ymin,xmax,ymax</b>: (GDAL &gt;=2.0) Define custom layer bounds
 to increase the accuracy of the coordinates. Note: the geometry of written features
 must be within the defined box.</li>
+<li> <b>ENCODING=</b><i>value</i>: (GDAL &gt;=2.3) Define the encoding for field
+names and field values. The encoding name is specified in the format supported
+by CPLRecode (e.g. ISO-8859-1, CP1251, CP1252 ...) and internally converted to
+MapInfo charsets names. Default value is '' that equals to 'Neutral' MapInfo charset.
+</li>
 </ul>
 
 <h3>Compatibility</h3>

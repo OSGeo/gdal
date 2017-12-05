@@ -103,6 +103,10 @@ start_pass_huff_decoder (j_decompress_ptr cinfo)
     actbl = compptr->ac_tbl_no;
     /* Compute derived values for Huffman tables */
     /* We may do this more than once for a table, but it's not expensive */
+    if (dctbl < 0 || dctbl >= NUM_HUFF_TBLS)
+      ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, dctbl);
+    if (actbl < 0 || actbl >= NUM_HUFF_TBLS)
+      ERREXIT1(cinfo, JERR_NO_HUFF_TABLE, actbl);
     jpeg_make_d_derived_tbl(cinfo, TRUE, dctbl,
 			    & entropy->dc_derived_tbls[dctbl]);
     jpeg_make_d_derived_tbl(cinfo, FALSE, actbl,
@@ -444,9 +448,11 @@ jpeg_huff_decode (bitread_working_state * state,
  * On some machines, a shift and add will be faster than a table lookup.
  */
 
+#define NEG_1 ((unsigned int)-1)
+#define AVOID_TABLES
 #ifdef AVOID_TABLES
 
-#define HUFF_EXTEND(x,s)  ((x) < (1<<((s)-1)) ? (x) + (((-1)<<(s)) + 1) : (x))
+#define HUFF_EXTEND(x,s)  ((x) + ((((x) - (1<<((s)-1))) >> 31) & (((NEG_1)<<(s)) + 1)))
 
 #else
 
@@ -624,7 +630,10 @@ decode_mcu (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
   }
 
   /* Account for restart interval (no-op if not using restarts) */
-  entropy->restarts_to_go--;
+  if( entropy->restarts_to_go == 0 )
+      entropy->restarts_to_go = ~0U;
+  else
+      entropy->restarts_to_go--;
 
   return TRUE;
 }

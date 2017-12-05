@@ -62,8 +62,10 @@ namespace PCIDSK
         PCIDSKBuffer &GetHeader() { return header; }
         void        FlushHeader();
 
+        bool      GetUpdatable() const override;
         void      WriteToFile( const void *buffer, uint64 offset, uint64 size ) override;
         void      ReadFromFile( void *buffer, uint64 offset, uint64 size ) override;
+        void      CheckFileBigEnough( uint64 bytes_to_read );
 
         eSegType    GetSegmentType() override { return segment_type; }
         std::string GetName() override { return segment_name; }

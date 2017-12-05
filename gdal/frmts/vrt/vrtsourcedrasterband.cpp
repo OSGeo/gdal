@@ -27,12 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "gdal_vrt.h"
+#include "vrtdataset.h"
+
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
 #include "cpl_minixml.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 #include "ogr_geometry.h"
 
-#include "vrtdataset.h"
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*! @cond Doxygen_Suppress */
 
@@ -229,8 +246,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         // Do nothing
     }
     else if( nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
-         (!m_bNoDataValueSet || (!CPLIsNan(m_dfNoDataValue) &&
-                                 m_dfNoDataValue == 0)) )
+         (!m_bNoDataValueSet || m_dfNoDataValue == 0.0) )
     {
         if( nLineSpace == nBufXSize * nPixelSpace )
         {
@@ -247,7 +263,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             }
         }
     }
-    else if( m_bNoDataValueSet )
+    else
     {
         double dfWriteValue = 0.0;
         if( m_bNoDataValueSet )
@@ -342,7 +358,8 @@ int  VRTSourcedRasterBand::IGetDataCoverageStatus( int nXOff,
         if( !papoSources[iSource]->IsSimpleSource() )
         {
             delete poPolyNonCoveredBySources;
-            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED;
+            return GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED |
+                   GDAL_DATA_COVERAGE_STATUS_DATA;
         }
         VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>(papoSources[iSource]);
         // Check if the AOI is fully inside the source
@@ -888,8 +905,11 @@ CPLErr VRTSourcedRasterBand::AddSource( VRTSource *poNewSource )
         VRTSimpleSource* poSS = reinterpret_cast<VRTSimpleSource*>( poNewSource );
         if( GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != NULL)
         {
-            poSS->SetMaxValue(
-                    (1 << atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))-1);
+            int nBits = atoi(GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            if( nBits >= 1 && nBits <= 31 )
+            {
+                poSS->SetMaxValue( static_cast<int>((1U << nBits) -1) );
+            }
         }
 
         CheckSource( poSS );
@@ -924,11 +944,13 @@ CPLErr CPL_STDCALL VRTAddSource( VRTSourcedRasterBandH hVRTBand,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
-                                      const char *pszVRTPath )
+                                      const char *pszVRTPath,
+                                      void* pUniqueHandle )
 
 {
     {
-        const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath );
+        const CPLErr eErr = VRTRasterBand::XMLInit( psTree, pszVRTPath,
+                                                    pUniqueHandle );
         if( eErr != CE_None )
             return eErr;
     }
@@ -948,7 +970,7 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 
         CPLErrorReset();
         VRTSource * const poSource =
-            poDriver->ParseSource( psChild, pszVRTPath );
+            poDriver->ParseSource( psChild, pszVRTPath, pUniqueHandle );
         if( poSource != NULL )
             AddSource( poSource );
         else if( CPLGetLastErrorType() != CE_None )
@@ -1397,7 +1419,8 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
 /*      Find the file(s) at this location.                              */
 /* -------------------------------------------------------------------- */
         char **papszFileList = NULL;
-        int nListSize = 0;
+        int nListSize = 0; // keep it in this scope
+        int nListMaxSize = 0; // keep it in this scope
         CPLHashSet * const hSetFiles = CPLHashSetNew( CPLHashSetHashStr,
                                                       CPLHashSetEqualStr,
                                                       NULL );
@@ -1432,7 +1455,6 @@ const char *VRTSourcedRasterBand::GetMetadataItem( const char * pszName,
                                          &nOutXSize, &nOutYSize ) )
                 continue;
 
-            int nListMaxSize = 0;
             poSrc->GetFileList( &papszFileList, &nListSize, &nListMaxSize,
                                 hSetFiles );
         }
@@ -1533,7 +1555,8 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         if( psTree == NULL )
             return CE_Failure;
 
-        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                            GetDataset() );
         CPLDestroyXMLNode( psTree );
 
         if( poSource != NULL )
@@ -1563,7 +1586,8 @@ CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName,
         if( psTree == NULL )
             return CE_Failure;
 
-        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+        VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                            GetDataset() );
         CPLDestroyXMLNode( psTree );
 
         if( poSource != NULL )
@@ -1612,7 +1636,8 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
             if( psTree == NULL )
                 return CE_Failure;
 
-            VRTSource * const poSource = poDriver->ParseSource( psTree, NULL );
+            VRTSource * const poSource = poDriver->ParseSource( psTree, NULL,
+                                                                GetDataset() );
             CPLDestroyXMLNode( psTree );
 
             if( poSource == NULL )
@@ -1663,6 +1688,20 @@ int VRTSourcedRasterBand::CloseDependentDatasets()
     nSources = 0;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                               FlushCache()                           */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::FlushCache()
+{
+    CPLErr eErr = VRTRasterBand::FlushCache();
+    for( int i = 0; i < nSources && eErr == CE_None; i++ )
+    {
+        eErr = papoSources[i]->FlushCache();
+    }
+    return eErr;
 }
 
 /*! @endcond */

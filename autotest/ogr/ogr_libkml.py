@@ -2039,6 +2039,44 @@ def ogr_libkml_read_gx_timestamp():
     return 'success'
 
 ###############################################################################
+# Test reading KML with kml: prefix
+
+def ogr_libkml_read_placemark_with_kml_prefix():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with dumplicated folder name
+
+def ogr_libkml_read_duplicate_folder_name():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/duplicate_folder_name.kml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'layer':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'layer (#2)':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -2138,6 +2176,8 @@ gdaltest_list = [
     ogr_libkml_write_folder,
     ogr_libkml_write_container_properties,
     ogr_libkml_read_gx_timestamp,
+    ogr_libkml_read_placemark_with_kml_prefix,
+    ogr_libkml_read_duplicate_folder_name,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

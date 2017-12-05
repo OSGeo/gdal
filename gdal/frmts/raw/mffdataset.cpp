@@ -37,7 +37,7 @@
 #include <cmath>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 enum {
   MFFPRJ_NONE,
@@ -198,7 +198,7 @@ class MFFSpheroidList : public SpheroidList
 {
 public:
   MFFSpheroidList();
-  ~MFFSpheroidList() {};
+  ~MFFSpheroidList() {}
 };
 
 MFFSpheroidList :: MFFSpheroidList()

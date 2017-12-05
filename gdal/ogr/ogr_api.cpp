@@ -36,7 +36,7 @@
 #include "cpl_error.h"
 #include "ogr_geometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static bool bNonLinearGeometriesEnabled = true;
 
@@ -1329,6 +1329,11 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
         return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
             getNumGeometries();
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+            getNumGeometries();
+    }
     else
     {
         // autotest/pymod/ogrtest.py calls this method on any geometry. So keep
@@ -1394,6 +1399,12 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     {
         return reinterpret_cast<OGRGeometryH>(
             reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+                getGeometryRef(iSubGeom));
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRGeometryH> (
+            reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
                 getGeometryRef(iSubGeom));
     }
     else
@@ -1462,6 +1473,11 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
         eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
             addGeometry(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        eErr = reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+            addGeometry(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
+    }
 
     return eErr;
 }
@@ -1526,6 +1542,11 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
         eErr = reinterpret_cast<OGRGeometryCollection *>(hGeom)->
             addGeometryDirectly(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
     }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        eErr = reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
+            addGeometryDirectly(reinterpret_cast<OGRGeometry *>(hNewSubGeom));
+    }
 
     if( eErr != OGRERR_NONE )
         delete reinterpret_cast<OGRGeometry *>(hNewSubGeom);
@@ -1576,6 +1597,11 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
         return reinterpret_cast<OGRGeometryCollection *>(hGeom)->
+            removeGeometry(iGeom, bDelete);
+    }
+    else if( OGR_GT_IsSubClassOf(eType, wkbPolyhedralSurface) )
+    {
+        return reinterpret_cast<OGRPolyhedralSurface *>(hGeom)->
             removeGeometry(iGeom, bDelete);
     }
     else

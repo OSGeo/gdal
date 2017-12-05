@@ -19,9 +19,7 @@
 */
 
 #include "marfa.h"
-#include <cassert>
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 #include <jpeglib.h>
@@ -64,8 +62,7 @@ static void RGBA2RGB(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
         *--stop = *--source_end;
         *--stop = *--source_end;
@@ -84,8 +81,7 @@ static void LA2L(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void L2LA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
     }
 }
@@ -127,11 +123,15 @@ CPLErr JPNG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
                 L2LA(dst.buffer, dst.buffer + dst.size, temp.buffer + temp.size);
         }
     }
-    else { // Should be PNG
-        assert(PNG_SIG == CPL_LSBWORD32(signature));
+    else if( PNG_SIG == CPL_LSBWORD32(signature) ) { // Should be PNG
         PNG_Codec codec(image);
         // PNG codec expands to 4 bands
         return codec.DecompressPNG(dst, src);
+    }
+    else {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Not a JPEG or PNG tile");
+        retval = CE_Failure;
     }
 
     return retval;

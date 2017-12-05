@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # abort install if any errors occur and enable tracing
 set -o errexit
@@ -32,7 +32,7 @@ sudo rm -f /usr/lib/libgdal.so*
 sudo make install
 sudo ldconfig
 # not sure why we need to do that
-sudo cp -r /usr/lib/python2.7/site-packages/*  /usr/lib/python2.7/dist-packages/
+#sudo cp -r /usr/lib/python2.7/site-packages/*  /usr/lib/python2.7/dist-packages/
 
 cd swig/perl
 make veryclean

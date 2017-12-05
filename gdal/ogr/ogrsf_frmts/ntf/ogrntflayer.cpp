@@ -29,7 +29,7 @@
 #include "ntf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRNTFLayer()                             */
@@ -45,7 +45,7 @@ OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
     pfnTranslator(pfnTranslatorIn),
     poDS(poDSIn),
     iCurrentReader(-1),
-    nCurrentPos(-1),
+    nCurrentPos((vsi_l_offset)-1),
     nCurrentFID(1)
 {
     SetDescription( poFeatureDefn->GetName() );
@@ -77,7 +77,7 @@ void OGRNTFLayer::ResetReading()
 
 {
     iCurrentReader = -1;
-    nCurrentPos = -1;
+    nCurrentPos = (vsi_l_offset)-1;
     nCurrentFID = 1;
 }
 
@@ -102,7 +102,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
     if( iCurrentReader == -1 )
     {
         iCurrentReader++;
-        nCurrentPos = -1;
+        nCurrentPos = (vsi_l_offset)-1;
     }
 
     NTFFileReader       *poCurrentReader = poDS->GetFileReader(iCurrentReader);
@@ -116,7 +116,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 /*      from for the last feature, even if some other access            */
 /*      mechanism has moved the file pointer.                           */
 /* -------------------------------------------------------------------- */
-    if( nCurrentPos != -1 )
+    if( nCurrentPos != (vsi_l_offset)-1 )
         poCurrentReader->SetFPPos( nCurrentPos, nCurrentFID );
     else
         poCurrentReader->Reset();
@@ -162,7 +162,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
         } while( iCurrentReader < poDS->GetFileCount()
                  && !poDS->GetFileReader(iCurrentReader)->TestForLayer(this) );
 
-        nCurrentPos = -1;
+        nCurrentPos = (vsi_l_offset)-1;
         nCurrentFID = 1;
 
         poFeature = GetNextFeature();

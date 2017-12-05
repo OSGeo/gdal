@@ -126,10 +126,10 @@ def test_gdal_edit_py_2():
 
     ds = gdal.Open('tmp/test_gdal_edit_py.tif')
     wkt = ds.GetProjectionRef()
-    gt = ds.GetGeoTransform()
+    gt = ds.GetGeoTransform(can_return_null = True)
     ds = None
 
-    if gt != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
+    if gt is not None:
         gdaltest.post_reason('fail')
         print(gt)
         return 'fail'
@@ -278,6 +278,58 @@ def test_gdal_edit_py_5():
     return 'success'
 
 ###############################################################################
+# Test -scale and -offset
+
+def test_gdal_edit_py_6():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -scale 2 -offset 3")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(1).GetScale() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(1).GetOffset() != 3:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test -colorinterp_X
+
+def test_gdal_edit_py_7():
+
+    script_path = test_py_scripts.get_py_script('gdal_edit')
+    if script_path is None:
+        return 'skip'
+
+    gdal.Translate('tmp/test_gdal_edit_py.tif',
+                   '../gcore/data/byte.tif',
+                   options = '-b 1 -b 1 -b 1 -b 1 -co PHOTOMETRIC=RGB -co ALPHA=NO')
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 alpha")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    test_py_scripts.run_py_script(script_path, 'gdal_edit', "tmp/test_gdal_edit_py.tif -colorinterp_4 undefined")
+
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif')
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_edit_py_cleanup():
@@ -295,6 +347,8 @@ gdaltest_list = [
     test_gdal_edit_py_3,
     test_gdal_edit_py_4,
     test_gdal_edit_py_5,
+    test_gdal_edit_py_6,
+    test_gdal_edit_py_7,
     test_gdal_edit_py_cleanup,
     ]
 

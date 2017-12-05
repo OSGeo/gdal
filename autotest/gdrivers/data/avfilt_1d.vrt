@@ -1,0 +1,16 @@
+<VRTDataset rasterXSize="50" rasterYSize="50">
+  <SRS>GEOGCS[&quot;WGS 84&quot;,DATUM[&quot;WGS_1984&quot;,SPHEROID[&quot;WGS 84&quot;,6378137,298.257223563,AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</SRS>
+  <GeoTransform> -4.4840319999999998e+01,  3.4320000000000002e-03,  0.0000000000000000e+00, -2.2932583999999999e+01,  0.0000000000000000e+00, -3.4320000000000002e-03</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <KernelFilteredSource>
+      <SourceFilename>./data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <Kernel normalized="1">
+        <Size>13</Size>
+        <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+  </VRTRasterBand>
+</VRTDataset>

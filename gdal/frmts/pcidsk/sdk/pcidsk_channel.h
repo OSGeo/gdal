@@ -42,7 +42,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSKChannel 
     {
     public:
-        virtual ~PCIDSKChannel() {};
+        virtual ~PCIDSKChannel() {}
         virtual int GetBlockWidth() const = 0;
         virtual int GetBlockHeight() const = 0;
         virtual int GetBlockCount() const = 0;

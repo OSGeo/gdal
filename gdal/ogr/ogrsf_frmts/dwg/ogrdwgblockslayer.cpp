@@ -29,7 +29,7 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRDWGBlocksLayer()                          */
@@ -95,7 +95,8 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 /*      Are we done reading the current blocks features?                */
 /* -------------------------------------------------------------------- */
     DWGBlockDefinition *psBlock = &(oIt->second);
-    unsigned int nSubFeatureCount = psBlock->apoFeatures.size();
+    unsigned int nSubFeatureCount = static_cast<unsigned int>(
+        psBlock->apoFeatures.size());
 
     if( psBlock->poGeometry != NULL )
         nSubFeatureCount++;

@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRFMELayer()                             */
@@ -251,7 +251,8 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
         }
         else
         {
-            printf( "Not able to translate field type: %s\n",
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Not able to translate field type: %s",
                     poAttrValue->data() );
             CSLDestroy( papszTokens );
             continue;

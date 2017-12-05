@@ -33,7 +33,7 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using kmldom::KmlFactory;
 
@@ -205,6 +205,7 @@ void RegisterOGRLIBKML()
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
+"  <Option name='DOCUMENT_ID' type='string' description='Id of the root &lt;Document&gt; node' default='root_doc'/>'"
 "  <Option name='AUTHOR_NAME' type='string' description='Name in <atom:Author> element'/>"
 "  <Option name='AUTHOR_URI' type='string' description='URI in <atom:Author> element'/>"
 "  <Option name='AUTHOR_EMAIL' type='string' description='Email in <atom:Author> element'/>"
@@ -329,6 +330,7 @@ void RegisterOGRLIBKML()
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Real String" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRLIBKMLDriverOpen;
     poDriver->pfnIdentify = OGRLIBKMLDriverIdentify;

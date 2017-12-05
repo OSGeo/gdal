@@ -44,7 +44,7 @@
 #include <zlib.h>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // LERC is not ready for big endian hosts for now
 #if defined(LERC) && defined(WORDS_BIGENDIAN)
@@ -137,32 +137,33 @@ std::ostream& operator<<(std::ostream &out, const ILIdx& t) {
 }
 
 // Define PPMW to enable this handy debug function
-
 #ifdef PPMW
 void ppmWrite(const char *fname, const char *data, const ILSize &sz) {
-    FILE *fp=fopen(fname,"wb");
-    switch(sz.c) {
-    case 4:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        char *d=(char *)data;
-        for(int i=sz.x*sz.y;i;i--) {
-            fwrite(d,3,1,fp);
-            d+=4;
+    FILE *fp = fopen(fname, "wb");
+    switch (sz.c) {
+    case 4: // Strip the alpha
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        {
+            char *d = (char *)data;
+            for (int i = sz.x*sz.y; i; i--) {
+                fwrite(d, 3, 1, fp);
+                d += 4;
+            }
         }
         break;
     case 3:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x*sz.y,3,fp);
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x*sz.y, 3, fp);
         break;
     case 1:
-        fprintf(fp,"P5 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x,sz.y,fp);
+        fprintf(fp, "P5 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x, sz.y, fp);
         break;
     default:
-        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);
-        return;
+        fprintf(stderr, "Can't write ppm file with %d bands\n", sz.c);/*ok*/
     }
     fclose(fp);
+    return;
 }
 #endif
 
@@ -503,7 +504,7 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 #endif
     VSIFCloseL(ifp);
     return !ret;
-};
+}
 
 // Similar to compress2() but with flags to control zlib features
 // Returns true if it worked
@@ -632,6 +633,13 @@ void GDALRegister_mrf()
         "       <Value>YCC</Value>"
         "   </Option>\n"
         "</CreationOptionList>\n");
+
+    driver->SetMetadataItem(
+      GDAL_DMD_OPENOPTIONLIST,
+      "<OpenOptionList>"
+      "    <Option name='NOERRORS' type='boolean' description='Ignore decompression errors' default='FALSE'/>"
+      "</OpenOptionList>"
+      );
 
     driver->pfnOpen = GDALMRFDataset::Open;
     driver->pfnIdentify = GDALMRFDataset::Identify;

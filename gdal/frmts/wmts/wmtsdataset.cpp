@@ -49,7 +49,7 @@ extern "C" void GDALRegister_WMTS();
 
 #define WMTS_WGS84_DEG_PER_METER    (180 / M_PI / SRS_WGS84_SEMIMAJOR)
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef enum
 {
@@ -353,7 +353,7 @@ const char *WMTSBand::GetMetadataItem( const char * pszName,
         if( sscanf( pszName+6, "%d_%d", &iPixel, &iLine ) != 2 )
             return NULL;
 
-        const WMTSTileMatrix& oTM = poGDS->oTMS.aoTM[poGDS->oTMS.aoTM.size()-1];
+        const WMTSTileMatrix& oTM = poGDS->oTMS.aoTM.back();
 
         iPixel += (int)floor(0.5 + (poGDS->adfGT[0] - oTM.dfTLX) / oTM.dfPixelSize);
         iLine += (int)floor(0.5 + (oTM.dfTLY - poGDS->adfGT[3]) / oTM.dfPixelSize);
@@ -614,7 +614,7 @@ CPLString WMTSDataset::FixCRSName(const char* pszCRS)
 
     CPLString osRet(pszCRS);
     while( osRet.size() &&
-           (osRet[osRet.size()-1] == ' ' || osRet[osRet.size()-1] == '\r' || osRet[osRet.size()-1] == '\n') )
+           (osRet.back() == ' ' || osRet.back() == '\r' || osRet.back() == '\n') )
     {
         osRet.resize(osRet.size() - 1);
     }
@@ -719,6 +719,12 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             oTM.osIdentifier = l_pszIdentifier;
             oTM.dfScaleDenominator = CPLAtof(pszScaleDenominator);
             oTM.dfPixelSize = oTM.dfScaleDenominator * WMTS_PITCH;
+            if( oTM.dfPixelSize <= 0.0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid ScaleDenominator");
+                return FALSE;
+            }
             if( oTMS.oSRS.IsGeographic() )
                 oTM.dfPixelSize *= WMTS_WGS84_DEG_PER_METER;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
@@ -738,8 +744,8 @@ int WMTSDataset::ReadTMS(CPLXMLNode* psContents,
             }
             oTM.nTileWidth = atoi(pszTileWidth);
             oTM.nTileHeight = atoi(pszTileHeight);
-            if( oTM.nTileWidth < 128 || oTM.nTileWidth > 4096 ||
-                oTM.nTileHeight < 128 || oTM.nTileHeight > 4096 )
+            if( oTM.nTileWidth <= 0 || oTM.nTileWidth > 4096 ||
+                oTM.nTileHeight <= 0 || oTM.nTileHeight > 4096 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid TileWidth/TileHeight element");
@@ -1137,8 +1143,10 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
     if( STARTS_WITH(osGetCapabilitiesURL, "/vsimem/") )
     {
-        if( CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL) )
-            osGetCapabilitiesURL = CPLGetXMLValue(psXML, "=Capabilities.ServiceMetadataURL.href", NULL);
+        const char* pszHref = CPLGetXMLValue(psXML,
+                            "=Capabilities.ServiceMetadataURL.href", NULL);
+        if( pszHref )
+            osGetCapabilitiesURL = pszHref;
         else
         {
             osGetCapabilitiesURL = GetOperationKVPURL(psXML, "GetCapabilities");
@@ -1584,7 +1592,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     // Check if this doesn't match the most precise tile matrix
                     // by densifying its contour
-                    const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+                    const WMTSTileMatrix& oTM = oTMS.aoTM.back();
 
                     bool bMatchFound = false;
                     const char *pszProjectionTMS = oTMS.oSRS.GetAttrValue("PROJECTION");
@@ -1748,7 +1756,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         if( !bHasAOI &&
             (eExtentMethod == AUTO || eExtentMethod == MOST_PRECISE_TILE_MATRIX) )
         {
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
             CPLDebug("WMTS", "Using TM level %s bounding box", oTM.osIdentifier.c_str() );
 
             sAOI.MinX = oTM.dfTLX;
@@ -1770,7 +1778,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
         {
             // Clip with implied BoundingBox of the most precise TM
             // Useful for http://tileserver.maptiler.com/wmts
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
 
             // For https://data.linz.govt.nz/services;key=XXXXXXXX/wmts/1.0.0/set/69/WMTSCapabilities.xml
             // only clip in Y since there's a warp over dateline.
@@ -1792,7 +1800,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
 
         // Clip with limits of most precise TM when available
         {
-            const WMTSTileMatrix& oTM = oTMS.aoTM[oTMS.aoTM.size()-1];
+            const WMTSTileMatrix& oTM = oTMS.aoTM.back();
             if( aoMapTileMatrixLimits.find(oTM.osIdentifier) != aoMapTileMatrixLimits.end() )
             {
                 const WMTSTileMatrixLimits& oTMLimits = aoMapTileMatrixLimits[oTM.osIdentifier];
@@ -1818,7 +1826,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                 {
                     CPLDebug("WMTS", "Using zoom level %s instead of %s to avoid int overflow",
                              oTMS.aoTM[nMaxZoomLevel].osIdentifier.c_str(),
-                             oTMS.aoTM[(int)oTMS.aoTM.size()-1].osIdentifier.c_str());
+                             oTMS.aoTM.back().osIdentifier.c_str());
                 }
 
                 // Align AOI on pixel boundaries with respect to TopLeftCorner of
@@ -1972,7 +1980,7 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
             const WMTSTileMatrix& oTM = oTMS.aoTM[i];
             int nRasterXSize = int(0.5 + poDS->nRasterXSize / oTM.dfPixelSize * poDS->adfGT[1]);
             int nRasterYSize = int(0.5 + poDS->nRasterYSize / oTM.dfPixelSize * poDS->adfGT[1]);
-            if( !poDS->apoDatasets.empty() && 
+            if( !poDS->apoDatasets.empty() &&
                 (nRasterXSize < 128 || nRasterYSize < 128) )
             {
                 break;
@@ -2221,7 +2229,7 @@ void GDALRegister_WMTS()
 
     poDriver->SetDescription( "WMTS" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGC Web Mab Tile Service" );
+    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "OGC Web Map Tile Service" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_wmts.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "WMTS:" );

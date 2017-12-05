@@ -101,13 +101,13 @@ def test_gdaladdo_3():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
 
-    shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_3.tif' )
+    gdal.Translate( 'tmp/test_gdaladdo_3.tif', '../gcore/data/nodata_byte.tif', options = '-outsize 1024 1024' )
 
     gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -ro tmp/test_gdaladdo_3.tif 2')
 
     ds = gdal.Open('tmp/test_gdaladdo_3.tif')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    exp_cs = 1152
+    exp_cs = 20683
 
     if cs != exp_cs:
         gdaltest.post_reason( 'got wrong overview checksum.' )
@@ -152,11 +152,63 @@ def test_gdaladdo_4():
 
     return 'success'
 
+###############################################################################
+# Test implicit levels
+
+def test_gdaladdo_5():
+    if test_cli_utilities.get_gdaladdo_path() is None:
+        return 'skip'
+
+    shutil.copyfile( '../gcore/data/nodata_byte.tif', 'tmp/test_gdaladdo_5.tif' )
+
+    # Will not do anything given than the file is smaller than 256x256 already
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' tmp/test_gdaladdo_5.tif')
+
+    ds = gdal.Open('tmp/test_gdaladdo_5.tif')
+    cnt = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    if cnt != 0:
+        gdaltest.post_reason( 'fail' )
+        print(cnt)
+        return 'fail'
+
+    # Will generate overviews of size 10 5 3 2 1
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' -minsize 1 tmp/test_gdaladdo_5.tif')
+
+    ds = gdal.Open('tmp/test_gdaladdo_5.tif')
+    cnt = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    if cnt != 5:
+        gdaltest.post_reason( 'fail' )
+        print(cnt)
+        return 'fail'
+
+    gdal.Translate( 'tmp/test_gdaladdo_5.tif', '../gcore/data/nodata_byte.tif', options = '-outsize 257 257' )
+
+    # Will generate overviews of size 129x129
+    gdaltest.runexternal(test_cli_utilities.get_gdaladdo_path() + ' tmp/test_gdaladdo_5.tif')
+
+    ds = gdal.Open('tmp/test_gdaladdo_5.tif')
+    cnt = ds.GetRasterBand(1).GetOverviewCount()
+    ds = None
+
+    if cnt != 1:
+        gdaltest.post_reason( 'fail' )
+        print(cnt)
+        return 'fail'
+
+    os.remove('tmp/test_gdaladdo_5.tif')
+
+    return 'success'
+
 gdaltest_list = [
     test_gdaladdo_1,
     test_gdaladdo_2,
     test_gdaladdo_3,
-    test_gdaladdo_4
+    test_gdaladdo_4,
+    test_gdaladdo_5
     ]
 
 

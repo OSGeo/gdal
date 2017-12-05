@@ -30,7 +30,7 @@
 
 #include "ogrwarpedlayer.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRWarpedLayer()                            */
@@ -350,7 +350,7 @@ OGRErr      OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
     {
         if( sStaticEnvelope.IsInit() )
         {
-            memcpy(psExtent, &sStaticEnvelope, sizeof(OGREnvelope));
+            *psExtent = sStaticEnvelope;
             return OGRERR_NONE;
         }
 
@@ -361,7 +361,7 @@ OGRErr      OGRWarpedLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int
 
         if( ReprojectEnvelope(&sExtent, m_poCT) )
         {
-            memcpy(psExtent, &sExtent, sizeof(OGREnvelope));
+            *psExtent = sExtent;
             return OGRERR_NONE;
         }
         else

@@ -560,6 +560,8 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 
     l_segment = new EphemerisSeg_t();
 
+    try {
+
 /* -------------------------------------------------------------------- */
 /*      Process first block.                                            */
 /* -------------------------------------------------------------------- */
@@ -936,6 +938,12 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
         ReadAvhrrEphemerisSegment( nStartBlock, l_segment);
     }
 
+    }
+    catch( const PCIDSKException& )
+    {
+        delete l_segment;
+        throw;
+    }
     return l_segment;
 }
 

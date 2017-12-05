@@ -36,7 +36,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //Disabled as people may worry about the BSB patent
 //#define BSB_CREATE
@@ -444,7 +444,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         {
             /* no match */
         }
-        else if( STARTS_WITH_CI(pszPR, "PR=MERCATOR") )
+        else if( STARTS_WITH_CI(pszPR, "PR=MERCATOR") && nGCPCount > 0 )
         {
             // We somewhat arbitrarily select our first GCPX as our
             // central meridian.  This is mostly helpful to ensure

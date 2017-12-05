@@ -50,8 +50,9 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_rat.h"
+#include "gdal_priv_templates.hpp"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GDALRasterBand()                           */
@@ -595,11 +596,11 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
  * \brief Read a block of data.
  *
  * Default internal implementation ... to be overridden by
- * subclasses that support writing.
+ * subclasses that support reading.
  * @param nBlockXOff Block X Offset
  * @param nBlockYOff Block Y Offset
- * @param pData Pixel buffer to write
- * @return error code.
+ * @param pData Pixel buffer into which to place read data.
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 /************************************************************************/
@@ -615,7 +616,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
  * @param nBlockXOff Block X Offset
  * @param nBlockYOff Block Y Offset
  * @param pData Pixel buffer to write
- * @return error code.
+ * @return CE_None on success or CE_Failure on an error.
  */
 
 /**/
@@ -984,7 +985,10 @@ int GDALRasterBand::InitBlockInfo()
             (poDS->nOpenFlags & GDAL_OF_BLOCK_ACCESS_MASK) ==
                                             GDAL_OF_DEFAULT_BLOCK_ACCESS )
         {
-            bUseArray = ( static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn < 1024 * 1024  );
+            GUIntBig nBlockCount = static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
+            if( poDS != NULL )
+                nBlockCount *= poDS->GetRasterCount();
+            bUseArray = ( nBlockCount  < 1024 * 1024  );
         }
         else if( (poDS->nOpenFlags & GDAL_OF_BLOCK_ACCESS_MASK) ==
                                             GDAL_OF_HASHSET_BLOCK_ACCESS )
@@ -1074,19 +1078,19 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
     if( poBandBlockCache == NULL || !poBandBlockCache->IsInitOK() )
     {
         if( poBandBlockCache == NULL )
-            printf("poBandBlockCache == NULL\n");
+            printf("poBandBlockCache == NULL\n");/*ok*/
         else
-            printf("!poBandBlockCache->IsInitOK()\n");
-        printf("caller = %s\n", pszCaller);
-        printf("GDALRasterBand: %p\n", this);
-        printf("GDALRasterBand: nBand=%d\n", nBand);
-        printf("nRasterXSize = %d\n", nRasterXSize);
-        printf("nRasterYSize = %d\n", nRasterYSize);
-        printf("nBlockXSize = %d\n", nBlockXSize);
-        printf("nBlockYSize = %d\n", nBlockYSize);
+            printf("!poBandBlockCache->IsInitOK()\n");/*ok*/
+        printf("caller = %s\n", pszCaller);/*ok*/
+        printf("GDALRasterBand: %p\n", this);/*ok*/
+        printf("GDALRasterBand: nBand=%d\n", nBand);/*ok*/
+        printf("nRasterXSize = %d\n", nRasterXSize);/*ok*/
+        printf("nRasterYSize = %d\n", nRasterYSize);/*ok*/
+        printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
+        printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
         poBlock->DumpBlock();
         if( GetDataset() != NULL )
-            printf("Dataset: %s\n", GetDataset()->GetDescription());
+            printf("Dataset: %s\n", GetDataset()->GetDescription());/*ok*/
         GDALRasterBlock::Verify();
         abort();
     }
@@ -1324,6 +1328,7 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
 
         if( !bJustInitialize )
         {
+            const GUInt32 nErrorCounter = CPLGetErrorCounter();
             int bCallLeaveReadWrite = EnterReadWrite(GF_Read);
             eErr = IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef());
             if( bCallLeaveReadWrite) LeaveReadWrite();
@@ -1332,8 +1337,10 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
                 poBlock->DropLock();
                 FlushBlock( nXBlockOff, nYBlockOff );
                 ReportError( CE_Failure, CPLE_AppDefined,
-                    "IReadBlock failed at X offset %d, Y offset %d",
-                    nXBlockOff, nYBlockOff );
+                    "IReadBlock failed at X offset %d, Y offset %d%s",
+                    nXBlockOff, nYBlockOff,
+                    (nErrorCounter != CPLGetErrorCounter()) ?
+                        CPLSPrintf(": %s", CPLGetLastErrorMsg()) : "");
                 return NULL;
             }
 
@@ -2942,7 +2949,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    const double dfScale = nBuckets / (dfMax - dfMin);
+    const double dfScale = (dfMax > dfMin) ? nBuckets / (dfMax - dfMin) : 0.0;
     memset( panHistogram, 0, sizeof(GUIntBig) * nBuckets );
 
     int bGotNoDataValue = FALSE;
@@ -2952,6 +2959,15 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
     // old behaviour made sense somethimes.
     bGotNoDataValue = bGotNoDataValue &&
         !CPLTestBool(CPLGetConfigOption("GDAL_NODATA_IN_HISTOGRAM", "NO"));
+    bool bGotFloatNoDataValue = false;
+    float fNoDataValue = 0.0f;
+    if( eDataType == GDT_Float32 && bGotNoDataValue &&
+        GDALIsValueInRange<float>(dfNoDataValue) )
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
+        bGotNoDataValue = false;
+    }
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     const bool bSignedByte =
@@ -3026,10 +3042,14 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     dfValue = static_cast<GInt32 *>(pData)[iOffset];
                     break;
                   case GDT_Float32:
-                    dfValue = static_cast<float *>(pData)[iOffset];
-                    if( CPLIsNan(dfValue) )
+                  {
+                    const float fValue = static_cast<float *>(pData)[iOffset];
+                    if( CPLIsNan(fValue) ||
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
+                    dfValue = fValue;
                     break;
+                  }
                   case GDT_Float64:
                     dfValue = static_cast<double *>(pData)[iOffset];
                     if( CPLIsNan(dfValue) )
@@ -3083,7 +3103,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 const int nIndex =
@@ -3214,10 +3235,14 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         dfValue = static_cast<GInt32 *>(pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = static_cast<float *>(pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
+                      {
+                        const float fValue = static_cast<float *>(pData)[iOffset];
+                        if( CPLIsNan(fValue) ||
+                            (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                             continue;
+                        dfValue = fValue;
                         break;
+                      }
                       case GDT_Float64:
                         dfValue = static_cast<double *>(pData)[iOffset];
                         if( CPLIsNan(dfValue) )
@@ -3268,7 +3293,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                         return CE_Failure;
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -3486,8 +3511,13 @@ CPLErr
     }
 
     *pnBuckets = nBuckets;
-    return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram,
+    CPLErr eErr = GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram,
                          TRUE, FALSE, pfnProgress, pProgressData );
+    if( eErr != CE_None )
+    {
+        *pnBuckets = 0;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -3609,6 +3639,9 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
  *
  * Many drivers just ignore the AdviseRead() call, but it can dramatically
  * accelerate access via some drivers.
+ *
+ * Depending on call paths, drivers might receive several calls to
+ * AdviseRead() with the same parameters.
  *
  * @param nXOff The pixel offset to the top left corner of the region
  * of the band to be accessed.  This would be zero to start from the left side.
@@ -3801,6 +3834,8 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(
     return poBand->GetStatistics(
         bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
 }
+
+#ifdef CPL_HAS_GINT64
 
 /************************************************************************/
 /*                         GDALUInt128                                  */
@@ -4477,6 +4512,14 @@ void ComputeStatisticsInternal<GByte>( int nXCheck,
     }
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static void UnshiftSumSquare( GUIntBig& nSumSquare,
+                              GUIntBig  nSumThis,
+                              GUIntBig  i )
+{
+    nSumSquare += 32768 * (2 * nSumThis - i * 32768);
+}
+
 // AVX2/SSE2 optimization for GUInt16 case
 template<>
 void ComputeStatisticsInternal<GUInt16>( int nXCheck,
@@ -4610,7 +4653,7 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
                         anSumSquare[1] + anSumSquare[2] + anSumSquare[3];
 #ifndef naive_version
         // Unshift the sum of squares
-        nSumSquare += 32768 * (2 * nSumThis - static_cast<GUIntBig>(i) * 32768);
+        UnshiftSumSquare(nSumSquare, nSumThis, static_cast<GUIntBig>(i));
 #endif
         nSum += nSumThis;
 
@@ -4638,6 +4681,8 @@ void ComputeStatisticsInternal<GUInt16>( int nXCheck,
 }
 
 #endif // (defined(__x86_64__) || defined(_M_X64)) && (defined(__GNUC__) || defined(_MSC_VER))
+
+#endif // CPL_HAS_GINT64
 
 /************************************************************************/
 /*                         ComputeStatistics()                          */
@@ -4729,6 +4774,15 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
+    bool bGotFloatNoDataValue = false;
+    float fNoDataValue = 0.0f;
+    if( eDataType == GDT_Float32 && bGotNoDataValue &&
+        GDALIsValueInRange<float>(dfNoDataValue) )
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
+        bGotNoDataValue = false;
+    }
 
     const char* pszPixelType =
         GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
@@ -4807,10 +4861,14 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     dfValue = static_cast<GInt32 *>(pData)[iOffset];
                     break;
                   case GDT_Float32:
-                    dfValue = static_cast<float *>(pData)[iOffset];
-                    if( CPLIsNan(dfValue) )
+                  {
+                    const float fValue = static_cast<float *>(pData)[iOffset];
+                    if( CPLIsNan(fValue) ||
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
+                    dfValue = fValue;
                     break;
+                  }
                   case GDT_Float64:
                     dfValue = static_cast<double *>(pData)[iOffset];
                     if( CPLIsNan(dfValue) )
@@ -4836,7 +4894,8 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -4884,6 +4943,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
               nSampleRate += 1;
         }
 
+#ifdef CPL_HAS_GINT64
         // Particular case for GDT_Byte that only use integral types for all
         // intermediate computations. Only possible if the number of pixels
         // explored is lower than GUINTBIG_MAX / (255*255), so that nSumSquare
@@ -4922,7 +4982,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 GDALRasterBlock * const poBlock =
                     GetLockedBlockRef( iXBlock, iYBlock );
                 if( poBlock == NULL )
-                    continue;
+                    return CE_Failure;
 
                 void* const pData = poBlock->GetDataRef();
 
@@ -5020,6 +5080,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                 "Failed to compute statistics, no valid pixels found in sampling." );
             return CE_Failure;
         }
+#endif
 
         for( int iSampleBlock = 0;
              iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
@@ -5030,7 +5091,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
 
             GDALRasterBlock * const poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
-                continue;
+                return CE_Failure;
 
             void* const pData = poBlock->GetDataRef();
 
@@ -5074,10 +5135,14 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         dfValue = static_cast<GInt32 *>(pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = static_cast<float *>(pData)[iOffset];
-                        if (CPLIsNan(dfValue))
+                      {
+                        const float fValue = static_cast<float *>(pData)[iOffset];
+                        if( CPLIsNan(fValue) ||
+                            (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                             continue;
+                        dfValue = fValue;
                         break;
+                      }
                       case GDT_Float64:
                         dfValue = ((double *)pData)[iOffset];
                         if( CPLIsNan(dfValue) )
@@ -5103,7 +5168,7 @@ GDALRasterBand::ComputeStatistics( int bApproxOK,
                         CPLAssert( false );
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -5341,6 +5406,16 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
     int bGotNoDataValue = FALSE;
     const double dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
     bGotNoDataValue = bGotNoDataValue && !CPLIsNan(dfNoDataValue);
+    bool bGotFloatNoDataValue = false;
+    float fNoDataValue = 0.0f;
+    if( eDataType == GDT_Float32 && bGotNoDataValue &&
+        (fabs(dfNoDataValue) <= std::numeric_limits<float>::max() ||
+         CPLIsInf(dfNoDataValue)) )
+    {
+        fNoDataValue = static_cast<float>(dfNoDataValue);
+        bGotFloatNoDataValue = true;
+        bGotNoDataValue = false;
+    }
 
     const char* pszPixelType = GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
     const bool bSignedByte =
@@ -5418,10 +5493,14 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     dfValue = static_cast<GInt32 *>(pData)[iOffset];
                     break;
                   case GDT_Float32:
-                    dfValue = static_cast<float *>(pData)[iOffset];
-                    if( CPLIsNan(dfValue) )
+                  {
+                    const float fValue = static_cast<float *>(pData)[iOffset];
+                    if( CPLIsNan(fValue) ||
+                        (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
                         continue;
+                    dfValue = fValue;
                     break;
+                  }
                   case GDT_Float64:
                     dfValue = static_cast<double *>(pData)[iOffset];
                     if( CPLIsNan(dfValue) )
@@ -5447,7 +5526,8 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                     CPLAssert( false );
                 }
 
-                if( bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
+                if( eDataType != GDT_Float32 &&
+                    bGotNoDataValue && ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                     continue;
 
                 if( bFirstValue )
@@ -5500,7 +5580,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
 
             GDALRasterBlock *poBlock = GetLockedBlockRef( iXBlock, iYBlock );
             if( poBlock == NULL )
-                continue;
+                return CE_Failure;
 
             void * const pData = poBlock->GetDataRef();
 
@@ -5543,10 +5623,14 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                         dfValue = static_cast<GInt32 *>(pData)[iOffset];
                         break;
                       case GDT_Float32:
-                        dfValue = static_cast<float *>(pData)[iOffset];
-                        if( CPLIsNan(dfValue) )
-                            continue;
-                        break;
+                      {
+                          const float fValue = static_cast<float *>(pData)[iOffset];
+                          if( CPLIsNan(fValue) ||
+                              (bGotFloatNoDataValue && ARE_REAL_EQUAL(fValue, fNoDataValue)) )
+                              continue;
+                          dfValue = fValue;
+                          break;
+                      }
                       case GDT_Float64:
                         dfValue = static_cast<double *>(pData)[iOffset];
                         if( CPLIsNan(dfValue) )
@@ -5572,7 +5656,7 @@ CPLErr GDALRasterBand::ComputeRasterMinMax( int bApproxOK,
                         CPLAssert( false );
                     }
 
-                    if( bGotNoDataValue &&
+                    if( eDataType != GDT_Float32 && bGotNoDataValue &&
                         ARE_REAL_EQUAL(dfValue, dfNoDataValue) )
                         continue;
 
@@ -5845,8 +5929,20 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
  *
- * Note that the GetMaskBand() should always return a GDALRasterBand mask, even if it is only
- * an all 255 mask with the flags indicating GMF_ALL_VALID.
+ * Note that the GetMaskBand() should always return a GDALRasterBand mask, even
+ * if it is only an all 255 mask with the flags indicating GMF_ALL_VALID.
+ *
+ * For an external .msk file to be recognized by GDAL, it must be a valid GDAL
+ * dataset, with the same name as the main dataset and suffixed with .msk,
+ * with either one band (in the GMF_PER_DATASET case), or as many bands as the
+ * main dataset.
+ * It must have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items is a combination of the flags GMF_ALL_VALID,
+ * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA. If a metadata item is missing for
+ * a band, then the other rules explained above will be used to generate a
+ * on-the-fly mask band.
+ * \see CreateMaskBand() for the characteristics of .msk files created by GDAL.
  *
  * This method is the same as the C function GDALGetMaskBand().
  *
@@ -6083,6 +6179,18 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
  *     The null flags will return GMF_ALL_VALID.</li>
  * </ul>
  *
+ * For an external .msk file to be recognized by GDAL, it must be a valid GDAL
+ * dataset, with the same name as the main dataset and suffixed with .msk,
+ * with either one band (in the GMF_PER_DATASET case), or as many bands as the
+ * main dataset.
+ * It must have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items is a combination of the flags GMF_ALL_VALID,
+ * GMF_PER_DATASET, GMF_ALPHA and GMF_NODATA. If a metadata item is missing for
+ * a band, then the other rules explained above will be used to generate a
+ * on-the-fly mask band.
+ * \see CreateMaskBand() for the characteristics of .msk files created by GDAL.
+ *
  * This method is the same as the C function GDALGetMaskFlags().
  *
  * @since GDAL 1.5.0
@@ -6152,6 +6260,9 @@ void GDALRasterBand::InvalidateMaskBand()
  * as many bands as the original image (or just one for GMF_PER_DATASET).
  * The mask images will be deflate compressed tiled images with the same
  * block size as the original image if possible.
+ * It will have INTERNAL_MASK_FLAGS_xx metadata items set at the dataset
+ * level, where xx matches the band number of a band of the main dataset. The
+ * value of those items will be the one of the nFlagsIn parameter.
  *
  * Note that if you got a mask band with a previous call to GetMaskBand(),
  * it might be invalidated by CreateMaskBand(). So you have to call GetMaskBand()
@@ -6161,9 +6272,12 @@ void GDALRasterBand::InvalidateMaskBand()
  *
  * @since GDAL 1.5.0
  *
+ * @param nFlagsIn 0 or combination of GMF_PER_DATASET / GMF_ALPHA.
+ *
  * @return CE_None on success or CE_Failure on an error.
  *
  * @see http://trac.osgeo.org/gdal/wiki/rfc15_nodatabitmask
+ * @see GDALDataset::CreateMaskBand()
  *
  */
 
@@ -6414,7 +6528,7 @@ void GDALRasterBand::ReportError( CPLErr eErrClass, CPLErrorNum err_no,
     const char* pszDSName = poDS ? poDS->GetDescription() : "";
     if( strlen(fmt) + strlen(pszDSName) + 20 >= sizeof(szNewFmt) - 1 )
         pszDSName = CPLGetFilename(pszDSName);
-    if( pszDSName[0] != '\0' &&
+    if( pszDSName[0] != '\0' && strchr(pszDSName, '%') == NULL &&
         strlen(fmt) + strlen(pszDSName) + 20 < sizeof(szNewFmt) - 1 )
     {
         snprintf(szNewFmt, sizeof(szNewFmt), "%s, band %d: %s",

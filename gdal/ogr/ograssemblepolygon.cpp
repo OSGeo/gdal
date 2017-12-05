@@ -39,7 +39,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            CheckPoints()                             */
@@ -359,6 +359,11 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             if( rn == maxring ) continue;
             poPolygon->addRingDirectly(aoRings[rn]);
         }
+    }
+    else
+    {
+        for(size_t i = 0; i < aoRings.size(); ++i )
+            delete aoRings[i];
     }
 
     if( peErr != NULL )

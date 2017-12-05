@@ -31,7 +31,7 @@
 #include "sdts_al.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            SDTSFeature()                             */
@@ -61,15 +61,18 @@ void SDTSFeature::ApplyATID( DDFField * poField )
     const int nRepeatCount = poField->GetRepeatCount();
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
-      paoATID = reinterpret_cast<SDTSModId *>(
+        paoATID = reinterpret_cast<SDTSModId *>(
           CPLRealloc( paoATID, sizeof(SDTSModId)*(nAttributes+1) ) );
 
         SDTSModId *poModId = paoATID + nAttributes;
+        *poModId = SDTSModId();
 
         if( bUsualFormat )
         {
             const char * pabyData
                 = poField->GetSubfieldData( poMODN, NULL, iRepeat );
+            if( pabyData == NULL || strlen(pabyData) < 5 )
+                return;
 
             memcpy( poModId->szModule, pabyData, 4 );
             poModId->szModule[4] = '\0';
@@ -112,6 +115,9 @@ int SDTSModId::Set( DDFField *poField )
     if( poDefn->GetSubfieldCount() >= 2
         && poDefn->GetSubfield(0)->GetWidth() == 4 )
     {
+        if( strlen(pachData) < 5 )
+            return FALSE;
+
         memcpy( szModule, pachData, 4 );
         szModule[4] = '\0';
 
@@ -121,8 +127,12 @@ int SDTSModId::Set( DDFField *poField )
     {
         DDFSubfieldDefn *poSF
             = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
+        if( poSF == NULL )
+            return FALSE;
         int nBytesRemaining;
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
+        if( pachData == NULL )
+            return FALSE;
         snprintf( szModule, sizeof(szModule), "%s",
                  poSF->ExtractStringData( pachData, nBytesRemaining, NULL) );
 
@@ -208,6 +218,9 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
                 {
                     const char *pszModName
                         = poField->GetSubfieldData(poMODN, NULL, i);
+
+                    if( pszModName == NULL || strlen(pszModName) < 4 )
+                        continue;
 
                     char szName[5];
                     strncpy( szName, pszModName, 4 );

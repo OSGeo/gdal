@@ -201,7 +201,7 @@ class OGRCouchDBTableLayer : public OGRCouchDBLayer
                                                       int nUpdateSeqIn,
                                                       bool bGeoJSONDocumentIn );
 
-    void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; };
+    void                        SetUpdateSeq(int nUpdateSeqIn) { nUpdateSeq = nUpdateSeqIn; }
 
     int                       HasFilterOnFieldOrCreateIfNecessary(const char* pszFieldName);
 
@@ -303,22 +303,6 @@ class OGRCouchDBDataSource : public OGRDataSource
                                         const char* pszErrorMsg);
     static bool                 IsOK   (json_object* poAnswerObj,
                                         const char* pszErrorMsg);
-};
-
-/************************************************************************/
-/*                           OGRCouchDBDriver                           */
-/************************************************************************/
-
-class OGRCouchDBDriver : public OGRSFDriver
-{
-  public:
-    virtual ~OGRCouchDBDriver();
-
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char **papszOptions ) override;
-    virtual int                 TestCapability( const char * ) override;
 };
 
 #endif /* ndef OGR_COUCHDB_H_INCLUDED */

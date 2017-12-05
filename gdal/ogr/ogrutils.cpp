@@ -37,17 +37,32 @@
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "ogr_core.h"
 #include "ogr_geometry.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+// Returns whether a double fits within an int.
+// Unable to put this in cpl_port.h as include limit breaks grib.
+inline bool CPLIsDoubleAnInt(double d)
+{
+    // Write it this way to detect NaN
+    if ( !(d >= std::numeric_limits<int>::min() &&
+           d <= std::numeric_limits<int>::max()) )
+    {
+        return false;
+    }
+    return d == static_cast<double>(static_cast<int>(d));
+}
 
 /************************************************************************/
 /*                        OGRFormatDouble()                             */
@@ -225,7 +240,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     size_t nLenX = 0;
     size_t nLenY = 0;
 
-    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
         snprintf( szX, bufSize, "%d", static_cast<int>(x) );
         snprintf( szY, bufSize, "%d", static_cast<int>(y) );
@@ -253,7 +268,7 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
     if( nDimension == 3 )
     {
-        if( CPL_IS_DOUBLE_A_INT(z) )
+        if( CPLIsDoubleAnInt(z) )
         {
             snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
         }
@@ -327,7 +342,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
     size_t nLenX = 0;
     size_t nLenY = 0;
 
-    if( CPL_IS_DOUBLE_A_INT(x) && CPL_IS_DOUBLE_A_INT(y) )
+    if( CPLIsDoubleAnInt(x) && CPLIsDoubleAnInt(y) )
     {
         snprintf( szX, bufSize, "%d", static_cast<int>(x) );
         snprintf( szY, bufSize, "%d", static_cast<int>(y) );
@@ -356,7 +371,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
 
     if( hasZ )
     {
-        if( CPL_IS_DOUBLE_A_INT(z) )
+        if( CPLIsDoubleAnInt(z) )
         {
             snprintf( szZ, bufSize, "%d", static_cast<int>(z) );
         }
@@ -369,7 +384,7 @@ void OGRMakeWktCoordinateM( char *pszTarget,
 
     if( hasM )
     {
-        if( CPL_IS_DOUBLE_A_INT(m) )
+        if( CPLIsDoubleAnInt(m) )
         {
             snprintf( szM, bufSize, "%d", static_cast<int>(m) );
         }
@@ -997,10 +1012,13 @@ int OGRParseDate( const char *pszInput,
               (*pszInput >= '0' && *pszInput <= '9')) )
             return FALSE;
         int nYear = atoi(pszInput);
-        if( nYear != static_cast<GInt16>(nYear) )
+        if (nYear > std::numeric_limits<GInt16>::max() ||
+            nYear < std::numeric_limits<GInt16>::min() )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Years < -32768 or > 32767 are not supported");
+                     "Years < %d or > %d are not supported",
+                     std::numeric_limits<GInt16>::min(),
+                     std::numeric_limits<GInt16>::max());
             return FALSE;
         }
         psField->Date.Year = static_cast<GInt16>(nYear);
@@ -1023,9 +1041,10 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Month = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Month == 0 || psField->Date.Month > 12 )
+        const int nMonth = atoi(pszInput);
+        if( nMonth <= 0 || nMonth > 12 )
             return FALSE;
+        psField->Date.Month = static_cast<GByte>(nMonth);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1034,18 +1053,23 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Day = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Day == 0 || psField->Date.Day > 31 )
+        const int nDay = atoi(pszInput);
+        if( nDay <= 0 || nDay > 31 )
             return FALSE;
+        psField->Date.Day = static_cast<GByte>(nDay);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
+        if( *pszInput == '\0' )
+            return TRUE;
 
         bGotSomething = true;
 
         // If ISO 8601 format.
         if( *pszInput == 'T' )
             ++pszInput;
+        else if( *pszInput != ' ' )
+            return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1056,9 +1080,12 @@ int OGRParseDate( const char *pszInput,
 
     if( strstr(pszInput, ":") != NULL )
     {
-        psField->Date.Hour = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Hour > 23 )
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
             return FALSE;
+        const int nHour = atoi(pszInput);
+        if( nHour < 0 || nHour > 23 )
+            return FALSE;
+        psField->Date.Hour = static_cast<GByte>(nHour);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1067,9 +1094,12 @@ int OGRParseDate( const char *pszInput,
         else
             ++pszInput;
 
-        psField->Date.Minute = static_cast<GByte>(atoi(pszInput));
-        if( psField->Date.Minute > 59 )
+        if( !(*pszInput >= '0' && *pszInput <= '9') )
             return FALSE;
+        const int nMinute = atoi(pszInput);
+        if( nMinute < 0 || nMinute > 59 )
+            return FALSE;
+        psField->Date.Minute = static_cast<GByte>(nMinute);
 
         while( *pszInput >= '0' && *pszInput <= '9' )
             ++pszInput;
@@ -1077,9 +1107,12 @@ int OGRParseDate( const char *pszInput,
         {
             ++pszInput;
 
-            psField->Date.Second = static_cast<float>(CPLAtof(pszInput));
-            if( psField->Date.Second > 61 )
+            if( !(*pszInput >= '0' && *pszInput <= '9') )
                 return FALSE;
+            const double dfSeconds = CPLAtof(pszInput);
+            // We accept second=60 for leap seconds
+            if (dfSeconds > 60.0 || dfSeconds < 0.0) return FALSE;
+            psField->Date.Second = static_cast<float>(dfSeconds);
 
             while( (*pszInput >= '0' && *pszInput <= '9')
                 || *pszInput == '.' )
@@ -1200,6 +1233,14 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
         TZ = 0;
         bRet = true;
     }
+    // Date is expressed as a UTC date with only year:month.
+    else if( sscanf(pszXMLDateTime, "%04d-%02d", &year, &month) ==
+             2 )
+    {
+        TZ = 0;
+        bRet = true;
+        day = 1;
+    }
 
     if( !bRet )
       return FALSE;
@@ -1226,107 +1267,30 @@ static const char* const aszMonthStr[] = {
 
 int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
 {
-    // Following
-    // http://asg.web.cmu.edu/rfc/rfc822.html#sec-5 :
-    // [Fri,] 28 Dec 2007 05:24[:17] GMT
-    char** papszTokens =
-        CSLTokenizeStringComplex( pszRFC822DateTime, " ,:", TRUE, FALSE );
-    char** papszVal = papszTokens;
-    bool bRet = false;
-    int nTokens = CSLCount(papszTokens);
-    if( nTokens < 6 )
+    int nYear, nMonth, nDay, nHour, nMinute, nSecond, nTZFlag;
+    if( !CPLParseRFC822DateTime( pszRFC822DateTime,
+                                    &nYear,
+                                    &nMonth,
+                                    &nDay,
+                                    &nHour,
+                                    &nMinute,
+                                    &nSecond,
+                                    &nTZFlag,
+                                    NULL ) )
     {
-        CSLDestroy(papszTokens);
         return false;
     }
 
-    if( !((*papszVal)[0] >= '0' && (*papszVal)[0] <= '9') )
-    {
-        // Ignore day of week.
-        ++papszVal;
-    }
+    psField->Date.Year = static_cast<GInt16>(nYear);
+    psField->Date.Month = static_cast<GByte>(nMonth);
+    psField->Date.Day = static_cast<GByte>(nDay);
+    psField->Date.Hour = static_cast<GByte>(nHour);
+    psField->Date.Minute = static_cast<GByte>(nMinute);
+    psField->Date.Second = (nSecond < 0) ? 0.0f : static_cast<float>(nSecond);
+    psField->Date.TZFlag = static_cast<GByte>(nTZFlag);
+    psField->Date.Reserved = 0;
 
-    const int day = atoi(*papszVal);
-    ++papszVal;
-
-    int month = 0;
-
-    for( int i = 0; i < 12; ++i )
-    {
-        if( EQUAL(*papszVal, aszMonthStr[i]) )
-            month = i + 1;
-    }
-    ++papszVal;
-
-    int year = atoi(*papszVal);
-    ++papszVal;
-    if( year < 100 && year >= 30 )
-        year += 1900;
-    else if( year < 30 && year >= 0 )
-        year += 2000;
-
-    const int hour = atoi(*papszVal);
-    ++papszVal;
-
-    const int minute = atoi(*papszVal);
-    ++papszVal;
-
-    int second = 0;
-    if( *papszVal != NULL && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9' )
-    {
-        second = atoi(*papszVal);
-        ++papszVal;
-    }
-
-    if( month != 0 )
-    {
-        bRet = true;
-        int TZ = 0;
-
-        if( *papszVal == NULL )
-        {
-        }
-        else if( strlen(*papszVal) == 5 &&
-                 ((*papszVal)[0] == '+' || (*papszVal)[0] == '-') )
-        {
-            char szBuf[3] = { (*papszVal)[1], (*papszVal)[2], 0 };
-            const int TZHour = atoi(szBuf);
-            szBuf[0] = (*papszVal)[3];
-            szBuf[1] = (*papszVal)[4];
-            szBuf[2] = 0;
-            const int TZMinute = atoi(szBuf);
-            TZ = 100 + (((*papszVal)[0] == '+') ? 1 : -1) *
-                        ((TZHour * 60 + TZMinute) / 15);
-        }
-        else
-        {
-            const char* aszTZStr[] = {
-                "GMT", "UT", "Z", "EST", "EDT", "CST", "CDT", "MST", "MDT",
-                "PST", "PDT"
-            };
-            int anTZVal[] = { 0, 0, 0, -5, -4, -6, -5, -7, -6, -8, -7 };
-            for( int i = 0; i < 11; ++i )
-            {
-                if( EQUAL(*papszVal, aszTZStr[i]) )
-                {
-                    TZ = 100 + anTZVal[i] * 4;
-                    break;
-                }
-            }
-        }
-
-        psField->Date.Year = static_cast<GInt16>(year);
-        psField->Date.Month = static_cast<GByte>(month);
-        psField->Date.Day = static_cast<GByte>(day);
-        psField->Date.Hour = static_cast<GByte>(hour);
-        psField->Date.Minute = static_cast<GByte>(minute);
-        psField->Date.Second = static_cast<float>(second);
-        psField->Date.TZFlag = static_cast<GByte>(TZ);
-        psField->Date.Reserved = 0;
-    }
-
-    CSLDestroy(papszTokens);
-    return bRet;
+    return true;
 }
 
 /**
@@ -1485,8 +1449,8 @@ char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 /*                        OGRCompareDate()                              */
 /************************************************************************/
 
-int OGRCompareDate( OGRField *psFirstTuple,
-                    OGRField *psSecondTuple )
+int OGRCompareDate( const OGRField *psFirstTuple,
+                    const OGRField *psSecondTuple )
 {
     // TODO: We ignore TZFlag.
 
@@ -1657,7 +1621,7 @@ OGRErr OGRCheckPermutation( int* panPermutation, int nSize )
     return eErr;
 }
 
-OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
+OGRErr OGRReadWKBGeometryType( const unsigned char * pabyData,
                                OGRwkbVariant eWkbVariant,
                                OGRwkbGeometryType *peGeometryType )
 {
@@ -1811,12 +1775,12 @@ OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
         iRawType += 2000;
     }
 
-    // ISO SQL/MM style types are between 1-16, 1001-1016, 2001-2016, and
-    // 3001-3016.
-    if( !((iRawType > 0 && iRawType <= 16) ||
-           (iRawType > 1000 && iRawType <= 1016) ||
-           (iRawType > 2000 && iRawType <= 2016) ||
-           (iRawType > 3000 && iRawType <= 3016)) )
+    // ISO SQL/MM style types are between 1-17, 1001-1017, 2001-2017, and
+    // 3001-3017.
+    if( !((iRawType > 0 && iRawType <= 17) ||
+           (iRawType > 1000 && iRawType <= 1017) ||
+           (iRawType > 2000 && iRawType <= 2017) ||
+           (iRawType > 3000 && iRawType <= 3017)) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported WKB type %d", iRawType);

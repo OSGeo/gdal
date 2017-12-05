@@ -32,10 +32,11 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gstEndian.h"
+#include "cpl_safemaths.hpp"
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const size_t FIT_PAGE_SIZE = 128;
 
@@ -987,35 +988,12 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = head->ySize;
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        !GDALCheckBandCount(head->cSize, FALSE))
+        !GDALCheckBandCount(head->cSize, FALSE) ||
+        head->xPageSize == 0 ||
+        head->yPageSize == 0)
     {
         return NULL;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Check if 64 bit seek is needed.                                 */
-/* -------------------------------------------------------------------- */
-    uint64 bytesPerComponent =
-        GDALGetDataTypeSize(fitDataType(poDS->info->dtype)) / 8;
-    uint64 bytesPerPixel = head->cSize * bytesPerComponent;
-    uint64 recordSize = bytesPerPixel * head->xPageSize *
-        head->yPageSize;
-    uint64 numXBlocks =
-        (uint64) ceil((double) head->xSize / head->xPageSize);
-    uint64 numYBlocks =
-        (uint64) ceil((double) head->ySize / head->yPageSize);
-
-    uint64 maxseek = recordSize * numXBlocks * numYBlocks;
-
-//     CPLDebug("FIT", "(sizeof %i) max seek %llx ==> %llx\n", sizeof(uint64),
-//              maxseek, maxseek >> 31);
-    if (maxseek >> 31) // signed long
-#ifdef VSI_LARGE_API_SUPPORTED
-        CPLDebug("FIT", "Using 64 bit version of fseek");
-#else
-        CPLError(CE_Fatal, CPLE_NotSupported,
-                 "FIT - need 64 bit version of fseek");
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Verify all "unused" header values.                              */
@@ -1161,7 +1139,18 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     int blockX, blockY;
     firstBand->GetBlockSize(&blockX, &blockY);
-    CPLDebug("FIT write", "inherited block size %ix%i", blockX, blockY);
+    int nDTSize = GDALGetDataTypeSizeBytes(firstBand->GetRasterDataType());
+    try
+    {
+        CPL_IGNORE_RET_VAL(
+            CPLSM(blockX) * CPLSM(blockY) * CPLSM(nDTSize) * CPLSM(nBands));
+        CPLDebug("FIT write", "inherited block size %ix%i", blockX, blockY);
+    }
+    catch( ... )
+    {
+        blockX = 256;
+        blockY = 256;
+    }
 
     if( CSLFetchNameValue(papszOptions,"PAGESIZE") != NULL )
     {
@@ -1211,15 +1200,17 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
-    unsigned long bytesPerComponent =
-        (GDALGetDataTypeSize(firstBand->GetRasterDataType()) / 8);
-    unsigned long bytesPerPixel = nBands * bytesPerComponent;
+    unsigned long bytesPerPixel = nBands * nDTSize;
 
     unsigned long pageBytes = blockX * blockY * bytesPerPixel;
     char *output = (char *) malloc(pageBytes);
     if (! output)
-        CPLError(CE_Fatal, CPLE_NotSupported,
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
                  "FITRasterBand couldn't allocate %lu bytes", pageBytes);
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
+        return NULL;
+    }
     FreeGuard<char> guardOutput( output );
 
     long maxx = (long) ceil(poSrcDS->GetRasterXSize() / (double) blockX);
@@ -1258,7 +1249,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       static_cast<int>(y * blockY), // nYOff
                                       static_cast<int>(readX), // nXSize
                                       static_cast<int>(readY), // nYSize
-                                      output + iBand * bytesPerComponent,
+                                      output + iBand * nDTSize,
                                       // pData
                                       blockX, // nBufXSize
                                       blockY, // nBufYSize
@@ -1274,33 +1265,32 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 #ifdef swapping
             char *p = output;
             unsigned long i;
-            switch(bytesPerComponent) {
+            switch(nDTSize) {
             case 1:
                 // do nothing
                 break;
             case 2:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap16(p + i);
                 break;
             case 4:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap32(p + i);
                 break;
             case 8:
-                for(i=0; i < pageBytes; i+= bytesPerComponent)
+                for(i=0; i < pageBytes; i+= nDTSize)
                     gst_swap64(p + i);
                 break;
             default:
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "FIT write - unsupported bytesPerPixel %lu",
-                         bytesPerComponent);
+                         "FIT write - unsupported bytesPerPixel %d",
+                         nDTSize);
             } // switch
 #endif // swapping
 
             CPL_IGNORE_RET_VAL(VSIFWriteL(output, pageBytes, 1, fpImage));
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
-//             printf("progress %f\n", perc);
             if( !pfnProgress( perc, NULL, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );

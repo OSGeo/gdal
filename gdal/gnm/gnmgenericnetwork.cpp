@@ -34,7 +34,7 @@
 
 #include <set>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 GNMGenericNetwork::GNMGenericNetwork() :
@@ -581,7 +581,6 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
     for(size_t i = 0; i < paLineLayers.size(); ++i)
     {
         poLayer = paLineLayers[i];
-        eType = wkbFlatten(poLayer->GetGeomType());
 
         poLayer->ResetReading();
         while((poFeature = poLayer->GetNextFeature()) != NULL)
@@ -589,6 +588,7 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
             const OGRGeometry* poGeom = poFeature->GetGeometryRef();
             if(NULL != poGeom)
             {
+                eType = wkbFlatten(poGeom->getGeometryType());
                 if(eType == wkbLineString)
                 {
                     const OGRLineString* poLineString =

@@ -35,7 +35,7 @@
 #  include "cpl_conv.h"
 #  include "EnvisatFile.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #else
 #  include "APP/app.h"
@@ -280,7 +280,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
 
     if( VSIFReadL( mph_data, 1, MPH_SIZE, fp ) != MPH_SIZE )
     {
-        CPLFree( self );
+        EnvisatFile_Close( self );
         SendError( "VSIFReadL() for mph failed." );
         return FAILURE;
     }
@@ -290,7 +290,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
                                &(self->mph_count),
                                &(self->mph_entries) ) == FAILURE )
     {
-        CPLFree( self );
+        EnvisatFile_Close( self );
         return FAILURE;
     }
 
@@ -322,17 +322,21 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     {
         SendError( "File does not appear to have SPH,"
                    " SPH_SIZE not set, or zero." );
-        CPLFree( self );
+        EnvisatFile_Close( self );
         return FAILURE;
     }
 
     sph_data = (char *) CPLMalloc(sph_size + 1 );
     if( sph_data == NULL )
+    {
+        EnvisatFile_Close( self );
         return FAILURE;
+    }
 
     if( (int) VSIFReadL( sph_data, 1, sph_size, fp ) != sph_size )
     {
-        CPLFree( self );
+        CPLFree( sph_data );
+        EnvisatFile_Close( self );
         SendError( "VSIFReadL() for sph failed." );
         return FAILURE;
     }
@@ -349,9 +353,12 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
                                &(self->sph_count),
                                &(self->sph_entries) ) == FAILURE )
     {
-        CPLFree( self );
+        CPLFree( sph_data );
+        EnvisatFile_Close( self );
         return FAILURE;
     }
+
+    CPLFree( sph_data );
 
     /*
      * Parse the Dataset Definitions.
@@ -362,7 +369,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
     if( num_dsd > 0 && ds_data == NULL )
     {
         SendError( "DSDs indicated in MPH, but not found in SPH." );
-        CPLFree( self );
+        EnvisatFile_Close( self );
         return FAILURE;
     }
 
@@ -370,7 +377,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         CPLCalloc(sizeof(EnvisatDatasetInfo*),num_dsd);
     if( self->ds_info == NULL )
     {
-        CPLFree( self );
+        EnvisatFile_Close( self );
         return FAILURE;
     }
 
@@ -390,7 +397,7 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         if( S_NameValueList_Parse( dsd_data, 0,
                                    &dsdh_count, &dsdh_entries ) == FAILURE )
         {
-            CPLFree( self );
+            EnvisatFile_Close( self );
             return FAILURE;
         }
 
@@ -426,8 +433,6 @@ int EnvisatFile_Open( EnvisatFile **self_ptr,
         self->ds_info[i] = ds_info;
         self->ds_count++;
     }
-
-    CPLFree( sph_data );
 
     /*
      * Return successfully.

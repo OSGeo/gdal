@@ -56,7 +56,7 @@ public:
 
     int GetOverviewCount() override
     {
-        if( osOverview.size() > 0 )
+        if( !osOverview.empty() )
         {
             return static_cast<int>( osOverview.size() );
         }

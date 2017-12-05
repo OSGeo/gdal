@@ -35,7 +35,7 @@
  **********************************************************************/
 #include "postgisraster.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * \brief Constructor.
@@ -78,10 +78,6 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(
     nBlockYSize = MIN(MAX_BLOCK_SIZE, this->nRasterYSize);
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("PostGIS_Raster",
-        "PostGISRasterRasterBand constructor: Band created (srid = %d)",
-        poDS->nSrid);
-
     CPLDebug("PostGIS_Raster",
         "PostGISRasterRasterBand constructor: Band size: (%d X %d)",
         nRasterXSize, nRasterYSize);

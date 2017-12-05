@@ -32,7 +32,7 @@
 #include "gnm_priv.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 enum operation
 {
@@ -364,7 +364,7 @@ static void ReportOnLayer( OGRLayer * poLayer, int bVerbose )
                 nExtraArg)); \
         } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     int bQuiet = FALSE;
@@ -459,7 +459,7 @@ int main( int nArgc, char ** papszArgv )
             pszDataset = papszArgv[++iArg];
         }
 
-        else if( EQUAL(papszArgv[iArg],"-f") )
+        else if( (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = papszArgv[++iArg];
@@ -623,9 +623,10 @@ int main( int nArgc, char ** papszArgv )
         poDS->ReleaseResultSet(poResultLayer);
 
     if( poDS != NULL )
-        GDALClose( (GDALDatasetH)poDS );
+        GDALClose(poDS);
 
     GDALDestroyDriverManager();
 
     return nRet;
 }
+MAIN_END

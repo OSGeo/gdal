@@ -67,9 +67,9 @@ if geotransform is not None and geotransform != (0,1,0,0,0,1):
 if projection is not None and projection != '':
     dataset2.SetProjection( projection )
 
-gcp_count = dataset.GetGCPs()
+gcp_count = dataset.GetGCPCount()
 if gcp_count != 0:
-    dataset2.SetGCPs( gcp_count, dataset.GetGCPProjection() )
+    dataset2.SetGCPs( dataset.GetGCPs(), dataset.GetGCPProjection() )
 
 dataset = None
 dataset2 = None

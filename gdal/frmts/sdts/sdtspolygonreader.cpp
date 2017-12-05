@@ -30,7 +30,7 @@
 
 #include <cmath>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -90,9 +90,13 @@ int SDTSRawPolygon::Read( DDFRecord * poRecord )
     for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
     {
         DDFField        *poField = poRecord->GetField( iField );
-        CPLAssert( poField != NULL );
+        if( poField == NULL )
+            return FALSE;
+        DDFFieldDefn* poFieldDefn = poField->GetFieldDefn();
+        if( poFieldDefn == NULL )
+            return FALSE;
 
-        const char *pszFieldName = poField->GetFieldDefn()->GetName();
+        const char *pszFieldName = poFieldDefn->GetName();
 
         if( EQUAL(pszFieldName,"POLY") )
         {
@@ -609,6 +613,9 @@ void SDTSPolygonReader::AssembleRings( SDTSTransfer * poTransfer,
         poLineReader->AttachToPolygons( poTransfer, iPolyLayer );
         poLineReader->Rewind();
     }
+
+    if( !IsIndexed() )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Scan all polygons indexed on this reader, and assemble their    */

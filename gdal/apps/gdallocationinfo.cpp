@@ -31,9 +31,10 @@
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 #include "cpl_minixml.h"
+#include "commonutils.h"
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /******************************************************************************/
 /*! \page gdallocationinfo gdallocationinfo
@@ -211,7 +212,7 @@ static char *SanitizeSRS( const char *pszUserInput )
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     const char         *pszLocX = NULL, *pszLocY = NULL;
@@ -241,15 +242,15 @@ int main( int argc, char ** argv )
             CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"-b") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-b") )
         {
             anBandList.push_back( atoi(argv[++i]) );
         }
-        else if( EQUAL(argv[i],"-overview") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-overview") )
         {
             nOverview = atoi(argv[++i]) - 1;
         }
-        else if( EQUAL(argv[i],"-l_srs") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i],"-l_srs") )
         {
             CPLFree(pszSourceSRS);
             pszSourceSRS = SanitizeSRS(argv[++i]);
@@ -278,7 +279,7 @@ int main( int argc, char ** argv )
             bValOnly = true;
             bQuiet = true;
         }
-        else if( EQUAL(argv[i], "-oo") && i < argc-1 )
+        else if( i < argc-1 && EQUAL(argv[i], "-oo") )
         {
             papszOpenOptions = CSLAddString( papszOpenOptions,
                                                 argv[++i] );
@@ -369,33 +370,33 @@ int main( int argc, char ** argv )
 
         if( pszSourceSRS != NULL )
         {
-            double adfGeoTransform[6], adfInvGeoTransform[6];
-
+            double adfGeoTransform[6] = {};
             if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) != CE_None )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot get geotransform");
                 exit( 1 );
             }
 
+            double adfInvGeoTransform[6] = {};
             if( !GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform ) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
                 exit( 1 );
             }
 
-            iPixel = (int) floor(
+            iPixel = static_cast<int>(floor(
                 adfInvGeoTransform[0]
                 + adfInvGeoTransform[1] * dfGeoX
-                + adfInvGeoTransform[2] * dfGeoY );
-            iLine = (int) floor(
+                + adfInvGeoTransform[2] * dfGeoY));
+            iLine = static_cast<int>(floor(
                 adfInvGeoTransform[3]
                 + adfInvGeoTransform[4] * dfGeoX
-                + adfInvGeoTransform[5] * dfGeoY );
+                + adfInvGeoTransform[5] * dfGeoY));
         }
         else
         {
-            iPixel = (int) floor(dfGeoX);
-            iLine  = (int) floor(dfGeoY);
+            iPixel = static_cast<int>(floor(dfGeoX));
+            iLine  = static_cast<int>(floor(dfGeoY));
         }
 
     /* -------------------------------------------------------------------- */
@@ -433,7 +434,8 @@ int main( int argc, char ** argv )
     /* -------------------------------------------------------------------- */
     /*      Process each band.                                              */
     /* -------------------------------------------------------------------- */
-        for( int i = 0; bPixelReport && i < (int) anBandList.size(); i++ )
+        for( int i = 0; bPixelReport && i < static_cast<int>(anBandList.size());
+             i++ )
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, anBandList[i] );
 
@@ -447,8 +449,12 @@ int main( int argc, char ** argv )
                 {
                     int nOvrXSize = GDALGetRasterBandXSize(hOvrBand);
                     int nOvrYSize = GDALGetRasterBandYSize(hOvrBand);
-                    iPixelToQuery = (int)(0.5 + 1.0 * iPixel / GDALGetRasterXSize( hSrcDS ) * nOvrXSize);
-                    iLineToQuery = (int)(0.5 + 1.0 * iLine / GDALGetRasterYSize( hSrcDS ) * nOvrYSize);
+                    iPixelToQuery = static_cast<int>(
+                        0.5 +
+                        1.0 * iPixel / GDALGetRasterXSize(hSrcDS) * nOvrXSize);
+                    iLineToQuery = static_cast<int>(
+                        0.5 +
+                        1.0 * iLine / GDALGetRasterYSize(hSrcDS) * nOvrYSize);
                     if (iPixelToQuery >= nOvrXSize)
                         iPixelToQuery = nOvrXSize - 1;
                     if (iLineToQuery >= nOvrYSize)
@@ -638,3 +644,4 @@ int main( int argc, char ** argv )
 
     return 0;
 }
+MAIN_END

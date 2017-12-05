@@ -484,6 +484,11 @@ def ogr_index_11():
     if ret != 'success':
         return ret
 
+    lyr.SetAttributeFilter("intfield IN (1, 2, 3)")
+    ret = ogr_index_11_check(lyr, [ 0, 1, 2, 3, 4 ])
+    if ret != 'success':
+        return ret
+
     ds = None
 
     return 'success'

@@ -51,7 +51,7 @@
 #include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double TO_RADIANS = M_PI / 180.0;
 
@@ -237,7 +237,7 @@ GDALGridInverseDistanceToAPower( const void *poOptionsIn, GUInt32 nPoints,
  *  <ul>
  *      <li> \f$Z_i\f$ is a known value at point \f$i\f$,
  *      <li> \f$r_i\f$ is an Euclidean distance from the grid node
- *           to point \f$i\f$,
+ *           to point \f$i\f$ (with an optional smoothing parameter \f$s\f$),
  *      <li> \f$p\f$ is a weighting power,
  *      <li> \f$n\f$ is a total number of points in search ellipse.
  *  </ul>
@@ -278,6 +278,8 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
           const GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
           poOptionsIn);
     const double dfRadius = poOptions->dfRadius;
+    const double dfSmoothing = poOptions->dfSmoothing;
+    const double dfSmoothing2 = dfSmoothing * dfSmoothing;
 
     const GUInt32 nMaxPoints = poOptions->nMaxPoints;
 
@@ -311,16 +313,19 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
                 const double dfRY = padfY[i] - dfYPoint;
 
                 const double dfR2 = dfRX * dfRX + dfRY * dfRY;
-                if( dfR2 < 0.0000000000001 )
+                // real distance + smoothing
+                const double dfRsmoothed2 = dfR2 + dfSmoothing2;
+                if( dfRsmoothed2 < 0.0000000000001 )
                 {
                     *pdfValue = padfZ[i];
                     CPLFree(papsPoints);
                     return CE_None;
                 }
+                // is point within real distance?
                 if( dfR2 <= dfRPower2 )
                 {
                     oMapDistanceToZValues.insert(
-                        std::make_pair(dfR2, padfZ[i]) );
+                        std::make_pair(dfRsmoothed2, padfZ[i]) );
                 }
             }
         }
@@ -333,19 +338,20 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
             const double dfRX = padfX[i] - dfXPoint;
             const double dfRY = padfY[i] - dfYPoint;
             const double dfR2 = dfRX * dfRX + dfRY * dfRY;
+            const double dfRsmoothed2 = dfR2 + dfSmoothing2;
 
             // Is this point located inside the search circle?
             if( dfRPower2 * dfRX * dfRX + dfRPower2 * dfRY * dfRY <= dfRPower4 )
             {
                 // If the test point is close to the grid node, use the point
                 // value directly as a node value to avoid singularity.
-                if( dfR2 < 0.0000000000001 )
+                if( dfRsmoothed2 < 0.0000000000001 )
                 {
                     *pdfValue = padfZ[i];
                     return CE_None;
                 }
 
-                oMapDistanceToZValues.insert(std::make_pair(dfR2, padfZ[i]) );
+                oMapDistanceToZValues.insert(std::make_pair(dfRsmoothed2, padfZ[i]) );
             }
         }
     }
@@ -1450,13 +1456,13 @@ GDALGridLinear( const void *poOptionsIn, GUInt32 nPoints,
         psTriangulation, psExtraParams->nInitialFacetIdx,
         dfXPoint, dfYPoint, &nOutputFacetIdx ) );
 
-    CPLAssert(nOutputFacetIdx >= 0);
-    // Reuse output facet idx as next initial index since we proceed line by
-    // line.
-    psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
-
     if( bRet )
     {
+        CPLAssert(nOutputFacetIdx >= 0);
+        // Reuse output facet idx as next initial index since we proceed line by
+        // line.
+        psExtraParams->nInitialFacetIdx = nOutputFacetIdx;
+
         double lambda1 = 0.0;
         double lambda2 = 0.0;
         double lambda3 = 0.0;
@@ -2571,6 +2577,9 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
 
             const char *pszValue = CSLFetchNameValue( papszParms, "power" );
             poPowerOpts->dfPower = pszValue ? CPLAtofM(pszValue) : 2.0;
+
+            pszValue = CSLFetchNameValue( papszParms, "smoothing" );
+            poPowerOpts->dfSmoothing = pszValue ? CPLAtofM(pszValue) : 0.0;
 
             pszValue = CSLFetchNameValue( papszParms, "radius" );
             poPowerOpts->dfRadius = pszValue ? CPLAtofM(pszValue) : 1.0;

@@ -26,8 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi.h"
+#include "cpl_port.h"
 #include "gt_jpeg_copy.h"
+
+#include "cpl_vsi.h"
+
 #if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
 #  include "vrt/vrtdataset.h"
 #endif
@@ -41,7 +44,7 @@
 // Note: JPEG_DIRECT_COPY is not defined by default, because it is mainly
 // useful for debugging purposes.
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(JPEG_DIRECT_COPY) || defined(HAVE_LIBJPEG)
 
@@ -699,7 +702,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG( GTIFF_CopyBlockFromJPEGArgs* psArgs )
                                                         nSrcHeightInBlocks )
             {
                 const int nYBlocks =
-                    nSrcHeightInBlocks - (dst_blk_y + y_crop_blocks);
+                    (int)nSrcHeightInBlocks - (int)(dst_blk_y + y_crop_blocks);
                 if( nYBlocks > 0 )
                 {
                     JBLOCKARRAY src_buffer =

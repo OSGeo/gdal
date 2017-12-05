@@ -42,9 +42,10 @@ private:
     kealib::KEAAttributeTable *m_poKEATable;
     std::vector<kealib::KEAATTField> m_aoFields;
     CPLString osWorkingResult;
+    KEARasterBand *m_poBand;
 
 public:
-    explicit KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable);
+    KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable, KEARasterBand *poBand);
     ~KEARasterAttributeTable();
 
     GDALDefaultRasterAttributeTable *Clone() const override;
@@ -77,6 +78,10 @@ public:
     virtual CPLErr        CreateColumn( const char *pszFieldName,
                                 GDALRATFieldType eFieldType,
                                 GDALRATFieldUsage eFieldUsage ) override;
+    virtual CPLErr        SetLinearBinning( double dfRow0Min,
+                                            double dfBinSize ) override;
+    virtual int           GetLinearBinning( double *pdfRow0Min,
+                                            double *pdfBinSize ) const override;
 
     virtual CPLXMLNode   *Serialize() const override;
 };

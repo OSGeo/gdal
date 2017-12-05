@@ -45,7 +45,7 @@
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define PIXEL_TO_GEO_X(x,y) adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2]
 #define PIXEL_TO_GEO_Y(x,y) adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5]
@@ -2339,7 +2339,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     /* If the text is of the form {stuff}, then it means we want to fetch */
                     /* the value of the field "stuff" in the feature */
                     if( !osLabelText.empty() && osLabelText[0] == '{' &&
-                        osLabelText[osLabelText.size() - 1] == '}' )
+                        osLabelText.back() == '}' )
                     {
                         osLabelText = pszStr + 1;
                         osLabelText.resize(osLabelText.size() - 1);
@@ -2531,7 +2531,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     const char* pszLinkVal = NULL;
     if (pszOGRLinkField != NULL &&
         (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRLinkField)) >= 0 &&
-        OGR_F_IsFieldSet(hFeat, iField) &&
+        OGR_F_IsFieldSetAndNotNull(hFeat, iField) &&
         strcmp((pszLinkVal = OGR_F_GetFieldAsString(hFeat, iField)), "") != 0)
     {
         int nAnnotId = AllocNewObject();
@@ -2969,7 +2969,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         GDALPDFArrayRW* poArray = new GDALPDFArrayRW();
         for(int i = 0; i < nFields; i++)
         {
-            if (OGR_F_IsFieldSet(hFeat, i))
+            if (OGR_F_IsFieldSetAndNotNull(hFeat, i))
             {
                 OGRFieldDefnH hFDefn = OGR_F_GetFieldDefnRef( hFeat, i );
                 GDALPDFDictionaryRW* poKV = new GDALPDFDictionaryRW();
@@ -4486,12 +4486,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             {
                 if( dfWidthInUserUnit >= dfHeightInUserUnit )
                 {
-                    dfDPI = (int)(0.5 + (double)nWidth / (MAXIMUM_SIZE_IN_UNITS -
+                    dfDPI = ceil((double)nWidth / (MAXIMUM_SIZE_IN_UNITS -
                             (sMargins.nLeft + sMargins.nRight)) / USER_UNIT_IN_INCH);
                 }
                 else
                 {
-                    dfDPI = (int)(0.5 + (double)nHeight / (MAXIMUM_SIZE_IN_UNITS -
+                    dfDPI = ceil((double)nHeight / (MAXIMUM_SIZE_IN_UNITS -
                             (sMargins.nBottom + sMargins.nTop)) / USER_UNIT_IN_INCH);
                 }
                 CPLDebug("PDF", "Adjusting DPI to %d so that page dimension in "

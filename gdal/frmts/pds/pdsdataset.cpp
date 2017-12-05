@@ -46,8 +46,9 @@ static const double NULL3 = -3.4028226550889044521e+38;
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
+#include "cpl_safemaths.hpp"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 enum PDSLayout
 {
@@ -260,7 +261,7 @@ CPLErr PDSDataset::IRasterIO( GDALRWFlag eRWFlag,
 const char *PDSDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -463,6 +464,9 @@ void PDSDataset::ParseSRS()
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
+        if ( (fabs(center_lat)-90) < 0.0000001 ) {
+                oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+        } else
         oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
@@ -688,7 +692,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         osQube = "\"";
         osQube += GetKeywordSub( osPrefix + "^" + osImageKeyword, 1 );
         osQube +=  "\"";
-        nDetachedOffset = atoi(GetKeywordSub( osPrefix + "^" + osImageKeyword, 2, "1")) - 1;
+        nDetachedOffset = atoi(GetKeywordSub( osPrefix + "^" + osImageKeyword, 2, "1"));
+        if( nDetachedOffset >= 1 )
+            nDetachedOffset -= 1;
 
         // If this is not explicitly in bytes, then it is assumed to be in
         // records, and we need to translate to bytes.
@@ -777,23 +783,36 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
         record_bytes = atoi(GetKeyword(osPrefix+"RECORD_BYTES"));
 
     // this can happen with "record_type = undefined".
+    if( record_bytes < 0 )
+        return FALSE;
     if( record_bytes == 0 )
         record_bytes = 1;
 
     int nSkipBytes = 0;
-    if( nQube >0 && osQube.find("<BYTES>") != CPLString::npos )
-        nSkipBytes = nQube - 1;
-    else if (nQube > 0 )
-        nSkipBytes = (nQube - 1) * record_bytes;
-    else if( nDetachedOffset > 0 )
+    try
     {
-        if (bDetachedOffsetInBytes)
-            nSkipBytes = nDetachedOffset;
+        if( osQube.find("<BYTES>") != CPLString::npos )
+            nSkipBytes = (CPLSM(nQube) - CPLSM(1)).v();
+        else if (nQube > 0 )
+        {
+            nSkipBytes = (CPLSM(nQube - 1) * CPLSM(record_bytes)).v();
+        }
+        else if( nDetachedOffset > 0 )
+        {
+            if (bDetachedOffsetInBytes)
+                nSkipBytes = nDetachedOffset;
+            else
+            {
+                nSkipBytes = (CPLSM(nDetachedOffset) * CPLSM(record_bytes)).v();
+            }
+        }
         else
-            nSkipBytes = nDetachedOffset * record_bytes;
+            nSkipBytes = 0;
     }
-    else
-        nSkipBytes = 0;
+    catch( const CPLSafeIntOverflow& )
+    {
+        return FALSE;
+    }
 
     nSkipBytes += atoi(GetKeyword(osPrefix+"IMAGE.LINE_PREFIX_BYTES",""));
 
@@ -801,7 +820,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     /** if keyword not found leave as "M" or "MSB" **/
 
     CPLString osST = GetKeyword( osPrefix+"IMAGE.SAMPLE_TYPE" );
-    if( osST.size() >= 2 && osST[0] == '"' && osST[osST.size()-1] == '"' )
+    if( osST.size() >= 2 && osST[0] == '"' && osST.back() == '"' )
         osST = osST.substr( 1, osST.size() - 2 );
 
     char chByteOrder = 'M';  //default to MSB
@@ -950,11 +969,9 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRows < 1 || nCols < 1 || l_nBands < 1 )
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(l_nBands, false) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File %s appears to be a PDS file, but failed to find some required keywords.",
-                  GetDescription() );
         return FALSE;
     }
 
@@ -1001,27 +1018,37 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     int nPixelOffset;
     int nBandOffset;
 
-    if( eLayout == PDS_BIP )
+    try
     {
-        nPixelOffset = nItemSize * l_nBands;
-        nBandOffset = nItemSize;
-        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
-            * record_bytes;
+        if( eLayout == PDS_BIP )
+        {
+            nPixelOffset = (CPLSM(nItemSize) * CPLSM(l_nBands)).v();
+            nBandOffset = nItemSize;
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
+                * record_bytes;
+        }
+        else if( eLayout == PDS_BSQ )
+        {
+            nPixelOffset = nItemSize;
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
+                * record_bytes;
+            nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
+                + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
+        }
+        else /* assume BIL */
+        {
+            nPixelOffset = nItemSize;
+            nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
+            nLineOffset = (CPLSM(nBandOffset) * CPLSM(nCols)).v();
+            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes)
+                * record_bytes;
+        }
     }
-    else if( eLayout == PDS_BSQ )
+    catch( const CPLSafeIntOverflow& )
     {
-        nPixelOffset = nItemSize;
-        nLineOffset = ((nPixelOffset * nCols + record_bytes - 1)/record_bytes)
-            * record_bytes;
-        nBandOffset = nLineOffset * nRows
-            + nSuffixLines * (nCols + nSuffixItems) * nSuffixBytes;
-    }
-    else /* assume BIL */
-    {
-        nPixelOffset = nItemSize;
-        nBandOffset = nItemSize * nCols;
-        nLineOffset = ((nBandOffset * nCols + record_bytes - 1)/record_bytes)
-            * record_bytes;
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1031,7 +1058,7 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
     {
         RawRasterBand *poBand =
             new RawRasterBand( this, i+1, fpImage,
-                               nSkipBytes + nBandOffset * i,
+                               nSkipBytes + static_cast<vsi_l_offset>(nBandOffset) * i,
                                nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                chByteOrder == 'I' || chByteOrder == 'L',
@@ -1361,8 +1388,8 @@ void PDSDataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
+        ((osInput.at(0) != '"'   || osInput.back() != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.back() != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);

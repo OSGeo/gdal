@@ -37,8 +37,9 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "gdal_priv_templates.hpp"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
@@ -163,59 +164,88 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     {
       case GDT_Byte:
       {
-          GByte byNoData = static_cast<GByte>( dfNoDataValue );
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
+          if( !GDALIsValueInRange<GByte>(dfNoDataValue) )
           {
-              static_cast<GByte *>(pImage)[i] = pabySrc[i] == byNoData ? 0: 255;
+              memset(pImage, 255, nBlockXSize * nBlockYSize);
+          }
+          else
+          {
+            GByte byNoData = static_cast<GByte>( dfNoDataValue );
+
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                static_cast<GByte *>(pImage)[i] = pabySrc[i] == byNoData ? 0: 255;
+            }
           }
       }
       break;
 
       case GDT_UInt32:
       {
-          GUInt32 nNoData = static_cast<GUInt32>( dfNoDataValue );
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
+          if( !GDALIsValueInRange<GUInt32>(dfNoDataValue) )
           {
-              static_cast<GByte *>(pImage)[i] =
-                  reinterpret_cast<GUInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
+              memset(pImage, 255, nBlockXSize * nBlockYSize);
+          }
+          else
+          {
+            GUInt32 nNoData = static_cast<GUInt32>( dfNoDataValue );
+
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                static_cast<GByte *>(pImage)[i] =
+                    reinterpret_cast<GUInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
+            }
           }
       }
       break;
 
       case GDT_Int32:
       {
-          GInt32 nNoData = static_cast<GInt32>( dfNoDataValue );
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
+          if( !GDALIsValueInRange<GInt32>(dfNoDataValue) )
           {
-              static_cast<GByte *>(pImage)[i] =
-                  reinterpret_cast<GInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
+              memset(pImage, 255, nBlockXSize * nBlockYSize);
+          }
+          else
+          {
+            GInt32 nNoData = static_cast<GInt32>( dfNoDataValue );
+
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                static_cast<GByte *>(pImage)[i] =
+                    reinterpret_cast<GInt32 *>(pabySrc)[i] == nNoData ? 0 : 255;
+            }
           }
       }
       break;
 
       case GDT_Float32:
       {
-          float fNoData = static_cast<float>( dfNoDataValue );
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
+          if( !bIsNoDataNan && !CPLIsInf(dfNoDataValue) &&
+              !GDALIsValueInRange<float>(dfNoDataValue) )
           {
-              const float fVal = reinterpret_cast<float *>(pabySrc)[i];
-              if( bIsNoDataNan && CPLIsNan(fVal))
-                  static_cast<GByte *>(pImage)[i] = 0;
-              else if( ARE_REAL_EQUAL(fVal, fNoData) )
-                  static_cast<GByte *>(pImage)[i] = 0;
-              else
-                  static_cast<GByte *>(pImage)[i] = 255;
+              memset(pImage, 255, nBlockXSize * nBlockYSize);
+          }
+          else
+          {
+            float fNoData = static_cast<float>( dfNoDataValue );
+
+            for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
+            {
+                const float fVal = reinterpret_cast<float *>(pabySrc)[i];
+                if( bIsNoDataNan && CPLIsNan(fVal))
+                    static_cast<GByte *>(pImage)[i] = 0;
+                else if( ARE_REAL_EQUAL(fVal, fNoData) )
+                    static_cast<GByte *>(pImage)[i] = 0;
+                else
+                    static_cast<GByte *>(pImage)[i] = 255;
+            }
           }
       }
       break;
 
       case GDT_Float64:
       {
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; i-- )
+          for( int i = 0; i < nBlockXSize * nBlockYSize; i++ )
           {
               const double dfVal = reinterpret_cast<double *>(pabySrc)[i];
               if( bIsNoDataNan && CPLIsNan(dfVal))

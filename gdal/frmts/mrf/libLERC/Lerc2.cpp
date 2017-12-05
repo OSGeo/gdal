@@ -30,6 +30,12 @@ Contributors:  Thomas Maurer
 
 using namespace std;
 
+#ifdef DEBUG
+void LERC_BRKPNT()
+{
+}
+#endif
+
 NAMESPACE_LERC_START
 
 // -------------------------------------------------------------------------- ;
@@ -114,12 +120,12 @@ unsigned int Lerc2::ComputeNumBytesHeader()
 
 // -------------------------------------------------------------------------- ;
 
-bool Lerc2::GetHeaderInfo(const Byte* pByte, struct HeaderInfo& headerInfo) const
+bool Lerc2::GetHeaderInfo(const Byte* pByte, size_t srcSize, struct HeaderInfo& headerInfo) const
 {
   if (!pByte)
     return false;
 
-  return ReadHeader(&pByte, headerInfo);
+  return ReadHeader(&pByte, srcSize, headerInfo);
 }
 
 // -------------------------------------------------------------------------- ;
@@ -164,24 +170,31 @@ bool Lerc2::WriteHeader(Byte** ppByte) const
 
 // -------------------------------------------------------------------------- ;
 
-bool Lerc2::ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const
+bool Lerc2::ReadHeader(const Byte** ppByte, size_t &nRemainingSizeInOut, struct HeaderInfo& headerInfo) const
 {
   if (!ppByte || !*ppByte)
     return false;
 
   const Byte* ptr = *ppByte;
+  size_t nRemainingSize = nRemainingSizeInOut;
 
   string fileKey = FileKey();
   HeaderInfo& hd = headerInfo;
   hd.RawInit();
 
+  if (nRemainingSize < fileKey.length())
+    return false;
   if (0 != memcmp(ptr, fileKey.c_str(), fileKey.length()))
     return false;
 
   ptr += fileKey.length();
+  nRemainingSize -= fileKey.length();
 
+  if( nRemainingSize < sizeof(int) )
+     return false;
   memcpy(&(hd.version), ptr, sizeof(int));
   ptr += sizeof(int);
+  nRemainingSize -= sizeof(int);
 
   if (hd.version > m_currentVersion)    // this reader is outdated
     return false;
@@ -189,11 +202,17 @@ bool Lerc2::ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const
   std::vector<int>  intVec(7, 0);
   std::vector<double> dblVec(3, 0);
 
+  if( nRemainingSize < sizeof(int) * (intVec.size() - 1) )
+     return false;
   memcpy(&intVec[1], ptr, sizeof(int) * (intVec.size() - 1));
   ptr += sizeof(int) * (intVec.size() - 1);
+  nRemainingSize -= sizeof(int) * (intVec.size() - 1);
 
+  if( nRemainingSize < sizeof(double) * dblVec.size() )
+     return false;
   memcpy(&dblVec[0], ptr, sizeof(double) * dblVec.size());
   ptr += sizeof(double) * dblVec.size();
+  nRemainingSize -= sizeof(double) * dblVec.size();
 
   hd.nRows          = intVec[1];
   hd.nCols          = intVec[2];
@@ -207,6 +226,7 @@ bool Lerc2::ReadHeader(const Byte** ppByte, struct HeaderInfo& headerInfo) const
   hd.zMax           = dblVec[2];
 
   *ppByte = ptr;
+  nRemainingSizeInOut = nRemainingSize;
   return true;
 }
 
@@ -252,7 +272,7 @@ bool Lerc2::WriteMask(Byte** ppByte) const
 
 // -------------------------------------------------------------------------- ;
 
-bool Lerc2::ReadMask(const Byte** ppByte)
+bool Lerc2::ReadMask(const Byte** ppByte, size_t& nRemainingSizeInOut)
 {
   if (!ppByte)
     return false;
@@ -262,10 +282,17 @@ bool Lerc2::ReadMask(const Byte** ppByte)
   int h = m_headerInfo.nRows;
 
   const Byte* ptr = *ppByte;
+  size_t nRemainingSize = nRemainingSizeInOut;
 
   int numBytesMask;
+  if( nRemainingSize < sizeof(int) )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   memcpy(&numBytesMask, ptr, sizeof(int));
   ptr += sizeof(int);
+  nRemainingSize -= sizeof(int);
 
   if ((numValid == 0 || numValid == w * h) && (numBytesMask != 0))
     return false;
@@ -280,14 +307,25 @@ bool Lerc2::ReadMask(const Byte** ppByte)
   else if (numBytesMask > 0)    // read it in
   {
     RLE rle;
-    if (!rle.decompress(ptr, m_bitMask.Bits()))
+    if( nRemainingSize < static_cast<size_t>(numBytesMask) )
+    {
+      LERC_BRKPNT();
       return false;
+    }
+    if (!rle.decompress(ptr, nRemainingSize, m_bitMask.Bits(), m_bitMask.Size()))
+    {
+      LERC_BRKPNT();
+      return false;
+    }
 
     ptr += numBytesMask;
+    nRemainingSize -= numBytesMask;
   }
   // else use previous mask
 
   *ppByte = ptr;
+  nRemainingSizeInOut = nRemainingSize;
+
   return true;
 }
 

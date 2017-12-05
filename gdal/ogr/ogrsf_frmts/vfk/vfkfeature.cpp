@@ -35,7 +35,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*!
   \brief IVFKFeature constructor
@@ -490,6 +490,9 @@ bool VFKFeature::SetProperty( int iIndex, const char *pszValue )
     switch (fType) {
     case OFTInteger:
         m_propertyList[iIndex] = VFKProperty(atoi(pszValue));
+        break;
+    case OFTInteger64:
+        m_propertyList[iIndex] = VFKProperty(CPLAtoGIntBig(pszValue));
         break;
     case OFTReal:
         m_propertyList[iIndex] = VFKProperty(CPLAtof(pszValue));

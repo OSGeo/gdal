@@ -32,7 +32,7 @@
 
 #include "tiff.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -608,7 +608,7 @@ void GDALRegister_CALS()
                                "CALS (Type 1)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_cals.html" );
-
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, ".cal .ct1");
 
     poDriver->pfnIdentify = CALSDataset::Identify;

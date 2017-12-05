@@ -28,7 +28,7 @@
 
 #include "wmsmetadataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int VersionStringToInt(const char *version);
 

@@ -57,7 +57,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //////////////////////////////////////////////////////////////////////////////
 //// vizGeorefSpline2D
@@ -68,9 +68,7 @@ CPL_CVSID("$Id$");
 
 // #define VIZ_GEOREF_SPLINE_DEBUG 0
 
-#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] );
-#endif
 
 bool VizGeorefSpline2D::grow_points()
 
@@ -408,7 +406,7 @@ static CPL_INLINE void VizGeorefSpline2DBase_func4(
     xv[0].d[1] = xr[1];
     xv[1].d[0] = xr[2];
     xv[1].d[1] = xr[3];
-    v2dfunion yv[2];
+    v2dfunion yv[2] = {};
     yv[0].d[0] = yr[0];
     yv[0].d[1] = yr[1];
     yv[1].d[0] = yr[2];
@@ -437,13 +435,13 @@ static void VizGeorefSpline2DBase_func4( double* res,
                                          const double* xr, const double* yr )
 {
     double dist0  = SQ( xr[0] - pxy[0] ) + SQ( yr[0] - pxy[1] );
-    res[0] = dist0 ? dist0 * log(dist0) : 0.0;
+    res[0] = dist0 != 0.0 ? dist0 * log(dist0) : 0.0;
     double dist1  = SQ( xr[1] - pxy[0] ) + SQ( yr[1] - pxy[1] );
-    res[1] = dist1 ? dist1 * log(dist1) : 0.0;
+    res[1] = dist1 != 0.0 ? dist1 * log(dist1) : 0.0;
     double dist2  = SQ( xr[2] - pxy[0] ) + SQ( yr[2] - pxy[1] );
-    res[2] = dist2 ? dist2 * log(dist2) : 0.0;
+    res[2] = dist2 != 0.0 ? dist2 * log(dist2) : 0.0;
     double dist3  = SQ( xr[3] - pxy[0] ) + SQ( yr[3] - pxy[1] );
-    res[3] = dist3 ? dist3 * log(dist3) : 0.0;
+    res[3] = dist3 != 0.0 ? dist3 * log(dist3) : 0.0;
 }
 #endif // defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 
@@ -604,8 +602,8 @@ int VizGeorefSpline2D::solve()
     for( r = 0; r < _nof_eqs; r++ )
     {
         for( c = 0; c < _nof_eqs; c++ )
-            fprintf(stderr, "%f", A(r, c));
-        fprintf(stderr, "\n");
+            fprintf(stderr, "%f", A(r, c));/*ok*/
+        fprintf(stderr, "\n");/*ok*/
     }
 
 #endif
@@ -624,13 +622,18 @@ int VizGeorefSpline2D::solve()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
+
+#if ARMA_VERSION_MAJOR > 6 || (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500 )
+        // Perhaps available in earlier versions, but didn't check
+        if( !arma::solve(matCoefs, matA, matRHS, arma::solve_opts::no_approx) )
+#else
         if( !arma::solve(matCoefs, matA, matRHS) )
+#endif
+
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
 #pragma GCC diagnostic pop
 #endif
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "There is a problem inverting the interpolation matrix.");
             ret = 0;
         }
         else
@@ -642,31 +645,32 @@ int VizGeorefSpline2D::solve()
     }
     catch(...)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "There is a problem inverting the interpolation matrix.");
         ret = 0;
     }
-#else
-    const int status = matrixInvert( _nof_eqs, _AA, _Ainv );
-
-    if( !status )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "There is a problem inverting the interpolation matrix.");
-        ret = 0;
-    }
-    else
-    {
-        // calc the coefs
-        for( int v = 0; v < _nof_vars; v++ )
-            for( int r = 0; r < _nof_eqs; r++ )
-            {
-                coef[v][r] = 0.0;
-                for( int c = 0; c < _nof_eqs; c++ )
-                    coef[v][r] += Ainv(r, c) * rhs[v][c];
-            }
-    }
+    if( ret == 0 )
 #endif
+    {
+        const int status = matrixInvert( _nof_eqs, _AA, _Ainv );
+
+        if( !status )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "There is a problem inverting the interpolation matrix.");
+            ret = 0;
+        }
+        else
+        {
+            ret = 4;
+            // calc the coefs
+            for( int v = 0; v < _nof_vars; v++ )
+                for( int r = 0; r < _nof_eqs; r++ )
+                {
+                    coef[v][r] = 0.0;
+                    for( int c = 0; c < _nof_eqs; c++ )
+                        coef[v][r] += Ainv(r, c) * rhs[v][c];
+                }
+        }
+    }
 
     VSIFree(_AA);
     VSIFree(_Ainv);
@@ -757,8 +761,9 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     }
     case VIZ_GEOREF_SPLINE_POINT_WAS_ADDED:
     {
-        fprintf(stderr, " A point was added after the last solve\n");
-        fprintf(stderr, " NO interpolation - return values are zero\n");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A point was added after the last solve."
+                 " NO interpolation - return values are zero");
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
@@ -766,8 +771,9 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     }
     case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED:
     {
-        fprintf(stderr, " A point was deleted after the last solve\n");
-        fprintf(stderr, " NO interpolation - return values are zero\n");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A point was deleted after the last solve."
+                 " NO interpolation - return values are zero");
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
@@ -782,7 +788,6 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
     return 1;
 }
 
-#ifndef HAVE_ARMADILLO
 static int matrixInvert( int N, double input[], double output[] )
 {
     // Receives an array of dimension NxN as input.  This is passed as a one-
@@ -798,14 +803,14 @@ static int matrixInvert( int N, double input[], double output[] )
     // "left" and "right" halves of this array.
 
 #if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);
+    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);/*ok*/
     for( int row = 0; row < N; row++ )
     {
         for( int col = 0; col < N; col++ )
         {
-            fprintf(stderr, "%5.2f ", input[row*N + col]);
+            fprintf(stderr, "%5.2f ", input[row*N + col]);/*ok*/
         }
-        fprintf(stderr, "\n");
+        fprintf(stderr, "\n");/*ok*/
     }
 #endif
 
@@ -901,19 +906,18 @@ static int matrixInvert( int N, double input[], double output[] )
     delete [] temp;
 
 #if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion result matrix:\n");
+    fprintf(stderr, "Matrix Inversion result matrix:\n");/*ok*/
     for( int row = 0; row < N; row++ )
     {
         for( int col = 0; col < N; col++ )
         {
-            fprintf(stderr, "%5.2f ", output[row*N + col]);
+            fprintf(stderr, "%5.2f ", output[row*N + col]);/*ok*/
         }
-        fprintf(stderr, "\n");
+        fprintf(stderr, "\n");/*ok*/
     }
 #endif
 
     return true;
 }
-#endif
 
 /*! @endcond */

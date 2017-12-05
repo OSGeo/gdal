@@ -51,7 +51,6 @@ public:
 typedef struct
 {
     JP2_Decomp_Handle   handle;     // JP2 decompression handle
-    bool bLinux64Hack; // whether the Lura SDK use 8 bytes to space 32bit samples
 
     long                lBps;       // bits for each sample
     bool                bSigned;    // are the samples signed?

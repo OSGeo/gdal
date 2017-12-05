@@ -87,7 +87,7 @@ CPL_C_END
 /*      This is consider to be a private structure.                     */
 /* -------------------------------------------------------------------- */
 typedef struct {
-    FILE        *fp;
+    VSILFILE        *fp;
 
     int         nRawXSize;
     int         nRawYSize;
@@ -118,7 +118,7 @@ typedef struct {
     double      dfZMaximum;
     double      dfZMinimum;
 
-    long        *panRawLineOffset;
+    vsi_l_offset        *panRawLineOffset;
 } GXFInfo_t;
 
 #endif /* ndef GXFOPEN_H_INCLUDED */

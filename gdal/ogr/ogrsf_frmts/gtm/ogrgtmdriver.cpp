@@ -29,7 +29,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -53,7 +53,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     else
     {
-        short version = CPL_LSBINT16PTR(poOpenInfo->pabyHeader);
+        short version = CPL_LSBSINT16PTR(poOpenInfo->pabyHeader);
         if (version != 211 ||
             !STARTS_WITH((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker") )
         {

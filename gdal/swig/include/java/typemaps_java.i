@@ -643,7 +643,7 @@
  *  Java typemaps for (int* pnList, int** ppListOut)
  *
  ***************************************************/
-%typemap(in) (int* pnList, int** ppListOut) (int nLen, int* pBuf)
+%typemap(in) (int* pnList, int** ppListOut) (int nLen = 0, int* pBuf = NULL)
 {
   /* %typemap(in) (int* pnList, int** ppListOut) */
   $1 = &nLen;

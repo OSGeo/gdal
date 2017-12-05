@@ -31,9 +31,21 @@ coord_sys_code,coord_axis_name_code,coord_axis_orientation,coord_axis_abbreviati
 1038,9907,South along 75°W,Y,9001,2
 1039,9906,east,E,9002,1
 1039,9907,north,N,9002,2
+1040,1024,Ahead,x,9001,1
+1040,1025,Starboard,y,9001,2
+1040,1026,Upward,z,9001,3
+1041,1024,Ahead,x,9001,1
+1041,1025,Starboard,y,9001,2
+1041,1027,Downward,z,9001,3
+1042,1024,Ahead,y,9001,2
+1042,1025,Starboard,x,9001,1
+1042,1026,Upward,z,9001,3
 1043,9905,down,D,9003,1
 1044,9906,North along 90°W,E,9001,2
 1044,9907,North along 180°E,N,9001,1
+1045,1024,Ahead,y,9001,2
+1045,1025,Starboard,x,9001,1
+1045,1027,Downward,z,9001,3
 4400,9906,east,E,9001,1
 4400,9907,north,N,9001,2
 4401,9906,east,E,9062,1

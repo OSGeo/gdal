@@ -30,7 +30,7 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -53,7 +53,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALNearblackOptionsForBinary *GDALNearblackOptionsForBinaryNew(void)
 {
-    return (GDALNearblackOptionsForBinary*) CPLCalloc(  1, sizeof(GDALNearblackOptionsForBinary) );
+    return static_cast<GDALNearblackOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALNearblackOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -66,7 +67,6 @@ static void GDALNearblackOptionsForBinaryFree( GDALNearblackOptionsForBinary* ps
     {
         CPLFree(psOptionsForBinary->pszInFile);
         CPLFree(psOptionsForBinary->pszOutFile);
-        CPLFree(psOptionsForBinary->pszFormat);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -74,7 +74,7 @@ static void GDALNearblackOptionsForBinaryFree( GDALNearblackOptionsForBinary* ps
 /*                                main()                                */
 /************************************************************************/
 
-int main(int argc, char** argv)
+MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -126,8 +126,6 @@ int main(int argc, char** argv)
 
     if( psOptionsForBinary->pszOutFile == NULL )
         psOptionsForBinary->pszOutFile = CPLStrdup(psOptionsForBinary->pszInFile);
-    else if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszOutFile, psOptionsForBinary->pszFormat);
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
@@ -161,3 +159,4 @@ int main(int argc, char** argv)
 
     return nRetCode;
 }
+MAIN_END

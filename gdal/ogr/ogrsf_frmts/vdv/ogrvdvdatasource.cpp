@@ -31,7 +31,7 @@
 #include "cpl_time.h"
 #include <map>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifndef STARTS_WITH_CI
 #define STARTS_WITH(a,b)               (strncmp(a,b,strlen(b)) == 0)
@@ -92,11 +92,19 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
                 else
                 {
                     nWidth = atoi(papszFrm[i] + strlen("num") + 1);
-                    nWidth += 1; /* VDV-451 width is without sign */
-                    if( nWidth >= 10 )
-                        eType = OFTInteger64;
-                    else
+                    if( nWidth < 0 || nWidth >= 100 )
+                    {
+                        nWidth = 0;
                         eType = OFTInteger;
+                    }
+                    else
+                    {
+                        nWidth += 1; /* VDV-451 width is without sign */
+                        if( nWidth >= 10 )
+                            eType = OFTInteger64;
+                        else
+                            eType = OFTInteger;
+                    }
                 }
             }
             else
@@ -107,6 +115,8 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
             if( papszFrm[i][strlen("char")] == '[' )
             {
                 nWidth = atoi(papszFrm[i] + strlen("char") + 1);
+                if( nWidth < 0 )
+                    nWidth = 0;
             }
         }
         else if( STARTS_WITH_CI(papszFrm[i], "boolean") )
@@ -343,7 +353,7 @@ void OGRIDFDataSource::Parse()
 
     // Patch Link geometries with the intermediate points of LinkCoordinate
     OGRLayer* poLinkLyr = m_poMemDS->GetLayerByName("Link");
-    if( poLinkLyr )
+    if( poLinkLyr && poLinkLyr->GetLayerDefn()->GetGeomFieldCount() )
     {
         iLinkID = poLinkLyr->GetLayerDefn()->GetFieldIndex("LINK_ID");
         if( iLinkID >= 0 )
@@ -575,7 +585,7 @@ void OGRVDVDataSource::DetectLayers()
                         poLayer->SetFeatureCount(nFeatureCount);
                     poLayer = NULL;
                     nFeatureCount = 0;
-                    nStartOffset = VSIFTellL(m_fpL) - nRead + i - 4 + 1;
+                    nStartOffset = VSIFTellL(m_fpL) + i + 1 - nRead - 4;
                     bInTableName = true;
                     osTableName.resize(0);
                     chNextExpected = 0;
@@ -672,7 +682,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
         {
             CPLString osChs(pszLine+4);
             osChs.Trim();
-            if( osChs.size() >= 2 && osChs[0] == '"' && osChs[osChs.size()-1] == '"' )
+            if( osChs.size() >= 2 && osChs[0] == '"' && osChs.back() == '"' )
                 osChs = osChs.substr(1, osChs.size()-2);
             m_bRecodeFromLatin1 = EQUAL(osChs, "ISO8859-1") ||
                                   EQUAL(osChs, "ISO_LATIN_1");
@@ -827,7 +837,7 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
                 else
                     osToken = papszTokens[i];
                 // Strip trailing spaces
-                while( osToken.size() && osToken[osToken.size()-1] == ' ' )
+                while( !osToken.empty() && osToken.back() == ' ' )
                     osToken.resize(osToken.size()-1);
                 OGRFieldType eFieldType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
                 if( m_bRecodeFromLatin1 && eFieldType == OFTString )
@@ -1228,7 +1238,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
     {
         if( i > 0)
             bOK &= VSIFPrintfL(m_fpL, "; ") > 0;
-        if( poFeature->IsFieldSet(i) )
+        if( poFeature->IsFieldSetAndNotNull(i) )
         {
             const OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
             if( eType == OFTInteger || eType == OFTInteger64 )

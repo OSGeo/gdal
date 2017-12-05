@@ -32,6 +32,7 @@
 #define DWG_R2000_H_H
 
 #include "cadfile.h"
+#include "io.h"
 
 struct SectionLocatorRecord
 {
@@ -78,7 +79,7 @@ class DWGFileR2000 : public CADFile
 {
 public:
     explicit             DWGFileR2000( CADFileIO * poFileIO );
-    virtual             ~DWGFileR2000();
+    virtual             ~DWGFileR2000() = default;
 
 protected:
     virtual int ReadSectionLocators() override;
@@ -92,6 +93,7 @@ protected:
 
     CADDictionary GetNOD() override;
 protected:
+<<<<<<< HEAD
     CADBlockObject * getBlock( unsigned int dObjectSize,
                                const CADCommonED& stCommonEntityData,
                                const char * pabyInput,
@@ -229,6 +231,116 @@ protected:
     unsigned short validateEntityCRC(const char * pabyInput,
         unsigned int dObjectSize, size_t & nBitOffsetFromStart,
         const char * entityName = "ENTITY", bool bSwapEndianness = false );
+=======
+    CADBlockObject * getBlock(unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer& buffer);
+    CADEllipseObject * getEllipse(unsigned int dObjectSize,
+                                  const CADCommonED& stCommonEntityData,
+                                  CADBuffer &buffer);
+    CADSolidObject * getSolid( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer& buffer);
+    CADPointObject * getPoint(unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer &buffer);
+    CADPolyline3DObject * getPolyLine3D(unsigned int dObjectSize,
+                                        const CADCommonED& stCommonEntityData,
+                                        CADBuffer &buffer);
+    CADRayObject * getRay( unsigned int dObjectSize,
+                           const CADCommonED& stCommonEntityData,
+                           CADBuffer &buffer);
+    CADXLineObject * getXLine( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer &buffer );
+    CADLineObject * getLine( unsigned int dObjectSize,
+                             const CADCommonED& stCommonEntityData,
+                             CADBuffer &buffer );
+    CADTextObject * getText( unsigned int dObjectSize,
+                             const CADCommonED& stCommonEntityData,
+                             CADBuffer &buffer );
+    CADVertex3DObject * getVertex3D( unsigned int dObjectSize,
+                                     const CADCommonED& stCommonEntityData,
+                                     CADBuffer &buffer );
+    CADCircleObject * getCircle( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 CADBuffer &buffer );
+    CADEndblkObject * getEndBlock( unsigned int dObjectSize,
+                                   const CADCommonED& stCommonEntityData,
+                                   CADBuffer &buffer );
+    CADPolyline2DObject * getPolyline2D( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         CADBuffer &buffer );
+    CADAttribObject * getAttributes( unsigned int dObjectSize,
+                                     const CADCommonED& stCommonEntityData,
+                                     CADBuffer &buffer );
+    CADAttdefObject * getAttributesDefn( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         CADBuffer &buffer );
+    CADLWPolylineObject * getLWPolyLine( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         CADBuffer &buffer );
+    CADArcObject * getArc( unsigned int dObjectSize,
+                           const CADCommonED& stCommonEntityData,
+                           CADBuffer &buffer );
+    CADSplineObject * getSpline( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 CADBuffer &buffer );
+    CADEntityObject * getEntity( int dObjectType, unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 CADBuffer &buffer );
+    CADInsertObject * getInsert( int dObjectType, unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 CADBuffer &buffer );
+    CADDictionaryObject * getDictionary( unsigned int dObjectSize,
+                                         CADBuffer &buffer );
+    CADXRecordObject * getXRecord( unsigned int dObjectSize,
+                                   CADBuffer &buffer );
+    CADLayerObject * getLayerObject( unsigned int dObjectSize,
+                                     CADBuffer &buffer );
+    CADLayerControlObject * getLayerControl( unsigned int dObjectSize,
+                                             CADBuffer &buffer );
+    CADBlockControlObject * getBlockControl( unsigned int dObjectSize,
+                                             CADBuffer &buffer );
+    CADBlockHeaderObject * getBlockHeader( unsigned int dObjectSize,
+                                           CADBuffer &buffer );
+    CADLineTypeControlObject * getLineTypeControl( unsigned int dObjectSize,
+                                                   CADBuffer &buffer );
+    CADLineTypeObject * getLineType1( unsigned int dObjectSize,
+                                      CADBuffer &buffer );
+    CADMLineObject * getMLine( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer &buffer );
+    CADPolylinePFaceObject * getPolylinePFace( unsigned int dObjectSize,
+                                               const CADCommonED& stCommonEntityData,
+                                               CADBuffer &buffer );
+    CADImageObject * getImage( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer &buffer );
+    CAD3DFaceObject * get3DFace( unsigned int dObjectSize,
+                                 const CADCommonED& stCommonEntityData,
+                                 CADBuffer &buffer );
+    CADVertexMeshObject * getVertexMesh( unsigned int dObjectSize,
+                                         const CADCommonED& stCommonEntityData,
+                                         CADBuffer &buffer );
+    CADVertexPFaceObject * getVertexPFace( unsigned int dObjectSize,
+                                           const CADCommonED& stCommonEntityData,
+                                           CADBuffer &buffer );
+    CADDimensionObject * getDimension( short dObjectType, unsigned int dObjectSize,
+                                       const CADCommonED& stCommonEntityData,
+                                       CADBuffer &buffer );
+    CADMTextObject * getMText( unsigned int dObjectSize,
+                               const CADCommonED& stCommonEntityData,
+                               CADBuffer &buffer );
+    CADImageDefObject * getImageDef( unsigned int dObjectSize,
+                                     CADBuffer &buffer );
+    CADImageDefReactorObject * getImageDefReactor( unsigned int dObjectSize,
+                                                   CADBuffer &buffer );
+    void fillCommonEntityHandleData(CADEntityObject * pEnt, CADBuffer &buffer);
+    unsigned short validateEntityCRC(CADBuffer& buffer, unsigned int dObjectSize,
+                                     const char * entityName = "ENTITY",
+                                     bool bSwapEndianness = false );
+>>>>>>> upstream/trunk
 protected:
     int                               imageSeeker;
     std::vector<SectionLocatorRecord> sectionLocatorRecords;

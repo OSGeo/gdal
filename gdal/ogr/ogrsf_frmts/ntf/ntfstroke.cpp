@@ -34,8 +34,9 @@
 #include "cpl_string.h"
 
 #include <algorithm>
+#include <utility>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                     NTFArcCenterFromEdgePoints()                     */
@@ -130,7 +131,6 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 {
     double dfStartAngle = 0.0;
     double dfEndAngle = 0.0;
-    double dfAlongAngle = 0.0;
     double dfCenterX = 0.0;
     double dfCenterY = 0.0;
     double dfRadius = 0.0;
@@ -152,20 +152,11 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         dfDeltaX = dfAlongX - dfCenterX;
         dfDeltaY = dfAlongY - dfCenterY;
-        dfAlongAngle = atan2(dfDeltaY, dfDeltaX) * 180.0 / M_PI;
+        double dfAlongAngle = atan2(dfDeltaY, dfDeltaX) * 180.0 / M_PI;
 
         dfDeltaX = dfEndX - dfCenterX;
         dfDeltaY = dfEndY - dfCenterY;
         dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / M_PI;
-
-#ifdef notdef
-        if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
-        {
-            const double dfTempAngle = dfStartAngle;
-            dfStartAngle = dfEndAngle;
-            dfEndAngle = dfTempAngle;
-        }
-#endif
 
         while( dfAlongAngle < dfStartAngle )
             dfAlongAngle += 360.0;
@@ -175,9 +166,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
         if( dfEndAngle - dfStartAngle > 360.0 )
         {
-            const double dfTempAngle = dfStartAngle;
-            dfStartAngle = dfEndAngle;
-            dfEndAngle = dfTempAngle;
+            std::swap(dfStartAngle, dfEndAngle);
 
             while( dfEndAngle < dfStartAngle )
                 dfStartAngle -= 360.0;
@@ -213,7 +202,7 @@ NTFStrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY,
 
     for( int iPoint = 0; iPoint < nVertexCount; iPoint++ )
     {
-        double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
+        const double dfAngle = (dfStartAngle + iPoint * dfSlice) * M_PI / 180.0;
 
         const double dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
         const double dfArcY = dfCenterY + sin(dfAngle) * dfRadius;

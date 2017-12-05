@@ -34,6 +34,8 @@
 #endif
 
 #include <util/PlatformUtils.hpp>
+#include <sax/InputSource.hpp>
+#include <util/BinInputStream.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE

@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              Identify()                              */
@@ -137,8 +137,8 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf stat;
-    if( CPLStat( pszName, &stat ) == 0 )
+    VSIStatBufL stat;
+    if( VSIStatL( pszName, &stat ) == 0 )
     {
         if( !VSI_ISDIR(stat.st_mode) )
         {
@@ -305,6 +305,7 @@ void RegisterOGRShape()
 "    <Value>ARCZM</Value>"
 "    <Value>POLYGONZM</Value>"
 "    <Value>MULTIPOINTZM</Value>"
+"    <Value>MULTIPATCH</Value>"
 "    <Value>NONE</Value>"
 "    <Value>NULL</Value>"
 "  </Option>"

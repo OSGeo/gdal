@@ -1,0 +1,3835 @@
+INFO: Open of `GMLAS:data/gmlas/real_world/Piezometre.06512X0037.STREMY.2.gml'
+      using driver `GMLAS' successful.
+
+Layer name: environmentalmonitoringfacility
+Geometry (geometry): Unknown (any)
+Geometry (representativepoint): Point
+Feature Count: 1
+Extent (geometry): (5.187133, 46.190954) - (5.187133, 46.190954)
+Extent (representativepoint): (5.187133, 46.190954) - (5.187133, 46.190954)
+SRS WKT (geometry):
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+SRS WKT (representativepoint):
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+Geometry Column 1 = geometry
+Geometry Column 2 = representativepoint
+id: String (0.0) NOT NULL
+description_href: String (0.0)
+description_title: String (0.0)
+description_nilreason: String (0.0)
+description: String (0.0)
+descriptionreference_href: String (0.0)
+descriptionreference_title: String (0.0)
+descriptionreference_nilreason: String (0.0)
+identifier_codespace: String (0.0)
+identifier: String (0.0)
+location_location_pkid: String (0.0)
+inspireid_pkid: String (0.0)
+additionaldescription_nilreason: String (0.0)
+additionaldescription_nil: Integer(Boolean) (0.0)
+additionaldescription: String (0.0)
+broader_pkid: String (0.0)
+measurementregime_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+measurementregime_href: String (0.0)
+measurementregime_title: String (0.0)
+measurementregime_nilreason: String (0.0)
+mobile_nilreason: String (0.0)
+mobile: Integer(Boolean) (0.0)
+specialisedemftype_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+specialisedemftype_href: String (0.0)
+specialisedemftype_title: String (0.0)
+specialisedemftype_nilreason: String (0.0)
+OGRFeature(environmentalmonitoringfacility):1
+  id (String) = Piezometre.06512X0037.STREMY.2
+  description (String) = Water well from national BSS (Banque du Sous-Sol) Data database. Piezometer monitoring ground water level
+  identifier_codespace (String) = http://www.ietf.org/rfc/rfc2616
+  identifier (String) = http://ressource.brgm-rec.fr/data/Piezometre/06512X0037/STREMY.2
+  inspireid_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_inspireId_1
+  broader_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_broader_1
+  measurementregime_owns (Integer(Boolean)) = 0
+  mobile (Integer(Boolean)) = 0
+  specialisedemftype_owns (Integer(Boolean)) = 0
+  specialisedemftype_href (String) = http://www.sandre.eaufrance.fr/urn.php?urn=urn:sandre:dictionnaire:PTE::entite:Piezometre:ressource:2.1:::html
+  specialisedemftype_title (String) = Piezometre
+  geometry = POINT (5.18713262971692 46.1909541655103)
+  representativepoint = POINT (5.18713262971692 46.1909541655103)
+
+
+Layer name: environmentalmonitoringfacility_ef_name
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+nilreason: String (0.0)
+value: String (0.0) NOT NULL
+OGRFeature(environmentalmonitoringfacility_ef_name):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_name_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  value (String) = Piézomètre de St-Rémy - 01
+
+
+Layer name: environmentalmonitoringfacility_mediamonitored
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+OGRFeature(environmentalmonitoringfacility_mediamonitored):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_mediaMonitored_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  href (String) = http://inspire.ec.europa.eu/codelist/MediaValue/water
+  title (String) = water
+
+
+Layer name: environmentalmonitoringfacility_onlineresource
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+nilreason: String (0.0)
+value: String (0.0) NOT NULL
+OGRFeature(environmentalmonitoringfacility_onlineresource):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_onlineResource_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  value (String) = http://fichebsseau.brgm.fr/bss_eau/fiche.jsf?code=06512X0037/STREMY
+
+
+Layer name: environmentalmonitoringfacility_purpose
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+OGRFeature(environmentalmonitoringfacility_purpose):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_purpose_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  href (String) = http://www.sandre.eaufrance.fr/?urn=urn:sandre:donnees:148::CdElement:2:::referentiel:3.1:xml
+  title (String) = Ground water level measurement
+
+
+Layer name: environmentalmonitoringfacility_supersedes
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+abstractmonitoringobject_environmentamonitoringfacility_pkid: String (0.0)
+abstractmonitoringobject_environmentalmonitoringnetwork_pkid: String (0.0)
+abstractmonitoringobject_environmentmonitoringprogramme_pkid: String (0.0)
+OGRFeature(environmentalmonitoringfacility_supersedes):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_supersedes_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+
+
+Layer name: environmentalmonitoringfacility_supersededby
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+abstractmonitoringobject_environmentamonitoringfacility_pkid: String (0.0)
+abstractmonitoringobject_environmentalmonitoringnetwork_pkid: String (0.0)
+abstractmonitoringobject_environmentmonitoringprogramme_pkid: String (0.0)
+OGRFeature(environmentalmonitoringfacility_supersededby):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_supersededBy_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+
+
+Layer name: environmentalmonitoringfacility_resultacquisitionsource
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+OGRFeature(environmentalmonitoringfacility_resultacquisitionsource):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_resultAcquisitionSource_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  href (String) = http://inspire.ec.europa.eu/codelist/ResultAcquisitionSourceValue/inSitu/
+  title (String) = in-situ
+
+
+Layer name: environmentalmonitoringfacility_operationalactivityperiod
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+operationalactivityperiod_pkid: String (0.0)
+OGRFeature(environmentalmonitoringfacility_operationalactivityperiod):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_operationalActivityPeriod_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  operationalactivityperiod_pkid (String) = Piezometre.OperationalActivityPeriod.2.06512X0037-STREMY
+
+
+Layer name: environmentalmonitoringfacility_relatedto
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+anydomainlink_id: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+anydomainlink_description_href: String (0.0)
+anydomainlink_description_title: String (0.0)
+anydomainlink_description_nilreason: String (0.0)
+anydomainlink_description: String (0.0)
+anydomainlink_descriptionreference_href: String (0.0)
+anydomainlink_descriptionreference_title: String (0.0)
+anydomainlink_descriptionreference_nilreason: String (0.0)
+anydomainlink_identifier_codespace: String (0.0)
+anydomainlink_identifier: String (0.0)
+anydomainlink_comment_nilreason: String (0.0)
+anydomainlink_comment: String (0.0)
+anydomainlink_relatedto_href: String (0.0)
+anydomainlink_relatedto_title: String (0.0)
+anydomainlink_relatedto_nilreason: String (0.0)
+anydomainlink_relatedto_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+anydomainlink_relatedto_environmentalmonitoringfacility_pkid: String (0.0)
+OGRFeature(environmentalmonitoringfacility_relatedto):1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  anydomainlink_relatedto_owns (Integer(Boolean)) = 0
+
+
+Layer name: environmentalmonitoringfacility_belongsto
+Geometry: None
+Feature Count: 8
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+parent_id: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+networkfacility_pkid: String (0.0)
+OGRFeature(environmentalmonitoringfacility_belongsto):1
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_1
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e65
+
+OGRFeature(environmentalmonitoringfacility_belongsto):2
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_2
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e64
+
+OGRFeature(environmentalmonitoringfacility_belongsto):3
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_3
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e63
+
+OGRFeature(environmentalmonitoringfacility_belongsto):4
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_4
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e62
+
+OGRFeature(environmentalmonitoringfacility_belongsto):5
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_5
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e61
+
+OGRFeature(environmentalmonitoringfacility_belongsto):6
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_6
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e60
+
+OGRFeature(environmentalmonitoringfacility_belongsto):7
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_7
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e5f
+
+OGRFeature(environmentalmonitoringfacility_belongsto):8
+  ogr_pkid (String) = Piezometre.06512X0037.STREMY.2_belongsTo_8
+  parent_id (String) = Piezometre.06512X0037.STREMY.2
+  owns (Integer(Boolean)) = 0
+  networkfacility_pkid (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e5e
+
+
+Layer name: operationalactivityperiod
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+id: String (0.0) NOT NULL
+description_href: String (0.0)
+description_title: String (0.0)
+description_nilreason: String (0.0)
+description: String (0.0)
+descriptionreference_href: String (0.0)
+descriptionreference_title: String (0.0)
+descriptionreference_nilreason: String (0.0)
+identifier_codespace: String (0.0)
+identifier: String (0.0)
+location_location_pkid: String (0.0)
+activitytime_href: String (0.0)
+activitytime_title: String (0.0)
+activitytime_nilreason: String (0.0)
+activitytime_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+activitytime_abstracttimeobject_timeinstant_pkid: String (0.0)
+activitytime_abstracttimeobject_timeperiod_pkid: String (0.0)
+activitytime_abstracttimeobject_timenode_pkid: String (0.0)
+activitytime_abstracttimeobject_timeedge_pkid: String (0.0)
+activitytime_abstracttimeobject_timetopologycomplex_pkid: String (0.0)
+OGRFeature(operationalactivityperiod):1
+  id (String) = Piezometre.OperationalActivityPeriod.2.06512X0037-STREMY
+  activitytime_owns (Integer(Boolean)) = 0
+  activitytime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.2.225196
+
+
+Layer name: timeperiod
+Geometry: None
+Feature Count: 9
+Layer SRS WKT:
+(unknown)
+id: String (0.0) NOT NULL
+frame: String (0.0) DEFAULT '#ISO-8601'
+description_href: String (0.0)
+description_title: String (0.0)
+description_nilreason: String (0.0)
+description: String (0.0)
+descriptionreference_href: String (0.0)
+descriptionreference_title: String (0.0)
+descriptionreference_nilreason: String (0.0)
+identifier_codespace: String (0.0)
+identifier: String (0.0)
+beginposition_frame: String (0.0) DEFAULT '#ISO-8601'
+beginposition_calendareraname: String (0.0)
+beginposition_indeterminateposition: String (0.0)
+beginposition: String (0.0)
+begin_href: String (0.0)
+begin_title: String (0.0)
+begin_nilreason: String (0.0)
+begin_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+begin_timeinstant_pkid: String (0.0)
+endposition_frame: String (0.0) DEFAULT '#ISO-8601'
+endposition_calendareraname: String (0.0)
+endposition_indeterminateposition: String (0.0)
+endposition: String (0.0)
+end_href: String (0.0)
+end_title: String (0.0)
+end_nilreason: String (0.0)
+end_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+end_timeinstant_pkid: String (0.0)
+duration: String (0.0)
+timeinterval_unit: String (0.0)
+timeinterval_radix: Integer (0.0)
+timeinterval_factor: Integer (0.0)
+timeinterval: Real (0.0)
+OGRFeature(timeperiod):1
+  id (String) = TimePeriod.2.225196
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  endposition (String) = 2014-10-14T06:00:00Z
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):2
+  id (String) = TimePeriod.0000000029.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-09-30T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):3
+  id (String) = TimePeriod.0600000004.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-09-30T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):4
+  id (String) = TimePeriod.0600000007.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):5
+  id (String) = TimePeriod.0600000215.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):6
+  id (String) = TimePeriod.0600000233.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):7
+  id (String) = TimePeriod.0000000070.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):8
+  id (String) = TimePeriod.0000000131.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1991-10-12T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+OGRFeature(timeperiod):9
+  id (String) = TimePeriod.0000000073.06512X0037-STREMY
+  frame (String) = #ISO-8601
+  beginposition_frame (String) = #ISO-8601
+  beginposition (String) = 1977-10-08T23:00:00Z
+  begin_owns (Integer(Boolean)) = 0
+  endposition_frame (String) = #ISO-8601
+  end_owns (Integer(Boolean)) = 0
+
+
+Layer name: ef_inspireid
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+identifier_localid: String (0.0) NOT NULL
+identifier_namespace: String (0.0) NOT NULL
+identifier_versionid_nilreason: String (0.0)
+identifier_versionid_nil: Integer(Boolean) (0.0)
+identifier_versionid: String (0.0)
+OGRFeature(ef_inspireid):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_inspireId_1
+  identifier_localid (String) = Piezometre/06512X0037/STREMY.2
+  identifier_namespace (String) = http://ressource.brgm-rec.fr/data
+
+
+Layer name: legalbackground
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+legislationcitation_pkid: String (0.0)
+OGRFeature(legalbackground):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_legalBackground_1
+  owns (Integer(Boolean)) = 0
+
+
+Layer name: broader
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+hierarchy_pkid: String (0.0)
+OGRFeature(broader):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_broader_1
+  owns (Integer(Boolean)) = 0
+
+
+Layer name: reportedto
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+nilreason: String (0.0)
+reporttolegalact_legalact_href: String (0.0)
+reporttolegalact_legalact_title: String (0.0)
+reporttolegalact_legalact_nilreason: String (0.0)
+reporttolegalact_legalact_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+reporttolegalact_legalact_legislationcitation_pkid: String (0.0)
+reporttolegalact_reportdate_nilreason: String (0.0)
+reporttolegalact_reportdate: DateTime (0.0)
+reporttolegalact_reportedenvelope_nilreason: String (0.0)
+reporttolegalact_reportedenvelope_nil: Integer(Boolean) (0.0)
+reporttolegalact_reportedenvelope: String (0.0)
+reporttolegalact_observationrequired_nilreason: String (0.0)
+reporttolegalact_observationrequired: Integer(Boolean) (0.0)
+reporttolegalact_observingcapabilityrequired_nilreason: String (0.0)
+reporttolegalact_observingcapabilityrequired: Integer(Boolean) (0.0)
+reporttolegalact_description_nilreason: String (0.0)
+reporttolegalact_description_nil: Integer(Boolean) (0.0)
+reporttolegalact_description: String (0.0)
+OGRFeature(reportedto):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_reportedTo_1
+  nilreason (String) = http://inspire.ec.europa.eu/codelist/VoidReasonValue/Unpopulated
+  reporttolegalact_legalact_owns (Integer(Boolean)) = 0
+
+
+Layer name: hasobservation
+Geometry: None
+Feature Count: 4
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+om_observation_pkid: String (0.0)
+OGRFeature(hasobservation):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_1
+  href (String) = http://ressource.brgm-rec.fr/obs/RawOfferingPiezo/06512X0037/STREMY.2&responseFormat=http://www.opengis.net/waterml/2.0&temporalFilter=om%3AphenomenonTime%2Clatest
+  title (String) = Latest value (WaterML 2.0 format): Raw groundwater level measurement from piezometer 06512X0037/STREMY.2
+
+OGRFeature(hasobservation):2
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_2
+  href (String) = http://ressource.brgm-rec.fr/obs/RawOfferingPiezo/06512X0037/STREMY.2&responseFormat=application/json&temporalFilter=om%3AphenomenonTime%2Clatest
+  title (String) = Latest value (JSON format): Raw groundwater level measurement from piezometer 06512X0037/STREMY.2
+
+OGRFeature(hasobservation):3
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_3
+  href (String) = http://ressource.brgm-rec.fr/obs/RawOfferingPiezo/06512X0037/STREMY.2&responseFormat=http://www.opengis.net/waterml/2.0
+  title (String) = All observations (WaterML 2.0 format): Raw groundwater level measurement from piezometer 06512X0037/STREMY.2
+
+OGRFeature(hasobservation):4
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_4
+  href (String) = http://ressource.brgm-rec.fr/obs/RawOfferingPiezo/06512X0037/STREMY.2&MergeObservationsIntoDataArray=true
+  title (String) = SWEArrayObservation: Raw groundwater level measurement from piezometer 06512X0037/STREMY.2
+
+
+Layer name: involvedin
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+ogr_pkid: String (0.0) NOT NULL
+href: String (0.0)
+title: String (0.0)
+nilreason: String (0.0)
+owns: Integer(Boolean) (0.0) DEFAULT 'false'
+environmentalmonitoringactivity_pkid: String (0.0)
+OGRFeature(involvedin):1
+  ogr_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_involvedIn_1
+  owns (Integer(Boolean)) = 0
+
+
+Layer name: networkfacility
+Geometry: None
+Feature Count: 8
+Layer SRS WKT:
+(unknown)
+id: String (0.0) NOT NULL
+description_href: String (0.0)
+description_title: String (0.0)
+description_nilreason: String (0.0)
+description: String (0.0)
+descriptionreference_href: String (0.0)
+descriptionreference_title: String (0.0)
+descriptionreference_nilreason: String (0.0)
+identifier_codespace: String (0.0)
+identifier: String (0.0)
+linkingtime_href: String (0.0)
+linkingtime_title: String (0.0)
+linkingtime_nilreason: String (0.0)
+linkingtime_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+linkingtime_abstracttimeobject_timeinstant_pkid: String (0.0)
+linkingtime_abstracttimeobject_timeperiod_pkid: String (0.0)
+linkingtime_abstracttimeobject_timenode_pkid: String (0.0)
+linkingtime_abstracttimeobject_timeedge_pkid: String (0.0)
+linkingtime_abstracttimeobject_timetopologycomplex_pkid: String (0.0)
+belongsto_href: String (0.0)
+belongsto_title: String (0.0)
+belongsto_nilreason: String (0.0)
+belongsto_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+belongsto_environmentalmonitoringnetwork_pkid: String (0.0)
+contains_href: String (0.0)
+contains_title: String (0.0)
+contains_nilreason: String (0.0)
+contains_owns: Integer(Boolean) (0.0) DEFAULT 'false'
+contains_environmentalmonitoringfacility_pkid: String (0.0)
+OGRFeature(networkfacility):1
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e65
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0000000029.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0000000029
+  belongsto_title (String) = Réseau patrimonial national de suivi quantitatif des eaux souterraines(RNESP)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):2
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e64
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0600000004.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0600000004
+  belongsto_title (String) = Réseau de suivi quantitatif des eaux souterraines du bassin Rhône-Méditerranée(RBESOUPRMC)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):3
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e63
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0600000007.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0600000007
+  belongsto_title (String) = Réseau de suivi quantitatif des eaux souterraines de la région Rhône-Alpes(RRESOUPRHA )
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):4
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e62
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0600000215.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0600000215
+  belongsto_title (String) = Réseau de suivi quantitatif des eaux souterraines du BRGM Rhône-Alpes(RESOUPBRGMRHA)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):5
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e61
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0600000233.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0600000233
+  belongsto_title (String) = Surveillance de l'état quantitatif des eaux souterraines du bassin Rhône et cours d'eaux côtiers méditérranéen(FRDSOP)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):6
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e60
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0000000070.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0000000070
+  belongsto_title (String) = Surveillance de l'état quantitatif des eaux souterraines de la France(FR_SOP)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):7
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e5f
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0000000131.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0000000131
+  belongsto_title (String) = Réseau de suivi quantitatif des points d’eau utilisés pour le Bulletin de Situation Hydrologique national (RNESOUPBSH)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+OGRFeature(networkfacility):8
+  id (String) = ef_networkfacility_2.fid--28738dc3_15d17368ff8_-2e5e
+  linkingtime_owns (Integer(Boolean)) = 0
+  linkingtime_abstracttimeobject_timeperiod_pkid (String) = TimePeriod.0000000073.06512X0037-STREMY
+  belongsto_href (String) = http://ressource.brgm-rec.fr/data/DispositifCollecte/0000000073
+  belongsto_title (String) = Réseau national de suivi quantitatif des eaux souterraines sous MO BRGM(RNESOUPMOBRGM)
+  belongsto_owns (Integer(Boolean)) = 0
+  contains_owns (Integer(Boolean)) = 0
+
+
+Layer name: environmenmonitoringfacility_legalbackground_legalbackground
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+occurrence: Integer (0.0) NOT NULL
+parent_pkid: String (0.0) NOT NULL
+child_pkid: String (0.0) NOT NULL
+OGRFeature(environmenmonitoringfacility_legalbackground_legalbackground):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_legalBackground_1
+
+
+Layer name: environmentalmonitoringfacility_reportedto_reportedto
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+occurrence: Integer (0.0) NOT NULL
+parent_pkid: String (0.0) NOT NULL
+child_pkid: String (0.0) NOT NULL
+OGRFeature(environmentalmonitoringfacility_reportedto_reportedto):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_reportedTo_1
+
+
+Layer name: environmentamonitoringfacility_hasobservation_hasobservation
+Geometry: None
+Feature Count: 4
+Layer SRS WKT:
+(unknown)
+occurrence: Integer (0.0) NOT NULL
+parent_pkid: String (0.0) NOT NULL
+child_pkid: String (0.0) NOT NULL
+OGRFeature(environmentamonitoringfacility_hasobservation_hasobservation):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_1
+
+OGRFeature(environmentamonitoringfacility_hasobservation_hasobservation):2
+  occurrence (Integer) = 2
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_2
+
+OGRFeature(environmentamonitoringfacility_hasobservation_hasobservation):3
+  occurrence (Integer) = 3
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_3
+
+OGRFeature(environmentamonitoringfacility_hasobservation_hasobservation):4
+  occurrence (Integer) = 4
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_hasObservation_4
+
+
+Layer name: environmentalmonitoringfacility_involvedin_involvedin
+Geometry: None
+Feature Count: 1
+Layer SRS WKT:
+(unknown)
+occurrence: Integer (0.0) NOT NULL
+parent_pkid: String (0.0) NOT NULL
+child_pkid: String (0.0) NOT NULL
+OGRFeature(environmentalmonitoringfacility_involvedin_involvedin):1
+  occurrence (Integer) = 1
+  parent_pkid (String) = Piezometre.06512X0037.STREMY.2
+  child_pkid (String) = 33AA9BE880A93128BEA467A6649B5D8E_involvedIn_1
+
+
+Layer name: _ogr_fields_metadata
+Geometry: None
+Feature Count: 218
+Layer SRS WKT:
+(unknown)
+layer_name: String (0.0)
+field_index: Integer (0.0)
+field_name: String (0.0)
+field_xpath: String (0.0)
+field_type: String (0.0)
+field_is_list: Integer(Boolean) (0.0)
+field_min_occurs: Integer (0.0)
+field_max_occurs: Integer (0.0)
+field_repetition_on_sequence: Integer(Boolean) (0.0)
+field_default_value: String (0.0)
+field_fixed_value: String (0.0)
+field_category: String (0.0)
+field_related_layer: String (0.0)
+field_junction_layer: String (0.0)
+field_documentation: String (0.0)
+OGRFeature(_ogr_fields_metadata):221
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 1
+  field_name (String) = id
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/@gml:id
+  field_type (String) = ID
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The attribute gml:id supports provision of a handle for the XML element representing a GML Object. Its use is mandatory for all GML objects. It is of XML type ID, so is constrained to be unique in the XML document within which it occurs.
+
+OGRFeature(_ogr_fields_metadata):223
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 3
+  field_name (String) = description_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:description/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):224
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 4
+  field_name (String) = description_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:description/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):225
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 5
+  field_name (String) = description_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):226
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 6
+  field_name (String) = description
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The value of this property is a text description of the object. gml:description uses gml:StringOrRefType as its content model, so it may contain a simple text string content, or carry a reference to an external description. The use of gml:description to reference an external description has been deprecated and replaced by the gml:descriptionReference property.
+
+OGRFeature(_ogr_fields_metadata):227
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 7
+  field_name (String) = descriptionreference_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:descriptionReference/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):228
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 8
+  field_name (String) = descriptionreference_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:descriptionReference/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):229
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 9
+  field_name (String) = descriptionreference_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:descriptionReference/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):230
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 10
+  field_name (String) = identifier_codespace
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:identifier/@codeSpace
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):231
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 11
+  field_name (String) = identifier
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/gml:identifier
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = Often, a special identifier is assigned to an object by the maintaining authority with the intention that it is used in references to the object For such cases, the codeSpace shall be provided. That identifier is usually unique either globally or within an application domain. gml:identifier is a pre-defined property for such identifiers.
+gml:CodeWithAuthorityType requires that the codeSpace attribute is provided in an instance.
+
+OGRFeature(_ogr_fields_metadata):234
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 14
+  field_name (String) = inspireid_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:inspireId
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = ef_inspireid
+
+OGRFeature(_ogr_fields_metadata):235
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 15
+  field_name (String) = ef_name
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:name
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_ef_name
+
+OGRFeature(_ogr_fields_metadata):236
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 16
+  field_name (String) = additionaldescription_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:additionalDescription/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):237
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 17
+  field_name (String) = additionaldescription_nil
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:additionalDescription/@xsi:nil
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):238
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 18
+  field_name (String) = additionaldescription
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:additionalDescription
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Plain text description of additional information not fitting in other attributes.
+
+OGRFeature(_ogr_fields_metadata):239
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 19
+  field_name (String) = mediamonitored
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_mediamonitored
+
+OGRFeature(_ogr_fields_metadata):240
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 20
+  field_name (String) = legalbackground_legalbackground
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:legalBackground
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE
+  field_related_layer (String) = legalbackground
+  field_junction_layer (String) = environmenmonitoringfacility_legalbackground_legalbackground
+
+OGRFeature(_ogr_fields_metadata):242
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 22
+  field_name (String) = geometry
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:geometry
+  field_type (String) = geometry
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Geometry associated to the AbstractMonitoringObject.
+For mobile facilities the geometry represents the area the facility is expected to measure in.
+A geometric property may either be any geometry element encapsulated in an element of this type or an XLink reference to a remote geometry element (where remote includes geometry elements located elsewhere in the same or another document). Note that either the reference or the contained element shall be given, but not both or none.
+If a feature has a property that takes a geometry element as its value, this is called a geometry property. A generic type for such a geometry property is GeometryPropertyType.
+
+OGRFeature(_ogr_fields_metadata):243
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 23
+  field_name (String) = onlineresource
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:onlineResource
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_onlineresource
+
+OGRFeature(_ogr_fields_metadata):244
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 24
+  field_name (String) = purpose
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_purpose
+
+OGRFeature(_ogr_fields_metadata):246
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 26
+  field_name (String) = broader_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:broader
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = broader
+
+OGRFeature(_ogr_fields_metadata):248
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 28
+  field_name (String) = supersedes
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_supersedes
+
+OGRFeature(_ogr_fields_metadata):249
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 29
+  field_name (String) = supersededby
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_supersededby
+
+OGRFeature(_ogr_fields_metadata):250
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 30
+  field_name (String) = reportedto_reportedto
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:reportedTo
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE
+  field_related_layer (String) = reportedto
+  field_junction_layer (String) = environmentalmonitoringfacility_reportedto_reportedto
+
+OGRFeature(_ogr_fields_metadata):251
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 31
+  field_name (String) = hasobservation_hasobservation
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:hasObservation
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE
+  field_related_layer (String) = hasobservation
+  field_junction_layer (String) = environmentamonitoringfacility_hasobservation_hasobservation
+
+OGRFeature(_ogr_fields_metadata):252
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 32
+  field_name (String) = involvedin_involvedin
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:involvedIn
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE
+  field_related_layer (String) = involvedin
+  field_junction_layer (String) = environmentalmonitoringfacility_involvedin_involvedin
+
+OGRFeature(_ogr_fields_metadata):253
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 33
+  field_name (String) = representativepoint
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:representativePoint
+  field_type (String) = geometry
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Representative location for the EnvironmentalMonitoringFacility.
+
+-- Description --
+A property that has a point as its value domain may either be an appropriate geometry element encapsulated in an element of this type or an XLink reference to a remote geometry element (where remote includes geometry elements located elsewhere in the same document). Either the reference or the contained element shall be given, but neither both nor none.
+
+OGRFeature(_ogr_fields_metadata):254
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 34
+  field_name (String) = measurementregime_owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:measurementRegime/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):255
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 35
+  field_name (String) = measurementregime_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:measurementRegime/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):256
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 36
+  field_name (String) = measurementregime_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:measurementRegime/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):257
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 37
+  field_name (String) = measurementregime_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:measurementRegime/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):258
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 38
+  field_name (String) = mobile_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mobile/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):259
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 39
+  field_name (String) = mobile
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mobile
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Indicate whether the EnvironmentalMonitoringFacility is mobile (repositionable) during the acquisition of the observation.
+
+OGRFeature(_ogr_fields_metadata):260
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 40
+  field_name (String) = resultacquisitionsource
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_resultacquisitionsource
+
+OGRFeature(_ogr_fields_metadata):261
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 41
+  field_name (String) = specialisedemftype_owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:specialisedEMFType/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):262
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 42
+  field_name (String) = specialisedemftype_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:specialisedEMFType/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):263
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 43
+  field_name (String) = specialisedemftype_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:specialisedEMFType/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):264
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 44
+  field_name (String) = specialisedemftype_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:specialisedEMFType/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):265
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 45
+  field_name (String) = operationalactivityperiod
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_operationalactivityperiod
+
+OGRFeature(_ogr_fields_metadata):266
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 46
+  field_name (String) = relatedto
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_relatedto
+
+OGRFeature(_ogr_fields_metadata):267
+  layer_name (String) = environmentalmonitoringfacility
+  field_index (Integer) = 47
+  field_name (String) = belongsto
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 2147483647
+  field_repetition_on_sequence (Integer(Boolean)) = 0
+  field_category (String) = PATH_TO_CHILD_ELEMENT_NO_LINK
+  field_related_layer (String) = environmentalmonitoringfacility_belongsto
+
+OGRFeature(_ogr_fields_metadata):275
+  layer_name (String) = environmentalmonitoringfacility_ef_name
+  field_index (Integer) = 1
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:name/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):276
+  layer_name (String) = environmentalmonitoringfacility_ef_name
+  field_index (Integer) = 2
+  field_name (String) = value
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:name
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Plain text denotation of the AbstractMonitoringObject.
+
+OGRFeature(_ogr_fields_metadata):277
+  layer_name (String) = environmentalmonitoringfacility_mediamonitored
+  field_index (Integer) = 1
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):278
+  layer_name (String) = environmentalmonitoringfacility_mediamonitored
+  field_index (Integer) = 2
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):279
+  layer_name (String) = environmentalmonitoringfacility_mediamonitored
+  field_index (Integer) = 3
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):280
+  layer_name (String) = environmentalmonitoringfacility_mediamonitored
+  field_index (Integer) = 4
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):281
+  layer_name (String) = environmentalmonitoringfacility_onlineresource
+  field_index (Integer) = 1
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:onlineResource/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):282
+  layer_name (String) = environmentalmonitoringfacility_onlineresource
+  field_index (Integer) = 2
+  field_name (String) = value
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:onlineResource
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+A link to an external document providing further information on the AbstractMonitoringObject.
+
+OGRFeature(_ogr_fields_metadata):283
+  layer_name (String) = environmentalmonitoringfacility_purpose
+  field_index (Integer) = 1
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):284
+  layer_name (String) = environmentalmonitoringfacility_purpose
+  field_index (Integer) = 2
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):285
+  layer_name (String) = environmentalmonitoringfacility_purpose
+  field_index (Integer) = 3
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):286
+  layer_name (String) = environmentalmonitoringfacility_purpose
+  field_index (Integer) = 4
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):287
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):288
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):289
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):290
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):291
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  field_index (Integer) = 5
+  field_name (String) = abstractmonitoringobject_environmentamonitoringfacility_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes/ef:EnvironmentalMonitoringFacility
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = environmentalmonitoringfacility
+
+OGRFeature(_ogr_fields_metadata):294
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):295
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):296
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):297
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):298
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  field_index (Integer) = 5
+  field_name (String) = abstractmonitoringobject_environmentamonitoringfacility_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy/ef:EnvironmentalMonitoringFacility
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = environmentalmonitoringfacility
+
+OGRFeature(_ogr_fields_metadata):301
+  layer_name (String) = environmentalmonitoringfacility_resultacquisitionsource
+  field_index (Integer) = 1
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):302
+  layer_name (String) = environmentalmonitoringfacility_resultacquisitionsource
+  field_index (Integer) = 2
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):303
+  layer_name (String) = environmentalmonitoringfacility_resultacquisitionsource
+  field_index (Integer) = 3
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):304
+  layer_name (String) = environmentalmonitoringfacility_resultacquisitionsource
+  field_index (Integer) = 4
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):305
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):306
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):307
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):308
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):309
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  field_index (Integer) = 5
+  field_name (String) = operationalactivityperiod_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod/ef:OperationalActivityPeriod
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = operationalactivityperiod
+
+OGRFeature(_ogr_fields_metadata):310
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):311
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):312
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):313
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):314
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 5
+  field_name (String) = anydomainlink_id
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/@gml:id
+  field_type (String) = ID
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The attribute gml:id supports provision of a handle for the XML element representing a GML Object. Its use is mandatory for all GML objects. It is of XML type ID, so is constrained to be unique in the XML document within which it occurs.
+
+OGRFeature(_ogr_fields_metadata):316
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 7
+  field_name (String) = anydomainlink_description_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:description/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):317
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 8
+  field_name (String) = anydomainlink_description_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:description/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):318
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 9
+  field_name (String) = anydomainlink_description_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):319
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 10
+  field_name (String) = anydomainlink_description
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The value of this property is a text description of the object. gml:description uses gml:StringOrRefType as its content model, so it may contain a simple text string content, or carry a reference to an external description. The use of gml:description to reference an external description has been deprecated and replaced by the gml:descriptionReference property.
+
+OGRFeature(_ogr_fields_metadata):320
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 11
+  field_name (String) = anydomainlink_descriptionreference_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:descriptionReference/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):321
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 12
+  field_name (String) = anydomainlink_descriptionreference_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:descriptionReference/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):322
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 13
+  field_name (String) = anydomainlink_descriptionreference_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:descriptionReference/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):323
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 14
+  field_name (String) = anydomainlink_identifier_codespace
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:identifier/@codeSpace
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):324
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 15
+  field_name (String) = anydomainlink_identifier
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/gml:identifier
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = Often, a special identifier is assigned to an object by the maintaining authority with the intention that it is used in references to the object For such cases, the codeSpace shall be provided. That identifier is usually unique either globally or within an application domain. gml:identifier is a pre-defined property for such identifiers.
+gml:CodeWithAuthorityType requires that the codeSpace attribute is provided in an instance.
+
+OGRFeature(_ogr_fields_metadata):326
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 17
+  field_name (String) = anydomainlink_comment_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:comment/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):327
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 18
+  field_name (String) = anydomainlink_comment
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:comment
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Additional information on the domain link.
+
+OGRFeature(_ogr_fields_metadata):328
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 19
+  field_name (String) = anydomainlink_relatedto_href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:relatedTo/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):329
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 20
+  field_name (String) = anydomainlink_relatedto_title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:relatedTo/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):330
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 21
+  field_name (String) = anydomainlink_relatedto_nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:relatedTo/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):331
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 22
+  field_name (String) = anydomainlink_relatedto_owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:relatedTo/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):332
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  field_index (Integer) = 23
+  field_name (String) = anydomainlink_relatedto_environmentalmonitoringfacility_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo/ef:AnyDomainLink/ef:relatedTo/ef:EnvironmentalMonitoringFacility
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = environmentalmonitoringfacility
+
+OGRFeature(_ogr_fields_metadata):340
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):341
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):342
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):343
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):344
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  field_index (Integer) = 5
+  field_name (String) = networkfacility_pkid
+  field_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo/ef:NetworkFacility
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = networkfacility
+
+OGRFeature(_ogr_fields_metadata):345
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 1
+  field_name (String) = id
+  field_xpath (String) = ef:OperationalActivityPeriod/@gml:id
+  field_type (String) = ID
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The attribute gml:id supports provision of a handle for the XML element representing a GML Object. Its use is mandatory for all GML objects. It is of XML type ID, so is constrained to be unique in the XML document within which it occurs.
+
+OGRFeature(_ogr_fields_metadata):347
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 3
+  field_name (String) = description_href
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:description/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):348
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 4
+  field_name (String) = description_title
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:description/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):349
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 5
+  field_name (String) = description_nilreason
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):350
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 6
+  field_name (String) = description
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The value of this property is a text description of the object. gml:description uses gml:StringOrRefType as its content model, so it may contain a simple text string content, or carry a reference to an external description. The use of gml:description to reference an external description has been deprecated and replaced by the gml:descriptionReference property.
+
+OGRFeature(_ogr_fields_metadata):351
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 7
+  field_name (String) = descriptionreference_href
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:descriptionReference/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):352
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 8
+  field_name (String) = descriptionreference_title
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:descriptionReference/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):353
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 9
+  field_name (String) = descriptionreference_nilreason
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:descriptionReference/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):354
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 10
+  field_name (String) = identifier_codespace
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:identifier/@codeSpace
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):355
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 11
+  field_name (String) = identifier
+  field_xpath (String) = ef:OperationalActivityPeriod/gml:identifier
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = Often, a special identifier is assigned to an object by the maintaining authority with the intention that it is used in references to the object For such cases, the codeSpace shall be provided. That identifier is usually unique either globally or within an application domain. gml:identifier is a pre-defined property for such identifiers.
+gml:CodeWithAuthorityType requires that the codeSpace attribute is provided in an instance.
+
+OGRFeature(_ogr_fields_metadata):358
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 14
+  field_name (String) = activitytime_href
+  field_xpath (String) = ef:OperationalActivityPeriod/ef:activityTime/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):359
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 15
+  field_name (String) = activitytime_title
+  field_xpath (String) = ef:OperationalActivityPeriod/ef:activityTime/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):360
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 16
+  field_name (String) = activitytime_nilreason
+  field_xpath (String) = ef:OperationalActivityPeriod/ef:activityTime/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):361
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 17
+  field_name (String) = activitytime_owns
+  field_xpath (String) = ef:OperationalActivityPeriod/ef:activityTime/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):363
+  layer_name (String) = operationalactivityperiod
+  field_index (Integer) = 19
+  field_name (String) = activitytime_abstracttimeobject_timeperiod_pkid
+  field_xpath (String) = ef:OperationalActivityPeriod/ef:activityTime/gml:TimePeriod
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = timeperiod
+
+OGRFeature(_ogr_fields_metadata):491
+  layer_name (String) = timeperiod
+  field_index (Integer) = 1
+  field_name (String) = frame
+  field_xpath (String) = gml:TimePeriod/@frame
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = #ISO-8601
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):492
+  layer_name (String) = timeperiod
+  field_index (Integer) = 2
+  field_name (String) = id
+  field_xpath (String) = gml:TimePeriod/@gml:id
+  field_type (String) = ID
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The attribute gml:id supports provision of a handle for the XML element representing a GML Object. Its use is mandatory for all GML objects. It is of XML type ID, so is constrained to be unique in the XML document within which it occurs.
+
+OGRFeature(_ogr_fields_metadata):494
+  layer_name (String) = timeperiod
+  field_index (Integer) = 4
+  field_name (String) = description_href
+  field_xpath (String) = gml:TimePeriod/gml:description/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):495
+  layer_name (String) = timeperiod
+  field_index (Integer) = 5
+  field_name (String) = description_title
+  field_xpath (String) = gml:TimePeriod/gml:description/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):496
+  layer_name (String) = timeperiod
+  field_index (Integer) = 6
+  field_name (String) = description_nilreason
+  field_xpath (String) = gml:TimePeriod/gml:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):497
+  layer_name (String) = timeperiod
+  field_index (Integer) = 7
+  field_name (String) = description
+  field_xpath (String) = gml:TimePeriod/gml:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The value of this property is a text description of the object. gml:description uses gml:StringOrRefType as its content model, so it may contain a simple text string content, or carry a reference to an external description. The use of gml:description to reference an external description has been deprecated and replaced by the gml:descriptionReference property.
+
+OGRFeature(_ogr_fields_metadata):498
+  layer_name (String) = timeperiod
+  field_index (Integer) = 8
+  field_name (String) = descriptionreference_href
+  field_xpath (String) = gml:TimePeriod/gml:descriptionReference/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):499
+  layer_name (String) = timeperiod
+  field_index (Integer) = 9
+  field_name (String) = descriptionreference_title
+  field_xpath (String) = gml:TimePeriod/gml:descriptionReference/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):500
+  layer_name (String) = timeperiod
+  field_index (Integer) = 10
+  field_name (String) = descriptionreference_nilreason
+  field_xpath (String) = gml:TimePeriod/gml:descriptionReference/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):501
+  layer_name (String) = timeperiod
+  field_index (Integer) = 11
+  field_name (String) = identifier_codespace
+  field_xpath (String) = gml:TimePeriod/gml:identifier/@codeSpace
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):502
+  layer_name (String) = timeperiod
+  field_index (Integer) = 12
+  field_name (String) = identifier
+  field_xpath (String) = gml:TimePeriod/gml:identifier
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = Often, a special identifier is assigned to an object by the maintaining authority with the intention that it is used in references to the object For such cases, the codeSpace shall be provided. That identifier is usually unique either globally or within an application domain. gml:identifier is a pre-defined property for such identifiers.
+gml:CodeWithAuthorityType requires that the codeSpace attribute is provided in an instance.
+
+OGRFeature(_ogr_fields_metadata):505
+  layer_name (String) = timeperiod
+  field_index (Integer) = 15
+  field_name (String) = beginposition_frame
+  field_xpath (String) = gml:TimePeriod/gml:beginPosition/@frame
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = #ISO-8601
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):506
+  layer_name (String) = timeperiod
+  field_index (Integer) = 16
+  field_name (String) = beginposition_calendareraname
+  field_xpath (String) = gml:TimePeriod/gml:beginPosition/@calendarEraName
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):507
+  layer_name (String) = timeperiod
+  field_index (Integer) = 17
+  field_name (String) = beginposition_indeterminateposition
+  field_xpath (String) = gml:TimePeriod/gml:beginPosition/@indeterminatePosition
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):508
+  layer_name (String) = timeperiod
+  field_index (Integer) = 18
+  field_name (String) = beginposition
+  field_xpath (String) = gml:TimePeriod/gml:beginPosition
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The method for identifying a temporal position is specific to each temporal reference system.  gml:TimePositionType supports the description of temporal position according to the subtypes described in ISO 19108.
+Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system . 
+In common with many of the components modelled as data types in the ISO 19100 series of International Standards, the corresponding GML component has simple content. However, the content model gml:TimePositionType is defined in several steps.
+Three XML attributes appear on gml:TimePositionType:
+A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.  
+For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.  
+Inexact temporal positions may be expressed using the optional indeterminatePosition attribute.  This takes a value from an enumeration.
+
+OGRFeature(_ogr_fields_metadata):509
+  layer_name (String) = timeperiod
+  field_index (Integer) = 19
+  field_name (String) = begin_href
+  field_xpath (String) = gml:TimePeriod/gml:begin/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):510
+  layer_name (String) = timeperiod
+  field_index (Integer) = 20
+  field_name (String) = begin_title
+  field_xpath (String) = gml:TimePeriod/gml:begin/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):511
+  layer_name (String) = timeperiod
+  field_index (Integer) = 21
+  field_name (String) = begin_nilreason
+  field_xpath (String) = gml:TimePeriod/gml:begin/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):512
+  layer_name (String) = timeperiod
+  field_index (Integer) = 22
+  field_name (String) = begin_owns
+  field_xpath (String) = gml:TimePeriod/gml:begin/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):514
+  layer_name (String) = timeperiod
+  field_index (Integer) = 24
+  field_name (String) = endposition_frame
+  field_xpath (String) = gml:TimePeriod/gml:endPosition/@frame
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = #ISO-8601
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):515
+  layer_name (String) = timeperiod
+  field_index (Integer) = 25
+  field_name (String) = endposition_calendareraname
+  field_xpath (String) = gml:TimePeriod/gml:endPosition/@calendarEraName
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):516
+  layer_name (String) = timeperiod
+  field_index (Integer) = 26
+  field_name (String) = endposition_indeterminateposition
+  field_xpath (String) = gml:TimePeriod/gml:endPosition/@indeterminatePosition
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):517
+  layer_name (String) = timeperiod
+  field_index (Integer) = 27
+  field_name (String) = endposition
+  field_xpath (String) = gml:TimePeriod/gml:endPosition
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The method for identifying a temporal position is specific to each temporal reference system.  gml:TimePositionType supports the description of temporal position according to the subtypes described in ISO 19108.
+Values based on calendars and clocks use lexical formats that are based on ISO 8601, as described in XML Schema Part 2:2001. A decimal value may be used with coordinate systems such as GPS time or UNIX time. A URI may be used to provide a reference to some era in an ordinal reference system . 
+In common with many of the components modelled as data types in the ISO 19100 series of International Standards, the corresponding GML component has simple content. However, the content model gml:TimePositionType is defined in several steps.
+Three XML attributes appear on gml:TimePositionType:
+A time value shall be associated with a temporal reference system through the frame attribute that provides a URI reference that identifies a description of the reference system. Following ISO 19108, the Gregorian calendar with UTC is the default reference system, but others may also be used. Components for describing temporal reference systems are described in 14.4, but it is not required that the reference system be described in this, as the reference may refer to anything that may be indentified with a URI.  
+For time values using a calendar containing more than one era, the (optional) calendarEraName attribute provides the name of the calendar era.  
+Inexact temporal positions may be expressed using the optional indeterminatePosition attribute.  This takes a value from an enumeration.
+
+OGRFeature(_ogr_fields_metadata):518
+  layer_name (String) = timeperiod
+  field_index (Integer) = 28
+  field_name (String) = end_href
+  field_xpath (String) = gml:TimePeriod/gml:end/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):519
+  layer_name (String) = timeperiod
+  field_index (Integer) = 29
+  field_name (String) = end_title
+  field_xpath (String) = gml:TimePeriod/gml:end/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):520
+  layer_name (String) = timeperiod
+  field_index (Integer) = 30
+  field_name (String) = end_nilreason
+  field_xpath (String) = gml:TimePeriod/gml:end/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):521
+  layer_name (String) = timeperiod
+  field_index (Integer) = 31
+  field_name (String) = end_owns
+  field_xpath (String) = gml:TimePeriod/gml:end/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):523
+  layer_name (String) = timeperiod
+  field_index (Integer) = 33
+  field_name (String) = duration
+  field_xpath (String) = gml:TimePeriod/gml:duration
+  field_type (String) = duration
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = gml:duration conforms to the ISO 8601 syntax for temporal length as implemented by the XML Schema duration type.
+
+OGRFeature(_ogr_fields_metadata):524
+  layer_name (String) = timeperiod
+  field_index (Integer) = 34
+  field_name (String) = timeinterval_unit
+  field_xpath (String) = gml:TimePeriod/gml:timeInterval/@unit
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):525
+  layer_name (String) = timeperiod
+  field_index (Integer) = 35
+  field_name (String) = timeinterval_radix
+  field_xpath (String) = gml:TimePeriod/gml:timeInterval/@radix
+  field_type (String) = positiveInteger
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):526
+  layer_name (String) = timeperiod
+  field_index (Integer) = 36
+  field_name (String) = timeinterval_factor
+  field_xpath (String) = gml:TimePeriod/gml:timeInterval/@factor
+  field_type (String) = integer
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):527
+  layer_name (String) = timeperiod
+  field_index (Integer) = 37
+  field_name (String) = timeinterval
+  field_xpath (String) = gml:TimePeriod/gml:timeInterval
+  field_type (String) = decimal
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = gml:timeInterval conforms to ISO 11404 which is based on floating point values for temporal length.
+ISO 11404 syntax specifies the use of a positiveInteger together with appropriate values for radix and factor. The resolution of the time interval is to one radix ^(-factor) of the specified time unit.
+The value of the unit is either selected from the units for time intervals from ISO 31-1:1992, or is another suitable unit.  The encoding is defined for GML in gml:TimeUnitType. The second component of this union type provides a method for indicating time units other than the six standard units given in the enumeration.
+
+OGRFeature(_ogr_fields_metadata):5554
+  layer_name (String) = ef_inspireid
+  field_index (Integer) = 1
+  field_name (String) = identifier_localid
+  field_xpath (String) = ef:inspireId/base:Identifier/base:localId
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+A local identifier, assigned by the data provider. The local identifier is unique within the namespace, that is no other spatial object carries the same unique identifier.
+
+-- Description --
+NOTE It is the responsibility of the data provider to guarantee uniqueness of the local identifier within the namespace.
+
+OGRFeature(_ogr_fields_metadata):5555
+  layer_name (String) = ef_inspireid
+  field_index (Integer) = 2
+  field_name (String) = identifier_namespace
+  field_xpath (String) = ef:inspireId/base:Identifier/base:namespace
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Namespace uniquely identifying the data source of the spatial object.
+
+-- Description --
+NOTE The namespace value will be owned by the data provider of the spatial object and will be registered in the INSPIRE External Object Identifier Namespaces Register.
+
+OGRFeature(_ogr_fields_metadata):5556
+  layer_name (String) = ef_inspireid
+  field_index (Integer) = 3
+  field_name (String) = identifier_versionid_nilreason
+  field_xpath (String) = ef:inspireId/base:Identifier/base:versionId/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5557
+  layer_name (String) = ef_inspireid
+  field_index (Integer) = 4
+  field_name (String) = identifier_versionid_nil
+  field_xpath (String) = ef:inspireId/base:Identifier/base:versionId/@xsi:nil
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5558
+  layer_name (String) = ef_inspireid
+  field_index (Integer) = 5
+  field_name (String) = identifier_versionid
+  field_xpath (String) = ef:inspireId/base:Identifier/base:versionId
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+The identifier of the particular version of the spatial object, with a maximum length of 25 characters. If the specification of a spatial object type with an external object identifier includes life-cycle information, the version identifier is used to distinguish between the different versions of a spatial object. Within the set of all versions of a spatial object, the version identifier is unique. 
+
+-- Description --
+NOTE The maximum length has been selected to allow for time stamps based on ISO 8601, for example, "2007-02-12T12:12:12+05:30" as the version identifier.
+
+NOTE 2 The property is void, if the spatial data set does not distinguish between different versions of the spatial object. It is missing, if the spatial object type does not support any life-cycle information.
+
+OGRFeature(_ogr_fields_metadata):5559
+  layer_name (String) = legalbackground
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:legalBackground/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5560
+  layer_name (String) = legalbackground
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:legalBackground/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5561
+  layer_name (String) = legalbackground
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:legalBackground/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5562
+  layer_name (String) = legalbackground
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:legalBackground/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5571
+  layer_name (String) = broader
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:broader/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5572
+  layer_name (String) = broader
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:broader/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5573
+  layer_name (String) = broader
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:broader/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5574
+  layer_name (String) = broader
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:broader/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5631
+  layer_name (String) = reportedto
+  field_index (Integer) = 1
+  field_name (String) = nilreason
+  field_xpath (String) = ef:reportedTo/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5632
+  layer_name (String) = reportedto
+  field_index (Integer) = 2
+  field_name (String) = reporttolegalact_legalact_href
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:legalAct/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5633
+  layer_name (String) = reportedto
+  field_index (Integer) = 3
+  field_name (String) = reporttolegalact_legalact_title
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:legalAct/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5634
+  layer_name (String) = reportedto
+  field_index (Integer) = 4
+  field_name (String) = reporttolegalact_legalact_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:legalAct/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5635
+  layer_name (String) = reportedto
+  field_index (Integer) = 5
+  field_name (String) = reporttolegalact_legalact_owns
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:legalAct/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5637
+  layer_name (String) = reportedto
+  field_index (Integer) = 7
+  field_name (String) = reporttolegalact_reportdate_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:reportDate/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5638
+  layer_name (String) = reportedto
+  field_index (Integer) = 8
+  field_name (String) = reporttolegalact_reportdate
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:reportDate
+  field_type (String) = dateTime
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Time of reporting.
+
+OGRFeature(_ogr_fields_metadata):5639
+  layer_name (String) = reportedto
+  field_index (Integer) = 9
+  field_name (String) = reporttolegalact_reportedenvelope_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:reportedEnvelope/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5640
+  layer_name (String) = reportedto
+  field_index (Integer) = 10
+  field_name (String) = reporttolegalact_reportedenvelope_nil
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:reportedEnvelope/@xsi:nil
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5641
+  layer_name (String) = reportedto
+  field_index (Integer) = 11
+  field_name (String) = reporttolegalact_reportedenvelope
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:reportedEnvelope
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Link to the reported data set according to the date indicated in the attribute reportDate.
+
+OGRFeature(_ogr_fields_metadata):5642
+  layer_name (String) = reportedto
+  field_index (Integer) = 12
+  field_name (String) = reporttolegalact_observationrequired_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:observationRequired/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5643
+  layer_name (String) = reportedto
+  field_index (Integer) = 13
+  field_name (String) = reporttolegalact_observationrequired
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:observationRequired
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Indicates whether an observation is required for the AbstractMonitoringFeature.
+
+OGRFeature(_ogr_fields_metadata):5644
+  layer_name (String) = reportedto
+  field_index (Integer) = 14
+  field_name (String) = reporttolegalact_observingcapabilityrequired_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:observingCapabilityRequired/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5645
+  layer_name (String) = reportedto
+  field_index (Integer) = 15
+  field_name (String) = reporttolegalact_observingcapabilityrequired
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:observingCapabilityRequired
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Indicates whether the observingCapability is required for the AbstractMonitoringFeature.
+
+OGRFeature(_ogr_fields_metadata):5646
+  layer_name (String) = reportedto
+  field_index (Integer) = 16
+  field_name (String) = reporttolegalact_description_nilreason
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5647
+  layer_name (String) = reportedto
+  field_index (Integer) = 17
+  field_name (String) = reporttolegalact_description_nil
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:description/@xsi:nil
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5648
+  layer_name (String) = reportedto
+  field_index (Integer) = 18
+  field_name (String) = reporttolegalact_description
+  field_xpath (String) = ef:reportedTo/ef:ReportToLegalAct/ef:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = -- Definition --
+Additional information on the actual data reported.
+
+OGRFeature(_ogr_fields_metadata):5649
+  layer_name (String) = hasobservation
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:hasObservation/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5650
+  layer_name (String) = hasobservation
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:hasObservation/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5651
+  layer_name (String) = hasobservation
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:hasObservation/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5653
+  layer_name (String) = involvedin
+  field_index (Integer) = 1
+  field_name (String) = href
+  field_xpath (String) = ef:involvedIn/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5654
+  layer_name (String) = involvedin
+  field_index (Integer) = 2
+  field_name (String) = title
+  field_xpath (String) = ef:involvedIn/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5655
+  layer_name (String) = involvedin
+  field_index (Integer) = 3
+  field_name (String) = nilreason
+  field_xpath (String) = ef:involvedIn/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5656
+  layer_name (String) = involvedin
+  field_index (Integer) = 4
+  field_name (String) = owns
+  field_xpath (String) = ef:involvedIn/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5658
+  layer_name (String) = networkfacility
+  field_index (Integer) = 1
+  field_name (String) = id
+  field_xpath (String) = ef:NetworkFacility/@gml:id
+  field_type (String) = ID
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 1
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The attribute gml:id supports provision of a handle for the XML element representing a GML Object. Its use is mandatory for all GML objects. It is of XML type ID, so is constrained to be unique in the XML document within which it occurs.
+
+OGRFeature(_ogr_fields_metadata):5660
+  layer_name (String) = networkfacility
+  field_index (Integer) = 3
+  field_name (String) = description_href
+  field_xpath (String) = ef:NetworkFacility/gml:description/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5661
+  layer_name (String) = networkfacility
+  field_index (Integer) = 4
+  field_name (String) = description_title
+  field_xpath (String) = ef:NetworkFacility/gml:description/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5662
+  layer_name (String) = networkfacility
+  field_index (Integer) = 5
+  field_name (String) = description_nilreason
+  field_xpath (String) = ef:NetworkFacility/gml:description/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5663
+  layer_name (String) = networkfacility
+  field_index (Integer) = 6
+  field_name (String) = description
+  field_xpath (String) = ef:NetworkFacility/gml:description
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = The value of this property is a text description of the object. gml:description uses gml:StringOrRefType as its content model, so it may contain a simple text string content, or carry a reference to an external description. The use of gml:description to reference an external description has been deprecated and replaced by the gml:descriptionReference property.
+
+OGRFeature(_ogr_fields_metadata):5664
+  layer_name (String) = networkfacility
+  field_index (Integer) = 7
+  field_name (String) = descriptionreference_href
+  field_xpath (String) = ef:NetworkFacility/gml:descriptionReference/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5665
+  layer_name (String) = networkfacility
+  field_index (Integer) = 8
+  field_name (String) = descriptionreference_title
+  field_xpath (String) = ef:NetworkFacility/gml:descriptionReference/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5666
+  layer_name (String) = networkfacility
+  field_index (Integer) = 9
+  field_name (String) = descriptionreference_nilreason
+  field_xpath (String) = ef:NetworkFacility/gml:descriptionReference/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5667
+  layer_name (String) = networkfacility
+  field_index (Integer) = 10
+  field_name (String) = identifier_codespace
+  field_xpath (String) = ef:NetworkFacility/gml:identifier/@codeSpace
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5668
+  layer_name (String) = networkfacility
+  field_index (Integer) = 11
+  field_name (String) = identifier
+  field_xpath (String) = ef:NetworkFacility/gml:identifier
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+  field_documentation (String) = Often, a special identifier is assigned to an object by the maintaining authority with the intention that it is used in references to the object For such cases, the codeSpace shall be provided. That identifier is usually unique either globally or within an application domain. gml:identifier is a pre-defined property for such identifiers.
+gml:CodeWithAuthorityType requires that the codeSpace attribute is provided in an instance.
+
+OGRFeature(_ogr_fields_metadata):5670
+  layer_name (String) = networkfacility
+  field_index (Integer) = 13
+  field_name (String) = linkingtime_href
+  field_xpath (String) = ef:NetworkFacility/ef:linkingTime/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5671
+  layer_name (String) = networkfacility
+  field_index (Integer) = 14
+  field_name (String) = linkingtime_title
+  field_xpath (String) = ef:NetworkFacility/ef:linkingTime/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5672
+  layer_name (String) = networkfacility
+  field_index (Integer) = 15
+  field_name (String) = linkingtime_nilreason
+  field_xpath (String) = ef:NetworkFacility/ef:linkingTime/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5673
+  layer_name (String) = networkfacility
+  field_index (Integer) = 16
+  field_name (String) = linkingtime_owns
+  field_xpath (String) = ef:NetworkFacility/ef:linkingTime/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5675
+  layer_name (String) = networkfacility
+  field_index (Integer) = 18
+  field_name (String) = linkingtime_abstracttimeobject_timeperiod_pkid
+  field_xpath (String) = ef:NetworkFacility/ef:linkingTime/gml:TimePeriod
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = timeperiod
+
+OGRFeature(_ogr_fields_metadata):5679
+  layer_name (String) = networkfacility
+  field_index (Integer) = 22
+  field_name (String) = belongsto_href
+  field_xpath (String) = ef:NetworkFacility/ef:belongsTo/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5680
+  layer_name (String) = networkfacility
+  field_index (Integer) = 23
+  field_name (String) = belongsto_title
+  field_xpath (String) = ef:NetworkFacility/ef:belongsTo/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5681
+  layer_name (String) = networkfacility
+  field_index (Integer) = 24
+  field_name (String) = belongsto_nilreason
+  field_xpath (String) = ef:NetworkFacility/ef:belongsTo/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5682
+  layer_name (String) = networkfacility
+  field_index (Integer) = 25
+  field_name (String) = belongsto_owns
+  field_xpath (String) = ef:NetworkFacility/ef:belongsTo/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5684
+  layer_name (String) = networkfacility
+  field_index (Integer) = 27
+  field_name (String) = contains_href
+  field_xpath (String) = ef:NetworkFacility/ef:contains/@xlink:href
+  field_type (String) = anyURI
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5685
+  layer_name (String) = networkfacility
+  field_index (Integer) = 28
+  field_name (String) = contains_title
+  field_xpath (String) = ef:NetworkFacility/ef:contains/@xlink:title
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5686
+  layer_name (String) = networkfacility
+  field_index (Integer) = 29
+  field_name (String) = contains_nilreason
+  field_xpath (String) = ef:NetworkFacility/ef:contains/@nilReason
+  field_type (String) = anySimpleType
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5687
+  layer_name (String) = networkfacility
+  field_index (Integer) = 30
+  field_name (String) = contains_owns
+  field_xpath (String) = ef:NetworkFacility/ef:contains/@owns
+  field_type (String) = boolean
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_default_value (String) = false
+  field_category (String) = REGULAR
+
+OGRFeature(_ogr_fields_metadata):5688
+  layer_name (String) = networkfacility
+  field_index (Integer) = 31
+  field_name (String) = contains_environmentalmonitoringfacility_pkid
+  field_xpath (String) = ef:NetworkFacility/ef:contains/ef:EnvironmentalMonitoringFacility
+  field_type (String) = string
+  field_is_list (Integer(Boolean)) = 0
+  field_min_occurs (Integer) = 0
+  field_max_occurs (Integer) = 1
+  field_category (String) = PATH_TO_CHILD_ELEMENT_WITH_LINK
+  field_related_layer (String) = environmentalmonitoringfacility
+
+OGRFeature(_ogr_fields_metadata):5708
+  layer_name (String) = environmenmonitoringfacility_legalbackground_legalbackground
+  field_name (String) = occurrence
+
+OGRFeature(_ogr_fields_metadata):5709
+  layer_name (String) = environmenmonitoringfacility_legalbackground_legalbackground
+  field_name (String) = parent_pkid
+
+OGRFeature(_ogr_fields_metadata):5710
+  layer_name (String) = environmenmonitoringfacility_legalbackground_legalbackground
+  field_name (String) = child_pkid
+
+OGRFeature(_ogr_fields_metadata):5720
+  layer_name (String) = environmentalmonitoringfacility_reportedto_reportedto
+  field_name (String) = occurrence
+
+OGRFeature(_ogr_fields_metadata):5721
+  layer_name (String) = environmentalmonitoringfacility_reportedto_reportedto
+  field_name (String) = parent_pkid
+
+OGRFeature(_ogr_fields_metadata):5722
+  layer_name (String) = environmentalmonitoringfacility_reportedto_reportedto
+  field_name (String) = child_pkid
+
+OGRFeature(_ogr_fields_metadata):5723
+  layer_name (String) = environmentamonitoringfacility_hasobservation_hasobservation
+  field_name (String) = occurrence
+
+OGRFeature(_ogr_fields_metadata):5724
+  layer_name (String) = environmentamonitoringfacility_hasobservation_hasobservation
+  field_name (String) = parent_pkid
+
+OGRFeature(_ogr_fields_metadata):5725
+  layer_name (String) = environmentamonitoringfacility_hasobservation_hasobservation
+  field_name (String) = child_pkid
+
+OGRFeature(_ogr_fields_metadata):5726
+  layer_name (String) = environmentalmonitoringfacility_involvedin_involvedin
+  field_name (String) = occurrence
+
+OGRFeature(_ogr_fields_metadata):5727
+  layer_name (String) = environmentalmonitoringfacility_involvedin_involvedin
+  field_name (String) = parent_pkid
+
+OGRFeature(_ogr_fields_metadata):5728
+  layer_name (String) = environmentalmonitoringfacility_involvedin_involvedin
+  field_name (String) = child_pkid
+
+
+Layer name: _ogr_layers_metadata
+Geometry: None
+Feature Count: 24
+Layer SRS WKT:
+(unknown)
+layer_name: String (0.0)
+layer_xpath: String (0.0)
+layer_category: String (0.0)
+layer_pkid_name: String (0.0)
+layer_parent_pkid_name: String (0.0)
+layer_documentation: String (0.0)
+OGRFeature(_ogr_layers_metadata):19
+  layer_name (String) = environmentalmonitoringfacility
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility
+  layer_category (String) = TOP_LEVEL_ELEMENT
+  layer_pkid_name (String) = id
+  layer_documentation (String) = -- Name --
+environmental monitoring facility
+
+-- Definition --
+A georeferenced object directly collecting or processing data about objects whose properties (e.g. physical, chemical, biological or other aspects of environmental conditions) are repeatedly observed or measured. An environmental monitoring facility can also host other environmental monitoring facilities.
+
+-- Description --
+NOTE 1: An EnvironmentalMonitoringFacility is not a facility in the common INSPIRE sense realised by the Generic Conceptual Model class ActivtiyComplex.
+
+NOTE 2: Laboratories are not EnvironmentalMonitoringFacilities from an INSPIRE perspective as the exact location of the laboratory does not add further information to the measurement. 
+The methodology used in the laboratory should be provided with observational data.
+The basic feature model is given by the gml:AbstractFeatureType.
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The value of the gml:location property describes the extent, position or relative location of the feature.
+
+OGRFeature(_ogr_layers_metadata):22
+  layer_name (String) = environmentalmonitoringfacility_ef_name
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:name
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Plain text denotation of the AbstractMonitoringObject.
+
+OGRFeature(_ogr_layers_metadata):23
+  layer_name (String) = environmentalmonitoringfacility_mediamonitored
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:mediaMonitored
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Monitored environmental medium.
+gml:ReferenceType is intended to be used in application schemas directly, if a property element shall use a "by-reference only" encoding.
+
+OGRFeature(_ogr_layers_metadata):24
+  layer_name (String) = environmentalmonitoringfacility_onlineresource
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:onlineResource
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+A link to an external document providing further information on the AbstractMonitoringObject.
+
+OGRFeature(_ogr_layers_metadata):25
+  layer_name (String) = environmentalmonitoringfacility_purpose
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:purpose
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Reason for which the AbstractMonitoringObject has been generated.
+gml:ReferenceType is intended to be used in application schemas directly, if a property element shall use a "by-reference only" encoding.
+
+OGRFeature(_ogr_layers_metadata):26
+  layer_name (String) = environmentalmonitoringfacility_supersedes
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersedes
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+In a genealogy, the AbstractMonitoringObject(s) that has(have) been deactivated/replaced by another one.
+
+OGRFeature(_ogr_layers_metadata):27
+  layer_name (String) = environmentalmonitoringfacility_supersededby
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:supersededBy
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+In a genealogy, the newly active AbstractMonitoringObject(s) that replaces(replace) the superseded one.
+
+OGRFeature(_ogr_layers_metadata):28
+  layer_name (String) = environmentalmonitoringfacility_resultacquisitionsource
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:resultAcquisitionSource
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Source of result acquisition
+gml:ReferenceType is intended to be used in application schemas directly, if a property element shall use a "by-reference only" encoding.
+
+OGRFeature(_ogr_layers_metadata):29
+  layer_name (String) = environmentalmonitoringfacility_operationalactivityperiod
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:operationalActivityPeriod
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Lifespan of the physical object (facility).
+To create a collection of GML Objects that are not all features, a property type shall be derived by extension from gml:AbstractMemberType.
+This abstract property type is intended to be used only in object types where software shall be able to identify that an instance of such an object type is to be interpreted as a collection of objects.
+By default, this abstract property type does not imply any ownership of the objects in the collection. The owns attribute of gml:OwnershipAttributeGroup may be used on a property element instance to assert ownership of an object in the collection. A collection shall not own an object already owned by another object.
+
+OGRFeature(_ogr_layers_metadata):30
+  layer_name (String) = environmentalmonitoringfacility_relatedto
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:relatedTo
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = anydomainlink_id
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+Any Thematic Link to an Environmental Monitoring Facility.
+The association has additional properties as defined in the association class AnyDomainLink.
+
+OGRFeature(_ogr_layers_metadata):33
+  layer_name (String) = environmentalmonitoringfacility_belongsto
+  layer_xpath (String) = ef:EnvironmentalMonitoringFacility/ef:belongsTo
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_parent_pkid_name (String) = parent_id
+  layer_documentation (String) = -- Definition --
+A link pointing to the EnvironmentalMonitoringNetwork(s) this EnvironmentalMonitoringFacility pertains to.
+The association has additional properties as defined in the association class NetworkFacility.
+
+OGRFeature(_ogr_layers_metadata):34
+  layer_name (String) = operationalactivityperiod
+  layer_xpath (String) = ef:OperationalActivityPeriod
+  layer_category (String) = TOP_LEVEL_ELEMENT
+  layer_pkid_name (String) = id
+  layer_documentation (String) = -- Name --
+operational activity period
+
+-- Definition --
+Corresponds to a period during which the EnvironmentalMonitoringFacility has been up and running.
+The basic feature model is given by the gml:AbstractFeatureType.
+The content model for gml:AbstractFeatureType adds two specific properties suitable for geographic features to the content model defined in gml:AbstractGMLType. 
+The value of the gml:boundedBy property describes an envelope that encloses the entire feature instance, and is primarily useful for supporting rapid searching for features that occur in a particular location. 
+The value of the gml:location property describes the extent, position or relative location of the feature.
+
+OGRFeature(_ogr_layers_metadata):52
+  layer_name (String) = timeperiod
+  layer_xpath (String) = gml:TimePeriod
+  layer_category (String) = TOP_LEVEL_ELEMENT
+  layer_pkid_name (String) = id
+  layer_documentation (String) = gml:TimePeriod acts as a one-dimensional geometric primitive that represents an identifiable extent in time.
+The location in of a gml:TimePeriod is described by the temporal positions of the instants at which it begins and ends. The length of the period is equal to the temporal distance between the two bounding temporal positions. 
+Both beginning and end may be described in terms of their direct position using gml:TimePositionType which is an XML Schema simple content type, or by reference to an indentifiable time instant using gml:TimeInstantPropertyType.
+Alternatively a limit of a gml:TimePeriod may use the conventional GML property model to make a reference to a time instant described elsewhere, or a limit may be indicated as a direct position.
+
+OGRFeature(_ogr_layers_metadata):547
+  layer_name (String) = ef_inspireid
+  layer_xpath (String) = ef:inspireId
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+External object identifier.
+
+OGRFeature(_ogr_layers_metadata):548
+  layer_name (String) = legalbackground
+  layer_xpath (String) = ef:legalBackground
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+The legal context, in which the management and regulation of the AbstractMonitoringObject is defined.
+To create a collection of GML Objects that are not all features, a property type shall be derived by extension from gml:AbstractMemberType.
+This abstract property type is intended to be used only in object types where software shall be able to identify that an instance of such an object type is to be interpreted as a collection of objects.
+By default, this abstract property type does not imply any ownership of the objects in the collection. The owns attribute of gml:OwnershipAttributeGroup may be used on a property element instance to assert ownership of an object in the collection. A collection shall not own an object already owned by another object.
+
+OGRFeature(_ogr_layers_metadata):551
+  layer_name (String) = broader
+  layer_xpath (String) = ef:broader
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+A link pointing to a broader AbstractMonitoringObject (a higher level in a hierarchical structure).
+The association has additional
+properties as defined in the
+association class Hierarchy.
+
+OGRFeature(_ogr_layers_metadata):558
+  layer_name (String) = reportedto
+  layer_xpath (String) = ef:reportedTo
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+Information on the involvement of the AbstractMonitoringFeature in reporting.
+
+OGRFeature(_ogr_layers_metadata):559
+  layer_name (String) = hasobservation
+  layer_xpath (String) = ef:hasObservation
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+Observation of emissions, of the state of environmental media and of other ecosystem parameters (biodiversity, ecological conditions of vegetation, etc.) by or on behalf of public authorities at this AbstractMonitoringFeature.
+
+OGRFeature(_ogr_layers_metadata):560
+  layer_name (String) = involvedin
+  layer_xpath (String) = ef:involvedIn
+  layer_category (String) = NESTED_ELEMENT
+  layer_pkid_name (String) = ogr_pkid
+  layer_documentation (String) = -- Definition --
+EnvironmentalMonitoringActivity(s) in which the AbstractMonitoringFeature is involved.
+
+OGRFeature(_ogr_layers_metadata):561
+  layer_name (String) = networkfacility
+  layer_xpath (String) = ef:NetworkFacility
+  layer_category (String) = TOP_LEVEL_ELEMENT
+  layer_pkid_name (String) = id
+  layer_documentation (String) = -- Name --
+network facility
+
+-- Definition --
+Link between EnvironmentalMonitoringNetwork and EnvironmentalMonitoringFacility.
+
+OGRFeature(_ogr_layers_metadata):568
+  layer_name (String) = environmenmonitoringfacility_legalbackground_legalbackground
+  layer_category (String) = JUNCTION_TABLE
+
+OGRFeature(_ogr_layers_metadata):572
+  layer_name (String) = environmentalmonitoringfacility_reportedto_reportedto
+  layer_category (String) = JUNCTION_TABLE
+
+OGRFeature(_ogr_layers_metadata):573
+  layer_name (String) = environmentamonitoringfacility_hasobservation_hasobservation
+  layer_category (String) = JUNCTION_TABLE
+
+OGRFeature(_ogr_layers_metadata):574
+  layer_name (String) = environmentalmonitoringfacility_involvedin_involvedin
+  layer_category (String) = JUNCTION_TABLE
+
+
+Layer name: _ogr_layer_relationships
+Geometry: None
+Feature Count: 24
+Layer SRS WKT:
+(unknown)
+parent_layer: String (0.0)
+parent_pkid: String (0.0)
+parent_element_name: String (0.0)
+child_layer: String (0.0)
+child_pkid: String (0.0)
+OGRFeature(_ogr_layer_relationships):94
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = inspireid_pkid
+  child_layer (String) = ef_inspireid
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):95
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = ef_name
+  child_layer (String) = environmentalmonitoringfacility_ef_name
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):96
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = mediamonitored
+  child_layer (String) = environmentalmonitoringfacility_mediamonitored
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):97
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = legalbackground_legalbackground
+  child_layer (String) = legalbackground
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):99
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = onlineresource
+  child_layer (String) = environmentalmonitoringfacility_onlineresource
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):100
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = purpose
+  child_layer (String) = environmentalmonitoringfacility_purpose
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):102
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = broader_pkid
+  child_layer (String) = broader
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):104
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = supersedes
+  child_layer (String) = environmentalmonitoringfacility_supersedes
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):105
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = supersededby
+  child_layer (String) = environmentalmonitoringfacility_supersededby
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):106
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = reportedto_reportedto
+  child_layer (String) = reportedto
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):107
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = hasobservation_hasobservation
+  child_layer (String) = hasobservation
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):108
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = involvedin_involvedin
+  child_layer (String) = involvedin
+  child_pkid (String) = ogr_pkid
+
+OGRFeature(_ogr_layer_relationships):109
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = resultacquisitionsource
+  child_layer (String) = environmentalmonitoringfacility_resultacquisitionsource
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):110
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = operationalactivityperiod
+  child_layer (String) = environmentalmonitoringfacility_operationalactivityperiod
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):111
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = relatedto
+  child_layer (String) = environmentalmonitoringfacility_relatedto
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):112
+  parent_layer (String) = environmentalmonitoringfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = belongsto
+  child_layer (String) = environmentalmonitoringfacility_belongsto
+  child_pkid (String) = parent_id
+
+OGRFeature(_ogr_layer_relationships):113
+  parent_layer (String) = environmentalmonitoringfacility_supersedes
+  parent_pkid (String) = ogr_pkid
+  parent_element_name (String) = abstractmonitoringobject_environmentamonitoringfacility_pkid
+  child_layer (String) = environmentalmonitoringfacility
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):116
+  parent_layer (String) = environmentalmonitoringfacility_supersededby
+  parent_pkid (String) = ogr_pkid
+  parent_element_name (String) = abstractmonitoringobject_environmentamonitoringfacility_pkid
+  child_layer (String) = environmentalmonitoringfacility
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):119
+  parent_layer (String) = environmentalmonitoringfacility_operationalactivityperiod
+  parent_pkid (String) = ogr_pkid
+  parent_element_name (String) = operationalactivityperiod_pkid
+  child_layer (String) = operationalactivityperiod
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):122
+  parent_layer (String) = environmentalmonitoringfacility_relatedto
+  parent_pkid (String) = anydomainlink_id
+  parent_element_name (String) = anydomainlink_relatedto_environmentalmonitoringfacility_pkid
+  child_layer (String) = environmentalmonitoringfacility
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):123
+  parent_layer (String) = environmentalmonitoringfacility_belongsto
+  parent_pkid (String) = ogr_pkid
+  parent_element_name (String) = networkfacility_pkid
+  child_layer (String) = networkfacility
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):128
+  parent_layer (String) = operationalactivityperiod
+  parent_pkid (String) = id
+  parent_element_name (String) = activitytime_abstracttimeobject_timeperiod_pkid
+  child_layer (String) = timeperiod
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):1301
+  parent_layer (String) = networkfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = linkingtime_abstracttimeobject_timeperiod_pkid
+  child_layer (String) = timeperiod
+  child_pkid (String) = id
+
+OGRFeature(_ogr_layer_relationships):1306
+  parent_layer (String) = networkfacility
+  parent_pkid (String) = id
+  parent_element_name (String) = contains_environmentalmonitoringfacility_pkid
+  child_layer (String) = environmentalmonitoringfacility
+  child_pkid (String) = id
+
+
+Layer name: _ogr_other_metadata
+Geometry: None
+Feature Count: 42
+Layer SRS WKT:
+(unknown)
+key: String (0.0)
+value: String (0.0)
+OGRFeature(_ogr_other_metadata):0
+  key (String) = REMOVE_UNUSED_LAYERS
+  value (String) = YES
+
+OGRFeature(_ogr_other_metadata):1
+  key (String) = document_filename
+  value (String) = data/gmlas/real_world/Piezometre.06512X0037.STREMY.2.gml
+
+OGRFeature(_ogr_other_metadata):2
+  key (String) = namespace_uri_1
+  value (String) = http://inspire.ec.europa.eu/schemas/ef/4.0
+
+OGRFeature(_ogr_other_metadata):3
+  key (String) = namespace_location_1
+  value (String) = http://inspire.ec.europa.eu/schemas/ef/4.0/EnvironmentalMonitoringFacilities.xsd
+
+OGRFeature(_ogr_other_metadata):4
+  key (String) = namespace_prefix_1
+  value (String) = ef
+
+OGRFeature(_ogr_other_metadata):5
+  key (String) = namespace_uri_2
+  value (String) = http://inspire.ec.europa.eu/schemas/ad/4.0
+
+OGRFeature(_ogr_other_metadata):6
+  key (String) = namespace_prefix_2
+  value (String) = ad
+
+OGRFeature(_ogr_other_metadata):7
+  key (String) = namespace_uri_3
+  value (String) = http://inspire.ec.europa.eu/schemas/au/4.0
+
+OGRFeature(_ogr_other_metadata):8
+  key (String) = namespace_prefix_3
+  value (String) = au
+
+OGRFeature(_ogr_other_metadata):9
+  key (String) = namespace_uri_4
+  value (String) = http://inspire.ec.europa.eu/schemas/base/3.3
+
+OGRFeature(_ogr_other_metadata):10
+  key (String) = namespace_prefix_4
+  value (String) = base
+
+OGRFeature(_ogr_other_metadata):11
+  key (String) = namespace_uri_5
+  value (String) = http://inspire.ec.europa.eu/schemas/base2/2.0
+
+OGRFeature(_ogr_other_metadata):12
+  key (String) = namespace_prefix_5
+  value (String) = base2
+
+OGRFeature(_ogr_other_metadata):13
+  key (String) = namespace_uri_6
+  value (String) = http://inspire.ec.europa.eu/schemas/bu-base/4.0
+
+OGRFeature(_ogr_other_metadata):14
+  key (String) = namespace_prefix_6
+  value (String) = bu-base
+
+OGRFeature(_ogr_other_metadata):15
+  key (String) = namespace_uri_7
+  value (String) = http://inspire.ec.europa.eu/schemas/cp/4.0
+
+OGRFeature(_ogr_other_metadata):16
+  key (String) = namespace_prefix_7
+  value (String) = cp
+
+OGRFeature(_ogr_other_metadata):17
+  key (String) = namespace_uri_8
+  value (String) = http://inspire.ec.europa.eu/schemas/gn/4.0
+
+OGRFeature(_ogr_other_metadata):18
+  key (String) = namespace_prefix_8
+  value (String) = gn
+
+OGRFeature(_ogr_other_metadata):19
+  key (String) = namespace_uri_9
+  value (String) = http://inspire.ec.europa.eu/schemas/net/4.0
+
+OGRFeature(_ogr_other_metadata):20
+  key (String) = namespace_prefix_9
+  value (String) = net
+
+OGRFeature(_ogr_other_metadata):21
+  key (String) = namespace_uri_10
+  value (String) = http://inspire.ec.europa.eu/schemas/tn/4.0
+
+OGRFeature(_ogr_other_metadata):22
+  key (String) = namespace_prefix_10
+  value (String) = tn
+
+OGRFeature(_ogr_other_metadata):23
+  key (String) = namespace_uri_11
+  value (String) = http://www.interactive-instruments.de/ShapeChange/AppInfo
+
+OGRFeature(_ogr_other_metadata):24
+  key (String) = namespace_prefix_11
+  value (String) = sc
+
+OGRFeature(_ogr_other_metadata):25
+  key (String) = namespace_uri_12
+  value (String) = http://www.isotc211.org/2005/gco
+
+OGRFeature(_ogr_other_metadata):26
+  key (String) = namespace_prefix_12
+  value (String) = gco
+
+OGRFeature(_ogr_other_metadata):27
+  key (String) = namespace_uri_13
+  value (String) = http://www.isotc211.org/2005/gmd
+
+OGRFeature(_ogr_other_metadata):28
+  key (String) = namespace_prefix_13
+  value (String) = gmd
+
+OGRFeature(_ogr_other_metadata):29
+  key (String) = namespace_uri_14
+  value (String) = http://www.isotc211.org/2005/gsr
+
+OGRFeature(_ogr_other_metadata):30
+  key (String) = namespace_prefix_14
+  value (String) = gsr
+
+OGRFeature(_ogr_other_metadata):31
+  key (String) = namespace_uri_15
+  value (String) = http://www.isotc211.org/2005/gss
+
+OGRFeature(_ogr_other_metadata):32
+  key (String) = namespace_prefix_15
+  value (String) = gss
+
+OGRFeature(_ogr_other_metadata):33
+  key (String) = namespace_uri_16
+  value (String) = http://www.isotc211.org/2005/gts
+
+OGRFeature(_ogr_other_metadata):34
+  key (String) = namespace_prefix_16
+  value (String) = gts
+
+OGRFeature(_ogr_other_metadata):35
+  key (String) = namespace_uri_17
+  value (String) = http://www.opengis.net/gml/3.2
+
+OGRFeature(_ogr_other_metadata):36
+  key (String) = namespace_prefix_17
+  value (String) = gml
+
+OGRFeature(_ogr_other_metadata):37
+  key (String) = namespace_uri_18
+  value (String) = http://www.opengis.net/om/2.0
+
+OGRFeature(_ogr_other_metadata):38
+  key (String) = namespace_prefix_18
+  value (String) = om
+
+OGRFeature(_ogr_other_metadata):39
+  key (String) = namespace_uri_19
+  value (String) = http://www.w3.org/1999/xlink
+
+OGRFeature(_ogr_other_metadata):40
+  key (String) = namespace_prefix_19
+  value (String) = xlink
+
+OGRFeature(_ogr_other_metadata):41
+  key (String) = gml_version
+  value (String) = 3.2.1
+

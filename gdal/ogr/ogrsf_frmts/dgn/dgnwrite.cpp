@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
                            unsigned char *pabyTarget );
@@ -104,11 +104,11 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
     if( psElement->offset != -1 )
     {
-        long nOldFLoc = VSIFTell( psDGN->fp );
+        vsi_l_offset nOldFLoc = VSIFTellL( psDGN->fp );
         unsigned char abyLeader[2];
 
-        if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFRead( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
+        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+            || VSIFReadL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed seek or read when trying to mark existing\n"
@@ -118,9 +118,9 @@ int DGNResizeElement( DGNHandle hDGN, DGNElemCore *psElement, int nNewSize )
 
         abyLeader[1] |= 0x80;
 
-        if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-            || VSIFWrite( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
-            || VSIFSeek( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
+        if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+            || VSIFWriteL( abyLeader, sizeof(abyLeader), 1, psDGN->fp ) != 1
+            || VSIFSeekL( psDGN->fp, nOldFLoc, SEEK_SET ) != 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed seek or write when trying to mark existing\n"
@@ -209,7 +209,7 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
             return FALSE;
 
         // Establish the position of the new element.
-        psElement->offset = static_cast<int>(VSIFTell( psDGN->fp ));
+        psElement->offset = static_cast<int>(VSIFTellL( psDGN->fp ));
         psElement->element_id = psDGN->element_count;
 
         // Grow element buffer if needed.
@@ -239,8 +239,8 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
 /* -------------------------------------------------------------------- */
 /*      Write out the element.                                          */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( psDGN->fp, psElement->offset, SEEK_SET ) != 0
-        || VSIFWrite( psElement->raw_data, psElement->raw_bytes,
+    if( VSIFSeekL( psDGN->fp, psElement->offset, SEEK_SET ) != 0
+        || VSIFWriteL( psElement->raw_data, psElement->raw_bytes,
                       1, psDGN->fp) != 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -261,8 +261,8 @@ int DGNWriteElement( DGNHandle hDGN, DGNElemCore *psElement )
     {
         const unsigned char abyEOF[2] = { 0xff, 0xff };
 
-        VSIFWrite( abyEOF, 2, 1, psDGN->fp );
-        VSIFSeek( psDGN->fp, -2, SEEK_CUR );
+        VSIFWriteL( abyEOF, 2, 1, psDGN->fp );
+        VSIFSeekL( psDGN->fp, VSIFTellL(psDGN->fp)-2, SEEK_SET );
     }
 
     return TRUE;
@@ -315,28 +315,31 @@ DGNHandle
 
 {
 /* -------------------------------------------------------------------- */
-/*      Open seed file, and read TCB element.                           */
-/* -------------------------------------------------------------------- */
-    DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
-    if( psSeed == NULL )
-        return NULL;
-
-    DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
-
-    DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
-
-    CPLAssert( psSrcTCB->raw_bytes >= 1536 );
-
-/* -------------------------------------------------------------------- */
 /*      Open output file.                                               */
 /* -------------------------------------------------------------------- */
-    FILE *fpNew = VSIFOpen( pszNewFilename, "wb" );
+    VSILFILE *fpNew = VSIFOpenL( pszNewFilename, "wb" );
     if( fpNew == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open output file: %s", pszNewFilename );
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Open seed file, and read TCB element.                           */
+/* -------------------------------------------------------------------- */
+    DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
+    if( psSeed == NULL )
+    {
+        VSIFCloseL( fpNew );
+        return NULL;
+    }
+
+    DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
+
+    DGNElemCore *psSrcTCB = DGNReadElement( psSeed );
+
+    CPLAssert( psSrcTCB->raw_bytes >= 1536 );
 
 /* -------------------------------------------------------------------- */
 /*      Modify TCB appropriately for the output file.                   */
@@ -377,19 +380,19 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Write TCB and EOF to new file.                                  */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
+    VSIFWriteL( pabyRawTCB, psSrcTCB->raw_bytes, 1, fpNew );
     CPLFree( pabyRawTCB );
 
     unsigned char abyEOF[2] = { 0xff,  0xff };
 
-    VSIFWrite( abyEOF, 2, 1, fpNew );
+    VSIFWriteL( abyEOF, 2, 1, fpNew );
 
     DGNFreeElement( psSeed, psSrcTCB );
 
 /* -------------------------------------------------------------------- */
 /*      Close and re-open using DGN API.                                */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fpNew );
+    VSIFCloseL( fpNew );
 
     DGNInfo *psDGN = (DGNInfo *) DGNOpen( pszNewFilename, TRUE );
 
@@ -463,7 +466,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
         DGNElemMultiPoint *psSrcMP = (DGNElemMultiPoint *) psSrcElement;
 
         const size_t nSize = sizeof(DGNElemMultiPoint)
-            + sizeof(DGNPoint) * (psSrcMP->num_vertices-2);
+            + sizeof(DGNPoint) * (psSrcMP->num_vertices-1);
 
         DGNElemMultiPoint *psMP =
             static_cast<DGNElemMultiPoint *>(CPLMalloc( nSize ));
@@ -878,7 +881,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
     DGNElemMultiPoint *psMP = static_cast<DGNElemMultiPoint *>(
         CPLCalloc( sizeof(DGNElemMultiPoint)
-                   + sizeof(DGNPoint) * (nPointCount-2), 1 ));
+                   + sizeof(DGNPoint) * (nPointCount-1), 1 ));
     DGNElemCore *psCore = &(psMP->core);
 
     DGNInitializeElemCore( hDGN, psCore );

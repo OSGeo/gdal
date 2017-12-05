@@ -212,7 +212,7 @@ void to_native(IMAGE_DESCRIPTION_RECORD& r);
 void to_string(PH_DATA& d);
 
 // unit tests on structures, returns true on success
-bool perform_type_size_check(void);
+//bool perform_type_size_check(void);
 
 class Conversions {
 public:

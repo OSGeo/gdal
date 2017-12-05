@@ -40,7 +40,7 @@
 #include "ogr_p.h"
 #include "ograpispy.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRFeatureDefn()                           */
@@ -214,6 +214,22 @@ OGRFeatureDefn *OGRFeatureDefn::Clone()
         poCopy->AddGeomFieldDefn( GetGeomFieldDefn( i ) );
 
     return poCopy;
+}
+
+/************************************************************************/
+/*                              SetName()                               */
+/************************************************************************/
+
+/**
+ * \brief Change name of this OGRFeatureDefn.
+ *
+ * @param pszName feature definition name
+ * @since GDAL 2.3
+ */
+void OGRFeatureDefn::SetName( const char* pszName )
+{
+    CPLFree(pszFeatureClassName);
+    pszFeatureClassName = CPLStrdup(pszName);
 }
 
 /************************************************************************/
@@ -608,7 +624,7 @@ int OGR_FD_GetGeomFieldCount( OGRFeatureDefnH hDefn )
         OGRAPISpy_FD_GetGeomFieldCount(hDefn);
 #endif
 
-    return ((OGRFeatureDefn *) hDefn)->GetGeomFieldCount();
+    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetGeomFieldCount();
 }
 
 /************************************************************************/

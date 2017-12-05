@@ -29,14 +29,14 @@
  ****************************************************************************/
 
 class WMSMiniDriver_TiledWMS : public WMSMiniDriver {
+
 public:
     WMSMiniDriver_TiledWMS();
     virtual ~WMSMiniDriver_TiledWMS();
 
-public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) override;
-    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request, 
-                                const GDALWMSImageRequestInfo &iri, 
+    virtual CPLErr TiledImageRequest(WMSHTTPRequest &request,
+                                const GDALWMSImageRequestInfo &iri,
                                 const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:
@@ -44,7 +44,6 @@ protected:
     CPLString GetLowestScale(char **&list,int i);
     GDALWMSDataWindow m_data_window;
     char **m_requests;
-    CPLString m_end_url;
     int m_bsx;
     int m_bsy;
 };

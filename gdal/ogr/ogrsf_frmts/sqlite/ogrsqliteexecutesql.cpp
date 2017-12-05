@@ -30,11 +30,10 @@
 #include "ogr_api.h"
 #include "ogrsqlitevirtualogr.h"
 #include "ogrsqliteexecutesql.h"
+#include "ogrsqliteutility.h"
 #include "cpl_multiproc.h"
 
-#ifdef HAVE_SQLITE_VFS
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRSQLiteExecuteSQLLayer                       */
@@ -515,15 +514,15 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         osGeomColRaw = poGeomField->GetNameRef();
     const char* pszGeomColRaw = osGeomColRaw.c_str();
 
-    CPLString osGeomColEscaped(OGRSQLiteEscape(pszGeomColRaw));
+    CPLString osGeomColEscaped(SQLEscapeLiteral(pszGeomColRaw));
     const char* pszGeomColEscaped = osGeomColEscaped.c_str();
 
-    CPLString osLayerNameEscaped(OGRSQLiteEscape(osTableName));
+    CPLString osLayerNameEscaped(SQLEscapeLiteral(osTableName));
     const char* pszLayerNameEscaped = osLayerNameEscaped.c_str();
 
     CPLString osIdxNameRaw(CPLSPrintf("idx_%s_%s",
                     oLayerDesc.osLayerName.c_str(), pszGeomColRaw));
-    CPLString osIdxNameEscaped(OGRSQLiteEscapeName(osIdxNameRaw));
+    CPLString osIdxNameEscaped(SQLEscapeName(osIdxNameRaw));
 
     /* Make sure that the SRS is injected in spatial_ref_sys */
     OGRSpatialReference* poSRS = poGeomField->GetSpatialRef();
@@ -643,7 +642,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
                     "VirtualOGRSpatialIndex(%d, '%s', pkid, xmin, xmax, ymin, ymax)",
                     osIdxNameEscaped.c_str(),
                     nExtraDS,
-                    OGRSQLiteEscape(oLayerDesc.osLayerName).c_str());
+                    SQLEscapeLiteral(oLayerDesc.osLayerName).c_str());
 
     rc = sqlite3_exec( hDB, osSQL.c_str(), NULL, NULL, NULL );
     if( rc != SQLITE_OK )
@@ -668,7 +667,7 @@ int OGR2SQLITEDealWithSpatialColumn(OGRLayer* poLayer,
         const char* pszInsertInto = CPLSPrintf(
             "INSERT INTO \"%s\" (pkid, xmin, xmax, ymin, ymax) "
             "VALUES (?,?,?,?,?)", osIdxNameEscaped.c_str());
-        rc = sqlite3_prepare(hDB, pszInsertInto, -1, &hStmt, NULL);
+        rc = sqlite3_prepare_v2(hDB, pszInsertInto, -1, &hStmt, NULL);
     }
 
     OGR2SQLITE_IgnoreAllFieldsExceptGeometry(poLayer);
@@ -798,7 +797,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 
         poSQLiteDS = new OGRSQLiteDataSource();
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO");
-        const int nRet = poSQLiteDS->Open( pszTmpDBName, TRUE, NULL );
+        GDALOpenInfo oOpenInfo(pszTmpDBName,
+                               GDAL_OF_VECTOR | GDAL_OF_UPDATE);
+        const int nRet = poSQLiteDS->Open(&oOpenInfo);
         CPLSetThreadLocalConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", pszOldVal);
         if( !nRet )
         {
@@ -934,9 +935,9 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
             poSingleSrcLayer = poLayer;
 
         osSQL.Printf("CREATE VIRTUAL TABLE \"%s\" USING VirtualOGR(%d,'%s',%d,%d)",
-                OGRSQLiteEscapeName(osTableName).c_str(),
+                SQLEscapeName(osTableName).c_str(),
                 nExtraDS,
-                OGRSQLiteEscape(oLayerDesc.osLayerName).c_str(),
+                SQLEscapeLiteral(oLayerDesc.osLayerName).c_str(),
                 bFoundOGRStyle,
                 TRUE/*bExposeOGRNativeData*/);
 
@@ -976,14 +977,14 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
     int bEmptyLayer = FALSE;
 
     sqlite3_stmt *hSQLStmt = NULL;
-    int rc = sqlite3_prepare( hDB,
+    int rc = sqlite3_prepare_v2( hDB,
                               pszStatement, -1,
                               &hSQLStmt, NULL );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                "In ExecuteSQL(): sqlite3_prepare(%s):\n  %s",
+                "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
                 pszStatement, sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != NULL )
@@ -1071,31 +1072,3 @@ std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
 
     return oSetLayers;
 }
-
-#else // HAVE_SQLITE_VFS
-
-/************************************************************************/
-/*                          OGRSQLiteExecuteSQL()                       */
-/************************************************************************/
-
-OGRLayer * OGRSQLiteExecuteSQL( OGRDataSource* poDS,
-                                const char *pszStatement,
-                                OGRGeometry *poSpatialFilter,
-                                const char *pszDialect )
-{
-    CPLError(CE_Failure, CPLE_NotSupported,
-                "The SQLite version is to old to support the SQLite SQL dialect");
-    return NULL;
-}
-
-/************************************************************************/
-/*                   OGRSQLiteGetReferencedLayers()                     */
-/************************************************************************/
-
-std::set<LayerDesc> OGRSQLiteGetReferencedLayers(const char* pszStatement)
-{
-     std::set<LayerDesc> oSetLayers;
-     return oSetLayers;
-}
-
-#endif // HAVE_SQLITE_VFS

@@ -11,6 +11,10 @@ Aspatial Support
 Support for aspatial data (i.e. SQLite tables/views without a geometry column),
 potentially with associated metadata.
 
+This was used in GDAL 2.0 and GDAL 2.1, before the introduction of the 'attributes'
+data_type of GeoPackage v1.2. Starting with GDAL 2.2, 'attributes' will be used by default, so this
+extension is now legacy.
+
 ## Extension Author
 
 [GDAL - Geospatial Data Abstraction Library](http://gdal.org), author_name `gdal`.

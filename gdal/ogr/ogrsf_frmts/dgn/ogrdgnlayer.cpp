@@ -35,7 +35,7 @@
 #include <cmath>
 #include <list>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRDGNLayer()                              */
@@ -248,7 +248,7 @@ OGRFeature *OGRDGNLayer::GetFeature( GIntBig nFeatureId )
     // DGNReadElement(), but I will defer that for now.
 
     DGNElemCore *psElement = DGNReadElement( hDGN );
-    OGRFeature *poFeature = ElementToFeature( psElement );
+    OGRFeature *poFeature = ElementToFeature( psElement, 0 );
     DGNFreeElement( hDGN, psElement );
 
     if( poFeature == NULL )
@@ -303,7 +303,7 @@ void OGRDGNLayer::ConsiderBrush( DGNElemCore *psElement, const char *pszPen,
 /*                          ElementToFeature()                          */
 /************************************************************************/
 
-OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
+OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel )
 
 {
     OGRFeature  *poFeature = new OGRFeature( poFeatureDefn );
@@ -335,12 +335,18 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
     pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
                               anEntityNum + iLink, anMSLink + iLink, NULL );
-    while( pabyData && nLinkCount < MAX_LINK )
+    while( pabyData )
     {
         iLink++;
 
         if( anEntityNum[nLinkCount] != 0 || anMSLink[nLinkCount] != 0 )
+        {
             nLinkCount++;
+            if( nLinkCount == MAX_LINK )
+            {
+                break;
+            }
+        }
 
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
@@ -652,7 +658,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
           /* collect subsequent child geometries. */
           // we should disable the spatial filter ... add later.
-          for( int iChild = 0; iChild < psHdr->numelems; iChild++ )
+          for( int iChild = 0; iChild < psHdr->numelems &&
+                               nRecLevel < 20; iChild++ )
           {
               OGRFeature *poChildFeature = NULL;
               DGNElemCore *psChildElement = DGNReadElement( hDGN );
@@ -660,7 +667,8 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
 
               if( psChildElement != NULL )
               {
-                  poChildFeature = ElementToFeature( psChildElement );
+                  poChildFeature = ElementToFeature( psChildElement,
+                                                     nRecLevel + 1 );
                   DGNFreeElement( hDGN, psChildElement );
               }
 
@@ -726,7 +734,7 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
             continue;
         }
 
-        OGRFeature *poFeature = ElementToFeature( psElement );
+        OGRFeature *poFeature = ElementToFeature( psElement, 0 );
         DGNFreeElement( hDGN, psElement );
 
         if( poFeature == NULL )

@@ -93,6 +93,7 @@ class OGROpenFileGDBLayer : public OGRLayer
     static void         GetBoundsFuncEx(const void* hFeature,
                                         CPLRectObj* pBounds,
                                         void* pQTUserData);
+    void                TryToDetectMultiPatchKind();
 
 public:
 

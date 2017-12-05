@@ -29,7 +29,7 @@
 #include "cpl_conv.h"
 #include "ogr_db2.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRDB2AppendEscaped( )                     */
@@ -1108,7 +1108,7 @@ OGRErr OGRDB2TableLayer::PrepareFeature( OGRFeature *poFeature, char cType )
     for( int i = 0; i < nFieldCount; i++ )
     {
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
         if (bNeedComma)
@@ -1223,7 +1223,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
     for( int i = 0; i < nFieldCount; i++ )
     {
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
             continue;
 
 //        int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();

@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.49 2016-12-02 23:05:51 erouault Exp $ */
+/* $Id: tif_pixarlog.c,v 1.54 2017-07-10 10:40:28 erouault Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -636,29 +636,27 @@ PixarLogGuessDataFmt(TIFFDirectory *td)
 	return guess;
 }
 
+#define TIFF_SIZE_T_MAX ((size_t) ~ ((size_t)0))
+#define TIFF_TMSIZE_T_MAX (tmsize_t)(TIFF_SIZE_T_MAX >> 1)
+
 static tmsize_t
 multiply_ms(tmsize_t m1, tmsize_t m2)
 {
-	tmsize_t bytes = m1 * m2;
-
-	if (m1 && bytes / m1 != m2)
-		bytes = 0;
-
-	return bytes;
+        if( m1 == 0 || m2 > TIFF_TMSIZE_T_MAX / m1 )
+            return 0;
+        return m1 * m2;
 }
 
 static tmsize_t
 add_ms(tmsize_t m1, tmsize_t m2)
 {
-	tmsize_t bytes = m1 + m2;
-
 	/* if either input is zero, assume overflow already occurred */
 	if (m1 == 0 || m2 == 0)
-		bytes = 0;
-	else if (bytes <= m1 || bytes <= m2)
-		bytes = 0;
+		return 0;
+	else if (m1 > TIFF_TMSIZE_T_MAX - m2)
+		return 0;
 
-	return bytes;
+	return m1 + m2;
 }
 
 static int
@@ -675,8 +673,19 @@ PixarLogSetupDecode(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState* sp = DecoderState(tif);
 	tmsize_t tbuf_size;
+        uint32 strip_height;
 
 	assert(sp != NULL);
+
+	/* This function can possibly be called several times by */
+	/* PredictorSetupDecode() if this function succeeds but */
+	/* PredictorSetup() fails */
+	if( (sp->state & PLSTATE_INIT) != 0 )
+		return 1;
+
+        strip_height = td->td_rowsperstrip;
+        if( strip_height > td->td_imagelength )
+            strip_height = td->td_imagelength;
 
 	/* Make sure no byte swapping happens on the data
 	 * after decompression. */
@@ -687,7 +696,7 @@ PixarLogSetupDecode(TIFF* tif)
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
 	tbuf_size = multiply_ms(multiply_ms(multiply_ms(sp->stride, td->td_imagewidth),
-				      td->td_rowsperstrip), sizeof(uint16));
+				      strip_height), sizeof(uint16));
 	/* add one more stride in case input ends mid-stride */
 	tbuf_size = add_ms(tbuf_size, sizeof(uint16) * sp->stride);
 	if (tbuf_size == 0)
@@ -699,6 +708,9 @@ PixarLogSetupDecode(TIFF* tif)
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN)
 		sp->user_datafmt = PixarLogGuessDataFmt(td);
 	if (sp->user_datafmt == PIXARLOGDATAFMT_UNKNOWN) {
+                _TIFFfree(sp->tbuf);
+                sp->tbuf = NULL;
+                sp->tbuf_size = 0;
 		TIFFErrorExt(tif->tif_clientdata, module,
 			"PixarLog compression can't handle bits depth/data format combination (depth: %d)", 
 			td->td_bitspersample);
@@ -706,6 +718,9 @@ PixarLogSetupDecode(TIFF* tif)
 	}
 
 	if (inflateInit(&sp->stream) != Z_OK) {
+                _TIFFfree(sp->tbuf);
+                sp->tbuf = NULL;
+                sp->tbuf_size = 0;
 		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
 		return (0);
 	} else {
@@ -774,6 +789,10 @@ PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 
 	(void) s;
 	assert(sp != NULL);
+
+        sp->stream.next_in = tif->tif_rawcp;
+	sp->stream.avail_in = (uInt) tif->tif_rawcc;
+
 	sp->stream.next_out = (unsigned char *) sp->tbuf;
 	assert(sizeof(sp->stream.avail_out)==4);  /* if this assert gets raised,
 	    we need to simplify this code to reflect a ZLib that is likely updated
@@ -818,6 +837,9 @@ PixarLogDecode(TIFF* tif, uint8* op, tmsize_t occ, uint16 s)
 		    (unsigned long) tif->tif_row, (TIFF_UINT64_T) sp->stream.avail_out);
 		return (0);
 	}
+
+        tif->tif_rawcp = sp->stream.next_in;
+        tif->tif_rawcc = sp->stream.avail_in;
 
 	up = sp->tbuf;
 	/* Swap bytes in the data if from a different endian machine. */

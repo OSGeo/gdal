@@ -37,7 +37,7 @@
 #include <algorithm>
 #include <limits>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -54,7 +54,7 @@ class HF2Dataset : public GDALPamDataset
     VSILFILE   *fp;
     double      adfGeoTransform[6];
     char       *pszWKT;
-    vsi_l_offset    *panBlockOffset;
+    vsi_l_offset    *panBlockOffset; // tile 0 is a the bottom left
 
     int         nTileSize;
     int         bHasLoaderBlockMap;
@@ -85,7 +85,7 @@ class HF2RasterBand : public GDALPamRasterBand
     friend class HF2Dataset;
 
     float*  pafBlockData;
-    int     nLastBlockYOff;
+    int     nLastBlockYOffFromBottom;
 
   public:
 
@@ -101,7 +101,7 @@ class HF2RasterBand : public GDALPamRasterBand
 
 HF2RasterBand::HF2RasterBand( HF2Dataset *poDSIn, int nBandIn, GDALDataType eDT ) :
     pafBlockData(NULL),
-    nLastBlockYOff(-1)
+    nLastBlockYOffFromBottom(-1)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -130,38 +130,47 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
 
 {
     HF2Dataset *poGDS = (HF2Dataset *) poDS;
-    // NOTE: the use of nBlockXSize for the y dimensions is intended
 
-    const int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    const int nYBlocks = DIV_ROUND_UP(nRasterYSize, nBlockXSize);
+    const int nXBlocks = DIV_ROUND_UP(nRasterXSize, poGDS->nTileSize);
 
     if (!poGDS->LoadBlockMap())
         return CE_Failure;
 
+    const int nMaxTileHeight= std::min(poGDS->nTileSize, nRasterYSize);
     if (pafBlockData == NULL)
     {
-        pafBlockData = (float*)VSIMalloc3(nXBlocks * sizeof(float), poGDS->nTileSize, poGDS->nTileSize);
+        if( nMaxTileHeight > 10*1024*1024 / nRasterXSize )
+        {
+            VSIFSeekL( poGDS->fp, 0, SEEK_END );
+            vsi_l_offset nSize = VSIFTellL(poGDS->fp);
+            if( nSize < static_cast<vsi_l_offset>(nMaxTileHeight) * nRasterXSize )
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "File too short");
+                return CE_Failure;
+            }
+        }
+        pafBlockData = (float*)VSIMalloc3(sizeof(float), nRasterXSize, nMaxTileHeight);
         if (pafBlockData == NULL)
             return CE_Failure;
     }
 
-    nLineYOff = nRasterYSize - 1 - nLineYOff;
+    const int nLineYOffFromBottom = nRasterYSize - 1 - nLineYOff;
 
-    const int nBlockYOff = nLineYOff / nBlockXSize;
-    const int nYOffInTile = nLineYOff % nBlockXSize;
+    const int nBlockYOffFromBottom = nLineYOffFromBottom / nBlockXSize;
+    const int nYOffInTile = nLineYOffFromBottom % nBlockXSize;
 
-    if (nBlockYOff != nLastBlockYOff)
+    if (nBlockYOffFromBottom != nLastBlockYOffFromBottom)
     {
-        nLastBlockYOff = nBlockYOff;
+        nLastBlockYOffFromBottom = nBlockYOffFromBottom;
 
-        memset(pafBlockData, 0, nXBlocks * sizeof(float) * nBlockXSize * nBlockXSize);
+        memset(pafBlockData, 0, sizeof(float) * nRasterXSize * nMaxTileHeight);
 
         /* 4 * nBlockXSize is the upper bound */
         void* pabyData = CPLMalloc( 4 * nBlockXSize );
 
         for(int nxoff = 0; nxoff < nXBlocks; nxoff++)
         {
-            VSIFSeekL(poGDS->fp, poGDS->panBlockOffset[(nYBlocks - 1 - nBlockYOff) * nXBlocks + nxoff], SEEK_SET);
+            VSIFSeekL(poGDS->fp, poGDS->panBlockOffset[nBlockYOffFromBottom * nXBlocks + nxoff], SEEK_SET);
             float fScale, fOff;
             VSIFReadL(&fScale, 4, 1, poGDS->fp);
             VSIFReadL(&fOff, 4, 1, poGDS->fp);
@@ -171,7 +180,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
             const int nTileWidth =
                 std::min(nBlockXSize, nRasterXSize - nxoff * nBlockXSize);
             const int nTileHeight =
-                std::min(nBlockXSize, nRasterYSize - nBlockYOff * nBlockXSize);
+                std::min(nBlockXSize, nRasterYSize - nBlockYOffFromBottom * nBlockXSize);
 
             for(int j=0;j<nTileHeight;j++)
             {
@@ -187,9 +196,14 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                 GInt32 nVal;
                 VSIFReadL(&nVal, 4, 1, poGDS->fp);
                 CPL_LSBPTR32(&nVal);
-                if( VSIFReadL(pabyData, static_cast<size_t>(nWordSize * (nTileWidth - 1)), 1, poGDS->fp) != 1 )
+                const size_t nToRead = static_cast<size_t>(nWordSize * (nTileWidth - 1));
+                const size_t nRead = VSIFReadL(pabyData, 1, nToRead, poGDS->fp);
+                if( nRead != nToRead )
                 {
-                    CPLError(CE_Failure, CPLE_FileIO, "File too short");
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "File too short: got %d, expected %d",
+                             static_cast<int>(nRead),
+                             static_cast<int>(nToRead));
                     CPLFree(pabyData);
                     return CE_Failure;
                 }
@@ -203,7 +217,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                     dfVal = std::numeric_limits<float>::max();
                 else if( dfVal < std::numeric_limits<float>::min() )
                     dfVal = std::numeric_limits<float>::min();
-                pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + 0] = static_cast<float>(dfVal);
+                pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + 0] = static_cast<float>(dfVal);
                 for(int i=1;i<nTileWidth;i++)
                 {
                     int nInc;
@@ -227,7 +241,7 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
                         dfVal = std::numeric_limits<float>::max();
                     else if( dfVal < std::numeric_limits<float>::min() )
                         dfVal = std::numeric_limits<float>::min();
-                    pafBlockData[nxoff * nBlockXSize * nBlockXSize + j * nBlockXSize + i] = static_cast<float>(dfVal);
+                    pafBlockData[nxoff * nBlockXSize + j * nRasterXSize + i] = static_cast<float>(dfVal);
                 }
             }
         }
@@ -237,8 +251,8 @@ CPLErr HF2RasterBand::IReadBlock( int nBlockXOff, int nLineYOff,
 
     const int nTileWidth =
         std::min(nBlockXSize, nRasterXSize - nBlockXOff * nBlockXSize);
-    memcpy(pImage, pafBlockData + nBlockXOff * nBlockXSize * nBlockXSize +
-                                  nYOffInTile * nBlockXSize,
+    memcpy(pImage, pafBlockData + nBlockXOff * nBlockXSize +
+                                  nYOffInTile * nRasterXSize,
            nTileWidth * sizeof(float));
 
     return CE_None;
@@ -290,6 +304,18 @@ int HF2Dataset::LoadBlockMap()
 
     const int nXBlocks = (nRasterXSize + nTileSize - 1) / nTileSize;
     const int nYBlocks = (nRasterYSize + nTileSize - 1) / nTileSize;
+    if( nXBlocks * nYBlocks > 1000000 )
+    {
+        vsi_l_offset nCurOff = VSIFTellL(fp);
+        VSIFSeekL( fp, 0, SEEK_END );
+        vsi_l_offset nSize = VSIFTellL(fp);
+        VSIFSeekL( fp, nCurOff, SEEK_SET );
+        // Check that the file is big enough to have 8 bytes per block
+        if( static_cast<vsi_l_offset>(nXBlocks) * nYBlocks > nSize / 8 )
+        {
+            return FALSE;
+        }
+    }
     panBlockOffset = (vsi_l_offset*) VSIMalloc3(sizeof(vsi_l_offset), nXBlocks, nYBlocks);
     if (panBlockOffset == NULL)
     {
@@ -300,7 +326,7 @@ int HF2Dataset::LoadBlockMap()
         for(int i = 0; i < nXBlocks; i++)
         {
             vsi_l_offset nOff = VSIFTellL(fp);
-            panBlockOffset[(nYBlocks - 1 - j) * nXBlocks + i] = nOff;
+            panBlockOffset[j * nXBlocks + i] = nOff;
             //VSIFSeekL(fp, 4 + 4, SEEK_CUR);
             float fScale, fOff;
             VSIFReadL(&fScale, 4, 1, fp);
@@ -455,6 +481,12 @@ GDALDataset *HF2Dataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     if (!GDALCheckDatasetDimensions(nXSize, nYSize))
+    {
+        return NULL;
+    }
+    const int nXBlocks = (nXSize + nTileSize - 1) / nTileSize;
+    const int nYBlocks = (nYSize + nTileSize - 1) / nTileSize;
+    if( nXBlocks > INT_MAX / nYBlocks )
     {
         return NULL;
     }
@@ -1012,12 +1044,35 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                 for(int k=1;k<nReqYSize*nReqXSize;k++)
                 {
                     float fVal = ((float*)pTileBuffer)[k];
+                    if( CPLIsNan(fVal) )
+                    {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                 "NaN value found");
+                        eErr = CE_Failure;
+                        break;
+                    }
                     if (fVal < fMinVal) fMinVal = fVal;
                     if (fVal > fMaxVal) fMaxVal = fVal;
                 }
+                if( eErr == CE_Failure )
+                    break;
 
                 float fIntRange = (fMaxVal - fMinVal) / fVertPres;
+                if( fIntRange > static_cast<float>(std::numeric_limits<int>::max()) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "VERTICAL_PRECISION too small regarding actual range of values");
+                    eErr = CE_Failure;
+                    break;
+                }
                 float fScale = (fMinVal == fMaxVal) ? 1 : (fMaxVal - fMinVal) / fIntRange;
+                if( fScale == 0.0f )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Scale == 0.0f");
+                    eErr = CE_Failure;
+                    break;
+                }
                 float fOffset = fMinVal;
                 WriteFloat(fp, fScale); /* scale */
                 WriteFloat(fp, fOffset); /* offset */
@@ -1025,14 +1080,14 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
                 {
                     float fLastVal = ((float*)pTileBuffer)[(nReqYSize - k - 1) * nReqXSize + 0];
                     float fIntLastVal = (fLastVal - fOffset) / fScale;
-                    CPLAssert(fIntLastVal >= -2147483648.0f && fIntLastVal <= 2147483647.0f);
+                    CPLAssert(fIntLastVal <= static_cast<float>(std::numeric_limits<int>::max()));
                     int nLastVal = (int)fIntLastVal;
                     GByte nWordSize = 1;
                     for(int l=1;l<nReqXSize;l++)
                     {
                         float fVal = ((float*)pTileBuffer)[(nReqYSize - k - 1) * nReqXSize + l];
                         float fIntVal = (fVal - fOffset) / fScale;
-                        CPLAssert(fIntVal >= -2147483648.0f && fIntVal <= 2147483647.0f);
+                        CPLAssert(fIntVal <= static_cast<float>(std::numeric_limits<int>::max()));
                         const int nVal = (int)fIntVal;
                         const int nDiff = nVal - nLastVal;
                         CPLAssert((int)((GIntBig)nVal - nLastVal) == nDiff);
@@ -1093,7 +1148,13 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (eErr != CE_None)
         return NULL;
 
-    return (GDALDataset*) GDALOpen(osFilename.c_str(), GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(osFilename.c_str(), GA_ReadOnly);
+    HF2Dataset* poDS = reinterpret_cast<HF2Dataset*>(Open(&oOpenInfo));
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

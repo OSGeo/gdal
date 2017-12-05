@@ -44,11 +44,42 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include "cpl_port.h" // in case of -DDEBUG_BOOL
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* used by ogrdxflayer.cpp */
 void rbspline2( int npts,int k,int p1,double b[],double h[],
-                bool xflag, double x[], double p[] );
+                bool bCalculateKnots, double x[], double p[] );
+
+/* used by DWG driver */
+void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
+void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
+
+/************************************************************************/
+/*                               knotu()                                */
+/************************************************************************/
+
+/*  Subroutine to generate a B-spline uniform (periodic) knot vector.
+
+    c            = order of the basis function
+    n            = the number of defining polygon vertices
+    nplus2       = index of x() for the first occurrence of the maximum knot vector value
+    nplusc       = maximum value of the knot vector -- $n + c$
+    x[]          = array containing the knot vector
+*/
+
+static void knotu(int n,int c,double x[])
+
+{
+  int nplusc, /* nplus2, */i;
+
+    nplusc = n + c;
+    /* nplus2 = n + 2; */
+
+    x[1] = 0;
+    for (i = 2; i <= nplusc; i++){
+        x[i] = i-1;
+    }
+}
 
 /************************************************************************/
 /*                                knot()                                */
@@ -137,12 +168,20 @@ static void rbasis( int c, double t, int npts,
             double d = 0.0;
             double e = 0.0;
             if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
-                d = ((t-x[i])*temp[i])/(x[i+k-1]-x[i]);
+            {
+                double denom = x[i+k-1]-x[i];
+                if( denom != 0 )
+                    d = ((t-x[i])*temp[i])/denom;
+            }
             // else
             //    d = 0.0 ;
 
             if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
-                e = ((x[i+k]-t)*temp[i+1])/(x[i+k]-x[i+1]);
+            {
+                double denom = x[i+k]-x[i+1];
+                if( denom != 0 )
+                    e = ((x[i+k]-t)*temp[i+1])/denom;
+            }
             // else
             //     e = 0.0;
 
@@ -178,10 +217,10 @@ static void rbasis( int c, double t, int npts,
 }
 
 /************************************************************************/
-/*                              rbspline()                              */
+/*                             rbspline2()                              */
 /************************************************************************/
 
-/*  Subroutine to generate a rational B-spline curve using an uniform open knot vector
+/*  Subroutine to generate a rational B-spline curve.
 
     C code for An Introduction to NURBS
     by David F. Rogers. Copyright (C) 2000 David F. Rogers,
@@ -207,11 +246,13 @@ static void rbasis( int c, double t, int npts,
                   p[3] contains the z-component of the point
     p1          = number of points to be calculated on the curve
     t           = parameter value 0 <= t <= npts - k + 1
-    x[]         = array containing the knot vector
+    bCalculateKnots  = when set to true, x will be filled with the knot() routine,
+                  otherwise its content will be used.
+    knots[]     = array containing the knot vector (must be npts + k + 1 large)
 */
 
 void rbspline2( int npts,int k,int p1,double b[],double h[],
-                bool xflag, double x[], double p[] )
+                bool bCalculateKnots, double knots[], double p[] )
 
 {
     const int nplusc = npts + k;
@@ -221,25 +262,25 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
 
 /* generate the uniform open knot vector */
 
-    if( xflag == true )
-        knot(npts, k, x);
+    if( bCalculateKnots == true )
+        knot(npts, k, knots);
 
     int icount = 0;
 
 /*    calculate the points on the rational B-spline curve */
 
     double t = 0.0;
-    const double step = ((double)x[nplusc])/((double)(p1-1));
+    const double step = ((double)knots[nplusc])/((double)(p1-1));
 
     for( int i1 = 1; i1<= p1; i1++ )
     {
-        if( (double)x[nplusc] - t < 5e-6 )
+        if( (double)knots[nplusc] - t < 5e-6 )
         {
-            t = (double)x[nplusc];
+            t = (double)knots[nplusc];
         }
 
         /* generate the basis function for this value of t */
-        rbasis(k, t, npts, x, h, &(nbasis[0]));
+        rbasis(k, t, npts, knots, h, &(nbasis[0]));
         for( int j = 1; j <= 3; j++ )
         {      /* generate a point on the curve */
             int jcount = j;
@@ -248,6 +289,141 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
             for( int i = 1; i <= npts; i++ )
             { /* Do local matrix multiplication */
                 const double temp = nbasis[i]*b[jcount];
+                p[icount + j] = p[icount + j] + temp;
+                jcount = jcount + 3;
+            }
+        }
+        icount = icount + 3;
+        t = t + step;
+    }
+}
+
+/************************************************************************/
+/*                              rbspline()                              */
+/************************************************************************/
+
+/*  Subroutine to generate a rational B-spline curve using an uniform open knot vector
+
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
+
+    Name: rbspline.c
+    Language: C
+    Subroutines called: knot.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 297
+
+    b[]         = array containing the defining polygon vertices
+                  b[1] contains the x-component of the vertex
+                  b[2] contains the y-component of the vertex
+                  b[3] contains the z-component of the vertex
+    h[]         = array containing the homogeneous weighting factors 
+    k           = order of the B-spline basis function
+    nbasis      = array containing the basis functions for a single value of t
+    nplusc      = number of knot values
+    npts        = number of defining polygon vertices
+    p[,]        = array containing the curve points
+                  p[1] contains the x-component of the point
+                  p[2] contains the y-component of the point
+                  p[3] contains the z-component of the point
+    p1          = number of points to be calculated on the curve
+    t           = parameter value 0 <= t <= npts - k + 1
+    x[]         = array containing the knot vector
+*/
+
+void rbspline(int npts,int k,int p1,double b[],double h[], double p[])
+
+{
+    std::vector<double> x (npts + k + 1, 0.0);
+    rbspline2( npts,k,p1,b,h,true,&x[0],p );
+}
+
+/************************************************************************/
+/*                              rbsplinu()                              */
+/************************************************************************/
+
+/*  Subroutine to generate a rational B-spline curve using an uniform periodic knot vector
+
+    C code for An Introduction to NURBS
+    by David F. Rogers. Copyright (C) 2000 David F. Rogers,
+    All rights reserved.
+
+    Name: rbsplinu.c
+    Language: C
+    Subroutines called: knotu.c, rbasis.c, fmtmul.c
+    Book reference: Chapter 4, Alg. p. 298
+
+    b[]         = array containing the defining polygon vertices
+                  b[1] contains the x-component of the vertex
+                  b[2] contains the y-component of the vertex
+                  b[3] contains the z-component of the vertex
+    h[]         = array containing the homogeneous weighting factors 
+    k           = order of the B-spline basis function
+    nbasis      = array containing the basis functions for a single value of t
+    nplusc      = number of knot values
+    npts        = number of defining polygon vertices
+    p[,]        = array containing the curve points
+                  p[1] contains the x-component of the point
+                  p[2] contains the y-component of the point
+                  p[3] contains the z-component of the point
+    p1          = number of points to be calculated on the curve
+    t           = parameter value 0 <= t <= npts - k + 1
+    x[]         = array containing the knot vector
+*/
+
+void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[])
+
+{
+    int i,j,icount,jcount;
+    int i1;
+    int nplusc;
+
+    double step;
+    double t;
+    double temp;
+    std::vector<double> nbasis;
+    std::vector<double> x;
+
+    nplusc = npts + k;
+
+    x.resize( nplusc+1);
+    nbasis.resize(npts+1);
+
+/*  zero and redimension the knot vector and the basis array */
+
+    for(i = 0; i <= npts; i++){
+        nbasis[i] = 0.;
+    }
+
+    for(i = 0; i <= nplusc; i++){
+        x[i] = 0;
+    }
+
+/* generate the uniform periodic knot vector */
+
+    knotu(npts,k,&(x[0]));
+
+    icount = 0;
+
+/*    calculate the points on the rational B-spline curve */
+
+    t = k-1;
+    step = ((double)((npts)-(k-1)))/((double)(p1-1));
+
+    for (i1 = 1; i1<= p1; i1++){
+
+        if (x[nplusc] - t < 5e-6){
+            t = x[nplusc];
+        }
+
+        rbasis(k,t,npts,&(x[0]),h,&(nbasis[0]));      /* generate the basis function for this value of t */
+
+        for (j = 1; j <= 3; j++){      /* generate a point on the curve */
+            jcount = j;
+            p[icount+j] = 0.;
+
+            for (i = 1; i <= npts; i++){ /* Do local matrix multiplication */
+                temp = nbasis[i]*b[jcount];
                 p[icount + j] = p[icount + j] + temp;
                 jcount = jcount + 3;
             }

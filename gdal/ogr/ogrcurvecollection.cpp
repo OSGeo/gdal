@@ -40,7 +40,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -213,7 +213,7 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
 /************************************************************************/
 
 OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
-                                                   unsigned char * pabyData,
+                                                   const unsigned char * pabyData,
                                                    int& nSize,
                                                    int& nDataOffset,
                                                    OGRwkbByteOrder& eByteOrder,
@@ -249,54 +249,67 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
 
 OGRErr OGRCurveCollection::importBodyFromWkb(
     OGRGeometry* poGeom,
-    unsigned char * pabyData,
+    const unsigned char * pabyData,
     int nSize,
-    int nDataOffset,
     int bAcceptCompoundCurve,
     OGRErr (*pfnAddCurveDirectlyFromWkb)(OGRGeometry* poGeom,
                                          OGRCurve* poCurve),
-    OGRwkbVariant eWkbVariant )
+    OGRwkbVariant eWkbVariant,
+    int& nBytesConsumedOut )
 {
-
+    nBytesConsumedOut = -1;
 /* -------------------------------------------------------------------- */
 /*      Get the Geoms.                                                  */
 /* -------------------------------------------------------------------- */
     const int nIter = nCurveCount;
     nCurveCount = 0;
+    int nDataOffset = 0;
     for( int iGeom = 0; iGeom < nIter; iGeom++ )
     {
         OGRGeometry* poSubGeom = NULL;
 
         // Parses sub-geometry.
-        unsigned char* pabySubData = pabyData + nDataOffset;
+        const unsigned char* pabySubData = pabyData + nDataOffset;
         if( nSize < 9 && nSize != -1 )
             return OGRERR_NOT_ENOUGH_DATA;
 
-        OGRwkbGeometryType eSubGeomType = wkbUnknown;
+        OGRwkbGeometryType eFlattenSubGeomType = wkbUnknown;
         if( OGRReadWKBGeometryType( pabySubData, eWkbVariant,
-                                    &eSubGeomType ) != OGRERR_NONE )
+                                    &eFlattenSubGeomType ) != OGRERR_NONE )
             return OGRERR_FAILURE;
+        eFlattenSubGeomType = wkbFlatten(eFlattenSubGeomType);
 
         OGRErr eErr = OGRERR_NONE;
-        if( (eSubGeomType != wkbCompoundCurve &&
-             OGR_GT_IsCurve(eSubGeomType)) ||
-            (bAcceptCompoundCurve && eSubGeomType == wkbCompoundCurve) )
+        int nSubGeomBytesConsumedOut = -1;
+        if( (eFlattenSubGeomType != wkbCompoundCurve &&
+             OGR_GT_IsCurve(eFlattenSubGeomType)) ||
+            (bAcceptCompoundCurve && eFlattenSubGeomType == wkbCompoundCurve) )
         {
             eErr = OGRGeometryFactory::
                 createFromWkb( pabySubData, NULL,
-                               &poSubGeom, nSize, eWkbVariant );
+                               &poSubGeom, nSize, eWkbVariant,
+                               nSubGeomBytesConsumedOut );
         }
         else
         {
             CPLDebug(
                 "OGR",
                 "Cannot add geometry of type (%d) to geometry of type (%d)",
-                eSubGeomType, poGeom->getGeometryType());
+                eFlattenSubGeomType, poGeom->getGeometryType());
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
         if( eErr == OGRERR_NONE )
         {
+            CPLAssert( nSubGeomBytesConsumedOut > 0 );
+            if( nSize != -1 )
+            {
+                CPLAssert( nSize >= nSubGeomBytesConsumedOut );
+                nSize -= nSubGeomBytesConsumedOut;
+            }
+
+            nDataOffset += nSubGeomBytesConsumedOut;
+
             OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poSubGeom);
             if( poCurve == NULL )
             {
@@ -311,12 +324,8 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
             return eErr;
         }
 
-        const int nSubGeomWkbSize = poSubGeom->WkbSize();
-        if( nSize != -1 )
-            nSize -= nSubGeomWkbSize;
-
-        nDataOffset += nSubGeomWkbSize;
     }
+    nBytesConsumedOut = nDataOffset;
 
     return OGRERR_NONE;
 }
@@ -541,25 +550,20 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
     OGREnvelope3D oGeomEnv;
     bool bExtentSet = false;
 
+    *psEnvelope = OGREnvelope3D();
     for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
     {
         if( !papoCurves[iGeom]->IsEmpty() )
         {
-            if( !bExtentSet )
-            {
-                papoCurves[iGeom]->getEnvelope( psEnvelope );
-                bExtentSet = true;
-            }
-            else
-            {
-                papoCurves[iGeom]->getEnvelope( &oGeomEnv );
-                psEnvelope->Merge( oGeomEnv );
-            }
+            bExtentSet = true;
+            papoCurves[iGeom]->getEnvelope( &oGeomEnv );
+            psEnvelope->Merge( oGeomEnv );
         }
     }
 
     if( !bExtentSet )
     {
+        // To be backward compatible when called on empty geom
         psEnvelope->MinX = 0.0;
         psEnvelope->MinY = 0.0;
         psEnvelope->MinZ = 0.0;
@@ -575,7 +579,12 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 OGRBoolean OGRCurveCollection::IsEmpty() const
 {
-    return nCurveCount == 0;
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        if( !papoCurves[iGeom]->IsEmpty() )
+            return FALSE;
+    }
+    return TRUE;
 }
 
 /************************************************************************/
@@ -632,6 +641,20 @@ void OGRCurveCollection::setMeasured( OGRGeometry* poGeom,
     }
 
     poGeom->OGRGeometry::setMeasured( bIsMeasured );
+}
+
+/************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCurveCollection::assignSpatialReference( OGRGeometry* poGeom,
+                                                 OGRSpatialReference * poSR )
+{
+    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    {
+        papoCurves[iGeom]->assignSpatialReference( poSR );
+    }
+    poGeom->OGRGeometry::assignSpatialReference( poSR );
 }
 
 /************************************************************************/

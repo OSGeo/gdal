@@ -46,9 +46,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
-
-using std::vector;
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -122,6 +120,7 @@ retry:  // TODO(schwehr): Stop using goto.
     {
         const char* pszExt = CPLGetExtension(pszFilename);
         if( EQUAL(pszExt, "zip") || EQUAL(pszExt, "tar") || EQUAL(pszExt, "gz")
+            || pszFilename[strlen(pszFilename)-1] == '}'
 #ifdef DEBUG
             // For AFL, so that .cur_input is detected as the archive filename.
             || EQUAL( CPLGetFilename(pszFilename), ".cur_input" )
@@ -160,9 +159,14 @@ retry:  // TODO(schwehr): Stop using goto.
     if( fpL != NULL )
     {
         bStatOK = TRUE;
-        const int nBufSize = 1025;
-        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize, 1) );
-        nHeaderBytesTried = nBufSize - 1;
+        int nBufSize =
+            atoi(CPLGetConfigOption("GDAL_INGESTED_BYTES_AT_OPEN", "1024"));
+        if( nBufSize < 1024 )
+            nBufSize = 1024;
+        else if( nBufSize > 10 * 1024 * 1024) 
+            nBufSize = 10 * 1024 * 1024;
+        pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize+1, 1) );
+        nHeaderBytesTried = nBufSize;
         nHeaderBytes = static_cast<int>(
             VSIFReadL( pabyHeader, 1, nHeaderBytesTried, fpL ) );
         VSIRewindL( fpL );
@@ -200,7 +204,7 @@ retry:  // TODO(schwehr): Stop using goto.
             // my_remote_utm.tif.  This helps a lot for GDAL based readers that
             // only provide file explorers to open datasets.
             const int nBufSize = 2048;
-            vector<char> oFilename(nBufSize);
+            std::vector<char> oFilename(nBufSize);
             char *szPointerFilename = &oFilename[0];
             int nBytes = static_cast<int>(
                 readlink( pszFilename, szPointerFilename, nBufSize ) );

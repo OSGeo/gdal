@@ -29,9 +29,10 @@
 
 #include "kearat.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable)
+KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKEATable,
+                            KEARasterBand *poBand)
 {
     for( size_t nColumnIndex = 0; nColumnIndex < poKEATable->getMaxGlobalColIdx(); nColumnIndex++ )
     {
@@ -48,6 +49,7 @@ KEARasterAttributeTable::KEARasterAttributeTable(kealib::KEAAttributeTable *poKE
         m_aoFields.push_back(sKEAField);
     }
     m_poKEATable = poKEATable;
+    m_poBand = poBand;
 }
 
 KEARasterAttributeTable::~KEARasterAttributeTable()
@@ -575,7 +577,7 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField, int iSt
             }
             catch(kealib::KEAException &e)
             {
-                fprintf(stderr,"Failed to read/write attribute table: %s %d %d %ld\n", e.what(), iStartRow, iLength, m_poKEATable->getSize() );
+                //fprintf(stderr,"Failed to read/write attribute table: %s %d %d %ld\n", e.what(), iStartRow, iLength, m_poKEATable->getSize() );
                 CPLError( CE_Failure, CPLE_AppDefined, "Failed to read/write attribute table: %s", e.what() );
                 return CE_Failure;
             }
@@ -903,6 +905,36 @@ CPLErr KEARasterAttributeTable::CreateColumn( const char *pszFieldName,
     }
 
     return CE_None;
+}
+
+CPLErr KEARasterAttributeTable::SetLinearBinning( double dfRow0Min,
+                                            double dfBinSize )
+{
+    size_t nRows = m_poKEATable->getSize();
+
+    osWorkingResult.Printf( "%.16g", dfRow0Min);
+    m_poBand->SetMetadataItem("STATISTICS_HISTOMIN", osWorkingResult);
+    osWorkingResult.Printf( "%.16g", (nRows - 1) * dfBinSize + dfRow0Min);
+    m_poBand->SetMetadataItem("STATISTICS_HISTOMAX", osWorkingResult);
+
+    // STATISTICS_HISTONUMBINS now returned by metadata
+
+    return CE_None;
+}
+
+int KEARasterAttributeTable::GetLinearBinning( double *pdfRow0Min,
+                                            double *pdfBinSize ) const
+{
+    const char *pszMin = m_poBand->GetMetadataItem("STATISTICS_HISTOMIN");
+    const char *pszMax = m_poBand->GetMetadataItem("STATISTICS_HISTOMAX");
+    if( ( pszMin == NULL ) || ( pszMax == NULL ) )
+    {
+        return FALSE;
+    } 
+    *pdfRow0Min = atof(pszMin);
+    *pdfBinSize = (atof(pszMax) - *pdfRow0Min) / (m_poKEATable->getSize() - 1);
+
+    return TRUE;
 }
 
 CPLXMLNode *KEARasterAttributeTable::Serialize() const

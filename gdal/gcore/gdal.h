@@ -61,10 +61,13 @@ typedef enum {
     /*! Sixteen bit signed integer */           GDT_Int16 = 3,
     /*! Thirty two bit unsigned integer */      GDT_UInt32 = 4,
     /*! Thirty two bit signed integer */        GDT_Int32 = 5,
+    /* TODO?(#6879): GDT_UInt64 */
+    /* TODO?(#6879): GDT_Int64 */
     /*! Thirty two bit floating point */        GDT_Float32 = 6,
     /*! Sixty four bit floating point */        GDT_Float64 = 7,
     /*! Complex Int16 */                        GDT_CInt16 = 8,
     /*! Complex Int32 */                        GDT_CInt32 = 9,
+    /* TODO?(#6879): GDT_CInt64 */
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
     GDT_TypeCount = 12          /* maximum type # + 1 */
@@ -74,11 +77,17 @@ int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits( GDALDataType eDataType );
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsInteger( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsFloating( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsSigned( GDALDataType );
 const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
 GDALDataType CPL_DLL CPL_STDCALL GDALGetDataTypeByName( const char * );
 GDALDataType CPL_DLL CPL_STDCALL GDALDataTypeUnion( GDALDataType, GDALDataType );
+GDALDataType CPL_DLL CPL_STDCALL GDALDataTypeUnionWithValue( GDALDataType eDT, double dValue, int bComplex );
+GDALDataType CPL_DLL CPL_STDCALL GDALFindDataType( int nBits, int bSigned, int bFloating, int bComplex );
+GDALDataType CPL_DLL CPL_STDCALL GDALFindDataTypeForValue( double dValue, int bComplex );
 double CPL_DLL GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int* pbClamped, int* pbRounded );
-GDALDataType CPL_STDCALL GDALGetNonComplexDataType( GDALDataType );
+GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType( GDALDataType );
 
 /**
 * status of the asynchronous stream
@@ -175,7 +184,7 @@ typedef struct
 /*! Types of color interpretation for raster bands. */
 typedef enum
 {
-    GCI_Undefined=0,
+    /*! Undefined */                                      GCI_Undefined=0,
     /*! Greyscale */                                      GCI_GrayIndex=1,
     /*! Paletted (see associated color table) */          GCI_PaletteIndex=2,
     /*! Red band of RGBA image */                         GCI_RedBand=3,
@@ -192,7 +201,7 @@ typedef enum
     /*! Y Luminance */                                    GCI_YCbCr_YBand=14,
     /*! Cb Chroma */                                      GCI_YCbCr_CbBand=15,
     /*! Cr Chroma */                                      GCI_YCbCr_CrBand=16,
-    /*! Max current value */                              GCI_Max=16
+    /*! Max current value (equals to GCI_YCbCr_CrBand currently) */ GCI_Max=16
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
@@ -307,10 +316,24 @@ typedef GIntBig GSpacing;
 /** Capability set by a driver that implements the Open() API. */
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
 
-/** Capability set by a driver that implements the Create() API. */
+/** Capability set by a driver that implements the Create() API.
+ * 
+ * If GDAL_DCAP_CREATE is set, but GDAL_DCAP_CREATECOPY not, a generic
+ * CreateCopy() implementation is available and will use the Create() API of
+ * the driver.
+ * So to test if some CreateCopy() implementation is available, generic or
+ * specialize, test for both GDAL_DCAP_CREATE and GDAL_DCAP_CREATECOPY.
+ */
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 
-/** Capability set by a driver that implements the CreateCopy() API. */
+/** Capability set by a driver that implements the CreateCopy() API. 
+ * 
+ * If GDAL_DCAP_CREATECOPY is not defined, but GDAL_DCAP_CREATE is set, a generic
+ * CreateCopy() implementation is available and will use the Create() API of
+ * the driver.
+ * So to test if some CreateCopy() implementation is available, generic or
+ * specialize, test for both GDAL_DCAP_CREATE and GDAL_DCAP_CREATECOPY.
+ */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
 /** Capability set by a driver that can read/create datasets through the VSI*L API. */
@@ -346,6 +369,18 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS"
 
+/** Capability set by a non-spatial driver having no support for geometries. E.g. non-spatial
+ * vector drivers (e.g. spreadsheet format drivers) do not support geometries,
+ * and accordingly will have this capability present.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
+
+/** Capability set by drivers which support feature styles.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_FEATURE_STYLES     "DCAP_FEATURE_STYLES"
+
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
 GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate( GDALDriverH hDriver,
@@ -358,10 +393,9 @@ GDALCreateCopy( GDALDriverH, const char *, GDALDatasetH,
 GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriver( const char * pszFilename,
                                             char ** papszFileList );
 
-GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx( const char* pszFilename,
-                                                      unsigned int nIdentifyFlags,
-                                                      const char* const* papszAllowedDrivers,
-                                                      const char* const* papszFileList );
+GDALDriverH CPL_DLL CPL_STDCALL GDALIdentifyDriverEx(
+    const char *pszFilename, unsigned int nIdentifyFlags,
+    const char *const *papszAllowedDrivers, const char *const *papszFileList);
 
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALOpen( const char *pszFilename, GDALAccess eAccess ) CPL_WARN_UNUSED_RESULT;
@@ -484,6 +518,7 @@ int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );
 int CPL_DLL         CPL_STDCALL GDALGetDriverCount( void );
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriver( int );
+GDALDriverH CPL_DLL CPL_STDCALL GDALCreateDriver( void );
 void        CPL_DLL CPL_STDCALL GDALDestroyDriver( GDALDriverH );
 int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
@@ -630,6 +665,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
 void CPL_DLL * CPL_STDCALL GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL CPL_STDCALL GDALReferenceDataset( GDALDatasetH );
 int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
+int CPL_DLL CPL_STDCALL GDALReleaseDataset( GDALDatasetH );
 
 CPLErr CPL_DLL CPL_STDCALL
 GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
@@ -963,29 +999,29 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 /** Strucutre to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
-typedef struct {
-    /*! Line offset */         double      dfLINE_OFF;
-    /*! Sample/Pixel offset */ double      dfSAMP_OFF;
-    /*! Latitude offset */     double      dfLAT_OFF;
-    /*! Longitude offset */    double      dfLONG_OFF;
-    /*! Height offset */       double      dfHEIGHT_OFF;
+typedef struct
+{
+    double dfLINE_OFF;   /*!< Line offset */
+    double dfSAMP_OFF;   /*!< Sample/Pixel offset */
+    double dfLAT_OFF;    /*!< Latitude offset */
+    double dfLONG_OFF;   /*!< Longitude offset */
+    double dfHEIGHT_OFF; /*!< Height offset */
 
-     /*! Line scale */         double      dfLINE_SCALE;
-    /*! Sample/Pixel scale */  double      dfSAMP_SCALE;
-    /*! Latitude scale */      double      dfLAT_SCALE;
-    /*! Longitude scale */     double      dfLONG_SCALE;
-    /*! Height scale */        double      dfHEIGHT_SCALE;
+    double dfLINE_SCALE;   /*!< Line scale */
+    double dfSAMP_SCALE;   /*!< Sample/Pixel scale */
+    double dfLAT_SCALE;    /*!< Latitude scale */
+    double dfLONG_SCALE;   /*!< Longitude scale */
+    double dfHEIGHT_SCALE; /*!< Height scale */
 
-     /*! Line Numerator Coefficients */          double  adfLINE_NUM_COEFF[20];
-    /*! Line Denominator Coefficients */         double  adfLINE_DEN_COEFF[20];
-    /*! Sample/Pixel Numerator Coefficients */   double  adfSAMP_NUM_COEFF[20];
-    /*! Sample/Pixel Denominator Coefficients */ double  adfSAMP_DEN_COEFF[20];
+    double adfLINE_NUM_COEFF[20]; /*!< Line Numerator Coefficients */
+    double adfLINE_DEN_COEFF[20]; /*!< Line Denominator Coefficients */
+    double adfSAMP_NUM_COEFF[20]; /*!< Sample/Pixel Numerator Coefficients */
+    double adfSAMP_DEN_COEFF[20]; /*!< Sample/Pixel Denominator Coefficients */
 
-    /*! Minimum longitude */   double      dfMIN_LONG;
-    /*! Minimum latitude */    double      dfMIN_LAT;
-    /*! Maximum longitude */   double      dfMAX_LONG;
-    /*! Maximum latitude */    double      dfMAX_LAT;
-
+    double dfMIN_LONG; /*!< Minimum longitude */
+    double dfMIN_LAT;  /*!< Minimum latitude */
+    double dfMAX_LONG; /*!< Maximum longitude */
+    double dfMAX_LAT;  /*!< Maximum latitude */
 } GDALRPCInfo;
 
 int CPL_DLL CPL_STDCALL GDALExtractRPCInfo( char **, GDALRPCInfo * );
@@ -1053,7 +1089,7 @@ typedef enum {
     /*! Color Range Green Maximum */       GFU_GreenMax = 15,
     /*! Color Range Blue Maximum */        GFU_BlueMax = 16,
     /*! Color Range Alpha Maximum */       GFU_AlphaMax = 17,
-    /*! Maximum GFU value */               GFU_MaxCount
+    /*! Maximum GFU value (equals to GFU_AlphaMax+1 currently) */ GFU_MaxCount
 } GDALRATFieldUsage;
 
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL

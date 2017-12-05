@@ -32,9 +32,8 @@
 #ifndef HFAOPEN_H_INCLUDED
 #define HFAOPEN_H_INCLUDED
 
-/* -------------------------------------------------------------------- */
-/*      Include standard portability stuff.                             */
-/* -------------------------------------------------------------------- */
+#include <cstdio>
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 

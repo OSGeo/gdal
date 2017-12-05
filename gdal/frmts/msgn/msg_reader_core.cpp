@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "cpl_error.h"
 
 #include "msg_reader_core.h"
 #include "msg_basic_types.h"
@@ -43,7 +44,7 @@
 #ifdef GDAL_SUPPORT
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #else
 #define VSIFSeek(fp, pos, ref)    CPL_IGNORE_RET_VAL(fseek(fp, pos, ref))
@@ -118,23 +119,25 @@ Msg_reader_core::Msg_reader_core( const char* fname ) :
     _open_success(false)
 {
     memset(&_main_header, 0, sizeof(_main_header));
+    memset(&_sec_header, 0, sizeof(_sec_header));
     SecondaryProdHeaderInit(&_sec_header);
     for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
       _calibration[i].cal_slope = 0.0;
       _calibration[i].cal_offset = 0.0;
     }
 
-    FILE* fin = fopen(fname, "rb");
+    VSILFILE* fin = VSIFOpenL(fname, "rb");
     if( !fin )
     {
-        fprintf(stderr, "Could not open file %s\n", fname);
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Could not open file %s", fname);
         return;
     }
     read_metadata_block(fin);
-    fclose(fin);
+    VSIFCloseL(fin);
 }
 
-Msg_reader_core::Msg_reader_core( FILE* fp ) :
+Msg_reader_core::Msg_reader_core( VSILFILE* fp ) :
     _lines(0),
     _columns(0),
     _line_start(0),
@@ -158,6 +161,7 @@ Msg_reader_core::Msg_reader_core( FILE* fp ) :
     _open_success(false)
 {
     memset(&_main_header, 0, sizeof(_main_header));
+    memset(&_sec_header, 0, sizeof(_sec_header));
 
     SecondaryProdHeaderInit(&_sec_header);
     for (size_t i=0; i < MSG_NUM_CHANNELS; ++i) {
@@ -168,32 +172,32 @@ Msg_reader_core::Msg_reader_core( FILE* fp ) :
     read_metadata_block(fp);
 }
 
-void Msg_reader_core::read_metadata_block(FILE* fin) {
+void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     _open_success = true;
 
     unsigned int i;
 
-    CPL_IGNORE_RET_VAL(VSIFRead(&_main_header, sizeof(_main_header), 1, fin));
-    CPL_IGNORE_RET_VAL(VSIFRead(&_sec_header, sizeof(_sec_header), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&_main_header, sizeof(_main_header), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&_sec_header, sizeof(_sec_header), 1, fin));
 
 #ifdef DEBUG
     // print out all the fields in the header
     PH_DATA* hd = (PH_DATA*)&_main_header;
     for (int i=0; i < 6; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);
+        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
 
     for (i=0; i < 5; i++) {
-        printf("%s %s %s", hdi->name, hdi->size, hdi->address);
+        printf("%s %s %s", hdi->name, hdi->size, hdi->address);/*ok*/
         hdi++;
     }
     hd = (PH_DATA*)(&_main_header.totalFileSize);
     for (int i=0; i < 19; i++) {
         to_string(*hd);
-        printf("[%02d] %s %s", i, hd->name, hd->value);
+        printf("[%02d] %s %s", i, hd->name, hd->value);/*ok*/
         hd++;
     }
 #endif // DEBUG
@@ -212,8 +216,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         }
     }
 #ifdef DEBUG
-    printf("Data: %u %u\n", _f_data_offset, _f_data_size);
-    printf("Header: %u %u\n", _f_header_offset, _f_header_size);
+    printf("Data: %u %u\n", _f_data_offset, _f_data_size);/*ok*/
+    printf("Header: %u %u\n", _f_header_offset, _f_header_size);/*ok*/
 #endif // DEBUG
 
     unsigned int lines;
@@ -229,7 +233,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     _columns -= cols - 1;
 
 #ifdef DEBUG
-    printf("lines = %u, cols = %u\n", _lines, _columns);
+    printf("lines = %u, cols = %u\n", _lines, _columns);/*ok*/
 #endif // DEBUG
 
     int records_per_line = 0;
@@ -243,7 +247,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     }
 
 #ifdef DEBUG
-    printf("reading a total of %d records per line\n", records_per_line);
+    printf("reading a total of %d records per line\n", records_per_line);/*ok*/
 #endif // DEBUG
 
     // extract time fields, assume that SNIT is the correct field:
@@ -256,8 +260,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     // read radiometric block
     RADIOMETRIC_PROCESSING_RECORD rad;
     off_t offset = RADIOMETRICPROCESSING_RECORD_OFFSET + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    CPL_IGNORE_RET_VAL(VSIFSeek(fin, offset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFRead(&rad, sizeof(RADIOMETRIC_PROCESSING_RECORD), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&rad, sizeof(RADIOMETRIC_PROCESSING_RECORD), 1, fin));
     to_native(rad);
     memcpy((void*)_calibration, (void*)&rad.level1_5ImageCalibration,sizeof(_calibration));
 
@@ -265,10 +269,10 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_calibration[i].cal_slope < 0 || _calibration[i].cal_slope > 0.4)
         {
-            printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);
+            printf("Warning: calibration slope (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_slope);/*ok*/
         }
         if (_calibration[i].cal_offset > 0 || _calibration[i].cal_offset < -20) {
-            printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n", _calibration[i].cal_offset);
+            printf("Warning: calibration offset (%f) out of nominal range. MSG reader probably broken\n",/*ok*/ _calibration[i].cal_offset);
         }
     }
 #endif
@@ -276,8 +280,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     // read image description block
     IMAGE_DESCRIPTION_RECORD idr;
     offset = RADIOMETRICPROCESSING_RECORD_OFFSET  - IMAGEDESCRIPTION_RECORD_LENGTH + _f_header_offset + sizeof(GP_PK_HEADER) + sizeof(GP_PK_SH1) + 1;
-    CPL_IGNORE_RET_VAL(VSIFSeek(fin, offset, SEEK_SET));
-    CPL_IGNORE_RET_VAL(VSIFRead(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&idr, sizeof(IMAGE_DESCRIPTION_RECORD), 1, fin));
     to_native(idr);
     _line_dir_step = idr.referencegrid_visir.lineDirGridStep;
     _col_dir_step = idr.referencegrid_visir.columnDirGridStep;
@@ -288,7 +292,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     GP_PK_SH1    sub_header;
     SUB_VISIRLINE visir_line;
 
-    CPL_IGNORE_RET_VAL(VSIFSeek(fin, _f_data_offset, SEEK_SET));
+    CPL_IGNORE_RET_VAL(VSIFSeekL(fin, _f_data_offset, SEEK_SET));
 
     _hrv_packet_size = 0;
     _interline_spacing = 0;
@@ -302,14 +306,14 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
     }
 
     do {
-        CPL_IGNORE_RET_VAL(VSIFRead(&gp_header, sizeof(GP_PK_HEADER), 1, fin));
-        CPL_IGNORE_RET_VAL(VSIFRead(&sub_header, sizeof(GP_PK_SH1), 1, fin));
-        CPL_IGNORE_RET_VAL(VSIFRead(&visir_line, sizeof(SUB_VISIRLINE), 1, fin));
+        CPL_IGNORE_RET_VAL(VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin));
+        CPL_IGNORE_RET_VAL(VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin));
+        CPL_IGNORE_RET_VAL(VSIFReadL(&visir_line, sizeof(SUB_VISIRLINE), 1, fin));
         to_native(visir_line);
         to_native(gp_header);
 
         // skip over the actual line data
-        CPL_IGNORE_RET_VAL(VSIFSeek(fin,
+        CPL_IGNORE_RET_VAL(VSIFSeekL(fin,
             gp_header.packetLength - (sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1),
             SEEK_CUR
         ));
@@ -331,7 +335,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
                 _hrv_bytes_per_line = gp_header.packetLength - (unsigned int)(sizeof(GP_PK_SH1) + sizeof(SUB_VISIRLINE) - 1);
                 _hrv_packet_size = gp_header.packetLength + (unsigned int)sizeof(GP_PK_HEADER) + 1;
                 _interline_spacing +=  3*_hrv_packet_size;
-                CPL_IGNORE_RET_VAL(VSIFSeek(fin, 2*gp_header.packetLength, SEEK_CUR ));
+                CPL_IGNORE_RET_VAL(VSIFSeekL(fin, 2*gp_header.packetLength, SEEK_CUR ));
             }
         }
     } while (band_count > 0);

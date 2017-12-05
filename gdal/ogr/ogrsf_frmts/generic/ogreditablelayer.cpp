@@ -29,7 +29,7 @@
 #include "ogreditablelayer.h"
 #include "../mem/ogr_mem.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 

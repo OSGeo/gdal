@@ -38,7 +38,7 @@
 #include "vrtdataset.h"
 #include <map>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -217,7 +217,7 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 const char *DIMAPDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -270,7 +270,7 @@ class DIMAPRasterBand : public GDALPamRasterBand
 
   public:
                    DIMAPRasterBand( DIMAPDataset *, int, VRTSourcedRasterBand * );
-    virtual       ~DIMAPRasterBand() {};
+    virtual       ~DIMAPRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,

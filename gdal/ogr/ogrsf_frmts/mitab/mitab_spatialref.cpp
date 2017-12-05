@@ -27,192 +27,25 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log: mitab_spatialref.cpp,v $
- * Revision 1.55  2011-06-11 00:35:00  fwarmerdam
- * add support for reading google mercator (#4115)
- *
- * Revision 1.54  2010-10-07 18:46:26  aboudreault
- * Fixed bad use of CPLAtof when locale setting doesn't use . for float (GDAL bug #3775)
- *
- * Revision 1.53  2010-09-07 16:48:08  aboudreault
- * Removed incomplete patch for affine params support in mitab. (bug 1155)
- *
- * Revision 1.52  2010-07-08 17:21:12  aboudreault
- * Put back New_Zealand Datum in asDatumInfoList
- *
- * Revision 1.51  2010-07-07 19:00:15  aboudreault
- * Cleanup Win32 Compile Warnings (GDAL bug #2930)
- *
- * Revision 1.50  2010-07-05 17:20:14  aboudreault
- * Added Krovak projection support (bug 2230)
- *
- * Revision 1.49  2009-10-15 16:16:37  fwarmerdam
- * add the default EPSG/OGR name for new zealand datums (gdal #3187)
- *
- * Revision 1.48  2007/11/21 21:15:45  dmorissette
- * Fix asDatumInfoList[] and asSpheroidInfoList[] defns/refs (bug 1826)
- *
- * Revision 1.47  2006/07/10 17:58:48  fwarmerdam
- * North_American_Datum_1927 support
- *
- * Revision 1.46  2006/07/07 19:41:32  dmorissette
- * Fixed problem with uninitialized sTABProj.nAffineFlag (bug 1254,1319)
- *
- * Revision 1.45  2006/05/09 20:21:29  fwarmerdam
- * Coordsys false easting and northing are in the units of the coordsys, not
- * necessarily meters.  Adjusted mitab_spatialref.cpp to reflect this.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1113
- *
- * Revision 1.44  2005/09/29 20:15:36  dmorissette
- * More improvements to handling of modified TM projections 21-24.
- * Added correct name stings to all datum definitions (Anthony D, bug 1155)
- *
- * Revision 1.43  2005/05/12 22:07:52  dmorissette
- * Improved handling of Danish modified TM proj#21-24 (hss, bugs 976,1010)
- *
- * Revision 1.42  2005/03/22 23:24:54  dmorissette
- * Added support for datum id in .MAP header (bug 910)
- *
- * Revision 1.41  2004/10/11 20:50:04  dmorissette
- * 7 new datum defns, 1 fixed and list of ellipsoids updated (Bug 608,Uffe K.)
- *
- * Revision 1.40  2003/03/21 14:20:42  warmerda
- * fixed up regional mercator handling, was screwing up transverse mercator
- *
- * Revision 1.39  2002/12/19 20:46:01  warmerda
- * fixed spelling of Provisional_South_American_Datum_1956
- *
- * Revision 1.38  2002/12/12 20:12:18  warmerda
- * fixed signs of rotational parameters for TOWGS84 in WKT
- *
- * Revision 1.37  2002/10/15 14:33:30  warmerda
- * Added untested support in mitab_spatialref.cpp, and mitab_coordsys.cpp for
- * projections Regional Mercator (26), Polyconic (27), Azimuthal Equidistant -
- * All origin latitudes (28), and Lambert Azimuthal Equal Area - any aspect
- * (29).
- *
- * Revision 1.36  2002/09/05 15:38:16  warmerda
- * one more ogc datum name
- *
- * Revision 1.35  2002/09/05 15:23:22  warmerda
- * added some EPSG datum names provided by Siro Martello @ Cadcorp
- *
- * Revision 1.34  2002/04/01 19:49:24  warmerda
- * added support for cassini/soldner - proj 30
- *
- * Revision 1.33  2002/03/01 19:00:15  warmerda
- * False Easting/Northing should be in the linear units of measure in MapInfo,
- * but in OGRSpatialReference/WKT they are always in meters.  Convert accordingly.
- *
- * Revision 1.32  2001/10/25 16:13:41  warmerda
- * Added OGC string for datum 12
- *
- * Revision 1.31  2001/08/10 21:25:59  warmerda
- * SetSpatialRef() now makes a clone of the srs instead of taking a ref to it
- *
- * Revision 1.30  2001/04/23 17:38:06  warmerda
- * fixed use of freed points bug for datum 999/9999
- *
- * Revision 1.29  2001/04/04 21:43:19  warmerda
- * added code to set WGS84 values
- *
- * Revision 1.28  2001/01/23 21:23:42  daniel
- * Added projection bounds lookup table, called from TABFile::SetProjInfo()
- *
- * Revision 1.27  2001/01/22 16:00:53  warmerda
- * reworked swiss projection support
- *
- * Revision 1.26  2001/01/19 21:56:18  warmerda
- * added untested support for Swiss Oblique Mercator
- *
- * Revision 1.25  2000/12/05 14:56:55  daniel
- * Added some missing unit names (aliases) in TABFile::SetSpatialRef()
- *
- * Revision 1.24  2000/10/16 21:44:50  warmerda
- * added nonearth support
- *
- * Revision 1.23  2000/10/16 18:01:20  warmerda
- * added check for NULL on passed in spatial ref
- *
- * Revision 1.22  2000/10/02 14:46:36  daniel
- * Added 7 parameter datums with id 1000+
- *
- * Revision 1.21  2000/09/29 22:09:18  daniel
- * Added new datums/ellipsoid from MapInfo V6.0
- *
- * Revision 1.20  2000/09/28 16:39:44  warmerda
- * Avoid warnings for unused, and uninitialized variables
- *
- * Revision 1.19  2000/02/07 17:43:17  daniel
- * Fixed offset in parsing of custom datum string in SetSpatialRef()
- *
- * Revision 1.18  2000/02/04 05:30:50  daniel
- * Fixed problem in GetSpatialRef() with szDatumName[] buffer size and added
- * use of an epsilon in comparing of datum parameters.
- *
- * Revision 1.17  2000/01/15 22:30:45  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.16  1999/12/21 20:01:47  warmerda
- * added support for DATUM 0
- *
- * Revision 1.15  1999/11/11 02:56:17  warmerda
- * fixed problems with stereographic
- *
- * Revision 1.14  1999/11/10 20:13:12  warmerda
- * implement spheroid table
- *
- * Revision 1.13  1999/11/09 22:31:38  warmerda
- * initial implementation of MIF CoordSys support
- *
- * Revision 1.12  1999/10/19 16:31:32  warmerda
- * Improved mile support.
- *
- * Revision 1.11  1999/10/19 16:27:50  warmerda
- * Added support for Mile (units=0).  Also added support for nonearth
- * projections.
- *
- * Revision 1.10  1999/10/05 18:56:08  warmerda
- * fixed lots of bugs with projection parameters
- *
- * Revision 1.9  1999/10/04 21:17:47  warmerda
- * Make sure that asDatumInfoList comparisons include the ellipsoid code.
- * Don't include OGC name for local NAD27 values.  Put NAD83 ahead of GRS80
- * so it will be used in preference even though they are identical parms.
- *
- * Revision 1.8  1999/10/04 19:46:42  warmerda
- * assorted changes, including rework of units
- *
- * Revision 1.7  1999/09/28 04:52:17  daniel
- * Added missing param in sprintf() format for szDatumName[]
- *
- * Revision 1.6  1999/09/28 02:51:46  warmerda
- * Added ellipsoid codes, and bulk of write implementation.
- *
- * Revision 1.5  1999/09/27 21:23:41  warmerda
- * added more projections
- *
- * Revision 1.4  1999/09/24 04:01:28  warmerda
- * remember nMIDatumId changes
- *
- * Revision 1.3  1999/09/23 19:51:38  warmerda
- * added datum mapping table support
- *
- * Revision 1.2  1999/09/22 23:04:59  daniel
- * Handle reference count on OGRSpatialReference properly
- *
- * Revision 1.1  1999/09/21 19:39:22  daniel
- * Moved Get/SetSpatialRef() to a separate file
- *
  **********************************************************************/
 
+#include "cpl_port.h"
 #include "mitab.h"
 
 #include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "mitab_priv.h"
+#include "ogr_spatialref.h"
+#include "ogr_srs_api.h"
+
+CPL_CVSID("$Id$")
 
 /* -------------------------------------------------------------------- */
 /*      This table was automatically generated by doing translations    */
@@ -348,7 +181,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 6124, 112, "Rikets_koordinatsystem_1990",10,498,  -36, 568,  0, 0, 0, 0, 0},
 { 0,    113, "Lisboa_DLX",                 4, -303, -62, 105,  0, 0, 0, 0, 0},
 { 0,    114, "Melrica_1973_D73",           4, -223, 110, 37,   0, 0, 0, 0, 0},
-{ 0,    115, "Euref_98",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
+{ 6258, 115, "Euref_89",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "GDA94",                      0, 0,    0,   0,    0, 0, 0, 0, 0},
 { 6283, 116, "Geocentric_Datum_of_Australia_1994", 0, 0, 0, 0, 0, 0, 0, 0, 0},
 { 6167, 117, "NZGD2000",                   0, 0,    0,   0,    0, 0, 0, 0, 0},
@@ -383,16 +216,23 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    145, "Sierra_Leone_1960",          6, -88,  4,   101,  0, 0, 0, 0, 0},
 { 6156, 146, "S_JTSK_Ferro",               10, 589, 76,  480,  0, 0, 0, 0, 0},
 { 6297, 147, "Tananarive_1925",            4, -189, -242,-91,  0, 0, 0, 0, 0},
-{ 0,    148, "Voirol_1874",                6, -73,  -247,227,  0, 0, 0, 0, 0},
+{ 6811, 148, "Voirol_1874",                6, -73,  -247,227,  0, 0, 0, 0, 0},
 { 0,    149, "Virol_1960",                 6, -123, -206,219,  0, 0, 0, 0, 0},
-{ 6148, 150, "Hartebeesthoek94",           0, 0,    0,   0,    0, 0, 0, 0, 0},
-{ 6122, 151, "ATS77",                      51, 0, 0, 0, 0, 0, 0, 0, 0},
-{ 6612, 152, "JGD2000",                    0, 0, 0, 0, 0, 0, 0, 0, 0},
+{ 6148, 150, "Hartebeesthoek94",           28,   0,    0,  0,  0, 0, 0, 0, 0},
+{ 6122, 151, "ATS77",                      51,   0,    0,  0,  0, 0, 0, 0, 0},
+{ 6612, 152, "JGD2000",                    0,    0,    0,  0,  0, 0, 0, 0, 0},
+{ 0,    153, "HGRS87",                     0, -199.87, 74.79, 246.62, 0, 0, 0, 0, 0},
+{ 6214, 154, "Beijing 1954",               3, -31.4, 144.3, 81.2, 0, 0, 0, 0, 0},
+{ 6754, 155, "Libya (LGD 2006)",           4, 208.4058, 109.8777, 2.5764, 0, 0, 0, 0, 0},
+{ 6317, 156, "Dealul Piscului 1970",       3, 28, -121, -77, 0, 0, 0, 0, 0},
 { 0,    157, "WGS_1984",                   54, 0, 0, 0, 0, 0, 0, 0, 0}, // Google merc
+{ 6150, 158, "CH1903+ datum for Switzerland", 10, 674.374, 15.056, 405.346, 0, 0, 0, 0, 0},
+{ 0,    159, "Schwarzeck (updated) datum for Namibia", 14, 616.8, 103.3, -256.9, 0, 0, 0, 0, 0 },
+{ 0,    161, "NOAA GCS_Sphere",            55, 0, 0, 0, 0, 0, 0, 0, 0 },
 { 0,    1000,"DHDN_Potsdam_Rauenberg",     10,582,  105, 414, -1.04, -0.35, 3.08, 8.3, 0},
 { 6284, 1001,"Pulkovo_1942",               3, 24,   -123, -94, -0.02, 0.25, 0.13, 1.1, 0},
-{ 6275, 1002,"NTF_Paris_Meridian",         30,-168, -60, 320, 0, 0, 0, 0, 2.337229166667},
-{ 0,    1003,"Switzerland_CH_1903",        10,660.077,13.551, 369.344, 0.804816, 0.577692, 0.952236, 5.66,0},
+{ 6807, 1002,"NTF_Paris_Meridian",         30,-168, -60, 320, 0, 0, 0, 0, 2.337229166667},
+{ 6149, 1003,"Switzerland_CH_1903",        10,660.077,13.551, 369.344, 0.804816, 0.577692, 0.952236, 5.66,0},
 { 6237, 1004,"Hungarian_Datum_1972",       21,-56,  75.77, 15.31, -0.37, -0.2, -0.21, -1.01, 0},
 { 0,    1005,"Cape_7_Parameter",           28,-134.73,-110.92, -292.66, 0, 0, 0, 1, 0},
 { 6203, 1006,"AGD84_7_Param_Aust",         2, -117.763,-51.51, 139.061, -0.292, -0.443, -0.277, -0.191, 0},
@@ -408,8 +248,15 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    1016,"Finnish_KKJ",                4, -96.062, -82.428, -121.754, -4.801, -0.345, 1.376, 1.496, 0},
 { 6610, 1017,"Xian 1980",                  53, 24, -123, -94, -0.02, -0.25, 0.13, 1.1, 0},
 { 0,    1018,"Lithuanian Pulkovo 1942",    4, -40.59527, -18.54979, -69.33956, -2.508, -1.8319, 2.6114, -4.2991, 0},
-{ 0,    1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
+{ 6313, 1019,"Belgian 1972 7 Parameter",   4, -99.059, 53.322, -112.486, -0.419, 0.83, -1.885, 0.999999, 0},
 { 6818, 1020,"S-JTSK with Ferro prime meridian", 10, 589, 76, 480, 0, 0, 0, 0, -17.666666666667},
+{ 1031, 1021,"Serbia datum MGI 1901",      10, 574.027, 170.175, 401.545, 4.88786, -0.66524, -13.24673, 6.88933, 0},
+{ 0,    1022,"North Sahara 7-parameter",   6, -38.7086, -128.8054, 118.8837, 0.83822, 7.38459, -1.57989, 3.9904, 0},
+{ 0,    1023,"Hungarian Projection System (EOV) - updated", 21, 52.684, -71.194, -13.975, 0.312, 0.1063, 0.3729, 1.0191, 0 },
+{ 1052, 1024,"S-JTSK (Krovak) Coordinate system - updated", 10, 570.6934, 85.6936, 462.8393, -4.99825, -1.58663, -5.26114, 3.5430155, 0 },
+{ 0,    1025,"JTSK03 (Slovak Republic)",   10, 485.014055, 169.473618, 483.842943, -7.78625453, -4.39770887, -4.10248899, 0, 0 },
+{ 0,    9999,"Bosnia-Herzegovina",         10, 472.8677, 187.8769, 544.7084, -5.76198422, -5.3222842, 12.80666941, 1.54517287, 0 },
+{ 6181, 9999,"Luxembourg 1930 / Gauss",     4, -192.986, 13.673, -39.309, 0.4099, 2.9332, -2.6881, 0.43, 0 },
 
 { -1,   -1, NULL,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
@@ -1323,7 +1170,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
         psDatumInfo = NULL;
     }
 
-    char szDatumName[160] = {};
+    char szDatumName[200] = {};
     if( psDatumInfo == NULL )
     {
         if( sTABProj.adDatumParams[0] == 0.0
@@ -1438,7 +1285,10 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     {
         dfPMOffset = sTABProj.adDatumParams[4];
 
-        pszPMName = "non-Greenwich";
+        if( fabs(dfPMOffset - 2.337229166667) < 1e-10)
+            pszPMName = "Paris";
+        else
+            pszPMName = "non-Greenwich";
     }
 
     /*-----------------------------------------------------------------
@@ -1490,12 +1340,33 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     if( sTABProj.nProjId == 3
         && sTABProj.nDatumId == 33
         && sTABProj.nEllipsoidId == 0
-        && TAB_EQUAL(poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0), 3.0)
-        && TAB_EQUAL(poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0), 46.5) )
+        && TAB_EQUAL(poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0), 3.0)
+        && TAB_EQUAL(poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0), 46.5) )
     {
         poSpatialRef->SetNode( "PROJCS", "RGF93 / Lambert-93" );
         poSpatialRef->SetNode( "PROJCS|GEOGCS", "RGF93");
         poSpatialRef->SetNode( "PROJCS|GEOGCS|DATUM", "Reseau_Geodesique_Francais_1993");
+    }
+
+    if( sTABProj.nProjId == 3 )
+    {
+        // If the LCC_2SP can be turned into a LCC_1SP that has the same
+        // latitude of origin, then it is a better candidate
+        OGRSpatialReference* poLCC1SP =
+            poSpatialRef->convertToOtherProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP);
+        if( poLCC1SP )
+        {
+            if( TAB_EQUAL(poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                          poLCC1SP->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0)) )
+            {
+                delete poSpatialRef;
+                poSpatialRef = poLCC1SP;
+            }
+            else
+            {
+                delete poLCC1SP;
+            }
+        }
     }
 
     return poSpatialRef;
@@ -1621,10 +1492,10 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         sTABProj.nProjId = 9;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
@@ -1633,8 +1504,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
     {
         sTABProj.nProjId = 5;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
         nParmCount = 3;
 
@@ -1645,32 +1516,32 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
         sTABProj.nProjId = 2;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         nParmCount = 2;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_IV) )
     {
         sTABProj.nProjId = 14;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_ECKERT_VI) )
     {
         sTABProj.nProjId = 15;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
     {
         sTABProj.nProjId = 6;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
@@ -1679,16 +1550,16 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_GALL_STEREOGRAPHIC) )
     {
         sTABProj.nProjId = 17;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_HOTINE_OBLIQUE_MERCATOR) )
     {
         sTABProj.nProjId = 7;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_AZIMUTH,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1698,8 +1569,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
         sTABProj.nProjId = 4;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = 90.0;
         nParmCount = 3;
 
@@ -1710,22 +1581,40 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
     {
         sTABProj.nProjId = 3;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
+    else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        OGRSpatialReference* poOtherSRS =
+            poSpatialRef->convertToOtherProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP);
+        if( poOtherSRS )
+        {
+            sTABProj.nProjId = 3;
+            parms[0] = poOtherSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+            parms[1] = poOtherSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+            parms[2] = poOtherSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+            parms[3] = poOtherSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+            parms[4] = poOtherSRS->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+            parms[5] = poOtherSRS->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
+            nParmCount = 6;
+            delete poOtherSRS;
+        }
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
     {
         sTABProj.nProjId = 19;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
@@ -1734,8 +1623,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
     {
         sTABProj.nProjId = 10;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         nParmCount = 1; // FIXME for MIF export ?
 
@@ -1749,22 +1638,22 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_MILLER_CYLINDRICAL) )
     {
         sTABProj.nProjId = 11;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_MOLLWEIDE) )
     {
         sTABProj.nProjId = 13;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
     {
         sTABProj.nProjId = 18;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
@@ -1773,8 +1662,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
     {
         sTABProj.nProjId = 25;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
@@ -1783,22 +1672,22 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_ROBINSON) )
     {
         sTABProj.nProjId = 12;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_SINUSOIDAL) )
     {
         sTABProj.nProjId = 16;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         nParmCount = 1;
     }
 
     else if( EQUAL(pszProjection,SRS_PT_STEREOGRAPHIC) )
     {
         sTABProj.nProjId = 20;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1808,8 +1697,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if (EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC))
     {
         sTABProj.nProjId = 31;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR, 1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING, 0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0);
@@ -1819,8 +1708,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
     {
         sTABProj.nProjId = 8;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1830,8 +1719,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_21) ) // Encom 2003
     {
         sTABProj.nProjId = 21;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1841,8 +1730,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_22) ) // Encom 2003
     {
         sTABProj.nProjId = 22;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1852,8 +1741,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_23) ) // Encom 2003
     {
         sTABProj.nProjId = 23;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1863,8 +1752,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_24) ) // Encom 2003
     {
         sTABProj.nProjId = 24;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
@@ -1874,8 +1763,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
     {
         sTABProj.nProjId = 30;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
@@ -1884,8 +1773,8 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
     {
         sTABProj.nProjId = 27;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
@@ -1894,10 +1783,10 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
    else if( EQUAL(pszProjection,SRS_PT_KROVAK) )
    {
         sTABProj.nProjId = 32;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_PSEUDO_STD_PARALLEL_1,0.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_AZIMUTH,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[2] = poSpatialRef->GetNormProjParm(SRS_PP_PSEUDO_STD_PARALLEL_1,0.0);
+        parms[3] = poSpatialRef->GetNormProjParm(SRS_PP_AZIMUTH,0.0);
         parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
@@ -1906,11 +1795,17 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
   else if( EQUAL(pszProjection,SRS_PT_EQUIRECTANGULAR) )
   {
         sTABProj.nProjId = 33;
-        parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
-        parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+        parms[0] = poSpatialRef->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+        parms[1] = poSpatialRef->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
+  }
+
+  else
+  {
+      CPLError(CE_Warning, CPLE_AppDefined,
+               "No translation from %s to MapInfo known", pszProjection);
   }
 
     /* ==============================================================

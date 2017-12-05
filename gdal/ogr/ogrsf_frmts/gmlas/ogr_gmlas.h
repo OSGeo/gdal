@@ -309,6 +309,9 @@ class GMLASConfiguration
             OGR array types. */
         bool            m_bUseArrays;
 
+        /** Whether OGR field null state should be used. */
+        bool            m_bUseNullState;
+
         /** Whether geometries should be stored as XML in a OGR string field. */
         bool            m_bIncludeGeometryXML;
 
@@ -329,6 +332,9 @@ class GMLASConfiguration
 
         /** Whether to launder identifiers like postgresql does */
         bool            m_bPGIdentifierLaundering;
+
+        /* Maximum number of fields in an element considered for flattening. */
+        int             m_nMaximumFieldsForFlattening;
 
         /** Whether remote XSD schemas should be locally cached. */
         bool            m_bAllowXSDCache;
@@ -351,11 +357,40 @@ class GMLASConfiguration
         /** Whether technical layers should be exposed.  */
         bool            m_bExposeMetadataLayers;
 
+        /** For flatening rules, map prefix namespace to its URI */
+        std::map<CPLString, CPLString> m_oMapPrefixToURIFlatteningRules;
+
+        std::vector<CPLString> m_osForcedFlattenedXPath;
+
+        std::vector<CPLString> m_osDisabledFlattenedXPath;
+
+        enum SWEActivationMode
+        {
+            SWE_ACTIVATE_IF_NAMESPACE_FOUND,
+            SWE_ACTIVATE_TRUE,
+            SWE_ACTIVATE_FALSE
+        };
+
+        /** If and when activate SWE special processings */
+        SWEActivationMode m_eSWEActivationMode;
+
+        /** If enabling swe:DataRecord parsing */
+        bool m_bSWEProcessDataRecord;
+
+        /** If enabling swe:DataArray parsing */
+        bool m_bSWEProcessDataArray;
+
         /** For ignored xpaths, map prefix namespace to its URI */
         std::map<CPLString, CPLString> m_oMapPrefixToURIIgnoredXPaths;
 
         /** Ignored xpaths */
         std::vector<CPLString> m_aosIgnoredXPaths;
+
+        /** For type constraints, map prefix namespace to its URI */
+        std::map<CPLString, CPLString> m_oMapPrefixToURITypeConstraints;
+
+        /** Map an XPath to a list of potential types for its children */
+        std::map<CPLString, std::vector<CPLString> > m_oMapChildrenElementsConstraints;
 
         /* Beginning of Writer config */
 
@@ -475,6 +510,9 @@ class GMLASXPathMatcher
         bool MatchesRefXPath(
             const CPLString& osXPath,
             CPLString& osOutMatchedXPath ) const;
+
+        const std::map<CPLString, CPLString>& GetMapPrefixToURI() const
+            { return m_oMapPrefixToURIReferenceXPaths; }
 };
 
 /************************************************************************/
@@ -494,6 +532,8 @@ typedef enum
     GMLAS_FT_DOUBLE,
     GMLAS_FT_DECIMAL,
     GMLAS_FT_DATE,
+    GMLAS_FT_GYEAR,
+    GMLAS_FT_GYEAR_MONTH,
     GMLAS_FT_TIME,
     GMLAS_FT_DATETIME,
     GMLAS_FT_BASE64BINARY,
@@ -762,9 +802,20 @@ class GMLASSchemaAnalyzer
 {
         GMLASXPathMatcher& m_oIgnoredXPathMatcher;
 
+        GMLASXPathMatcher& m_oChildrenElementsConstraintsXPathMatcher;
+
+        GMLASXPathMatcher& m_oForcedFlattenedXPathMatcher;
+
+        GMLASXPathMatcher& m_oDisabledFlattenedXPathMatcher;
+
+        std::map<CPLString, std::vector<CPLString> > m_oMapChildrenElementsConstraints;
+
         /** Whether repeated strings, integers, reals should be in corresponding
             OGR array types. */
         bool m_bUseArrays;
+
+        /** Whether OGR field null state should be used. */
+        bool            m_bUseNullState;
 
         /** Whether, when dealing with schemas that import the
             GML namespace, and that at least one of them has
@@ -780,6 +831,9 @@ class GMLASSchemaAnalyzer
 
         /** Map from a namespace URI to the corresponding prefix */
         std::map<CPLString, CPLString> m_oMapURIToPrefix;
+
+        /** Map element XPath to its XSElementDeclaration* */
+        std::map<CPLString, XSElementDeclaration*> m_oMapXPathToEltDecl;
 
         typedef std::map<XSElementDeclaration*,
                                 std::vector<XSElementDeclaration*> >
@@ -814,12 +868,20 @@ class GMLASSchemaAnalyzer
         /** Whether to launder identifiers like postgresql does */
         bool            m_bPGIdentifierLaundering;
 
+        /* Maximum number of fields in an element considered for flattening. */
+        int             m_nMaximumFieldsForFlattening;
+
         /** GML version found: 2.1.1, 3.1.1 or 3.2.1 or empty*/
         CPLString m_osGMLVersionFound;
 
         /** Set of schemas opened */
         std::set<CPLString> m_oSetSchemaURLs;
-        
+
+        /** Map from namespace URI to namespace prefix coming from the
+         * examination of xmlns:foo=bar attributes of the top element of the
+         * GML document */
+        std::map<CPLString,CPLString> m_oMapDocNSURIToPrefix;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         XSModelGroupDefinition* GetGroupDefinition( const XSModelGroup* poModelGroup );
@@ -830,6 +892,8 @@ class GMLASSchemaAnalyzer
         void GetConcreteImplementationTypes(
                                 XSElementDeclaration* poParentElt,
                                 std::vector<XSElementDeclaration*>& apoImplEltList);
+        std::vector<XSElementDeclaration*>
+                    GetConstraintChildrenElements(const CPLString& osFullXPath);
         bool FindElementsWithMustBeToLevel(
                             const CPLString& osParentXPath,
                             XSModelGroup* poModelGroup,
@@ -839,7 +903,8 @@ class GMLASSchemaAnalyzer
                             std::vector<XSElementDeclaration*>& oVectorEltsForTopClass,
                             std::set<CPLString>& aoSetXPathEltsForTopClass,
                             XSModel* poModel,
-                            bool& bSimpleEnoughOut);
+                            bool& bSimpleEnoughOut,
+                            int& nCountSubEltsOut);
         void BuildMapCountOccurrencesOfSameName(
                     XSModelGroup* poModelGroup,
                     std::map< CPLString, int >& oMapCountOccurrencesOfSameName);
@@ -870,7 +935,9 @@ class GMLASSchemaAnalyzer
                         std::vector<XSElementDeclaration*>& apoSubEltList,
                         GMLASFeatureClass& oClass,
                         int nMaxOccurs,
-                        bool bForceJunctionTable);
+                        bool bEltNameWillNeedPrefix,
+                        bool bForceJunctionTable,
+                        bool bCaseOfConstraintChildren);
 
         bool IsGMLNamespace(const CPLString& osURI);
 
@@ -891,8 +958,16 @@ class GMLASSchemaAnalyzer
         CPL_DISALLOW_COPY_ASSIGN(GMLASSchemaAnalyzer)
 
     public:
-        explicit GMLASSchemaAnalyzer( GMLASXPathMatcher& oIgnoredXPathMatcher );
+                GMLASSchemaAnalyzer(
+                    GMLASXPathMatcher& oIgnoredXPathMatcher,
+                    GMLASXPathMatcher& oChildrenElementsConstraintsXPathMatcher,
+                    const std::map<CPLString, std::vector<CPLString> >&
+                                                        oMapChildrenElementsConstraints,
+                    GMLASXPathMatcher& oForcedFlattenedXPathMatcher,
+                    GMLASXPathMatcher& oDisabledFlattenedXPathMatcher);
+
         void SetUseArrays(bool b) { m_bUseArrays = b; }
+        void SetUseNullState(bool b) { m_bUseNullState = b; }
         void SetInstantiateGMLFeaturesOnly(bool b)
                                     { m_bInstantiateGMLFeaturesOnly = b; }
         void SetIdentifierMaxLength(int nLength)
@@ -901,6 +976,10 @@ class GMLASSchemaAnalyzer
                                     { m_bCaseInsensitiveIdentifier = b; }
         void SetPGIdentifierLaundering(bool b)
                                     { m_bPGIdentifierLaundering = b; }
+        void SetMaximumFieldsForFlattening(int n)
+                                    { m_nMaximumFieldsForFlattening = n; }
+        void SetMapDocNSURIToPrefix(const std::map<CPLString,CPLString>& oMap)
+                                    { m_oMapDocNSURIToPrefix = oMap; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,
@@ -965,6 +1044,12 @@ class OGRGMLASDataSource: public GDALDataset
 
         GMLASXPathMatcher              m_oIgnoredXPathMatcher;
 
+        GMLASXPathMatcher              m_oChildrenElementsConstraintsXPathMatcher;
+
+        GMLASXPathMatcher              m_oForcedFlattenedXPathMatcher;
+
+        GMLASXPathMatcher              m_oDisabledFlattenedXPathMatcher;
+
         GMLASSwapCoordinatesEnum       m_eSwapCoordinates;
 
         /** Base unique identifier */
@@ -981,6 +1066,11 @@ class OGRGMLASDataSource: public GDALDataset
         GMLASXLinkResolver             m_oXLinkResolver;
 
         CPLString                      m_osGMLVersionFound;
+
+        bool                           m_bFoundSWE;
+
+        // Pointers are also included in m_apoLayers
+        std::vector<OGRGMLASLayer*>    m_apoSWEDataArrayLayers;
 
         void TranslateClasses( OGRGMLASLayer* poParentLayer,
                                const GMLASFeatureClass& oFC );
@@ -1065,6 +1155,7 @@ class OGRGMLASLayer: public OGRLayer
         OGRGMLASDataSource            *m_poDS;
         GMLASFeatureClass              m_oFC;
         bool                           m_bLayerDefnFinalized;
+        int                            m_nMaxFieldIndex;
         OGRFeatureDefn                *m_poFeatureDefn;
 
         /** Map from XPath to corresponding field index in OGR layer
@@ -1095,6 +1186,8 @@ class OGRGMLASLayer: public OGRLayer
         /** OGR field index of the field that points to the parent ID */
         int                            m_nParentIDFieldIdx;
 
+        std::map<CPLString, CPLString> m_oMapSWEFieldToOGRFieldName;
+
         OGRFeature*                    GetNextRawFeature();
 
         bool                           InitReader();
@@ -1107,6 +1200,7 @@ class OGRGMLASLayer: public OGRLayer
                       const GMLASFeatureClass& oFC,
                       OGRGMLASLayer* poParentLayer,
                       bool bAlwaysGenerateOGRPKId);
+        explicit OGRGMLASLayer(const char* pszLayerName);
         virtual ~OGRGMLASLayer();
 
         virtual const char* GetName() override { return GetDescription(); }
@@ -1115,7 +1209,17 @@ class OGRGMLASLayer: public OGRLayer
         virtual OGRFeature* GetNextFeature() override;
         virtual int TestCapability( const char* ) override { return FALSE; }
 
+        void SetDataSource(OGRGMLASDataSource* poDS) { m_poDS = poDS; }
+
         void PostInit(bool bIncludeGeometryXML);
+        void ProcessDataRecordCreateFields(CPLXMLNode* psDataRecord,
+                                const std::vector<OGRFeature*>& apoFeatures,
+                                OGRLayer* poFieldsMetadataLayer);
+        void ProcessDataRecordFillFeature(CPLXMLNode* psDataRecord,
+                                          OGRFeature* poFeature);
+        void ProcessDataRecordOfDataArrayCreateFields(OGRGMLASLayer* poParentLayer,
+                                                      CPLXMLNode* psDataRecord,
+                                                      OGRLayer* poFieldsMetadataLayer);
         void CreateCompoundFoldedMappings();
 
         const GMLASFeatureClass& GetFeatureClass() const { return m_oFC; }
@@ -1314,6 +1418,25 @@ class GMLASReader : public DefaultHandler
         /** Initial pass to guess SRS, etc... */
         bool                        m_bInitialPass;
 
+        /** Whether to process swe:DataArray in a special way */
+        bool                        m_bProcessSWEDataArray;
+
+        /** Whether to process swe:DataArray in a special way */
+        bool                        m_bProcessSWEDataRecord;
+
+        /** Depth level of the swe:DataArray element */
+        int                         m_nSWEDataArrayLevel;
+
+        /** Field name to which the DataArray belongs to */
+        CPLString                   m_osSWEDataArrayParentField;
+
+        /** Depth level of the swe:DataRecord element */
+        int                         m_nSWEDataRecordLevel;
+
+        OGRLayer                   *m_poFieldsMetadataLayer;
+        OGRLayer                   *m_poLayersMetadataLayer;
+        OGRLayer                   *m_poRelationshipsLayer;
+
         /** Base unique identifier */
         CPLString                      m_osHash;
 
@@ -1339,6 +1462,9 @@ class GMLASReader : public DefaultHandler
         CPLString                      m_osAttrValue;
         CPLString                      m_osText;
 
+        std::vector<OGRGMLASLayer*>    m_apoSWEDataArrayLayers;
+        int                            m_nSWEDataArrayLayerIdx;
+
         void        SetField( OGRFeature* poFeature,
                               OGRGMLASLayer* poLayer,
                               int nAttrIdx,
@@ -1359,7 +1485,9 @@ class GMLASReader : public DefaultHandler
 
         void        AttachAsLastChild(CPLXMLNode* psNode);
 
-        void        ProcessGeometry();
+        void        ProcessSWEDataArray(CPLXMLNode* psRoot);
+        void        ProcessSWEDataRecord(CPLXMLNode* psRoot);
+        void        ProcessGeometry(CPLXMLNode* psRoot);
 
         void        ProcessAttributes(const Attributes& attrs);
         void        ProcessXLinkHref( const CPLString& osAttrXPath,
@@ -1378,6 +1506,8 @@ class GMLASReader : public DefaultHandler
                         const CPLString& osFieldXPath,
                         int& nInsertFieldIdx,
                         const GMLASXLinkResolutionConf::URLSpecificResolution& oRule );
+
+        bool        FillTextContent() const { return !m_bInitialPass && m_nCurFieldIdx >=0; }
 
     public:
                         GMLASReader(GMLASXSDCache& oCache,
@@ -1441,6 +1571,10 @@ class GMLASReader : public DefaultHandler
                           void* pProgressData,
                           bool bRemoveUnusedLayers,
                           bool bRemoveUnusedFields,
+                          bool bProcessSWEDataArray,
+                          OGRLayer* poFieldsMetadataLayer,
+                          OGRLayer* poLayersMetadataLayer,
+                          OGRLayer* poRelationshipsLayer,
                           std::set<CPLString>& aoSetRemovedLayerNames);
 
         static bool LoadXSDInParser( SAX2XMLReader* poParser,
@@ -1451,6 +1585,11 @@ class GMLASReader : public DefaultHandler
                                      Grammar** ppoGrammar,
                                      bool bSchemaFullChecking,
                                      bool bHandleMultipleImports );
+
+        void SetSWEDataArrayLayers( const std::vector<OGRGMLASLayer*>& ar );
+        void SetProcessDataRecord(bool b) { m_bProcessSWEDataRecord = b; }
+        const std::vector<OGRGMLASLayer*>& GetSWEDataArrayLayers() const
+            { return m_apoSWEDataArrayLayers; }
 };
 
 #endif // OGR_GMLAS_INCLUDED

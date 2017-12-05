@@ -63,10 +63,12 @@ char *GPJ_grass_to_wkt( struct Key_Value *,
 
 #define GRASS_MAX_COLORS 100000  // what is the right value
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if GRASS_VERSION_MAJOR  >= 7
 #define G_get_cellhd             Rast_get_cellhd
+#define G_get_window             Rast_get_window
+#define G_set_window             Rast_set_window
 #define G_raster_map_type        Rast_map_type
 #define G_read_fp_range          Rast_read_fp_range
 #define G_get_fp_range_min_max   Rast_get_fp_range_min_max

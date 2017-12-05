@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRDGNDataSource()                           */
@@ -81,15 +81,15 @@ int OGRDGNDataSource::Open( const char * pszNewName,
     if( bTestOpen )
     {
 
-        FILE *fp = VSIFOpen( pszNewName, "rb" );
+        VSILFILE *fp = VSIFOpenL( pszNewName, "rb" );
         if( fp == NULL )
             return FALSE;
 
         GByte abyHeader[512];
         const int nHeaderBytes = static_cast<int>(
-            VSIFRead( abyHeader, 1, sizeof(abyHeader), fp ) );
+            VSIFReadL( abyHeader, 1, sizeof(abyHeader), fp ) );
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
         if( nHeaderBytes < 512 )
             return FALSE;
@@ -187,7 +187,7 @@ OGRLayer *OGRDGNDataSource::ICreateLayer( const char *pszLayerName,
     if( nLayers > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DGN driver only supports one layer will all the elements "
+                  "DGN driver only supports one layer with all the elements "
                   "in it." );
         return NULL;
     }

@@ -31,7 +31,7 @@
 #include "gdal_pam.h"
 #include "gxfopen.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -270,15 +270,15 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      we also now verify that there is a #GRID keyword before         */
 /*      passing it off to GXFOpen().  We check in the first 50K.        */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( poOpenInfo->pszFilename, "rb" );
+    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
     if( fp == NULL )
         return NULL;
 
     const size_t BIGBUFSIZE = 50000;
     char *pszBigBuf = (char *) CPLMalloc(BIGBUFSIZE);
     const int nBytesRead =
-        static_cast<int>(VSIFRead( pszBigBuf, 1, BIGBUFSIZE, fp ));
-    VSIFClose( fp );
+        static_cast<int>(VSIFReadL( pszBigBuf, 1, BIGBUFSIZE, fp ));
+    VSIFCloseL( fp );
 
     bool bGotGrid = false;
 
@@ -390,6 +390,7 @@ void GDALRegister_GXF()
                                "GeoSoft Grid Exchange Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GXF" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gxf" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = GXFDataset::Open;
 

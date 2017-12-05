@@ -166,7 +166,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
     if (inlen < 4)
         return -1;
 
-    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | (*(inbuf+0)<<24);
+    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | ((unsigned)*(inbuf+0)<<24);
     inbuf+=4; inlen-=4;
 
     newdata = (reg>>19)&0x1fff;
@@ -441,9 +441,9 @@ static int get_int32(blxcontext_t *ctx, unsigned char **data) {
     unionint result = { 0 };
 
     if(ctx->endian == LITTLEENDIAN)
-	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result.i;
 }
@@ -469,9 +469,9 @@ static int get_unsigned32(blxcontext_t *ctx, unsigned char **data) {
     int result;
 
     if(ctx->endian == LITTLEENDIAN)
-	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result;
 }
@@ -759,6 +759,12 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		for(i=0; i<n-1; i++)
 		    linfo[level][c].lut[i] = (blxdata)get_short_le(&inptr);
 		linfo[level][c].dlen = get_short_le(&inptr);
+                if( linfo[level][c].dlen < 0 )
+                {
+                    BLXerror0("Cell corrupt");
+                    outbuf = NULL;
+                    goto error;
+                }
                 len -= sizeof(short) * n;
 	    } else {
 		linfo[level][c].dlen = 0;

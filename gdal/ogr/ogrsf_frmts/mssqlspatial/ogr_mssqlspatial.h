@@ -107,7 +107,7 @@ public:
     int             ValidateGeometry(OGRGeometry* poGeom);
 
     OGRGeometry*    GetValidGeometryRef();
-    int             IsValid() { return bIsValid; };
+    int             IsValid() { return bIsValid; }
 };
 
 /************************************************************************/
@@ -147,7 +147,7 @@ public:
     explicit            OGRMSSQLGeometryParser( int nGeomColumnType );
     OGRErr              ParseSqlGeometry(unsigned char* pszInput, int nLen,
                                                         OGRGeometry **poGeom);
-    int                 GetSRSId() { return nSRSId; };
+    int                 GetSRSId() { return nSRSId; }
 };
 
 /************************************************************************/
@@ -281,12 +281,12 @@ typedef union {
     } Float;
 
     struct {
-        int     nSize;
+        SQLLEN  nSize;
         char* pData[8000];
     } VarChar;
 
     struct {
-        int     nSize;
+        SQLLEN  nSize;
         GByte*  pData;
     } RawData;
 

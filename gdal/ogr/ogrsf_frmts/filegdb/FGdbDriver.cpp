@@ -35,7 +35,7 @@
 #include "cpl_multiproc.h"
 #include "ogrmutexeddatasource.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRFileGDB();
 
@@ -285,7 +285,7 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
 
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
-    if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
+    if( osName.back()== '/' || osName.back()== '\\' )
         osName.resize(osName.size()-1);
 
 #ifndef WIN32
@@ -440,7 +440,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
-    if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
+    if( osName.back()== '/' || osName.back()== '\\' )
         osName.resize(osName.size()-1);
 
 #ifndef WIN32
@@ -662,7 +662,7 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
 
     CPLString osName(poMutexedDS->GetName());
     CPLString osNameOri(osName);
-    if( osName[osName.size()-1] == '/' || osName[osName.size()-1] == '\\' )
+    if( osName.back()== '/' || osName.back()== '\\' )
         osName.resize(osName.size()-1);
 
     //int bPerLayerCopyingForTransaction = poDS->HasPerLayerCopyingForTransaction();
@@ -822,6 +822,7 @@ void RegisterOGRFileGDB()
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='FEATURE_DATASET' type='string' description='FeatureDataset folder into to put the new layer'/>"
+"  <Option name='LAYER_ALIAS' type='string' description='Alias of layer name'/>"
 "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column' default='SHAPE'/>"
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "  <Option name='FID' type='string' description='Name of OID column' default='OBJECTID' deprecated_alias='OID_NAME'/>"

@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Various offsets, in bytes */
 // Commented out the unused defines.
@@ -50,6 +50,7 @@ class COSARDataset : public GDALDataset
 {
 public:
         COSARDataset() : fp(NULL) { }
+        ~COSARDataset();
         VSILFILE *fp;
 
         static GDALDataset *Open( GDALOpenInfo * );
@@ -140,10 +141,18 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
  * COSARDataset Implementation
  *****************************************************************************/
 
+COSARDataset::~COSARDataset()
+{
+    if( fp != NULL )
+    {
+        VSIFCloseL(fp);
+    }
+}
+
 GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     long nRTNB;
     /* Check if we're actually a COSAR data set. */
-    if( pOpenInfo->nHeaderBytes < 4 )
+    if( pOpenInfo->nHeaderBytes < 4 || pOpenInfo->fpL == NULL)
         return NULL;
 
     if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR"))
@@ -177,6 +186,12 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 #ifdef CPL_LSB
     pDS->nRasterYSize = CPL_SWAP32(pDS->nRasterYSize);
 #endif
+
+    if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
+    {
+        delete pDS;
+        return NULL;
+    }
 
     VSIFSeekL(pDS->fp, RTNB_OFFSET, SEEK_SET);
     VSIFReadL(&nRTNB, 1, 4, pDS->fp);

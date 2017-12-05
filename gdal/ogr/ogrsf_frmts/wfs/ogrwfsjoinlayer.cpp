@@ -29,7 +29,7 @@
 #include "ogr_wfs.h"
 #include "../../frmts/wms/md5.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRWFSJoinLayer()                           */
@@ -580,7 +580,7 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
         for(int i=0;i<(int)aoSrcFieldNames.size();i++)
         {
             int iSrcField = poSrcFeature->GetFieldIndex(aoSrcFieldNames[i]);
-            if( iSrcField >= 0 && poSrcFeature->IsFieldSet(iSrcField) )
+            if( iSrcField >= 0 && poSrcFeature->IsFieldSetAndNotNull(iSrcField) )
             {
                 OGRFieldType eType = poFeatureDefn->GetFieldDefn(i)->GetType();
                 if( eType == poSrcFeature->GetFieldDefnRef(iSrcField)->GetType() )

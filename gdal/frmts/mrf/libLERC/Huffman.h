@@ -37,8 +37,8 @@ NAMESPACE_LERC_START
 class Huffman
 {
 public:
-  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_numBitsToSkipInTree(0), m_root(NULL) {};
-  ~Huffman() { Clear(); };
+  Huffman() : m_maxHistoSize(1 << 15), m_maxNumBitsLUT(12), m_numBitsToSkipInTree(0), m_root(NULL) {}
+  ~Huffman() { Clear(); }
 
   // Limitation: We limit the max Huffman code length to 32 bit. If this happens, the function ComputeCodes()
   // returns false. In that case don't use Huffman coding but Lerc only instead.
@@ -55,10 +55,10 @@ public:
   bool SetCodes(const std::vector<std::pair<short, unsigned int> >& codeTable);
 
   bool WriteCodeTable(Byte** ppByte) const;
-  bool ReadCodeTable(const Byte** ppByte);
+  bool ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytes);
 
   bool BuildTreeFromCodes(int& numBitsLUT);
-  bool DecodeOneValue(const unsigned int** srcPtr, int& bitPos, int numBitsLUT, int& value) const;
+  bool DecodeOneValue(const unsigned int** srcPtr, size_t& nRemainingBytes, int& bitPos, int numBitsLUT, int& value) const;
   void Clear();
 
 private:
@@ -135,22 +135,34 @@ private:
   bool ComputeNumBytesCodeTable(int& numBytes) const;
   bool GetRange(int& i0, int& i1, int& maxCodeLength) const;
   bool BitStuffCodes(Byte** ppByte, int i0, int i1) const;
-  bool BitUnStuffCodes(const Byte** ppByte, int i0, int i1);
+  bool BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytes, int i0, int i1);
   bool ConvertCodesToCanonical();
 };
 
 // -------------------------------------------------------------------------- ;
 
-inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int numBitsLUT, int& value) const
+inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, size_t& nRemainingBytes, int& bitPos, int numBitsLUT, int& value) const
 {
-  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos > 32)
+  if (!ppSrc || !(*ppSrc) || bitPos < 0 || bitPos >= 32)
     return false;
 
   // first get the next (up to) 12 bits as a copy
-  /* coverity[large_shift] */
-  int valTmp = ((**ppSrc) << bitPos) >> (32 - numBitsLUT);
+  if( nRemainingBytes < sizeof(unsigned) )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
+
+  int valTmp = (Load(*ppSrc) << bitPos) >> (32 - numBitsLUT);
   if (32 - bitPos < numBitsLUT)
-    valTmp |= (*(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
+  {
+    if( nRemainingBytes < 2 * sizeof(unsigned) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
+    valTmp |= (Load(*ppSrc + 1)) >> (64 - bitPos - numBitsLUT);
+  }
 
   if (m_decodeLUT[valTmp].first >= 0)    // if there, move the correct number of bits and done
   {
@@ -160,6 +172,7 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
     {
       bitPos -= 32;
       (*ppSrc)++;
+      nRemainingBytes -= sizeof(unsigned);
     }
     return true;
   }
@@ -175,22 +188,34 @@ inline bool Huffman::DecodeOneValue(const unsigned int** ppSrc, int& bitPos, int
   {
     bitPos -= 32;
     (*ppSrc)++;
+    nRemainingBytes -= sizeof(unsigned);
   }
 
   const Node* node = m_root;
   value = -1;
   while (value < 0)
   {
+    if( nRemainingBytes < sizeof(unsigned) )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
     /* coverity[large_shift] */
-    int bit = ((**ppSrc) << bitPos) >> 31;
+    int bit = (Load(*ppSrc) << bitPos) >> 31;
     bitPos++;
     if (bitPos == 32)
     {
       bitPos = 0;
       (*ppSrc)++;
+      nRemainingBytes -= sizeof(unsigned);
     }
 
     node = bit ? node->child1 : node->child0;
+    if( node == NULL )
+    {
+      LERC_BRKPNT();
+      return false;
+    }
 
     if (node->value >= 0)    // reached a leaf node
       value = node->value;

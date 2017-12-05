@@ -32,6 +32,7 @@ import sys
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
 
 ###############################################################################
@@ -50,12 +51,25 @@ init_list = [
     ('utmsmall.img', 1, 50054, None),
     ('2bit_compressed.img', 1, 11918, None)]
 
+
+###############################################################################
+# Test bugfix for https://oss-fuzz.com/v2/testcase-detail/6053338875428864
+
+def hfa_read_completedefn_recursion():
+
+    with gdaltest.error_handler():
+        gdal.Open('data/hfa_completedefn_recursion.img')
+    return 'success'
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
     if ut is None:
         print( 'HFA tests skipped' )
         sys.exit()
     gdaltest_list.append( (ut.testOpen, item[0]) )
+
+
+gdaltest_list.append( (hfa_read_completedefn_recursion) )
 
 if __name__ == '__main__':
 

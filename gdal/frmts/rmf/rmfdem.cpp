@@ -31,7 +31,7 @@
 
 #include "rmfdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
  * The encoded data stream is a series of records.
@@ -90,6 +90,7 @@ GInt32 INV_INT24 = 0xFF000000L;
 
 // Not sure which behaviour we wish for int32 overflow, so just do the
 // addition as uint32 to workaround -ftrapv
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static GInt32 AddInt32( GInt32& nTarget, GInt32 nVal )
 {
     GUInt32 nTargetU = 0;
@@ -140,16 +141,22 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 if( nSizeOut < nCount )
                     break;
                 nSizeOut -= nCount;
-                while( nCount-- > 0 )
+                while( nCount > 0 )
+                {
+                    nCount --;
                     *paiOut++ = iPrev;
+                }
                 break;
 
             case TYPE_OUT:
                 if( nSizeOut < nCount )
                     break;
                 nSizeOut -= nCount;
-                while( nCount-- > 0 )
+                while( nCount > 0 )
+                {
+                    nCount --;
                     *paiOut++ = OUT_INT32;
+                }
                 break;
 
             case TYPE_INT4:
@@ -159,16 +166,17 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     break;
                 nSizeIn -= nCount / 2;
                 nSizeOut -= nCount;
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-    GInt32 nCode;
+                    nCount --;
+                    GInt32 nCode;
                     nCode = (*pabyTempIn) & 0x0F;
                     if( nCode > RANGE_INT4 )
                         nCode |= INV_INT4;
                     *paiOut++ = ( nCode == OUT_INT4 ) ?
                         OUT_INT32 : AddInt32(iPrev, nCode);
 
-                    if( nCount-- == 0 )
+                    if( nCount == 0 )
                     {
                         if( nSizeIn )
                         {
@@ -177,6 +185,7 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                         }
                         break;
                     }
+                    nCount --;
 
                     nCode = ((*pabyTempIn++)>>4) & 0x0F;
                     if( nCode > RANGE_INT4 )
@@ -193,9 +202,10 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                     break;
                 nSizeIn -= nCount;
                 nSizeOut -= nCount;
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-    GInt32 nCode;
+                    nCount --;
+                    GInt32 nCode;
                     *paiOut++ = ( (nCode = *pabyTempIn++) == OUT_INT8 ) ?
                         OUT_INT32 : AddInt32(iPrev, nCode);
                 }
@@ -209,15 +219,17 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 nSizeIn -= 3 * nCount / 2;
                 nSizeOut -= nCount;
 
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-                    GInt32 nCode = *((GInt16*)pabyTempIn++) & 0x0FFF;
+                    nCount --;
+                    GInt32 nCode = CPL_LSBSINT16PTR(pabyTempIn) & 0x0FFF;
+                    pabyTempIn += 1;
                     if( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
                     *paiOut++ = ( nCode == OUT_INT12 ) ?
                         OUT_INT32 : AddInt32(iPrev, nCode);
 
-                    if( nCount-- == 0 )
+                    if( nCount == 0 )
                     {
                         if( nSizeIn )
                         {
@@ -226,8 +238,9 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                         }
                         break;
                     }
+                    nCount --;
 
-                    nCode = ( (*(GInt16*)pabyTempIn) >> 4 ) & 0x0FFF;
+                    nCode = ( CPL_LSBSINT16PTR(pabyTempIn) >> 4 ) & 0x0FFF;
                     pabyTempIn += 2;
                     if( nCode > RANGE_INT12 )
                         nCode |= INV_INT12;
@@ -244,9 +257,10 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 nSizeIn -= 2 * nCount;
                 nSizeOut -= nCount;
 
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-                    const GInt32 nCode = *((GInt16*)pabyTempIn);
+                    nCount --;
+                    const GInt32 nCode = CPL_LSBSINT16PTR(pabyTempIn);
                     pabyTempIn += 2;
                     *paiOut++ = ( nCode == OUT_INT16 ) ?
                         OUT_INT32 : AddInt32(iPrev, nCode);
@@ -261,9 +275,12 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 nSizeIn -= 3 * nCount;
                 nSizeOut -= nCount;
 
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-                    GInt32 nCode = *((GInt32 *)pabyTempIn) & 0x00FFFFFF;
+                    nCount --;
+                    GInt32 nCode = (*(GByte*)pabyTempIn) |
+                                   ((*(GByte*)(pabyTempIn+1)) << 8) |
+                                   ((*(GByte*)(pabyTempIn+2)) << 16);
                     pabyTempIn += 3;
                     if( nCode > RANGE_INT24 )
                         nCode |= INV_INT24;
@@ -280,9 +297,10 @@ int RMFDataset::DEMDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                 nSizeIn -= 4 * nCount;
                 nSizeOut -= nCount;
 
-                while( nCount-- > 0 )
+                while( nCount > 0 )
                 {
-                    GInt32 nCode = *(GInt32 *)pabyTempIn;
+                    nCount --;
+                    GInt32 nCode = CPL_LSBSINT32PTR(pabyTempIn);
                     pabyTempIn += 4;
                     *paiOut++ = ( nCode == OUT_INT32 ) ?
                         OUT_INT32 : AddInt32(iPrev, nCode);

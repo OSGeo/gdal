@@ -75,7 +75,7 @@ public:
 
     bool hasOnlyEmpty() const;
 
-    void parse();
+    bool parse();
     void print(unsigned short what = 3);
     std::string getError() const;
     int classifyNodes();

@@ -41,7 +41,7 @@ std::string Nodetype2String(Nodetype const& type);
 
 class KMLNode
 {
-    CPL_DISALLOW_COPY_ASSIGN( KMLNode );
+    CPL_DISALLOW_COPY_ASSIGN( KMLNode )
 public:
 
     KMLNode();
@@ -110,6 +110,8 @@ private:
 
     int nLayerNumber_;
     int nNumFeatures_;
+
+    void unregisterLayerIfMatchingThisNode(KML* poKML);
 };
 
 #endif /* KMLNODE_H_INCLUDED */

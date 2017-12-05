@@ -110,7 +110,7 @@
 
 #include <algorithm>
 
-// CPL_CVSID("$Id$");
+// CPL_CVSID("$Id$")
 
 const double kdEarthCircumPolar = 40007849;
 const double kdEarthCircumEquat = 40075004;
@@ -428,7 +428,7 @@ TerragenDataset::TerragenDataset() :
     m_dSCAL(30.0),
     m_dGroundScale(0.0),
     m_dMetersPerGroundUnit(1.0),
-    m_dMetersPerElevUnit(0.0),
+    m_dMetersPerElevUnit(1.0),
     m_fp(NULL),
     m_nDataOffset(0),
     m_nHeightScale(0),
@@ -1095,6 +1095,7 @@ void GDALRegister_Terragen()
 "   <Option name='MINUSERPIXELVALUE' type='float' description='Lowest logical elevation'/>"
 "   <Option name='MAXUSERPIXELVALUE' type='float' description='Highest logical elevation'/>"
 "</CreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = TerragenDataset::Open;
     poDriver->pfnCreate = TerragenDataset::Create;

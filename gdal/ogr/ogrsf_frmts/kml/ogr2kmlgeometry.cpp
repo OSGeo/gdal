@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const double EPSILON = 1e-8;
 
@@ -93,6 +93,20 @@ static void MakeKMLCoordinate( char *pszTarget, size_t nTargetLen,
                           "issued any more",
                           x );
                 bFirstWarning = false;
+            }
+
+            // Trash drastically non-sensical values.
+            if( x > 1.0e6 || x < -1.0e6 || CPLIsNan(x) )
+            {
+                static bool bFirstWarning2 = true;
+                if( bFirstWarning2 )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Longitude %lf is unreasonable.  Setting to 0."
+                             "This warning will not be issued any more", x);
+                    bFirstWarning2 = false;
+                }
+                x = 0.0;
             }
 
             if (x > 180)

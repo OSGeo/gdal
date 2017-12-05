@@ -84,6 +84,12 @@ class KmlSuperOverlayReadDataset : public GDALDataset
     static int          Identify(GDALOpenInfo *);
     static GDALDataset *Open(const char* pszFilename, KmlSuperOverlayReadDataset* poParent = NULL, int nRec = 0);
     static GDALDataset *Open(GDALOpenInfo *);
+ 
+    static const int KMLSO_ContainsOpaquePixels = 0x1;
+    static const int KMLSO_ContainsTransparentPixels = 0x2;
+    static const int KMLSO_ContainsPartiallyTransparentPixels = 0x4;
+
+    static int DetectTransparency( int rxsize, int rysize, int rx, int ry, int dxsize, int dysize, GDALDataset* poSrcDs );
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual const char *GetProjectionRef() override;

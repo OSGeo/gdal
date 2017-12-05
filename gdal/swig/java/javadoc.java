@@ -7648,10 +7648,10 @@ public class Feature:public long GetFID()
  * @param pnDay an allocated array of 1 integer to put the day (1-31)
  * @param pnHour an allocated array of 1 integer to put the hour (0-23)
  * @param pnMinute an allocated array of 1 integer to put the minute (0-59)
- * @param pnSecond an allocated array of 1 integer to put the second (0-59)
+ * @param pfSecond an allocated array of 1 integer to put the second (0-59)
  * @param pnTZFlag an allocated array of 1 integer to put the time zone flag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  */
-public class Feature:public void GetFieldAsDateTime(int ifield, int[] pnYear, int[] pnMonth, int[] pnDay, int[] pnHour, int[] pnMinute, int[] pnSecond, int[] pnTZFlag)
+public class Feature:public void GetFieldAsDateTime(int ifield, int[] pnYear, int[] pnMonth, int[] pnDay, int[] pnHour, int[] pnMinute, float[] pfSecond, int[] pnTZFlag)
 
 /**
  * Fetch field value as a double.
@@ -7922,7 +7922,7 @@ public class Feature:public void SetField(int ifield, int val)
  * @param second (0-59)
  * @param tzflag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  */
-public class Feature:public void SetField(int ifield, int year, int month, int day, int hour, int minute, int second, int tzflag)
+public class Feature:public void SetField(int ifield, int year, int month, int day, int hour, int minute, float second, int tzflag)
 
 /**
  * Set field to string value.
@@ -7977,7 +7977,7 @@ public class Feature:public void SetField(String name, int val)
  * @param second (0-59)
  * @param tzflag (0=unknown, 1=localtime, 100=GMT, see data model for details)
  */
-public class Feature:public void SetField(String name, int year, int month, int day, int hour, int minute, int second, int tzflag)
+public class Feature:public void SetField(String name, int year, int month, int day, int hour, int minute, float second, int tzflag)
 
 /**
  * Set field to string value.
@@ -10064,7 +10064,7 @@ public class ogr:public static DataSource OpenShared(String filename, int update
  * <li>UK .NTF</li>
  * <li>U.S. Census TIGER/Line</li>
  * <li>VRT - Virtual Datasource</li>
- * <li>X-Plane/Flighgear aeronautical data</li>
+ * <li>X-Plane/Flightgear aeronautical data</li>
  * </ul>
  * <p>
  * This function should generally be called once at the beginning of the application.

@@ -1,7 +1,12 @@
 
-/*! \page gdalcompare gdalcompare.py
+/*!
+\if man
+\page gdalcompare
+\else
+\page gdalcompare gdalcompare.py
+\endif
 
-compare two images
+Compare two images.
 
 \section gdalcompare_synopsis SYNOPSIS
 

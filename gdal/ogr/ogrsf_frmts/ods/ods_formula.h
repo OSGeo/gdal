@@ -111,6 +111,7 @@ typedef enum {
 
 class IODSCellEvaluator;
 
+// cppcheck-suppress copyCtorAndEqOperator
 class ods_formula_node {
   private:
     void           FreeSubExpr();

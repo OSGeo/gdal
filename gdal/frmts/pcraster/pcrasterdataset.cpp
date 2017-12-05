@@ -33,7 +33,7 @@
 #include "pcrasterdataset.h"
 #include "pcrasterutil.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*!
   \file
@@ -292,11 +292,18 @@ PCRasterDataset::PCRasterDataset( MAP* mapIn) :
     d_west(0.0),
     d_north(0.0),
     d_cellSize(0.0),
+    d_cellRepresentation(CR_UNDEFINED),
+    d_valueScale(VS_UNDEFINED),
+    d_defaultNoDataValue(0.0),
     d_location_changed(false)
 {
   // Read header info.
   nRasterXSize = static_cast<int>(RgetNrCols(d_map));
   nRasterYSize = static_cast<int>(RgetNrRows(d_map));
+  if( !GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) )
+  {
+      return;
+  }
   d_west = static_cast<double>(RgetXUL(d_map));
   d_north = static_cast<double>(RgetYUL(d_map));
   d_cellSize = static_cast<double>(RgetCellSize(d_map));

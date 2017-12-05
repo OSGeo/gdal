@@ -56,7 +56,7 @@ sub Datums {
     return keys %DATUMS;
 }
 
-sub RELEASE_PARENTS {
+sub RELEASE_PARENT {
 }
 
 
@@ -64,6 +64,8 @@ package Geo::OSR::SpatialReference;
 use strict;
 use warnings;
 use Carp;
+
+Geo::GDAL->import(qw(:INTERNAL));
 %}
 
 %feature("shadow") OSRSpatialReferenceShadow( char const * wkt = "" )
@@ -107,9 +109,9 @@ sub new {
         eval {
             SetWellKnownGeogCS($self, 'WGS'.$param{WGS});
         };
-        confess Geo::GDAL->last_error if $@;
+        confess last_error() if $@;
     } else {
-        Geo::GDAL::error("Unrecognized/missing parameters: @_.");
+        error("Unrecognized/missing parameters: @_.");
     }
     bless $self, $pkg if defined $self;
 }
@@ -136,7 +138,7 @@ sub Export {
         MICoordSys => sub { return ExportToMICoordSys() },
         MapInfoCS => sub { return ExportToMICoordSys() },
         );
-    Geo::GDAL::error(1, $format, \%converters) unless $converters{$format};
+    error(1, $format, \%converters) unless $converters{$format};
     return $converters{$format}->();
 }
 *AsText = *ExportToWkt;
@@ -155,7 +157,7 @@ sub Set {
     } elsif (exists $params{LinearUnits} and exists $params{Value}) {
         SetLinearUnitsAndUpdateParameters($self, $params{LinearUnits}, $params{Value});
     } elsif ($params{Parameter} and exists $params{Value}) {
-        Geo::GDAL::error(1, $params{Parameter}, \%Geo::OSR::PARAMETERS) unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
+        error(1, $params{Parameter}, \%Geo::OSR::PARAMETERS) unless exists $Geo::OSR::PARAMETERS{$params{Parameter}};
         $params{Normalized} ?
             SetNormProjParm($self, $params{Parameter}, $params{Value}) :
             SetProjParm($self, $params{Parameter}, $params{Value});
@@ -191,7 +193,7 @@ sub Set {
             SetProjCS($self, $params{CoordinateSystem});
         }
     } elsif (exists $params{Projection}) {
-        Geo::GDAL::error(1, $params{Projection}, \%Geo::OSR::PROJECTIONS) unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
+        error(1, $params{Projection}, \%Geo::OSR::PROJECTIONS) unless exists $Geo::OSR::PROJECTIONS{$params{Projection}};
         my @parameters = ();
         @parameters = @{$params{Parameters}} if ref($params{Parameters});
         if ($params{Projection} eq 'Albers_Conic_Equal_Area') {
@@ -289,7 +291,7 @@ sub Set {
             SetProjection($self, $params{Projection});
         }
     } else {
-        Geo::GDAL::error("Not enough information to create a spatial reference object.");
+        error("Not enough information to create a spatial reference object.");
     }
 }
 
@@ -312,6 +314,8 @@ sub GetUTMZone {
 package Geo::OSR::CoordinateTransformation;
 use strict;
 use warnings;
+
+Geo::GDAL->import(qw(:INTERNAL));
 
 sub TransformPoints {
     my($self, $points) = @_;

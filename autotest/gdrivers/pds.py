@@ -262,6 +262,72 @@ def pds_9():
 
     return 'success'
 
+###############################################################################
+# Test PDS label with nested arrays (#6970)
+
+def pds_10():
+
+    gdal.FileFromMemBuffer('/vsimem/pds_10',
+"""PDS_VERSION_ID                       = "PDS3"
+DATA_FORMAT                          = "PDS"
+^IMAGE                               = 1 <BYTES>
+
+# Non sensical but just to parse nested arrays
+NOTE                                 = ((1, 2, 3))
+PRODUCT_ID                           = ({1, 2}, {3,4})
+
+OBJECT                               = IMAGE
+    BANDS                            = 1
+    BAND_STORAGE_TYPE                = "BAND SEQUENTIAL"
+    LINES                            = 1
+    LINE_SAMPLES                     = 1
+    SAMPLE_BITS                      = 8
+
+END_OBJECT                           = IMAGE
+
+END
+""")
+
+    ds = gdal.Open('/vsimem/pds_10')
+
+    if ds.GetMetadataItem('NOTE') != '((1,2,3))':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataItem('NOTE'))
+        return 'fail'
+
+    if ds.GetMetadataItem('PRODUCT_ID') != '({1,2},{3,4})':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadataItem('NOTE'))
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer('/vsimem/pds_10',
+"""PDS_VERSION_ID                       = "PDS3"
+# Unpaired
+NOTE                                 = (x, y}
+END
+""")
+
+    with gdaltest.error_handler():
+        gdal.Open('/vsimem/pds_10')
+
+
+    gdal.FileFromMemBuffer('/vsimem/pds_10',
+"""PDS_VERSION_ID                       = "PDS3"
+# Unpaired
+NOTE                                 = {x, y)
+END
+""")
+
+    with gdaltest.error_handler():
+        gdal.Open('/vsimem/pds_10')
+
+
+    gdal.Unlink('/vsimem/pds_10')
+
+    return 'success'
+
+
 gdaltest_list = [
     pds_1,
     pds_2,
@@ -271,7 +337,8 @@ gdaltest_list = [
     pds_6,
     pds_7,
     pds_8,
-    pds_9 ]
+    pds_9,
+    pds_10 ]
 
 if __name__ == '__main__':
 

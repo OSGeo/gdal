@@ -228,7 +228,7 @@ def ogr_shape_7():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -258,7 +258,7 @@ def ogr_shape_8():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -570,7 +570,7 @@ def ogr_shape_16_1():
         gdaltest.post_reason( 'Got wrong EAS_ID' )
         return 'fail'
 
-    if feat.IsFieldSet( 'NEWFLD' ):
+    if not feat.IsFieldNull( 'NEWFLD' ):
         gdaltest.post_reason( 'Expected NULL NEWFLD value!' )
         return 'fail'
 
@@ -643,7 +643,7 @@ def ogr_shape_18():
     # data/poly.shp has arbitrarily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 27700 )
-    srs.StripCTParms()
+    #srs.StripCTParms()
 
     if not srs_lyr.IsSame(srs):
         print('')
@@ -748,7 +748,7 @@ def ogr_shape_21():
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
 
-        if feat.GetGeometryRef() is not None:
+        if feat is not None and feat.GetGeometryRef() is not None:
             return 'fail'
 
     return 'success'
@@ -1511,7 +1511,7 @@ def ogr_shape_35():
     ds = ogr.Open('/vsimem/test35.shp')
     lyr = ds.GetLayer(0)
     srs_read = lyr.GetSpatialRef()
-    if srs_read.ExportToWkt().find('GCS_WGS_1984') == -1:
+    if srs_read.ExportToWkt() != srs.ExportToWkt():
         gdaltest.post_reason('did not get expected SRS')
         print(srs_read)
         return 'fail'
@@ -1643,7 +1643,7 @@ def ogr_shape_39():
     lyr = ds.GetLayer(0)
     feat_read = lyr.GetNextFeature()
 
-    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('MULTIPOLYGON (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10)),((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0)),((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2)))'),
+    if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (TIN (((5 4 10,0 0 5,10 0 5,5 4 10)),((5 4 10,10 0 5,10 8 5,5 4 10)),((5 4 10,10 8 5,0 8 5,5 4 10)),((5 4 10,0 8 5,0 0 5,5 4 10))),TIN (((10 0 5,10 0 0,10 8 5,10 0 5)),((10 0 0,10 8 5,10 8 0,10 0 0)),((10 8 5,10 8 0,0 8 5,10 8 5)),((10 8 0,0 8 5,0 8 0,10 8 0)),((0 8 5,0 8 0,0 0 5,0 8 5)),((0 8 0,0 0 5,0 0 0,0 8 0))),MULTIPOLYGON (((0 0 0,0 0 5,10 0 5,10 0 0,6 0 0,6 0 3,4 0 3,4 0 0,0 0 0),(1 0 2,3 0 2,3 0 4,1 0 4,1 0 2),(7 0 2,9 0 2,9 0 4,7 0 4,7 0 2))))'),
                                 max_error = 0.000000001 ) != 0:
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
@@ -3671,7 +3671,7 @@ def ogr_shape_76():
     ds = ogr.Open('data/prjwithutf8bom.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    if sr.ExportToWkt().find('GEOGCS["GCS_North_American_1983"') != 0:
+    if sr.ExportToWkt().find('GEOGCS["NAD83"') != 0:
         return 'fail'
 
     return 'success'
@@ -3810,6 +3810,9 @@ def ogr_shape_81():
     lyr = ds.CreateLayer('ogr_shape_81')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,-1 -1)'))
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -4528,22 +4531,30 @@ def ogr_shape_99():
     ds = ogr.Open('/vsimem/ogr_shape_99.shp')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToPrettyWkt()
-    expected_wkt = """PROJCS["CH1903_LV03",
-    GEOGCS["GCS_CH1903",
+    expected_wkt = """PROJCS["CH1903 / LV03",
+    GEOGCS["CH1903",
         DATUM["CH1903",
-            SPHEROID["Bessel_1841",6377397.155,299.1528128],
-            TOWGS84[674.4,15.1,405.3,0,0,0,0]],
-        PRIMEM["Greenwich",0.0],
-        UNIT["Degree",0.0174532925199433]],
+            SPHEROID["Bessel 1841",6377397.155,299.1528128,
+                AUTHORITY["EPSG","7004"]],
+            TOWGS84[674.374,15.056,405.346,0,0,0,0],
+            AUTHORITY["EPSG","6149"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4149"]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
-    PARAMETER["False_Easting",600000.0],
-    PARAMETER["False_Northing",200000.0],
-    PARAMETER["Scale_Factor",1.0],
-    PARAMETER["Azimuth",90.0],
-    PARAMETER["Longitude_Of_Center",7.439583333333333],
-    PARAMETER["Latitude_Of_Center",46.95240555555556],
+    PARAMETER["latitude_of_center",46.95240555555556],
+    PARAMETER["longitude_of_center",7.439583333333333],
+    PARAMETER["azimuth",90],
     PARAMETER["rectified_grid_angle",90],
-    UNIT["Meter",1.0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",600000],
+    PARAMETER["false_northing",200000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Y",EAST],
+    AXIS["X",NORTH],
     AUTHORITY["EPSG","21781"]]"""
     ds = None
 
@@ -4839,6 +4850,9 @@ def ogr_shape_103():
     for (options, expected) in [ (['DBF_EOF_CHAR=YES'], True),
                                 ([], True),
                                 (['DBF_EOF_CHAR=NO'], False) ]:
+
+        options += [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ]
+
         # Create empty file
         ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
         lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = options)
@@ -4846,6 +4860,7 @@ def ogr_shape_103():
 
         if not check_EOF(filename, expected = expected):
             gdaltest.post_reason('fail')
+            print(options)
             return 'fail'
 
         # Add field
@@ -4977,11 +4992,11 @@ def ogr_shape_103():
 
     # Test appending to a file without a EOF marker
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
-    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr = ds.GetLayer(0)
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds.FlushCache()
@@ -4996,12 +5011,12 @@ def ogr_shape_103():
 
     # Test editing a record (that is not the last one ) in a file without a EOF marker
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
-    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'])
+    lyr = ds.CreateLayer('ogr_shape_103', geom_type = ogr.wkbNone, options = ['DBF_EOF_CHAR=NO'] + [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     lyr.CreateFeature( ogr.Feature(lyr.GetLayerDefn()) )
     ds = None
-    ds = gdal.OpenEx(filename, gdal.OF_UPDATE)
+    ds = gdal.OpenEx(filename, gdal.OF_UPDATE, open_options = [ 'DBF_DATE_LAST_UPDATE=1970-01-01' ])
     lyr = ds.GetLayer(0)
     lyr.SetFeature( lyr.GetNextFeature() )
     ds = None
@@ -5016,6 +5031,247 @@ def ogr_shape_103():
 
     return 'success'
 
+###############################################################################
+# Test writing MULTIPATCH
+
+def ogr_shape_104():
+
+    for (wkt, lyr_type, options, expected_wkt) in \
+                [ ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [],  None ],
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,1 1 3,2 2 4,0 0 0)))', ogr.wkbUnknown, [], None], # triangle fan
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 1 2,1 1 3,4 4 5,0 1 2)))', ogr.wkbUnknown, [], None], # triangle strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [], None], # no fan no strip
+                  ['TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))', ogr.wkbUnknown, [],
+                        'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)),((1 1 3,0 1 2,4 4 5,1 1 3)))'],
+                        # no fan no strip with duplicated triangle (as found in #5888)
+                  ['POLYHEDRALSURFACE Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbUnknown, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['GEOMETRYCOLLECTION Z (TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0))))', ogr.wkbUnknown, [],  'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))' ],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbUnknown, [ 'SHPT=MULTIPATCH' ], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+                  ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
+               ]:
+
+        if expected_wkt is None:
+            expected_wkt = wkt
+
+        filename = '/vsimem/ogr_shape_104.shp'
+        ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
+        lyr = ds.CreateLayer('ogr_shape_104', geom_type = lyr_type, options = options)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry( ogr.CreateGeometryFromWkt( wkt ) )
+        lyr.CreateFeature(f)
+        ds = None
+
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f.GetGeometryRef().ExportToIsoWkt() != expected_wkt:
+            gdaltest.post_reason('fail')
+            print(wkt, lyr_type, options)
+            f.DumpReadable()
+            return 'fail'
+        ds = None
+
+        ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test reading .dbf with substantial padding after last field definition.
+
+def ogr_shape_105():
+
+    ds = ogr.Open('data/padding_after_field_defns.dbf')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['id'] != '1' or f['foo'] != '2':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that rewriting the last shape reuses the space it took. (#6787)
+
+def ogr_shape_106():
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource('/vsimem/ogr_shape_106.shp')
+    lyr = ds.CreateLayer('ogr_shape_81')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,1 1)'))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    ds = ogr.Open('/vsimem/ogr_shape_106.shp', update = 1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    # Write larger shape
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2 2,3 3,4 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    size = gdal.VSIStatL('/vsimem/ogr_shape_106.shp').size
+    if size != 188 + 2 * 8:
+        gdaltest.post_reason('fail')
+        print(size)
+        return 'fail'
+
+    shape_drv.DeleteDataSource( '/vsimem/ogr_shape_106.shp' )
+
+    return 'success'
+
+###############################################################################
+# Compare to VSI*L file
+
+def is_same(filename1, filename2, verbose = True):
+    f1 = gdal.VSIFOpenL(filename1, "rb")
+    if f1 is None:
+        if verbose:
+            print('%s does not exist' % filename1)
+        return False
+    f2 = gdal.VSIFOpenL(filename2, "rb")
+    if f2 is None:
+        if verbose:
+            print('%s does not exist' % filename2)
+        gdal.VSIFCloseL(f1)
+        return False
+
+    ret = True
+    size1 = gdal.VSIStatL(filename1).size
+    size2 = gdal.VSIStatL(filename2).size
+    if size1 != size2:
+        if verbose:
+            print('%s size is %d, whereas %s size is %d' % (filename1, size1, filename2, size2))
+        ret = False
+    if ret:
+        data1 = gdal.VSIFReadL(1, size1, f1)
+        data2 = gdal.VSIFReadL(1, size2, f2)
+        if data1 != data2:
+            if verbose:
+                print('File content of %s and %s are different' % (filename1, filename2))
+                print(struct.unpack('B' * len(data1), data1))
+                print(struct.unpack('B' * len(data2), data2))
+            ret = False
+
+    gdal.VSIFCloseL(f1)
+    gdal.VSIFCloseL(f2)
+    return ret
+
+###############################################################################
+# Test that multiple edition of the last shape works properly (#7031)
+
+def ogr_shape_107():
+
+    layer_name = 'ogr_shape_107'
+    filename = '/vsimem/' + layer_name + '.shp'
+    copy_filename = '/vsimem/' + layer_name + '_copy.shp'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2.5 3.5)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be larger
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
+    lyr.SetFeature(f)
+
+    # Insert new feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (5 6)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 6)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,1.5 2.5,3 4)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be smaller
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 2,3 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+    return 'success'
+
+###############################################################################
+# Test spatial + attribute filter
+
+def ogr_shape_108():
+
+    ds = ogr.Open('data/poly.shp')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(479750.6875,4764702.0,479750.6875,4764702.0)
+    expected_fc = lyr.GetFeatureCount()
+    lyr.SetAttributeFilter("1=1")
+    if lyr.GetFeatureCount() != expected_fc:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount(), expected_fc)
+        return'fail'
+
+    return 'success'
 
 ###############################################################################
 def ogr_shape_cleanup():
@@ -5164,9 +5420,14 @@ gdaltest_list = [
     ogr_shape_101,
     ogr_shape_102,
     ogr_shape_103,
+    ogr_shape_104,
+    ogr_shape_105,
+    ogr_shape_106,
+    ogr_shape_107,
+    ogr_shape_108,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_103 ]
+# gdaltest_list = [ ogr_shape_107 ]
 
 if __name__ == '__main__':
 

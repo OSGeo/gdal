@@ -51,20 +51,23 @@ my $dir = '/vsimem/';
 if (1) {
 for (my $i = 0; $i < @data; $i+=2) {
     my $type = $data[$i];
-    my $l = Geo::OGR::Driver($driver)->Create($dir.$type.'.shp')->CreateLayer(GeometryType => $type);
-    eval {
-        $l->InsertFeature({Geometry => {WKT => $data[$i+1]}});
-    };
-    if ($@) {
-        my @e = split /\n/, $@;
-        $e[0] =~ s/\. at .*/./;
-        ok(0, "$driver, insert feature: $type => $data[$i+1] ($e[0])");
-        next;
+    {
+        my $l = Geo::OGR::Driver($driver)->Create($dir.$type.'.shp')->CreateLayer(GeometryType => $type);
+        eval {
+            $l->InsertFeature({Geometry => {WKT => $data[$i+1]}});
+        };
+        if ($@) {
+            my @e = split /\n/, $@;
+            $e[0] =~ s/\. at .*/./;
+            ok(0, "$driver, insert feature: $type => $data[$i+1] ($e[0])");
+            next;
+        }
     }
     
-    # close and open
-    undef $l;
-    $l = Geo::OGR::Open($dir)->GetLayer($type);
+    # reopen
+    # !! if $l is not destroyed before this, an unifinished layer is opened !!
+    my $l = Geo::OGR::Open($dir)->GetLayer($type);
+    ok($l->FeatureCount == 1, "count is correct");
     my $t = $l->GeometryType;
     $t =~ s/25D/Z/;
     my $exp = $type;

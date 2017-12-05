@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Name:     oci_wrapper.h
  * Project:  Oracle Spatial GeoRaster Driver
@@ -65,6 +64,8 @@ int                 OWParseServerVersion( const char* pszText );
 int                 OWParseEPSG( const char* pszText );
 bool                OWIsNumeric( const char *pszText );
 const char*         OWParseSDO_GEOR_INIT( const char* pszInsert, int nField );
+char*               OWRemoveQuotes( const char* pszText );
+void                OWUpperIfNoQuotes( char* pszText );
 
 /***************************************************************************/
 /*                            Arbitrary limits                             */
@@ -267,6 +268,8 @@ public:
                             const char* pszUserIn,
                             const char* pszPasswordIn,
                             const char* pszServerIn );
+    explicit            OWConnection(
+                            OCIExtProcContext* poWithContext );
     virtual            ~OWConnection();
 
 private:
@@ -283,9 +286,14 @@ private:
 
     bool                bSuceeeded;
 
+    bool                bExtProc;
+
     char*               pszUser;
     char*               pszPassword;
     char*               pszServer;
+
+    char*               pszExtProcUser;
+    char*               pszExtProcSchema;
 
     OCIType*            hNumArrayTDO;
     OCIType*            hGeometryTDO;
@@ -293,6 +301,8 @@ private:
     OCIType*            hPCTDO;
     OCIType*            hElemArrayTDO;
     OCIType*            hOrdnArrayTDO;
+
+    void                QueryVersion();
 
 public:
 
@@ -311,15 +321,17 @@ public:
     void                DestroyType( sdo_geometry** pphData );
     void                CreateType( OCIArray** phData , OCIType* type);
     void                DestroyType( OCIArray** phData );
+    void                DestroyType( OCIType* phType );
+
     OCIType*            DescribeType( const char *pszTypeName );
 
-    bool                Succeeded() { return bSuceeeded; };
+    bool                Succeeded() { return bSuceeeded; }
 
-    char*               GetUser() { return pszUser; };
-    char*               GetPassword() { return pszPassword; };
-    char*               GetServer() { return pszServer; };
-    int                 GetVersion () { return nVersion; };
-    sb4                 GetCharSize () { return nCharSize; };
+    char*               GetUser() { return pszUser; }
+    char*               GetPassword() { return pszPassword; }
+    char*               GetServer() { return pszServer; }
+    int                 GetVersion () { return nVersion; }
+    sb4                 GetCharSize () { return nCharSize; }
 
     OCIType*            GetGeometryType() { return hGeometryTDO; }
     OCIType*            GetGeoRasterType() { return hGeoRasterTDO; }
@@ -329,6 +341,10 @@ public:
     bool                Commit(); // OCITransCommit()
     bool                StartTransaction(); //  //OCITransStart()
     bool                EndTransaction() {return Commit(); }
+
+    bool                IsExtProc() { return bExtProc; }
+    char*               GetExtProcUser() { return pszExtProcUser; }
+    char*               GetExtProcSchema() { return pszExtProcSchema; }
 };
 
 /***************************************************************************/
@@ -367,6 +383,7 @@ public:
 
     void                Bind( int* pnData );
     void                Bind( long* pnData );
+    void                Bind( long long* pnData );
     void                Bind( double* pnData );
     void                Bind( char* pData, long nData );
     void                Bind( sdo_geometry** pphData );
@@ -375,6 +392,7 @@ public:
     void                Bind( char* pszData, int nSize = OWNAME );
     void                Define( int* pnData );
     void                Define( long* pnData );
+    void                Define( long long* pnData );
     void                Define( double* pnData );
     void                Define( char* pszData, int nSize = OWNAME );
     void                Define( OCILobLocator** pphLocator );
@@ -384,6 +402,8 @@ public:
     void                Define( sdo_pc** pphData );
     void                Define( OCILobLocator** pphLocator, long nIterations );
     void                BindName( const char* pszName, int* pnData );
+    void                BindName( const char* pszName, long* pnData );
+    void                BindName( const char* pszName, long long* pnData );
     void                BindName( const char* pszName, double* pnData );
     void                BindName( const char* pszName, char* pszData,
                             int nSize = OWNAME );
@@ -393,11 +413,17 @@ public:
     static void         Free( OCILobLocator** ppphLocator,
                             int nCount );
     unsigned long       ReadBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nSize );
+                            void* pBuffer, unsigned long nSize );
+    unsigned long       ReadBlob( OCILobLocator* phLocator,
+                            void* pBuffer, unsigned long nOffset, 
+                                           unsigned long nSize );
     char*               ReadCLob( OCILobLocator* phLocator );
     void                WriteCLob( OCILobLocator** pphLocator, char* pszData );
     bool                WriteBlob( OCILobLocator* phLocator,
-                            void* pBuffer, int nSize );
+                            void* pBuffer, unsigned long  nSize );
+    unsigned long       WriteBlob( OCILobLocator* phLocator,
+                            void* pBuffer, unsigned long nOffset, 
+                                           unsigned long nSize );
     int                 GetElement( OCIArray** ppoData,
                             int nIndex, int* pnResult );
     double              GetElement( OCIArray** ppoData,
@@ -406,6 +432,7 @@ public:
                             int nValue );
     void                AddElement( OCIArray* ppoData,
                             double dfValue );
+    unsigned long       GetBlobLength( OCILobLocator* phLocator );
 };
 
 #endif /* ifndef _ORCL_WRAP_H_INCLUDED */

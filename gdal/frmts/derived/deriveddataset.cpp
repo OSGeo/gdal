@@ -30,13 +30,13 @@
 #include "gdal_proxy.h"
 #include "derivedlist.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class DerivedDataset : public VRTDataset
 {
     public:
         DerivedDataset( int nXSize, int nYSize );
-       ~DerivedDataset() {};
+       ~DerivedDataset() {}
 
         static int Identify( GDALOpenInfo * );
         static GDALDataset *Open( GDALOpenInfo * );

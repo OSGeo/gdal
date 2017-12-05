@@ -31,7 +31,7 @@
 #include "ogr_sde.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ~OGRSDEDriver()                            */
@@ -123,5 +123,9 @@ void RegisterOGRSDE()
     if( !GDAL_CHECK_VERSION("OGR SDE") )
         return;
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRSDEDriver );
+    OGRSFDriver* poDriver = new OGRSDEDriver;
+
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "SDE:");
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

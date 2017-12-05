@@ -11,6 +11,10 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
+ifeq ($(HAVE_SFCGAL),yes)
+CPPFLAGS 	:=	-DHAVE_SFCGAL=1 $(SFCGAL_CFLAGS) $(CPPFLAGS)
+endif
+
 CXXFLAGS 	:=	-DHAVE_MITAB $(CXXFLAGS)
 
 ifeq ($(HAVE_EXPAT),yes)
@@ -37,6 +41,7 @@ clean:
 	rm -f html/*
 	(cd ogrsf_frmts; $(MAKE) clean)
 	$(RM) *.o
+	$(RM) -f test_geo_utils$(EXE)
 
 very-clean: clean
 	rm -rf html rtf
@@ -68,6 +73,9 @@ install:
 	for f in $(INST_H_FILES) ; \
 	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done
+
+test_geo_utils$(EXE):	test_geo_utils.$(OBJ_EXT) ogr_geo_utils.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) test_geo_utils.$(OBJ_EXT) ogr_geo_utils.$(OBJ_EXT) $(CONFIG_LIBS) -o test_geo_utils$(EXE)
 
 # The sed substitution below workarounds a bug with gcc 4.1 -O2 (checked on 64bit platforms)
 # that produces buggy compiled code.

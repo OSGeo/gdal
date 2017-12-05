@@ -39,7 +39,7 @@
 // Uncomment to recognize also .gen files in addition to .img files
 // #define OPEN_GEN
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 class SRPDataset : public GDALPamDataset
 {
@@ -184,7 +184,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     SRPDataset* l_poDS = (SRPDataset*)this->poDS;
-    int offset;
+    vsi_l_offset offset;
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {
@@ -208,19 +208,20 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if (l_poDS->TILEINDEX)
     {
         if( l_poDS->PCB == 0 ) // uncompressed
-            offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
+            offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) * 128 * 128;
         else // compressed
-            offset = l_poDS->offsetInIMG + (l_poDS->TILEINDEX[nBlock] - 1);
+            offset = l_poDS->offsetInIMG +  static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1);
     }
     else
-        offset = l_poDS->offsetInIMG + nBlock * 128 * 128;
+        offset = l_poDS->offsetInIMG + static_cast<vsi_l_offset>(nBlock) * 128 * 128;
 
 /* -------------------------------------------------------------------- */
 /*      Seek to target location.                                        */
 /* -------------------------------------------------------------------- */
     if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %d", offset);
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot seek to offset " CPL_FRMT_GUIB, offset);
         return CE_Failure;
     }
 
@@ -233,7 +234,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128*128 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read data at offset %d", offset);
+                     "Cannot read data at offset " CPL_FRMT_GUIB, offset);
             return CE_Failure;
         }
     }
@@ -252,7 +253,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if( nBytesRead == 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read data at offset %d", offset);
+                     "Cannot read data at offset " CPL_FRMT_GUIB, offset);
             CPLFree(pabyCData);
             return CE_Failure;
         }
@@ -398,6 +399,8 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
 {
     if( EQUAL(osProduct,"ASRP") )
     {
+        if( ARV == 0 )
+            return CE_Failure;
         if( ZNA == 9)
         {
             // North Polar Case
@@ -420,6 +423,8 @@ CPLErr SRPDataset::GetGeoTransform( double * padfGeoTransform)
         }
         else
         {
+            if( BRV == 0 )
+                return CE_Failure;
             padfGeoTransform[0] = LSO/3600.0;
             padfGeoTransform[1] = 360. / ARV;
             padfGeoTransform[2] = 0.0;
@@ -555,9 +560,12 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
 
         const int nIndexValueWidth = subfieldDefn->GetWidth();
 
+        char offset[30] = {0};
         /* Should be strict comparison, but apparently a few datasets */
         /* have GetDataSize() greater than the required minimum (#3862) */
-        if (nIndexValueWidth > (INT_MAX - 1) / (NFL * NFC) ||
+        if (nIndexValueWidth <= 0 ||
+            static_cast<size_t>(nIndexValueWidth) >= sizeof(offset) ||
+            nIndexValueWidth > (INT_MAX - 1) / (NFL * NFC) ||
             field->GetDataSize() < nIndexValueWidth * NFL * NFC + 1)
         {
             return false;
@@ -572,7 +580,6 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
             return false;
         }
         const char* ptr = field->GetData();
-        char offset[30] = {0};
         offset[nIndexValueWidth] = '\0';
 
         for( int i = 0; i < NFL * NFC; i++ )
@@ -736,7 +743,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 { /*USRP1.2*/
                     const char* pszDAT =
                         record->GetStringSubfield("QUV", 0, "DAT1", 0);
-                    if( pszDAT != NULL )
+                    if( pszDAT != NULL && strlen(pszDAT) >= 12 )
                     {
                         char dat[9];
                         strncpy(dat, pszDAT+4, 8);
@@ -756,7 +763,7 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
                 { /*USRP1.2*/
                     const char* pszDAT =
                         record->GetStringSubfield("QUV", 0, "DAT2", 0);
-                    if( pszDAT != NULL )
+                    if( pszDAT != NULL && strlen(pszDAT) >= 12 )
                     {
                         char dat[9];
                         strncpy(dat,pszDAT+4,8);
@@ -873,7 +880,7 @@ char **SRPDataset::GetFileList()
 
         papszFileList = CSLAddString(papszFileList, osIMGFileName.c_str());
 
-        if( strlen(osQALFileName) > 0 )
+        if( !osQALFileName.empty() )
             papszFileList = CSLAddString( papszFileList, osQALFileName );
     }
     return papszFileList;

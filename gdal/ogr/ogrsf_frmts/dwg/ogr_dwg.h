@@ -38,25 +38,7 @@
 #include <queue>
 
 #include "ogr_autocad_services.h"
-
-#include "OdaCommon.h"
-#include "diagnostics.h"
-#include "DbDatabase.h"
-#include "DbEntity.h"
-#include "DbDimAssoc.h"
-#include "DbObjectIterator.h"
-#include "DbBlockTable.h"
-#include "DbBlockTableRecord.h"
-#include "DbSymbolTable.h"
-
-#include "OdCharMapper.h"
-#include "RxObjectImpl.h"
-
-#include "ExSystemServices.h"
-#include "ExHostAppServices.h"
-#include "OdFileBuf.h"
-#include "RxDynamicModule.h"
-#include "FdField.h"
+#include "dwg_headers.h"
 
 class OGRDWGDataSource;
 class OGRDWGServices;
@@ -145,9 +127,9 @@ class OGRDWGLayer : public OGRLayer
 
     void                FormatDimension( CPLString &osText, double dfValue );
 
-    CPLString           TextUnescape( OdString oString);
+    CPLString           TextUnescape( OdString oString, bool );
 
-    OdDbBlockTableRecordPtr poBlock;
+    OdDbBlockTableRecordPtr m_poBlock;
     OdDbObjectIteratorPtr   poEntIter;
 
   public:
@@ -176,7 +158,7 @@ class OGRDWGDataSource : public OGRDataSource
 {
     VSILFILE           *fp;
 
-    CPLString           osName;
+    CPLString           m_osName;
     std::vector<OGRLayer*> apoLayers;
 
     int                 iEntitiesSectionOffset;
@@ -206,9 +188,9 @@ class OGRDWGDataSource : public OGRDataSource
     int                 Open( OGRDWGServices *poServices,
                               const char * pszFilename, int bHeaderOnly=FALSE );
 
-    const char          *GetName() override { return osName; }
+    const char          *GetName() override { return m_osName; }
 
-    int                 GetLayerCount() override { return apoLayers.size(); }
+    int                 GetLayerCount() override { return static_cast<int>(apoLayers.size()); }
     OGRLayer            *GetLayer( int ) override;
 
     int                 TestCapability( const char * ) override;
@@ -257,18 +239,13 @@ protected:
 
 class OGRDWGDriver : public OGRSFDriver
 {
-    int     bInitialized;
-    void    Initialize();
-
-    OdStaticRxObject<OGRDWGServices> oServices;
-
-    static void ErrorHandler( OdResult oRes );
+    OGRDWGServices *poServices;
 
   public:
     OGRDWGDriver();
     ~OGRDWGDriver();
 
-    OGRDWGServices *GetServices() { return &oServices; }
+    OGRDWGServices *GetServices() { return poServices; }
 
     const char *GetName() override;
     OGRDataSource *Open( const char *, int ) override;

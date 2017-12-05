@@ -105,7 +105,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
   {
      void* user_data = CPLGetErrorHandlerUserData();
      if( user_data != NULL )
-       Py_XDECREF((PyObject*)user_data);
+     {
+         Py_XDECREF((PyObject*)user_data);
+     }
      CPLPopErrorHandler();
   }
 %}
@@ -154,6 +156,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (get_last_error_no) CPLGetLastErrorNo;
 %rename (get_last_error_type) CPLGetLastErrorType;
 %rename (get_last_error_msg) CPLGetLastErrorMsg;
+%rename (get_error_counter) CPLGetErrorCounter;
 %rename (push_finder_location) CPLPushFinderLocation;
 %rename (pop_finder_location) CPLPopFinderLocation;
 %rename (finder_clean) CPLFinderClean;
@@ -177,6 +180,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetLastErrorNo) CPLGetLastErrorNo;
 %rename (GetLastErrorType) CPLGetLastErrorType;
 %rename (GetLastErrorMsg) CPLGetLastErrorMsg;
+%rename (GetErrorCounter) CPLGetErrorCounter;
 %rename (PushFinderLocation) CPLPushFinderLocation;
 %rename (PopFinderLocation) CPLPopFinderLocation;
 %rename (FinderClean) CPLFinderClean;
@@ -305,6 +309,23 @@ CPLErr CPLGetLastErrorType();
 #endif
 const char *CPLGetLastErrorMsg();
 
+
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
+/* We don't want errors to be cleared or thrown by this */
+/* call */
+%exception CPLGetErrorCounter
+{
+#ifdef SWIGPYTHON
+%#ifdef SED_HACKS
+    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+%#endif
+#endif
+    result = CPLGetErrorCounter();
+}
+#endif
+unsigned int CPLGetErrorCounter();
+
+
 int VSIGetLastErrorNo();
 const char *VSIGetLastErrorMsg();
 
@@ -369,10 +390,25 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 %apply Pointer NONNULL {const char * pszFilename};
 /* Added in GDAL 1.7.0 */
-#ifdef SWIGJAVA
+
+#if defined(SWIGPYTHON)
+
+%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const GByte *pabyData )};
+%inline {
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const GByte *pabyData)
+{
+    const size_t nSize = static_cast<size_t>(nBytes);
+    GByte* pabyDataDup = (GByte*)VSIMalloc(nSize);
+    if (pabyDataDup == NULL)
+            return;
+    memcpy(pabyDataDup, pabyData, nSize);
+    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
+}
+}
+%clear ( GIntBig nBytes, const GByte *pabyData );
+#else
+#if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
-#elif defined(SWIGPYTHON)
-%apply (int nLen, char *pBuf) {( int nBytes, const GByte *pabyData )};
 #endif
 %inline {
 void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
@@ -385,8 +421,9 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByt
 }
 
 }
-#if defined(SWIGJAVA) || defined(SWIGPYTHON)
+#if defined(SWIGJAVA)
 %clear ( int nBytes, const GByte *pabyData );
+#endif
 #endif
 
 /* Added in GDAL 1.7.0 */
@@ -511,6 +548,8 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 }
 %}
 
+int VSIFEofL( VSILFILE* fp );
+
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
 #if defined(SWIGPYTHON)
@@ -536,12 +575,12 @@ VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 %inline {
 int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 {
-    if (nLen < size * memb)
+    if (nLen < static_cast<GIntBig>(size) * memb)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
     }
-    return VSIFWriteL(pBuf, size, memb, fp);
+    return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 }
 #elif defined(SWIGPERL)
@@ -564,6 +603,8 @@ void VSIStdoutUnsetRedirection()
 }
 }
 #endif
+
+void VSICurlClearCache();
 
 #endif /* !defined(SWIGJAVA) */
 

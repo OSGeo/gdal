@@ -30,7 +30,7 @@
 #include "ogr_gtm.h"
 #include "cpl_time.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                                     OGRSpatialReference* poSRSIn,
@@ -117,7 +117,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-        if( poFeature->IsFieldSet( i ) )
+        if( poFeature->IsFieldSetAndNotNull( i ) )
         {
             const char* l_pszName = poFieldDefn->GetNameRef();
             /* Waypoint name */
@@ -187,7 +187,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     appendUShort(pBufferAux, (unsigned short) commentLength);
 
     /* Write waypoint string comment to buffer */
-    strncpy((char*)pBuffer+12, pszcomment, commentLength);
+    memcpy((char*)pBuffer+12, pszcomment, commentLength);
 
     /* Write icon to buffer */
     pBufferAux = (char*)pBuffer+12+commentLength;

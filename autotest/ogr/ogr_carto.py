@@ -494,7 +494,7 @@ Error""")
             "fields":{"st_extent":{"type":"string"}}}""")
 
     f = lyr.GetFeature(0)
-    if f.GetFID() != -1 or f.IsFieldSet(0):
+    if f.GetFID() != -1 or not f.IsFieldNull(0):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -846,6 +846,20 @@ Error""")
             "fields":{}}""")
     ret = lyr.CreateFeature(f)
     if ret != 0 or f.GetFID() != 12:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=BEGIN;INSERT INTO "table1" ("strfield", "cartodb_id") VALUES (NULL, 11);COMMIT;&api_key=foo""",
+        """{"rows":[],
+            "fields":{}}""")
+    ds = ogr.Open('CARTO:foo', update = 1)
+    lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull('strfield')
+    ret = lyr.CreateFeature(f)
+    if ret != 0 or f.GetFID() != 11:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

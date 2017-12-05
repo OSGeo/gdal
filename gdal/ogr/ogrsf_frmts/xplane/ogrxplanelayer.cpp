@@ -27,10 +27,9 @@
  ****************************************************************************/
 
 #include "ogr_xplane.h"
-#include "ogr_xplane_geo_utils.h"
 #include "ogr_xplane_reader.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRXPlaneLayer()                          */

@@ -32,8 +32,6 @@
 
 #include "ogr_sqlite.h"
 
-#ifdef HAVE_SQLITE_VFS
-
 class OGR2SQLITEModule;
 
 OGR2SQLITEModule* OGR2SQLITE_Setup(GDALDataset* poDS,
@@ -44,7 +42,5 @@ int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule* poModule, OGRDataSource* poDS);
 void OGR2SQLITE_Register();
 
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer* poLayer);
-
-#endif // HAVE_SQLITE_VFS
 
 #endif // OGR_SQLITE_VIRTUAL_OGR_H_INCLUDED

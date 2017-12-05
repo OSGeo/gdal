@@ -29,7 +29,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRDXFDriverIdentify()                         */
@@ -147,6 +147,7 @@ void RegisterOGRDXF()
                                "<LayerCreationOptionList/>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRDXFDriverOpen;
     poDriver->pfnIdentify = OGRDXFDriverIdentify;

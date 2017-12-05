@@ -30,11 +30,7 @@
 #include "ogr_dwg.h"
 #include "cpl_conv.h"
 
-#include "DbDimension.h"
-#include "DbRotatedDimension.h"
-#include "DbAlignedDimension.h"
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         TranslateDIMENSION()                         */
@@ -289,7 +285,7 @@ the approach is as above in all these cases.
 /*      feature for the next feature read.                              */
 /* -------------------------------------------------------------------- */
 
-    // a single space suppresses labelling.
+    // a single space suppresses labeling.
     if( osText == " " )
         return poFeature;
 
@@ -366,7 +362,7 @@ void OGRDWGLayer::FormatDimension( CPLString &osText, double dfValue )
     // to spend the effort.  See QCAD's rs_dimlinear.cpp and related files
     // for example.
 
-    sprintf(szFormat, "%%.%df", nPrecision );
+    snprintf(szFormat, sizeof(szFormat), "%%.%df", nPrecision );
     CPLsnprintf(szBuffer, sizeof(szBuffer), szFormat, dfValue);
     char* pszComma = strchr(szBuffer, ',');
     if (pszComma)

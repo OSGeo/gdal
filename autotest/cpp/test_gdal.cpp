@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general GDAL features.
@@ -23,19 +22,16 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_gdal.cpp,v $
-//  Revision 1.4  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
-#include <tut.h>
-#include <gdal.h>
+
+#include "gdal_unit_test.h"
+
 #include <gdal_priv.h>
 #include <gdal_utils.h>
-#include <string>
+#include <gdal_priv_templates.hpp>
+#include <gdal.h>
+
 #include <limits>
+#include <string>
 
 namespace tut
 {
@@ -132,6 +128,9 @@ namespace tut
 #endif
     }
 
+#define ENSURE(cond) ensure(#cond, (cond))
+#define ENSURE_EQUALS(a, b) ensure_equals(#a " == " #b, (a), (b))
+    
     // Test GDALDataTypeUnion()
     template<> template<> void object::test<6>()
     {
@@ -142,14 +141,44 @@ namespace tut
                 GDALDataType eDT1 = static_cast<GDALDataType>(i);
                 GDALDataType eDT2 = static_cast<GDALDataType>(j);
                 GDALDataType eDT = GDALDataTypeUnion(eDT1,eDT2 );
-                ensure( eDT == GDALDataTypeUnion(eDT2,eDT1) );
-                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT1) );
-                ensure( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
-                ensure( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
-                        (!(GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2))) );
+                ENSURE( eDT == GDALDataTypeUnion(eDT2,eDT1) );
+                ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT1) );
+                ENSURE( GDALGetDataTypeSize(eDT) >= GDALGetDataTypeSize(eDT2) );
+                ENSURE( (GDALDataTypeIsComplex(eDT) && (GDALDataTypeIsComplex(eDT1) || GDALDataTypeIsComplex(eDT2))) ||
+                        (!GDALDataTypeIsComplex(eDT) && !GDALDataTypeIsComplex(eDT1) && !GDALDataTypeIsComplex(eDT2)) );
+                
+                ENSURE( !(GDALDataTypeIsFloating(eDT1) || GDALDataTypeIsFloating(eDT2)) || GDALDataTypeIsFloating(eDT));
+                ENSURE( !(GDALDataTypeIsSigned(eDT1) || GDALDataTypeIsSigned(eDT2)) || GDALDataTypeIsSigned(eDT));
             }
         }
+
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int16, GDT_UInt16), GDT_Int32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Int16, GDT_UInt32), GDT_Float64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt32, GDT_Int16), GDT_Float64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_UInt32, GDT_CInt16), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_Float32, GDT_CInt32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt16, GDT_UInt32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt16, GDT_CFloat32), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Byte), GDT_CInt32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_UInt16), GDT_CInt32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Int16), GDT_CInt32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_UInt32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Int32), GDT_CInt32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_Float32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_CInt16), GDT_CInt32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CInt32, GDT_CFloat32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Byte), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt16), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Int16), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_UInt32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Int32), GDT_CFloat64);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_Float32), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt16), GDT_CFloat32);
+        ENSURE_EQUALS(GDALDataTypeUnion(GDT_CFloat32, GDT_CInt32), GDT_CFloat64);
     }
+
+#undef ENSURE
+#undef ENSURE_EQUALS
 
     // Test GDALAdjustValueToDataType()
     template<> template<> void object::test<7>()
@@ -186,18 +215,32 @@ namespace tut
         ensure( GDALAdjustValueToDataType(GDT_Float32, 1.23,&bClamped,&bRounded) == static_cast<double>(1.23f) && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float32, -1e300,&bClamped,&bRounded) == -std::numeric_limits<float>::max() && bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float32, 1e300,&bClamped,&bRounded) == std::numeric_limits<float>::max() && bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float32, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        {
+            double dfNan = std::numeric_limits<double>::quiet_NaN();
+            double dfGot = GDALAdjustValueToDataType(GDT_Float32, dfNan,&bClamped,&bRounded);
+            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+        }
 
         ensure( GDALAdjustValueToDataType(GDT_Float64, 0.0,&bClamped,&bRounded) == 0.0 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, 1e-50,&bClamped,&bRounded) == 1e-50 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, -1e40,&bClamped,&bRounded) == -1e40 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Float64, 1e40,&bClamped,&bRounded) == 1e40 && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        ensure( GDALAdjustValueToDataType(GDT_Float64, -std::numeric_limits<float>::infinity(),&bClamped,&bRounded) == -std::numeric_limits<float>::infinity() && !bClamped && !bRounded);
+        {
+            double dfNan = std::numeric_limits<double>::quiet_NaN();
+            double dfGot = GDALAdjustValueToDataType(GDT_Float64, dfNan,&bClamped,&bRounded);
+            ensure( memcmp(&dfNan, &dfGot, sizeof(double)) == 0 && !bClamped && !bRounded);
+        }
     }
 
     class FakeBand: public GDALRasterBand
     {
         protected:
-            virtual CPLErr IReadBlock(int, int, void*) { return CE_None; }
-            virtual CPLErr IWriteBlock( int, int, void * ) { return CE_None; }
+            virtual CPLErr IReadBlock(int, int, void*) CPL_OVERRIDE { return CE_None; }
+            virtual CPLErr IWriteBlock( int, int, void * ) CPL_OVERRIDE { return CE_None; }
 
         public:
                     FakeBand(int nXSize, int nYSize) { nBlockXSize = nXSize;
@@ -210,15 +253,15 @@ namespace tut
         public:
             DatasetWithErrorInFlushCache() : bHasFlushCache(false) { }
            ~DatasetWithErrorInFlushCache() { FlushCache(); }
-            virtual void FlushCache(void)
+            virtual void FlushCache(void) CPL_OVERRIDE
             {
                 if( !bHasFlushCache)
                     CPLError(CE_Failure, CPLE_AppDefined, "some error");
                 GDALDataset::FlushCache();
                 bHasFlushCache = true;
             }
-            virtual CPLErr SetProjection(const char*) { return CE_None; }
-            virtual CPLErr SetGeoTransform(double*) { return CE_None; }
+            virtual CPLErr SetProjection(const char*) CPL_OVERRIDE { return CE_None; }
+            virtual CPLErr SetGeoTransform(double*) CPL_OVERRIDE { return CE_None; }
 
             static GDALDataset* CreateCopy(const char*, GDALDataset*,
                                     int, char **,
@@ -319,6 +362,106 @@ namespace tut
         ensure( abyBuffer[16] == 7 );
         GDALSwapWords(abyBuffer, 4, 2, 9 );
 
+    }
+
+    // Test ARE_REAL_EQUAL()
+    template<> template<> void object::test<11>()
+    {
+        ensure( ARE_REAL_EQUAL(0.0, 0.0) );
+        ensure( !ARE_REAL_EQUAL(0.0, 0.1) );
+        ensure( !ARE_REAL_EQUAL(0.1, 0.0) );
+        ensure( ARE_REAL_EQUAL(1.0, 1.0) );
+        ensure( !ARE_REAL_EQUAL(1.0, 0.99) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::min(), std::numeric_limits<double>::min()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::min(), 0.0) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::max(), std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<double>::min(), -std::numeric_limits<double>::min()) );
+
+        ensure( ARE_REAL_EQUAL(0.0f, 0.0f) );
+        ensure( !ARE_REAL_EQUAL(0.0f, 0.1f) );
+        ensure( !ARE_REAL_EQUAL(0.1f, 0.0f) );
+        ensure( ARE_REAL_EQUAL(1.0f, 1.0f) );
+        ensure( !ARE_REAL_EQUAL(1.0f, 0.99f) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::min(), -std::numeric_limits<float>::min()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::min(), std::numeric_limits<float>::min()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::min(), 0.0f) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()) );
+        ensure( ARE_REAL_EQUAL(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()) );
+        ensure( ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()) );
+        ensure( !ARE_REAL_EQUAL(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max()) );
+    }
+
+    // Test GDALIsValueInRange()
+    template<> template<> void object::test<12>()
+    {
+        ensure( GDALIsValueInRange<GByte>(0) );
+        ensure( GDALIsValueInRange<GByte>(255) );
+        ensure( !GDALIsValueInRange<GByte>(-1) );
+        ensure( !GDALIsValueInRange<GByte>(256) );
+        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::max()) );
+        ensure( GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()) );
+        ensure( !GDALIsValueInRange<float>(std::numeric_limits<double>::max()) );
+        ensure( GDALIsValueInRange<double>(std::numeric_limits<double>::infinity()) );
+        ensure( !GDALIsValueInRange<double>(CPLAtof("nan")) );
+        ensure( !GDALIsValueInRange<float>(CPLAtof("nan")) );
+        ensure( !GDALIsValueInRange<GByte>(CPLAtof("nan")) );
+    }
+
+    // Test GDALDataTypeIsInteger()
+    template<> template<> void object::test<13>()
+    {
+        ensure( !GDALDataTypeIsInteger(GDT_Unknown) );
+        ensure( GDALDataTypeIsInteger(GDT_Byte) );
+        ensure( GDALDataTypeIsInteger(GDT_UInt16) );
+        ensure( GDALDataTypeIsInteger(GDT_Int16) );
+        ensure( GDALDataTypeIsInteger(GDT_UInt32) );
+        ensure( GDALDataTypeIsInteger(GDT_Int32) );
+        ensure( !GDALDataTypeIsInteger(GDT_Float32) );
+        ensure( !GDALDataTypeIsInteger(GDT_Float64) );
+        ensure( GDALDataTypeIsInteger(GDT_CInt16) );
+        ensure( GDALDataTypeIsInteger(GDT_CInt32) );
+        ensure( !GDALDataTypeIsInteger(GDT_CFloat32) );
+        ensure( !GDALDataTypeIsInteger(GDT_CFloat64) );
+    }
+
+    // Test GDALDataTypeIsFloating()
+    template<> template<> void object::test<14>()
+    {
+        ensure( !GDALDataTypeIsFloating(GDT_Unknown) );
+        ensure( !GDALDataTypeIsFloating(GDT_Byte) );
+        ensure( !GDALDataTypeIsFloating(GDT_UInt16) );
+        ensure( !GDALDataTypeIsFloating(GDT_Int16) );
+        ensure( !GDALDataTypeIsFloating(GDT_UInt32) );
+        ensure( !GDALDataTypeIsFloating(GDT_Int32) );
+        ensure( GDALDataTypeIsFloating(GDT_Float32) );
+        ensure( GDALDataTypeIsFloating(GDT_Float64) );
+        ensure( !GDALDataTypeIsFloating(GDT_CInt16) );
+        ensure( !GDALDataTypeIsFloating(GDT_CInt32) );
+        ensure( GDALDataTypeIsFloating(GDT_CFloat32) );
+        ensure( GDALDataTypeIsFloating(GDT_CFloat64) );
+    }
+
+    // Test GDALDataTypeIsComplex()
+    template<> template<> void object::test<15>()
+    {
+        ensure( !GDALDataTypeIsComplex(GDT_Unknown) );
+        ensure( !GDALDataTypeIsComplex(GDT_Byte) );
+        ensure( !GDALDataTypeIsComplex(GDT_UInt16) );
+        ensure( !GDALDataTypeIsComplex(GDT_Int16) );
+        ensure( !GDALDataTypeIsComplex(GDT_UInt32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Int32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Float32) );
+        ensure( !GDALDataTypeIsComplex(GDT_Float64) );
+        ensure( GDALDataTypeIsComplex(GDT_CInt16) );
+        ensure( GDALDataTypeIsComplex(GDT_CInt32) );
+        ensure( GDALDataTypeIsComplex(GDT_CFloat32) );
+        ensure( GDALDataTypeIsComplex(GDT_CFloat64) );
     }
 
 } // namespace tut

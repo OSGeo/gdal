@@ -27,7 +27,7 @@
  */
 
 typedef struct {
-  INT32 put_buffer;		/* current bit-accumulation buffer */
+  unsigned int put_buffer;		/* current bit-accumulation buffer */
   int put_bits;			/* # of bits now in it */
   int last_dc_val[MAX_COMPS_IN_SCAN]; /* last DC coef for each component */
 } savable_state;
@@ -306,7 +306,7 @@ emit_bits (working_state * state, unsigned int code, int size)
 /* Emit some bits; return TRUE if successful, FALSE if must suspend */
 {
   /* This routine is heavily used, so it's worth coding tightly. */
-  register INT32 put_buffer = (INT32) code;
+  register unsigned int put_buffer = code;
   register int put_bits = state->cur.put_bits;
 
   /* if size is 0, caller used an invalid Huffman table entry */

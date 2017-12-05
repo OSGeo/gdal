@@ -34,7 +34,7 @@
 #include <cmath>
 #include <cstdlib>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -250,17 +250,44 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff,
 
 double BTRasterBand::GetNoDataValue( int* pbSuccess /*= NULL */ )
 {
+    // First check in PAM
+    int bSuccess = FALSE;
+    double dfRet = GDALPamRasterBand::GetNoDataValue(&bSuccess);
+    if( bSuccess )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+        return dfRet;
+    }
+
+    // Otherwise defaults to -32768
     if(pbSuccess != NULL)
         *pbSuccess = TRUE;
 
     return -32768;
 }
-
-CPLErr BTRasterBand::SetNoDataValue( double )
+ 
+CPLErr BTRasterBand::SetNoDataValue( double dfNoDataValue )
 
 {
-    return CE_None;
+    // First check if there's an existing nodata value in PAM
+    int bSuccess = FALSE;
+    GDALPamRasterBand::GetNoDataValue(&bSuccess);
+    if( bSuccess )
+    {
+        // if so override it in PAM
+        return GDALPamRasterBand::SetNoDataValue(dfNoDataValue);
+    }
+
+    // if nothing in PAM yet and the nodatavalue is the default one, do
+    // nothing
+    if( dfNoDataValue == -32768.0 )
+        return CE_None;
+    // other nodata value ? then go to PAM
+    return GDALPamRasterBand::SetNoDataValue(dfNoDataValue);
 }
+
+
 
 /************************************************************************/
 /*                            GetUnitType()                             */

@@ -31,7 +31,7 @@
 #define SQUARE(x) ((x)*(x))
 #define EPSILON 1e-5
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
@@ -78,7 +78,8 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary* poPageDict)
     else
     {
         ExploreContents(poContents, poResources);
-        ExploreTree(poStructTreeRoot, 0);
+        std::set< std::pair<int,int> > aoSetAlreadyVisited;
+        ExploreTree(poStructTreeRoot, aoSetAlreadyVisited, 0);
     }
 
     CleanupIntermediateResources();
@@ -237,10 +238,17 @@ int PDFDataset::GetLayerCount()
 /*                            ExploreTree()                             */
 /************************************************************************/
 
-void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
+void PDFDataset::ExploreTree(GDALPDFObject* poObj,
+                             std::set< std::pair<int,int> > aoSetAlreadyVisited,
+                             int nRecLevel)
 {
     if (nRecLevel == 16)
         return;
+
+    std::pair<int,int> oObjPair( poObj->GetRefNum(), poObj->GetRefGen() );
+    if( aoSetAlreadyVisited.find( oObjPair ) != aoSetAlreadyVisited.end() )
+        return;
+    aoSetAlreadyVisited.insert( oObjPair );
 
     if (poObj->GetType() != PDFObjectType_Dictionary)
         return;
@@ -306,12 +314,13 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj, int nRecLevel)
         else
         {
             for(int i=0;i<poArray->GetLength();i++)
-                ExploreTree(poArray->Get(i), nRecLevel + 1);
+                ExploreTree(poArray->Get(i), aoSetAlreadyVisited,
+                            nRecLevel + 1);
         }
     }
     else if (poK->GetType() == PDFObjectType_Dictionary)
     {
-        ExploreTree(poK, nRecLevel + 1);
+        ExploreTree(poK, aoSetAlreadyVisited, nRecLevel + 1);
     }
 }
 
@@ -401,7 +410,10 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y,
                                             double& X, double &Y)
 {
     x = x / dfPageWidth * nRasterXSize;
-    y = (1 - y / dfPageHeight) * nRasterYSize;
+    if( bGeoTransformValid )
+        y = (1 - y / dfPageHeight) * nRasterYSize;
+    else
+        y = (y / dfPageHeight) * nRasterYSize;
 
     X = adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2];
     Y = adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5];
@@ -853,7 +865,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -880,7 +892,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -894,7 +906,7 @@ OGRGeometry* PDFDataset::ParseContent(const char* pszContent,
                 {
                     if (!(!oCoords.empty() &&
                           oCoords[oCoords.size() - 2] == CLOSE_SUBPATH &&
-                          oCoords[oCoords.size() - 1] == CLOSE_SUBPATH))
+                          oCoords.back() == CLOSE_SUBPATH))
                     {
                         oCoords.push_back(CLOSE_SUBPATH);
                         oCoords.push_back(CLOSE_SUBPATH);
@@ -1524,8 +1536,9 @@ void PDFDataset::ExploreContents(GDALPDFObject* poObj,
 /************************************************************************/
 
 void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
-                                                            GDALPDFObject* poResources,
-                                                            std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer)
+                                                      GDALPDFObject* poResources,
+                                                      std::map<CPLString, OGRPDFLayer*>& oMapPropertyToLayer,
+                                                      OGRPDFLayer* poSingleLayer)
 {
     if (poContents->GetType() == PDFObjectType_Array)
     {
@@ -1556,7 +1569,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
             CPLFree(pszStr);
         }
         if( pszConcatStr )
-            ParseContent(pszConcatStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
+            ParseContent(pszConcatStr, poResources, FALSE, FALSE, oMapPropertyToLayer, poSingleLayer);
         CPLFree(pszConcatStr);
         return;
     }
@@ -1571,7 +1584,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(GDALPDFObject* poContents,
     char* pszStr = poStream->GetBytes();
     if( !pszStr )
         return;
-    ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer, NULL);
+    ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer, poSingleLayer);
     CPLFree(pszStr);
 }
 
@@ -1657,12 +1670,29 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
         }
     }
 
+    OGRPDFLayer* poSingleLayer = NULL;
     if( nLayers == 0 )
-        return;
+    {
+        if( CPLTestBool(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) )
+        {
+            OGRPDFLayer *poLayer =
+                new OGRPDFLayer(this, "content", NULL, wkbUnknown);
+            papoLayers = (OGRLayer**)
+                CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
+            papoLayers[nLayers] = poLayer;
+            nLayers ++;
+            poSingleLayer = poLayer;
+        }
+        else
+        {
+            return;
+        }
+    }
 
     ExploreContentsNonStructuredInternal(poContents,
                                          poResources,
-                                         oMapPropertyToLayer);
+                                         oMapPropertyToLayer,
+                                         poSingleLayer);
 
     /* Remove empty layers */
     int i = 0;

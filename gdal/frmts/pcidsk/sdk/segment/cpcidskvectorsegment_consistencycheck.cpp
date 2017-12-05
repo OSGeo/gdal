@@ -166,7 +166,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck()
     report += ConsistencyCheck_ShapeIndices();
 
     if( report != "" )
-        fprintf( stderr, "ConsistencyCheck() Report:\n%s", report.c_str() );
+        fprintf( stderr, "ConsistencyCheck() Report:\n%s", report.c_str() );/*ok*/
 
     return report;
 }

@@ -31,7 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             NTFCodeList                              */
@@ -48,16 +48,20 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord ) :
     snprintf( szValType, sizeof(szValType), "%s", poRecord->GetField(13,14) );
     snprintf( szFInter, sizeof(szFInter), "%s", poRecord->GetField(15,19) );
 
+    const int nRecordLen = poRecord->GetLength();
     const char *pszText = poRecord->GetData() + 22;
     int iThisField = 0;
     for( ;
-         *pszText != '\0' && iThisField < nNumCode;
+         nRecordLen > 22 && *pszText != '\0' && iThisField < nNumCode;
          iThisField++ )
     {
         char szVal[128] = {};
         int iLen = 0;
-        while( *pszText != '\\' && *pszText != '\0' )
+        while( iLen < static_cast<int>(sizeof(szVal)) - 1 &&
+               *pszText != '\\' && *pszText != '\0' )
+        {
             szVal[iLen++] = *(pszText++);
+        }
         szVal[iLen] = '\0';
 
         if( *pszText == '\\' )
@@ -65,8 +69,11 @@ NTFCodeList::NTFCodeList( NTFRecord * poRecord ) :
 
         iLen = 0;
         char szDes[128] = {};
-        while( *pszText != '\\' && *pszText != '\0' )
+        while( iLen < static_cast<int>(sizeof(szDes)) - 1 &&
+               *pszText != '\\' && *pszText != '\0' )
+        {
             szDes[iLen++] = *(pszText++);
+        }
         szDes[iLen] = '\0';
 
         if( *pszText == '\\' )

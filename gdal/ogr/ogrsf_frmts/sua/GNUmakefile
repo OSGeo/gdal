@@ -4,7 +4,7 @@ include ../../../GDALmake.opt
 
 OBJ	=	ogrsuadriver.o ogrsuadatasource.o ogrsualayer.o
 
-CPPFLAGS	:=	-I.. -I../.. -I../xplane  $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. $(CPPFLAGS)
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 

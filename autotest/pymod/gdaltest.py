@@ -31,6 +31,7 @@
 
 import contextlib
 import os
+import os.path
 import stat
 import sys
 import time
@@ -570,7 +571,7 @@ class GDALTest:
                        vsimem = 0, new_filename = None, strict_in = 0,
                        skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
                        check_checksum_not_null = None, interrupt_during_copy = False,
-                       dest_open_options = None):
+                       dest_open_options = None, quiet_error_handler = True):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -597,7 +598,8 @@ class GDALTest:
             else:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
-        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        if quiet_error_handler:
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         if interrupt_during_copy:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                          strict = strict_in,
@@ -607,7 +609,8 @@ class GDALTest:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                             strict = strict_in,
                                             options = self.options )
-        gdal.PopErrorHandler()
+        if quiet_error_handler:
+            gdal.PopErrorHandler()
 
         if interrupt_during_copy:
             if new_ds is None:
@@ -893,7 +896,7 @@ class GDALTest:
         gt = (123.0, 1.18, 0.0, 456.0, 0.0, -1.18 )
         if prj is None:
             # This is a challenging SRS since it has non-meter linear units.
-            prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["feet",0.3048006096012192]]'
+            prj='PROJCS["NAD83 / Ohio South",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",40.03333333333333],PARAMETER["standard_parallel_2",38.73333333333333],PARAMETER["latitude_of_origin",38],PARAMETER["central_meridian",-82.5],PARAMETER["false_easting",1968500],PARAMETER["false_northing",0],UNIT["US survey foot",0.3048006096012192]]'
 
         src_osr = osr.SpatialReference()
         src_osr.ImportFromWkt(prj)
@@ -1259,9 +1262,11 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
+def download_file(url, filename = None, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
 
-    if filename.startswith(base_dir + '/'):
+    if filename is None:
+        filename = os.path.basename(url)
+    elif filename.startswith(base_dir + '/'):
         filename = filename[len(base_dir + '/'):]
 
     global count_skipped_tests_download
@@ -1901,6 +1906,12 @@ def is_file_open(filename):
     return False
 
 ###############################################################################
+# built_against_curl()
+
+def built_against_curl():
+    return gdal.GetDriverByName('HTTP') is not None
+
+###############################################################################
 # error_handler()
 # Allow use of "with" for an ErrorHandler that always pops at the scope close.
 # Defaults to suppressing errors and warnings.
@@ -1924,6 +1935,18 @@ def SetCacheMax(val):
     yield
   finally:
     gdal.SetCacheMax(oldval)
+
+###############################################################################
+# Temporarily define a configuration option
+
+@contextlib.contextmanager
+def config_option(key, val):
+  oldval = gdal.GetConfigOption(key)
+  gdal.SetConfigOption(key, val)
+  try:
+    yield
+  finally:
+    gdal.SetConfigOption(key, oldval)
 
 ###############################################################################
 run_func = gdaltestaux.run_func

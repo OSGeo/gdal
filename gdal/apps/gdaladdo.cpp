@@ -29,46 +29,48 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "commonutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage( const char* pszErrorMsg = NULL )
 
 {
-    printf( "Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
-            "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [--help-general] filename levels\n"
-            "\n"
-            "  -r : choice of resampling method (default: nearest)\n"
-            "  -ro : open the dataset in read-only mode, in order to generate\n"
-            "        external overview (for GeoTIFF datasets especially)\n"
-            "  -clean : remove all overviews\n"
-            "  -q : turn off progress display\n"
-            "  -b : band to create overview (if not set overviews will be created for all bands)\n"
-            "  filename: The file to build overviews for (or whose overviews must be removed).\n"
-            "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
-            "\n"
-            "Useful configuration variables :\n"
-            "  --config USE_RRD YES : Use Erdas Imagine format (.aux) as overview format.\n"
-            "Below, only for external overviews in GeoTIFF format:\n"
-            "  --config COMPRESS_OVERVIEW {JPEG,LZW,PACKBITS,DEFLATE} : TIFF compression\n"
-            "  --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...} : TIFF photometric interp.\n"
-            "  --config INTERLEAVE_OVERVIEW {PIXEL|BAND} : TIFF interleaving method\n"
-            "  --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO} : is BigTIFF used\n"
-            "\n"
-            "Examples:\n"
-            " %% gdaladdo -r average abc.tif 2 4 8 16\n"
-            " %% gdaladdo --config COMPRESS_OVERVIEW JPEG\n"
-            "             --config PHOTOMETRIC_OVERVIEW YCBCR\n"
-            "             --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif 2 4 8 16\n");
+    printf("Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
+           "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [-minsize val]\n"
+           "                [--help-general] filename [levels]\n"
+           "\n"
+           "  -r : choice of resampling method (default: nearest)\n"
+           "  -ro : open the dataset in read-only mode, in order to generate\n"
+           "        external overview (for GeoTIFF datasets especially)\n"
+           "  -clean : remove all overviews\n"
+           "  -q : turn off progress display\n"
+           "  -b : band to create overview (if not set overviews will be created for all bands)\n"
+           "  filename: The file to build overviews for (or whose overviews must be removed).\n"
+           "  levels: A list of integral overview levels to build. Ignored with -clean option.\n"
+           "\n"
+           "Useful configuration variables :\n"
+           "  --config USE_RRD YES : Use Erdas Imagine format (.aux) as overview format.\n"
+           "Below, only for external overviews in GeoTIFF format:\n"
+           "  --config COMPRESS_OVERVIEW {JPEG,LZW,PACKBITS,DEFLATE} : TIFF compression\n"
+           "  --config PHOTOMETRIC_OVERVIEW {RGB,YCBCR,...} : TIFF photometric interp.\n"
+           "  --config INTERLEAVE_OVERVIEW {PIXEL|BAND} : TIFF interleaving method\n"
+           "  --config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO} : is BigTIFF used\n"
+           "\n"
+           "Examples:\n"
+           " %% gdaladdo -r average abc.tif\n"
+           " %% gdaladdo --config COMPRESS_OVERVIEW JPEG\n"
+           "            --config PHOTOMETRIC_OVERVIEW YCBCR\n"
+           "            --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif\n");
 
     if( pszErrorMsg != NULL )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit( 1 );
+    exit(1);
 }
 
 /************************************************************************/
@@ -82,7 +84,8 @@ class GDALError
       CPLErrorNum       m_errNum;
       CPLString         m_osMsg;
 
-      GDALError( CPLErr eErr = CE_None, CPLErrorNum errNum= CPLE_None, const char * pszMsg = "") :
+      GDALError( CPLErr eErr = CE_None, CPLErrorNum errNum= CPLE_None,
+                 const char * pszMsg = "" ) :
           m_eErr(eErr), m_errNum(errNum), m_osMsg(pszMsg ? pszMsg : "")
       {
       }
@@ -90,7 +93,8 @@ class GDALError
 
 std::vector<GDALError> aoErrors;
 
-static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum, const char * pszMsg )
+static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum,
+                                              const char * pszMsg )
 {
     aoErrors.push_back(GDALError(eErr, errNum, pszMsg));
 }
@@ -102,38 +106,40 @@ static void CPL_STDCALL GDALAddoErrorHandler( CPLErr eErr, CPLErrorNum errNum, c
 #define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg) \
     do { if (iArg + nExtraArg >= nArgc) \
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
-                         papszArgv[iArg], nExtraArg)); } while( false )
+                         papszArgv[iArg], nExtraArg)); } while(false)
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
-    GDALDatasetH     hDataset;
-    const char      *pszResampling = "nearest";
-    const char      *pszFilename = NULL;
-    int              anLevels[1024];
-    int              nLevelCount = 0;
-    int              nResultStatus = 0;
-    int              bReadOnly = FALSE;
-    int              bClean = FALSE;
-    GDALProgressFunc pfnProgress = GDALTermProgress;
-    int             *panBandList = NULL;
-    int              nBandCount = 0;
-    char           **papszOpenOptions = NULL;
-
-    /* Check that we are running against at least GDAL 1.7 */
-    /* Note to developers : if we use newer API, please change the requirement */
+    // Check that we are running against at least GDAL 1.7.
+    // Note to developers: if we use newer API, please change the requirement.
     if (atoi(GDALVersionInfo("VERSION_NUM")) < 1700)
     {
-        fprintf(stderr, "At least, GDAL >= 1.7.0 is required for this version of %s, "
-                        "which was compiled against GDAL %s\n", papszArgv[0], GDAL_RELEASE_NAME);
+        fprintf(stderr,
+                "At least, GDAL >= 1.7.0 is required for this version of %s, "
+                "which was compiled against GDAL %s\n",
+                papszArgv[0], GDAL_RELEASE_NAME);
         exit(1);
     }
 
     GDALAllRegister();
 
-    nArgc = GDALGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+    nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
     if( nArgc < 1 )
-        exit( -nArgc );
+        exit(-nArgc);
+
+    const char *pszResampling = "nearest";
+    const char *pszFilename = NULL;
+    int anLevels[1024] = {};
+    int nLevelCount = 0;
+    int nResultStatus = 0;
+    bool bReadOnly = false;
+    bool bClean = false;
+    GDALProgressFunc pfnProgress = GDALTermProgress;
+    int *panBandList = NULL;
+    int nBandCount = 0;
+    char **papszOpenOptions = NULL;
+    int nMinSize = 256;
 
 /* -------------------------------------------------------------------- */
 /*      Parse command line.                                              */
@@ -142,124 +148,167 @@ int main( int nArgc, char ** papszArgv )
     {
         if( EQUAL(papszArgv[iArg], "--utility_version") )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( papszArgv );
+            printf("%s was compiled against GDAL %s and "
+                   "is running against GDAL %s\n",
+                   papszArgv[0], GDAL_RELEASE_NAME,
+                   GDALVersionInfo("RELEASE_NAME"));
+            CSLDestroy(papszArgv);
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"--help") )
+        else if( EQUAL(papszArgv[iArg], "--help") )
+        {
             Usage();
-        else if( EQUAL(papszArgv[iArg],"-r") )
+        }
+        else if( EQUAL(papszArgv[iArg], "-r") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszResampling = papszArgv[++iArg];
         }
-        else if( EQUAL(papszArgv[iArg],"-ro"))
-            bReadOnly = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-clean"))
-            bClean = TRUE;
-        else if( EQUAL(papszArgv[iArg],"-q") || EQUAL(papszArgv[iArg],"-quiet") )
+        else if( EQUAL(papszArgv[iArg], "-ro"))
+        {
+            bReadOnly = true;
+        }
+        else if( EQUAL(papszArgv[iArg], "-clean"))
+        {
+            bClean = true;
+        }
+        else if( EQUAL(papszArgv[iArg], "-q") ||
+                 EQUAL(papszArgv[iArg], "-quiet") )
+        {
             pfnProgress = GDALDummyProgress;
-        else if( EQUAL(papszArgv[iArg],"-b"))
+        }
+        else if( EQUAL(papszArgv[iArg], "-b"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             const char* pszBand = papszArgv[iArg+1];
-            int nBand = atoi(pszBand);
+            const int nBand = atoi(pszBand);
             if( nBand < 1 )
             {
-                printf( "Unrecognizable band number (%s).\n", papszArgv[iArg+1] );
+                printf("Unrecognizable band number (%s).\n", papszArgv[iArg+1]);
                 Usage();
             }
             iArg++;
 
             nBandCount++;
-            panBandList = (int *)
-                CPLRealloc(panBandList, sizeof(int) * nBandCount);
+            panBandList = static_cast<int *>(
+                CPLRealloc(panBandList, sizeof(int) * nBandCount));
             panBandList[nBandCount-1] = nBand;
         }
         else if( EQUAL(papszArgv[iArg], "-oo") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszOpenOptions = CSLAddString( papszOpenOptions,
-                                             papszArgv[++iArg] );
+            papszOpenOptions =
+                CSLAddString(papszOpenOptions, papszArgv[++iArg]);
+        }
+        else if( EQUAL(papszArgv[iArg], "-minsize") )
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            nMinSize = atoi(papszArgv[++iArg]);
         }
         else if( papszArgv[iArg][0] == '-' )
+        {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
+        }
         else if( pszFilename == NULL )
+        {
             pszFilename = papszArgv[iArg];
-        else if( atoi(papszArgv[iArg]) > 0 )
+        }
+        else if( atoi(papszArgv[iArg]) > 0 &&
+                 static_cast<size_t>(nLevelCount) < CPL_ARRAYSIZE(anLevels) )
         {
             anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
             if( anLevels[nLevelCount-1] == 1 )
             {
-                printf("Warning: Overview with subsampling factor of 1 requested. This will copy the full resolution dataset in the overview !\n");
+                printf(
+                    "Warning: Overview with subsampling factor of 1 requested. "
+                    "This will copy the full resolution dataset in the "
+                    "overview!\n");
             }
         }
         else
+        {
             Usage("Too many command options.");
+        }
     }
 
     if( pszFilename == NULL )
         Usage("No datasource specified.");
 
-    if( nLevelCount == 0 && !bClean )
-        Usage("No overview level specified.");
-
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */
 /* -------------------------------------------------------------------- */
-    if (bReadOnly)
-        hDataset = NULL;
-    else
+    GDALDatasetH hDataset = NULL;
+    if( !bReadOnly )
     {
-        CPLPushErrorHandler( GDALAddoErrorHandler );
-        CPLSetCurrentErrorHandlerCatchDebug( FALSE );
-        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE, NULL, papszOpenOptions, NULL );
+        CPLPushErrorHandler(GDALAddoErrorHandler);
+        CPLSetCurrentErrorHandlerCatchDebug(FALSE);
+        hDataset = GDALOpenEx(pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                              NULL, papszOpenOptions, NULL);
         CPLPopErrorHandler();
         if( hDataset != NULL )
         {
             for(size_t i=0;i<aoErrors.size();i++)
             {
-                CPLError( aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
-                          aoErrors[i].m_osMsg.c_str() );
+                CPLError(aoErrors[i].m_eErr, aoErrors[i].m_errNum, "%s",
+                         aoErrors[i].m_osMsg.c_str());
             }
         }
     }
 
     if( hDataset == NULL )
-        hDataset = GDALOpenEx( pszFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL, papszOpenOptions, NULL );
+        hDataset =
+            GDALOpenEx(pszFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                       NULL, papszOpenOptions, NULL);
 
     CSLDestroy(papszOpenOptions);
     papszOpenOptions = NULL;
 
     if( hDataset == NULL )
-        exit( 2 );
+        exit(2);
 
 /* -------------------------------------------------------------------- */
 /*      Clean overviews.                                                */
 /* -------------------------------------------------------------------- */
-    if ( bClean &&
-        GDALBuildOverviews( hDataset,pszResampling, 0, NULL,
-                             0, NULL, pfnProgress, NULL ) != CE_None )
+    if ( bClean )
     {
-        printf( "Cleaning overviews failed.\n" );
-        nResultStatus = 200;
+        if( GDALBuildOverviews(hDataset,pszResampling, 0, NULL,
+                               0, NULL, pfnProgress, NULL) != CE_None )
+        {
+            printf("Cleaning overviews failed.\n");
+            nResultStatus = 200;
+        }
     }
-
+    else
+    {
 /* -------------------------------------------------------------------- */
 /*      Generate overviews.                                             */
 /* -------------------------------------------------------------------- */
 
-    //Only HFA support selected layers
-    if(nBandCount > 0)
-        CPLSetConfigOption( "USE_RRD", "YES" );
+        if( nLevelCount == 0 )
+        {
+            const int nXSize = GDALGetRasterXSize(hDataset);
+            const int nYSize = GDALGetRasterYSize(hDataset);
+            int nOvrFactor = 1;
+            while( DIV_ROUND_UP(nXSize, nOvrFactor) > nMinSize ||
+                   DIV_ROUND_UP(nYSize, nOvrFactor) > nMinSize )
+            {
+                nOvrFactor *= 2;
+                anLevels[nLevelCount++] = nOvrFactor;
+            }
+        }
 
-    if (nLevelCount > 0 && nResultStatus == 0 &&
-        GDALBuildOverviews( hDataset,pszResampling, nLevelCount, anLevels,
-                             nBandCount, panBandList, pfnProgress, NULL ) != CE_None )
-    {
-        printf( "Overview building failed.\n" );
-        nResultStatus = 100;
+        // Only HFA supports selected layers
+        if( nBandCount > 0 )
+            CPLSetConfigOption("USE_RRD", "YES");
+
+        if( nLevelCount > 0 &&
+            GDALBuildOverviews(hDataset,pszResampling, nLevelCount, anLevels,
+                               nBandCount, panBandList, pfnProgress,
+                               NULL) != CE_None)
+        {
+            printf("Overview building failed.\n");
+            nResultStatus = 100;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -267,9 +316,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     GDALClose(hDataset);
 
-    CSLDestroy( papszArgv );
+    CSLDestroy(papszArgv);
     CPLFree(panBandList);
     GDALDestroyDriverManager();
 
     return nResultStatus;
 }
+MAIN_END

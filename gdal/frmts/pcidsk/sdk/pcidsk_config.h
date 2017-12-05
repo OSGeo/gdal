@@ -99,7 +99,7 @@ namespace PCIDSK {
 #endif
 
 #ifndef GDAL_PCIDSK_DRIVER
-#ifdef PCIDSK_INTERNAL
+#if defined(PCIDSK_INTERNAL) && !defined(ALIAS_CPLSNPRINTF_AS_SNPRINTF)
 #include <stdlib.h>
 extern "C" double CPLAtof(const char*);
 extern "C" int CPLsprintf(char *str, const char* fmt, ...) PCIDSK_PRINT_FUNC_FORMAT(2,3);
@@ -111,8 +111,16 @@ extern "C" int CPLsnprintf(char *str, size_t size, const char* fmt, ...) PCIDSK_
 #endif
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900) && !defined(HAVE_CPL_SAFER_SNPRINTF)
 #  define snprintf _snprintf
+#endif
+
+#if defined(__MSVCRT__) || defined(_MSC_VER)
+  #define PCIDSK_FRMT_INT64     "%I64d"
+  #define PCIDSK_FRMT_UINT64    "%I64u"
+#else
+  #define PCIDSK_FRMT_INT64     "%lld"
+  #define PCIDSK_FRMT_UINT64    "%llu"
 #endif
 
 #endif // PCIDSK_CONFIG_H_INCLUDED

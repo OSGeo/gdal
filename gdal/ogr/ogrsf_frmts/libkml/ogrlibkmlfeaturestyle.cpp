@@ -35,7 +35,7 @@
 #include "ogrlibkmlfeaturestyle.h"
 #include "ogrlibkmlstyle.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using kmldom::FeaturePtr;
 using kmldom::IconStylePtr;

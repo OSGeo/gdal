@@ -31,7 +31,7 @@
 #include "ogr_oci.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGROCILayer()                               */
@@ -187,6 +187,8 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     {
         if( papszResult[iField] != NULL )
             poFeature->SetField( iField, papszResult[iField] );
+        else
+            poFeature->SetFieldNull( iField );
     }
 
 /* -------------------------------------------------------------------- */
@@ -745,14 +747,9 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
     else if( nEType == 4  || nEType % 100 == 5 )
     {
         int nSubElementCount = nInterpretation;
-        OGRLineString *poLS, *poElemLS;
+        OGRLineString *poLS;
         int nElemCount, nTotalOrdCount;
         OGROCISession      *poSession = poDS->GetSession();
-
-        if( nEType == 4 )
-            poLS = new OGRLineString();
-        else
-            poLS = new OGRLinearRing();
 
         if( poSession->Failed(
             OCICollSize( poSession->hEnv, poSession->hError,
@@ -766,6 +763,11 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
             "OCICollSize(sdo_ordinates)" ) )
             return NULL;
 
+        if( nEType == 4 )
+            poLS = new OGRLineString();
+        else
+            poLS = new OGRLinearRing();
+
         for( *piElement += 3; nSubElementCount-- > 0;  *piElement += 3 )
         {
             LoadElementInfo( *piElement, nElemCount, nTotalOrdCount,
@@ -777,10 +779,11 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
                 nElemOrdCount += nDimension;
 
             // translate element.
-            poElemLS = (OGRLineString *)
+            OGRGeometry* poGeom =
                 TranslateGeometryElement( piElement, nGType, nDimension,
                                           nEType, nInterpretation,
                                           nStartOrdinal - 1, nElemOrdCount );
+            OGRLineString* poElemLS = dynamic_cast<OGRLineString *>(poGeom);
 
             // Try to append to our aggregate linestring/ring
             if( poElemLS )
@@ -795,9 +798,8 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
                 }
                 else
                     poLS->addSubLineString( poElemLS, 0 );
-
-                delete poElemLS;
             }
+            delete poGeom;
         }
 
         *piElement -= 3;
@@ -913,14 +915,12 @@ int OGROCILayer::LookupTableSRID()
 /* -------------------------------------------------------------------- */
     OGROCIStringBuf oCommand;
 
-    oCommand.Appendf( 1000, "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
-                      "WHERE TABLE_NAME = UPPER('%s') AND COLUMN_NAME = UPPER('%s')",
-                      pszTableName, pszGeomName );
+    oCommand.Append( "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
+                      "WHERE TABLE_NAME = UPPER(:table_name) AND COLUMN_NAME = UPPER(:geometry_name)" );
 
     if( pszOwner != NULL )
     {
-        oCommand.Appendf( 500, " AND OWNER = '%s'", pszOwner );
-        CPLFree( pszOwner );
+        oCommand.Append( " AND OWNER = :owner");
     }
 
 /* -------------------------------------------------------------------- */
@@ -928,8 +928,19 @@ int OGROCILayer::LookupTableSRID()
 /* -------------------------------------------------------------------- */
     OGROCIStatement oGetTables( poDS->GetSession() );
     int nSRID = -1;
+    
+    if( oGetTables.Prepare( oCommand.GetString() ) != CE_None )
+        return nSRID;
+    
+    oGetTables.BindString(":table_name", pszTableName);
+    oGetTables.BindString(":geometry_name", pszGeomName);
+    if( pszOwner != NULL )
+    {
+        oGetTables.BindString(":owner", pszOwner);
+        CPLFree( pszOwner );
+    }
 
-    if( oGetTables.Execute( oCommand.GetString() ) == CE_None )
+    if( oGetTables.Execute( NULL ) == CE_None )
     {
         char **papszRow = oGetTables.SimpleFetchRow();
 

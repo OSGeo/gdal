@@ -67,6 +67,8 @@ class GDALAsyncReader;
 #include "cpl_atomic_ops.h"
 #include <vector>
 #include <map>
+#include <limits>
+#include <cmath>
 #include "ogr_core.h"
 
 //! @cond Doxygen_Suppress
@@ -502,6 +504,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     int           Reference();
     int           Dereference();
+    int           ReleaseRef();
+
     /** Return access mode.
      * @return access mode.
      */
@@ -722,6 +726,9 @@ class CPL_DLL GDALRasterBlock
     static void FlushDirtyBlocks();
     static int  FlushCacheBlock(int bDirtyBlocksOnly = FALSE);
     static void Verify();
+
+    static void EnterDisableDirtyBlockFlush();
+    static void LeaveDisableDirtyBlockFlush();
 
 #ifdef notdef
     static void CheckNonOrphanedBlocks(GDALRasterBand* poBand);
@@ -1425,7 +1432,8 @@ typedef CPLErr (*GDALResampleFunction)
                         const char * pszResampling,
                         int bHasNoData, float fNoDataValue,
                         GDALColorTable* poColorTable,
-                        GDALDataType eSrcDataType);
+                        GDALDataType eSrcDataType,
+                        bool bPropagateNoData );
 
 GDALResampleFunction GDALGetResampleFunction(const char* pszResampling,
                                                  int* pnRadius);
@@ -1501,30 +1509,11 @@ GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess,
                            GDALDataset *poDependentDS );
 
 /* ==================================================================== */
-/*      Misc functions.                                                 */
-/* ==================================================================== */
-
-CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree,
-                                     int *pnXSize, int *pnYSize,
-                                     double *padfGeoTransform,
-                                     char **ppszProjection );
-
-/* ==================================================================== */
 /*  Infrastructure to check that dataset characteristics are valid      */
 /* ==================================================================== */
 
 int CPL_DLL GDALCheckDatasetDimensions( int nXSize, int nYSize );
 int CPL_DLL GDALCheckBandCount( int nBands, int bIsZeroAllowed );
-
-// Test if 2 floating point values match. Useful when comparing values
-// stored as a string at some point. See #3573, #4183, #4506
-#define ARE_REAL_EQUAL(dfVal1, dfVal2) \
- /* Is it FLT_MIN ? Cf #6578 */ \
- (((float)dfVal2 == (float)1.17549435e-38) ? ((float)dfVal1 == (float)dfVal2) : \
- /* Or DBL_MIN ? */ \
-  (dfVal2 == 2.2250738585072014e-308) ? (dfVal1 == dfVal2) : \
- /* General case */ \
-  (dfVal1 == dfVal2 || fabs(dfVal1 - dfVal2) < 1e-10 || (dfVal2 != 0 && fabs(1 - dfVal1 / dfVal2) < 1e-10 )))
 
 /* Internal use only */
 
@@ -1572,9 +1561,18 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg* psExtraArg,
                                         int nXSize, int nYSize,
                                         int nBufXSize, int nBufYSize);
 
-/* CPL_DLL exported, but only for gdalwarp */
-GDALDataset CPL_DLL* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
-                                               int bThisLevelOnly, int bOwnDS);
+
+GDALDataset* GDALCreateOverviewDataset(GDALDataset* poDS, int nOvrLevel,
+                                       int bThisLevelOnly);
+
+// Should cover particular cases of #3573, #4183, #4506, #6578
+// Behaviour is undefined if fVal1 or fVal2 are NaN (should be tested before
+// calling this function)
+template<class T> inline bool ARE_REAL_EQUAL(T fVal1, T fVal2, int ulp = 2)
+{
+    return fVal1 == fVal2 || /* Should cover infinity */
+           std::abs(fVal1 - fVal2) < std::numeric_limits<float>::epsilon() * std::abs(fVal1+fVal2) * ulp;
+}
 
 #define DIV_ROUND_UP(a, b) ( ((a) % (b)) == 0 ? ((a) / (b)) : (((a) / (b)) + 1) )
 

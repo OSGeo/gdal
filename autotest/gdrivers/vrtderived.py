@@ -870,7 +870,7 @@ def vrtderived_14():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_VRT_ENABLE_PYTHON', "YES")
-    ds = gdal.Open('data/python_ones.vrt')
+    ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtderived_14.vrt', gdal.Open('data/python_ones.vrt'))
     (my_min, my_max) = ds.GetRasterBand(1).ComputeRasterMinMax()
     (my_min2, my_max2, mean, stddev) = ds.GetRasterBand(1).ComputeStatistics(False)
     hist = ds.GetRasterBand(1).GetHistogram()
@@ -891,6 +891,8 @@ def vrtderived_14():
         gdaltest.post_reason( 'invalid GetHistogram' )
         print(hist)
         return 'fail'
+
+    gdal.GetDriverByName('VRT').Delete('/vsimem/vrtderived_14.vrt')
 
     return 'success'
 

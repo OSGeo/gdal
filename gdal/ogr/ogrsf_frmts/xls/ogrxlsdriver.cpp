@@ -29,7 +29,7 @@
 #include "ogr_xls.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           ~OGRXLSDriver()                            */
@@ -100,6 +100,7 @@ void RegisterOGRXLS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MS Excel format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "xls" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_xls.html" );
+    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

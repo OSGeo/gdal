@@ -1,0 +1,17 @@
+{
+  "objectIdFieldName" : "objectid",
+  "globalIdFieldName" : "",
+  "geometryType" : "esriGeometryPolygon",
+  "fields" : [
+  ],
+  "features" : [
+    {
+      "geometry" : {
+        "rings" : [
+         ]
+      },
+      "attributes" : {
+      }
+    }
+  ]
+}

@@ -35,10 +35,11 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_geos.h"
+#include "ogr_sfcgal.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRCurvePolygon()                         */
@@ -444,11 +445,13 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
 /*      format.                                                         */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::importFromWkb( unsigned char * pabyData,
+OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
                                        int nSize,
-                                       OGRwkbVariant eWkbVariant )
+                                       OGRwkbVariant eWkbVariant,
+                                       int& nBytesConsumedOut )
 
 {
+    nBytesConsumedOut = -1;
     OGRwkbByteOrder eByteOrder;
     int nDataOffset = 0;
     // coverity[tainted_data]
@@ -457,10 +460,14 @@ OGRErr OGRCurvePolygon::importFromWkb( unsigned char * pabyData,
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    return oCC.importBodyFromWkb(this, pabyData, nSize, nDataOffset,
+    eErr = oCC.importBodyFromWkb(this, pabyData + nDataOffset, nSize,
                                  TRUE,  // bAcceptCompoundCurve
                                  addCurveDirectlyFromWkb,
-                                 eWkbVariant);
+                                 eWkbVariant,
+                                 nBytesConsumedOut );
+    if( eErr == OGRERR_NONE )
+        nBytesConsumedOut += nDataOffset;
+    return eErr;
 }
 
 /************************************************************************/
@@ -559,7 +566,13 @@ OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
         OGRLineString* poLS =
             oCC.papoCurves[iRing]->CurveToLine(dfMaxAngleStepSizeDegrees,
                                                papszOptions);
-        poPoly->addRingDirectly(OGRCurve::CastToLinearRing(poLS));
+        OGRLinearRing* poRing = OGRCurve::CastToLinearRing(poLS);
+        if( poRing == NULL ) {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "OGRCurve::CastToLinearRing failed");
+            break;
+        }
+        poPoly->addRingDirectly(poRing);
     }
     return poPoly;
 }
@@ -696,6 +709,15 @@ void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
 }
 
 /************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCurvePolygon::assignSpatialReference( OGRSpatialReference * poSR )
+{
+    oCC.assignSpatialReference( this, poSR );
+}
+
+/************************************************************************/
 /*                               IsEmpty()                              */
 /************************************************************************/
 
@@ -710,6 +732,11 @@ OGRBoolean OGRCurvePolygon::IsEmpty() const
 
 void OGRCurvePolygon::segmentize( double dfMaxLength )
 {
+    if (EQUAL(getGeometryName(), "TRIANGLE"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "segmentize() is not valid for Triangle");
+        return;
+    }
     oCC.segmentize(dfMaxLength);
 }
 
@@ -737,6 +764,23 @@ OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
     }
 
     return OGRGeometry::Contains(p);
+}
+
+/************************************************************************/
+/*                          IntersectsPoint()                           */
+/************************************************************************/
+
+OGRBoolean OGRCurvePolygon::IntersectsPoint( const OGRPoint* p ) const
+{
+    if( getExteriorRingCurve() != NULL &&
+        getNumInteriorRings() == 0 )
+    {
+        const int nRet = getExteriorRingCurve()->IntersectsPoint(p);
+        if( nRet >= 0 )
+            return nRet;
+    }
+
+    return OGRGeometry::Intersects(p);
 }
 
 /************************************************************************/
@@ -779,7 +823,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
                      "dynamic_cast failed.  Expected OGRPoint.");
             return FALSE;
         }
-        return ContainsPoint(poPoint);
+        return IntersectsPoint(poPoint);
     }
 
     return OGRGeometry::Intersects(poOtherGeom);
@@ -832,17 +876,31 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
+OGRPolygon* OGRCurvePolygon::CasterToPolygon(OGRSurface* poSurface)
+{
+    OGRCurvePolygon* poCurvePoly = dynamic_cast<OGRCurvePolygon*>(poSurface);
+    CPLAssert(poCurvePoly);
+    return OGRCurvePolygon::CastToPolygon(poCurvePoly);
+}
+
 OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const
 {
-    return (OGRSurfaceCasterToPolygon) OGRCurvePolygon::CastToPolygon;
+    return OGRCurvePolygon::CasterToPolygon;
 }
 
 /************************************************************************/
 /*                      GetCasterToCurvePolygon()                       */
 /************************************************************************/
 
+static OGRCurvePolygon* CasterToCurvePolygon(OGRSurface* poSurface)
+{
+    OGRCurvePolygon* poCurvePoly = dynamic_cast<OGRCurvePolygon*>(poSurface);
+    CPLAssert(poCurvePoly);
+    return poCurvePoly;
+}
+
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const
 {
-    return (OGRSurfaceCasterToCurvePolygon) OGRGeometry::CastToIdentity;
+    return ::CasterToCurvePolygon;
 }
 //! @endcond

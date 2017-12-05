@@ -34,7 +34,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -134,29 +134,32 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /*      There is a EOL!   e.G.  h4231_0000.nd4.06                       */
 /* -------------------------------------------------------------------- */
 
-    long int nPixelOffset=0;
-    if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "BYTE" )) {
+    vsi_l_offset nPixelOffset=0;
+    const char* pszFormat = CSLFetchNameValueDef(papszKeywordList,"FORMAT","");
+    if (EQUAL( pszFormat, "BYTE" )) {
         nPixelOffset = 1;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "HALF" )) {
+    else if (EQUAL( pszFormat, "HALF" )) {
         nPixelOffset = 2;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "FULL" )) {
+    else if (EQUAL( pszFormat, "FULL" )) {
         nPixelOffset = 4;
     }
-    else if (EQUAL( CSLFetchNameValue(papszKeywordList,"FORMAT" ), "REAL" )) {
+    else if (EQUAL( pszFormat, "REAL" )) {
         nPixelOffset = 4;
     }
+    if( nPixelOffset == 0 )
+        return FALSE;
 
-    const long int nCols = atoi( CSLFetchNameValue( papszKeywordList, "NS" ) );
-    const long int nRows = atoi( CSLFetchNameValue( papszKeywordList, "NL" ) );
-    const int nBands = atoi( CSLFetchNameValue( papszKeywordList, "NB" ) );
-    const int nBB = atoi( CSLFetchNameValue( papszKeywordList, "NBB" ) );
+    const vsi_l_offset nCols = atoi( CSLFetchNameValueDef( papszKeywordList, "NS", "" ) );
+    const vsi_l_offset nRows = atoi( CSLFetchNameValueDef( papszKeywordList, "NL", "" ) );
+    const int nBands = atoi( CSLFetchNameValueDef( papszKeywordList, "NB", "" ) );
+    const int nBB = atoi( CSLFetchNameValueDef( papszKeywordList, "NBB", "" ) );
 
-    const long int nLineOffset = nPixelOffset * nCols + nBB ;
-    const long int nBandOffset = nLineOffset * nRows;
+    const vsi_l_offset nLineOffset = nPixelOffset * nCols + nBB ;
+    const vsi_l_offset nBandOffset = nLineOffset * nRows;
 
-    const long int starteol = LabelSize + nBandOffset * nBands;
+    const vsi_l_offset starteol = LabelSize + nBandOffset * nBands;
     if( VSIFSeekL( fp, starteol, SEEK_SET ) != 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Error seeking again to EOL!");
@@ -172,23 +175,24 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)pszEOLHeader);
     pch1 = strstr( reinterpret_cast<char *>( pszEOLHeader + nOffset ), "=" );
-    if( pch1 == NULL )
+    if( pch1 == NULL || *pch1 == '\0' )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
         return FALSE;
     }
-    VSIFree(pszEOLHeader);
     pch1 ++;
     pch2 = strstr( pch1, " " );
     if( pch2 == NULL )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
+        VSIFree(pszEOLHeader);
         return FALSE;
     }
     strncpy( keyval, pch1, std::min(static_cast<size_t>(pch2 - pch1),
                                     sizeof(keyval) - 1 ) );
     keyval[std::min( static_cast<size_t>(pch2-pch1), sizeof(keyval)-1 )] = '\0';
+    VSIFree(pszEOLHeader);
 
     int EOLabelSize = atoi( keyval );
     if( EOLabelSize <= 0 || EOLabelSize > 100 * 1024 * 1024 )
@@ -246,16 +250,19 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
     osName = "";
     osValue = "";
 
-    if( !ReadWord( osName ) ) {
-    return FALSE;}
+    if( !ReadWord( osName ) )
+    {
+        // VICAR has no NULL string termination
+        if( *pszHeaderNext == '\0') {
+            osName="END";
+            return TRUE;
+        }
+        return FALSE;
+    }
 
     SkipWhite();
-
-    // VICAR has no NULL string termination
-    if( *pszHeaderNext == '\0') {
-        osName="END";
-        return TRUE;
-    }
+    if( *pszHeaderNext == '\0' )
+        return FALSE;
 
     pszHeaderNext++;
 
@@ -268,7 +275,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
         {
             osValue += osWord;
             if ( osWord.size() < 2 ) continue;
-            if( osWord[osWord.size()-1] == ')' && osWord[osWord.size()-2] == '\'' ) break;
+            if( osWord.back() == ')' && osWord[osWord.size()-2] == '\'' ) break;
         }
     }
 
@@ -281,7 +288,7 @@ int VICARKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue ) {
             SkipWhite();
 
             osValue += osWord;
-            if( !osWord.empty() && osWord[osWord.size()-1] == ')'  ) break;
+            if( !osWord.empty() && osWord.back() == ')'  ) break;
         }
     }
     else
@@ -308,7 +315,7 @@ int VICARKeywordHandler::ReadWord( CPLString &osWord )
     SkipWhite();
 
     if( *pszHeaderNext == '\0')
-        return TRUE;
+        return FALSE;
 
     if( !( *pszHeaderNext != '='  && !isspace((unsigned char)*pszHeaderNext)) )
         return FALSE;

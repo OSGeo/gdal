@@ -33,7 +33,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 
@@ -49,18 +49,14 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces(void);
 /*      This constructor is used for main file channels.                */
 /************************************************************************/
 
-PCIDSK2Band::PCIDSK2Band( PCIDSK2Dataset *poDSIn,
-                          PCIDSKFile *poFileIn,
-                          int nBandIn )
+PCIDSK2Band::PCIDSK2Band( PCIDSKFile *poFileIn,
+                          PCIDSKChannel *poChannelIn )
 
 {
     Initialize();
 
-    this->poDS = poDSIn;
-    this->poFile = poFileIn;
-    this->nBand = nBandIn;
-
-    poChannel = poFile->GetChannel( nBand );
+    poFile = poFileIn;
+    poChannel = poChannelIn;
 
     nBlockXSize = static_cast<int>( poChannel->GetBlockWidth() );
     nBlockYSize = static_cast<int>( poChannel->GetBlockHeight() );
@@ -140,7 +136,7 @@ PCIDSK2Band::~PCIDSK2Band()
 {
     while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
     CSLDestroy( papszLastMDListValue );
@@ -156,6 +152,13 @@ PCIDSK2Band::~PCIDSK2Band()
 void PCIDSK2Band::SetDescription( const char *pszDescription )
 
 {
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set description on read-only file." );
+        return;
+    }
+
     try
     {
         poChannel->SetDescription( pszDescription );
@@ -398,6 +401,13 @@ CPLErr PCIDSK2Band::SetColorTable( GDALColorTable *poCT )
     if( poFile == NULL )
         return CE_Failure;
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set color table on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
 /* -------------------------------------------------------------------- */
@@ -498,7 +508,7 @@ void PCIDSK2Band::RefreshOverviewList()
 /* -------------------------------------------------------------------- */
     while( !apoOverviews.empty() )
     {
-        delete apoOverviews[apoOverviews.size()-1];
+        delete apoOverviews.back();
         apoOverviews.pop_back();
     }
 
@@ -616,6 +626,13 @@ CPLErr PCIDSK2Band::SetMetadata( char **papszMD,
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
         for( int iItem = 0; papszMD && papszMD[iItem]; iItem++ )
@@ -661,6 +678,13 @@ CPLErr PCIDSK2Band::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
 
     try
     {
@@ -1039,6 +1063,13 @@ CPLErr PCIDSK2Dataset::SetMetadata( char **papszMD,
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
         for( int iItem = 0; papszMD && papszMD[iItem]; iItem++ )
@@ -1083,6 +1114,13 @@ CPLErr PCIDSK2Dataset::SetMetadataItem( const char *pszName,
 /* -------------------------------------------------------------------- */
     CSLDestroy( papszLastMDListValue );
     papszLastMDListValue = NULL;
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set metadata on read-only file." );
+        return CE_Failure;
+    }
 
     try
     {
@@ -1210,6 +1248,13 @@ CPLErr PCIDSK2Dataset::SetGeoTransform( double * padfTransform )
     if( poGeoref == NULL )
         return GDALPamDataset::SetGeoTransform( padfTransform );
 
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set GeoTransform on read-only file." );
+        return CE_Failure;
+    }
+
     try
     {
         poGeoref->WriteSimple( poGeoref->GetGeosys(),
@@ -1323,6 +1368,16 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
                              &padfPrjParams ) == OGRERR_NONE ) )
     {
         return GDALPamDataset::SetProjection( pszWKT );
+    }
+
+    if( GetAccess() == GA_ReadOnly )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Unable to set projection on read-only file." );
+        CPLFree( pszGeosys );
+        CPLFree( pszUnits );
+        CPLFree( padfPrjParams );
+        return CE_Failure;
     }
 
     try
@@ -1654,8 +1709,9 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try opening the file.                                           */
 /* -------------------------------------------------------------------- */
+    PCIDSKFile *poFile = NULL;
     try {
-        PCIDSKFile *poFile =
+        poFile =
             PCIDSK::Open( poOpenInfo->pszFilename,
                           poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
                           PCIDSK2GetInterfaces() );
@@ -1664,6 +1720,16 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to re-open %s within PCIDSK driver.\n",
                       poOpenInfo->pszFilename );
+            return NULL;
+        }
+
+        const bool bValidRasterDimensions = poFile->GetWidth() &&
+                                            poFile->GetHeight();
+        if( !bValidRasterDimensions &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+            (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+        {
+            delete poFile;
             return NULL;
         }
 
@@ -1703,12 +1769,14 @@ GDALDataset *PCIDSK2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
+        delete poFile;
         return NULL;
     }
     catch( ... )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK::Create() failed, unexpected exception." );
+        delete poFile;
         return NULL;
     }
 }
@@ -1735,6 +1803,14 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
     poDS->nRasterXSize = poFile->GetWidth();
     poDS->nRasterYSize = poFile->GetHeight();
 
+    const bool bValidRasterDimensions = poFile->GetWidth() &&
+                                        poFile->GetHeight();
+    if( !bValidRasterDimensions )
+    {
+        poDS->nRasterXSize = 512;
+        poDS->nRasterYSize = 512;
+    }
+
     try {
 
 /* -------------------------------------------------------------------- */
@@ -1753,7 +1829,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create band objects.                                            */
 /* -------------------------------------------------------------------- */
-        for( int iBand = 0; iBand < poFile->GetChannels(); iBand++ )
+        for( int iBand = 0; bValidRasterDimensions &&
+                            iBand < poFile->GetChannels(); iBand++ )
         {
             PCIDSKChannel* poChannel = poFile->GetChannel( iBand + 1 );
             if (poChannel->GetBlockWidth() <= 0 ||
@@ -1763,7 +1840,14 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
                 return NULL;
             }
 
-            poDS->SetBand( iBand+1, new PCIDSK2Band( poDS, poFile, iBand+1 ));
+            if( PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() )
+                    == GDT_Unknown )
+            {
+                continue;
+            }
+
+            poDS->SetBand( poDS->GetRasterCount() + 1,
+                new PCIDSK2Band( poFile, poChannel ));
         }
 
 /* -------------------------------------------------------------------- */
@@ -1772,7 +1856,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
         int nLastBitmapSegment = 0;
         PCIDSKSegment *poBitSeg = NULL;
 
-        while( (poBitSeg = poFile->GetSegment( SEG_BIT, "",
+        while( bValidRasterDimensions &&
+               (poBitSeg = poFile->GetSegment( SEG_BIT, "",
                                                nLastBitmapSegment)) != NULL )
         {
             PCIDSKChannel *poChannel =
@@ -1783,6 +1868,12 @@ GDALDataset *PCIDSK2Dataset::LLOpen( const char *pszFilename,
             {
                 delete poDS;
                 return NULL;
+            }
+
+            if( PCIDSK2Dataset::PCIDSKTypeToGDAL( poChannel->GetType() )
+                    == GDT_Unknown )
+            {
+                continue;
             }
 
             poDS->SetBand( poDS->GetRasterCount()+1,
@@ -2096,7 +2187,7 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 
     apoLayers.push_back( new OGRPCIDSKLayer( poSeg, poVecSeg, TRUE ) );
 
-    return apoLayers[apoLayers.size()-1];
+    return apoLayers.back();
 }
 
 /************************************************************************/

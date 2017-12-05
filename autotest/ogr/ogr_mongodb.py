@@ -337,6 +337,8 @@ def ogr_mongodb_2():
     lyr.CreateField(ogr.FieldDefn('realist', ogr.OFTRealList))
     lyr.CreateField(ogr.FieldDefn('embed.embed2.int', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('embed.embed2.real', ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn('str_is_null', ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn('str_is_unset', ogr.OFTString))
 
     # Test CreateFeature()
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -355,6 +357,7 @@ def ogr_mongodb_2():
     f['embed.str'] = 'foo'
     f['embed.embed2.int'] = 3
     f['embed.embed2.real'] = 3.45
+    f.SetFieldNull('str_is_null')
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POLYGON((2 49,2 50,3 50,3 49,2 49))'))
     if lyr.CreateFeature(f) != 0:
         gdaltest.post_reason('fail')
@@ -728,6 +731,10 @@ def ogr_mongodb_2():
         return 'fail'
     f = lyr.GetNextFeature()
     for i in range(f_ref.GetDefnRef().GetFieldCount()):
+        if f_ref.GetFieldDefnRef(i).GetNameRef() == "str_is_null":
+            continue
+        if f_ref.GetFieldDefnRef(i).GetNameRef() == "str_is_unset":
+            continue
         # Order might be a bit different...
         j = f.GetDefnRef().GetFieldIndex(f_ref.GetFieldDefnRef(i).GetNameRef())
         if f.GetField(j) != f_ref.GetField(i) or \

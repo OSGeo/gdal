@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd" version="1.0.0">
+ <ows:ServiceIdentification>
+    <ows:Title>Stripped from BaseMap original service</ows:Title>
+    <ows:Abstract></ows:Abstract>
+    <ows:ServiceType>OGC WMTS</ows:ServiceType>
+    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+    <ows:Fees>none</ows:Fees>
+    <ows:AccessConstraints></ows:AccessConstraints>
+  </ows:ServiceIdentification>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:href="https://maps.wien.gv.at/basemap">
+            <ows:Constraint name="GetEncoding">
+              <ows:AllowedValues>
+                <ows:Value>RESTful</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Get>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="GetTile">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:href="https://maps.wien.gv.at/basemap">
+            <ows:Constraint name="GetEncoding">
+              <ows:AllowedValues>
+                <ows:Value>RESTful</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Get>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <Contents>
+    <Layer>
+      <ows:Title>Basemap</ows:Title>
+      <ows:Abstract></ows:Abstract>
+      <ows:WGS84BoundingBox crs="urn:ogc:def:crs:OGC:2:84">
+        <ows:LowerCorner>8.782379 46.358770</ows:LowerCorner>
+	<ows:UpperCorner>17.189532 49.037872</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <ows:Identifier>geolandbasemap</ows:Identifier>
+      <Style isDefault="true">
+        <ows:Identifier>normal</ows:Identifier>
+      </Style>
+      <Format>image/png</Format>
+      <TileMatrixSetLink>
+        <TileMatrixSet>google3857</TileMatrixSet>
+      </TileMatrixSetLink>
+      <ResourceURL format="image/png" template="https://maps1.wien.gv.at/basemap/geolandbasemap/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png" resourceType="tile"/>
+    </Layer>
+    <TileMatrixSet>
+      <ows:Identifier>google3857</ows:Identifier>
+      <ows:BoundingBox crs="urn:ogc:def:crs:EPSG:6.18.3:3857">
+       	<ows:LowerCorner>977650 5838030</ows:LowerCorner>
+        <ows:UpperCorner>1913530 6281290</ows:UpperCorner>
+      </ows:BoundingBox>
+      <ows:SupportedCRS>urn:ogc:def:crs:EPSG:6.18.3:3857</ows:SupportedCRS>
+      <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
+      <TileMatrix>
+        <ows:Identifier>0</ows:Identifier>
+        <ScaleDenominator>559082264.029</ScaleDenominator>
+        <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
+        <TileWidth>256</TileWidth>
+        <TileHeight>256</TileHeight>
+        <MatrixWidth>1</MatrixWidth>
+        <MatrixHeight>1</MatrixHeight>
+      </TileMatrix>
+      <TileMatrix>
+        <ows:Identifier>1</ows:Identifier>
+        <ScaleDenominator>279541132.015</ScaleDenominator>
+        <TopLeftCorner>-20037508.3428 20037508.3428</TopLeftCorner>
+        <TileWidth>256</TileWidth>
+        <TileHeight>256</TileHeight>
+        <MatrixWidth>2</MatrixWidth>
+        <MatrixHeight>2</MatrixHeight>
+      </TileMatrix>
+    </TileMatrixSet>
+  </Contents>
+  <ServiceMetadataURL xlink:href="https://maps.wien.gv.at/basemap/1.0.0/WMTSCapabilities.xml"/>
+</Capabilities>

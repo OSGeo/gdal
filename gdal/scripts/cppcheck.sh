@@ -10,8 +10,8 @@ for dirname in alg port gcore ogr frmts gnm apps; do
     cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
-        -DGBool=int -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
-        -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
+        -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
+        -DHAVE_SFCGAL -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 -DHAVE_SQLITE_VFS \
         -DPTHREAD_MUTEX_RECURSIVE -DCPU_LITTLE_ENDIAN -DCPL_IS_LSB=1 \
         -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=5 \
@@ -96,8 +96,8 @@ if [[ $? -eq 0 ]] ; then
 fi
 
 grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleakOnRealloc issues in frmts/hdf4/hdf-eos ignored"
-grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "memleakOnRealloc issues in frmts/grib/degrib18 ignored"
-grep "memleakOnRealloc" ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib18
+grep "memleakOnRealloc" ${LOG_FILE} | grep frmts/grib/degrib > /dev/null && echo "memleakOnRealloc issues in frmts/grib/degrib ignored"
+grep "memleakOnRealloc" ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib
 if [[ $? -eq 0 ]] ; then
     echo "memleakOnRealloc check failed"
     ret_code=1
@@ -118,15 +118,15 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "syntaxError" ${LOG_FILE}
+grep "syntaxError" ${LOG_FILE} | grep -v "is invalid C code"
 if [[ $? -eq 0 ]] ; then
     echo "syntaxError check failed"
     ret_code=1
 fi
 
 grep "memleak," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "memleak issues in frmts/hdf4/hdf-eos ignored"
-grep "memleak," ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "memleak issues in frmts/grib/degrib18 ignored"
-grep "memleak," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib18
+grep "memleak," ${LOG_FILE} | grep frmts/grib/degrib > /dev/null && echo "memleak issues in frmts/grib/degrib ignored"
+grep "memleak," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | grep -v frmts/grib/degrib
 if [[ $? -eq 0 ]] ; then
     echo "memleak check failed"
     ret_code=1
@@ -146,7 +146,7 @@ fi
 
 # Most if not all of them are false positives
 grep "uninitvar," ${LOG_FILE} | grep frmts/hdf4/hdf-eos > /dev/null && echo "(potential) uninitvar issues in frmts/hdf4/hdf-eos ignored"
-grep "uninitvar," ${LOG_FILE} | grep frmts/grib/degrib18 > /dev/null && echo "(potential) uninitvar issues in frmts/grib/degrib18 ignored"
+grep "uninitvar," ${LOG_FILE} | grep frmts/grib/degrib > /dev/null && echo "(potential) uninitvar issues in frmts/grib/degrib ignored"
 grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libtiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libtiff ignored"
 grep "uninitvar," ${LOG_FILE} | grep frmts/gtiff/libgeotiff > /dev/null && echo "(potential) uninitvar issues in frmts/gtiff/libgeotiff ignored"
 grep "uninitvar," ${LOG_FILE} | grep frmts/jpeg/libjpeg > /dev/null && echo "(potential) uninitvar issues in frmts/jpeg/libjpeg ignored"
@@ -156,7 +156,7 @@ grep "uninitvar," ${LOG_FILE} | grep frmts/zlib > /dev/null && echo "(potential)
 grep "uninitvar," ${LOG_FILE} | grep ogr/ogrsf_frmts/geojson/libjson > /dev/null && echo "(potential) uninitvar issues in ogr/ogrsf_frmts/geojson/libjson ignored"
 
 grep "uninitvar," ${LOG_FILE} | grep -v frmts/hdf4/hdf-eos | \
-                                grep -v frmts/grib/degrib18 | \
+                                grep -v frmts/grib/degrib | \
                                 grep -v frmts/gtiff/libtiff | \
                                 grep -v frmts/gtiff/libgeotiff | \
                                 grep -v frmts/jpeg/libjpeg | \
@@ -170,9 +170,9 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib18/g2clib-1.0.4" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib18/g2clib-1.0.4 ignored"
+grep "uninitdata," ${LOG_FILE} | grep "frmts/grib/degrib/g2clib" > /dev/null && echo "(potential) uninitdata issues in frmts/grib/degrib/g2clib ignored"
 
-grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib18/g2clib-1.0.4"
+grep "uninitdata," ${LOG_FILE} | grep -v "frmts/grib/degrib/g2clib"
 if [[ $? -eq 0 ]] ; then
     echo "uninitdata check failed"
     ret_code=1
@@ -310,7 +310,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "functionStatic" ${LOG_FILE}
+grep "functionStatic" ${LOG_FILE} | grep -v "OGRSQLiteDataSource::OpenRaster" | grep -v "OGRSQLiteDataSource::OpenRasterSubDataset"
 if [[ $? -eq 0 ]] ; then
     echo "functionStatic check failed"
     ret_code=1
@@ -424,7 +424,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib18/g2clib-1.0.4 | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng
+grep "redundantAssignment" ${LOG_FILE} | grep -v frmts/grib/degrib/g2clib | grep -v frmts/hdf4/hdf-eos | grep -v frmts/png/libpng
 if [[ $? -eq 0 ]] ; then
     echo "redundantAssignment check failed"
     ret_code=1
@@ -434,7 +434,7 @@ grep "unreadVariable" ${LOG_FILE} | grep -v alg/internal_libqhull | \
                                     grep -v frmts/gtiff/libtiff  | \
                                     grep -v frmts/jpeg/libjpeg | \
                                     grep -v frmts/png/libpng | \
-                                    grep -v frmts/grib/degrib18/degrib | \
+                                    grep -v frmts/grib/degrib/degrib | \
                                     grep -v frmts/hdf4/hdf-eos | \
                                     grep -v frmts/zlib
 if [[ $? -eq 0 ]] ; then
@@ -465,7 +465,8 @@ grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2159,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2208,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
     grep -v "frmts/hdf4/hdf-eos/EHapi.c:2227,error,bufferAccessOutOfBounds,Buffer is accessed out of bounds." | \
-    grep -v "frmts/grib/degrib18/g2clib-1.0.4"
+    grep -v "frmts/grib/degrib/g2clib" | \
+    grep -v "is invalid C code"
 
 if [[ $? -eq 0 ]] ; then
     echo "Errors check failed"

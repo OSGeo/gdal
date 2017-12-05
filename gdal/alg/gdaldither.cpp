@@ -77,7 +77,7 @@
 #define CAST_PCT(x) x
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static int MAKE_COLOR_CODE( int r, int g, int b )
 {
@@ -249,12 +249,11 @@ int GDALDitherRGB2PCTInternal(
     const int nColorsMod8 = nColors % 8;
     if( nColorsMod8 )
     {
-        // Make it obvious to Coverity that we won't overflow the array
-        // with the nColors + iColor < 256 condition.
+        int iDest = nColors;
         for( iColor = 0; iColor < 8 - nColorsMod8 &&
-                         nColors + iColor < 256; iColor ++)
+                         iDest < 256; iColor ++, iDest++)
         {
-            anPCT[nColors+iColor] = anPCT[nColors-1];
+            anPCT[iDest] = anPCT[nColors-1];
         }
     }
 #endif

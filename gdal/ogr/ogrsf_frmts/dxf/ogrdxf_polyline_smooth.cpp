@@ -32,7 +32,7 @@
 #include "math.h"
 #include "ogrdxf_polyline_smooth.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                Local helper functions                                */
@@ -262,16 +262,23 @@ void DXFSmoothPolyline::EmitArc(
 /*      Tessellate the arc segment and append to the linestring.        */
 /* -------------------------------------------------------------------- */
 
-    OGRLineString* poArcpoLS =
-        (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
-            ogrArcCenter.x, ogrArcCenter.y, dfZ,
-            ogrArcRadius, ogrArcRadius, ogrArcRotation,
-            ogrArcStartAngle, ogrArcEndAngle,
-            0.0);
+    if( fabs(ogrArcEndAngle - ogrArcStartAngle) <= 361.0 )
+    {
+        OGRLineString* poArcpoLS =
+            (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
+                ogrArcCenter.x, ogrArcCenter.y, dfZ,
+                ogrArcRadius, ogrArcRadius, ogrArcRotation,
+                ogrArcStartAngle, ogrArcEndAngle,
+                0.0);
 
-    poLS->addSubLineString(poArcpoLS);
+        poLS->addSubLineString(poArcpoLS);
 
-    delete poArcpoLS;
+        delete poArcpoLS;
+    }
+    else
+    {
+        // TODO: emit error ?
+    }
 }
 
 /************************************************************************/
@@ -309,7 +316,7 @@ void DXFSmoothPolyline::Close()
     if(m_vertices.size() >= 2)
     {
         const bool bVisuallyClosed =
-            (m_vertices[m_vertices.size() - 1].shares_2D_pos(m_vertices[0]));
+            (m_vertices.back().shares_2D_pos(m_vertices[0]));
 
         if(!bVisuallyClosed)
         {

@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test some PCI specific translation issues.
@@ -24,26 +23,14 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_osr_pci.cpp,v $
-//  Revision 1.2  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
 
-// See Bronek Kozicki's comments posted here:
-// http://lists.boost.org/Archives/boost/2005/07/89697.php
-#if defined(_MSC_VER) || defined(_WIN32_WCE)
-#pragma warning(disable: 4996)
-#endif
+#include "gdal_unit_test.h"
 
-#include <tut.h>
-#include <tut_gdal.h>
-#include <ogr_srs_api.h> // OSR
-#include <ogr_api.h> // OGR
-#include <cpl_error.h> // CPL
+#include <cpl_error.h>
 #include <cpl_string.h>
+#include <ogr_api.h>
+#include <ogr_srs_api.h>
+
 #include <algorithm>
 #include <cmath>
 #include <string>

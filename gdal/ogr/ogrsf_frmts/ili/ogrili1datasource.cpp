@@ -35,7 +35,7 @@
 
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRILI1DataSource()                         */
@@ -70,11 +70,11 @@ OGRILI1DataSource::~OGRILI1DataSource()
     delete poImdReader;
     if( fpTransfer )
     {
-        VSIFPrintf( fpTransfer, "ETAB\n" );
-        VSIFPrintf( fpTransfer, "ETOP\n" );
-        VSIFPrintf( fpTransfer, "EMOD\n" );
-        VSIFPrintf( fpTransfer, "ENDE\n" );
-        fclose(fpTransfer);
+        VSIFPrintfL( fpTransfer, "ETAB\n" );
+        VSIFPrintfL( fpTransfer, "ETOP\n" );
+        VSIFPrintfL( fpTransfer, "EMOD\n" );
+        VSIFPrintfL( fpTransfer, "ENDE\n" );
+        VSIFCloseL(fpTransfer);
     }
 }
 
@@ -101,10 +101,15 @@ int OGRILI1DataSource::Open( const char * pszNewName,
     else
     {
         char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
-
+        int nCount = CSLCount(filenames);
+        if( nCount == 0 )
+        {
+            CSLDestroy(filenames);
+            return FALSE;
+        }
         osBasename = filenames[0];
 
-        if( CSLCount(filenames) > 1 )
+        if( nCount > 1 )
             osModelFilename = filenames[1];
 
         CSLDestroy( filenames );
@@ -113,7 +118,7 @@ int OGRILI1DataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( osBasename.c_str(), "r" );
+    VSILFILE *fp = VSIFOpenL( osBasename.c_str(), "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -132,7 +137,7 @@ int OGRILI1DataSource::Open( const char * pszNewName,
 
     if( bTestOpen )
     {
-        int nLen = (int)VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        int nLen = (int)VSIFReadL( szHeader, 1, sizeof(szHeader), fp );
         if (nLen == sizeof(szHeader))
             szHeader[sizeof(szHeader)-1] = '\0';
         else
@@ -140,7 +145,7 @@ int OGRILI1DataSource::Open( const char * pszNewName,
 
         if( strstr(szHeader,"SCNT") == NULL )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return FALSE;
         }
     }
@@ -149,7 +154,7 @@ int OGRILI1DataSource::Open( const char * pszNewName,
 /*      We assume now that it is ILI1.  Close and instantiate a          */
 /*      ILI1Reader on it.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     poReader = CreateILI1Reader();
     if( poReader == NULL )
@@ -205,7 +210,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */
 /* -------------------------------------------------------------------- */
-    fpTransfer = VSIFOpen( osBasename.c_str(), "w+b" );
+    fpTransfer = VSIFOpenL( osBasename.c_str(), "w+b" );
 
     if( fpTransfer == NULL )
     {
@@ -232,13 +237,13 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fpTransfer, "SCNT\n" );
-    VSIFPrintf( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n",
+    VSIFPrintfL( fpTransfer, "SCNT\n" );
+    VSIFPrintfL( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n",
                 GDAL_RELEASE_NAME );
-    VSIFPrintf( fpTransfer, "////\n" );
-    VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
+    VSIFPrintfL( fpTransfer, "////\n" );
+    VSIFPrintfL( fpTransfer, "MTID INTERLIS1\n" );
     const char* modelname = poImdReader->mainModelName.c_str();
-    VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
+    VSIFPrintfL( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
 }
@@ -265,7 +270,7 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
         = poImdReader->GetFeatureDefnInfo(pszLayerName);
     const char *table = pszLayerName;
     char * topic = ExtractTopic(pszLayerName);
-    if (nLayers) VSIFPrintf( fpTransfer, "ETAB\n" );
+    if (nLayers) VSIFPrintfL( fpTransfer, "ETAB\n" );
     if (topic)
     {
       table = pszLayerName+strlen(topic)+2; //after "__"
@@ -273,11 +278,11 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
       {
         if (pszTopic)
         {
-          VSIFPrintf( fpTransfer, "ETOP\n" );
+          VSIFPrintfL( fpTransfer, "ETOP\n" );
           CPLFree(pszTopic);
         }
         pszTopic = topic;
-        VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
+        VSIFPrintfL( fpTransfer, "TOPI %s\n", pszTopic );
       }
       else
       {
@@ -287,9 +292,9 @@ OGRILI1DataSource::ICreateLayer( const char * pszLayerName,
     else
     {
       if (pszTopic == NULL) pszTopic = CPLStrdup("Unknown");
-      VSIFPrintf( fpTransfer, "TOPI %s\n", pszTopic );
+      VSIFPrintfL( fpTransfer, "TOPI %s\n", pszTopic );
     }
-    VSIFPrintf( fpTransfer, "TABL %s\n", table );
+    VSIFPrintfL( fpTransfer, "TABL %s\n", table );
 
     OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(table);
     poFeatureDefn->SetGeomType( eType );

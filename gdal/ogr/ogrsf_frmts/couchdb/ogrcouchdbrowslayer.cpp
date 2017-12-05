@@ -28,7 +28,7 @@
 
 #include "ogr_couchdb.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRCouchDBRowsLayer()                        */

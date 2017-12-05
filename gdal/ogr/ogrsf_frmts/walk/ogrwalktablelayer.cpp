@@ -29,7 +29,7 @@
 #include "ogrwalk.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRWalkTableLayer()                         */
@@ -42,8 +42,6 @@ OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn ) :
 
     iNextShapeId = 0;
     poFeatureDefn = NULL;
-
-    memset( &sExtent, 0, sizeof(sExtent) );
 }
 
 /************************************************************************/

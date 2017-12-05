@@ -29,7 +29,7 @@
 
 #include "sdts_al.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -139,8 +139,11 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      for each.                                                       */
 /* ==================================================================== */
     DDFRecord *poRecord = NULL;
-    while( (poRecord = oCATDFile.ReadRecord()) != NULL )
+    int nIters = 0;
+    while( (poRecord = oCATDFile.ReadRecord()) != NULL && nIters < 1000 )
     {
+        nIters ++;
+
 /* -------------------------------------------------------------------- */
 /*      Verify that we have a proper CATD record.                       */
 /* -------------------------------------------------------------------- */
@@ -160,6 +163,17 @@ int SDTS_CATD::Read( const char * pszFilename )
             CPLStrdup(poRecord->GetStringSubfield( "CATD", 0, "EXTR", 0 ));
         poEntry->pszType =
             CPLStrdup(poRecord->GetStringSubfield( "CATD", 0, "TYPE", 0 ));
+
+        if( poEntry->pszModule[0] == '\0' ||
+            poEntry->pszFile[0] == '\0' )
+        {
+            CPLFree(poEntry->pszModule);
+            CPLFree(poEntry->pszFile);
+            CPLFree(poEntry->pszExternalFlag);
+            CPLFree(poEntry->pszType);
+            delete poEntry;
+            continue;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Create a full path to the file.                                 */

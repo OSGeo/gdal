@@ -39,7 +39,7 @@
 static const char UNSUPPORTED_OP_READ_ONLY[] =
     "%s : unsupported operation on a read-only datasource.";
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRShapeLayer()                            */
@@ -932,10 +932,12 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     unsigned int nOffset = 0;
     unsigned int nSize = 0;
+    bool bIsLastRecord = false;
     if( hSHP != NULL )
     {
         nOffset = hSHP->panRecOffset[nFID];
         nSize = hSHP->panRecSize[nFID];
+        bIsLastRecord = (nOffset + nSize + 8 == hSHP->nFileSize );
     }
 
     OGRErr eErr = SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature,
@@ -944,7 +946,18 @@ OGRErr OGRShapeLayer::ISetFeature( OGRFeature *poFeature )
 
     if( hSHP != NULL )
     {
-        if( nOffset != hSHP->panRecOffset[nFID] ||
+        if( bIsLastRecord )
+        {
+            // Optimization: we don't need repacking if this is the last
+            // record of the file. Just potential truncation
+            CPLAssert( nOffset == hSHP->panRecOffset[nFID] );
+            CPLAssert( hSHP->panRecOffset[nFID] + hSHP->panRecSize[nFID] + 8 == hSHP->nFileSize );
+            if( hSHP->panRecSize[nFID] < nSize )
+            {
+                VSIFTruncateL(VSI_SHP_GetVSIL(hSHP->fpSHP), hSHP->nFileSize);
+            }
+        }
+        else if( nOffset != hSHP->panRecOffset[nFID] ||
             nSize != hSHP->panRecSize[nFID] )
         {
             bSHPNeedsRepack = true;
@@ -1037,6 +1050,8 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
     if( nTotalShapeCount == 0
         && wkbFlatten(eRequestedGeomType) == wkbUnknown
+        && hSHP != NULL
+        && hSHP->nShapeType != SHPT_MULTIPATCH
         && poFeature->GetGeometryRef() != NULL )
     {
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
@@ -1110,24 +1125,28 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
           case wkbPolygon:
           case wkbMultiPolygon:
+          case wkbTriangle:
             nShapeType = SHPT_POLYGON;
             eRequestedGeomType = wkbPolygon;
             break;
 
           case wkbPolygon25D:
           case wkbMultiPolygon25D:
+          case wkbTriangleZ:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygon25D;
             break;
 
           case wkbPolygonM:
           case wkbMultiPolygonM:
+          case wkbTriangleM:
             nShapeType = SHPT_POLYGONM;
             eRequestedGeomType = wkbPolygonM;
             break;
 
           case wkbPolygonZM:
           case wkbMultiPolygonZM:
+          case wkbTriangleZM:
             nShapeType = SHPT_POLYGONZ;
             eRequestedGeomType = wkbPolygonZM;
             break;
@@ -1135,6 +1154,41 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
           default:
             nShapeType = -1;
             break;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbTIN ||
+            wkbFlatten(poGeom->getGeometryType()) == wkbPolyhedralSurface )
+        {
+            nShapeType = SHPT_MULTIPATCH;
+            eRequestedGeomType = wkbUnknown;
+        }
+
+        if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
+        {
+            OGRGeometryCollection *poGC =
+                            dynamic_cast<OGRGeometryCollection *>(poGeom);
+            bool bIsMultiPatchCompatible = false;
+            for( int iGeom = 0; poGC != NULL &&
+                                iGeom < poGC->getNumGeometries(); iGeom++ )
+            {
+                OGRwkbGeometryType eSubGeomType =
+                    wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
+                if( eSubGeomType == wkbTIN ||
+                    eSubGeomType == wkbPolyhedralSurface )
+                {
+                    bIsMultiPatchCompatible = true;
+                }
+                else if( eSubGeomType != wkbMultiPolygon )
+                {
+                    bIsMultiPatchCompatible = false;
+                    break;
+                }
+            }
+            if( bIsMultiPatchCompatible )
+            {
+                nShapeType = SHPT_MULTIPATCH;
+                eRequestedGeomType = wkbUnknown;
+            }
         }
 
         if( nShapeType != -1 )
@@ -1426,7 +1480,7 @@ GIntBig OGRShapeLayer::GetFeatureCount( int bForce )
     }
 
     // Attribute filter only.
-    if( m_poAttrQuery != NULL )
+    if( m_poAttrQuery != NULL && m_poFilterGeom == NULL )
     {
         // See if we can ignore reading geometries.
         const bool bSaveGeometryIgnored =
@@ -2082,7 +2136,30 @@ OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
         }
 
         if( poSRS )
-            poSRS->AutoIdentifyEPSG();
+        {
+            if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
+            {
+                int nEntries = 0;
+                int* panConfidence = NULL;
+                OGRSpatialReferenceH* pahSRS =
+                    poSRS->FindMatches(NULL, &nEntries, &panConfidence);
+                if( nEntries == 1 && panConfidence[0] == 100 )
+                {
+                    poSRS->Release();
+                    poSRS = reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
+                    CPLFree(pahSRS);
+                }
+                else
+                {
+                    OSRFreeSRSArray(pahSRS);
+                }
+                CPLFree(panConfidence);
+            }
+            else
+            {
+                poSRS->AutoIdentifyEPSG();
+            }
+        }
     }
 
     return poSRS;

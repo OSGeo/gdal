@@ -41,9 +41,10 @@ from osgeo import gdal
 # or empty names, or files that are not valid datasets...
 
 def matches_non_existing_error_msg(msg):
-    m1 = "does not exist in the file system,\nand is not recognized as a supported dataset name.\n" in msg
+    m1 = "does not exist in the file system, and is not recognized as a supported dataset name." in msg
     m2 = 'No such file or directory' in msg
-    return m1 or m2
+    m3 = 'Permission denied' in msg
+    return m1 or m2 or m3
 
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -89,7 +90,9 @@ def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
-    if ds is None and gdal.GetLastErrorMsg() == '`data/doctype.xml\' not recognized as a supported file format.\n':
+    last_error = gdal.GetLastErrorMsg()
+    expected = '`data/doctype.xml\' not recognized as a supported file format'
+    if ds is None and expected in last_error:
         return 'success'
     else:
         return 'fail'
@@ -620,6 +623,56 @@ def basic_test_16():
 
     return 'success'
 
+###############################################################################
+# Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
+
+def basic_test_17():
+
+    from osgeo import ogr
+
+    for i in range(2):
+        ogr.UseExceptions()
+        gdal.UseExceptions()
+        try:
+            gdal.Open('do_not_exist')
+        except:
+            pass
+        gdal.DontUseExceptions()
+        ogr.DontUseExceptions()
+        if gdal.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ogr.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    for i in range(2):
+        ogr.UseExceptions()
+        gdal.UseExceptions()
+        try:
+            gdal.Open('do_not_exist')
+        except:
+            pass
+        flag = False
+        try:
+            ogr.DontUseExceptions()
+            gdal.DontUseExceptions()
+            flag = True
+        except:
+            gdal.DontUseExceptions()
+            ogr.DontUseExceptions()
+        if flag:
+            gdaltest.post_reason('expected failure')
+            return 'fail'
+        if gdal.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ogr.GetUseExceptions():
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ basic_test_1,
                   basic_test_2,
                   basic_test_3,
@@ -635,7 +688,8 @@ gdaltest_list = [ basic_test_1,
                   basic_test_13,
                   basic_test_14,
                   basic_test_15,
-                  basic_test_16 ]
+                  basic_test_16,
+                  basic_test_17 ]
 
 
 if __name__ == '__main__':

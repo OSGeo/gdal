@@ -76,7 +76,7 @@
 #define NUMERICOID              1700
 #define NUMERICARRAYOID         1231
 
-CPLString OGRPGEscapeString(PGconn *hPGConn,
+CPLString OGRPGEscapeString(void *hPGConn,
                             const char* pszStrValue, int nMaxLength = -1,
                             const char* pszTableName = "",
                             const char* pszFieldName = "");
@@ -276,7 +276,7 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bPreservePrecision;
     int                 bUseCopy;
     int                 bCopyActive;
-    int                 bFIDColumnInCopyFields;
+    bool                bFIDColumnInCopyFields;
     int                 bFirstInsertion;
 
     OGRErr              CreateFeatureViaCopy( OGRFeature *poFeature );
@@ -297,6 +297,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bAutoFIDOnCreateViaCopy;
     int                 bUseCopyByDefault;
+    bool                bNeedToUpdateSequence;
 
     int                 bDeferredCreation;
     CPLString           osCreateTable;
@@ -309,6 +310,8 @@ class OGRPGTableLayer : public OGRPGLayer
 
     OGRErr              RunAddGeometryColumn( OGRPGGeomFieldDefn *poGeomField );
     OGRErr              RunCreateSpatialIndex( OGRPGGeomFieldDefn *poGeomField );
+
+    void                UpdateSequenceIfNeeded();
 
 public:
                         OGRPGTableLayer( OGRPGDataSource *,

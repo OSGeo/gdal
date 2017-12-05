@@ -54,7 +54,16 @@ CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *fileIn,
     pimpl_(new CPCIDSKADS40ModelSegment::PCIDSKADS40Info), 
     loaded_(false),mbModified(false)
 {
-    Load();
+    try
+    {
+        Load();
+    }
+    catch( const PCIDSKException& )
+    {
+        delete pimpl_;
+        pimpl_ = NULL;
+        throw;
+    }
 }
 
 
@@ -71,7 +80,10 @@ void CPCIDSKADS40ModelSegment::Load()
         return;
     }
     
-    assert(data_size - 1024 == 1 * 512);
+    if( data_size - 1024 != 1 * 512 )
+    {
+        return ThrowPCIDSKException("Wrong data_size in CPCIDSKADS40ModelSegment");
+    }
     
     pimpl_->seg_data.SetSize(static_cast<int>(data_size) - 1024); // should be 1 * 512
     

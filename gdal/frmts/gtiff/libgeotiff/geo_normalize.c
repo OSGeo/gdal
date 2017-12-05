@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2741 2016-09-04 18:50:49Z rouault $
+ * $Id: geo_normalize.c 2769 2017-06-08 12:32:59Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -31,6 +31,7 @@
 #include "geo_tiffp.h"
 #include "geovalues.h"
 #include "geo_normalize.h"
+#include "geo_keyp.h"
 
 #ifndef KvUserDefined
 #  define KvUserDefined 32767
@@ -1550,13 +1551,14 @@ static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
         return 0;
     if( tagtype != expected_tagtype )
     {
-        static int nErrorCount = 0;
-        if( ++nErrorCount < 100 )
+        if( psGTIF->gt_error_callback )
         {
-            fprintf(stderr,
-                    "Expected key %s to be of type %s. Got %s\n",
-                    GTIFKeyName(key), GTIFTypeName(expected_tagtype),
-                    GTIFTypeName(tagtype));
+            psGTIF->gt_error_callback(
+                psGTIF,
+                LIBGEOTIFF_WARNING,
+                "Expected key %s to be of type %s. Got %s",
+                GTIFKeyName(key), GTIFTypeName(expected_tagtype),
+                GTIFTypeName(tagtype));
         }
         return 0;
     }

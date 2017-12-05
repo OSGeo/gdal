@@ -40,24 +40,46 @@ NAMESPACE_LERC_START
 // Returns false if input seems wrong
 // Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
-bool BitMask::RLEdecompress(const Byte* src) {
+bool BitMask::RLEdecompress(const Byte* src, size_t nRemainingBytes) {
     Byte *dst = m_pBits;
     int sz = Size();
     short int count;
     assert(src);
 
 // Read a two bye short int
-#define READ_COUNT if (true) { count = *src++; count += (*src++ << 8); }
+#define READ_COUNT if (true) { if (nRemainingBytes < 2 ) { LERC_BRKPNT(); return false; } count = *src++; count += (*src++ << 8); nRemainingBytes -= 2; }
 
     while (sz) { // One sequence per loop
         READ_COUNT;
         if (count < 0) { // negative count for repeats
+            if (nRemainingBytes < 1 )
+            {
+                LERC_BRKPNT();
+                return false;
+            }
             Byte b = *src++;
+            nRemainingBytes --;
             sz += count;
+            if( sz < 0 )
+            {
+                LERC_BRKPNT();
+                return false;
+            }
             while (0 != count++)
                 *dst++ = b;
         } else { // No repeats
             sz -= count;
+            if( sz < 0 )
+            {
+                LERC_BRKPNT();
+                return false;
+            }
+            if (nRemainingBytes < static_cast<size_t>(count) )
+            {
+              LERC_BRKPNT();
+              return false;
+            }
+            nRemainingBytes -= count;
             while (0 != count--)
                 *dst++ = *src++;
         }

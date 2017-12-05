@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 namespace GMLAS
 {
@@ -62,7 +62,7 @@ class LayerDescription
         bool      bIsTopLevel;
         bool      bIsJunction;
         // map a field sequential number to a field
-        std::map< int, GMLASField > oMapIdxToField; 
+        std::map< int, GMLASField > oMapIdxToField;
         // map a field xpath to its sequential number
         std::map< CPLString, int > oMapFieldXPathToIdx;
         std::map< CPLString, int > oMapFieldNameToOGRIdx;
@@ -331,69 +331,8 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     std::vector<PairURIFilename> aoXSDs;
     std::map<CPLString, CPLString> oMapURIToPrefix;
     CPLString osGMLVersion;
-    if( osXSDFilenames.empty() )
-    {
-        // No explicit XSD creation option, then we assume that the source
-        // dataset contains all the metadata layers we need
-        OGRLayer* poOtherMetadataLayer =
-                            m_poSrcDS->GetLayerByName(szOGR_OTHER_METADATA);
-        if( poOtherMetadataLayer == NULL )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot establish schema since no %s creation option "
-                     "specified and no %s found in source "
-                     "dataset. One of them must be defined.",
-                     szINPUT_XSD_OPTION,
-                     szOGR_OTHER_METADATA);
-            return false;
-        }
-        std::map<int, CPLString> oMapToUri;
-        std::map<int, CPLString> oMapToLocation;
-        std::map<int, CPLString> oMapToPrefix;
-        while( true )
-        {
-            OGRFeature* poFeature = poOtherMetadataLayer->GetNextFeature();
-            if( poFeature == NULL )
-                break;
-            const char* pszKey = poFeature->GetFieldAsString(szKEY);
-            int i = 0;
-            if( sscanf( pszKey, szNAMESPACE_URI_FMT, &i ) == 1 && i > 0 )
-            {
-                oMapToUri[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( sscanf( pszKey, szNAMESPACE_LOCATION_FMT, &i ) == 1 &&
-                     i > 0 )
-            {
-                oMapToLocation[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( sscanf( pszKey, szNAMESPACE_PREFIX_FMT, &i ) == 1 &&
-                     i > 0 )
-            {
-                oMapToPrefix[i] = poFeature->GetFieldAsString(szVALUE);
-            }
-            else if( EQUAL(pszKey, szGML_VERSION) )
-            {
-                osGMLVersion = poFeature->GetFieldAsString(szVALUE);
-            }
-            delete poFeature;
-        }
-        poOtherMetadataLayer->ResetReading();
 
-        for( int i = 1; i <= static_cast<int>(oMapToUri.size()); ++i )
-        {
-            if( oMapToUri.find(i) != oMapToUri.end() )
-            {
-                const CPLString& osURI( oMapToUri[i] );
-                aoXSDs.push_back( PairURIFilename( osURI,
-                                                   oMapToLocation[i] ) );
-                if( oMapToPrefix.find(i) != oMapToPrefix.end() )
-                {
-                    oMapURIToPrefix[ osURI ] = oMapToPrefix[i];
-                }
-            }
-        }
-    }
-    else
+    if( !osXSDFilenames.empty() )
     {
         // Create a fake GMLAS dataset from the XSD= value
         m_poTmpDS = new OGRGMLASDataSource();
@@ -408,12 +347,25 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         {
             return false;
         }
-        aoXSDs = m_poTmpDS->GetXSDsManuallyPassed();
-        oMapURIToPrefix = m_poTmpDS->GetMapURIToPrefix();
-        osGMLVersion = m_poTmpDS->GetGMLVersionFound();
     }
 
     GDALDataset* poQueryDS = m_poTmpDS ? m_poTmpDS : m_poSrcDS;
+
+    // No explicit XSD creation option, then we assume that the source
+    // dataset contains all the metadata layers we need
+    OGRLayer* poOtherMetadataLayer =
+                        poQueryDS->GetLayerByName(szOGR_OTHER_METADATA);
+    if( poOtherMetadataLayer == NULL )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "Cannot establish schema since no %s creation option "
+                    "specified and no %s found in source "
+                    "dataset. One of them must be defined.",
+                    szINPUT_XSD_OPTION,
+                    szOGR_OTHER_METADATA);
+        return false;
+    }
+
     m_poLayersMDLayer =
         poQueryDS->GetLayerByName(szOGR_LAYERS_METADATA);
     m_poFieldsMDLayer =
@@ -437,6 +389,52 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         CPLError(CE_Failure, CPLE_AppDefined, "%s not found",
                  szOGR_LAYER_RELATIONSHIPS);
         return false;
+    }
+
+    std::map<int, CPLString> oMapToUri;
+    std::map<int, CPLString> oMapToLocation;
+    std::map<int, CPLString> oMapToPrefix;
+    while( true )
+    {
+        OGRFeature* poFeature = poOtherMetadataLayer->GetNextFeature();
+        if( poFeature == NULL )
+            break;
+        const char* pszKey = poFeature->GetFieldAsString(szKEY);
+        int i = 0;
+        if( sscanf( pszKey, szNAMESPACE_URI_FMT, &i ) == 1 && i > 0 )
+        {
+            oMapToUri[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( sscanf( pszKey, szNAMESPACE_LOCATION_FMT, &i ) == 1 &&
+                    i > 0 )
+        {
+            oMapToLocation[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( sscanf( pszKey, szNAMESPACE_PREFIX_FMT, &i ) == 1 &&
+                    i > 0 )
+        {
+            oMapToPrefix[i] = poFeature->GetFieldAsString(szVALUE);
+        }
+        else if( EQUAL(pszKey, szGML_VERSION) )
+        {
+            osGMLVersion = poFeature->GetFieldAsString(szVALUE);
+        }
+        delete poFeature;
+    }
+    poOtherMetadataLayer->ResetReading();
+
+    for( int i = 1; i <= static_cast<int>(oMapToUri.size()); ++i )
+    {
+        if( oMapToUri.find(i) != oMapToUri.end() )
+        {
+            const CPLString& osURI( oMapToUri[i] );
+            aoXSDs.push_back( PairURIFilename( osURI,
+                                                oMapToLocation[i] ) );
+            if( oMapToPrefix.find(i) != oMapToPrefix.end() )
+            {
+                oMapURIToPrefix[ osURI ] = oMapToPrefix[i];
+            }
+        }
     }
 
     if( !CollectLayers() )
@@ -565,7 +563,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
                                              szSRSNAME_FORMAT_OPTION,
                                              m_oConf.m_osSRSNameFormat);
 
-    CPLString osLineFormat = CSLFetchNameValueDef(m_papszOptions, 
+    CPLString osLineFormat = CSLFetchNameValueDef(m_papszOptions,
                                                   szLINEFORMAT_OPTION,
                                                   m_oConf.m_osLineFormat);
     if( !osLineFormat.empty() )
@@ -699,7 +697,7 @@ bool GMLASWriter::WriteXSD( const CPLString& osXSDFilenameIn,
     PrintLine( fpXSD,
                "    elementFormDefault=\"qualified\" version=\"1.0\" >");
 
-    // Those imports are not really needed, since the schemaLocation are 
+    // Those imports are not really needed, since the schemaLocation are
     // already specified in the .xml file, but that helps validating the
     // document with libxml2/xmllint since it can only accept one single main
     // schema.
@@ -1063,7 +1061,8 @@ bool GMLASWriter::CollectFields()
         }
     }
 
-    m_poFieldsMDLayer->SetAttributeFilter( NULL );
+    m_poFieldsMDLayer->SetAttributeFilter(
+        (CPLString(szFIELD_CATEGORY) + " != '" + szSWE_FIELD + "'").c_str() );
     m_poFieldsMDLayer->ResetReading();
     while( true )
     {
@@ -1884,7 +1883,7 @@ bool GMLASWriter::GetCoordSwap( const OGRSpatialReference* poSRS )
         return oIter->second;
 
     bool bCoordSwap = false;
-    const char* pszTarget = poSRS->IsProjected() ? 
+    const char* pszTarget = poSRS->IsProjected() ?
                                                 "PROJCS" : "GEOGCS";
     const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
     const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
@@ -1943,12 +1942,15 @@ bool GMLASWriter::WriteFieldRegular(
         FindCommonPrefixLength( aoCurComponents, aoFieldComponents );
 
     const bool bEmptyContent =
-        nFieldIdx < 0 || 
+        nFieldIdx < 0 ||
           ((bIsGeometryField && !poFeature->GetGeomFieldRef(nFieldIdx)) ||
-           (!bIsGeometryField && !poFeature->IsFieldSet(nFieldIdx)));
-
-    bool bMustBeEmittedEvenIfEmpty = oField.GetMinOccurs() > 0;
-    if( oField.GetMinOccurs() == 0 && bEmptyContent &&
+           (!bIsGeometryField && !poFeature->IsFieldSetAndNotNull(nFieldIdx)));
+    const bool bIsNull = m_oConf.m_bUseNullState  &&
+                         (!bIsGeometryField && nFieldIdx >= 0 &&
+                           poFeature->IsFieldNull(nFieldIdx));
+    bool bMustBeEmittedEvenIfEmpty = oField.GetMinOccurs() > 0 || bIsNull;
+    if( !m_oConf.m_bUseNullState &&
+        oField.GetMinOccurs() == 0 && bEmptyContent &&
         nCommonLength + 1 == aoCurComponents.size() &&
         IsAttr(aoCurComponents.back()) &&
         nCommonLength == aoFieldComponents.size() &&
@@ -2101,7 +2103,7 @@ bool GMLASWriter::WriteFieldRegular(
         const int nFieldXMLIdx = oLayerDesc.GetOGRIdxFromFieldName
                                                 (oField.GetName() + "_xml");
         if( nFieldXMLIdx >= 0 &&
-            poFeature->IsFieldSet(nFieldXMLIdx) )
+            poFeature->IsFieldSetAndNotNull(nFieldXMLIdx) )
         {
             if( poFeature->GetFieldDefnRef(nFieldXMLIdx)->GetType() ==
                                                                 OFTStringList )
@@ -2317,7 +2319,7 @@ bool GMLASWriter::WriteFieldRegular(
                         if( j > 0 )
                             PrintMultipleValuesSeparator(oField,
                                                             aoFieldComponents);
-                        VSIFPrintfL(m_fpXML, 
+                        VSIFPrintfL(m_fpXML,
                                     panValues[j] ? "true" : "false");
                     }
                 }
@@ -2557,7 +2559,7 @@ bool GMLASWriter::WriteFieldNoLink(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet( nParentPKIDIdx ) )
+    if( !poFeature->IsFieldSetAndNotNull( nParentPKIDIdx ) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Missing value of %s field for feature "
@@ -2792,7 +2794,7 @@ bool GMLASWriter::WriteFieldWithLink(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet(nFieldIdx) )
+    if( !poFeature->IsFieldSetAndNotNull(nFieldIdx) )
     {
         // Not an error (unless the field is required)
         return true;
@@ -2961,7 +2963,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( !poFeature->IsFieldSet(nIndexPKID) )
+    if( !poFeature->IsFieldSetAndNotNull(nIndexPKID) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Field '%s' in layer %s is not set for "
@@ -3099,7 +3101,7 @@ void GMLASWriter::PrintLine(VSILFILE* fp, const char *fmt, ...)
     VSIFWriteL(m_osEOL.c_str(), 1, m_osEOL.size(), fp);
 }
 
-}; /* namespace GMLAS */
+} /* namespace GMLAS */
 
 
 /************************************************************************/

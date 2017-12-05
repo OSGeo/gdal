@@ -2218,20 +2218,16 @@ def jp2lura_51():
 
     if maxdiff > 0.01:
         gdaltest.post_reason('fail')
-        print(maxdiff)
-        if sys.maxsize > 2**32 and sys.platform.startswith('linux'):
-            print('Expected to fail on Linux 64')
-            return 'skip'
         return 'fail'
 
     # QUALITY
-    # Apparently not supported
-    ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
+    with gdaltest.error_handler():
+        ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
                                          options = ['SPLIT_IEEE754=YES', 'QUALITY=100'])
     if ds is not None:
         maxdiff = gdaltest.compare_ds(ds, src_ds)
         ds = None
-        if maxdiff > 0.01:
+        if maxdiff > 124:
             gdaltest.post_reason('fail')
             print(maxdiff)
             return 'fail'
@@ -2240,14 +2236,16 @@ def jp2lura_51():
             gdaltest.post_reason('fail')
             return 'fail'
     ds = None
-    gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
+    with gdaltest.error_handler():
+        gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
+    gdal.Unlink('/vsimem/jp2lura_51.jp2')
 
     # RATE
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
                                          options = ['SPLIT_IEEE754=YES', 'RATE=1'])
     maxdiff = gdaltest.compare_ds(ds, src_ds)
     ds = None
-    if maxdiff > 0.1:
+    if maxdiff > 370:
         gdaltest.post_reason('fail')
         print(maxdiff)
         return 'fail'

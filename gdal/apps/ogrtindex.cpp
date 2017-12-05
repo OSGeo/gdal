@@ -32,18 +32,27 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
+#include "commonutils.h"
 
 #include <cassert>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void Usage();
+
+typedef enum
+{
+    FORMAT_AUTO,
+    FORMAT_WKT,
+    FORMAT_EPSG,
+    FORMAT_PROJ
+} SrcSRSFormat;
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char **papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     // Check strict compilation and runtime library version as we use C++ API.
@@ -59,7 +68,7 @@ int main( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     int nFirstSourceDataset = -1;
     bool bLayersWildcarded = true;
-    const char *pszFormat = "ESRI Shapefile";
+    const char *pszFormat = NULL;
     const char *pszTileIndexField = "LOCATION";
     const char *pszOutputName = NULL;
     bool write_absolute_path = false;
@@ -67,6 +76,13 @@ int main( int nArgc, char **papszArgv )
     char* current_path = NULL;
     bool accept_different_schemas = false;
     bool bFirstWarningForNonMatchingAttributes = true;
+    const char *pszTargetSRS = "";
+    bool bSetTargetSRS = false;
+    const char* pszSrcSRSName = NULL;
+    int i_SrcSRSName = -1;
+    bool bSrcSRSFormatSpecified = false;
+    SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
+    size_t nMaxFieldSize = 254;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
@@ -78,7 +94,7 @@ int main( int nArgc, char **papszArgv )
                    GDALVersionInfo("RELEASE_NAME"));
             return 0;
         }
-        else if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             pszFormat = papszArgv[++iArg];
         }
@@ -94,7 +110,7 @@ int main( int nArgc, char **papszArgv )
         {
             accept_different_schemas = true;
         }
-        else if( EQUAL(papszArgv[iArg],"-tileindex") && iArg < nArgc-1 )
+        else if( iArg < nArgc-1 && EQUAL(papszArgv[iArg],"-tileindex") )
         {
             pszTileIndexField = papszArgv[++iArg];
         }
@@ -103,6 +119,29 @@ int main( int nArgc, char **papszArgv )
         {
             iArg++;
             bLayersWildcarded = false;
+        }
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg],"-t_srs") == 0 )
+        {
+            pszTargetSRS = papszArgv[++iArg];
+            bSetTargetSRS = true;
+        }
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg], "-src_srs_name") == 0 )
+        {
+            pszSrcSRSName = papszArgv[++iArg];
+        }
+        else if( iArg < nArgc-1 && strcmp(papszArgv[iArg], "-src_srs_format") == 0 )
+        {
+            const char* pszSRSFormat;
+            bSrcSRSFormatSpecified = true;
+            pszSRSFormat = papszArgv[++iArg];
+            if( EQUAL(pszSRSFormat, "AUTO") )
+                eSrcSRSFormat = FORMAT_AUTO;
+            else if( EQUAL(pszSRSFormat, "WKT") )
+                eSrcSRSFormat = FORMAT_WKT;
+            else if( EQUAL(pszSRSFormat, "EPSG") )
+                eSrcSRSFormat = FORMAT_EPSG;
+            else if( EQUAL(pszSRSFormat, "PROJ") )
+                eSrcSRSFormat = FORMAT_PROJ;
         }
         else if( papszArgv[iArg][0] == '-' )
             Usage();
@@ -114,6 +153,36 @@ int main( int nArgc, char **papszArgv )
 
     if( pszOutputName == NULL || nFirstSourceDataset == -1 )
         Usage();
+
+    if( bSrcSRSFormatSpecified && pszSrcSRSName == NULL )
+    {
+        fprintf( stderr,"-src_srs_name must be specified when -src_srs_format is "
+                "specified.\n" );
+        Usage();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create and validate target SRS if given.                        */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference* poTargetSRS = NULL;
+    if( bSetTargetSRS )
+    {
+        if( skip_different_projection )
+        {
+            fprintf( stderr,
+                     "Warning : -skip_different_projection does not apply "
+                     "when -t_srs is requested.\n" );
+        }
+        poTargetSRS = new OGRSpatialReference();
+        // coverity[tainted_data]
+        if( poTargetSRS->SetFromUserInput( pszTargetSRS ) != CE_None )
+        {
+            delete poTargetSRS;
+            fprintf( stderr, "Invalid target SRS `%s'.\n",
+                     pszTargetSRS );
+            exit(1);
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to open as an existing dataset for update access.           */
@@ -128,38 +197,62 @@ int main( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     if( poDstDS == NULL )
     {
-        OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-        GDALDriver *poDriver = NULL;
-
-        for( int iDriver = 0;
-             iDriver < poR->GetDriverCount() && poDriver == NULL;
-             iDriver++ )
+        CPLString osFormat;
+        if( pszFormat == NULL )
         {
-            if( EQUAL(poR->GetDriver(iDriver)->GetDescription(),pszFormat) )
+            std::vector<CPLString> aoDrivers =
+                GetOutputDriversFor(pszOutputName, GDAL_OF_VECTOR);
+            if( aoDrivers.empty() )
             {
-                poDriver = poR->GetDriver(iDriver);
+                CPLError( CE_Failure, CPLE_AppDefined,
+                        "Cannot guess driver for %s", pszOutputName);
+                exit( 10 );
+            }
+            else
+            {
+                if( aoDrivers.size() > 1 )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                            "Several drivers matching %s extension. Using %s",
+                            CPLGetExtension(pszOutputName), aoDrivers[0].c_str() );
+                }
+                osFormat = aoDrivers[0];
             }
         }
-
-        if( poDriver == NULL )
+        else
         {
-            fprintf( stderr, "Unable to find driver `%s'.\n", pszFormat );
-            fprintf( stderr, "The following drivers are available:\n" );
+            osFormat = pszFormat;
+        }
+        if( !EQUAL(osFormat, "ESRI Shapefile") )
+            nMaxFieldSize = 0;
 
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
+
+        GDALDriverH hDriver = GDALGetDriverByName( osFormat.c_str() );
+        if( hDriver == NULL )
+        {
+            GDALDriverManager *poDM = GetGDALDriverManager();
+            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
             {
-                fprintf( stderr, "  -> `%s'\n",
-                         poR->GetDriver(iDriver)->GetDescription() );
+                fprintf( stderr,  "Unable to find driver `%s'.\n", osFormat.c_str() );
+                fprintf( stderr,  "The following drivers are available:\n" );
+
+                GDALDriver* poIter = poDM->GetDriver(iDriver);
+                char** papszDriverMD = poIter->GetMetadata();
+                if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) &&
+                    CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) )
+                {
+                    fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+                }
             }
             exit( 1 );
         }
 
-        if( !CPLTestBool( CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                               GDAL_DCAP_CREATE, "FALSE") ) )
+        if( !CPLTestBool( CSLFetchNameValueDef( GDALGetMetadata(hDriver, NULL),
+                            GDAL_DCAP_CREATE, "FALSE" ) ) )
         {
             fprintf( stderr,
                      "%s driver does not support data source creation.\n",
-                     pszFormat );
+                     osFormat.c_str() );
             exit( 1 );
         }
 
@@ -167,20 +260,17 @@ int main( int nArgc, char **papszArgv )
 /*      Now create it.                                                  */
 /* -------------------------------------------------------------------- */
 
-        poDstDS = poDriver->Create( pszOutputName, 0, 0, 0, GDT_Unknown, NULL );
+        poDstDS = reinterpret_cast<GDALDataset*>(
+            GDALCreate( hDriver, pszOutputName, 0, 0, 0, GDT_Unknown, NULL ));
         if( poDstDS == NULL )
         {
             fprintf( stderr, "%s driver failed to create %s\n",
-                    pszFormat, pszOutputName );
+                    osFormat.c_str(), pszOutputName );
             exit( 1 );
         }
 
         if( poDstDS->GetLayerCount() == 0 )
         {
-            OGRFieldDefn oLocation( pszTileIndexField, OFTString );
-
-            oLocation.SetWidth( 200 );
-
             if( nFirstSourceDataset < nArgc &&
                 papszArgv[nFirstSourceDataset][0] == '-' )
             {
@@ -188,10 +278,14 @@ int main( int nArgc, char **papszArgv )
             }
 
             OGRSpatialReference* poSrcSpatialRef = NULL;
-
-            // Fetches the SRS of the first layer and use it when creating the
+            if( bSetTargetSRS )
+            {
+            // Fetches the SRS from target SRS (if set), or from the SRS of
+            // the first layer and use it when creating the
             // tileindex layer.
-            if( nFirstSourceDataset < nArgc )
+                poSrcSpatialRef = poTargetSRS->Clone();
+            }
+            else if( nFirstSourceDataset < nArgc )
             {
                 GDALDataset* poDS = reinterpret_cast<GDALDataset*>(
                     OGROpen(papszArgv[nFirstSourceDataset], FALSE, NULL));
@@ -224,13 +318,23 @@ int main( int nArgc, char **papszArgv )
                     }
                 }
 
-                GDALClose( (GDALDatasetH)poDS );
+                GDALClose(poDS);
             }
 
             poDstLayer = poDstDS->CreateLayer( "tileindex", poSrcSpatialRef );
-            poDstLayer->CreateField( &oLocation, OFTString );
 
-            OGRSpatialReference::DestroySpatialReference( poSrcSpatialRef );
+            OGRFieldDefn oLocation( pszTileIndexField, OFTString );
+            oLocation.SetWidth( 200 );
+            poDstLayer->CreateField( &oLocation );
+
+            if( pszSrcSRSName != NULL )
+            {
+                OGRFieldDefn oSrcSRSNameField( pszSrcSRSName, OFTString );
+                poDstLayer->CreateField( &oSrcSRSNameField );
+            }
+
+            if( poSrcSpatialRef )
+                poSrcSpatialRef->Release();
         }
     }
 
@@ -253,6 +357,9 @@ int main( int nArgc, char **papszArgv )
                 pszTileIndexField );
         exit( 1 );
     }
+
+    if( pszSrcSRSName != NULL )
+        i_SrcSRSName = poDstLayer->GetLayerDefn()->GetFieldIndex( pszSrcSRSName );
 
     OGRFeatureDefn* poFeatureDefn = NULL;
 
@@ -399,32 +506,37 @@ int main( int nArgc, char **papszArgv )
             }
 
             OGRSpatialReference* spatialRef = poLayer->GetSpatialRef();
-            if( alreadyExistingSpatialRefValid )
+            // If not set target srs, test that the current file uses same
+            // projection as others.
+            if( !bSetTargetSRS )
             {
-                if( (spatialRef != NULL && alreadyExistingSpatialRef != NULL &&
-                     spatialRef->IsSame(alreadyExistingSpatialRef) == FALSE) ||
-                    ((spatialRef != NULL) !=
-                     (alreadyExistingSpatialRef != NULL)) )
+                if( alreadyExistingSpatialRefValid )
                 {
-                    fprintf(
-                        stderr,
-                        "Warning : layer %d of %s is not using the same "
-                        "projection system as other files in the tileindex. "
-                        "This may cause problems when using it in MapServer "
-                        "for example.%s\n",
-                        iLayer, papszArgv[nFirstSourceDataset],
-                        skip_different_projection ? " Skipping it" : "");
-                    if( skip_different_projection )
+                    if( (spatialRef != NULL && alreadyExistingSpatialRef != NULL &&
+                        spatialRef->IsSame(alreadyExistingSpatialRef) == FALSE) ||
+                        ((spatialRef != NULL) !=
+                        (alreadyExistingSpatialRef != NULL)) )
                     {
-                        continue;
+                        fprintf(
+                            stderr,
+                            "Warning : layer %d of %s is not using the same "
+                            "projection system as other files in the tileindex. "
+                            "This may cause problems when using it in MapServer "
+                            "for example.%s\n",
+                            iLayer, papszArgv[nFirstSourceDataset],
+                            skip_different_projection ? " Skipping it" : "");
+                        if( skip_different_projection )
+                        {
+                            continue;
+                        }
                     }
                 }
-            }
-            else
-            {
-                alreadyExistingSpatialRefValid = true;
-                alreadyExistingSpatialRef =
-                    spatialRef ? spatialRef->Clone() : NULL;
+                else
+                {
+                    alreadyExistingSpatialRefValid = true;
+                    alreadyExistingSpatialRef =
+                        spatialRef ? spatialRef->Clone() : NULL;
+                }
             }
 
 /* -------------------------------------------------------------------- */
@@ -524,6 +636,31 @@ int main( int nArgc, char **papszArgv )
             OGRPolygon oRegion;
             oRegion.addRing( &oRing );
 
+            // If set target srs, do the forward transformation of all points.
+            if( bSetTargetSRS && spatialRef != NULL )
+            {
+                OGRCoordinateTransformation* poCT = NULL;
+                if( !spatialRef->IsSame( poTargetSRS ) )
+                {
+                    poCT = OGRCreateCoordinateTransformation( spatialRef, poTargetSRS );
+                    if( poCT == NULL || oRegion.transform(poCT) == OGRERR_FAILURE )
+                    {
+                        char* pszSourceWKT = NULL;
+                        spatialRef->exportToWkt(&pszSourceWKT);
+                        fprintf(
+                            stderr,
+                            "Warning : unable to transform points from source "
+                            "SRS `%s' to target SRS `%s'\n"
+                            "for file `%s' - file skipped\n",
+                            pszSourceWKT, pszTargetSRS, papszArgv[nFirstSourceDataset] );
+                        CPLFree(pszSourceWKT);
+                        delete poCT;
+                        continue;
+                    }
+                    delete poCT;
+                }
+            }
+
 /* -------------------------------------------------------------------- */
 /*      Add layer to tileindex.                                         */
 /* -------------------------------------------------------------------- */
@@ -535,6 +672,73 @@ int main( int nArgc, char **papszArgv )
             oTileFeat.SetGeometry( &oRegion );
             oTileFeat.SetField( iTileIndexField, szLocation );
 
+            if( i_SrcSRSName >= 0 && spatialRef != NULL )
+            {
+                const char* pszAuthorityCode =
+                    spatialRef->GetAuthorityCode(NULL);
+                const char* pszAuthorityName =
+                    spatialRef->GetAuthorityName(NULL);
+                char* pszWKT = NULL;
+                spatialRef->exportToWkt(&pszWKT);
+                if( eSrcSRSFormat == FORMAT_AUTO )
+                {
+                    if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
+                    {
+                        oTileFeat.SetField(i_SrcSRSName,
+                            CPLSPrintf("%s:%s",
+                                    pszAuthorityName, pszAuthorityCode) );
+                    }
+                    else if( nMaxFieldSize == 0 ||
+                            strlen(pszWKT) <= nMaxFieldSize )
+                    {
+                        oTileFeat.SetField(i_SrcSRSName, pszWKT);
+                    }
+                    else
+                    {
+                        char* pszProj4 = NULL;
+                        if( spatialRef->exportToProj4(&pszProj4) == OGRERR_NONE )
+                        {
+                            oTileFeat.SetField(i_SrcSRSName, pszProj4 );
+                            CPLFree(pszProj4);
+                        }
+                        else
+                        {
+                            oTileFeat.SetField(i_SrcSRSName, pszWKT);
+                        }
+                    }
+                }
+                else if( eSrcSRSFormat == FORMAT_WKT )
+                {
+                    if( nMaxFieldSize == 0 ||
+                        strlen(pszWKT) <= nMaxFieldSize )
+                    {
+                        oTileFeat.SetField(i_SrcSRSName, pszWKT );
+                    }
+                    else
+                    {
+                        fprintf(stderr,
+                                "Cannot write WKT for file %s as it is too long!\n",
+                                fileNameToWrite);
+                    }
+                }
+                else if( eSrcSRSFormat == FORMAT_PROJ )
+                {
+                    char* pszProj4 = NULL;
+                    if( spatialRef->exportToProj4(&pszProj4) == OGRERR_NONE )
+                    {
+                        oTileFeat.SetField(i_SrcSRSName, pszProj4 );
+                        CPLFree(pszProj4);
+                    }
+                }
+                else if( eSrcSRSFormat == FORMAT_EPSG )
+                {
+                    if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
+                        oTileFeat.SetField(i_SrcSRSName,
+                            CPLSPrintf("%s:%s",
+                                    pszAuthorityName, pszAuthorityCode) );
+                }
+                CPLFree(pszWKT);
+            }
             if( poDstLayer->CreateFeature( &oTileFeat ) != OGRERR_NONE )
             {
                 fprintf( stderr,
@@ -559,8 +763,8 @@ int main( int nArgc, char **papszArgv )
     OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
 
     if( alreadyExistingSpatialRef != NULL )
-        OGRSpatialReference::DestroySpatialReference(
-            alreadyExistingSpatialRef );
+        alreadyExistingSpatialRef->Release();
+    delete poTargetSRS;
 
     CPLFree(current_path);
 
@@ -577,6 +781,7 @@ int main( int nArgc, char **papszArgv )
 
     return 0;
 }
+MAIN_END
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -587,6 +792,8 @@ static void Usage()
 {
     printf( "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n"
             "                 [-write_absolute_path] [-skip_different_projection]\n"
+            "                 [-t_srs target_srs]\n"
+            "                 [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]\n"
             "                 [-accept_different_schemas]\n"
             "                 output_dataset src_dataset...\n" );
     printf( "\n" );
@@ -594,8 +801,7 @@ static void Usage()
             "           in the tile index.\n" );
     printf( "  -lname name: Add the layer named 'name' from each source file\n"
             "               in the tile index.\n" );
-    printf( "  -f output_format: Select an output format name.  The default\n"
-            "                    is to create a shapefile.\n" );
+    printf( "  -f output_format: Select an output format name.\n" );
     printf( "  -tileindex field_name: The name to use for the dataset name.\n"
             "                         Defaults to LOCATION.\n" );
     printf( "  -write_absolute_path: Filenames are written with absolute paths.\n" );
@@ -605,6 +811,12 @@ static void Usage()
             "                             into the index have the same attribute schemas. If you\n"
             "                             specify this option, this test will be disabled. Be aware that\n"
             "                             resulting index may be incompatible with MapServer!\n" );
+    printf(
+            "  - If -t_srs is specified, geometries of input files will be transformed to the desired\n"
+            "    target coordinate reference system.\n"
+            "    Note that using this option generates files that are NOT compatible with MapServer < 7.2.\n"
+            "  - Simple rectangular polygons are generated in the same coordinate reference system\n"
+            "    as the vectors, or in target reference system if the -t_srs option is used.\n");
     printf( "\n" );
     printf( "If no -lnum or -lname arguments are given it is assumed that\n"
             "all layers in source datasets should be added to the tile index\n"

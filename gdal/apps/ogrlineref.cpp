@@ -25,22 +25,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
+#include "cpl_port.h"
+
+#include "commonutils.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
-#include "ogr_api.h"
 #include "gdal.h"
 #include "gdal_alg.h"
-#include "commonutils.h"
-#include <map>
-#include <vector>
-#include <set>
-#include <limits>
-#include "cpl_error.h"
+#include "ogr_api.h"
 #include "ogr_geos.h"
+#include "ogr_p.h"
+#include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$");
+#include <limits>
+#include <map>
+#include <set>
+#include <vector>
+
+CPL_CVSID("$Id$")
 
 #define FIELD_START "beg"
 #define FIELD_FINISH "end"
@@ -876,7 +879,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
             nCount++;
         }
 
-        for (int j = 0; j < (int)astSubLines.size(); j++)
+        for (int j = 0; j < static_cast<int>(astSubLines.size()); j++)
         {
             if (astSubLines[j].IsInside(dfDist))
             {
@@ -890,7 +893,7 @@ static OGRErr CreatePartsFromLineString(OGRLineString* pPathGeom, OGRLayer* cons
         }
     }
 
-    for (int i = 0; i < (int)astSubLines.size(); i++)
+    for (int i = 0; i < static_cast<int>(astSubLines.size()); i++)
     {
         delete astSubLines[i].pPart;
     }
@@ -1189,7 +1192,7 @@ static OGRErr GetCoordinates(OGRLayer* const poPkLayer,
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          papszArgv[iArg], nExtraArg)); } while( false )
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     OGRErr       eErr = OGRERR_NONE;
@@ -1268,7 +1271,7 @@ int main( int nArgc, char ** papszArgv )
         {
             bQuiet = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-f") )
+        else if( (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             //bFormatExplicitlySet = TRUE;
@@ -1606,9 +1609,9 @@ int main( int nArgc, char ** papszArgv )
         }
 
         //clean up
-        GDALClose( (GDALDatasetH)poLnDS);
-        GDALClose( (GDALDatasetH)poPkDS);
-        GDALClose( (GDALDatasetH)poODS);
+        GDALClose(poLnDS);
+        GDALClose(poPkDS);
+        GDALClose(poODS);
 
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
@@ -1667,7 +1670,7 @@ int main( int nArgc, char ** papszArgv )
         eErr = GetPosition(poPartsLayer, dfX, dfY, bDisplayProgress, bQuiet);
 
         //clean up
-        GDALClose( (GDALDatasetH)poPartsDS);
+        GDALClose(poPartsDS);
 #else //HAVE_GEOS_PROJECT
         fprintf( stderr, "GEOS support not enabled or incompatible version.\n" );
         exit( 1 );
@@ -1721,7 +1724,7 @@ int main( int nArgc, char ** papszArgv )
         eErr = GetCoordinates(poPartsLayer, dfPos, bDisplayProgress, bQuiet);
 
         //clean up
-        GDALClose( (GDALDatasetH)poPartsDS);
+        GDALClose(poPartsDS);
     }
     else if (stOper == op_get_subline)
     {
@@ -1830,9 +1833,8 @@ int main( int nArgc, char ** papszArgv )
         //do the work
         eErr = CreateSubline(poPartsLayer, dfPosBeg, dfPosEnd, poOutLayer, bDisplayProgress, bQuiet);
 
-        //clean up
-        GDALClose( (GDALDatasetH) poPartsDS);
-        GDALClose( (GDALDatasetH) poODS);
+        GDALClose(poPartsDS);
+        GDALClose(poODS);
 
         if (NULL != pszOutputLayerName)
             CPLFree(pszOutputLayerName);
@@ -1858,3 +1860,4 @@ int main( int nArgc, char ** papszArgv )
 
     return eErr == OGRERR_NONE ? 0 : 1;
 }
+MAIN_END

@@ -30,4 +30,4 @@ clean:
 install-obj:	$(O_OBJ:.o=.$(OBJ_EXT))
 	cp $(APPOBJ) ../o
 
-$(OBJ) $(O_OBJ):	subfile_source.h
+$(OBJ) $(O_OBJ): jp2kakdataset.h subfile_source.h

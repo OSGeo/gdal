@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRGMLASDataSource()                        */
@@ -62,6 +62,8 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_nCurMetadataLayerIdx = -1;
     m_poFieldsMetadataLayer = new OGRMemLayer
                                     (szOGR_FIELDS_METADATA, NULL, wkbNone );
+    m_bFoundSWE = false;
+
     {
         OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
@@ -289,22 +291,29 @@ void OGRGMLASDataSource::TranslateClasses( OGRGMLASLayer* poParentLayer,
 }
 
 /************************************************************************/
-/*                         GMLASGuessXSDFilename                        */
+/*                         GMLASTopElementParser                        */
 /************************************************************************/
 
-class GMLASGuessXSDFilename : public DefaultHandler
+class GMLASTopElementParser : public DefaultHandler
 {
             std::vector<PairURIFilename>  m_aoFilenames;
             int         m_nStartElementCounter;
             bool        m_bFinish;
+            bool        m_bFoundSWE;
+            std::map<CPLString,CPLString> m_oMapDocNSURIToPrefix;
 
     public:
-                        GMLASGuessXSDFilename();
+                        GMLASTopElementParser();
 
-                        virtual ~GMLASGuessXSDFilename() {}
+                        virtual ~GMLASTopElementParser() {}
 
-        std::vector<PairURIFilename> Guess(const CPLString& osFilename,
-                                     VSILFILE* fp);
+        void Parse(const CPLString& osFilename, VSILFILE* fp);
+
+        const std::vector<PairURIFilename>& GetXSDs() const
+                                            { return m_aoFilenames; }
+        bool GetSWE() const { return m_bFoundSWE; }
+        const std::map<CPLString,CPLString>& GetMapDocNSURIToPrefix() const
+                                            { return m_oMapDocNSURIToPrefix; }
 
         virtual void startElement(
             const   XMLCh* const    uri,
@@ -315,22 +324,20 @@ class GMLASGuessXSDFilename : public DefaultHandler
 };
 
 /************************************************************************/
-/*                          GMLASGuessXSDFilename()                     */
+/*                          GMLASTopElementParser()                     */
 /************************************************************************/
 
-GMLASGuessXSDFilename::GMLASGuessXSDFilename()
+GMLASTopElementParser::GMLASTopElementParser()
     : m_nStartElementCounter(0),
-        m_bFinish(false)
+        m_bFinish(false), m_bFoundSWE(false)
 {
 }
 
 /************************************************************************/
-/*                               Guess()                                */
+/*                               Parse()                                */
 /************************************************************************/
 
-std::vector<PairURIFilename>
-        GMLASGuessXSDFilename::Guess(const CPLString& osFilename,
-                                                    VSILFILE* fp)
+void GMLASTopElementParser::Parse(const CPLString& osFilename, VSILFILE* fp)
 {
     SAX2XMLReader* poSAXReader = XMLReaderFactory::createXMLReader();
 
@@ -373,15 +380,13 @@ std::vector<PairURIFilename>
 
     delete poSAXReader;
     delete poIS;
-
-    return m_aoFilenames;
 }
 
 /************************************************************************/
 /*                             startElement()                           */
 /************************************************************************/
 
-void GMLASGuessXSDFilename::startElement(
+void GMLASTopElementParser::startElement(
                             const   XMLCh* const /*uri*/,
                             const   XMLCh* const /*localname*/,
                             const   XMLCh* const /*qname*/,
@@ -426,6 +431,21 @@ void GMLASGuessXSDFilename::startElement(
             CPLDebug("GMLAS", "%s=%s",
                      szNO_NAMESPACE_SCHEMA_LOCATION, osAttrValue.c_str());
             m_aoFilenames.push_back( PairURIFilename( "", osAttrValue ) );
+        }
+        else if( osAttrURIPrefix == szXMLNS_URI &&
+                 osAttrValue == szSWE_URI )
+        {
+            CPLDebug("GMLAS", "SWE namespace found");
+            m_bFoundSWE = true;
+        }
+        else if( osAttrURIPrefix == szXMLNS_URI && !osAttrValue.empty() &&
+                 !osAttrLocalname.empty() )
+        {
+#ifdef DEBUG_VERBOSE
+            CPLDebug("GMLAS", "Namespace %s = %s",
+                     osAttrLocalname.c_str(), osAttrValue.c_str() );
+#endif
+            m_oMapDocNSURIToPrefix[ osAttrValue ] = osAttrLocalname;
         }
     }
 
@@ -724,17 +744,42 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
                                     m_oConf.m_oMapPrefixToURIIgnoredXPaths,
                                     m_oConf.m_aosIgnoredXPaths );
 
-    GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher);
+    {
+        std::map<CPLString, std::vector<CPLString> >::const_iterator oIter =
+                            m_oConf.m_oMapChildrenElementsConstraints.begin();
+        std::vector<CPLString> oVector;
+        for( ; oIter != m_oConf.m_oMapChildrenElementsConstraints.end(); ++oIter )
+            oVector.push_back(oIter->first);
+        m_oChildrenElementsConstraintsXPathMatcher.SetRefXPaths(
+            m_oConf.m_oMapPrefixToURITypeConstraints,
+            oVector );
+    }
+
+    m_oForcedFlattenedXPathMatcher.SetRefXPaths(
+                                  m_oConf.m_oMapPrefixToURIFlatteningRules,
+                                  m_oConf.m_osForcedFlattenedXPath);
+
+    m_oDisabledFlattenedXPathMatcher.SetRefXPaths(
+                                  m_oConf.m_oMapPrefixToURIFlatteningRules,
+                                  m_oConf.m_osDisabledFlattenedXPath);
+
+    GMLASSchemaAnalyzer oAnalyzer(m_oIgnoredXPathMatcher,
+                                  m_oChildrenElementsConstraintsXPathMatcher,
+                                  m_oConf.m_oMapChildrenElementsConstraints,
+                                  m_oForcedFlattenedXPathMatcher,
+                                  m_oDisabledFlattenedXPathMatcher);
     oAnalyzer.SetUseArrays(m_oConf.m_bUseArrays);
+    oAnalyzer.SetUseNullState(m_oConf.m_bUseNullState);
     oAnalyzer.SetInstantiateGMLFeaturesOnly(
                                         m_oConf.m_bInstantiateGMLFeaturesOnly);
     oAnalyzer.SetIdentifierMaxLength(m_oConf.m_nIdentifierMaxLength);
     oAnalyzer.SetCaseInsensitiveIdentifier(
                                         m_oConf.m_bCaseInsensitiveIdentifier);
     oAnalyzer.SetPGIdentifierLaundering(m_oConf.m_bPGIdentifierLaundering);
+    oAnalyzer.SetMaximumFieldsForFlattening(m_oConf.m_nMaximumFieldsForFlattening);
 
     m_osGMLFilename = STARTS_WITH_CI(poOpenInfo->pszFilename, szGMLAS_PREFIX) ?
-        poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX) :
+        CPLExpandTilde(poOpenInfo->pszFilename + strlen(szGMLAS_PREFIX)) :
         poOpenInfo->pszFilename;
 
     CPLString osXSDFilenames = CSLFetchNameValueDef(
@@ -760,11 +805,27 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
         return false;
     }
 
+    GMLASTopElementParser topElementParser;
+    if( !m_osGMLFilename.empty() )
+    {
+        topElementParser.Parse(m_osGMLFilename, fpGML);
+        if( m_oConf.m_eSWEActivationMode ==
+                        GMLASConfiguration::SWE_ACTIVATE_IF_NAMESPACE_FOUND )
+        {
+            m_bFoundSWE = topElementParser.GetSWE();
+        }
+        else if( m_oConf.m_eSWEActivationMode ==
+                        GMLASConfiguration::SWE_ACTIVATE_TRUE )
+        {
+            m_bFoundSWE = true;
+        }
+        oAnalyzer.SetMapDocNSURIToPrefix(
+                                    topElementParser.GetMapDocNSURIToPrefix());
+    }
     std::vector<PairURIFilename> aoXSDs;
     if( osXSDFilenames.empty() )
     {
-        GMLASGuessXSDFilename guesser;
-        aoXSDs = guesser.Guess(m_osGMLFilename, fpGML);
+        aoXSDs = topElementParser.GetXSDs();
     }
     else
     {
@@ -925,7 +986,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
     m_oXLinkResolver.SetConf( m_oConf.m_oXLinkResolution );
     m_oXLinkResolver.SetRefreshMode( bRefreshCache );
 
-    if( m_bValidate || m_bRemoveUnusedLayers )
+    if( m_bValidate || m_bRemoveUnusedLayers ||
+        (m_bFoundSWE && (m_oConf.m_bSWEProcessDataRecord ||
+                         m_oConf.m_bSWEProcessDataArray)) )
     {
         CPLErrorReset();
         RunFirstPassIfNeeded( NULL, NULL, NULL );
@@ -1082,7 +1145,17 @@ OGRFeature* OGRGMLASDataSource::GetNextFeature( OGRLayer** ppoBelongingLayer,
                 *pdfProgressPct = 1.0;
             if( ppoBelongingLayer != NULL )
                 *ppoBelongingLayer = NULL;
-            return NULL;
+            m_bEndOfReaderLayers = true;
+            if( !m_apoRequestedMetadataLayers.empty() )
+            {
+                m_nCurMetadataLayerIdx = 0;
+                return GetNextFeature( ppoBelongingLayer, pdfProgressPct,
+                                    pfnProgress, pProgressData );
+            }
+            else
+            {
+                return NULL;
+            }
         }
     }
 
@@ -1188,6 +1261,8 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         {
             poReader->SetMapSRSNameToInvertedAxis(m_oMapSRSNameToInvertedAxis);
             poReader->SetMapGeomFieldDefnToSRSName(m_oMapGeomFieldDefnToSRSName);
+            poReader->SetProcessDataRecord(m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
+            poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
         }
         return true;
     }
@@ -1195,6 +1270,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
     m_bFirstPassDone = true;
 
     // Determine if we have geometry fields in any layer
+    // If so, do an initial pass to determine the SRS of those geometry fields.
     bool bHasGeomFields = false;
     for(size_t i=0;i<m_apoLayers.size();i++)
     {
@@ -1206,11 +1282,12 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         }
     }
 
-    // If so, do an initial pass to determine the SRS of those geometry fields.
     const bool bHasURLSpecificRules =
                 !m_oXLinkResolver.GetConf().m_aoURLSpecificRules.empty();
     if( bHasGeomFields || m_bValidate || m_bRemoveUnusedLayers ||
-        m_bRemoveUnusedFields || bHasURLSpecificRules )
+        m_bRemoveUnusedFields || bHasURLSpecificRules ||
+        (m_bFoundSWE && (m_oConf.m_bSWEProcessDataRecord ||
+                         m_oConf.m_bSWEProcessDataArray)) )
     {
         bool bJustOpenedFiled =false;
         VSILFILE* fp = NULL;
@@ -1238,6 +1315,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
                                  m_bSchemaFullChecking,
                                  m_bHandleMultipleImports );
 
+        poReaderFirstPass->SetProcessDataRecord(
+            m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
+
         poReaderFirstPass->SetFileSize( m_nFileSize );
 
         poReaderFirstPass->SetMapIgnoredXPathToWarn(
@@ -1246,11 +1326,25 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         m_oConf.m_oMapIgnoredXPathToWarn.clear();
 
         std::set<CPLString> aoSetRemovedLayerNames;
-        m_bFirstPassDone = poReaderFirstPass->RunFirstPass(pfnProgress,
-                                                           pProgressData,
-                                                           m_bRemoveUnusedLayers,
-                                                           m_bRemoveUnusedFields,
-                                                           aoSetRemovedLayerNames);
+        m_bFirstPassDone = poReaderFirstPass->RunFirstPass(
+            pfnProgress,
+            pProgressData,
+            m_bRemoveUnusedLayers,
+            m_bRemoveUnusedFields,
+            m_bFoundSWE && m_oConf.m_bSWEProcessDataArray,
+            m_poFieldsMetadataLayer,
+            m_poLayersMetadataLayer,
+            m_poRelationshipsLayer,
+            aoSetRemovedLayerNames);
+
+        const std::vector<OGRGMLASLayer*>& apoSWEDataArrayLayers =
+                                poReaderFirstPass->GetSWEDataArrayLayers();
+        m_apoSWEDataArrayLayers = apoSWEDataArrayLayers;
+        for(size_t i = 0; i < apoSWEDataArrayLayers.size(); i++ )
+        {
+            apoSWEDataArrayLayers[i]->SetDataSource(this);
+            m_apoLayers.push_back(apoSWEDataArrayLayers[i]);
+        }
 
         // If we have removed layers, we also need to cleanup our special
         // metadata layers
@@ -1332,6 +1426,8 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded( GMLASReader* poReader,
         {
             poReader->SetMapSRSNameToInvertedAxis(m_oMapSRSNameToInvertedAxis);
             poReader->SetMapGeomFieldDefnToSRSName(m_oMapGeomFieldDefnToSRSName);
+            poReader->SetProcessDataRecord(m_bFoundSWE && m_oConf.m_bSWEProcessDataRecord);
+            poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
         }
     }
 

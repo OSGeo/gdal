@@ -156,7 +156,7 @@ vector<string> CADGeometry::getEED() const
     return asEED;
 }
 
-void CADGeometry::setEED( vector<string> eed )
+void CADGeometry::setEED( const vector<string>& eed )
 {
     asEED = eed;
 }

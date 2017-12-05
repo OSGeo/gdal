@@ -30,7 +30,7 @@
 
 #include "ceosopen.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -96,17 +96,17 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
         CPL_SWAP32PTR( abyHeader + 8 );
     }
 
-    nRecordNumUInt32 = (abyHeader[0] << 24)
+    nRecordNumUInt32 = ((unsigned)abyHeader[0] << 24)
                          + (abyHeader[1] << 16)
                          + (abyHeader[2] << 8)
                          + abyHeader[3];
 
-    psRecord->nRecordType = (abyHeader[4] << 24)
+    psRecord->nRecordType = ((unsigned)abyHeader[4] << 24)
                          + (abyHeader[5] << 16)
                          + (abyHeader[6] << 8)
                          + abyHeader[7];
 
-    nLengthUInt32 = (abyHeader[8] << 24)
+    nLengthUInt32 = ((unsigned)abyHeader[8] << 24)
                          + (abyHeader[9] << 16)
                          + (abyHeader[10] << 8)
                          + abyHeader[11];
@@ -148,6 +148,7 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Short read on CEOS record data.\n" );
+        CPLFree( psRecord->pachData );
         CPLFree( psRecord );
         return NULL;
     }
@@ -164,8 +165,11 @@ CEOSRecord * CEOSReadRecord( CEOSImage *psImage )
 void CEOSDestroyRecord( CEOSRecord * psRecord )
 
 {
-    CPLFree( psRecord->pachData );
-    CPLFree( psRecord );
+    if( psRecord )
+    {
+        CPLFree( psRecord->pachData );
+        CPLFree( psRecord );
+    }
 }
 
 /************************************************************************/
@@ -232,8 +236,9 @@ CEOSImage * CEOSOpen( const char * pszFilename, const char * pszAccess )
 /*      Try to read the header record.                                  */
 /* -------------------------------------------------------------------- */
     psRecord = CEOSReadRecord( psImage );
-    if( psRecord == NULL )
+    if( psRecord == NULL || psRecord->nLength < 288 + 4 )
     {
+        CEOSDestroyRecord( psRecord );
         CEOSClose( psImage );
         return NULL;
     }

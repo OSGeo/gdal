@@ -627,6 +627,7 @@ typedef enum
  * @since GDAL 2.1
  */
 
+// cppcheck-suppress copyCtorAndEqOperator
 class CPL_DLL GNMRule
 {
 public:

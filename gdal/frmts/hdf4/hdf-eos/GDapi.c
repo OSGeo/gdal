@@ -94,9 +94,9 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 
 #include "hdf4compat.h"
 
-extern  void for_init(int32, int32, float64 *, int32, char *, char *, int32 *,
+extern  void for_init(int32, int32, float64 *, int32, const char *, const char *, int32 *,
                       int32 (*for_trans[])());
-extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
+extern  void inv_init(int32, int32, float64 *, int32, const char *, const char *, int32 *,
                       int32 (*inv_trans[])());
 
 #define	GDIDOFFSET 4194304
@@ -220,12 +220,12 @@ static const char * const pixregNames[] = {
 };
 
 /* Grid Function Prototypes (internal routines) */
-static intn GDchkgdid(int32, char *, int32 *, int32 *, int32 *);
+static intn GDchkgdid(int32, const char *, int32 *, int32 *, int32 *);
 static intn GDSDfldsrch(int32, int32, const char *, int32 *, int32 *, 
                         int32 *, int32 *, int32 [], int32 *);
-static intn GDwrrdfield(int32, char *, char *,
+static intn GDwrrdfield(int32, const char *, const char *,
                         int32 [], int32 [], int32 [], VOIDP datbuf);
-static intn GDwrrdattr(int32, char *, int32, int32, char *, VOIDP);
+static intn GDwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
 static intn GDll2ij(int32, int32, float64 [], int32, int32, int32, float64[],
                     float64[], int32, float64[], float64[], int32[], int32[],
                     float64[], float64[]);
@@ -233,7 +233,7 @@ static intn  GDgetdefaults(int32, int32, float64[], int32,
                            float64[], float64[]);
 static intn GDtangentpnts(int32, float64[], float64[], float64[], float64[],
                           float64 [], int32 *);
-static intn GDwrrdtile(int32, char *, char *, int32 [], VOIDP);
+static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
 static intn GDll2mm_cea(int32,int32, int32, float64[], int32, int32,
                         float64[], float64[], int32, float64[],float64[],
                         float64[], float64[], float64 *, float64 *);
@@ -273,7 +273,7 @@ static intn GDmm2ll_cea(int32, int32, int32, float64[],	int32, int32,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDopen(char *filename, intn l_access)
+GDopen(const char *filename, intn l_access)
 
 {
     int32           fid /* HDF-EOS file ID */ ;
@@ -324,7 +324,7 @@ GDopen(char *filename, intn l_access)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
+GDcreate(int32 fid, const char *gridname, int32 xdimsize, int32 ydimsize,
 	 float64 upleftpt[], float64 lowrightpt[])
 {
     intn            i;		/* Loop index */
@@ -585,7 +585,7 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDattach(int32 fid, char *gridname)
+GDattach(int32 fid, const char *gridname)
 
 {
     intn            i;		/* Loop index */
@@ -852,7 +852,7 @@ GDattach(int32 fid, char *gridname)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-GDchkgdid(int32 gridID, char *routname,
+GDchkgdid(int32 gridID, const char *routname,
 	  int32 * fid, int32 * sdInterfaceID, int32 * gdVgrpID)
 {
     intn            status = 0;	/* routine return status variable */
@@ -938,7 +938,7 @@ GDchkgdid(int32 gridID, char *routname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDdefdim(int32 gridID, char *dimname, int32 dim)
+GDdefdim(int32 gridID, const char *dimname, int32 dim)
 
 {
     intn            status;	/* routine return status variable */
@@ -972,8 +972,10 @@ GDdefdim(int32 gridID, char *dimname, int32 dim)
     if (status == 0)
     {
 	Vgetname(GDXGrid[gridID % idOffset].IDTable, gridname);
+        /* The cast to char* is somehow nasty since EHinsertmeta can modify */
+        /* dimname, but not in this case since we call with metacode = 0 */
 	status = EHinsertmeta(sdInterfaceID, gridname, "g", 0L,
-			      dimname, &dim);
+			      (char*) dimname, &dim);
     }
     return (status);
 
@@ -1158,7 +1160,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDblkSOMoffset(int32 gridID, float32 offset[], int32 count, char *code)
+GDblkSOMoffset(int32 gridID, float32 offset[], int32 count, const char *code)
 {
     intn            status = 0;	/* routine return status variable */
 
@@ -1559,7 +1561,7 @@ GDdefpixreg(int32 gridID, int32 pixregcode)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDdiminfo(int32 gridID, char *dimname)
+GDdiminfo(int32 gridID, const char *dimname)
 
 {
     intn            status;	/* routine return status variable */
@@ -2336,7 +2338,7 @@ GDpixreginfo(int32 gridID, int32 * pixregcode)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
+GDcompinfo(int32 gridID, const char *fieldname, int32 * compcode, intn compparm[])
 {
     intn            i;		/* Loop index */
     intn            status = 0;	/* routine return status variable */
@@ -2525,7 +2527,7 @@ GDcompinfo(int32 gridID, char *fieldname, int32 * compcode, intn compparm[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
+GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 	    int32 * numbertype, char *dimlist)
 
 {
@@ -2731,7 +2733,7 @@ GDfieldinfo(int32 gridID, char *fieldname, int32 * rank, int32 dims[],
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDdeffield(int32 gridID, char *fieldname, char *dimlist,
+GDdeffield(int32 gridID, const char *fieldname, const char *dimlist,
 	   int32 numbertype, int32 merge)
 
 {
@@ -3453,7 +3455,7 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDwritefieldmeta(int32 gridID, char *fieldname, char *dimlist,
+GDwritefieldmeta(int32 gridID, const char *fieldname, const char *dimlist,
 		 int32 numbertype)
 {
     intn            status = 0;	/* routine return status variable */
@@ -3754,7 +3756,7 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-GDwrrdfield(int32 gridID, char *fieldname, char *code,
+GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
 	    int32 start[], int32 stride[], int32 edge[], VOIDP datbuf)
 
 {
@@ -4016,7 +4018,7 @@ GDwrrdfield(int32 gridID, char *fieldname, char *code,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDwritefield(int32 gridID, char *fieldname,
+GDwritefield(int32 gridID, const char *fieldname,
 	     int32 start[], int32 stride[], int32 edge[], VOIDP data)
 
 {
@@ -4065,7 +4067,7 @@ GDwritefield(int32 gridID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDreadfield(int32 gridID, char *fieldname,
+GDreadfield(int32 gridID, const char *fieldname,
 	    int32 start[], int32 stride[], int32 edge[], VOIDP buffer)
 
 {
@@ -4113,8 +4115,8 @@ GDreadfield(int32 gridID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 static intn
-GDwrrdattr(int32 gridID, char *attrname, int32 numbertype, int32 count,
-	   char *wrcode, VOIDP datbuf)
+GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
+	   const char *wrcode, VOIDP datbuf)
 
 {
     intn            status;	/* routine return status variable */
@@ -4173,7 +4175,7 @@ GDwrrdattr(int32 gridID, char *attrname, int32 numbertype, int32 count,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDwriteattr(int32 gridID, char *attrname, int32 numbertype, int32 count,
+GDwriteattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 	    VOIDP datbuf)
 {
     intn            status = 0;	/* routine return status variable */
@@ -4216,7 +4218,7 @@ GDwriteattr(int32 gridID, char *attrname, int32 numbertype, int32 count,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDreadattr(int32 gridID, char *attrname, VOIDP datbuf)
+GDreadattr(int32 gridID, const char *attrname, VOIDP datbuf)
 {
     intn            status = 0;	/* routine return status variable */
     int32           dum = 0;	/* dummy variable */
@@ -4267,7 +4269,7 @@ GDreadattr(int32 gridID, char *attrname, VOIDP datbuf)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDattrinfo(int32 gridID, char *attrname, int32 * numbertype, int32 * count)
+GDattrinfo(int32 gridID, const char *attrname, int32 * numbertype, int32 * count)
 {
     intn            status = 0;	/* routine return status variable */
 
@@ -4915,7 +4917,7 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 int32
-GDinqgrid(char *filename, char *gridlist, int32 * strbufsize)
+GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
 {
     int32           nGrid;	/* Number of grid structures in file */
 
@@ -4957,7 +4959,7 @@ GDinqgrid(char *filename, char *gridlist, int32 * strbufsize)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDsetfillvalue(int32 gridID, char *fieldname, VOIDP fillval)
+GDsetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
 {
     intn            status;	/* routine return status variable */
 
@@ -5048,7 +5050,7 @@ GDsetfillvalue(int32 gridID, char *fieldname, VOIDP fillval)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDgetfillvalue(int32 gridID, char *fieldname, VOIDP fillval)
+GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
 {
     intn            status;	/* routine return status variable */
 
@@ -8223,7 +8225,7 @@ GDdefboxregion(int32 gridID, float64 cornerlon[], float64 cornerlat[])
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
+GDregioninfo(int32 gridID, int32 regionID, const char *fieldname,
 	     int32 * ntype, int32 * rank, int32 dims[], int32 * size,
 	     float64 upleftpt[], float64 lowrightpt[])
 {
@@ -8236,9 +8238,9 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
     int32           l_index;	/* Dimension l_index */
 
     char            dimlist[256];	/* Dimension list */
-    char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
-    char           *errM1 = "Both \"XDim\" and \"YDim\" must be present ";
-    char           *errM2 = "in the dimension list for \"%s\".\n";
+    const char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
+    const char           *errM1 = "Both \"XDim\" and \"YDim\" must be present ";
+    const char           *errM2 = "in the dimension list for \"%s\".\n";
     char            errbuf[256];/* Error buffer */
 
 
@@ -8476,7 +8478,7 @@ GDregioninfo(int32 gridID, int32 regionID, char *fieldname,
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDextractregion(int32 gridID, int32 regionID, char *fieldname,
+GDextractregion(int32 gridID, int32 regionID, const char *fieldname,
 		VOIDP buffer)
 {
     intn            i;		/* Loop index */
@@ -8495,9 +8497,9 @@ GDextractregion(int32 gridID, int32 regionID, char *fieldname,
     int32           origincode;	/* Pixel origin code */
 
     char            dimlist[256];	/* Dimension list */
-    char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
-    char           *errM1 = "Both \"XDim\" and \"YDim\" must be present ";
-    char           *errM2 = "in the dimension list for \"%s\".\n";
+    const char           *errMesg = "Vertical Dimension Not Found: \"%s\".\n";
+    const char           *errM1 = "Both \"XDim\" and \"YDim\" must be present ";
+    const char           *errM2 = "in the dimension list for \"%s\".\n";
     char            errbuf[256];/* Error buffer */
 
 
@@ -8894,7 +8896,7 @@ for (j=0; j<8; j++) \
 
 
 int32
-GDdefvrtregion(int32 gridID, int32 regionID, char *vertObj, float64 range[])
+GDdefvrtregion(int32 gridID, int32 regionID, const char *vertObj, float64 range[])
 {
     intn            i, j = 0, k, status;
     uint8           found = 0;
@@ -9455,7 +9457,7 @@ GDgetpixels(int32 gridID, int32 nLonLat, float64 lonVal[], float64 latVal[],
 -----------------------------------------------------------------------------*/
 int32
 GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
-	       char *fieldname, VOIDP buffer)
+	       const char *fieldname, VOIDP buffer)
 {
     intn            i;		/* Loop index */
     intn            j;		/* Loop index */
@@ -9729,7 +9731,7 @@ GDgetpixvalues(int32 gridID, int32 nPixels, int32 pixRow[], int32 pixCol[],
 -----------------------------------------------------------------------------*/
 int32
 GDinterpolate(int32 gridID, int32 nValues, float64 lonVal[], float64 latVal[],
-	      char *fieldname, float64 interpVal[])
+	      const char *fieldname, float64 interpVal[])
 {
     intn            i;		/* Loop index */
     intn            j;		/* Loop index */
@@ -10129,7 +10131,7 @@ Alexis Zubrow
 ********************************************************/
 
 static intn
-GDwrrdtile(int32 gridID, char *fieldname, char *code, int32 start[],
+GDwrrdtile(int32 gridID, const char *fieldname, const char *code, int32 start[],
 	   VOIDP datbuf)
 {
     intn            i;		/* Loop index */
@@ -10251,7 +10253,7 @@ Author--  Alexis Zubrow
 
 
 intn
-GDtileinfo(int32 gridID, char *fieldname, int32 * tilecode, int32 * tilerank,
+GDtileinfo(int32 gridID, const char *fieldname, int32 * tilecode, int32 * tilerank,
 	   int32 tiledims[])
 
 {
@@ -10343,7 +10345,7 @@ Alexis Zubrow
 ********************************************************/
 
 intn
-GDwritetile(int32 gridID, char *fieldname, int32 tilecoords[],
+GDwritetile(int32 gridID, const char *fieldname, int32 tilecoords[],
 	    VOIDP tileData)
 {
     char            code[] = "w";	/* write tile code */
@@ -10364,7 +10366,7 @@ Alexis Zubrow
 ********************************************************/
 
 intn
-GDreadtile(int32 gridID, char *fieldname, int32 tilecoords[],
+GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
 	   VOIDP tileData)
 {
     char            code[] = "r";	/* read tile code */
@@ -10385,7 +10387,7 @@ Alexis Zubrow
 ********************************************************/
 
 intn
-GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, CPL_UNUSED int32 cachecode)
+GDsettilecache(int32 gridID, const char *fieldname, int32 maxcache, CPL_UNUSED int32 cachecode)
 {
 
     intn            status = 0;	/* routine return status variable */
@@ -10494,7 +10496,7 @@ GDsettilecache(int32 gridID, char *fieldname, int32 maxcache, CPL_UNUSED int32 c
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 intn
-GDsettilecomp(int32 gridID, char *fieldname, int32 tilerank, int32*
+GDsettilecomp(int32 gridID, const char *fieldname, int32 tilerank, int32*
                tiledims, int32 compcode, intn* compparm)
 {
     intn            status;     /* routine return status variable */

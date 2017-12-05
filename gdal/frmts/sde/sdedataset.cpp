@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "sdedataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          GetRastercount()                            */

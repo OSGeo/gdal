@@ -37,7 +37,7 @@
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -79,7 +79,7 @@ class TILRasterBand : public GDALPamRasterBand
 
   public:
                    TILRasterBand( TILDataset *, int, VRTSourcedRasterBand * );
-    virtual       ~TILRasterBand() {};
+    virtual       ~TILRasterBand() {}
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,

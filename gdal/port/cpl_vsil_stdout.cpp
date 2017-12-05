@@ -44,7 +44,7 @@
 #include <fcntl.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static VSIWriteFunction pWriteFunction = fwrite;
 static FILE* pWriteStream = stdout;
@@ -78,12 +78,11 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-    using VSIFilesystemHandler::Open;
-
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
 };
 
 /************************************************************************/
@@ -101,8 +100,10 @@ class VSIStdoutHandle CPL_FINAL : public VSIVirtualHandle
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb )
+        override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb )
+        override;
     virtual int       Eof() override;
     virtual int       Flush() override;
     virtual int       Close() override;
@@ -244,12 +245,11 @@ int VSIStdoutFilesystemHandler::Stat( const char * /* pszFilename */,
 class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
-    using VSIFilesystemHandler::Open;
-
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
                                     bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) override;
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+                           int nFlags ) override;
 };
 
 /************************************************************************/
@@ -262,13 +262,15 @@ class VSIStdoutRedirectHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poHandle;
   public:
-              explicit VSIStdoutRedirectHandle(VSIVirtualHandle* poHandle);
+              explicit VSIStdoutRedirectHandle( VSIVirtualHandle* poHandle );
               virtual ~VSIStdoutRedirectHandle();
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    virtual size_t    Read( void *pBuffer, size_t nSize,
+                            size_t nMemb ) override;
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb )
+        override;
     virtual int       Eof() override;
     virtual int       Flush() override;
     virtual int       Close() override;
@@ -425,6 +427,10 @@ int VSIStdoutRedirectFilesystemHandler::Stat( const char * /* pszFilename */,
  * output stream.
  *
  * The file operations available are of course limited to Write().
+ * 
+ * A variation of this file system exists as the /vsistdout_redirect/ file
+ * system handler, where the output function can be defined with
+ * VSIStdoutSetRedirection().
  *
  * @since GDAL 1.8.0
  */

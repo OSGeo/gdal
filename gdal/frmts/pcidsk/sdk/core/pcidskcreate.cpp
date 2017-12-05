@@ -65,6 +65,14 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
                 std::string options, const PCIDSKInterfaces *interfaces )
 
 {
+    if( pixels < 0 || pixels > 99999999 ||
+        lines < 0 || lines > 99999999 ||
+        channel_count < 0 || channel_count > 99999999 )
+    {
+        return (PCIDSKFile*)ThrowPCIDSKExceptionPtr(
+            "PCIDSK::Create(): invalid dimensions / band count." );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Use default interfaces if none are passed in.                   */
 /* -------------------------------------------------------------------- */

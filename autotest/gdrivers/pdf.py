@@ -1444,7 +1444,7 @@ def pdf_extra_rasters():
             gdaltest.post_reason('did not get expected layers')
             print(layers)
             return 'fail'
-    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174):
+    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165):
         gdaltest.post_reason('bad checksum')
         print(cs)
         return 'fail'

@@ -30,7 +30,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const TigerFieldInfo rt1_2002_fields[] = {
   // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet bWrite
@@ -401,6 +401,8 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
         return NULL;
     }
 
+    // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+    // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
     if( VSIFReadL( achRecord, psRT1Info->nRecordLength, 1, fpPrimary ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
@@ -432,14 +434,18 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to seek to %d of %s3",
                       nRecordId * nRT3RecLen, pszModule );
+            delete poFeature;
             return NULL;
         }
 
+        // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
+        // char and sizeof(achRecord) == OGR_TIGER_RECBUF_LEN > 255
         if( VSIFReadL( achRT3Rec, psRT3Info->nRecordLength, 1, fpRT3 ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Failed to read record %d of %s3",
                       nRecordId, pszModule );
+            delete poFeature;
             return NULL;
         }
 
@@ -459,6 +465,7 @@ OGRFeature *TigerCompleteChain::GetFeature( int nRecordId )
                          poLine, 0 ) )
     {
         delete poFeature;
+        delete poLine;
         return NULL;
     }
 
@@ -620,6 +627,11 @@ int TigerCompleteChain::GetShapeRecordId( int nChainId, int nTLID )
     int         nChainsRead = 0;
     char        achShapeRec[OGR_TIGER_RECBUF_LEN];
     int         nShapeRecLen = psRT2Info->nRecordLength + nRecordLength - psRT1Info->nRecordLength;
+
+    if( nShapeRecLen <= 0 )
+    {
+        return -2;
+    }
 
     while( nChainsRead < nMaxChainToRead )
     {

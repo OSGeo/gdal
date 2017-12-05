@@ -30,7 +30,7 @@
 #include "cpl_string.h"
 #include "ogr_gmt.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRGmtDataSource()                          */
@@ -72,9 +72,10 @@ int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
         return FALSE;
     }
 
-    nLayers = 1;
-    papoLayers = static_cast<OGRGmtLayer **>( CPLMalloc(sizeof(void*)) );
-    papoLayers[0] = poLayer;
+    papoLayers = static_cast<OGRGmtLayer **>( CPLRealloc( papoLayers,
+                                        (nLayers + 1) *sizeof(OGRGmtLayer*)) );
+    papoLayers[nLayers] = poLayer;
+    nLayers ++;
 
     CPLFree (pszName);
     pszName = CPLStrdup( pszFilename );
@@ -107,6 +108,9 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRwkbGeometryType eType,
                                 CPL_UNUSED char ** papszOptions )
 {
+    if( nLayers != 0 )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Establish the geometry type.  Note this logic                   */
 /* -------------------------------------------------------------------- */

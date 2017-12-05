@@ -231,7 +231,7 @@ template<typename T>
   struct AlterToStdMV {
     T d_nonStdMV;
     AlterToStdMV(T nonStdMV):
-      d_nonStdMV(nonStdMV) {};
+      d_nonStdMV(nonStdMV) {}
 
     void operator()(T& v) {
       if (!isMV(v) && v == d_nonStdMV)
@@ -272,7 +272,7 @@ template<typename T>
   struct AlterFromStdMV {
     T d_otherMV;
     AlterFromStdMV(T otherMV):
-      d_otherMV(otherMV) {};
+      d_otherMV(otherMV) {}
 
     void operator()(T& v) {
       if (isMV(v))
@@ -290,7 +290,7 @@ template<typename T>
   struct FromStdMV {
     T d_otherMV;
     FromStdMV(T otherMV):
-      d_otherMV(otherMV) {};
+      d_otherMV(otherMV) {}
 
     T operator()(const T& v) {
       if (isMV(v))

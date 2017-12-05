@@ -34,6 +34,9 @@
 #include "ogrsf_frmts.h"
 #include "swq.h"
 #include "cpl_hash_set.h"
+#include "cpl_string.h"
+
+#include <vector>
 
 /*! @cond Doxygen_Suppress */
 
@@ -66,7 +69,7 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     int        *panGeomFieldToSrcGeomField;
 
-    GIntBig     nIndexSize;
+    size_t      nIndexSize;
     GIntBig    *panFIDIndex;
     int         bOrderByValid;
 
@@ -78,13 +81,23 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     int         nExtraDSCount;
     GDALDataset **papoExtraDS;
 
+    GIntBig     nIteratedFeatures;
+    std::vector<CPLString> m_oDistinctList;
+
     int         PrepareSummary();
 
     OGRFeature *TranslateFeature( OGRFeature * );
     void        CreateOrderByIndex();
-    int         SortIndexSection( OGRField *pasIndexFields,
-                                  GIntBig nStart, GIntBig nEntries );
-    int         Compare( OGRField *pasFirst, OGRField *pasSecond );
+    void        ReadIndexFields( OGRFeature* poSrcFeat,
+                                 int nOrderItems,
+                                 OGRField *pasIndexFields );
+    void        SortIndexSection( const OGRField *pasIndexFields,
+                                  GIntBig *panMerged,
+                                  size_t nStart, size_t nEntries );
+    void        FreeIndexFields(OGRField *pasIndexFields,
+                                size_t l_nIndexSize,
+                                bool bFreeArray = true);
+    int         Compare( const OGRField *pasFirst, const OGRField *pasSecond );
 
     void        ClearFilters();
     void        ApplyFiltersToSource();

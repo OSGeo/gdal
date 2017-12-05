@@ -5,7 +5,7 @@
 
 GDAL_ROOT	=	..
 
-EXTRAFLAGS =	-I../ogr/ogrsf_frmts $(GEOS_CFLAGS)
+EXTRAFLAGS =	-I../frmts/vrt -I../ogr/ogrsf_frmts $(GEOS_CFLAGS) $(PROJ_FLAGS) $(PROJ_INCLUDE)
 
 !INCLUDE ..\nmake.opt
 
@@ -27,7 +27,8 @@ OBJ =	gdaldither.obj gdalmediancut.obj gdal_crs.obj gdaltransformer.obj \
 	gdalsievefilter.obj gdalrasterpolygonenumerator.obj polygonize.obj \
 	contour.obj \
 	gdal_octave.obj gdal_simplesurf.obj gdalmatching.obj \
-	gdaltransformgeolocs.obj delaunay.obj gdalpansharpen.obj
+	gdaltransformgeolocs.obj delaunay.obj gdalpansharpen.obj \
+	gdalapplyverticalshiftgrid.obj
 
 !IF "$(SSEFLAGS)" == "/DHAVE_SSE_AT_COMPILE_TIME"
 SSE_OBJ = gdalgridsse.obj

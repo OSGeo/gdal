@@ -32,7 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 
@@ -345,7 +345,7 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
     NGSGEOIDDataset *poDS = new NGSGEOIDDataset();
     poDS->fp = fp;
 
-    int nRows, nCols;
+    int nRows = 0, nCols = 0;
     GetHeaderInfo( poOpenInfo->pabyHeader,
                    poDS->adfGeoTransform,
                    &nRows,

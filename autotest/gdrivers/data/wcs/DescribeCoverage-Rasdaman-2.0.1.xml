@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wcs:CoverageDescriptions xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+    xmlns:ows="http://www.opengis.net/ows/2.0"
+    xmlns:swe="http://www.opengis.net/swe/2.0"
+    xmlns:wcs="http://www.opengis.net/wcs/2.0"
+    xmlns:wcsgs="http://www.geoserver.org/wcsgs/2.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd">
+    <wcs:CoverageDescription gml:id="BlueMarbleCov"
+        xmlns="http://www.opengis.net/gml/3.2"
+        xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0">
+        <boundedBy>
+            <Envelope axisLabels="Lat Long" srsDimension="2"
+                srsName="http://ows.rasdaman.org/def/crs/EPSG/0/4326" uomLabels="degree degree">
+                <lowerCorner>-90 -180</lowerCorner>
+                <upperCorner>90 180</upperCorner>
+            </Envelope>
+        </boundedBy>
+        <wcs:CoverageId>BlueMarbleCov</wcs:CoverageId>
+        <coverageFunction>
+            <GridFunction>
+                <sequenceRule axisOrder="+2 +1">Linear</sequenceRule>
+                <startPoint>0 0</startPoint>
+            </GridFunction>
+        </coverageFunction>
+        <gmlcov:metadata/>
+        <domainSet>
+            <RectifiedGrid dimension="2" gml:id="BlueMarbleCov-grid">
+                <limits>
+                    <GridEnvelope>
+                        <low>0 0</low>
+                        <high>8999 17999</high>
+                    </GridEnvelope>
+                </limits>
+                <axisLabels>Lat Long</axisLabels>
+                <origin>
+                    <Point gml:id="BlueMarbleCov-origin" srsName="http://ows.rasdaman.org/def/crs/EPSG/0/4326">
+                        <pos>89.99 -179.99</pos>
+                    </Point>
+                </origin>
+                <offsetVector srsName="http://ows.rasdaman.org/def/crs/EPSG/0/4326">-0.02 0</offsetVector>
+                <offsetVector srsName="http://ows.rasdaman.org/def/crs/EPSG/0/4326">0 0.02</offsetVector>
+            </RectifiedGrid>
+        </domainSet>
+        <gmlcov:rangeType>
+            <swe:DataRecord>
+                <swe:field name="Red">
+                    <swe:Quantity xmlns:swe="http://www.opengis.net/swe/2.0">
+                        <swe:label>Red</swe:label>
+                        <swe:uom code="10^0"/>
+                    </swe:Quantity>
+                </swe:field>
+                <swe:field name="Green">
+                    <swe:Quantity xmlns:swe="http://www.opengis.net/swe/2.0">
+                        <swe:label>Green</swe:label>
+                        <swe:uom code="10^0"/>
+                    </swe:Quantity>
+                </swe:field>
+                <swe:field name="Blue">
+                    <swe:Quantity xmlns:swe="http://www.opengis.net/swe/2.0">
+                        <swe:label>Blue</swe:label>
+                        <swe:uom code="10^0"/>
+                    </swe:Quantity>
+                </swe:field>
+            </swe:DataRecord>
+        </gmlcov:rangeType>
+        <wcs:ServiceParameters>
+            <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+            <wcs:nativeFormat>application/octet-stream</wcs:nativeFormat>
+        </wcs:ServiceParameters>
+    </wcs:CoverageDescription>
+</wcs:CoverageDescriptions>

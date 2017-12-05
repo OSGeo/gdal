@@ -37,7 +37,7 @@
 
 using namespace msg_native_format;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef enum {
     MODE_VISIR,     // Visible and Infrared bands (1 through 11) in 10-bit raw mode
@@ -57,7 +57,7 @@ class MSGNDataset : public GDALDataset
 {
     friend class MSGNRasterBand;
 
-    FILE       *fp;
+    VSILFILE       *fp;
 
     Msg_reader_core*    msg_reader_core;
     double adfGeoTransform[6];
@@ -184,11 +184,11 @@ CPLErr MSGNRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             packet_size*(3 - (i_nBlockYOff % 3)) + (packet_size - data_length);
     }
 
-    if( VSIFSeek( poGDS->fp, data_offset, SEEK_SET ) != 0 )
+    if( VSIFSeekL( poGDS->fp, data_offset, SEEK_SET ) != 0 )
         return CE_Failure;
 
     char *pszRecord = (char *) CPLMalloc(data_length);
-    size_t nread = VSIFRead( pszRecord, 1, data_length, poGDS->fp );
+    size_t nread = VSIFReadL( pszRecord, 1, data_length, poGDS->fp );
 
     SUB_VISIRLINE* p = (SUB_VISIRLINE*) pszRecord;
     to_native(*p);
@@ -305,7 +305,7 @@ MSGNDataset::~MSGNDataset()
 
 {
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
     if (msg_reader_core) {
         delete msg_reader_core;
@@ -398,7 +398,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    FILE* fp = VSIFOpen( open_info->pszFilename, "rb" );
+    VSILFILE* fp = VSIFOpenL( open_info->pszFilename, "rb" );
     if( fp == NULL ) {
         if (open_info != poOpenInfo) {
             delete open_info;
@@ -414,7 +414,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
     // first reset the file pointer, then hand over to the msg_reader_core
-    CPL_IGNORE_RET_VAL(VSIFSeek( poDS->fp, 0, SEEK_SET ));
+    CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fp, 0, SEEK_SET ));
 
     poDS->msg_reader_core = new Msg_reader_core(poDS->fp);
 
@@ -503,6 +503,8 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         1 / ( 1 - Conversions::rpol/Conversions::req)
     );
 
+    CPLFree(poDS->pszProjection);
+    poDS->pszProjection = NULL;
     oSRS.exportToWkt( &(poDS->pszProjection) );
 
     CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
@@ -556,6 +558,7 @@ void GDALRegister_MSGN()
                                "EUMETSAT Archive native (.nat)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_msgn.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "nat" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = MSGNDataset::Open;
 

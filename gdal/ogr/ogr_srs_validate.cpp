@@ -41,7 +41,7 @@
 #include "ogr_spatialref.h"
 #include "osr_cs_wkt.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Why would fipszone and zone be parameters when they relate to a composite
 // projection which renders down into a non-zoned projection?
@@ -310,7 +310,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_LATITUDE_OF_POINT_1,
     SRS_PP_LONGITUDE_OF_POINT_1,
     SRS_PP_LATITUDE_OF_POINT_2,
-    SRS_PP_LONGITUDE_OF_POINT_2
+    SRS_PP_LONGITUDE_OF_POINT_2,
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
@@ -1263,7 +1263,15 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
         if( !EQUAL(poParm->GetValue(), "PARAMETER") )
             continue;
 
-        const char *pszParmName = poParm->GetChild(0)->GetValue();
+        OGR_SRSNode *poParmNameNode = poParm->GetChild(0);
+        if( poParmNameNode == NULL )
+        {
+            CPLDebug( "OGRSpatialReference::Validate",
+                      "Parameter name for PROJECTION %s is corrupt.",
+                       pszProjection );
+            return OGRERR_CORRUPT_DATA;
+        }
+        const char *pszParmName = poParmNameNode->GetValue();
 
         int i = iOffset;  // Used after for.
         for( ; papszProjWithParms[i] != NULL; i++ )

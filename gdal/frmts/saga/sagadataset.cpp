@@ -37,7 +37,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifndef INT_MAX
 # define INT_MAX 2147483647
@@ -329,15 +329,18 @@ char** SAGADataset::GetFileList()
     // Main data file, etc.
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    // Header file.
-    CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
-    papszFileList = CSLAddString( papszFileList, osFilename );
-
-    // projections file.
-    osFilename = CPLFormCIFilename( osPath, osName, "prj" );
-    VSIStatBufL sStatBuf;
-    if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+    if( !EQUAL(CPLGetExtension( GetDescription() ), "sg-grd-z") )
+    {
+        // Header file.
+        CPLString osFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
         papszFileList = CSLAddString( papszFileList, osFilename );
+
+        // projections file.
+        osFilename = CPLFormCIFilename( osPath, osName, "prj" );
+        VSIStatBufL sStatBuf;
+        if( VSIStatExL( osFilename, &sStatBuf, VSI_STAT_EXISTS_FLAG ) == 0 )
+            papszFileList = CSLAddString( papszFileList, osFilename );
+    }
 
     return papszFileList;
 }
@@ -406,16 +409,53 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     /* -------------------------------------------------------------------- */
-    /*  We assume the user is pointing to the binary (i.e. .sdat) file.     */
+    /*  We assume the user is pointing to the binary (i.e. .sdat) file or a */
+    /*  compressed raster (.sg-grd-z) file.                                 */
     /* -------------------------------------------------------------------- */
-    if( !EQUAL(CPLGetExtension( poOpenInfo->pszFilename ), "sdat"))
+    CPLString osExtension(CPLGetExtension(poOpenInfo->pszFilename));
+
+    if( !EQUAL(osExtension, "sdat") &&
+        !EQUAL(osExtension, "sg-grd-z") )
     {
         return NULL;
     }
 
-    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-    const CPLString osName = CPLGetBasename( poOpenInfo->pszFilename );
-    const CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, ".sgrd" );
+    CPLString osPath, osFullname, osName, osHDRFilename;
+
+    if (EQUAL(osExtension, "sg-grd-z") &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "/vsizip"))
+    {
+        osPath = "/vsizip/{";
+        osPath += poOpenInfo->pszFilename;
+        osPath += "}/";
+
+        char ** filesinzip = VSIReadDir(osPath);
+        if (filesinzip == NULL)
+            return NULL; //empty zip file
+
+        CPLString file;
+        for (int iFile = 0; filesinzip != NULL && filesinzip[iFile] != NULL; iFile++)
+        {
+            if (EQUAL(CPLGetExtension(filesinzip[iFile]), "sdat"))
+            {
+                 file = filesinzip[iFile];
+                 break;
+            }
+        }
+
+        CSLDestroy(filesinzip);
+
+        osFullname = CPLFormFilename (osPath, file, NULL);
+        osName = CPLGetBasename(file);
+        osHDRFilename = CPLFormFilename (osPath, CPLGetBasename(file) , "sgrd");
+    }
+    else
+    {
+        osFullname = poOpenInfo->pszFilename;
+        osPath = CPLGetPath( poOpenInfo->pszFilename );
+        osName = CPLGetBasename(poOpenInfo->pszFilename);
+        osHDRFilename = CPLFormCIFilename( osPath, CPLGetBasename( poOpenInfo->pszFilename ), "sgrd" );
+    }
 
     VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
     if( fp == NULL )
@@ -520,16 +560,16 @@ GDALDataset *SAGADataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "rb" );
     else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = VSIFOpenL( osFullname.c_str(), "r+b" );
 
     if( poDS->fp == NULL )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
+                  osFullname.c_str() );
         return NULL;
     }
 
@@ -908,7 +948,8 @@ GDALDataset *SAGADataset::Create( const char * pszFilename,
       }
     }
 
-    char abyNoData[8];
+    double dfNoDataForAlignment;
+    void* abyNoData = &dfNoDataForAlignment;
     GDALCopyWords(&dfNoDataVal, GDT_Float64, 0,
                   abyNoData, eType, 0, 1);
 
@@ -1055,9 +1096,9 @@ void GDALRegister_SAGA()
     poDriver->SetDescription( "SAGA" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "SAGA GIS Binary Grid (.sdat)" );
+                               "SAGA GIS Binary Grid (.sdat, .sg-grd-z)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SAGA" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sdat" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "sdat sg-grd-z" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte Int16 "
                                "UInt16 Int32 UInt32 Float32 Float64" );
 

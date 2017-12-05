@@ -32,7 +32,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef enum eCalibration_t {
     Sigma0 = 0,
@@ -809,7 +809,7 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszSigma0LUT = NULL;
 
     char *pszPath = CPLStrdup(CPLGetPath( osMDFilename ));
-    const int nFLen = static_cast<int>(strlen(osMDFilename));
+    const int nFLen = static_cast<int>(osMDFilename.size());
 
     CPLXMLNode *psNode = psImageAttributes->psChild;
     for( ;
@@ -1508,6 +1508,7 @@ void GDALRegister_RS2()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "RadarSat 2 XML Product" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_rs2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_SUBDATASETS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = RS2Dataset::Open;
     poDriver->pfnIdentify = RS2Dataset::Identify;

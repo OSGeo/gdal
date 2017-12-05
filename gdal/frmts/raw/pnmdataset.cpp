@@ -32,7 +32,7 @@
 #include "rawdataset.h"
 #include <cctype>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -117,7 +117,7 @@ int PNMDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Verify that this is a _raw_ ppm or pgm file.  Note, we don't    */
 /*      support ascii files, or pbm (1bit) files.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 10 )
+    if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fpL == NULL )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'P'  ||
@@ -214,22 +214,9 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
 
-/* -------------------------------------------------------------------- */
-/*      Open file                                                       */
-/* -------------------------------------------------------------------- */
-
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->fpImage == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within PNM driver.",
-                  poOpenInfo->pszFilename );
-        return NULL;
-    }
+    // Borrow file pointer
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = NULL;
 
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -417,7 +404,10 @@ void GDALRegister_PNM()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Portable Pixmap Format (netpbm)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PNM" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+    // pgm : grey
+    // ppm : RGB
+    // pnm : ??
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "pgm ppm pnm" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-portable-anymap" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

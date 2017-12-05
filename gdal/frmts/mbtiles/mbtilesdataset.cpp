@@ -39,7 +39,7 @@
 #include <math.h>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
 
@@ -51,6 +51,12 @@ static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", NULL};
 // TileMatrixSet origin : caution this is in GeoPackage / WMTS convention ! That is upper-left corner
 #define TMS_ORIGIN_X        -MAX_GM
 #define TMS_ORIGIN_Y         MAX_GM
+
+#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) || defined(ALLOW_FORMAT_DUMPS)
+// Enable accepting a SQL dump (starting with a "-- SQL MBTILES" line) as a valid
+// file. This makes fuzzer life easier
+#define ENABLE_SQL_SQLITE_FORMAT
+#endif
 
 class MBTilesBand;
 
@@ -131,9 +137,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     OGRDataSourceH hDS;
     sqlite3* hDB;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
-#endif
 
     bool bFetchedMetadata;
     CPLStringList aosList;
@@ -305,7 +309,7 @@ bool MBTilesDataset::HasNonEmptyGrids()
         return false;
 
     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    if (hFeat == NULL || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -381,7 +385,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         return NULL;
 
     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-    if (hFeat == NULL || !OGR_F_IsFieldSet(hFeat, 0))
+    if (hFeat == NULL || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
         OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
@@ -423,7 +427,6 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         //CPLDebug("MBTILES", "Grid value = %s", (const char*)pabyUncompressed);
     }
 
-    struct json_tokener *jstok = NULL;
     json_object* jsobj = NULL;
 
     if (nUncompressedSize == 0)
@@ -431,20 +434,10 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         goto end;
     }
 
-    jstok = json_tokener_new();
-    jsobj = json_tokener_parse_ex(jstok, (const char*)pabyUncompressed, -1);
-    if( jstok->err != json_tokener_success)
+    if( !OGRJSonParse((const char*)pabyUncompressed, &jsobj, true) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                    "JSON parsing error: %s (at offset %d)",
-                    json_tokener_error_desc(jstok->err),
-                    jstok->char_offset);
-        json_tokener_free(jstok);
-
         goto end;
     }
-
-    json_tokener_free(jstok);
 
     if (json_object_is_type(jsobj, json_type_object))
     {
@@ -650,7 +643,7 @@ const char *MBTilesBand::GetMetadataItem( const char * pszName,
                 if (hSQLLyr)
                 {
                     hFeat = OGR_L_GetNextFeature(hSQLLyr);
-                    if (hFeat != NULL && OGR_F_IsFieldSet(hFeat, 0))
+                    if (hFeat != NULL && OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         const char* pszJSon = OGR_F_GetFieldAsString(hFeat, 0);
                         //CPLDebug("MBTILES", "JSon = %s", pszJSon);
@@ -733,9 +726,8 @@ MBTilesDataset::MBTilesDataset()
     bFetchedMetadata = false;
     nHasNonEmptyGrids = -1;
     hDB = NULL;
-#ifdef HAVE_SQLITE_VFS
     pMyVFS = NULL;
-#endif
+
     m_bGeoTransformValid = false;
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -775,14 +767,12 @@ MBTilesDataset::~MBTilesDataset()
         {
             sqlite3_close(hDB);
 
-#ifdef HAVE_SQLITE_VFS
             if (pMyVFS)
             {
                 sqlite3_vfs_unregister(pMyVFS);
                 CPLFree(pMyVFS->pAppData);
                 CPLFree(pMyVFS);
             }
-#endif
         }
     }
 }
@@ -1189,7 +1179,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
-            "SELECT name, value FROM metadata", NULL, NULL);
+            "SELECT name, value FROM metadata LIMIT 1000", NULL, NULL);
     if (hSQLLyr == NULL)
         return NULL;
 
@@ -1202,18 +1192,18 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     OGRFeatureH hFeat;
     while( (hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL )
     {
-        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) && OGR_F_IsFieldSetAndNotNull(hFeat, 1))
         {
-            const char* pszName = OGR_F_GetFieldAsString(hFeat, 0);
-            const char* pszValue = OGR_F_GetFieldAsString(hFeat, 1);
-            if (pszValue[0] != '\0' &&
-                !STARTS_WITH(pszValue, "function(") &&
-                strstr(pszValue, "<img ") == NULL &&
-                strstr(pszValue, "<p>") == NULL &&
-                strstr(pszValue, "</p>") == NULL &&
-                strstr(pszValue, "<div") == NULL)
+            CPLString osName = OGR_F_GetFieldAsString(hFeat, 0);
+            CPLString osValue = OGR_F_GetFieldAsString(hFeat, 1);
+            if (osName[0] != '\0' &&
+                !STARTS_WITH(osValue, "function(") &&
+                strstr(osValue, "<img ") == NULL &&
+                strstr(osValue, "<p>") == NULL &&
+                strstr(osValue, "</p>") == NULL &&
+                strstr(osValue, "<div") == NULL)
             {
-                aosList.AddNameValue(pszName, pszValue);
+                aosList.AddNameValue(osName, osValue);
             }
         }
         OGR_F_Destroy(hFeat);
@@ -1244,10 +1234,19 @@ const char *MBTilesDataset::GetMetadataItem( const char* pszName, const char * p
 
 int MBTilesDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    if( poOpenInfo->pabyHeader &&
+        STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
+    {
+        return TRUE;
+    }
+#endif
+
     if ( (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") ||
       // Allow direct Amazon S3 signed URLs that contains .mbtiles in the middle of the URL
           strstr(poOpenInfo->pszFilename, ".mbtiles") != NULL) &&
         poOpenInfo->nHeaderBytes >= 1024 &&
+        poOpenInfo->pabyHeader &&
         STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "SQLite Format 3"))
     {
         return TRUE;
@@ -1279,7 +1278,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
         if (hFeat)
         {
             int bHasMinLevel = FALSE;
-            if (OGR_F_IsFieldSet(hFeat, 0))
+            if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
             {
                 nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
                 bHasMinLevel = TRUE;
@@ -1291,7 +1290,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
                 if (hFeat)
                 {
-                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
                         bHasMinMaxLevel = TRUE;
@@ -1366,7 +1365,7 @@ int MBTilesGetMinMaxZoomLevel(OGRDataSourceH hDS, int bHasMap,
             return FALSE;
         }
 
-        if (OGR_F_IsFieldSet(hFeat, 0) && OGR_F_IsFieldSet(hFeat, 1))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) && OGR_F_IsFieldSetAndNotNull(hFeat, 1))
         {
             nMinLevel = OGR_F_GetFieldAsInteger(hFeat, 0);
             nMaxLevel = OGR_F_GetFieldAsInteger(hFeat, 1);
@@ -1481,20 +1480,23 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
             return false;
         }
 
-        if (OGR_F_IsFieldSet(hFeat, 0) &&
-            OGR_F_IsFieldSet(hFeat, 1) &&
-            OGR_F_IsFieldSet(hFeat, 2) &&
-            OGR_F_IsFieldSet(hFeat, 3))
+        if (OGR_F_IsFieldSetAndNotNull(hFeat, 0) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 1) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 2) &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, 3))
         {
             int nMinTileCol = OGR_F_GetFieldAsInteger(hFeat, 0);
             int nMaxTileCol = OGR_F_GetFieldAsInteger(hFeat, 1);
             int nMinTileRow = OGR_F_GetFieldAsInteger(hFeat, 2);
             int nMaxTileRow = OGR_F_GetFieldAsInteger(hFeat, 3);
-            minX = MBTilesTileCoordToWorldCoord(nMinTileCol, nMaxLevel);
-            minY = MBTilesTileCoordToWorldCoord(nMinTileRow, nMaxLevel);
-            maxX = MBTilesTileCoordToWorldCoord(nMaxTileCol + 1, nMaxLevel);
-            maxY = MBTilesTileCoordToWorldCoord(nMaxTileRow + 1, nMaxLevel);
-            bHasBounds = true;
+            if( nMaxTileCol < INT_MAX && nMaxTileRow < INT_MAX )
+            {
+                minX = MBTilesTileCoordToWorldCoord(nMinTileCol, nMaxLevel);
+                minY = MBTilesTileCoordToWorldCoord(nMinTileRow, nMaxLevel);
+                maxX = MBTilesTileCoordToWorldCoord(nMaxTileCol + 1, nMaxLevel);
+                maxY = MBTilesTileCoordToWorldCoord(nMaxTileRow + 1, nMaxLevel);
+                bHasBounds = true;
+            }
         }
 
         OGR_F_Destroy(hFeat);
@@ -1645,7 +1647,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
             hFeat = OGR_L_GetNextFeature(hSQLLyr);
             if (hFeat)
             {
-                if (OGR_F_IsFieldSet(hFeat, 0))
+                if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                 {
                     const char* pszPointer = OGR_F_GetFieldAsString(hFeat, 0);
                     fpCURLOGR = (VSILFILE* )CPLScanPointer( pszPointer, static_cast<int>(strlen(pszPointer)) );
@@ -1659,8 +1661,8 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     const char* pszSQL =
         CPLSPrintf("SELECT tile_data FROM tiles WHERE "
                    "tile_column = %d AND tile_row = %d AND zoom_level = %d",
-                   (nMinTileCol  + nMaxTileCol) / 2,
-                   (nMinTileRow  + nMaxTileRow) / 2,
+                   nMinTileCol / 2 + nMaxTileCol / 2,
+                   nMinTileRow / 2 + nMaxTileRow / 2,
                    nMaxLevel);
     CPLDebug("MBTILES", "%s", pszSQL);
 
@@ -1857,7 +1859,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                 hFeat = OGR_L_GetNextFeature(hSQLLyr);
                 if (hFeat)
                 {
-                    if (OGR_F_IsFieldSet(hFeat, 0))
+                    if (OGR_F_IsFieldSetAndNotNull(hFeat, 0))
                     {
                         bHasMap = strcmp(OGR_F_GetFieldAsString(hFeat, 0),
                                          "view") == 0;
@@ -1955,7 +1957,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
             nBands = MBTilesGetBandCount(hDS, nMaxLevel,
                                          nMinTileRow, nMaxTileRow,
                                          nMinTileCol, nMaxTileCol);
-            if (nBands < 0)
+            // Map RGB to RGBA since we can guess wrong (see #6836)
+            if (nBands < 0 || nBands == 3)
                 nBands = 4;
         }
 
@@ -1975,12 +1978,21 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->InitRaster ( NULL, nMaxLevel, nBands,
                            dfMinX, dfMinY, dfMaxX, dfMaxY );
 
+        const char* pszFormat = poDS->GetMetadataItem("format");
+        if( pszFormat != NULL && EQUAL(pszFormat, "pbf") )
+        {
+            CPLDebug("MBTiles",
+                     "This files contain vector tiles, "
+                     "not supported by this driver");
+            delete poDS;
+            return NULL;
+        }
+
         if( poDS->eAccess == GA_Update )
         {
             // So that we can edit all potential overviews
             nMinLevel = 0;
 
-            const char* pszFormat = poDS->GetMetadataItem("format");
             if( pszFormat != NULL && (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) )
             {
                 poDS->m_eTF = GPKG_TF_JPEG;
@@ -2095,7 +2107,6 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     SetDescription( pszFilename );
 
     int rc;
-#ifdef HAVE_SQLITE_VFS
     if (STARTS_WITH(pszFilename, "/vsi"))
     {
         pMyVFS = OGRSQLiteCreateVFS(NULL, NULL);
@@ -2103,7 +2114,6 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
         rc = sqlite3_open_v2( pszFilename, &hDB, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, pMyVFS->zName );
     }
     else
-#endif
     {
         rc = sqlite3_open( pszFilename, &hDB );
     }
@@ -2619,6 +2629,12 @@ CPLErr MBTilesDataset::IBuildOverviews(
     GDALRasterBand*** papapoOverviewBands = (GDALRasterBand ***) CPLCalloc(sizeof(void*),nBands);
     int iCurOverview = 0;
     int nMinZoom = m_nZoomLevel;
+    for( int i = 0; i < m_nOverviewCount; i++ )
+    {
+        MBTilesDataset* poODS = m_papoOverviewDS[i];
+        if( poODS->m_nZoomLevel < nMinZoom )
+            nMinZoom = poODS->m_nZoomLevel;
+    }
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
         papapoOverviewBands[iBand] = (GDALRasterBand **) CPLCalloc(sizeof(void*),nOverviews);
@@ -2637,8 +2653,6 @@ CPLErr MBTilesDataset::IBuildOverviews(
                 continue;
             }
             MBTilesDataset* poODS = m_papoOverviewDS[iOvr];
-            if( poODS->m_nZoomLevel < nMinZoom )
-                nMinZoom = poODS->m_nZoomLevel;
             papapoOverviewBands[iBand][iCurOverview] = poODS->GetRasterBand(iBand+1);
             iCurOverview++ ;
         }
@@ -2659,7 +2673,7 @@ CPLErr MBTilesDataset::IBuildOverviews(
         int nRows = 0;
         int nCols = 0;
         char** papszResult = NULL;
-        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom'", &papszResult, &nRows, &nCols, NULL);
+        sqlite3_get_table(hDB, "SELECT * FROM metadata WHERE name = 'minzoom' LIMIT 2", &papszResult, &nRows, &nCols, NULL);
         sqlite3_free_table(papszResult);
         if( nRows == 1 )
         {
@@ -2750,6 +2764,10 @@ COMPRESSION_OPTIONS
 "  <Option name='WRITE_MINMAXZOOM' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
 "</CreationOptionList>");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+#ifdef ENABLE_SQL_SQLITE_FORMAT
+    poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
+#endif
 
     poDriver->pfnOpen = MBTilesDataset::Open;
     poDriver->pfnIdentify = MBTilesDataset::Identify;

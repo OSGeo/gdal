@@ -182,8 +182,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                 }
 #endif //_DEBUG
                 auto dCurrentEntHandle = pBlockHeader->hEntities[0].getAsLong();
-                auto dLastEntHandle    = pBlockHeader->hEntities[
-                    pBlockHeader->hEntities.size() - 1].getAsLong(); // FIXME: in 2000+ entities probably has no links to each other.
+                auto dLastEntHandle    = pBlockHeader->hEntities.back().getAsLong(); // FIXME: in 2000+ entities probably has no links to each other.
 
                 if( dCurrentEntHandle == dLastEntHandle ) // Blocks can be empty (contain no objects)
                     return;

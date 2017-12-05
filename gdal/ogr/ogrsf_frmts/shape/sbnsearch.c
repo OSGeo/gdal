@@ -60,7 +60,7 @@ SHP_CVSID("$Id$")
 #endif
 
 #define READ_MSB_INT(ptr) \
-        (((ptr)[0] << 24) | ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3])
+        (int)(((unsigned)(ptr)[0] << 24) | ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3])
 
 #define CACHED_DEPTH_LIMIT      8
 
@@ -712,8 +712,8 @@ static int SBNSearchDiskInternal( SearchStruct* psSearch,
                         bMaxX < bNodeMinX || bMaxY < bNodeMinY ||
                         bMinX > bNodeMaxX || bMinY > bNodeMaxY )
                     {
-                        /*printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);
-                        printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
+                        /* printf("shape %d %d %d %d\n", bMinX, bMinY, bMaxX, bMaxY);*/
+                        /* printf("node  %d %d %d %d\n", bNodeMinX, bNodeMinY, bNodeMaxX, bNodeMaxY);*/
                         hSBN->sHooks.Error(
                             "Invalid shape bounding box in bin" );
                         free(psNode->pabyShapeDesc);

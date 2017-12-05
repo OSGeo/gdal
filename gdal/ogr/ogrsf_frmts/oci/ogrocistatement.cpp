@@ -30,7 +30,7 @@
 #include "ogr_oci.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGROCIStatement()                           */
@@ -199,6 +199,19 @@ CPLErr OGROCIStatement::BindScalar( const char *pszPlaceName,
         return CE_Failure;
     else
         return CE_None;
+}
+
+/************************************************************************/
+/*                             BindString()                             */
+/************************************************************************/
+
+CPLErr OGROCIStatement::BindString( const char *pszPlaceName,
+                                    const char *pszData, sb2 *paeInd )
+
+{
+    return BindScalar(
+        pszPlaceName, const_cast<void*>(reinterpret_cast<const void*>(pszData)),
+        static_cast<int>(strlen(pszData)) + 1, SQLT_STR , paeInd);
 }
 
 /************************************************************************/

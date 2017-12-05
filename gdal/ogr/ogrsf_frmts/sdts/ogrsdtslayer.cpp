@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRSDTSLayer()                            */
@@ -106,8 +106,8 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
         const int nLayerIdx = poTransfer->FindLayer( papszATIDRefs[iTable] );
         if( nLayerIdx < 0 )
             continue;
-        SDTSAttrReader *poAttrReader = (SDTSAttrReader *)
-            poTransfer->GetLayerIndexedReader(nLayerIdx);
+        SDTSAttrReader *poAttrReader = dynamic_cast<SDTSAttrReader *>(
+            poTransfer->GetLayerIndexedReader(nLayerIdx));
 
         if( poAttrReader == NULL )
             continue;
@@ -290,6 +290,10 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
 /*      Fetch the next sdts style feature object from the reader.       */
 /* -------------------------------------------------------------------- */
     SDTSFeature *poSDTSFeature = poReader->GetNextFeature();
+    // Retain now the IsIndexed state to determine if we must delete or
+    // not poSDTSFeature when done with it, because later calls might cause
+    // indexing.
+    const bool bIsIndexed = CPL_TO_BOOL(poReader->IsIndexed());
 
     if( poSDTSFeature == NULL )
         return NULL;
@@ -397,7 +401,7 @@ OGRFeature * OGRSDTSLayer::GetNextUnfilteredFeature()
         poFeature->GetGeometryRef()->assignSpatialReference(
             poDS->GetSpatialRef() );
 
-    if( !poReader->IsIndexed() )
+    if( !bIsIndexed )
         delete poSDTSFeature;
 
     return poFeature;

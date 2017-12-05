@@ -33,7 +33,7 @@
 #include "cpl_conv.h"
 #include "ods_formula.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 namespace {
 #include "ods_formula_parser.hpp"
@@ -200,7 +200,11 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
         }
         else
         {
-            *ppNode = new ods_formula_node( atoi(osToken) );
+            GIntBig nVal = CPLAtoGIntBig(osToken);
+            if( osToken.size() >= 12 || nVal < INT_MIN || nVal > INT_MAX  )
+                *ppNode = new ods_formula_node( CPLAtof(osToken) );
+            else
+                *ppNode = new ods_formula_node( static_cast<int>(nVal) );
         }
 
         return ODST_NUMBER;

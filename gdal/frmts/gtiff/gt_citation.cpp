@@ -29,15 +29,23 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "cpl_string.h"
-
-#include "geovalues.h"
 #include "gt_citation.h"
-#include "gt_wkt_srs_priv.h"
 
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <string>
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "geokeys.h"
+#include "geotiff.h"
+#include "geovalues.h"
+#include "gt_wkt_srs_priv.h"
+#include "ogr_core.h"
+
+CPL_CVSID("$Id$")
 
 static const char * const apszUnitMap[] = {
     "meters", "1.0",
@@ -100,7 +108,7 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             "NAD = ", "Datum = ", "Ellipsoid = ", "Units = ", NULL };
 
         // This is a handle IMAGING style citation.
-        char name[256] = { '\0' };
+        CPLString osName;
         char* p1 = NULL;
 
         char* p = strchr(psCitation, '$');
@@ -131,21 +139,21 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             {
               case PCSCitationGeoKey:
                 if( strstr(psCitation, "Projection = ") )
-                    strcpy(name, "PRJ Name = ");
+                    osName = "PRJ Name = ";
                 else
-                    strcpy(name, "PCS Name = ");
+                    osName = "PCS Name = ";
                 break;
               case GTCitationGeoKey:
-                strcpy(name, "PCS Name = ");
+                osName = "PCS Name = ";
                 break;
               case GeogCitationGeoKey:
                 if( !strstr(p, "Unable to") )
-                    strcpy(name, "GCS Name = ");
+                    osName = "GCS Name = ";
                 break;
               default:
                 break;
             }
-            if( strlen(name)>0 )
+            if( !osName.empty() )
             {
                 // TODO(schwehr): What exactly is this code trying to do?
                 // Added in r15993 and modified in r21844 by warmerdam.
@@ -168,9 +176,8 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 }
                 if( p1 >= p )
                 {
-                    strncat(name, p, p1 - p + 1);
-                    strcat(name, "|");
-                    name[strlen(name)] = '\0';
+                    osName.append(p, p1 - p + 1);
+                    osName += '|';
                 }
             }
         }
@@ -199,9 +206,9 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
             if( p && p1 && p1>p )
             {
                 if( EQUAL(keyNames[i], "Units = ") )
-                    strcat(name, "LUnits = ");
+                    osName += "LUnits = ";
                 else
-                    strcat(name, keyNames[i]);
+                    osName += keyNames[i];
                 if( p1[0] == '\0' || p1[0] == '\n' || p1[0] == ' ' )
                     p1--;
                 char* p2 = p1 - 1;
@@ -216,14 +223,13 @@ char* ImagineCitationTranslation( char* psCitation, geokey_t keyID )
                 }
                 if( p1 >= p )
                 {
-                    strncat(name, p, p1 - p + 1);
-                    strcat(name, "|");
-                    name[strlen(name)] = '\0';
+                    osName.append(p, p1 - p + 1);
+                    osName += '|';
                 }
             }
         }
-        if( strlen(name) > 0 )
-            ret = CPLStrdup(name);
+        if( !osName.empty() )
+            ret = CPLStrdup(osName);
     }
     return ret;
 }
@@ -262,43 +268,43 @@ char** CitationStringParse(char* psCitation, geokey_t keyID)
             pStr += strlen(pStr);
             nameSet = true;
         }
-        if( strstr(name, "PCS Name = ") )
+        if( strstr(name, "PCS Name = ") && ret[CitPcsName] == NULL )
         {
             ret[CitPcsName] = CPLStrdup(name + strlen("PCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "PRJ Name = ") )
+        if( strstr(name, "PRJ Name = ") && ret[CitProjectionName] == NULL )
         {
             ret[CitProjectionName] =
                 CPLStrdup(name + strlen("PRJ Name = "));
             nameFound = true;
         }
-        if( strstr(name, "LUnits = ") )
+        if( strstr(name, "LUnits = ") && ret[CitLUnitsName] == NULL )
         {
             ret[CitLUnitsName] = CPLStrdup(name + strlen("LUnits = "));
             nameFound = true;
         }
-        if( strstr(name, "GCS Name = ") )
+        if( strstr(name, "GCS Name = ") && ret[CitGcsName] == NULL )
         {
             ret[CitGcsName] = CPLStrdup(name + strlen("GCS Name = "));
             nameFound = true;
         }
-        if( strstr(name, "Datum = ") )
+        if( strstr(name, "Datum = ") && ret[CitDatumName] == NULL )
         {
             ret[CitDatumName] = CPLStrdup(name + strlen("Datum = "));
             nameFound = true;
         }
-        if( strstr(name, "Ellipsoid = ") )
+        if( strstr(name, "Ellipsoid = ") && ret[CitEllipsoidName] == NULL )
         {
             ret[CitEllipsoidName] = CPLStrdup(name + strlen("Ellipsoid = "));
             nameFound = true;
         }
-        if( strstr(name, "Primem = ") )
+        if( strstr(name, "Primem = ") && ret[CitPrimemName] == NULL )
         {
             ret[CitPrimemName] = CPLStrdup(name + strlen("Primem = "));
             nameFound = true;
         }
-        if( strstr(name, "AUnits = ") )
+        if( strstr(name, "AUnits = ") && ret[CitAUnitsName] == NULL )
         {
             ret[CitAUnitsName] = CPLStrdup(name + strlen("AUnits = "));
             nameFound = true;
@@ -425,7 +431,7 @@ void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
         bRewriteGeogCitation = true;
     }
 
-    if( osCitation[strlen(osCitation) - 1] != '|' )
+    if( osCitation.back() != '|' )
         osCitation += "|";
 
     if( bRewriteGeogCitation )
@@ -622,11 +628,11 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF, GTIFDefn* psDefn,
             const char *pStr =
                 strstr( szCTString, "Projection Name = ") +
                 strlen("Projection Name = ");
+            CPLString osCSName(pStr);
             const char* pReturn = strchr( pStr, '\n');
-            char CSName[128] = { '\0' };
-            strncpy(CSName, pStr, pReturn - pStr);
-            CSName[pReturn-pStr] = '\0';
-            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, CSName)
+            if( pReturn )
+                osCSName.resize(pReturn - pStr);
+            if( poSRS->ImportFromESRIStatePlaneWKT(0, NULL, NULL, 32767, osCSName)
                 == OGRERR_NONE )
             {
                 // For some erdas citation keys, the state plane CS name is

@@ -184,7 +184,7 @@
 #    define HAVE_CXX11 1
 #  endif
 /* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
-#endif  /* __cpluscplus */
+#endif  /* __cplusplus */
 
 /*---------------------------------------------------------------------
  *        types for 16 and 32 bits integers, etc...
@@ -220,24 +220,10 @@ typedef int             GBool;
 /* -------------------------------------------------------------------- */
 
 #if defined(WIN32) && defined(_MSC_VER)
-
 #define VSI_LARGE_API_SUPPORTED
-typedef __int64          GIntBig;
-typedef unsigned __int64 GUIntBig;
+#endif
 
-/** Minimum GIntBig value */
-#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
-/** Maximum GIntBig value */
-#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
-/** Maximum GUIntBig value */
-#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
-
-/** Signed 64 bit integer type */
-typedef GIntBig          GInt64;
-/** Unsigned 64 bit integer type */
-typedef GUIntBig         GUInt64;
-
-#elif HAVE_LONG_LONG
+#if HAVE_LONG_LONG
 
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
@@ -253,11 +239,23 @@ typedef unsigned long long GUIntBig;
 /** Maximum GUIntBig value */
 #define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
-// Note: we might want to use instead int64_t / uint64_t if they are available
+/*! @cond Doxygen_Suppress */
+#define CPL_HAS_GINT64 1
+/*! @endcond */
+
+/* Note: we might want to use instead int64_t / uint64_t if they are available */
+
 /** Signed 64 bit integer type */
 typedef GIntBig          GInt64;
 /** Unsigned 64 bit integer type */
 typedef GUIntBig         GUInt64;
+
+/** Minimum GInt64 value */
+#define GINT64_MIN      GINTBIG_MIN
+/** Maximum GInt64 value */
+#define GINT64_MAX      GINTBIG_MAX
+/** Minimum GUInt64 value */
+#define GUINT64_MAX     GUINTBIG_MAX
 
 #else
 
@@ -635,10 +633,11 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
-#elif defined(__cplusplus) && defined(__MINGW32__) &&  __GNUC__ == 4 && __GNUC_MINOR__ == 2
-/* Hack for compatibility with ancient i586-mingw32msvc toolchain */
+#elif defined(__cplusplus) && defined(HAVE_STD_IS_NAN) && HAVE_STD_IS_NAN
 extern "C++" {
+#ifndef DOXYGEN_SKIP
 #include <cmath>
+#endif
 static inline int CPLIsNan(float f) { return std::isnan(f); }
 static inline int CPLIsNan(double f) { return std::isnan(f); }
 static inline int CPLIsInf(float f) { return std::isinf(f); }
@@ -775,6 +774,8 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[1] = byTemp;                                       \
 }
 
+#if defined(MAKE_SANITIZE_HAPPY) || !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64))
+
 /** Byte-swap a 32 bit pointer */
 #define CPL_SWAP32PTR(x) \
 {                                                                 \
@@ -808,6 +809,32 @@ template<> struct CPLStaticAssert<true>
     _pabyDataT[3] = _pabyDataT[4];                                \
     _pabyDataT[4] = byTemp;                                       \
 }
+
+#else
+
+/** Byte-swap a 32 bit pointer */
+#define CPL_SWAP32PTR(x) \
+{                                                                           \
+    GUInt32 _n32;                                                           \
+    void* _lx = x;                                                          \
+    memcpy(&_n32, _lx, 4);                                                  \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 4); \
+    _n32 = CPL_SWAP32(_n32);                                                \
+    memcpy(_lx, &_n32, 4);                                                  \
+}
+
+/** Byte-swap a 64 bit pointer */
+#define CPL_SWAP64PTR(x) \
+{                                                                           \
+    GUInt64 _n64;                                                           \
+    void* _lx = x;                                                          \
+    memcpy(&_n64, _lx, 8);                                                    \
+    CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 || sizeof(*(x)) == 8); \
+    _n64 = CPL_SWAP64(_n64);                                                \
+    memcpy(_lx, &_n64, 8);                                                    \
+}
+
+#endif
 
 /** Byte-swap a 64 bit pointer */
 #define CPL_SWAPDOUBLE(p) CPL_SWAP64PTR(p)
@@ -846,10 +873,14 @@ template<> struct CPLStaticAssert<true>
 #  define CPL_MSBPTR64(x)       CPL_SWAP64PTR(x)
 #endif
 
-/** Return a Int16 from the 2 bytes ordered in LSB order at address x */
+/** Return a Int16 from the 2 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT16PTR or CPL_LSBUINT16PTR for explicit
+ * signedness. */
 #define CPL_LSBINT16PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8))
 
-/** Return a Int32 from the 4 bytes ordered in LSB order at address x */
+/** Return a Int32 from the 4 bytes ordered in LSB order at address x.
+ * @deprecated Use rather CPL_LSBSINT32PTR or CPL_LSBUINT32PTR for explicit
+ * signedness. */
 #define CPL_LSBINT32PTR(x)    ((*(GByte*)(x)) | (*(((GByte*)(x))+1) << 8) | \
                               (*(((GByte*)(x))+2) << 16) | (*(((GByte*)(x))+3) << 24))
 
@@ -973,7 +1004,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 /*! @endcond */
 
-#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP)
+#if ((defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))) || __has_attribute(returns_nonnull)) && !defined(DOXYGEN_SKIP) && !defined(__INTEL_COMPILER)
 /** Qualifier for a function that does not return NULL */
 #  define CPL_RETURNS_NONNULL __attribute__((returns_nonnull))
 #else
@@ -1053,15 +1084,22 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 #endif
 
-#if !defined(_MSC_VER) && !defined(__APPLE__)
+#if !defined(_MSC_VER) && !defined(__APPLE__) && !defined(_FORTIFY_SOURCE)
 CPL_C_START
-#if defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF)
-int vsnprintf(char *str, size_t size, const char* fmt, va_list args) CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
-int snprintf(char *str, size_t size, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(3,4) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
-int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
-#elif defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
-int sprintf(char *str, const char* fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3) CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
-#endif
+#  if defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF)
+int vsnprintf(char *str, size_t size, const char* fmt, va_list args)
+    CPL_WARN_DEPRECATED("Use CPLvsnprintf() instead");
+int snprintf(char *str, size_t size, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(3,4)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
+int sprintf(char *str, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use CPLsnprintf() instead");
+#  elif defined(GDAL_COMPILATION) && !defined(DONT_DEPRECATE_SPRINTF)
+int sprintf(char *str, const char* fmt, ...)
+    CPL_PRINT_FUNC_FORMAT(2, 3)
+    CPL_WARN_DEPRECATED("Use snprintf() or CPLsnprintf() instead");
+#  endif /* defined(GDAL_COMPILATION) && defined(WARN_STANDARD_PRINTF) */
 CPL_C_END
 #endif /* !defined(_MSC_VER) && !defined(__APPLE__) */
 
@@ -1069,12 +1107,6 @@ CPL_C_END
 /*! @cond Doxygen_Suppress */
 #define CPL_CPU_REQUIRES_ALIGNED_ACCESS
 /*! @endcond */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (d) >= INT_MIN && (d) <= INT_MAX && (double)(int)(d) == (d) )
-#else
-/* This is technically unspecified behaviour if the double is out of range, but works OK on x86 */
-/** Returns whether a double fits on a int */
-#define CPL_IS_DOUBLE_A_INT(d)  ( (double)(int)(d) == (d) )
 #endif
 
 #ifdef __cplusplus
@@ -1188,6 +1220,13 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #define VOLATILE_BOOL volatile bool
 
 #endif /* defined(__cplusplus) && defined(DEBUG_BOOL) */
+
+#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
 /*! @endcond */
+
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

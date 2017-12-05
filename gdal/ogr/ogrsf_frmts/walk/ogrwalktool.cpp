@@ -28,7 +28,7 @@
 
 #include "ogrwalk.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                   OGRWalkArcCenterFromEdgePoints()                   */

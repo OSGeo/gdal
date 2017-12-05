@@ -225,6 +225,7 @@ class CPL_DLL OGRFeatureDefn
        explicit OGRFeatureDefn( const char * pszName = NULL );
     virtual    ~OGRFeatureDefn();
 
+    void                 SetName( const char* pszName );
     virtual const char  *GetName();
 
     virtual int         GetFieldCount();
@@ -296,6 +297,8 @@ class CPL_DLL OGRFeature
     char                *m_pszTmpFieldValue;
 //! @endcond
 
+    bool                CopySelfTo( OGRFeature *poNew );
+
   public:
     explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
@@ -333,6 +336,12 @@ class CPL_DLL OGRFeature
     int                 IsFieldSet( int iField );
 
     void                UnsetField( int iField );
+
+    bool                IsFieldNull( int iField );
+
+    void                SetFieldNull( int iField );
+
+    bool                IsFieldSetAndNotNull( int iField );
 
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
 
@@ -493,10 +502,17 @@ class CPL_DLL OGRFeatureQuery
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
+    OGRErr      Compile( OGRLayer *, OGRFeatureDefn*, const char *,
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar );
   public:
                 OGRFeatureQuery();
                ~OGRFeatureQuery();
 
+    OGRErr      Compile( OGRLayer *, const char *,
+                         int bCheck = TRUE,
+                         swq_custom_func_registrar*
+                         poCustomFuncRegistrar = NULL );
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*

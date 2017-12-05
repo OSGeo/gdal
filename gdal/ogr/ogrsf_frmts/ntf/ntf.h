@@ -31,6 +31,7 @@
 #define NTF_H_INCLUDED
 
 #include "cpl_conv.h"
+#include "cpl_vsi.h"
 #include "ogrsf_frmts.h"
 
 /* -------------------------------------------------------------------- */
@@ -118,10 +119,10 @@ class NTFRecord
     int      nLength;
     char    *pszData;
 
-    static int      ReadPhysicalLine( FILE *fp, char *pszLine );
+    static int      ReadPhysicalLine( VSILFILE *fp, char *pszLine );
 
   public:
-    explicit  NTFRecord( FILE * );
+    explicit  NTFRecord( VSILFILE * );
              ~NTFRecord();
 
     int      GetType() { return nType; }
@@ -208,7 +209,7 @@ class NTFFileReader
     char             *pszFilename;
     OGRNTFDataSource *poDS;
 
-    FILE             *fp;
+    VSILFILE         *fp;
 
     // feature class list.
     int               nFCCount;
@@ -236,9 +237,9 @@ class NTFFileReader
     double            dfScale;
     double            dfPaperToGround;
 
-    long              nStartPos;
-    long              nPreSavedPos;
-    long              nPostSavedPos;
+    vsi_l_offset      nStartPos;
+    vsi_l_offset      nPreSavedPos;
+    vsi_l_offset      nPostSavedPos;
     NTFRecord        *poSavedRecord;
 
     long              nSavedFeatureId;
@@ -273,11 +274,13 @@ class NTFFileReader
 
     OGRNTFRasterLayer *poRasterLayer;
 
-    long             *panColumnOffset;
+    vsi_l_offset     *panColumnOffset;
 
     int               bCacheLines;
     int               nLineCacheSize;
     OGRGeometry     **papoLineCache;
+    
+    void              AddToIndexGroup( NTFRecord * poRecord );
 
   public:
     explicit           NTFFileReader( OGRNTFDataSource * );
@@ -285,9 +288,9 @@ class NTFFileReader
 
     int               Open( const char * pszFilename = NULL );
     void              Close();
-    FILE              *GetFP() { return fp; }
-    void              GetFPPos( long *pnPos, long * pnFeatureId);
-    int               SetFPPos( long nPos, long nFeatureId );
+    VSILFILE         *GetFP() { return fp; }
+    void              GetFPPos( vsi_l_offset *pnPos, long * pnFeatureId);
+    int               SetFPPos( vsi_l_offset nPos, long nFeatureId );
     void              Reset();
     void              SetBaseFID( long nFeatureId );
 
@@ -306,9 +309,9 @@ class NTFFileReader
 
     int               ProcessAttValue( const char *pszValType,
                                        const char *pszRawValue,
-                                       char **ppszAttName,
-                                       char **ppszAttValue,
-                                       char **ppszCodeDesc );
+                                       const char **ppszAttName,
+                                       const char **ppszAttValue,
+                                       const char **ppszCodeDesc );
 
     int               TestForLayer( OGRNTFLayer * );
     OGRFeature       *ReadOGRFeature( OGRNTFLayer * = NULL );
@@ -379,7 +382,7 @@ class OGRNTFLayer : public OGRLayer
     OGRNTFDataSource   *poDS;
 
     int                 iCurrentReader;
-    long                nCurrentPos;
+    vsi_l_offset        nCurrentPos;
     long                nCurrentFID;
 
   public:
@@ -421,7 +424,7 @@ class OGRNTFFeatureClassLayer : public OGRLayer
 
     OGRNTFDataSource   *poDS;
 
-    int                 iCurrentFC;
+    GIntBig            iCurrentFC;
 
   public:
     explicit             OGRNTFFeatureClassLayer( OGRNTFDataSource * poDS );
@@ -458,10 +461,10 @@ class OGRNTFRasterLayer : public OGRLayer
     float              *pafColumn;
     int                 iColumnOffset;
 
-    int                 iCurrentFC;
+    GIntBig             iCurrentFC;
 
     int                 nDEMSample;
-    int                 nFeatureCount;
+    GIntBig             nFeatureCount;
 
   public:
                         OGRNTFRasterLayer( OGRNTFDataSource * poDS,
@@ -500,7 +503,7 @@ class OGRNTFDataSource : public OGRDataSource
 
     int                 iCurrentFC;
     int                 iCurrentReader;
-    long                nCurrentPos;
+    vsi_l_offset        nCurrentPos;
     long                nCurrentFID;
 
     int                 nNTFFileCount;

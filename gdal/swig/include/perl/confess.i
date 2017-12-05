@@ -1,6 +1,7 @@
 %header %{
     void do_confess(const char *error, int push_to_error_stack) {
-        SV *sv = newSVpv(error, 0);
+        SV *sv = newSVpv("", 0);
+        sv_setpvf(sv, "%s\n", error);
         if (push_to_error_stack) {
             AV* error_stack = get_av("Geo::GDAL::error", 0);
             av_push(error_stack, sv);
@@ -25,6 +26,7 @@
     #define NEED_DEF "A parameter which must be defined or not empty, is not."
     #define WRONG_CLASS "Object has a wrong class."
     #define NEED_REF "A parameter which must be a reference, is not."
+    #define NEED_HASH_REF "A parameter/item which must be a hash reference, is not."
     #define NEED_ARRAY_REF "A parameter/item which must be an array reference, is not."
     #define NEED_BINARY_DATA "A parameter which must be binary data, is not."
     #define NEED_CODE_REF "A parameter which must be an anonymous subroutine, is not."

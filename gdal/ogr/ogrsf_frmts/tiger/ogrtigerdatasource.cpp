@@ -33,7 +33,9 @@
 #include <cctype>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+#define DIGIT_ZERO '0'
 
 /************************************************************************/
 /*                        TigerClassifyVersion()                        */
@@ -358,10 +360,11 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             {
                 char       szModule[128];
 
-                strncpy( szModule, candidateFileList[i],
-                         strlen(candidateFileList[i])-1 );
-
-                szModule[strlen(candidateFileList[i])-1] = '\0';
+                snprintf( szModule, sizeof(szModule), "%s",
+                          candidateFileList[i] );
+                const size_t nLen = strlen(szModule);
+                if( nLen )
+                    szModule[nLen-1] = '\0';
 
                 papszFileList = CSLAddString(papszFileList, szModule);
             }
@@ -451,7 +454,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
                 && nVersionCode != 21
                 && nVersionCode != 24
                 && pszRecStart[3]  != '9'
-                && pszRecStart[3]  != '0'
+                && pszRecStart[3]  != DIGIT_ZERO
                 && !bIsGDT )
                 continue;
 

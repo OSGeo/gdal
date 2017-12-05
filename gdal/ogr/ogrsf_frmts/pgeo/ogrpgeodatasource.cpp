@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRPGeoDataSource()                          */

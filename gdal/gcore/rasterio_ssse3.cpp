@@ -28,12 +28,16 @@
 
 #include "cpl_port.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) && ( defined(__x86_64) || defined(_M_X64) )
 
 #include <tmmintrin.h>
 #include "gdal_priv_templates.hpp"
+
+void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters );
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
@@ -42,6 +46,44 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
 void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
                                              int nIters );
+
+void GDALUnrolledCopy_GByte_2_1_SSSE3( GByte* CPL_RESTRICT pDest,
+                                             const GByte* CPL_RESTRICT pSrc,
+                                             int nIters )
+{
+    int i;
+    const __m128i xmm_shuffle0 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1,
+                                              14  ,12  ,10  ,8,
+                                               6  , 4  , 2  ,0);
+    const __m128i xmm_shuffle1 = _mm_set_epi8(14  ,12  ,10  ,8,
+                                               6  , 4  , 2  ,0,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1);
+    // If we were sure that there would always be 1 trailing byte, we could
+    // check against nIters - 15
+    for ( i = 0; i < nIters - 16; i += 16 )
+    {
+        __m128i xmm0 = _mm_loadu_si128( (__m128i const*) (pSrc + 0) );
+        __m128i xmm1 = _mm_loadu_si128( (__m128i const*) (pSrc + 16) );
+
+        // From LSB to MSB:
+        // 0,x,1,x,2,x,3,x,4,x,5,x,6,x,7,x --> 0,1,2,3,4,5,6,7,0,0,0,0,0,0,0
+        xmm0 = _mm_shuffle_epi8(xmm0, xmm_shuffle0);
+        // 8,x,9,x,10,x,11,x,12,x,13,x,14,x,15,x --> 0,0,0,0,0,0,0,0,8,9,10,11,12,13,14,15
+        xmm1 = _mm_shuffle_epi8(xmm1, xmm_shuffle1);
+        xmm0 = _mm_or_si128(xmm0, xmm1);
+
+        _mm_storeu_si128( (__m128i*) (pDest + i), xmm0);
+
+        pSrc += 2 * 16;
+    }
+    for( ; i < nIters; i++ )
+    {
+        pDest[i] = *pSrc;
+        pSrc += 2;
+    }
+}
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                              const GByte* CPL_RESTRICT pSrc,
@@ -98,6 +140,18 @@ void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
                                               -1  ,-1  ,-1  ,-1,
                                               -1  ,-1  ,-1  ,-1,
                                               12  ,8   ,4   ,0);
+    const __m128i xmm_shuffle1 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1,
+                                              12  ,8   ,4   ,0,
+                                              -1  ,-1  ,-1  ,-1);
+    const __m128i xmm_shuffle2 = _mm_set_epi8(-1  ,-1  ,-1  ,-1,
+                                              12  ,8   ,4   ,0,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1);
+    const __m128i xmm_shuffle3 = _mm_set_epi8(12  ,8   ,4   ,0,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1,
+                                              -1  ,-1  ,-1  ,-1);
     // If we were sure that there would always be 3 trailing bytes, we could
     // check against nIters - 15
     for ( i = 0; i < nIters - 16; i += 16 )
@@ -108,15 +162,16 @@ void GDALUnrolledCopy_GByte_4_1_SSSE3( GByte* CPL_RESTRICT pDest,
         __m128i xmm3 = _mm_loadu_si128( (__m128i const*) (pSrc + 48) );
 
         xmm0 = _mm_shuffle_epi8(xmm0, xmm_shuffle0);
-        xmm1 = _mm_shuffle_epi8(xmm1, xmm_shuffle0);
-        xmm2 = _mm_shuffle_epi8(xmm2, xmm_shuffle0);
-        xmm3 = _mm_shuffle_epi8(xmm3, xmm_shuffle0);
+        xmm1 = _mm_shuffle_epi8(xmm1, xmm_shuffle1);
+        xmm2 = _mm_shuffle_epi8(xmm2, xmm_shuffle2);
+        xmm3 = _mm_shuffle_epi8(xmm3, xmm_shuffle3);
 
-        // Extract lower 32 bit word
-        GDALCopyXMMToInt32(xmm0, pDest + i + 0);
-        GDALCopyXMMToInt32(xmm1, pDest + i + 4);
-        GDALCopyXMMToInt32(xmm2, pDest + i + 8);
-        GDALCopyXMMToInt32(xmm3, pDest + i + 12);
+        xmm0 = _mm_or_si128(xmm0, xmm1);
+        xmm2 = _mm_or_si128(xmm2, xmm3);
+        xmm0 = _mm_or_si128(xmm0, xmm2);
+
+        _mm_storeu_si128( (__m128i*) (pDest + i), xmm0);
+
         pSrc += 4 * 16;
     }
     for( ; i < nIters; i++ )

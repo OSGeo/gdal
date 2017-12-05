@@ -840,6 +840,95 @@ def ogr_kml_read_folder_with_subfolder_placemark():
     return 'success'
 
 ###############################################################################
+# Test reading invalid KML (#6878)
+
+def ogr_kml_read_truncated():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/truncated.kml')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
+
+def ogr_kml_read_weird_empty_folders():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/weird_empty_folders.kml')
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayerCount())
+        return 'fail'
+
+    if ds.GetLayer(0).GetFeatureCount() != 0:
+        gdaltest.post_reason('failed')
+        print(ds.GetLayer(0).GetFeatureCount())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1683
+
+def ogr_kml_read_junk_content_after_valid_doc():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = ogr.Open('data/junk_content_after_valid_doc.kml')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with kml: prefix
+
+def ogr_kml_read_placemark_with_kml_prefix():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_with_kml_prefix.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    if feat is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with dumplicated folder name
+
+def ogr_kml_read_duplicate_folder_name():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/duplicate_folder_name.kml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'layer':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'layer (#2)':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -864,6 +953,11 @@ gdaltest_list = [
     ogr_kml_empty_layer,
     ogr_kml_two_layers,
     ogr_kml_read_folder_with_subfolder_placemark,
+    ogr_kml_read_truncated,
+    ogr_kml_read_weird_empty_folders,
+    ogr_kml_read_junk_content_after_valid_doc,
+    ogr_kml_read_placemark_with_kml_prefix,
+    ogr_kml_read_duplicate_folder_name,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':

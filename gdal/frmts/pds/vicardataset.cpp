@@ -40,7 +40,7 @@ static const double NULL3 = -32768.0;
 
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -119,7 +119,7 @@ char **VICARDataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -132,7 +132,7 @@ char **VICARDataset::GetFileList()
 const char *VICARDataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -164,12 +164,13 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->pabyHeader == NULL )
         return FALSE;
 
+    char *pszHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     return
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "LBLSIZE" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "FORMAT" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NL" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NS" ) != NULL &&
-        strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ), "NB" ) != NULL;
+        strstr(pszHeader, "LBLSIZE") != NULL &&
+        strstr(pszHeader, "FORMAT") != NULL &&
+        strstr(pszHeader, "NL") != NULL &&
+        strstr(pszHeader, "NS") != NULL &&
+        strstr(pszHeader, "NB") != NULL;
 }
 
 /************************************************************************/
@@ -179,7 +180,7 @@ int VICARDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 /* -------------------------------------------------------------------- */
-/*      Does this look like a VICAR dataset?                             */
+/*      Does this look like a VICAR dataset?                            */
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
         return NULL;
@@ -224,8 +225,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         chByteOrder = 'I';
     }
 
-    /************ CHECK INSTRUMENT *****************/
-    /************ ONLY HRSC TESTED *****************/
+    /************ CHECK INSTRUMENT/DATA *****************/
 
     bool bIsDTM = false;
     value = poDS->GetKeyword( "DTM.DTM_OFFSET" );
@@ -233,11 +233,13 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         bIsDTM = true;
     }
 
-    value = poDS->GetKeyword( "BLTYPE" );
-    if (!EQUAL(value,"M94_HRSC") && !bIsDTM ) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s instrument not tested. Continue with caution!\n\n", value);
-    }
+    bool bInstKnown = false;
+    // Check for HRSC
+    if ( EQUAL(poDS->GetKeyword("BLTYPE"),"M94_HRSC") )
+        bInstKnown = true;
+    // Check for Framing Camera on Dawn
+    else if ( EQUAL(poDS->GetKeyword("INSTRUMENT_ID"),"FC2") )
+        bInstKnown = true;
 
     /***********   Grab layout type (BSQ, BIP, BIL) ************/
 
@@ -284,7 +286,8 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    if( nRows < 1 || nCols < 1 || nBands < 1 )
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, false) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be a VICAR file, but failed to find some "
@@ -424,7 +427,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     } else if (EQUAL( map_proj_name, "MERCATOR" )) {
         oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
-        oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
+        if ((fabs(center_lat)-90) < 0.0000001) {
+            oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+        } else {
+            oSRS.SetStereographic ( center_lat, center_lon, 1, 0, 0 );
+        }
     } else if (EQUAL( map_proj_name, "POLAR_STEREOGRAPHIC")) {
         oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
     } else if (EQUAL( map_proj_name, "TRANSVERSE_MERCATOR" )) {
@@ -581,10 +588,17 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Compute the line offsets.                                        */
 /* -------------------------------------------------------------------- */
 
-    const long int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    const long int nPixelOffset = nItemSize;
-    const long int nLineOffset = nPixelOffset * nCols + atoi(poDS->GetKeyword("NBB")) ;
-    const long int nBandOffset = nLineOffset * nRows;
+    const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    const int nPixelOffset = nItemSize;
+    const int nNBB = atoi(poDS->GetKeyword("NBB"));
+    if( nPixelOffset > INT_MAX / nCols || nNBB < 0 ||
+        nPixelOffset * nCols > INT_MAX - nNBB )
+    {
+        delete poDS;
+        return NULL;
+    }
+    const int nLineOffset = nPixelOffset * nCols + nNBB;
+    const vsi_l_offset nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
 
     int nSkipBytes = atoi(poDS->GetKeyword("LBLSIZE"));
 
@@ -595,7 +609,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         GDALRasterBand *poBand
             = new RawRasterBand( poDS, i+1, poDS->fpImage, nSkipBytes + nBandOffset * i,
-                                 static_cast<int>(nPixelOffset), static_cast<int>(nLineOffset), eDataType,
+                                 nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB
                                    chByteOrder == 'I' || chByteOrder == 'L',
 #else
@@ -604,7 +618,9 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                                    TRUE );
 
         poDS->SetBand( i+1, poBand );
-        poBand->SetNoDataValue( dfNoData );
+        //only set NoData if instrument is supported
+        if (bInstKnown)
+            poBand->SetNoDataValue( dfNoData );
         if (bIsDTM) {
             poBand->SetScale( static_cast<double>(
                 CPLAtof(poDS->GetKeyword( "DTM.DTM_SCALING_FACTOR") ) ) );
@@ -724,7 +740,7 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->SetMetadataItem( apszKeywords[i], pszKeywordValue );
         }
     }
-    else if (bIsDTM && EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" ))
+    else if (bIsDTM && ( EQUAL( poDS->GetKeyword( "TARGET_NAME"), "VESTA" ) || EQUAL( poDS->GetKeyword( "TARGET_NAME"), "CERES" )))
     {
         poDS->SetMetadataItem( "SPACECRAFT_NAME", "DAWN" );
         poDS->SetMetadataItem( "PRODUCT_TYPE", "DTM");

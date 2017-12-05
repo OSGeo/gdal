@@ -52,7 +52,7 @@
 #include <fcntl.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // We buffer the first 1MB of standard input to enable drivers
 // to autodetect data. In the first MB, backward and forward seeking
@@ -90,8 +90,6 @@ class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 public:
                               VSIStdinFilesystemHandler();
     virtual                  ~VSIStdinFilesystemHandler();
-
-    using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,
@@ -364,6 +362,14 @@ VSIStdinFilesystemHandler::Open( const char *pszFilename,
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
         return NULL;
 
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return NULL;
+    }
+
     if( strchr(pszAccess, 'w') != NULL ||
         strchr(pszAccess, '+') != NULL )
     {
@@ -389,6 +395,14 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
         return -1;
 
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return -1;
+    }
+
     if( nFlags & VSI_STAT_SIZE_FLAG )
     {
         VSIStdinInit();
@@ -413,7 +427,7 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
  * \brief Install /vsistdin/ file system handler
  *
  * A special file handler is installed that allows reading from the standard
- * input steam.
+ * input stream.
  *
  * The file operations available are of course limited to Read() and
  * forward Seek() (full seek in the first MB of a file).

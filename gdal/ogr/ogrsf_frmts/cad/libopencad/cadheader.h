@@ -35,6 +35,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <ctime>
 
 class OCAD_EXTERN CADHandle final
 {
@@ -78,10 +79,7 @@ public:
     // cppcheck-suppress noExplicitConstructor
     CADVariant( const std::string& val );
     // cppcheck-suppress noExplicitConstructor
-    CADVariant( time_t val );
-public:
-    CADVariant( const CADVariant& orig );
-    CADVariant& operator=( const CADVariant& orig );
+    CADVariant( long julianday, long milliseconds );
 public:
     long                getDecimal() const;
     double              getReal() const;

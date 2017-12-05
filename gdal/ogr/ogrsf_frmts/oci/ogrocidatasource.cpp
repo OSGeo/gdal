@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int anEPSGOracleMapping[] =
 {
@@ -139,7 +139,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         const char* pszTables = CSLFetchNameValue(papszOpenOptionsIn, "TABLES");
         if( pszTables )
             papszTableList = CSLTokenizeStringComplex(pszTables, ",", TRUE, FALSE );
-        pszWorkspace = CSLFetchNameValueDef(papszOpenOptions, "WORKSPACE", "");
+        pszWorkspace = CSLFetchNameValueDef(papszOpenOptionsIn, "WORKSPACE", "");
     }
     else
     {
@@ -181,8 +181,6 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OCI", "Userid=%s, Password=%s, Database=%s",
-              pszUserid, pszPassword, pszDatabase );
 
     if( EQUAL(pszDatabase, "") &&
         EQUAL(pszPassword, "") &&
@@ -505,6 +503,18 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
 
 /* -------------------------------------------------------------------- */
+/*      Get the default string size                                     */
+/* -------------------------------------------------------------------- */
+
+    int nDefaultStringSize = DEFAULT_STRING_SIZE;
+
+    if (CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) != NULL)
+    {
+        nDefaultStringSize = atoi( 
+            CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
@@ -639,6 +649,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
+    poLayer->SetDefaultStringSize( nDefaultStringSize );
 
     const char* pszDIM = CSLFetchNameValue(papszOptions,"DIM");
     if( pszDIM != NULL )
@@ -833,7 +844,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
     if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;
-        poSRS = NULL;
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
@@ -981,7 +992,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      We got it!  Return it.                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != NULL && papszResult[0] != NULL && papszResult[1] == NULL )
     {
         CPLFree( pszWKT );
         return atoi( papszResult[0] );
@@ -1000,7 +1011,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     else
         papszResult = NULL;
 
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != NULL && papszResult[0] != NULL && papszResult[1] == NULL )
         nSRSId = atoi(papszResult[0]) + 1;
     else
         nSRSId = 1;

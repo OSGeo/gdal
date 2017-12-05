@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int FLD_TRACK_FID = 0;
 static const int FLD_TRACK_SEG_ID = 1;
@@ -513,37 +513,43 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
         for (int i = 0; ppszAttr[i]; i += 2)
         {
-            if (strcmp(ppszAttr[i], "lat") == 0)
+            if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
             {
                 hasFoundLat = true;
                 latVal = CPLAtof(ppszAttr[i + 1]);
             }
-            else if (strcmp(ppszAttr[i], "lon") == 0)
+            else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
             {
                 hasFoundLon = true;
                 lonVal = CPLAtof(ppszAttr[i + 1]);
             }
         }
 
+        poFeature->SetFID( nNextFID++ );
+
         if (hasFoundLat && hasFoundLon)
         {
-            poFeature->SetFID( nNextFID++ );
             poFeature->SetGeometryDirectly( new OGRPoint( lonVal, latVal ) );
+        }
+        else
+        {
+            CPLDebug("GPX", "Skipping %s (FID=%d) without lat and/or lon",
+                     pszName, nNextFID);
+        }
 
-            if (gpxGeomType == GPX_ROUTE_POINT)
-            {
-                rtePtId++;
-                poFeature->SetField( FLD_ROUTE_FID, rteFID-1);
-                poFeature->SetField( FLD_ROUTE_PT_ID, rtePtId-1);
-            }
-            else if (gpxGeomType == GPX_TRACK_POINT)
-            {
-                trkSegPtId++;
+        if (gpxGeomType == GPX_ROUTE_POINT)
+        {
+            rtePtId++;
+            poFeature->SetField( FLD_ROUTE_FID, rteFID-1);
+            poFeature->SetField( FLD_ROUTE_PT_ID, rtePtId-1);
+        }
+        else if (gpxGeomType == GPX_TRACK_POINT)
+        {
+            trkSegPtId++;
 
-                poFeature->SetField( FLD_TRACK_FID, trkFID-1);
-                poFeature->SetField( FLD_TRACK_SEG_ID, trkSegId-1);
-                poFeature->SetField( FLD_TRACK_PT_ID, trkSegPtId-1);
-            }
+            poFeature->SetField( FLD_TRACK_FID, trkFID-1);
+            poFeature->SetField( FLD_TRACK_SEG_ID, trkSegId-1);
+            poFeature->SetField( FLD_TRACK_PT_ID, trkSegPtId-1);
         }
     }
     else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
@@ -616,12 +622,12 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 hasFoundLon = false;
                 for (int i = 0; ppszAttr[i]; i += 2)
                 {
-                    if (strcmp(ppszAttr[i], "lat") == 0)
+                    if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLat = true;
                         latVal = CPLAtof(ppszAttr[i + 1]);
                     }
-                    else if (strcmp(ppszAttr[i], "lon") == 0)
+                    else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLon = true;
                         lonVal = CPLAtof(ppszAttr[i + 1]);
@@ -631,6 +637,11 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 if (hasFoundLat && hasFoundLon)
                 {
                     lineString->addPoint(lonVal, latVal);
+                }
+                else
+                {
+                    CPLDebug("GPX", "Skipping %s without lat and/or lon",
+                             pszName);
                 }
             }
         }
@@ -643,12 +654,12 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 hasFoundLon = false;
                 for (int i = 0; ppszAttr[i]; i += 2)
                 {
-                    if (strcmp(ppszAttr[i], "lat") == 0)
+                    if (strcmp(ppszAttr[i], "lat") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLat = true;
                         latVal = CPLAtof(ppszAttr[i + 1]);
                     }
-                    else if (strcmp(ppszAttr[i], "lon") == 0)
+                    else if (strcmp(ppszAttr[i], "lon") == 0 && ppszAttr[i + 1][0])
                     {
                         hasFoundLon = true;
                         lonVal = CPLAtof(ppszAttr[i + 1]);
@@ -658,6 +669,11 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 if (hasFoundLat && hasFoundLon)
                 {
                     lineString->addPoint(lonVal, latVal);
+                }
+                else
+                {
+                    CPLDebug("GPX", "Skipping %s without lat and/or lon",
+                             pszName);
                 }
             }
         }
@@ -825,7 +841,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                         {
                             if (strcmp(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "ele" ) == 0)
                             {
-                                if( poFeature->IsFieldSet( iField ) )
+                                if( poFeature->IsFieldSetAndNotNull( iField ) )
                                 {
                                     double val =  poFeature->GetFieldAsDouble( iField);
                                     ((OGRPoint*)poFeature->GetGeometryRef())->setZ(val);
@@ -1235,7 +1251,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
     for( ; i < nGPXFields; i++ )
     {
         OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-        if( poFeatureIn->IsFieldSet( i ) )
+        if( poFeatureIn->IsFieldSetAndNotNull( i ) )
         {
             const char* pszName = poFieldDefn->GetNameRef();
             if (strcmp(pszName, "time") == 0)
@@ -1251,9 +1267,9 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                 {
                     AddIdent(fp, nIdentLevel);
                     VSIFPrintfL(fp, "<link href=\"%s\">", poFeatureIn->GetFieldAsString( i ));
-                    if( poFeatureIn->IsFieldSet( i + 1 ) )
+                    if( poFeatureIn->IsFieldSetAndNotNull( i + 1 ) )
                         VSIFPrintfL(fp, "<text>%s</text>", poFeatureIn->GetFieldAsString( i + 1 ));
-                    if( poFeatureIn->IsFieldSet( i + 2 ) )
+                    if( poFeatureIn->IsFieldSetAndNotNull( i + 2 ) )
                         VSIFPrintfL(fp, "<type>%s</type>", poFeatureIn->GetFieldAsString( i + 2 ));
                     poDS->PrintLine("</link>");
                 }
@@ -1286,7 +1302,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
         for(;i<n;i++)
         {
             OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn( i );
-            if( poFeatureIn->IsFieldSet( i ) )
+            if( poFeatureIn->IsFieldSetAndNotNull( i ) )
             {
                 char* compatibleName =
                         OGRGPX_GetXMLCompatibleTagName(pszExtensionsNS, poFieldDefn->GetNameRef());
@@ -1686,7 +1702,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        if ( !poFeatureIn->IsFieldSet(FLD_ROUTE_FID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_ROUTE_FID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_ROUTE_FID)->GetNameRef() );
@@ -1708,7 +1724,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                 poDS->PrintLine("</rte>");
             }
             poDS->PrintLine("<rte>");
-            if ( poFeatureIn->IsFieldSet(FLD_ROUTE_NAME) )
+            if ( poFeatureIn->IsFieldSetAndNotNull(FLD_ROUTE_NAME) )
             {
                 char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeatureIn->GetFieldAsString( FLD_ROUTE_NAME ));
@@ -1754,7 +1770,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        if ( !poFeatureIn->IsFieldSet(FLD_TRACK_FID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_FID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
@@ -1766,7 +1782,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                       "Invalid value for field %s.", poFeatureDefn->GetFieldDefn(FLD_TRACK_FID)->GetNameRef() );
             return OGRERR_FAILURE;
         }
-        if ( !poFeatureIn->IsFieldSet(FLD_TRACK_SEG_ID) )
+        if ( !poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_SEG_ID) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Field %s must be set.", poFeatureDefn->GetFieldDefn(FLD_TRACK_SEG_ID)->GetNameRef() );
@@ -1790,7 +1806,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             }
             poDS->PrintLine("<trk>");
 
-            if ( poFeatureIn->IsFieldSet(FLD_TRACK_NAME) )
+            if ( poFeatureIn->IsFieldSetAndNotNull(FLD_TRACK_NAME) )
             {
                 char* pszValue =
                             OGRGetXML_UTF8_EscapedString(poFeatureIn->GetFieldAsString( FLD_TRACK_NAME ));

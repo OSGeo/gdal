@@ -720,6 +720,26 @@ def ogr_basic_15():
 
 
 ###############################################################################
+# Test issue with Python 3.5 and older SWIG (#6749)
+
+def ogr_basic_16_make_geom():
+    geom = ogr.Geometry(ogr.wkbPoint)
+    geom.AddPoint_2D(0, 0)
+    return geom
+
+def ogr_basic_16_gen_list(N):
+    for i in range(N):
+        ogr_basic_16_make_geom()
+        yield i
+
+def ogr_basic_16():
+
+    if list(ogr_basic_16_gen_list(2)) != [0, 1]:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_basic_cleanup():
@@ -744,6 +764,7 @@ gdaltest_list = [
     ogr_basic_13,
     ogr_basic_14,
     ogr_basic_15,
+    ogr_basic_16,
     ogr_basic_cleanup ]
 
 #gdaltest_list = [ ogr_basic_13 ]

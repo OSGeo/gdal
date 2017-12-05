@@ -24,10 +24,10 @@
  * in all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABOGRXercesTY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * LIABOGRXercesTY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
@@ -40,7 +40,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef HAVE_XERCES
 
@@ -178,8 +178,146 @@ CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
 
 }
 
-#else // HAVE_XERCES
 
-void OGRCleanupXercesMutex(void) {}
+
+#define WORKAROUND_XERCESC_2094
+
+/************************************************************************/
+/*                      OGRXercesBinInputStream                         */
+/************************************************************************/
+class OGRXercesBinInputStream : public BinInputStream
+{
+    VSILFILE* fp;
+    XMLCh emptyString;
+#ifdef WORKAROUND_XERCESC_2094
+    bool bFirstCallToReadBytes;
+#endif
+
+public :
+
+    explicit OGRXercesBinInputStream(VSILFILE* fp);
+    virtual ~OGRXercesBinInputStream();
+
+    virtual XMLFilePos curPos() const override;
+    virtual XMLSize_t readBytes(XMLByte* const toFill,
+                                const XMLSize_t maxToRead) override;
+    virtual const XMLCh* getContentType() const override
+        { return &emptyString; }
+};
+
+/************************************************************************/
+/*                       OGRXercesInputSource                           */
+/************************************************************************/
+
+class OGRXercesInputSource : public InputSource
+{
+    OGRXercesBinInputStream* pBinInputStream;
+
+public:
+             OGRXercesInputSource(VSILFILE* fp,
+                            MemoryManager* const manager =
+                                XMLPlatformUtils::fgMemoryManager);
+    virtual ~OGRXercesInputSource();
+
+    virtual BinInputStream* makeStream() const override
+        { return pBinInputStream; }
+};
+
+/************************************************************************/
+/*                      OGRXercesBinInputStream()                       */
+/************************************************************************/
+
+OGRXercesBinInputStream::OGRXercesBinInputStream(VSILFILE *fpIn) :
+    fp(fpIn),
+    emptyString(0)
+#ifdef WORKAROUND_XERCESC_2094
+    ,bFirstCallToReadBytes(true)
+#endif
+{}
+
+/************************************************************************/
+/*                     ~OGRXercesBinInputStream()                       */
+/************************************************************************/
+
+OGRXercesBinInputStream::~OGRXercesBinInputStream() {}
+
+/************************************************************************/
+/*                              curPos()                                */
+/************************************************************************/
+
+XMLFilePos OGRXercesBinInputStream::curPos() const
+{
+    return (XMLFilePos)VSIFTellL(fp);
+}
+
+/************************************************************************/
+/*                            readBytes()                               */
+/************************************************************************/
+
+XMLSize_t OGRXercesBinInputStream::readBytes(XMLByte* const toFill,
+                                             const XMLSize_t maxToRead)
+{
+    XMLSize_t nRead = (XMLSize_t)VSIFReadL(toFill, 1, maxToRead, fp);
+#ifdef WORKAROUND_XERCESC_2094
+    if( bFirstCallToReadBytes && nRead > 10 )
+    {
+        // Workaround leak in Xerces-C when parsing an invalid encoding
+        // attribute and there are newline or tab characters between <?xml and
+        // version="1.0". So replace those newlines by equivalent spaces....
+        // See https://issues.apache.org/jira/browse/XERCESC-2094
+        XMLSize_t nToSkip = 0;
+        if( memcmp(toFill, "<?xml", 5) == 0 )
+            nToSkip = 5;
+        else if( memcmp(toFill, "\xEF\xBB\xBF<?xml", 8) == 0 )
+            nToSkip = 8;
+        if( nToSkip > 0 )
+        {
+            for( XMLSize_t i = nToSkip; i < nRead; i++ )
+            {
+                if( toFill[i] == 0xD || toFill[i] == 0xA || toFill[i] == 0x9 )
+                    toFill[i] = ' ';
+                else
+                    break;
+            }
+        }
+        bFirstCallToReadBytes = false;
+    }
+#endif
+    return nRead;
+}
+
+/************************************************************************/
+/*                       OGRXercesInputSource()                         */
+/************************************************************************/
+
+OGRXercesInputSource::OGRXercesInputSource(VSILFILE *fp,
+                                           MemoryManager *const manager) :
+    InputSource(manager),
+    pBinInputStream(new OGRXercesBinInputStream(fp))
+{}
+
+/************************************************************************/
+/*                      ~OGRXercesInputSource()                         */
+/************************************************************************/
+
+OGRXercesInputSource::~OGRXercesInputSource() {}
+
+/************************************************************************/
+/*                     OGRCreateXercesInputSource()                     */
+/************************************************************************/
+
+InputSource* OGRCreateXercesInputSource(VSILFILE* fp)
+{
+    return new OGRXercesInputSource(fp);
+}
+
+/************************************************************************/
+/*                     OGRDestroyXercesInputSource()                    */
+/************************************************************************/
+
+void OGRDestroyXercesInputSource(InputSource* is)
+{
+    delete is;
+}
 
 #endif // HAVE_XERCES

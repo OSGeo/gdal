@@ -30,13 +30,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-#include "DbSymbolTable.h"
-#include "DbLayerTable.h"
-#include "DbLayerTableRecord.h"
-#include "DbLinetypeTable.h"
-#include "DbLinetypeTableRecord.h"
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRDWGDataSource()                          */
@@ -47,7 +41,7 @@ OGRDWGDataSource::OGRDWGDataSource() :
   iEntitiesSectionOffset(0),
   bInlineBlocks(FALSE),
   poServices(NULL),
-  poDb(NULL)
+  poDb(static_cast<const OdRxObject*>(NULL))
 
 {
 }
@@ -73,7 +67,7 @@ OGRDWGDataSource::~OGRDWGDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDWGDataSource::TestCapability( const char * pszCap )
+int OGRDWGDataSource::TestCapability( const char * /*pszCap*/ )
 
 {
     return FALSE;
@@ -96,18 +90,15 @@ OGRLayer *OGRDWGDataSource::GetLayer( int iLayer )
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDWGDataSource::Open( OGRDWGServices *poServices,
-                            const char * pszFilename, int bHeaderOnly )
+int OGRDWGDataSource::Open( OGRDWGServices *poServicesIn,
+                            const char * pszFilename, int /*bHeaderOnly*/ )
 
 {
-    if( !EQUAL(CPLGetExtension(pszFilename),"dwg") )
-        return FALSE;
-
-    this->poServices = poServices;
+    poServices = poServicesIn;
 
     osEncoding = CPL_ENC_ISO8859_1;
 
-    osName = pszFilename;
+    m_osName = pszFilename;
 
     bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DWG_INLINE_BLOCKS", "TRUE" ) );
@@ -177,13 +168,13 @@ void OGRDWGDataSource::ReadLayerDefinitions()
         OdDbLayerTableRecordPtr poLD = poIter->getRecordId().safeOpenObject();
         std::map<CPLString,CPLString> oLayerProperties;
 
-        CPLString osLayerName = ACTextUnescape(poLD->getName(),GetEncoding());
+        CPLString osLayerName = ACTextUnescape(poLD->getName(),GetEncoding(), false);
 
         oLayerProperties["Exists"] = "1";
 
-        OdDbLinetypeTableRecordPtr poLT = poLD->linetypeObjectId().safeOpenObject();
+        OdDbLinetypeTableRecordPtr poLinetypeTableRecord = poLD->linetypeObjectId().safeOpenObject();
         oLayerProperties["Linetype"] =
-            ACTextUnescape(poLT->getName(),GetEncoding());
+            ACTextUnescape(poLinetypeTableRecord->getName(),GetEncoding(), false);
 
         osValue.Printf( "%d", poLD->colorIndex() );
         oLayerProperties["Color"] = osValue;
@@ -237,7 +228,7 @@ void OGRDWGDataSource::ReadLineTypeDefinitions()
         CPLString osLineTypeDef;
         OdDbLinetypeTableRecordPtr poLT = poIter->getRecordId().safeOpenObject();
 
-        osLineTypeName = ACTextUnescape(poLT->getName(),GetEncoding());
+        osLineTypeName = ACTextUnescape(poLT->getName(),GetEncoding(),false);
 
         if (poLT->numDashes())
         {
@@ -365,7 +356,7 @@ void OGRDWGDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
 
     if( !bInlineBlocks )
     {
-        OGRFieldDefn  oTextField( "BlockName", OFTString );
-        poFeatureDefn->AddFieldDefn( &oTextField );
+        OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockNameField );
     }
 }

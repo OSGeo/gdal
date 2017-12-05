@@ -59,6 +59,7 @@ const char* FindSubStringInsensitive(const char* pszStr,
 CPLString WFS_EscapeURL(const char* pszURL);
 CPLString WFS_DecodeURL(const CPLString &osSrc);
 
+// cppcheck-suppress copyCtorAndEqOperator
 class OGRWFSSortDesc
 {
     public:
@@ -208,7 +209,7 @@ class OGRWFSLayer : public OGRLayer
 
     void                SetRequiredOutputFormat(const char* pszRequiredOutputFormatIn);
 
-    const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; };
+    const char         *GetRequiredOutputFormat() { return pszRequiredOutputFormat; }
 
     void                SetOrderBy(const std::vector<OGRWFSSortDesc>& aoSortColumnsIn);
     bool                HasGotApproximateLayerDefn() { GetLayerDefn(); return bGotApproximateLayerDefn; }

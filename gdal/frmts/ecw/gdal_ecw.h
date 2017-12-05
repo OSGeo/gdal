@@ -468,6 +468,16 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     int         nWinBufLoaded;
     void        **papCurLineBuf;
 
+    // Deferred advise read parameters
+    int         m_nAdviseReadXOff;
+    int         m_nAdviseReadYOff;
+    int         m_nAdviseReadXSize;
+    int         m_nAdviseReadYSize;
+    int         m_nAdviseReadBufXSize;
+    int         m_nAdviseReadBufYSize;
+    int         m_nAdviseReadBandCount;
+    int        *m_panAdviseReadBandList;
+
     char        **papszGMLMetadata;
 
     ECWCachedMultiBandIO sCachedMultiBandIO;
@@ -475,6 +485,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     void        ECW2WKTProjection();
 
     void        CleanupWindow();
+    CPLErr      RunDeferredAdviseRead();
     int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
                                 GByte *, int, int, GDALDataType,
                                 int, int *,

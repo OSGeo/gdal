@@ -32,7 +32,7 @@
 #include "cpl_conv.h"
 #include "ogr_sxf.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRSXF();
 
@@ -136,6 +136,7 @@ void RegisterOGRSXF()
                                "Storage and eXchange Format" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_sxf.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sxf" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

@@ -45,9 +45,9 @@
 #include "cpl_string.h"
 #include "cpl_vsi_virtual.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-#if defined(DEBUG) && !defined(HAVE_FUZZER_FRIENDLY_ARCHIVE)
+#if (defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)) && !defined(HAVE_FUZZER_FRIENDLY_ARCHIVE)
 /* This is a completely custom archive format that is rather inefficient */
 /* but supports random insertions or deletions, since it doesn't record */
 /* explicit file size or rely on files starting on a particular boundary */
@@ -141,6 +141,9 @@ static bool VSIIsTGZ(const char* pszFilename)
 /*                           VSITarReader()                             */
 /************************************************************************/
 
+// TODO(schwehr): What is this ***NEWFILE*** thing?
+// And make it a symbolic constant.
+
 VSITarReader::VSITarReader(const char* pszTarFileName) :
     nCurOffset(0),
     nNextFileSize(0),
@@ -155,11 +158,12 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     m_nCurOffsetOld = 0;
     if( fp != NULL )
     {
-        GByte abySignature[24];
+        GByte abySignature[24] = {};
         m_bIsFuzzerFriendly =
             (VSIFReadL(abySignature, 1, 24, fp) == 24) &&
             (memcmp(abySignature, "FUZZER_FRIENDLY_ARCHIVE\n", 24) == 0 ||
-             memcmp(abySignature, "***NEWFILE***:", strlen("***NEWFILE***:")) == 0);
+             memcmp(abySignature, "***NEWFILE***:",
+                    strlen("***NEWFILE***:")) == 0);
         CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_SET));
     }
 #endif
@@ -184,7 +188,8 @@ VSIArchiveEntryFileOffset* VSITarReader::GetFileOffset()
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
-        return new VSITarEntryFileOffset(nCurOffset, nNextFileSize, osNextFileName);
+        return new VSITarEntryFileOffset(nCurOffset, nNextFileSize,
+                                         osNextFileName);
     }
 #endif
     return new VSITarEntryFileOffset(nCurOffset);
@@ -199,13 +204,16 @@ int VSITarReader::GotoNextFile()
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
+        const int nNewFileMarkerSize =
+                                static_cast<int>(strlen("***NEWFILE***:"));
         while( true )
         {
             if( m_abyBufferIdx >= m_abyBufferSize )
             {
                 if( m_abyBufferSize == 0 )
                 {
-                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer, 1, 2048, fp));
+                    m_abyBufferSize = static_cast<int>(
+                        VSIFReadL(m_abyBuffer, 1, 2048, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                 }
@@ -228,16 +236,23 @@ int VSITarReader::GotoNextFile()
                         return FALSE;
                     }
                     memcpy(m_abyBuffer, m_abyBuffer + 1024, 1024);
-                    m_abyBufferSize = static_cast<int>(VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
+                    m_abyBufferSize = static_cast<int>(
+                         VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                     m_abyBufferIdx = 0;
                     m_abyBufferSize += 1024;
                 }
             }
-            if( ((m_abyBufferSize == 2048 && m_abyBufferIdx < m_abyBufferSize - ((int)strlen("***NEWFILE***:")+64)) ||
-                 (m_abyBufferSize < 2048 && m_abyBufferIdx < m_abyBufferSize - ((int)strlen("***NEWFILE***:")+2))) &&
-                memcmp( m_abyBuffer + m_abyBufferIdx, "***NEWFILE***:", strlen("***NEWFILE***:")) == 0 )
+            if( ((m_abyBufferSize == 2048 &&
+                  m_abyBufferIdx < m_abyBufferSize -(nNewFileMarkerSize+64)) ||
+                 (m_abyBufferSize < 2048 &&
+                  m_abyBufferIdx < m_abyBufferSize -(nNewFileMarkerSize+2))) &&
+                m_abyBufferIdx >= 0 &&  // Make CSA happy, but useless.
+                m_abyBufferIdx < 2048 - nNewFileMarkerSize &&
+                memcmp(m_abyBuffer + m_abyBufferIdx,
+                       "***NEWFILE***:",
+                       strlen("***NEWFILE***:")) == 0 )
             {
                 if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
                 {
@@ -251,27 +266,32 @@ int VSITarReader::GotoNextFile()
                         return TRUE;
                     }
                 }
-                m_abyBufferIdx += (int)strlen("***NEWFILE***:");
-                int nFilenameStartIdx = m_abyBufferIdx;
-                for(; m_abyBufferIdx < m_abyBufferSize &&
-                      m_abyBuffer[m_abyBufferIdx] != '\n'; ++m_abyBufferIdx)
+                m_abyBufferIdx += nNewFileMarkerSize;
+                const int nFilenameStartIdx = m_abyBufferIdx;
+                for( ; m_abyBufferIdx < m_abyBufferSize &&
+                       m_abyBuffer[m_abyBufferIdx] != '\n';
+                     ++m_abyBufferIdx)
                 {
-                    /* do nothing */
+                    // Do nothing.
                 }
                 if( m_abyBufferIdx < m_abyBufferSize )
                 {
-                    osNextFileName.assign( (const char*)(m_abyBuffer + nFilenameStartIdx), m_abyBufferIdx - nFilenameStartIdx );
+                    osNextFileName.assign(
+                        (const char*)(m_abyBuffer + nFilenameStartIdx),
+                        m_abyBufferIdx - nFilenameStartIdx);
                     nCurOffset = VSIFTellL(fp);
                     nCurOffset -= m_abyBufferSize;
                     nCurOffset += m_abyBufferIdx + 1;
                 }
             }
             else
-                m_abyBufferIdx ++;
+            {
+                m_abyBufferIdx++;
+            }
         }
     }
 #endif
-    char abyHeader[512];
+    char abyHeader[512] = {};
     if (VSIFReadL(abyHeader, 512, 1, fp) != 1)
         return FALSE;
 
@@ -291,6 +311,12 @@ int VSITarReader::GotoNextFile()
     nNextFileSize = 0;
     for(int i=0;i<11;i++)
         nNextFileSize = nNextFileSize * 8 + (abyHeader[124+i] - '0');
+    if( nNextFileSize > GINTBIG_MAX )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid file size for %s", osNextFileName.c_str());
+        return FALSE;
+    }
 
     nModifiedTime = 0;
     for(int i=0;i<11;i++)
@@ -299,7 +325,7 @@ int VSITarReader::GotoNextFile()
     nCurOffset = VSIFTellL(fp);
 
     const GUIntBig nBytesToSkip = ((nNextFileSize + 511) / 512) * 512;
-    if( nBytesToSkip > (~((GUIntBig)0)) - nCurOffset )
+    if( nBytesToSkip > (~(static_cast<GUIntBig>(0))) - nCurOffset )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
         return FALSE;
@@ -334,10 +360,10 @@ int VSITarReader::GotoFirstFile()
 /*                         GotoFileOffset()                             */
 /************************************************************************/
 
-int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset* pOffset)
+int VSITarReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
 {
     VSITarEntryFileOffset* pTarEntryOffset =
-                    reinterpret_cast<VSITarEntryFileOffset*>(pOffset);
+        static_cast<VSITarEntryFileOffset*>(pOffset);
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     if( m_bIsFuzzerFriendly )
     {
@@ -369,8 +395,6 @@ public:
     virtual const char* GetPrefix() override { return "/vsitar"; }
     virtual std::vector<CPLString> GetExtensions() override;
     virtual VSIArchiveReader* CreateReader(const char* pszTarFileName) override;
-
-    using VSIFilesystemHandler::Open;
 
     virtual VSIVirtualHandle *Open( const char *pszFilename,
                                     const char *pszAccess,

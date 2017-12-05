@@ -83,6 +83,7 @@ bool BitMask2::SetSize(int nCols, int nRows)
 // the last multiplication adds the four results together in the top nibble
 // This is potentially slower for input data
 //
+LERC_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static inline int csb(unsigned int v) {
     return ((((v - ((v >> 1) & 0x55)) * 0x1010101) & 0x30c00c03) * 0x10040041) >> 0x1c;
 }

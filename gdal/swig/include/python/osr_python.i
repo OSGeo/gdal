@@ -7,6 +7,10 @@
 %feature("autodoc");
 
 #ifndef FROM_GDAL_I
+%{
+#define MODULE_NAME           "osr"
+%}
+
 %include "python_exceptions.i"
 %include "python_strings.i"
 #endif

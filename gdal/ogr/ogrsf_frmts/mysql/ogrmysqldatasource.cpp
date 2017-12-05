@@ -31,34 +31,10 @@
 #include <string>
 #include "ogr_mysql.h"
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4201 ) /* nonstandard extension used : nameless struct/union */
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wdocumentation"
-#endif
-#include <my_sys.h>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic pop
-#endif
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
-
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 /************************************************************************/
 /*                         OGRMySQLDataSource()                         */
 /************************************************************************/
@@ -145,7 +121,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, char** papszOpenOptionsIn
         const char* pszVal = CSLFetchNameValue(papszOpenOptionsIn, apszOpenOptions[i]);
         if( pszVal )
         {
-            if( osNewName[osNewName.size()-1] != ':' )
+            if( osNewName.back() != ':' )
                 osNewName += ",";
             if( i > 0 )
             {
@@ -893,6 +869,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
     CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
 
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
+    const bool bHasSI = ( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) );
+
     if( wkbFlatten(eType) == wkbNone )
     {
         osCommand.Printf(
@@ -905,8 +884,9 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
         osCommand.Printf(
                  "CREATE TABLE `%s` ( "
                  "   %s %s UNIQUE NOT NULL AUTO_INCREMENT, "
-                 "   %s GEOMETRY NOT NULL )",
-                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName );
+                 "   %s GEOMETRY %s)",
+                 pszLayerName, pszExpectedFIDName, pszFIDType, pszGeomColumnName,
+                 bHasSI ? "NOT NULL" : "");
     }
 
     if( CSLFetchNameValue( papszOptions, "ENGINE" ) != NULL )
@@ -1027,9 +1007,7 @@ OGRMySQLDataSource::ICreateLayer( const char * pszLayerNameIn,
 /*      We're doing this before we add geometry and record to the table */
 /*      so this may not be exactly the best way to do it.               */
 /* -------------------------------------------------------------------- */
-    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-
-    if( eType != wkbNone && (pszSI == NULL || CPLTestBool(pszSI)) )
+    if( bHasSI )
     {
         osCommand.Printf(
                  "ALTER TABLE `%s` ADD SPATIAL INDEX(`%s`) ",

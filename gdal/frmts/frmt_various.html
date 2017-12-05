@@ -327,7 +327,7 @@ USGS DOQ Standards</a></p>
 
 <h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</a></h2>
 
-<p>GDAL supports reading and writing the ESRI .hdr labelling format,
+<p>GDAL supports reading and writing the ESRI .hdr labeling format,
 often referred to as ESRI BIL format.  Eight, sixteen
 and thirty-two bit integer raster data types are supported as well as 32
 bit floating point.  Coordinate systems (from a .prj file), and georeferencing
@@ -821,7 +821,7 @@ GMT.</p>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/netcdf/gmtdataset.cpp</tt>.</p>
 
-<p>See Also: <a href="http://www.unidata.ucar.edu/packages/netcdf/">Unidata NetCDF Page</a></p>
+<p>See Also: <a href="http://www.unidata.ucar.edu/software/netcdf/">Unidata NetCDF Page</a></p>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
@@ -1203,7 +1203,9 @@ values are real (though represented as complex bands).</p>
 <p>The driver supports both reading and writing (including create, delete,
 and copy) SAGA GIS binary grids. SAGA binary grid datasets are made of
 an ASCII header (.SGRD) and a binary data (.SDAT) file with a common
-basename.  The .SDAT file should be selected to access the dataset.</p>
+basename.  The .SDAT file should be selected to access the dataset.
+Starting with GDAL 2.3, the driver can read compressed .sg-grd-z files that
+are ZIP archives with .sgrd, .sdat and .prj files.</p>
 
 <p>The driver supports reading the following SAGA datatypes
 (in brackets the corresponding GDAL types): BIT (GDT_Byte),
@@ -1380,7 +1382,7 @@ to about 70 colors automatically.</p>
 
 <p>The GFF format was implemented based on the Matlab code provided by Sandia to read the data. The driver supports all types of data (16-bit or 32-bit complex, real bytes) theoretically, however due to a lack of data only 32-bit complex data has been tested.</p>
 
-<p>Sandia provides some sample data at <a href="http://sandia.gov/RADAR/sar-data.html">http://sandia.gov/RADAR/sar-data.html</a>.</p>
+<p>Sandia provides some sample data at <a href="http://www.sandia.gov/radar/complex-data/">http://www.sandia.gov/radar/complex-data/</a>.</p>
 
 <p>The extension for GFF formats is .gff.</p>
 

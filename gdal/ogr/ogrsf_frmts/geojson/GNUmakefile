@@ -16,7 +16,9 @@ OBJ = \
 	ogrgeojsonutils.o \
 	ogrgeojsonreader.o \
 	ogrgeojsonwriter.o \
+	ogresrijsondriver.o \
 	ogresrijsonreader.o \
+	ogrtopojsondriver.o \
 	ogrtopojsonreader.o
 
 CPPFLAGS	:= $(JSON_INCLUDE) -I. -I.. -I../..  $(CPPFLAGS)

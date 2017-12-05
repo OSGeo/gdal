@@ -28,7 +28,7 @@
 
 #include "ogr_amigocloud.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRAmigoCloud();
 
@@ -80,8 +80,6 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, NULL, TRUE ) )
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "AmigoCloud driver doesn't support database creation." );
         return NULL;
     }
 
@@ -93,7 +91,6 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRAmigoCloud()
-
 {
     if( GDALGetDriverByName( "AmigoCloud" ) != NULL )
         return;
@@ -108,9 +105,8 @@ void RegisterOGRAmigoCloud()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
     "<OpenOptionList>"
-    "  <Option name='API_KEY' type='string' description='Account API key'/>"
-    "  <Option name='PROJECTID' type='string' description='Project id' required='true'/>"
-    "  <Option name='BATCH_INSERT' type='boolean' description='Whether to group features to be inserted in a batch' default='YES'/>"
+    "  <Option name='AMIGOCLOUD_API_KEY' type='string' description='AmigoCLoud API token'/>"
+    "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table without deleting it' default='NO'/>"
     "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
@@ -118,7 +114,6 @@ void RegisterOGRAmigoCloud()
 
     poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
     "<LayerCreationOptionList>"
-    "  <Option name='OVERWRITE' type='boolean' description='Whether to overwrite an existing table with the layer name to be created' default='NO'/>"
     "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
     "</LayerCreationOptionList>");
 

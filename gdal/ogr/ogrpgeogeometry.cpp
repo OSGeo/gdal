@@ -34,10 +34,15 @@
 #include "cpl_port.h"
 #include "ogrpgeogeometry.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstring>
 #include <limits>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -47,7 +52,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int SHPP_TRISTRIP  = 0;
 static const int SHPP_TRIFAN    = 1;
@@ -140,94 +145,91 @@ static const int EXT_SHAPE_ELLIPSE_COMPLETE    = 0x2000;
 /*                  OGRCreateFromMultiPatchPart()                       */
 /************************************************************************/
 
-void OGRCreateFromMultiPatchPart( OGRMultiPolygon *poMP,
+static
+void OGRCreateFromMultiPatchPart( OGRGeometryCollection *poGC,
+                                  OGRMultiPolygon*& poMP,
                                   OGRPolygon*& poLastPoly,
                                   int nPartType,
                                   int nPartPoints,
-                                  double* padfX,
-                                  double* padfY,
-                                  double* padfZ )
+                                  const double* padfX,
+                                  const double* padfY,
+                                  const double* padfZ )
 {
     nPartType &= 0xf;
 
     if( nPartType == SHPP_TRISTRIP )
     {
-        if( poLastPoly != NULL )
+        if( poMP != NULL && poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
+        OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
         for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
         {
-            OGRPolygon *poPoly = new OGRPolygon();
-            OGRLinearRing *poRing = new OGRLinearRing();
-            int iSrcVert = iBaseVert;
+            const int iSrcVert = iBaseVert;
 
-            poRing->setPoint( 0,
-                            padfX[iSrcVert],
-                            padfY[iSrcVert],
-                            padfZ[iSrcVert] );
-            poRing->setPoint( 1,
-                            padfX[iSrcVert+1],
-                            padfY[iSrcVert+1],
-                            padfZ[iSrcVert+1] );
+            OGRPoint oPoint1  (padfX[iSrcVert],
+                               padfY[iSrcVert],
+                               padfZ[iSrcVert]);
 
-            poRing->setPoint( 2,
-                            padfX[iSrcVert+2],
-                            padfY[iSrcVert+2],
-                            padfZ[iSrcVert+2] );
-            poRing->setPoint( 3,
-                            padfX[iSrcVert],
-                            padfY[iSrcVert],
-                            padfZ[iSrcVert] );
+            OGRPoint oPoint2  (padfX[iSrcVert+1],
+                               padfY[iSrcVert+1],
+                               padfZ[iSrcVert+1]);
 
-            poPoly->addRingDirectly( poRing );
-            poMP->addGeometryDirectly( poPoly );
+            OGRPoint oPoint3  (padfX[iSrcVert+2],
+                               padfY[iSrcVert+2],
+                               padfZ[iSrcVert+2]);
+
+            OGRTriangle *poTriangle =
+                            new OGRTriangle(oPoint1, oPoint2, oPoint3);
+
+            poTIN->addGeometryDirectly( poTriangle );
         }
+        poGC->addGeometryDirectly(poTIN);
     }
     else if( nPartType == SHPP_TRIFAN )
     {
-        if( poLastPoly != NULL )
+        if( poMP != NULL && poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
+        OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
         for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert++ )
         {
-            OGRPolygon *poPoly = new OGRPolygon();
-            OGRLinearRing *poRing = new OGRLinearRing();
-            int iSrcVert = iBaseVert;
+            const int iSrcVert = iBaseVert;
 
-            poRing->setPoint( 0,
-                            padfX[0],
-                            padfY[0],
-                            padfZ[0] );
-            poRing->setPoint( 1,
-                            padfX[iSrcVert+1],
-                            padfY[iSrcVert+1],
-                            padfZ[iSrcVert+1] );
+            OGRPoint oPoint1  (padfX[0], padfY[0], padfZ[0]);
 
-            poRing->setPoint( 2,
-                            padfX[iSrcVert+2],
-                            padfY[iSrcVert+2],
-                            padfZ[iSrcVert+2] );
-            poRing->setPoint( 3,
-                            padfX[0],
-                            padfY[0],
-                            padfZ[0] );
+            OGRPoint oPoint2  (padfX[iSrcVert+1],
+                               padfY[iSrcVert+1],
+                               padfZ[iSrcVert+1]);
 
-            poPoly->addRingDirectly( poRing );
-            poMP->addGeometryDirectly( poPoly );
+            OGRPoint oPoint3  (padfX[iSrcVert+2],
+                               padfY[iSrcVert+2],
+                               padfZ[iSrcVert+2]);
+
+            OGRTriangle *poTriangle =
+                            new OGRTriangle(oPoint1, oPoint2, oPoint3);
+
+            poTIN->addGeometryDirectly( poTriangle );
         }
+        poGC->addGeometryDirectly(poTIN);
     }
     else if( nPartType == SHPP_OUTERRING
             || nPartType == SHPP_INNERRING
             || nPartType == SHPP_FIRSTRING
             || nPartType == SHPP_RING )
     {
-        if( poLastPoly != NULL
+        if( poMP == NULL )
+        {
+            poMP = new OGRMultiPolygon();
+        }
+
+        if( poMP != NULL && poLastPoly != NULL
             && (nPartType == SHPP_OUTERRING
                 || nPartType == SHPP_FIRSTRING) )
         {
@@ -241,9 +243,9 @@ void OGRCreateFromMultiPatchPart( OGRMultiPolygon *poMP,
         OGRLinearRing *poRing = new OGRLinearRing;
 
         poRing->setPoints( nPartPoints,
-                            padfX,
-                            padfY,
-                            padfZ );
+                            const_cast<double*>(padfX),
+                            const_cast<double*>(padfY),
+                            const_cast<double*>(padfZ) );
 
         poRing->closeRings();
 
@@ -251,63 +253,297 @@ void OGRCreateFromMultiPatchPart( OGRMultiPolygon *poMP,
     }
     else if( nPartType == SHPP_TRIANGLES )
     {
-        if( poLastPoly != NULL )
+        if( poMP != NULL && poLastPoly != NULL )
         {
             poMP->addGeometryDirectly( poLastPoly );
             poLastPoly = NULL;
         }
 
+        OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
         for( int iBaseVert = 0; iBaseVert < nPartPoints-2; iBaseVert+=3 )
         {
-            OGRPolygon *poPoly = new OGRPolygon();
-            OGRLinearRing *poRing = new OGRLinearRing();
-            int iSrcVert = iBaseVert;
+            const int iSrcVert = iBaseVert;
 
-            poRing->setPoint( 0,
-                            padfX[iSrcVert],
-                            padfY[iSrcVert],
-                            padfZ[iSrcVert] );
-            poRing->setPoint( 1,
-                            padfX[iSrcVert+1],
-                            padfY[iSrcVert+1],
-                            padfZ[iSrcVert+1] );
+            OGRPoint oPoint1  (padfX[iSrcVert],
+                               padfY[iSrcVert],
+                               padfZ[iSrcVert]);
 
-            poRing->setPoint( 2,
-                            padfX[iSrcVert+2],
-                            padfY[iSrcVert+2],
-                            padfZ[iSrcVert+2] );
-            poRing->setPoint( 3,
-                            padfX[iSrcVert],
-                            padfY[iSrcVert],
-                            padfZ[iSrcVert] );
+            OGRPoint oPoint2  (padfX[iSrcVert+1],
+                               padfY[iSrcVert+1],
+                               padfZ[iSrcVert+1]);
 
-            poPoly->addRingDirectly( poRing );
-            poMP->addGeometryDirectly( poPoly );
+            OGRPoint oPoint3  (padfX[iSrcVert+2],
+                               padfY[iSrcVert+2],
+                               padfZ[iSrcVert+2]);
+
+            OGRTriangle *poTriangle =
+                            new OGRTriangle(oPoint1, oPoint2, oPoint3);
+
+            poTIN->addGeometryDirectly( poTriangle );
         }
+        poGC->addGeometryDirectly(poTIN);
     }
     else
         CPLDebug( "OGR", "Unrecognized parttype %d, ignored.",
                   nPartType );
 }
 
+static bool RegisterEdge(
+            const double* padfX,
+            const double* padfY,
+            const double* padfZ,
+            int nPart,
+            std::map< std::vector<double>, std::pair<int,int> >& oMapEdges )
+{
+    int idx = 0;
+    if( padfX[0] > padfX[1] )
+    {
+        idx = 1;
+    }
+    else if( padfX[0] == padfX[1] )
+    {
+        if( padfY[0] > padfY[1] )
+        {
+            idx = 1;
+        }
+        else if( padfY[0] == padfY[1] )
+        {
+            if( padfZ[0] > padfZ[1] )
+            {
+                idx = 1;
+            }
+        }
+    }
+    std::vector<double> oVector;
+    oVector.push_back(padfX[idx]);
+    oVector.push_back(padfY[idx]);
+    oVector.push_back(padfZ[idx]);
+    oVector.push_back(padfX[1-idx]);
+    oVector.push_back(padfY[1-idx]);
+    oVector.push_back(padfZ[1-idx]);
+    std::map< std::vector<double>, std::pair<int,int> >::iterator oIter =
+        oMapEdges.find(oVector);
+    if( oIter == oMapEdges.end() )
+    {
+        oMapEdges[oVector] = std::pair<int,int>(nPart, -1);
+    }
+    else
+    {
+        CPLAssert(oIter->second.first >= 0);
+        if( oIter->second.second < 0 )
+            oIter->second.second = nPart;
+        else
+            return false;
+    }
+    return true;
+}
+
+static const std::pair<int,int>& GetEdgeOwners(
+        const double* padfX,
+        const double* padfY,
+        const double* padfZ,
+        const std::map< std::vector<double>, std::pair<int,int> >& oMapEdges )
+{
+    int idx = 0;
+    if( padfX[0] > padfX[1] )
+    {
+        idx = 1;
+    }
+    else if( padfX[0] == padfX[1] )
+    {
+        if( padfY[0] > padfY[1] )
+        {
+            idx = 1;
+        }
+        else if( padfY[0] == padfY[1] )
+        {
+            if( padfZ[0] > padfZ[1] )
+            {
+                idx = 1;
+            }
+        }
+    }
+    std::vector<double> oVector;
+    oVector.push_back(padfX[idx]);
+    oVector.push_back(padfY[idx]);
+    oVector.push_back(padfZ[idx]);
+    oVector.push_back(padfX[1-idx]);
+    oVector.push_back(padfY[1-idx]);
+    oVector.push_back(padfZ[1-idx]);
+    std::map< std::vector<double>, std::pair<int,int> >::const_iterator oIter =
+        oMapEdges.find(oVector);
+    CPLAssert( oIter != oMapEdges.end() );
+    return oIter->second;
+}
+
 /************************************************************************/
 /*                     OGRCreateFromMultiPatch()                        */
 /*                                                                      */
 /*      Translate a multipatch representation to an OGR geometry        */
-/*      Mostly copied from shape2ogr.cpp                                */
 /************************************************************************/
 
-static OGRGeometry* OGRCreateFromMultiPatch( int nParts,
-                                             GInt32* panPartStart,
-                                             GInt32* panPartType,
+OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
+                                             const GInt32* panPartStart,
+                                             const GInt32* panPartType,
                                              int nPoints,
-                                             double* padfX,
-                                             double* padfY,
-                                             double* padfZ)
+                                             const double* padfX,
+                                             const double* padfY,
+                                             const double* padfZ)
 {
-    OGRMultiPolygon *poMP = new OGRMultiPolygon();
-    OGRPolygon *poLastPoly = NULL;
+    // Deal with particular case of a patch of OuterRing of 4 points
+    // that form a TIN. And be robust to consecutive duplicated triangles !
+    std::map< std::vector<double>, std::pair<int,int> > oMapEdges;
+    bool bTINCandidate = nParts >= 2;
+    std::set<int> oSetDuplicated;
+    for( int iPart = 0; iPart < nParts && panPartStart != NULL; iPart++ )
+    {
+        int nPartPoints = 0;
 
+        // Figure out details about this part's vertex list.
+        if( iPart == nParts - 1 )
+            nPartPoints =
+                nPoints - panPartStart[iPart];
+        else
+            nPartPoints = panPartStart[iPart+1]
+                - panPartStart[iPart];
+        const int nPartStart = panPartStart[iPart];
+
+        if( panPartType[iPart] == SHPP_OUTERRING &&
+            nPartPoints == 4 &&
+            padfX[nPartStart] == padfX[nPartStart + 3] &&
+            padfY[nPartStart] == padfY[nPartStart + 3] &&
+            padfZ[nPartStart] == padfZ[nPartStart + 3] &&
+            !CPLIsNan(padfX[nPartStart]) &&
+            !CPLIsNan(padfX[nPartStart+1]) &&
+            !CPLIsNan(padfX[nPartStart+2]) &&
+            !CPLIsNan(padfY[nPartStart]) &&
+            !CPLIsNan(padfY[nPartStart+1]) &&
+            !CPLIsNan(padfY[nPartStart+2]) &&
+            !CPLIsNan(padfZ[nPartStart]) &&
+            !CPLIsNan(padfZ[nPartStart+1]) &&
+            !CPLIsNan(padfZ[nPartStart+2]) )
+        {
+            bool bDuplicate = false;
+            if( iPart > 0 )
+            {
+                bDuplicate = true;
+                const int nPrevPartStart = panPartStart[iPart-1];
+                for( int j = 0; j < 3; j++ )
+                {
+                    if( padfX[nPartStart + j] == padfX[nPrevPartStart + j] &&
+                        padfY[nPartStart + j] == padfY[nPrevPartStart + j] &&
+                        padfZ[nPartStart + j] == padfZ[nPrevPartStart + j] )
+                    {
+                    }
+                    else
+                    {
+                        bDuplicate = false;
+                        break;
+                    }
+                }
+            }
+            if( bDuplicate )
+            {
+                oSetDuplicated.insert(iPart);
+            }
+            else
+            if ( RegisterEdge( padfX + nPartStart,
+                               padfY + nPartStart,
+                               padfZ + nPartStart,
+                               iPart,
+                               oMapEdges ) &&
+                 RegisterEdge( padfX + nPartStart + 1,
+                               padfY + nPartStart + 1,
+                               padfZ + nPartStart + 1,
+                               iPart,
+                               oMapEdges ) &&
+                 RegisterEdge( padfX + nPartStart + 2,
+                               padfY + nPartStart + 2,
+                               padfZ + nPartStart + 2,
+                               iPart,
+                               oMapEdges ) )
+            {
+                // ok
+            }
+            else
+            {
+                bTINCandidate = false;
+                break;
+            }
+        }
+        else
+        {
+            bTINCandidate = false;
+            break;
+        }
+    }
+    if( bTINCandidate && panPartStart != NULL )
+    {
+        std::set<int> oVisitedParts;
+        std::set<int> oToBeVisitedParts;
+        oToBeVisitedParts.insert(0);
+        while( !oToBeVisitedParts.empty() )
+        {
+            const int iPart = *(oToBeVisitedParts.begin());
+            oVisitedParts.insert(iPart);
+            oToBeVisitedParts.erase(iPart);
+
+            const int nPartStart = panPartStart[iPart];
+            for( int j = 0; j < 3; j++ )
+            {
+                const std::pair<int,int>& oPair =
+                    GetEdgeOwners( padfX + nPartStart + j,
+                                   padfY + nPartStart + j,
+                                   padfZ + nPartStart + j,
+                                   oMapEdges );
+                const int iOtherPart = ( oPair.first == iPart ) ?
+                                         oPair.second : oPair.first;
+                if( iOtherPart >= 0 &&
+                    oVisitedParts.find(iOtherPart) == oVisitedParts.end() )
+                {
+                    oToBeVisitedParts.insert(iOtherPart);
+                }
+            }
+        }
+        if( static_cast<int>(oVisitedParts.size()) ==
+                            nParts - static_cast<int>(oSetDuplicated.size()) )
+        {
+            OGRTriangulatedSurface* poTIN = new OGRTriangulatedSurface();
+            for( int iPart = 0; iPart < nParts; iPart++ )
+            {
+                if( oSetDuplicated.find(iPart) != oSetDuplicated.end() )
+                    continue;
+
+                int nPartStart = 0;
+                if( panPartStart != NULL )
+                {
+                    nPartStart = panPartStart[iPart];
+                }
+
+                OGRPoint oPoint1  (padfX[nPartStart],
+                                   padfY[nPartStart],
+                                   padfZ[nPartStart]);
+
+                OGRPoint oPoint2  (padfX[nPartStart+1],
+                                   padfY[nPartStart+1],
+                                   padfZ[nPartStart+1]);
+
+                OGRPoint oPoint3  (padfX[nPartStart+2],
+                                   padfY[nPartStart+2],
+                                   padfZ[nPartStart+2]);
+
+                OGRTriangle *poTriangle =
+                                new OGRTriangle(oPoint1, oPoint2, oPoint3);
+
+                poTIN->addGeometryDirectly( poTriangle );
+            }
+            return poTIN;
+        }
+    }
+
+    OGRGeometryCollection *poGC = new OGRGeometryCollection();
+    OGRMultiPolygon *poMP = NULL;
+    OGRPolygon *poLastPoly = NULL;
     for( int iPart = 0; iPart < nParts; iPart++ )
     {
         int nPartPoints = 0;
@@ -330,7 +566,8 @@ static OGRGeometry* OGRCreateFromMultiPatch( int nParts,
             nPartStart = panPartStart[iPart];
         }
 
-        OGRCreateFromMultiPatchPart(poMP,
+        OGRCreateFromMultiPatchPart(poGC,
+                                    poMP,
                                     poLastPoly,
                                     panPartType[iPart],
                                     nPartPoints,
@@ -339,13 +576,25 @@ static OGRGeometry* OGRCreateFromMultiPatch( int nParts,
                                     padfZ + nPartStart);
     }
 
-    if( poLastPoly != NULL )
+
+    if( poMP != NULL && poLastPoly != NULL )
     {
         poMP->addGeometryDirectly( poLastPoly );
-        poLastPoly = NULL;
+        // poLastPoly = NULL;
+    }
+    if( poMP != NULL )
+        poGC->addGeometryDirectly(poMP);
+
+    if (poGC->getNumGeometries() == 1)
+    {
+        OGRGeometry *poResultGeom = poGC->getGeometryRef(0);
+        poGC->removeGeometry( 0, FALSE );
+        delete poGC;
+        return poResultGeom;
     }
 
-    return poMP;
+    else
+        return poGC;
 }
 
 /************************************************************************/
@@ -1147,26 +1396,52 @@ id,WKT
 }
 
 /************************************************************************/
-/*                   OGRWriteMultiPatchToShapeBin()                     */
+/*                         OGRCreateMultiPatch()                        */
 /************************************************************************/
 
-OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
-                                     GByte **ppabyShape,
-                                     int *pnBytes )
+OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
+                            int bAllowSHPTTriangle,
+                            int& nParts,
+                            int*& panPartStart,
+                            int*& panPartType,
+                            int& nPoints,
+                            OGRRawPoint*& poPoints,
+                            double*& padfZ )
 {
-    if( wkbFlatten(poGeom->getGeometryType()) != wkbMultiPolygon )
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    if( eType != wkbPolygon && eType != wkbTriangle &&
+        eType != wkbMultiPolygon && eType != wkbMultiSurface &&
+        eType != wkbTIN &&
+        eType != wkbPolyhedralSurface && eType != wkbGeometryCollection )
+    {
         return OGRERR_UNSUPPORTED_OPERATION;
+    }
 
     poGeom->closeRings();
-    OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
-    int nParts = 0;
-    int* panPartStart = NULL;
-    int* panPartType = NULL;
-    int nPoints = 0;
-    OGRRawPoint* poPoints = NULL;
-    double* padfZ = NULL;
-    int nBeginLastPart = 0;
 
+    OGRMultiPolygon *poMPoly;
+    OGRGeometry* poGeomToDelete = NULL;
+    if( eType == wkbMultiPolygon )
+        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeom);
+    else
+    {
+        poGeomToDelete =
+                OGRGeometryFactory::forceToMultiPolygon(poGeom->clone());
+        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeomToDelete);
+    }
+    if( poMPoly == NULL )
+    {
+        delete poGeomToDelete;
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+
+    nParts = 0;
+    panPartStart = NULL;
+    panPartType = NULL;
+    nPoints = 0;
+    poPoints = NULL;
+    padfZ = NULL;
+    int nBeginLastPart = 0;
     for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
     {
         OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
@@ -1179,17 +1454,28 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
         OGRLinearRing *poRing = poPoly->getExteriorRing();
         if( nRings == 1 && poRing->getNumPoints() == 4 )
         {
+            int nCorrectedPoints = nPoints;
+            if( nParts > 0 && poPoints != NULL &&
+                panPartType[nParts-1] == SHPP_OUTERRING &&
+                nPoints - panPartStart[nParts-1] == 4 )
+            {
+                nCorrectedPoints--;
+            }
+
             if( nParts > 0 && poPoints != NULL &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
                   nPoints - panPartStart[nParts-1] == 3) ||
+                 (panPartType[nParts-1] == SHPP_OUTERRING &&
+                  nPoints - panPartStart[nParts-1] == 4) ||
                  panPartType[nParts-1] == SHPP_TRIFAN) &&
                 poRing->getX(0) == poPoints[nBeginLastPart].x &&
                 poRing->getY(0) == poPoints[nBeginLastPart].y &&
                 poRing->getZ(0) == padfZ[nBeginLastPart] &&
-                poRing->getX(1) == poPoints[nPoints-1].x &&
-                poRing->getY(1) == poPoints[nPoints-1].y &&
-                poRing->getZ(1) == padfZ[nPoints-1] )
+                poRing->getX(1) == poPoints[nCorrectedPoints-1].x &&
+                poRing->getY(1) == poPoints[nCorrectedPoints-1].y &&
+                poRing->getZ(1) == padfZ[nCorrectedPoints-1] )
             {
+                nPoints  = nCorrectedPoints;
                 panPartType[nParts-1] = SHPP_TRIFAN;
 
                 poPoints = static_cast<OGRRawPoint *>(
@@ -1203,15 +1489,18 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             }
             else if( nParts > 0 && poPoints != NULL &&
                 ((panPartType[nParts-1] == SHPP_TRIANGLES &&
-                  nPoints - panPartStart[nParts-1] == 3) ||
+                  nPoints - panPartStart[nParts-1] == 3)||
+                 (panPartType[nParts-1] == SHPP_OUTERRING &&
+                  nPoints - panPartStart[nParts-1] == 4) ||
                  panPartType[nParts-1] == SHPP_TRISTRIP) &&
-                poRing->getX(0) == poPoints[nPoints-2].x &&
-                poRing->getY(0) == poPoints[nPoints-2].y &&
-                poRing->getZ(0) == padfZ[nPoints-2] &&
-                poRing->getX(1) == poPoints[nPoints-1].x &&
-                poRing->getY(1) == poPoints[nPoints-1].y &&
-                poRing->getZ(1) == padfZ[nPoints-1] )
+                poRing->getX(0) == poPoints[nCorrectedPoints-2].x &&
+                poRing->getY(0) == poPoints[nCorrectedPoints-2].y &&
+                poRing->getZ(0) == padfZ[nCorrectedPoints-2] &&
+                poRing->getX(1) == poPoints[nCorrectedPoints-1].x &&
+                poRing->getY(1) == poPoints[nCorrectedPoints-1].y &&
+                poRing->getZ(1) == padfZ[nCorrectedPoints-1] )
             {
+                nPoints  = nCorrectedPoints;
                 panPartType[nParts-1] = SHPP_TRISTRIP;
 
                 poPoints = static_cast<OGRRawPoint *>(
@@ -1225,7 +1514,9 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             }
             else
             {
-                if( nParts == 0 || panPartType[nParts-1] != SHPP_TRIANGLES )
+                if( nParts == 0 ||
+                    panPartType[nParts-1] != SHPP_TRIANGLES ||
+                    !bAllowSHPTTriangle )
                 {
                     nBeginLastPart = nPoints;
 
@@ -1234,21 +1525,22 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
                     panPartType = static_cast<int *>(
                         CPLRealloc(panPartType, (nParts + 1) * sizeof(int)));
                     panPartStart[nParts] = nPoints;
-                    panPartType[nParts] = SHPP_TRIANGLES;
+                    panPartType[nParts] = bAllowSHPTTriangle ? SHPP_TRIANGLES :
+                                                               SHPP_OUTERRING;
                     nParts++;
                 }
 
                 poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + 3) * sizeof(OGRRawPoint)));
+                    CPLRealloc(poPoints, (nPoints + 4) * sizeof(OGRRawPoint)));
                 padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + 3) * sizeof(double)));
-                for( int i = 0; i < 3; i++ )
+                    CPLRealloc(padfZ, (nPoints + 4) * sizeof(double)));
+                for( int i = 0; i < 4; i++ )
                 {
                     poPoints[nPoints+i].x = poRing->getX(i);
                     poPoints[nPoints+i].y = poRing->getY(i);
                     padfZ[nPoints+i] = poRing->getZ(i);
                 }
-                nPoints += 3;
+                nPoints += bAllowSHPTTriangle ? 3 : 4;
             }
         }
         else
@@ -1291,6 +1583,43 @@ OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
             nParts += nRings;
         }
     }
+
+    if( nParts == 1 && panPartType[0] == SHPP_OUTERRING &&
+        nPoints == 4 )
+    {
+        panPartType[0] = SHPP_TRIFAN;
+        nPoints = 3;
+    }
+
+    delete poGeomToDelete;
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                   OGRWriteMultiPatchToShapeBin()                     */
+/************************************************************************/
+
+OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
+                                     GByte **ppabyShape,
+                                     int *pnBytes )
+{
+    int nParts = 0;
+    int* panPartStart = NULL;
+    int* panPartType = NULL;
+    int nPoints = 0;
+    OGRRawPoint* poPoints = NULL;
+    double* padfZ = NULL;
+    OGRErr eErr = OGRCreateMultiPatch( poGeom,
+                                       TRUE,
+                                       nParts,
+                                       panPartStart,
+                                       panPartType,
+                                       nPoints,
+                                       poPoints,
+                                       padfZ );
+    if( eErr != OGRERR_NONE )
+        return eErr;
 
     int nShpSize = 4;  // All types start with integer type number.
     nShpSize += 16 * 2;  // xy bbox.
@@ -1576,9 +1905,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
         else if( pasCurves[i].eType == CURVE_BEZIER &&
                   nStartPointIdx+1 < nPartStartIdx + nPartPoints )
         {
-            const int nSteps = 100;
             OGRLineString *poLine = new OGRLineString();
-            poLine->setNumPoints(nSteps + 1);
             const double dfX0 = padfX[nStartPointIdx];
             const double dfY0 = padfY[nStartPointIdx];
             const double dfX1 = pasCurves[i].u.Bezier.dfX1;
@@ -1587,6 +1914,28 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             const double dfY2 = pasCurves[i].u.Bezier.dfY2;
             const double dfX3 = padfX[nStartPointIdx+1];
             const double dfY3 = padfY[nStartPointIdx+1];
+            double dfStartAngle = atan2(dfY1 - dfY0, dfX1 - dfX0);
+            double dfEndAngle = atan2(dfY3 - dfY2, dfX3 - dfX2);
+            if( dfStartAngle + M_PI < dfEndAngle )
+                dfStartAngle += 2 * M_PI;
+            else if( dfEndAngle + M_PI < dfStartAngle )
+                dfEndAngle += 2 * M_PI;
+            const double dfStepSizeRad =
+                CPLAtofM(CPLGetConfigOption("OGR_ARC_STEPSIZE", "4")) / 180.0 * M_PI;
+            const double dfLengthTangentStart = (dfX1 - dfX0) * (dfX1 - dfX0) +
+                                                (dfY1 - dfY0) * (dfY1 - dfY0);
+            const double dfLengthTangentEnd  =  (dfX3 - dfX2) * (dfX3 - dfX2) +
+                                                (dfY3 - dfY2) * (dfY3 - dfY2);
+            const double dfLength            =  (dfX3 - dfX0) * (dfX3 - dfX0) +
+                                                (dfY3 - dfY0) * (dfY3 - dfY0);
+            // Heuristics to compute number of steps: we take into account the
+            // angular difference between the start and end tangent. And we
+            // also take into account the relative length of the tangent vs
+            // the length of the straight segment
+            const int nSteps = static_cast<int>(ceil(
+                std::max(2.0, fabs(dfEndAngle - dfStartAngle) / dfStepSizeRad) *
+                std::max(1.0, 5.0 * (dfLengthTangentStart + dfLengthTangentEnd) / dfLength) ));
+            poLine->setNumPoints(nSteps + 1);
             poLine->setPoint(0, dfX0, dfY0,
                              padfZ != NULL ? padfZ[nStartPointIdx] : 0.0,
                              padfM != NULL ? padfM[nStartPointIdx] : 0.0);

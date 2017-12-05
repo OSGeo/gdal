@@ -11,13 +11,13 @@ curl http://download.osgeo.org/proj/proj-datumgrid-1.5.tar.gz > proj-datumgrid-1
 tar xvzf proj-datumgrid-1.5.tar.gz
 cd ..
 ./configure --prefix=$HOME/install-proj
-make -j3
-make install
+make -j3 > /dev/null
+make install >/dev/null
 cd ..
 # build GDAL
 cd gdal
 CC="ccache gcc" CXX="ccache g++" ./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-python --with-geotiff=internal --with-png=internal --with-static-proj4=$HOME/install-proj --with-sqlite3=/usr/local/opt/sqlite
-make USER_DEFS="-Wextra -Werror" -j3
+make USER_DEFS="-Wextra -Werror" -j3 -s
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 echo "Show which shared libs got used:"

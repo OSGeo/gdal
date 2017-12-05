@@ -37,7 +37,7 @@
 #include <iostream>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 KML::KML() :
     poTrunk_(NULL),
@@ -70,12 +70,12 @@ bool KML::open(const char * pszFilename)
     return pKMLFile_ != NULL;
 }
 
-void KML::parse()
+bool KML::parse()
 {
     if( NULL == pKMLFile_ )
     {
         sError_ = "No file given";
-        return;
+        return false;
     }
 
     if(poTrunk_ != NULL) {
@@ -115,20 +115,50 @@ void KML::parse()
                       static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
-            return;
+
+            if( poCurrent_ != NULL )
+            {
+                while( poCurrent_ )
+                {
+                    KMLNode* poTemp = poCurrent_->getParent();
+                    delete poCurrent_;
+                    poCurrent_ = poTemp;
+                }
+                // No need to destroy poTrunk_ : it has been destroyed in
+                // the last iteration
+            }
+            else
+            {
+                // Case of invalid content after closing element matching
+                // first <kml> element
+                delete poTrunk_;
+            }
+            poTrunk_ = NULL;
+
+            return false;
         }
         nWithoutEventCounter ++;
     } while (!nDone && nLen > 0 && nWithoutEventCounter < 10);
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
-    poCurrent_ = NULL;
 
     if (nWithoutEventCounter == 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too much data inside one element. File probably corrupted");
+        while( poCurrent_ )
+        {
+            KMLNode* poTemp = poCurrent_->getParent();
+            delete poCurrent_;
+            poCurrent_ = poTemp;
+        }
+        poTrunk_ = NULL;
+        return false;
     }
+
+    poCurrent_ = NULL;
+    return true;
 }
 
 void KML::checkValidity()
@@ -212,8 +242,13 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
 
     poKML->nWithoutEventCounter = 0;
 
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
+
     if(poKML->poTrunk_ == NULL
-    || (poKML->poCurrent_->getName()).compare("description") != 0)
+    || (poKML->poCurrent_ != NULL &&
+        poKML->poCurrent_->getName().compare("description") != 0))
     {
         if (poKML->nDepth_ == 1024)
         {
@@ -244,7 +279,7 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
 
         poKML->nDepth_++;
     }
-    else
+    else if( poKML->poCurrent_ != NULL )
     {
         std::string sNewContent = "<";
         sNewContent += pszName;
@@ -273,6 +308,10 @@ void XMLCALL KML::startElementValidate( void* pUserData, const char* pszName,
         return;
 
     poKML->validity = KML_VALIDITY_INVALID;
+
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
 
     if(strcmp(pszName, "kml") == 0 || strcmp(pszName, "Document") == 0)
     {
@@ -341,6 +380,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
     KML* poKML = static_cast<KML *>(pUserData);
 
     poKML->nWithoutEventCounter = 0;
+
+    const char* pszColumn = strchr(pszName, ':');
+    if( pszColumn)
+        pszName = pszColumn + 1;
 
     if(poKML->poCurrent_ != NULL &&
        poKML->poCurrent_->getName().compare(pszName) == 0)
@@ -448,6 +491,10 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
         {
             CPLDebug("KML", "Not handled: %s", pszName);
             delete poTmp;
+            if( poKML->poCurrent_ == poTmp )
+                poKML->poCurrent_ = NULL;
+            if( poKML->poTrunk_ == poTmp )
+                poKML->poTrunk_ = NULL;
         }
         else
         {
@@ -518,12 +565,15 @@ std::string KML::getError() const
 
 int KML::classifyNodes()
 {
+    if( poTrunk_ == NULL )
+        return false;
     return poTrunk_->classify(this);
 }
 
 void KML::eliminateEmpty()
 {
-    poTrunk_->eliminateEmpty(this);
+    if( poTrunk_ != NULL )
+        poTrunk_->eliminateEmpty(this);
 }
 
 void KML::print(unsigned short nNum)
@@ -541,32 +591,32 @@ bool KML::isHandled(std::string const& elem) const
 bool KML::isLeaf( std::string const& /* elem */ ) const
 {
     return false;
-};
+}
 
 bool KML::isFeature( std::string const& /* elem */ ) const
 {
     return false;
-};
+}
 
 bool KML::isFeatureContainer( std::string const& /* elem */ ) const
 {
     return false;
-};
+}
 
 bool KML::isContainer( std::string const& /* elem */ ) const
 {
     return false;
-};
+}
 
 bool KML::isRest( std::string const& /* elem */ ) const
 {
     return false;
-};
+}
 
 void KML::findLayers( KMLNode* /* poNode */, int /* bKeepEmptyContainers */ )
 {
     // idle
-};
+}
 
 bool KML::hasOnlyEmpty() const
 {
@@ -635,11 +685,11 @@ void KML::unregisterLayerIfMatchingThisNode(KMLNode* poNode)
         {
             if( i < nNumLayers_ - 1 )
             {
-                memcpy( papoLayers_ + i, papoLayers_ + i + 1,
+                memmove( papoLayers_ + i, papoLayers_ + i + 1,
                         (nNumLayers_ - 1 - i) * sizeof(KMLNode*) );
             }
             nNumLayers_ --;
-            continue;
+            break;
         }
         i++;
     }

@@ -41,7 +41,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int nLeaderSize = 24;
 
@@ -129,6 +129,8 @@ int DDFRecord::Read()
     {
         return ReadHeader();
     }
+    if( nFieldOffset < 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise we read just the data and carefully overlay it on     */
@@ -267,13 +269,14 @@ int DDFRecord::ReadHeader()
     nReadBytes = static_cast<int>(VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP()));
     if( nReadBytes == 0 && VSIFEofL( poModule->GetFP() ) )
     {
+        nFieldOffset = -1;
         return FALSE;
     }
     else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Leader is short on DDF file." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -291,12 +294,13 @@ int DDFRecord::ReadHeader()
     _sizeFieldPos = achLeader[21] - '0';
     _sizeFieldTag = achLeader[23] - '0';
 
-    if( _sizeFieldLength < 0 || _sizeFieldLength > 9
-        || _sizeFieldPos < 0 || _sizeFieldPos > 9
-        || _sizeFieldTag < 0 || _sizeFieldTag > 9 )
+    if( _sizeFieldLength <= 0 || _sizeFieldLength > 9
+        || _sizeFieldPos <= 0 || _sizeFieldPos > 9
+        || _sizeFieldTag <= 0 || _sizeFieldTag > 9 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ISO8211 record leader appears to be corrupt." );
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -315,7 +319,7 @@ int DDFRecord::ReadHeader()
                   "Data record appears to be corrupt on DDF file.\n"
                   " -- ensure that the files were uncompressed without modifying\n"
                   "carriage return/linefeeds (by default WINZIP does this)." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -327,14 +331,15 @@ int DDFRecord::ReadHeader()
 /*      Read the remainder of the record.                               */
 /* -------------------------------------------------------------------- */
         nDataSize = _recLength - nLeaderSize;
-        pachData = (char *) CPLMalloc(nDataSize);
+        pachData = (char *) CPLMalloc(nDataSize+1);
+        pachData[nDataSize] = '\0';
 
         if( VSIFReadL( pachData, 1, nDataSize, poModule->GetFP()) !=
             (size_t) nDataSize )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Data record is short on DDF file." );
-
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -346,14 +351,15 @@ int DDFRecord::ReadHeader()
                && (nDataSize < 2 || pachData[nDataSize-2] != DDF_FIELD_TERMINATOR) )
         {
             nDataSize++;
-            pachData = (char *) CPLRealloc(pachData,nDataSize);
+            pachData = (char *) CPLRealloc(pachData,nDataSize+1);
+            pachData[nDataSize] = '\0';
 
             if( VSIFReadL( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
                 != 1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Data record is short on DDF file." );
-
+                nFieldOffset = -1;
                 return FALSE;
             }
             CPLDebug( "ISO8211",
@@ -363,6 +369,7 @@ int DDFRecord::ReadHeader()
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -377,11 +384,12 @@ int DDFRecord::ReadHeader()
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Invalid entry width = %d", nFieldEntryWidth);
+            nFieldOffset = -1;
             return FALSE;
         }
 
         nFieldCount = 0;
-        for( i = 0; i < nDataSize; i += nFieldEntryWidth )
+        for( i = 0; i + nFieldEntryWidth <= nDataSize; i += nFieldEntryWidth )
         {
             if( pachData[i] == DDF_FIELD_TERMINATOR )
                 break;
@@ -431,6 +439,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -475,6 +484,7 @@ int DDFRecord::ReadHeader()
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Invalid record buffer size : %d.",
                       nFieldEntryWidth );
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -482,6 +492,7 @@ int DDFRecord::ReadHeader()
 
         if( tmpBuf == NULL )
         {
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -494,11 +505,13 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth);
+            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth+1);
+            newBuf[nDataSize+nFieldEntryWidth] = '\0';
             if(pachData!=NULL) {
                 memcpy(newBuf, pachData, nDataSize);
                 CPLFree(pachData);
@@ -538,6 +551,7 @@ int DDFRecord::ReadHeader()
                 tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldLength);
             if( tmpBuf == NULL )
             {
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -547,16 +561,19 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength);
+            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength+1);
             if( newBuf == NULL )
             {
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
+            newBuf[nDataSize+nFieldLength] = '\0';
             memcpy(newBuf, pachData, nDataSize);
             CPLFree(pachData);
             memcpy(&newBuf[nDataSize], tmpBuf, nFieldLength);
@@ -568,6 +585,7 @@ int DDFRecord::ReadHeader()
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -604,6 +622,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -613,6 +632,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -652,7 +672,8 @@ DDFField * DDFRecord::FindField( const char * pszName, int iFieldIndex )
 {
     for( int i = 0; i < nFieldCount; i++ )
     {
-        if( EQUAL(paoFields[i].GetFieldDefn()->GetName(),pszName) )
+        DDFFieldDefn* poFieldDefn = paoFields[i].GetFieldDefn();
+        if( poFieldDefn && EQUAL(poFieldDefn->GetName(),pszName) )
         {
             if( iFieldIndex == 0 )
                 return paoFields + i;
@@ -928,8 +949,9 @@ DDFRecord * DDFRecord::Clone()
     poNR->nFieldOffset = nFieldOffset;
 
     poNR->nDataSize = nDataSize;
-    poNR->pachData = (char *) CPLMalloc(nDataSize);
+    poNR->pachData = (char *) CPLMalloc(nDataSize + 1);
     memcpy( poNR->pachData, pachData, nDataSize );
+    poNR->pachData[nDataSize] = '\0';
 
     poNR->nFieldCount = nFieldCount;
     poNR->paoFields = new DDFField[nFieldCount];
@@ -1121,7 +1143,10 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
     // Don't realloc things smaller ... we will cut off some data.
     if( nBytesToAdd > 0 )
-        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+    {
+        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd + 1);
+        pachData[nDataSize+nBytesToAdd] = '\0';
+    }
 
     nDataSize += nBytesToAdd;
 
@@ -1478,7 +1503,8 @@ int DDFRecord::ResetDirectory()
     if( nDirSize != nFieldOffset )
     {
         const int nNewDataSize = nDataSize - nFieldOffset + nDirSize;
-        char *pachNewData = (char *) CPLMalloc(nNewDataSize);
+        char *pachNewData = (char *) CPLMalloc(nNewDataSize+1);
+        pachNewData[nNewDataSize] = '\0';
         memcpy( pachNewData + nDirSize,
                 pachData + nFieldOffset,
                 nNewDataSize - nDirSize );

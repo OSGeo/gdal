@@ -64,7 +64,7 @@ def mbtiles_2():
     if ds is None:
         return 'fail'
 
-    if ds.RasterCount != 3:
+    if ds.RasterCount != 4:
         gdaltest.post_reason('expected 3 bands')
         return 'fail'
 
@@ -184,8 +184,8 @@ def mbtiles_4():
     if ds is None:
         return 'fail'
 
-    if ds.RasterCount != 3:
-        gdaltest.post_reason('expected 3 bands')
+    if ds.RasterCount != 4:
+        gdaltest.post_reason('expected 4 bands')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
@@ -352,7 +352,7 @@ def mbtiles_7():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
-    expected_ovr_cs = [ 21179, 22577, 11996 ]
+    expected_ovr_cs = [ 21179, 22577, 11996, 17849 ]
     got_ovr_cs = [ ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(ds.RasterCount) ]
     if expected_ovr_cs != got_ovr_cs:
         gdaltest.post_reason('fail')
@@ -476,6 +476,26 @@ def mbtiles_10():
     return 'success'
 
 ###############################################################################
+# Test opening a .mbtiles.sql file
+
+def mbtiles_11():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+    ds = gdal.Open('data/byte.mbtiles.sql')
+    if ds.GetRasterBand(1).Checksum() != 4118:
+        gdaltest.post_reason('validation failed')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -496,6 +516,7 @@ gdaltest_list = [
     mbtiles_8,
     mbtiles_9,
     mbtiles_10,
+    mbtiles_11,
     mbtiles_cleanup ]
 
 #gdaltest_list = [ mbtiles_1, mbtiles_9 ]

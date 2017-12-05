@@ -43,7 +43,7 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                              parseURN()                              */
@@ -79,7 +79,7 @@ static bool parseURN( char *pszURN,
 /*      Extract object type                                             */
 /* -------------------------------------------------------------------- */
     if( ppszObjectType != NULL )
-        *ppszObjectType = (const char *) pszURN + 12;
+        *ppszObjectType = pszURN + 12;
 
     int i = 12;
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
@@ -95,7 +95,7 @@ static bool parseURN( char *pszURN,
 /*      Extract authority                                               */
 /* -------------------------------------------------------------------- */
     if( ppszAuthority != NULL )
-        *ppszAuthority = (char *) pszURN + i;
+        *ppszAuthority = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -110,7 +110,7 @@ static bool parseURN( char *pszURN,
 /*      Extract version                                                 */
 /* -------------------------------------------------------------------- */
     if( ppszVersion != NULL )
-        *ppszVersion = (char *) pszURN + i;
+        *ppszVersion = pszURN + i;
 
     while( pszURN[i] != ':' && pszURN[i] != '\0' )
         i++;
@@ -125,7 +125,7 @@ static bool parseURN( char *pszURN,
 /*      Extract code.                                                   */
 /* -------------------------------------------------------------------- */
     if( ppszCode != NULL )
-        *ppszCode = (char *) pszURN + i;
+        *ppszCode = pszURN + i;
 
     return true;
 }
@@ -275,25 +275,28 @@ static CPLXMLNode *exportAuthorityToXML( const OGR_SRSNode *poAuthParent,
 /* -------------------------------------------------------------------- */
 /*      Get authority node from parent.                                 */
 /* -------------------------------------------------------------------- */
-    if( poAuthParent->FindChild( "AUTHORITY" ) == -1 )
+    const int nAuthority = poAuthParent->FindChild("AUTHORITY");
+    if( nAuthority == -1 )
         return NULL;
 
-    const OGR_SRSNode *poAuthority = poAuthParent->GetChild(
-        poAuthParent->FindChild( "AUTHORITY" ));
+    const OGR_SRSNode *poAuthority = poAuthParent->GetChild(nAuthority);
 
 /* -------------------------------------------------------------------- */
 /*      Create identification.                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszCode = poAuthority->GetChild(1)->GetValue();
+    if(poAuthority->GetChildCount() < 2)
+        return NULL;
+
     const char *pszCodeSpace = poAuthority->GetChild(0)->GetValue();
+    const char *pszCode = poAuthority->GetChild(1)->GetValue();
     const char *pszEdition = NULL;
 
     if( bUseSubName )
-        return addAuthorityIDBlock( psXMLParent, pszTagName, pszCodeSpace,
-                                 pszObjectType, atoi(pszCode), pszEdition );
+        return addAuthorityIDBlock(psXMLParent, pszTagName, pszCodeSpace,
+                                   pszObjectType, atoi(pszCode), pszEdition);
 
-    return AddValueIDWithURN( psXMLParent, pszTagName, pszCodeSpace,
-                              pszObjectType, atoi(pszCode), pszEdition );
+    return AddValueIDWithURN(psXMLParent, pszTagName, pszCodeSpace,
+                             pszObjectType, atoi(pszCode), pszEdition);
 }
 
 /************************************************************************/
@@ -624,7 +627,11 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator                                             */
 /* -------------------------------------------------------------------- */
-    if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
+    if( pszProjection == NULL )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "No projection method");
+    }
+    else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
     {
         AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 9807 );
 
@@ -945,7 +952,7 @@ static int getEPSGObjectCodeValue( CPLXMLNode *psNode,
         || !EQUAL(osObjectType, pszEPSGObjectType) )
         return nDefault;
 
-    if( strlen(osValue) > 0 )
+    if( !osValue.empty() )
         return atoi(osValue);
 
     const char *pszValue = CPLGetXMLValue( psNode, "", NULL);

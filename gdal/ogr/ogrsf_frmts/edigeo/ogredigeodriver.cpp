@@ -29,7 +29,7 @@
 #include "ogr_edigeo.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGREDIGEO();
 
@@ -88,6 +88,7 @@ void RegisterOGREDIGEO()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_edigeo.html" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGREDIGEODriverOpen;
     poDriver->pfnIdentify = OGREDIGEODriverIdentify;

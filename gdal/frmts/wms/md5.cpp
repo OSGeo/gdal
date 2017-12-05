@@ -42,7 +42,7 @@ this file is only about 3k of object code.  */
 #include "cpl_port.h"
 #include "md5.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* Little-endian byte-swapping routines.  Note that these do not
 depend on the size of datatypes such as cvs_uint32, nor do they require
@@ -202,6 +202,7 @@ struct cvs_MD5Context *ctx)
 * reflect the addition of 16 longwords of new data.  MD5Update blocks
 * the data and converts bytes into longwords for this routine.
 */
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void
 cvs_MD5Transform (
                   cvs_uint32 buf[4],

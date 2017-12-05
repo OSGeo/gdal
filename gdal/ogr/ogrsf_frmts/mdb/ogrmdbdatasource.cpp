@@ -32,7 +32,7 @@
 #include <vector>
 #include "ogrgeomediageometry.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRMDBDataSource()                          */
@@ -290,7 +290,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
 
     pszName = CPLStrdup( pszNewName );
 
-    if (!env.Init())
+    if (!env.InitIfNeeded())
         return FALSE;
 
     poDB = OGRMDBDatabase::Open(&env, pszNewName);

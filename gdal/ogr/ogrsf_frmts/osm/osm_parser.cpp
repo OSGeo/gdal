@@ -26,12 +26,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define DO_NOT_DEFINE_READ_VARINT64
+
 #include "osm_parser.h"
 #include "gpb.h"
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
+#include "cpl_worker_thread_pool.h"
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
@@ -39,7 +43,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // The buffer that are passed to GPB decoding are extended with 0's
 // to be sure that we will be able to read a single 64bit value without
@@ -47,6 +51,17 @@ CPL_CVSID("$Id$");
 static const int EXTRA_BYTES = 1;
 
 static const int XML_BUFSIZE = 64 * 1024;
+
+// Per OSM PBF spec
+const unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
+
+// Per OSM PBF spec (usually much smaller !)
+const unsigned int MAX_BLOB_SIZE = 64 * 1024 * 1024;
+
+// GDAL implementation limits
+const unsigned int MAX_ACC_BLOB_SIZE = 50 * 1024 * 1024;
+const unsigned int MAX_ACC_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
+const int N_MAX_JOBS = 1024;
 
 /************************************************************************/
 /*                            INIT_INFO()                               */
@@ -65,6 +80,16 @@ static void INIT_INFO( OSMInfo *sInfo )
 /************************************************************************/
 /*                            _OSMContext                               */
 /************************************************************************/
+
+typedef struct
+{
+    const GByte *pabySrc;
+    size_t       nSrcSize;
+    GByte       *pabyDstBase;
+    size_t       nDstOffset;
+    size_t       nDstSize;
+    bool         bStatus;
+} DecompressionJob;
 
 struct _OSMContext
 {
@@ -90,11 +115,23 @@ struct _OSMContext
     GIntBig        nLatOffset;
     GIntBig        nLonOffset;
 
-    unsigned int   nBlobSizeAllocated;
+    // concatenated protocol buffer messages BLOB_OSMDATA, or single BLOB_OSMHEADER
     GByte         *pabyBlob;
+    unsigned int   nBlobSizeAllocated;
+    unsigned int   nBlobOffset;
+    unsigned int   nBlobSize;
+
+    GByte         *pabyBlobHeader; // MAX_BLOB_HEADER_SIZE+EXTRA_BYTES large
+
+    CPLWorkerThreadPool* poWTP;
 
     GByte         *pabyUncompressed;
     unsigned int   nUncompressedAllocated;
+    unsigned int   nTotalUncompressedSize;
+
+    DecompressionJob asJobs[N_MAX_JOBS];
+    int              nJobs;
+    int              iNextJob;
 
 #ifdef HAVE_EXPAT
     XML_Parser     hXMLParser;
@@ -316,8 +353,8 @@ bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
             if( !(strcmp(pszTxt, "OsmSchema-V0.6") == 0 ||
                   strcmp(pszTxt, "DenseNodes") == 0) )
             {
-                fprintf(stderr,
-                        "Error: unsupported required feature : %s\n",
+                CPLError(CE_Failure, CPLE_NotSupported,
+                        "Error: unsupported required feature : %s",
                         pszTxt);
                 VSIFree(pszTxt);
                 GOTO_END_ERROR;  // TODO(schwehr): Get rid of goto.
@@ -448,6 +485,38 @@ end_error:
 }
 
 /************************************************************************/
+/*                     AddWithOverflowAccepted()                        */
+/************************************************************************/
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static GIntBig AddWithOverflowAccepted(GIntBig a, GIntBig b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned and a
+    // big unsigned to negative integer.
+    return static_cast<GIntBig>(
+                        static_cast<GUIntBig>(a) + static_cast<GUIntBig>(b));
+}
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static int AddWithOverflowAccepted(int a, int b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned and a
+    // big unsigned to negative integer.
+    return static_cast<int>(
+                        static_cast<unsigned>(a) + static_cast<unsigned>(b));
+}
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static unsigned AddWithOverflowAccepted(unsigned a, int b)
+{
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a negative number to unsigned.
+    return a + static_cast<unsigned>(b);
+}
+
+/************************************************************************/
 /*                         ReadDenseNodes()                             */
 /************************************************************************/
 
@@ -474,6 +543,7 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
     GByte* pabyDataLon = NULL;
     GByte* apabyData[DENSEINFO_IDX_VISIBLE] = {NULL, NULL, NULL, NULL, NULL, NULL};
     GByte* pabyDataKeyVal = NULL;
+    unsigned int nMaxTags = 0;
 
     /* printf(">ReadDenseNodes\n"); */
     while(pabyData < pabyDataLimit)
@@ -563,12 +633,13 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
             READ_SIZE(pabyData, pabyDataLimit, nSize);
 
             pabyDataKeyVal = pabyData;
+            nMaxTags = nSize / 2;
 
-            if( nSize > psCtxt->nTagsAllocated )
+            if( nMaxTags > psCtxt->nTagsAllocated )
             {
 
                 psCtxt->nTagsAllocated = std::max(
-                    psCtxt->nTagsAllocated * 2, nSize);
+                    psCtxt->nTagsAllocated * 2, nMaxTags);
                 OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasTags,
                     psCtxt->nTagsAllocated * sizeof(OSMTag));
@@ -623,21 +694,21 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
 
             READ_VARSINT64_NOCHECK(pabyDataIDs, pabyDataIDsLimit, nDelta1);
             READ_VARSINT64(pabyDataLat, pabyDataLimit, nDelta2);
-            nID += nDelta1;
-            nLat += nDelta2;
+            nID = AddWithOverflowAccepted(nID, nDelta1);
+            nLat = AddWithOverflowAccepted(nLat, nDelta2);
 
             READ_VARSINT64(pabyDataLon, pabyDataLimit, nDelta1);
-            nLon += nDelta1;
+            nLon = AddWithOverflowAccepted(nLon, nDelta1);
 
             if( pabyDataTimeStamp )
             {
                 READ_VARSINT64(pabyDataTimeStamp, pabyDataLimit, nDelta2);
-                nTimeStamp += nDelta2;
+                nTimeStamp = AddWithOverflowAccepted(nTimeStamp, nDelta2);
             }
             if( pabyDataChangeset )
             {
                 READ_VARSINT64(pabyDataChangeset, pabyDataLimit, nDelta1);
-                nChangeset += nDelta1;
+                nChangeset = AddWithOverflowAccepted(nChangeset, nDelta1);
             }
             if( pabyDataVersion )
             {
@@ -647,13 +718,13 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
             {
                 int nDeltaUID = 0;
                 READ_VARSINT32(pabyDataUID, pabyDataLimit, nDeltaUID);
-                nUID += nDeltaUID;
+                nUID = AddWithOverflowAccepted(nUID, nDeltaUID);
             }
             if( pabyDataUserSID )
             {
                 int nDeltaUserSID = 0;
                 READ_VARSINT32(pabyDataUserSID, pabyDataLimit, nDeltaUserSID);
-                nUserSID += nDeltaUserSID;
+                nUserSID = AddWithOverflowAccepted(nUserSID, nDeltaUserSID);
                 if( nUserSID >= nStrCount )
                     GOTO_END_ERROR;
             }
@@ -662,7 +733,7 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
 
             if( pabyDataKeyVal != NULL && pasTags != NULL )
             {
-                while( true )
+                while( static_cast<unsigned>(nTags) < nMaxTags )
                 {
                     unsigned int nKey, nVal;
                     READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nKey);
@@ -1071,7 +1142,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
             {
                 GIntBig nDeltaRef = 0;
                 READ_VARSINT64_NOCHECK(pabyData, pabyDataNewLimit, nDeltaRef);
-                nRefVal += nDeltaRef;
+                nRefVal = AddWithOverflowAccepted(nRefVal, nDeltaRef);
 
                 psCtxt->panNodeRefs[sWay.nRefs ++] = nRefVal;
             }
@@ -1259,7 +1330,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
             {
                 GIntBig nDeltaMemID = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nDeltaMemID);
-                nMemID += nDeltaMemID;
+                nMemID = AddWithOverflowAccepted(nMemID, nDeltaMemID);
 
                 psCtxt->pasMembers[nIter].nID = nMemID;
             }
@@ -1496,6 +1567,98 @@ end_error:
 }
 
 /************************************************************************/
+/*                          DecompressFunction()                        */
+/************************************************************************/
+
+static void DecompressFunction(void* pDataIn)
+{
+    DecompressionJob* psJob = static_cast<DecompressionJob*>(pDataIn);
+    psJob->bStatus =
+        CPLZLibInflate( psJob->pabySrc, psJob->nSrcSize,
+                        psJob->pabyDstBase + psJob->nDstOffset,
+                        psJob->nDstSize, NULL) != NULL;
+}
+
+/************************************************************************/
+/*                      RunDecompressionJobs()                          */
+/************************************************************************/
+
+static bool RunDecompressionJobs(OSMContext* psCtxt)
+{
+    psCtxt->nTotalUncompressedSize = 0;
+
+    GByte* pabyDstBase = psCtxt->pabyUncompressed;
+    std::vector<void*> ahJobs;
+    for( int i = 0; i < psCtxt->nJobs; i++ )
+    {
+        psCtxt->asJobs[i].pabyDstBase = pabyDstBase;
+        if( psCtxt->poWTP )
+            ahJobs.push_back(&psCtxt->asJobs[i]);
+        else
+            DecompressFunction(&psCtxt->asJobs[i]);
+    }
+    if( psCtxt->poWTP )
+    {
+        psCtxt->poWTP->SubmitJobs(DecompressFunction, ahJobs);
+        psCtxt->poWTP->WaitCompletion();
+    }
+
+    bool bRet = true;
+    for( int i = 0; bRet && i < psCtxt->nJobs; i++ )
+    {
+        bRet &= psCtxt->asJobs[i].bStatus;
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                          ProcessSingleBlob()                         */
+/************************************************************************/
+
+static bool ProcessSingleBlob(OSMContext* psCtxt,
+                           DecompressionJob& sJob, BlobType eType)
+{
+    if( eType == BLOB_OSMHEADER )
+    {
+        return ReadOSMHeader(
+            sJob.pabyDstBase + sJob.nDstOffset,
+            sJob.pabyDstBase + sJob.nDstOffset + sJob.nDstSize,
+            psCtxt);
+    }
+    else
+    {
+        CPLAssert( eType == BLOB_OSMDATA );
+        return ReadPrimitiveBlock(
+            sJob.pabyDstBase + sJob.nDstOffset,
+            sJob.pabyDstBase + sJob.nDstOffset + sJob.nDstSize,
+            psCtxt);
+    }
+}
+
+/************************************************************************/
+/*                   RunDecompressionJobsAndProcessAll()                */
+/************************************************************************/
+
+static bool RunDecompressionJobsAndProcessAll(OSMContext* psCtxt,
+                                              BlobType eType)
+{
+    if( !RunDecompressionJobs(psCtxt) )
+    {
+        return false;
+    }
+    for( int i = 0; i < psCtxt->nJobs; i++ )
+    {
+        if( !ProcessSingleBlob(psCtxt, psCtxt->asJobs[i], eType) )
+        {
+            return false;
+        }
+    }
+    psCtxt->iNextJob = 0;
+    psCtxt->nJobs = 0;
+    return true;
+}
+
+/************************************************************************/
 /*                              ReadBlob()                              */
 /************************************************************************/
 
@@ -1504,12 +1667,13 @@ static const int BLOB_IDX_RAW_SIZE  = 2;
 static const int BLOB_IDX_ZLIB_DATA = 3;
 
 static
-bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
-               OSMContext* psCtxt )
+bool ReadBlob( OSMContext* psCtxt, BlobType eType )
 {
     unsigned int nUncompressedSize = 0;
     bool bRet = true;
-    GByte* pabyDataLimit = pabyData + nDataSize;
+    GByte* pabyData = psCtxt->pabyBlob + psCtxt->nBlobOffset;
+    GByte* pabyLastCheckpointData = pabyData;
+    GByte* pabyDataLimit = psCtxt->pabyBlob + psCtxt->nBlobSize;
 
     while(pabyData < pabyDataLimit)
     {
@@ -1518,9 +1682,15 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
 
         if( nKey == MAKE_KEY(BLOB_IDX_RAW, WT_DATA) )
         {
+            if( psCtxt->nJobs > 0 &&
+                !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
+            {
+                GOTO_END_ERROR;
+            }
+
             unsigned int nDataLength = 0;
             READ_SIZE(pabyData, pabyDataLimit, nDataLength);
-            if( nDataLength > 64 * 1024 * 1024 ) GOTO_END_ERROR;
+            if( nDataLength > MAX_BLOB_SIZE ) GOTO_END_ERROR;
 
             // printf("raw data size = %d\n", nDataLength);
 
@@ -1545,54 +1715,93 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
         {
             unsigned int nZlibCompressedSize = 0;
             READ_VARUINT32(pabyData, pabyDataLimit, nZlibCompressedSize);
-            if( CHECK_OOB && nZlibCompressedSize > nDataSize ) GOTO_END_ERROR;
+            if( CHECK_OOB && nZlibCompressedSize >
+                    psCtxt->nBlobSize - psCtxt->nBlobOffset)
+            {
+                GOTO_END_ERROR;
+            }
 
             // printf("nZlibCompressedSize = %d\n", nZlibCompressedSize);
 
             if( nUncompressedSize != 0 )
             {
-                if( nUncompressedSize > psCtxt->nUncompressedAllocated )
+                if( nUncompressedSize / 100 > nZlibCompressedSize )
                 {
+                    // Too prevent excessive memory allocations
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                                "Excessive uncompressed vs compressed ratio");
+                    GOTO_END_ERROR;
+                }
+                if( psCtxt->nJobs > 0 &&
+                    (psCtxt->nTotalUncompressedSize >
+                                UINT_MAX - nUncompressedSize ||
+                     psCtxt->nTotalUncompressedSize +
+                            nUncompressedSize > MAX_ACC_UNCOMPRESSED_SIZE) )
+                {
+                    pabyData = pabyLastCheckpointData;
+                    break;
+                }
+                unsigned nSizeNeeded = psCtxt->nTotalUncompressedSize +
+                                       nUncompressedSize;
+                if( nSizeNeeded > psCtxt->nUncompressedAllocated )
+                {
+
                     GByte* pabyUncompressedNew = NULL;
-                    if( psCtxt->nUncompressedAllocated <= INT_MAX )
+                    if( psCtxt->nUncompressedAllocated <=
+                            UINT_MAX - psCtxt->nUncompressedAllocated / 3 &&
+                        psCtxt->nUncompressedAllocated +
+                            psCtxt->nUncompressedAllocated / 3 <
+                                MAX_ACC_UNCOMPRESSED_SIZE )
+                    {
                         psCtxt->nUncompressedAllocated =
-                            std::max(psCtxt->nUncompressedAllocated * 2, nUncompressedSize);
+                            std::max(psCtxt->nUncompressedAllocated +
+                                            psCtxt->nUncompressedAllocated / 3,
+                                     nSizeNeeded);
+                    }
                     else
-                        psCtxt->nUncompressedAllocated = nUncompressedSize;
-                    if( psCtxt->nUncompressedAllocated > 0xFFFFFFFFU - EXTRA_BYTES )
+                    {
+                        psCtxt->nUncompressedAllocated = nSizeNeeded;
+                    }
+                    if( psCtxt->nUncompressedAllocated > UINT_MAX - EXTRA_BYTES )
                         GOTO_END_ERROR;
-                    pabyUncompressedNew = (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
-                                        psCtxt->nUncompressedAllocated + EXTRA_BYTES);
+                    pabyUncompressedNew =
+                        (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
+                                psCtxt->nUncompressedAllocated + EXTRA_BYTES);
                     if( pabyUncompressedNew == NULL )
                         GOTO_END_ERROR;
                     psCtxt->pabyUncompressed = pabyUncompressedNew;
                 }
-                memset(psCtxt->pabyUncompressed + nUncompressedSize, 0, EXTRA_BYTES);
+                memset(psCtxt->pabyUncompressed + nSizeNeeded, 0, EXTRA_BYTES);
 
-                /* printf("inflate %d -> %d\n", nZlibCompressedSize, nUncompressedSize); */
-
-                void* pOut =
-                    CPLZLibInflate( pabyData, nZlibCompressedSize,
-                                    psCtxt->pabyUncompressed, nUncompressedSize,
-                                    NULL );
-                if( pOut == NULL )
-                    GOTO_END_ERROR;
-
-                if( eType == BLOB_OSMHEADER )
+                psCtxt->asJobs[psCtxt->nJobs].pabySrc = pabyData;
+                psCtxt->asJobs[psCtxt->nJobs].nSrcSize = nZlibCompressedSize;
+                psCtxt->asJobs[psCtxt->nJobs].nDstOffset =
+                                                psCtxt->nTotalUncompressedSize;
+                psCtxt->asJobs[psCtxt->nJobs].nDstSize = nUncompressedSize;
+                psCtxt->nJobs ++;
+                if( psCtxt->poWTP == NULL || eType != BLOB_OSMDATA )
                 {
-                    bRet = ReadOSMHeader(psCtxt->pabyUncompressed,
-                                         psCtxt->pabyUncompressed + nUncompressedSize,
-                                         psCtxt);
+                    if( !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
+                    {
+                        GOTO_END_ERROR;
+                    }
                 }
-                else if( eType == BLOB_OSMDATA )
+                else
                 {
-                    bRet = ReadPrimitiveBlock(psCtxt->pabyUncompressed,
-                                              psCtxt->pabyUncompressed + nUncompressedSize,
-                                              psCtxt);
+                    // Make sure that uncompressed blobs are separated by
+                    // EXTRA_BYTES in the case where in the future we would
+                    // implement parallel decoding of them (not sure if that's
+                    // doable)
+                    psCtxt->nTotalUncompressedSize +=
+                                            nUncompressedSize + EXTRA_BYTES;
                 }
             }
 
+            nUncompressedSize = 0;
             pabyData += nZlibCompressedSize;
+            pabyLastCheckpointData = pabyData;
+            if( psCtxt->nJobs == N_MAX_JOBS )
+                break;
         }
         else
         {
@@ -1600,10 +1809,177 @@ bool ReadBlob( GByte* pabyData, unsigned int nDataSize, BlobType eType,
         }
     }
 
+    if( psCtxt->nJobs > 0 )
+    {
+        if( !RunDecompressionJobs(psCtxt) )
+        {
+            GOTO_END_ERROR;
+        }
+        // Just process one blob at a time
+        if( !ProcessSingleBlob(psCtxt, psCtxt->asJobs[0], eType) )
+        {
+            GOTO_END_ERROR;
+        }
+        psCtxt->iNextJob = 1;
+    }
+
+    psCtxt->nBlobOffset = static_cast<unsigned>(pabyData - psCtxt->pabyBlob);
     return bRet;
 
 end_error:
     return false;
+}
+
+/************************************************************************/
+/*                          OSM_ProcessBlock()                          */
+/************************************************************************/
+
+static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
+{
+    // Process any remaining queued jobs one by one
+    if (psCtxt->iNextJob < psCtxt->nJobs)
+    {
+        if( !(ProcessSingleBlob(psCtxt,
+                                psCtxt->asJobs[psCtxt->iNextJob],
+                                BLOB_OSMDATA)) )
+        {
+            return OSM_ERROR;
+        }
+        psCtxt->iNextJob ++;
+        return OSM_OK;
+    }
+    psCtxt->iNextJob = 0;
+    psCtxt->nJobs = 0;
+
+    // Make sure to finish parsing the last concatenated blocks
+    if( psCtxt->nBlobOffset < psCtxt->nBlobSize )
+    {
+        return ReadBlob(psCtxt, BLOB_OSMDATA) ? OSM_OK : OSM_ERROR;
+    }
+    psCtxt->nBlobOffset = 0;
+    psCtxt->nBlobSize = 0;
+
+    bool nRet = false;
+    int nBlobCount = 0;
+    OSMRetCode eRetCode = OSM_OK;
+    unsigned int nBlobSizeAcc = 0;
+    BlobType eType = BLOB_UNKNOWN;
+    while( true )
+    {
+        GByte abyHeaderSize[4];
+        unsigned int nBlobSize = 0;
+
+        if( VSIFReadL(abyHeaderSize, 4, 1, psCtxt->fp) != 1 )
+        {
+            eRetCode = OSM_EOF;
+            break;
+        }
+        const unsigned int nHeaderSize =
+            (static_cast<unsigned int>(abyHeaderSize[0]) << 24) |
+            (abyHeaderSize[1] << 16) |
+            (abyHeaderSize[2] << 8) | abyHeaderSize[3];
+
+        psCtxt->nBytesRead += 4;
+
+        /* printf("nHeaderSize = %d\n", nHeaderSize); */
+        if( nHeaderSize > MAX_BLOB_HEADER_SIZE )
+        {
+            eRetCode = OSM_ERROR;
+            break;
+        }
+        if( VSIFReadL(psCtxt->pabyBlobHeader, 1, nHeaderSize, psCtxt->fp) !=
+                                                                nHeaderSize )
+        {
+            eRetCode = OSM_ERROR;
+            break;
+        }
+
+        psCtxt->nBytesRead += nHeaderSize;
+
+        memset(psCtxt->pabyBlobHeader + nHeaderSize, 0, EXTRA_BYTES);
+        nRet = ReadBlobHeader(psCtxt->pabyBlobHeader, 
+                              psCtxt->pabyBlobHeader + nHeaderSize,
+                              &nBlobSize, &eType);
+        if( !nRet || eType == BLOB_UNKNOWN )
+        {
+            eRetCode = OSM_ERROR;
+            break;
+        }
+
+        // Limit in OSM PBF spec
+        if( nBlobSize > MAX_BLOB_SIZE )
+        {
+            eRetCode = OSM_ERROR;
+            break;
+        }
+        if( nBlobSize + nBlobSizeAcc > psCtxt->nBlobSizeAllocated )
+        {
+            psCtxt->nBlobSizeAllocated =
+                std::max(std::min(MAX_ACC_BLOB_SIZE,
+                                  psCtxt->nBlobSizeAllocated * 2),
+                         nBlobSize + nBlobSizeAcc);
+            GByte* pabyBlobNew = static_cast<GByte *>(
+                VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
+                                    psCtxt->nBlobSizeAllocated + EXTRA_BYTES));
+            if( pabyBlobNew == NULL )
+            {
+                eRetCode = OSM_ERROR;
+                break;
+            }
+            psCtxt->pabyBlob = pabyBlobNew;
+        }
+        // Given how Protocol buffer work, we can merge sevaral buffers
+        // by just appending them to the previous ones.
+        if( VSIFReadL(psCtxt->pabyBlob + nBlobSizeAcc, 1,
+                      nBlobSize, psCtxt->fp) != nBlobSize )
+        {
+            eRetCode = OSM_ERROR;
+            break;
+        }
+        psCtxt->nBytesRead += nBlobSize;
+        nBlobSizeAcc += nBlobSize;
+        memset(psCtxt->pabyBlob + nBlobSizeAcc, 0, EXTRA_BYTES);
+
+        nBlobCount ++;
+
+        if( eType == BLOB_OSMDATA && psCtxt->poWTP != NULL )
+        {
+            // Accumulate BLOB_OSMDATA until we reach either the maximum
+            // number of jobs or a threshold in bytes
+            if( nBlobCount == N_MAX_JOBS || nBlobSizeAcc > MAX_ACC_BLOB_SIZE )
+            {
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if( nBlobCount > 0 )
+    {
+        psCtxt->nBlobOffset = 0;
+        psCtxt->nBlobSize = nBlobSizeAcc;
+        nRet = ReadBlob(psCtxt, eType);
+        if( nRet )
+        {
+            if( eRetCode == OSM_EOF &&
+                (psCtxt->iNextJob < psCtxt->nJobs ||
+                 psCtxt->nBlobOffset < psCtxt->nBlobSize) )
+            {
+                eRetCode = OSM_OK;
+            }
+            CPLAssert( psCtxt->iNextJob == psCtxt->nJobs ||
+                       eType == BLOB_OSMDATA );
+        }
+        else
+        {
+            eRetCode = OSM_ERROR;
+        }
+    }
+
+    return eRetCode;
 }
 
 /************************************************************************/
@@ -1984,44 +2360,52 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
     else if( (psCtxt->bInNode || psCtxt->bInWay || psCtxt->bInRelation) &&
              strcmp(pszName, "tag") == 0 )
     {
-        if( psCtxt->nTags < psCtxt->nTagsAllocated )
+        if( psCtxt->nTags == psCtxt->nTagsAllocated )
         {
-            OSMTag* psTag = &(psCtxt->pasTags[psCtxt->nTags]);
-            psCtxt->nTags ++;
-
-            psTag->pszK = "";
-            psTag->pszV = "";
-
-            if( ppszIter )
+            psCtxt->nTagsAllocated =
+                psCtxt->nTagsAllocated * 2;
+            OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                psCtxt->pasTags,
+                psCtxt->nTagsAllocated * sizeof(OSMTag));
+            if( pasTagsNew == NULL )
             {
-                while( ppszIter[0] != NULL )
-                {
-                    if( ppszIter[0][0] == 'k' )
-                    {
-                        psTag->pszK = OSM_AddString(psCtxt, ppszIter[1]);
-                    }
-                    else if( ppszIter[0][0] == 'v' )
-                    {
-                        psTag->pszV = OSM_AddString(psCtxt, ppszIter[1]);
-                    }
-                    ppszIter += 2;
-                }
+                if( psCtxt->bInNode )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in node " CPL_FRMT_GIB,
+                            psCtxt->pasNodes[0].nID);
+                else if( psCtxt->bInWay )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in way " CPL_FRMT_GIB,
+                            psCtxt->sWay.nID);
+                else if( psCtxt->bInRelation )
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                            "Too many tags in relation " CPL_FRMT_GIB,
+                            psCtxt->sRelation.nID);
+                return;
             }
+            psCtxt->pasTags = pasTagsNew;
         }
-        else
+
+        OSMTag* psTag = &(psCtxt->pasTags[psCtxt->nTags]);
+        psCtxt->nTags ++;
+
+        psTag->pszK = "";
+        psTag->pszV = "";
+
+        if( ppszIter )
         {
-            if( psCtxt->bInNode )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in node " CPL_FRMT_GIB,
-                         psCtxt->pasNodes[0].nID);
-            else if( psCtxt->bInWay )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in way " CPL_FRMT_GIB,
-                         psCtxt->sWay.nID);
-            else if( psCtxt->bInRelation )
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Too many tags in relation " CPL_FRMT_GIB,
-                         psCtxt->sRelation.nID);
+            while( ppszIter[0] != NULL )
+            {
+                if( ppszIter[0][0] == 'k' )
+                {
+                    psTag->pszK = OSM_AddString(psCtxt, ppszIter[1]);
+                }
+                else if( ppszIter[0][0] == 'v' )
+                {
+                    psTag->pszV = OSM_AddString(psCtxt, ppszIter[1]);
+                }
+                ppszIter += 2;
+            }
         }
     }
 }
@@ -2258,7 +2642,7 @@ OSMContext* OSM_Open( const char* pszFilename,
     {
         psCtxt->nBlobSizeAllocated = XML_BUFSIZE;
 
-        psCtxt->nStrAllocated = 65536;
+        psCtxt->nStrAllocated = 1024*1024;
         psCtxt->pszStrBuf = (char*) VSI_MALLOC_VERBOSE(psCtxt->nStrAllocated);
         if( psCtxt->pszStrBuf )
             psCtxt->pszStrBuf[0] = '\0';
@@ -2304,6 +2688,27 @@ OSMContext* OSM_Open( const char* pszFilename,
         OSM_Close(psCtxt);
         return NULL;
     }
+    psCtxt->pabyBlobHeader =
+            (GByte*)VSI_MALLOC_VERBOSE(MAX_BLOB_HEADER_SIZE+EXTRA_BYTES);
+    if( psCtxt->pabyBlobHeader == NULL )
+    {
+        OSM_Close(psCtxt);
+        return NULL;
+    }
+    const char* pszNumThreads =
+                CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
+    int nNumCPUs = CPLGetNumCPUs();
+    if( pszNumThreads && !EQUAL(pszNumThreads, "ALL_CPUS") )
+        nNumCPUs = std::min(2 * nNumCPUs, atoi(pszNumThreads));
+    if( nNumCPUs > 1 )
+    {
+        psCtxt->poWTP = new CPLWorkerThreadPool();
+        if( !psCtxt->poWTP->Setup(nNumCPUs , NULL, NULL) )
+        {
+            delete psCtxt->poWTP;
+            psCtxt->poWTP = NULL;
+        }
+    }
 
     return psCtxt;
 }
@@ -2328,12 +2733,14 @@ void OSM_Close(OSMContext* psCtxt)
 #endif
 
     VSIFree(psCtxt->pabyBlob);
+    VSIFree(psCtxt->pabyBlobHeader);
     VSIFree(psCtxt->pabyUncompressed);
     VSIFree(psCtxt->panStrOff);
     VSIFree(psCtxt->pasNodes);
     VSIFree(psCtxt->pasTags);
     VSIFree(psCtxt->pasMembers);
     VSIFree(psCtxt->panNodeRefs);
+    delete psCtxt->poWTP;
 
     VSIFCloseL(psCtxt->fp);
     VSIFree(psCtxt);
@@ -2347,6 +2754,11 @@ void OSM_ResetReading( OSMContext* psCtxt )
     VSIFSeekL(psCtxt->fp, 0, SEEK_SET);
 
     psCtxt->nBytesRead = 0;
+    psCtxt->nJobs = 0;
+    psCtxt->iNextJob = 0;
+    psCtxt->nBlobOffset = 0;
+    psCtxt->nBlobSize = 0;
+    psCtxt->nTotalUncompressedSize = 0;
 
 #ifdef HAVE_EXPAT
     if( !psCtxt->bPBF )
@@ -2370,72 +2782,6 @@ void OSM_ResetReading( OSMContext* psCtxt )
         psCtxt->bInRelation = false;
     }
 #endif
-}
-
-/************************************************************************/
-/*                          OSM_ProcessBlock()                          */
-/************************************************************************/
-
-static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
-{
-    bool nRet = false;
-    GByte abyHeaderSize[4];
-    unsigned int nBlobSize = 0;
-    BlobType eType;
-
-    if( VSIFReadL(abyHeaderSize, 4, 1, psCtxt->fp) != 1 )
-    {
-        return OSM_EOF;
-    }
-    const unsigned int nHeaderSize =
-        (abyHeaderSize[0] << 24) | (abyHeaderSize[1] << 16) |
-        (abyHeaderSize[2] << 8) | abyHeaderSize[3];
-
-    psCtxt->nBytesRead += 4;
-
-    /* printf("nHeaderSize = %d\n", nHeaderSize); */
-    if( nHeaderSize > 64 * 1024 )
-        GOTO_END_ERROR;
-    if( VSIFReadL(psCtxt->pabyBlob, 1, nHeaderSize, psCtxt->fp) != nHeaderSize )
-        GOTO_END_ERROR;
-
-    psCtxt->nBytesRead += nHeaderSize;
-
-    memset(psCtxt->pabyBlob + nHeaderSize, 0, EXTRA_BYTES);
-    nRet = ReadBlobHeader(psCtxt->pabyBlob, psCtxt->pabyBlob + nHeaderSize,
-                          &nBlobSize, &eType);
-    if( !nRet || eType == BLOB_UNKNOWN )
-        GOTO_END_ERROR;
-
-    if( nBlobSize > 64*1024*1024 )
-        GOTO_END_ERROR;
-    if( nBlobSize > psCtxt->nBlobSizeAllocated )
-    {
-        psCtxt->nBlobSizeAllocated =
-            std::max(psCtxt->nBlobSizeAllocated * 2, nBlobSize);
-        GByte* pabyBlobNew = static_cast<GByte *>(
-            VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
-                                psCtxt->nBlobSizeAllocated + EXTRA_BYTES));
-        if( pabyBlobNew == NULL )
-            GOTO_END_ERROR;
-        psCtxt->pabyBlob = pabyBlobNew;
-    }
-    if( VSIFReadL(psCtxt->pabyBlob, 1, nBlobSize, psCtxt->fp) != nBlobSize )
-        GOTO_END_ERROR;
-
-    psCtxt->nBytesRead += nBlobSize;
-
-    memset(psCtxt->pabyBlob + nBlobSize, 0, EXTRA_BYTES);
-    nRet = ReadBlob(psCtxt->pabyBlob, nBlobSize, eType,
-                    psCtxt);
-    if( !nRet )
-        GOTO_END_ERROR;
-
-    return OSM_OK;
-
-end_error:
-
-    return OSM_ERROR;
 }
 
 /************************************************************************/

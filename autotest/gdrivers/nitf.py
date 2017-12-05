@@ -72,7 +72,7 @@ def nitf_3():
 ###############################################################################
 # Test direction creation of an NITF file.
 
-def nitf_create(creation_options, set_inverted_color_interp = True):
+def nitf_create(creation_options, set_inverted_color_interp = True, createcopy = False):
 
     drv = gdal.GetDriverByName( 'NITF' )
 
@@ -81,7 +81,10 @@ def nitf_create(creation_options, set_inverted_color_interp = True):
     except:
         pass
 
-    ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
+    if createcopy:
+        ds = gdal.GetDriverByName('MEM').Create('', 200, 100, 3, gdal.GDT_Byte)
+    else:
+        ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
                      creation_options )
     ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
 
@@ -101,6 +104,10 @@ def nitf_create(creation_options, set_inverted_color_interp = True):
         ds.WriteRaster( 0, line, 200, 1, raw_data,
                         buf_type = gdal.GDT_Int16,
                         band_list = [1,2,3] )
+
+    if createcopy:
+        ds = drv.CreateCopy( 'tmp/test_create.ntf', ds,
+                            options = creation_options)
 
     ds = None
 
@@ -541,7 +548,11 @@ def nitf_27():
 # Test Create() with IC=C8 compression with the JP2ECW driver
 
 def nitf_28_jp2ecw():
+
     gdaltest.nitf_28_jp2ecw_is_ok = False
+    if gdal.GetDriverByName('JP2ECW') is None:
+        return 'skip'
+
     import ecw
     if not ecw.has_write_support():
         return 'skip'
@@ -556,14 +567,24 @@ def nitf_28_jp2ecw():
     else:
         ret = 'fail'
 
+    tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (256,256): # 256 since this is hardcoded as such in the ECW driver
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
+        ret = 'fail'
+
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
 
 ###############################################################################
 # Test reading the previously create file with the JP2MrSID driver
-# (The NITF driver only looks for the JP2ECW driver when creating IC=C8 NITF files,
-#  but allows any GDAL driver to open the JP2 stream inside it)
 
 def nitf_28_jp2mrsid():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
@@ -589,10 +610,6 @@ def nitf_28_jp2mrsid():
 
 ###############################################################################
 # Test reading the previously create file with the JP2KAK driver
-# (The NITF driver only looks for the JP2ECW driver when creating IC=C8 NITF files,
-#  but allows any GDAL driver to open the JP2 stream inside it)
-#
-# Note: I (E. Rouault) haven't been able to check that this test actually works.
 
 def nitf_28_jp2kak():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
@@ -610,6 +627,66 @@ def nitf_28_jp2kak():
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2KAK')
 
     ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+###############################################################################
+# Test reading the previously create file with the JP2KAK driver
+
+def nitf_28_jp2openjpeg():
+    if not gdaltest.nitf_28_jp2ecw_is_ok:
+        return 'skip'
+
+    try:
+        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
+
+    gdaltest.reregister_all_jpeg2000_drivers()
+
+    return ret
+
+###############################################################################
+# Test Create() with IC=C8 compression with the JP2OpenJPEG driver
+
+def nitf_28_jp2openjpeg_bis():
+    try:
+        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+    except:
+        drv = None
+
+    if drv is None:
+        return 'skip'
+
+    # Deregister other potential conflicting JPEG2000 drivers
+    gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
+
+    if nitf_create([ 'ICORDS=G', 'IC=C8', 'QUALITY=25' ], set_inverted_color_interp = False, createcopy = True) == 'success':
+        ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp = False)
+    else:
+        ret = 'fail'
+
+    tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (1024,1024):
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
+        ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -672,7 +749,6 @@ def nitf_30():
 
     src_ds = gdal.Open( 'data/fake_nsif.ntf' )
     ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
-    src_ds = None
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
@@ -702,6 +778,82 @@ def nitf_30():
     ds = None
 
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
+
+    # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['BLOCKA_BLOCK_INSTANCE_01=01',
+                   'BLOCKA_BLOCK_COUNT=01',
+                   'BLOCKA_N_GRAY_01=00000',
+                   'BLOCKA_L_LINES_01=01000',
+                   'BLOCKA_LAYOVER_ANGLE_01=000',
+                   'BLOCKA_SHADOW_ANGLE_01=000',
+                   'BLOCKA_FRLC_LOC_01=+42.319331+020.078400',
+                   'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
+                   'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
+                   'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test that gdal_translate -ullr doesn't propagate BLOCKA
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
+
+    # Test USE_SRC_NITF_METADATA=NO
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_no_src_md.ntf', src_ds,
+                                            options = ['USE_SRC_NITF_METADATA=NO'])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
 
     return 'success'
 
@@ -1153,6 +1305,11 @@ def nitf_43(driver_to_test, options):
     else:
         ret = 'fail'
     out_ds = None
+
+    if open('tmp/nitf_43.ntf', 'rb').read().decode('LATIN1').find('<gml') >= 0:
+        print('GMLJP2 detected !')
+        ret = 'fail'
+
     gdal.GetDriverByName('NITF').Delete('tmp/nitf_43.ntf')
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -1669,6 +1826,74 @@ def nitf_58():
     ds = None
 
     if md is None or 'NITF_STDIDC_ACQUISITION_DATE' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading IMRFCA and IMASDA
+
+def nitf_read_IMRFCA_IMASDA():
+
+    # Create a fake NITF file with fake IMRFCA and IMASDA TRE
+    IMRFCA='0' * 1760
+    IMASDA='0' * 242
+
+    tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md is None or md == {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMRFCA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMASDA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMRFCA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA[0:-1], 'TRE=IMASDA=' + IMASDA])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMASDA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA[0:-1]])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -2466,6 +2691,265 @@ def nitf_72():
         ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds)
     if ds is not None:
         gdaltest.post_reason('fail: expected failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test case for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1525
+
+def nitf_73():
+
+    with gdaltest.error_handler():
+        gdal.Open('data/oss_fuzz_1525.ntf')
+
+    return 'success'
+
+###############################################################################
+# Test cases for CCLSTA
+#  - Simple case
+
+def nitf_74():
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_74.ntf', 1, 1, options = \
+             ['FILE_TRE=CCINFA=0012AS 17ge:GENC:3:3-5:AUS00000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_74.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_74.ntf' )
+
+    expected_data = """<tres>
+  <tre name="CCINFA" location="file">
+    <field name="NUMCODE" value="001" />
+    <repeated name="CODES" number="1">
+      <group index="0">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="AS" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:AUS" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    if data != expected_data:
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+#  - TABLE AG.2 case
+
+def nitf_75():
+
+    listing_AG1 = """<?xml version="1.0" encoding="UTF-8"?>
+<genc:GeopoliticalEntityEntry 
+    xmlns:genc="http://api.nsgreg.nga.mil/schema/genc/3.0" 
+    xmlns:genc-cmn="http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd">
+    <genc:encoding>
+        <genc-cmn:char3Code>MMR</genc-cmn:char3Code>
+        <genc-cmn:char3CodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:3:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:3:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:char3CodeURISet>
+        <genc-cmn:char2Code>MM</genc-cmn:char2Code>
+        <genc-cmn:char2CodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:2:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:2:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:char2CodeURISet>
+        <genc-cmn:numericCode>104</genc-cmn:numericCode>
+        <genc-cmn:numericCodeURISet>
+            <genc-cmn:codespaceURL>http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5</genc-cmn:codespaceURL>
+            <genc-cmn:codespaceURN>urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5</genc-cmn:codespaceURN>
+            <genc-cmn:codespaceURNBased>geo-political:GENC:n:3-5</genc-cmn:codespaceURNBased>
+            <genc-cmn:codespaceURNBasedShort>ge:GENC:n:3-5</genc-cmn:codespaceURNBasedShort>
+        </genc-cmn:numericCodeURISet>
+    </genc:encoding>
+    <genc:name><![CDATA[BURMA]]></genc:name>
+    <genc:shortName><![CDATA[Burma]]></genc:shortName>
+    <genc:fullName><![CDATA[Union of Burma]]></genc:fullName>
+    <genc:gencStatus>exception</genc:gencStatus>
+    <genc:entryDate>2016-09-30</genc:entryDate>
+    <genc:entryType>unchanged</genc:entryType>
+    <genc:usRecognition>independent</genc:usRecognition>
+    <genc:entryNotesOnNaming><![CDATA[
+        The GENC Standard specifies the name "BURMA" where instead ISO 3166-1 specifies "MYANMAR"; GENC specifies the short name "Burma" where instead ISO 3166-1 specifies "Myanmar"; and GENC specifies the full name "Union of Burma" where instead ISO 3166-1 specifies "the Republic of the Union of Myanmar". The GENC Standard specifies the local short name for 'my'/'mya' as "Myanma Naingngandaw" where instead ISO 3166-1 specifies "Myanma".
+        ]]></genc:entryNotesOnNaming>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-01</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-02</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-03</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-04</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-05</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-06</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-07</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-11</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-12</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-13</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-14</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-15</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-16</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-17</genc:division>
+    <genc:division codeSpace="as:GENC:6:3-5">MM-18</genc:division>
+    <genc:localShortName>
+        <genc:name><![CDATA[Myanma Naingngandaw]]></genc:name>
+        <genc:iso6393Char3Code>mya</genc:iso6393Char3Code>
+    </genc:localShortName>
+</genc:GeopoliticalEntityEntry>"""
+
+    ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_75.ntf', 1, 1, options = \
+             ['TRE=CCINFA=0062RQ 17ge:GENC:3:3-5:PRI000002RQ 20as:ISO2:6:II-3:US-PR000002BM 17ge:GENC:3:3-5:MMR04108 ' + \
+                 listing_AG1 + '3MMR 19ge:ISO1:3:VII-7:MMR00000' + '2S1 19ge:GENC:3:3-alt:SCT000002YYC16gg:1059:2:ed9:3E00000'])
+    ds = None
+
+    ds = gdal.Open('/vsimem/nitf_75.ntf')
+    data = ds.GetMetadata('xml:TRE')[0]
+    ds = None
+
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_75.ntf' )
+
+    expected_data = """<tres>
+  <tre name="CCINFA" location="image">
+    <field name="NUMCODE" value="006" />
+    <repeated name="CODES" number="6">
+      <group index="0">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="RQ" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:PRI" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="1">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="RQ" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="20" />
+        <field name="ESURN" value="as:ISO2:6:II-3:US-PR" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="2">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="BM" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="17" />
+        <field name="ESURN" value="ge:GENC:3:3-5:MMR" />
+        <field name="DETAIL_LEN" value="04108" />
+        <field name="DETAIL_CMPR" value="" />
+        <field name="DETAIL" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;genc:GeopoliticalEntityEntry 
+    xmlns:genc=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0&quot; 
+    xmlns:genc-cmn=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0/genc-cmn&quot; 
+    xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; 
+    xsi:schemaLocation=&quot;http://api.nsgreg.nga.mil/schema/genc/3.0 http://api.nsgreg.nga.mil/schema/genc/3.0.0/genc.xsd&quot;&gt;
+    &lt;genc:encoding&gt;
+        &lt;genc-cmn:char3Code&gt;MMR&lt;/genc-cmn:char3Code&gt;
+        &lt;genc-cmn:char3CodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/3/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:3:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:3:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:char3CodeURISet&gt;
+        &lt;genc-cmn:char2Code&gt;MM&lt;/genc-cmn:char2Code&gt;
+        &lt;genc-cmn:char2CodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/2/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:2:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:2:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:char2CodeURISet&gt;
+        &lt;genc-cmn:numericCode&gt;104&lt;/genc-cmn:numericCode&gt;
+        &lt;genc-cmn:numericCodeURISet&gt;
+            &lt;genc-cmn:codespaceURL&gt;http://api.nsgreg.nga.mil/geo-political/GENC/n/3-5&lt;/genc-cmn:codespaceURL&gt;
+            &lt;genc-cmn:codespaceURN&gt;urn:us:gov:dod:nga:def:geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURN&gt;
+            &lt;genc-cmn:codespaceURNBased&gt;geo-political:GENC:n:3-5&lt;/genc-cmn:codespaceURNBased&gt;
+            &lt;genc-cmn:codespaceURNBasedShort&gt;ge:GENC:n:3-5&lt;/genc-cmn:codespaceURNBasedShort&gt;
+        &lt;/genc-cmn:numericCodeURISet&gt;
+    &lt;/genc:encoding&gt;
+    &lt;genc:name&gt;&lt;![CDATA[BURMA]]&gt;&lt;/genc:name&gt;
+    &lt;genc:shortName&gt;&lt;![CDATA[Burma]]&gt;&lt;/genc:shortName&gt;
+    &lt;genc:fullName&gt;&lt;![CDATA[Union of Burma]]&gt;&lt;/genc:fullName&gt;
+    &lt;genc:gencStatus&gt;exception&lt;/genc:gencStatus&gt;
+    &lt;genc:entryDate&gt;2016-09-30&lt;/genc:entryDate&gt;
+    &lt;genc:entryType&gt;unchanged&lt;/genc:entryType&gt;
+    &lt;genc:usRecognition&gt;independent&lt;/genc:usRecognition&gt;
+    &lt;genc:entryNotesOnNaming&gt;&lt;![CDATA[
+        The GENC Standard specifies the name &quot;BURMA&quot; where instead ISO 3166-1 specifies &quot;MYANMAR&quot;; GENC specifies the short name &quot;Burma&quot; where instead ISO 3166-1 specifies &quot;Myanmar&quot;; and GENC specifies the full name &quot;Union of Burma&quot; where instead ISO 3166-1 specifies &quot;the Republic of the Union of Myanmar&quot;. The GENC Standard specifies the local short name for 'my'/'mya' as &quot;Myanma Naingngandaw&quot; where instead ISO 3166-1 specifies &quot;Myanma&quot;.
+        ]]&gt;&lt;/genc:entryNotesOnNaming&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-01&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-02&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-03&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-04&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-05&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-06&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-07&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-11&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-12&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-13&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-14&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-15&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-16&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-17&lt;/genc:division&gt;
+    &lt;genc:division codeSpace=&quot;as:GENC:6:3-5&quot;&gt;MM-18&lt;/genc:division&gt;
+    &lt;genc:localShortName&gt;
+        &lt;genc:name&gt;&lt;![CDATA[Myanma Naingngandaw]]&gt;&lt;/genc:name&gt;
+        &lt;genc:iso6393Char3Code&gt;mya&lt;/genc:iso6393Char3Code&gt;
+    &lt;/genc:localShortName&gt;
+&lt;/genc:GeopoliticalEntityEntry&gt;" />
+      </group>
+      <group index="3">
+        <field name="CODE_LEN" value="3" />
+        <field name="CODE" value="MMR" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="19" />
+        <field name="ESURN" value="ge:ISO1:3:VII-7:MMR" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="4">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="S1" />
+        <field name="EQTYPE" value="" />
+        <field name="ESURN_LEN" value="19" />
+        <field name="ESURN" value="ge:GENC:3:3-alt:SCT" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+      <group index="5">
+        <field name="CODE_LEN" value="2" />
+        <field name="CODE" value="YY" />
+        <field name="EQTYPE" value="C" />
+        <field name="ESURN_LEN" value="16" />
+        <field name="ESURN" value="gg:1059:2:ed9:3E" />
+        <field name="DETAIL_LEN" value="00000" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+
+    if data != expected_data:
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading C4 compressed file
+
+def nitf_read_C4():
+
+    ds = gdal.Open('data/RPFTOC01.ON2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 53599:
+        print(cs)
         return 'fail'
 
     return 'success'
@@ -3431,6 +3915,8 @@ gdaltest_list = [
     nitf_28_jp2ecw,
     nitf_28_jp2mrsid,
     nitf_28_jp2kak,
+    nitf_28_jp2openjpeg,
+    nitf_28_jp2openjpeg_bis,
     nitf_29,
     nitf_30,
     nitf_31,
@@ -3467,6 +3953,7 @@ gdaltest_list = [
     nitf_56,
     nitf_57,
     nitf_58,
+    nitf_read_IMRFCA_IMASDA,
     nitf_59,
     nitf_60,
     nitf_61,
@@ -3481,6 +3968,10 @@ gdaltest_list = [
     nitf_70,
     nitf_71,
     nitf_72,
+    nitf_73,
+    nitf_74,
+    nitf_75,
+    nitf_read_C4,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,

@@ -91,7 +91,7 @@
 #include "gdal_pam.h"
 #include "gta_headers.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* Helper functions                                                     */

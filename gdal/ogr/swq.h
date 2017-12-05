@@ -27,9 +27,15 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 
+#include <vector>
+#include <set>
+
 #if defined(_WIN32) && !defined(strcasecmp)
 #  define strcasecmp stricmp
 #endif
+
+// Used for swq_summary.oSetDistinctValues and oVectorDistinctValues
+#define SZ_OGR_NULL  "__OGR_NULL__"
 
 typedef enum {
     SWQ_OR,
@@ -114,6 +120,7 @@ public:
     ~swq_expr_node();
 
     void           Initialize();
+    void           MarkAsTimestamp();
     CPLString      UnparseOperationFromUnparsedSubExpr(char** apszSubExpr);
     char          *Unparse( swq_field_list *, char chColumnQuote );
     void           Dump( FILE *fp, int depth );
@@ -283,16 +290,30 @@ typedef struct {
     swq_expr_node *expr;
 } swq_col_def;
 
-typedef struct {
+class swq_summary {
+public:
+    struct Comparator
+    {
+        bool    bSortAsc;
+        swq_field_type eType;
+
+        Comparator() : bSortAsc(true), eType(SWQ_STRING) {}
+
+        bool    operator() (const CPLString&, const CPLString &) const;
+    };
+
     GIntBig     count;
 
-    char        **distinct_list; /* items of the list can be NULL */
+    std::vector<CPLString>          oVectorDistinctValues;
+    std::set<CPLString, Comparator> oSetDistinctValues;
     double      sum;
     double      min;
     double      max;
-    char        szMin[32];
-    char        szMax[32];
-} swq_summary;
+    CPLString   osMin;
+    CPLString   osMax;
+
+        swq_summary() : count(0), sum(0.0), min(0.0), max(0.0) {}
+};
 
 typedef struct {
     char *table_name;
@@ -341,7 +362,7 @@ public:
                            int distinct_flag = FALSE );
     int         result_columns;
     swq_col_def *column_defs;
-    swq_summary *column_summary;
+    std::vector<swq_summary> column_summary;
 
     int         PushTableDef( const char *pszDataSource,
                               const char *pszTableName,
@@ -358,6 +379,12 @@ public:
     void        PushOrderBy( const char* pszTableName, const char *pszFieldName, int bAscending );
     int         order_specs;
     swq_order_def *order_defs;
+
+    void        SetLimit( GIntBig nLimit );
+    GIntBig     limit;
+
+    void        SetOffset( GIntBig nOffset );
+    GIntBig     offset;
 
     swq_select *poOtherSelect;
     void        PushUnionAll( swq_select* poOtherSelectIn );
@@ -377,7 +404,6 @@ CPLErr swq_select_parse( swq_select *select_info,
                          swq_field_list *field_list,
                          int parse_flags );
 
-const char *swq_select_finish_summarize( swq_select *select_info );
 const char *swq_select_summarize( swq_select *select_info,
                                   int dest_column,
                                   const char *value );

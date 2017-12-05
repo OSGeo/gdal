@@ -365,10 +365,19 @@ def vsifile_7():
 
     # Test seeking  beyond file size in read-only mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'rb')
-    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0:
+    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gdal.VSIFTellL(fp) != 0:
+    if gdal.VSIFEofL(fp) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTellL(fp) != 0x7FFFFFFFFFFFFFFF:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(gdal.VSIFReadL(1, 1, fp)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFEofL(fp) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(fp)
@@ -610,6 +619,66 @@ def vsifile_12():
 
     return 'success'
 
+###############################################################################
+# Test reading filename with prefixes without terminating slash
+
+def vsifile_13():
+
+    gdal.VSIFOpenL('/vsigzip', 'rb')
+    gdal.VSIFOpenL('/vsizip', 'rb')
+    gdal.VSIFOpenL('/vsitar', 'rb')
+    gdal.VSIFOpenL('/vsimem', 'rb')
+    gdal.VSIFOpenL('/vsisparse', 'rb')
+    gdal.VSIFOpenL('/vsisubfile', 'rb')
+    gdal.VSIFOpenL('/vsicurl', 'rb')
+    gdal.VSIFOpenL('/vsis3', 'rb')
+    gdal.VSIFOpenL('/vsicurl_streaming', 'rb')
+    gdal.VSIFOpenL('/vsis3_streaming', 'rb')
+    gdal.VSIFOpenL('/vsistdin', 'rb')
+
+    fp = gdal.VSIFOpenL('/vsistdout', 'wb')
+    if fp is not None:
+        gdal.VSIFCloseL(fp)
+
+    gdal.VSIStatL('/vsigzip')
+    gdal.VSIStatL('/vsizip')
+    gdal.VSIStatL('/vsitar')
+    gdal.VSIStatL('/vsimem')
+    gdal.VSIStatL('/vsisparse')
+    gdal.VSIStatL('/vsisubfile')
+    gdal.VSIStatL('/vsicurl')
+    gdal.VSIStatL('/vsis3')
+    gdal.VSIStatL('/vsicurl_streaming')
+    gdal.VSIStatL('/vsis3_streaming')
+    gdal.VSIStatL('/vsistdin')
+    gdal.VSIStatL('/vsistdout')
+
+    return 'success'
+
+###############################################################################
+# Check performance issue (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1673)
+
+def vsifile_14():
+
+    with gdaltest.error_handler():
+        gdal.VSIFOpenL('/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz', 'rb')
+    return 'success'
+
+###############################################################################
+# Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
+
+def vsifile_15():
+
+    fp = gdal.VSIFOpenL('/vsigzip/data/corrupted_z_buf_error.gz', 'rb')
+    if fp is None:
+        return 'fail'
+    while not gdal.VSIFEofL(fp):
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1,4,fp)
+    gdal.VSIFCloseL(fp)
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -621,7 +690,10 @@ gdaltest_list = [ vsifile_1,
                   vsifile_9,
                   vsifile_10,
                   vsifile_11,
-                  vsifile_12 ]
+                  vsifile_12,
+                  vsifile_13,
+                  vsifile_14,
+                  vsifile_15 ]
 
 if __name__ == '__main__':
 

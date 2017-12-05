@@ -32,7 +32,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
+import os.path
 import sys
 
 sys.path.append( '../pymod' )
@@ -43,6 +49,39 @@ import webserver
 
 from osgeo import gdal
 from osgeo import ogr
+
+
+###############################################################################
+
+def compare_ogrinfo_output(gmlfile, reffile, options = ''):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_ogrinfo_path() is None:
+        return 'skip'
+
+    tmpfilename = 'tmp/' + os.path.basename(gmlfile) + '.txt'
+    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
+        ' -ro -al GMLAS:' + gmlfile +
+        ' -oo EXPOSE_METADATA_LAYERS=YES '+
+        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
+        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
+        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO' + ' ' + options,
+        encoding = 'utf-8')
+    ret = ret.replace('\r\n', '\n')
+    ret = ret.replace('data\\', 'data/') # Windows
+    expected = open(reffile, 'rb').read().decode('utf-8')
+    expected = expected.replace('\r\n', '\n')
+    if ret != expected:
+        gdaltest.post_reason('fail')
+        print('Got:')
+        print(ret)
+        open(tmpfilename, 'wb').write(ret.encode('utf-8'))
+        print('Diff:')
+        os.system('diff -u ' + reffile + ' ' + tmpfilename)
+        #os.unlink(tmpfilename)
+        return 'fail'
+    return 'success'
 
 ###############################################################################
 # Basic test
@@ -70,30 +109,9 @@ def ogr_gmlas_basic():
        print('Skipping because of -sanitize')
        return 'skip'
 
-    import test_cli_utilities
+    return compare_ogrinfo_output('data/gmlas_test1.xml',
+                                  'data/gmlas_test1.txt')
 
-    if test_cli_utilities.get_ogrinfo_path() is None:
-        return 'skip'
-
-    ret = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() +
-        ' -ro -al GMLAS:data/gmlas_test1.xml '+
-        '-oo EXPOSE_METADATA_LAYERS=YES '+
-        '-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES '+
-        '-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO ' +
-        '-oo @EXPOSE_CONFIGURATION_IN_METADATA=NO')
-    ret = ret.replace('\r\n', '\n')
-    expected = open('data/gmlas_test1.txt', 'rb').read().decode('utf-8')
-    expected = expected.replace('\r\n', '\n')
-    ret = ret.replace('data\\', 'data/') # Windows
-    if ret != expected:
-        gdaltest.post_reason('fail')
-        print('Got:')
-        print(ret)
-        open('tmp/ogr_gmlas_1.txt', 'wb').write(ret.encode('utf-8'))
-        print('Diff:')
-        os.system('diff -u data/gmlas_test1.txt tmp/ogr_gmlas_1.txt')
-        #os.unlink('tmp/ogr_gmlas_1.txt')
-        return 'fail'
 
     return 'success'
 
@@ -644,11 +662,11 @@ def ogr_gmlas_geometryproperty():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.IsFieldSet('geometryPropertyEmpty_xml'):
+    if not f.IsFieldNull('geometryPropertyEmpty_xml'):
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f['pointProperty_xml'] != '<gml:Point gml:id="poly.geom.Point" srsName="http://www.opengis.net/def/crs/EPSG/0/4326"><gml:pos>50 3</gml:pos></gml:Point>':
+    if f['pointProperty_xml'] != '<gml:Point gml:id="poly.geom.Point"><gml:pos srsName="http://www.opengis.net/def/crs/EPSG/0/4326">50 3</gml:pos></gml:Point>':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -1307,6 +1325,46 @@ def ogr_gmlas_conf_ignored_xpath():
     return 'success'
 
 ###############################################################################
+
+do_log = False
+class GMLASHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.startswith('/vsimem/'):
+                from osgeo import gdal
+                f = gdal.VSIFOpenL(self.path, "rb")
+                if f is None:
+                    self.send_response(404)
+                    self.end_headers()
+                else:
+                    gdal.VSIFSeekL(f, 0, 2)
+                    size = gdal.VSIFTellL(f)
+                    gdal.VSIFSeekL(f, 0, 0)
+                    content = gdal.VSIFReadL(1, size, f)
+                    gdal.VSIFCloseL(f)
+                    self.protocol_version = 'HTTP/1.0'
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(content)
+                return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+###############################################################################
 # Test schema caching
 
 def ogr_gmlas_cache():
@@ -1322,7 +1380,7 @@ def ogr_gmlas_cache():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
@@ -1871,6 +1929,26 @@ def ogr_gmlas_dataset_getnextfeature():
             gdaltest.post_reason('fail')
             return 'fail'
 
+    # Test iterating over metadata layers on XSD-only based dataset
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=data/gmlas_test1.xsd', 'EXPOSE_METADATA_LAYERS=YES'])
+    count = 0
+    last_l = None
+    while True:
+        f, l = ds.GetNextFeature()
+        if f is None:
+            if l is not None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            break
+        count += 1
+        last_l = l
+
+    if count == 0:
+        gdaltest.post_reason('fail')
+        print(count)
+        return 'fail'
+
+
     return 'success'
 
 ###############################################################################
@@ -1930,6 +2008,8 @@ def ogr_gmlas_inline_identifier():
     if ds.GetLayerCount() != 2:
         gdaltest.post_reason('fail')
         print( ds.GetLayerCount() )
+        for i in range( ds.GetLayerCount() ):
+            print(ds.GetLayer(i).GetName())
         return 'fail'
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex('identifier_foo') < 0:
@@ -2195,7 +2275,7 @@ def ogr_gmlas_xlink_resolver():
     if drv is None:
         return 'skip'
 
-    (webserver_process, webserver_port) = webserver.launch(fork_process = False)
+    (webserver_process, webserver_port) = webserver.launch(handler = GMLASHTTPHandler)
     if webserver_port == 0:
         return 'skip'
 
@@ -3231,6 +3311,75 @@ def ogr_gmlas_writer_gml():
     return 'success'
 
 ###############################################################################
+# Test writing support with geometries and -a_srs
+
+def ogr_gmlas_writer_gml_assign_srs():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas_geometryproperty_gml32_no_error.gml',
+                    open_options = [ 'EXPOSE_METADATA_LAYERS=YES', '@HASH=hash' ])
+    tmp_ds = gdal.VectorTranslate('', src_ds, format = 'Memory')
+    src_ds = None
+
+    ret_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer_gml.xml', tmp_ds, \
+        format = 'GMLAS', \
+        dstSRS = 'EPSG:32631', \
+        reproject = False)
+    tmp_ds = None
+
+    if ret_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    f = gdal.VSIFOpenL('/vsimem/ogr_gmlas_writer_gml.xml', 'rb')
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    content = gdal.VSIFReadL(1, 10000, f).decode('utf-8')
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_writer_gml.xsd')
+
+    if content.find('http://www.opengis.net/def/crs/EPSG/0/32631') < 0:
+        gdaltest.post_reason('fail')
+        print(content)
+        return 'fail'
+
+    # No geometry, but to test that the proxied ExecuteSQL() works
+
+    src_ds = gdal.OpenEx('GMLAS:data/gmlas_test1.xml', open_options = [ 'EXPOSE_METADATA_LAYERS=YES' ])
+    tmp_ds = gdal.VectorTranslate('/vsimem/ogr_gmlas_writer.db', src_ds, format = 'SQLite')
+    src_ds = None
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_ref0.xml', tmp_ds, \
+                                  format = 'GMLAS', \
+                                  dstSRS = 'EPSG:32631', \
+                                  reproject = False, \
+                                  datasetCreationOptions = ['WRAPPING=GMLAS_FEATURECOLLECTION'] )
+    gdal.VectorTranslate('/vsimem/gmlas_test1_generated_asrs.xml', tmp_ds, \
+                                  format = 'GMLAS', \
+                                  dstSRS = 'EPSG:32631', \
+                                  reproject = False, \
+                                  datasetCreationOptions = ['WRAPPING=GMLAS_FEATURECOLLECTION'] )
+    tmp_ds = None
+    gdal.Unlink('/vsimem/ogr_gmlas_writer.db')
+
+    if gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size != gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size:
+        gdaltest.post_reason('fail')
+        print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_ref0.xml').size)
+        print(gdal.VSIStatL('/vsimem/gmlas_test1_generated_asrs.xml').size)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/gmlas_test1_generated_ref0.xml')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_ref0.xsd')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xml')
+    gdal.Unlink('/vsimem/gmlas_test1_generated_asrs.xsd')
+
+    return 'success'
+
+###############################################################################
 # Test writing support with geometries with original XML content preserved
 
 def ogr_gmlas_writer_gml_original_xml():
@@ -3609,6 +3758,969 @@ def ogr_gmlas_read_fake_gmljp2():
     return 'success'
 
 ###############################################################################
+#  Test TypingConstraints
+
+def ogr_gmlas_typing_constraints():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+
+
+    # One substitution, with repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+        <myns:bar><myns:value>baz2</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer('main_elt_foo_bar')
+    if lyr.GetFeatureCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer('bar')
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz2':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+    # 2 substitutions
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns ogr_gmlas_typing_constraints.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_typing_constraints.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="bar">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="baz">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_typing_constraints.xml',
+        open_options = ["""CONFIG_FILE=<Configuration>
+<TypingConstraints>
+        <Namespaces>
+            <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
+        </Namespaces>
+        <ChildConstraint>
+            <ContainerXPath>myns_modified_for_fun:main_elt/myns_modified_for_fun:foo</ContainerXPath>
+            <ChildrenElements>
+                <Element>myns_modified_for_fun:bar</Element>
+                <Element>myns_modified_for_fun:baz</Element>
+            </ChildrenElements>
+        </ChildConstraint>
+    </TypingConstraints>
+</Configuration>"""])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('foo_bar_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.IsFieldSetAndNotNull('foo_baz_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    f = lyr.GetNextFeature()
+    if f.GetField('value') != 'baz':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_typing_constraints.xsd')
+
+
+    return 'success'
+
+###############################################################################
+#  Test swe:DataArray
+
+def ogr_gmlas_swe_dataarray():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_dataarray.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns ogr_gmlas_swe_dataarray.xsd">
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType name="Components">
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                         <swe:field name="myCount">
+                            <swe:Count definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myText">
+                            <swe:Text definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myBoolean">
+                            <swe:Boolean definition="http://"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,3,foo,true@@2017-09-01T00:00:00,2,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <!-- extra fields and trailing block separator -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,extra_field,extra_field2@@2017-09-01T00:00:00,,3.45@@
+            </swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="," tokenSeparator=","/>
+            </swe:encoding>
+            <!-- blockSeparator == tokenSeparator. Valid, but not advised ! -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,2017-09-01T00:00:00,,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_dataarray.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_dataarray.xml')
+
+    lyr = ds.GetLayerByName('dataarray_1_components')
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('parent_ogr_pkid') or \
+       f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34 or \
+       f.GetField('myCount') != 3 or \
+       f.GetField('myText') != 'foo' or \
+       f.GetField('myBoolean') != True:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') != '2' or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('dataarray_2')
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') is not None or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('dataarray_3')
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2016/09/01 00:00:00+01' or \
+       f.GetField('myCategory') != '1' or \
+       f.GetField('myQuantity') != 2.34:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('myTime') != '2017/09/01 00:00:00' or \
+       f.GetField('myCategory') is not None or \
+       f.GetField('myQuantity') != 3.45:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_dataarray.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_dataarray.xsd')
+
+
+    return 'success'
+
+
+###############################################################################
+#  Test swe:DataRecord
+
+def ogr_gmlas_swe_datarecord():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # One substitution, no repetition
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord.xml',
+"""<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns ogr_gmlas_swe_datarecord.xsd">
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+            <swe:field name="myCount">
+                <swe:Count definition="http://">
+                    <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:field>
+            <swe:field name="myText">
+                <swe:Text definition="http://">
+                    <swe:value>foo</swe:value>
+                </swe:Text>
+            </swe:field>
+            <swe:field name="myBoolean">
+                <swe:Boolean definition="http://">
+                    <swe:value>true</swe:value>
+                </swe:Boolean>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+</myns:main_elt>
+""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://www.opengis.net/swe/2.0" schemaLocation="ogr_gmlas_swe_datarecord_swe.xsd"/>
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                        <xs:complexContent>
+                                <xs:extension base="swe:DataRecordPropertyType">
+                                        <xs:attribute name="nilReason" type="xs:string"/>
+                                </xs:extension>
+                        </xs:complexContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord_swe.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           targetNamespace="http://www.opengis.net/swe/2.0"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="ogr_gmlas_swe_datarecord_xlink.xsd"/>
+
+<xs:element name="AbstractDataComponent" abstract="true" type="swe:AbstractDataComponentType"/>
+
+<xs:complexType name="AbstractDataComponentType"/>
+
+<xs:attributeGroup name="AssociationAttributeGroup">
+    <xs:attributeGroup ref="xlink:simpleAttrs"/>
+</xs:attributeGroup>
+
+<xs:complexType name="Reference">
+    <xs:attributeGroup ref="swe:AssociationAttributeGroup"/>
+</xs:complexType>
+
+<xs:element name="Time" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Category" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="identifier" type="xs:string" minOccurs="0"/>
+            <xs:element name="codeSpace" type="swe:Reference" minOccurs="0"/>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Quantity" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+        <!-- attribute optional is ignored in the default configuration -->
+        <xs:attribute name="optional" type="xs:boolean" default="false" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Count" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:int"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Text" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Boolean" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:complexType name="AbstractDataComponentPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:AbstractDataComponent"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:element name="DataRecord" substitutionGroup="swe:AbstractDataComponent" type="swe:DataRecordType">
+</xs:element>
+
+<xs:complexType name="DataRecordType">
+    <xs:complexContent>
+        <xs:extension base="swe:AbstractDataComponentType">
+            <xs:sequence>
+              <xs:element name="field" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:complexContent>
+                        <xs:extension base="swe:AbstractDataComponentPropertyType">
+                            <xs:attribute name="name" type="xs:NCName" use="required"/>
+                        </xs:extension>
+                    </xs:complexContent>
+                </xs:complexType>
+              </xs:element>
+           </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+  </xs:complexType>
+
+
+<xs:complexType name="DataRecordPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:DataRecord"/>
+    </xs:sequence>
+</xs:complexType>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_swe_datarecord_xlink.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              targetNamespace="http://www.w3.org/1999/xlink"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+<xs:attribute name="href" type="xs:anyURI"/>
+<xs:attributeGroup name="simpleAttrs">
+    <xs:attribute ref="xlink:href"/>
+</xs:attributeGroup>
+</xs:schema>""")
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_datarecord.xml', open_options = ['VALIDATE=YES'])
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_swe_datarecord.xml')
+    lyr = ds.GetLayerByName('main_elt_foo')
+    if lyr.GetLayerDefn().GetFieldCount() != 12:
+        gdaltest.post_reason('fail')
+        print(lyr.GetLayerDefn().GetFieldCount())
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField('mytime_value') != '2017/09/01 00:00:00' or \
+       f.GetField('mycategory_value') != 'myvalue' or \
+       f.GetField('mycategory_identifier') != 'myidentifier' or \
+       f.GetField('mycategory_codespace_href') != 'http://example.com' or \
+       f.GetField('myquantity_value') != 1.23 or \
+       f.GetField('mycount_value') != 2 or \
+       f.GetField('mytext_value') != 'foo' or \
+       f.GetField('myboolean_value') != True:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord_swe.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_swe_datarecord_xlink.xsd')
+
+
+    return 'success'
+
+###############################################################################
+#  Test a xs:any field at end of a type declaration
+
+def ogr_gmlas_any_field_at_end_of_declaration():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    # Simplified test case for
+    # http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd 
+    # http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+
+<xs:element name="main_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="foo" type="xs:string" minOccurs="1"/>
+        <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml',
+"""
+<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="ogr_gmlas_any_field_at_end_of_declaration.xsd">
+    <foo>bar</foo>
+    <extra><something>baz</something></extra>
+</main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml')
+    lyr = ds.GetLayerByName('main_elt')
+    # Will warn about 'Unexpected element with xpath=main_elt/extra (subxpath=main_elt/extra) found'
+    # This should be fixed at some point
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if f.GetField('foo') != 'bar':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    if f.GetField('value') != '<something>baz</something>':
+        print('Expected fail: value != <something>baz</something>')
+
+    gdal.Unlink('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_any_field_at_end_of_declaration.xml')
+
+    return 'success'
+
+###############################################################################
+#  Test auxiliary schema without namespace prefix
+
+def ogr_gmlas_aux_schema_without_namespace_prefix():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://main"
+           targetNamespace="http://main"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" type="xs:string"/>
+            <xs:element ref="generic" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="generic" abstract="true" type="xs:anyType"/>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://aux"
+           targetNamespace="http://aux"
+           xmlns:main="http://main"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://main" schemaLocation="ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd"/>
+<xs:element name="genericInt" substitutionGroup="main:generic">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="value" type="xs:integer" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml',
+"""
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:aux="http://aux"
+          xsi:schemaLocation="http://main ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd http://aux ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd">
+    <main:foo>bar</main:foo>
+    <aux:genericInt><aux:value>1</aux:value></aux:genericInt>
+</main:main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml')
+    lyr = ds.GetLayerByName('main_elt')
+    f = lyr.GetNextFeature()
+    if not f.IsFieldSetAndNotNull('generic_pkid'):
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix.xml')
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_main.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_aux_schema_without_namespace_prefix_aux.xsd')
+
+    return 'success'
+
+###############################################################################
+# Test importing a GML geometry that is in an element that is a substitutionGroup
+# of another one (#6990)
+
+def ogr_gmlas_geometry_as_substitutiongroup():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/gmlas_fake_gml32.xsd',
+                           open('data/gmlas_fake_gml32.xsd', 'rb').read())
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:gml="http://fake_gml32"
+              elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml32" schemaLocation="../subdir/gmlas_fake_gml32.xsd"/>
+
+<xs:element name="main_elt" substitutionGroup="gml:AbstractFeature">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence>
+            <xs:element ref="_foo"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="_foo" type="xs:anyType" abstract="true"/>
+
+<xs:element name="foo" type="gml:PointPropertyType" substitutionGroup="_foo"/>
+
+</xs:schema>""")
+
+    gdal.FileFromMemBuffer('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml',
+"""
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:gml="http://fake_gml32"
+          xsi:schemaLocation="http://main ogr_gmlas_geometry_as_substitutiongroup.xsd">
+    <main:foo><gml:Point gml:id="id"><gml:pos>5 6</gml:pos></gml:Point></main:foo>
+</main:main_elt>""")
+
+    ds = gdal.OpenEx('GMLAS:/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml')
+    lyr = ds.GetLayerByName('foo')
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is None:
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xml')
+    gdal.Unlink('/vsimem/subdir/ogr_gmlas_geometry_as_substitutiongroup.xsd')
+    gdal.Unlink('/vsimem/subdir/gmlas_fake_gml32.xsd')
+
+    return 'success'
+
+###############################################################################
+def ogr_gmlas_extra_piezometre():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    return compare_ogrinfo_output('data/gmlas/real_world/Piezometre.06512X0037.STREMY.2.gml',
+                                  'data/gmlas/real_world/output/Piezometre.06512X0037.STREMY.2.txt',
+                                  options = '-oo REMOVE_UNUSED_LAYERS=YES')
+
+###############################################################################
+def ogr_gmlas_extra_eureg():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    return compare_ogrinfo_output('data/gmlas/real_world/EUReg.example.gml',
+                                  'data/gmlas/real_world/output/EUReg.example.txt',
+                                  options = '-oo REMOVE_UNUSED_LAYERS=YES')
+
+
+###############################################################################
+# Test a schema that has nothing interesting in it but imports another
+# sceham
+
+def ogr_gmlas_no_element_in_first_choice_schema():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_interesting_schema.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:my_ns="http://my/ns" 
+           targetNamespace="http://my/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>""")
+
+
+    gdal.FileFromMemBuffer('/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd',
+"""<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:my_ns="http://my/ns" 
+           targetNamespace="http://main/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+ <xs:import namespace="http://my/ns" schemaLocation="ogr_gmlas_interesting_schema.xsd" />
+</xs:schema>""")
+
+
+    ds = gdal.OpenEx('GMLAS:', open_options = ['XSD=/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd'])
+    lyr = ds.GetLayerByName('_ogr_layers_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_xpath'] != 'my_ns:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    gdal.Unlink('/vsimem/ogr_gmlas_interesting_schema.xsd')
+    gdal.Unlink('/vsimem/ogr_gmlas_no_element_in_first_choice_schema.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gmlas_cleanup():
@@ -3670,18 +4782,32 @@ gdaltest_list = [
     ogr_gmlas_writer_check_xml_xsd,
     ogr_gmlas_writer_check_xml_read_back,
     ogr_gmlas_writer_gml,
+    ogr_gmlas_writer_gml_assign_srs,
     ogr_gmlas_writer_gml_original_xml,
     ogr_gmlas_writer_options,
     ogr_gmlas_writer_errors,
     ogr_gmlas_read_fake_gmljp2,
+    ogr_gmlas_typing_constraints,
+    ogr_gmlas_swe_dataarray,
+    ogr_gmlas_swe_datarecord,
+    ogr_gmlas_any_field_at_end_of_declaration,
+    ogr_gmlas_aux_schema_without_namespace_prefix,
+    ogr_gmlas_geometry_as_substitutiongroup,
+    ogr_gmlas_no_element_in_first_choice_schema,
     ogr_gmlas_cleanup ]
 
-# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_writer_gml, ogr_gmlas_cleanup ]
+# gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]
+
+# Test only work if using "python ogr_gmlas.py"
+gdaltest_extra_list = [
+    ogr_gmlas_extra_piezometre,
+    ogr_gmlas_extra_eureg
+]
 
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'ogr_gmlas' )
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests( gdaltest_list + gdaltest_extra_list )
 
     gdaltest.summarize()

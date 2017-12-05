@@ -1,0 +1,10 @@
+<kml>
+    <Document>
+        <Folder>
+            <kml>
+                <Document><Folder></Folder></Document>
+            </kml>
+            <Placemark></Placemark>
+        </Folder>
+    </Document>
+</kml>

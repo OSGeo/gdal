@@ -32,7 +32,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -295,6 +295,7 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
         nLineCount++;
 
         if ( (nLineCount == 1) && !EQUAL(pszLine, "IMAGINE_RAW_FILE") ) {
+            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return NULL;
         }
 
@@ -465,18 +466,33 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
     if( EQUAL(szLayout, "BIP") )
     {
         nPixelOffset = nItemSize * nBands;
+        if( nPixelOffset > INT_MAX / nCols )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nItemSize);
     }
     else if( EQUAL(szLayout, "BSQ") )
     {
         nPixelOffset = nItemSize;
+        if( nPixelOffset > INT_MAX / nCols )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
+        if( nItemSize > INT_MAX / nBands || nItemSize * nBands > INT_MAX / nCols )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
     }

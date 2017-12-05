@@ -802,7 +802,7 @@ def jp2openjpeg_22():
     if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetRasterBand(1).Checksum() != 11457:
+    if ds.GetRasterBand(1).Checksum() not in [ 11457, 11450 ]:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
@@ -1097,6 +1097,15 @@ def jp2openjpeg_26():
        out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize != 128:
         print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).XSize)
         print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.ErrorReset()
+    out_ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
     out_ds = None
@@ -1606,7 +1615,9 @@ def jp2openjpeg_33():
   </VRTRasterBand>
 </VRTDataset>""")
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options = ['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000'])
+    # Limit number of resolutions, because of
+    # https://github.com/uclouvain/openjpeg/issues/493
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options = ['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000', 'RESOLUTIONS=5'])
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
@@ -2876,7 +2887,7 @@ def jp2openjpeg_45():
     myshape2_gml_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/myshape2.gml" """)
     feature2_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature2.gml" """)
     feature3_pos = gmljp2.find("""<gmljp2:feature xlink:href="gmljp2://xml/feature3.gml" """)
-    myshape_kml_pos = gmljp2.find("""<Document id="root_doc">""")
+    myshape_kml_pos = gmljp2.find("""<Document id="root_doc_0">""")
     empty_kml_pos = gmljp2.find("""<Document id="empty_doc" />""")
     style1_pos = gmljp2.find("""<style1 xmlns="http://dummy" />""")
     style2_pos = gmljp2.find("""<mydummyns:style2 xmlns:mydummyns="http://dummy" />""")
@@ -2919,7 +2930,7 @@ def jp2openjpeg_45():
     #print(gmljp2)
 
     myshape_gml = ds.GetMetadata_List("xml:myshape.gml")[0]
-    if myshape_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/myshape.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+    if myshape_gml.find("""<ogr1:FeatureCollection gml:id="ID_GMLJP2_0_1_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/1 gmljp2://xml/myshape.xsd" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape_gml)
         return 'fail'
@@ -2929,13 +2940,13 @@ def jp2openjpeg_45():
         return 'fail'
 
     myshape_xsd = ds.GetMetadata_List("xml:myshape.xsd")[0]
-    if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/" xmlns:ogr="http://ogr.maptools.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
+    if myshape_xsd.find("""<xs:schema targetNamespace="http://ogr.maptools.org/1" xmlns:ogr1="http://ogr.maptools.org/1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlsf="http://www.opengis.net/gmlsf/2.0" elementFormDefault="qualified" version="1.0">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape_xsd)
         return 'fail'
 
     myshape2_gml = ds.GetMetadata_List("xml:myshape2.gml")[0]
-    if myshape2_gml.find("""<ogr:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
+    if myshape2_gml.find("""<ogr2:FeatureCollection gml:id="ID_GMLJP2_0_2_aFeatureCollection" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ogr.maptools.org/ gmljp2://xml/a_schema.xsd" xmlns:ogr2="http://ogr.maptools.org/" xmlns:gml="http://www.opengis.net/gml/3.2">""") < 0:
         gdaltest.post_reason('fail')
         print(myshape2_gml)
         return 'fail'
@@ -3584,6 +3595,28 @@ def jp2openjpeg_49():
     return 'success'
 
 ###############################################################################
+# Test opening an image of small dimension with very small tiles (#7012)
+
+def jp2openjpeg_50():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/fake_sent2_preview.jp2')
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    if blockxsize != ds.RasterXSize or blockysize != ds.RasterYSize:
+        gdaltest.post_reason('expected warning')
+        print(blockxsize, blockysize)
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 2046:
+        gdaltest.post_reason('expected warning')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3641,6 +3674,7 @@ gdaltest_list = [
     jp2openjpeg_47,
     jp2openjpeg_48,
     jp2openjpeg_49,
+    jp2openjpeg_50,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

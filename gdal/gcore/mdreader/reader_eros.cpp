@@ -38,7 +38,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderEROS()
@@ -237,19 +237,22 @@ char** GDALMDReaderEROS::LoadImdTxtFile()
     for(i = 0; papszLines[i] != NULL; i++)
     {
         const char *pszLine = papszLines[i];
-        for(j = 0; j < 21; j++)
+        if( CPLStrnlen(pszLine, 21) >= 21 )
         {
-            if(pszLine[j] == ' ')
+            for(j = 0; j < 21; j++)
             {
-                break;
+                if(pszLine[j] == ' ' )
+                {
+                    break;
+                }
+                szName[j] = pszLine[j];
             }
-            szName[j] = pszLine[j];
-        }
 
-        if(j > 0)
-        {
-            szName[j] = 0;
-            papszIMD = CSLAddNameValue(papszIMD, szName, pszLine + 20);
+            if(j > 0)
+            {
+                szName[j] = 0;
+                papszIMD = CSLAddNameValue(papszIMD, szName, pszLine + 20);
+            }
         }
     }
 

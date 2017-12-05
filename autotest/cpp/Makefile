@@ -1,10 +1,14 @@
 # This Makefile requires GNU Make.
 
 CXX = g++
-CXXFLAGS := $(shell gdal-config --cflags) -I. -Itut $(CPPFLAGS)
+#CXXFLAGS := $(shell gdal-config --cflags)
+CXXFLAGS = -g -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
+CXXFLAGS += -I. -Itut $(CPPFLAGS)
 CXXFLAGS += -Wall
-CXXFLAGS += -Wextra
+CXXFLAGS += -Wextra -Wno-unused-function
 # CXXFLAGS += -Werror
+#CXXFLAGS += -fsanitize=undefined
+#LDFLAGS := -fsanitize=undefined
 
 ifdef HARDEN
 CXXFLAGS += -O2 -g
@@ -18,7 +22,7 @@ endif
 
 LDFLAGS = $(shell gdal-config --libs)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond test_virtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_c_include_from_cpp_file
 
 all: $(PROGS)
 
@@ -31,7 +35,7 @@ quick_test:
 	./testcopywords
 	./testclosedondestroydm
 	./testthreadcond
-	./test_virtualmem
+	./testvirtualmem
 	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
 	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
 	./testblockcache -check -co TILED=YES -migrate
@@ -42,6 +46,18 @@ quick_test:
 	./testblockcachelimits --debug ON
 	./testmultithreadedwriting
 	./testdestroy
+
+test_sse:
+	$(CXX) -g -O2  testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mssse3 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mssse3 -msse4.1 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -mavx2 testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
+	$(CXX) -g -O2 -DUSE_SSE2_EMULATION testsse.cpp -o testsse -I../../gdal/port -I../../gdal/gcore
+	./testsse
 
 OBJ = \
     gdal_unit_test.o \
@@ -76,7 +92,7 @@ testclosedondestroydm: testclosedondestroydm.cpp
 testthreadcond: testthreadcond.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-test_virtualmem: test_virtualmem.cpp
+testvirtualmem: testvirtualmem.cpp
 	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 testblockcache: testblockcache.cpp
@@ -97,8 +113,14 @@ testdestroy: testdestroy.cpp
 vsipreload.so: ../../gdal/port/vsipreload.cpp
 	$(CXX) -fPIC -g $(CXXFLAGS) $< $(LDFLAGS) -shared -o $@
 
+test_include_from_c_file: test_include_from_c_file.c
+	$(CC) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
+test_c_include_from_cpp_file: test_c_include_from_cpp_file.cpp
+	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+
 clean:
-	$(RM) $(PROGS)
+	$(RM) $(PROGS) testsse
 	$(RM) $(OBJ)
 	$(RM) *.a
 	$(RM) *.out

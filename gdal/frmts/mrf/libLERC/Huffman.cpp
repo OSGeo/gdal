@@ -62,7 +62,9 @@ bool Huffman::ComputeCodes(const vector<int>& histo)
   }
 
   m_codeTable.resize(size);
-  memset(&m_codeTable[0], 0, size * sizeof(m_codeTable[0]));
+  std::fill( m_codeTable.begin(), m_codeTable.end(),
+             std::pair<short, unsigned int>(0, 0) );
+
   if (!pq.top().TreeToLUT(0, 0, m_codeTable))    // fill the LUT
     return false;
 
@@ -168,52 +170,98 @@ bool Huffman::WriteCodeTable(Byte** ppByte) const
 
 // -------------------------------------------------------------------------- ;
 
-bool Huffman::ReadCodeTable(const Byte** ppByte)
+bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
 {
   if (!ppByte || !(*ppByte))
     return false;
 
   const Byte* ptr = *ppByte;
+  size_t nRemainingBytes = nRemainingBytesInOut;
 
-  int version = *((int*)ptr);    // version
+  if( nRemainingBytes < sizeof(int) )
+  {
+      LERC_BRKPNT();
+      return false;
+  }
+  int version;
+  // FIXME endianness handling
+  memcpy(&version, ptr, sizeof(int));    // version
   ptr += sizeof(int);
+  nRemainingBytes -= sizeof(int);
 
   if (version < 2) // allow forward compatibility
     return false;
 
   vector<int> intVec(4, 0);
+  if( nRemainingBytes < sizeof(int) * ( intVec.size() - 1 ) )
+  {
+      LERC_BRKPNT();
+      return false;
+  }
   for (size_t i = 1; i < intVec.size(); i++)
   {
-    intVec[i] = *((int*)ptr);
+    memcpy(&intVec[i], ptr, sizeof(int)); // FIXME endianness handling
     ptr += sizeof(int);
   }
+  nRemainingBytes -= sizeof(int) * ( intVec.size() - 1 );
 
   int size = intVec[1];
   int i0 = intVec[2];
   int i1 = intVec[3];
 
-  if (i0 >= i1 || size > (int)m_maxHistoSize)
-    return false;
-
-  vector<unsigned int> dataVec(i1 - i0, 0);
-  BitStuffer2 bitStuffer2;
-  if (!bitStuffer2.Decode(&ptr, dataVec))    // unstuff the code lengths
-    return false;
-
-  m_codeTable.resize(size);
-  memset(&m_codeTable[0], 0, size * sizeof(m_codeTable[0]));
-
-  for (int i = i0; i < i1; i++)
+  if (i0 >= i1 || i0 < 0 || size < 0 || size > (int)m_maxHistoSize ||
+      i1 - i0 > size)
   {
-    int k = GetIndexWrapAround(i, size);
-    m_codeTable[k].first = (short)dataVec[i - i0];
+    LERC_BRKPNT();
+    return false;
   }
 
-  if (!BitUnStuffCodes(&ptr, i0, i1))    // unstuff the codes
-    return false;
+  try
+  {
+    vector<unsigned int> dataVec(i1 - i0, 0);
+    BitStuffer2 bitStuffer2;
+    if (!bitStuffer2.Decode(&ptr, nRemainingBytes, dataVec, i1 - i0))    // unstuff the code lengths
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+    if( dataVec.size() != static_cast<size_t>(i1 - i0) )
+    {
+        LERC_BRKPNT();
+        return false;
+    }
 
-  *ppByte = ptr;
-  return true;
+    m_codeTable.resize(size);
+    std::fill( m_codeTable.begin(), m_codeTable.end(),
+                std::pair<short, unsigned int>(0, 0) );
+
+    if( GetIndexWrapAround(i0, size) >= size ||
+        GetIndexWrapAround(i1 - 1, size) >= size )
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+
+    for (int i = i0; i < i1; i++)
+    {
+        int k = GetIndexWrapAround(i, size);
+        m_codeTable[k].first = (short)dataVec[i - i0];
+    }
+
+    if (!BitUnStuffCodes(&ptr, nRemainingBytes, i0, i1))    // unstuff the codes
+    {
+        LERC_BRKPNT();
+        return false;
+    }
+
+    *ppByte = ptr;
+    nRemainingBytesInOut = nRemainingBytes;
+    return true;
+  }
+  catch( std::bad_alloc& )
+  {
+    return false;
+  }
 }
 
 // -------------------------------------------------------------------------- ;
@@ -262,7 +310,13 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
     {
       unsigned int code = m_codeTable[k].second;
       int shift = 1;
-      while (code >> shift) shift++;
+      while (true)
+      {
+          code = code >> 1;
+          if( code == 0 )
+              break;
+          shift++;
+      }
       m_numBitsToSkipInTree = min(m_numBitsToSkipInTree, len - shift);
     }
   }
@@ -382,6 +436,10 @@ bool Huffman::GetRange(int& i0, int& i1, int& maxCodeLength) const
   int j = 0;
   while (j < size)    // find the largest stretch of 0's, if any
   {
+    // FIXME? is the type of first (short) appropriate ? Or shouldn't that
+    // check be moved elsewhere
+    if( m_codeTable[j].first < 0 ) // avoids infinite loop
+      return false;
     while (j < size && m_codeTable[j].first > 0) j++;
     int k0 = j;
     while (j < size && m_codeTable[j].first == 0) j++;
@@ -438,9 +496,9 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
       if (32 - bitPos >= len)
       {
         if (bitPos == 0)
-          *dstPtr = 0;
+          Store(dstPtr, 0);
 
-        *dstPtr |= val << (32 - bitPos - len);
+        Store(dstPtr, Load(dstPtr) | (val << (32 - bitPos - len)));
         bitPos += len;
         if (bitPos == 32)
         {
@@ -451,8 +509,9 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
       else
       {
         bitPos += len - 32;
-        *dstPtr++ |= val >> bitPos;
-        *dstPtr = val << (32 - bitPos);
+        Store(dstPtr, Load(dstPtr) | (val >> bitPos));
+        dstPtr ++;
+        Store(dstPtr, val << (32 - bitPos));
       }
     }
   }
@@ -464,11 +523,12 @@ bool Huffman::BitStuffCodes(Byte** ppByte, int i0, int i1) const
 
 // -------------------------------------------------------------------------- ;
 
-bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
+bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut, int i0, int i1)
 {
   if (!ppByte || !(*ppByte))
     return false;
 
+  size_t nRemainingBytes = nRemainingBytesInOut;
   const unsigned int* arr = (const unsigned int*)(*ppByte);
   const unsigned int* srcPtr = arr;
   int size = (int)m_codeTable.size();
@@ -480,7 +540,17 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
     int len = m_codeTable[k].first;
     if (len > 0)
     {
-      m_codeTable[k].second = ((*srcPtr) << bitPos) >> (32 - len);
+      if( nRemainingBytes < sizeof(unsigned) )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
+      if( len > 32 )
+      {
+        LERC_BRKPNT();
+        return false;
+      }
+      m_codeTable[k].second = (Load(srcPtr) << bitPos) >> (32 - len);
 
       if (32 - bitPos >= len)
       {
@@ -489,20 +559,43 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, int i0, int i1)
         if (bitPos == 32)
         {
           bitPos = 0;
+          if( nRemainingBytes < sizeof(unsigned) )
+          {
+            LERC_BRKPNT();
+            return false;
+          }
           srcPtr++;
+          nRemainingBytes -= sizeof(unsigned);
         }
       }
       else
       {
         bitPos += len - 32;
+        if( nRemainingBytes < sizeof(unsigned) )
+        {
+           LERC_BRKPNT();
+           return false;
+        }
         srcPtr++;
-        m_codeTable[k].second |= (*srcPtr) >> (32 - bitPos);
+        nRemainingBytes -= sizeof(unsigned);
+        if( nRemainingBytes < sizeof(unsigned) )
+        {
+           LERC_BRKPNT();
+           return false;
+        }
+        m_codeTable[k].second |= Load(srcPtr) >> (32 - bitPos);
       }
     }
   }
 
   size_t numUInts = srcPtr - arr + (bitPos > 0 ? 1 : 0);
+  if( nRemainingBytesInOut < sizeof(unsigned) * numUInts )
+  {
+    LERC_BRKPNT();
+    return false;
+  }
   *ppByte += numUInts * sizeof(unsigned int);
+  nRemainingBytesInOut -= numUInts * sizeof(unsigned int);
   return true;
 }
 
@@ -521,8 +614,7 @@ bool Huffman::ConvertCodesToCanonical()
   //   codeLength * tableSize - index
 
   int tableSize = (int)m_codeTable.size();
-  vector<pair<int, int> > sortVec(tableSize);
-  memset(&sortVec[0], 0, tableSize * sizeof(pair<int, int>));
+  vector<pair<int, int> > sortVec(tableSize, pair<int, int>(0,0));
 
   for (int i = 0; i < tableSize; i++)
     if (m_codeTable[i].first > 0)

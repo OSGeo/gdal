@@ -41,6 +41,10 @@
 %rename (RegisterAll) OGRRegisterAll();
 
 #ifndef FROM_GDAL_I
+%{
+#define MODULE_NAME           "ogr"
+%}
+
 %include "python_exceptions.i"
 %include "python_strings.i"
 
@@ -286,11 +290,11 @@
             return self.SetField2( fld_index, value )
 
     def GetField(self, fld_index):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in GetField()")
-        if not (self.IsFieldSet(fld_index)):
+        if not (self.IsFieldSet(fld_index)) or self.IsFieldNull(fld_index):
             return None
         fld_type = self.GetFieldType(fld_index)
         if fld_type == OFTInteger:
@@ -332,34 +336,37 @@
             int minute, int second, int tzflag)
         """
 
+        if len(args) == 2 and args[1] is None:
+            return _ogr.Feature_SetFieldNull(self, args[0])
+
         if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
 
 
         if len(args) == 2 and str(type(args[1])) == "<type 'unicode'>":
             fld_index = args[0]
-            if isinstance(fld_index, str):
+            if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
                 fld_index = self.GetFieldIndex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
 
         return _ogr.Feature_SetField(self, *args)
 
     def SetField2(self, fld_index, value):
-        if isinstance(fld_index, str):
+        if isinstance(fld_index, str) or isinstance(fld_index, type(u'')):
             fld_index = self.GetFieldIndex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
             raise ValueError("Illegal field requested in SetField2()")
 
         if value is None:
-            self.UnsetField( fld_index )
+            self.SetFieldNull( fld_index )
             return
 
         if isinstance(value,list):
             if len(value) == 0:
-                self.UnsetField( fld_index )
+                self.SetFieldNull( fld_index )
                 return
             if isinstance(value[0],type(1)) or isinstance(value[0],type(12345678901234)):
                 self.SetFieldInteger64List(fld_index,value)

@@ -103,6 +103,17 @@ def vsizip_1():
     # Now we can close the main handle
     gdal.VSIFCloseL(hZIP)
 
+    # ERROR 6: Support only 1 file in archive file /vsimem/test.zip when no explicit in-archive filename is specified
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        f = gdal.VSIFOpenL('/vsizip/vsimem/test.zip', 'rb')
+    if f is not None:
+        gdal.VSIFCloseL(f)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
     f = gdal.VSIFOpenL("/vsizip/vsimem/test.zip/subdir3/abcd", "rb")
     if f is None:
         gdaltest.post_reason('fail 5')
@@ -193,6 +204,16 @@ def vsizip_1():
 
     gdal.Unlink("/vsimem/test.xxx")
     gdal.Unlink("/vsimem/zipinzip.yyy")
+
+    # Test VSIStatL on a non existing file
+    if gdal.VSIStatL('/vsizip//vsimem/foo.zip') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test ReadDir on a non existing file
+    if gdal.ReadDir('/vsizip//vsimem/foo.zip') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -599,7 +620,9 @@ def vsizip_14():
 
     fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
     try:
-        exec("cp866_filename = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
+        x = [ '' ]
+        exec("x[0] = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
+        cp866_filename = x[0]
     except:
         cp866_filename = '\u0430\u0431\u0432\u0433\u0434\u0435'
 

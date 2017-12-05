@@ -130,6 +130,8 @@ Since OGR 1.11, the GML driver supports reading :
 Since OGR 2.0, the GML driver supports reading responses to CSW GetRecords
 queries.<p>
 
+Since OGR 2.2, the GML driver supports reading Japanese FGD GML v4 files.<p>
+
 <h2>Geometry reading</h2>
 
 When reading a feature, the driver will by default only take into account the
@@ -447,6 +449,16 @@ approximating into their closest matching linear geometry.
 <br>
 Note: starting with OGR 1.11, fields of type StringList, RealList or IntegerList can be written. This
 will cause to advertize the SF-1 profile in the .XSD schema (such types are not supported by SF-0).<br>
+
+<p>
+
+<li> <b>GML_FEATURE_COLLECTION</b>=YES/NO (OGR &gt;= 2.3) Whether to use the gml:FeatureCollection,
+instead of creating a dedicated container element in the target namespace.
+Only valid for FORMAT=GML3/GML3.2. Note that gml:FeatureCollection has been
+deprecated in GML 3.2, and is not allowed by the OGC 06-049r1 "Geography Markup
+Language (GML) simple features profile" (for GML 3.1.1) and OGC 10-100r3
+"Geography Markup Language (GML) simple features profile (with Corrigendum)" (for GML 3.2)
+specifications.</li>
 
 <p>
 

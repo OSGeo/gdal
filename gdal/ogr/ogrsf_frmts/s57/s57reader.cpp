@@ -37,7 +37,7 @@
 #include <algorithm>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
 * Recode the given string from a source encoding to UTF-8 encoding.  The source
@@ -470,8 +470,14 @@ bool S57Reader::Ingest()
         DDFField *poKeyField = poRecord->GetField(1);
         if (poKeyField == NULL)
             return false;
+        DDFFieldDefn* poKeyFieldDefn = poKeyField->GetFieldDefn();
+        if( poKeyFieldDefn == NULL )
+            continue;
+        const char* pszName = poKeyFieldDefn->GetName();
+        if( pszName == NULL )
+            continue;
 
-        if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
+        if( EQUAL(pszName,"VRID") )
         {
             const int nRCNM = poRecord->GetIntSubfield( "VRID",0, "RCNM",0 );
             const int nRCID = poRecord->GetIntSubfield( "VRID",0, "RCID",0 );
@@ -501,14 +507,14 @@ bool S57Reader::Ingest()
             }
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"FRID") )
+        else if( EQUAL(pszName,"FRID") )
         {
             int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
 
             oFE_Index.AddRecord( nRCID, poRecord->Clone() );
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSID") )
+        else if( EQUAL(pszName,"DSID") )
         {
             CPLFree( pszDSNM );
             pszDSNM =
@@ -523,7 +529,7 @@ bool S57Reader::Ingest()
             }
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
+        else if( EQUAL(pszName,"DSPM") )
         {
             nCOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
             nSOMF = std::max(1, poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
@@ -541,7 +547,7 @@ bool S57Reader::Ingest()
         {
             CPLDebug( "S57",
                       "Skipping %s record in S57Reader::Ingest().",
-                      poKeyField->GetFieldDefn()->GetName() );
+                      pszName );
         }
     }
 
@@ -1507,6 +1513,34 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
                              "MASK",iSubField) );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Geometric attributes                                            */
+/*      Retrieve POSACC and QUAPOS attributes                           */
+/* -------------------------------------------------------------------- */
+
+    const int posaccField = poRegistrar->FindAttrByAcronym("POSACC");
+    const int quaposField = poRegistrar->FindAttrByAcronym("QUAPOS");
+
+    DDFField * poATTV = poRecord->FindField("ATTV");
+    if( poATTV != NULL )
+    {
+        for( int j = 0; j < poATTV->GetRepeatCount(); j++ )
+        {
+            const int subField = poRecord->GetIntSubfield("ATTV",0,"ATTL",j);
+            // POSACC field
+            if (subField == posaccField) {
+                poFeature->SetField( "POSACC",
+                                    poRecord->GetFloatSubfield("ATTV",0,"ATVL",j) );
+            }
+
+            // QUAPOS field
+            if (subField == quaposField) {
+                poFeature->SetField( "QUAPOS",
+                                    poRecord->GetIntSubfield("ATTV",0,"ATVL",j) );
+            }
+        }
+    }
+
     return poFeature;
 }
 
@@ -1869,7 +1903,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
     if( poFSPT->GetRepeatCount() != 1 )
     {
 #ifdef DEBUG
-        fprintf( stderr,
+        fprintf( stderr, /*ok*/
                  "Point features with other than one spatial linkage.\n" );
         poFRecord->Dump( stderr );
 #endif
@@ -2515,10 +2549,7 @@ int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
     if( pnRCNM != NULL )
         *pnRCNM = pabyData[0];
 
-    return pabyData[1]
-         + pabyData[2] * 256
-         + pabyData[3] * 256 * 256
-         + pabyData[4] * 256 * 256 * 256;
+    return CPL_LSBSINT32PTR(pabyData + 1);
 }
 
 /************************************************************************/
@@ -3401,8 +3432,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*3+1));
-                    GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*3+0));
+                    GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*3+1));
+                    GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*3+0));
 
                     if( bGotExtents )
                     {
@@ -3432,8 +3463,8 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
 
                 for( int i = 0; i < nVCount; i++ )
                 {
-                    const GInt32 nX = CPL_LSBINT32PTR(pabyData + 4*(i*2+1));
-                    const GInt32 nY = CPL_LSBINT32PTR(pabyData + 4*(i*2+0));
+                    const GInt32 nX = CPL_LSBSINT32PTR(pabyData + 4*(i*2+1));
+                    const GInt32 nY = CPL_LSBSINT32PTR(pabyData + 4*(i*2+0));
 
                     if( bGotExtents )
                     {

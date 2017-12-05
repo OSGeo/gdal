@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // These should be global, they are used all over the place
 const double SPHERICAL_RADIUS = 6378137.0;

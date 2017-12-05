@@ -1,0 +1,170 @@
+
+/*!
+\if man
+\page ogrmerge
+\else
+\page ogrmerge ogrmerge.py
+\endif
+
+Merge several vector datasets into a single one.
+
+\section ogrmerge_synopsis SYNOPSIS
+
+\verbatim
+ogrmerge.py -o out_dsname src_dsname [src_dsname]*
+            [-f format] [-single] [-nln layer_name_template]
+            [-update | -overwrite_ds] [-append | -overwrite_layer]
+            [-src_geom_type geom_type_name[,geom_type_name]*]
+            [-dsco NAME=VALUE]* [-lco NAME=VALUE]*
+            [-s_srs srs_def] [-t_srs srs_def | -a_srs srs_def]
+            [-progress] [-skipfailures] [--help-general]
+
+Options specific to -single:
+            [-field_strategy FirstLayer|Union|Intersection]
+            [-src_layer_field_name name]
+            [-src_layer_field_content layer_name_template]
+\endverbatim
+
+\section ogrmerge_description DESCRIPTION
+
+(Available since GDAL 2.2)
+
+The ogrmerge.py script takes as input several vector datasets, each of them
+having one or several vector layers, and copy them in a target dataset.
+
+There are essential two modes :
+- the default one, where each input vector layer, is copied as a separate
+layer into the target dataset
+- another one, activated with the -single switch, where the content of all
+input vector layers is appended into a single target layer. This assumes that
+the schema of those vector layers is more or less the same.
+
+Internally this generates a <a href="drv_vrt.html">VRT</a> file,
+and if the output format is not VRT,
+final translation is done with ogr2ogr / gdal.VectorTranslate.
+So for advanced uses, output to VRT, potential manual editing of it and
+ogr2ogr can be done.
+
+<dl>
+
+<dt> <b>-o</b> <i>out_dsname</i>:</dt><dd>
+Output dataset name. Required.
+</dd>
+
+<dt> <i>src_dsname</i>:</dt><dd>
+One or several input vector datasets. Required
+</dd>
+
+<dt> <b>-f</b> <em>format</em>:</dt><dd>Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). Use the short format name</dd>
+
+<dt> <b>-single</b>:</dt><dd>If specified, all input vector layers will be
+merged into a single one.</dd>
+
+<dt> <b>-nln</b> <em>layer_name_template</em>:</dt><dd>Name of the output
+vector layer (in single mode, and the default is "merged"), or template to
+name the output vector layers in default mode (the default value is
+"{AUTO_NAME}"). The template can be a string with the following variables
+that will be susbstitued with a value computed from the input layer being
+processed:
+
+- {AUTO_NAME}: equivalent to {DS_BASENAME}_{LAYER_NAME} if both values are
+different, or {LAYER_NAME} when they are identical (case of shapefile).
+          'different
+- {DS_NAME}    : name of the source dataset
+- {DS_BASENAME}: base name of the source dataset
+- {DS_INDEX}   : index of the source dataset
+- {LAYER_NAME} : name of the source layer
+- {LAYER_INDEX}: index of the source layer
+</dd>
+
+<dt> <b>-update</b> </dt><dd>Open an existing dataset in update mode.</dd>
+
+<dt> <b>-overwrite_ds</b> </dt><dd>Overwrite the existing dataset if it
+already exists (for file based datasets)</dd>
+
+<dt> <b>-append</b> </dt><dd>Open an existing dataset in update mode, and
+if output layers already exist, append the content of input layers to them.
+</dd>
+
+<dt> <b>-overwrite_layer</b> </dt><dd>Open an existing dataset in update mode,
+and if output layers already exist, replace their content with the one of the
+input layer.</dd>
+
+<dt> <b>-src_geom_type</b> <em>geom_type_name[,geom_type_name]*]</em>:</dt><dd>
+Only take into account input layers whose geometry type match the type(s)
+specified. Valid values for geom_type_name are GEOMETRY, POINT, LINESTRING,
+POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOINT, GEOMETRYCOLLECTION,
+CIRCULARSTRING,  CURVEPOLYGON, MULTICURVE, MULTISURFACE, CURVE, SURFACE,
+TRIANGLE, POLYHEDRALSURFACE and TIN.</dd>
+
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd>
+Dataset creation option (format specific)</dd>
+
+<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd>
+Layer creation option (format specific)</dd>
+
+<dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd>
+Assign an output SRS</dd>
+
+<dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd>
+Reproject/transform to this SRS on output</dd>
+
+<dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd>
+Override source SRS</dd>
+
+<dt> <b>-progress</b>:</dt><dd>
+Display progress on terminal. Only works if input layers have the
+"fast feature count" capability.</dd>
+
+<dt> <b>-skipfailures</b>:</dt><dd>
+Continue after a failure, skipping the failed feature.</dd>
+
+<dt> <b>-field_strategy</b><em> FirstLayer|Union|Intersection</em>:</dt><dd>
+Only used with -single. Determines how the schema of the target layer is built
+from the schemas of the input layers. May be FirstLayer to use the fields from
+the first layer found, Union to use a super-set of all the fields from all
+source layers, or Intersection to use a sub-set of all the common fields from
+all source layers. Defaults to Union.</dd>
+
+<dt> <b>-src_layer_field_name</b><em> name</em>:</dt><dd>
+Only used with -single. If specified, the schema of the target layer will be
+extended with a new field 'name', whose content is determined by
+-src_layer_field_content.</dd>
+
+<dt> <b>-src_layer_field_content</b><em> layer_name_template</em>:</dt><dd>
+Only used with -single. If specified, the schema of the target layer will be
+extended with a new field (whose name is given by -src_layer_field_name, or
+'source_ds_lyr' otherwise), whose content is determined by layer_name_template.
+The syntax of layer_name_template is the same as for -nln.
+</dd>
+
+</dl>
+
+\section ogrmerge_examples EXAMPLES
+
+
+- Creates a VRT with a layer for each input shapefiles
+\verbatim
+ogrmerge.py -f VRT -o merged.vrt *.shp
+\endverbatim
+
+- Same, but creates a GeoPackage file
+\verbatim
+ogrmerge.py -f GPKG -o merged.gpkg *.shp
+\endverbatim
+
+- Concatenate the content of france.shp and germany.shp in merged.shp, and
+adds a 'country' field to each feature whose value is 'france' or 'germany'
+depending where it comes from.
+\verbatim
+ogrmerge.py -single -o merged.shp france.shp germany.shp -src_layer_field_name country
+\endverbatim
+
+\if man
+\section ogrmerge_author AUTHORS
+Even Rouault <even.rouault@spatialys.com>
+\endif
+*/
+

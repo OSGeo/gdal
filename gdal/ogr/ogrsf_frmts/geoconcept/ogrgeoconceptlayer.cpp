@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ogrgeoconceptlayer.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRGeoconceptLayer()                         */
@@ -75,6 +75,7 @@ OGRErr OGRGeoconceptLayer::Open( GCSubType* Subclass )
     {
       _poFeatureDefn = reinterpret_cast<OGRFeatureDefn *>(
           GetSubTypeFeatureDefn_GCIO(_gcFeature) );
+      SetDescription( _poFeatureDefn->GetName() );
       _poFeatureDefn->Reference();
     }
     else
@@ -384,7 +385,7 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
                   nextField = WriteFeatureFieldAsString_GCIO(
                       _gcFeature,
                       nextField,
-                      poFeature->IsFieldSet(iF)?
+                      poFeature->IsFieldSetAndNotNull(iF)?
                       poFeature->GetFieldAsString(iF) : NULL);
                   break;
                 }

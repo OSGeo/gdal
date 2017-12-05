@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.1">
+  <Document>
+    <name>KML Samples</name>
+    <open>1</open>
+    <description>Unleash your creativity with the help of these examples!</description>
+    <Folder>
+      <name>Polygons</name>
+      <visibility>0</visibility>
+      <description>Examples of polygon shapes</description>
+      <Folder>
+        <name>Google Campus</name>
+        <visibility>0</visibility>
+        <description>A collection showing how easy it is to create 3-dimensional
+          buildings</description>
+        <LookAt>
+          <longitude>-122.084120030116</longitude>
+          <latitude>37.42174011925477</latitude>
+          <altitude>0</altitude>
+          <range>276.7870053764046</range>
+          <tilt>53.454348562403</tilt>
+          <heading>-34.82469740081282</heading>
+        </LookAt>
+        <Placemark>
+          <name>Building 40</name>
+          <visibility>0</visibility>
+          <styleUrl>#transRedPoly</styleUrl>
+          <Polygon>
+            <extrude>1</extrude>
+            <altitudeMode>relativeToGround</altitudeMode>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates> -122.0848938459612,37.42257124044786,17
+                  -122.0849580979198,37.42211922626856,17

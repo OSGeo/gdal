@@ -31,7 +31,7 @@
 #include "ogr_dods.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRDODSGridLayer()                          */

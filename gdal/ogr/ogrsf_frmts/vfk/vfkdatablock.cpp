@@ -37,7 +37,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*!
   \brief VFK Data Block constructor
@@ -105,12 +105,9 @@ VFKPropertyDefn *IVFKDataBlock::GetProperty(int iIndex) const
 */
 void IVFKDataBlock::SetProperties(const char *poLine)
 {
-    const char *poChar = NULL;
-
     /* skip data block name */
-    for (poChar = poLine; *poChar != '0' && *poChar != ';'; poChar++)
-        ;
-    if (*poChar == '\0')
+    const char *poChar = strchr(poLine, ';');
+    if( poChar == NULL )
         return;
 
     poChar++;
@@ -128,6 +125,8 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
             poProp = ++poChar;
             nLength = 0;
+            if( *poProp == '\0' )
+                break;
         }
         else if (*poChar == ';') {
             pszType = (char *) CPLRealloc(pszType, nLength + 1);
@@ -141,13 +140,16 @@ void IVFKDataBlock::SetProperties(const char *poLine)
 
             poProp = ++poChar;
             nLength = 0;
+            if( *poProp == '\0' )
+                break;
         }
         poChar++;
         nLength++;
     }
 
     pszType = (char *) CPLRealloc(pszType, nLength + 1);
-    strncpy(pszType, poProp, nLength);
+    if( nLength > 0 )
+        strncpy(pszType, poProp, nLength);
     pszType[nLength] = '\0';
 
     /* add property */

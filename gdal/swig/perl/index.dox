@@ -2,7 +2,7 @@
 
 \section index_version Version
 
-These pages document the development version of the GDAL Perl API,
+These pages document the development version (2.3) of the GDAL Perl API,
 which is extended from the released versions APIs. Old versions:
 <a href="../1.4/index.html">1.4</a>
 <a href="../1.5/index.html">1.5</a>
@@ -14,6 +14,8 @@ which is extended from the released versions APIs. Old versions:
 <a href="../1.11/index.html">1.11</a>
 <a href="../2.0/index.html">2.0</a>
 <a href="../2.1/index.html">2.1</a>
+<a href="../2.2/index.html">2.2</a>.
+<a href="../snapshot/index.html">The development version of these docs.</a>
 
 \section index_intro Introduction
 
@@ -189,13 +191,14 @@ OGR Error: Unsupported geometry type
 while
 
 \code
-$point = Geo::OGR::Geometry->new(WKT=>"POINTXX(1 1)");
+my $point = Geo::OGR::Geometry->new(WKT=>"POINTXX(1 1)");
 \endcode
 
 Produces:
 \code
-OGR Error: Unsupported geometry type at <long path>/OGR.pm line 652.
-	Geo::OGR::Geometry::new("Geo::OGR::Geometry", "WKT", "POINTXX(1 1)") called at foo.pl line 18
+OGR Error: Corrupt data
+ at <long path>/OGR.pm line 693.
+        Geo::OGR::Geometry::new("Geo::OGR::Geometry", "WKT", "POINTXX(1 1)") called at foo.pl line 18
 \endcode
 
 and
@@ -341,6 +344,21 @@ use this for subobjects. (In fact it will create an error.)
 my $feature = $lauer->InsertFeature({test => 13, geom => {WKT => 'POINT (10 20)'}});
 my $geom = $feature->{geom}; # will lead to memory error!
 \endcode
+
+\section index_processing_options Processing options
+
+Some methods are thin wrappers for <a
+href="http://www.gdal.org/pages.html">GDAL command line tools</a>.
+
+The options for these methods should be given in an anonymous hash
+where the key is the option name (-ot, -mask, etc) and the value is
+the option value. If the option expects a list of values, the list
+should be given as a reference to an array.
+
+In addition to the above, the API supports giving the options in an
+anonymous array; keys without hyphen (not if the options are in an
+array); and lists of values given as a string, separated with
+whitespace (only for lists of numeric values).
 
 \section index_footer Note
 

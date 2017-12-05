@@ -33,7 +33,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                tp2c()                                */
@@ -644,7 +644,7 @@ void IDADataset::ReadColorTable()
 /*      Decide what .clr file to look for and try to open.              */
 /* -------------------------------------------------------------------- */
     CPLString osCLRFilename = CPLGetConfigOption( "IDA_COLOR_FILE", "" );
-    if( strlen(osCLRFilename) == 0 )
+    if( osCLRFilename.empty() )
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
     VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );

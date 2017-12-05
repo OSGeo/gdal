@@ -34,7 +34,7 @@
 #include "cpl_error.h"
 #include "cpl_quad_tree.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           Utilities functions                        */
@@ -288,6 +288,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
         }
     }
     VSIFFlushL(poHeader->fp);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -402,7 +403,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         for( int j = 0; j < poHeader->nVar; ++j )
         {
             double *padfValues = NULL;
-            if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
+            if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -429,6 +430,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     // If everything went fine, we overwrite the new file with the content of the old one. This way, even if something goes bad, we can still recover the layer. The copy process is format-agnostic.
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -488,7 +490,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
         }
         double *padfValues = NULL;
         for (int j=0;j<poHeader->nVar-1;++j) {
-            if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
+            if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -513,6 +515,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     }
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -557,7 +560,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
         }
         for (int j=0;j<poHeader->nVar;++j) {
             double *padfValues = NULL;
-            if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
+            if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -575,6 +578,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     }
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -618,7 +622,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
-            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i,-1,panMap[j]),SEEK_SET)!=0 || Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
+            if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i,-1,panMap[j]),SEEK_SET)!=0 || Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -634,6 +638,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
     }
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -658,6 +663,7 @@ OGRErr OGRSelafinLayer::AlterFieldDefn(int iField,
     if (VSIFSeekL(poHeader->fp,88+16+40*iField,SEEK_SET)!=0) return OGRERR_FAILURE;
     if (Selafin::write_string(poHeader->fp,poHeader->papszVariables[iField],32)==0) return OGRERR_FAILURE;
     VSIFFlushL(poHeader->fp);
+    poHeader->UpdateFileSize();
     return OGRERR_NONE;
 }
 
@@ -705,7 +711,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
         }
         for (int j=0;j<poHeader->nVar;++j) {
             double *padfValues = NULL;
-            if (Selafin::read_floatarray(poHeader->fp,&padfValues)==-1) {
+            if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -726,6 +732,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     // If everything went fine, we overwrite the new file with the content of the old one. This way, even if something goes bad, we can still recover the layer. The copy process is format-agnostic.
     MoveOverwrite(poHeader->fp,fpNew);
     VSIUnlink(pszTempfile);
+    poHeader->UpdateFileSize();
 
     return OGRERR_NONE;
 }

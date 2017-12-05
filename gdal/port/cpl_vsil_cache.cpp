@@ -47,7 +47,7 @@
 
 //! @cond Doxygen_Suppress
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -129,6 +129,10 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
     virtual vsi_l_offset Tell() override;
     virtual size_t    Read( void *pBuffer, size_t nSize,
                             size_t nMemb ) override;
+    virtual int          ReadMultiRange( int nRanges, void ** ppData,
+                                         const vsi_l_offset* panOffsets,
+                                         const size_t* panSizes ) override;
+
     virtual size_t    Write( const void *pBuffer, size_t nSize,
                              size_t nMemb ) override;
     virtual int       Eof() override;
@@ -205,14 +209,12 @@ int VSICachedFile::Seek( vsi_l_offset nReqOffset, int nWhence )
 
     if( nWhence == SEEK_SET )
     {
-        // use offset directly.
+        // Use offset directly.
     }
-
     else if( nWhence == SEEK_CUR )
     {
         nReqOffset += nOffset;
     }
-
     else if( nWhence == SEEK_END )
     {
         nReqOffset += nFileSize;
@@ -460,8 +462,8 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
         VSICacheChunk * poBlock = oMapOffsetToCache[iBlock];
         if( poBlock == NULL )
         {
-            /* We can reach that point when the amount to read exceeds */
-            /* the cache size */
+            // We can reach that point when the amount to read exceeds
+            // the cache size.
             LoadBlocks(iBlock, 1,
                        static_cast<GByte *>(pBuffer) + nAmountCopied,
                        std::min(nSize * nCount - nAmountCopied, m_nChunkSize));
@@ -501,6 +503,18 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( nRet != nCount )
         bEOF = true;
     return nRet;
+}
+
+/************************************************************************/
+/*                           ReadMultiRange()                           */
+/************************************************************************/
+
+int VSICachedFile::ReadMultiRange( int const nRanges, void ** const ppData,
+                                   const vsi_l_offset* const panOffsets,
+                                   const size_t* const panSizes )
+{
+    // If the base is /vsicurl/
+    return poBase->ReadMultiRange( nRanges, ppData, panOffsets, panSizes );
 }
 
 /************************************************************************/

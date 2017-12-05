@@ -32,7 +32,7 @@
 #include "ogr_srs_api.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -187,7 +187,9 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int nRasterXSize, nRasterYSize;
     memcpy( &nRasterXSize, achHeader + 128, 4 );
     memcpy( &nRasterYSize, achHeader + 132, 4 );
-    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
+    if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) ||
+        /* to avoid overflow in later -8 * nRasterXSize computation */
+        nRasterXSize >= INT_MAX / 8 )
     {
         delete poDS;
         return NULL;
@@ -214,7 +216,8 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     RawRasterBand *poBand =
         new RawRasterBand( poDS, 1, poDS->fpImage,
-                           160 + 4 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
+                           160 + 4 + static_cast<vsi_l_offset>(nRasterXSize) *
+                                (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Latitude Offset (radians)" );
@@ -222,7 +225,8 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poBand =
         new RawRasterBand( poDS, 2, poDS->fpImage,
-                           160 + nRasterXSize * (nRasterYSize-1) * 2 * 4,
+                           160 + static_cast<vsi_l_offset>(nRasterXSize) *
+                                (nRasterYSize-1) * 2 * 4,
                            8, -8 * nRasterXSize,
                            GDT_Float32, CPL_IS_LSB, TRUE, FALSE );
     poBand->SetDescription( "Longitude Offset (radians)" );

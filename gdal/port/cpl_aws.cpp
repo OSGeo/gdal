@@ -34,11 +34,21 @@
 #include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_minixml.h"
+#include "cpl_multiproc.h"
+#include "cpl_http.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-//#define DEBUG_VERBOSE 1
+// #define DEBUG_VERBOSE 1
+
+#ifdef HAVE_CURL
+static CPLMutex *hMutex = NULL;
+static CPLString osIAMRole;
+static CPLString osGlobalAccessKeyId;
+static CPLString osGlobalSecretAccessKey;
+static CPLString osGlobalSessionToken;
+static GIntBig nGlobalExpiration = 0;
 
 /************************************************************************/
 /*                         CPLGetLowerCaseHex()                         */
@@ -71,7 +81,7 @@ static CPLString CPLGetLowerCaseHex( const GByte *pabyData, size_t nBytes )
 CPLString CPLGetLowerCaseHexSHA256( const void *pabyData, size_t nBytes )
 {
     GByte hash[CPL_SHA256_HASH_SIZE] = {};
-    CPL_SHA256((const GByte*)pabyData, nBytes, hash);
+    CPL_SHA256(static_cast<const GByte *>(pabyData), nBytes, hash);
     return CPLGetLowerCaseHex(hash, CPL_SHA256_HASH_SIZE);
 }
 
@@ -94,13 +104,13 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
     for( size_t i = 0; i < osURL.size(); i++ )
     {
         char ch = osURL[i];
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+        if( (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
             (ch >= '0' && ch <= '9') ||
-            ch == '_' || ch == '-' || ch == '~' || ch == '.')
+            ch == '_' || ch == '-' || ch == '~' || ch == '.' )
         {
             osRet += ch;
         }
-        else if (ch == '/')
+        else if( ch == '/' )
         {
             if( bEncodeSlash )
                 osRet += "%2F";
@@ -109,11 +119,31 @@ CPLString CPLAWSURLEncode( const CPLString& osURL, bool bEncodeSlash )
         }
         else
         {
-            osRet += CPLSPrintf("%02X", ch);
+            osRet += CPLSPrintf("%%%02X", static_cast<unsigned char>(ch));
         }
     }
     return osRet;
 }
+
+
+/************************************************************************/
+/*                         CPLAWSGetHeaderVal()                         */
+/************************************************************************/
+
+CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
+                             const char* pszKey)
+{
+    CPLString osKey(pszKey);
+    osKey += ":";
+    const struct curl_slist* psIter = psExistingHeaders;
+    for(; psIter != NULL; psIter = psIter->next)
+    {
+        if( STARTS_WITH(psIter->data, osKey.c_str()) )
+            return CPLString(psIter->data + osKey.size()).Trim();
+    }
+    return CPLString();
+}
+
 
 /************************************************************************/
 /*                CPLGetAWS_SIGN4_Authorization()                       */
@@ -125,9 +155,11 @@ CPLString
 CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                const CPLString& osAccessKeyId,
                                const CPLString& osAccessToken,
-                               const CPLString& osAWSRegion,
+                               const CPLString& osRegion,
+                               const CPLString& osRequestPayer,
                                const CPLString& osService,
                                const CPLString& osVerb,
+                               const struct curl_slist* psExistingHeaders,
                                const CPLString& osHost,
                                const CPLString& osCanonicalURI,
                                const CPLString& osCanonicalQueryString,
@@ -143,28 +175,37 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 
     osCanonicalRequest += osCanonicalQueryString + "\n";
 
-    CPLString osCanonicalHeaders =
-        "host:" + osHost + "\n" +
-        "x-amz-content-sha256:" + osXAMZContentSHA256 + "\n" +
-        "x-amz-date:" + osTimestamp + "\n";
+    std::map<CPLString, CPLString> oSortedMapHeaders;
+    oSortedMapHeaders["host"] = osHost;
+    oSortedMapHeaders["x-amz-content-sha256"] = osXAMZContentSHA256;
+    oSortedMapHeaders["x-amz-date"] = osTimestamp;
+    if( !osRequestPayer.empty() )
+        oSortedMapHeaders["x-amz-request-payer"] = osRequestPayer;
     if( !osAccessToken.empty() )
+        oSortedMapHeaders["x-amz-security-token"] = osAccessToken;
+    CPLString osCanonicalizedHeaders(
+        IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
+                            oSortedMapHeaders,
+                            psExistingHeaders,
+                            "x-amz-"));
+
+    osCanonicalRequest += osCanonicalizedHeaders + "\n";
+
+    CPLString osSignedHeaders;
+    std::map<CPLString, CPLString>::const_iterator oIter = oSortedMapHeaders.begin();
+    for(; oIter != oSortedMapHeaders.end(); ++oIter )
     {
-        osCanonicalHeaders += "x-amz-security-token:";
-        osCanonicalHeaders += osAccessToken;
-        osCanonicalHeaders += "\n";
+        if( !osSignedHeaders.empty() )
+            osSignedHeaders += ";";
+        osSignedHeaders += oIter->first;
     }
 
-    osCanonicalRequest += osCanonicalHeaders + "\n";
-
-    CPLString osSignedHeaders = "host;x-amz-content-sha256;x-amz-date";
-    if( !osAccessToken.empty() )
-        osSignedHeaders += ";x-amz-security-token";
     osCanonicalRequest += osSignedHeaders + "\n";
 
     osCanonicalRequest += osXAMZContentSHA256;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osCanonicalRequest='%s'\n", osCanonicalRequest.c_str());
+    CPLDebug("S3", "osCanonicalRequest='%s'", osCanonicalRequest.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -177,7 +218,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osYYMMDD.resize(8);
 
     CPLString osScope = osYYMMDD + "/";
-    osScope += osAWSRegion;
+    osScope += osRegion;
     osScope += "/";
     osScope += osService;
     osScope += "/aws4_request";
@@ -185,14 +226,14 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osStringToSign += CPLGetLowerCaseHexSHA256(osCanonicalRequest);
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osStringToSign='%s'\n", osStringToSign.c_str());
+    CPLDebug("S3", "osStringToSign='%s'", osStringToSign.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Compute signing key.                                            */
 /* -------------------------------------------------------------------- */
-    GByte abySigningKeyIn[CPL_SHA256_HASH_SIZE];
-    GByte abySigningKeyOut[CPL_SHA256_HASH_SIZE];
+    GByte abySigningKeyIn[CPL_SHA256_HASH_SIZE] = {};
+    GByte abySigningKeyOut[CPL_SHA256_HASH_SIZE] = {};
 
     CPLString osFirstKey(CPLString("AWS4") + osSecretAccessKey);
     CPL_HMAC_SHA256( osFirstKey.c_str(), osFirstKey.size(),
@@ -201,7 +242,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     memcpy(abySigningKeyIn, abySigningKeyOut, CPL_SHA256_HASH_SIZE);
 
     CPL_HMAC_SHA256( abySigningKeyIn, CPL_SHA256_HASH_SIZE,
-                     osAWSRegion.c_str(), osAWSRegion.size(),
+                     osRegion.c_str(), osRegion.size(),
                      abySigningKeyOut );
     memcpy(abySigningKeyIn, abySigningKeyOut, CPL_SHA256_HASH_SIZE);
 
@@ -218,13 +259,13 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 #ifdef DEBUG_VERBOSE
     CPLString osSigningKey(CPLGetLowerCaseHex(abySigningKeyIn,
                                               CPL_SHA256_HASH_SIZE));
-    CPLDebug("S3", "osSigningKey='%s'\n", osSigningKey.c_str());
+    CPLDebug("S3", "osSigningKey='%s'", osSigningKey.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Compute signature.                                              */
 /* -------------------------------------------------------------------- */
-    GByte abySignature[CPL_SHA256_HASH_SIZE];
+    GByte abySignature[CPL_SHA256_HASH_SIZE] = {};
     CPL_HMAC_SHA256( abySigningKeyIn, CPL_SHA256_HASH_SIZE,
                      osStringToSign, osStringToSign.size(),
                      abySignature);
@@ -232,7 +273,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
                                              CPL_SHA256_HASH_SIZE));
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osSignature='%s'\n", osSignature.c_str());
+    CPLDebug("S3", "osSignature='%s'", osSignature.c_str());
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -244,7 +285,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osAuthorization += "/";
     osAuthorization += osYYMMDD;
     osAuthorization += "/";
-    osAuthorization += osAWSRegion;
+    osAuthorization += osRegion;
     osAuthorization += "/";
     osAuthorization += osService;
     osAuthorization += "/";
@@ -257,7 +298,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
     osAuthorization += osSignature;
 
 #ifdef DEBUG_VERBOSE
-    CPLDebug("S3", "osAuthorization='%s'\n", osAuthorization.c_str());
+    CPLDebug("S3", "osAuthorization='%s'", osAuthorization.c_str());
 #endif
 
     return osAuthorization;
@@ -272,7 +313,7 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
     struct tm brokenDown;
     CPLUnixTimeToYMDHMS(time(NULL), &brokenDown);
 
-    char szTimeStamp[4+2+2+1+2+2+2+1+1];
+    char szTimeStamp[4+2+2+1+2+2+2+1+1] = {};
     snprintf(szTimeStamp, sizeof(szTimeStamp), "%04d%02d%02dT%02d%02d%02dZ",
             brokenDown.tm_year + 1900,
             brokenDown.tm_mon + 1,
@@ -283,28 +324,28 @@ CPLString CPLGetAWS_SIGN4_Timestamp()
     return szTimeStamp;
 }
 
-#ifdef HAVE_CURL
 
 /************************************************************************/
 /*                         VSIS3HandleHelper()                          */
 /************************************************************************/
-
 VSIS3HandleHelper::VSIS3HandleHelper( const CPLString& osSecretAccessKey,
                                       const CPLString& osAccessKeyId,
                                       const CPLString& osSessionToken,
-                                      const CPLString& osAWSS3Endpoint,
-                                      const CPLString& osAWSRegion,
+                                      const CPLString& osEndpoint,
+                                      const CPLString& osRegion,
+                                      const CPLString& osRequestPayer,
                                       const CPLString& osBucket,
                                       const CPLString& osObjectKey,
                                       bool bUseHTTPS,
                                       bool bUseVirtualHosting ) :
-    m_osURL(BuildURL(osAWSS3Endpoint, osBucket, osObjectKey, bUseHTTPS,
+    m_osURL(BuildURL(osEndpoint, osBucket, osObjectKey, bUseHTTPS,
                      bUseVirtualHosting)),
     m_osSecretAccessKey(osSecretAccessKey),
     m_osAccessKeyId(osAccessKeyId),
     m_osSessionToken(osSessionToken),
-    m_osAWSS3Endpoint(osAWSS3Endpoint),
-    m_osAWSRegion(osAWSRegion),
+    m_osEndpoint(osEndpoint),
+    m_osRegion(osRegion),
+    m_osRequestPayer(osRequestPayer),
     m_osBucket(osBucket),
     m_osObjectKey(osObjectKey),
     m_bUseHTTPS(bUseHTTPS),
@@ -325,21 +366,25 @@ VSIS3HandleHelper::~VSIS3HandleHelper()
 /*                           BuildURL()                                 */
 /************************************************************************/
 
-CPLString VSIS3HandleHelper::BuildURL(const CPLString& osAWSS3Endpoint,
+CPLString VSIS3HandleHelper::BuildURL(const CPLString& osEndpoint,
                                       const CPLString& osBucket,
                                       const CPLString& osObjectKey,
                                       bool bUseHTTPS, bool bUseVirtualHosting)
 {
-    if( bUseVirtualHosting )
-        return CPLSPrintf("%s://%s.%s/%s", (bUseHTTPS) ? "https" : "http",
+    const char* pszProtocol = (bUseHTTPS) ? "https" : "http";
+    if( osBucket.empty()  )
+        return CPLSPrintf("%s://%s", pszProtocol,
+                                        osEndpoint.c_str());
+    else if( bUseVirtualHosting )
+        return CPLSPrintf("%s://%s.%s/%s", pszProtocol,
                                         osBucket.c_str(),
-                                        osAWSS3Endpoint.c_str(),
-                                        osObjectKey.c_str());
+                                        osEndpoint.c_str(),
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
     else
-        return CPLSPrintf("%s://%s/%s/%s", (bUseHTTPS) ? "https" : "http",
-                                        osAWSS3Endpoint.c_str(),
+        return CPLSPrintf("%s://%s/%s/%s", pszProtocol,
+                                        osEndpoint.c_str(),
                                         osBucket.c_str(),
-                                        osObjectKey.c_str());
+                                        CPLAWSURLEncode(osObjectKey, false).c_str());
 }
 
 /************************************************************************/
@@ -348,30 +393,16 @@ CPLString VSIS3HandleHelper::BuildURL(const CPLString& osAWSS3Endpoint,
 
 void VSIS3HandleHelper::RebuildURL()
 {
-    m_osURL = BuildURL(m_osAWSS3Endpoint, m_osBucket, m_osObjectKey,
+    m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey,
                        m_bUseHTTPS, m_bUseVirtualHosting);
-    std::map<CPLString, CPLString>::iterator oIter =
-        m_oMapQueryParameters.begin();
-    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
-    {
-        if( oIter == m_oMapQueryParameters.begin() )
-            m_osURL += "?";
-        else
-            m_osURL += "&";
-        m_osURL += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            m_osURL += "=";
-            m_osURL += oIter->second;
-        }
-    }
+    m_osURL += GetQueryString();
 }
 
 /************************************************************************/
 /*                        GetBucketAndObjectKey()                       */
 /************************************************************************/
 
-bool VSIS3HandleHelper::GetBucketAndObjectKey( const char* pszURI,
+bool IVSIS3LikeHandleHelper::GetBucketAndObjectKey( const char* pszURI,
                                                const char* pszFSPrefix,
                                                bool bAllowNoObject,
                                                CPLString &osBucket,
@@ -400,6 +431,512 @@ bool VSIS3HandleHelper::GetBucketAndObjectKey( const char* pszURI,
 }
 
 /************************************************************************/
+/*                      BuildCanonicalizedHeaders()                    */
+/************************************************************************/
+
+CPLString IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
+                            std::map<CPLString, CPLString>& oSortedMapHeaders,
+                            const struct curl_slist* psExistingHeaders,
+                            const char* pszHeaderPrefix)
+{
+    const struct curl_slist* psIter = psExistingHeaders;
+    for(; psIter != NULL; psIter = psIter->next)
+    {
+        if( STARTS_WITH_CI(psIter->data, pszHeaderPrefix) )
+        {
+            const char* pszColumn = strstr(psIter->data, ":");
+            if( pszColumn )
+            {
+                CPLString osKey(psIter->data);
+                osKey.resize( pszColumn - psIter->data);
+                oSortedMapHeaders[osKey.tolower()] =
+                    CPLString(pszColumn + strlen(":")).Trim();
+            }
+        }
+    }
+
+    CPLString osCanonicalizedHeaders;
+    std::map<CPLString, CPLString>::const_iterator oIter =
+        oSortedMapHeaders.begin();
+    for(; oIter != oSortedMapHeaders.end(); ++oIter )
+    {
+        osCanonicalizedHeaders += oIter->first + ":" + oIter->second + "\n";
+    }
+    return osCanonicalizedHeaders;
+}
+
+/************************************************************************/
+/*                          ParseSimpleJson()                           */
+/*                                                                      */
+/*      Return a string list of name/value pairs extracted from a       */
+/*      JSON doc.  The EC2 IAM web service returns simple JSON          */
+/*      responses.  The parsing as done currently is very fragile       */
+/*      and depends on JSON documents being in a very very simple       */
+/*      form.                                                           */
+/************************************************************************/
+
+static CPLStringList ParseSimpleJson(const char *pszJson)
+
+{
+/* -------------------------------------------------------------------- */
+/*      We are expecting simple documents like the following with no    */
+/*      hierarchy or complex structure.                                 */
+/* -------------------------------------------------------------------- */
+/*
+    {
+    "Code" : "Success",
+    "LastUpdated" : "2017-07-03T16:20:17Z",
+    "Type" : "AWS-HMAC",
+    "AccessKeyId" : "bla",
+    "SecretAccessKey" : "bla",
+    "Token" : "bla",
+    "Expiration" : "2017-07-03T22:42:58Z"
+    }
+*/
+
+    CPLStringList oWords(
+        CSLTokenizeString2(pszJson, " \n\t,:{}", CSLT_HONOURSTRINGS ));
+    CPLStringList oNameValue;
+
+    for( int i=0; i < oWords.size(); i += 2 )
+    {
+        oNameValue.SetNameValue(oWords[i], oWords[i+1]);
+    }
+
+    return oNameValue;
+}
+
+/************************************************************************/
+/*                        Iso8601ToUnixTime()                           */
+/************************************************************************/
+
+static bool Iso8601ToUnixTime(const char* pszDT, GIntBig* pnUnixTime)
+{
+    int nYear;
+    int nMonth;
+    int nDay;
+    int nHour;
+    int nMinute;
+    int nSecond;
+    if( sscanf(pszDT, "%04d-%02d-%02dT%02d:%02d:%02d",
+                &nYear, &nMonth, &nDay, &nHour, &nMinute, &nSecond) == 6 )
+    {
+        struct tm brokendowntime;
+        brokendowntime.tm_year = nYear - 1900;
+        brokendowntime.tm_mon = nMonth - 1;
+        brokendowntime.tm_mday = nDay;
+        brokendowntime.tm_hour = nHour;
+        brokendowntime.tm_min = nMinute;
+        brokendowntime.tm_sec = nSecond;
+        *pnUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+        return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                  IsMachinePotentiallyEC2Instance()                   */
+/************************************************************************/
+
+static bool IsMachinePotentiallyEC2Instance()
+{
+#ifdef __linux
+    // Small optimization on Linux. If the kernel is recent
+    // enough, a /sys/hypervisor/uuid file should exist on EC2 instances
+    // and contain a string beginning with ec2.
+    // See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+    // If /sys/hypervisor exists, but /sys/hypervisor/uuid does not
+    // exist or doesn't start with ec2, then do not attempt any network
+    // access
+    bool bAttemptNetworkAccess = true;
+    if( CPLTestBool(CPLGetConfigOption(
+                        "CPL_AWS_CHECK_HYPERVISOR_UUID", "YES")) )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL("/sys/hypervisor", &sStat) == 0 )
+        {
+            char uuid[36+1] = { 0 };
+            VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
+            if( fp != NULL )
+            {
+                VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
+                bAttemptNetworkAccess = EQUALN( uuid, "ec2", 3 );
+                VSIFCloseL(fp);
+            }
+            else
+            {
+                bAttemptNetworkAccess = false;
+            }
+        }
+    }
+    return bAttemptNetworkAccess;
+#elif defined(WIN32)
+    // We might add later a way of detecting if we run on EC2 using WMI
+    // See http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/identify_ec2_instances.html
+    // For now, unconditionnaly try
+    return true;
+#else
+    // At time of writing EC2 instances can be only Linux or Windows
+    return false;
+#endif
+}
+
+/************************************************************************/
+/*                      GetConfigurationFromEC2()                       */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
+                                                CPLString& osAccessKeyId,
+                                                CPLString& osSessionToken)
+{
+    CPLMutexHolder oHolder( &hMutex );
+    time_t nCurTime;
+    time(&nCurTime);
+    // Try to reuse credentials if they are still valid, but
+    // keep one minute of margin...
+    if( !osGlobalAccessKeyId.empty() && nCurTime < nGlobalExpiration - 60 )
+    {
+        osAccessKeyId = osGlobalAccessKeyId;
+        osSecretAccessKey = osGlobalSecretAccessKey;
+        osSessionToken = osGlobalSessionToken;
+        return true;
+    }
+
+    const CPLString osEC2CredentialsURL(
+        CPLGetConfigOption("CPL_AWS_EC2_CREDENTIALS_URL",
+            "http://169.254.169.254/latest/meta-data/iam/security-credentials/"));
+    if( osIAMRole.empty() && !osEC2CredentialsURL.empty() )
+    {
+        // If we don't know yet the IAM role, fetch it
+        if( IsMachinePotentiallyEC2Instance() )
+        {
+            char** papszOptions = CSLSetNameValue(NULL, "TIMEOUT", "1");
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult =
+                        CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
+            CPLPopErrorHandler();
+            CSLDestroy(papszOptions);
+            if( psResult )
+            {
+                if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+                {
+                    osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
+                }
+                CPLHTTPDestroyResult(psResult);
+            }
+        }
+    }
+    if( osIAMRole.empty() )
+        return false;
+
+    // Now fetch the refreshed credentials
+    CPLStringList oResponse;
+    CPLHTTPResult* psResult = CPLHTTPFetch(
+        (osEC2CredentialsURL + osIAMRole).c_str(), NULL );
+    if( psResult )
+    {
+        if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+        {
+            const CPLString osJSon =
+                    reinterpret_cast<char*>(psResult->pabyData);
+            oResponse = ParseSimpleJson(osJSon);
+        }
+        CPLHTTPDestroyResult(psResult);
+    }
+    osAccessKeyId = oResponse.FetchNameValueDef("AccessKeyId", "");
+    osSecretAccessKey =
+                oResponse.FetchNameValueDef("SecretAccessKey", "");
+    osSessionToken = oResponse.FetchNameValueDef("Token", "");
+    const CPLString osExpiration =
+        oResponse.FetchNameValueDef("Expiration", "");
+    GIntBig nExpirationUnix = 0;
+    if( !osAccessKeyId.empty() &&
+        !osSecretAccessKey.empty() &&
+        Iso8601ToUnixTime(osExpiration, &nExpirationUnix) )
+    {
+        osGlobalAccessKeyId = osAccessKeyId;
+        osGlobalSecretAccessKey = osSecretAccessKey;
+        osGlobalSessionToken = osSessionToken;
+        nGlobalExpiration = nExpirationUnix;
+        CPLDebug("AWS", "Storing AIM credentials until %s",
+                osExpiration.c_str());
+    }
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+}
+
+
+/************************************************************************/
+/*                      UpdateAndWarnIfInconsistent()                   */
+/************************************************************************/
+
+static
+void UpdateAndWarnIfInconsistent(const char* pszKeyword,
+                                 CPLString& osVal,
+                                 const CPLString& osNewVal,
+                                 const CPLString& osCredentials,
+                                 const CPLString& osConfig)
+{
+    // nominally defined in ~/.aws/credentials but can
+    // be set here too. If both values exist, credentials
+    // has the priority
+    if( osVal.empty() )
+    {
+        osVal = osNewVal;
+    }
+    else if( osVal != osNewVal )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                    "%s defined in both %s "
+                    "and %s. The one of %s will be used",
+                    pszKeyword,
+                    osCredentials.c_str(),
+                    osConfig.c_str(),
+                    osCredentials.c_str());
+    }
+}
+
+/************************************************************************/
+/*                GetConfigurationFromAWSConfigFiles()                  */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
+                                                CPLString& osSecretAccessKey,
+                                                CPLString& osAccessKeyId,
+                                                CPLString& osSessionToken,
+                                                CPLString& osRegion,
+                                                CPLString& osCredentials)
+{
+    // See http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
+    const char* pszProfile = CPLGetConfigOption("AWS_DEFAULT_PROFILE", "");
+    const CPLString osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
+
+#ifdef WIN32
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    static const char SEP_STRING[] = "\\";
+#else
+    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    static const char SEP_STRING[] = "/";
+#endif
+
+    CPLString osDotAws( pszHome ? pszHome : "" );
+    osDotAws += SEP_STRING;
+    osDotAws += ".aws";
+
+    // Read first ~/.aws/credential file
+
+    // GDAL specific config option (mostly for testing purpose, but also
+    // used in production in some cases)
+    const char* pszCredentials =
+                    CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE", NULL );
+    if( pszCredentials )
+    {
+        osCredentials = pszCredentials;
+    }
+    else
+    {
+        osCredentials = osDotAws;
+        osCredentials += SEP_STRING;
+        osCredentials += "credentials";
+    }
+    VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
+    if( fp != NULL )
+    {
+        const char* pszLine;
+        bool bInProfile = false;
+        const CPLString osBracketedProfile("[" + osProfile + "]");
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        {
+            if( pszLine[0] == '[' )
+            {
+                if( bInProfile )
+                    break;
+                if( CPLString(pszLine) == osBracketedProfile )
+                    bInProfile = true;
+            }
+            else if( bInProfile )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "aws_access_key_id") )
+                        osAccessKeyId = pszValue;
+                    else if( EQUAL(pszKey, "aws_secret_access_key") )
+                        osSecretAccessKey = pszValue;
+                    else if( EQUAL(pszKey, "aws_session_token") )
+                        osSessionToken = pszValue;
+                }
+                CPLFree(pszKey);
+            }
+        }
+        VSIFCloseL(fp);
+    }
+
+    // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
+    const char* pszAWSConfigFileEnv =
+                            CPLGetConfigOption( "AWS_CONFIG_FILE", NULL );
+    CPLString osConfig;
+    if( pszAWSConfigFileEnv )
+    {
+        osConfig = pszAWSConfigFileEnv;
+    }
+    else
+    {
+        osConfig = osDotAws;
+        osConfig += SEP_STRING;
+        osConfig += "credentials";
+    }
+    fp = VSIFOpenL( osConfig, "rb" );
+    if( fp != NULL )
+    {
+        const char* pszLine;
+        bool bInProfile = false;
+        const CPLString osBracketedProfile("[" + osProfile + "]");
+        const CPLString osBracketedProfileProfile("[profile " + osProfile + "]");
+        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        {
+            if( pszLine[0] == '[' )
+            {
+                if( bInProfile )
+                    break;
+                // In config file, the section name is nominally [profile foo]
+                // for the non default profile.
+                if( CPLString(pszLine) == osBracketedProfile ||
+                    CPLString(pszLine) == osBracketedProfileProfile )
+                {
+                    bInProfile = true;
+                }
+            }
+            else if( bInProfile )
+            {
+                char* pszKey = NULL;
+                const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
+                if( pszKey && pszValue )
+                {
+                    if( EQUAL(pszKey, "aws_access_key_id") )
+                    {
+                        UpdateAndWarnIfInconsistent(pszKey,
+                                                    osAccessKeyId,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "aws_secret_access_key") )
+                    {
+                        UpdateAndWarnIfInconsistent(pszKey,
+                                                    osSecretAccessKey,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "aws_session_token") )
+                    {
+                        UpdateAndWarnIfInconsistent(pszKey,
+                                                    osSessionToken,
+                                                    pszValue,
+                                                    osCredentials,
+                                                    osConfig);
+                    }
+                    else if( EQUAL(pszKey, "region") )
+                    {
+                        osRegion = pszValue;
+                    }
+                }
+                CPLFree(pszKey);
+            }
+        }
+        VSIFCloseL(fp);
+    }
+    else if( pszAWSConfigFileEnv != NULL )
+    {
+        if( pszAWSConfigFileEnv[0] != '\0' )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s does not exist or cannot be open",
+                     pszAWSConfigFileEnv);
+        }
+    }
+
+    return !osAccessKeyId.empty() && !osSecretAccessKey.empty();
+}
+
+/************************************************************************/
+/*                        GetConfiguration()                            */
+/************************************************************************/
+
+bool VSIS3HandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osSessionToken,
+                                         CPLString& osRegion)
+{
+    osSecretAccessKey =
+        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
+    // AWS_REGION is GDAL specific. Later overloaded by standard
+    // AWS_DEFAULT_REGION
+    osRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
+    if( !osSecretAccessKey.empty() )
+    {
+        osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
+        if( osAccessKeyId.empty() )
+        {
+            VSIError(VSIE_AWSInvalidCredentials,
+                    "AWS_ACCESS_KEY_ID configuration option not defined");
+            return false;
+        }
+
+        osSessionToken = CPLGetConfigOption("AWS_SESSION_TOKEN", "");
+        return true;
+    }
+
+    // Next try reading from ~/.aws/credentials and ~/.aws/config
+    CPLString osCredentials;
+    if( GetConfigurationFromAWSConfigFiles(osSecretAccessKey, osAccessKeyId,
+                                           osSessionToken, osRegion,
+                                           osCredentials) )
+    {
+        return true;
+    }
+
+    // Last method: use IAM role security credentials on EC2 instances
+    if( GetConfigurationFromEC2(osSecretAccessKey, osAccessKeyId,
+                                osSessionToken) )
+    {
+        return true;
+    }
+
+    VSIError(VSIE_AWSInvalidCredentials,
+                "AWS_SECRET_ACCESS_KEY configuration option and %s not defined",
+                osCredentials.c_str());
+    return false;
+}
+
+/************************************************************************/
+/*                          CleanMutex()                                */
+/************************************************************************/
+
+void VSIS3HandleHelper::CleanMutex()
+{
+    if( hMutex != NULL )
+        CPLDestroyMutex( hMutex );
+    hMutex = NULL;
+}
+
+/************************************************************************/
+/*                          ClearCache()                                */
+/************************************************************************/
+
+void VSIS3HandleHelper::ClearCache()
+{
+    CPLMutexHolder oHolder( &hMutex );
+
+    osIAMRole.clear();
+    osGlobalAccessKeyId.clear();
+    osGlobalSecretAccessKey.clear();
+    osGlobalSessionToken.clear();
+    nGlobalExpiration = 0;
+}
+
+/************************************************************************/
 /*                          BuildFromURI()                              */
 /************************************************************************/
 
@@ -407,29 +944,32 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                                                     const char* pszFSPrefix,
                                                     bool bAllowNoObject )
 {
-    const CPLString osSecretAccessKey =
-        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
-    if( osSecretAccessKey.empty() )
+    CPLString osSecretAccessKey;
+    CPLString osAccessKeyId;
+    CPLString osSessionToken;
+    CPLString osRegion;
+    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId,
+                          osSessionToken, osRegion) )
     {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "AWS_SECRET_ACCESS_KEY configuration option not defined");
         return NULL;
     }
-    const CPLString osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
-    if( osAccessKeyId.empty() )
+
+    // According to http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html
+    // " This variable overrides the default region of the in-use profile, if set."
+    const CPLString osDefaultRegion = CPLGetConfigOption("AWS_DEFAULT_REGION", "");
+    if( !osDefaultRegion.empty() )
     {
-        VSIError(VSIE_AWSInvalidCredentials,
-                 "AWS_ACCESS_KEY_ID configuration option not defined");
-        return NULL;
+        osRegion = osDefaultRegion;
     }
-    const CPLString osSessionToken =
-        CPLGetConfigOption("AWS_SESSION_TOKEN", "");
-    const CPLString osAWSS3Endpoint =
+
+    const CPLString osEndpoint =
         CPLGetConfigOption("AWS_S3_ENDPOINT", "s3.amazonaws.com");
-    const CPLString osAWSRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
+    const CPLString osRequestPayer =
+        CPLGetConfigOption("AWS_REQUEST_PAYER", "");
     CPLString osBucket;
     CPLString osObjectKey;
-    if( !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
+    if( pszURI != NULL && pszURI[0] != '\0' &&
+        !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
                                osBucket, osObjectKey) )
     {
         return NULL;
@@ -442,16 +982,42 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                            bIsValidNameForVirtualHosting ? "TRUE" : "FALSE"));
     return new VSIS3HandleHelper(osSecretAccessKey, osAccessKeyId,
                                  osSessionToken,
-                                 osAWSS3Endpoint, osAWSRegion,
+                                 osEndpoint, osRegion,
+                                 osRequestPayer,
                                  osBucket, osObjectKey, bUseHTTPS,
                                  bUseVirtualHosting);
+}
+
+/************************************************************************/
+/*                          GetQueryString()                            */
+/************************************************************************/
+
+CPLString IVSIS3LikeHandleHelper::GetQueryString() const
+{
+    CPLString osQueryString;
+    std::map<CPLString, CPLString>::const_iterator oIter =
+        m_oMapQueryParameters.begin();
+    for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
+    {
+        if( oIter == m_oMapQueryParameters.begin() )
+            osQueryString += "?";
+        else
+            osQueryString += "&";
+        osQueryString += oIter->first;
+        if( !oIter->second.empty() )
+        {
+            osQueryString += "=";
+            osQueryString += CPLAWSURLEncode(oIter->second);
+        }
+    }
+    return osQueryString;
 }
 
 /************************************************************************/
 /*                       ResetQueryParameters()                         */
 /************************************************************************/
 
-void VSIS3HandleHelper::ResetQueryParameters()
+void IVSIS3LikeHandleHelper::ResetQueryParameters()
 {
     m_oMapQueryParameters.clear();
     RebuildURL();
@@ -461,8 +1027,8 @@ void VSIS3HandleHelper::ResetQueryParameters()
 /*                         AddQueryParameter()                          */
 /************************************************************************/
 
-void VSIS3HandleHelper::AddQueryParameter( const CPLString& osKey,
-                                           const CPLString& osValue )
+void IVSIS3LikeHandleHelper::AddQueryParameter( const CPLString& osKey,
+                                                const CPLString& osValue )
 {
     m_oMapQueryParameters[osKey] = osValue;
     RebuildURL();
@@ -474,8 +1040,9 @@ void VSIS3HandleHelper::AddQueryParameter( const CPLString& osKey,
 
 struct curl_slist *
 VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
+                                   const struct curl_slist* psExistingHeaders,
                                    const void *pabyDataContent,
-                                   size_t nBytesContent )
+                                   size_t nBytesContent ) const
 {
     CPLString osXAMZDate = CPLGetConfigOption("AWS_TIMESTAMP", "");
     if( osXAMZDate.empty() )
@@ -485,7 +1052,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
 
     CPLString osCanonicalQueryString;
-    std::map<CPLString, CPLString>::iterator oIter =
+    std::map<CPLString, CPLString>::const_iterator oIter =
         m_oMapQueryParameters.begin();
     for( ; oIter != m_oMapQueryParameters.end(); ++oIter )
     {
@@ -496,18 +1063,21 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osCanonicalQueryString += CPLAWSURLEncode(oIter->second);
     }
 
+    const CPLString osHost(m_bUseVirtualHosting && !m_osBucket.empty()
+        ? CPLString(m_osBucket + "." + m_osEndpoint) : m_osEndpoint);
     const CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
         m_osSecretAccessKey,
         m_osAccessKeyId,
         m_osSessionToken,
-        m_osAWSRegion,
+        m_osRegion,
+        m_osRequestPayer,
         "s3",
         osVerb,
+        psExistingHeaders,
+        osHost,
         m_bUseVirtualHosting
-        ? m_osBucket + "." + m_osAWSS3Endpoint : m_osAWSS3Endpoint,
-        m_bUseVirtualHosting
-        ? ("/" + m_osObjectKey).c_str() :
-        ("/" + m_osBucket + "/" + m_osObjectKey).c_str(),
+        ? CPLAWSURLEncode("/" + m_osObjectKey, false).c_str() :
+        CPLAWSURLEncode("/" + m_osBucket + "/" + m_osObjectKey, false).c_str(),
         osCanonicalQueryString,
         osXAMZContentSHA256,
         osXAMZDate);
@@ -522,6 +1092,10 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         headers = curl_slist_append(
             headers,
             CPLSPrintf("X-Amz-Security-Token: %s", m_osSessionToken.c_str()));
+    if( !m_osRequestPayer.empty() )
+        headers = curl_slist_append(
+            headers,
+            CPLSPrintf("x-amz-request-payer: %s", m_osRequestPayer.c_str()));
     headers = curl_slist_append(
         headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
     return headers;
@@ -532,15 +1106,20 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /************************************************************************/
 
 bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
-                                           bool bSetError )
+                                           const char* pszHeaders,
+                                           bool bSetError, bool* pbUpdateMap )
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("S3", "%s", pszErrorMsg);
+    CPLDebug("S3", "%s", pszHeaders ? pszHeaders : "");
 #endif
+
+    if( pbUpdateMap != NULL )
+        *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
     {
-        if(bSetError)
+        if( bSetError )
         {
             VSIError(VSIE_AWSError, "Invalid AWS response: %s", pszErrorMsg);
         }
@@ -583,14 +1162,15 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             }
             return false;
         }
-        SetAWSRegion(pszRegion);
-        CPLDebug("S3", "Switching to region %s", m_osAWSRegion.c_str());
+        SetRegion(pszRegion);
+        CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
         CPLDestroyXMLNode(psTree);
         return true;
     }
 
-    if( EQUAL(pszCode, "PermanentRedirect") )
+    if( EQUAL(pszCode, "PermanentRedirect") || EQUAL(pszCode, "TemporaryRedirect") )
     {
+        const bool bIsTemporaryRedirect = EQUAL(pszCode, "TemporaryRedirect");
         const char* pszEndpoint =
             CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
         if( pszEndpoint == NULL ||
@@ -611,15 +1191,44 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             strncmp(pszEndpoint, m_osBucket.c_str(), m_osBucket.size()) == 0 &&
             pszEndpoint[m_osBucket.size()] == '.' )
         {
+            /* If we have a body with
+            <Error><Code>PermanentRedirect</Code><Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message><Bucket>bucket.with.dot</Bucket><Endpoint>bucket.with.dot.s3.amazonaws.com</Endpoint></Error>
+            and headers like
+            x-amz-bucket-region: eu-west-1
+            and the bucket name has dot in it,
+            then we must use s3.$(x-amz-bucket-region).amazon.com as endpoint.
+            See #7154 */
+            const char* pszRegionPtr = (pszHeaders != NULL) ?
+                strstr(pszHeaders, "x-amz-bucket-region: "): NULL;
+            if( strchr(m_osBucket.c_str(), '.') != NULL && pszRegionPtr != NULL )
+            {
+                CPLString osRegion(pszRegionPtr + strlen("x-amz-bucket-region: "));
+                size_t nPos = osRegion.find('\r');
+                if( nPos != std::string::npos )
+                    osRegion.resize(nPos);
+                SetEndpoint( CPLSPrintf("s3.%s.amazonaws.com", osRegion.c_str()) );
+                SetRegion(osRegion.c_str());
+                CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
+                CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
+                CPLDestroyXMLNode(psTree);
+                if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+                    *pbUpdateMap = false;
+                return true;
+            }
+
             m_bUseVirtualHosting = true;
             CPLDebug("S3", "Switching to virtual hosting");
         }
-        SetAWSS3Endpoint(
+        SetEndpoint(
             m_bUseVirtualHosting
             ? pszEndpoint + m_osBucket.size() + 1
             : pszEndpoint);
-        CPLDebug("S3", "Switching to endpoint %s", m_osAWSS3Endpoint.c_str());
+        CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
+
+        if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+            *pbUpdateMap = false;
+
         return true;
     }
 
@@ -649,23 +1258,33 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
 }
 
 /************************************************************************/
-/*                          SetAWSS3Endpoint()                          */
+/*                          SetEndpoint()                          */
 /************************************************************************/
 
-void VSIS3HandleHelper::SetAWSS3Endpoint( const CPLString &osStr )
+void VSIS3HandleHelper::SetEndpoint( const CPLString &osStr )
 {
-    m_osAWSS3Endpoint = osStr;
+    m_osEndpoint = osStr;
     RebuildURL();
 }
 
 /************************************************************************/
-/*                           SetAWSRegion()                             */
+/*                           SetRegion()                             */
 /************************************************************************/
 
-void VSIS3HandleHelper::SetAWSRegion( const CPLString &osStr )
+void VSIS3HandleHelper::SetRegion( const CPLString &osStr )
 {
-    m_osAWSRegion = osStr;
+    m_osRegion = osStr;
 }
+
+/************************************************************************/
+/*                           SetRequestPayer()                          */
+/************************************************************************/
+
+void VSIS3HandleHelper::SetRequestPayer( const CPLString &osStr )
+{
+    m_osRequestPayer = osStr;
+}
+
 /************************************************************************/
 /*                         SetVirtualHosting()                          */
 /************************************************************************/
@@ -673,16 +1292,6 @@ void VSIS3HandleHelper::SetAWSRegion( const CPLString &osStr )
 void VSIS3HandleHelper::SetVirtualHosting( bool b )
 {
     m_bUseVirtualHosting = b;
-    RebuildURL();
-}
-
-/************************************************************************/
-/*                           SetObjectKey()                             */
-/************************************************************************/
-
-void VSIS3HandleHelper::SetObjectKey( const CPLString &osStr )
-{
-    m_osObjectKey = osStr;
     RebuildURL();
 }
 

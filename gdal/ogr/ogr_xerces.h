@@ -35,6 +35,7 @@
 
 #include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
 
 #ifdef HAVE_XERCES
 
@@ -43,6 +44,9 @@
 /* Thread-safe initialization/de-initialization. Calls should be paired */
 bool CPL_DLL OGRInitializeXerces(void);
 void CPL_DLL OGRDeinitializeXerces(void);
+
+InputSource CPL_DLL* OGRCreateXercesInputSource(VSILFILE* fp);
+void CPL_DLL OGRDestroyXercesInputSource(InputSource* is);
 
 namespace OGR
 {
@@ -55,8 +59,8 @@ CPLString CPL_DLL &transcode( const XMLCh *panXMLString, CPLString& osRet,
 using OGR::transcode;
 #endif
 
-#endif /* HAVE_XERCES */
-
 void OGRCleanupXercesMutex(void);
+
+#endif /* HAVE_XERCES */
 
 #endif /* OGR_XERCES_INCLUDED */

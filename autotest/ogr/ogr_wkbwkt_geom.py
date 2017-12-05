@@ -652,6 +652,30 @@ def ogr_wkt_inf_nan():
     return 'success'
 
 ###############################################################################
+# Test corrupted WKT
+
+def ogr_wkt_multicurve_compoundcurve_corrupted():
+
+    with gdaltest.error_handler():
+        g = ogr.CreateGeometryFromWkt('MULTICURVE(COMPOUNDCURVE')
+    if g is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test corrupted WKT
+
+def ogr_wkt_multipolygon_corrupted():
+
+    with gdaltest.error_handler():
+        g = ogr.CreateGeometryFromWkt('MULTIPOLYGON(POLYGON((N')
+    if g is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # When imported build a list of units based on the files available.
 
 #print 'hit enter'
@@ -674,6 +698,8 @@ gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkt_recursion )
 gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkb_recursion )
 gdaltest_list.append( ogr_wkbwkt_export_wkt_iso_multipoint )
 gdaltest_list.append( ogr_wkt_inf_nan )
+gdaltest_list.append( ogr_wkt_multicurve_compoundcurve_corrupted )
+gdaltest_list.append( ogr_wkt_multipolygon_corrupted )
 
 if __name__ == '__main__':
 

@@ -31,7 +31,7 @@
 
 #include <cstddef>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef HAVE_LIBXML2
 
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
@@ -74,7 +74,7 @@ class GDALGMLJP2Expr
         eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(pszVal) {}
     GDALGMLJP2Expr( CPLString osVal ) :
         eType(GDALGMLJP2Expr_STRING_LITERAL), osValue(osVal) {}
-    ~GDALGMLJP2Expr() {};
+    ~GDALGMLJP2Expr() {}
 
     GDALGMLJP2Expr          Evaluate( xmlXPathContextPtr pXPathCtx,
                                       xmlDocPtr pDoc );

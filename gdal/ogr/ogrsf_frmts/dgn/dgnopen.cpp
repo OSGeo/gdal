@@ -28,7 +28,7 @@
 
 #include "dgnlibp.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            DGNTestOpen()                             */
@@ -98,7 +98,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( pszFilename, bUpdate ? "rb+" : "rb");
+    VSILFILE *fp = VSIFOpenL( pszFilename, bUpdate ? "rb+" : "rb");
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -112,17 +112,17 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
     GByte abyHeader[512];
     const int nHeaderBytes =
-        static_cast<int>(VSIFRead( abyHeader, 1, sizeof(abyHeader), fp ));
+        static_cast<int>(VSIFReadL( abyHeader, 1, sizeof(abyHeader), fp ));
     if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File `%s' does not have expected DGN header.\n",
                   pszFilename );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return NULL;
     }
 
-    VSIRewind( fp );
+    VSIRewindL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create the info structure.                                      */
@@ -286,7 +286,7 @@ void DGNClose( DGNHandle hDGN )
 {
     DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
-    VSIFClose( psDGN->fp );
+    VSIFCloseL( psDGN->fp );
     CPLFree( psDGN->element_index );
     CPLFree( psDGN );
 }

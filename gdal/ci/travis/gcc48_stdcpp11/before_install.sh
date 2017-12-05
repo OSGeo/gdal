@@ -5,11 +5,12 @@ set -e
 sudo mv /etc/apt/sources.list.d/pgdg* /tmp
 sudo apt-get remove postgis libpq5 libpq-dev postgresql-9.1-postgis postgresql-9.1-postgis-2.2-scripts postgresql-9.2-postgis postgresql-9.3-postgis postgresql-9.1 postgresql-9.2 postgresql-9.3 libgdal1
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-sudo add-apt-repository -y ppa:marlam/gta
+#sudo add-apt-repository -y ppa:marlam/gta
 #http://ubuntuhandbook.org/index.php/2013/08/install-gcc-4-8-via-ppa-in-ubuntu-12-04-13-04/
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
-sudo apt-get install python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev libgta-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+sudo apt-get install python-numpy postgis postgresql-9.1 postgresql-client-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev liblzma-dev libgeos-dev libcurl4-gnutls-dev libproj-dev libxml2-dev libexpat-dev libxerces-c-dev libnetcdf-dev netcdf-bin libpoppler-dev libspatialite-dev gpsbabel swig libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils libfreexl-dev unixodbc-dev libwebp-dev openjdk-7-jdk libepsilon-dev liblcms2-2 libpcre3-dev mercurial cmake libcrypto++-dev
+# libgta-dev 
 sudo apt-get install python-lxml
 sudo apt-get install python-pip
 sudo apt-get install libogdi3.2-dev
@@ -30,7 +31,7 @@ wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/FileGDB_API_
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libecwj2-ubuntu12.04-64bit.tar.gz
 wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-libkml-r864-64bit.tar.gz
-wget http://s3.amazonaws.com/etc-data.koordinates.com/gdal-travisci/install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
+wget https://github.com/uclouvain/openjpeg/releases/download/v2.3.0/openjpeg-v2.3.0-linux-x86_64.tar.gz
 #wget http://even.rouault.free.fr/mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 tar xzf MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44.tar.gz
 sudo cp -r MrSID_DSDK-8.5.0.3422-linux.x86-64.gcc44/Raster_DSDK/include/* /usr/local/include
@@ -46,9 +47,9 @@ sudo cp -r install-libecwj2/lib/* /usr/local/lib
 tar xzf install-libkml-r864-64bit.tar.gz
 sudo cp -r install-libkml/include/* /usr/local/include
 sudo cp -r install-libkml/lib/* /usr/local/lib
-tar xzf install-openjpeg-2.0.0-ubuntu12.04-64bit.tar.gz
-sudo cp -r install-openjpeg/include/* /usr/local/include
-sudo cp -r install-openjpeg/lib/* /usr/local/lib
+tar xzf openjpeg-v2.3.0-linux-x86_64.tar.gz
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/include/* /usr/local/include
+sudo cp -r openjpeg-v2.3.0-linux-x86_64/lib/* /usr/local/lib
 #tar xzf mongo-cxx-1.0.2-install-ubuntu12.04-64bit.tar.gz
 #sudo cp -r mongo-cxx-1.0.2-install/include/* /usr/local/include
 #sudo cp -r mongo-cxx-1.0.2-install/lib/* /usr/local/lib

@@ -36,6 +36,8 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <map>
+#include <utility>
 #include <curl/curl.h>
 
 #include "cpl_conv.h"
@@ -56,6 +58,12 @@ class GDALWMSRasterBand;
 /* -------------------------------------------------------------------- */
 CPLString MD5String(const char *s);
 CPLString ProjToWKT(const CPLString &proj);
+
+// Decode s from encoding "base64" or "XMLencoded".
+// If encoding is "file", s is the file name on input and file content on output
+// If encoding is not recognized, does nothing
+const char *WMSUtilDecode(CPLString &s, const char *encoding);
+
 // Ensure that the url ends in ? or &
 void URLPrepare(CPLString &url);
 // void URLAppend(CPLString *url, const char *s);
@@ -146,8 +154,8 @@ public:
 class WMSMiniDriver {
 friend class GDALWMSDataset;
 public:
-    WMSMiniDriver() : m_parent_dataset(NULL) {};
-    virtual ~WMSMiniDriver() {};
+    WMSMiniDriver() : m_parent_dataset(NULL) {}
+    virtual ~WMSMiniDriver() {}
 
 public:
     // MiniDriver specific initialization from XML, required
@@ -155,7 +163,7 @@ public:
     virtual CPLErr Initialize(CPLXMLNode *config, char **papszOpenOptions) = 0;
 
     // Called once at the end of the dataset initialization
-    virtual CPLErr EndInit() { return CE_None; };
+    virtual CPLErr EndInit() { return CE_None; }
 
     // Error message returned in url, required
     // Set error message in request.Error
@@ -165,24 +173,24 @@ public:
         CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri) = 0;
 
     // change capabilities to be used by the parent
-    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {};
+    virtual void GetCapabilities(CPL_UNUSED WMSMiniDriverCapabilities *caps) {}
 
     // signal by setting the m_has_getinfo in the GetCapabilities call
     virtual void GetTiledImageInfo(CPL_UNUSED CPLString &url,
         CPL_UNUSED const GDALWMSImageRequestInfo &iri,
         CPL_UNUSED const GDALWMSTiledImageRequestInfo &tiri,
         CPL_UNUSED int nXInBlock,
-        CPL_UNUSED int nYInBlock) {};
+        CPL_UNUSED int nYInBlock) {}
 
     virtual const char *GetProjectionInWKT() {
         if (!m_projection_wkt.empty())
             return m_projection_wkt.c_str();
         return NULL;
-    };
+    }
 
     virtual char **GetMetadataDomainList() {
         return NULL;
-    };
+    }
 
 protected:
     CPLString m_base_url;
@@ -192,8 +200,8 @@ protected:
 
 class WMSMiniDriverFactory {
 public:
-    WMSMiniDriverFactory() {};
-    virtual ~WMSMiniDriverFactory() {};
+    WMSMiniDriverFactory() {}
+    virtual ~WMSMiniDriverFactory() {}
 
 public:
     virtual WMSMiniDriver* New() const = 0;
@@ -204,6 +212,9 @@ public:
 WMSMiniDriver *NewWMSMiniDriver(const CPLString &name);
 void WMSRegisterMiniDriverFactory(WMSMiniDriverFactory *mdf);
 void WMSDeregisterMiniDrivers(GDALDriver *);
+
+// WARNING: Called by GDALDestructor, unsafe to use any static objects
+void WMSDeregister(GDALDriver *);
 
 /************************************************************************/
 /*                            GDALWMSCache                              */
@@ -252,8 +263,8 @@ public:
 
     void SetColorTable(GDALColorTable *pct) { m_poColorTable=pct; }
 
-    void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); };
-    GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); };
+    void mSetBand(int i, GDALRasterBand *band) { SetBand(i,band); }
+    GDALWMSRasterBand *mGetBand(int i) { return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i)); }
 
     const GDALWMSDataWindow *WMSGetDataWindow() const {
         return &m_data_window;
@@ -336,6 +347,12 @@ public:
         list2vec(vMax,pszMax);
     }
 
+    void SetXML(const char *psz) {
+        m_osXML.clear();
+        if (psz)
+            m_osXML = psz;
+    }
+
     static GDALDataset* Open(GDALOpenInfo *poOpenInfo);
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy( const char * pszFilename,
@@ -345,6 +362,10 @@ public:
                                     void * pProgressData );
 
     const char * const * GetHTTPRequestOpts();
+
+    static const char *GetServerConfig(const char *URI, char **papszHTTPOptions);
+    static void DestroyCfgMutex();
+    static void ClearConfigCache();
 
 protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy, void *buffer,
@@ -394,6 +415,11 @@ protected:
     bool m_bNeedsDataWindow;
 
     CPLString m_osXML;
+
+    // Per session cache of server configurations
+    typedef std::map<CPLString, CPLString> StringMap_t;
+    static CPLMutex *cfgmtx;
+    static StringMap_t cfg;
 };
 
 /************************************************************************/
@@ -412,7 +438,7 @@ class GDALWMSRasterBand : public GDALPamRasterBand {
 public:
     GDALWMSRasterBand( GDALWMSDataset *parent_dataset, int band, double scale );
     virtual ~GDALWMSRasterBand();
-    void AddOverview(double scale);
+    bool AddOverview(double scale);
     virtual double GetNoDataValue( int * ) override;
     virtual double GetMinimum( int * ) override;
     virtual double GetMaximum( int * ) override;
@@ -447,6 +473,10 @@ protected:
     std::vector<GDALWMSRasterBand *> m_overviews;
     int m_overview;
     GDALColorInterp m_color_interp;
+    int m_nAdviseReadBX0;
+    int m_nAdviseReadBY0;
+    int m_nAdviseReadBX1;
+    int m_nAdviseReadBY1;
 };
 
 #endif /* notdef WMSDRIVER_H_INCLUDED */

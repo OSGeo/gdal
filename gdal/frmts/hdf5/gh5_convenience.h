@@ -33,12 +33,12 @@
 #define H5_USE_16_API
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4005 ) /* warning C4005: '_HDF5USEDLL_' : macro redefinition */
+#pragma warning(push)
+#pragma warning(disable : 4005) // warning C4005: '_HDF5USEDLL_' : macro redefinition
 #endif
 #include "hdf5.h"
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #include "cpl_string.h"
@@ -46,8 +46,8 @@
 
 /* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
 
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
-       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 && \
+       (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
 #  define H5OFFSET_TYPE hssize_t
 #else
 #  define H5OFFSET_TYPE  hsize_t

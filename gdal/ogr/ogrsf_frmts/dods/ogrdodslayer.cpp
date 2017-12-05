@@ -29,7 +29,7 @@
 #include "ogr_dods.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRDODSLayer()                            */
@@ -112,7 +112,7 @@ OGRDODSLayer::~OGRDODSLayer()
                   poFeatureDefn->GetName() );
     }
 
-    if( papoFields != NULL )
+    if( papoFields != NULL && poFeatureDefn != NULL )
     {
         int iField;
 

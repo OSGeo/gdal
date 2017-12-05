@@ -32,8 +32,9 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
+#include "commonutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static void Usage()
 
@@ -46,7 +47,7 @@ static void Usage()
     printf( "EPSG:n definition or the name of a file containing WKT/XML.\n");
 }
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     OGRSpatialReference oSRS;
@@ -65,7 +66,7 @@ int main( int nArgc, char ** papszArgv )
         if( EQUAL(papszArgv[i],"-xml") )
             bReportXML = true;
 
-        else if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
+        else if( i < nArgc - 4 && EQUAL(papszArgv[i],"-t") )
         {
             OGRSpatialReference oSourceSRS;
             OGRSpatialReference oTargetSRS;
@@ -195,3 +196,4 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
+MAIN_END

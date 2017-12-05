@@ -77,6 +77,14 @@ public:
     CPLErr SetNoDataValue(double dfNoData) override;
     virtual CPLErr DeleteNoDataValue() override;
 
+    // histogram methods
+    CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, GUIntBig ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData) override;
+    CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                        int nBuckets, GUIntBig *panHistogram ) override;
+
     // virtual methods for RATs
     GDALRasterAttributeTable *GetDefaultRAT() override;
     CPLErr SetDefaultRAT(const GDALRasterAttributeTable *poRAT) override;
@@ -107,6 +115,12 @@ protected:
 
     // updates m_papszMetadataList
     void UpdateMetadataList();
+
+    // sets/gets the histogram column from a string (for metadata)
+    CPLErr SetHistogramFromString(const char *pszString);
+    char *GetHistogramAsString();
+    // So we can return the histogram as a string from GetMetadataItem
+    char *m_pszHistoBinValues;
 
     kealib::KEAImageIO  *m_pImageIO; // our image access pointer - refcounted
     char               **m_papszMetadataList; // CPLStringList of metadata

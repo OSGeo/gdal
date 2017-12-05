@@ -37,7 +37,7 @@
 #include "../../ogr/ogrsf_frmts/mitab/mitab.h"
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -117,9 +117,9 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
     // load the color table and might as well to the ClassNames
     poGDS->poColorTable = new GDALColorTable();
 
-    GDALColorEntry oEntry = { 255, 255, 255, 255 };
+    GDALColorEntry oEntry = { 255, 255, 255, 0 };
     // null value = 0 is transparent
-    // alpha 255 = transparent
+    // alpha 0 = transparent
 
     poGDS->poColorTable->SetColorEntry( 0, &oEntry );
 
@@ -130,7 +130,7 @@ NWT_GRCRasterBand::NWT_GRCRasterBand( NWT_GRCDataset * poDSIn, int nBandIn )
         oEntry.c1 = poGDS->pGrd->stClassDict->stClassifedItem[i]->r;
         oEntry.c2 = poGDS->pGrd->stClassDict->stClassifedItem[i]->g;
         oEntry.c3 = poGDS->pGrd->stClassDict->stClassifedItem[i]->b;
-        oEntry.c4 = 0;            // alpha 0 = solid
+        oEntry.c4 = 255;            // alpha 255 = solid
 
         poGDS->poColorTable->SetColorEntry( poGDS->pGrd->
                                           stClassDict->stClassifedItem[i]->

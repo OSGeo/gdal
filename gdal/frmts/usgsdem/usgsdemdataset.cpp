@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef struct {
     double      x;
@@ -559,6 +559,8 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     CPL_IGNORE_RET_VAL(VSIFSeekL(InDem, 816, 0));
     const double dxdelta = DConvert(InDem, 12);
     const double dydelta = DConvert(InDem, 12);
+    if( dydelta == 0 )
+        return FALSE;
     fVRes = DConvert(InDem, 12);
 
 /* -------------------------------------------------------------------- */

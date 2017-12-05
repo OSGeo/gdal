@@ -70,6 +70,7 @@ public:
              bool onlyZPart = false) const;
 
   bool read(Byte** ppByte,
+            size_t& nRemainingBytes,
              double maxZError,
              bool onlyHeader = false,
              bool onlyZPart = false);
@@ -92,7 +93,7 @@ public:
     }
 
     return true;
-  };
+  }
 
 protected:
 
@@ -120,7 +121,7 @@ protected:
     int numTilesVert, int numTilesHori, Byte* bArr, int& numBytes, float& maxValInImg) const;
 
   bool readTiles( bool zPart, double maxZErrorInFile,
-    int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr);
+    int numTilesVert, int numTilesHori, float maxValInImg, Byte* bArr, size_t nRemainingBytes);
 
   bool cntsNoInt() const;
   bool computeCntStats(int i0, int i1, int j0, int j1, float& cntMin, float& cntMax) const;
@@ -135,13 +136,13 @@ protected:
   bool writeZTile(Byte** ppByte, int& numBytes, int i0, int i1, int j0, int j1,
     int numValidPixel, float zMin, float zMax, double maxZError) const;
 
-  bool readCntTile(Byte** ppByte, int i0, int i1, int j0, int j1);
-  bool readZTile(  Byte** ppByte, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
+  bool readCntTile(Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1);
+  bool readZTile(  Byte** ppByte, size_t& nRemainingBytes, int i0, int i1, int j0, int j1, double maxZErrorInFile, float maxZInImg);
 
   static int numBytesFlt(float z);    // returns 1, 2, or 4
   // These are not portable on architectures that enforce alignment
   static bool writeFlt(Byte** ppByte, float z, int numBytes);
-  static bool readFlt( Byte** ppByte, float& z, int numBytes);
+  static bool readFlt( Byte** ppByte, size_t& nRemainingBytes, float& z, int numBytes);
 
   // Portable versions of the above, endian independent if BIG_ENDIAN is defined when needed
 

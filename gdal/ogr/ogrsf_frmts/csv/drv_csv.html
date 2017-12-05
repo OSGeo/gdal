@@ -137,7 +137,10 @@ OGRFeature(test):3
 
 <p>Otherwise, if one
 or several columns contain a geometry definition encoded as WKT, WKB (encoded
-in hexadecimal) or GeoJSON, the name of such column(s) the GEOM_POSSIBLE_NAMES open option.</p>
+in hexadecimal) or GeoJSON (in which case the GeoJSON content must be formatted
+to follow CSV rules, that is to say it must be surrounded by double-quotes, and
+double-quotes inside the string must be repeated for proper escaping), the name
+of such column(s) the GEOM_POSSIBLE_NAMES open option.</p>
 
 <p>For older versions, it is possible to extract spatial information (points) from a CSV file
 which has columns for the X and Y coordinates, through the use of the

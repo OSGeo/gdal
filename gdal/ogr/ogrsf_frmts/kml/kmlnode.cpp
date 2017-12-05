@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           Help functions                             */
@@ -214,18 +214,6 @@ void KMLNode::print(unsigned int what)
         (*pvpoChildren_)[z]->print(what);
 }
 
-#ifdef DEBUG_VERBOSE
-static int nDepth = 0;
-static char* genSpaces()
-{
-    static char spaces[128];
-    for(int i=0;i<nDepth;i++)
-        spaces[i] = ' ';
-    spaces[i] = '\0';
-    return spaces;
-}
-#endif
-
 int KMLNode::classify(KML* poKML, int nRecLevel)
 {
     Nodetype all = Empty;
@@ -238,11 +226,6 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
                   nRecLevel );
         return FALSE;
     }
-
-#ifdef DEBUG_VERBOSE
-    CPLDebug( "KML", "%s<%s>", genSpaces(), sName_.c_str() );
-    nDepth ++;
-#endif
 
     if(sName_.compare("Point") == 0)
         eType_ = Point;
@@ -279,11 +262,6 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
     const kml_nodes_t::size_type size = pvpoChildren_->size();
     for(kml_nodes_t::size_type z = 0; z < size; z++)
     {
-#ifdef DEBUG_VERBOSE
-        CPLDebug( "KML", "%s[%d] %s", genSpaces(), z,
-                  (*pvpoChildren_)[z]->sName_.c_str() );
-#endif
-
         // Classify pvpoChildren_
         if (!(*pvpoChildren_)[z]->classify(poKML, nRecLevel + 1))
             return FALSE;
@@ -322,31 +300,35 @@ int KMLNode::classify(KML* poKML, int nRecLevel)
             eType_ = all;
     }
 
-    //nDepth --;
-#ifdef DEBUG_VERBOSE
-    CPLDebug( "KML", "%s</%s> --> eType=%s",
-              genSpaces(), sName_.c_str(), Nodetype2String(eType_).c_str());
-#endif
-
     return TRUE;
+}
+
+
+void KMLNode::unregisterLayerIfMatchingThisNode(KML* poKML)
+{
+    for(std::size_t z = 0; z < countChildren(); z++)
+    {
+        getChild(z)->unregisterLayerIfMatchingThisNode(poKML);
+    }
+    poKML->unregisterLayerIfMatchingThisNode(this);
 }
 
 void KMLNode::eliminateEmpty(KML* poKML)
 {
-    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
+    for(kml_nodes_t::size_type z = 0; z < pvpoChildren_->size();)
     {
         if((*pvpoChildren_)[z]->eType_ == Empty
            && (poKML->isContainer((*pvpoChildren_)[z]->sName_)
                || poKML->isFeatureContainer((*pvpoChildren_)[z]->sName_)))
         {
-            poKML->unregisterLayerIfMatchingThisNode((*pvpoChildren_)[z]);
+            (*pvpoChildren_)[z]->unregisterLayerIfMatchingThisNode(poKML);
             delete (*pvpoChildren_)[z];
             pvpoChildren_->erase(pvpoChildren_->begin() + z);
-            z--;
         }
         else
         {
             (*pvpoChildren_)[z]->eliminateEmpty(poKML);
+            ++z;
         }
     }
 }
@@ -436,7 +418,7 @@ void KMLNode::addContent(std::string const& text)
 
 void KMLNode::appendContent(std::string const& text)
 {
-    std::string& tmp = (*pvsContent_)[pvsContent_->size() - 1];
+    std::string& tmp = pvsContent_->back();
     tmp += text;
 }
 

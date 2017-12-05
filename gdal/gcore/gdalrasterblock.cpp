@@ -42,7 +42,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static bool bCacheMaxInitialized = false;
 // Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
@@ -51,6 +51,8 @@ static volatile GIntBig nCacheUsed = 0;
 
 static GDALRasterBlock *poOldest = NULL;  // Tail.
 static GDALRasterBlock *poNewest = NULL;  // Head.
+
+static int nDisableDirtyBlockFlushCounter = 0;
 
 #if 0
 static CPLMutex *hRBLock = NULL;
@@ -436,7 +438,8 @@ int GDALRasterBlock::FlushCacheBlock( int bDirtyBlocksOnly )
 
         while( poTarget != NULL )
         {
-            if( !bDirtyBlocksOnly || poTarget->GetDirty() )
+            if( !bDirtyBlocksOnly ||
+                (poTarget->GetDirty() && nDisableDirtyBlockFlushCounter == 0) )
             {
                 if( CPLAtomicCompareAndExchange(
                         &(poTarget->nLockCount), 0, -1) )
@@ -504,6 +507,47 @@ void GDALRasterBlock::FlushDirtyBlocks()
     {
         /* go on */
     }
+}
+
+/************************************************************************/
+/*                      EnterDisableDirtyBlockFlush()                   */
+/************************************************************************/
+
+/**
+ * \brief Starts preventing dirty blocks from being flushed
+ *
+ * This static method is used to prevent dirty blocks from being flushed.
+ * This might be useful when in a IWriteBlock() method, whose implementation
+ * can directly/indirectly cause the block cache to evict new blocks, to
+ * be recursively called on the same dataset.
+ *
+ * This method implements a reference counter and is thread-safe.
+ * 
+ * This call must be paired with a corresponding LeaveDisableDirtyBlockFlush().
+ *
+ * @since GDAL 2.2.2
+ */
+
+void GDALRasterBlock::EnterDisableDirtyBlockFlush()
+{
+    CPLAtomicInc(&nDisableDirtyBlockFlushCounter);
+}
+
+/************************************************************************/
+/*                      LeaveDisableDirtyBlockFlush()                   */
+/************************************************************************/
+
+/**
+ * \brief Ends preventing dirty blocks from being flushed.
+ *
+ * Undoes the effect of EnterDisableDirtyBlockFlush().
+ *
+ * @since GDAL 2.2.2
+ */
+
+void GDALRasterBlock::LeaveDisableDirtyBlockFlush()
+{
+    CPLAtomicDec(&nDisableDirtyBlockFlushCounter);
 }
 
 /************************************************************************/
@@ -731,17 +775,17 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
     {
         if ( poBlock->GetBand() == poBand )
         {
-            printf("Cache has still blocks of band %p\n", poBand);
-            printf("Band : %d\n", poBand->GetBand());
-            printf("nRasterXSize = %d\n", poBand->GetXSize());
-            printf("nRasterYSize = %d\n", poBand->GetYSize());
+            printf("Cache has still blocks of band %p\n", poBand);/*ok*/
+            printf("Band : %d\n", poBand->GetBand());/*ok*/
+            printf("nRasterXSize = %d\n", poBand->GetXSize());/*ok*/
+            printf("nRasterYSize = %d\n", poBand->GetYSize());/*ok*/
             int nBlockXSize, nBlockYSize;
             poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            printf("nBlockXSize = %d\n", nBlockXSize);
-            printf("nBlockYSize = %d\n", nBlockYSize);
-            printf("Dataset : %p\n", poBand->GetDataset());
+            printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
+            printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
+            printf("Dataset : %p\n", poBand->GetDataset());/*ok*/
             if( poBand->GetDataset() )
-                printf("Dataset : %s\n",
+                printf("Dataset : %s\n",/*ok*/
                        poBand->GetDataset()->GetDescription());
         }
     }
@@ -906,9 +950,13 @@ CPLErr GDALRasterBlock::Internalize()
             {
                 while( poTarget != NULL )
                 {
-                    if( CPLAtomicCompareAndExchange(
-                            &(poTarget->nLockCount), 0, -1) )
-                        break;
+                    if( !poTarget->GetDirty() ||
+                        nDisableDirtyBlockFlushCounter == 0 )
+                    {
+                        if( CPLAtomicCompareAndExchange(
+                                &(poTarget->nLockCount), 0, -1) )
+                            break;
+                    }
                     poTarget = poTarget->poPrevious;
                 }
 
@@ -1134,26 +1182,26 @@ void GDALRasterBlock::DumpAll()
          poBlock != NULL;
          poBlock = poBlock->poNext )
     {
-        printf("Block %d\n", iBlock);
+        printf("Block %d\n", iBlock);/*ok*/
         poBlock->DumpBlock();
-        printf("\n");
+        printf("\n");/*ok*/
         iBlock++;
     }
 }
 
 void GDALRasterBlock::DumpBlock()
 {
-    printf("  Lock count = %d\n", nLockCount);
-    printf("  bDirty = %d\n", static_cast<int>(bDirty));
-    printf("  nXOff = %d\n", nXOff);
-    printf("  nYOff = %d\n", nYOff);
-    printf("  nXSize = %d\n", nXSize);
-    printf("  nYSize = %d\n", nYSize);
-    printf("  eType = %d\n", eType);
-    printf("  Band %p\n", GetBand());
-    printf("  Band %d\n", GetBand()->GetBand());
+    printf("  Lock count = %d\n", nLockCount);/*ok*/
+    printf("  bDirty = %d\n", static_cast<int>(bDirty));/*ok*/
+    printf("  nXOff = %d\n", nXOff);/*ok*/
+    printf("  nYOff = %d\n", nYOff);/*ok*/
+    printf("  nXSize = %d\n", nXSize);/*ok*/
+    printf("  nYSize = %d\n", nYSize);/*ok*/
+    printf("  eType = %d\n", eType);/*ok*/
+    printf("  Band %p\n", GetBand());/*ok*/
+    printf("  Band %d\n", GetBand()->GetBand());/*ok*/
     if( GetBand()->GetDataset() )
-        printf("  Dataset = %s\n",
+        printf("  Dataset = %s\n",/*ok*/
                GetBand()->GetDataset()->GetDescription());
 }
 #endif  // if 0

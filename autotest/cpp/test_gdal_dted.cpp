@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// $Id$
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test DTED support. Ported from gdrivers/dted.py.
@@ -24,21 +23,15 @@
 // Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 // Boston, MA 02111-1307, USA.
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  $Log: test_gdal_dted.cpp,v $
-//  Revision 1.3  2006/12/06 15:39:13  mloskot
-//  Added file header comment and copyright note.
-//
-//
-///////////////////////////////////////////////////////////////////////////////
-#include <tut.h> // TUT
-#include <tut_gdal.h>
-#include <gdal_common.h>
-#include <gdal.h> // GDAL
+
+#include "gdal_unit_test.h"
+
+#include <cpl_string.h>
 #include <gdal_alg.h>
 #include <gdal_priv.h>
-#include <cpl_string.h>
-#include <sstream> // C++
+#include <gdal.h>
+
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -193,7 +186,7 @@ namespace tut
         std::string proj(GDALGetProjectionRef(ds));
         ensure_equals("Projection definition is not available", proj.empty(), false);
 
-        std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]");
+        std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]");
         ensure_equals("Projection does not match expected", proj, expect);
 
         GDALClose(ds);
@@ -249,7 +242,7 @@ namespace tut
         std::string proj(GDALGetProjectionRef(dsDst));
         ensure_equals("Projection definition is not available", proj.empty(), false);
 
-        std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],AUTHORITY[\"EPSG\",\"4326\"]]");
+        std::string expect("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]");
         ensure_equals("Projection does not match expected", proj, expect);
 
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);

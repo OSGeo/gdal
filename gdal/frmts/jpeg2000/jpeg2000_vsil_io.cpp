@@ -73,10 +73,15 @@
  * __END_OF_JASPER_LICENSE__
  */
 
+#ifndef __STDC_LIMIT_MACROS
+// Needed on RHEL 6 for SIZE_MAX availability, needed by Jasper
+#define __STDC_LIMIT_MACROS 1
+#endif
+
 #include "jpeg2000_vsil_io.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*
  * File descriptor file object.
@@ -207,7 +212,7 @@ static void JPEG2000_VSIL_jas_stream_initbuf(jas_stream_t *stream, int bufmode, 
             /* The buffer must be large enough to accommodate maximum
                putback. */
             assert(bufsize > JAS_STREAM_MAXPUTBACK);
-            stream->bufbase_ = JAS_CAST(uchar *, buf);
+            stream->bufbase_ = JAS_CAST(unsigned char *, buf);
             stream->bufsize_ = bufsize - JAS_STREAM_MAXPUTBACK;
         }
     } else {

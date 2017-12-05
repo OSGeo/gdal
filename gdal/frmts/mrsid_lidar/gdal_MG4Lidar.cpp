@@ -48,7 +48,7 @@ LT_USE_LIDAR_NAMESPACE
 #include "gdal_pam.h"
 // #include "gdal_alg.h" // 1.6 and later have gridding algorithms
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -70,10 +70,10 @@ class CropableMG4PointReader : public MG4PointReader
          setBounds(*bounds);
    }
 };
-CropableMG4PointReader::CropableMG4PointReader() : MG4PointReader() {};
-CropableMG4PointReader::~CropableMG4PointReader() {};
+CropableMG4PointReader::CropableMG4PointReader() : MG4PointReader() {}
+CropableMG4PointReader::~CropableMG4PointReader() {}
 
-IMPLEMENT_OBJECT_CREATE(CropableMG4PointReader);
+IMPLEMENT_OBJECT_CREATE(CropableMG4PointReader)
 
 static double MaxRasterSize = 2048.0;
 static double MaxBlockSideSize = 1024.0;

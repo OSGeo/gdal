@@ -37,7 +37,7 @@
 
 using std::fill;
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef struct {
     GInt32      NBIH;   /* bytes in header, normally 1024 */
@@ -230,11 +230,23 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 
     int nStart = CPL_LSBWORD32( poDS->sHeader.IL );
     int nEnd = CPL_LSBWORD32( poDS->sHeader.LL );
-    poDS->nRasterYSize = nEnd - nStart + 1;
+    GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    if( nDiff <= 0 || nDiff > INT_MAX )
+    {
+        delete poDS;
+        return NULL;
+    }
+    poDS->nRasterYSize = static_cast<int>(nDiff);
 
     nStart = CPL_LSBWORD32( poDS->sHeader.IE );
     nEnd = CPL_LSBWORD32( poDS->sHeader.LE );
-    poDS->nRasterXSize = nEnd - nStart + 1;
+    nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    if( nDiff <= 0 || nDiff > INT_MAX )
+    {
+        delete poDS;
+        return NULL;
+    }
+    poDS->nRasterXSize = static_cast<int>(nDiff);
 
     const int nBands = CPL_LSBWORD32( poDS->sHeader.NC );
 

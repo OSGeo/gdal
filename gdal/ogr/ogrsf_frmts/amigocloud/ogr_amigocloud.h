@@ -44,6 +44,7 @@
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);
 CPLString OGRAMIGOCLOUDEscapeIdentifier(const char* pszStr);
 CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr);
+std::string OGRAMIGOCLOUDJsonEncode(const std::string &value);
 
 /************************************************************************/
 /*                      OGRAmigoCloudGeomFieldDefn                         */
@@ -60,6 +61,7 @@ class OGRAmigoCloudGeomFieldDefn: public OGRGeomFieldDefn
         }
 };
 
+// cppcheck-suppress copyCtorAndEqOperator
 class OGRAmigoCloudFID
 {
     public:
@@ -143,6 +145,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
 {
     CPLString           osTableName;
+    CPLString           osName;
     CPLString           osDatasetId;
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -162,7 +165,8 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
          OGRAmigoCloudTableLayer(OGRAmigoCloudDataSource* poDS, const char* pszName);
         virtual ~OGRAmigoCloudTableLayer();
 
-        virtual const char        *GetName() override { return osTableName.c_str(); }
+        virtual const char        *GetName() override { return osName.c_str(); }
+                const char        *GetTableName() { return osTableName.c_str(); }
                 const char        *GetDatasetId() { return osDatasetId.c_str(); }
         virtual OGRFeatureDefn    *GetLayerDefnInternal(json_object* poObjIn) override;
         virtual json_object       *FetchNewFeatures(GIntBig iNext) override;
@@ -230,7 +234,7 @@ class OGRAmigoCloudResultLayer : public OGRAmigoCloudLayer
 class OGRAmigoCloudDataSource : public OGRDataSource
 {
         char*               pszName;
-        char*               pszProjetctId;
+        char*               pszProjectId;
 
         OGRAmigoCloudTableLayer**  papoLayers;
         int                 nLayers;
@@ -275,14 +279,16 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         const char*                 GetAPIURL() const;
         bool                        IsReadWrite() const { return bReadWrite; }
-        const char*                 GetProjetcId() { return pszProjetctId;}
+        const char*                 GetProjectId() { return pszProjectId;}
         char**                      AddHTTPOptions();
         json_object*                RunPOST(const char*pszURL, const char *pszPostData, const char *pszHeaders="HEADERS=Content-Type: application/json");
         json_object*                RunGET(const char*pszURL);
-        json_object*                RunDELETE(const char*pszURL);
+        bool                        RunDELETE(const char*pszURL);
         json_object*                RunSQL(const char* pszUnescapedSQL);
         const CPLString&            GetCurrentSchema() { return osCurrentSchema; }
-        static int                         FetchSRSId( OGRSpatialReference * poSRS );
+        static int                  FetchSRSId( OGRSpatialReference * poSRS );
+
+        static std::string          GetUserAgentOption();
 
         int                         IsAuthenticatedConnection() { return !osAPIKey.empty(); }
         int                         HasOGRMetadataFunction() { return bHasOGRMetadataFunction; }
@@ -293,6 +299,13 @@ class OGRAmigoCloudDataSource : public OGRDataSource
             OGRGeometry *poSpatialFilter = NULL,
             const char *pszDialect = NULL,
             bool bRunDeferredActions = false );
+
+        bool ListDatasets();
+        bool waitForJobToFinish(const char* jobId);
+        bool TruncateDataset(const CPLString &tableName);
+        void SubmitChangeset(const CPLString &json);
+
+
 };
 
 #endif /* ndef OGR_AMIGOCLOUD_H_INCLUDED */

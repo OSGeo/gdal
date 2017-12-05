@@ -158,7 +158,7 @@ typedef struct
     int32          Sequence;
     CeosTypeCode_t TypeCode;
     int32          Length;
-    int32          Flavour;
+    int32          Flavor;
     int32          Subsequence;
     int32          FileId;
     uchar *        Buffer;
@@ -190,7 +190,7 @@ struct CeosSARImageDesc
 
 typedef struct
 {
-    int32          Flavour;
+    int32          Flavor;
     int32          Sensor;
     int32          ProductType;
     int32          FileNamingConvention;
@@ -274,7 +274,7 @@ void SetCeosField(CeosRecord_t *record, int32 start_byte, char *format, void *va
 
 void SetIntCeosField(CeosRecord_t *record, int32 start_byte, int32 length, int32 value);
 
-CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavour, int32 subsequence);
+CeosRecord_t *FindCeosRecord(Link_t *record_list, CeosTypeCode_t typecode, int32 fileid, int32 flavor, int32 subsequence);
 
 void SerializeCeosRecordsToFile(Link_t *record_list, VSILFILE *fp);
 

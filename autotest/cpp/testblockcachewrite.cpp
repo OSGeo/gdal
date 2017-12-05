@@ -28,10 +28,11 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 #include "gdal_priv.h"
-#include <assert.h>
+
+#include <cassert>
 
 class MyRasterBand: public GDALRasterBand
 {
@@ -45,8 +46,8 @@ class MyRasterBand: public GDALRasterBand
             bBusy = FALSE;
         }
 
-        CPLErr IReadBlock(int, int, void*) { CPLAssert(FALSE); return CE_Failure; }
-        CPLErr IWriteBlock(int nXBlock, int nYBlock, void*)
+        CPLErr IReadBlock(int, int, void*) CPL_OVERRIDE { CPLAssert(FALSE); return CE_Failure; }
+        CPLErr IWriteBlock(int nXBlock, int nYBlock, void*) CPL_OVERRIDE
         {
             printf("Entering IWriteBlock(%d, %d)\n", nXBlock, nYBlock);
             assert(!bBusy);
@@ -75,7 +76,7 @@ class MyDataset: public GDALDataset
         }
 };
 
-void thread_func(void* /* unused */ )
+static void thread_func(void* /* unused */ )
 {
     printf("begin thread\n");
     GDALFlushCacheBlock();

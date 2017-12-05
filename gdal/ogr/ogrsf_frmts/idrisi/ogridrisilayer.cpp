@@ -32,7 +32,7 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRIdrisiLayer()                             */
@@ -142,14 +142,14 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
 
     CSLSetNameValueSeparator( papszADC, ":" );
 
-    const char *pszVersion = CSLFetchNameValue( papszADC, "file format " );
+    const char *pszVersion = CSLFetchNameValue( papszADC, "file format" );
     if( pszVersion == NULL || !EQUAL( pszVersion, "IDRISI Values A.1" ) )
     {
         CSLDestroy( papszADC );
         return false;
     }
 
-    const char *pszFileType = CSLFetchNameValue( papszADC, "file type   " );
+    const char *pszFileType = CSLFetchNameValue( papszADC, "file type" );
     if( pszFileType == NULL || !EQUAL( pszFileType, "ascii" ) )
     {
         CPLDebug("IDRISI", ".adc file found, but file type != ascii");
@@ -157,7 +157,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
         return false;
     }
 
-    const char* pszRecords = CSLFetchNameValue( papszADC, "records     " );
+    const char* pszRecords = CSLFetchNameValue( papszADC, "records" );
     if( pszRecords == NULL || atoi(pszRecords) != (int)nTotalFeatures )
     {
         CPLDebug("IDRISI", ".adc file found, but 'records' not found or not "
@@ -166,7 +166,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
         return false;
     }
 
-    const char* pszFields = CSLFetchNameValue( papszADC, "fields      " );
+    const char* pszFields = CSLFetchNameValue( papszADC, "fields" );
     if( pszFields == NULL || atoi(pszFields) <= 1 )
     {
         CPLDebug( "IDRISI",
@@ -197,7 +197,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
 
     char szKey[32];
     int iCurField = 0;
-    snprintf(szKey, sizeof(szKey), "field %d ", iCurField);
+    snprintf(szKey, sizeof(szKey), "field %d", iCurField);
 
     char** papszIter = papszADC;
     const char* pszLine = NULL;
@@ -216,9 +216,9 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
             }
         }
         else if (bFieldFound &&
-                 STARTS_WITH(pszLine, "data type   :"))
+                 STARTS_WITH(pszLine, "data type:"))
         {
-            const char* pszFieldType = pszLine + strlen("data type   :");
+            const char* pszFieldType = pszLine + strlen("data type:");
 
             OGRFieldDefn oFieldDefn(osFieldName.c_str(),
                                     EQUAL(pszFieldType, "integer") ? OFTInteger :
@@ -234,7 +234,7 @@ bool OGRIdrisiLayer::Detect_AVL_ADC( const char* pszFilename )
                 poFeatureDefn->AddFieldDefn( &oFieldDefn );
 
             iCurField ++;
-            snprintf(szKey, sizeof(szKey), "field %d ", iCurField);
+            snprintf(szKey, sizeof(szKey), "field %d", iCurField);
         }
 
         papszIter++;

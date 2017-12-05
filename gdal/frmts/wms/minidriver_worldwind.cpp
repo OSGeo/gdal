@@ -30,7 +30,7 @@
 #include "wmsdriver.h"
 #include "minidriver_worldwind.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 WMSMiniDriver_WorldWind::WMSMiniDriver_WorldWind() {}
 
@@ -57,8 +57,8 @@ CPLErr WMSMiniDriver_WorldWind::Initialize(CPLXMLNode *config, CPL_UNUSED char *
     return ret;
 }
 
-CPLErr WMSMiniDriver_WorldWind::TiledImageRequest(WMSHTTPRequest &request, 
-                                                    const GDALWMSImageRequestInfo &iri, 
+CPLErr WMSMiniDriver_WorldWind::TiledImageRequest(WMSHTTPRequest &request,
+                                                    const GDALWMSImageRequestInfo &iri,
                                                     const GDALWMSTiledImageRequestInfo &tiri)
 {
     CPLString &url = request.URL;

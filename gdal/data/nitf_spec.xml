@@ -135,6 +135,23 @@
         </loop>
     </tre>
 
+    <!-- STDI-0002-1 Appendix AG: CCINFA (from RFC-084) -->
+    <tre name="CCINFA">
+        <field name="NUMCODE" length="3" type="integer" minval="1" maxval="999"/>
+        <loop counter="NUMCODE" md_prefix="CODE_%03d_" name="CODES">
+            <field name="CODE_LEN" length="1" type="integer" minval="1" maxval="9"/>
+            <field name="CODE" length_var="CODE_LEN"/>
+            <field name="EQTYPE" length="1"/>
+            <field name="ESURN_LEN" length="2" type="integer" minval="9" maxval="99"/>
+            <field name="ESURN" length_var="ESURN_LEN"/>
+            <field name="DETAIL_LEN" length="5" type="integer" minval="0"/>
+            <if cond="DETAIL_LEN!=00000">
+                <field name="DETAIL_CMPR" length="1" type="string"/>
+                <field name="DETAIL" length_var="DETAIL_LEN"/>
+            </if>
+        </loop>
+    </tre>
+
     <tre name="CSDIDA" md_prefix="NITF_CSDIDA_" length="70" location="file">
         <field name="DAY" length="2"/>
         <field name="MONTH" length="3"/>
@@ -591,7 +608,7 @@
         </loop>
     </tre>
 
-    <tre name="PIAPRD" minlength="201" maxlength="63759" location="image">
+    <tre name="PIAPRD" minlength="201" maxlength="63759" location="file">
         <field name="ACCESSID" length="64" type="string"/>
         <field name="FMCONTROL" length="32" type="string"/>
         <field name="SUBDET" length="1" type="string"/>

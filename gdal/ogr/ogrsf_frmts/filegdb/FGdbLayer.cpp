@@ -36,7 +36,7 @@
 #include "FGdbUtils.h"
 #include "cpl_minixml.h" // the only way right now to extract schema information
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using std::string;
 using std::wstring;
@@ -1195,7 +1195,7 @@ OGRErr FGdbLayer::ICreateFeature( OGRFeature *poFeature )
         poGeom->getEnvelope(&sFeatureGeomEnvelope);
         if (!m_bLayerEnvelopeValid)
         {
-            memcpy(&sLayerEnvelope, &sFeatureGeomEnvelope, sizeof(sLayerEnvelope));
+            sLayerEnvelope = sFeatureGeomEnvelope;
             m_bLayerEnvelopeValid = true;
         }
         else
@@ -1230,7 +1230,7 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
         const std::string & strFieldType = m_vOGRFieldToESRIFieldType[i];
 
         /* Set empty fields to NULL */
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             if( strFieldType == "esriFieldTypeGlobalID" )
                 continue;
@@ -1383,9 +1383,16 @@ OGRErr FGdbLayer::PopulateRowWithFeature( Row& fgdb_row, OGRFeature *poFeature )
             int nShapeSize = 0;
             OGRErr err;
 
-            if( m_bCreateMultipatch && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+            const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+            if( m_bCreateMultipatch && (eType == wkbMultiPolygon ||
+                                        eType == wkbMultiSurface ||
+                                        eType == wkbTIN ||
+                                        eType == wkbPolyhedralSurface ||
+                                        eType == wkbGeometryCollection) )
             {
                 err = OGRWriteMultiPatchToShapeBin( poGeom, &pabyShape, &nShapeSize );
+                if( err == OGRERR_UNSUPPORTED_OPERATION )
+                    err = OGRWriteToShapeBin( poGeom, &pabyShape, &nShapeSize );
             }
             else
             {
@@ -1701,7 +1708,7 @@ char* FGdbLayer::CreateFieldDefn(OGRFieldDefn& oField,
         if( oField.GetType() == OFTString )
         {
             CPLString osVal = pszDefault;
-            if( osVal[0] == '\'' && osVal[osVal.size()-1] == '\'' )
+            if( osVal[0] == '\'' && osVal.back() == '\'' )
             {
                 osVal = osVal.substr(1);
                 osVal.resize(osVal.size()-1);
@@ -2314,6 +2321,9 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     else if ( CSLFetchNameValue( papszOptions, "OID_NAME") != NULL )
         fid_name = CSLFetchNameValue( papszOptions, "OID_NAME");
 
+    m_bCreateMultipatch = CPLTestBool(CSLFetchNameValueDef(
+                                    papszOptions, "CREATE_MULTIPATCH", "NO"));
+
     /* Figure out our geometry type */
     if ( eType != wkbNone )
     {
@@ -2324,9 +2334,19 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         if ( ! OGRGeometryToGDB(eType, &esri_type, &has_z, &has_m) )
             return GDBErr(-1, "Unable to map OGR type to ESRI type");
 
-        if( wkbFlatten(eType) == wkbMultiPolygon &&
-            CPLTestBool(CSLFetchNameValueDef(papszOptions, "CREATE_MULTIPATCH", "NO")) )
+        if( wkbFlatten(eType) == wkbMultiPolygon && m_bCreateMultipatch )
         {
+            esri_type = "esriGeometryMultiPatch";
+            has_z = true;
+        }
+        // For TIN and PolyhedralSurface, default to create a multipatch,
+        // unless the user explicitly disabled it
+        else if( (wkbFlatten(eType) == wkbTIN ||
+                  wkbFlatten(eType) == wkbPolyhedralSurface ) &&
+                 CPLTestBool(CSLFetchNameValueDef(papszOptions,
+                                                  "CREATE_MULTIPATCH", "YES")) )
+        {
+            m_bCreateMultipatch = true;
             esri_type = "esriGeometryMultiPatch";
             has_z = true;
         }
@@ -2435,8 +2455,14 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
         CPLCreateXMLElementAndValue(defn_xml, "EXTCLSID", "");
     }
 
-    /* Set the alias for the Feature Class */
-    if (pszLayerNameIn != layerName)
+    /* Set the alias for the Feature Class, check if we received an */
+    /* explicit one in the options vector. */
+    const char* pszLayerAlias = CSLFetchNameValue( papszOptions, "LAYER_ALIAS");
+    if ( pszLayerAlias != NULL )
+    {
+        CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszLayerAlias);
+    }
+    else if (pszLayerNameIn != layerName)
     {
         CPLCreateXMLElementAndValue(defn_xml, "AliasName", pszLayerNameIn);
     }
@@ -2500,7 +2526,6 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     }
 
     m_papszOptions = CSLDuplicate(papszOptions);
-    m_bCreateMultipatch = CPLTestBool(CSLFetchNameValueDef(m_papszOptions, "CREATE_MULTIPATCH", "NO"));
 
     // Default to YES here assuming ogr2ogr scenario
     m_bBulkLoadAllowed = CPLTestBool(CPLGetConfigOption("FGDB_BULK_LOAD", "YES"));
@@ -3076,7 +3101,13 @@ void FGdbLayer::SetSpatialFilter( OGRGeometry* pOGRGeom )
 
     m_pOGRFilterGeometry = pOGRGeom->clone();
 
-    m_pOGRFilterGeometry->transformTo(m_pSRS);
+    // NOTE: This is really special behaviour: no other driver, nor core, does
+    // reprojection of filter geometry to source layer SRS. Should perhaps
+    // be removed for consistency
+    if( m_pOGRFilterGeometry->getSpatialReference() != NULL )
+    {
+        m_pOGRFilterGeometry->transformTo(m_pSRS);
+    }
 
     m_bFilterDirty = true;
 }
@@ -3184,7 +3215,8 @@ bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row* pRow, OGRFeature** ppFeature)
 
         if (isNull)
         {
-            continue; //leave as unset
+            pOutFeature->SetFieldNull(i);
+            continue;
         }
 
         //

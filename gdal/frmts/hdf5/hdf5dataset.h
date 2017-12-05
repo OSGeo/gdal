@@ -31,28 +31,29 @@
 #ifndef HDF5DATASET_H_INCLUDED_
 #define HDF5DATASET_H_INCLUDED_
 
-#include "gdal_pam.h"
 #include "cpl_list.h"
+#include "gdal_pam.h"
 
-typedef struct HDF5GroupObjects {
-  char         *pszName;
-  char         *pszPath;
-  char         *pszUnderscorePath;
-  char         *pszTemp;
-  int           nType;
-  int           nIndex;
-  hsize_t       nbObjs;
-  int           nbAttrs;
-  int           nRank;
-  hsize_t       *paDims;
-  hid_t          native;
-  hid_t          HDatatype;
-  unsigned long  objno[2];
-  struct HDF5GroupObjects *poHparent;
-  struct HDF5GroupObjects *poHchild;
+typedef struct HDF5GroupObjects
+{
+    char *pszName;
+    char *pszPath;
+    char *pszUnderscorePath;
+    char *pszTemp;
+    int nType;
+    int nIndex;
+    hsize_t nbObjs;
+    int nbAttrs;
+    int nRank;
+    hsize_t *paDims;
+    hid_t native;
+    hid_t HDatatype;
+    unsigned long objno[2];
+    struct HDF5GroupObjects *poHparent;
+    struct HDF5GroupObjects *poHchild;
 } HDF5GroupObjects;
 
-herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
+herr_t HDF5CreateGroupObjs(hid_t, const char *, void *);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -62,27 +63,26 @@ herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
 class HDF5Dataset : public GDALPamDataset
 {
 protected:
+    hid_t            hHDF5;
+    hid_t            hGroupID; // H handler interface.
+    char             **papszSubDatasets;
+    int              bIsHDFEOS;
+    int              nDatasetType;
+    int              nSubDataCount;
 
-  hid_t            hHDF5;
-  hid_t            hGroupID; /* H handler interface */
-  char             **papszSubDatasets;
-  int              bIsHDFEOS;
-  int              nDatasetType;
-  int              nSubDataCount;
+    HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
 
-  HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
+    CPLErr ReadGlobalAttributes(int);
+    CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
+    CPLErr CreateMetadata( HDF5GroupObjects *, int );
 
-  CPLErr ReadGlobalAttributes(int);
-  CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
-  CPLErr CreateMetadata( HDF5GroupObjects *, int );
+    HDF5GroupObjects *HDF5FindDatasetObjects( HDF5GroupObjects *, const char * );
+    HDF5GroupObjects *HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, const char * );
+    char *CreatePath(HDF5GroupObjects *);
+    void DestroyH5Objects(HDF5GroupObjects *);
 
-  HDF5GroupObjects* HDF5FindDatasetObjects( HDF5GroupObjects *, const char * );
-  HDF5GroupObjects* HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, const char * );
-  char* CreatePath(HDF5GroupObjects *);
-  void DestroyH5Objects(HDF5GroupObjects *);
-
-  static GDALDataType GetDataType(hid_t);
-  static const char * GetDataTypeName(hid_t);
+    static GDALDataType GetDataType(hid_t);
+    static const char *GetDataTypeName(hid_t);
 
   /**
    * Reads an array of double attributes from the HDF5 metadata.
@@ -100,18 +100,19 @@ protected:
    *        the length of the array.
    * @return CPLErr CE_None in case of success, CE_Failure in case of failure
    */
-  CPLErr HDF5ReadDoubleAttr(const char* pszAttrName,double **pdfValues,int *nLen=NULL);
+    CPLErr HDF5ReadDoubleAttr(const char *pszAttrName, double **pdfValues,
+                              int *nLen = NULL);
 
-public:
+  public:
 
-  char             **papszMetadata;
-  HDF5GroupObjects *poH5CurrentObject;
+    char             **papszMetadata;
+    HDF5GroupObjects *poH5CurrentObject;
 
-  HDF5Dataset();
-  ~HDF5Dataset();
+    HDF5Dataset();
+    ~HDF5Dataset();
 
-  static GDALDataset *Open(GDALOpenInfo *);
-  static int Identify(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 };
 
 #endif /* HDF5DATASET_H_INCLUDED_ */

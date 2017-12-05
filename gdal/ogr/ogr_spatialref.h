@@ -34,6 +34,8 @@
 
 #include "ogr_srs_api.h"
 
+#include <vector>
+
 /**
  * \file ogr_spatialref.h
  *
@@ -152,6 +154,13 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromURNPart(const char* pszAuthority,
                                   const char* pszCode,
                                   const char* pszURN);
+
+    OGRErr      importFromEPSGAInternal(int nCode,
+                                        const char* pszSRSType);
+
+    static const std::vector<OGRSpatialReference*>* GetSRSCache(
+                                                    const char* pszSRSType);
+
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
     explicit    OGRSpatialReference(const char * = NULL);
@@ -211,6 +220,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
 
+    OGRSpatialReference* convertToOtherProjection(
+                                    const char* pszTargetProjection,
+                                    const char* const* papszOptions = NULL ) const;
+
     OGRErr      Validate();
     OGRErr      StripCTParms( OGR_SRSNode * = NULL );
     OGRErr      StripVertical();
@@ -263,8 +276,12 @@ class CPL_DLL OGRSpatialReference
     int         IsVertical() const;
     int         IsCompound() const;
     int         IsSameGeogCS( const OGRSpatialReference * ) const;
+    int         IsSameGeogCS( const OGRSpatialReference *,
+                              const char* const * papszOptions ) const;
     int         IsSameVertCS( const OGRSpatialReference * ) const;
     int         IsSame( const OGRSpatialReference * ) const;
+    int         IsSame( const OGRSpatialReference *,
+                        const char* const * papszOptions ) const;
 
     void        Clear();
     OGRErr      SetLocalCS( const char * );
@@ -298,12 +315,18 @@ class CPL_DLL OGRSpatialReference
     double      GetSemiMajor( OGRErr * = NULL ) const;
     double      GetSemiMinor( OGRErr * = NULL ) const;
     double      GetInvFlattening( OGRErr * = NULL ) const;
+    double      GetEccentricity() const;
+    double      GetSquaredEccentricity() const;
 
     OGRErr      SetAuthority( const char * pszTargetKey,
                               const char * pszAuthority,
                               int nCode );
 
     OGRErr      AutoIdentifyEPSG();
+    OGRSpatialReferenceH* FindMatches( char** papszOptions,
+                                       int* pnEntries,
+                                       int** ppanMatchConfidence ) const;
+
     int         GetEPSGGeogCS();
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
@@ -411,11 +434,13 @@ class CPL_DLL OGRSpatialReference
                             double dfScale,
                             double dfFalseEasting, double dfFalseNorthing );
 
+#ifdef undef
     /** Oblique Mercator */
     OGRErr      SetOM( double dfCenterLat, double dfCenterLong,
                        double dfAzimuth, double dfRectToSkew,
                        double dfScale,
                        double dfFalseEasting, double dfFalseNorthing );
+#endif
 
     /** Hotine Oblique Mercator Azimuth Center / Variant B */
     OGRErr      SetHOMAC( double dfCenterLat, double dfCenterLong,

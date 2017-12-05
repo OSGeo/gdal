@@ -33,7 +33,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -375,7 +375,7 @@ CPLErr ERSDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         CPLString osLine;
 
         CPLString osId = pasGCPList[iGCP].pszId;
-        if( strlen(osId) == 0 )
+        if( osId.empty() )
             osId.Printf( "%d", iGCP + 1 );
 
         osLine.Printf( "\t\t\t\t\"%s\"\tYes\tYes\t%.6f\t%.6f\t%.15g\t%.15g\t%.15g\n",
@@ -608,7 +608,7 @@ char **ERSDataset::GetFileList()
     char **papszFileList = GDALPamDataset::GetFileList();
 
     // Add raw data file if we have one.
-    if( strlen(osRawFilename) > 0 )
+    if( !osRawFilename.empty() )
         papszFileList = CSLAddString( papszFileList, osRawFilename );
 
     // If we have a dependent file, merge its list of files in.
@@ -980,9 +980,17 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         poDS->osRawFilename = osDataFilePath;
 
-        if( poDS->fpImage != NULL )
+        if( poDS->fpImage != NULL && nBands > 0 )
         {
-            int iWordSize = GDALGetDataTypeSize(eType) / 8;
+            int iWordSize = GDALGetDataTypeSizeBytes(eType);
+
+            if( nBands > INT_MAX / iWordSize ||
+                poDS->nRasterXSize > INT_MAX / (nBands * iWordSize) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "int overflow");
+                delete poDS;
+                return NULL;
+            }
 
             for( int iBand = 0; iBand < nBands; iBand++ )
             {

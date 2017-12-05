@@ -69,7 +69,7 @@ public:
 public:
     CADTables();
 
-    void      AddTable( enum TableType eType, CADHandle hHandle );
+    void      AddTable( enum TableType eType, const CADHandle& hHandle );
     CADHandle GetTableHandle( enum TableType eType );
     int       ReadTable( CADFile * const pCADFile, enum TableType eType );
     size_t    GetLayerCount() const;

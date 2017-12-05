@@ -63,6 +63,14 @@ distinct values of the eas_id attribute.
 SELECT COUNT(DISTINCT eas_id) FROM polylayer
 \endcode
 
+\subsection ogr_sql_select_syntax General syntax
+
+The general syntax of a SELECT statement is:
+
+\code
+SELECT [fields] FROM layer_name [JOIN ...] [WHERE ...] [ORDER BY ...] [LIMIT ...] [OFFSET ...]
+\endcode
+
 \subsection ogr_sql_flist_ops Field List Operators
 
 The field list is a comma separate list of the fields to be carried into
@@ -342,6 +350,29 @@ be a very expensive operation.
 
 Sorting of string field values is case sensitive, not case insensitive like in
 most other parts of OGR SQL.
+
+\subsection ogr_sql_limit_offset LIMIT and OFFSET
+
+Starting with GDAL 2.2, the <b>LIMIT</b> clause can be used to limit the
+number of features returned. For example
+
+\code
+SELECT * FROM poly LIMIT 5
+\endcode
+
+The <b>OFFSET</b> clause can be used to skip the first features of the result
+set. The value after OFFSET is the number of features skipped. For example, to
+skip the first 3 features from the result set:
+
+\code
+SELECT * FROM poly OFFSET 3
+\endcode
+
+Both clauses can be combined:
+
+\code
+SELECT * FROM poly LIMIT 5 OFFSET 3
+\endcode
 
 \subsection ogr_sql_joins JOINs
 

@@ -56,7 +56,7 @@ ogrtest.openfilegdb_datalist = [ [ "none", ogr.wkbNone, None],
                 [ "multilinestring25D_multipart", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20),(5 6 -30,7 8 -40))" ],
                 [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
                 [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                [ "multipatch", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 0,0 1 0,1 0 0,0 0 0)),((0 1 0,1 0 0,1 1 0,0 1 0)),((10 0 0,10 1 0,11 0 0,10 0 0)),((10 0 0,11 0 0,10 -1 0,10 0 0)),((5 0 0,5 1 0,6 0 0,5 0 0)),((100 0 0,100 1 0,101 1 0,101 0 0,100 0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0)))" ],
+                [ "multipatch", ogr.wkbGeometryCollection25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))" ],
                 [ "null_polygon", ogr.wkbPolygon, None],
                 [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                 [ "empty_multipoint", ogr.wkbMultiPoint, "MULTIPOINT EMPTY", None],
@@ -322,12 +322,6 @@ def ogr_openfilegdb_1(filename = 'data/testopenfilegdb.gdb.zip', version10 = Tru
             except:
                 expected_wkt = data[2]
             geom = feat.GetGeometryRef()
-            if geom is not None and geom.GetGeometryType() != expected_geom_type:
-                gdaltest.post_reason('fail')
-                feat.DumpReadable()
-                print(geom.GetGeometryType())
-                print(expected_geom_type)
-                return 'fail'
             if geom:
                 geom = geom.ExportToWkt()
             if geom != expected_wkt and ogrtest.check_feature_geometry(feat, expected_wkt) == 1:
@@ -1497,6 +1491,69 @@ def ogr_openfilegdb_19():
     return 'success'
 
 ###############################################################################
+# Read polygons with M component where the M of the closing point is not the
+# one of the starting point (#7017)
+
+def ogr_openfilegdb_20():
+
+    ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToIsoWkt())
+            print(f_ref.GetGeometryRef().ExportToIsoWkt())
+            return 'fail'
+
+    ds = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToIsoWkt())
+            print(f_ref.GetGeometryRef().ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test selecting FID column with OGRSQL
+
+def ogr_openfilegdb_21():
+
+    ds = ogr.Open('data/curves.gdb')
+    sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
+    if sql_lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('polygon')
+    lyr.SetAttributeFilter('OBJECTID = 2')
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_openfilegdb_cleanup():
@@ -1546,6 +1603,8 @@ gdaltest_list = [
     ogr_openfilegdb_17,
     ogr_openfilegdb_18,
     ogr_openfilegdb_19,
+    ogr_openfilegdb_20,
+    ogr_openfilegdb_21,
     ogr_openfilegdb_cleanup,
     ]
 

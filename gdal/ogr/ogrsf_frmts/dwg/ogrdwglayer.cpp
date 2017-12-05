@@ -31,33 +31,16 @@
 
 #include "ogrdxf_polyline_smooth.h"
 
-#include "DbPolyline.h"
-#include "Db2dPolyline.h"
-#include "Db3dPolyline.h"
-#include "Db3dPolylineVertex.h"
-#include "DbLine.h"
-#include "DbPoint.h"
-#include "DbEllipse.h"
-#include "DbArc.h"
-#include "DbMText.h"
-#include "DbText.h"
-#include "DbCircle.h"
-#include "DbSpline.h"
-#include "DbBlockReference.h"
-#include "DbAttribute.h"
-#include "DbFiler.h"
-#include "Ge/GeScale3d.h"
-
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRDWGLayer()                             */
 /************************************************************************/
 
-OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
+OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
 
 {
-    this->poDS = poDS;
+    this->poDS = poDSIn;
 
     iNextFID = 0;
 
@@ -85,12 +68,12 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDS )
 
     for (pBlkIter->start(); ! pBlkIter->done(); pBlkIter->step())
     {
-        poBlock = pBlkIter->getRecordId().safeOpenObject();
+        m_poBlock = pBlkIter->getRecordId().safeOpenObject();
 
-        if( EQUAL(poBlock->getName(),"*Model_Space") )
+        if( EQUAL(m_poBlock->getName(),"*Model_Space") )
             break;
         else
-            poBlock = NULL;
+            m_poBlock = NULL;
     }
 
     ResetReading();
@@ -119,10 +102,10 @@ OGRDWGLayer::~OGRDWGLayer()
 /*                            TextUnescape()                            */
 /************************************************************************/
 
-CPLString OGRDWGLayer::TextUnescape( OdString oString )
+CPLString OGRDWGLayer::TextUnescape( OdString oString, bool bIsMText )
 
 {
-    return ACTextUnescape( (const char *) oString, poDS->GetEncoding() );
+    return ACTextUnescape( (const char *) oString, poDS->GetEncoding(), bIsMText );
 }
 
 /************************************************************************/
@@ -136,7 +119,7 @@ CPLString OGRDWGLayer::TextUnescape( OdString oString )
 void OGRDWGLayer::SetBlockTable( OdDbBlockTableRecordPtr poNewBlock )
 
 {
-    poBlock = poNewBlock;
+    m_poBlock = poNewBlock;
 
     ResetReading();
 }
@@ -165,8 +148,8 @@ void OGRDWGLayer::ResetReading()
     iNextFID = 0;
     ClearPendingFeatures();
 
-    if( !poBlock.isNull() )
-        poEntIter = poBlock->newIterator();
+    if( !m_poBlock.isNull() )
+        poEntIter = m_poBlock->newIterator();
 }
 
 /************************************************************************/
@@ -180,8 +163,8 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
                                               OdDbEntityPtr poEntity )
 
 {
-    poFeature->SetField( "Layer", TextUnescape(poEntity->layer()) );
-    poFeature->SetField( "Linetype", TextUnescape(poEntity->layer()) );
+    poFeature->SetField( "Layer", TextUnescape(poEntity->layer(), false) );
+    poFeature->SetField( "Linetype", TextUnescape(poEntity->layer(), false) );
 
     CPLString osValue;
     osValue.Printf( "%d", (int) poEntity->lineWeight() );
@@ -430,9 +413,9 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
-    CPLString osText = TextUnescape( poMTE->contents() );
+    CPLString osText = TextUnescape( poMTE->contents(), true );
 
-    if( osText != "" && osText[osText.size()-1] == '\n' )
+    if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
@@ -553,9 +536,9 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
 /*      Apply text after stripping off any extra terminating newline.   */
 /* -------------------------------------------------------------------- */
-    CPLString osText = TextUnescape( poText->textString() );
+    CPLString osText = TextUnescape( poText->textString(), false );
 
-    if( osText != "" && osText[osText.size()-1] == '\n' )
+    if( !osText.empty() && osText.back() == '\n' )
         osText.resize( osText.size() - 1 );
 
     poFeature->SetField( "Text", osText );
@@ -1228,7 +1211,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
         if( poSubFeature->GetGeometryRef() != NULL )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
-        ACAdjustText( dfAngle, oScale.sx, poSubFeature );
+        ACAdjustText( dfAngle, oScale.sx, oScale.sy, poSubFeature );
 
 #ifdef notdef
         osCompEntityId = poSubFeature->GetFieldAsString( "EntityHandle" );

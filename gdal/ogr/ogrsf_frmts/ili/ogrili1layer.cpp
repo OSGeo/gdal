@@ -35,7 +35,7 @@
 #include <map>
 #include <vector>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRILI1Layer()                              */
@@ -195,18 +195,18 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
     for( int iPoint = 0; iPoint < poLine->getNumPoints(); iPoint++ )
     {
-        if (iPoint == 0) VSIFPrintf( poDS->GetTransferFile(), "STPT" );
-        else VSIFPrintf( poDS->GetTransferFile(), "LIPT" );
-        VSIFPrintf( poDS->GetTransferFile(), " %s",
+        if (iPoint == 0) VSIFPrintfL( poDS->GetTransferFile(), "STPT" );
+        else VSIFPrintfL( poDS->GetTransferFile(), "LIPT" );
+        VSIFPrintfL( poDS->GetTransferFile(), " %s",
                     d2str(poLine->getX(iPoint)) );
-        VSIFPrintf( poDS->GetTransferFile(), " %s",
+        VSIFPrintfL( poDS->GetTransferFile(), " %s",
                     d2str(poLine->getY(iPoint)) );
         if( b3D )
-            VSIFPrintf( poDS->GetTransferFile(), " %s",
+            VSIFPrintfL( poDS->GetTransferFile(), " %s",
                         d2str(poLine->getZ(iPoint)) );
-        VSIFPrintf( poDS->GetTransferFile(), "\n" );
+        VSIFPrintfL( poDS->GetTransferFile(), "\n" );
     }
-    VSIFPrintf( poDS->GetTransferFile(), "ELIN\n" );
+    VSIFPrintfL( poDS->GetTransferFile(), "ELIN\n" );
 }
 
 static void AppendCoumpoundCurve( OGRCompoundCurve *poCC,
@@ -224,16 +224,16 @@ static void AppendCoumpoundCurve( OGRCompoundCurve *poCC,
             //Skip last point in curve member
             if (iPoint == poLine->getNumPoints()-1 && iMember < poCC->getNumCurves()-1)
                 continue;
-            if (iMember == 0 && iPoint == 0) VSIFPrintf( poDS->GetTransferFile(), "STPT" );
-            else if (bIsArc && iPoint == 1) VSIFPrintf( poDS->GetTransferFile(), "ARCP" );
-            else VSIFPrintf( poDS->GetTransferFile(), "LIPT" );
-            VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getX(iPoint)) );
-            VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getY(iPoint)) );
-            if (b3D) VSIFPrintf( poDS->GetTransferFile(), " %s", d2str(poLine->getZ(iPoint)) );
-            VSIFPrintf( poDS->GetTransferFile(), "\n" );
+            if (iMember == 0 && iPoint == 0) VSIFPrintfL( poDS->GetTransferFile(), "STPT" );
+            else if (bIsArc && iPoint == 1) VSIFPrintfL( poDS->GetTransferFile(), "ARCP" );
+            else VSIFPrintfL( poDS->GetTransferFile(), "LIPT" );
+            VSIFPrintfL( poDS->GetTransferFile(), " %s", d2str(poLine->getX(iPoint)) );
+            VSIFPrintfL( poDS->GetTransferFile(), " %s", d2str(poLine->getY(iPoint)) );
+            if (b3D) VSIFPrintfL( poDS->GetTransferFile(), " %s", d2str(poLine->getZ(iPoint)) );
+            VSIFPrintfL( poDS->GetTransferFile(), "\n" );
         }
     }
-    VSIFPrintf( poDS->GetTransferFile(), "ELIN\n" );
+    VSIFPrintfL( poDS->GetTransferFile(), "ELIN\n" );
 }
 
 int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
@@ -345,8 +345,10 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
 /************************************************************************/
 
 OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
+    // FIXME: tid not thread safe
     static long tid = -1; //system generated TID (must be unique within table)
-    VSIFPrintf( poDS->GetTransferFile(), "OBJE" );
+    VSILFILE* fp = poDS->GetTransferFile();
+    VSIFPrintfL( fp, "OBJE" );
 
     if ( poFeatureDefn->GetFieldCount() &&
          !EQUAL(poFeatureDefn->GetFieldDefn(0)->GetNameRef(), "TID") )
@@ -356,7 +358,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             tid = (int)poFeature->GetFID();
         else
             ++tid;
-        VSIFPrintf( poDS->GetTransferFile(), " %ld", tid );
+        VSIFPrintfL( fp, " %ld", tid );
         //Embedded geometry
         if( poFeature->GetGeometryRef() != NULL )
         {
@@ -366,9 +368,9 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             {
                 OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
 
-                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getX()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getY()) );
             }
             // 3D Point
@@ -376,11 +378,11 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             {
                 OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
 
-                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getX()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getY()) );
-                VSIFPrintf( poDS->GetTransferFile(), " %s",
+                VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getZ()) );
             }
         }
@@ -389,7 +391,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
     // Write all fields.
     for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        if ( poFeature->IsFieldSet( iField ) )
+        if ( poFeature->IsFieldSetAndNotNull( iField ) )
         {
           const char *pszRaw = poFeature->GetFieldAsString( iField );
           if (poFeatureDefn->GetFieldDefn( iField )->GetType() == OFTString) {
@@ -400,18 +402,18 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
               for(size_t i=0; i<strlen(pszString); i++ ) {
                   if (pszString[i] == ' ') pszString[i] = '_';
               }
-              VSIFPrintf( poDS->GetTransferFile(), " %s", pszString );
+              VSIFPrintfL( fp, " %s", pszString );
               CPLFree( pszString );
           } else {
-              VSIFPrintf( poDS->GetTransferFile(), " %s", pszRaw );
+              VSIFPrintfL( fp, " %s", pszRaw );
           }
         }
         else
         {
-          VSIFPrintf( poDS->GetTransferFile(), " @" );
+          VSIFPrintfL( fp, " @" );
         }
     }
-    VSIFPrintf( poDS->GetTransferFile(), "\n" );
+    VSIFPrintfL( fp, "\n" );
 
     // Write out Geometry
     if( poFeature->GetGeometryRef() != NULL )
@@ -429,6 +431,9 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
 int OGRILI1Layer::TestCapability( CPL_UNUSED const char * pszCap ) {
     if( EQUAL(pszCap,OLCCurveGeometries) )
         return TRUE;
+
+    if( EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCSequentialWrite) )
+        return poDS->GetTransferFile() != NULL;
 
     return FALSE;
 }
@@ -556,7 +561,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
 
             OGRPoint endPointCC;
             OGRCompoundCurve* poCC = new OGRCompoundCurve();
- 
+
             bool bFirst = true;
             while( true )
             {

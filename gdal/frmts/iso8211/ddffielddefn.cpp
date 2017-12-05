@@ -39,7 +39,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define CPLE_DiscardedFormat   1301
 
@@ -558,7 +558,9 @@ int DDFFieldDefn::BuildSubfields()
 /*      brackets.                                                       */
 /*                                                                      */
 /*      Given a string like "(A,3(B,C),D),X,Y)" return "A,3(B,C),D".    */
-/*      Give a string like "3A,2C" return "3A".                         */
+/*      Giveh a string like "3A,2C" return "3A".                        */
+/*      Giveh a string like "(3A,2C" return NULL.                       */
+/*      Giveh a string like "3A),2C" return NULL.                       */
 /************************************************************************/
 
 char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
@@ -573,12 +575,19 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
         if( pszSrc[i] == '(' )
             nBracket++;
         else if( pszSrc[i] == ')' )
+        {
             nBracket--;
+            if( nBracket < 0 )
+                return NULL;
+        }
     }
+    if( nBracket > 0 )
+        return NULL;
 
     char *pszReturn = NULL;
     if( pszSrc[0] == '(' )
     {
+        CPLAssert( i >= 2 );
         pszReturn = CPLStrdup( pszSrc + 1 );
         pszReturn[i-2] = '\0';
     }
@@ -615,16 +624,36 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         if( (iSrc == 0 || pszSrc[iSrc-1] == ',') && pszSrc[iSrc] == '(' )
         {
             char *pszContents = ExtractSubstring( pszSrc+iSrc );
-            char *pszExpandedContents = ExpandFormat( pszContents );
-
-            if( strlen(pszExpandedContents) + strlen(pszDest) + 1 > nDestMax )
+            if( pszContents == NULL )
             {
-                nDestMax = 2 * (strlen(pszExpandedContents) + strlen(pszDest));
+                pszDest[0] = '\0';
+                return pszDest;
+            }
+            char *pszExpandedContents = ExpandFormat( pszContents );
+            if( pszExpandedContents[0] == '\0' )
+            {
+                CPLFree(pszContents);
+                CPLFree( pszExpandedContents );
+                pszDest[0] = '\0';
+                return pszDest;
+            }
+
+            const size_t nExpandedContentsLen = strlen(pszExpandedContents);
+            if( nExpandedContentsLen + iDst + 1 > nDestMax )
+            {
+                nDestMax = 2 * (nExpandedContentsLen + iDst);
+                if( nDestMax > 1024 * 1024 )
+                {
+                    CPLFree( pszContents );
+                    CPLFree( pszExpandedContents );
+                    pszDest[0] = '\0';
+                    return pszDest;
+                }
                 pszDest = static_cast<char *>(CPLRealloc(pszDest,nDestMax + 1));
             }
 
-            strcat( pszDest, pszExpandedContents );
-            iDst = strlen(pszDest);
+            strcat( pszDest + iDst, pszExpandedContents );
+            iDst += nExpandedContentsLen;
 
             iSrc = iSrc + strlen(pszContents) + 2;
 
@@ -637,6 +666,13 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                  && isdigit(pszSrc[iSrc]) )
         {
             nRepeat = atoi(pszSrc+iSrc);
+            // 100: arbitrary number. Higher values might cause performance
+            // problems in the below loop
+            if( nRepeat < 0 || nRepeat > 100 )
+            {
+                pszDest[0] = '\0';
+                return pszDest;
+            }
 
             // Skip over repeat count.
             const char *pszNext = pszSrc + iSrc;  // Used after for.
@@ -644,25 +680,47 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 iSrc++;
 
             char *pszContents = ExtractSubstring( pszNext );
+            if( pszContents == NULL )
+            {
+                pszDest[0] = '\0';
+                return pszDest;
+            }
             char *pszExpandedContents = ExpandFormat( pszContents );
+            if( pszExpandedContents[0] == '\0' )
+            {
+                CPLFree(pszContents);
+                CPLFree( pszExpandedContents );
+                pszDest[0] = '\0';
+                return pszDest;
+            }
 
+            const size_t nExpandedContentsLen = strlen(pszExpandedContents);
             for( int i = 0; i < nRepeat; i++ )
             {
-                if( strlen(pszExpandedContents) + strlen(pszDest) + 1 + 1 >
+                if( nExpandedContentsLen + iDst + 1 + 1 >
                     nDestMax )
                 {
                     nDestMax =
-                        2 * (strlen(pszExpandedContents) + strlen(pszDest) + 1);
+                        2 * (nExpandedContentsLen + iDst + 1);
+                    if( nDestMax > 1024 * 1024 )
+                    {
+                        CPLFree( pszContents );
+                        CPLFree( pszExpandedContents );
+                        pszDest[0] = '\0';
+                        return pszDest;
+                    }
                     pszDest =
                         static_cast<char *>(CPLRealloc(pszDest,nDestMax + 1));
                 }
 
-                strcat( pszDest, pszExpandedContents );
+                strcat( pszDest + iDst, pszExpandedContents );
+                iDst += nExpandedContentsLen;
                 if( i < nRepeat-1 )
-                    strcat( pszDest, "," );
+                {
+                    strcat( pszDest + iDst, "," );
+                    iDst ++;
+                }
             }
-
-            iDst = strlen(pszDest);
 
             if( pszNext[0] == '(' )
                 iSrc = iSrc + strlen(pszContents) + 2;
@@ -718,6 +776,14 @@ int DDFFieldDefn::ApplyFormats()
 /* -------------------------------------------------------------------- */
 
     char *pszFormatList = ExpandFormat( _formatControls );
+    if( pszFormatList[0] == '\0' )
+    {
+        CPLError( CE_Warning, static_cast<CPLErrorNum>(CPLE_DiscardedFormat),
+                  "Invalid format controls for `%s': %s",
+                  pszTag, _formatControls );
+        CPLFree( pszFormatList );
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Tokenize based on commas.                                       */
@@ -788,6 +854,14 @@ int DDFFieldDefn::ApplyFormats()
         }
         else
         {
+            if( nFixedWidth > INT_MAX - papoSubfields[i]->GetWidth() )
+            {
+                CPLError( CE_Warning,
+                          static_cast<CPLErrorNum>(CPLE_DiscardedFormat),
+                          "Invalid format controls for `%s': %s",
+                          pszTag, _formatControls );
+                return FALSE;
+            }
             nFixedWidth += papoSubfields[i]->GetWidth();
         }
     }

@@ -455,6 +455,23 @@ def tiff_srs_imagine_localcs_citation():
 
     return 'success'
 
+###############################################################################
+# Test reading a geotiff with a EPSG code and a TOWGS84 key that must
+# override the default coming from EPSG
+
+def tiff_srs_towgs84_override():
+
+    ds = gdal.Open('data/gtiff_towgs84_override.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('TOWGS84[584.8,67,400.3,0.105,0.013,-2.378,10.29]') < 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -490,8 +507,8 @@ tiff_srs_list = [ 2758, #tmerc
                   32730, # UTM WGS84 south special case
                   22700, # unknown datum 'Deir_ez_Zor'
                   31491, # Germany Zone projection
-                  3857, # Web Mercator
-                  102113, # ESRI WGS_1984_Web_Mercator
+                  [3857, False, True], # Web Mercator
+                  [102113, False, True], # ESRI WGS_1984_Web_Mercator
 ]
 
 for item in tiff_srs_list:
@@ -529,6 +546,7 @@ gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
 gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
 gdaltest_list.append( tiff_srs_projection_3856 )
 gdaltest_list.append( tiff_srs_imagine_localcs_citation )
+gdaltest_list.append( tiff_srs_towgs84_override )
 
 if __name__ == '__main__':
 

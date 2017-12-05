@@ -10,8 +10,7 @@ rm $OUT_FILE 2>/dev/null
 
 echo "/* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */" >> $OUT_FILE
 
-# We exclude the TIFFSwab functions for renaming since tif_swab.c uses ifdef to determine if the symbols must be defined
-symbol_list=$(objdump -t libtiff.so  | grep .text | awk '{print $6}' | grep -v .text | grep -v TIFFInit | grep -v TIFFSwab | grep -v __do_global | grep -v __bss_start | grep -v _edata | grep -v _end | grep -v _fini | grep -v _init | sort)
+symbol_list=$(objdump -t libtiff.so  | grep .text | awk '{print $6}' | grep -v .text | grep -v TIFFInit | grep -v __do_global | grep -v __bss_start | grep -v _edata | grep -v _end | grep -v _fini | grep -v _init | grep -v call_gmon_start | grep -v CPL_IGNORE_RET_VAL_INT | grep -v register_tm_clones | sort)
 for symbol in $symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
@@ -23,7 +22,7 @@ do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
 done
 
-data_symbol_list=$(objdump -t libtiff.so  | grep "\.data" |  awk '{print $6}' | grep -v "\.")
+data_symbol_list=$(objdump -t libtiff.so  | grep "\.data"  | grep -v __dso_handle | grep -v __TMC_END__ |  awk '{print $6}' | grep -v "\.")
 for symbol in $data_symbol_list
 do
     echo "#define $symbol gdal_$symbol" >> $OUT_FILE
@@ -37,11 +36,16 @@ done
 
 rm libtiff.so
 
+echo "" >> $OUT_FILE
+echo "#define DISABLE_CHECK_TIFFSWABMACROS" >> $OUT_FILE
+echo "" >> $OUT_FILE
+
 # Was excluded by grep -v TIFFInit
 echo "#define TIFFInitDumpMode gdal_TIFFInitDumpMode" >> $OUT_FILE
 
-# Pasted and adapter from tif_codec.c
+# Pasted and adapted from tif_codec.c
 echo "#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12" >> $OUT_FILE
+echo "#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12" >> $OUT_FILE
 echo "#ifdef LZW_SUPPORT" >> $OUT_FILE
 echo "#define TIFFInitLZW gdal_TIFFInitLZW" >> $OUT_FILE
 echo "#endif" >> $OUT_FILE

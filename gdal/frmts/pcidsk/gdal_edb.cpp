@@ -31,7 +31,7 @@
 #include "gdal_priv.h"
 #include "pcidsk.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 using PCIDSK::EDBFile;
 using PCIDSK::eChanType;

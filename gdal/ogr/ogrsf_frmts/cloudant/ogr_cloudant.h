@@ -84,20 +84,4 @@ class OGRCloudantDataSource : public OGRCouchDBDataSource
              char ** papszOptions = NULL ) override;
 };
 
-/************************************************************************/
-/*                           OGRCloudantDriver                          */
-/************************************************************************/
-
-class OGRCloudantDriver : public OGRCouchDBDriver
-{
-  public:
-    virtual ~OGRCloudantDriver();
-
-    virtual const char*         GetName() override;
-    virtual OGRDataSource*      Open( const char *, int ) override;
-    virtual OGRDataSource*      CreateDataSource( const char * pszName,
-                                                  char **papszOptions ) override;
-    virtual int                 TestCapability( const char * ) override;
-};
-
 #endif /* ndef OGR_CLOUDANT_H_INCLUDED */

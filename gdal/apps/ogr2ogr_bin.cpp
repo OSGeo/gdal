@@ -27,316 +27,49 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
-#include "ogr_p.h"
-#include "gdal_utils_priv.h"
-#include "commonutils.h"
-#include <vector>
+#include "cpl_port.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
-CPL_CVSID("$Id$");
+#include "commonutils.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "gdal_utils.h"
+#include "gdal_utils_priv.h"
+#include "gdal_version.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_p.h"
+#include "ogrsf_frmts.h"
 
-static void Usage(int bShort = TRUE);
-static void Usage(const char* pszAdditionalMsg, int bShort = TRUE);
 
-/************************************************************************/
-/*                 GDALVectorTranslateOptionsForBinaryNew()             */
-/************************************************************************/
-
-static GDALVectorTranslateOptionsForBinary *GDALVectorTranslateOptionsForBinaryNew(void)
-{
-    return (GDALVectorTranslateOptionsForBinary*) CPLCalloc(  1, sizeof(GDALVectorTranslateOptionsForBinary) );
-}
-
-/************************************************************************/
-/*                  GDALVectorTranslateOptionsForBinaryFree()           */
-/************************************************************************/
-
-static void GDALVectorTranslateOptionsForBinaryFree( GDALVectorTranslateOptionsForBinary* psOptionsForBinary )
-{
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszDataSource);
-        CPLFree(psOptionsForBinary->pszDestDataSource);
-        CSLDestroy(psOptionsForBinary->papszOpenOptions);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
-}
-
-/* -------------------------------------------------------------------- */
-/*                  CheckDestDataSourceNameConsistency()                */
-/* -------------------------------------------------------------------- */
-
-static
-void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
-                                        const char* pszDriverName)
-{
-    int i;
-    char* pszDestExtension = CPLStrdup(CPLGetExtension(pszDestFilename));
-
-    if( EQUAL(pszDriverName, "GMT") )
-        pszDriverName = "OGR_GMT";
-    CheckExtensionConsistency(pszDestFilename, pszDriverName);
-
-    static const char* apszBeginName[][2] =  { { "PG:"      , "PostgreSQL" },
-                                               { "MySQL:"   , "MySQL" },
-                                               { "CouchDB:" , "CouchDB" },
-                                               { "GFT:"     , "GFT" },
-                                               { "MSSQL:"   , "MSSQLSpatial" },
-                                               { "ODBC:"    , "ODBC" },
-                                               { "OCI:"     , "OCI" },
-                                               { "SDE:"     , "SDE" },
-                                               { "WFS:"     , "WFS" },
-                                               { NULL, NULL }
-                                             };
-
-    for(i=0; apszBeginName[i][0] != NULL; i++)
-    {
-        if (EQUALN(pszDestFilename, apszBeginName[i][0], strlen(apszBeginName[i][0])) &&
-            !EQUAL(pszDriverName, apszBeginName[i][1]))
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                    "The target file has a name which is normally recognized by the %s driver,\n"
-                    "but the requested output driver is %s. Is it really what you want ?\n",
-                    apszBeginName[i][1],
-                    pszDriverName);
-            break;
-        }
-    }
-
-    CPLFree(pszDestExtension);
-}
-
-/************************************************************************/
-/*                                main()                                */
-/************************************************************************/
-
-int main( int nArgc, char ** papszArgv )
-{
-    GDALDatasetH hDS = NULL;
-    GDALDatasetH hODS = NULL;
-    int bCloseODS = TRUE;
-    int bUsageError = FALSE;
-    GDALDatasetH hDstDS;
-    int nRetCode = 1;
-    GDALVectorTranslateOptionsForBinary* psOptionsForBinary;
-    GDALVectorTranslateOptions *psOptions;
-
-    /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(papszArgv[0]))
-        exit(1);
-
-    EarlySetConfigOptions(nArgc, papszArgv);
-
-/* -------------------------------------------------------------------- */
-/*      Register format(s).                                             */
-/* -------------------------------------------------------------------- */
-    OGRRegisterAll();
-
-/* -------------------------------------------------------------------- */
-/*      Processing command line arguments.                              */
-/* -------------------------------------------------------------------- */
-    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
-
-    if( nArgc < 1 )
-    {
-        papszArgv = NULL;
-        nRetCode = -nArgc;
-        goto exit;
-    }
-
-    for( int iArg = 1; iArg < nArgc; iArg++ )
-    {
-        if( EQUAL(papszArgv[iArg], "--utility_version") )
-        {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            nRetCode = 0;
-            goto exit;
-        }
-        else if( EQUAL(papszArgv[iArg],"--help") )
-        {
-            Usage();
-            goto exit;
-        }
-        else if ( EQUAL(papszArgv[iArg], "--long-usage") )
-        {
-            Usage(FALSE);
-            goto exit;
-        }
-    }
-
-    psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
-    psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
-
-    if( psOptions == NULL )
-    {
-        Usage();
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-        goto exit;
-    }
-
-    if( psOptionsForBinary->pszDataSource == NULL ||
-        psOptionsForBinary->pszDestDataSource == NULL )
-    {
-        if( psOptionsForBinary->pszDestDataSource == NULL )
-            Usage("no target datasource provided");
-        else
-            Usage("no source datasource provided");
-        GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-        goto exit;
-    }
-
-    if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
-        psOptionsForBinary->bQuiet = TRUE;
-
-    if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet &&
-        psOptionsForBinary->eAccessMode == ACCESS_CREATION)
-    {
-        CheckDestDataSourceNameConsistency(psOptionsForBinary->pszDestDataSource,
-                                           psOptionsForBinary->pszFormat);
-    }
-/* -------------------------------------------------------------------- */
-/*      Open data source.                                               */
-/* -------------------------------------------------------------------- */
-
-    /* Avoid opening twice the same datasource if it is both the input and output */
-    /* Known to cause problems with at least FGdb, SQlite and GPKG drivers. See #4270 */
-    if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
-        strcmp(psOptionsForBinary->pszDestDataSource, psOptionsForBinary->pszDataSource) == 0)
-    {
-        hODS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
-        GDALDriverH hDriver = NULL;
-        if( hODS != NULL )
-            hDriver = GDALGetDatasetDriver(hODS);
-
-        /* Restrict to those 3 drivers. For example it is known to break with */
-        /* the PG driver due to the way it manages transactions... */
-        if (hDriver && !(EQUAL(GDALGetDescription(hDriver), "FileGDB") ||
-                         EQUAL(GDALGetDescription(hDriver), "SQLite") ||
-                         EQUAL(GDALGetDescription(hDriver), "GPKG")))
-        {
-            hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
-        }
-        else
-        {
-            hDS = hODS;
-            bCloseODS = FALSE;
-        }
-    }
-    else
-    {
-        hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report failure                                                  */
-/* -------------------------------------------------------------------- */
-    if( hDS == NULL )
-    {
-        GDALDriverManager *poDM = GetGDALDriverManager();
-
-        fprintf( stderr, "FAILURE:\n"
-                "Unable to open datasource `%s' with the following drivers.\n",
-                psOptionsForBinary->pszDataSource );
-
-        for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
-        {
-            GDALDriver* poIter = poDM->GetDriver(iDriver);
-            char** papszDriverMD = poIter->GetMetadata();
-            if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) )
-            {
-                fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
-            }
-        }
-
-        GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-        goto exit;
-    }
-
-    if( hODS != NULL )
-    {
-        GDALDriverManager *poDM = GetGDALDriverManager();
-
-        GDALDriver* poDriver = poDM->GetDriverByName(psOptionsForBinary->pszFormat);
-        if( poDriver == NULL )
-        {
-            fprintf( stderr,  "Unable to find driver `%s'.\n", psOptionsForBinary->pszFormat );
-            fprintf( stderr,  "The following drivers are available:\n" );
-
-            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
-            {
-                GDALDriver* poIter = poDM->GetDriver(iDriver);
-                char** papszDriverMD = poIter->GetMetadata();
-                if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) &&
-                    (CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) ||
-                     CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATECOPY, "FALSE") )) )
-                {
-                    fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
-                }
-            }
-            GDALVectorTranslateOptionsFree(psOptions);
-            GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-            goto exit;
-        }
-    }
-
-    if( !(psOptionsForBinary->bQuiet) )
-    {
-        GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
-    }
-
-    hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource, hODS,
-                                              1, &hDS, psOptions, &bUsageError);
-    if( bUsageError )
-        Usage();
-    else
-        nRetCode = (hDstDS) ? 0 : 1;
-
-    GDALVectorTranslateOptionsFree(psOptions);
-    GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-
-    if(hDS)
-        GDALClose(hDS);
-    if(bCloseODS)
-        GDALClose(hDstDS);
-
-exit:
-    CSLDestroy( papszArgv );
-    OGRCleanupAll();
-
-    return nRetCode;
-}
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
-
-static void Usage(int bShort)
-{
-    Usage(NULL, bShort);
-}
 
 static bool StringCISortFunction(const CPLString& a, const CPLString& b)
 {
     return STRCASECMP(a.c_str(), b.c_str()) < 0;
 }
 
-static void Usage(const char* pszAdditionalMsg, int bShort)
-
+static void Usage(const char* pszAdditionalMsg, bool bShort = true)
 {
-    OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
-
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where|@filename]\n"
             "               [-progress] [-sql <sql statement>|@filename] [-dialect dialect]\n"
-            "               [-preserve_fid] [-fid FID]\n"
+            "               [-preserve_fid] [-fid FID] [-limit nb_features]\n"
             "               [-spat xmin ymin xmax ymax] [-spat_srs srs_def] [-geomfield field]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
@@ -377,6 +110,7 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
     printf("\n -f format_name: output file format name, possible values are:\n");
 
     std::vector<CPLString> aoSetDrivers;
+    OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
     for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
     {
         GDALDriver *poDriver = poR->GetDriver(iDriver);
@@ -445,3 +179,235 @@ static void Usage(const char* pszAdditionalMsg, int bShort)
     if( pszAdditionalMsg )
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
 }
+
+static void Usage(bool bShort = TRUE)
+{
+    Usage(NULL, bShort);
+}
+
+/************************************************************************/
+/*                 GDALVectorTranslateOptionsForBinaryNew()             */
+/************************************************************************/
+
+static GDALVectorTranslateOptionsForBinary *GDALVectorTranslateOptionsForBinaryNew(void)
+{
+    return static_cast<GDALVectorTranslateOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALVectorTranslateOptionsForBinary)));
+}
+
+/************************************************************************/
+/*                  GDALVectorTranslateOptionsForBinaryFree()           */
+/************************************************************************/
+
+static void GDALVectorTranslateOptionsForBinaryFree( GDALVectorTranslateOptionsForBinary* psOptionsForBinary )
+{
+    if( psOptionsForBinary )
+    {
+        CPLFree(psOptionsForBinary->pszDataSource);
+        CPLFree(psOptionsForBinary->pszDestDataSource);
+        CSLDestroy(psOptionsForBinary->papszOpenOptions);
+        CPLFree(psOptionsForBinary->pszFormat);
+        CPLFree(psOptionsForBinary);
+    }
+}
+
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
+
+MAIN_START(nArgc, papszArgv)
+{
+    /* Check strict compilation and runtime library version as we use C++ API */
+    if (! GDAL_CHECK_VERSION(papszArgv[0]))
+        exit(1);
+
+    EarlySetConfigOptions(nArgc, papszArgv);
+
+/* -------------------------------------------------------------------- */
+/*      Register format(s).                                             */
+/* -------------------------------------------------------------------- */
+    OGRRegisterAll();
+
+/* -------------------------------------------------------------------- */
+/*      Processing command line arguments.                              */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDS = NULL;
+    GDALDatasetH hODS = NULL;
+    bool bCloseODS = true;
+    int bUsageError = FALSE;
+    GDALDatasetH hDstDS = NULL;
+    int nRetCode = 1;
+    GDALVectorTranslateOptionsForBinary* psOptionsForBinary = NULL;
+    GDALVectorTranslateOptions *psOptions = NULL;
+
+    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+
+    if( nArgc < 1 )
+    {
+        papszArgv = NULL;
+        nRetCode = -nArgc;
+        goto exit;
+    }
+
+    for( int iArg = 1; iArg < nArgc; iArg++ )
+    {
+        if( EQUAL(papszArgv[iArg], "--utility_version") )
+        {
+            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+                   papszArgv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            nRetCode = 0;
+            goto exit;
+        }
+        else if( EQUAL(papszArgv[iArg],"--help") )
+        {
+            Usage();
+            goto exit;
+        }
+        else if ( EQUAL(papszArgv[iArg], "--long-usage") )
+        {
+            Usage(false);
+            goto exit;
+        }
+    }
+
+    psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
+    psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
+
+    if( psOptions == NULL )
+    {
+        Usage();
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
+    }
+
+    if( psOptionsForBinary->pszDataSource == NULL ||
+        psOptionsForBinary->pszDestDataSource == NULL )
+    {
+        if( psOptionsForBinary->pszDestDataSource == NULL )
+            Usage("no target datasource provided");
+        else
+            Usage("no source datasource provided");
+        GDALVectorTranslateOptionsFree(psOptions);
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
+    }
+
+    if( strcmp(psOptionsForBinary->pszDestDataSource, "/vsistdout/") == 0 )
+        psOptionsForBinary->bQuiet = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Open data source.                                               */
+/* -------------------------------------------------------------------- */
+
+    /* Avoid opening twice the same datasource if it is both the input and output */
+    /* Known to cause problems with at least FGdb, SQlite and GPKG drivers. See #4270 */
+    if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
+        strcmp(psOptionsForBinary->pszDestDataSource, psOptionsForBinary->pszDataSource) == 0)
+    {
+        hODS = GDALOpenEx( psOptionsForBinary->pszDataSource,
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
+        GDALDriverH hDriver = NULL;
+        if( hODS != NULL )
+            hDriver = GDALGetDatasetDriver(hODS);
+
+        /* Restrict to those 3 drivers. For example it is known to break with */
+        /* the PG driver due to the way it manages transactions... */
+        if (hDriver && !(EQUAL(GDALGetDescription(hDriver), "FileGDB") ||
+                         EQUAL(GDALGetDescription(hDriver), "SQLite") ||
+                         EQUAL(GDALGetDescription(hDriver), "GPKG")))
+        {
+            hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
+                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
+        }
+        else
+        {
+            hDS = hODS;
+            bCloseODS = false;
+        }
+    }
+    else
+    {
+        hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
+                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report failure                                                  */
+/* -------------------------------------------------------------------- */
+    if( hDS == NULL )
+    {
+        GDALDriverManager *poDM = GetGDALDriverManager();
+
+        fprintf( stderr, "FAILURE:\n"
+                "Unable to open datasource `%s' with the following drivers.\n",
+                psOptionsForBinary->pszDataSource );
+
+        for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+        {
+            GDALDriver* poIter = poDM->GetDriver(iDriver);
+            char** papszDriverMD = poIter->GetMetadata();
+            if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) )
+            {
+                fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+            }
+        }
+
+        GDALVectorTranslateOptionsFree(psOptions);
+        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        goto exit;
+    }
+
+    if( hODS != NULL && psOptionsForBinary->pszFormat != NULL )
+    {
+        GDALDriverManager *poDM = GetGDALDriverManager();
+
+        GDALDriver* poDriver = poDM->GetDriverByName(psOptionsForBinary->pszFormat);
+        if( poDriver == NULL )
+        {
+            fprintf( stderr,  "Unable to find driver `%s'.\n", psOptionsForBinary->pszFormat );
+            fprintf( stderr,  "The following drivers are available:\n" );
+
+            for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+            {
+                GDALDriver* poIter = poDM->GetDriver(iDriver);
+                char** papszDriverMD = poIter->GetMetadata();
+                if( CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_VECTOR, "FALSE") ) &&
+                    (CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) ||
+                     CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATECOPY, "FALSE") )) )
+                {
+                    fprintf( stderr,  "  -> `%s'\n", poIter->GetDescription() );
+                }
+            }
+            GDALVectorTranslateOptionsFree(psOptions);
+            GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+            goto exit;
+        }
+    }
+
+    if( !(psOptionsForBinary->bQuiet) )
+    {
+        GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+    }
+
+    hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource, hODS,
+                                              1, &hDS, psOptions, &bUsageError);
+    if( bUsageError )
+        Usage();
+    else
+        nRetCode = hDstDS ? 0 : 1;
+
+    GDALVectorTranslateOptionsFree(psOptions);
+    GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+
+    if(hDS)
+        GDALClose(hDS);
+    if(bCloseODS)
+        GDALClose(hDstDS);
+
+exit:
+    CSLDestroy( papszArgv );
+    OGRCleanupAll();
+
+    return nRetCode;
+}
+MAIN_END

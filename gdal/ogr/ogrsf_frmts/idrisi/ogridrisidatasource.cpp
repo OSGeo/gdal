@@ -31,7 +31,7 @@
 #include "idrisi.h"
 #include "ogr_idrisi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRIdrisiDataSource()                         */
@@ -122,7 +122,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
     {
         CSLSetNameValueSeparator( papszVDC, ":" );
 
-        const char *pszVersion = CSLFetchNameValue( papszVDC, "file format " );
+        const char *pszVersion = CSLFetchNameValue( papszVDC, "file format" );
 
         if( pszVersion == NULL || !EQUAL( pszVersion, "IDRISI Vector A.1" ) )
         {
@@ -132,8 +132,8 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
         }
 
         const char *pszRefSystem
-            = CSLFetchNameValue( papszVDC, "ref. system " );
-        const char *pszRefUnits = CSLFetchNameValue( papszVDC, "ref. units  " );
+            = CSLFetchNameValue( papszVDC, "ref. system" );
+        const char *pszRefUnits = CSLFetchNameValue( papszVDC, "ref. units" );
 
         if (pszRefSystem != NULL && pszRefUnits != NULL)
             IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnits,
@@ -163,10 +163,10 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    const char *pszMinX = CSLFetchNameValue( papszVDC, "min. X      " );
-    const char *pszMaxX = CSLFetchNameValue( papszVDC, "max. X      " );
-    const char *pszMinY = CSLFetchNameValue( papszVDC, "min. Y      " );
-    const char *pszMaxY = CSLFetchNameValue( papszVDC, "max. Y      " );
+    const char *pszMinX = CSLFetchNameValue( papszVDC, "min. X" );
+    const char *pszMaxX = CSLFetchNameValue( papszVDC, "max. X" );
+    const char *pszMinY = CSLFetchNameValue( papszVDC, "min. Y" );
+    const char *pszMaxY = CSLFetchNameValue( papszVDC, "max. Y" );
 
     OGRIdrisiLayer* poLayer = new OGRIdrisiLayer(pszFilename,
                                                  CPLGetBasename(pszFilename),

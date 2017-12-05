@@ -29,7 +29,7 @@
 #include "cpl_conv.h"
 #include "ogr_pds.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern "C" void RegisterOGRPDS();
 

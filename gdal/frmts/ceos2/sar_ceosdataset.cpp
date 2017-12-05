@@ -34,7 +34,7 @@
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static GInt16 CastToGInt16(float val)
 {
@@ -630,7 +630,7 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
     nGCPCount(0),
     pasGCPList(NULL)
 {
-    sVolume.Flavour = 0;
+    sVolume.Flavor = 0;
     sVolume.Sensor = 0;
     sVolume.ProductType = 0;
     sVolume.FileNamingConvention = 0;

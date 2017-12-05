@@ -33,14 +33,15 @@
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
+#include "commonutils.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ArgIsNumeric()                            */
 /************************************************************************/
 
-static int ArgIsNumeric( const char *pszArg )
+static bool ArgIsNumeric( const char *pszArg )
 
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
@@ -56,7 +57,7 @@ static void Usage(const char* pszErrorMsg = NULL)
     printf(
         "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]\n"
         "                    [-snodata n] [-f <formatname>] [-i <interval>]\n"
-        "                    [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
+        "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
         "                    [-off <offset>] [-fl <level> <level>...]\n"
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
@@ -76,14 +77,12 @@ static void Usage(const char* pszErrorMsg = NULL)
         Usage(CPLSPrintf("%s option requires %d argument(s)", \
                          argv[i], nExtraArg)); } while( false )
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
-    GDALDatasetH hSrcDS;
-    int i;
-    int b3D = FALSE;
+    bool b3D = false;
     int bNoDataSet = FALSE;
-    int bIgnoreNoData = FALSE;
+    bool bIgnoreNoData = false;
     int nBandIn = 1;
     double dfInterval = 0.0;
     double dfNoData = 0.0;
@@ -91,13 +90,13 @@ int main( int argc, char ** argv )
     const char *pszSrcFilename = NULL;
     const char *pszDstFilename = NULL;
     const char *pszElevAttrib = NULL;
-    const char *pszFormat = "ESRI Shapefile";
+    const char *pszFormat = NULL;
     char **papszDSCO = NULL;
     char **papszLCO = NULL;
     double adfFixedLevels[1000];
     int nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
-    int bQuiet = FALSE;
+    bool bQuiet = false;
     GDALProgressFunc pfnProgress = NULL;
 
     // Check that we are running against at least GDAL 1.4.
@@ -119,7 +118,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    for( i = 1; i < argc; i++ )
+    for( int i = 1; i < argc; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -153,7 +152,7 @@ int main( int argc, char ** argv )
                                  argv[i]));
             while( i < argc-1
                    && nFixedLevelCount
-                             < (int)(sizeof(adfFixedLevels)/sizeof(double))
+                   < static_cast<int>(sizeof(adfFixedLevels)/sizeof(double))
                    && ArgIsNumeric(argv[i+1]) )
                 adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
         }
@@ -162,7 +161,7 @@ int main( int argc, char ** argv )
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             nBandIn = atoi(argv[++i]);
         }
-        else if( EQUAL(argv[i],"-f") )
+        else if( EQUAL(argv[i],"-f") || EQUAL(argv[i],"-of") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             pszFormat = argv[++i];
@@ -179,7 +178,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-3d")  )
         {
-            b3D = TRUE;
+            b3D = true;
         }
         else if( EQUAL(argv[i],"-snodata") )
         {
@@ -194,7 +193,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"-inodata") )
         {
-            bIgnoreNoData = TRUE;
+            bIgnoreNoData = true;
         }
         else if ( EQUAL(argv[i],"-q") || EQUAL(argv[i],"-quiet") )
         {
@@ -233,13 +232,11 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
-    GDALRasterBandH hBand;
-
-    hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
+    GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
     if( hSrcDS == NULL )
         exit( 2 );
 
-    hBand = GDALGetRasterBand( hSrcDS, nBandIn );
+    GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nBandIn );
     if( hBand == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -262,31 +259,57 @@ int main( int argc, char ** argv )
         hSRS = OSRNewSpatialReference( pszWKT );
 
 /* -------------------------------------------------------------------- */
-/*      Create the output file.                                          */
+/*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
-    OGRDataSourceH hDS;
-    OGRSFDriverH hDriver = OGRGetDriverByName( pszFormat );
-    OGRFieldDefnH hFld;
-    OGRLayerH hLayer;
+    CPLString osFormat;
+    if( pszFormat == NULL )
+    {
+        std::vector<CPLString> aoDrivers =
+            GetOutputDriversFor(pszDstFilename, GDAL_OF_VECTOR);
+        if( aoDrivers.empty() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot guess driver for %s", pszDstFilename);
+            exit( 10 );
+        }
+        else
+        {
+            if( aoDrivers.size() > 1 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                        "Several drivers matching %s extension. Using %s",
+                        CPLGetExtension(pszDstFilename), aoDrivers[0].c_str() );
+            }
+            osFormat = aoDrivers[0];
+        }
+    }
+    else
+    {
+        osFormat = pszFormat;
+    }
+
+    OGRSFDriverH hDriver = OGRGetDriverByName( osFormat.c_str() );
 
     if( hDriver == NULL )
     {
         fprintf( stderr, "Unable to find format driver named %s.\n",
-                 pszFormat );
+                 osFormat.c_str() );
         exit( 10 );
     }
 
-    hDS = OGR_Dr_CreateDataSource( hDriver, pszDstFilename, papszDSCO );
+    OGRDataSourceH hDS =
+        OGR_Dr_CreateDataSource(hDriver, pszDstFilename, papszDSCO);
     if( hDS == NULL )
-        exit( 1 );
+        exit(1);
 
-    hLayer = OGR_DS_CreateLayer( hDS, pszNewLayerName, hSRS,
-                                 b3D ? wkbLineString25D : wkbLineString,
-                                 papszLCO );
+    OGRLayerH hLayer =
+        OGR_DS_CreateLayer(hDS, pszNewLayerName, hSRS,
+                           b3D ? wkbLineString25D : wkbLineString,
+                           papszLCO);
     if( hLayer == NULL )
         exit( 1 );
 
-    hFld = OGR_Fld_Create( "ID", OFTInteger );
+    OGRFieldDefnH hFld = OGR_Fld_Create("ID", OFTInteger);
     OGR_Fld_SetWidth( hFld, 8 );
     OGR_L_CreateField( hLayer, hFld, FALSE );
     OGR_Fld_Destroy( hFld );
@@ -296,15 +319,18 @@ int main( int argc, char ** argv )
         hFld = OGR_Fld_Create( pszElevAttrib, OFTReal );
         OGR_Fld_SetWidth( hFld, 12 );
         OGR_Fld_SetPrecision( hFld, 3 );
-        OGR_L_CreateField( hLayer, hFld, FALSE );
+        OGRErr eErr = OGR_L_CreateField( hLayer, hFld, FALSE );
         OGR_Fld_Destroy( hFld );
+        if( eErr == OGRERR_FAILURE )
+        {
+            exit( 1 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Invoke.                                                         */
 /* -------------------------------------------------------------------- */
-    /* CPLErr eErr = */
-    GDALContourGenerate( hBand, dfInterval, dfOffset,
+    CPLErr eErr = GDALContourGenerate( hBand, dfInterval, dfOffset,
                          nFixedLevelCount, adfFixedLevels,
                          bNoDataSet, dfNoData, hLayer,
                          OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
@@ -326,5 +352,6 @@ int main( int argc, char ** argv )
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
-    return 0;
+    return (eErr == CE_None) ? 0 : 1;
 }
+MAIN_END

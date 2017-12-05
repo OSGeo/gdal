@@ -36,9 +36,9 @@
 #define BOOL_CONST(x,y)      const bool x = y
 #define INT_CONST(x,y)       const int x = y
 #else
-#define STRING_CONST(x,y)    extern const char* const x;
-#define BOOL_CONST(x,y)      extern const bool x;
-#define INT_CONST(x,y)       extern const int x;
+#define STRING_CONST(x,y)    extern const char* const x
+#define BOOL_CONST(x,y)      extern const bool x
+#define INT_CONST(x,y)       extern const int x
 #endif
 
 namespace GMLASConstants
@@ -54,6 +54,7 @@ namespace GMLASConstants
     BOOL_CONST(REMOVE_UNUSED_LAYERS_DEFAULT, false);
     BOOL_CONST(REMOVE_UNUSED_FIELDS_DEFAULT, false);
     BOOL_CONST(USE_ARRAYS_DEFAULT, true);
+    BOOL_CONST(USE_NULL_STATE_DEFAULT, false);
     BOOL_CONST(INCLUDE_GEOMETRY_XML_DEFAULT, false);
     BOOL_CONST(INSTANTIATE_GML_FEATURES_ONLY_DEFAULT, true);
     BOOL_CONST(ALLOW_XSD_CACHE_DEFAULT, true);
@@ -62,9 +63,12 @@ namespace GMLASConstants
     BOOL_CONST(VALIDATE_DEFAULT, false);
     BOOL_CONST(FAIL_IF_VALIDATION_ERROR_DEFAULT, false);
     BOOL_CONST(EXPOSE_METADATA_LAYERS_DEFAULT, false);
+    BOOL_CONST(SWE_PROCESS_DATA_RECORD_DEFAULT, true);
+    BOOL_CONST(SWE_PROCESS_DATA_ARRAY_DEFAULT, true);
     BOOL_CONST(WARN_IF_EXCLUDED_XPATH_FOUND_DEFAULT, true);
     BOOL_CONST(CASE_INSENSITIVE_IDENTIFIER_DEFAULT, true);
     BOOL_CONST(PG_IDENTIFIER_LAUNDERING_DEFAULT, true);
+    INT_CONST(MAXIMUM_FIELDS_FLATTENING_DEFAULT, 10);
     INT_CONST(MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH, 10);
     INT_CONST(INDENT_SIZE_DEFAULT, 2);
     INT_CONST(INDENT_SIZE_MIN, 0);
@@ -105,6 +109,8 @@ namespace GMLASConstants
     STRING_CONST(szTYPE, "type");
     STRING_CONST(szHREF, "href");
     STRING_CONST(szOWNS, "owns");
+
+    STRING_CONST(szSWE_URI, "http://www.opengis.net/swe/2.0");
 
     STRING_CONST(szOPENGIS_URL, "http://www.opengis.net/");
 
@@ -191,6 +197,7 @@ namespace GMLASConstants
     STRING_CONST(szTOP_LEVEL_ELEMENT, "TOP_LEVEL_ELEMENT");
     STRING_CONST(szNESTED_ELEMENT, "NESTED_ELEMENT");
     STRING_CONST(szJUNCTION_TABLE, "JUNCTION_TABLE");
+    STRING_CONST(szSWE_DATA_ARRAY, "SWE_DATA_ARRAY");
 
 // Values of field_category
     STRING_CONST(szREGULAR, "REGULAR");
@@ -201,6 +208,7 @@ namespace GMLASConstants
     STRING_CONST(szPATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE,
                                     "PATH_TO_CHILD_ELEMENT_WITH_JUNCTION_TABLE");
     STRING_CONST(szGROUP, "GROUP");
+    STRING_CONST(szSWE_FIELD, "SWE_FIELD");
 
     STRING_CONST(szGMLAS_PREFIX, "GMLAS:");
     STRING_CONST(szDEFAULT_CONF_FILENAME, "gmlasconf.xml");
@@ -262,6 +270,7 @@ namespace GMLASConstants
     STRING_CONST(szXS_TOKEN, "token");
     STRING_CONST(szXS_NMTOKEN, "NMTOKEN");
     STRING_CONST(szXS_NCNAME, "NCName");
+    STRING_CONST(szXS_QNAME, "QName");
     STRING_CONST(szXS_ID, "ID");
     STRING_CONST(szXS_BOOLEAN, "boolean");
     STRING_CONST(szXS_BYTE, "byte");
@@ -281,6 +290,8 @@ namespace GMLASConstants
     STRING_CONST(szXS_DOUBLE, "double");
     STRING_CONST(szXS_DECIMAL, "decimal");
     STRING_CONST(szXS_DATE, "date");
+    STRING_CONST(szXS_GYEAR, "gYear");
+    STRING_CONST(szXS_GYEAR_MONTH, "gYearMonth");
     STRING_CONST(szXS_TIME, "time");
     STRING_CONST(szXS_DATETIME, "dateTime");
     STRING_CONST(szXS_ANY_URI, "anyURI");
@@ -296,7 +307,7 @@ namespace GMLASConstants
     STRING_CONST(szAT_ANY_ATTR, "@*");
     STRING_CONST(szMATCH_ALL, "/*");
     STRING_CONST(szEXTRA_SUFFIX, ";extra=");
-};
+}
 
 #undef STRING_CONST
 #undef INT_CONST

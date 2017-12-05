@@ -159,6 +159,7 @@ typedef short INT16;
 
 #ifndef XMD_H			/* X11/xmd.h correctly defines INT32 */
 #ifndef _BASETSD_H
+#define INT32_IS_ACTUALLY_LONG
 typedef long INT32;
 #endif
 #endif

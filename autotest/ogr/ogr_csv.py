@@ -2169,7 +2169,7 @@ def ogr_csv_43():
     lyr.SetSpatialFilterRect(0, 0, 0, 100, 100)
     lyr.SetSpatialFilter(0, lyr.GetSpatialFilter())
     lyr.SetSpatialFilter(lyr.GetSpatialFilter())
-    if lyr.GetFeatureCount() != 2:
+    if lyr.GetFeatureCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     if lyr.GetExtent() != (2.0, 2.0, 49.0, 49.0):
@@ -2486,6 +2486,28 @@ def ogr_csv_48():
     return 'success'
 
 ###############################################################################
+# Test EMPTY_STRING_AS_NULL=ES
+
+def ogr_csv_49():
+    gdal.FileFromMemBuffer('/vsimem/ogr_csv_49.csv',
+"""id,str
+1,
+""")
+
+    ds = gdal.OpenEx('/vsimem/ogr_csv_49.csv', open_options = ['EMPTY_STRING_AS_NULL=YES'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if not f.IsFieldNull('str'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_csv_49.csv')
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_csv_cleanup():
@@ -2568,6 +2590,7 @@ gdaltest_list = [
     ogr_csv_46,
     ogr_csv_47,
     ogr_csv_48,
+    ogr_csv_49,
     ogr_csv_cleanup ]
 
 if __name__ == '__main__':

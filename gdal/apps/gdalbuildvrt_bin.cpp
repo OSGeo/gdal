@@ -31,7 +31,7 @@
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -52,6 +52,7 @@ static void Usage(const char* pszErrorMsg)
             "                    [-srcnodata \"value [value...]\"] [-vrtnodata \"value [value...]\"] \n"
             "                    [-a_srs srs_def]\n"
             "                    [-r {nearest,bilinear,cubic,cubicspline,lanczos,average,mode}]\n"
+            "                    [-oo NAME=VALUE]*\n"
             "                    [-input_file_list my_list.txt] [-overwrite] output.vrt [gdalfile]*\n"
             "\n"
             "e.g.\n"
@@ -89,7 +90,8 @@ static void Usage(const char* pszErrorMsg)
 
 static GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
 {
-    return (GDALBuildVRTOptionsForBinary*) CPLCalloc(  1, sizeof(GDALBuildVRTOptionsForBinary) );
+    return static_cast<GDALBuildVRTOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -110,7 +112,7 @@ static void GDALBuildVRTOptionsForBinaryFree( GDALBuildVRTOptionsForBinary* psOp
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -210,3 +212,4 @@ int main( int argc, char ** argv )
 
     return nRetCode;
 }
+MAIN_END

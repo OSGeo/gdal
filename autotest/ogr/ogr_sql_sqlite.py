@@ -29,6 +29,11 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+try:
+    from BaseHTTPServer import BaseHTTPRequestHandler
+except:
+    from http.server import BaseHTTPRequestHandler
+
 import os
 import sys
 
@@ -983,6 +988,280 @@ def ogr_sql_sqlite_15():
 
     return ogr_sql_sqlite_14_and_15(sql)
 
+
+###############################################################################
+do_log = False
+class GeocodingHTTPHandler(BaseHTTPRequestHandler):
+
+    def log_request(self, code='-', size='-'):
+        return
+
+    def do_GET(self):
+
+        try:
+            if do_log:
+                f = open('/tmp/log.txt', 'a')
+                f.write('GET %s\n' % self.path)
+                f.close()
+
+            if self.path.find('/geocoding') != -1:
+                if self.path == '/geocoding?q=Paris&addressdetails=1&limit=1&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
+<searchresults>
+  <place lat="48.8566177374844" lon="2.34288146739775" display_name="Paris, Ile-de-France, France metropolitaine">
+    <county>Paris</county>
+    <state>Ile-de-France</state>
+    <country>France metropolitaine</country>
+    <country_code>fr</country_code>
+  </place>
+</searchresults>""".encode('ascii'))
+                    return
+                elif self.path == '/geocoding?q=NonExistingPlace&addressdetails=1&limit=1&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?><searchresults></searchresults>""".encode('ascii'))
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/yahoogeocoding') != -1:
+                if self.path == '/yahoogeocoding?q=Paris':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>40</Quality><Result><quality>40</quality><latitude>48.85693</latitude><longitude>2.3412</longitude><offsetlat>48.85693</offsetlat><offsetlon>2.3412</offsetlon><radius>9200</radius><name></name><line1></line1><line2>Paris</line2><line3></line3><line4>France</line4><house></house><street></street><xstreet></xstreet><unittype></unittype><unit></unit><postal></postal><neighborhood></neighborhood><city>Paris</city><county>Paris</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>75</countycode><uzip>75001</uzip><hash></hash><woeid>615702</woeid><woetype>7</woetype></Result></ResultSet>
+<!-- nws03.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->
+<!-- wws09.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 04:59:06 PST 2012 -->""".encode('ascii'))
+                    return
+                elif self.path == '/yahoogeocoding?q=NonExistingPlace':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>7</Error><ErrorMessage>No result</ErrorMessage><Locale>en-US</Locale><Found>0</Found><Quality>0</Quality></ResultSet>
+<!-- nws08.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->
+<!-- wws08.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:00:45 PST 2012 -->""".encode('ascii'))
+                    return
+
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/geonamesgeocoding') != -1:
+                if self.path == '/geonamesgeocoding?q=Paris&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames style="MEDIUM">
+<totalResultsCount>2356</totalResultsCount>
+<geoname>
+<toponymName>Paris</toponymName>
+<name>Paris</name>
+<lat>48.85341</lat>
+<lng>2.3488</lng>
+<geonameId>2988507</geonameId>
+<countryCode>FR</countryCode>
+<countryName>France</countryName>
+<fcl>P</fcl>
+<fcode>PPLC</fcode>
+</geoname>
+</geonames>""".encode('ascii'))
+                    return
+                elif self.path == '/geonamesgeocoding?q=NonExistingPlace&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames style="MEDIUM">
+<totalResultsCount>0</totalResultsCount>
+</geonames>""".encode('ascii'))
+                    return
+
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/binggeocoding') != -1:
+                if self.path == '/binggeocoding?q=Paris&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>1</EstimatedTotal>
+      <Resources>
+        <Location>
+          <Name>Paris, Paris, France</Name>
+          <Point>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+          </Point>
+          <BoundingBox>
+            <SouthLatitude>48</SouthLatitude>
+            <WestLongitude>2</WestLongitude>
+            <NorthLatitude>48</NorthLatitude>
+            <EastLongitude>2</EastLongitude>
+          </BoundingBox>
+          <Address>
+            <AdminDistrict>IdF</AdminDistrict>
+            <AdminDistrict2>Paris</AdminDistrict2>
+            <CountryRegion>France</CountryRegion>
+            <FormattedAddress>Paris, Paris, France</FormattedAddress>
+            <Locality>Paris</Locality>
+          </Address>
+          <GeocodePoint>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+            <CalculationMethod>Random</CalculationMethod>
+            <UsageType>Display</UsageType>
+          </GeocodePoint>
+        </Location>
+      </Resources>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""".encode('ascii'))
+                    return
+                elif self.path == '/binggeocoding?q=NonExistingPlace&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>0</EstimatedTotal>
+      <Resources/>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""".encode('ascii'))
+                    return
+
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            # Below is for reverse geocoding
+            elif self.path.find('/reversegeocoding') != -1:
+                if self.path == '/reversegeocoding?lon=2.00000000&lat=49.00000000&email=foo%40bar' or \
+                   self.path == '/reversegeocoding?lon=2.00000000&lat=49.00000000&zoom=12&email=foo%40bar':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
+<reversegeocode>
+  <result place_id="46754274" osm_type="way" osm_id="38621743" ref="Chemin du Cordon" lat="49.0002726061675" lon="1.99514157818059">Chemin du Cordon, Foret de l'Hautil, Triel-sur-Seine, Saint-Germain-en-Laye, Yvelines, Ile-de-France, 78510, France metropolitaine</result>
+  <addressparts>
+    <road>Chemin du Cordon</road>
+    <forest>Foret de l'Hautil</forest>
+    <city>Triel-sur-Seine</city>
+    <county>Saint-Germain-en-Laye</county>
+    <state>Ile-de-France</state>
+    <postcode>78510</postcode>
+    <country>France metropolitaine</country>
+    <country_code>fr</country_code>
+  </addressparts>
+</reversegeocode>""".encode('ascii'))
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/yahooreversegeocoding') != -1:
+                if self.path == '/yahooreversegeocoding?q=49.00000000,2.00000000&gflags=R':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ResultSet xmlns:ns1="http://www.yahooapis.com/v1/base.rng" version="2.0" xml:lang="en-US"><Error>0</Error><ErrorMessage>No error</ErrorMessage><Locale>en-US</Locale><Found>1</Found><Quality>99</Quality><Result><quality>72</quality><latitude>49.001</latitude><longitude>1.999864</longitude><offsetlat>49.001</offsetlat><offsetlon>1.999864</offsetlon><radius>400</radius><name>49.00000000,2.00000000</name><line1>Chemin de Menucourt</line1><line2>78510 Triel-sur-Seine</line2><line3></line3><line4>France</line4><house></house><street>Chemin de Menucourt</street><xstreet></xstreet><unittype></unittype><unit></unit><postal>78510</postal><neighborhood></neighborhood><city>Triel-sur-Seine</city><county>Yvelines</county><state>Ile-de-France</state><country>France</country><countrycode>FR</countrycode><statecode></statecode><countycode>78</countycode><uzip>78510</uzip><hash></hash><woeid>12727518</woeid><woetype>11</woetype></Result></ResultSet>
+<!-- nws02.maps.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->
+<!-- wws05.geotech.bf1.yahoo.com uncompressed/chunked Sat Dec 29 05:03:31 PST 2012 -->""".encode('ascii'))
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/geonamesreversegeocoding') != -1:
+                if self.path == '/geonamesreversegeocoding?lat=49.00000000&lng=2.00000000&username=demo':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<geonames>
+<geoname>
+<toponymName>Paris Basin</toponymName>
+<name>Paris Basin</name>
+<lat>49</lat>
+<lng>2</lng>
+<geonameId>2988503</geonameId>
+<countryCode>FR</countryCode>
+<countryName>France</countryName>
+<fcl>T</fcl>
+<fcode>DPR</fcode>
+<distance>0</distance>
+</geoname>
+</geonames>""".encode('ascii'))
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            elif self.path.find('/bingreversegeocoding') != -1:
+                if self.path == '/bingreversegeocoding?49.00000000,2.00000000&key=fakekey':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/xml')
+                    self.end_headers()
+                    self.wfile.write("""<Response>
+  <ResourceSets>
+    <ResourceSet>
+      <EstimatedTotal>1</EstimatedTotal>
+      <Resources>
+        <Location>
+          <Name>Paris, Paris, France</Name>
+          <Point>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+          </Point>
+          <BoundingBox>
+            <SouthLatitude>48</SouthLatitude>
+            <WestLongitude>2</WestLongitude>
+            <NorthLatitude>48</NorthLatitude>
+            <EastLongitude>2</EastLongitude>
+          </BoundingBox>
+          <Address>
+            <AdminDistrict>IdF</AdminDistrict>
+            <AdminDistrict2>Paris</AdminDistrict2>
+            <CountryRegion>France</CountryRegion>
+            <FormattedAddress>Paris, Paris, France</FormattedAddress>
+            <Locality>Paris</Locality>
+          </Address>
+          <GeocodePoint>
+            <Latitude>48</Latitude>
+            <Longitude>2</Longitude>
+            <CalculationMethod>Random</CalculationMethod>
+            <UsageType>Display</UsageType>
+          </GeocodePoint>
+        </Location>
+      </Resources>
+    </ResourceSet>
+  </ResourceSets>
+</Response>""".encode('ascii'))
+                    return
+                else:
+                    self.send_error(404,'File Not Found: %s' % self.path)
+                    return
+
+            return
+        except IOError:
+            pass
+
+        self.send_error(404,'File Not Found: %s' % self.path)
+
+
+
 ###############################################################################
 def ogr_sql_sqlite_start_webserver():
 
@@ -991,8 +1270,11 @@ def ogr_sql_sqlite_start_webserver():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
+        
+    if gdal.GetDriverByName('HTTP') is None:
+        return 'skip'
 
-    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch()
+    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch(handler = GeocodingHTTPHandler)
     if ogrtest.webserver_port == 0:
         return 'skip'
 
@@ -1341,7 +1623,7 @@ def ogr_sql_sqlite_24():
     # Test inflating a random binary blob
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate(x'0203')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1360,7 +1642,7 @@ def ogr_sql_sqlite_24():
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_deflate('a', 'b')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1379,7 +1661,7 @@ def ogr_sql_sqlite_24():
     # Error case
     sql_lyr = ds.ExecuteSQL("SELECT ogr_inflate('a')", dialect = 'SQLite')
     feat = sql_lyr.GetNextFeature()
-    if feat.IsFieldSet(0):
+    if not feat.IsFieldNull(0):
         gdaltest.post_reason('fail')
         feat.DumpReadable()
         ds.ReleaseResultSet(sql_lyr)
@@ -1407,7 +1689,7 @@ def ogr_sql_sqlite_25_test_errors(ds, fct):
     for val in [ 'null', "'foo'", "x'00010203'" ]:
         sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect = 'SQLite')
         feat = sql_lyr.GetNextFeature()
-        if feat.IsFieldSet(0):
+        if not feat.IsFieldNull(0):
             feat.DumpReadable()
             ds.ReleaseResultSet(sql_lyr)
             print(val)
@@ -1690,7 +1972,7 @@ def ogr_sql_sqlite_28():
                  "SELECT hstore_get_value('a=>b','c')" ]:
         sql_lyr = ds.ExecuteSQL( sql, dialect = 'SQLite' )
         f = sql_lyr.GetNextFeature()
-        if f.IsFieldSet(0):
+        if not f.IsFieldNull(0):
             gdaltest.post_reason('fail')
             print(sql)
             f.DumpReadable()
@@ -1796,6 +2078,33 @@ def ogr_sql_sqlite_30():
 
     return 'success'
 
+###############################################################################
+# Test filtering complex field name
+
+def ogr_sql_sqlite_31():
+
+    if not ogrtest.has_sqlite_dialect:
+        return 'skip'
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('test')
+    lyr.CreateField(ogr.FieldDefn('50M3 @w35Om3 N@M3', ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 25)
+    lyr.CreateFeature(f)
+    f = None
+
+    sql_lyr = ds.ExecuteSQL('select * from test where "50M3 @w35Om3 N@M3" = 25', dialect = 'SQLite')
+    f = sql_lyr.GetNextFeature()
+    value = f.GetField(0)
+    ds.ReleaseResultSet(sql_lyr)
+
+    if value != 25:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_sql_sqlite_1,
     ogr_sql_sqlite_2,
@@ -1828,7 +2137,8 @@ gdaltest_list = [
     ogr_sql_sqlite_27,
     ogr_sql_sqlite_28,
     ogr_sql_sqlite_29,
-    ogr_sql_sqlite_30
+    ogr_sql_sqlite_30,
+    ogr_sql_sqlite_31
 ]
 
 if __name__ == '__main__':

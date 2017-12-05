@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const int USE_COPY_UNSET = -1;
 
@@ -84,6 +84,7 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
     iFIDAsRegularColumnIndex(-1),
     bAutoFIDOnCreateViaCopy(true),
     bCopyStatementWithFID(false),
+    bNeedToUpdateSequence(false),
     papszOverrideColumnTypes(NULL)
 {
     SetDescription( poFeatureDefn->GetName() );
@@ -98,6 +99,7 @@ OGRPGDumpLayer::OGRPGDumpLayer( OGRPGDumpDataSource* poDSIn,
 OGRPGDumpLayer::~OGRPGDumpLayer()
 {
     EndCopy();
+    UpdateSequenceIfNeeded();
 
     poFeatureDefn->Release();
     CPLFree(pszSchemaName);
@@ -150,7 +152,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
     {
         if( poFeature->GetFID() == OGRNullFID )
         {
-            if( poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) )
+            if( poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) )
             {
                 poFeature->SetFID(
                     poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex));
@@ -158,7 +160,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         }
         else
         {
-            if( !poFeature->IsFieldSet( iFIDAsRegularColumnIndex ) ||
+            if( !poFeature->IsFieldSetAndNotNull( iFIDAsRegularColumnIndex ) ||
                 poFeature->GetFieldAsInteger64(iFIDAsRegularColumnIndex) != poFeature->GetFID() )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -189,7 +191,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
         const int nFieldCount = poFeatureDefn->GetFieldCount();
         for( int iField = 0; iField < nFieldCount; iField++ )
         {
-            if( !poFeature->IsFieldSet( iField ) &&
+            if( !poFeature->IsFieldSetAndNotNull( iField ) &&
                 poFeature->GetFieldDefnRef(iField)->GetDefault() != NULL )
             {
                 bHasDefaultValue = true;
@@ -220,6 +222,7 @@ OGRErr OGRPGDumpLayer::ICreateFeature( OGRFeature *poFeature )
                     // FID column is an autoincremented column.
                     StartCopy(bFIDSet);
                     bCopyStatementWithFID = bFIDSet;
+                    bNeedToUpdateSequence = bFIDSet;
                 }
 
                 eErr = CreateFeatureViaCopy( poFeature );
@@ -280,11 +283,16 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
+        bNeedToUpdateSequence = true;
         if( bNeedComma )
             osCommand += ", ";
 
         osCommand = osCommand + OGRPGDumpEscapeColumnName(pszFIDColumn) + " ";
         bNeedComma = true;
+    }
+    else
+    {
+        UpdateSequenceIfNeeded();
     }
 
     for( int i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -514,7 +522,7 @@ void OGRPGCommonAppendCopyFieldsExceptGeom(
             osCommand += "\t";
         bAddTab = true;
 
-        if( !poFeature->IsFieldSet( i ) )
+        if( !poFeature->IsFieldSetAndNotNull( i ) )
         {
             osCommand += "\\N" ;
 
@@ -685,7 +693,7 @@ OGRErr OGRPGDumpLayer::StartCopy( int bSetFID )
 
     CPLString osFields = BuildCopyFields(bSetFID);
 
-    size_t size = strlen(osFields) +  strlen(pszSqlTableName) + 100;
+    size_t size = osFields.size() +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     snprintf( pszCommand, size,
@@ -717,7 +725,29 @@ OGRErr OGRPGDumpLayer::EndCopy()
 
     bUseCopy = USE_COPY_UNSET;
 
+    UpdateSequenceIfNeeded();
+
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                       UpdateSequenceIfNeeded()                       */
+/************************************************************************/
+
+void OGRPGDumpLayer::UpdateSequenceIfNeeded()
+{
+    if( bNeedToUpdateSequence && pszFIDColumn != NULL )
+    {
+        CPLString osCommand;
+        osCommand.Printf(
+            "SELECT setval(pg_get_serial_sequence(%s, %s), MAX(%s)) FROM %s",
+            OGRPGDumpEscapeString(pszSqlTableName).c_str(),
+            OGRPGDumpEscapeString(pszFIDColumn).c_str(),
+            OGRPGDumpEscapeColumnName(pszFIDColumn).c_str(),
+            pszSqlTableName);
+        poDS->Log(osCommand);
+        bNeedToUpdateSequence = false;
+    }
 }
 
 /************************************************************************/
@@ -951,6 +981,12 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
                                  OGRPGCommonEscapeStringCbk pfnEscapeString,
                                  void* userdata)
 {
+    if( poFeature->IsFieldNull(i) )
+    {
+        osCommand += "NULL";
+        return;
+    }
+
     OGRFeatureDefn* poFeatureDefn = poFeature->GetDefnRef();
     OGRFieldType nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
     OGRFieldSubType eSubType = poFeatureDefn->GetFieldDefn(i)->GetSubType();
@@ -1430,8 +1466,16 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn* poFieldDefn,
         return;
     CPLString osDefault(pszDefault);
     size_t nPos = osDefault.find("::character varying");
-    if( nPos != std::string::npos )
+    if( nPos != std::string::npos &&
+        nPos + strlen("::character varying") == osDefault.size() )
+    {
         osDefault.resize(nPos);
+    }
+    else if( (nPos = osDefault.find("::text")) != std::string::npos &&
+             nPos + strlen("::text") == osDefault.size() )
+    {
+        osDefault.resize(nPos);
+    }
     else if( strcmp(osDefault, "now()") == 0 )
         osDefault = "CURRENT_TIMESTAMP";
     else if( strcmp(osDefault, "('now'::text)::date") == 0 )

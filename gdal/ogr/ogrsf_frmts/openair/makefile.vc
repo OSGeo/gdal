@@ -1,6 +1,6 @@
 
 OBJ	=	ogropenairdriver.obj ogropenairdatasource.obj ogropenairlayer.obj ogropenairlabellayer.obj
-EXTRAFLAGS =	-I.. -I..\.. -I..\xplane
+EXTRAFLAGS =	-I.. -I..\..
 
 GDAL_ROOT	=	..\..\..
 

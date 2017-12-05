@@ -33,7 +33,7 @@
 #include "cpl_http.h"
 #include "parsexsd.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                      OGRWFSRecursiveUnlink()                         */
@@ -1073,7 +1073,12 @@ OGRFeatureDefn * OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn* poSrcFDefn)
         {
             return poFeatureDefn;
         }
-        poSrcFDefn = l_poDS->GetLayer(0)->GetLayerDefn();
+        OGRLayer* l_poLayer = l_poDS->GetLayer(0);
+        if( l_poLayer == NULL )
+        {
+            return poFeatureDefn;
+        }
+        poSrcFDefn = l_poLayer->GetLayerDefn();
         bGotApproximateLayerDefn = true;
         /* We cannot trust width and precision based on a single feature */
         bUnsetWidthPrecision = true;
@@ -1183,6 +1188,8 @@ OGRFeature *OGRWFSLayer::GetNextFeature()
             if (poBaseDS)
             {
                 poBaseLayer = poBaseDS->GetLayer(0);
+                if( poBaseLayer == NULL )
+                    return NULL;
                 poBaseLayer->ResetReading();
 
                 /* Check that the layer field definition is consistent with the one */
@@ -1803,7 +1810,7 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (poFeature->IsFieldSet(0))
+    if (poFeature->IsFieldSetAndNotNull(0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot insert a feature when gml_id field is already set");
@@ -1850,7 +1857,17 @@ OGRErr OGRWFSLayer::ICreateFeature( OGRFeature *poFeature )
         if (i == poFeature->GetFieldCount())
             break;
 
-        if (poFeature->IsFieldSet(i))
+#ifdef notdef
+        if( poFeature->IsFieldNull(i) )
+        {
+            OGRFieldDefn* poFDefn = poFeature->GetFieldDefnRef(i);
+            osPost += "      <feature:";
+            osPost += poFDefn->GetNameRef();
+            osPost += " xsi:nil=\"true\" />\n";
+        }
+        else
+#endif
+        if (poFeature->IsFieldSet(i) && !poFeature->IsFieldNull(i) )
         {
             OGRFieldDefn* poFDefn = poFeature->GetFieldDefnRef(i);
             osPost += "      <feature:";
@@ -2041,7 +2058,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if (poFeature->IsFieldSet(0) == FALSE)
+    if (poFeature->IsFieldSetAndNotNull(0) == FALSE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot update a feature when gml_id field is not set");
@@ -2094,7 +2111,7 @@ OGRErr OGRWFSLayer::ISetFeature( OGRFeature *poFeature )
 
         osPost += "    <wfs:Property>\n";
         osPost += "      <wfs:Name>"; osPost += poFDefn->GetNameRef(); osPost += "</wfs:Name>\n";
-        if (poFeature->IsFieldSet(i))
+        if (poFeature->IsFieldSetAndNotNull(i))
         {
             osPost += "      <wfs:Value>";
             if (poFDefn->GetType() == OFTInteger)

@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRGmtLayer()                             */
@@ -93,7 +93,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
             if( papszKeyedValues[iKey][0] == 'J' )
             {
                 CPLString osArg = papszKeyedValues[iKey] + 2;
-                if( osArg[0] == '"' && osArg[osArg.length()-1] == '"' )
+                if( osArg[0] == '"' && osArg.back() == '"' )
                 {
                     osArg = osArg.substr(1,osArg.length()-2);
                     char *pszArg = CPLUnescapeString(osArg, NULL,
@@ -119,7 +119,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
 /* -------------------------------------------------------------------- */
     if( osWKT.length() )
     {
-        char *pszWKT = (char *) osWKT.c_str();
+        char *pszWKT = const_cast<char *>(osWKT.c_str());
 
         poSRS = new OGRSpatialReference();
         if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
@@ -240,7 +240,7 @@ OGRGmtLayer::~OGRGmtLayer()
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
         CPLDebug( "Gmt", "%d features read on layer '%s'.",
-                  (int) m_nFeaturesRead,
+                  static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 
@@ -947,7 +947,8 @@ OGRErr OGRGmtLayer::WriteGeometry( OGRGeometryH hGeom, bool bHaveAngle )
     const int nPointCount = OGR_G_GetPointCount(hGeom);
     const int nDim = OGR_G_GetCoordinateDimension(hGeom);
     // For testing only. Ticket #6453
-    const bool bUseTab = CPLTestBool( CPLGetConfigOption("GMT_USE_TAB", "FALSE") );
+    const bool bUseTab =
+        CPLTestBool(CPLGetConfigOption("GMT_USE_TAB", "FALSE"));
 
     for( int iPoint = 0; iPoint < nPointCount; iPoint++ )
     {

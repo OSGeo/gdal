@@ -31,7 +31,7 @@
 #include "cpl_time.h"
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 namespace OpenFileGDB
 {
@@ -1838,4 +1838,4 @@ int FileGDBIndexIterator::GetMinMaxSumCount(double& dfMin, double& dfMax,
     return TRUE;
 }
 
-}; /* namespace OpenFileGDB */
+} /* namespace OpenFileGDB */

@@ -29,7 +29,7 @@
 
 #include "gtm.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*        Methods for dealing with write on files and buffers           */
@@ -339,7 +339,11 @@ bool GTM::isValid()
         {
             VSILFILE* pGTMFileOri = pGTMFile;
             pGTMFile = fp;
-            if (isValid())
+            char* pszFilenameOri = pszFilename;
+            pszFilename = pszGZIPFileName;
+            const bool bRet = isValid();
+            pszFilename = pszFilenameOri;
+            if (bRet)
             {
                 VSIFCloseL(pGTMFileOri);
                 CPLFree(pszGZIPFileName);
@@ -355,7 +359,7 @@ bool GTM::isValid()
         CPLFree(pszGZIPFileName);
     }
 
-    const short version = CPL_LSBINT16PTR(buffer);
+    const short version = CPL_LSBSINT16PTR(buffer);
     /*Skip string length */
     const char* szHeader = buffer + 2;
     if (version == 211 && strcmp(szHeader, "TrackMaker") == 0 )
@@ -806,8 +810,6 @@ bool GTM::readFile(void* pBuffer, size_t nSize, size_t nCount)
     const size_t nRead = VSIFReadL( pBuffer, nSize, nCount, pGTMFile );
     if (nRead == 0)
     {
-        VSIFCloseL( pGTMFile );
-        pGTMFile = NULL;
         return false;
     }
     return true;

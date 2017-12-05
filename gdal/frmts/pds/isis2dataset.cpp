@@ -46,7 +46,7 @@ static const int RECORD_SIZE = 512;
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -144,7 +144,7 @@ char **ISIS2Dataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( strlen(osExternalCube) > 0 )
+    if( !osExternalCube.empty() )
         papszFileList = CSLAddString( papszFileList, osExternalCube );
 
     return papszFileList;
@@ -157,7 +157,7 @@ char **ISIS2Dataset::GetFileList()
 const char *ISIS2Dataset::GetProjectionRef()
 
 {
-    if( strlen(osProjection) > 0 )
+    if( !osProjection.empty() )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -622,26 +622,43 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int nLineOffset, nPixelOffset, nBandOffset;
+    int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
+    int nLineOffset, nPixelOffset;
+    vsi_l_offset nBandOffset;
 
     if( EQUAL(szLayout,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
+        if( nPixelOffset > INT_MAX / nBands )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
+        if( nPixelOffset > INT_MAX / nCols )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = nLineOffset * nRows;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
     }
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
+        if( nPixelOffset > INT_MAX / nBands ||
+            nPixelOffset * nBands > INT_MAX / nCols )
+        {
+            delete poDS;
+            return NULL;
+        }
         nLineOffset = nItemSize * nBands * nCols;
-        nBandOffset = nItemSize * nCols;
+        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
     }
 
 /* -------------------------------------------------------------------- */
@@ -787,8 +804,8 @@ void ISIS2Dataset::CleanString( CPLString &osInput )
 
 {
    if(  ( osInput.size() < 2 ) ||
-        ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-        ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
+        ((osInput.at(0) != '"'   || osInput.back() != '"' ) &&
+        ( osInput.at(0) != '\'' || osInput.back() != '\'')) )
         return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);

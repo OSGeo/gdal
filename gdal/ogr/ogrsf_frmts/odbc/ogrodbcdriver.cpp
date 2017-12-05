@@ -29,7 +29,7 @@
 #include "ogr_odbc.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            ~OGRODBCDriver()                            */
@@ -121,5 +121,7 @@ int OGRODBCDriver::TestCapability( const char * pszCap )
 void RegisterOGRODBC()
 
 {
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( new OGRODBCDriver );
+    OGRSFDriver* poDriver = new OGRODBCDriver;
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "ODBC:");
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

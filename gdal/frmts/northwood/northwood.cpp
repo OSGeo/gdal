@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <string>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
 {
@@ -65,6 +65,8 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                 sizeof(pGrd->nXSide) );
         CPL_LSBPTR32(&pGrd->nXSide);
     }
+    if( pGrd->nXSide <= 1 )
+        return FALSE;
 
     memcpy( reinterpret_cast<void *>( &usTmp ),
             reinterpret_cast<void *>( &nwtHeader[11] ),
@@ -204,7 +206,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     if( pGrd->cFormat & 0x80 )        // if is GRC load the Dictionary
     {
         VSIFSeekL( pGrd->fp,
-                   1024 + (pGrd->nXSide * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
+                   1024 + (static_cast<vsi_l_offset>(pGrd->nXSide) * pGrd->nYSide) * (pGrd->nBitsPerPixel/8),
                    SEEK_SET );
 
         if( !VSIFReadL( &usTmp, 2, 1, pGrd->fp) )
@@ -264,7 +266,10 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
                 return FALSE;
             }
 
-            if( !VSIFReadL( &psItem->szClassName, psItem->usLen, 1, pGrd->fp ) )
+            // 0-len class names are possible
+            psItem->szClassName[0] = '\0';
+            if( psItem->usLen > 0 &&
+                !VSIFReadL( &psItem->szClassName, psItem->usLen, 1, pGrd->fp ) )
                 return FALSE;
         }
     }
@@ -293,7 +298,7 @@ int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd )
                      pGrd->stInflection[0].b, pMap, &nWarkerMark );
     }
     // find what inflections zmin is between
-    for( i = 0; i < pGrd->iNumColorInflections; i++ )
+    for( i = 1; i < pGrd->iNumColorInflections; i++ )
     {
         if( pGrd->fZMin < pGrd->stInflection[i].zVal )
         {
@@ -447,7 +452,7 @@ NWT_GRID *nwtOpenGrid( char *filename )
 
     if( fp == NULL )
     {
-        fprintf( stderr, "\nCan't open %s\n", filename );
+        CPLError(CE_Failure, CPLE_OpenFailed, "Can't open %s", filename );
         return NULL;
     }
 
@@ -469,7 +474,8 @@ NWT_GRID *nwtOpenGrid( char *filename )
         pGrd->cFormat = 0x80;        //  grc classified type
     else
     {
-        fprintf( stderr, "\nUnhandled Northwood format type = %0xd\n",
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unhandled Northwood format type = %0xd",
                  nwtHeader[4] );
         if( pGrd )
             free( pGrd );
@@ -506,77 +512,77 @@ void nwtPrintGridHeader( NWT_GRID * pGrd )
 {
     if( pGrd->cFormat & 0x80 )
     {
-        printf( "\n%s\n\nGrid type is Classified ", pGrd->szFileName );
+        printf( "\n%s\n\nGrid type is Classified ", pGrd->szFileName );/*ok*/
         if( pGrd->cFormat == 0x81 )
-            printf( "4 bit (Less than 16 Classes)" );
+            printf( "4 bit (Less than 16 Classes)" );/*ok*/
         else if( pGrd->cFormat == 0x82 )
-            printf( "8 bit (Less than 256 Classes)" );
+            printf( "8 bit (Less than 256 Classes)" );/*ok*/
         else if( pGrd->cFormat == 0x84 )
-            printf( "16 bit (Less than 65536 Classes)" );
+            printf( "16 bit (Less than 65536 Classes)" );/*ok*/
         else
         {
-            printf( "GRC - Unhandled Format or Type %d", pGrd->cFormat );
+            printf( "GRC - Unhandled Format or Type %d", pGrd->cFormat );/*ok*/
             return;
         }
     }
     else
     {
-        printf( "\n%s\n\nGrid type is Numeric ", pGrd->szFileName );
+        printf( "\n%s\n\nGrid type is Numeric ", pGrd->szFileName );/*ok*/
         if( pGrd->cFormat == 0x00 )
-            printf( "16 bit (Standard Precision)" );
+            printf( "16 bit (Standard Precision)" );/*ok*/
         else if( pGrd->cFormat == 0x01 )
-            printf( "32 bit (High Precision)" );
+            printf( "32 bit (High Precision)" );/*ok*/
         else
         {
-            printf( "GRD - Unhandled Format or Type %d", pGrd->cFormat );
+            printf( "GRD - Unhandled Format or Type %d", pGrd->cFormat );/*ok*/
             return;
         }
     }
-    printf( "\nDim (x,y) = (%u,%u)", pGrd->nXSide, pGrd->nYSide );
-    printf( "\nStep Size = %f", pGrd->dfStepSize );
-    printf( "\nBounds = (%f,%f) (%f,%f)", pGrd->dfMinX, pGrd->dfMinY,
+    printf( "\nDim (x,y) = (%u,%u)", pGrd->nXSide, pGrd->nYSide );/*ok*/
+    printf( "\nStep Size = %f", pGrd->dfStepSize );/*ok*/
+    printf( "\nBounds = (%f,%f) (%f,%f)", pGrd->dfMinX, pGrd->dfMinY,/*ok*/
             pGrd->dfMaxX, pGrd->dfMaxY );
-    printf( "\nCoordinate System = %s", pGrd->cMICoordSys );
+    printf( "\nCoordinate System = %s", pGrd->cMICoordSys );/*ok*/
 
     if( !(pGrd->cFormat & 0x80) )    // print the numeric specific stuff
     {
-        printf( "\nMin Z = %f Max Z = %f Z Units = %d \"%s\"", pGrd->fZMin,
+        printf( "\nMin Z = %f Max Z = %f Z Units = %d \"%s\"", pGrd->fZMin,/*ok*/
                 pGrd->fZMax, pGrd->iZUnits, pGrd->cZUnits );
 
-        printf( "\n\nDisplay Mode =" );
+        printf( "\n\nDisplay Mode =" );/*ok*/
         if( pGrd->bShowGradient )
-            printf( " Color Gradient" );
+            printf( " Color Gradient" );/*ok*/
 
         if( pGrd->bShowGradient && pGrd->bShowHillShade )
-            printf( " and" );
+            printf( " and" );/*ok*/
 
         if( pGrd->bShowHillShade )
-            printf( " Hill Shading" );
+            printf( " Hill Shading" );/*ok*/
 
         for( int i = 0; i < pGrd->iNumColorInflections; i++ )
         {
-            printf( "\nColor Inflection %d - %f (%d,%d,%d)", i + 1,
+            printf( "\nColor Inflection %d - %f (%d,%d,%d)", i + 1,/*ok*/
                     pGrd->stInflection[i].zVal, pGrd->stInflection[i].r,
                     pGrd->stInflection[i].g, pGrd->stInflection[i].b );
         }
 
         if( pGrd->bHillShadeExists )
         {
-            printf("\n\nHill Shade Azumith = %.1f Inclination = %.1f "
+            printf("\n\nHill Shade Azumith = %.1f Inclination = %.1f "/*ok*/
                    "Brightness = %d Contrast = %d",
                    pGrd->fHillShadeAzimuth, pGrd->fHillShadeAngle,
                    pGrd->cHillShadeBrightness, pGrd->cHillShadeContrast );
         }
         else
-            printf( "\n\nNo Hill Shade Data" );
+            printf( "\n\nNo Hill Shade Data" );/*ok*/
     }
     else                            // print the classified specific stuff
     {
-        printf( "\nNumber of Classes defined = %u",
+        printf( "\nNumber of Classes defined = %u",/*ok*/
                 pGrd->stClassDict->nNumClassifiedItems );
         for( int i = 0; i < static_cast<int>( pGrd->stClassDict->nNumClassifiedItems ); i++ )
         {
-            printf( "\n%s - (%d,%d,%d)  Raw = %d  %d %d",
+            printf( "\n%s - (%d,%d,%d)  Raw = %d  %d %d",/*ok*/
                     pGrd->stClassDict->stClassifedItem[i]->szClassName,
                     pGrd->stClassDict->stClassifedItem[i]->r,
                     pGrd->stClassDict->stClassifedItem[i]->g,

@@ -42,7 +42,7 @@
 #include "hdf4compat.h"
 #include "hdf4dataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 extern const char * const pszGDALSignature;
 
@@ -298,7 +298,6 @@ int HDF4Dataset::GetDataTypeSize( int32 iNumType )
 
 double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
 {
-    CPL_STATIC_ASSERT(sizeof(GIntBig) == 8);
     switch ( iNumType )
     {
         case DFNT_INT8:
@@ -313,10 +312,12 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData )
             return static_cast<double>(*reinterpret_cast<GInt32 *>(pData));
         case DFNT_UINT32:
             return static_cast<double>(*reinterpret_cast<GUInt32 *>(pData));
+#ifdef CPL_HAS_GINT64
         case DFNT_INT64:
-            return static_cast<double>(*reinterpret_cast<GIntBig *>(pData));
+            return static_cast<double>(*reinterpret_cast<GInt64 *>(pData));
         case DFNT_UINT64:
-            return static_cast<double>(*reinterpret_cast<GIntBig *>(pData));
+            return static_cast<double>(*reinterpret_cast<GUInt64 *>(pData));
+#endif
         case DFNT_FLOAT32:
             return static_cast<double>(*reinterpret_cast<float *>(pData));
         case DFNT_FLOAT64:
@@ -705,8 +706,11 @@ int HDF4Dataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify( poOpenInfo ) )
         return NULL;
+#endif
 
     CPLMutexHolderD(&hHDF4Mutex);
 

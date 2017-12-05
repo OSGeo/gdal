@@ -45,6 +45,7 @@ class Header {
         int nMaxyIndex;    //!< Index of the point at the northern border of the bounding box
         bool bTreeUpdateNeeded;  //!< Tell if the quad tree has to be updated
     public:
+        vsi_l_offset nFileSize;  //!< Size (in bytes) of the file
         //size_t nRefCount;   //!< Number of references to this object
         VSILFILE *fp;   //!< Pointer to the file with the layers
         char *pszFilename;  //!< Name of the Selafin file
@@ -127,6 +128,8 @@ class Header {
          * \param nIndex Index of the point which has to be removed
          */
         void removePoint(int nIndex);
+
+        void UpdateFileSize();
 };
 
 #ifdef notdef
@@ -200,7 +203,7 @@ int write_integer(VSILFILE *fp,int nData);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of characters in string read
  */
-int read_string(VSILFILE *fp,char *&pszData,bool bDiscard=false);
+int read_string(VSILFILE *fp,char *&pszData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write a string to a Selafin file
@@ -226,7 +229,7 @@ int write_string(VSILFILE *fp,char *pszData,size_t nLength=0);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of elements in array read, -1 if an error occurred
  */
-int read_intarray(VSILFILE *fp,int *&panData,bool bDiscard=false);
+int read_intarray(VSILFILE *fp,int *&panData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write an array of integers to a Selafin file
@@ -273,7 +276,7 @@ int write_float(VSILFILE *fp,double dfData);
  * \param bDiscard If true, the function does not attempt to save the value read in the variable nData, but only advances in the file as it should. Default value is false.
  * \return Number of elements in array read, -1 if an error occurred
  */
-int read_floatarray(VSILFILE *fp,double **papadfData,bool bDiscard=false);
+int read_floatarray(VSILFILE *fp,double **papadfData,vsi_l_offset nFileSize,bool bDiscard=false);
 
 /**
  * \brief Write an array of floats to a Selafin file

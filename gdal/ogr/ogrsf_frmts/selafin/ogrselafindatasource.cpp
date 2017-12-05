@@ -34,7 +34,7 @@
 
 #include <ctime>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          Range                                       */
@@ -394,15 +394,15 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                      pszFilename, pszLockName);
             return FALSE;
         }
-        fp = VSIFOpenL( pszFilename, "rb+" );
+        fp = VSIFOpenExL( pszFilename, "rb+", true );
     }
     else
     {
-        fp = VSIFOpenL( pszFilename, "rb" );
+        fp = VSIFOpenExL( pszFilename, "rb", true );
     }
 
     if( fp == NULL ) {
-        CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s, %s.", pszFilename, VSIStrerror( errno ) );
+        CPLError( CE_Warning, CPLE_OpenFailed, "Failed to open %s.", VSIGetLastErrorMsg() );
         return FALSE;
     }
     if( !bUpdate && strstr(pszFilename, "/vsigzip/") == NULL && strstr(pszFilename, "/vsizip/") == NULL ) fp = (VSILFILE*) VSICreateBufferedReaderHandle((VSIVirtualHandle*)fp);
@@ -442,9 +442,9 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     }
 
     // Read header of file to get common information for all layers
+    // poHeader now owns fp
     poHeader=Selafin::read_header(fp,pszFilename);
     if (poHeader==NULL) {
-        VSIFCloseL(fp);
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open %s, wrong format.\n", pszFilename);
         return FALSE;
     }
@@ -455,6 +455,14 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
             delete poSpatialRef;
             poSpatialRef=NULL;
         }
+    }
+
+    // To prevent int overflow in poRange.getSize() call where we do
+    // nSteps * 2
+    if( poHeader->nSteps >= INT_MAX / 2 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, "Invalid nSteps value" );
+        return FALSE;
     }
 
     // Create two layers for each selected time step: one for points, the other for elements
@@ -472,7 +480,6 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                 if( VSIFSeekL(fp, poHeader->getPosition(i)+4, SEEK_SET)!=0 ||
                     Selafin::read_float(fp, dfTime)==0 )
                 {
-                    VSIFCloseL(fp);
                     CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open %s, wrong format.\n", pszFilename);
                     return FALSE;
                 }
@@ -484,7 +491,9 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
                     sDate.tm_mday=poHeader->panStartDate[2];
                     sDate.tm_hour=poHeader->panStartDate[3];
                     sDate.tm_min=poHeader->panStartDate[4];
-                    sDate.tm_sec=poHeader->panStartDate[5]+(int)dfTime;
+                    double dfSec=poHeader->panStartDate[5]+dfTime;
+                    if( dfSec >= 0 && dfSec < 60 )
+                        sDate.tm_sec=static_cast<int>(dfSec);
                     mktime(&sDate);
                     strftime(szTemp,29,"%Y_%m_%d_%H_%M_%S",&sDate);
                 }
@@ -613,7 +622,7 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
         {
             int nTemp = 0;
             if (VSIFSeekL(poHeader->fp,poHeader->getPosition(i+1)+12,SEEK_SET)!=0 ||
-                (nTemp=Selafin::read_floatarray(poHeader->fp,&dfValues)) !=poHeader->nPoints ||
+                (nTemp=Selafin::read_floatarray(poHeader->fp,&dfValues,poHeader->nFileSize)) !=poHeader->nPoints ||
                 VSIFSeekL(poHeader->fp,poHeader->getPosition(i)+12,SEEK_SET)!=0 ||
                 Selafin::write_floatarray(poHeader->fp,dfValues,poHeader->nPoints)==0) {
                 CPLError( CE_Failure, CPLE_FileIO, "Could not update Selafin file %s.\n",pszName);
@@ -621,6 +630,7 @@ OGRErr OGRSelafinDataSource::DeleteLayer( int iLayer ) {
                 return OGRERR_FAILURE;
             }
             CPLFree(dfValues);
+            dfValues = NULL;
         }
     }
     // Delete all layers with the same step number in layer list. Usually there are two of them: one for points and one for elements, but we can't rely on that because of possible layer filtering specifications

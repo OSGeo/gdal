@@ -323,6 +323,33 @@ def envi_14():
 
     return 'success'
 
+###############################################################################
+# Test reading and writing geotransform matrix with rotation
+
+def envi_15():
+
+    src_ds = gdal.Open('data/rotation.img')
+    got_gt = src_ds.GetGeoTransform()
+    expected_gt = [736600.089, 1.0981889363046606, -2.4665727356350224,
+                   4078126.75, -2.4665727356350224, -1.0981889363046606]
+    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6) ]) > 1e-5:
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        print(got_gt)
+        return 'fail'
+
+    gdal.GetDriverByName('ENVI').CreateCopy('/vsimem/envi_15.dat', src_ds)
+
+    ds = gdal.Open('data/rotation.img')
+    got_gt = ds.GetGeoTransform()
+    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6) ]) > 1e-5:
+        gdaltest.post_reason( 'did not get expected geotransform' )
+        print(got_gt)
+        return 'fail'
+    ds = None
+    gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
+
+    return 'success'
+
 gdaltest_list = [
     envi_1,
     envi_2,
@@ -338,6 +365,7 @@ gdaltest_list = [
     envi_12,
     envi_13,
     envi_14,
+    envi_15,
     ]
 
 

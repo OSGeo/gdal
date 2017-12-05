@@ -32,7 +32,7 @@
 #include "cpl_string.h"
 #include "ogr_mysql.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                         OGRMySQLTableLayer()                         */
@@ -468,8 +468,9 @@ void OGRMySQLTableLayer::BuildWhere()
                 sEnvelope.MinX, sEnvelope.MinY);
 
         snprintf( pszWHERE, nWHERELen,
-                 "WHERE MBRIntersects(GeomFromText('%s'), `%s`)",
+                 "WHERE MBRIntersects(GeomFromText('%s', '%d'), `%s`)",
                  szEnvelope,
+                 nSRSId,
                  pszGeomColumn);
     }
 
@@ -831,7 +832,11 @@ OGRErr OGRMySQLTableLayer::ICreateFeature( OGRFeature *poFeature )
 
         const char *pszStrValue = poFeature->GetFieldAsString(i);
 
-        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
+        if( poFeature->IsFieldNull(i) )
+        {
+            osCommand += "NULL";
+        }
+        else if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger64
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTBinary )

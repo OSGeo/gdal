@@ -1,0 +1,120 @@
+%PDF-1.6
+%ÿÿÿÿ
+7 0 obj
+<< /BBox [ 0 0 1024 679 ] /Measure 8 0 R /Name (Layer) /Type /Viewport >>
+endobj
+8 0 obj
+<< /Bounds [ 0 1 0 0 1 0 1 1 ] /GCS 9 0 R /GPTS [ 43.0424273363873979 2.7423636773173032 43.0363084815124353 2.7423892766913944 43.0363360882442052 2.754960843272547 43.0424549489906028 2.7549364931328855 ] /LPTS [ 0 1 0 0 1 0 1 1 ] /Subtype /GEO /Type /Measure >>
+endobj
+9 0 obj
+<< /EPSG 32631 /Type /PROJCS /WKT (PROJCS["WGS_1984_UTM_Zone_31N",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]) >>
+endobj
+3 0 obj
+<< /Annots 6 0 R /Contents 4 0 R /MediaBox [ 0 0 1024 679 ] /Parent 1 0 R /Resources 5 0 R /StructParents 0 /Type /Page /UserUnit 1 /VP [ 7 0 R ] >>
+endobj
+10 0 obj
+<< /Name (poly) /Type /OCG >>
+endobj
+12 0 obj
+<< /BBox [ -1 -1 1026 680 ] /Length 13 0 R /Resources << /ExtGState << /GS1 << /Type /ExtGState /ca 0.5 >> >> >> /Subtype /Form /Type /XObject >>
+stream
+q
+/GS1 gs
+1.000000 w
+0 J
+0 j
+10 M
+[]0 d
+0.000000 0.000000 0.000000 RG
+0.498039 0.498039 0.498039 rg
+1020.312838 679.000000 m
+1024.000000 660.013981 l
+715.372006 521.116262 l
+632.004638 490.139073 l
+675.188185 380.220015 l
+804.832565 301.278146 l
+764.836227 230.330390 l
+666.782704 60.955114 l
+453.021025 63.453274 l
+396.463703 61.454746 l
+338.031552 60.455482 l
+193.701016 3.497425 l
+181.858350 0.000000 l
+108.333832 135.899926 l
+31.590858 237.824871 l
+14.779897 231.329654 l
+0.000000 268.302428 l
+134.987642 321.263429 l
+624.630313 520.116998 l
+1020.312838 679.000000 l
+h
+b*
+Q
+endstream
+endobj
+13 0 obj
+   577
+endobj
+14 0 obj
+<< /A << /O /UserProperties /P [ << /N (AREA) /V 247328.1719999999913853 >> << /N (EAS_ID) /V 179 >> << /N (PRFEDEA) /V (35043423) >> ] >> /K 0 /P 11 0 R /Pg 3 0 R /S /feature /T (feature1) >>
+endobj
+11 0 obj
+<< /A << /O /UserProperties >> /K [ 14 0 R ] /P 15 0 R /S /Feature /T (poly) >>
+endobj
+4 0 obj
+<< /Length 16 0 R >>
+stream
+/OC /Lyr10 BDC
+/feature <</MCID 0>> BDC
+/Vector12 Do
+EMC
+EMC
+endstream
+endobj
+16 0 obj
+   61
+endobj
+17 0 obj
+<< /Nums [ 0 [ 14 0 R  ]
+ ] >> 
+endobj
+15 0 obj
+<< /Type /StructTreeRoot /ParentTree 17 0 R /K [ 11 0 R ] >>
+endobj
+5 0 obj
+<< /Properties << /Lyr10 10 0 R >> /XObject << /Vector12 12 0 R >> >>
+endobj
+6 0 obj
+[ ]
+endobj
+1 0 obj
+<< /Count 1 /Kids [ 3 0 R ] /Type /Pages >>
+endobj
+2 0 obj
+<< /MarkInfo << /UserProperties true >> /OCProperties << /D << /Order [ 10 0 R ] >> /OCGs [ 10 0 R ] >> /Pages 1 0 R /StructTreeRoot 15 0 R /Type /Catalog >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000002487 00000 n 
+0000002546 00000 n 
+0000000827 00000 n 
+0000002122 00000 n 
+0000002383 00000 n 
+0000002468 00000 n 
+0000000015 00000 n 
+0000000104 00000 n 
+0000000384 00000 n 
+0000000991 00000 n 
+0000002026 00000 n 
+0000001037 00000 n 
+0000001794 00000 n 
+0000001817 00000 n 
+0000002306 00000 n 
+0000002236 00000 n 
+0000002258 00000 n 
+trailer
+<< /Root 2 0 R /Size 18 >>
+startxref
+2719
+%%EOF

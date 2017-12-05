@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -523,6 +523,7 @@ const char *DTEDDataset::GetProjectionRef()
 {
     // get xml and aux SR first
     const char* pszPrj = GDALPamDataset::GetProjectionRef();
+    const char* pszVertDatum;
     if(pszPrj && strlen(pszPrj) > 0)
         return pszPrj;
 
@@ -532,11 +533,19 @@ const char *DTEDDataset::GetProjectionRef()
     pszPrj = GetMetadataItem( "DTED_HorizontalDatum");
     if (EQUAL(pszPrj, "WGS84"))
     {
-        return
-            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-            "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-            "AUTHORITY[\"EPSG\",\"4326\"]]";
+
+        pszVertDatum = GetMetadataItem("DTED_VerticalDatum");
+        if (EQUAL(pszVertDatum, "MSL") &&
+            CPLTestBool( CPLGetConfigOption("REPORT_COMPD_CS", "NO") ) )
+        {
+                return "COMPD_CS[\"WGS 84 + EGM96 geoid height\", GEOGCS[\"WGS 84\", DATUM[\"WGS_1984\", SPHEROID[\"WGS 84\",6378137,298.257223563, AUTHORITY[\"EPSG\",\"7030\"]], AUTHORITY[\"EPSG\",\"6326\"]], PRIMEM[\"Greenwich\",0, AUTHORITY[\"EPSG\",\"8901\"]], UNIT[\"degree\",0.0174532925199433, AUTHORITY[\"EPSG\",\"9122\"]], AUTHORITY[\"EPSG\",\"4326\"]], VERT_CS[\"EGM96 geoid height\", VERT_DATUM[\"EGM96 geoid\",2005, AUTHORITY[\"EPSG\",\"5171\"]], UNIT[\"metre\",1, AUTHORITY[\"EPSG\",\"9001\"]], AXIS[\"Up\",UP], AUTHORITY[\"EPSG\",\"5773\"]]]";
+
+        }
+        else
+        {
+            return SRS_WKT_WGS84;
+        }
+
     }
     else if (EQUAL(pszPrj, "WGS72"))
     {
@@ -668,13 +677,14 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*     Check horizontal source size.                                    */
 /* -------------------------------------------------------------------- */
     int expectedXSize;
-    if( std::abs(nLLOriginLat) >= 80 )
+    int nReferenceLat = nLLOriginLat < 0 ? - (nLLOriginLat + 1) : nLLOriginLat;
+    if( nReferenceLat >= 80 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 6 + 1;
-    else if( std::abs(nLLOriginLat) >= 75 )
+    else if( nReferenceLat >= 75 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 4 + 1;
-    else if( std::abs(nLLOriginLat) >= 70 )
+    else if( nReferenceLat >= 70 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 3 + 1;
-    else if( std::abs(nLLOriginLat) >= 50 )
+    else if( nReferenceLat >= 50 )
         expectedXSize = (poSrcDS->GetRasterYSize() - 1) / 2 + 1;
     else
         expectedXSize = poSrcDS->GetRasterYSize();

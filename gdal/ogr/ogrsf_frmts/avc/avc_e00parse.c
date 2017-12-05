@@ -1964,7 +1964,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
     AVCFieldInfo *pasDef;
     AVCTableDef *psTableDef;
     int         i, nType, nSize;
-    char        szFormat[10];
+    char        szFormat[20];
     char        *pszBuf, szTmp[30];
 
     pasFields =  psInfo->cur.pasFields;

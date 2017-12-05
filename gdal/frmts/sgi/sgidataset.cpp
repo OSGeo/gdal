@@ -38,7 +38,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 struct ImageRec
 {
@@ -110,7 +110,10 @@ static void ConvertLong(GUInt32* array, GInt32 length)
 {
    GUInt32* ptr = reinterpret_cast<GUInt32*>( array );
    while(length--)
-     CPL_SWAP32PTR(ptr++);
+   {
+     CPL_SWAP32PTR(ptr);
+     ptr ++;
+   }
 }
 #else
 static void ConvertLong(GUInt32* /*array*/, GInt32 /*length */)
@@ -825,6 +828,8 @@ GDALDataset *SGIDataset::Create( const char * pszFilename,
                   "Failure writing SGI file '%s'.\n%s",
                   pszFilename,
                   VSIStrerror( errno ) );
+        VSIFCloseL( fp );
+        CPLFree( pabyRLELine );
         return NULL;
     }
 
@@ -854,6 +859,7 @@ void GDALRegister_SGI()
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/rgb" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#SGI" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = SGIDataset::Open;
     poDriver->pfnCreate = SGIDataset::Create;

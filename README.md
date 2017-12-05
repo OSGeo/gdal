@@ -9,9 +9,8 @@ GDAL - Geospatial Data Abstraction Library
 | Ubuntu 16.04 64 / CL 3.9 | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=ubuntu_1604&label=ubuntu_1604)](https://travis-ci.org/OSGeo/gdal) |
 | Python 3                 | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=python3&label=python3)](https://travis-ci.org/OSGeo/gdal) |
 | MacOS X                  | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=osx&label=osx)](https://travis-ci.org/OSGeo/gdal) |
-| MSVC 2008                | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc9?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
 | MSVC 2013 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/jtwx0pcr0y01i17p/branch/trunk?svg=true)](https://ci.appveyor.com/project/OSGeo/gdal) |
-| MSVC 2015 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tbtcdve977yd5atp/branch/trunk_vc13?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
+| MSVC 2015 32 & 64 bit    | [![Build status](https://ci.appveyor.com/api/projects/status/tn5oj0ipp5lmexjh/branch/trunk_vc13?svg=true)](https://ci.appveyor.com/project/rouault/gdal-coverage) |
 | MinGW                    | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=mingw&label=mingw)](https://travis-ci.org/OSGeo/gdal) |
 | MinGW_W64                | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=mingw_w64&label=mingw_w64)](https://travis-ci.org/OSGeo/gdal) |
 | Android                  | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=android&label=android)](https://travis-ci.org/OSGeo/gdal) |
@@ -25,6 +24,6 @@ GDAL is an open source X/MIT licensed translator library for raster and vector g
 
 * Main site: http://www.gdal.org - Developer and user docs, links to other resources
 * SVN repository: http://svn.osgeo.org/gdal
-* Download: ftp://ftp.remotesensing.org/gdal, http://download.osgeo.org/gdal
+* Download: http://download.osgeo.org/gdal
 * Wiki: http://trac.osgeo.org/gdal - Bug tracking, various user and developer contributed documentation and hints
 * Mailing list: http://lists.osgeo.org/mailman/listinfo/gdal-dev

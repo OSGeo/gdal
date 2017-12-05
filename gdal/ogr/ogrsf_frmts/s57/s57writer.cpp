@@ -32,7 +32,7 @@
 #include "ogr_api.h"
 #include "s57.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             S57Writer()                              */
@@ -896,7 +896,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add the FSPT if needed.                                         */
 /* -------------------------------------------------------------------- */
-    if( poFeature->IsFieldSet( poFeature->GetFieldIndex("NAME_RCNM") ) )
+    if( poFeature->IsFieldSetAndNotNull( poFeature->GetFieldIndex("NAME_RCNM") ) )
     {
         int nItemCount = 0;
 
@@ -1024,7 +1024,7 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
         if( iField < 0 )
             continue;
 
-        if( !poFeature->IsFieldSet( iField ) )
+        if( !poFeature->IsFieldSetAndNotNull( iField ) )
             continue;
 
         const int nATTLInt = poRegistrar->FindAttrByAcronym( papszAttrList[iAttr] );

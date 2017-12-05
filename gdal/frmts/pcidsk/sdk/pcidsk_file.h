@@ -46,7 +46,7 @@ namespace PCIDSK
     class PCIDSK_DLL PCIDSKFile
     {
     public:
-        virtual ~PCIDSKFile() {};
+        virtual ~PCIDSKFile() {}
 
         virtual PCIDSKInterfaces *GetInterfaces() = 0;
 
@@ -78,6 +78,7 @@ namespace PCIDSK
     // low level io, primarily internal.
         virtual void WriteToFile( const void *buffer, uint64 offset, uint64 size)=0;
         virtual void ReadFromFile( void *buffer, uint64 offset, uint64 size ) = 0;
+        virtual void CheckFileBigEnough( uint64 bytes_to_read ) = 0;
 
         virtual void GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
                                    std::string filename="", bool writable=false ) = 0;

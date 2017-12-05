@@ -30,7 +30,7 @@
 
 #include "gnm_frmts.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 void GNMRegisterAllInternal()
 {

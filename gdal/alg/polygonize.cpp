@@ -48,7 +48,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -81,17 +81,17 @@ public:
 /************************************************************************/
 void RPolygon::Dump() const
 {
-    printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
+    /*ok*/printf( "RPolygon: Value=%g, LastLineUpdated=%d\n",
             dfPolyValue, nLastLineUpdated );
 
     for( size_t iString = 0; iString < aanXY.size(); iString++ )
     {
         const std::vector<int> &anString = aanXY[iString];
 
-        printf( "  String %d:\n", (int) iString );
+        /*ok*/printf( "  String %d:\n", (int) iString );
         for( size_t iVert = 0; iVert < anString.size(); iVert += 2 )
         {
-            printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
+            /*ok*/printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );
         }
     }
 }
@@ -132,7 +132,7 @@ void RPolygon::Coalesce()
                 std::vector<int> &anString = aanXY[iString];
 
                 if( anBase[anBase.size() - 2] == anString[0]
-                    && anBase[anBase.size() - 1] == anString[1] )
+                    && anBase.back() == anString[1] )
                 {
                     Merge( static_cast<int>(iBaseString),
                            static_cast<int>(iString), 1 );
@@ -140,8 +140,8 @@ void RPolygon::Coalesce()
                 }
                 else if( anBase[anBase.size() - 2] ==
                              anString[anString.size() - 2] &&
-                         anBase[anBase.size()-1] ==
-                             anString[anString.size() - 1] )
+                         anBase.back() ==
+                             anString.back() )
                 {
                     Merge( static_cast<int>(iBaseString),
                            static_cast<int>(iString), -1 );
@@ -152,7 +152,7 @@ void RPolygon::Coalesce()
 
         // At this point our loop *should* be closed!
         CPLAssert( anBase[0] == anBase[anBase.size()-2]
-                   && anBase[1] == anBase[anBase.size()-1] );
+                   && anBase[1] == anBase.back() );
     }
 }
 
@@ -741,14 +741,14 @@ GBool GDALFloatEquals( float A, float B )
 
     // Make aInt lexicographically ordered as a twos-complement int.
     if( aInt < 0 )
-        aInt = 0x80000000 - aInt;
+        aInt = INT_MIN - aInt;
 
     // Make bInt lexicographically ordered as a twos-complement int.
     int bInt = 0;
     memcpy(&bInt, &B, 4);
 
     if( bInt < 0 )
-        bInt = 0x80000000 - bInt;
+        bInt = INT_MIN - bInt;
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
     const int intDiff =
         abs(static_cast<int>(static_cast<GUIntBig>(

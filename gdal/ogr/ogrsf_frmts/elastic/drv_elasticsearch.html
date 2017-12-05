@@ -98,14 +98,17 @@ by ElasticSearch and will be approximated to their linear equivalents).
 
 The driver will forward any spatial filter set with SetSpatialFilter() to the server.<p>
 
-However, in the current state, SQL attribute filters set with SetAttributeFilter()
-are evaluated only on client-side. To enable server-side filtering, the string
-passed to SetAttributeFilter() must be a JSon object in the
-<a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">ElasticSearch filter syntax</a>.
-e.g. <pre>{ "post_filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
+Starting with GDAL 2.2, SQL attribute filters set with SetAttributeFilter() are
+converted to <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">
+ElasticSearch filter syntax</a>.
+They will be combined with the potentially defined spatial filter.<p>
+
+It is also possible to directly use a ElasticSearch filter by setting the string
+passed to SetAttributeFilter() as a JSon serialized object, e.g.
+<pre>{ "post_filter": { "term": { "properties.EAS_ID": 169 } } }</pre>
 <p>
 
-Note: if defining an Elastic Search JSon filter, the spatial filter specified
+Note: if defining directly an Elastic Search JSon filter, the spatial filter specified
 through SetSpatialFilter() will be ignored, and must thus be included in the JSon
 filter if needed.<p>
 
@@ -142,7 +145,10 @@ stable at all.<p>
 
 <h2>ExecuteSQL() interface</h2>
 
-If specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
+Starting with GDAL 2.2, SQL requests, involving a single layer, with WHERE and
+ORDER BY statements will be translated as ElasticSearch queries.<p>
+
+Otherwise, if specifying "ES" as the dialect of ExecuteSQL(), a JSon string with a
 serialized <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-filters.html">Elastic Search filter</a>
 can be passed. The search will be done on all indices and types, unless the
 filter itself restricts the search. The returned layer will be a union of the
@@ -188,8 +194,6 @@ For ElasticSearch 5.X (works also with 2.X) :
 </pre>
 
 Aggregations are not supported.<p>
-
-Standard SQL requests will be executed on client-side.<p>
 
 <h2>Getting metadata</h2>
 
@@ -260,11 +264,18 @@ This option is without effect if MAPPING is specified.</li>
 Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "not_analyzed"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+Starting with GDAL 2.2, the {ALL} value can be used to designate all fields.
 This option is without effect if MAPPING is specified.</li>
 <li><b>NOT_INDEXED_FIELDS</b>=List of comma separated field names that should not be indexed.
 Those fields will have their <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html">"index" property</a> of the field mapping set to "no"
 (the default in ElasticSearch is "analyzed"). A same field should not be
 specified both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS.
+This option is without effect if MAPPING is specified.</li>
+<li><b>FIELDS_WITH_RAW_VALUE</b>=(GDAL &gt; 2.2) List of comma separated field
+names (of type string) that should be created with an additional raw/not_analyzed
+sub-field, or {ALL} to designate all string analyzed fields.
+This is needed for sorting on those columns, and can improve performance when
+filtering with SQL operators.
 This option is without effect if MAPPING is specified.</li>
 <li><b>BULK_INSERT</b>=YES/NO. Whether to use bulk insert for feature creation. Defaults to YES.</li>
 <li><b>BULK_SIZE</b>=value. Size in bytes of the buffer for bulk upload. Defaults to 1000000 (1 million).</li>

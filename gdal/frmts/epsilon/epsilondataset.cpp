@@ -35,11 +35,11 @@
 #pragma clang diagnostic ignored "-Wdocumentation"
 #endif
 #include "epsilon.h"
-#ifdef __clang
+#ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define RASTERLITE_WAVELET_HEADER "StartWaveletsImage$$"
 #define RASTERLITE_WAVELET_FOOTER "$$EndWaveletsImage"

@@ -275,6 +275,35 @@ def xyz_7():
 
     return 'success'
 
+###############################################################################
+# Test particular case of XYZ file with missed samples (#6934)
+
+def xyz_8():
+
+    content = """0 500 50
+750 500 100
+500 750 150
+750 750 200
+
+"""
+    gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
+
+    ds = gdal.Open('/vsimem/grid.xyz')
+    if ds.RasterXSize != 4 or ds.RasterYSize != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.Unlink('/vsimem/grid.xyz')
+
+    if cs != 35:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+
 
 ###############################################################################
 # Cleanup
@@ -292,6 +321,7 @@ gdaltest_list = [
     xyz_5,
     xyz_6,
     xyz_7,
+    xyz_8,
     xyz_cleanup ]
 
 if __name__ == '__main__':

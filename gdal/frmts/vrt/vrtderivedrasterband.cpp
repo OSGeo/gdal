@@ -49,7 +49,7 @@
 
 /*! @cond Doxygen_Suppress */
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // #define GDAL_VRT_DISABLE_PYTHON
 // #define PYTHONSO_DEFAULT "libpython2.7.so"
@@ -396,7 +396,7 @@ static bool LoadPythonAPI()
                                                         NULL, FALSE ));
                             osVersion = pszStr;
                             if( !osVersion.empty() &&
-                                osVersion[osVersion.size() - 1] == '\n' )
+                                osVersion.back() == '\n' )
                             {
                                 osVersion.resize(osVersion.size() - 1);
                             }
@@ -1385,7 +1385,7 @@ bool VRTDerivedRasterBand::InitializePython()
     PyObject* poCompiledString = Py_CompileString(
         ("import numpy\n"
         "def GDALCreateNumpyArray(buffer, dtype, height, width):\n"
-        "    return numpy.frombuffer(buffer, dtype.decode('ascii'))."
+        "    return numpy.frombuffer(buffer, str(dtype.decode('ascii')))."
                                                 "reshape([height, width])\n"
         "\n" + m_poPrivate->m_osCode).c_str(),
         osModuleName, Py_file_input);
@@ -1959,10 +1959,12 @@ int  VRTDerivedRasterBand::IGetDataCoverageStatus( int /* nXOff */,
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::XMLInit( CPLXMLNode *psTree,
-                                      const char *pszVRTPath )
+                                      const char *pszVRTPath,
+                                      void* pUniqueHandle )
 
 {
-    const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath );
+    const CPLErr eErr = VRTSourcedRasterBand::XMLInit( psTree, pszVRTPath,
+                                                       pUniqueHandle );
     if( eErr != CE_None )
         return eErr;
 

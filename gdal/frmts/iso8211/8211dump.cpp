@@ -32,15 +32,15 @@
 #include "cpl_vsi.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule   oModule;
     const char  *pszFilename = NULL;
-    int         bFSPTHack = FALSE;
-    int         bXML = FALSE;
+    bool        bFSPTHack = false;
+    bool        bXML = false;
     bool        bAllDetails = false;
 
 /* -------------------------------------------------------------------- */
@@ -49,21 +49,28 @@ int main( int nArgc, char ** papszArgv )
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-fspt_repeating") )
-            bFSPTHack = TRUE;
+        {
+            bFSPTHack = true;
+        }
         else if( EQUAL(papszArgv[iArg],"-xml") )
-            bXML = TRUE;
+        {
+            bXML = true;
+        }
         else if( EQUAL(papszArgv[iArg],"-xml_all_details") )
         {
             bXML = TRUE;
             bAllDetails = true;
         }
         else
+        {
             pszFilename = papszArgv[iArg];
+        }
     }
 
     if( pszFilename == NULL )
     {
-        printf( "Usage: 8211dump [-xml|-xml_all_details] [-fspt_repeating] filename\n" );
+        printf( "Usage: 8211dump [-xml|-xml_all_details] "
+                "[-fspt_repeating] filename\n" );
         exit( 1 );
     }
 

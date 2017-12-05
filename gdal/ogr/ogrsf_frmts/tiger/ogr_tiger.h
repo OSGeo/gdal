@@ -120,6 +120,8 @@ typedef struct TigerRecordInfo {
 // than is really necessary won't affect the amount of memory required
 // in a substantial way.
 // mbp Fri Dec 20 19:19:59 2002
+// Note: OGR_TIGER_RECBUF_LEN should also be larger than 255, since
+// TigerRecordInfo::nRecordLength fits on unsigned char.
 #define OGR_TIGER_RECBUF_LEN 500
 
 /************************************************************************/

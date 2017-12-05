@@ -33,7 +33,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 #if !(defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5)
@@ -289,6 +289,11 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = hGifFile->SavedImages[0].ImageDesc.Width;
     poDS->nRasterYSize = hGifFile->SavedImages[0].ImageDesc.Height;
+    if( !GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) )
+    {
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */

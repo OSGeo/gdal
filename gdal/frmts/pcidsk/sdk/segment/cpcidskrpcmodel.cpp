@@ -90,7 +90,16 @@ CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn
     CPCIDSKSegment(fileIn, segmentIn, segment_pointer), pimpl_(new CPCIDSKRPCModelSegment::PCIDSKRPCInfo), 
     loaded_(false),mbModified(false)
 {
-    Load();
+    try
+    {
+        Load();
+    }
+    catch( const PCIDSKException& )
+    {
+        delete pimpl_;
+        pimpl_ = NULL;
+        throw;
+    }
 }
 
 
@@ -107,7 +116,10 @@ void CPCIDSKRPCModelSegment::Load()
         return;
     }
     
-    assert(data_size - 1024 == 7 * 512);
+    if( data_size - 1024 != 7 * 512 )
+    {
+        return ThrowPCIDSKException("Wrong data_size in CPCIDSKRPCModelSegment");
+    }
     
     pimpl_->seg_data.SetSize((int) (data_size - 1024)); // should be 7 * 512
     

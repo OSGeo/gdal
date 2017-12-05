@@ -35,7 +35,7 @@
 #include <vector>
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef std::map<CPLString,CPLXMLNode*> StrNodeMap;
 typedef std::vector<CPLXMLNode*> NodeVector;
@@ -71,11 +71,13 @@ public:
         poTableDefn = new OGRFeatureDefn(layerName);
         poTableDefn->Reference();
         CPLFree(layerName);
-    };
+    }
+
     ~IliClass()
     {
         poTableDefn->Release();
-    };
+    }
+
     const char* GetName() {
         return poTableDefn->GetName();
     }
@@ -101,7 +103,7 @@ public:
         }
 
         return CPLStrdup(psClassTID);
-    };
+    }
     void AddFieldNode(CPLXMLNode* nodeIn, int iOrderPos)
     {
         if (iOrderPos >= (int)oFields.size())
@@ -355,7 +357,10 @@ void ImdReader::ReadModel(const char *pszFilename) {
     CPLXMLNode *psSectionNode
         = CPLGetXMLNode( psRootNode, "=TRANSFER.DATASECTION" );
     if( psSectionNode == NULL )
+    {
+        CPLDestroyXMLNode(psRootNode);
         return;
+    }
 
     StrNodeMap oTidLookup; /* for fast lookup of REF relations */
     ClassesMap oClasses;

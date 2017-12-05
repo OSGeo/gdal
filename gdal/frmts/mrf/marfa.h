@@ -82,6 +82,8 @@ NAMESPACE_MRF_START
 //
 #define ZFLAG_SMASK 0x1c0
 
+#define PADDING_BYTES 3
+
 // Force LERC to be included, normally off, detected in the makefile
 // #define LERC
 
@@ -221,6 +223,15 @@ static inline unsigned long long net64(const unsigned long long x)
 #define net64(x) swab64(x)
 #endif
 
+// Count the values in a buffer that match a specific value
+template<typename T> static int MatchCount(T *buff, int sz, T val) {
+    int ncount = 0;
+    for (int i = 0; i < sz; i++)
+        if (buff[i] == val)
+            ncount++;
+    return ncount;
+}
+
 const char *CompName(ILCompression comp);
 const char *OrderName(ILOrder val);
 ILCompression CompToken(const char *, ILCompression def = IL_ERR_COMP);
@@ -327,14 +338,14 @@ public:
 
     virtual char **GetFileList() override;
 
-    void SetColorTable(GDALColorTable *pct) { poColorTable = pct; };
-    const GDALColorTable *GetColorTable() { return poColorTable; };
+    void SetColorTable(GDALColorTable *pct) { poColorTable = pct; }
+    const GDALColorTable *GetColorTable() { return poColorTable; }
     void SetNoDataValue(const char*);
     void SetMinValue(const char*);
     void SetMaxValue(const char*);
     CPLErr SetVersion(int version);
 
-    const CPLString GetFname() { return fname; };
+    const CPLString GetFname() { return fname; }
     // Patches a region of all the next overview, argument counts are in blocks
     virtual CPLErr PatchOverview(int BlockX, int BlockY, int Width, int Height,
         int srcLevel = 0, int recursive = false, int sampling_mode = SAMPLING_Avg);
@@ -357,11 +368,13 @@ protected:
 
     // Apply create options to the current dataset
     void ProcessCreateOptions(char **papszOptions);
+    void ProcessOpenOptions(char **papszOptions);
 
     // Writes the XML tree as MRF.  It does not check the content
     int WriteConfig(CPLXMLNode *);
 
     // Initializes the dataset from an MRF metadata XML
+    // Options should be papszOpenOptions, but the dataset already has a member with that name
     CPLErr Initialize(CPLXMLNode *);
 
     // Do nothing, this is not possible in an MRF
@@ -393,8 +406,13 @@ protected:
     virtual CPLErr IBuildOverviews(const char*, int, int*, int, int*,
         GDALProgressFunc, void*) override;
 
+    virtual int CloseDependentDatasets() override;
+
     // Write a tile, the infooffset is the relative position in the index file
     virtual CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
+
+    // Custom CopyWholeRaster for Zen JPEG
+    CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData);
 
     // For versioned MRFs, add a version
     CPLErr AddVersion();
@@ -407,11 +425,11 @@ protected:
     GDALRWFlag IdxMode() {
         if (!ifp.FP) IdxFP();
         return ifp.acc;
-    };
+    }
     GDALRWFlag DataMode() {
         if (!dfp.FP) DataFP();
         return dfp.acc;
-    };
+    }
     GDALDataset *GetSrcDS();
 
     /*
@@ -437,12 +455,15 @@ protected:
     GIntBig idxSize; // The size of each version index, or the size of the cloned index
 
     int clonedSource; // Is it a cloned source
+    int nocopy;       // Set when initializing a caching MRF
     int bypass_cache; // Do we alter disk cache
     int mp_safe;      // Not thread safe, only multiple writers
     int hasVersions;  // Does it support versions
     int verCount;     // The last version
     int bCrystalized; // Unset only during the create process
     int spacing;      // How many spare bytes before each tile data
+    int no_errors;    // Ignore read errors
+    int missing;      // set if no_errors is set and data is missing
 
     // Freeform sticky dataset options, as a list of key-value pairs
     CPLStringList optlist;
@@ -513,8 +534,11 @@ public:
     // Block not stored on disk
     CPLErr FillBlock(void *buffer);
 
+    // Same, for interleaved bands, current band goes in buffer
+    CPLErr FillBlock(int xblk, int yblk, void *buffer);
+
     // de-interlace a buffer in pixel blocks
-    CPLErr RB(int xblk, int yblk, buf_mgr src, void *buffer);
+    CPLErr ReadInterleavedBlock(int xblk, int yblk, void *buffer);
 
     const char *GetOptionValue(const char *opt, const char *def) const;
     void SetAccess(GDALAccess eA) { eAccess = eA; }
@@ -531,7 +555,6 @@ protected:
     // The info about the current image, to enable R-sets
     ILImage img;
     std::vector<GDALMRFRasterBand *> overviews;
-    int overview;
 
     VSILFILE *IdxFP() { return poDS->IdxFP(); }
     GDALRWFlag IdxMode() { return poDS->IdxMode(); }
@@ -576,7 +599,7 @@ protected:
 class PNG_Codec {
 public:
     explicit PNG_Codec(const ILImage &image) : img(image),
-        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {};
+        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {}
 
     virtual ~PNG_Codec() {
         CPLFree(PNGColors);
@@ -614,7 +637,7 @@ protected:
 
 class JPEG_Codec {
 public:
-    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {};
+    explicit JPEG_Codec(const ILImage &image) : img(image), sameres(FALSE), rgb(FALSE), optimize(false) {}
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
     CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
@@ -640,7 +663,7 @@ class JPEG_Band : public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     JPEG_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level);
-    virtual ~JPEG_Band() {};
+    virtual ~JPEG_Band() {}
 
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
@@ -668,8 +691,8 @@ class Raw_Band : public GDALMRFRasterBand {
     friend class GDALMRFDataset;
 public:
     Raw_Band(GDALMRFDataset *pDS, const ILImage &image, int b, int level) :
-        GDALMRFRasterBand(pDS, image, b, int(level)) {};
-    virtual ~Raw_Band() {};
+        GDALMRFRasterBand(pDS, image, b, int(level)) {}
+    virtual ~Raw_Band() {}
 protected:
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) override;
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override;

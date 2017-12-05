@@ -32,6 +32,10 @@
 #ifndef OGRSHAPE_H_INCLUDED
 #define OGRSHAPE_H_INCLUDED
 
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
+
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
 #include "shp_vsi.h"

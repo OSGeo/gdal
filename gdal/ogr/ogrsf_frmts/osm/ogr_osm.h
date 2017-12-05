@@ -37,6 +37,9 @@
 #include "cpl_string.h"
 
 #include <set>
+#if HAVE_CXX11
+#include <unordered_set>
+#endif
 #include <map>
 #include <vector>
 
@@ -64,10 +67,11 @@ class OGROSMComputedAttribute
         sqlite3_stmt  *hStmt;
         std::vector<CPLString> aosAttrToBind;
         std::vector<int> anIndexToBind;
+        bool         bHardcodedZOrder;
 
-        OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL) {}
+        OGROSMComputedAttribute() : nIndex(-1), eType(OFTString), hStmt(NULL), bHardcodedZOrder(false) {}
         explicit OGROSMComputedAttribute(const char* pszName) :
-                osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL) {}
+                osName(pszName), nIndex(-1), eType(OFTString), hStmt(NULL), bHardcodedZOrder(false) {}
 };
 
 /************************************************************************/
@@ -299,9 +303,7 @@ class OGROSMDataSource : public OGRDataSource
     bool                bHasParsedFirstChunk;
     bool                bStopParsing;
 
-#ifdef HAVE_SQLITE_VFS
     sqlite3_vfs*        pMyVFS;
-#endif
 
     sqlite3            *hDB;
     sqlite3_stmt       *hInsertNodeStmt;
@@ -323,7 +325,13 @@ class OGROSMDataSource : public OGRDataSource
 
     int                 nNodesInTransaction;
 
+#if HAVE_CXX11
+    std::unordered_set<std::string> aoSetClosedWaysArePolygons;
+#else
     std::set<std::string> aoSetClosedWaysArePolygons;
+#endif
+    int                 nMinSizeKeysInSetClosedWaysArePolygons;
+    int                 nMaxSizeKeysInSetClosedWaysArePolygons;
 
     LonLat             *pasLonLatCache;
 
@@ -397,8 +405,8 @@ class OGROSMDataSource : public OGRDataSource
     int                 nBucketOld;
     int                 nOffInBucketReducedOld;
     GByte              *pabySector;
-    Bucket             *papsBuckets;
-    int                 nBuckets;
+    std::map<int, Bucket> oMapBuckets;
+    Bucket*             GetBucket(int nBucketId);
 
     bool                bNeedsToSaveWayInfo;
 
@@ -458,9 +466,7 @@ class OGROSMDataSource : public OGRDataSource
 
     bool                TransferToDiskIfNecesserary();
 
-    bool                AllocBucket(int iBucket);
-    bool                AllocMoreBuckets( int nNewBucketIdx,
-                                          bool bAllocBucket = false );
+    Bucket*             AllocBucket(int iBucket);
 
     void                AddComputedAttributes(int iCurLayer,
                                              const std::vector<OGROSMComputedAttribute>& oAttributes);

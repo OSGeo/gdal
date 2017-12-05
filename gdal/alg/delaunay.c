@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL algorithms
  * Purpose:  Delaunay triangulation
@@ -50,7 +49,7 @@
 #include <ctype.h>
 #include <math.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(INTERNAL_QHULL) || defined(EXTERNAL_QHULL)
 #define HAVE_INTERNAL_OR_EXTERNAL_QHULL 1
@@ -403,7 +402,8 @@ int  GDALTriangulationComputeBarycentricCoordinates(const GDALTriangulation* psD
  * @param psDT triangulation.
  * @param dfX x coordinate of the point.
  * @param dfY y coordinate of the point.
- * @param panOutputFacetIdx (output) pointer to the index of the triangle.
+ * @param panOutputFacetIdx (output) pointer to the index of the triangle,
+ *                          or -1 in case of failure.
  *
  * @return index >= 0 of the triangle in case of success, -1 otherwise.
  *
@@ -488,11 +488,13 @@ int GDALTriangulationFindFacetBruteForce(const GDALTriangulation* psDT,
  *
  * @param psDT triangulation.
  * @param nFacetIdx index of first triangle to start with.
+ *                  Must be >= 0 && < psDT->nFacets
  * @param dfX x coordinate of the point.
  * @param dfY y coordinate of the point.
- * @param panOutputFacetIdx (output) pointer to the index of the triangle.
+ * @param panOutputFacetIdx (output) pointer to the index of the triangle,
+ *                          or -1 in case of failure.
  *
- * @return TRUE in case of success, -1 otherwise.
+ * @return TRUE in case of success, FALSE otherwise.
  *
  * @since GDAL 2.1
  */

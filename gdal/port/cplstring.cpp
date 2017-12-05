@@ -39,7 +39,11 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
+CPL_CVSID("$Id$")
 
 /*
  * The CPLString class is derived from std::string, so the vast majority
@@ -69,7 +73,8 @@ CPLString &CPLString::Printf( CPL_FORMAT_STRING(const char *pszFormat), ... )
 /************************************************************************/
 
 /** Assign the content of the string using vsprintf() */
-CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
+CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
+                               va_list args )
 
 {
 /* -------------------------------------------------------------------- */
@@ -78,7 +83,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
 /* -------------------------------------------------------------------- */
 
 #if !defined(HAVE_VSNPRINTF)
-    char *pszBuffer = (char *) CPLMalloc(30000);
+    char *pszBuffer = static_cast<char *>(CPLMalloc(30000));
     if( CPLvsnprintf( pszBuffer, 30000, pszFormat, args) > 29998 )
     {
         CPLError( CE_Fatal, CPLE_AppDefined,
@@ -100,14 +105,14 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
     wrk_args = args;
 #endif
 
-    char szModestBuffer[500];
+    char szModestBuffer[500] = {};
     szModestBuffer[0] = '\0';
     int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
                              wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
-        char *pszWorkBuffer = reinterpret_cast<char *>(
+        char *pszWorkBuffer = static_cast<char *>(
             CPLMalloc(nWorkBufferSize));
 
 #ifdef va_copy
@@ -116,13 +121,14 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list
 #else
         wrk_args = args;
 #endif
-        while( (nPR=CPLvsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
+        while( (nPR = CPLvsnprintf(pszWorkBuffer, nWorkBufferSize, pszFormat,
+                                   wrk_args))
                >= nWorkBufferSize-1
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
-            pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer,
-                                                nWorkBufferSize );
+            pszWorkBuffer = static_cast<char *>(
+                CPLRealloc(pszWorkBuffer, nWorkBufferSize));
 #ifdef va_copy
             va_end( wrk_args );
             va_copy( wrk_args, args );
@@ -172,7 +178,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
     // presumably long enough for any number.
     const size_t buf_size = 512;
-    char szWork[buf_size];
+    char szWork[buf_size] = {};
 
     CPLsnprintf( szWork, buf_size, pszFormat, dfValue );
 
@@ -227,7 +233,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
     if( pszDstEncoding == NULL )
         pszDstEncoding = CPL_ENC_UTF8;
 
-    if( strcmp(pszSrcEncoding,pszDstEncoding) == 0 )
+    if( strcmp(pszSrcEncoding, pszDstEncoding) == 0 )
         return *this;
 
     char *pszRecoded = CPLRecode( c_str(),
@@ -267,7 +273,8 @@ size_t CPLString::ifind( const std::string & str, size_t pos ) const
  *
  * @param s substring to find.
  * @param nPos offset in the string at which the search starts.
- * @return the position of the substring in the string or std::string::npos if not found.
+ * @return the position of the substring in the string or std::string::npos if
+ * not found.
  * @since GDAL 1.9.0
  */
 
@@ -275,8 +282,8 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
 
 {
     const char *pszHaystack = c_str();
-    char chFirst = (char) ::tolower( s[0] );
-    size_t nTargetLen = strlen(s);
+    const char chFirst = static_cast<char>(::tolower(s[0]));
+    const size_t nTargetLen = strlen(s);
 
     if( nPos > size() )
         nPos = size();
@@ -287,7 +294,7 @@ size_t CPLString::ifind( const char *s, size_t nPos ) const
     {
         if( chFirst == ::tolower(*pszHaystack) )
         {
-            if( EQUALN(pszHaystack,s,nTargetLen) )
+            if( EQUALN(pszHaystack, s, nTargetLen) )
                 return nPos;
         }
 
@@ -310,7 +317,7 @@ CPLString &CPLString::toupper()
 
 {
     for( size_t i = 0; i < size(); i++ )
-        (*this)[i] = (char) ::toupper( (*this)[i] );
+        (*this)[i] = static_cast<char>(::toupper((*this)[i]));
 
     return *this;
 }
@@ -326,8 +333,8 @@ CPLString &CPLString::toupper()
 CPLString &CPLString::tolower()
 
 {
-    for(size_t i = 0; i < size(); i++ )
-        (*this)[i] = (char) ::tolower( (*this)[i] );
+    for( size_t i = 0; i < size(); i++ )
+        (*this)[i] = static_cast<char>(::tolower((*this)[i]));
 
     return *this;
 }
@@ -362,7 +369,7 @@ CPLString &CPLString::replaceAll( const std::string &osBefore,
 CPLString &CPLString::replaceAll( char chBefore,
                                   const std::string &osAfter )
 {
-    return replaceAll(std::string(&chBefore,1), osAfter);
+    return replaceAll(std::string(&chBefore, 1), osAfter);
 }
 
 /**
@@ -400,13 +407,13 @@ CPLString CPLURLGetValue(const char* pszURL, const char* pszKey)
     CPLString osKey(pszKey);
     osKey += "=";
     size_t nKeyPos = CPLString(pszURL).ifind(osKey);
-    if (nKeyPos != std::string::npos && nKeyPos > 0 &&
-        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&'))
+    if( nKeyPos != std::string::npos && nKeyPos > 0 &&
+        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&') )
     {
-        CPLString osValue(pszURL + nKeyPos + strlen(osKey));
+        CPLString osValue(pszURL + nKeyPos + osKey.size());
         const char* pszValue = osValue.c_str();
         const char* pszSep = strchr(pszValue, '&');
-        if (pszSep)
+        if( pszSep )
         {
             osValue.resize(pszSep - pszValue);
         }
@@ -432,28 +439,28 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
                        const char* pszValue)
 {
     CPLString osURL(pszURL);
-    if (strchr(osURL, '?') == NULL)
+    if( strchr(osURL, '?') == NULL )
         osURL += "?";
     pszURL = osURL.c_str();
 
     CPLString osKey(pszKey);
     osKey += "=";
     size_t nKeyPos = osURL.ifind(osKey);
-    if (nKeyPos != std::string::npos && nKeyPos > 0 &&
-        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&'))
+    if( nKeyPos != std::string::npos && nKeyPos > 0 &&
+        (pszURL[nKeyPos-1] == '?' || pszURL[nKeyPos-1] == '&') )
     {
         CPLString osNewURL(osURL);
         osNewURL.resize(nKeyPos);
-        if (pszValue)
+        if( pszValue )
         {
             osNewURL += osKey;
             osNewURL += pszValue;
         }
         const char* pszNext = strchr(pszURL + nKeyPos, '&');
-        if (pszNext)
+        if( pszNext )
         {
-            if (osNewURL[osNewURL.size()-1] == '&'
-                || osNewURL[osNewURL.size()-1] == '?' )
+            if( osNewURL.back() == '&'
+                || osNewURL.back() == '?' )
                 osNewURL += pszNext + 1;
             else
                 osNewURL += pszNext;
@@ -462,9 +469,9 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
     }
     else
     {
-        if (pszValue)
+        if( pszValue )
         {
-            if (osURL[osURL.size()-1] != '&' && osURL[osURL.size()-1] != '?')
+            if( osURL.back() != '&' && osURL.back() != '?' )
                 osURL += '&';
             osURL += osKey;
             osURL += pszValue;

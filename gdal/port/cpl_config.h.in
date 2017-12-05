@@ -162,8 +162,14 @@
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
 
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
 /* Define to 1 if you have the statvfs' function. */
 #undef HAVE_STATVFS
+
+/* Define to 1 if you have the `statvfs64' function. */
+#undef HAVE_STATVFS64
 
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
@@ -176,6 +182,9 @@
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
 #undef ICONV_CPP_CONST
+
+/* Define to 1 if libjvm.so should be dlopen'd */
+#undef JVM_LIB_DLOPEN
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -252,3 +261,6 @@
 
 /* Define to 1 if you have the `uselocale' function. */
 #undef HAVE_USELOCALE
+
+/* Define to 1 if you have the `std::isnan' function. */
+#undef HAVE_STD_IS_NAN

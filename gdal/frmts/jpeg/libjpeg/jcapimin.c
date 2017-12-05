@@ -202,7 +202,8 @@ jpeg_write_marker (j_compress_ptr cinfo, int marker,
 
   (*cinfo->marker->write_marker_header) (cinfo, marker, datalen);
   write_marker_byte = cinfo->marker->write_marker_byte;	/* copy for speed */
-  while (datalen--) {
+  while (datalen) {
+    datalen --;
     (*write_marker_byte) (cinfo, *dataptr);
     dataptr++;
   }

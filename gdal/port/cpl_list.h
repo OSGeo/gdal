@@ -45,7 +45,10 @@
 CPL_C_START
 
 /** List element structure. */
-typedef struct _CPLList
+typedef struct _CPLList CPLList;
+
+/** List element structure. */
+struct _CPLList
 {
     /*! Pointer to the data object. Should be allocated and freed by the
      * caller.
@@ -55,7 +58,7 @@ typedef struct _CPLList
      * last one.
      */
     struct _CPLList    *psNext;
-} CPLList;
+};
 
 CPLList CPL_DLL *CPLListAppend( CPLList *psList, void * pData );
 CPLList CPL_DLL *CPLListInsert( CPLList *psList, void * pData, int nPosition );

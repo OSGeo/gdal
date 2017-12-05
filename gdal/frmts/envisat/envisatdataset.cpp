@@ -34,7 +34,7 @@
 #include "ogr_srs_api.h"
 #include "timedelta.hpp"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_C_START
 #include "EnvisatFile.h"
@@ -73,9 +73,9 @@ MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
     nImgOffset(nImgOffsetIn),
     nPrefixBytes(nPrefixBytesIn),
     nBytePerPixel(3),
-    nRecordSize(nPrefixBytesIn + nBlockXSize * nBytePerPixel),
-    nDataSize(nBlockXSize * nBytePerPixel),
-    pReadBuf(static_cast<GByte *>(CPLMalloc(nRecordSize)))
+    nRecordSize(0),
+    nDataSize(0),
+    pReadBuf(NULL)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -86,6 +86,9 @@ MerisL2FlagBand::MerisL2FlagBand( GDALDataset *poDSIn, int nBandIn,
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
+    nRecordSize = nPrefixBytesIn + nBlockXSize * nBytePerPixel;
+    nDataSize = nBlockXSize * nBytePerPixel;
+    pReadBuf = static_cast<GByte *>(CPLMalloc(nRecordSize));
 }
 
 /************************************************************************/
