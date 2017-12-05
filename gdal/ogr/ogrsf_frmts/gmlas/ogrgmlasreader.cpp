@@ -680,7 +680,7 @@ void GMLASReader::SetField( OGRFeature* poFeature,
             poFeature->SetField( nAttrIdx, "" );
         }
     }
-    else if( eType == OFTDateTime )
+    else if( eType == OFTDate || eType == OFTDateTime )
     {
         OGRField sField;
         if( OGRParseXMLDateTime(

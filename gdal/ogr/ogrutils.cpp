@@ -1233,6 +1233,14 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
         TZ = 0;
         bRet = true;
     }
+    // Date is expressed as a UTC date with only year:month.
+    else if( sscanf(pszXMLDateTime, "%04d-%02d", &year, &month) ==
+             2 )
+    {
+        TZ = 0;
+        bRet = true;
+        day = 1;
+    }
 
     if( !bRet )
       return FALSE;
