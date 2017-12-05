@@ -499,7 +499,9 @@ bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CP
             CPLString name = folder[i];
             if (name.find(filename) != std::string::npos) {
                 CPLString filepath = CPLFormFilename(cache, name, NULL);
-                remove(filepath);
+                if (VSIUnlink(filepath) == -1) {
+                    // error but can't do much, raise a warning?
+                }
             }
         }
         CSLDestroy(folder);
@@ -736,7 +738,7 @@ CPLString ParseCRS(CPLXMLNode *node)
     // http://www.eurogeographics.org/sites/default/files/2016-01-18_INSPIRE-KEN-CovFaq.pdf
     size_t pos = crs.find("?");
     if (pos != std::string::npos) {
-        if (crs.find("crs-compound?")) { // 1=uri&2=uri...
+        if (crs.find("crs-compound?") != std::string::npos) { // 1=uri&2=uri...
             // assuming the first is for X,Y
             crs = crs.substr(pos+1);
             pos = crs.find("&");
@@ -755,7 +757,7 @@ CPLString ParseCRS(CPLXMLNode *node)
 bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projection)
 {
     if (*projection != NULL) {
-        CPLFree(projection);
+        CPLFree(*projection);
     }
     *projection = NULL;
     if (crs.empty()) {

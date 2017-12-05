@@ -891,6 +891,7 @@ static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLStrin
         }
     }
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
+    CSLDestroy(options);
     if (psResult == NULL || psResult->nDataLen == 0) {
         CPLHTTPDestroyResult(psResult);
         return false;
