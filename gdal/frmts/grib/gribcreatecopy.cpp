@@ -28,6 +28,9 @@
  *
  */
 
+/* Support for GRIB2 write capabilities has been funded by Meteorological */
+/* Service of Canada */
+
 #include "cpl_port.h"
 #include "gribdataset.h"
 
