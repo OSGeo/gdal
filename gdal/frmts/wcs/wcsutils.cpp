@@ -532,11 +532,10 @@ CPLErr SearchCache(const CPLString &cache,
     }
     while (const char *line = CPLReadLineL(f)) {
         char *value = strchr((char *)line, '=');
-        if (*value == '=') {
-            *value = '\0';
-        } else {
+        if (value == NULL || *value != '=') {
             continue;
         }
+        *value = '\0';
         if (strcmp(url, value + 1) == 0) {
             filename = line;
             found = true;
