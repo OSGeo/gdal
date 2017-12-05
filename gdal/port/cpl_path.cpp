@@ -521,7 +521,7 @@ const char *CPLFormFilename( const char * pszPath,
     CPLAssert( ! ( pszBasename >= pszStaticResult
                    && pszBasename < pszStaticResult + CPL_PATH_BUF_SIZE ) );
 
-    if( pszBasename[0] == '.' && pszBasename[1] == '/' )
+    if( pszBasename[0] == '.' && (pszBasename[1] == '/' || pszBasename[1] == '\\') )
         pszBasename += 2;
 
     const char *pszAddedPathSep = "";
