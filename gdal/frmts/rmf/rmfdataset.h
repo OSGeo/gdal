@@ -158,7 +158,7 @@ class RMFDataset : public GDALDataset
     static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
     int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
 
-    std::vector<GDALDataset*>   poOvrDatasets;
+    std::vector<RMFDataset*>   poOvrDatasets;
 
   public:
                 RMFDataset();
@@ -178,7 +178,7 @@ class RMFDataset : public GDALDataset
 
     vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
     GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
-    bool                OpenOverviews( RMFDataset* poParentDS, GDALOpenInfo* );
+    RMFDataset*         OpenOverview( RMFDataset* poParentDS, GDALOpenInfo* );
 };
 
 /************************************************************************/

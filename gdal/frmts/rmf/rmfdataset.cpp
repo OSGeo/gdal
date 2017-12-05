@@ -1149,10 +1149,30 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    return Open( poOpenInfo, NULL, 0 );
+    GDALDataset* poDS = Open( poOpenInfo, NULL, 0 );
+    if( poDS == NULL )
+    {
+        return NULL;
+    }
+
+    RMFDataset* poCurrentLayer = dynamic_cast<RMFDataset*>( poDS );
+    RMFDataset* poParent = poCurrentLayer;
+    const int   nMaxPossibleOvCount = 64;
+
+    for( int iOv = 0; iOv < nMaxPossibleOvCount && poCurrentLayer != NULL; ++iOv )
+    {
+        poCurrentLayer = poCurrentLayer->OpenOverview( poParent, poOpenInfo );
+        if( poCurrentLayer == NULL )
+            break;
+        poParent->poOvrDatasets.push_back( poCurrentLayer );
+    }
+
+    return poDS;
 }
 
-GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset )
+GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
+                              RMFDataset* poParentDS,
+                              vsi_l_offset nNextHeaderOffset )
 {
     if( !Identify(poOpenInfo) )
         return NULL;
@@ -1306,6 +1326,19 @@ do {                                                                    \
         poDS->sHeader.iElevationType = *(abyHeader + 308);
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrOffset, 312 );
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
+    }
+
+    if( poParentDS != NULL )
+    {
+        if( 0 != memcmp( poDS->sHeader.bySignature,
+                         poParentDS->sHeader.bySignature,
+                         RMF_SIGNATURE_SIZE ) )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Invalid subheader signature." );
+            delete poDS;
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1734,13 +1767,7 @@ do {                                                                    \
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    if( poParentDS == NULL )
-    {
-        poParentDS = poDS;
-    }
-
-    if( ( !poDS->OpenOverviews( poParentDS, poOpenInfo ) ) &&
-        ( nNextHeaderOffset == 0 ) )
+    if( nNextHeaderOffset == 0 && poParentDS == NULL )
     {
         poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     }
@@ -2038,16 +2065,16 @@ GUInt32 RMFDataset::GetRMFOffset( vsi_l_offset nFileOffset,
     return static_cast<GUInt32>(nFileOffset);
 }
 
-bool RMFDataset::OpenOverviews(RMFDataset* poParentDS, GDALOpenInfo* poOpenInfo)
+RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenInfo)
 {
     if( sHeader.nOvrOffset == 0 )
     {
-        return false;
+        return NULL;
     }
 
-    if( poParentDS == NULL )
+    if( poParent == NULL )
     {
-        return false;
+        return NULL;
     }
 
     vsi_l_offset nSubOffset = GetFileOffset(sHeader.nOvrOffset);
@@ -2056,16 +2083,59 @@ bool RMFDataset::OpenOverviews(RMFDataset* poParentDS, GDALOpenInfo* poOpenInfo)
               "Try to open overview subfile at " CPL_FRMT_GUIB " for '%s'",
               nSubOffset, poOpenInfo->pszFilename );
 
-    GDALDataset*    poSub = (GDALDataset*)Open( poOpenInfo, poParentDS, nSubOffset );
+    if( !poParent->poOvrDatasets.empty() )
+    {
+        if( poParent->GetFileOffset( poParent->sHeader.nOvrOffset ) ==
+            nSubOffset )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "Recursive subdataset list is detected. "
+                      "Overview open failed." );
+            return NULL;
+        }
+
+        for( size_t n = 0; n != poParent->poOvrDatasets.size() - 1; ++n )
+        {
+            RMFDataset* poOvr( poParent->poOvrDatasets[n] );
+
+            if( poOvr == NULL )
+                continue;
+            if( poOvr->GetFileOffset( poOvr->sHeader.nOvrOffset ) ==
+                nSubOffset )
+            {
+                CPLError( CE_Failure, CPLE_IllegalArg,
+                          "Recursive subdataset list is detected. "
+                          "Overview open failed." );
+                return NULL;
+            }
+        }
+    }
+
+    size_t nHeaderSize( RMF_HEADER_SIZE );
+    GByte * pabyNewHeader;
+    pabyNewHeader = static_cast<GByte *>( CPLRealloc(poOpenInfo->pabyHeader,
+                                                     nHeaderSize + 1) );
+    if( pabyNewHeader == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Can't allocate buffer for overview header" );
+        return NULL;
+    }
+
+    poOpenInfo->pabyHeader = pabyNewHeader;
+    memset( poOpenInfo->pabyHeader, 0, nHeaderSize + 1 );
+    VSIFSeekL( fp, nSubOffset, SEEK_SET );
+    poOpenInfo->nHeaderBytes = static_cast<int>( VSIFReadL( poOpenInfo->pabyHeader,
+                                                 1, nHeaderSize, fp ) );
+
+    RMFDataset* poSub = (RMFDataset*)Open( poOpenInfo, poParent, nSubOffset );
 
     if( poSub == NULL )
     {
-        return false;
+        return NULL;
     }
 
-    poParentDS->poOvrDatasets.push_back( poSub );
-
-    return true;
+    return poSub;
 }
 
 /************************************************************************/
