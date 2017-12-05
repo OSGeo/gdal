@@ -720,18 +720,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    if( dfXDirection != 0.0 )
-    {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfXDirection);
-        osStyle += CPLString().Printf(",dx:%s", szBuffer);
-    }
-
-    if( dfYDirection != 0.0 )
-    {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfYDirection);
-        osStyle += CPLString().Printf(",dy:%s", szBuffer);
-    }
-
     const char *pszWidthFactor = poDS->LookupTextStyleProperty( osStyleName,
         "Width", "1" );
     if( pszWidthFactor && CPLAtof( pszWidthFactor ) != 1.0 )
