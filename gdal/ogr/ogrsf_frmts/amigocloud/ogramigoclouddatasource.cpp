@@ -261,7 +261,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
         CSLDestroy(papszTables);
 
         // If OVERWRITE: YES, truncate the layer.
-        if( nLayers==1 && CSLFetchNameValue( papszOpenOptionsIn, "OVERWRITE" ) != NULL  &&
+        if( nLayers==1 &&
             CPLFetchBool(papszOpenOptionsIn, "OVERWRITE", "NO") )
         {
            TruncateDataset(papoLayers[0]->GetTableName());
@@ -638,6 +638,7 @@ bool OGRAmigoCloudDataSource::RunDELETE(const char*pszURL)
     {
         CPLDebug( "AMIGOCLOUD", "DELETE Error Status:%d", psResult->nStatus );
     }
+    CPLHTTPDestroyResult(psResult);
 
     return true;
 }
