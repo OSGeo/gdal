@@ -101,6 +101,8 @@ GMLASFieldType GMLASField::GetTypeFromString( const CPLString& osType )
         return GMLAS_FT_DATE;
     else if( osType == szXS_GYEAR )
         return GMLAS_FT_GYEAR;
+    else if( osType == szXS_GYEAR_MONTH )
+        return GMLAS_FT_GYEAR_MONTH;
     else if( osType == szXS_TIME )
         return GMLAS_FT_TIME;
     else if( osType == szXS_DATETIME )

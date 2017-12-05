@@ -810,6 +810,9 @@ void OGRGMLASLayer::PostInit( bool bIncludeGeometryXML )
             case GMLAS_FT_GYEAR:
                 eType = OFTInteger;
                 break;
+            case GMLAS_FT_GYEAR_MONTH:
+                eType = OFTDate;
+                break;
             case GMLAS_FT_TIME:
                 eType = OFTTime;
                 break;
