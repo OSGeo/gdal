@@ -75,7 +75,7 @@ for my $module (sort keys %$objects) {
                    ABSTRACT => 'Perl extension for the GDAL library for geospatial data',
                    AUTHOR => 'Ari Jolma <ari.jolma at gmail.com>',
                    MAKEFILE => 'Makefile_'.$add,
-                   CC => $cxx,
+#                   CC => $cxx,
                    LIBS => $LIB,
                    INC => $INC,
                    OPTIMIZE => $OPTIMIZE,
