@@ -20,30 +20,36 @@ unless (-r $config) {
         "You have to first say \"cd $source_tree; make\".";
 }
 
-# logic to set INSTALLSITEMAN3DIR if INSTALL_BASE and INST_MAN are set
+# Obtain some information from GDALmake.opt.
+#
+# 1) Set INSTALLSITEMAN3DIR if INSTALL_BASE and INST_MAN are set.
 # INSTALL_BASE is used in the standard case when this script is called
 # as a part of overall build with --with-perl
 # INST_MAN may be set by --mandir=DIR option to configure
-if ($ARGV[0] =~ /INSTALL_BASE=(.*)/) {
-    my $INSTALL_BASE = $1;
-    my $opt = "$source_tree/GDALmake.opt";
-    open(my $fh, "<", $opt) or die "Can't open < $opt: $!";
-    while (<$fh>) {
-        if (/(\w+)\s+=\s+(.*)/) {
-            my $key = $1;
-            my $val = $2;
-            $val =~ s/\s+$//;
-            if ($key eq 'prefix') {
-                die 'prefix in GDALmake.opt is set different to \$INSTALL_BASE' unless $INSTALL_BASE eq $val;
-            } elsif ($key eq 'INST_MAN') {
-                $val =~ s/\$\{prefix\}/$INSTALL_BASE/;
-                push @ARGV, "INSTALLSITEMAN1DIR=$val/man1";
-                push @ARGV, "INSTALLSITEMAN3DIR=$val/man3";
-            }
+#
+# 2) The C++ compiler.
+#
+my $cxx = '';
+my $opt = "$source_tree/GDALmake.opt";
+open(my $fh, "<", $opt) or die "Can't open < $opt: $!";
+my ($INSTALL_BASE) = $ARGV[0] =~ /INSTALL_BASE=(.*)/;
+while (<$fh>) {
+    if (/(\w+)\s+=\s+(.*)/) {
+        my $key = $1;
+        my $val = $2;
+        $val =~ s/\s+$//;
+        if ($key eq 'prefix') {
+            die 'prefix in GDALmake.opt is different from \$INSTALL_BASE' unless $INSTALL_BASE eq $val;
+        } elsif ($key eq 'INST_MAN') {
+            $val =~ s/\$\{prefix\}/$INSTALL_BASE/;
+            push @ARGV, "INSTALLSITEMAN1DIR=$val/man1";
+            push @ARGV, "INSTALLSITEMAN3DIR=$val/man3";
+        } elsif ($key eq 'CXX') {
+            ($cxx) = $val =~ /\)\s*(.*)$/;
         }
     }
-    close $fh;
 }
+close $fh;
 
 my ($INC, $LIB, $objects) = get_config($config);
 
@@ -69,6 +75,7 @@ for my $module (sort keys %$objects) {
                    ABSTRACT => 'Perl extension for the GDAL library for geospatial data',
                    AUTHOR => 'Ari Jolma <ari.jolma at gmail.com>',
                    MAKEFILE => 'Makefile_'.$add,
+                   CC => $cxx,
                    LIBS => $LIB,
                    INC => $INC,
                    OPTIMIZE => $OPTIMIZE,

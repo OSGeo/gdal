@@ -719,6 +719,7 @@ bool WCSDataset201::ExtractGridInfo()
     bServiceDirty = CPLUpdateXML(psService, "High", Join(shigh, ",")) || bServiceDirty;
     if (slow.size() < 2 || shigh.size() < 2) {
         CPLError(CE_Failure, CPLE_AppDefined, "The coverage has less than 2 dimensions.");
+        CSLDestroy(metadata);
         return false;
     }
     // todo: if our x,y domain is not the first two? use domain_indexes?
@@ -754,6 +755,7 @@ bool WCSDataset201::ExtractGridInfo()
 
     CPLXMLNode *grid = GetGridNode(coverage, subtype);
     if (!grid) {
+        CSLDestroy(metadata);
         return false;
     }
 
@@ -770,6 +772,7 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<int> grid_size;
     if (size.size() < 2) {
         CPLError(CE_Failure, CPLE_AppDefined, "Can't parse the grid envelope.");
+        CSLDestroy(metadata);
         return false;
     }
 
@@ -789,6 +792,7 @@ bool WCSDataset201::ExtractGridInfo()
     std::vector<double> origin;
     std::vector<std::vector<double> > offsets;
     if (!GridOffsets(grid, subtype, swap_grid_axis, origin, offsets, axes, &metadata)) {
+        CSLDestroy(metadata);
         return false;
     }
 
@@ -832,11 +836,13 @@ bool WCSDataset201::ExtractGridInfo()
     CPLString crs = CPLGetXMLValue(psService, "SRS", "");
     if (crs != "" && crs != osCRS) {
         if (!SetCRS(crs, false)) {
+            CSLDestroy(metadata);
             return false;
         }
         // todo: support CRS override, it requires warping the grid to the new CRS
         // SetGeometry(grid_size, origin, offsets);
         CPLError(CE_Failure, CPLE_AppDefined, "CRS override not yet supported.");
+        CSLDestroy(metadata);
         return false;
     }
 
