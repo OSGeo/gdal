@@ -4716,30 +4716,14 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
-    OGRLayer *poLayer = NULL;
-
+    OGRLayer *poLayer = GetLayerByName(papszTokens[3]);
+    if( poLayer == NULL )
     {
-        GDALDatasetPrivate *psPrivate =
-            static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-        CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
-
-        for( int i = 0; i < GetLayerCount(); ++i )
-        {
-            poLayer = GetLayer(i);
-
-            if( poLayer!= NULL && EQUAL(poLayer->GetName(),papszTokens[3]) )
-                break;
-            poLayer = NULL;
-        }
-
-        if( poLayer == NULL )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "CREATE INDEX ON failed, no such layer as `%s'.",
-                     papszTokens[3]);
-            CSLDestroy(papszTokens);
-            return OGRERR_FAILURE;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "CREATE INDEX ON failed, no such layer as `%s'.",
+                    papszTokens[3]);
+        CSLDestroy(papszTokens);
+        return OGRERR_FAILURE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4756,13 +4740,7 @@ OGRErr GDALDataset::ProcessSQLCreateIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named field.                                           */
 /* -------------------------------------------------------------------- */
-    int i = 0;  // Used after for.
-    for( ; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
-    {
-        if( EQUAL(papszTokens[5],
-                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
-            break;
-    }
+    int i = poLayer->GetLayerDefn()->GetFieldIndex(papszTokens[5]);
 
     CSLDestroy(papszTokens);
 
@@ -4826,30 +4804,14 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named layer.                                           */
 /* -------------------------------------------------------------------- */
-    OGRLayer *poLayer = NULL;
-
+    OGRLayer *poLayer = GetLayerByName(papszTokens[3]);
+    if( poLayer == NULL )
     {
-        GDALDatasetPrivate *psPrivate =
-            static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-        CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : NULL);
-
-        for( int i = 0; i < GetLayerCount(); ++i )
-        {
-            poLayer = GetLayer(i);
-
-            if( poLayer!= NULL && EQUAL(poLayer->GetName(),papszTokens[3]) )
-                break;
-            poLayer = NULL;
-        }
-
-        if( poLayer == NULL )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "CREATE INDEX ON failed, no such layer as `%s'.",
-                     papszTokens[3]);
-            CSLDestroy(papszTokens);
-            return OGRERR_FAILURE;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                    "DROP INDEX ON failed, no such layer as `%s'.",
+                    papszTokens[3]);
+        CSLDestroy(papszTokens);
+        return OGRERR_FAILURE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4891,14 +4853,7 @@ OGRErr GDALDataset::ProcessSQLDropIndex( const char *pszSQLCommand )
 /* -------------------------------------------------------------------- */
 /*      Find the named field.                                           */
 /* -------------------------------------------------------------------- */
-    int i = 0;  // Used after for.
-    for( ; i < poLayer->GetLayerDefn()->GetFieldCount(); ++i )
-    {
-        if( EQUAL(papszTokens[5],
-                  poLayer->GetLayerDefn()->GetFieldDefn(i)->GetNameRef()) )
-            break;
-    }
-
+    int i = poLayer->GetLayerDefn()->GetFieldIndex(papszTokens[5]);
     CSLDestroy(papszTokens);
 
     if( i >= poLayer->GetLayerDefn()->GetFieldCount() )
