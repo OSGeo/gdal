@@ -527,12 +527,14 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
        }
        else if( m_nDepth == m_nUpdatePropertyDepth && m_osElementName == "Property" )
        {
-           if( EQUAL( m_osLastPropertyName, "adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet" ) )
+           if( EQUAL( m_osLastPropertyName, "adv:lebenszeitintervall/adv:AA_Lebenszeitintervall/adv:endet" ) ||
+               EQUAL( m_osLastPropertyName, "lebenszeitintervall/AA_Lebenszeitintervall/endet" ) )
            {
                CPLAssert( m_osLastPropertyValue != "" );
                m_osLastEnded = m_osLastPropertyValue;
            }
-           else if( EQUAL( m_osLastPropertyName, "adv:anlass" ) )
+           else if( EQUAL( m_osLastPropertyName, "adv:anlass" ) ||
+                    EQUAL( m_osLastPropertyName, "anlass" ) )
            {
                CPLAssert( m_osLastPropertyValue != "" );
                m_LastOccasions.push_back( m_osLastPropertyValue );
