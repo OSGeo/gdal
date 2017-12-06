@@ -77,6 +77,10 @@ class OGRTABDataSource : public OGRDataSource
                              char ** = NULL ) override;
 
     char        **GetFileList() override;
+
+    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect ) override;
 };
 
 void CPL_DLL RegisterOGRTAB();

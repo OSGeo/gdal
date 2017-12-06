@@ -514,3 +514,45 @@ char **OGRTABDataSource::GetFileList()
     }
     return osList.StealList();
 }
+
+/************************************************************************/
+/*                            ExecuteSQL()                              */
+/************************************************************************/
+
+OGRLayer* OGRTABDataSource::ExecuteSQL( const char *pszStatement,
+                                        OGRGeometry *poSpatialFilter,
+                                        const char *pszDialect )
+{
+    char **papszTokens = CSLTokenizeString(pszStatement);
+    if( CSLCount(papszTokens) == 6 &&
+        EQUAL(papszTokens[0], "CREATE") &&
+        EQUAL(papszTokens[1], "INDEX") &&
+        EQUAL(papszTokens[2], "ON") &&
+        EQUAL(papszTokens[4], "USING") )
+    {
+        IMapInfoFile* poLayer = dynamic_cast<IMapInfoFile*>(
+            GetLayerByName(papszTokens[3]));
+        if( poLayer == NULL )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "`%s' failed failed, no such layer as `%s'.",
+                     pszStatement, papszTokens[3]);
+            CSLDestroy(papszTokens);
+            return NULL;
+        }
+        int nFieldIdx = poLayer->GetLayerDefn()->GetFieldIndex(papszTokens[5]);
+        CSLDestroy(papszTokens);
+        if( nFieldIdx < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                      "`%s' failed, field not found.",
+                      pszStatement);
+            return NULL;
+        }
+        poLayer->SetFieldIndexed(nFieldIdx);
+        return NULL;
+    }
+
+    CSLDestroy(papszTokens);
+    return GDALDataset::ExecuteSQL(pszStatement, poSpatialFilter, pszDialect);
+}
