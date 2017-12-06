@@ -1324,6 +1324,7 @@ int  TABRelation::Init(const char *pszViewName,
     /*-----------------------------------------------------------------
      * If selectedFields = "*" then select all fields from both tables
      *----------------------------------------------------------------*/
+    papszSelectedFields = CSLDuplicate(papszSelectedFields);
     if (CSLCount(papszSelectedFields) == 1 &&
         EQUAL(papszSelectedFields[0], "*") )
     {
