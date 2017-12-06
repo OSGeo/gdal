@@ -155,6 +155,7 @@ g2int g2_unpack4(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int *ipd
           }
 #endif
           nbits=abs(mappds->ext[j])*8;
+          lipdstmpl[i] = 0;
           if ( mappds->ext[j] >= 0 ) {
             gbit2(cgrib,cgrib_length,lipdstmpl+i,*iofst,nbits);
           }
