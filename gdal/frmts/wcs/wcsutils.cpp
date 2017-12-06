@@ -435,7 +435,7 @@ std::vector<CPLString> ReadCache(const CPLString &cache)
     if (data) {
         for (int i = 0; data[i]; ++i) {
             char *val = strchr(data[i], '=');
-            if (*val == '=') {
+            if (val != NULL && *val == '=') {
                 val += 1;
                 if (strcmp(val, "bar") != 0) {
                     contents.push_back(val);
@@ -468,7 +468,7 @@ bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CP
     if (data) {
         for (int i = 0; data[i]; ++i) {
             char *val = strchr(data[i], '=');
-            if (*val == '=') {
+            if (val != NULL && *val == '=') {
                 *val = '\0';
                 val = val + 1;
                 if ((key != "" && key == data[i])
@@ -532,11 +532,10 @@ CPLErr SearchCache(const CPLString &cache,
     }
     while (const char *line = CPLReadLineL(f)) {
         char *value = strchr((char *)line, '=');
-        if (*value == '=') {
-            *value = '\0';
-        } else {
+        if (value == NULL || *value != '=') {
             continue;
         }
+        *value = '\0';
         if (strcmp(url, value + 1) == 0) {
             filename = line;
             found = true;
