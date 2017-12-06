@@ -27,49 +27,41 @@ include gdal-configure.opt
 ########
 gdal: gdal.js
 
-gdal.js: gdal-lib
+gdal.js: $(GDAL)/libgdal.a
 	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a -o gdal.js -s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS)
 
-gdal-lib: $(GDAL)/libgdal.a
-
-$(GDAL)/libgdal.a: $(GDAL)/config.status proj4
+$(GDAL)/libgdal.a: $(GDAL)/config.status $(PROJ4)/src/.libs/libproj.a
 	cd $(GDAL) && EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMMAKE) make lib-target
 
 # TODO: Pass the configure params more elegantly so that this uses the
 # EMCONFIGURE variable
-$(GDAL)/config.status: proj4-native $(GDAL)/configure
+$(GDAL)/config.status: $(GDAL)/configure
+	# PROJ4 needs to be built natively as part of the GDAL configuration process,
+	# but we don't want to nuke the Emscripten build if it happens to have been
+	# built first, so we need to copy it and then restore it once the GDAL
+	# configuration process is complete.
+	cp -R $(PROJ4) proj4_bak
+	cd $(PROJ4) && git clean -X --force .
+	cd $(PROJ4) && ./autogen.sh
+	cd $(PROJ4) && ./configure
+	cd $(PROJ4) && make
 	cd $(GDAL) && emconfigure ./configure $(GDAL_CONFIG_OPTIONS)
+	rm -rf $(PROJ4)
+	mv proj4_bak $(PROJ4)
 
 ##########
 # PROJ.4 #
 ##########
-# The -X parameter cleans only ignored files but not manually added ones
-reset-proj4:
-	cd $(PROJ4) && git clean -X --force
-
-proj4: reset-proj4
+$(PROJ4)/src/.libs/libproj.a:
 	cd $(PROJ4) && ./autogen.sh
 	cd $(PROJ4) && $(EMCONFIGURE) ./configure
 	cd $(PROJ4) && EMCC_CFLAGS="$(PROJ_EMCC_CFLAGS)" $(EMMAKE) make
 
-# We need to make proj4-native a separate prerequisite even though it's nearly
-# the same thing because make will only run each prerequisite once per
-# invocation, and we need to build PROJ.4 twice, once natively to fake out the
-# GDAL build script, and once "for real" via emscripten.  For the same reason,
-# we also can't target any of the file outputs of the PROJ.4 build process
-# because the files are exactly the same no matter whether the build is native
-# or via emscripten, so if we target individual files, they'll only get built
-# once, not twice as we need.
-# TODO: Make this cleaner.
-reset-proj4-native:
-	cd $(PROJ4) && git clean -X --force
-
-proj4-native: reset-proj4-native
-	cd $(PROJ4) && ./autogen.sh
-	cd $(PROJ4) && ./configure
-	cd $(PROJ4) && make
-
+# There seems to be interference between a dependency on config.status specified
+# in the original GDAL Makefile and the config.status rule above that causes
+# `make clean` from the gdal folder to try to _build_ gdal before cleaning it.
 clean:
-	cd $(GDAL) && make clean
-	cd $(PROJ4) && make clean
-	rm -f gdal.js gdal.js.mem
+	cd $(PROJ4) && git clean -X --force .
+	cd $(GDAL) && git clean -X --force .
+	rm -f gdal.js.mem
+	rm -f gdal.js
