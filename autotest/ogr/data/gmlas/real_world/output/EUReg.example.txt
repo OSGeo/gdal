@@ -98,6 +98,7 @@ OGRFeature(productionfacility):1
   beginlifespanversion (DateTime) = (null)
   hostingsite_href (String) = #_123456789.SITE
   hostingsite_owns (Integer(Boolean)) = 0
+  hostingsite_productionsite_eureg_productionsite_pkid (String) = _123456789.SITE
   facilityname_owns (Integer(Boolean)) = 0
   facilityname_featurename_nameoffeature (String) = EXAMPLE FACILITY 1
   facilityname_featurename_confidentialityreason_owns (Integer(Boolean)) = 0
@@ -200,12 +201,14 @@ OGRFeature(productionfacility_groupedinstallation):1
   parent_id (String) = _000000002.FACILITY
   href (String) = #_010101011.INSTALLATION
   owns (Integer(Boolean)) = 0
+  productioninstallation_eureg_productioninstallation_pkid (String) = _010101011.INSTALLATION
 
 OGRFeature(productionfacility_groupedinstallation):2
   ogr_pkid (String) = _000000002.FACILITY_groupedInstallation_2
   parent_id (String) = _000000002.FACILITY
   href (String) = #_010101012.INSTALLATION
   owns (Integer(Boolean)) = 0
+  productioninstallation_eureg_productioninstallation_pkid (String) = _010101012.INSTALLATION
 
 
 Layer name: productionfacility_competentauthorityeprtr
@@ -368,12 +371,14 @@ OGRFeature(eureg_productioninstallation_groupedinstallationpart):1
   parent_id (String) = _010101011.INSTALLATION
   href (String) = #_987654321.PART
   owns (Integer(Boolean)) = 0
+  productioninstallatipart_eureg_productioninstallatipart_pkid (String) = _987654321.PART
 
 OGRFeature(eureg_productioninstallation_groupedinstallationpart):2
   ogr_pkid (String) = _010101012.INSTALLATION_groupedInstallationPart_2
   parent_id (String) = _010101012.INSTALLATION
   href (String) = #_987654322.PART
   owns (Integer(Boolean)) = 0
+  productioninstallatipart_eureg_productioninstallatipart_pkid (String) = _987654322.PART
 
 
 Layer name: eureg_productioninstallation_competentauthoritypermits
@@ -633,6 +638,7 @@ OGRFeature(eureg_productionsite):1
   sitename_featurename_confidentialityreason_owns (Integer(Boolean)) = 0
   reportdata_href (String) = #ES.RD.2017
   reportdata_owns (Integer(Boolean)) = 0
+  reportdata_reportdata_pkid (String) = ES.RD.2017
   eureg_location = POINT (2.104334 41.991925)
 
 

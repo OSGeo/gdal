@@ -257,6 +257,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
     , m_bCaseInsensitiveIdentifier(CASE_INSENSITIVE_IDENTIFIER_DEFAULT)
     , m_bPGIdentifierLaundering(PG_IDENTIFIER_LAUNDERING_DEFAULT)
     , m_nMaximumFieldsForFlattening(MAXIMUM_FIELDS_FLATTENING_DEFAULT)
+    , m_bAlwaysGenerateOGRId(ALWAYS_GENERATE_OGR_ID_DEFAULT)
 {
     // A few hardcoded namespace uri->prefix mappings
     m_oMapURIToPrefix[ szXMLNS_URI ] = szXMLNS_PREFIX;
@@ -382,7 +383,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
             {
                 const CPLString oClassNS =
                         GetNSOfLastXPathComponent(oClass.GetXPath());
-                bool bHasDoneRemnamingForThatCase = false;
+                bool bHasDoneRenamingForThatCase = false;
 
                 for(size_t i=0; i<nOccurrences;i++)
                 {
@@ -396,7 +397,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                         !STARTS_WITH(oField.GetName(), (oNS + "_").c_str() ) )
                     {
                         bHasDoneSomeRenaming = true;
-                        bHasDoneRemnamingForThatCase = true;
+                        bHasDoneRenamingForThatCase = true;
                         oField.SetName( oNS + "_" + oField.GetName() );
                         break;
                     }
@@ -407,7 +408,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                              oField.GetName().find("_attr") == std::string::npos )
                     {
                         bHasDoneSomeRenaming = true;
-                        bHasDoneRemnamingForThatCase = true;
+                        bHasDoneRenamingForThatCase = true;
                         oField.SetName( oField.GetName() + "_attr" );
                         break;
                     }
@@ -415,7 +416,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
 
                 // If none of the above renaming strategies have worked, then
                 // append a counter to the duplicates.
-                if( !bHasDoneRemnamingForThatCase )
+                if( !bHasDoneRenamingForThatCase )
                 {
                     for(size_t i=0; i<nOccurrences;i++)
                     {
@@ -443,7 +444,9 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
             int nNameSize = static_cast<int>(aoFields[i].GetName().size());
             if( nNameSize > m_nIdentifierMaxLength )
             {
-                aoFields[i].SetName(TruncateIdentifier(aoFields[i].GetName()));
+                aoFields[i].SetName(
+                    OGRGMLASTruncateIdentifier(aoFields[i].GetName(),
+                                               m_nIdentifierMaxLength));
             }
         }
     }
@@ -484,9 +487,10 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
             for(size_t i=0; i<nOccurrences;i++)
             {
                 GMLASField& oField = aoFields[oIter->second[i]];
-                oField.SetName( AddSerialNumber( oField.GetName(),
+                oField.SetName( OGRGMLASAddSerialNumber( oField.GetName(),
                                                     static_cast<int>(i+1),
-                                                    nOccurrences) );
+                                                    nOccurrences,
+                                                    m_nIdentifierMaxLength) );
             }
         }
     }
@@ -534,7 +538,9 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
             int nNameSize = static_cast<int>(aoClasses[i]->GetName().size());
             if( nNameSize > m_nIdentifierMaxLength )
             {
-                aoClasses[i]->SetName(TruncateIdentifier(aoClasses[i]->GetName()));
+                aoClasses[i]->SetName(OGRGMLASTruncateIdentifier(
+                                            aoClasses[i]->GetName(),
+                                            m_nIdentifierMaxLength));
             }
         }
     }
@@ -575,168 +581,13 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
             for(size_t i=0; i<nOccurrences;i++)
             {
                 GMLASFeatureClass* poClass = aoClasses[oIter->second[i]];
-                poClass->SetName( AddSerialNumber(poClass->GetName(),
+                poClass->SetName( OGRGMLASAddSerialNumber(poClass->GetName(),
                                                   static_cast<int>(i+1),
-                                                  nOccurrences) );
+                                                  nOccurrences,
+                                                  m_nIdentifierMaxLength) );
             }
         }
     }
-}
-
-/************************************************************************/
-/*                        AddSerialNumber()                             */
-/************************************************************************/
-
-CPLString GMLASSchemaAnalyzer::AddSerialNumber(const CPLString& osNameIn,
-                                               int iOccurrence,
-                                               size_t nOccurrences)
-{
-    CPLString osName(osNameIn);
-    const int nDigitsSize = (nOccurrences < 10) ? 1:
-                            (nOccurrences < 100) ? 2 : 3;
-    char szDigits[4];
-    snprintf(szDigits, sizeof(szDigits), "%0*d",
-                nDigitsSize, iOccurrence);
-    if( m_nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH )
-    {
-        if( static_cast<int>(osName.size()) < m_nIdentifierMaxLength )
-        {
-            if( static_cast<int>(osName.size()) + nDigitsSize <
-                                            m_nIdentifierMaxLength )
-            {
-                osName += szDigits;
-            }
-            else
-            {
-                osName.resize(m_nIdentifierMaxLength - nDigitsSize);
-                osName += szDigits;
-            }
-        }
-        else
-        {
-            osName.resize(osName.size() - nDigitsSize);
-            osName += szDigits;
-        }
-    }
-    else
-    {
-        osName += szDigits;
-    }
-    return osName;
-}
-
-/************************************************************************/
-/*                      TruncateIdentifier()                            */
-/************************************************************************/
-
-CPLString GMLASSchemaAnalyzer::TruncateIdentifier(const CPLString& osName)
-{
-    int nExtra = static_cast<int>(osName.size()) - m_nIdentifierMaxLength;
-    CPLAssert(nExtra > 0);
-
-    // Decompose in tokens
-    char** papszTokens = CSLTokenizeString2(osName, "_",
-                                            CSLT_ALLOWEMPTYTOKENS );
-    std::vector< char > achDelimiters;
-    std::vector< CPLString > aosTokens;
-    for( int j=0; papszTokens[j] != NULL; ++j )
-    {
-        const char* pszToken = papszTokens[j];
-        bool bIsCamelCase = false;
-        // Split parts like camelCase or CamelCase into several tokens
-        if( pszToken[0] != '\0' && islower(pszToken[1]) )
-        {
-            bIsCamelCase = true;
-            bool bLastIsLower = true;
-            std::vector<CPLString> aoParts;
-            CPLString osCurrentPart;
-            osCurrentPart += pszToken[0];
-            osCurrentPart += pszToken[1];
-            for( int k=2; pszToken[k]; ++k)
-            {
-                if( isupper(pszToken[k]) )
-                {
-                    if( !bLastIsLower )
-                    {
-                        bIsCamelCase = false;
-                        break;
-                    }
-                    aoParts.push_back(osCurrentPart);
-                    osCurrentPart.clear();
-                    bLastIsLower = false;
-                }
-                else
-                {
-                    bLastIsLower = true;
-                }
-                osCurrentPart += pszToken[k];
-            }
-            if( bIsCamelCase )
-            {
-                if( !osCurrentPart.empty() )
-                    aoParts.push_back(osCurrentPart);
-                for( size_t k=0; k<aoParts.size(); ++k )
-                {
-                    achDelimiters.push_back( (j > 0 && k == 0) ? '_' : '\0' );
-                    aosTokens.push_back( aoParts[k] );
-                }
-            }
-        }
-        if( !bIsCamelCase )
-        {
-            achDelimiters.push_back( (j > 0) ? '_' : '\0' );
-            aosTokens.push_back( pszToken );
-        }
-    }
-    CSLDestroy(papszTokens);
-
-    // Truncate identifier by removing last character of longest part
-    bool bHasDoneSomething = true;
-    while( nExtra > 0 && bHasDoneSomething )
-    {
-        bHasDoneSomething = false;
-        int nMaxSize = 0;
-        size_t nIdxMaxSize = 0;
-        for( size_t j=0; j < aosTokens.size(); ++j )
-        {
-            int nTokenLen = static_cast<int>(aosTokens[j].size());
-            if( nTokenLen > nMaxSize )
-            {
-                // Avoid truncating last token unless it is excessively longer
-                // than previous ones.
-                if( j < aosTokens.size() - 1 ||
-                    nTokenLen > 2 * nMaxSize )
-                {
-                    nMaxSize = nTokenLen;
-                    nIdxMaxSize = j;
-                }
-            }
-        }
-
-        if( nMaxSize > 1 )
-        {
-            aosTokens[nIdxMaxSize].resize( nMaxSize - 1 );
-            bHasDoneSomething = true;
-            nExtra --;
-        }
-    }
-
-    // Reassemble truncated parts
-    CPLString osNewName;
-    for( size_t j=0; j < aosTokens.size(); ++j )
-    {
-        if( achDelimiters[j] )
-            osNewName += achDelimiters[j];
-        osNewName += aosTokens[j];
-    }
-
-    // If we are still longer than max allowed, truncate beginning of name
-    if( nExtra > 0 )
-    {
-        osNewName = osNewName.substr(nExtra);
-    }
-    CPLAssert( static_cast<int>(osNewName.size()) == m_nIdentifierMaxLength );
-    return osNewName;
 }
 
 /************************************************************************/
@@ -3276,35 +3127,60 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         // handle substitutions
                         if( poTargetElt != NULL && !poTargetElt->getAbstract() )
                         {
-                            // If the element is nillable, then we
-                            // need an extra field to be able to distinguish between the
-                            // case of the missing element or the element with
-                            // xsi:nil="true"
-                            if( poElt->getNillable() && !m_bUseNullState )
+                            bool bHasRequiredId = false;
+                            XSComplexTypeDefinition* poTargetEltCT =
+                                IsEltCompatibleOfFC(poTargetElt);
+                            if( poTargetEltCT )
                             {
-                                GMLASField oFieldNil;
-                                oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
-                                oFieldNil.SetXPath( osElementXPath + "/" +
-                                                    szAT_XSI_NIL );
-                                oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
-                                oFieldNil.SetMinOccurs( 0 );
-                                oFieldNil.SetMaxOccurs( 1 );
-                                aoFields.push_back(oFieldNil);
+                                XSAttributeUseList* poTargetEltAttrList =
+                                        poTargetEltCT->getAttributeUses();
+                                const size_t nTEAttrListSize = (poTargetEltAttrList != NULL) ?
+                                                                poTargetEltAttrList->size(): 0;
+                                for(size_t j=0; j< nTEAttrListSize; ++j )
+                                {
+                                    XSAttributeUse* poTEAttr = poTargetEltAttrList->elementAt(j);
+                                    XSAttributeDeclaration* poTEAttrDecl = poTEAttr->getAttrDeclaration();
+                                    XSSimpleTypeDefinition* poTEAttrType = poTEAttrDecl->getTypeDefinition();
+                                    if( transcode(poTEAttrType->getName()) == szXS_ID &&
+                                        poTEAttr->getRequired() )
+                                    {
+                                        bHasRequiredId = true;
+                                        break;
+                                    }
+                                }
                             }
+                            if( bHasRequiredId && !m_bAlwaysGenerateOGRId )
+                            {
+                                // If the element is nillable, then we
+                                // need an extra field to be able to distinguish between the
+                                // case of the missing element or the element with
+                                // xsi:nil="true"
+                                if( poElt->getNillable() && !m_bUseNullState )
+                                {
+                                    GMLASField oFieldNil;
+                                    oFieldNil.SetName( osPrefixedEltName + "_" + szNIL );
+                                    oFieldNil.SetXPath( osElementXPath + "/" +
+                                                        szAT_XSI_NIL );
+                                    oFieldNil.SetType( GMLAS_FT_BOOLEAN, "boolean" );
+                                    oFieldNil.SetMinOccurs( 0 );
+                                    oFieldNil.SetMaxOccurs( 1 );
+                                    aoFields.push_back(oFieldNil);
+                                }
 
-                            GMLASField oField;
-                            // Fake xpath
-                            oField.SetXPath(
-                                GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
-                                            osElementXPath + "/" + szAT_XLINK_HREF));
-                            oField.SetName( osPrefixedEltName + szPKID_SUFFIX );
-                            oField.SetMinOccurs(0);
-                            oField.SetMaxOccurs(1);
-                            oField.SetType( GMLAS_FT_STRING, szXS_STRING );
-                            oField.SetCategory(
-                                GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK );
-                            oField.SetRelatedClassXPath(osTargetElement);
-                            aoFields.push_back( oField );
+                                GMLASField oField;
+                                // Fake xpath
+                                oField.SetXPath(
+                                    GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
+                                                osElementXPath + "/" + szAT_XLINK_HREF));
+                                oField.SetName( osPrefixedEltName + szPKID_SUFFIX );
+                                oField.SetMinOccurs(0);
+                                oField.SetMaxOccurs(1);
+                                oField.SetType( GMLAS_FT_STRING, szXS_STRING );
+                                oField.SetCategory(
+                                    GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK );
+                                oField.SetRelatedClassXPath(osTargetElement);
+                                aoFields.push_back( oField );
+                            }
                         }
                         else if( poTargetElt != NULL && poTargetElt->getAbstract() )
                         {

@@ -30,6 +30,7 @@
 
 // Must be first for DEBUG_BOOL case
 #include "ogr_gmlas.h"
+#include "ogr_pgdump.h"
 #include "cpl_minixml.h"
 
 CPL_CVSID("$Id$")
@@ -1063,6 +1064,24 @@ bool OGRGMLASLayer::RemoveField( int nIdx )
         m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
     }
 
+    OGRLayer* poFieldsMetadataLayer = m_poDS->GetFieldsMetadataLayer();
+    OGRFeature* poFeature;
+    poFieldsMetadataLayer->ResetReading();
+    while( (poFeature = poFieldsMetadataLayer->GetNextFeature()) != NULL )
+    {
+        if( strcmp( poFeature->GetFieldAsString( szLAYER_NAME ), GetName() ) == 0 &&
+            poFeature->GetFieldAsInteger( szFIELD_INDEX ) == nIdx )
+        {
+            poFeature->SetField( szFIELD_INDEX, -1 );
+            CPL_IGNORE_RET_VAL(
+                poFieldsMetadataLayer->SetFeature( poFeature ) );
+            delete poFeature;
+            break;
+        }
+        delete poFeature;
+    }
+    poFieldsMetadataLayer->ResetReading();
+
     return true;
 }
 
@@ -1120,6 +1139,25 @@ void OGRGMLASLayer::InsertNewField( int nInsertPos,
         }
         m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
     }
+
+    OGRLayer* poFieldsMetadataLayer = m_poDS->GetFieldsMetadataLayer();
+    OGRFeature* poFeature;
+    poFieldsMetadataLayer->ResetReading();
+    while( (poFeature = poFieldsMetadataLayer->GetNextFeature()) != NULL )
+    {
+        if( strcmp( poFeature->GetFieldAsString( szLAYER_NAME ), GetName() ) == 0 )
+        {
+            int nFieldIndex = poFeature->GetFieldAsInteger( szFIELD_INDEX );
+            if( nFieldIndex >= nInsertPos )
+            {
+                poFeature->SetField( szFIELD_INDEX, nFieldIndex + 1 );
+                CPL_IGNORE_RET_VAL(
+                    poFieldsMetadataLayer->SetFeature( poFeature ) );
+            }
+        }
+        delete poFeature;
+    }
+    poFieldsMetadataLayer->ResetReading();
 }
 
 /************************************************************************/
@@ -1133,6 +1171,26 @@ int OGRGMLASLayer::GetOGRFieldIndexFromXPath(const CPLString& osXPath) const
     if( oIter == m_oMapFieldXPathToOGRFieldIdx.end() )
         return -1;
     return oIter->second;
+}
+
+/************************************************************************/
+/*                       GetXPathFromOGRFieldIndex()                    */
+/************************************************************************/
+
+CPLString OGRGMLASLayer::GetXPathFromOGRFieldIndex(int nIdx) const
+{
+    const int nFCIdx = GetFCFieldIndexFromOGRFieldIdx(nIdx);
+    if( nFCIdx >= 0 )
+        return m_oFC.GetFields()[nFCIdx].GetXPath();
+
+    std::map<CPLString, int>::const_iterator oIter =
+        m_oMapFieldXPathToOGRFieldIdx.begin();
+    for( ; oIter != m_oMapFieldXPathToOGRFieldIdx.end(); ++oIter )
+    {
+        if( oIter->second == nIdx )
+            return oIter->first;
+    }
+    return CPLString();
 }
 
 /************************************************************************/
@@ -1188,6 +1246,223 @@ int OGRGMLASLayer::GetFCFieldIndexFromOGRGeomFieldIdx(int iOGRGeomFieldIdx) cons
 }
 
 /************************************************************************/
+/*                 GetXPathOfFieldLinkForAttrToOtherLayer()             */
+/************************************************************************/
+
+CPLString OGRGMLASLayer::GetXPathOfFieldLinkForAttrToOtherLayer(
+                                        const CPLString& osFieldName,
+                                        const CPLString& osTargetLayerXPath )
+{
+    const int nOGRFieldIdx = GetLayerDefn()->GetFieldIndex(osFieldName);
+    CPLAssert(nOGRFieldIdx >= 0);
+    const int nFCFieldIdx = GetFCFieldIndexFromOGRFieldIdx(nOGRFieldIdx);
+    CPLAssert(nFCFieldIdx >= 0);
+    CPLString osXPath(m_oFC.GetFields()[nFCFieldIdx].GetXPath());
+    size_t nPos = osXPath.find(szAT_XLINK_HREF);
+    CPLAssert(nPos != std::string::npos);
+    CPLAssert(nPos + strlen(szAT_XLINK_HREF) == osXPath.size());
+    CPLString osTargetFieldXPath(osXPath.substr(0, nPos) + osTargetLayerXPath);
+    return osTargetFieldXPath;
+}
+
+/************************************************************************/
+/*                           LaunderFieldName()                         */
+/************************************************************************/
+
+CPLString OGRGMLASLayer::LaunderFieldName(const CPLString& osFieldName)
+{
+    int nCounter = 1;
+    CPLString osLaunderedName(osFieldName);
+    while( m_poFeatureDefn->GetFieldIndex(osLaunderedName) >= 0 )
+    {
+        nCounter ++;
+        osLaunderedName = osFieldName + CPLSPrintf("%d", nCounter);
+    }
+
+    const int nIdentifierMaxLength = m_poDS->GetConf().m_nIdentifierMaxLength;
+    if( nIdentifierMaxLength >= MIN_VALUE_OF_MAX_IDENTIFIER_LENGTH &&
+        osLaunderedName.size() > static_cast<size_t>(nIdentifierMaxLength) )
+    {
+        osLaunderedName = OGRGMLASTruncateIdentifier(osLaunderedName,
+                                                     nIdentifierMaxLength);
+    }
+
+    if( m_poDS->GetConf().m_bPGIdentifierLaundering )
+    {
+        char* pszLaundered = OGRPGCommonLaunderName( osLaunderedName,
+                                                        "GMLAS" );
+        osLaunderedName = pszLaundered;
+        CPLFree( pszLaundered );
+    }
+
+    if( m_poFeatureDefn->GetFieldIndex(osLaunderedName) >= 0 )
+    {
+        nCounter = 1;
+        CPLString osCandidate;
+        do
+        {
+            osCandidate = OGRGMLASAddSerialNumber( osLaunderedName,
+                                                   nCounter,
+                                                   nCounter + 1,
+                                                   nIdentifierMaxLength );
+        } while( nCounter < 100 &&
+                 m_poFeatureDefn->GetFieldIndex(osCandidate) >= 0 );
+        osLaunderedName = osCandidate;
+    }
+
+    return osLaunderedName;
+}
+
+/************************************************************************/
+/*                     CreateLinkForAttrToOtherLayer()                  */
+/************************************************************************/
+
+/* Create a new field to contain the PKID of the feature pointed by this */
+/* osFieldName (a xlink:href attribute), when it is an internal link to */
+/* another layer whose xpath is given by osTargetLayerXPath */
+
+CPLString OGRGMLASLayer::CreateLinkForAttrToOtherLayer(
+                                        const CPLString& osFieldName,
+                                        const CPLString& osTargetLayerXPath )
+{
+    CPLString osTargetFieldXPath = GetXPathOfFieldLinkForAttrToOtherLayer(
+        osFieldName, osTargetLayerXPath);
+    const int nExistingTgtOGRFieldIdx =
+        GetOGRFieldIndexFromXPath(osTargetFieldXPath);
+    if( nExistingTgtOGRFieldIdx >= 0 )
+    {
+        return GetLayerDefn()->GetFieldDefn(
+                                nExistingTgtOGRFieldIdx)->GetNameRef();
+    }
+
+    const int nOGRFieldIdx = GetLayerDefn()->GetFieldIndex(osFieldName);
+    CPLAssert(nOGRFieldIdx >= 0);
+    const int nFCFieldIdx = GetFCFieldIndexFromOGRFieldIdx(nOGRFieldIdx);
+    CPLAssert(nFCFieldIdx >= 0);
+    CPLString osXPath(m_oFC.GetFields()[nFCFieldIdx].GetXPath());
+    size_t nPos = osXPath.find(szAT_XLINK_HREF);
+    CPLString osXPathStart( osXPath.substr(0, nPos) );
+
+    // Find at which position to insert the new field in the layer definition
+    // (we could happen at the end, but it will be nicer to insert close to
+    // the href field)
+    int nInsertPos = -1;
+    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( GetXPathFromOGRFieldIndex(i).find(osXPathStart) == 0 )
+        {
+            nInsertPos = i + 1;
+        }
+        else if( nInsertPos >= 0 )
+            break;
+    }
+
+    CPLString osNewFieldName(osFieldName);
+    nPos = osFieldName.find(szHREF_SUFFIX);
+    if( nPos != std::string::npos )
+    {
+        osNewFieldName.resize(nPos);
+    }
+    osNewFieldName += "_";
+    OGRGMLASLayer* poTargetLayer = m_poDS->GetLayerByXPath(osTargetLayerXPath);
+    CPLAssert(poTargetLayer);
+    osNewFieldName += poTargetLayer->GetName();
+    osNewFieldName += "_pkid";
+    osNewFieldName = LaunderFieldName(osNewFieldName);
+    OGRFieldDefn oFieldDefn( osNewFieldName, OFTString );
+    InsertNewField( nInsertPos, oFieldDefn, osTargetFieldXPath );
+
+
+    OGRLayer* poFieldsMetadataLayer = m_poDS->GetFieldsMetadataLayer();
+    OGRLayer* poRelationshipsLayer = m_poDS->GetRelationshipsLayer();
+
+    // Find a relevant location of the field metadata layer into which to
+    // insert the new feature (same as above, we could potentially insert just
+    // at the end)
+    GIntBig nFieldsMetadataIdxPos = -1;
+    poFieldsMetadataLayer->ResetReading();
+    OGRFeature* poFeature;
+    while( (poFeature = poFieldsMetadataLayer->GetNextFeature()) != NULL )
+    {
+        if( strcmp( poFeature->GetFieldAsString( szLAYER_NAME ), GetName() ) == 0 )
+        {
+            if (poFeature->GetFieldAsInteger( szFIELD_INDEX ) > nInsertPos )
+            {
+                delete poFeature;
+                break;
+            }
+            nFieldsMetadataIdxPos = poFeature->GetFID() + 1;
+        }
+        else if( nFieldsMetadataIdxPos >= 0 )
+        {
+            delete poFeature;
+            break;
+        }
+        delete poFeature;
+    }
+    poFieldsMetadataLayer->ResetReading();
+
+    // Move down all features beyond that insertion point
+    for(GIntBig nFID = poFieldsMetadataLayer->GetFeatureCount() - 1;
+                nFID >= nFieldsMetadataIdxPos; nFID-- )
+    {
+        poFeature = poFieldsMetadataLayer->GetFeature(nFID);
+        if( poFeature )
+        {
+            poFeature->SetFID(nFID+1);
+            CPL_IGNORE_RET_VAL( poFieldsMetadataLayer->SetFeature(poFeature) );
+            delete poFeature;
+        }
+    }
+    if( nFieldsMetadataIdxPos >= 0 )
+    {
+        CPL_IGNORE_RET_VAL(
+            poFieldsMetadataLayer->DeleteFeature(nFieldsMetadataIdxPos));
+    }
+
+    // Register field in _ogr_fields_metadata
+    OGRFeature* poFieldDescFeature =
+                new OGRFeature(poFieldsMetadataLayer->GetLayerDefn());
+    poFieldDescFeature->SetField( szLAYER_NAME, GetName() );
+    poFieldDescFeature->SetField( szFIELD_INDEX, nInsertPos );
+    poFieldDescFeature->SetField( szFIELD_XPATH, osTargetFieldXPath );
+    poFieldDescFeature->SetField( szFIELD_NAME,
+                                    oFieldDefn.GetNameRef() );
+    poFieldDescFeature->SetField( szFIELD_TYPE, szXS_STRING );
+    poFieldDescFeature->SetField( szFIELD_IS_LIST, 0 );
+    poFieldDescFeature->SetField( szFIELD_MIN_OCCURS, 0 );
+    poFieldDescFeature->SetField( szFIELD_MAX_OCCURS, 1 );
+    poFieldDescFeature->SetField( szFIELD_CATEGORY, szPATH_TO_CHILD_ELEMENT_WITH_LINK );
+    poFieldDescFeature->SetField( szFIELD_RELATED_LAYER,
+                                          poTargetLayer->GetName() );
+    if( nFieldsMetadataIdxPos >= 0 )
+        poFieldDescFeature->SetFID( nFieldsMetadataIdxPos );
+    CPL_IGNORE_RET_VAL(
+        poFieldsMetadataLayer->CreateFeature(poFieldDescFeature));
+    delete poFieldDescFeature;
+
+    // Register relationship in _ogr_layer_relationships
+    OGRFeature* poRelationshipsFeature =
+        new OGRFeature(poRelationshipsLayer->GetLayerDefn());
+    poRelationshipsFeature->SetField( szPARENT_LAYER, GetName() );
+    poRelationshipsFeature->SetField( szPARENT_PKID,
+            GetLayerDefn()->GetFieldDefn(
+                    GetIDFieldIdx())->GetNameRef() );
+    poRelationshipsFeature->SetField( szPARENT_ELEMENT_NAME,
+                                      osNewFieldName );
+    poRelationshipsFeature->SetField(szCHILD_LAYER,
+                                        poTargetLayer->GetName() );
+    poRelationshipsFeature->SetField( szCHILD_PKID,
+        poTargetLayer->GetLayerDefn()->GetFieldDefn(
+            poTargetLayer->GetIDFieldIdx())->GetNameRef() );
+    CPL_IGNORE_RET_VAL(poRelationshipsLayer->CreateFeature(
+                                    poRelationshipsFeature));
+    delete poRelationshipsFeature;
+
+    return osNewFieldName;
+}
+
+/************************************************************************/
 /*                              GetLayerDefn()                          */
 /************************************************************************/
 
@@ -1198,6 +1473,7 @@ OGRFeatureDefn* OGRGMLASLayer::GetLayerDefn()
         // If we haven't yet determined the SRS of geometry columns, do it now
         m_bLayerDefnFinalized = true;
         if( m_poFeatureDefn->GetGeomFieldCount() > 0 ||
+            m_poDS->GetConf().m_oXLinkResolution.m_bResolveInternalXLinks ||
             !m_poDS->GetConf().m_oXLinkResolution.m_aoURLSpecificRules.empty() )
         {
             if( m_poReader == NULL )

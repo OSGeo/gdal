@@ -359,15 +359,18 @@ def ogr_gmlas_gml_Reference():
         return 'skip'
 
     ds = ogr.Open('GMLAS:data/gmlas/gmlas_test_targetelement.xml')
-    if ds.GetLayerCount() != 2:
+    if ds.GetLayerCount() != 3:
         gdaltest.post_reason('fail')
         print(ds.GetLayerCount())
         return 'fail'
 
     lyr = ds.GetLayerByName('main_elt')
-    f = lyr.GetNextFeature()
-    if f['reference_existing_target_elt_href'] != '#BAZ' or \
-       f['reference_existing_target_elt_pkid'] != 'BAZ' or \
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    if f['reference_existing_target_elt_with_required_id_href'] != '#BAZ' or \
+       f['reference_existing_target_elt_with_required_id_pkid'] != 'BAZ' or \
+       f['reference_existing_target_elt_with_optional_id_href'] != '#BAZ2' or \
+       f['refe_exis_targ_elt_with_opti_id_targe_elt_with_optio_id_pkid'] != 'F36BAD21BD2F14DDCA8852DBF8C90DBC_target_elt_with_optional_id_1' or \
        f['reference_existing_abstract_target_elt_href'] != '#BAW' or \
        f.IsFieldSet('reference_existing_abstract_target_elt_nillable_href') or \
        f['reference_existing_abstract_target_elt_nillable_nil'] != 1:
@@ -731,7 +734,7 @@ def ogr_gmlas_validate():
     lyr.GetFeatureCount()
     gdal.PopErrorHandler()
     # Unexpected element with xpath=myns:main_elt/myns:bar (subxpath=myns:main_elt/myns:bar) found
-    if len(myhandler.error_list) != 2:
+    if len(myhandler.error_list) < 2:
         gdaltest.post_reason('fail')
         print(myhandler.error_list)
         return 'fail'
@@ -3335,7 +3338,7 @@ def ogr_gmlas_extra_eureg():
 
 ###############################################################################
 # Test a schema that has nothing interesting in it but imports another
-# sceham
+# schema
 
 def ogr_gmlas_no_element_in_first_choice_schema():
 
@@ -3346,6 +3349,160 @@ def ogr_gmlas_no_element_in_first_choice_schema():
     lyr = ds.GetLayerByName('_ogr_layers_metadata')
     f = lyr.GetNextFeature()
     if f['layer_xpath'] != 'my_ns:main_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+# Test cross-layer links with xlink:href="#my_id"
+
+def ogr_gmlas_internal_xlink_href():
+
+    if ogr.GetDriverByName('GMLAS') is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_internal_xlink_href.xml')
+        lyr = ds.GetLayerByName('main_elt')
+        f = lyr.GetNextFeature()
+    if f['link_to_second_or_third_elt_href'] != '#does_not_exist' or \
+       f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
+       f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
+       f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['link_to_second_or_third_elt_href'] != '#id2' or \
+       f['link_to_second_or_third_elt_second_elt_pkid'] != 'id2' or \
+       f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
+       f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['link_to_second_or_third_elt_href'] != '#id3' or \
+       f['link_to_second_or_third_elt_second_elt_pkid'] != 'id3' or \
+       f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
+       f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['link_to_second_or_third_elt_href'] != '#id4' or \
+       f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
+       f['link_to_second_or_third_elt_third_elt_pkid'] != 'D1013B7E44F28C976B976A4314FA4A09_third_elt_1' or \
+       f.IsFieldSet('link_to_third_elt_third_elt_pkid'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['link_to_third_elt_href'] != '#id4' or \
+       f.IsFieldSet('link_to_second_or_third_elt_second_elt_pkid') or \
+       f.IsFieldSet('link_to_second_or_third_elt_third_elt_pkid') or \
+       f['link_to_third_elt_third_elt_pkid'] != 'D1013B7E44F28C976B976A4314FA4A09_third_elt_1':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('_ogr_fields_metadata')
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 1 or \
+       f['field_name'] != 'link_to_second_or_third_elt_href':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 2 or \
+       f['field_name'] != 'link_to_second_or_third_elt_second_elt_pkid' or \
+       f['field_xpath'] != 'main_elt/link_to_second_or_third_elt/second_elt' or \
+       f['field_type'] != 'string' or \
+       f['field_is_list'] != 0 or \
+       f['field_min_occurs'] != 0 or \
+       f['field_max_occurs'] != 1 or \
+       f['field_category'] != 'PATH_TO_CHILD_ELEMENT_WITH_LINK' or \
+       f['field_related_layer'] != 'second_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 3 or \
+       f['field_name'] != 'link_to_second_or_third_elt_third_elt_pkid' or \
+       f['field_xpath'] != 'main_elt/link_to_second_or_third_elt/third_elt' or \
+       f['field_type'] != 'string' or \
+       f['field_is_list'] != 0 or \
+       f['field_min_occurs'] != 0 or \
+       f['field_max_occurs'] != 1 or \
+       f['field_category'] != 'PATH_TO_CHILD_ELEMENT_WITH_LINK' or \
+       f['field_related_layer'] != 'third_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 4 or \
+       f['field_name'] != 'link_to_second_or_third_elt':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 5 or \
+       f['field_name'] != 'link_to_third_elt_href':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'main_elt' or f['field_index'] != 6 or \
+       f['field_name'] != 'link_to_third_elt_third_elt_pkid':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['layer_name'] != 'third_elt' or f['field_index'] != 1 or \
+       f['field_name'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    lyr = ds.GetLayerByName('_ogr_layer_relationships')
+    f = lyr.GetNextFeature()
+    if f['parent_layer'] != 'main_elt' or \
+       f['parent_pkid'] != 'ogr_pkid' or \
+       f['parent_element_name'] != 'link_to_third_elt_third_elt_pkid' or \
+       f['child_layer'] != 'third_elt' or \
+       f['child_pkid'] != 'ogr_pkid':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['parent_layer'] != 'main_elt' or \
+       f['parent_pkid'] != 'ogr_pkid' or \
+       f['parent_element_name'] != 'link_to_second_or_third_elt_second_elt_pkid' or \
+       f['child_layer'] != 'second_elt' or \
+       f['child_pkid'] != 'id':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    f = lyr.GetNextFeature()
+    if f['parent_layer'] != 'main_elt' or \
+       f['parent_pkid'] != 'ogr_pkid' or \
+       f['parent_element_name'] != 'link_to_second_or_third_elt_third_elt_pkid' or \
+       f['child_layer'] != 'third_elt' or \
+       f['child_pkid'] != 'ogr_pkid':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3426,6 +3583,7 @@ gdaltest_list = [
     ogr_gmlas_aux_schema_without_namespace_prefix,
     ogr_gmlas_geometry_as_substitutiongroup,
     ogr_gmlas_no_element_in_first_choice_schema,
+    ogr_gmlas_internal_xlink_href,
     ogr_gmlas_cleanup ]
 
 # gdaltest_list = [ ogr_gmlas_basic, ogr_gmlas_aux_schema_without_namespace_prefix, ogr_gmlas_cleanup ]
