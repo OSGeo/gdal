@@ -1,4 +1,4 @@
-INFO: Open of `GMLAS:data/gmlas_test1.xml'
+INFO: Open of `GMLAS:data/gmlas/gmlas_test1.xml'
       using driver `GMLAS' successful.
 
 Layer name: abstract_element_realization1
@@ -2585,7 +2585,7 @@ key: String (0.0)
 value: String (0.0)
 OGRFeature(_ogr_other_metadata):0
   key (String) = document_filename
-  value (String) = data/gmlas_test1.xml
+  value (String) = data/gmlas/gmlas_test1.xml
 
 OGRFeature(_ogr_other_metadata):1
   key (String) = namespace_uri_1
@@ -2593,7 +2593,7 @@ OGRFeature(_ogr_other_metadata):1
 
 OGRFeature(_ogr_other_metadata):2
   key (String) = namespace_location_1
-  value (String) = data/gmlas_test1.xsd
+  value (String) = data/gmlas/gmlas_test1.xsd
 
 OGRFeature(_ogr_other_metadata):3
   key (String) = namespace_prefix_1
