@@ -1,0 +1,6 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              targetNamespace="http://fake_xlink"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+<xs:attribute name="href" type="xs:anyURI"/>
+</xs:schema>

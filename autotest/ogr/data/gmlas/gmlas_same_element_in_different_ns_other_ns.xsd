@@ -1,0 +1,13 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:other_ns="http://other_ns"
+           targetNamespace="http://other_ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="abstractElt" abstract="true"/>
+<xs:element name="realizationOfAbstractElt" substitutionGroup="other_ns:abstractElt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="foo" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>

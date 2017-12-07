@@ -1,0 +1,18 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="first">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element ref="second"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="second">
+  <xs:complexType>
+    <xs:sequence/>
+    <xs:attribute name="my_id" type="xs:ID" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

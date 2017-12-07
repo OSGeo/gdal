@@ -1,0 +1,28 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           xmlns:other_ns="http://other_ns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://other_ns" schemaLocation="gmlas_same_element_in_different_ns_other_ns.xsd"/>
+<xs:element name="elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element ref="other_ns:abstractElt"/>
+        <xs:element name="elt2">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element ref="other_ns:abstractElt" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+<xs:element name="realizationOfAbstractElt" substitutionGroup="other_ns:abstractElt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="bar" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>

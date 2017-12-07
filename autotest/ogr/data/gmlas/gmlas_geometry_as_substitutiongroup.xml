@@ -1,0 +1,6 @@
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:gml="http://fake_gml32"
+          xsi:schemaLocation="http://main gmlas_geometry_as_substitutiongroup.xsd">
+    <main:foo><gml:Point gml:id="id"><gml:pos>5 6</gml:pos></gml:Point></main:foo>
+</main:main_elt>

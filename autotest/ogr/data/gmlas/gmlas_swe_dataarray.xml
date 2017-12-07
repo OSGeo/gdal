@@ -1,0 +1,97 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns gmlas_swe_dataarray.xsd">
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType name="Components">
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                         <swe:field name="myCount">
+                            <swe:Count definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myText">
+                            <swe:Text definition="http://"/>
+                        </swe:field>
+                         <swe:field name="myBoolean">
+                            <swe:Boolean definition="http://"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,3,foo,true@@2017-09-01T00:00:00,2,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="@@" tokenSeparator=","/>
+            </swe:encoding>
+            <!-- extra fields and trailing block separator -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,extra_field,extra_field2@@2017-09-01T00:00:00,,3.45@@
+            </swe:values>
+        </swe:DataArray>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataArray>
+            <swe:elementCount>
+                <swe:Count>
+                        <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:elementCount>
+            <swe:elementType>
+                <swe:DataRecord>
+                        <swe:field name="myTime">
+                            <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime"/>
+                        </swe:field>
+                        <swe:field name="myCategory">
+                            <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification"/>
+                        </swe:field>
+                         <swe:field name="myQuantity">
+                            <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour"/>
+                        </swe:field>
+                </swe:DataRecord>
+            </swe:elementType>
+            <swe:encoding>
+                    <swe:TextEncoding decimalSeparator="." blockSeparator="," tokenSeparator=","/>
+            </swe:encoding>
+            <!-- blockSeparator == tokenSeparator. Valid, but not advised ! -->
+            <swe:values>2016-09-01T00:00:00+01:00,1,2.34,2017-09-01T00:00:00,,3.45</swe:values>
+        </swe:DataArray>
+    </myns:foo>
+</myns:main_elt>

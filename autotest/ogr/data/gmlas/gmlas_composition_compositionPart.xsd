@@ -1,0 +1,27 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:element name="first">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="composition" maxOccurs="unbounded" minOccurs="0" type="CompositionPartPropertyType"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:complexType name="CompositionPartPropertyType">
+    <xs:sequence>
+        <xs:element ref="CompositionPart"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:element name="CompositionPart">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="a" type="xs:string"/>
+    </xs:sequence>
+    <xs:attribute name="my_id" type="xs:ID" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

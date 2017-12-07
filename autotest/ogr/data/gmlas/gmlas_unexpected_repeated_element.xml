@@ -1,0 +1,6 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns gmlas_unexpected_repeated_element.xsd">
+    <myns:foo>foo_first</myns:foo>
+    <myns:foo>foo_again</myns:foo>
+</myns:main_elt>

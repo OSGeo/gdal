@@ -1,0 +1,7 @@
+<main:main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:main="http://main"
+          xmlns:aux="http://aux"
+          xsi:schemaLocation="http://main gmlas_aux_schema_without_namespace_prefix_main.xsd http://aux gmlas_aux_schema_without_namespace_prefix_aux.xsd">
+    <main:foo>bar</main:foo>
+    <aux:genericInt><aux:value>1</aux:value></aux:genericInt>
+</main:main_elt>

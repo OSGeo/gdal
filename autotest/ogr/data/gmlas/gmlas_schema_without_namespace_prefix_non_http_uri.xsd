@@ -1,0 +1,11 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="my_namespace"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="main_elt">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="attr" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>
