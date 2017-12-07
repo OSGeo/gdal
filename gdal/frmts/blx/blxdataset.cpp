@@ -34,7 +34,7 @@
 #include "gdal_pam.h"
 
 CPL_C_START
-#include <blx.h>
+#include "blx.h"
 CPL_C_END
 
 CPL_CVSID("$Id$")
