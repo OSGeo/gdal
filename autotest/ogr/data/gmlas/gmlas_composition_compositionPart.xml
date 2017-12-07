@@ -1,0 +1,13 @@
+<first xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:noNamespaceSchemaLocation="gmlas_composition_compositionPart.xsd">
+    <composition>
+        <CompositionPart my_id="id1">
+            <a>a1</a>
+        </CompositionPart>
+    </composition>
+    <composition>
+        <CompositionPart my_id="id2">
+            <a>a2</a>
+        </CompositionPart>
+    </composition>
+</first>

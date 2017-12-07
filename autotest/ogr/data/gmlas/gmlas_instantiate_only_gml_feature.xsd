@@ -1,0 +1,50 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:gml="http://fake_gml32"
+              elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml32" schemaLocation="gmlas_fake_gml32.xsd"/>
+
+<!--
+    Xerces correctly detects circular dependencies
+
+  <xs:complexType name="typeA">
+    <xs:complexContent>
+      <xs:extension base="typeB">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="typeB">
+    <xs:complexContent>
+      <xs:extension base="typeA">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+<xs:element name="A" substitutionGroup="B" type="typeA"/>
+<xs:element name="B" substitutionGroup="A" type="typeB"/>
+-->
+
+<xs:element name="nonFeature">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="a" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="someFeature" substitutionGroup="gml:AbstractFeature">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="gml:AbstractFeatureType">
+        <xs:sequence>
+            <xs:element ref="nonFeature"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

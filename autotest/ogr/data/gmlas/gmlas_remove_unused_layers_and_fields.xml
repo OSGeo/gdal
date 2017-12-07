@@ -1,0 +1,6 @@
+<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="gmlas_remove_unused_layers_and_fields.xsd">
+    <used1>foo</used1>
+    <used2>bar</used2>
+    <nillable xsi:nil="true" nilReason="unknown"/>
+</main_elt>

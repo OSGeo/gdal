@@ -1,0 +1,6 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:my_ns="http://my/ns" 
+           targetNamespace="http://main/ns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+ <xs:import namespace="http://my/ns" schemaLocation="gmlas_interesting_schema.xsd" />
+</xs:schema>

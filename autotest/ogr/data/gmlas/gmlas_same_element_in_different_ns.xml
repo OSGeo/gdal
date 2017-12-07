@@ -1,0 +1,8 @@
+<myns:elt xmlns:myns="http://myns"
+             xmlns:other_ns="http://other_ns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns gmlas_same_element_in_different_ns.xsd">
+    <other_ns:realizationOfAbstractElt>
+        <other_ns:foo>bar</other_ns:foo>
+    </other_ns:realizationOfAbstractElt>
+</myns:elt>

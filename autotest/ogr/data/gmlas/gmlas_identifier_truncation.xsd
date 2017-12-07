@@ -1,0 +1,39 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="very_long_identifier_class">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="very_long_idenTifier" type="xs:string"/>
+            <xs:element name="another_long_identifier" type="xs:string"/>
+            <xs:element name="another_long_identifierbis" type="xs:string"/>
+            <xs:element name="x" type="xs:string"/>
+            <xs:element name="noTCAMELCaseAndLong" type="xs:string"/>
+            <xs:element name="suuuuuuuuuuuperlong" type="xs:string"/>
+            <xs:element name="s_u_u_u_u_u_u_u_u_u_u_u_p_e_r_l_o_n_g" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="another_long_identifier_class">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="another_long_identifier_classbis">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="y">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>

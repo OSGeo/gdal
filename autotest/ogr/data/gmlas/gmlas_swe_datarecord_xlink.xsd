@@ -1,0 +1,10 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              targetNamespace="http://www.w3.org/1999/xlink"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+<xs:attribute name="href" type="xs:anyURI"/>
+<xs:attributeGroup name="simpleAttrs">
+    <xs:attribute ref="xlink:href"/>
+</xs:attributeGroup>
+</xs:schema>

@@ -1,0 +1,8 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns gmlas_typing_constraints_one_subst_with_repetition.xsd">
+    <myns:foo>
+        <myns:bar><myns:value>baz</myns:value></myns:bar>
+        <myns:bar><myns:value>baz2</myns:value></myns:bar>
+    </myns:foo>
+</myns:main_elt>

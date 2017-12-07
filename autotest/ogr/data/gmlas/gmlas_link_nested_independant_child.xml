@@ -1,0 +1,4 @@
+<first xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:noNamespaceSchemaLocation="gmlas_link_nested_independant_child.xsd">
+    <second my_id="second_id"/>
+</first>
