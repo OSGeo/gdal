@@ -1,26 +1,11 @@
 # This Makefile requires GNU Make.
 
-CXX = g++
-#CXXFLAGS := $(shell gdal-config --cflags)
-CXXFLAGS = -g -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
-CXXFLAGS += -I. -Itut $(CPPFLAGS)
-CXXFLAGS += -Wall
-CXXFLAGS += -Wextra -Wno-unused-function
-# CXXFLAGS += -Werror
-#CXXFLAGS += -fsanitize=undefined
-#LDFLAGS := -fsanitize=undefined
+include ../../gdal/GDALmake.opt
+CXXFLAGS += -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
+CXXFLAGS += -I. -Itut
 
-ifdef HARDEN
-CXXFLAGS += -O2 -g
-CXXFLAGS += -D_FORTIFY_SOURCE=2
-CXXFLAGS += -fstack-protector-all
-CXXFLAGS += -Wformat -Werror=format-security
-CXXFLAGS += -ftrapv -fwrapv
-# Clashes with current build strategy.
-# CXXFLAGS += -fPIE -pie
-endif
-
-LDFLAGS = $(shell gdal-config --libs)
+CFLAGS += -I../../gdal/port -I../../gdal/alg -I../../gdal/gcore -I../../gdal/ogr -I../../gdal/ogr/ogrsf_frmts -I../../gdal/apps -I../../gdal/frmts/vrt -DGDAL_COMPILATION
+CFLAGS += -I. -Itut
 
 PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_c_include_from_cpp_file
 
@@ -78,46 +63,67 @@ OBJ = \
     tut/tut_gdal.o
 
 gdal_unit_test: $(OBJ)
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	$(LD) $(LDFLAGS) $^ $(CONFIG_LIBS) -o $@
 
-testperfcopywords: testperfcopywords.cpp
-	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testperfcopywords.o: testperfcopywords.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
 
-testcopywords: testcopywords.cpp
-	$(CXX) -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testperfcopywords: testperfcopywords.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testclosedondestroydm: testclosedondestroydm.cpp
-	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testcopywords.o: testcopywords.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
 
-testthreadcond: testthreadcond.cpp
-	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testcopywords: testcopywords.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testvirtualmem: testvirtualmem.cpp
-	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testclosedondestroydm: testclosedondestroydm.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testblockcache: testblockcache.cpp
-	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testthreadcond: testthreadcond.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testblockcachewrite: testblockcachewrite.cpp
-	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testvirtualmem: testvirtualmem.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testmultithreadedwriting: testmultithreadedwriting.cpp
-	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testblockcache.o: testblockcache.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
 
-testblockcachelimits: testblockcachelimits.cpp
-	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testblockcache: testblockcache.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-testdestroy: testdestroy.cpp
-	$(CXX) -g -O2 $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testblockcachewrite.o: testblockcachewrite.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
 
-vsipreload.so: ../../gdal/port/vsipreload.cpp
-	$(CXX) -fPIC -g $(CXXFLAGS) $< $(LDFLAGS) -shared -o $@
+testblockcachewrite: testblockcachewrite.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
-test_include_from_c_file: test_include_from_c_file.c
-	$(CC) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testmultithreadedwriting.o: testmultithreadedwriting.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
 
-test_c_include_from_cpp_file: test_c_include_from_cpp_file.cpp
-	$(CXX) -g $(CXXFLAGS) $< $(LDFLAGS) -o $@
+testmultithreadedwriting: testmultithreadedwriting.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
+
+testblockcachelimits.o: testblockcachelimits.cpp
+	$(CXX) $(CXXFLAGS) -O2 -c $<
+
+testblockcachelimits: testblockcachelimits.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
+
+testdestroy: testdestroy.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
+
+vsipreload.so: ../../gdal/port/vsipreload.o
+	$(CXX) -fPIC -g $(CXXFLAGS) $< $(CONFIG_LIBS) $(LDFLAGS) -shared -o $@
+
+test_include_from_c_file.o: test_include_from_c_file.c
+	$(CC) $(CFLAGS) -O2 -c $<
+
+test_include_from_c_file: test_include_from_c_file.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
+
+test_c_include_from_cpp_file: test_c_include_from_cpp_file.o
+	$(LD) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@
 
 clean:
 	$(RM) $(PROGS) testsse
