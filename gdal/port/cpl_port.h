@@ -653,7 +653,7 @@ static inline int CPLIsFinite(double f) { return std::isfinite(f); }
 #  define CPLIsFinite(x) __builtin_isfinite(x)
 #else
 /** Return whether a floating-pointer number is NaN */
-#if defined(__cplusplus) && defined(__GNUC__) && defined(__linux) && !defined(__ANDROID__)
+#if defined(__cplusplus) && defined(__GNUC__) && defined(__linux) && !defined(__ANDROID__) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /* so to not get warning about conversion from double to float with */
 /* gcc -Wfloat-conversion when using isnan()/isinf() macros */
 extern "C++" {
@@ -705,7 +705,7 @@ static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
 #endif
 /*! @endcond */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /*! @cond Doxygen_Suppress */
 extern "C++" {
@@ -1020,7 +1020,7 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_RESTRICT
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 #if HAVE_CXX11 || _MSC_VER >= 1500
 
@@ -1109,7 +1109,7 @@ CPL_C_END
 /*! @endcond */
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 /** Returns the size of C style arrays. */
 #define CPL_ARRAYSIZE(array) \
   ((sizeof(array) / sizeof(*(array))) / \
@@ -1143,7 +1143,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 // a integer is assigned to a bool
 // WARNING: use only at compilation time, since it is know to not work
 //  at runtime for unknown reasons (crash in MongoDB driver for example)
-#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL)
+#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL) && !defined(CPL_SUPRESS_CPLUSPLUS)
 extern "C++" {
 class MSVCPedanticBool
 {

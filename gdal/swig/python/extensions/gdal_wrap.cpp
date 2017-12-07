@@ -3165,6 +3165,7 @@ namespace swig {
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -3172,7 +3173,6 @@ using namespace std;
 #include "cpl_vsi_error.h"
 
 #include "gdal.h"
-#include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdalwarper.h"
 
@@ -4706,7 +4706,7 @@ SWIGINTERN GDALAsyncReaderShadow *GDALDatasetShadow_BeginAsyncReader(GDALDataset
 
     if (hAsyncReader)
     {
-        return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
+        return (GDALAsyncReaderShadow*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
     }
     else
     {

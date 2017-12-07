@@ -3188,6 +3188,8 @@ typedef char retStringAndCPLFree;
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "cpl_string.h"
 #include "cpl_conv.h"
 

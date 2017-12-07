@@ -295,7 +295,7 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS,
 
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /************************************************************************/
 /*                            GDALWarpKernel                            */
