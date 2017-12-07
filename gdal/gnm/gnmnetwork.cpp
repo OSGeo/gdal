@@ -91,3 +91,15 @@ OGRLayerH CPL_STDCALL GNMGetPath (GNMNetworkH hNet, GNMGFID nStartFID,
     return (OGRLayerH) ((GNMNetwork*)hNet)->GetPath(nStartFID, nEndFID,
                                                     eAlgorithm, papszOptions);
 }
+
+GNMNetworkH CPL_STDCALL GNMCastToNetwork(GDALMajorObjectH hBase)
+{
+    return reinterpret_cast<GNMNetworkH>(
+        dynamic_cast<GNMNetwork*>(reinterpret_cast<GDALMajorObject*>(hBase)));
+}
+
+GNMGenericNetworkH CPL_STDCALL GNMCastToGenericNetwork(GDALMajorObjectH hBase)
+{
+    return reinterpret_cast<GNMGenericNetworkH>(
+        dynamic_cast<GNMNetwork*>(reinterpret_cast<GDALMajorObject*>(hBase)));
+}

@@ -32,7 +32,9 @@
 #ifndef GNM
 #define GNM
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #include "ogrsf_frmts.h"
+#endif
 #include "gnmgraph.h"
 
 // Direction of an edge.
@@ -60,6 +62,8 @@ typedef enum
     /** KShortest Paths        */           GATKShortestPath,
     /** Recursive Breadth-first search */   GATConnectedComponents
 } GNMGraphAlgorithmType;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /**
  * General GNM class which represents a geography network of common format.
@@ -731,5 +735,7 @@ protected:
     OGRLayer    *poLayer;
 //! @endcond
 };
+
+#endif // __cplusplus
 
 #endif // GNM
