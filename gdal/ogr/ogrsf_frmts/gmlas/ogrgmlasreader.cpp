@@ -1869,7 +1869,32 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
                 osAttrLocalname == szHREF &&
                 !osAttrValue.empty() )
             {
-                ProcessXLinkHref( osAttrXPath, osAttrValue );
+                ProcessXLinkHref( nAttrIdx, osAttrXPath, osAttrValue );
+            }
+
+            if( m_oXLinkResolver.GetConf().m_bResolveInternalXLinks &&
+                m_bInitialPass )
+            {
+                nFCIdx = m_oCurCtxt.m_poLayer->
+                        GetFCFieldIndexFromXPath(osAttrXPath);
+                if( nFCIdx >= 0 &&
+                    m_oCurCtxt.m_poLayer->GetFeatureClass().
+                        GetFields()[nFCIdx].GetType() == GMLAS_FT_ID )
+                {
+                    // We don't check that there's no existing id in the map
+                    // This is normally forbidden by the xs:ID rules
+                    // If not respected by the document, this should not lead to
+                    // crashes
+                    m_oMapElementIdToLayer[ osAttrValue ] = m_oCurCtxt.m_poLayer;
+
+                    if( m_oCurCtxt.m_poLayer->IsGeneratedIDField() )
+                    {
+                        CPLString osFeaturePKID(
+                            m_oCurCtxt.m_poFeature->GetFieldAsString(
+                                m_oCurCtxt.m_poLayer->GetIDFieldIdx() ));
+                        m_oMapElementIdToPKID[ osAttrValue ] = osFeaturePKID;
+                    }
+                }
             }
         }
 
@@ -2027,7 +2052,8 @@ void GMLASReader::ProcessAttributes(const Attributes& attrs)
 /*                           ProcessXLinkHref()                         */
 /************************************************************************/
 
-void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
+void GMLASReader::ProcessXLinkHref( int nAttrIdx,
+                                    const CPLString& osAttrXPath,
                                     const CPLString& osAttrValue )
 {
     // If we are a xlink:href attribute, and that the link value is
@@ -2039,11 +2065,51 @@ void GMLASReader::ProcessXLinkHref( const CPLString& osAttrXPath,
             m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
                 GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
                                                     osAttrXPath));
-        if( nAttrIdx2 >= 0 )
+        if( nAttrIdx2 >= 0 ) 
         {
             SetField( m_oCurCtxt.m_poFeature,
                         m_oCurCtxt.m_poLayer,
                         nAttrIdx2, osAttrValue.substr(1) );
+        }
+        else if( m_oXLinkResolver.GetConf().m_bResolveInternalXLinks )
+        {
+            const CPLString osReferingField(
+                m_oCurCtxt.m_poLayer->GetLayerDefn()->
+                    GetFieldDefn(nAttrIdx)->GetNameRef());
+            const CPLString osId(osAttrValue.substr(1));
+            if( m_bInitialPass )
+            {
+                std::pair<OGRGMLASLayer*, CPLString> oReferingPair(
+                    m_oCurCtxt.m_poLayer, osReferingField);
+                m_oMapFieldXPathToLinkValue[oReferingPair].push_back(osId);
+            }
+            else
+            {
+                std::map<CPLString, OGRGMLASLayer*>::const_iterator oIter =
+                    m_oMapElementIdToLayer.find(osId);
+                if( oIter != m_oMapElementIdToLayer.end() )
+                {
+                    OGRGMLASLayer* poTargetLayer = oIter->second;
+                    const CPLString osLinkFieldXPath =
+                        m_oCurCtxt.m_poLayer->GetXPathOfFieldLinkForAttrToOtherLayer(
+                            osReferingField,
+                            poTargetLayer->GetFeatureClass().GetXPath());
+                    const int nLinkFieldOGRId =
+                        m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
+                            osLinkFieldXPath);
+                    std::map<CPLString, CPLString>::const_iterator oIter2 =
+                        m_oMapElementIdToPKID.find(osId);
+                    if( oIter2 != m_oMapElementIdToPKID.end() )
+                    {
+                        m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId,
+                                                         oIter2->second);
+                    }
+                    else
+                    {
+                        m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId, osId);
+                    }
+                }
+            }
         }
     }
     else
@@ -3177,7 +3243,7 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
 
     // Store in m_oSetGeomFieldsWithUnknownSRS the geometry fields
     std::set<OGRGMLASLayer*> oSetUnreferencedLayers;
-    std::map<OGRGMLASLayer*, std::set<int> > oMapUnusedFields;
+    std::map<OGRGMLASLayer*, std::set<CPLString> > oMapUnusedFields;
     for(size_t i=0; i < m_papoLayers->size(); i++ )
     {
         OGRGMLASLayer* poLayer = (*m_papoLayers)[i];
@@ -3190,7 +3256,8 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
         }
         for(int j=0; j< poFDefn->GetFieldCount(); j++ )
         {
-            oMapUnusedFields[poLayer].insert(j);
+            oMapUnusedFields[poLayer].insert(
+                poFDefn->GetFieldDefn(j)->GetNameRef());
         }
     }
 
@@ -3204,7 +3271,8 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
          bRemoveUnusedLayers ||
          bRemoveUnusedFields ||
          bHasURLSpecificRules ||
-         bProcessSWEDataArray );
+         bProcessSWEDataArray ||
+         m_oXLinkResolver.GetConf().m_bResolveInternalXLinks);
 
     // Loop on features until we have determined the SRS of all geometry
     // columns, or potentially on the whole file for the above reasons
@@ -3217,19 +3285,21 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
             oSetUnreferencedLayers.erase( poLayer );
         if( bRemoveUnusedFields )
         {
-            std::set<int>& oSetUnusedFields = oMapUnusedFields[poLayer];
+            std::set<CPLString>& oSetUnusedFields = oMapUnusedFields[poLayer];
             OGRFeatureDefn* poFDefn = poLayer->GetLayerDefn();
             int nFieldCount = poFDefn->GetFieldCount();
             for(int j=0; j< nFieldCount; j++ )
             {
                 if( poFeature->IsFieldSetAndNotNull(j) )
-                    oSetUnusedFields.erase(j);
+                    oSetUnusedFields.erase(poFDefn->GetFieldDefn(j)->GetNameRef());
             }
         }
         delete poFeature;
     }
 
     CPLDebug("GMLAS", "End of first pass");
+
+    ProcessInternalXLinkFirstPass(bRemoveUnusedFields, oMapUnusedFields);
 
     if( bRemoveUnusedLayers )
     {
@@ -3255,15 +3325,12 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
         for(size_t i=0; i < m_papoLayers->size(); i++ )
         {
             poLayer = (*m_papoLayers)[i];
-            std::set<int>& oSetUnusedFields = oMapUnusedFields[poLayer];
-            std::set<int>::iterator oIter = oSetUnusedFields.begin();
-            int nShiftIndex = 0;
+            std::set<CPLString>& oSetUnusedFields = oMapUnusedFields[poLayer];
+            std::set<CPLString>::iterator oIter = oSetUnusedFields.begin();
             for( ; oIter != oSetUnusedFields.end(); ++oIter )
             {
-                if( poLayer->RemoveField( (*oIter) - nShiftIndex ) )
-                {
-                    nShiftIndex ++;
-                }
+                poLayer->RemoveField(
+                    poLayer->GetLayerDefn()->GetFieldIndex(*oIter) );
             }
 
             // We need to run this again since we may have delete the
@@ -3284,6 +3351,54 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
     m_oSetGeomFieldsWithUnknownSRS.clear();
 
     return !m_bInterrupted;
+}
+
+/************************************************************************/
+/*                    ProcessInternalXLinkFirstPass()                   */
+/************************************************************************/
+
+void GMLASReader::ProcessInternalXLinkFirstPass(
+    bool bRemoveUnusedFields,
+    std::map<OGRGMLASLayer*, std::set<CPLString> >&oMapUnusedFields)
+{
+    std::map<std::pair<OGRGMLASLayer*, CPLString>,
+                std::vector<CPLString> >::const_iterator
+        oIter = m_oMapFieldXPathToLinkValue.begin();
+    for( ; oIter != m_oMapFieldXPathToLinkValue.end(); ++oIter )
+    {
+        OGRGMLASLayer* poReferingLayer = oIter->first.first;
+        const CPLString& osReferingField = oIter->first.second;
+        const std::vector<CPLString>& aosLinks = oIter->second;
+        std::set<OGRGMLASLayer*> oSetTargetLayers;
+        for( size_t i = 0; i < aosLinks.size(); i++ )
+        {
+            std::map<CPLString, OGRGMLASLayer*>::const_iterator oIter2 =
+                m_oMapElementIdToLayer.find(aosLinks[i]);
+            if( oIter2 == m_oMapElementIdToLayer.end() )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "%s:%s = '#%s' has no corresponding target "
+                         "element in this document",
+                         poReferingLayer->GetName(),
+                         osReferingField.c_str(),
+                         aosLinks[i].c_str());
+            }
+            else if( oSetTargetLayers.find(oIter2->second) ==
+                                                    oSetTargetLayers.end() )
+            {
+                OGRGMLASLayer* poTargetLayer = oIter2->second;
+                oSetTargetLayers.insert(poTargetLayer);
+                CPLString osLinkFieldName =
+                    poReferingLayer->CreateLinkForAttrToOtherLayer(
+                        osReferingField,
+                        poTargetLayer->GetFeatureClass().GetXPath());
+                if( bRemoveUnusedFields )
+                {
+                    oMapUnusedFields[poReferingLayer].erase(osLinkFieldName);
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/

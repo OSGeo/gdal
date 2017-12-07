@@ -246,6 +246,8 @@ class GMLASXLinkResolutionConf
 
         bool m_bDefaultCacheResults;
 
+        bool m_bResolveInternalXLinks;
+
         class URLSpecificResolution
         {
             public:
@@ -882,6 +884,8 @@ class GMLASSchemaAnalyzer
          * GML document */
         std::map<CPLString,CPLString> m_oMapDocNSURIToPrefix;
 
+        bool m_bAlwaysGenerateOGRId;
+
         static bool IsSame( const XSModelGroup* poModelGroup1,
                                   const XSModelGroup* poModelGroup2 );
         XSModelGroupDefinition* GetGroupDefinition( const XSModelGroup* poModelGroup );
@@ -945,12 +949,6 @@ class GMLASSchemaAnalyzer
 
         bool IsIgnoredXPath(const CPLString& osXPath);
 
-        CPLString TruncateIdentifier(const CPLString& osName);
-
-        CPLString AddSerialNumber(const CPLString& osNameIn,
-                                  int iOccurrence,
-                                  size_t nOccurrences);
-
         void CollectClassesReferences(
                                 GMLASFeatureClass& oClass,
                                 std::vector<GMLASFeatureClass*>& aoClasses );
@@ -980,6 +978,8 @@ class GMLASSchemaAnalyzer
                                     { m_nMaximumFieldsForFlattening = n; }
         void SetMapDocNSURIToPrefix(const std::map<CPLString,CPLString>& oMap)
                                     { m_oMapDocNSURIToPrefix = oMap; }
+        void SetAlwaysGenerateOGRId(bool b)
+                                    { m_bAlwaysGenerateOGRId = b; }
 
         bool Analyze(GMLASXSDCache& oCache,
                      const CPLString& osBaseDirname,
@@ -1035,6 +1035,12 @@ class OGRGMLASDataSource: public GDALDataset
         /** Map from geometry field definition to its expected SRSName */
         std::map<OGRGeomFieldDefn*, CPLString> m_oMapGeomFieldDefnToSRSName;
 
+        /* map the ID attribute to its belonging layer, e.g foo.1 -> layer Foo */
+        std::map<CPLString, OGRGMLASLayer*> m_oMapElementIdToLayer;
+
+        /* map the ID attribute to the feature PKID (when different from itself) */
+        std::map<CPLString, CPLString> m_oMapElementIdToPKID;
+
         std::vector<PairURIFilename>   m_aoXSDsManuallyPassed;
 
         GMLASConfiguration             m_oConf;
@@ -1087,6 +1093,9 @@ class OGRGMLASDataSource: public GDALDataset
 
         static std::vector<PairURIFilename> BuildXSDVector(
                                             const CPLString& osXSDFilenames);
+
+        void        InitReaderWithFirstPassElements(GMLASReader* poReader);
+
     public:
         OGRGMLASDataSource();
         virtual ~OGRGMLASDataSource();
@@ -1137,7 +1146,6 @@ class OGRGMLASDataSource: public GDALDataset
                                 return m_oConf.m_oMapIgnoredXPathToWarn; }
         const GMLASXPathMatcher& GetIgnoredXPathMatcher() const
                                 { return  m_oIgnoredXPathMatcher; }
-        const CPLString& GetHash() const { return m_osHash; }
 
         const GMLASConfiguration& GetConf() const { return m_oConf; }
         const std::vector<PairURIFilename>& GetXSDsManuallyPassed() const {
@@ -1195,6 +1203,10 @@ class OGRGMLASLayer: public OGRLayer
         void                           SetLayerDefnFinalized(bool bVal)
                                             { m_bLayerDefnFinalized = bVal; }
 
+        CPLString               LaunderFieldName(const CPLString& osFieldName);
+
+        CPLString               GetXPathFromOGRFieldIndex(int nIdx) const;
+
     public:
         OGRGMLASLayer(OGRGMLASDataSource* poDS,
                       const GMLASFeatureClass& oFC,
@@ -1239,6 +1251,12 @@ class OGRGMLASLayer: public OGRLayer
         void InsertNewField( int nInsertPos,
                              OGRFieldDefn& oFieldDefn,
                              const CPLString& osXPath );
+
+        CPLString GetXPathOfFieldLinkForAttrToOtherLayer(
+                                        const CPLString& osFieldName,
+                                        const CPLString& osTargetLayerXPath );
+        CPLString CreateLinkForAttrToOtherLayer( const CPLString& osFieldName,
+                                            const CPLString& osTargetLayerXPath );
 };
 
 /************************************************************************/
@@ -1465,6 +1483,16 @@ class GMLASReader : public DefaultHandler
         std::vector<OGRGMLASLayer*>    m_apoSWEDataArrayLayers;
         int                            m_nSWEDataArrayLayerIdx;
 
+        /* Set of 3 maps used for xlink:href="#xxxx" internal links resolution */
+        /* 1) map the ID attribute to its belonging layer, e.g foo.1 -> layer Foo */
+        std::map<CPLString, OGRGMLASLayer*> m_oMapElementIdToLayer;
+        /* 2) map the ID attribute to the feature PKID (when different from itself) */
+        std::map<CPLString, CPLString> m_oMapElementIdToPKID;
+        /* 3) map each (layer, field_xpath) to the list of ID it refers to */
+        /*    e.g  (layer Bar, field_xpath) -> [foo.1, foo.2] */
+        std::map<std::pair<OGRGMLASLayer*, CPLString>,
+                    std::vector<CPLString> > m_oMapFieldXPathToLinkValue;
+
         void        SetField( OGRFeature* poFeature,
                               OGRGMLASLayer* poLayer,
                               int nAttrIdx,
@@ -1490,7 +1518,8 @@ class GMLASReader : public DefaultHandler
         void        ProcessGeometry(CPLXMLNode* psRoot);
 
         void        ProcessAttributes(const Attributes& attrs);
-        void        ProcessXLinkHref( const CPLString& osAttrXPath,
+        void        ProcessXLinkHref( int nAttrIdx,
+                                      const CPLString& osAttrXPath,
                                       const CPLString& osAttrValue );
         void        ExploreXMLDoc( const CPLString& osAttrXPath,
                                    const GMLASXLinkResolutionConf::URLSpecificResolution& oRule,
@@ -1508,6 +1537,9 @@ class GMLASReader : public DefaultHandler
                         const GMLASXLinkResolutionConf::URLSpecificResolution& oRule );
 
         bool        FillTextContent() const { return !m_bInitialPass && m_nCurFieldIdx >=0; }
+
+        void        ProcessInternalXLinkFirstPass(bool bRemoveUnusedFields,
+            std::map<OGRGMLASLayer*, std::set<CPLString> >&oMapUnusedFields);
 
     public:
                         GMLASReader(GMLASXSDCache& oCache,
@@ -1543,6 +1575,16 @@ class GMLASReader : public DefaultHandler
                                     { return m_oMapGeomFieldDefnToSRSName; }
         void SetMapGeomFieldDefnToSRSName(const std::map<OGRGeomFieldDefn*, CPLString>& oMap )
                                     { m_oMapGeomFieldDefnToSRSName = oMap; }
+
+        const std::map<CPLString, OGRGMLASLayer*>& GetMapElementIdToLayer() const
+                                    { return m_oMapElementIdToLayer; }
+        void SetMapElementIdToLayer(std::map<CPLString, OGRGMLASLayer*>& oMap)
+                                    { m_oMapElementIdToLayer = oMap; }
+
+        const std::map<CPLString, CPLString>& GetMapElementIdToPKID() const
+                                    { return m_oMapElementIdToPKID; }
+        void SetMapElementIdToPKID(const std::map<CPLString, CPLString>& oMap )
+                                    { m_oMapElementIdToPKID = oMap; }
 
         void SetHash(const CPLString& osHash) { m_osHash = osHash; }
 
@@ -1591,5 +1633,13 @@ class GMLASReader : public DefaultHandler
         const std::vector<OGRGMLASLayer*>& GetSWEDataArrayLayers() const
             { return m_apoSWEDataArrayLayers; }
 };
+
+CPLString OGRGMLASTruncateIdentifier(const CPLString& osName,
+                                     int nIdentMaxLength);
+
+CPLString OGRGMLASAddSerialNumber(const CPLString& osNameIn,
+                                  int iOccurrence,
+                                  size_t nOccurrences,
+                                  int nIdentMaxLength);
 
 #endif // OGR_GMLAS_INCLUDED

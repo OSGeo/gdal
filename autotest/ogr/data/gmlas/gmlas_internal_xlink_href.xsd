@@ -1,0 +1,58 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xlink="http://fake_xlink"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_xlink" schemaLocation="gmlas_fake_xlink.xsd"/>
+
+<xs:element name="FeatureCollection">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element ref="main_elt" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="second_elt" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="third_elt" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="main_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="link_to_second_or_third_elt" minOccurs="0">
+            <xs:complexType>
+                <xs:sequence minOccurs="0">
+                    <xs:any processContents="lax"/>
+                </xs:sequence>
+                <xs:attribute ref="xlink:href"/>
+            </xs:complexType>
+        </xs:element>
+        <xs:element name="link_to_third_elt" minOccurs="0">
+            <xs:complexType>
+                <xs:sequence minOccurs="0">
+                    <xs:element ref="third_elt"/>
+                </xs:sequence>
+                <xs:attribute ref="xlink:href"/>
+            </xs:complexType>
+        </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="second_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="foo" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="third_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="foo" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

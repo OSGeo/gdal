@@ -32,7 +32,7 @@
 #include "ogr_gmlas.h"
 
 #define CONSTANT_DEFINITION
-#undef OGR_GMLAS_CONSTS_INCLUDED_REFEFINABLE
+#undef OGR_GMLAS_CONSTS_INCLUDED_REDEFINABLE
 #include "ogr_gmlas_consts.h"
 
 #include "cpl_minixml.h"
@@ -557,7 +557,8 @@ GMLASXLinkResolutionConf::GMLASXLinkResolutionConf() :
     m_bDefaultAllowRemoteDownload(ALLOW_REMOTE_DOWNLOAD_DEFAULT),
     m_eDefaultResolutionMode(RawContent),
     m_nDefaultResolutionDepth(1),
-    m_bDefaultCacheResults(CACHE_RESULTS_DEFAULT)
+    m_bDefaultCacheResults(CACHE_RESULTS_DEFAULT),
+    m_bResolveInternalXLinks(INTERNAL_XLINK_RESOLUTION_DEFAULT)
 {
 }
 
@@ -661,6 +662,10 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
             m_aoURLSpecificRules.push_back( oItem );
         }
     }
+
+    m_bResolveInternalXLinks = CPLGetXMLBoolValue( psRoot,
+                                    "ResolveInternalXLinks",
+                                    INTERNAL_XLINK_RESOLUTION_DEFAULT);
 
     return true;
 }
