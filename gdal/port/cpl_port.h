@@ -179,7 +179,7 @@
 /*      Which versions of C++ are available.                            */
 /* -------------------------------------------------------------------- */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #  if __cplusplus >= 201103L
 #    define HAVE_CXX11 1
 #  endif
