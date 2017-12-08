@@ -1047,7 +1047,7 @@ static const GRIB2ParmTable MeteoStability[] = {
 /* 191 */  {"-", "Reserved", "-", UC_NONE},
 /* 192 */  {"LFTX", "Surface Lifted Index", "K", UC_NONE},
 /* 193 */  {"4LFTX", "Best (4 layer) Lifted Index", "K", UC_NONE},
-/* 194 */  {"RI", "Richardson Number", "numeric", UC_NONE},
+/* 194 */  {"RI", "Richardson Number", "Numeric", UC_NONE},
 /* 195 */  {"CWDI", "Convective Weather Detection Index", "-", UC_NONE},
 /* 196 */  {"UVI", "Ultra Violet Index", "W/m^2", UC_NONE},
 /* 197 */  {"UPHL", "Updraft Helicity", "m^2/s^2", UC_NONE},
