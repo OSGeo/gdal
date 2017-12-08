@@ -39,10 +39,14 @@ else
 fi
 
 # Build extensions
-${CXX} ${CFLAGS} extensions/gdal_wrap.cpp -shared -o ${OUTDIR}/_gdal.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} ${CFLAGS} extensions/ogr_wrap.cpp -shared -o ${OUTDIR}/_ogr.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} ${CFLAGS} extensions/osr_wrap.cpp -shared -o ${OUTDIR}/_osr.pyd ${INCFLAGS} ${LINKFLAGS}
-${CXX} ${CFLAGS} extensions/gdalconst_wrap.c -shared -o ${OUTDIR}/_gdalconst.pyd ${INCFLAGS} ${LINKFLAGS}
+
+# Horrible hack because if <cmath> is included after Python.h we get weird errors
+echo '#include <cmath>' > extensions/gdal_wrap.temp.cpp
+cat extensions/gdal_wrap.cpp >> extensions/gdal_wrap.temp.cpp
+${CXX} ${CFLAGS} -std=c++11 extensions/gdal_wrap.temp.cpp -shared -o ${OUTDIR}/_gdal.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} -std=c++11 extensions/ogr_wrap.cpp -shared -o ${OUTDIR}/_ogr.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} -std=c++11 extensions/osr_wrap.cpp -shared -o ${OUTDIR}/_osr.pyd ${INCFLAGS} ${LINKFLAGS}
+${CXX} ${CFLAGS} -std=c++11 extensions/gdalconst_wrap.c -shared -o ${OUTDIR}/_gdalconst.pyd ${INCFLAGS} ${LINKFLAGS}
 
 if test x${HAS_NUMPY} = "xyes"; then
     ${CXX} ${CFLAGS} extensions/gdal_array_wrap.cpp -shared -o ${OUTDIR}/_gdal_array.pyd ${INCFLAGS} -I${PYTHONHOME}/Lib/site-packages/numpy/core/include ${LINKFLAGS}

@@ -123,32 +123,34 @@ AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-opera
 
 AC_LANG_POP([C++])
 
-CXX11_SUPPORT=no
-AC_ARG_WITH([cpp11],
-	    AS_HELP_STRING([--without-cpp11],
-	       [Disable C++11 compiler options]),,)
+CXX14_SUPPORT=no
+AC_ARG_WITH([cpp14],
+	    AS_HELP_STRING([--with-cpp14],
+	       [Enable C++14 compiler options]),,)
 
-AC_MSG_CHECKING([if use C++11 compiler options])
-if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
-    dnl Check C++ compiler compatibility with C++11
-    AC_MSG_CHECKING([C++ compiler compatibility with C++11])
-    AX_CXX_COMPILE_STDCXX_11([ext],[optional])
+AC_MSG_CHECKING([if use C++14 compiler options])
+if test "$with_cpp14" = "yes"; then
+    dnl Check C++ compiler compatibility with C++14
+    AC_MSG_CHECKING([C++ compiler compatibility with C++14])
+    AX_CXX_COMPILE_STDCXX([14],[noext],[optional])
 
-    if [test "$HAVE_CXX11" = "1"]; then
-        CXX11_SUPPORT=yes
+    if [test "$HAVE_CXX14" = "1"]; then
+        CXX14_SUPPORT=yes
     fi
     AC_MSG_RESULT([enabled])
 else
     AC_MSG_RESULT([disabled by user])
 fi
-AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
+AC_SUBST(CXX14_SUPPORT,$CXX14_SUPPORT)
 
-if [test "$CXX11_SUPPORT" = "yes"]; then
-    dnl Available in GCC 5.1
-    AC_LANG_PUSH([C++])
-        AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [CXX_WFLAGS="$CXX_WFLAGS -Wsuggest-override"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-    AC_LANG_POP([C++])
+if [test "$CXX14_SUPPORT" = "no"]; then
+    AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 fi
+
+dnl Available in GCC 5.1
+AC_LANG_PUSH([C++])
+    AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [CXX_WFLAGS="$CXX_WFLAGS -Wsuggest-override"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AC_LANG_POP([C++])
 
 dnl Enable -Wimplicit-fallthrough only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
@@ -316,6 +318,7 @@ AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime;
 AC_LANG_POP(C++)
 
 AC_MSG_CHECKING([for uselocale])
+AC_LANG_PUSH(C++)
 AC_TRY_COMPILE(
   [
 #define _XOPEN_SOURCE 700
@@ -334,6 +337,7 @@ AC_TRY_COMPILE(
   ], [
     AC_MSG_RESULT([no])
 ])
+AC_LANG_POP(C++)
 
 
 OPT_GDAL_FORMATS=
@@ -5566,7 +5570,7 @@ LOC_MSG()
 LOC_MSG([  Installation directory:    ${prefix}])
 LOC_MSG([  C compiler:                ${CC} ${CFLAGS}])
 LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
-LOC_MSG([  C++11 support:             ${CXX11_SUPPORT}])
+LOC_MSG([  C++14 support:             ${CXX14_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
