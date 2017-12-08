@@ -26,7 +26,9 @@
 #include "metaname.h"
 #include "myerror.h"
 #include "myutil.h"
+#ifdef ENABLE_TDLPACK
 #include "tdlpack.h"
+#endif
 #include "myassert.h"
 #include "clock.h"
 
