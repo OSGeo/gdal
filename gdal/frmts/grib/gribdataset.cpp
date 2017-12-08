@@ -901,8 +901,11 @@ int GRIBDataset::Identify( GDALOpenInfo *poOpenInfo )
     // Does a part of what ReadSECT0(), but in a thread-safe way.
     for(int i = 0; i < poOpenInfo->nHeaderBytes - 3; i++)
     {
-        if(STARTS_WITH_CI(pasHeader + i, "GRIB") ||
-           STARTS_WITH_CI(pasHeader + i, "TDLP"))
+        if(STARTS_WITH_CI(pasHeader + i, "GRIB")
+#ifdef ENABLE_TDLP
+            || STARTS_WITH_CI(pasHeader + i, "TDLP")
+#endif
+        )
             return TRUE;
     }
 
@@ -1011,8 +1014,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         int nOffsetFirstMessage = 0;
         for(int j = 0; j < poOpenInfo->nHeaderBytes - 3; j++)
         {
-            if(STARTS_WITH_CI(pasHeader + j, "GRIB") ||
-               STARTS_WITH_CI(pasHeader + j, "TDLP"))
+            if(STARTS_WITH_CI(pasHeader + j, "GRIB")
+#ifdef ENABLE_TDLP
+               || STARTS_WITH_CI(pasHeader + j, "TDLP")
+#endif
+            )
             {
                 nOffsetFirstMessage = j;
                 break;

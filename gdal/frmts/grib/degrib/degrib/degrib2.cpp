@@ -29,7 +29,9 @@
 //#include "write.h"
 #include "degrib2.h"
 #include "degrib1.h"
+#ifdef ENABLE_TDLPACK
 #include "tdlpack.h"
+#endif
 #include "grib2api.h"
 //#include "mymapf.h"
 #include "clock.h"
@@ -160,13 +162,16 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
                   break;
                }
             }
-         } else if ((*buff)[i] == 'T') {
+         }
+#ifdef ENABLE_TDLPACK
+         else if ((*buff)[i] == 'T') {
             if (((*buff)[i + 1] == 'D') && ((*buff)[i + 2] == 'L') &&
                 ((*buff)[i + 3] == 'P')) {
                tdlpMatch = 4;
                break;
             }
          }
+#endif
       }
       stillNeed = i - (curLen - 8);
       /* Read enough of message to have the first 8 bytes (including ID). */
@@ -921,7 +926,9 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          *f_endMsg = 1;
          free (buff);
          return 0;
-      } else if (version == -1) {
+      }
+#ifdef ENABLE_TDLPACK
+      else if (version == -1) {
          if (ReadTDLPRecord (fp, Grib_Data, grib_DataLen, meta, IS,
                              sect0, gribLen, majEarth, minEarth) != 0) {
             preErrSprintf ("Problems with ReadGrib1Record called by "
@@ -932,6 +939,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          free (buff);
          return 0;
       }
+#endif
 
       /*
        * Make room for entire message, and read it in.
