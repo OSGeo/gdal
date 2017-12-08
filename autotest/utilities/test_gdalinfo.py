@@ -244,6 +244,7 @@ def test_gdalinfo_10():
 # Test gdalinfo --version
 
 def test_gdalinfo_11():
+
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
@@ -280,6 +281,9 @@ def test_gdalinfo_13():
     ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('LICENSE')) != 0:
         print(ret)
+        print(gdal.VersionInfo('LICENSE'))
+        if gdaltest.is_travis_branch('mingw'):
+            return 'expected_fail'
         return 'fail'
 
     return 'success'
