@@ -236,7 +236,6 @@ typedef struct {
     double      dfDEMMissingValue;
     int         bApplyDEMVDatumShift;
 
-    int         bHasTriedOpeningDS;
     GDALDataset *poDS;
     double     *padfDEMBuffer;
     int         nDEMExtractions;
@@ -265,6 +264,8 @@ typedef struct {
     bool        bRPCInverseVerbose;
     char       *pszRPCInverseLog;
 } GDALRPCTransformInfo;
+
+static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform );
 
 /************************************************************************/
 /*                            RPCEvaluate()                             */
@@ -890,6 +891,17 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         psTransform->pszRPCInverseLog = CPLStrdup(pszRPCInverseLog);
 
 /* -------------------------------------------------------------------- */
+/*      Open DEM if needed.                                             */
+/* -------------------------------------------------------------------- */
+
+    if( psTransform->pszDEMPath != NULL &&
+        !GDALRPCOpenDEM(psTransform) )
+    {
+        GDALDestroyRPCTransformer( psTransform );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Establish a reference point for calcualating an affine          */
 /*      geotransform approximate transformation.                        */
 /* -------------------------------------------------------------------- */
@@ -984,6 +996,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
         GDALDestroyRPCTransformer(psTransform);
         return NULL;
     }
+
     return psTransform;
 }
 
@@ -1767,6 +1780,134 @@ GDALRPCTransformWholeLineWithDEM( const GDALRPCTransformInfo *psTransform,
 }
 
 /************************************************************************/
+/*                           GDALRPCOpenDEM()                           */
+/************************************************************************/
+
+static bool GDALRPCOpenDEM( GDALRPCTransformInfo* psTransform )
+{
+    CPLAssert( psTransform->pszDEMPath != NULL );
+
+    bool bIsValid = false;
+
+    CPLString osPrevValueConfigOption;
+    if( psTransform->bApplyDEMVDatumShift )
+    {
+        osPrevValueConfigOption
+            = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
+        CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
+    }
+    CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
+    psTransform->poDS = reinterpret_cast<GDALDataset *>(
+        GDALOpen(psTransform->pszDEMPath, GA_ReadOnly));
+    if( psTransform->poDS != NULL &&
+        psTransform->poDS->GetRasterCount() >= 1 )
+    {
+        psTransform->nBufferMaxRadius =
+            atoi(CPLGetConfigOption("GDAL_RPC_DEM_BUFFER_MAX_RADIUS", "2"));
+        psTransform->nHitsInBuffer = 0;
+        const int nMaxWindowSize = 4;
+        psTransform->padfDEMBuffer = static_cast<double*>(VSIMalloc(
+            (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) *
+            (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) *
+            sizeof(double) ));
+        psTransform->nBufferX = -1;
+        psTransform->nBufferY = -1;
+        psTransform->nBufferWidth = -1;
+        psTransform->nBufferHeight = -1;
+        psTransform->nLastQueriedX = -1;
+        psTransform->nLastQueriedY = -1;
+        const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
+        if( pszSpatialRef != NULL && pszSpatialRef[0] != '\0' )
+        {
+            OGRSpatialReference* poWGSSpaRef =
+                    new OGRSpatialReference(SRS_WKT_WGS84);
+
+            OGRSpatialReference* poDSSpaRef =
+                    new OGRSpatialReference(pszSpatialRef);
+            if( !psTransform->bApplyDEMVDatumShift )
+                poDSSpaRef->StripVertical();
+
+            if( !poWGSSpaRef->IsSame(poDSSpaRef) )
+                psTransform->poCT =
+                    OGRCreateCoordinateTransformation(poWGSSpaRef,
+                                                        poDSSpaRef);
+
+            if( psTransform->poCT != NULL && !poDSSpaRef->IsCompound() )
+            {
+                // Empiric attempt to guess if the coordinate transformation
+                // to WGS84 is a no-op. For example for NED13 datasets in
+                // NAD83.
+                double adfX[] = { -179.0, 179.0, 179.0, -179.0, 0.0, 0.0 };
+                double adfY[] = { 89.0, 89.0, -89.0, -89.0, 0.0, 0.0 };
+                double adfZ[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+                // Also test with a "reference point" from the RPC values.
+                double dfRefLong = 0.0;
+                double dfRefLat = 0.0;
+                if( psTransform->sRPC.dfMIN_LONG != -180 ||
+                    psTransform->sRPC.dfMAX_LONG != 180 )
+                {
+                    dfRefLong = (psTransform->sRPC.dfMIN_LONG +
+                                    psTransform->sRPC.dfMAX_LONG) * 0.5;
+                    dfRefLat  = (psTransform->sRPC.dfMIN_LAT +
+                                    psTransform->sRPC.dfMAX_LAT ) * 0.5;
+                }
+                else
+                {
+                    dfRefLong = psTransform->sRPC.dfLONG_OFF;
+                    dfRefLat  = psTransform->sRPC.dfLAT_OFF;
+                }
+                adfX[5] = dfRefLong;
+                adfY[5] = dfRefLat;
+
+                if( psTransform->poCT->Transform(
+                                            6, adfX, adfY, adfZ) &&
+                    fabs(adfX[0] - -179.0) < 1.0e-12 &&
+                    fabs(adfY[0] -   89.0) < 1.0e-12 &&
+                    fabs(adfX[1] -  179.0) < 1.0e-12 &&
+                    fabs(adfY[1] -   89.0) < 1.0e-12 &&
+                    fabs(adfX[2] -  179.0) < 1.0e-12 &&
+                    fabs(adfY[2] -  -89.0) < 1.0e-12 &&
+                    fabs(adfX[3] - -179.0) < 1.0e-12 &&
+                    fabs(adfY[3] -  -89.0) < 1.0e-12 &&
+                    fabs(adfX[4] -    0.0) < 1.0e-12 &&
+                    fabs(adfY[4] -    0.0) < 1.0e-12 &&
+                    fabs(adfX[5] - dfRefLong) < 1.0e-12 &&
+                    fabs(adfY[5] - dfRefLat) < 1.0e-12 )
+                {
+                    CPLDebug("RPC",
+                                "Short-circuiting coordinate transformation "
+                                "from DEM SRS to WGS 84 due to apparent nop");
+                    delete psTransform->poCT;
+                    psTransform->poCT = NULL;
+                }
+            }
+
+            delete poWGSSpaRef;
+            delete poDSSpaRef;
+        }
+
+        if( psTransform->poDS->GetGeoTransform(
+                            psTransform->adfDEMGeoTransform) == CE_None &&
+            GDALInvGeoTransform( psTransform->adfDEMGeoTransform,
+                                    psTransform->adfDEMReverseGeoTransform ) )
+        {
+            bIsValid = true;
+        }
+    }
+
+    if( psTransform->bApplyDEMVDatumShift )
+    {
+        CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
+                                        !osPrevValueConfigOption.empty()
+                                            ? osPrevValueConfigOption.c_str()
+                                            : NULL);
+    }
+
+    return bIsValid;
+}
+
+/************************************************************************/
 /*                          GDALRPCTransform()                          */
 /************************************************************************/
 
@@ -1784,136 +1925,6 @@ int GDALRPCTransform( void *pTransformArg, int bDstToSrc,
 
     if( psTransform->bReversed )
         bDstToSrc = !bDstToSrc;
-
-/* -------------------------------------------------------------------- */
-/*      Lazy opening of the optional DEM file.                          */
-/* -------------------------------------------------------------------- */
-    if( psTransform->pszDEMPath != NULL &&
-        psTransform->bHasTriedOpeningDS == FALSE )
-    {
-        bool bIsValid = false;
-        psTransform->bHasTriedOpeningDS = TRUE;
-        CPLString osPrevValueConfigOption;
-        if( psTransform->bApplyDEMVDatumShift )
-        {
-            osPrevValueConfigOption
-                = CPLGetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "");
-            CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS", "YES");
-        }
-        CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
-        psTransform->poDS = reinterpret_cast<GDALDataset *>(
-            GDALOpen(psTransform->pszDEMPath, GA_ReadOnly));
-        if( psTransform->poDS != NULL &&
-            psTransform->poDS->GetRasterCount() >= 1 )
-        {
-            psTransform->nBufferMaxRadius =
-                atoi(CPLGetConfigOption("GDAL_RPC_DEM_BUFFER_MAX_RADIUS", "2"));
-            psTransform->nHitsInBuffer = 0;
-            const int nMaxWindowSize = 4;
-            psTransform->padfDEMBuffer = static_cast<double*>(VSIMalloc(
-                (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) *
-                (nMaxWindowSize + 2 * psTransform->nBufferMaxRadius) *
-                sizeof(double) ));
-            psTransform->nBufferX = -1;
-            psTransform->nBufferY = -1;
-            psTransform->nBufferWidth = -1;
-            psTransform->nBufferHeight = -1;
-            psTransform->nLastQueriedX = -1;
-            psTransform->nLastQueriedY = -1;
-            const char* pszSpatialRef = psTransform->poDS->GetProjectionRef();
-            if( pszSpatialRef != NULL && pszSpatialRef[0] != '\0' )
-            {
-                OGRSpatialReference* poWGSSpaRef =
-                        new OGRSpatialReference(SRS_WKT_WGS84);
-
-                OGRSpatialReference* poDSSpaRef =
-                        new OGRSpatialReference(pszSpatialRef);
-                if( !psTransform->bApplyDEMVDatumShift )
-                    poDSSpaRef->StripVertical();
-
-                if( !poWGSSpaRef->IsSame(poDSSpaRef) )
-                    psTransform->poCT =
-                        OGRCreateCoordinateTransformation(poWGSSpaRef,
-                                                          poDSSpaRef);
-
-                if( psTransform->poCT != NULL && !poDSSpaRef->IsCompound() )
-                {
-                    // Empiric attempt to guess if the coordinate transformation
-                    // to WGS84 is a no-op. For example for NED13 datasets in
-                    // NAD83.
-                    double adfX[] = { -179.0, 179.0, 179.0, -179.0, 0.0, 0.0 };
-                    double adfY[] = { 89.0, 89.0, -89.0, -89.0, 0.0, 0.0 };
-                    double adfZ[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-
-                    // Also test with a "reference point" from the RPC values.
-                    double dfRefLong = 0.0;
-                    double dfRefLat = 0.0;
-                    if( psTransform->sRPC.dfMIN_LONG != -180 ||
-                        psTransform->sRPC.dfMAX_LONG != 180 )
-                    {
-                        dfRefLong = (psTransform->sRPC.dfMIN_LONG +
-                                     psTransform->sRPC.dfMAX_LONG) * 0.5;
-                        dfRefLat  = (psTransform->sRPC.dfMIN_LAT +
-                                     psTransform->sRPC.dfMAX_LAT ) * 0.5;
-                    }
-                    else
-                    {
-                        dfRefLong = psTransform->sRPC.dfLONG_OFF;
-                        dfRefLat  = psTransform->sRPC.dfLAT_OFF;
-                    }
-                    adfX[5] = dfRefLong;
-                    adfY[5] = dfRefLat;
-
-                    if( psTransform->poCT->Transform(
-                                                6, adfX, adfY, adfZ) &&
-                        fabs(adfX[0] - -179.0) < 1.0e-12 &&
-                        fabs(adfY[0] -   89.0) < 1.0e-12 &&
-                        fabs(adfX[1] -  179.0) < 1.0e-12 &&
-                        fabs(adfY[1] -   89.0) < 1.0e-12 &&
-                        fabs(adfX[2] -  179.0) < 1.0e-12 &&
-                        fabs(adfY[2] -  -89.0) < 1.0e-12 &&
-                        fabs(adfX[3] - -179.0) < 1.0e-12 &&
-                        fabs(adfY[3] -  -89.0) < 1.0e-12 &&
-                        fabs(adfX[4] -    0.0) < 1.0e-12 &&
-                        fabs(adfY[4] -    0.0) < 1.0e-12 &&
-                        fabs(adfX[5] - dfRefLong) < 1.0e-12 &&
-                        fabs(adfY[5] - dfRefLat) < 1.0e-12 )
-                    {
-                        CPLDebug("RPC",
-                                 "Short-circuiting coordinate transformation "
-                                 "from DEM SRS to WGS 84 due to apparent nop");
-                        delete psTransform->poCT;
-                        psTransform->poCT = NULL;
-                    }
-                }
-
-                delete poWGSSpaRef;
-                delete poDSSpaRef;
-            }
-
-            if( psTransform->poDS->GetGeoTransform(
-                                psTransform->adfDEMGeoTransform) == CE_None &&
-                GDALInvGeoTransform( psTransform->adfDEMGeoTransform,
-                                     psTransform->adfDEMReverseGeoTransform ) )
-            {
-                bIsValid = true;
-            }
-        }
-
-        if( psTransform->bApplyDEMVDatumShift )
-        {
-            CPLSetThreadLocalConfigOption("GTIFF_REPORT_COMPD_CS",
-                                          !osPrevValueConfigOption.empty()
-                                              ? osPrevValueConfigOption.c_str()
-                                              : NULL);
-        }
-
-        if( !bIsValid && psTransform->poDS != NULL )
-        {
-            GDALClose(psTransform->poDS);
-            psTransform->poDS = NULL;
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      The simple case is transforming from lat/long to pixel/line.    */
