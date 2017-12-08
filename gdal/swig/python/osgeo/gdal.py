@@ -2899,45 +2899,44 @@ def AutoCreateWarpedVRT(*args):
 def CreatePansharpenedVRT(*args):
     """CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"""
     return _gdal.CreatePansharpenedVRT(*args)
-class Transformer(_object):
+class GDALTransformerInfoShadow(_object):
     """Proxy of C++ GDALTransformerInfoShadow class."""
 
     __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, Transformer, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(self, GDALTransformerInfoShadow, name, value)
     __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, Transformer, name)
-    __repr__ = _swig_repr
+    __getattr__ = lambda self, name: _swig_getattr(self, GDALTransformerInfoShadow, name)
 
-    def __init__(self, *args):
-        """__init__(GDALTransformerInfoShadow self, Dataset src, Dataset dst, char ** options) -> Transformer"""
-        this = _gdal.new_Transformer(*args)
-        try:
-            self.this.append(this)
-        except Exception:
-            self.this = this
-    __swig_destroy__ = _gdal.delete_Transformer
+    def __init__(self, *args, **kwargs):
+        raise AttributeError("No constructor defined")
+    __repr__ = _swig_repr
+    __swig_destroy__ = _gdal.delete_GDALTransformerInfoShadow
     __del__ = lambda self: None
 
     def TransformPoint(self, *args):
         """
-        TransformPoint(Transformer self, int bDstToSrc, double [3] inout) -> int
-        TransformPoint(Transformer self, int bDstToSrc, double x, double y, double z=0.0) -> int
+        TransformPoint(GDALTransformerInfoShadow self, int bDstToSrc, double [3] inout) -> int
+        TransformPoint(GDALTransformerInfoShadow self, int bDstToSrc, double x, double y, double z=0.0) -> int
         """
-        return _gdal.Transformer_TransformPoint(self, *args)
+        return _gdal.GDALTransformerInfoShadow_TransformPoint(self, *args)
 
 
     def TransformPoints(self, *args):
-        """TransformPoints(Transformer self, int bDstToSrc, int nCount) -> int"""
-        return _gdal.Transformer_TransformPoints(self, *args)
+        """TransformPoints(GDALTransformerInfoShadow self, int bDstToSrc, int nCount) -> int"""
+        return _gdal.GDALTransformerInfoShadow_TransformPoints(self, *args)
 
 
     def TransformGeolocations(self, *args, **kwargs):
-        """TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"""
-        return _gdal.Transformer_TransformGeolocations(self, *args, **kwargs)
+        """TransformGeolocations(GDALTransformerInfoShadow self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"""
+        return _gdal.GDALTransformerInfoShadow_TransformGeolocations(self, *args, **kwargs)
 
-Transformer_swigregister = _gdal.Transformer_swigregister
-Transformer_swigregister(Transformer)
+GDALTransformerInfoShadow_swigregister = _gdal.GDALTransformerInfoShadow_swigregister
+GDALTransformerInfoShadow_swigregister(GDALTransformerInfoShadow)
 
+
+def Transformer(*args):
+    """Transformer(Dataset src, Dataset dst, char ** options) -> GDALTransformerInfoShadow"""
+    return _gdal.Transformer(*args)
 
 def ApplyVerticalShiftGrid(*args, **kwargs):
     """ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"""
