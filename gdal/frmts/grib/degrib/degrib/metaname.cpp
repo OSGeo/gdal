@@ -866,6 +866,9 @@ static const GRIB2ParmTable MeteoStability[] = {
 /* 10 */   {"LFTX", "Surface lifted index", "K", UC_NONE},
 /* 11 */   {"4LFTX", "Best (4-layer) lifted index", "K", UC_NONE},
 /* 12 */   {"RI", "Richardson number", "-", UC_NONE},
+/* 13 */   {"SHWINX", "Showalter Index", "K", UC_NONE},
+/* 14 */   {"-", "Reserved", "-", UC_NONE},
+/* 15 */   {"UPHL", "Updraft Helicity", "m^2/s^-2", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 0.13 */
