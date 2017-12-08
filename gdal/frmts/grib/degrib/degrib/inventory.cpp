@@ -26,7 +26,9 @@
 #include "tendian.h"
 #include "degrib2.h"
 #include "degrib1.h"
+#ifdef ENABLE_TDLPACK
 #include "tdlpack.h"
+#endif
 #include "myerror.h"
 #include "myutil.h"
 #include "myassert.h"
@@ -1087,6 +1089,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             //fclose (fp);
             return -12;
          }
+#ifdef ENABLE_TDLPACK
       } else if (version == -1) {
          if (TDLP_Inventory (fp, gribLen, inv) != 0) {
             preErrSprintf ("Inside GRIB2Inventory \n");
@@ -1095,6 +1098,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             //fclose (fp);
             return -13;
          }
+#endif
       } else {
          word.li = sect0[1];
          prodType = word.buffer[2];
@@ -1205,6 +1209,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       {
       uInt4 increment;
       /* Continue on to the next GRIB2 message. */
+#ifdef ENABLE_TDLPACK
       if (version == -1) {
          /* TDLPack uses 4 bytes for FORTRAN record size, then another 8
           * bytes for the size of the record (so FORTRAN can see it), then
@@ -1213,7 +1218,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
           * in_ the gribLen the non-rounded amount, so we need to take care
           * of the rounding, and the trailing 4 bytes here. */
          increment = buffLen + ((uInt4) ceil (gribLen / 8.0)) * 8 + 4;
-      } else {
+      } else
+#endif
+      {
          increment = buffLen + gribLen;
       }
       if( increment < buffLen || increment > (uInt4)(INT_MAX - offset) )
@@ -1327,6 +1334,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             //fclose (fp);
             return -12;
          }
+#ifdef ENABLE_TDLPACK
       } else if (version == -1) {
          if (TDLP_RefTime (fp, gribLen, &(refTime1)) != 0) {
             preErrSprintf ("Inside TDLP_RefTime\n");
@@ -1335,6 +1343,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             //fclose (fp);
             return -13;
          }
+#endif
       } else {
           /* word.li = sect0[1]; */
          /* prodType = word.buffer[2]; */
