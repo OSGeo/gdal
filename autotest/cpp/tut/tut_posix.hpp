@@ -344,7 +344,7 @@ private:
 
             //TODO: max failure length
             char buffer[1024];
-            int r = read(pipe, buffer, sizeof(buffer));
+            int r = static_cast<int>(read(pipe, buffer, sizeof(buffer)));
             ensure_errno("sanity check on read() failed", r >= 0);
 
             if(r > 0)
