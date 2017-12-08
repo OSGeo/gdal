@@ -2143,7 +2143,7 @@ TABFieldType TABFile::GetNativeFieldType(int nFieldId)
 int  TABFile::GetFieldIndexNumber(int nFieldId)
 {
     if (m_panIndexNo == NULL || nFieldId < 0 ||
-        m_poDATFile== NULL || nFieldId >= m_poDATFile->GetNumFields())
+        m_poDATFile== NULL || nFieldId >= m_poDefn->GetFieldCount())
         return 0;  // no index
 
     return m_panIndexNo[nFieldId];
@@ -2173,7 +2173,7 @@ int TABFile::SetFieldIndexed( int nFieldId )
     }
 
     if (m_panIndexNo == NULL || nFieldId < 0 ||
-        m_poDATFile== NULL || nFieldId >= m_poDATFile->GetNumFields())
+        m_poDATFile== NULL || nFieldId >= m_poDefn->GetFieldCount())
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Invalid field number in SetFieldIndexed().");
@@ -2276,7 +2276,7 @@ TABINDFile  *TABFile::GetINDFileRef()
             /*---------------------------------------------------------
              * Pass type information for each indexed field.
              *--------------------------------------------------------*/
-            for(int i=0; i<m_poDATFile->GetNumFields(); i++)
+            for(int i=0; i<m_poDefn->GetFieldCount(); i++)
             {
                 if (m_panIndexNo[i] > 0)
                 {
