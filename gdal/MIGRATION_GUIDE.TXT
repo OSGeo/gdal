@@ -1,7 +1,7 @@
 MIGRATION GUIDE FROM GDAL 2.2 to GDAL 2.3
 -----------------------------------------
 
-7) RFC 70: Guessing output format from output file name extension for utilities
+1) RFC 70: Guessing output format from output file name extension for utilities
 
 Link: https://trac.osgeo.org/gdal/wiki/rfc70_output_format_guess
 
@@ -10,6 +10,14 @@ Shapefile were assumed for most utilities. Now, the output format will be
 guessed from the output filename extension. This might break usages where
 non-standard extensions are used for GeoTIFF or Shapefile output when -f/-of is
 not specified (but warnings were already emitted in such situations).
+
+2) RFC 68: C++11 Compilation requirement
+
+Link: https://trac.osgeo.org/gdal/wiki/rfc68_cplusplus11
+
+GDAL now requires a C++11 compatible compiler. External code using GDAL C++ API
+will also need to enable at least C++11 compilation mode, if the compiler
+defaults to C++98/C++03.
 
 MIGRATION GUIDE FROM GDAL 2.1 to GDAL 2.2
 -----------------------------------------
