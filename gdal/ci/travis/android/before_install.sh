@@ -2,6 +2,6 @@
 
 set -e
 
-wget http://dl.google.com/android/ndk/android-ndk-r9d-linux-x86_64.tar.bz2
-tar xjf android-ndk-r9d-linux-x86_64.tar.bz2
-android-ndk-r9d/build/tools/make-standalone-toolchain.sh --system=linux-x86_64 --platform=android-8 --install-dir=$HOME/android-8-toolchain
+wget https://dl.google.com/android/repository/android-ndk-r16-linux-x86_64.zip
+unzip -q android-ndk-r16-linux-x86_64.zip
+android-ndk-r16/build/tools/make-standalone-toolchain.sh --platform=android-24 --install-dir=$HOME/android-toolchain

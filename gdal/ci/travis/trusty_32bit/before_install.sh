@@ -7,17 +7,17 @@ mkdir -p "$chroot$PWD"
 sudo apt-get update
 sudo apt-get install -y debootstrap
 export LC_ALL=en_US.utf8
-sudo i386 debootstrap --arch=i386 precise "$chroot"
+sudo i386 debootstrap --arch=i386 trusty "$chroot"
 sudo mount --rbind "$PWD" "$chroot$PWD"
 sudo mount --rbind /dev/pts "$chroot/dev/pts"
 sudo mount --rbind /dev/shm "$chroot/dev/shm"
 sudo mount --rbind /proc "$chroot/proc"
-sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu precise universe" >> buildroot.i386/etc/apt/sources.list'
+sudo su -c 'echo "deb http://archive.ubuntu.com/ubuntu trusty universe" >> buildroot.i386/etc/apt/sources.list'
 sudo i386 chroot "$chroot" locale-gen en_US.UTF-8
 sudo i386 chroot "$chroot" update-locale LANG=en_US.UTF-8
 sudo i386 chroot "$chroot" apt-get update
 sudo i386 chroot "$chroot" apt-get install -y clang
-sudo i386 chroot "$chroot" apt-get install -y python-software-properties
+sudo i386 chroot "$chroot" apt-get install -y software-properties-common  python-software-properties
 sudo i386 chroot "$chroot" add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 #sudo i386 chroot "$chroot" add-apt-repository -y ppa:marlam/gta
 sudo i386 chroot "$chroot" apt-get update
