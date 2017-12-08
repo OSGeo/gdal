@@ -820,7 +820,10 @@ TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
 
     m_poCurFeature = m_poRelation->GetFeature((int)nFeatureId);
     m_nCurFeatureId = nFeatureId;
-    m_poCurFeature->SetFID(m_nCurFeatureId);
+    if( m_poCurFeature )
+    {
+        m_poCurFeature->SetFID(m_nCurFeatureId);
+    }
     return m_poCurFeature;
 }
 
