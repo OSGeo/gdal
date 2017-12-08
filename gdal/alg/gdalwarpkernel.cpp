@@ -667,7 +667,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  */
 
 /**
- * \var int GDALWarpKernel::nSrcXExtraSize;
+ * \var double GDALWarpKernel::dfSrcXExtraSize;
  *
  * Number of pixels included in nSrcXSize that are present on the edges of
  * the area of interest to take into account the width of the kernel.
@@ -676,7 +676,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
  */
 
 /**
- * \var int GDALWarpKernel::nSrcYExtraSize;
+ * \var double GDALWarpKernel::dfSrcYExtraSize;
  *
  * Number of pixels included in nSrcYExtraSize that are present on the edges of
  * the area of interest to take into account the height of the kernel.
@@ -981,8 +981,8 @@ GDALWarpKernel::GDALWarpKernel() :
     nBands(0),
     nSrcXSize(0),
     nSrcYSize(0),
-    nSrcXExtraSize(0),
-    nSrcYExtraSize(0),
+    dfSrcXExtraSize(0.0),
+    dfSrcYExtraSize(0.0),
     papabySrcImage(NULL),
     papanBandSrcValid(NULL),
     panUnifiedSrcValid(NULL),
@@ -1056,11 +1056,11 @@ CPLErr GDALWarpKernel::PerformWarp()
 /*      Pre-calculate resampling scales and window sizes for filtering. */
 /* -------------------------------------------------------------------- */
 
-    dfXScale = static_cast<double>(nDstXSize) / (nSrcXSize - nSrcXExtraSize);
-    dfYScale = static_cast<double>(nDstYSize) / (nSrcYSize - nSrcYExtraSize);
-    if( nSrcXSize >= nDstXSize && nSrcXSize <= nDstXSize + nSrcXExtraSize )
+    dfXScale = static_cast<double>(nDstXSize) / (nSrcXSize - dfSrcXExtraSize);
+    dfYScale = static_cast<double>(nDstYSize) / (nSrcYSize - dfSrcYExtraSize);
+    if( nSrcXSize >= nDstXSize && nSrcXSize <= nDstXSize + dfSrcXExtraSize )
         dfXScale = 1.0;
-    if( nSrcYSize >= nDstYSize && nSrcYSize <= nDstYSize + nSrcYExtraSize )
+    if( nSrcYSize >= nDstYSize && nSrcYSize <= nDstYSize + dfSrcYExtraSize )
         dfYScale = 1.0;
     if( dfXScale < 1.0 )
     {

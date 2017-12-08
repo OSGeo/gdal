@@ -54,7 +54,7 @@ CPL_CVSID("$Id$")
 struct _GDALWarpChunk {
     int dx, dy, dsx, dsy;
     int sx, sy, ssx, ssy;
-    int sExtraSx, sExtraSy;
+    double sExtraSx, sExtraSy;
 };
 
 /************************************************************************/
@@ -1184,13 +1184,13 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(
     int nSrcYOff = 0;
     int nSrcXSize = 0;
     int nSrcYSize = 0;
-    int nSrcXExtraSize = 0;
-    int nSrcYExtraSize = 0;
+    double dfSrcXExtraSize = 0.0;
+    double dfSrcYExtraSize = 0.0;
     double dfSrcFillRatio = 0.0;
     CPLErr eErr =
         ComputeSourceWindow(nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                             &nSrcXOff, &nSrcYOff, &nSrcXSize, &nSrcYSize,
-                            &nSrcXExtraSize, &nSrcYExtraSize, &dfSrcFillRatio);
+                            &dfSrcXExtraSize, &dfSrcYExtraSize, &dfSrcFillRatio);
 
     if( eErr != CE_None )
     {
@@ -1374,8 +1374,8 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(
     pasChunkList[nChunkListCount].sy = nSrcYOff;
     pasChunkList[nChunkListCount].ssx = nSrcXSize;
     pasChunkList[nChunkListCount].ssy = nSrcYSize;
-    pasChunkList[nChunkListCount].sExtraSx = nSrcXExtraSize;
-    pasChunkList[nChunkListCount].sExtraSy = nSrcYExtraSize;
+    pasChunkList[nChunkListCount].sExtraSx = dfSrcXExtraSize;
+    pasChunkList[nChunkListCount].sExtraSy = dfSrcYExtraSize;
 
     nChunkListCount++;
 
@@ -1452,9 +1452,9 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
  * @param nSrcYOff source window Y offset (computed if window all zero)
  * @param nSrcXSize source window X size (computed if window all zero)
  * @param nSrcYSize source window Y size (computed if window all zero)
- * @param nSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
+ * @param dfSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
  * for filter window. Should be ignored in scale computation
- * @param nSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
+ * @param dfSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
  * for filter window. Should be ignored in scale computation
  * @param dfProgressBase minimum progress value reported
  * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
@@ -1467,7 +1467,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize,
                                       int nSrcXOff, int nSrcYOff,
                                       int nSrcXSize, int nSrcYSize,
-                                      int nSrcXExtraSize, int nSrcYExtraSize,
+                                      double dfSrcXExtraSize, double dfSrcYExtraSize,
                                       double dfProgressBase,
                                       double dfProgressScale)
 
@@ -1531,7 +1531,7 @@ CPLErr GDALWarpOperation::WarpRegion( int nDstXOff, int nDstYOff,
         WarpRegionToBuffer(nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                            pDstBuffer, psOptions->eWorkingDataType,
                            nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
-                           nSrcXExtraSize, nSrcYExtraSize,
+                           dfSrcXExtraSize, dfSrcYExtraSize,
                            dfProgressBase, dfProgressScale);
 
 /* -------------------------------------------------------------------- */
@@ -1669,9 +1669,9 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
  * @param nSrcYOff source window Y offset (computed if window all zero)
  * @param nSrcXSize source window X size (computed if window all zero)
  * @param nSrcYSize source window Y size (computed if window all zero)
- * @param nSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
+ * @param dfSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
  * for filter window. Should be ignored in scale computation
- * @param nSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
+ * @param dfSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
  * for filter window. Should be ignored in scale computation
  * @param dfProgressBase minimum progress value reported
  * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
@@ -1686,7 +1686,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     // Only in a CPLAssert.
     CPL_UNUSED GDALDataType eBufDataType,
     int nSrcXOff, int nSrcYOff, int nSrcXSize, int nSrcYSize,
-    int nSrcXExtraSize, int nSrcYExtraSize,
+    double dfSrcXExtraSize, double dfSrcYExtraSize,
     double dfProgressBase, double dfProgressScale)
 
 {
@@ -1712,7 +1712,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             ComputeSourceWindow( nDstXOff, nDstYOff, nDstXSize, nDstYSize,
                                  &nSrcXOff, &nSrcYOff,
                                  &nSrcXSize, &nSrcYSize,
-                                 &nSrcXExtraSize, &nSrcYExtraSize, NULL );
+                                 &dfSrcXExtraSize, &dfSrcYExtraSize, NULL );
         if( hWarpMutex != NULL )
             CPLReleaseMutex( hWarpMutex );
         if( eErr != CE_None )
@@ -1751,8 +1751,8 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.nSrcYOff = nSrcYOff;
     oWK.nSrcXSize = nSrcXSize;
     oWK.nSrcYSize = nSrcYSize;
-    oWK.nSrcXExtraSize = nSrcXExtraSize;
-    oWK.nSrcYExtraSize = nSrcYExtraSize;
+    oWK.dfSrcXExtraSize = dfSrcXExtraSize;
+    oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
     if( nSrcXSize != 0 && nSrcYSize != 0 &&
         (nSrcXSize > INT_MAX / nSrcYSize ||
@@ -2347,7 +2347,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     int nDstXSize, int nDstYSize,
     int *pnSrcXOff, int *pnSrcYOff,
     int *pnSrcXSize, int *pnSrcYSize,
-    int *pnSrcXExtraSize, int *pnSrcYExtraSize,
+    double *pdfSrcXExtraSize, double *pdfSrcYExtraSize,
     double *pdfSrcFillRatio )
 
 {
@@ -2581,10 +2581,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         *pnSrcYOff = 0;
         *pnSrcXSize = 0;
         *pnSrcYSize = 0;
-        if( pnSrcXExtraSize )
-            *pnSrcXExtraSize = 0;
-        if( pnSrcYExtraSize )
-            *pnSrcYExtraSize = 0;
+        if( pdfSrcXExtraSize )
+            *pdfSrcXExtraSize = 0.0;
+        if( pdfSrcYExtraSize )
+            *pdfSrcYExtraSize = 0.0;
         if( pdfSrcFillRatio )
             *pdfSrcFillRatio = 0.0;
         return CE_None;
@@ -2604,9 +2604,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         static_cast<double>(nDstXSize) / (dfMaxXOut - dfMinXOut);
     const double dfYScale =
         static_cast<double>(nDstYSize) / (dfMaxYOut - dfMinYOut);
-    const int nXRadius = dfXScale < 1.0 ?
+    const int nXRadius = dfXScale < 0.95 ?
         static_cast<int>(ceil( nResWinSize / dfXScale )) : nResWinSize;
-    const int nYRadius = dfYScale < 1.0 ?
+    const int nYRadius = dfYScale < 0.95 ?
         static_cast<int>(ceil( nResWinSize / dfYScale )) : nResWinSize;
     nResWinSize = std::max(nXRadius, nYRadius);
 
@@ -2655,12 +2655,14 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     if( dfCeilMaxYOut > INT_MAX )
         dfCeilMaxYOut = INT_MAX;
 
-    int nSrcXSizeRaw = std::min(nRasterXSize - *pnSrcXOff,
-                                static_cast<int>(dfCeilMaxXOut) - *pnSrcXOff);
-    int nSrcYSizeRaw = std::min(nRasterYSize - *pnSrcYOff,
-                                static_cast<int>(dfCeilMaxYOut) - *pnSrcYOff);
-    nSrcXSizeRaw = std::max(0, nSrcXSizeRaw);
-    nSrcYSizeRaw = std::max(0, nSrcYSizeRaw);
+    double dfSrcXSizeRaw = dfMaxXOut - dfMinXOut;
+    double dfSrcYSizeRaw = dfMaxYOut - dfMinYOut;
+    dfSrcXSizeRaw = std::min(static_cast<double>(nRasterXSize - *pnSrcXOff),
+                             dfSrcXSizeRaw);
+    dfSrcYSizeRaw = std::min(static_cast<double>(nRasterYSize - *pnSrcYOff),
+                             dfSrcYSizeRaw);
+    dfSrcXSizeRaw = std::max(0.0, dfSrcXSizeRaw);
+    dfSrcYSizeRaw = std::max(0.0, dfSrcYSizeRaw);
 
     *pnSrcXOff = std::max(0, nMinXOutClamped - nResWinSize);
     *pnSrcYOff = std::max(0, nMinYOutClamped - nResWinSize);
@@ -2676,10 +2678,10 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     *pnSrcXSize = std::max(0, *pnSrcXSize);
     *pnSrcYSize = std::max(0, *pnSrcYSize);
 
-    if( pnSrcXExtraSize )
-        *pnSrcXExtraSize = *pnSrcXSize - nSrcXSizeRaw;
-    if( pnSrcYExtraSize )
-        *pnSrcYExtraSize = *pnSrcYSize - nSrcYSizeRaw;
+    if( pdfSrcXExtraSize )
+        *pdfSrcXExtraSize = *pnSrcXSize - dfSrcXSizeRaw;
+    if( pdfSrcYExtraSize )
+        *pdfSrcYExtraSize = *pnSrcYSize - dfSrcYSizeRaw;
 
     // Computed the ratio of the clamped source raster window size over
     // the unclamped source raster window size.
