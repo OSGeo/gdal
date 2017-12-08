@@ -168,7 +168,8 @@ int main () { return 0; }""")
         if compiler_flag:
             extra_postargs=[compiler_flag]
 
-        SILENCE_OUTPUT = True
+        SILENCE_OUTPUT = False
+        # SILENCE_OUTPUT = True doesn't work with precise
         if os.name == 'posix' and SILENCE_OUTPUT:
             # if possible avoid any verbose output for this detection test
             pid = os.fork()
