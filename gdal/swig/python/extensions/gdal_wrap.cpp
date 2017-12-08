@@ -5875,12 +5875,6 @@ GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
                                       nInputSpectralBands, ahInputSpectralBands );
 }
 
-SWIGINTERN GDALTransformerInfoShadow *new_GDALTransformerInfoShadow(GDALDatasetShadow *src,GDALDatasetShadow *dst,char **options){
-    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
-       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst,
-                                         options );
-    return obj;
-  }
 SWIGINTERN void delete_GDALTransformerInfoShadow(GDALTransformerInfoShadow *self){
     GDALDestroyTransformer( self );
   }
@@ -5995,6 +5989,15 @@ SWIGINTERN int GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerIn
                                       GDALUseTransformer, self,
                             	      callback, callback_data, options );
   }
+
+  GDALTransformerInfoShadow* Transformer( GDALDatasetShadow *src, GDALDatasetShadow *dst,
+                             char **options ) {
+    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
+       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst,
+                                         options );
+    return obj;
+  }
+
 
 GDALDatasetShadow* ApplyVerticalShiftGrid( GDALDatasetShadow *src_ds,
                                            GDALDatasetShadow *grid_ds,
@@ -25986,124 +25989,17 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_new_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
-  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
-  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
-  char **arg3 = (char **) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  PyObject * obj0 = 0 ;
-  PyObject * obj1 = 0 ;
-  PyObject * obj2 = 0 ;
-  GDALTransformerInfoShadow *result = 0 ;
-  
-  if (!PyArg_ParseTuple(args,(char *)"OOO:new_Transformer",&obj0,&obj1,&obj2)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_Transformer" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
-  }
-  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
-  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_Transformer" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
-  }
-  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
-  {
-    /* %typemap(in) char **options */
-    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
-    if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
-  #if PY_VERSION_HEX < 0x03000000
-      || PyString_Check(obj2)
-  #endif
-      ) {
-      PyErr_SetString(PyExc_TypeError,"not a sequence");
-      SWIG_fail;
-    }
-    
-    Py_ssize_t size = PySequence_Size(obj2);
-    if( size != (int)size ) {
-      PyErr_SetString(PyExc_TypeError, "too big sequence");
-      SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem(obj2,i);
-      if (PyUnicode_Check(pyObj))
-      {
-        char *pszStr;
-        Py_ssize_t nLen;
-        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
-#if PY_VERSION_HEX >= 0x03000000
-        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-        arg3 = CSLAddString( arg3, pszStr );
-        Py_XDECREF(pyUTF8Str);
-      }
-#if PY_VERSION_HEX >= 0x03000000
-      else if (PyBytes_Check(pyObj))
-      arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
-#else
-      else if (PyString_Check(pyObj))
-      arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
-#endif
-      else
-      {
-        Py_DECREF(pyObj);
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      Py_DECREF(pyObj);
-    }
-  }
-  {
-    if ( bUseExceptions ) {
-      ClearErrorState();
-    }
-    {
-      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (GDALTransformerInfoShadow *)new_GDALTransformerInfoShadow(arg1,arg2,arg3);
-      SWIG_PYTHON_THREAD_END_ALLOW;
-    }
-#ifndef SED_HACKS
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
-    }
-#endif
-  }
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALTransformerInfoShadow, SWIG_POINTER_NEW |  0 );
-  {
-    /* %typemap(freearg) char **options */
-    CSLDestroy( arg3 );
-  }
-  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
-  return resultobj;
-fail:
-  {
-    /* %typemap(freearg) char **options */
-    CSLDestroy( arg3 );
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_delete_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_delete_GDALTransformerInfoShadow(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:delete_Transformer",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"O:delete_GDALTransformerInfoShadow",&obj0)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, SWIG_POINTER_DISOWN |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_Transformer" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_GDALTransformerInfoShadow" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
   {
@@ -26132,7 +26028,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformPoint__SWIG_0(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
   int arg2 ;
@@ -26147,15 +26043,15 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_0(PyObject *SWIGUNUS
   PyObject * obj2 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:Transformer_TransformPoint",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:GDALTransformerInfoShadow_TransformPoint",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformPoint" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Transformer_TransformPoint" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
   {
@@ -26213,7 +26109,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformPoint__SWIG_1(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
   double *arg2 ;
@@ -26244,31 +26140,31 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint__SWIG_1(PyObject *SWIGUNUS
     memset(argout2, 0, sizeof(argout2));
     arg2 = argout2;
   }
-  if (!PyArg_ParseTuple(args,(char *)"OOOO|O:Transformer_TransformPoint",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOO|O:GDALTransformerInfoShadow_TransformPoint",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformPoint" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
   ecode3 = SWIG_AsVal_int(obj1, &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Transformer_TransformPoint" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
   ecode4 = SWIG_AsVal_double(obj2, &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Transformer_TransformPoint" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast< double >(val4);
   ecode5 = SWIG_AsVal_double(obj3, &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Transformer_TransformPoint" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast< double >(val5);
   if (obj4) {
     ecode6 = SWIG_AsVal_double(obj4, &val6);
     if (!SWIG_IsOK(ecode6)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "Transformer_TransformPoint" "', argument " "6"" of type '" "double""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "GDALTransformerInfoShadow_TransformPoint" "', argument " "6"" of type '" "double""'");
     } 
     arg6 = static_cast< double >(val6);
   }
@@ -26303,7 +26199,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Transformer_TransformPoint(PyObject *self, PyObject *args) {
+SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformPoint(PyObject *self, PyObject *args) {
   Py_ssize_t argc;
   PyObject *argv[6] = {
     0
@@ -26330,7 +26226,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint(PyObject *self, PyObject *
         int res = SWIG_ConvertPtr(argv[2], &vptr, SWIGTYPE_p_double, 0);
         _v = SWIG_CheckState(res);
         if (_v) {
-          return _wrap_Transformer_TransformPoint__SWIG_0(self, args);
+          return _wrap_GDALTransformerInfoShadow_TransformPoint__SWIG_0(self, args);
         }
       }
     }
@@ -26357,14 +26253,14 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint(PyObject *self, PyObject *
           }
           if (_v) {
             if (argc <= 4) {
-              return _wrap_Transformer_TransformPoint__SWIG_1(self, args);
+              return _wrap_GDALTransformerInfoShadow_TransformPoint__SWIG_1(self, args);
             }
             {
               int res = SWIG_AsVal_double(argv[4], NULL);
               _v = SWIG_CheckState(res);
             }
             if (_v) {
-              return _wrap_Transformer_TransformPoint__SWIG_1(self, args);
+              return _wrap_GDALTransformerInfoShadow_TransformPoint__SWIG_1(self, args);
             }
           }
         }
@@ -26373,7 +26269,7 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoint(PyObject *self, PyObject *
   }
   
 fail:
-  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'Transformer_TransformPoint'.\n"
+  SWIG_SetErrorMsg(PyExc_NotImplementedError,"Wrong number or type of arguments for overloaded function 'GDALTransformerInfoShadow_TransformPoint'.\n"
     "  Possible C/C++ prototypes are:\n"
     "    GDALTransformerInfoShadow::TransformPoint(int,double [3])\n"
     "    GDALTransformerInfoShadow::TransformPoint(double [3],int,double,double,double)\n");
@@ -26381,7 +26277,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformPoints(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
   int arg2 ;
@@ -26399,15 +26295,15 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformPoints(PyObject *SWIGUNUSEDPARM(
   PyObject * obj2 = 0 ;
   int result;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOO:Transformer_TransformPoints",&obj0,&obj1,&obj2)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:GDALTransformerInfoShadow_TransformPoints",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformPoints" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GDALTransformerInfoShadow_TransformPoints" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(obj1, &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Transformer_TransformPoints" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "GDALTransformerInfoShadow_TransformPoints" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast< int >(val2);
   {
@@ -26495,7 +26391,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+SWIGINTERN PyObject *_wrap_GDALTransformerInfoShadow_TransformGeolocations(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   GDALTransformerInfoShadow *arg1 = (GDALTransformerInfoShadow *) 0 ;
   GDALRasterBandShadow *arg2 = (GDALRasterBandShadow *) 0 ;
@@ -26531,25 +26427,25 @@ SWIGINTERN PyObject *_wrap_Transformer_TransformGeolocations(PyObject *SWIGUNUSE
   psProgressInfo->psPyCallback = NULL;
   psProgressInfo->psPyCallbackData = NULL;
   arg6 = psProgressInfo;
-  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:Transformer_TransformGeolocations",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOO|OOO:GDALTransformerInfoShadow_TransformGeolocations",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALTransformerInfoShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer_TransformGeolocations" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GDALTransformerInfoShadow_TransformGeolocations" "', argument " "1"" of type '" "GDALTransformerInfoShadow *""'"); 
   }
   arg1 = reinterpret_cast< GDALTransformerInfoShadow * >(argp1);
   res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Transformer_TransformGeolocations" "', argument " "2"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GDALTransformerInfoShadow_TransformGeolocations" "', argument " "2"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg2 = reinterpret_cast< GDALRasterBandShadow * >(argp2);
   res3 = SWIG_ConvertPtr(obj2, &argp3,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Transformer_TransformGeolocations" "', argument " "3"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "GDALTransformerInfoShadow_TransformGeolocations" "', argument " "3"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg3 = reinterpret_cast< GDALRasterBandShadow * >(argp3);
   res4 = SWIG_ConvertPtr(obj3, &argp4,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Transformer_TransformGeolocations" "', argument " "4"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "GDALTransformerInfoShadow_TransformGeolocations" "', argument " "4"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg4 = reinterpret_cast< GDALRasterBandShadow * >(argp4);
   if (obj4) {
@@ -26707,12 +26603,119 @@ fail:
 }
 
 
-SWIGINTERN PyObject *Transformer_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *GDALTransformerInfoShadow_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O:swigregister", &obj)) return NULL;
   SWIG_TypeNewClientData(SWIGTYPE_p_GDALTransformerInfoShadow, SWIG_NewClientData(obj));
   return SWIG_Py_Void();
 }
+
+SWIGINTERN PyObject *_wrap_Transformer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  GDALDatasetShadow *arg2 = (GDALDatasetShadow *) 0 ;
+  char **arg3 = (char **) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  GDALTransformerInfoShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:Transformer",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Transformer" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(obj1, &argp2,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Transformer" "', argument " "2"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< GDALDatasetShadow * >(argp2);
+  {
+    /* %typemap(in) char **options */
+    /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+    if ( ! PySequence_Check(obj2) || PyUnicode_Check(obj2)
+  #if PY_VERSION_HEX < 0x03000000
+      || PyString_Check(obj2)
+  #endif
+      ) {
+      PyErr_SetString(PyExc_TypeError,"not a sequence");
+      SWIG_fail;
+    }
+    
+    Py_ssize_t size = PySequence_Size(obj2);
+    if( size != (int)size ) {
+      PyErr_SetString(PyExc_TypeError, "too big sequence");
+      SWIG_fail;
+    }
+    for (int i = 0; i < (int)size; i++) {
+      PyObject* pyObj = PySequence_GetItem(obj2,i);
+      if (PyUnicode_Check(pyObj))
+      {
+        char *pszStr;
+        Py_ssize_t nLen;
+        PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+        PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+        PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+        arg3 = CSLAddString( arg3, pszStr );
+        Py_XDECREF(pyUTF8Str);
+      }
+#if PY_VERSION_HEX >= 0x03000000
+      else if (PyBytes_Check(pyObj))
+      arg3 = CSLAddString( arg3, PyBytes_AsString(pyObj) );
+#else
+      else if (PyString_Check(pyObj))
+      arg3 = CSLAddString( arg3, PyString_AsString(pyObj) );
+#endif
+      else
+      {
+        Py_DECREF(pyObj);
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      Py_DECREF(pyObj);
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (GDALTransformerInfoShadow *)Transformer(arg1,arg2,arg3);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_GDALTransformerInfoShadow, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg3 );
+  }
+  return NULL;
+}
+
 
 SWIGINTERN PyObject *_wrap_ApplyVerticalShiftGrid(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
@@ -32493,15 +32496,15 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"ContourGenerate", (PyCFunction) _wrap_ContourGenerate, METH_VARARGS | METH_KEYWORDS, (char *)"ContourGenerate(Band srcBand, double contourInterval, double contourBase, int fixedLevelCount, int useNoData, double noDataValue, Layer dstLayer, int idField, int elevField, GDALProgressFunc callback=0, void * callback_data=None) -> int"},
 	 { (char *)"AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT, METH_VARARGS, (char *)"AutoCreateWarpedVRT(Dataset src_ds, char const * src_wkt=None, char const * dst_wkt=None, GDALResampleAlg eResampleAlg, double maxerror=0.0) -> Dataset"},
 	 { (char *)"CreatePansharpenedVRT", _wrap_CreatePansharpenedVRT, METH_VARARGS, (char *)"CreatePansharpenedVRT(char const * pszXML, Band panchroBand, int nInputSpectralBands) -> Dataset"},
-	 { (char *)"new_Transformer", _wrap_new_Transformer, METH_VARARGS, (char *)"new_Transformer(Dataset src, Dataset dst, char ** options) -> Transformer"},
-	 { (char *)"delete_Transformer", _wrap_delete_Transformer, METH_VARARGS, (char *)"delete_Transformer(Transformer self)"},
-	 { (char *)"Transformer_TransformPoint", _wrap_Transformer_TransformPoint, METH_VARARGS, (char *)"\n"
+	 { (char *)"delete_GDALTransformerInfoShadow", _wrap_delete_GDALTransformerInfoShadow, METH_VARARGS, (char *)"delete_GDALTransformerInfoShadow(GDALTransformerInfoShadow self)"},
+	 { (char *)"GDALTransformerInfoShadow_TransformPoint", _wrap_GDALTransformerInfoShadow_TransformPoint, METH_VARARGS, (char *)"\n"
 		"TransformPoint(int bDstToSrc, double [3] inout) -> int\n"
-		"Transformer_TransformPoint(Transformer self, int bDstToSrc, double x, double y, double z=0.0) -> int\n"
+		"GDALTransformerInfoShadow_TransformPoint(GDALTransformerInfoShadow self, int bDstToSrc, double x, double y, double z=0.0) -> int\n"
 		""},
-	 { (char *)"Transformer_TransformPoints", _wrap_Transformer_TransformPoints, METH_VARARGS, (char *)"Transformer_TransformPoints(Transformer self, int bDstToSrc, int nCount) -> int"},
-	 { (char *)"Transformer_TransformGeolocations", (PyCFunction) _wrap_Transformer_TransformGeolocations, METH_VARARGS | METH_KEYWORDS, (char *)"Transformer_TransformGeolocations(Transformer self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
-	 { (char *)"Transformer_swigregister", Transformer_swigregister, METH_VARARGS, NULL},
+	 { (char *)"GDALTransformerInfoShadow_TransformPoints", _wrap_GDALTransformerInfoShadow_TransformPoints, METH_VARARGS, (char *)"GDALTransformerInfoShadow_TransformPoints(GDALTransformerInfoShadow self, int bDstToSrc, int nCount) -> int"},
+	 { (char *)"GDALTransformerInfoShadow_TransformGeolocations", (PyCFunction) _wrap_GDALTransformerInfoShadow_TransformGeolocations, METH_VARARGS | METH_KEYWORDS, (char *)"GDALTransformerInfoShadow_TransformGeolocations(GDALTransformerInfoShadow self, Band xBand, Band yBand, Band zBand, GDALProgressFunc callback=0, void * callback_data=None, char ** options=None) -> int"},
+	 { (char *)"GDALTransformerInfoShadow_swigregister", GDALTransformerInfoShadow_swigregister, METH_VARARGS, NULL},
+	 { (char *)"Transformer", _wrap_Transformer, METH_VARARGS, (char *)"Transformer(Dataset src, Dataset dst, char ** options) -> GDALTransformerInfoShadow"},
 	 { (char *)"ApplyVerticalShiftGrid", (PyCFunction) _wrap_ApplyVerticalShiftGrid, METH_VARARGS | METH_KEYWORDS, (char *)"ApplyVerticalShiftGrid(Dataset src_ds, Dataset grid_ds, bool inverse=False, double srcUnitToMeter=1.0, double dstUnitToMeter=1.0, char ** options=None) -> Dataset"},
 	 { (char *)"ApplyGeoTransform", _wrap_ApplyGeoTransform, METH_VARARGS, (char *)"ApplyGeoTransform(double [6] padfGeoTransform, double dfPixel, double dfLine)"},
 	 { (char *)"InvGeoTransform", _wrap_InvGeoTransform, METH_VARARGS, (char *)"InvGeoTransform(double [6] gt_in) -> RETURN_NONE"},
