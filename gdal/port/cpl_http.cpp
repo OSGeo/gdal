@@ -993,27 +993,44 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     }
 #endif
 
-    // Enable following redirections.  Requires libcurl 7.10.1 at least.
+    // Enable following redirections.  Requires libcurl 7.19.1 at least.
+#if LIBCURL_VERSION_NUM >= 0x071301
     curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
     curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
     curl_easy_setopt(http_handle, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL );
+#endif//LIBCURL_VERSION_NUM >= 0x071301
 
+    // CURLOPT_CONNECTTIMEOUT_MS is defined in curl 7.16.2 or newer.
     // Set connect timeout.
     const char *pszConnectTimeout =
         CSLFetchNameValue( papszOptions, "CONNECTTIMEOUT" );
     if( pszConnectTimeout == NULL )
         pszConnectTimeout = CPLGetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", NULL);
     if( pszConnectTimeout != NULL )
+    {
+#if LIBCURL_VERSION_NUM >= 0x071002
         curl_easy_setopt(http_handle, CURLOPT_CONNECTTIMEOUT_MS,
                          static_cast<int>(1000 * CPLAtof(pszConnectTimeout)) );
+#else
+        curl_easy_setopt(http_handle, CURLOPT_CONNECTTIMEOUT,
+                         static_cast<int>( CPLAtof(pszTimeout)) );
+#endif// LIBCURL_VERSION_NUM >= 0x071002
+    }
 
     // Set timeout.
     const char *pszTimeout = CSLFetchNameValue( papszOptions, "TIMEOUT" );
     if( pszTimeout == NULL )
         pszTimeout = CPLGetConfigOption("GDAL_HTTP_TIMEOUT", NULL);
     if( pszTimeout != NULL )
+    {
+#if LIBCURL_VERSION_NUM >= 0x071002
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT_MS,
                          static_cast<int>(1000 * CPLAtof(pszTimeout)) );
+#else
+        curl_easy_setopt(http_handle, CURLOPT_TIMEOUT,
+                         static_cast<int>( CPLAtof(pszTimeout)) );
+#endif// LIBCURL_VERSION_NUM >= 0x071002
+    }
 
     // Set low speed time and limit.
     const char *pszLowSpeedTime =
