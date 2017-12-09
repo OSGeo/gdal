@@ -121,7 +121,7 @@ SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
 \subsection ogr_sql_sqlite_spatialite Spatialite SQL functions
 
 When GDAL/OGR is build with support for the <a href="http://www.gaia-gis.it/spatialite/">Spatialite</a> library,
-a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-3.0.0.html">extra SQL functions</a>,
+a lot of <a href="http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html">extra SQL functions</a>,
 in particular spatial functions, can be used in results column fields, WHERE clauses, etc....<p>
 
 \code
