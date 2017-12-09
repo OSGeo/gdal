@@ -393,7 +393,7 @@ LIBXML2_LIB = @LIBXML2_LIB@
 #
 # CAD Support
 #
-HAVE_CAD	=	@CXX11_SUPPORT@
+HAVE_CAD	=	yes
 
 #
 # Informix DataBlade support
