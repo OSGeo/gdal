@@ -206,7 +206,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     }
 
     OGRFeature  *poFeature = NULL;
-    CADGeometry *poCADGeometry = poCADLayer.getGeometry( nFID );
+    CADGeometry *poCADGeometry = poCADLayer.getGeometry( static_cast<size_t>(nFID) );
 
     if( NULL == poCADGeometry || GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
