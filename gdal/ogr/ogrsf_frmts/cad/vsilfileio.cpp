@@ -100,7 +100,7 @@ int VSILFileIO::Seek(long offset, CADFileIO::SeekOrigin origin)
 
 long int VSILFileIO::Tell()
 {
-    return VSIFTellL( m_oFileStream );
+    return static_cast<long>(VSIFTellL( m_oFileStream ));
 }
 
 size_t VSILFileIO::Read(void* ptr, size_t size)
