@@ -262,7 +262,7 @@ int OGRAmigoCloudDataSource::Open( const char * pszFilename,
 
         // If OVERWRITE: YES, truncate the layer.
         if( nLayers==1 &&
-            CPLFetchBool(papszOpenOptionsIn, "OVERWRITE", "NO") )
+            CPLFetchBool(papszOpenOptionsIn, "OVERWRITE", false) )
         {
            TruncateDataset(papoLayers[0]->GetTableName());
         }
