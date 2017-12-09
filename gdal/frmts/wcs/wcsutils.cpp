@@ -581,6 +581,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
         static const char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         for (size_t i = 0; i < filename.length(); ++i) {
             if (filename.at(i) == 'X') {
+                // coverity[dont_call]
                 filename.replace(i, 1, 1, chars[rand() % (sizeof(chars)-1)]);
             }
         }
