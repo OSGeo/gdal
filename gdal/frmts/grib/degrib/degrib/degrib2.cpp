@@ -124,7 +124,9 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    } wordType;
 
    uChar gribMatch = 0; /* Counts how many letters in GRIB we've matched. */
+#ifdef ENABLE_TDLPACK
    uChar tdlpMatch = 0; /* Counts how many letters in TDLP we've matched. */
+#endif
    wordType word;       /* Used to check that the edition is correct. */
    uInt4 curLen;        /* Where we currently are in buff. */
    uInt4 i;             /* Used to loop over the first few char's */
@@ -151,7 +153,11 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
       limit = (limit > recLen + 32) ? limit : recLen + 32;
    }
 */
-   while ((tdlpMatch != 4) && (gribMatch != 4)) {
+   while (
+#ifdef ENABLE_TDLPACK
+          (tdlpMatch != 4) && 
+#endif
+          (gribMatch != 4)) {
       for (i = curLen - 8; i + 7 < curLen; i++) {
          if ((*buff)[i] == 'G') {
             if (((*buff)[i + 1] == 'R') && ((*buff)[i + 2] == 'I') &&
@@ -217,6 +223,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    *buffLen = curLen;
 
    word.li = sect0[1];
+#ifdef ENABLE_TDLPACK
    if (tdlpMatch == 4) {
       if (word.buffer[3] != 0) {
          errSprintf ("ERROR: unexpected version of TDLP in SECT0\n");
@@ -231,7 +238,9 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
          errSprintf ("TDLP length %ld was < 59?\n", *gribLen);
          return -5;
       }
-   } else if (word.buffer[3] == 1) {
+   } else
+#endif
+   if (word.buffer[3] == 1) {
       *version = 1;
       /* Find out the GRIB Message Length */
       *gribLen = GRIB_UNSIGN_INT3 (word.buffer[0], word.buffer[1],
