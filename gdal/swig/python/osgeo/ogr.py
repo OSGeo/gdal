@@ -2978,11 +2978,21 @@ class Feature(_object):
                 else:
                     self.__dict__[key] = value
 
+    # This makes it possible to check is field in the feature in the form "'area' in feature". 
+    def __contains__(self, key):
+        """Returns is the feature has given key name / field_index"""
+        if isinstance(key, str):
+            return self.GetFieldIndex(key) != -1
+        else:
+            return 0 <= key < self.GetFieldCount()
+
     # This makes it possible to fetch fields in the form "feature['area']". 
     def __getitem__(self, key):
         """Returns the values of fields by the given name / field_index"""
         if isinstance(key, str):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
         if fld_index < 0:
             if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
@@ -2998,6 +3008,8 @@ class Feature(_object):
         """Returns the value of a field by field name / index"""
         if isinstance(key, str):
             fld_index = self.GetFieldIndex(key)
+        else:
+            fld_index = key
         if fld_index < 0:
             if isinstance(key, str):
                 fld_index = self.GetGeomFieldIndex(key)
