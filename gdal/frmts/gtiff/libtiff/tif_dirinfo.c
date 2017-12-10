@@ -1,5 +1,3 @@
-/* $Id: tif_dirinfo.c,v 1.127 2017-06-01 12:44:04 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.

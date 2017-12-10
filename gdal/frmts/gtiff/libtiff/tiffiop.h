@@ -1,5 +1,3 @@
-/* $Id: tiffiop.h,v 1.95 2017-09-07 14:02:52 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -314,7 +312,7 @@ typedef size_t TIFFIOSize_t;
 #define _TIFF_off_t off_t
 #endif
 
-#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#if defined(__clang__) && (__clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8))
 #define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
 #else
 #define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
