@@ -307,6 +307,7 @@ private:
 // only affect the current thread. But code that would be dependent of
 // setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
 // will not work depending on the actual implementation
+class CPLThreadLocaleCPrivate;
 class CPL_DLL CPLThreadLocaleC
 {
 public:
@@ -314,15 +315,7 @@ public:
     ~CPLThreadLocaleC();
 
 private:
-#ifdef HAVE_USELOCALE
-    locale_t nNewLocale;
-    locale_t nOldLocale;
-#else
-#if defined(_MSC_VER)
-    int   nOldValConfigThreadLocale;
-#endif
-    char *pszOldLocale;
-#endif
+    CPLThreadLocaleCPrivate* m_private;
 
     /* Make it non-copyable */
     CPLThreadLocaleC(const CPLThreadLocaleC&);
