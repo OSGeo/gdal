@@ -1,5 +1,3 @@
-/* $Id: tif_codec.c,v 1.17 2015-08-19 02:31:04 bfriesen Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
