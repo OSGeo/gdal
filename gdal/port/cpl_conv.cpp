@@ -2796,34 +2796,103 @@ CPLLocaleC::~CPLLocaleC()
 }
 
 /************************************************************************/
+/*                        CPLThreadLocaleCPrivate                       */
+/************************************************************************/
+
+#ifdef HAVE_USELOCALE
+
+class CPLThreadLocaleCPrivate
+{
+        locale_t nNewLocale;
+        locale_t nOldLocale;
+    public:
+        CPLThreadLocaleCPrivate();
+       ~CPLThreadLocaleCPrivate();
+};
+
+CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate()
+{
+    nNewLocale = newlocale(LC_NUMERIC_MASK, "C", nullptr);
+    nOldLocale = uselocale(nNewLocale);
+}
+
+CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
+{
+    uselocale(nOldLocale);
+    freelocale(nNewLocale);
+}
+
+#elif defined(_MSC_VER)
+
+class CPLThreadLocaleCPrivate
+{
+        int   nOldValConfigThreadLocale;
+        char *pszOldLocale;
+    public:
+        CPLThreadLocaleCPrivate();
+       ~CPLThreadLocaleCPrivate();
+};
+
+CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate()
+{
+    nOldValConfigThreadLocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+    pszOldLocale = setlocale(LC_NUMERIC, "C");
+    if( pszOldLocale )
+        pszOldLocale = CPLStrdup(pszOldLocale);
+}
+
+CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
+{
+    if( pszOldLocale != NULL )
+    {
+        setlocale(LC_NUMERIC, pszOldLocale);
+        CPLFree(pszOldLocale);
+    }
+    _configthreadlocale(nOldValConfigThreadLocale);
+}
+
+#else
+
+class CPLThreadLocaleCPrivate
+{
+        char *pszOldLocale;
+    public:
+        CPLThreadLocaleCPrivate();
+       ~CPLThreadLocaleCPrivate();
+};
+
+CPLThreadLocaleCPrivate::CPLThreadLocaleCPrivate()
+{
+    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC, nullptr));
+    if( EQUAL(pszOldLocale, "C")
+        || EQUAL(pszOldLocale, "POSIX")
+        || CPLsetlocale(LC_NUMERIC, "C") == nullptr )
+    {
+        CPLFree(pszOldLocale);
+        pszOldLocale = nullptr;
+    }
+}
+
+CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
+{
+    if( pszOldLocale != nullptr )
+    {
+        CPLsetlocale(LC_NUMERIC, pszOldLocale);
+        CPLFree(pszOldLocale);
+    }
+}
+
+#endif
+
+
+/************************************************************************/
 /*                        CPLThreadLocaleC()                            */
 /************************************************************************/
 
 CPLThreadLocaleC::CPLThreadLocaleC()
 
 {
-#ifdef HAVE_USELOCALE
-    nNewLocale = newlocale(LC_NUMERIC_MASK, "C", NULL);
-    nOldLocale = uselocale(nNewLocale);
-#else
-
-#if defined(_MSC_VER)
-    nOldValConfigThreadLocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-    pszOldLocale = setlocale(LC_NUMERIC, "C");
-    if( pszOldLocale )
-        pszOldLocale = CPLStrdup(pszOldLocale);
-#else
-    pszOldLocale = CPLStrdup(CPLsetlocale(LC_NUMERIC, NULL));
-    if( EQUAL(pszOldLocale, "C")
-        || EQUAL(pszOldLocale, "POSIX")
-        || CPLsetlocale(LC_NUMERIC, "C") == NULL )
-    {
-        CPLFree(pszOldLocale);
-        pszOldLocale = NULL;
-    }
-#endif
-
-#endif
+    m_private = new CPLThreadLocaleCPrivate;
 }
 
 /************************************************************************/
@@ -2833,27 +2902,7 @@ CPLThreadLocaleC::CPLThreadLocaleC()
 CPLThreadLocaleC::~CPLThreadLocaleC()
 
 {
-#ifdef HAVE_USELOCALE
-    uselocale(nOldLocale);
-    freelocale(nNewLocale);
-#else
-
-#if defined(_MSC_VER)
-    if( pszOldLocale != NULL )
-    {
-        setlocale(LC_NUMERIC, pszOldLocale);
-        CPLFree(pszOldLocale);
-    }
-    _configthreadlocale(nOldValConfigThreadLocale);
-#else
-    if( pszOldLocale != NULL )
-    {
-        CPLsetlocale(LC_NUMERIC, pszOldLocale);
-        CPLFree(pszOldLocale);
-    }
-#endif
-
-#endif
+    delete m_private;
 }
 //! @endcond
 
