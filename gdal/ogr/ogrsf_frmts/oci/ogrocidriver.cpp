@@ -47,7 +47,7 @@ static GDALDataset *OGROCIDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGROCIDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGROCIDataSource    *poDS;
 
@@ -57,7 +57,7 @@ static GDALDataset *OGROCIDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->eAccess == GA_Update, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -79,13 +79,13 @@ static GDALDataset *OGROCIDriverCreate( const char * pszName,
 
     poDS = new OGROCIDataSource();
 
-    if( !poDS->Open( pszName, NULL, TRUE, TRUE ) )
+    if( !poDS->Open( pszName, nullptr, TRUE, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
          "Oracle driver doesn't currently support database creation.\n"
                   "Please create database with Oracle tools before loading tables." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -101,7 +101,7 @@ void RegisterOGROCI()
     if( !GDAL_CHECK_VERSION("OCI driver") )
         return;
 
-    if( GDALGetDriverByName( "OCI" ) != NULL )
+    if( GDALGetDriverByName( "OCI" ) != nullptr )
         return;
 
     GDALDriver* poDriver = new GDALDriver();

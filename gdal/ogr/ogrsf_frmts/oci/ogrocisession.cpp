@@ -49,7 +49,7 @@ OGROCISession * OGRGetOCISession( const char *pszUserid,
     else
     {
         delete poSession;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -60,18 +60,18 @@ OGROCISession * OGRGetOCISession( const char *pszUserid,
 OGROCISession::OGROCISession()
 
 {
-    hEnv = NULL;
-    hError = NULL;
-    hSvcCtx = NULL;
-    hServer = NULL;
-    hSession = NULL;
-    hDescribe = NULL;
-    hGeometryTDO = NULL;
-    hOrdinatesTDO = NULL;
-    hElemInfoTDO = NULL;
-    pszUserid = NULL;
-    pszPassword = NULL;
-    pszDatabase = NULL;
+    hEnv = nullptr;
+    hError = nullptr;
+    hSvcCtx = nullptr;
+    hServer = nullptr;
+    hSession = nullptr;
+    hDescribe = nullptr;
+    hGeometryTDO = nullptr;
+    hOrdinatesTDO = nullptr;
+    hElemInfoTDO = nullptr;
+    pszUserid = nullptr;
+    pszPassword = nullptr;
+    pszDatabase = nullptr;
     nServerVersion = 10;
     nServerRelease = 1;
     nMaxNameLength = 30;
@@ -84,10 +84,10 @@ OGROCISession::OGROCISession()
 OGROCISession::~OGROCISession()
 
 {
-    if( hDescribe != NULL )
+    if( hDescribe != nullptr )
         OCIHandleFree((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE);
 
-    if( hSvcCtx != NULL )
+    if( hSvcCtx != nullptr )
     {
         OCISessionEnd(hSvcCtx, hError, hSession, (ub4) 0);
 
@@ -142,18 +142,18 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /* -------------------------------------------------------------------- */
 
     if( Failed( OCIEnvCreate( (OCIEnv **) &hEnv, OCI_THREADED | OCI_OBJECT,
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL,
+                              nullptr,
+                              nullptr,
+                              nullptr,
+                              nullptr,
                               0,
-                              NULL ) ) )
+                              nullptr ) ) )
     {
         return FALSE;
     }
 
     if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hError,
-                OCI_HTYPE_ERROR, (size_t) 0, (dvoid **) 0) ) )
+                OCI_HTYPE_ERROR, (size_t) 0, (dvoid **) nullptr) ) )
     {
         return FALSE;
     }
@@ -163,13 +163,13 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 /* -------------------------------------------------------------------- */
 
     if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hServer,
-                OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) 0) ) )
+                OCI_HTYPE_SERVER, (size_t) 0, (dvoid **) nullptr) ) )
     {
         return FALSE;
     }
 
     if( Failed( OCIHandleAlloc( (dvoid *) hEnv, (dvoid **) &hSvcCtx,
-                OCI_HTYPE_SVCCTX, (size_t) 0, (dvoid **) 0) ) )
+                OCI_HTYPE_SVCCTX, (size_t) 0, (dvoid **) nullptr) ) )
     {
         return FALSE;
     }
@@ -191,7 +191,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
     }
 
     if( Failed( OCIHandleAlloc((dvoid *) hEnv, (dvoid **)&hSession,
-                (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) 0) ) )
+                (ub4) OCI_HTYPE_SESSION, (size_t) 0, (dvoid **) nullptr) ) )
     {
         return FALSE;
     }
@@ -238,7 +238,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 
     if( Failed(
         OCIHandleAlloc( hEnv, (dvoid **) &hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
-                        (size_t)0, (dvoid **)0 ),
+                        (size_t)0, (dvoid **)nullptr ),
         "OCIHandleAlloc(Describe)" ) )
         return FALSE;
 
@@ -254,21 +254,21 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
                        hDescribe ) != OCI_ERROR)
     {
         hGeometryTDO = PinTDO( SDO_GEOMETRY );
-        if( hGeometryTDO == NULL )
+        if( hGeometryTDO == nullptr )
             return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ORDINATE_ARRAY type object.            */
 /* -------------------------------------------------------------------- */
         hOrdinatesTDO = PinTDO( "MDSYS.SDO_ORDINATE_ARRAY" );
-        if( hOrdinatesTDO == NULL )
+        if( hOrdinatesTDO == nullptr )
             return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Try to get the MDSYS.SDO_ELEM_INFO_ARRAY type object.           */
 /* -------------------------------------------------------------------- */
         hElemInfoTDO = PinTDO( "MDSYS.SDO_ELEM_INFO_ARRAY" );
-        if( hElemInfoTDO == NULL )
+        if( hElemInfoTDO == nullptr )
             return FALSE;
     }
 /* -------------------------------------------------------------------- */
@@ -344,7 +344,7 @@ int OGROCISession::EstablishSession( const char *pszUseridIn,
 int OGROCISession::Failed( sword nStatus, const char *pszFunction )
 
 {
-    if( pszFunction == NULL )
+    if( pszFunction == nullptr )
         pszFunction = "<unnamed>";
     if( nStatus == OCI_ERROR )
     {
@@ -352,9 +352,9 @@ int OGROCISession::Failed( sword nStatus, const char *pszFunction )
         char szErrorMsg[10000];
 
         szErrorMsg[0] = '\0';
-        if( hError != NULL )
+        if( hError != nullptr )
         {
-            OCIErrorGet( (dvoid *) hError, (ub4) 1, NULL, &nErrCode,
+            OCIErrorGet( (dvoid *) hError, (ub4) 1, nullptr, &nErrCode,
                          (text *) szErrorMsg, (ub4) sizeof(szErrorMsg),
                          OCI_HTYPE_ERROR );
         }
@@ -412,13 +412,13 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 /* -------------------------------------------------------------------- */
     if( Failed(
         OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
-                    &nOCIType, 0, OCI_ATTR_DATA_TYPE, hError ),
+                    &nOCIType, nullptr, OCI_ATTR_DATA_TYPE, hError ),
         "OCIAttrGet(Type)" ) )
         return CE_Failure;
 
     if( Failed(
         OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM,
-                    &nOCILen, 0, OCI_ATTR_DATA_SIZE, hError ),
+                    &nOCILen, nullptr, OCI_ATTR_DATA_SIZE, hError ),
         "OCIAttrGet(Size)" ) )
         return CE_Failure;
 
@@ -430,7 +430,7 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 
     if( Failed(
         OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &bOCINull,
-                    0, OCI_ATTR_IS_NULL, hError ),
+                    nullptr, OCI_ATTR_IS_NULL, hError ),
         "OCIAttrGet(Null)") )
         return CE_Failure;
 
@@ -472,12 +472,12 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
 
             if( Failed(
                 OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &byPrecision,
-                            0, OCI_ATTR_PRECISION, hError ),
+                            nullptr, OCI_ATTR_PRECISION, hError ),
                 "OCIAttrGet(Precision)" ) )
                 return CE_Failure;
             if( Failed(
                 OCIAttrGet( hParmDesc, OCI_DTYPE_PARAM, &nScale,
-                            0, OCI_ATTR_SCALE, hError ),
+                            nullptr, OCI_ATTR_SCALE, hError ),
                 "OCIAttrGet(Scale)") )
                 return CE_Failure;
 #ifdef notdef
@@ -535,10 +535,10 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
             break;
     }
 
-    if( pnOCIType != NULL )
+    if( pnOCIType != nullptr )
         *pnOCIType = nOCIType;
 
-    if( pnOCILen != NULL )
+    if( pnOCILen != nullptr )
         *pnOCILen = nOCILen;
 
     return CE_None;
@@ -578,9 +578,9 @@ void OGROCISession::CleanName( char * pszName )
 OCIType *OGROCISession::PinTDO( const char *pszType )
 
 {
-    OCIParam *hGeomParam = NULL;
-    OCIRef *hGeomTypeRef = NULL;
-    OCIType *hPinnedTDO = NULL;
+    OCIParam *hGeomParam = nullptr;
+    OCIRef *hGeomTypeRef = nullptr;
+    OCIType *hPinnedTDO = nullptr;
 
     if( Failed(
         OCIDescribeAny(hSvcCtx, hError,
@@ -588,26 +588,26 @@ OCIType *OGROCISession::PinTDO( const char *pszType )
                        OCI_OTYPE_NAME, (ub1)1, (ub1)OCI_PTYPE_TYPE,
                        hDescribe ),
         "GetTDO()->OCIDescribeAny()" ) )
-        return NULL;
+        return nullptr;
 
     if( Failed(
         OCIAttrGet((dvoid *)hDescribe, (ub4)OCI_HTYPE_DESCRIBE,
-                   (dvoid *)&hGeomParam, (ub4 *)0, (ub4)OCI_ATTR_PARAM,
+                   (dvoid *)&hGeomParam, (ub4 *)nullptr, (ub4)OCI_ATTR_PARAM,
                    hError), "GetTDO()->OCIGetAttr(ATTR_PARAM)") )
-        return NULL;
+        return nullptr;
 
     if( Failed(
         OCIAttrGet((dvoid *)hGeomParam, (ub4)OCI_DTYPE_PARAM,
-                   (dvoid *)&hGeomTypeRef, (ub4 *)0, (ub4)OCI_ATTR_REF_TDO,
+                   (dvoid *)&hGeomTypeRef, (ub4 *)nullptr, (ub4)OCI_ATTR_REF_TDO,
                    hError), "GetTDO()->OCIAttrGet(ATTR_REF_TDO)" ) )
-        return NULL;
+        return nullptr;
 
     if( Failed(
-        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)0,
+        OCIObjectPin(hEnv, hError, hGeomTypeRef, (OCIComplexObject *)nullptr,
                      OCI_PIN_ANY, OCI_DURATION_SESSION,
                      OCI_LOCK_NONE, (dvoid **)&hPinnedTDO ),
         "GetTDO()->OCIObjectPin()" ) )
-        return NULL;
+        return nullptr;
 
     return hPinnedTDO;
 }

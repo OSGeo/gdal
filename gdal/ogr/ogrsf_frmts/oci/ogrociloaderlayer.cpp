@@ -62,7 +62,7 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
 
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Reference();
 
 /* -------------------------------------------------------------------- */
@@ -70,9 +70,9 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
     pszLoaderFilename = CPLStrdup( pszLoaderFilenameIn );
 
-    fpData = NULL;
+    fpData = nullptr;
     fpLoader = VSIFOpen( pszLoaderFilename, "wt" );
-    if( fpLoader == NULL )
+    if( fpLoader == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open SQL*Loader control file:%s",
@@ -88,10 +88,10 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
 OGROCILoaderLayer::~OGROCILoaderLayer()
 
 {
-    if( fpData != NULL )
+    if( fpData != nullptr )
         VSIFClose( fpData );
 
-    if( fpLoader != NULL )
+    if( fpLoader != nullptr )
     {
         VSIFClose( fpLoader );
         FinalizeNewLayer();
@@ -99,7 +99,7 @@ OGROCILoaderLayer::~OGROCILoaderLayer()
 
     CPLFree( pszLoaderFilename );
 
-    if( poSRS != NULL && poSRS->Dereference() == 0 )
+    if( poSRS != nullptr && poSRS->Dereference() == 0 )
         delete poSRS;
 }
 
@@ -118,7 +118,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 /* -------------------------------------------------------------------- */
     const char *pszGeometryName =
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
-    if( pszGeometryName == NULL )
+    if( pszGeometryName == nullptr )
         pszGeometryName = "ORA_GEOMETRY";
 
 /* -------------------------------------------------------------------- */
@@ -126,9 +126,9 @@ void OGROCILoaderLayer::WriteLoaderHeader()
 /* -------------------------------------------------------------------- */
     const char *pszLDRMode = CSLFetchNameValue( papszOptions, "LOADER_MODE" );
 
-    if( pszLDRMode != NULL && EQUAL(pszLDRMode,"VARIABLE") )
+    if( pszLDRMode != nullptr && EQUAL(pszLDRMode,"VARIABLE") )
         nLDRMode = LDRM_VARIABLE;
-    else if( pszLDRMode != NULL && EQUAL(pszLDRMode,"BINARY") )
+    else if( pszLDRMode != nullptr && EQUAL(pszLDRMode,"BINARY") )
         nLDRMode = LDRM_BINARY;
     else
         nLDRMode = LDRM_STREAM;
@@ -147,7 +147,7 @@ void OGROCILoaderLayer::WriteLoaderHeader()
         const char *pszDataFilename = CPLResetExtension( pszLoaderFilename,
                                                          "dat" );
         fpData = VSIFOpen( pszDataFilename, "wb" );
-        if( fpData == NULL )
+        if( fpData == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Unable to open data output file `%s'.",
@@ -231,7 +231,7 @@ OGRFeature *OGROCILoaderLayer::GetNextFeature()
 {
     CPLError( CE_Failure, CPLE_NotSupported,
               "GetNextFeature() not supported for an OGROCILoaderLayer." );
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -260,7 +260,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureStreamMode( OGRFeature *poFeature )
 /*      Set the geometry                                                */
 /* -------------------------------------------------------------------- */
     int  nLineLen = 0;
-    if( poFeature->GetGeometryRef() != NULL)
+    if( poFeature->GetGeometryRef() != nullptr)
     {
         char szSRID[128];
         int  nGType;
@@ -385,7 +385,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 {
     OGROCIStringBuf oLine;
 
-    if( fpData == NULL )
+    if( fpData == nullptr )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
@@ -397,7 +397,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Set the geometry                                                */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != NULL)
+    if( poFeature->GetGeometryRef() != nullptr)
     {
         char szSRID[128];
         int  nGType;
@@ -537,7 +537,7 @@ OGRErr OGROCILoaderLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add extents of this geometry to the existing layer extents.     */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != NULL )
+    if( poFeature->GetGeometryRef() != nullptr )
     {
         OGREnvelope  sThisExtent;
 
