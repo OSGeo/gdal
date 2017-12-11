@@ -628,14 +628,14 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     VSIDebug3( "VSIUnixStdioFilesystemHandler::Open(\"%s\",\"%s\") = %p",
                pszFilename, pszAccess, fp );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         if( bSetError )
         {
             VSIError(VSIE_FileError, "%s: %s", pszFilename, strerror(nError));
         }
         errno = nError;
-        return NULL;
+        return nullptr;
     }
 
     const bool bReadOnly =
@@ -645,10 +645,10 @@ VSIUnixStdioFilesystemHandler::Open( const char *pszFilename,
     VSIUnixStdioHandle *poHandle =
         new(std::nothrow) VSIUnixStdioHandle( this, fp, bReadOnly,
                                               bModeAppendReadWrite );
-    if( poHandle == NULL )
+    if( poHandle == nullptr )
     {
         fclose(fp);
-        return NULL;
+        return nullptr;
     }
 
     errno = nError;
@@ -732,13 +732,13 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx( const char *pszPath,
 
     CPLStringList oDir;
     DIR *hDir = opendir(pszPath);
-    if( hDir != NULL )
+    if( hDir != nullptr )
     {
         // We want to avoid returning NULL for an empty list.
         oDir.Assign(static_cast<char**>(CPLCalloc(2, sizeof(char*))));
 
-        struct dirent *psDirEntry = NULL;
-        while( (psDirEntry = readdir(hDir)) != NULL )
+        struct dirent *psDirEntry = nullptr;
+        while( (psDirEntry = readdir(hDir)) != nullptr )
         {
             oDir.AddString( psDirEntry->d_name );
             if( nMaxFiles > 0 && oDir.Count() > nMaxFiles )

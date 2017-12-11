@@ -36,14 +36,14 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRSVGDataSource::OGRSVGDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0)
 #ifdef HAVE_EXPAT
     ,
     eValidity(SVG_VALIDITY_UNKNOWN),
     bIsCloudmade(false),
-    oCurrentParser(NULL),
+    oCurrentParser(nullptr),
     nDataHandlerCounter(0)
 #endif
 {}
@@ -69,7 +69,7 @@ OGRLayer *OGRSVGDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -88,7 +88,7 @@ void OGRSVGDataSource::startElementValidateCbk(const char *pszNameIn,
         if (strcmp(pszNameIn, "svg") == 0)
         {
             eValidity = SVG_VALIDITY_VALID;
-            for( int i = 0; ppszAttr[i] != NULL; i += 2 )
+            for( int i = 0; ppszAttr[i] != nullptr; i += 2 )
             {
                 if (strcmp(ppszAttr[i], "xmlns:cm") == 0 &&
                     strcmp(ppszAttr[i+1], "http://cloudmade.com/") == 0)
@@ -150,14 +150,14 @@ int OGRSVGDataSource::Open( const char * pszFilename )
 /* -------------------------------------------------------------------- */
     CPLString osFilename(pszFilename);
     if (EQUAL(CPLGetExtension(pszFilename), "svgz") &&
-        strstr(pszFilename, "/vsigzip/") == NULL)
+        strstr(pszFilename, "/vsigzip/") == nullptr)
     {
         osFilename = CPLString("/vsigzip/") + pszFilename;
         pszFilename = osFilename.c_str();
     }
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     eValidity = SVG_VALIDITY_UNKNOWN;
@@ -165,7 +165,7 @@ int OGRSVGDataSource::Open( const char * pszFilename )
     XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
-    XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
+    XML_SetElementHandler(oParser, ::startElementValidateCbk, nullptr);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];

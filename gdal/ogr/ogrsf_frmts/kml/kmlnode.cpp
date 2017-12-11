@@ -87,7 +87,7 @@ Coordinate* ParseCoordinate(std::string const& text)
     if(pszStr[pos - 1] != ',')
     {
         delete psTmp;
-        return NULL;
+        return nullptr;
     }
 
     psTmp->dfLatitude = CPLAtof(pszStr + pos);
@@ -115,7 +115,7 @@ KMLNode::KMLNode() :
     pvpoChildren_(new std::vector<KMLNode*>),
     pvsContent_(new std::vector<std::string>),
     pvoAttributes_(new std::vector<Attribute*>),
-    poParent_(NULL),
+    poParent_(nullptr),
     nLevel_(0),
     eType_(Unknown),
     b25D_(false),
@@ -125,8 +125,8 @@ KMLNode::KMLNode() :
 
 KMLNode::~KMLNode()
 {
-    CPLAssert( NULL != pvpoChildren_ );
-    CPLAssert( NULL != pvoAttributes_ );
+    CPLAssert( nullptr != pvpoChildren_ );
+    CPLAssert( nullptr != pvoAttributes_ );
 
     kml_nodes_t::iterator itChild;
     for( itChild = pvpoChildren_->begin();
@@ -508,9 +508,9 @@ std::size_t KMLNode::getNumFeatures()
 
 OGRGeometry* KMLNode::getGeometry(Nodetype eType)
 {
-    OGRGeometry* poGeom = NULL;
-    KMLNode* poCoor = NULL;
-    Coordinate* psCoord = NULL;
+    OGRGeometry* poGeom = nullptr;
+    KMLNode* poCoor = nullptr;
+    Coordinate* psCoord = nullptr;
 
     if (sName_.compare("Point") == 0)
     {
@@ -525,7 +525,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                      nCountP++)
                 {
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
+                    if(psCoord != nullptr)
                     {
                         if( psCoord->bHasZ )
                             poGeom = new OGRPoint(psCoord->dfLongitude,
@@ -556,7 +556,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                      nCountP++ )
                 {
                     psCoord = ParseCoordinate((*poCoor->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
+                    if(psCoord != nullptr)
                     {
                         if( psCoord->bHasZ )
                             ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
@@ -586,12 +586,12 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             }
         }
         // No outer boundary found
-        if(poCoor == NULL)
+        if(poCoor == nullptr)
         {
             return poGeom;
         }
         // Search coordinate Element
-        OGRLinearRing* poLinearRing = NULL;
+        OGRLinearRing* poLinearRing = nullptr;
         for( unsigned int nCount = 0;
              nCount < poCoor->pvpoChildren_->size();
              nCount++)
@@ -604,9 +604,9 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                      nCountP++)
                 {
                     psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
-                    if(psCoord != NULL)
+                    if(psCoord != nullptr)
                     {
-                        if (poLinearRing == NULL)
+                        if (poLinearRing == nullptr)
                         {
                             poLinearRing = new OGRLinearRing();
                         }
@@ -623,13 +623,13 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             }
         }
         // No outer boundary coordinates found
-        if(poLinearRing == NULL)
+        if(poLinearRing == nullptr)
         {
             return poGeom;
         }
 
         ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
-        poLinearRing = NULL;
+        poLinearRing = nullptr;
 
         //*********************************
         // Search innerBoundaryIs Elements
@@ -643,7 +643,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             {
                 if (poLinearRing)
                     ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
-                poLinearRing = NULL;
+                poLinearRing = nullptr;
 
                 if ((*pvpoChildren_)[nCount2]->pvpoChildren_->empty())
                     continue;
@@ -663,7 +663,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                              nCountP++)
                         {
                             psCoord = ParseCoordinate((*(*poCoor->pvpoChildren_)[nCount]->pvsContent_)[nCountP]);
-                            if(psCoord != NULL)
+                            if(psCoord != nullptr)
                             {
                                 if( psCoord->bHasZ )
                                     poLinearRing->addPoint(psCoord->dfLongitude,
@@ -708,12 +708,12 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
 Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 {
     if( nNum >= getNumFeatures() )
-        return NULL;
+        return nullptr;
 
     unsigned int nCount = 0;
     unsigned int nCountP = 0;
-    KMLNode* poFeat = NULL;
-    KMLNode* poTemp = NULL;
+    KMLNode* poFeat = nullptr;
+    KMLNode* poTemp = nullptr;
 
     if (nLastAsked + 1 != static_cast<int>(nNum ))
     {
@@ -742,8 +742,8 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
     nLastAsked = static_cast<int>(nNum);
     nLastCount = nCount;
 
-    if(poFeat == NULL)
-        return NULL;
+    if(poFeat == nullptr)
+        return nullptr;
 
     // Create a feature structure
     Feature *psReturn = new Feature;
@@ -767,7 +767,7 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
     else
     {
         delete psReturn;
-        return NULL;
+        return nullptr;
     }
 
     for(nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
@@ -781,11 +781,11 @@ Feature* KMLNode::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
             else
             {
                 delete psReturn;
-                return NULL;
+                return nullptr;
             }
         }
     }
 
     delete psReturn;
-    return NULL;
+    return nullptr;
 }

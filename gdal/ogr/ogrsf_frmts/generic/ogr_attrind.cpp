@@ -44,8 +44,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRLayerAttrIndex::OGRLayerAttrIndex() :
-    poLayer(NULL),
-    pszIndexPath(NULL)
+    poLayer(nullptr),
+    pszIndexPath(nullptr)
 {}
 
 /************************************************************************/
@@ -56,7 +56,7 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 
 {
     CPLFree( pszIndexPath );
-    pszIndexPath = NULL;
+    pszIndexPath = nullptr;
 }
 
 /************************************************************************/

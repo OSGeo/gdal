@@ -123,7 +123,7 @@ public:
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual const char *GetDescription() const override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     void    FindPDSTemplate();
 
@@ -158,19 +158,19 @@ namespace grib {
 class InventoryWrapper {
   public:
     explicit InventoryWrapper(const std::string &filepath)
-        : inv_(NULL), inv_len_(0), num_messages_(0), result_(0) {
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
       FileDataSource grib(filepath.c_str());
       result_ = GRIB2Inventory(grib, &inv_, &inv_len_, 0 /* all messages */,
                                &num_messages_);
     }
     explicit InventoryWrapper(FileDataSource file_data_source)
-        : inv_(NULL), inv_len_(0), num_messages_(0), result_(0) {
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
       result_ = GRIB2Inventory(file_data_source, &inv_, &inv_len_,
                                0 /* all messages */, &num_messages_);
     }
 
     ~InventoryWrapper() {
-        if (inv_ == NULL) return;
+        if (inv_ == nullptr) return;
         for (uInt4 i = 0; i < inv_len_; i++) {
             GRIB2InventoryFree(inv_ + i);
         }
@@ -179,7 +179,7 @@ class InventoryWrapper {
 
     // Modifying the contents pointed to by the return is allowed.
     inventoryType * get(int i) const {
-      if (i < 0 || i >= static_cast<int>(inv_len_)) return NULL;
+      if (i < 0 || i >= static_cast<int>(inv_len_)) return nullptr;
       return inv_ + i;
     }
 

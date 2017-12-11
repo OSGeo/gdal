@@ -44,13 +44,13 @@ OGRXPlaneReader* OGRXPlaneCreateNavFileReader( OGRXPlaneDataSource* poDataSource
 /*                         OGRXPlaneNavReader()                         */
 /************************************************************************/
 OGRXPlaneNavReader::OGRXPlaneNavReader() :
-    poILSLayer(NULL),
-    poVORLayer(NULL),
-    poNDBLayer(NULL),
-    poGSLayer(NULL),
-    poMarkerLayer(NULL),
-    poDMELayer(NULL),
-    poDMEILSLayer(NULL)
+    poILSLayer(nullptr),
+    poVORLayer(nullptr),
+    poNDBLayer(nullptr),
+    poGSLayer(nullptr),
+    poMarkerLayer(nullptr),
+    poDMELayer(nullptr),
+    poDMEILSLayer(nullptr)
 {}
 
 /************************************************************************/
@@ -118,8 +118,8 @@ int OGRXPlaneNavReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneNavReader::Read()
 {
-    const char* pszLine = NULL;
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    const char* pszLine = nullptr;
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
     {
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
@@ -129,14 +129,14 @@ void OGRXPlaneNavReader::Read()
         if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             bEOF = true;
             return;
         }
         else if( nTokens == 0 || !assertMinCol(9) )
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             continue;
         }
 
@@ -147,20 +147,20 @@ void OGRXPlaneNavReader::Read()
             CPLDebug("XPlane", "Line %d : bad feature code '%s'",
                      nLineNumber, papszTokens[0]);
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             continue;
         }
 
         ParseRecord(nType);
 
         CSLDestroy(papszTokens);
-        papszTokens = NULL;
+        papszTokens = nullptr;
 
         if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
-    papszTokens = NULL;
+    papszTokens = nullptr;
     bEOF = true;
 }
 

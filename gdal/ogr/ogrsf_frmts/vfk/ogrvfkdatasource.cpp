@@ -38,10 +38,10 @@ CPL_CVSID("$Id$")
   \brief OGRVFKDataSource constructor
 */
 OGRVFKDataSource::OGRVFKDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
-    poReader(NULL)
+    pszName(nullptr),
+    poReader(nullptr)
 {}
 
 /*!
@@ -73,7 +73,7 @@ int OGRVFKDataSource::Open(GDALOpenInfo* poOpenInfo)
 
     /* create VFK reader */
     poReader = CreateVFKReader(poOpenInfo->pszFilename);
-    if (poReader == NULL || !poReader->IsValid()) {
+    if (poReader == nullptr || !poReader->IsValid()) {
         /*
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s appears to be VFK but the VFK reader can't"
@@ -118,7 +118,7 @@ int OGRVFKDataSource::Open(GDALOpenInfo* poOpenInfo)
 OGRLayer *OGRVFKDataSource::GetLayer(int iLayer)
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -151,7 +151,7 @@ OGRVFKLayer *OGRVFKDataSource::CreateLayerFromBlock(const IVFKDataBlock *poDataB
 {
     /* create an empty layer */
     OGRVFKLayer *poLayer =
-        new OGRVFKLayer(poDataBlock->GetName(), NULL,
+        new OGRVFKLayer(poDataBlock->GetName(), nullptr,
                         poDataBlock->GetGeometryType(), this);
 
     /* define attributes (properties) */

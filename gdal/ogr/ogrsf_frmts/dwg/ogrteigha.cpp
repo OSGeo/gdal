@@ -36,7 +36,7 @@ extern "C" void CPL_DLL RegisterOGRDWG_DGNV8();
 
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
-static CPLMutex* hMutex = NULL;
+static CPLMutex* hMutex = nullptr;
 static bool bInitialized = false;
 static bool bInitSuccess = false;
 static OdStaticRxObject<OGRDWGServices> oDWGServices;
@@ -141,9 +141,9 @@ void OGRTEIGHADeinitialize()
     }
     bInitialized = false;
     bInitSuccess = false;
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/

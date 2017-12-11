@@ -172,12 +172,12 @@ const char* JP2LuraDataset::GetErrorMessage( long nErrorCode )
 
 JP2LuraDataset::JP2LuraDataset()
 {
-    fp = NULL;
+    fp = nullptr;
     iLevel = 0;
     nOverviewCount = 0;
-    papoOverviewDS = NULL;
+    papoOverviewDS = nullptr;
     memset(&sOutputData, 0, sizeof(sOutputData));
-    poCT = NULL;
+    poCT = nullptr;
     eColorspace = cJP2_Colorspace_Gray;
     nRedIndex = -1;
     nGreenIndex = -1;
@@ -197,7 +197,7 @@ JP2LuraDataset::~JP2LuraDataset()
             for (int i = 0; i < nOverviewCount; i++)
                     delete papoOverviewDS[i];
             CPLFree(papoOverviewDS);
-            papoOverviewDS = NULL;
+            papoOverviewDS = nullptr;
     }
 
     if( sOutputData.pDatacache )
@@ -212,13 +212,13 @@ JP2LuraDataset::~JP2LuraDataset()
         if(sOutputData.handle)
         {
                 JP2_Decompress_End(sOutputData.handle);
-                sOutputData.handle = NULL;
+                sOutputData.handle = nullptr;
         }
 
         if (fp)
         {
             VSIFCloseL(fp);
-            fp = NULL;
+            fp = nullptr;
         }
 
         delete poCT;
@@ -261,7 +261,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
 {
     char                        pcMsg[255];
-    JP2_Comp_Handle             handle = NULL;
+    JP2_Comp_Handle             handle = nullptr;
     GDALJP2Metadata             oJP2MD;
 
     int  nBands = poSrcDS->GetRasterCount();
@@ -272,14 +272,14 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                 "Unable to export files with %d bands. "
                 "Must be >= 1 and <= 32767", nBands);
-        return NULL;
+        return nullptr;
     }
     GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
-    if (poCT != NULL)
+    if (poCT != nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                 "JP2Lura driver does not support band with color table");
-        return NULL;
+        return nullptr;
     }
 
     const GDALDataType eDataType =
@@ -291,13 +291,13 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                 "JP2Lura driver only supports creating Byte, Int16, "
                 "UInt16, Int32, UInt32 or Float32");
-        return NULL;
+        return nullptr;
     }
     if( eDataType == GDT_Float32 && nBands != 1 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
             "JP2Lura driver only supports creating one single Float32 band");
-        return NULL;
+        return nullptr;
     }
     if( eDataType == GDT_Float32 &&
         !CPLFetchBool(papszOptions, "SPLIT_IEEE754", false) )
@@ -305,7 +305,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
             "Encoding of GDT_Float32 band is only supported if "
             "SPLIT_IEEE754=YES is specified");
-        return NULL;
+        return nullptr;
     }
 
     unsigned long ulBps = 0;
@@ -402,7 +402,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                      "Inconsistent value of NBITS for data type");
     }
     else if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS",
-                                                "IMAGE_STRUCTURE" ) != NULL )
+                                                "IMAGE_STRUCTURE" ) != nullptr )
     {
         ulBps = atoi(poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS",
                                                         "IMAGE_STRUCTURE" ) );
@@ -696,7 +696,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     /* -------------------------------------------------------------------- */
 
     int nGMLJP2Version = 1;
-    if (pszGMLJP2V2Def != NULL)
+    if (pszGMLJP2V2Def != nullptr)
     {
         bGMLJP2Option = true;
         nGMLJP2Version = 2;
@@ -715,7 +715,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     {
         if (poSrcDS->GetGCPCount() > 0)
         {
-            if( CSLFetchNameValue(papszOptions, "GeoJP2") == NULL )
+            if( CSLFetchNameValue(papszOptions, "GeoJP2") == nullptr )
                 bGeoJP2Option = true;
             bGeoreferencingCompatOfGeoJP2 = true;
             oJP2MD.SetGCPs(poSrcDS->GetGCPCount(),
@@ -725,7 +725,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         else
         {
             const char* pszWKT = poSrcDS->GetProjectionRef();
-            if (pszWKT != NULL && pszWKT[0] != '\0')
+            if (pszWKT != nullptr && pszWKT[0] != '\0')
             {
                     bGeoreferencingCompatOfGeoJP2 = true;
                     oJP2MD.SetProjection(pszWKT);
@@ -737,10 +737,10 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                     oJP2MD.SetGeoTransform(adfGeoTransform);
             }
             bGeoreferencingCompatOfGMLJP2 =
-                    (pszWKT != NULL && pszWKT[0] != '\0') &&
+                    (pszWKT != nullptr && pszWKT[0] != '\0') &&
                     poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
         }
-        if (poSrcDS->GetMetadata("RPC") != NULL)
+        if (poSrcDS->GetMetadata("RPC") != nullptr)
         {
                 oJP2MD.SetRPCMD(poSrcDS->GetMetadata("RPC"));
                 bGeoreferencingCompatOfGeoJP2 = true;
@@ -748,14 +748,14 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
         const char* pszAreaOrPoint =
                             poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
-        oJP2MD.bPixelIsPoint = pszAreaOrPoint != NULL &&
+        oJP2MD.bPixelIsPoint = pszAreaOrPoint != nullptr &&
                                 EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
         if( oJP2MD.bPixelIsPoint &&
-            CSLFetchNameValue(papszOptions, "GeoJP2") == NULL )
+            CSLFetchNameValue(papszOptions, "GeoJP2") == nullptr )
             bGeoJP2Option = true;
 
         if (bGMLJP2Option &&
-            CPLGetConfigOption("GMLJP2OVERRIDE", NULL) != NULL)
+            CPLGetConfigOption("GMLJP2OVERRIDE", nullptr) != nullptr)
         {
             // Force V1 since this is the branch in which the hack is
             // implemented
@@ -764,7 +764,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         }
     }
 
-    if (CSLFetchNameValue(papszOptions, "GMLJP2") != NULL && bGMLJP2Option &&
+    if (CSLFetchNameValue(papszOptions, "GMLJP2") != nullptr && bGMLJP2Option &&
         !bGeoreferencingCompatOfGMLJP2)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -773,7 +773,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 "for GMLJP2");
     }
 
-    if (CSLFetchNameValue(papszOptions, "GeoJP2") != NULL && bGeoJP2Option &&
+    if (CSLFetchNameValue(papszOptions, "GeoJP2") != nullptr && bGeoJP2Option &&
         !bGeoreferencingCompatOfGeoJP2)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -782,7 +782,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     }
     /*bool bGeoBoxesAfter = CPLFetchBool(papszOptions, "GEOBOXES_AFTER_JP2C",
             bInspireTG);*/
-    GDALJP2Box* poGMLJP2Box = NULL;
+    GDALJP2Box* poGMLJP2Box = nullptr;
     if (bIsJP2OrJPX && bGMLJP2Option && bGeoreferencingCompatOfGMLJP2)
     {
         if (nGMLJP2Version == 1)
@@ -790,15 +790,15 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         else
             poGMLJP2Box = oJP2MD.CreateGMLJP2V2(nXSize, nYSize,
                                                 pszGMLJP2V2Def, poSrcDS);
-        if (poGMLJP2Box == NULL)
-            return NULL;
+        if (poGMLJP2Box == nullptr)
+            return nullptr;
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++++++*/
     /* Start the compression process                    */
     /*++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-    VSILFILE* fp = NULL;
+    VSILFILE* fp = nullptr;
     bool bException = false;
     try
     {
@@ -898,7 +898,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
         const char* pszAccess =
                     EQUALN(pszFilename, "/vsisubfile/", 12) ? "r+b" : "w+b";
         fp = VSIFOpenL(pszFilename, pszAccess);
-        if (fp == NULL)
+        if (fp == nullptr)
         {
             throw "Cannot create file";
         }
@@ -958,7 +958,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             "recommends advertize reader requirement 67 feature, and thus JPX capability");
             }
             else */
-            if (poGMLJP2Box != NULL && bJPXOption)
+            if (poGMLJP2Box != nullptr && bJPXOption)
             {
                 /* GMLJP2 uses lbl and asoc boxes, which are JPEG2000 Part II spec */
                 /* advertizing jpx is required per 8.1 of 05-047r3 GMLJP2 */
@@ -966,11 +966,11 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             }
             WriteBox(fp, &ftypBox);
 
-            const bool bIPR = poSrcDS->GetMetadata("xml:IPR") != NULL &&
+            const bool bIPR = poSrcDS->GetMetadata("xml:IPR") != nullptr &&
                         WRITE_METADATA;
 
             /* Reader requirement box */
-            if (poGMLJP2Box != NULL && bJPXOption)
+            if (poGMLJP2Box != nullptr && bJPXOption)
             {
                 GDALJP2Box rreqBox(fp);
                 rreqBox.SetType("rreq");
@@ -1095,10 +1095,10 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             // Add res box if needed
             double dfXRes = 0, dfYRes = 0;
             int nResUnit = 0;
-            GDALJP2Box* poRes = NULL;
-            if (poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != NULL
-                && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != NULL
-                && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != NULL)
+            GDALJP2Box* poRes = nullptr;
+            if (poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") != nullptr
+                && poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") != nullptr
+                && poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") != nullptr)
             {
                 dfXRes =
                     CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
@@ -1193,7 +1193,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 WriteGDALMetadataBox(fp, poSrcDS, papszOptions);
             }
 
-            if (poGMLJP2Box != NULL)
+            if (poGMLJP2Box != nullptr)
             {
                 WriteBox(fp, poGMLJP2Box);
             }
@@ -1204,11 +1204,11 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     /* -------------------------------------------------------------------- */
         vsi_l_offset nCodeStreamLength = 0;
         vsi_l_offset nCodeStreamStart = 0;
-        VSILFILE* fpSrc = NULL;
+        VSILFILE* fpSrc = nullptr;
         if( USE_SRC_CODESTREAM)
         {
             CPLString osSrcFilename(poSrcDS->GetDescription());
-            if (poSrcDS->GetDriver() != NULL &&
+            if (poSrcDS->GetDriver() != nullptr &&
                     poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
             {
                     VRTDataset* poVRTDS = (VRTDataset*)poSrcDS;
@@ -1263,7 +1263,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
             const char* apszIgnoredOptions[] = {
                     "TILEXSIZE", "TILEYSIZE", "QUALITY", "REVERSIBLE",
                     "LAYERS", "PROGRESSION",
-                    "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", NULL };
+                    "CODEBLOCK_WIDTH", "CODEBLOCK_HEIGHT", nullptr };
             for (int i = 0; apszIgnoredOptions[i]; i++)
             {
                 if (CSLFetchNameValue(papszOptions, apszIgnoredOptions[i]))
@@ -1308,7 +1308,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
 
                 if ((int)VSIFWriteL(abyBuffer, 1, nToRead, fp) != nToRead ||
                         !pfnProgress((nRead + nToRead) * 1.0 / nCodeStreamLength,
-                        NULL, pProgressData))
+                        nullptr, pProgressData))
                 {
                     VSIFCloseL(fpSrc);
 
@@ -1538,7 +1538,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     /*++++++++++++++++++++++++++++++++++++++++++++++++++*/
     /* Tidy up and end process                          */
     /*++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    if (poGMLJP2Box != NULL)
+    if (poGMLJP2Box != nullptr)
         delete poGMLJP2Box;
     if (handle)
     {
@@ -1550,7 +1550,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     }
 
     if( bException )
-        return NULL;
+        return nullptr;
 
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
     return Open(&oOpenInfo);
@@ -1610,8 +1610,8 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
     JP2_Property_Value value;
     short              sChannel, sIndex;
 
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL)
-        return NULL;
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+        return nullptr;
 
     // No thread-safety issue here
     static bool bIsFirstTime = true;
@@ -1620,7 +1620,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         bIsFirstTime = false;
         unsigned long nMajor = 0;
         unsigned long nMinor = 0;
-        char* pszVersionString = NULL;
+        char* pszVersionString = nullptr;
         unsigned char nLicenseLevel = 0;
         JP2_Common_Get_Library_Version(&nMajor, &nMinor, &pszVersionString,
                                        &nLicenseLevel);
@@ -1664,7 +1664,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         }
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const char* pszNum1 = CPLGetConfigOption("LURA_LICENSE_NUM_1", "");
@@ -1729,7 +1729,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
             }
 
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -1738,7 +1738,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                  "Environment variables LURA_LICENSE_NUM_1 and "
                 "LURA_LICENSE_NUM_2 not configured.");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -1752,7 +1752,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     short sSpp = static_cast<short>(value);
@@ -1769,7 +1769,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->eColorspace = static_cast<JP2_Colorspace>(value);
@@ -1786,7 +1786,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug("JP2Lura", "components = %d", sSpp);
@@ -1842,7 +1842,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Only one component handled for paletted datasets");
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             error = JP2_Decompress_GetPalette(poDS->sOutputData.handle,
@@ -1852,7 +1852,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             if (!poDS->sOutputData.pPalette)
@@ -1860,7 +1860,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             if( poDS->sOutputData.pPalette->ulChannels == 3 ||
@@ -1887,7 +1887,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
             break;
 
         default:
-            poDS->sOutputData.pPalette = NULL;
+            poDS->sOutputData.pPalette = nullptr;
             break;
     }
 
@@ -1905,7 +1905,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const unsigned long ulHeight = static_cast<unsigned long>(value);
@@ -1918,7 +1918,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 
@@ -1960,7 +1960,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Internal library error (%s).", GetErrorMessage(error));
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         poDS->sOutputData.lBps = static_cast<long>(value);
@@ -1973,7 +1973,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Internal library error (%s).", GetErrorMessage(error));
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         poDS->sOutputData.bSigned = value != 0;
@@ -1996,7 +1996,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Internal library error (%s).", GetErrorMessage(error));
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             if (avalue[0] == 1 && avalue[1] == 8 && avalue[2] == 23)
@@ -2046,7 +2046,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                         CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
 
                     lCheckBps = (long)value;
@@ -2058,7 +2058,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
-                        return NULL;
+                        return nullptr;
                     }
 
                     bCheckSigned = value != 0;
@@ -2075,7 +2075,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                     CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
                     delete poDS;
-                    return NULL;
+                    return nullptr;
                 }
 
                 lCheckBps = static_cast<long>(value);
@@ -2087,7 +2087,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                     CPLError(CE_Failure, CPLE_AppDefined,
                         "Internal library error (%s).", GetErrorMessage(error));
                     delete poDS;
-                    return NULL;
+                    return nullptr;
                 }
 
                 bCheckSigned = value != 0;
@@ -2100,7 +2100,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Internal library error (%s).", GetErrorMessage(error));
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             ulCheckHeight = static_cast<unsigned long>(value);
@@ -2112,7 +2112,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Internal library error (%s).", GetErrorMessage(error));
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             ulCheckWidth = static_cast<unsigned long>(value);
@@ -2123,7 +2123,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot handle 4:2:0 resampling");
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
 
             if ((ulCheckHeight != ulHeight) ||
@@ -2152,7 +2152,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /*++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -2166,7 +2166,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     unsigned long ulTileH = static_cast<unsigned long>(value);
 
@@ -2177,7 +2177,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     unsigned long ulTileW = static_cast<unsigned long>(value);
 
@@ -2188,7 +2188,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -2266,13 +2266,13 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Internal library error (%s).", GetErrorMessage(error));
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     int numResolutions = static_cast<int>(value);
 
     /* Lower resolutions are not compatible with a color-table */
-    if( poDS->poCT != NULL )
+    if( poDS->poCT != nullptr )
         numResolutions = 0;
 
     int nW = poDS->nRasterXSize;
@@ -2313,7 +2313,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
 
         memcpy(&(poODS->sOutputData), &(poDS->sOutputData),
                sizeof(GDALJP2Lura_Output_Data));
-        poODS->sOutputData.pDatacache = NULL;
+        poODS->sOutputData.pDatacache = nullptr;
 
         for (int iBand = 1; iBand <= poODS->nBands; iBand++)
         {
@@ -2335,7 +2335,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
 
     // Borrow fpL
     poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Vector layers                                                   */
@@ -2352,7 +2352,7 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo * poOpenInfo)
                 poDS->GetLayerCount() == 0)
         {
             delete poDS;
-                return NULL;
+                return nullptr;
         }
     }
 
@@ -2434,7 +2434,7 @@ void JP2LuraDataset::WriteBox(VSILFILE* fp, GDALJP2Box* poBox)
     GUInt32   nLBox;
     GUInt32   nTBox;
 
-    if (poBox == NULL)
+    if (poBox == nullptr)
         return;
 
     nLBox = (int)poBox->GetDataLength() + 8;
@@ -2501,7 +2501,7 @@ void GDALRegister_JP2Lura()
     if (! GDAL_CHECK_VERSION("JP2Lura driver"))
         return;
 
-    if( GDALGetDriverByName( "JP2Lura" ) == NULL )
+    if( GDALGetDriverByName( "JP2Lura" ) == nullptr )
     {
         poDriver = new GDALDriver();
 

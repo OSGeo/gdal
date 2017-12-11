@@ -150,8 +150,8 @@ CPLErr TILRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 TILDataset::TILDataset() :
-    poVRTDS(NULL),
-    papszMetadataFiles(NULL)
+    poVRTDS(nullptr),
+    papszMetadataFiles(nullptr)
 {}
 
 /************************************************************************/
@@ -177,7 +177,7 @@ int TILDataset::CloseDependentDatasets()
     {
         bHasDroppedRef = TRUE;
         delete poVRTDS;
-        poVRTDS = NULL;
+        poVRTDS = nullptr;
     }
 
     while( !apoTileDS.empty() )
@@ -200,7 +200,7 @@ int TILDataset::Identify( GDALOpenInfo *poOpenInfo )
         || !EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"TIL") )
         return FALSE;
 
-    if( strstr((const char *) poOpenInfo->pabyHeader,"numTiles") == NULL )
+    if( strstr((const char *) poOpenInfo->pabyHeader,"numTiles") == nullptr )
         return FALSE;
 
     return TRUE;
@@ -214,7 +214,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -224,7 +224,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The TIL driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     CPLString osDirname = CPLGetDirname(poOpenInfo->pszFilename);
@@ -235,31 +235,31 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALMDReaderBase* mdreader = mdreadermanager.GetReader(poOpenInfo->pszFilename,
                                          poOpenInfo->GetSiblingFiles(), MDR_DG);
 
-    if(NULL == mdreader)
+    if(nullptr == mdreader)
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to open .TIL dataset due to missing metadata file." );
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Try to find the corresponding .IMD file.                        */
 /* -------------------------------------------------------------------- */
     char **papszIMD = mdreader->GetMetadataDomain(MD_DOMAIN_IMD);
 
-    if( papszIMD == NULL )
+    if( papszIMD == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to open .TIL dataset due to missing .IMD file." );
-        return NULL;
+        return nullptr;
     }
 
-    if( CSLFetchNameValue( papszIMD, "numRows" ) == NULL
-        || CSLFetchNameValue( papszIMD, "numColumns" ) == NULL
-        || CSLFetchNameValue( papszIMD, "bitsPerPixel" ) == NULL )
+    if( CSLFetchNameValue( papszIMD, "numRows" ) == nullptr
+        || CSLFetchNameValue( papszIMD, "numColumns" ) == nullptr
+        || CSLFetchNameValue( papszIMD, "bitsPerPixel" ) == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Missing a required field in the .IMD file." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -267,9 +267,9 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     CPLKeywordParser oParser;
@@ -277,7 +277,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !oParser.Ingest( fp ) )
     {
         VSIFCloseL( fp );
-        return NULL;
+        return nullptr;
     }
 
     VSIFCloseL( fp );
@@ -295,7 +295,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -303,12 +303,12 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      details like the band count and types.                          */
 /* -------------------------------------------------------------------- */
     const char *pszFilename = CSLFetchNameValue( papszTIL, "TILE_1.filename" );
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing TILE_1.filename in .TIL file." );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // trim double quotes.
@@ -317,15 +317,15 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     if( pszFilename[strlen(pszFilename)-1] == '"' )
         const_cast<char *>( pszFilename )[strlen(pszFilename)-1] = '\0';
 
-    CPLString osFilename = CPLFormFilename(osDirname, pszFilename, NULL);
+    CPLString osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
     GDALDataset *poTemplateDS = reinterpret_cast<GDALDataset *>(
         GDALOpen( osFilename, GA_ReadOnly ) );
-    if( poTemplateDS == NULL || poTemplateDS->GetRasterCount() == 0)
+    if( poTemplateDS == nullptr || poTemplateDS->GetRasterCount() == 0)
     {
         delete poDS;
-        if (poTemplateDS != NULL)
+        if (poTemplateDS != nullptr)
             GDALClose( poTemplateDS );
-        return NULL;
+        return nullptr;
     }
 
     GDALRasterBand *poTemplateBand = poTemplateDS->GetRasterBand(1);
@@ -348,7 +348,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetGeoTransform(adfGeoTransform);
     }
 
-    poTemplateBand = NULL;
+    poTemplateBand = nullptr;
     GDALClose( poTemplateDS );
 
 /* -------------------------------------------------------------------- */
@@ -358,7 +358,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->poVRTDS = new VRTDataset(poDS->nRasterXSize,poDS->nRasterYSize);
 
     for( int iBand = 0; iBand < nBandCount; iBand++ )
-        poDS->poVRTDS->AddBand( eDT, NULL );
+        poDS->poVRTDS->AddBand( eDT, nullptr );
 
     /* Don't try to write a VRT file */
     poDS->poVRTDS->SetWritable(FALSE);
@@ -386,12 +386,12 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString osKey;
         osKey.Printf( "TILE_%d.filename", iTile );
         pszFilename = CSLFetchNameValue( papszTIL, osKey );
-        if( pszFilename == NULL )
+        if( pszFilename == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Missing TILE_%d.filename in .TIL file.", iTile );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         // trim double quotes.
@@ -399,7 +399,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
             pszFilename++;
         if( pszFilename[strlen(pszFilename)-1] == '"' )
             const_cast<char *>( pszFilename )[strlen(pszFilename)-1] = '\0';
-        osFilename = CPLFormFilename(osDirname, pszFilename, NULL);
+        osFilename = CPLFormFilename(osDirname, pszFilename, nullptr);
 
         osKey.Printf( "TILE_%d.ULColOffset", iTile );
         const int nULX = atoi(CSLFetchNameValueDef(papszTIL, osKey, "0"));
@@ -416,7 +416,7 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALDataset *poTileDS =
             new GDALProxyPoolDataset( osFilename,
                                       nLRX - nULX + 1, nLRY - nULY + 1 );
-        if( poTileDS == NULL )
+        if( poTileDS == nullptr )
             continue;
 
         poDS->apoTileDS.push_back( poTileDS );
@@ -467,9 +467,9 @@ char **TILDataset::GetFileList()
         papszFileList = CSLAddString( papszFileList,
                                       apoTileDS[i]->GetDescription() );
 
-    if(NULL != papszMetadataFiles)
+    if(nullptr != papszMetadataFiles)
     {
-        for( int i = 0; papszMetadataFiles[i] != NULL; i++ )
+        for( int i = 0; papszMetadataFiles[i] != nullptr; i++ )
         {
             papszFileList = CSLAddString( papszFileList, papszMetadataFiles[i] );
         }
@@ -485,7 +485,7 @@ char **TILDataset::GetFileList()
 void GDALRegister_TIL()
 
 {
-    if( GDALGetDriverByName( "TIL" ) != NULL )
+    if( GDALGetDriverByName( "TIL" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

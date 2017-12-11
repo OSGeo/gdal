@@ -100,7 +100,7 @@ CPLHashSet* CPLHashSetNew( CPLHashSetHashFunc fnHashFunc,
     set->tabList = static_cast<CPLList**>(CPLCalloc(sizeof(CPLList*), 53));
     set->nIndiceAllocatedSize = 0;
     set->nAllocatedSize = 53;
-    set->psRecyclingList = NULL;
+    set->psRecyclingList = nullptr;
     set->nRecyclingListSize = 0;
     set->bRehash = false;
 #ifdef HASH_DEBUG
@@ -125,7 +125,7 @@ CPLHashSet* CPLHashSetNew( CPLHashSetHashFunc fnHashFunc,
 
 int CPLHashSetSize( const CPLHashSet* set )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     return set->nSize;
 }
 
@@ -138,7 +138,7 @@ static CPLList* CPLHashSetGetNewListElt( CPLHashSet* set )
     if( set->psRecyclingList )
     {
         CPLList* psRet = set->psRecyclingList;
-        psRet->pData = NULL;
+        psRet->pData = nullptr;
         set->nRecyclingListSize--;
         set->psRecyclingList = psRet->psNext;
         return psRet;
@@ -171,7 +171,7 @@ static void CPLHashSetReturnListElt( CPLHashSet* set, CPLList* psList )
 
 static void CPLHashSetClearInternal( CPLHashSet* set, bool bFinalize )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     for( int i = 0; i < set->nAllocatedSize; i++ )
     {
         CPLList* cur = set->tabList[i];
@@ -186,7 +186,7 @@ static void CPLHashSetClearInternal( CPLHashSet* set, bool bFinalize )
                 CPLHashSetReturnListElt(set, cur);
             cur = psNext;
         }
-        set->tabList[i] = NULL;
+        set->tabList[i] = nullptr;
     }
     set->bRehash = false;
 }
@@ -263,7 +263,7 @@ void CPLHashSetForeach( CPLHashSet* set,
                         CPLHashSetIterEltFunc fnIterFunc,
                         void* user_data )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     if( !fnIterFunc ) return;
 
     for( int i = 0; i < set->nAllocatedSize; i++ )
@@ -332,7 +332,7 @@ static void** CPLHashSetFindPtr( CPLHashSet* set, const void* elt )
             return &cur->pData;
         cur = cur->psNext;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -354,7 +354,7 @@ static void** CPLHashSetFindPtr( CPLHashSet* set, const void* elt )
 
 int CPLHashSetInsert( CPLHashSet* set, void* elt )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     void** pElt = CPLHashSetFindPtr(set, elt);
     if( pElt )
     {
@@ -404,12 +404,12 @@ int CPLHashSetInsert( CPLHashSet* set, void* elt )
 
 void* CPLHashSetLookup( CPLHashSet* set, const void* elt )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     void** pElt = CPLHashSetFindPtr(set, elt);
     if( pElt )
         return *pElt;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -420,7 +420,7 @@ static
 bool CPLHashSetRemoveInternal( CPLHashSet* set, const void* elt,
                                bool bDeferRehash )
 {
-    CPLAssert(set != NULL);
+    CPLAssert(set != nullptr);
     if( set->nIndiceAllocatedSize > 0 && set->nSize <= set->nAllocatedSize / 2 )
     {
         set->nIndiceAllocatedSize--;
@@ -432,7 +432,7 @@ bool CPLHashSetRemoveInternal( CPLHashSet* set, const void* elt,
 
     int nHashVal = static_cast<int>(set->fnHashFunc(elt) % set->nAllocatedSize);
     CPLList* cur = set->tabList[nHashVal];
-    CPLList* prev = NULL;
+    CPLList* prev = nullptr;
     while( cur )
     {
         if( set->fnEqualFunc(cur->pData, elt) )
@@ -550,7 +550,7 @@ int CPLHashSetEqualPointer( const void* elt1, const void* elt2 )
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 unsigned long CPLHashSetHashStr( const void *elt )
 {
-    if( elt == NULL )
+    if( elt == nullptr )
         return 0;
 
     const unsigned char* pszStr = static_cast<const unsigned char *>(elt);
@@ -581,13 +581,13 @@ int CPLHashSetEqualStr( const void* elt1, const void* elt2 )
     const char* pszStr1 = static_cast<const char *>(elt1);
     const char* pszStr2 = static_cast<const char *>(elt2);
 
-    if( pszStr1 == NULL && pszStr2 != NULL )
+    if( pszStr1 == nullptr && pszStr2 != nullptr )
         return FALSE;
 
-    if( pszStr1 != NULL && pszStr2 == NULL )
+    if( pszStr1 != nullptr && pszStr2 == nullptr )
         return FALSE;
 
-    if( pszStr1 == NULL && pszStr2 == NULL )
+    if( pszStr1 == nullptr && pszStr2 == nullptr )
         return TRUE;
 
     return strcmp(pszStr1, pszStr2) == 0;

@@ -61,7 +61,7 @@ public:
 
     int     Ingest( VSILFILE *fp );
 
-    const char *GetKeyword( const char *pszPath, const char *pszDefault=NULL );
+    const char *GetKeyword( const char *pszPath, const char *pszDefault=nullptr );
     char  **GetAllKeywords() { return papszKeywordList; }
 };
 

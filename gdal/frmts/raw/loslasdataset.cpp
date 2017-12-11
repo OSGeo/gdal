@@ -101,7 +101,7 @@ class LOSLASDataset : public RawDataset
 /*                             LOSLASDataset()                          */
 /************************************************************************/
 
-LOSLASDataset::LOSLASDataset() : fpImage(NULL), nRecordLength(0)
+LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
 {
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
@@ -115,7 +115,7 @@ LOSLASDataset::~LOSLASDataset()
 {
     FlushCache();
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
@@ -147,7 +147,7 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -159,10 +159,10 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
-    if( poDS->fpImage == NULL )
+    if( poDS->fpImage == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -179,7 +179,7 @@ GDALDataset *LOSLASDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     CPL_IGNORE_RET_VAL(VSIFSeekL( poDS->fpImage, 76, SEEK_SET ));
@@ -264,7 +264,7 @@ const char *LOSLASDataset::GetProjectionRef()
 void GDALRegister_LOSLAS()
 
 {
-    if( GDALGetDriverByName( "LOSLAS" ) != NULL )
+    if( GDALGetDriverByName( "LOSLAS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

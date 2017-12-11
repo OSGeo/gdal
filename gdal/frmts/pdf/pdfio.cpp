@@ -62,7 +62,7 @@ VSIPDFFileStream::VSIPDFFileStream(
 #else
     BaseStream(dictA),
 #endif
-    poParent(NULL),
+    poParent(nullptr),
     poFilename(new GooString(pszFilename)),
     f(fIn),
     nStart(0),
@@ -110,7 +110,7 @@ VSIPDFFileStream::VSIPDFFileStream( VSIPDFFileStream* poParentIn,
 VSIPDFFileStream::~VSIPDFFileStream()
 {
     close();
-    if (poParent == NULL)
+    if (poParent == nullptr)
     {
         delete poFilename;
         if (f)

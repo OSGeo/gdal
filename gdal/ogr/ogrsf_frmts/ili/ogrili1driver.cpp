@@ -40,18 +40,18 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == NULL) )
-        return NULL;
+        (!poOpenInfo->bStatOK && strchr(poOpenInfo->pszFilename, ',') == nullptr) )
+        return nullptr;
 
-    if( poOpenInfo->fpL != NULL )
+    if( poOpenInfo->fpL != nullptr )
     {
-        if( strstr((const char*)poOpenInfo->pabyHeader,"SCNT") == NULL )
+        if( strstr((const char*)poOpenInfo->pabyHeader,"SCNT") == nullptr )
         {
-            return NULL;
+            return nullptr;
         }
     }
     else if( poOpenInfo->bIsDirectory )
-        return NULL;
+        return nullptr;
 
     OGRILI1DataSource *poDS = new OGRILI1DataSource();
 
@@ -60,7 +60,7 @@ static GDALDataset *OGRILI1DriverOpen( GDALOpenInfo* poOpenInfo )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -82,7 +82,7 @@ static GDALDataset *OGRILI1DriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -93,7 +93,7 @@ static GDALDataset *OGRILI1DriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRILI1() {
-    if( GDALGetDriverByName( "Interlis 1" ) != NULL )
+    if( GDALGetDriverByName( "Interlis 1" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

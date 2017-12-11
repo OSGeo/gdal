@@ -54,7 +54,7 @@ CPL_CVSID("$Id$")
 GDALDataset* PCRasterDataset::open(
          GDALOpenInfo* info)
 {
-  PCRasterDataset* dataset = NULL;
+  PCRasterDataset* dataset = nullptr;
 
   if(info->fpL && info->nHeaderBytes >= static_cast<int>(CSF_SIZE_SIG) &&
      strncmp(reinterpret_cast<char*>( info->pabyHeader ), CSF_SIG, CSF_SIZE_SIG) == 0) {
@@ -70,7 +70,7 @@ GDALDataset* PCRasterDataset::open(
       if( CPLGetLastErrorType() != CE_None )
       {
           delete dataset;
-          return NULL;
+          return nullptr;
       }
     }
   }
@@ -115,7 +115,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(nrBands != 1) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Too many bands ('%d'): must be 1 band", nrBands);
-    return NULL;
+    return nullptr;
   }
 
   GDALRasterBand* raster = source->GetRasterBand(1);
@@ -129,7 +129,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(fileCellRepresentation == CR_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid cell representation");
-    return NULL;
+    return nullptr;
   }
 
   // The value scale of the values.
@@ -146,7 +146,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(valueScale == VS_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid value scale");
-    return NULL;
+    return nullptr;
   }
 
   CSF_PT const projection = PT_YDECT2B;
@@ -171,7 +171,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(appCellRepresentation == CR_UNDEFINED) {
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot determine a valid cell representation");
-    return NULL;
+    return nullptr;
   }
 
   // Check whether value scale fits the cell representation. Adjust when
@@ -187,7 +187,7 @@ GDALDataset* PCRasterDataset::createCopy(
   if(!map) {
     CPLError(CE_Failure, CPLE_OpenFailed,
          "PCRaster driver: Unable to create raster %s", filename);
-    return NULL;
+    return nullptr;
   }
 
   // Try to convert in app cell representation to the cell representation
@@ -196,7 +196,7 @@ GDALDataset* PCRasterDataset::createCopy(
     CPLError(CE_Failure, CPLE_NotSupported,
          "PCRaster driver: Cannot convert cells: %s", MstrError());
     Mclose(map);
-    return NULL;
+    return nullptr;
   }
 
   int hasMissingValue;
@@ -226,7 +226,7 @@ GDALDataset* PCRasterDataset::createCopy(
     if(raster->RasterIO(GF_Read, 0, static_cast<int>(row),
         static_cast<int>(nrCols), 1, buffer,
         static_cast<int>(nrCols), 1,
-         raster->GetRasterDataType(), 0, 0, NULL) != CE_None) {
+         raster->GetRasterDataType(), 0, 0, nullptr) != CE_None) {
       CPLError(CE_Failure, CPLE_FileIO,
          "PCRaster driver: Error reading from source raster");
       errorCode = CE_Failure;
@@ -249,7 +249,7 @@ GDALDataset* PCRasterDataset::createCopy(
     // Write row in target.
     RputRow(map, row, buffer);
 
-    if(!progress((row + 1) / (static_cast<double>(nrRows)), NULL, progressData)) {
+    if(!progress((row + 1) / (static_cast<double>(nrRows)), nullptr, progressData)) {
       CPLError(CE_Failure, CPLE_UserInterrupt,
          "PCRaster driver: User terminated CreateCopy()");
       errorCode = CE_Failure;
@@ -258,13 +258,13 @@ GDALDataset* PCRasterDataset::createCopy(
   }
 
   Mclose(map);
-  map = NULL;
+  map = nullptr;
 
   free(buffer);
-  buffer = NULL;
+  buffer = nullptr;
 
   if( errorCode != CE_None )
-      return NULL;
+      return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.        */
@@ -414,7 +414,7 @@ GDALDataset* PCRasterDataset::create(
          "PCRaster driver : "
          "attempt to create dataset with too many bands (%d); "
          "must be 1 band.\n", nrBands);
-    return NULL;
+    return nullptr;
   }
 
   const int row_col_max = INT4_MAX - 1;
@@ -423,7 +423,7 @@ GDALDataset* PCRasterDataset::create(
          "PCRaster driver : "
          "attempt to create dataset with too many columns (%d); "
          "must be smaller than %d.", nr_cols, row_col_max);
-    return NULL;
+    return nullptr;
   }
 
   if(nr_rows > row_col_max){
@@ -431,7 +431,7 @@ GDALDataset* PCRasterDataset::create(
          "PCRaster driver : "
          "attempt to create dataset with too many rows (%d); "
          "must be smaller than %d.", nr_rows, row_col_max);
-    return NULL;
+    return nullptr;
   }
 
   if(gdalType != GDT_Byte &&
@@ -442,7 +442,7 @@ GDALDataset* PCRasterDataset::create(
        "attempt to create dataset with an illegal data type (%s); "
        "use either Byte, Int32 or Float32.",
        GDALGetDataTypeName(gdalType));
-    return NULL;
+    return nullptr;
   }
 
   // value scale must be specified by the user,
@@ -450,11 +450,11 @@ GDALDataset* PCRasterDataset::create(
   const char *valueScale = CSLFetchNameValue(
     papszParmList,"PCRASTER_VALUESCALE");
 
-  if(valueScale == NULL){
+  if(valueScale == nullptr){
     CPLError(CE_Failure, CPLE_AppDefined,
          "PCRaster driver: value scale can not be determined; "
          "specify PCRASTER_VALUESCALE.");
-    return NULL;
+    return nullptr;
   }
 
   CSF_VS csf_value_scale = string2ValueScale(valueScale);
@@ -465,7 +465,7 @@ GDALDataset* PCRasterDataset::create(
          "use either VS_BOOLEAN, VS_NOMINAL, VS_ORDINAL, VS_SCALAR, "
          "VS_DIRECTION, VS_LDD",
           valueScale);
-    return NULL;
+    return nullptr;
   }
 
   CSF_CR csf_cell_representation = GDALType2CellRepresentation(gdalType, false);
@@ -484,11 +484,11 @@ GDALDataset* PCRasterDataset::create(
   if(!map){
     CPLError(CE_Failure, CPLE_OpenFailed,
          "PCRaster driver: Unable to create raster %s", filename);
-    return NULL;
+    return nullptr;
   }
 
   Mclose(map);
-  map = NULL;
+  map = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.        */

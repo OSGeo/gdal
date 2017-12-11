@@ -64,7 +64,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
     const char* pszExtension = CPLGetExtension(pszFilename);
     if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
@@ -72,7 +72,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
     if( !poDS->Open( pszFilename, true, CPL_TO_BOOL(bUpdate) ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     return poDS;
 }
@@ -91,11 +91,11 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
     VSIStatBufL  sStat;
     /* int bSingleNewFile = FALSE; */
 
-    if( pszName==NULL || strlen(pszName)==0 )
+    if( pszName==nullptr || strlen(pszName)==0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid datasource name (null or empty)");
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -108,7 +108,7 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s is not a valid existing directory.",
                       pszName );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -131,7 +131,7 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     return poDS;
 }
@@ -145,7 +145,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
 {
     VSIStatBufL sStatBuf;
     static const char * const apszExtensions[] =
-        { "gxt", "txt", "gct", "gcm", "gcr", NULL };
+        { "gxt", "txt", "gct", "gcm", "gcr", nullptr };
 
     if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
@@ -162,7 +162,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
             EQUAL(CPLGetExtension(pszDataSource),"txt")
            ) )
     {
-        for( int iExt=0; apszExtensions[iExt] != NULL; iExt++ )
+        for( int iExt=0; apszExtensions[iExt] != nullptr; iExt++ )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
                                                     apszExtensions[iExt] );
@@ -175,7 +175,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
         char **papszDirEntries = VSIReadDir( pszDataSource );
 
         for( int iFile = 0;
-             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++ )
         {
             if( CSLFindString( const_cast<char **>( apszExtensions ),
@@ -183,7 +183,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
             {
                 VSIUnlink( CPLFormFilename( pszDataSource,
                                             papszDirEntries[iFile],
-                                            NULL ) );
+                                            nullptr ) );
             }
         }
 

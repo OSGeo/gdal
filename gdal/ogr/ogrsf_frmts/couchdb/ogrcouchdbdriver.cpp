@@ -61,14 +61,14 @@ static GDALDataset* OGRCouchDBDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( OGRCouchDBDriverIdentify(poOpenInfo) == 0 )
-        return NULL;
+        return nullptr;
 
     OGRCouchDBDataSource   *poDS = new OGRCouchDBDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -90,7 +90,7 @@ static GDALDataset* OGRCouchDBDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -103,7 +103,7 @@ static GDALDataset* OGRCouchDBDriverCreate( const char * pszName,
 void RegisterOGRCouchDB()
 
 {
-    if( GDALGetDriverByName( "CouchDB" ) != NULL )
+    if( GDALGetDriverByName( "CouchDB" ) != nullptr )
       return;
 
     GDALDriver  *poDriver = new GDALDriver();

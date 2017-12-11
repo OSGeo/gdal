@@ -46,8 +46,8 @@
 
 CPL_CVSID("$Id$")
 
-static CPLMutex *hMutex = NULL;
-static std::map<CPLString, GDALDataset *> *poMap = NULL;
+static CPLMutex *hMutex = nullptr;
+static std::map<CPLString, GDALDataset *> *poMap = nullptr;
 
 /************************************************************************/
 /*                         OGRCSVDriverIdentify()                       */
@@ -56,7 +56,7 @@ static std::map<CPLString, GDALDataset *> *poMap = NULL;
 static int OGRCSVDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->fpL != NULL )
+    if( poOpenInfo->fpL != nullptr )
     {
         const CPLString osBaseFilename =
             CPLGetFilename(poOpenInfo->pszFilename);
@@ -127,7 +127,7 @@ static int OGRCSVDriverIdentify( GDALOpenInfo *poOpenInfo )
 
 void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS)
 {
-    if( poMap == NULL )
+    if( poMap == nullptr )
         return;
     CPLMutexHolderD(&hMutex);
     std::map<CPLString, GDALDataset *>::iterator oIter = poMap->find(pszName);
@@ -147,9 +147,9 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo *poOpenInfo )
 
 {
     if( !OGRCSVDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
-    if( poMap != NULL )
+    if( poMap != nullptr )
     {
         CPLMutexHolderD(&hMutex);
         std::map<CPLString, GDALDataset *>::iterator oIter =
@@ -167,13 +167,13 @@ static GDALDataset *OGRCSVDriverOpen( GDALOpenInfo *poOpenInfo )
                     FALSE, poOpenInfo->papszOpenOptions) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poOpenInfo->eAccess == GA_Update && poDS != NULL )
+    if( poOpenInfo->eAccess == GA_Update && poDS != nullptr )
     {
         CPLMutexHolderD(&hMutex);
-        if( poMap == NULL )
+        if( poMap == nullptr )
             poMap = new std::map<CPLString, GDALDataset *>();
         if( poMap->find(poOpenInfo->pszFilename) == poMap->end() )
         {
@@ -207,7 +207,7 @@ static GDALDataset *OGRCSVDriverCreate( const char *pszName,
                  "It seems a file system object called '%s' already exists.",
                  pszName);
 
-        return NULL;
+        return nullptr;
     }
 
     // If the target is not a simple .csv then create it as a directory.
@@ -236,7 +236,7 @@ static GDALDataset *OGRCSVDriverCreate( const char *pszName,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to create directory %s:\n%s",
                      pszName, VSIStrerror(errno));
-            return NULL;
+            return nullptr;
         }
         osDirName = pszName;
     }
@@ -251,11 +251,11 @@ static GDALDataset *OGRCSVDriverCreate( const char *pszName,
     else if( !poDS->Open(osDirName, TRUE, TRUE) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const char *pszGeometry = CSLFetchNameValue(papszOptions, "GEOMETRY");
-    if( pszGeometry != NULL && EQUAL(pszGeometry, "AS_WKT") )
+    if( pszGeometry != nullptr && EQUAL(pszGeometry, "AS_WKT") )
         poDS->EnableGeometryFields();
 
     return poDS;
@@ -277,11 +277,11 @@ static CPLErr OGRCSVDriverDelete( const char *pszFilename )
 
 static void OGRCSVDriverUnload( GDALDriver * )
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    hMutex = nullptr;
     delete poMap;
-    poMap = NULL;
+    poMap = nullptr;
 }
 
 /************************************************************************/
@@ -291,7 +291,7 @@ static void OGRCSVDriverUnload( GDALDriver * )
 void RegisterOGRCSV()
 
 {
-    if( GDALGetDriverByName("CSV") != NULL )
+    if( GDALGetDriverByName("CSV") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
  */
 
 DDFModule::DDFModule() :
-    fpDDF(NULL),
+    fpDDF(nullptr),
     bReadOnly(TRUE),
     nFirstRecordOffset(0),
     _interchangeLevel('\0'),
@@ -66,11 +66,11 @@ DDFModule::DDFModule() :
     _sizeFieldPos(0),
     _sizeFieldTag(0),
     nFieldDefnCount(0),
-    papoFieldDefns(NULL),
-    poRecord(NULL),
+    papoFieldDefns(nullptr),
+    poRecord(nullptr),
     nCloneCount(0),
     nMaxCloneCount(0),
-    papoClones(NULL)
+    papoClones(nullptr)
 {
     strcpy( _extendedCharSet, " ! " );
 }
@@ -106,19 +106,19 @@ void DDFModule::Close()
 /* -------------------------------------------------------------------- */
 /*      Close the file.                                                 */
 /* -------------------------------------------------------------------- */
-    if( fpDDF != NULL )
+    if( fpDDF != nullptr )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
-        fpDDF = NULL;
+        fpDDF = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the working record.                                     */
 /* -------------------------------------------------------------------- */
-    if( poRecord != NULL )
+    if( poRecord != nullptr )
     {
         delete poRecord;
-        poRecord = NULL;
+        poRecord = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -132,7 +132,7 @@ void DDFModule::Close()
     nCloneCount = 0;
     nMaxCloneCount = 0;
     CPLFree( papoClones );
-    papoClones = NULL;
+    papoClones = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the field definitions.                                  */
@@ -140,7 +140,7 @@ void DDFModule::Close()
     for( int i = 0; i < nFieldDefnCount; i++ )
         delete papoFieldDefns[i];
     CPLFree( papoFieldDefns );
-    papoFieldDefns = NULL;
+    papoFieldDefns = nullptr;
     nFieldDefnCount = 0;
 }
 
@@ -173,7 +173,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Close the existing file if there is one.                        */
 /* -------------------------------------------------------------------- */
-    if( fpDDF != NULL )
+    if( fpDDF != nullptr )
         Close();
 
 /* -------------------------------------------------------------------- */
@@ -181,7 +181,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
     fpDDF = VSIFOpenL( pszFilename, "rb" );
 
-    if( fpDDF == NULL )
+    if( fpDDF == nullptr )
     {
         if( !bFailQuietly )
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -198,7 +198,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     if( (int)VSIFReadL( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
-        fpDDF = NULL;
+        fpDDF = nullptr;
 
         if( !bFailQuietly )
             CPLError( CE_Failure, CPLE_FileIO,
@@ -264,7 +264,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     if( !bValid )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpDDF ));
-        fpDDF = NULL;
+        fpDDF = nullptr;
 
         if( !bFailQuietly )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -393,13 +393,13 @@ int DDFModule::Initialize( char chInterchangeLevel,
 int DDFModule::Create( const char *pszFilename )
 
 {
-    CPLAssert( fpDDF == NULL );
+    CPLAssert( fpDDF == nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Create the file on disk.                                        */
 /* -------------------------------------------------------------------- */
     fpDDF = VSIFOpenL( pszFilename, "wb+" );
-    if( fpDDF == NULL )
+    if( fpDDF == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create file %s, check path and permissions.",
@@ -424,7 +424,7 @@ int DDFModule::Create( const char *pszFilename )
     {
         int nLength;
 
-        papoFieldDefns[iField]->GenerateDDREntry( this, NULL, &nLength );
+        papoFieldDefns[iField]->GenerateDDREntry( this, nullptr, &nLength );
         _recLength += nLength;
     }
 
@@ -460,7 +460,7 @@ int DDFModule::Create( const char *pszFilename )
 
         CPLAssert(_sizeFieldLength + _sizeFieldPos + _sizeFieldTag < (int)sizeof(achDirEntry));
 
-        papoFieldDefns[iField]->GenerateDDREntry( this, NULL, &nLength );
+        papoFieldDefns[iField]->GenerateDDREntry( this, nullptr, &nLength );
 
         CPLAssert( (int)strlen(papoFieldDefns[iField]->GetName()) == _sizeFieldTag );
         strcpy( achDirEntry, papoFieldDefns[iField]->GetName() );
@@ -484,7 +484,7 @@ int DDFModule::Create( const char *pszFilename )
 /* -------------------------------------------------------------------- */
     for( iField = 0; iField < nFieldDefnCount; iField++ )
     {
-        char *pachData = NULL;
+        char *pachData = nullptr;
         int nLength = 0;
 
         papoFieldDefns[iField]->GenerateDDREntry( this, &pachData, &nLength );
@@ -579,7 +579,7 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
             return papoFieldDefns[i];
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -603,13 +603,13 @@ DDFFieldDefn *DDFModule::FindFieldDefn( const char *pszFieldName )
 DDFRecord *DDFModule::ReadRecord()
 
 {
-    if( poRecord == NULL )
+    if( poRecord == nullptr )
         poRecord = new DDFRecord( this );
 
     if( poRecord->Read() )
         return poRecord;
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -650,7 +650,7 @@ DDFFieldDefn *DDFModule::GetField(int i)
 
 {
     if( i < 0 || i >= nFieldDefnCount )
-        return NULL;
+        return nullptr;
     else
         return papoFieldDefns[i];
 }
@@ -723,12 +723,12 @@ void DDFModule::Rewind( long nOffset )
     if( nOffset == -1 )
         nOffset = nFirstRecordOffset;
 
-    if( fpDDF == NULL )
+    if( fpDDF == nullptr )
         return;
 
     if( VSIFSeekL( fpDDF, nOffset, SEEK_SET ) < 0 )
         return;
 
-    if( nOffset == nFirstRecordOffset && poRecord != NULL )
+    if( nOffset == nFirstRecordOffset && poRecord != nullptr )
         poRecord->Clear();
 }

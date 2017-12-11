@@ -490,7 +490,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
 
         // For all neighbours for the current vertex.
         panOutcomeEdgeId = GetOutEdges(nCurrenVertId);
-        if(NULL == panOutcomeEdgeId)
+        if(nullptr == panOutcomeEdgeId)
             continue;
 
         for (i = 0; i < panOutcomeEdgeId->size(); ++i)
@@ -535,7 +535,7 @@ LPGNMCONSTVECTOR GNMGraph::GetOutEdges(GNMGFID nFID) const
     std::map<GNMGFID,GNMStdVertex>::const_iterator it = m_mstVertices.find(nFID);
     if (it != m_mstVertices.end())
         return &it->second.anOutEdgeFIDs;
-    return NULL;
+    return nullptr;
 }
 
 GNMGFID GNMGraph::GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const
@@ -576,7 +576,7 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
             // vertex of each edge. Add it to the queue, which will be recursively
             // seen the same way on the next iteration.
             LPGNMCONSTVECTOR panOutcomeEdgeIDs = GetOutEdges(nCurVertID);
-            if(NULL != panOutcomeEdgeIDs)
+            if(nullptr != panOutcomeEdgeIDs)
             {
                 for (it = panOutcomeEdgeIDs->begin(); it != panOutcomeEdgeIDs->end(); ++it)
                 {

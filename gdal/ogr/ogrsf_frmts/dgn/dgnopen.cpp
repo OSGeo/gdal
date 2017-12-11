@@ -99,12 +99,12 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, bUpdate ? "rb+" : "rb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to open `%s' for read access.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -119,7 +119,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
                   "File `%s' does not have expected DGN header.\n",
                   pszFilename );
         VSIFCloseL( fp );
-        return NULL;
+        return nullptr;
     }
 
     VSIRewindL( fp );
@@ -139,7 +139,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
     psDGN->index_built = false;
     psDGN->element_count = 0;
-    psDGN->element_index = NULL;
+    psDGN->element_index = nullptr;
 
     psDGN->got_bounds = false;
 

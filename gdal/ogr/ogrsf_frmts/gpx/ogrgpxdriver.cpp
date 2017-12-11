@@ -38,18 +38,18 @@ CPL_CVSID("$Id$")
 static GDALDataset *OGRGPXDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
-    if( strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<gpx") == NULL )
-        return NULL;
+    if( strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader), "<gpx") == nullptr )
+        return nullptr;
 
     OGRGPXDataSource   *poDS = new OGRGPXDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, FALSE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -71,7 +71,7 @@ static GDALDataset *OGRGPXDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -100,7 +100,7 @@ void RegisterOGRGPX()
     if( !GDAL_CHECK_VERSION("OGR/GPX driver") )
         return;
 
-    if( GDALGetDriverByName( "GPX" ) != NULL )
+    if( GDALGetDriverByName( "GPX" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

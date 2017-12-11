@@ -178,7 +178,7 @@ OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
                                             int nOptionFlags )
 
 {
-    OGRFeatureDefn      *poFDefn = NULL;
+    OGRFeatureDefn      *poFDefn = nullptr;
 
     if( eGType == wkbPoint )
     {
@@ -206,7 +206,7 @@ OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
         poFDefn->SetGeomType( eGType );
     }
     else
-        return NULL;
+        return nullptr;
 
     poFDefn->Reference();
     S57GenerateStandardAttributes( poFDefn, nOptionFlags );
@@ -222,7 +222,7 @@ OGRFeatureDefn *
 S57GenerateVectorPrimitiveFeatureDefn( int nRCNM,
                                        int /* nOptionFlags */ )
 {
-    OGRFeatureDefn      *poFDefn = NULL;
+    OGRFeatureDefn      *poFDefn = nullptr;
 
     if( nRCNM == RCNM_VI )
     {
@@ -245,7 +245,7 @@ S57GenerateVectorPrimitiveFeatureDefn( int nRCNM,
         poFDefn->SetGeomType( wkbPolygon );
     }
     else
-        return NULL;
+        return nullptr;
 
     poFDefn->Reference();
 
@@ -332,7 +332,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn(
 
 {
     if( !poClassContentExplorer->SelectClass( nOBJL ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the feature definition based on the object class         */
@@ -388,7 +388,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn(
     char **papszAttrList = poClassContentExplorer->GetAttributeList();
 
     for( int iAttr = 0;
-         papszAttrList != NULL && papszAttrList[iAttr] != NULL;
+         papszAttrList != nullptr && papszAttrList[iAttr] != nullptr;
          iAttr++ )
     {
         const int iAttrIndex = poCR->FindAttrByAcronym( papszAttrList[iAttr] );
@@ -432,7 +432,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn(
 /*      Do we need to add DEPTH attributes to soundings?                */
 /* -------------------------------------------------------------------- */
     const char* pszClassAcronym = poClassContentExplorer->GetAcronym();
-    if( pszClassAcronym != NULL && EQUAL(pszClassAcronym, "SOUNDG")
+    if( pszClassAcronym != nullptr && EQUAL(pszClassAcronym, "SOUNDG")
         && (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
     {
         OGRFieldDefn oField( "DEPTH", OFTReal );

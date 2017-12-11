@@ -354,9 +354,9 @@ static void GRIB1_Table3LookUp (pdsG1Type *pdsMeta, char **shortLevelName,
    uChar level1, level2;
 
    free (*shortLevelName);
-   *shortLevelName = NULL;
+   *shortLevelName = nullptr;
    free (*longLevelName);
-   *longLevelName = NULL;
+   *longLevelName = nullptr;
    /* Find out if val is a 2 part value or not */
    if (GRIB1Surface[type].f_twoPart) {
       level1 = (pdsMeta->levelVal >> 8);
@@ -744,7 +744,7 @@ int GRIB1_Inventory (DataSource &fp, uInt4 gribLen, inventoryType *inv)
        return -1;
    }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
-   if( pds == NULL )
+   if( pds == nullptr )
    {
        errSprintf ("Ran out of memory.\n");
        return -1;
@@ -1864,7 +1864,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    char f_gds;          /* flag if there is a gds section. */
    char f_bms;          /* flag if there is a bms section. */
    double *grib_Data;   /* A pointer to Grib_Data for ease of manipulation. */
-   uChar *bitmap = NULL; /* A char field (0=noData, 1=data) set up in BMS. */
+   uChar *bitmap = nullptr; /* A char field (0=noData, 1=data) set up in BMS. */
    short int DSF;       /* Decimal Scale Factor for unpacking the data. */
    double unitM = 1;    /* M in y = Mx + B, for unit conversion. */
    double unitB = 0;    /* B in y = Mx + B, for unit conversion. */
@@ -1954,7 +1954,7 @@ int ReadGrib1Record (DataSource &fp, sChar f_unit, double **Grib_Data,
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;
-            *Grib_Data = NULL;
+            *Grib_Data = nullptr;
             return -2;
           }
       }

@@ -1217,7 +1217,7 @@ int yychar;
 /* Default value used for initialization, for pacifying older GCCs
    or non-GCC compilers.  */
 
-YYSTYPE yylval = NULL;
+YYSTYPE yylval = nullptr;
 
     /* Number of syntax errors so far.  */
     int yynerrs;

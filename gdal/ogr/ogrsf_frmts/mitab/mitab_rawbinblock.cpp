@@ -60,10 +60,10 @@ CPL_CVSID("$Id$")
  **********************************************************************/
 TABRawBinBlock::TABRawBinBlock( TABAccess eAccessMode /*= TABRead*/,
                                 GBool bHardBlockSize /*= TRUE*/ ) :
-    m_fp(NULL),
+    m_fp(nullptr),
     m_eAccess(eAccessMode),
     m_nBlockType(0),
-    m_pabyBuf(NULL),
+    m_pabyBuf(nullptr),
     m_nBlockSize(0),
     m_nSizeUsed(0),
     m_bHardBlockSize(bHardBlockSize),
@@ -96,7 +96,7 @@ TABRawBinBlock::~TABRawBinBlock()
 int     TABRawBinBlock::ReadFromFile(VSILFILE *fpSrc, int nOffset,
                                      int nSize)
 {
-    if (fpSrc == NULL || nSize == 0)
+    if (fpSrc == nullptr || nSize == 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABRawBinBlock::ReadFromFile(): Assertion Failed!");
@@ -158,7 +158,7 @@ int     TABRawBinBlock::CommitToFile()
 {
     int nStatus = 0;
 
-    if (m_fp == NULL || m_nBlockSize <= 0 || m_pabyBuf == NULL ||
+    if (m_fp == nullptr || m_nBlockSize <= 0 || m_pabyBuf == nullptr ||
         m_nFileOffset < 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -251,7 +251,7 @@ int     TABRawBinBlock::CommitAsDeleted(GInt32 nNextBlockPtr)
 
     CPLErrorReset();
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitAsDeleted(): Block has not been initialized yet!");
@@ -318,13 +318,13 @@ int     TABRawBinBlock::InitBlockFromData(GByte *pabyBuf,
      *---------------------------------------------------------------*/
     if (!bMakeCopy)
     {
-        if (m_pabyBuf != NULL)
+        if (m_pabyBuf != nullptr)
             CPLFree(m_pabyBuf);
         m_pabyBuf = pabyBuf;
         m_nBlockSize = nBlockSize;
         m_nSizeUsed = nSizeUsed;
     }
-    else if (m_pabyBuf == NULL || nBlockSize != m_nBlockSize)
+    else if (m_pabyBuf == nullptr || nBlockSize != m_nBlockSize)
     {
         m_pabyBuf = (GByte*)CPLRealloc(m_pabyBuf, nBlockSize*sizeof(GByte));
         m_nBlockSize = nBlockSize;
@@ -374,7 +374,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     else
         m_nFileOffset = 0;
 
-    if( m_fp != NULL && m_nFileSize < 0 && m_eAccess == TABReadWrite )
+    if( m_fp != nullptr && m_nFileSize < 0 && m_eAccess == TABReadWrite )
     {
         int nCurPos = (int)VSIFTellL(m_fp);
         VSIFSeekL(fpSrc, 0, SEEK_END);
@@ -401,7 +401,7 @@ int     TABRawBinBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  **********************************************************************/
 int     TABRawBinBlock::GetBlockType()
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GetBlockType(): Block has not been initialized.");
@@ -676,7 +676,7 @@ int     TABRawBinBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
      * Make sure block is initialized with Read access and that the
      * operation won't go beyond the buffer's size.
      *---------------------------------------------------------------*/
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "ReadBytes(): Block has not been initialized.");
@@ -789,7 +789,7 @@ int  TABRawBinBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
      * Make sure block is initialized with Write access and that the
      * operation won't go beyond the buffer's size.
      *---------------------------------------------------------------*/
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "WriteBytes(): Block has not been initialized.");
@@ -945,11 +945,11 @@ int  TABRawBinBlock::WritePaddedString(int nFieldSize, const char *pszString)
 
 void TABRawBinBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABRawBinBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }
@@ -1008,7 +1008,7 @@ void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
     double dValue = 0.0;
     memcpy(&dValue, anVal, 8);
 
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "%d\t0x%8.8x  %-5d\t%-6d %-6d %5.3e  d=%5.3e",
@@ -1035,11 +1035,11 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
                                           GBool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
 {
-    if (fpSrc == NULL || nSize == 0)
+    if (fpSrc == nullptr || nSize == 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "TABCreateMAPBlockFromFile(): Assertion Failed!");
-        return NULL;
+        return nullptr;
     }
 
     /*----------------------------------------------------------------
@@ -1057,7 +1057,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
          "TABCreateMAPBlockFromFile() failed reading %d bytes at offset %d.",
                  nSize, nOffset);
         CPLFree(pabyBuf);
-        return NULL;
+        return nullptr;
     }
 
     /*----------------------------------------------------------------
@@ -1065,7 +1065,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
      * Header block is different: it does not start with the object
      * type byte but it is always the first block in a file
      *---------------------------------------------------------------*/
-    TABRawBinBlock *poBlock = NULL;
+    TABRawBinBlock *poBlock = nullptr;
 
     if (nOffset == 0)
     {
@@ -1102,7 +1102,7 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
     {
         // Some error happened... and CPLError() has been called
         delete poBlock;
-        poBlock = NULL;
+        poBlock = nullptr;
     }
 
     return poBlock;
@@ -1120,8 +1120,8 @@ TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
 TABBinBlockManager::TABBinBlockManager() :
     m_nBlockSize(0),
     m_nLastAllocatedBlock(-1),
-    m_psGarbageBlocksFirst(NULL),
-    m_psGarbageBlocksLast(NULL)
+    m_psGarbageBlocksFirst(nullptr),
+    m_psGarbageBlocksLast(nullptr)
 {
     m_szName[0] = '\0';
 }
@@ -1196,13 +1196,13 @@ void TABBinBlockManager::Reset()
     m_nLastAllocatedBlock = -1;
 
     // Flush list of garbage blocks
-    while (m_psGarbageBlocksFirst != NULL)
+    while (m_psGarbageBlocksFirst != nullptr)
     {
         TABBlockRef *psNext = m_psGarbageBlocksFirst->psNext;
         CPLFree(m_psGarbageBlocksFirst);
         m_psGarbageBlocksFirst = psNext;
     }
-    m_psGarbageBlocksLast = NULL;
+    m_psGarbageBlocksLast = nullptr;
 }
 
 /**********************************************************************
@@ -1215,13 +1215,13 @@ void TABBinBlockManager::PushGarbageBlockAsFirst(GInt32 nBlockPtr)
     TABBlockRef *psNewBlockRef = (TABBlockRef *)CPLMalloc(sizeof(TABBlockRef));
 
     psNewBlockRef->nBlockPtr = nBlockPtr;
-    psNewBlockRef->psPrev = NULL;
+    psNewBlockRef->psPrev = nullptr;
     psNewBlockRef->psNext = m_psGarbageBlocksFirst;
 
-    if( m_psGarbageBlocksFirst != NULL )
+    if( m_psGarbageBlocksFirst != nullptr )
         m_psGarbageBlocksFirst->psPrev = psNewBlockRef;
     m_psGarbageBlocksFirst = psNewBlockRef;
-    if( m_psGarbageBlocksLast == NULL )
+    if( m_psGarbageBlocksLast == nullptr )
         m_psGarbageBlocksLast = m_psGarbageBlocksFirst;
 }
 
@@ -1236,12 +1236,12 @@ void TABBinBlockManager::PushGarbageBlockAsLast(GInt32 nBlockPtr)
 
     psNewBlockRef->nBlockPtr = nBlockPtr;
     psNewBlockRef->psPrev = m_psGarbageBlocksLast;
-    psNewBlockRef->psNext = NULL;
+    psNewBlockRef->psNext = nullptr;
 
-    if( m_psGarbageBlocksLast != NULL )
+    if( m_psGarbageBlocksLast != nullptr )
         m_psGarbageBlocksLast->psNext = psNewBlockRef;
     m_psGarbageBlocksLast = psNewBlockRef;
-    if( m_psGarbageBlocksFirst == NULL )
+    if( m_psGarbageBlocksFirst == nullptr )
         m_psGarbageBlocksFirst = m_psGarbageBlocksLast;
 }
 
@@ -1275,10 +1275,10 @@ GInt32 TABBinBlockManager::PopGarbageBlock()
         nBlockPtr = m_psGarbageBlocksFirst->nBlockPtr;
         TABBlockRef *psNext = m_psGarbageBlocksFirst->psNext;
         CPLFree(m_psGarbageBlocksFirst);
-        if( psNext != NULL )
-            psNext->psPrev = NULL;
+        if( psNext != nullptr )
+            psNext->psPrev = nullptr;
         else
-            m_psGarbageBlocksLast = NULL;
+            m_psGarbageBlocksLast = nullptr;
         m_psGarbageBlocksFirst = psNext;
     }
 

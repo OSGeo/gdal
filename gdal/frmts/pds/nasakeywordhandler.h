@@ -59,7 +59,7 @@ class CPL_DLL NASAKeywordHandler
     int     ReadWord( CPLString &osWord,
                       bool bStripSurroundingQuotes = false,
                       bool bParseList = false,
-                      bool* pbIsString = NULL);
+                      bool* pbIsString = nullptr);
     int     ReadPair( CPLString &osName, CPLString &osValue, json_object* poCur );
     int     ReadGroup( const char *pszPathPrefix, json_object* poCur );
 

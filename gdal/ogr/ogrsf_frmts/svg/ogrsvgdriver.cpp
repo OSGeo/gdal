@@ -44,18 +44,18 @@ CPL_C_END
 static GDALDataset *OGRSVGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "<svg") == NULL )
-        return NULL;
+    if( strstr((const char*)poOpenInfo->pabyHeader, "<svg") == nullptr )
+        return nullptr;
 
     OGRSVGDataSource *poDS = new OGRSVGDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -71,7 +71,7 @@ void RegisterOGRSVG()
     if(! GDAL_CHECK_VERSION("OGR/SVG driver") )
         return;
 
-    if( GDALGetDriverByName( "SVG" ) != NULL )
+    if( GDALGetDriverByName( "SVG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

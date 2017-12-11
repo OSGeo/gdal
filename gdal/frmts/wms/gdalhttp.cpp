@@ -51,9 +51,9 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
         if (new_size < 512) new_size = 512;
         psRequest->nDataAlloc = new_size;
         GByte * pabyNewData = reinterpret_cast<GByte *>(VSIRealloc(psRequest->pabyData, new_size));
-        if (pabyNewData == NULL) {
+        if (pabyNewData == nullptr) {
             VSIFree(psRequest->pabyData);
-            psRequest->pabyData = NULL;
+            psRequest->pabyData = nullptr;
             psRequest->Error.Printf("Out of memory allocating %u bytes for HTTP data buffer.",
                 static_cast<unsigned int>(new_size));
             psRequest->nDataAlloc = 0;
@@ -71,12 +71,12 @@ static size_t CPLHTTPWriteFunc(void *buffer, size_t count, size_t nmemb, void *r
 // Builds a curl request
 void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
     psRequest->nStatus = 0;
-    psRequest->pabyData = NULL;
+    psRequest->pabyData = nullptr;
     psRequest->nDataLen = 0;
     psRequest->nDataAlloc = 0;
 
     psRequest->m_curl_handle = curl_easy_init();
-    if (psRequest->m_curl_handle == NULL) {
+    if (psRequest->m_curl_handle == nullptr) {
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPInitializeRequest(): Unable to create CURL handle.");
         // This should return somehow?
     }
@@ -93,18 +93,18 @@ void WMSHTTPInitializeRequest(WMSHTTPRequest *psRequest) {
 
     psRequest->m_headers = static_cast<struct curl_slist*>(
             CPLHTTPSetOptions(psRequest->m_curl_handle, psRequest->options));
-    if( psRequest->m_headers != NULL )
+    if( psRequest->m_headers != nullptr )
         curl_easy_setopt(psRequest->m_curl_handle, CURLOPT_HTTPHEADER,
                          psRequest->m_headers);
 
 }
 
 WMSHTTPRequest::~WMSHTTPRequest() {
-    if (m_curl_handle != NULL)
+    if (m_curl_handle != nullptr)
         curl_easy_cleanup(m_curl_handle);
-    if( m_headers != NULL )
+    if( m_headers != nullptr )
         curl_slist_free_all(m_headers);
-    if (pabyData != NULL)
+    if (pabyData != nullptr)
         CPLFree(pabyData);
 }
 
@@ -114,7 +114,7 @@ WMSHTTPRequest::~WMSHTTPRequest() {
 //
 CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     CPLErr ret = CE_None;
-    CURLM *curl_multi = NULL;
+    CURLM *curl_multi = nullptr;
     int still_running;
     int max_conn;
     int i, conn_i;
@@ -124,7 +124,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         return CE_None;
 
     const char *max_conn_opt = CSLFetchNameValue(const_cast<char **>(pasRequest->options), "MAXCONN");
-    max_conn = (max_conn_opt == NULL) ? 5 : MAX(1, MIN(atoi(max_conn_opt), 1000));
+    max_conn = (max_conn_opt == nullptr) ? 5 : MAX(1, MIN(atoi(max_conn_opt), 1000));
 
     // If the first url starts with vsimem, assume all do and defer to CPLHTTPFetch
     if( STARTS_WITH(pasRequest[0].URL.c_str(), "/vsimem/") &&
@@ -139,14 +139,14 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             pasRequest[i].nDataLen = psResult->nDataLen;
             pasRequest[i].Error = psResult->pszErrBuf ? psResult->pszErrBuf : "";
             // Conventions are different between this module and cpl_http...
-            if( psResult->pszErrBuf != NULL &&
+            if( psResult->pszErrBuf != nullptr &&
                 strcmp(psResult->pszErrBuf, "HTTP error code : 404") == 0 )
                 pasRequest[i].nStatus = 404;
             else
                 pasRequest[i].nStatus = 200;
             pasRequest[i].ContentType = psResult->pszContentType ? psResult->pszContentType : "";
             // took ownership of content, we're done with the rest
-            psResult->pabyData = NULL;
+            psResult->pabyData = nullptr;
             psResult->nDataLen = 0;
             CPLHTTPDestroyResult(psResult);
         }
@@ -154,7 +154,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
     }
 
     curl_multi = curl_multi_init();
-    if (curl_multi == NULL) {
+    if (curl_multi == nullptr) {
         CPLError(CE_Fatal, CPLE_AppDefined, "CPLHTTPFetchMulti(): Unable to create CURL multi-handle.");
     }
 
@@ -178,7 +178,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
 
         do {
             msg = curl_multi_info_read(curl_multi, &msgs_in_queue);
-            if (msg != NULL) {
+            if (msg != nullptr) {
                 if (msg->msg == CURLMSG_DONE) {
                     // transfer completed, add more handles if available
                     if (conn_i < nRequestCount) {
@@ -190,7 +190,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
                     }
                 }
             }
-        } while (msg != NULL);
+        } while (msg != nullptr);
 
         FD_ZERO(&fdread);
         FD_ZERO(&fdwrite);
@@ -237,7 +237,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
         psRequest->nStatus = static_cast<int>(response_code);
 
-        char *content_type = NULL;
+        char *content_type = nullptr;
         curl_easy_getinfo(psRequest->m_curl_handle, CURLINFO_CONTENT_TYPE, &content_type);
         psRequest->ContentType = content_type ? content_type : "";
 
@@ -254,7 +254,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount) {
             && psRequest->nStatus != 0
             && psRequest->nStatus != 200
             && strstr(psRequest->ContentType, "text")
-            && psRequest->pabyData != NULL )
+            && psRequest->pabyData != nullptr )
             psRequest->Error = reinterpret_cast<const char *>(psRequest->pabyData);
 
         CPLDebug("HTTP", "Request [%d] %s : status = %d, content type = %s, error = %s",

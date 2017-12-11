@@ -53,7 +53,7 @@ OGRDWGBlocksLayer::OGRDWGBlocksLayer( OGRDWGDataSource *poDSIn ) :
 OGRDWGBlocksLayer::~OGRDWGBlocksLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "DWG", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -83,13 +83,13 @@ void OGRDWGBlocksLayer::ResetReading()
 OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 
 {
-    OGRFeature *poFeature = NULL;
+    OGRFeature *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Are we out of features?                                         */
 /* -------------------------------------------------------------------- */
     if( oIt == poDS->GetBlockMap().end() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Are we done reading the current blocks features?                */
@@ -98,7 +98,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
     unsigned int nSubFeatureCount = static_cast<unsigned int>(
         psBlock->apoFeatures.size());
 
-    if( psBlock->poGeometry != NULL )
+    if( psBlock->poGeometry != nullptr )
         nSubFeatureCount++;
 
     if( iNextSubFeature >= nSubFeatureCount )
@@ -108,7 +108,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
         iNextSubFeature = 0;
 
         if( oIt == poDS->GetBlockMap().end() )
-            return NULL;
+            return nullptr;
 
         psBlock = &(oIt->second);
     }
@@ -116,7 +116,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Is this a geometry based block?                                 */
 /* -------------------------------------------------------------------- */
-    if( psBlock->poGeometry != NULL
+    if( psBlock->poGeometry != nullptr
         && iNextSubFeature == psBlock->apoFeatures.size() )
     {
         poFeature = new OGRFeature( poFeatureDefn );
@@ -157,12 +157,12 @@ OGRFeature *OGRDWGBlocksLayer::GetNextFeature()
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
             return poFeature;

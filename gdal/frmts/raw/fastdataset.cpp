@@ -170,9 +170,9 @@ FASTRasterBand::FASTRasterBand( FASTDataset *poDSIn, int nBandIn, VSILFILE * fpR
 
 FASTDataset::FASTDataset() :
     pszProjection(CPLStrdup("")),
-    fpHeader(NULL),
-    pszFilename(NULL),
-    pszDirname(NULL),
+    fpHeader(nullptr),
+    pszFilename(nullptr),
+    pszDirname(nullptr),
     eDataType(GDT_Unknown),
     iSatellite(FAST_UNKNOWN)
 {
@@ -185,7 +185,7 @@ FASTDataset::FASTDataset() :
     // TODO: Why does this not work?
     //   fill( fpChannels, fpChannels + CPL_ARRAYSIZE(fpChannels), NULL );
     for (int i=0; i < 7; ++i)
-        fpChannels[i] = NULL;
+        fpChannels[i] = nullptr;
     nBands = 0;
 }
 
@@ -203,7 +203,7 @@ FASTDataset::~FASTDataset()
     for ( int i = 0; i < nBands; i++ )
         if ( fpChannels[i] )
             CPL_IGNORE_RET_VAL(VSIFCloseL( fpChannels[i] ));
-    if( fpHeader != NULL )
+    if( fpHeader != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpHeader ));
 }
 
@@ -258,7 +258,7 @@ int FASTDataset::OpenChannel( const char *pszFilenameIn, int iBand )
     fpChannels[iBand] = VSIFOpenL( pszFilenameIn, "rb" );
     if (fpChannels[iBand])
         apoChannelFilenames[iBand] = pszFilenameIn;
-    return fpChannels[iBand] != NULL;
+    return fpChannels[iBand] != nullptr;
 }
 
 /************************************************************************/
@@ -268,11 +268,11 @@ int FASTDataset::OpenChannel( const char *pszFilenameIn, int iBand )
 VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
                                      int iBand, int iFASTBand )
 {
-    const char  *pszChannelFilename = NULL;
+    const char  *pszChannelFilename = nullptr;
     char *pszPrefix = CPLStrdup( CPLGetBasename( pszFilename ) );
     char *pszSuffix = CPLStrdup( CPLGetExtension( pszFilename ) );
 
-    fpChannels[iBand] = NULL;
+    fpChannels[iBand] = nullptr;
 
     switch ( iSatellite )
     {
@@ -280,13 +280,13 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
             if ( pszBandname && !EQUAL( pszBandname, "" ) )
             {
                 pszChannelFilename =
-                    CPLFormCIFilename( pszDirname, pszBandname, NULL );
+                    CPLFormCIFilename( pszDirname, pszBandname, nullptr );
                 if ( OpenChannel( pszChannelFilename, iBand ) )
                     break;
                 pszChannelFilename =
                     CPLFormFilename( pszDirname,
                             CPLSPrintf( "%s.b%02d", pszPrefix, iFASTBand ),
-                            NULL );
+                            nullptr );
                 CPL_IGNORE_RET_VAL(OpenChannel( pszChannelFilename, iBand ));
             }
             break;
@@ -305,19 +305,19 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "IMAGERY%d.DAT", iFASTBand ), NULL );
+                CPLSPrintf( "IMAGERY%d.DAT", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "imagery%d.dat", iFASTBand ), NULL );
+                CPLSPrintf( "imagery%d.dat", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "IMAGERY%d.dat", iFASTBand ), NULL );
+                CPLSPrintf( "IMAGERY%d.dat", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "imagery%d.DAT", iFASTBand ), NULL );
+                CPLSPrintf( "imagery%d.DAT", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
@@ -329,19 +329,19 @@ VSILFILE *FASTDataset::FOpenChannel( const char *pszBandname,
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "BAND%d.DAT", iFASTBand ), NULL );
+                CPLSPrintf( "BAND%d.DAT", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "band%d.dat", iFASTBand ), NULL );
+                CPLSPrintf( "band%d.dat", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "BAND%d.dat", iFASTBand ), NULL );
+                CPLSPrintf( "BAND%d.dat", iFASTBand ), nullptr );
             if ( OpenChannel( pszChannelFilename, iBand ) )
                 break;
             pszChannelFilename = CPLFormFilename( pszDirname,
-                CPLSPrintf( "band%d.DAT", iFASTBand ), NULL );
+                CPLSPrintf( "band%d.DAT", iFASTBand ), nullptr );
             CPL_IGNORE_RET_VAL(OpenChannel( pszChannelFilename, iBand ));
             break;
     }
@@ -612,13 +612,13 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 1024)
-        return NULL;
+        return nullptr;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader + 52,
                 "ACQUISITION DATE =", 18)
         && !EQUALN((const char *) poOpenInfo->pabyHeader + 36,
                 "ACQUISITION DATE =", 18) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*  Create a corresponding GDALDataset.                                 */
@@ -626,10 +626,10 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     FASTDataset *poDS = new FASTDataset();
 
     poDS->fpHeader = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpHeader == NULL)
+    if (poDS->fpHeader == nullptr)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->pszFilename = poOpenInfo->pszFilename;
@@ -649,14 +649,14 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "FAST", "Header file too short. Reading failed" );
         CPLFree(pszHeader);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     pszHeader[nBytesRead] = '\0';
 
     // Read acquisition date
     char *pszTemp = GetValue( pszHeader, ACQUISITION_DATE,
                               ACQUISITION_DATE_SIZE, TRUE );
-    if (pszTemp == NULL)
+    if (pszTemp == nullptr)
     {
         CPLDebug( "FAST", "Cannot get ACQUISITION_DATE, using empty value." );
         pszTemp = CPLStrdup("");
@@ -666,7 +666,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read satellite name (will read the first one only)
     pszTemp = GetValue( pszHeader, SATELLITE_NAME, SATELLITE_NAME_SIZE, TRUE );
-    if (pszTemp == NULL)
+    if (pszTemp == nullptr)
     {
         CPLDebug( "FAST", "Cannot get SATELLITE_NAME, using empty value." );
         pszTemp = CPLStrdup( "" );
@@ -683,7 +683,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Read sensor name (will read the first one only)
     pszTemp = GetValue( pszHeader, SENSOR_NAME, SENSOR_NAME_SIZE, TRUE );
-    if (pszTemp == NULL)
+    if (pszTemp == nullptr)
     {
         CPLDebug( "FAST", "Cannot get SENSOR_NAME, using empty value." );
         pszTemp = CPLStrdup("");
@@ -694,7 +694,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Read filenames
     poDS->nBands = 0;
 
-    if (strstr( pszHeader, FILENAME ) == NULL)
+    if (strstr( pszHeader, FILENAME ) == nullptr)
     {
         if (strstr(pszHeader, "GENERATING AGENCY =EUROMAP"))
         {
@@ -762,7 +762,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         pszTemp = pszHeader;
         for ( int i = 0; i < 7; i++ )
         {
-            char *pszFilename = NULL ;
+            char *pszFilename = nullptr ;
             if ( pszTemp )
                 pszTemp = strstr( pszTemp, FILENAME );
             if ( pszTemp )
@@ -778,7 +778,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLScanString( pszTemp, FILENAME_SIZE, TRUE, FALSE );
             }
             else
-                pszTemp = NULL;
+                pszTemp = nullptr;
             if ( poDS->FOpenChannel( pszFilename, poDS->nBands,
                                      poDS->nBands + 1 ) )
                 poDS->nBands++;
@@ -793,7 +793,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Failed to find and open band data files." );
         CPLFree(pszHeader);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Read number of pixels/lines and bit depth
@@ -808,7 +808,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "FAST", "Failed to find number of pixels in line." );
         CPLFree(pszHeader);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     pszTemp = GetValue( pszHeader, LINES1, LINES_SIZE, FALSE );
@@ -824,14 +824,14 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLDebug( "FAST", "Failed to find number of lines in raster." );
         CPLFree(pszHeader);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         CPLFree(pszHeader);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     pszTemp = GetValue( pszHeader, BITS_PER_PIXEL, BITS_PER_PIXEL_SIZE, FALSE );
@@ -860,19 +860,19 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Read radiometric record.                                            */
 /* -------------------------------------------------------------------- */
-    const char *pszFirst = NULL;
-    const char *pszSecond = NULL;
+    const char *pszFirst = nullptr;
+    const char *pszSecond = nullptr;
 
     // Read gains and biases. This is a trick!
     pszTemp = strstr( pszHeader, "BIASES" );// It may be "BIASES AND GAINS"
                                             // or "GAINS AND BIASES"
     const char* pszGains = strstr( pszHeader, "GAINS" );
-    if( pszTemp == NULL || pszGains == NULL )
+    if( pszTemp == nullptr || pszGains == nullptr )
     {
         CPLDebug( "FAST", "No BIASES and/or GAINS" );
         CPLFree( pszHeader );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     if ( pszTemp > pszGains )
     {
@@ -888,7 +888,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Now search for the first number occurrence after that string.
     for ( int i = 1; i <= poDS->nBands; i++ )
     {
-        char *pszValue = NULL;
+        char *pszValue = nullptr;
         size_t nValueLen = VALUE_SIZE;
 
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
@@ -905,7 +905,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLFree(pszHeader);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         pszTemp += nValueLen;
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
@@ -922,7 +922,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLFree(pszHeader);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         pszTemp += nValueLen;
     }
@@ -978,11 +978,11 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                 adfProjParms[i] = CPLScanDouble( pszTemp, VALUE_SIZE );
                 pszTemp = strpbrk( pszTemp, " \t" );
             }
-            if (pszTemp == NULL )
+            if (pszTemp == nullptr )
             {
                 CPLFree(pszHeader);
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -1056,7 +1056,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         // In EOSAT FAST Rev C, the angles are in decimal degrees
         // otherwise they are in packed DMS format.
         const int bAnglesInPackedDMSFormat =
-            strstr( pszHeader, "REV            C" ) == NULL;
+            strstr( pszHeader, "REV            C" ) == nullptr;
 
         // Create projection definition
         OGRSpatialReference oSRS;
@@ -1180,7 +1180,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The FAST driver does not support update access to existing"
                   " datasets." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -1193,7 +1193,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_FAST()
 
 {
-    if( GDALGetDriverByName( "FAST" ) != NULL )
+    if( GDALGetDriverByName( "FAST" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

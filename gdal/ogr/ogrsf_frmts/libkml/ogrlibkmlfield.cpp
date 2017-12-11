@@ -285,7 +285,7 @@ void field2kml(
     int bUseSimpleFieldIn )
 {
     const bool bUseSimpleField = CPL_TO_BOOL(bUseSimpleFieldIn);
-    SchemaDataPtr poKmlSchemaData = NULL;
+    SchemaDataPtr poKmlSchemaData = nullptr;
     if( bUseSimpleField )
     {
         poKmlSchemaData = poKmlFactory->CreateSchemaData();
@@ -306,7 +306,7 @@ void field2kml(
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
 
-    TimeSpanPtr poKmlTimeSpan = NULL;
+    TimeSpanPtr poKmlTimeSpan = nullptr;
 
     const int nFields = poOgrFeat->GetFieldCount();
     int iSkip1 = -1;
@@ -314,7 +314,7 @@ void field2kml(
     int iAltitudeMode = kmldom::ALTITUDEMODE_CLAMPTOGROUND;
     int isGX = false;
 
-    ExtendedDataPtr poKmlExtendedData = NULL;
+    ExtendedDataPtr poKmlExtendedData = nullptr;
 
     for( int i = 0; i < nFields; i++ )
     {
@@ -330,8 +330,8 @@ void field2kml(
         const OGRFieldType type = poOgrFieldDef->GetType();
         const char *name = poOgrFieldDef->GetNameRef();
 
-        SimpleDataPtr poKmlSimpleData = NULL;
-        DataPtr poKmlData = NULL;
+        SimpleDataPtr poKmlSimpleData = nullptr;
+        DataPtr poKmlData = nullptr;
         OGRField sFieldDT;
 
         // TODO(schwehr): Refactor to get rid of gotos.
@@ -830,7 +830,7 @@ void field2kml(
         }
         else if( poKmlData )
         {
-            if( poKmlExtendedData == NULL )
+            if( poKmlExtendedData == nullptr )
                 poKmlExtendedData = poKmlFactory->CreateExtendedData();
             poKmlExtendedData->add_data( poKmlData );
         }
@@ -842,7 +842,7 @@ void field2kml(
         poKmlExtendedData = poKmlFactory->CreateExtendedData();
         poKmlExtendedData->add_schemadata( poKmlSchemaData );
     }
-    if( poKmlExtendedData != NULL )
+    if( poKmlExtendedData != nullptr )
     {
         poKmlFeature->set_extendeddata( poKmlExtendedData );
     }
@@ -1204,7 +1204,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
             // Probably a libkml bug: AsTimeStamp should really return not NULL
             // on a gx:TimeStamp.
             TimeStampPtr poKmlTimeStamp = AsTimeStamp( poKmlTimePrimitive );
-            if( poKmlTimeStamp == NULL )
+            if( poKmlTimeStamp == nullptr )
                 poKmlTimeStamp = AsGxTimeStamp( poKmlTimePrimitive );
 
             if( poKmlTimeStamp && poKmlTimeStamp->has_when() )
@@ -1221,7 +1221,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
             // Probably a libkml bug: AsTimeSpan should really return not NULL
             // on a gx:TimeSpan.
             TimeSpanPtr poKmlTimeSpan = AsTimeSpan( poKmlTimePrimitive );
-            if( poKmlTimeSpan == NULL )
+            if( poKmlTimeSpan == nullptr )
                 poKmlTimeSpan = AsGxTimeSpan( poKmlTimePrimitive );
 
             /***** begin *****/
@@ -1463,7 +1463,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
     }
 
     /***** extended schema *****/
-    ExtendedDataPtr poKmlExtendedData = NULL;
+    ExtendedDataPtr poKmlExtendedData = nullptr;
 
     if( poKmlFeature->has_extendeddata() )
     {
@@ -1600,7 +1600,7 @@ SimpleFieldPtr FieldDef2kml(
         EQUAL( pszFieldName, oFC.imagepyramid_maxheight_field) ||
         EQUAL( pszFieldName, oFC.imagepyramid_gridorigin_field) )
     {
-        return NULL;
+        return nullptr;
     }
 
     SimpleFieldPtr poKmlSimpleField = poKmlFactory->CreateSimpleField();
@@ -1635,7 +1635,7 @@ SimpleFieldPtr FieldDef2kml(
         return poKmlSimpleField;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /******************************************************************************

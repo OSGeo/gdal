@@ -61,14 +61,14 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 {
     TABProjInfo sTABProj;
     if(MITABCoordSys2TABProjInfo(pszCoordSys, &sTABProj) < 0 )
-        return NULL;
+        return nullptr;
     OGRSpatialReference *poSR = TABFile::GetSpatialRefFromTABProj(sTABProj);
 
     // Report on translation.
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
 
     poSR->exportToWkt(&pszWKT);
-    if( pszWKT != NULL )
+    if( pszWKT != nullptr )
     {
         CPLDebug("MITAB",
                  "This CoordSys value:\n%s\nwas translated to:\n%s",
@@ -92,8 +92,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
 
 {
-    if( poSR == NULL )
-        return NULL;
+    if( poSR == nullptr )
+        return nullptr;
 
     TABProjInfo sTABProj;
     int nParmCount = 0;
@@ -152,7 +152,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     }
 
     // Append units.
-    if( sTABProj.nProjId != 1 && pszMIFUnits != NULL )
+    if( sTABProj.nProjId != 1 && pszMIFUnits != nullptr )
     {
         if( sTABProj.nProjId != 0 )
             osCoordSys += ",";
@@ -185,10 +185,10 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
     }
 
     // Report on translation.
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
 
     poSR->exportToWkt(&pszWKT);
-    if( pszWKT != NULL )
+    if( pszWKT != nullptr )
     {
         CPLDebug("MITAB",
                  "This WKT Projection:\n%s\n\ntranslates to:\n%s",
@@ -211,7 +211,7 @@ bool MITABExtractCoordSysBounds( const char * pszCoordSys,
                                  double &dXMax, double &dYMax )
 
 {
-    if( pszCoordSys == NULL )
+    if( pszCoordSys == nullptr )
         return false;
 
     char **papszFields =
@@ -246,7 +246,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     // Set all fields to zero, equivalent of NonEarth Units "mi"
     memset(psProj, 0, sizeof(TABProjInfo));
 
-    if( pszCoordSys == NULL )
+    if( pszCoordSys == nullptr )
         return -1;
 
     // Parse the passed string into words.
@@ -261,15 +261,15 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     // Clip off Bounds information.
     int iBounds = CSLFindString(papszFields, "Bounds");
 
-    while( iBounds != -1 && papszFields[iBounds] != NULL )
+    while( iBounds != -1 && papszFields[iBounds] != nullptr )
     {
         CPLFree( papszFields[iBounds] );
-        papszFields[iBounds] = NULL;
+        papszFields[iBounds] = nullptr;
         iBounds++;
     }
 
     // Fetch the projection.
-    char **papszNextField = NULL;
+    char **papszNextField = nullptr;
 
     if( CSLCount(papszFields) >= 3 &&
         EQUAL(papszFields[0], "Earth") &&
@@ -290,7 +290,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         psProj->nProjId = 0;
         papszNextField = papszFields + 2;
 
-        if( papszNextField[0] != NULL && EQUAL(papszNextField[0], "Units") )
+        if( papszNextField[0] != nullptr && EQUAL(papszNextField[0], "Units") )
             papszNextField++;
     }
     else
@@ -335,7 +335,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     else if (nDatum != 999 && nDatum != 9999)
     {
         // Find the datum, and collect it's parameters if possible.
-        const MapInfoDatumInfo *psDatumInfo = NULL;
+        const MapInfoDatumInfo *psDatumInfo = nullptr;
 
         int iDatum = 0;  // Used after for.
         for( ; asDatumInfoList[iDatum].nMapInfoDatumID != -1; iDatum++ )
@@ -354,7 +354,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
             psDatumInfo = asDatumInfoList + 0;
         }
 
-        if( psDatumInfo != NULL )
+        if( psDatumInfo != nullptr )
         {
             psProj->nEllipsoidId = static_cast<GByte>(psDatumInfo->nEllipsoid);
             psProj->nDatumId =

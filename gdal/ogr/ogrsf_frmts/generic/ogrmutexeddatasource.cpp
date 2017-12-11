@@ -99,7 +99,7 @@ OGRLayer    *OGRMutexedDataSource::GetLayerByName(const char *pszName)
 OGRErr      OGRMutexedDataSource::DeleteLayer(int iIndex)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
-    OGRLayer* poLayer = m_bWrapLayersInMutexedLayer ? GetLayer(iIndex) : NULL;
+    OGRLayer* poLayer = m_bWrapLayersInMutexedLayer ? GetLayer(iIndex) : nullptr;
     OGRErr eErr = m_poBaseDataSource->DeleteLayer(iIndex);
     if( eErr == OGRERR_NONE && poLayer)
     {

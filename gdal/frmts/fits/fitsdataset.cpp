@@ -143,7 +143,7 @@ CPLErr FITSRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
   // Otherwise read in the image data
   fits_read_img(hFITS, dataset->fitsDataType, offset, nElements,
-                NULL, pImage, NULL, &status);
+                nullptr, pImage, nullptr, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Couldn't read image data from FITS file (%d).", status);
@@ -227,7 +227,7 @@ static bool isIgnorableFITSHeader(const char* name) {
 /************************************************************************/
 
 FITSDataset::FITSDataset():
-    hFITS(NULL)
+    hFITS(nullptr)
 {}
 
 /************************************************************************/
@@ -245,7 +245,7 @@ FITSDataset::~FITSDataset() {
       // capability.  Write any meta data to the file that's compatible with
       // FITS.
       status = 0;
-      fits_movabs_hdu(hFITS, 1, NULL, &status);
+      fits_movabs_hdu(hFITS, 1, nullptr, &status);
       fits_write_key_longwarn(hFITS, &status);
       if (status) {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -259,10 +259,10 @@ FITSDataset::~FITSDataset() {
         if (strlen(field) == 0)
             continue;
         else {
-            char* key = NULL;
+            char* key = nullptr;
             const char* value = CPLParseNameValue(field, &key);
             // FITS keys must be less than 8 chars
-            if (key != NULL && strlen(key) <= 8 && !isIgnorableFITSHeader(key))
+            if (key != nullptr && strlen(key) <= 8 && !isIgnorableFITSHeader(key))
             {
                 // Although FITS provides support for different value
                 // types, the GDAL Metadata mechanism works only with
@@ -280,7 +280,7 @@ FITSDataset::~FITSDataset() {
                 // handle. Note: to avoid a compiler warning we copy the
                 // const value string to a non const one.
                 char* valueCpy = CPLStrdup(value);
-                fits_update_key_longstr(hFITS, key, valueCpy, NULL, &status);
+                fits_update_key_longstr(hFITS, key, valueCpy, nullptr, &status);
                 CPLFree(valueCpy);
 
                 // Check for errors.
@@ -319,7 +319,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   int status = 0;
 
   // Move to the primary HDU
-  fits_movabs_hdu(hFITS, 1, NULL, &status);
+  fits_movabs_hdu(hFITS, 1, nullptr, &status);
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Couldn't move to first HDU in FITS file %s (%d).\n",
@@ -410,7 +410,7 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
   fits_get_hdrspace(hFITS, &nKeys, &nMoreKeys, &status);
   for(keyNum = 1; keyNum <= nKeys; keyNum++)
   {
-    fits_read_keyn(hFITS, keyNum, key, value, NULL, &status);
+    fits_read_keyn(hFITS, keyNum, key, value, nullptr, &status);
     if (status) {
       CPLError(CE_Failure, CPLE_AppDefined,
                "Error while reading key %d from FITS file %s (%d)",
@@ -437,8 +437,8 @@ CPLErr FITSDataset::Init(fitsfile* hFITS_, bool isExistingFile_) {
       if (strrchr(newValue, '&') == newValue + strlen(newValue) - 1)
       {
           // Value string ends in "&", so use long string conventions
-          char* longString = NULL;
-          fits_read_key_longstr(hFITS, key, &longString, NULL, &status);
+          char* longString = nullptr;
+          fits_read_key_longstr(hFITS, key, &longString, nullptr, &status);
           // Note that read_key_longstr already strips quotes
           if( status )
           {
@@ -470,13 +470,13 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   size_t fitsIDLen = strlen(fitsID);  // Should be 30 chars long
 
   if ((size_t)poOpenInfo->nHeaderBytes < fitsIDLen)
-    return NULL;
+    return nullptr;
   if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen))
-    return NULL;
+    return nullptr;
 
   // Get access mode and attempt to open the file
   int status = 0;
-  fitsfile* hFITS = NULL;
+  fitsfile* hFITS = nullptr;
   if (poOpenInfo->eAccess == GA_ReadOnly)
     fits_open_file(&hFITS, poOpenInfo->pszFilename, READONLY, &status);
   else
@@ -486,7 +486,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
              "Error while opening FITS file %s (%d).\n",
              poOpenInfo->pszFilename, status);
     fits_close_file(hFITS, &status);
-    return NULL;
+    return nullptr;
   }
 
   // Create a FITSDataset object and initialize it from the FITS handle
@@ -497,7 +497,7 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
   dataset->SetDescription(poOpenInfo->pszFilename);
   if (dataset->Init(hFITS, true) != CE_None) {
     delete dataset;
-    return NULL;
+    return nullptr;
   }
   else
   {
@@ -537,13 +537,13 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // Create the file - to force creation, we prepend the name with '!'
   char* extFilename = new char[strlen(pszFilename) + 10];  // 10 for margin!
   snprintf(extFilename, strlen(pszFilename) + 10, "!%s", pszFilename);
-  fitsfile* hFITS = NULL;
+  fitsfile* hFITS = nullptr;
   fits_create_file(&hFITS, extFilename, &status);
   delete[] extFilename;
   if (status) {
     CPLError(CE_Failure, CPLE_AppDefined,
              "Couldn't create FITS file %s (%d).\n", pszFilename, status);
-    return NULL;
+    return nullptr;
   }
 
   // Determine FITS type of image
@@ -562,7 +562,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
     CPLError(CE_Failure, CPLE_AppDefined,
              "GDALDataType (%d) unsupported for FITS", eType);
     fits_close_file(hFITS, &status);
-    return NULL;
+    return nullptr;
   }
 
   // Now create an image of appropriate size and type
@@ -576,7 +576,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
              "Couldn't create image within FITS file %s (%d).",
              pszFilename, status);
     fits_close_file(hFITS, &status);
-    return NULL;
+    return nullptr;
   }
 
   FITSDataset* dataset = new FITSDataset();
@@ -588,7 +588,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
   // Init recalculates a lot of stuff we already know, but...
   if (dataset->Init(hFITS, false) != CE_None) {
     delete dataset;
-    return NULL;
+    return nullptr;
   }
   else {
     return dataset;
@@ -602,7 +602,7 @@ GDALDataset *FITSDataset::Create( const char* pszFilename,
 void GDALRegister_FITS()
 
 {
-    if( GDALGetDriverByName( "FITS" ) != NULL )
+    if( GDALGetDriverByName( "FITS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -618,7 +618,7 @@ void GDALRegister_FITS()
 
     poDriver->pfnOpen = FITSDataset::Open;
     poDriver->pfnCreate = FITSDataset::Create;
-    poDriver->pfnCreateCopy = NULL;
+    poDriver->pfnCreateCopy = nullptr;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

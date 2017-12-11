@@ -38,10 +38,10 @@ static int nThreadCount = 4, nIterations = 1, bLockOnOpen = FALSE;
 static int bOpenInThreads = TRUE;
 static int nOpenIterations = 1;
 static volatile int nPendingThreads = 0;
-static const char *pszFilename = NULL;
+static const char *pszFilename = nullptr;
 static int nChecksum = 0;
 
-static CPLMutex *pGlobalMutex = NULL;
+static CPLMutex *pGlobalMutex = nullptr;
 
 static void WorkerFunc( void * );
 
@@ -85,7 +85,7 @@ int main( int argc, char ** argv )
             bLockOnOpen = TRUE;
         else if( EQUAL(argv[iArg],"-open_in_main") )
             bOpenInThreads = FALSE;
-        else if( pszFilename == NULL )
+        else if( pszFilename == nullptr )
             pszFilename = argv[iArg];
         else
         {
@@ -94,7 +94,7 @@ int main( int argc, char ** argv )
         }
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         printf( "Need a file to operate on.\n" );
         Usage();
@@ -113,7 +113,7 @@ int main( int argc, char ** argv )
     for( int i = 0; i < 2; i++ )
     {
         hDS = GDALOpen( pszFilename, GA_ReadOnly );
-        if( hDS == NULL )
+        if( hDS == nullptr )
             exit( 1 );
 
         nChecksum = GDALChecksumImage( GDALGetRasterBand( hDS, 1 ),
@@ -140,7 +140,7 @@ int main( int argc, char ** argv )
     std::vector<GDALDatasetH> aoDS;
     for( iThread = 0; iThread < nThreadCount; iThread++ )
     {
-        hDS = NULL;
+        hDS = nullptr;
         if( !bOpenInThreads )
         {
             hDS =  GDALOpen( pszFilename, GA_ReadOnly );
@@ -188,7 +188,7 @@ static void WorkerFunc( void * arg )
 
     for( iOpenIter = 0; iOpenIter < nOpenIterations; iOpenIter++ )
     {
-        if( hDSIn != NULL )
+        if( hDSIn != nullptr )
         {
             hDS = hDSIn;
         }
@@ -203,7 +203,7 @@ static void WorkerFunc( void * arg )
                 CPLReleaseMutex( pGlobalMutex );
         }
 
-        for( iIter = 0; iIter < nIterations && hDS != NULL; iIter++ )
+        for( iIter = 0; iIter < nIterations && hDS != nullptr; iIter++ )
         {
             int nMyChecksum;
 
@@ -219,7 +219,7 @@ static void WorkerFunc( void * arg )
             }
         }
 
-        if( hDS && hDSIn == NULL )
+        if( hDS && hDSIn == nullptr )
         {
             if( bLockOnOpen )
                 CPLAcquireMutex( pGlobalMutex, 100.0 );
@@ -227,7 +227,7 @@ static void WorkerFunc( void * arg )
             if( bLockOnOpen )
                 CPLReleaseMutex( pGlobalMutex );
         }
-        else if ( hDSIn != NULL )
+        else if ( hDSIn != nullptr )
         {
             GDALFlushCache(hDSIn);
         }

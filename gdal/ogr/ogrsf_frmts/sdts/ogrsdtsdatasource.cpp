@@ -37,11 +37,11 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRSDTSDataSource::OGRSDTSDataSource() :
-    poTransfer(NULL),
-    pszName(NULL),
+    poTransfer(nullptr),
+    pszName(nullptr),
     nLayers(0),
-    papoLayers(NULL),
-    poSRS(NULL)
+    papoLayers(nullptr),
+    poSRS(nullptr)
 {}
 
 /************************************************************************/
@@ -83,7 +83,7 @@ OGRLayer *OGRSDTSDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -111,7 +111,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     if( bTestOpen )
     {
         VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-        if( fp == NULL )
+        if( fp == nullptr )
             return FALSE;
 
         char pachLeader[10] = {};
@@ -136,7 +136,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
     if( !poTransfer->Open( pszFilename ) )
     {
         delete poTransfer;
-        poTransfer = NULL;
+        poTransfer = nullptr;
 
         return FALSE;
     }
@@ -180,7 +180,7 @@ int OGRSDTSDataSource::Open( const char * pszFilename, int bTestOpen )
 
         SDTSIndexedReader *poReader =
             poTransfer->GetLayerIndexedReader( iLayer );
-        if( poReader == NULL )
+        if( poReader == nullptr )
             continue;
 
         papoLayers = (OGRSDTSLayer **)

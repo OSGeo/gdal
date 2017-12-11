@@ -79,7 +79,7 @@ OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
     // If not, then eErr will contain the error description
     const OGRCurve *poCurve = other.getExteriorRingCurve();
     if (other.getNumInteriorRings() == 0 &&
-        poCurve != NULL && poCurve->get_IsClosed() &&
+        poCurve != nullptr && poCurve->get_IsClosed() &&
         poCurve->getNumPoints() == 4)
     {
         // everything is fine

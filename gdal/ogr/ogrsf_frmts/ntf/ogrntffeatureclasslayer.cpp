@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 
 OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn ) :
     poFeatureDefn(new OGRFeatureDefn("FEATURE_CLASSES")),
-    poFilterGeom(NULL),
+    poFilterGeom(nullptr),
     poDS(poDSIn),
     iCurrentFC(0)
 {
@@ -72,7 +72,7 @@ OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != nullptr )
         delete poFilterGeom;
 }
 
@@ -83,13 +83,13 @@ OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
 void OGRNTFFeatureClassLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != nullptr )
     {
         delete poFilterGeom;
-        poFilterGeom = NULL;
+        poFilterGeom = nullptr;
     }
 
-    if( poGeomIn != NULL )
+    if( poGeomIn != nullptr )
         poFilterGeom = poGeomIn->clone();
 }
 
@@ -111,7 +111,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetNextFeature()
 
 {
     if( iCurrentFC >= GetFeatureCount() )
-        return NULL;
+        return nullptr;
 
     return GetFeature( (long) iCurrentFC++ );
 }
@@ -126,7 +126,7 @@ OGRFeature *OGRNTFFeatureClassLayer::GetFeature( GIntBig nFeatureId )
     char        *pszFCName, *pszFCId;
 
     if( nFeatureId < 0 || nFeatureId >= poDS->GetFCCount() )
-        return NULL;
+        return nullptr;
 
     poDS->GetFeatureClass( (int)nFeatureId, &pszFCId, &pszFCName );
 

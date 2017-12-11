@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 
-static CPLMutex *hMutex = NULL;
+static CPLMutex *hMutex = nullptr;
 static bool bFirstTimeForDebugMessage = true;
 static GOA2Manager oStaticManager;
 
@@ -71,17 +71,17 @@ bool CPLIsMachineForSureGCEInstance()
                 bDone = true;
 
                 VSILFILE* fp = VSIFOpenL("/var/log/kern.log", "rb"); // Ubuntu 16.04
-                if( fp == NULL )
+                if( fp == nullptr )
                     fp = VSIFOpenL("/var/log/dmesg", "rb"); // CentOS 6
-                if( fp != NULL )
+                if( fp != nullptr )
                 {
                     const char* pszLine;
-                    while( (pszLine = CPLReadLineL(fp)) != NULL )
+                    while( (pszLine = CPLReadLineL(fp)) != nullptr )
                     {
-                        if( strstr(pszLine, "DMI:") != NULL )
+                        if( strstr(pszLine, "DMI:") != nullptr )
                         {
                             bIsGCEInstanceStatic =
-                                        strstr(pszLine, "Google Compute") != NULL;
+                                        strstr(pszLine, "Google Compute") != nullptr;
                             break;
                         }
                     }
@@ -150,7 +150,7 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
     if( osDate.empty() )
     {
         char szDate[64];
-        time_t nNow = time(NULL);
+        time_t nNow = time(nullptr);
         struct tm tm;
         CPLUnixTimeToYMDHMS(nNow, &tm);
         strftime(szDate, sizeof(szDate), "%a, %d %b %Y %H:%M:%S GMT", &tm);
@@ -188,7 +188,7 @@ struct curl_slist* GetGSHeaders( const CPLString& osVerb,
     osAuthorization += pszBase64;
     CPLFree(pszBase64);
 
-    struct curl_slist *headers=NULL;
+    struct curl_slist *headers=nullptr;
     headers = curl_slist_append(
         headers, CPLSPrintf("Date: %s", osDate.c_str()));
     headers = curl_slist_append(
@@ -242,14 +242,14 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
     const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
     static const char SEP_STRING[] = "\\";
 #else
-    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
     static const char SEP_STRING[] = "/";
 #endif
 
     // GDAL specific config option (mostly for testing purpose, but also
     // used in production in some cases)
     const char* pszCredentials =
-                    CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE", NULL);
+                    CPLGetConfigOption( "CPL_GS_CREDENTIALS_FILE", nullptr);
     if( pszCredentials )
     {
         osCredentials = pszCredentials;
@@ -262,12 +262,12 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
     }
 
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         const char* pszLine;
         bool bInCredentials = false;
         bool bInOAuth2 = false;
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             if( pszLine[0] == '[' )
             {
@@ -281,7 +281,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
             }
             else if( bInCredentials )
             {
-                char* pszKey = NULL;
+                char* pszKey = nullptr;
                 const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if( pszKey && pszValue )
                 {
@@ -296,7 +296,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
             }
             else if( bInOAuth2 )
             {
-                char* pszKey = NULL;
+                char* pszKey = nullptr;
                 const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if( pszKey && pszValue )
                 {
@@ -358,27 +358,27 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
     if( !osHeaderFile.empty() )
     {
         bool bFoundAuth = false;
-        VSILFILE *fp = NULL;
+        VSILFILE *fp = nullptr;
         // Do not allow /vsicurl/ access from /vsicurl because of GetCurlHandleFor()
         // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
         // memory after free
-        if( strstr(osHeaderFile, "/vsicurl/") == NULL &&
-            strstr(osHeaderFile, "/vsis3/") == NULL &&
-            strstr(osHeaderFile, "/vsigs/") == NULL &&
-            strstr(osHeaderFile, "/vsiaz/") == NULL &&
-            strstr(osHeaderFile, "/vsioss/") == NULL )
+        if( strstr(osHeaderFile, "/vsicurl/") == nullptr &&
+            strstr(osHeaderFile, "/vsis3/") == nullptr &&
+            strstr(osHeaderFile, "/vsigs/") == nullptr &&
+            strstr(osHeaderFile, "/vsiaz/") == nullptr &&
+            strstr(osHeaderFile, "/vsioss/") == nullptr )
         {
             fp = VSIFOpenL( osHeaderFile, "rb" );
         }
-        if( fp == NULL )
+        if( fp == nullptr )
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Cannot read %s", osHeaderFile.c_str());
         }
         else
         {
-            const char* pszLine = NULL;
-            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            const char* pszLine = nullptr;
+            while( (pszLine = CPLReadLineL(fp)) != nullptr )
             {
                 if( STARTS_WITH_CI(pszLine, "Authorization:") )
                 {
@@ -446,7 +446,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         bFirstTimeForDebugMessage = false;
 
         return oManager.SetAuthFromRefreshToken(
-            osRefreshToken, osClientId, osClientSecret, NULL);
+            osRefreshToken, osClientId, osClientSecret, nullptr);
     }
 
     CPLString osPrivateKey =
@@ -458,7 +458,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         if( !osPrivateKeyFile.empty() )
         {
             VSILFILE* fp = VSIFOpenL(osPrivateKeyFile, "rb");
-            if( fp == NULL )
+            if( fp == nullptr )
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                         "Cannot open %s", osPrivateKeyFile.c_str());
@@ -504,8 +504,8 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
                 osPrivateKey,
                 osClientEmail,
                 pszScope,
-                NULL,
-                NULL);
+                nullptr,
+                nullptr);
     }
 
     // Next try reading from ~/.boto
@@ -588,7 +588,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             bFirstTimeForDebugMessage = false;
             return oManager.SetAuthFromRefreshToken(
                 osOAuth2RefreshToken.c_str(), osClientId, osClientSecret,
-                NULL);
+                nullptr);
         }
         else
         {
@@ -615,8 +615,8 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
     else if( !CPLTestBool(CPLGetConfigOption("CPL_GCE_SKIP", "NO")) &&
              CPLIsMachinePotentiallyGCEInstance() )
     {
-        oManager.SetAuthFromGCE(NULL);
-        if( oManager.GetBearer() != NULL )
+        oManager.SetAuthFromGCE(nullptr);
+        if( oManager.GetBearer() != nullptr )
         {
             CPLDebug("GS", "Using GCE inherited permissions");
 
@@ -669,7 +669,7 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     if( !GetConfiguration(osSecretAccessKey, osAccessKeyId, osHeaderFile,
                           oManager) )
     {
-        return NULL;
+        return nullptr;
     }
 
     return new VSIGSHandleHelper( osEndpoint,
@@ -704,20 +704,20 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                    size_t ) const
 {
     if( m_bUseHeaderFile )
-        return NULL;
+        return nullptr;
 
     if( m_oManager.GetAuthMethod() != GOA2Manager::NONE )
     {
         const char* pszBearer = m_oManager.GetBearer();
-        if( pszBearer == NULL )
-            return NULL;
+        if( pszBearer == nullptr )
+            return nullptr;
 
         {
             CPLMutexHolder oHolder( &hMutex );
             oStaticManager = m_oManager;
         }
 
-        struct curl_slist *headers=NULL;
+        struct curl_slist *headers=nullptr;
         headers = curl_slist_append(
             headers, CPLSPrintf("Authorization: Bearer %s", pszBearer));
         return headers;
@@ -741,9 +741,9 @@ VSIGSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 
 void VSIGSHandleHelper::CleanMutex()
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 /************************************************************************/
 /*                          ClearCache()                                */

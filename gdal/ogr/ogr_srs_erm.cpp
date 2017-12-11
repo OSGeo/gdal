@@ -190,7 +190,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszAuthName = GetAuthorityName( "PROJCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName, "epsg") )
         {
             nEPSGCode = atoi(GetAuthorityCode( "PROJCS" ));
         }
@@ -199,7 +199,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszAuthName = GetAuthorityName( "GEOGCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName, "epsg") )
         {
             nEPSGCode = atoi(GetAuthorityCode( "GEOGCS" ));
         }
@@ -211,7 +211,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     OGRSpatialReference oSRSWork;
     const char *pszWKTDatum = GetAttrValue( "DATUM" );
 
-    if( pszWKTDatum != NULL
+    if( pszWKTDatum != nullptr
         && oSRSWork.importFromDict( "ecw_cs.wkt", pszWKTDatum ) == OGRERR_NONE)
     {
         strncpy( pszDatum, pszWKTDatum, BUFFER_SIZE );
@@ -312,7 +312,7 @@ OGRErr OGRSpatialReference::exportToERM( char *pszProj, char *pszDatum,
     {
         const char *pszPROJCS = GetAttrValue( "PROJCS" );
 
-        if( pszPROJCS != NULL
+        if( pszPROJCS != nullptr
             && oSRSWork.importFromDict( "ecw_cs.wkt", pszPROJCS ) == OGRERR_NONE
             && oSRSWork.IsProjected() )
         {

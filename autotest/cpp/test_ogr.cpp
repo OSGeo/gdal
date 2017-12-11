@@ -42,7 +42,7 @@ namespace tut
         bool has_geos_support_;
 
         test_ogr_data()
-            : drv_reg_(NULL),
+            : drv_reg_(nullptr),
             drv_count_(0),
             drv_shape_("ESRI Shapefile")
         {
@@ -80,7 +80,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("GetGDALDriverManager() is NULL", NULL != drv_reg_);
+        ensure("GetGDALDriverManager() is NULL", nullptr != drv_reg_);
     }
 
     // Test if Shapefile driver is registered
@@ -89,10 +89,10 @@ namespace tut
     void object::test<3>()
     {
         GDALDriverManager* manager = GetGDALDriverManager();
-        ensure(NULL != manager);
+        ensure(nullptr != manager);
 
         GDALDriver* drv = manager->GetDriverByName(drv_shape_.c_str());
-        ensure("Shapefile driver is not registered", NULL != drv);
+        ensure("Shapefile driver is not registered", nullptr != drv);
     }
 
     template<class T>
@@ -134,7 +134,7 @@ namespace tut
     void object::test<4>()
     {
         OGRSpatialReference* poSRS = new OGRSpatialReference();
-        ensure(NULL != poSRS);
+        ensure(nullptr != poSRS);
 
         testSpatialReferenceLeakOnCopy<OGRPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRLineString>(poSRS);
@@ -327,7 +327,7 @@ namespace tut
     void testCopyEquals()
     {
         T* poOrigin = make<T>();
-        ensure( NULL != poOrigin);
+        ensure( nullptr != poOrigin);
 
         T value2( *poOrigin );
 
@@ -386,7 +386,7 @@ namespace tut
         {
             OGRPoint p;
             double x = 1, y = 2;
-            OGR_G_SetPoints( (OGRGeometryH)&p, 1, &x, 0, &y, 0, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&p, 1, &x, 0, &y, 0, nullptr, 0 );
             ensure_equals(p.getCoordinateDimension(), 2);
             ensure_equals(p.getX(), 1);
             ensure_equals(p.getY(), 2);
@@ -406,14 +406,14 @@ namespace tut
         {
             OGRPoint p;
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            OGR_G_SetPoints( (OGRGeometryH)&p, 1, NULL, 0, NULL, 0, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&p, 1, nullptr, 0, nullptr, 0, nullptr, 0 );
             CPLPopErrorHandler();
         }
 
         {
             OGRLineString ls;
             double x = 1, y = 2;
-            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, nullptr, 0 );
             ensure_equals(ls.getCoordinateDimension(), 2);
             ensure_equals(ls.getX(0), 1);
             ensure_equals(ls.getY(0), 2);
@@ -423,7 +423,7 @@ namespace tut
         {
             OGRLineString ls;
             double x = 1, y = 2;
-            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 0, &y, 0, nullptr, 0 );
             ensure_equals(ls.getCoordinateDimension(), 2);
             ensure_equals(ls.getX(0), 1);
             ensure_equals(ls.getY(0), 2);
@@ -433,7 +433,7 @@ namespace tut
         {
             OGRLineString ls;
             double x = 1, y = 2;
-            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 8, &y, 8, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, &x, 8, &y, 8, nullptr, 0 );
             ensure_equals(ls.getCoordinateDimension(), 2);
             ensure_equals(ls.getX(0), 1);
             ensure_equals(ls.getY(0), 2);
@@ -463,7 +463,7 @@ namespace tut
         {
             OGRLineString ls;
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, NULL, 0, NULL, 0, NULL, 0 );
+            OGR_G_SetPoints( (OGRGeometryH)&ls, 1, nullptr, 0, nullptr, 0, nullptr, 0 );
             CPLPopErrorHandler();
         }
     }
@@ -472,9 +472,9 @@ namespace tut
     template<>
     void object::test<7>()
     {
-      OGRStyleMgrH hSM = OGR_SM_Create(NULL);
+      OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
       OGR_SM_InitStyleString(hSM, "PEN(w:2px,c:#000000,id:\"mapinfo-pen-2,ogr-pen-0\")");
-      OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, NULL);
+      OGRStyleToolH hTool = OGR_SM_GetPart(hSM, 0, nullptr);
       int bValueIsNull;
 
       ensure_distance(OGR_ST_GetParamDbl(hTool, OGRSTPenWidth, &bValueIsNull), 2.0 * (1.0 / (72.0 * 39.37)) * 1000, 1e-6);

@@ -257,7 +257,7 @@ class OGRCouchDBDataSource : public OGRDataSource
                                 const char* pszURI,
                                 const char* pszData);
 
-    OGRLayer*           OpenDatabase(const char* pszLayerName = NULL);
+    OGRLayer*           OpenDatabase(const char* pszLayerName = nullptr);
     OGRLayer*           OpenView();
     void                DeleteLayer( const char *pszLayerName );
 
@@ -279,9 +279,9 @@ class OGRCouchDBDataSource : public OGRDataSource
     virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
     virtual OGRErr      DeleteLayer(int) override;
 
     virtual OGRLayer*  ExecuteSQL( const char *pszSQLCommand,

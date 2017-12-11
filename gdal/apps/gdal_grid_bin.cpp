@@ -36,7 +36,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
@@ -77,7 +77,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "        linear:radius=-1.0:nodata=0.0\n"
         "\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     GDALDestroyDriverManager();
@@ -99,7 +99,7 @@ static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 
 static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary == NULL )
+    if( psOptionsForBinary == nullptr )
         return;
 
     CPLFree(psOptionsForBinary->pszSource);
@@ -148,30 +148,30 @@ MAIN_START(argc, argv)
     GDALGridOptions *psOptions = GDALGridOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALGridOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALGridOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == NULL )
+    if( psOptionsForBinary->pszSource == nullptr )
         Usage("No input file specified.");
-    if( psOptionsForBinary->pszDest== NULL )
+    if( psOptionsForBinary->pszDest== nullptr )
         Usage("No output file specified.");
 
-    if( psOptionsForBinary->pszDest == NULL )
+    if( psOptionsForBinary->pszDest == nullptr )
         psOptionsForBinary->pszDest = CPLStrdup(psOptionsForBinary->pszSource);
  
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hInDS = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                                     NULL, NULL, NULL );
-    if( hInDS == NULL )
+                                     nullptr, nullptr, nullptr );
+    if( hInDS == nullptr )
         exit( 1 );
 
     int bUsageError = FALSE;

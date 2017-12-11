@@ -38,20 +38,20 @@ CPL_CVSID("$Id$")
 static GDALDataset *OGRGeoRSSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "<rss") == NULL &&
-        strstr((const char*)poOpenInfo->pabyHeader, "<feed") == NULL &&
-        strstr((const char*)poOpenInfo->pabyHeader, "<atom:feed") == NULL )
-        return NULL;
+    if( strstr((const char*)poOpenInfo->pabyHeader, "<rss") == nullptr &&
+        strstr((const char*)poOpenInfo->pabyHeader, "<feed") == nullptr &&
+        strstr((const char*)poOpenInfo->pabyHeader, "<atom:feed") == nullptr )
+        return nullptr;
 
     OGRGeoRSSDataSource   *poDS = new OGRGeoRSSDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -73,7 +73,7 @@ static GDALDataset *OGRGeoRSSDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -102,7 +102,7 @@ void RegisterOGRGeoRSS()
     if (! GDAL_CHECK_VERSION("OGR/GeoRSS driver"))
         return;
 
-    if( GDALGetDriverByName( "GeoRSS" ) != NULL )
+    if( GDALGetDriverByName( "GeoRSS" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

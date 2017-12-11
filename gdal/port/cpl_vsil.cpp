@@ -159,8 +159,8 @@ typedef struct
 
 char **VSIReadDirRecursive( const char *pszPathIn )
 {
-    CPLStringList oFiles = NULL;
-    char **papszFiles = NULL;
+    CPLStringList oFiles = nullptr;
+    char **papszFiles = nullptr;
     VSIStatBufL psStatBuf;
     CPLString osTemp1;
     CPLString osTemp2;
@@ -169,7 +169,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
     std::vector<VSIReadDirRecursiveTask> aoStack;
     char* pszPath = CPLStrdup(pszPathIn);
-    char* pszDisplayedPath = NULL;
+    char* pszDisplayedPath = nullptr;
 
     while( true )
     {
@@ -234,13 +234,13 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 sTask.i = i;
                 sTask.pszPath = CPLStrdup(pszPath);
                 sTask.pszDisplayedPath =
-                    pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : NULL;
+                    pszDisplayedPath ? CPLStrdup(pszDisplayedPath) : nullptr;
                 aoStack.push_back(sTask);
 
                 CPLFree(pszPath);
                 pszPath = CPLStrdup( osTemp1.c_str() );
 
-                char* pszDisplayedPathNew = NULL;
+                char* pszDisplayedPathNew = nullptr;
                 if( pszDisplayedPath )
                 {
                     pszDisplayedPathNew =
@@ -256,7 +256,7 @@ char **VSIReadDirRecursive( const char *pszPathIn )
                 pszDisplayedPath = pszDisplayedPathNew;
 
                 i = 0;
-                papszFiles = NULL;
+                papszFiles = nullptr;
                 nCount = -1;
 
                 break;
@@ -1317,20 +1317,20 @@ int VSIIngestFile( VSILFILE* fp,
                    vsi_l_offset* pnSize,
                    GIntBig nMaxSize )
 {
-    if( fp == NULL && pszFilename == NULL )
+    if( fp == nullptr && pszFilename == nullptr )
         return FALSE;
-    if( ppabyRet == NULL )
+    if( ppabyRet == nullptr )
         return FALSE;
 
-    *ppabyRet = NULL;
-    if( pnSize != NULL )
+    *ppabyRet = nullptr;
+    if( pnSize != nullptr )
         *pnSize = 0;
 
     bool bFreeFP = false;
-    if( NULL == fp )
+    if( nullptr == fp )
     {
         fp = VSIFOpenL( pszFilename, "rb" );
-        if( NULL == fp )
+        if( nullptr == fp )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Cannot open file '%s'", pszFilename );
@@ -1346,7 +1346,7 @@ int VSIIngestFile( VSILFILE* fp,
 
     vsi_l_offset nDataLen = 0;
 
-    if( pszFilename == NULL ||
+    if( pszFilename == nullptr ||
         strcmp(pszFilename, "/vsistdin/") == 0 )
     {
         vsi_l_offset nDataAlloc = 0;
@@ -1367,20 +1367,20 @@ int VSIIngestFile( VSILFILE* fp,
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Input file too large to be opened" );
                     VSIFree( *ppabyRet );
-                    *ppabyRet = NULL;
+                    *ppabyRet = nullptr;
                     if( bFreeFP )
                         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return FALSE;
                 }
                 GByte* pabyNew = static_cast<GByte *>(
                     VSIRealloc(*ppabyRet, static_cast<size_t>(nDataAlloc)) );
-                if( pabyNew == NULL )
+                if( pabyNew == nullptr )
                 {
                     CPLError( CE_Failure, CPLE_OutOfMemory,
                               "Cannot allocated " CPL_FRMT_GIB " bytes",
                               nDataAlloc );
                     VSIFree( *ppabyRet );
-                    *ppabyRet = NULL;
+                    *ppabyRet = nullptr;
                     if( bFreeFP )
                         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                     return FALSE;
@@ -1397,15 +1397,15 @@ int VSIIngestFile( VSILFILE* fp,
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Input file too large to be opened" );
                 VSIFree( *ppabyRet );
-                *ppabyRet = NULL;
-                if( pnSize != NULL )
+                *ppabyRet = nullptr;
+                if( pnSize != nullptr )
                     *pnSize = 0;
                 if( bFreeFP )
                     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                 return FALSE;
             }
 
-            if( pnSize != NULL )
+            if( pnSize != nullptr )
                 *pnSize += nRead;
             (*ppabyRet)[nDataLen] = '\0';
             if( nRead == 0 )
@@ -1445,7 +1445,7 @@ int VSIIngestFile( VSILFILE* fp,
 
         *ppabyRet = static_cast<GByte *>(
             VSIMalloc(static_cast<size_t>(nDataLen + 1)) );
-        if( NULL == *ppabyRet )
+        if( nullptr == *ppabyRet )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Cannot allocated " CPL_FRMT_GIB " bytes",
@@ -1463,12 +1463,12 @@ int VSIIngestFile( VSILFILE* fp,
                       "Cannot read " CPL_FRMT_GIB " bytes",
                       nDataLen );
             VSIFree( *ppabyRet );
-            *ppabyRet = NULL;
+            *ppabyRet = nullptr;
             if( bFreeFP )
                 CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return FALSE;
         }
-        if( pnSize != NULL )
+        if( pnSize != nullptr )
             *pnSize = nDataLen;
     }
     if( bFreeFP )
@@ -1557,7 +1557,7 @@ GIntBig VSIGetDiskFreeSpace( const char *pszDirname )
 /************************************************************************/
 
 VSIFileManager::VSIFileManager() :
-    poDefaultHandler(NULL)
+    poDefaultHandler(nullptr)
 {}
 
 /************************************************************************/
@@ -1586,14 +1586,14 @@ VSIFileManager::~VSIFileManager()
 /*                                Get()                                 */
 /************************************************************************/
 
-static VSIFileManager *poManager = NULL;
-static CPLMutex* hVSIFileManagerMutex = NULL;
+static VSIFileManager *poManager = nullptr;
+static CPLMutex* hVSIFileManagerMutex = nullptr;
 
 VSIFileManager *VSIFileManager::Get()
 
 {
     static volatile GPtrDiff_t nConstructerPID = 0;
-    if( poManager != NULL )
+    if( poManager != nullptr )
     {
         if( nConstructerPID != 0 )
         {
@@ -1614,7 +1614,7 @@ VSIFileManager *VSIFileManager::Get()
     }
 
     CPLMutexHolder oHolder2( &hVSIFileManagerMutex );
-    if( poManager == NULL )
+    if( poManager == nullptr )
     {
         nConstructerPID = static_cast<GPtrDiff_t>(CPLGetPID());
 #ifdef DEBUG_VERBOSE
@@ -1717,13 +1717,13 @@ void VSICleanupFileManager()
     if( poManager )
     {
         delete poManager;
-        poManager = NULL;
+        poManager = nullptr;
     }
 
-    if( hVSIFileManagerMutex != NULL )
+    if( hVSIFileManagerMutex != nullptr )
     {
         CPLDestroyMutex(hVSIFileManagerMutex);
-        hVSIFileManagerMutex = NULL;
+        hVSIFileManagerMutex = nullptr;
     }
 }
 

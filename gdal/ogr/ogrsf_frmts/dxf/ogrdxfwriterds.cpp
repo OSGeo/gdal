@@ -41,11 +41,11 @@ CPL_CVSID("$Id$")
 
 OGRDXFWriterDS::OGRDXFWriterDS() :
     nNextFID(80),
-    poLayer(NULL),
-    poBlocksLayer(NULL),
-    fp(NULL),
-    fpTemp(NULL),
-    papszLayersToCreate(NULL),
+    poLayer(nullptr),
+    poBlocksLayer(nullptr),
+    fp(nullptr),
+    fpTemp(nullptr),
+    papszLayersToCreate(nullptr),
     nHANDSEEDOffset(0)
 {}
 
@@ -56,7 +56,7 @@ OGRDXFWriterDS::OGRDXFWriterDS() :
 OGRDXFWriterDS::~OGRDXFWriterDS()
 
 {
-    if (fp != NULL)
+    if (fp != nullptr)
     {
 /* -------------------------------------------------------------------- */
 /*      Transfer over the header into the destination file with any     */
@@ -66,7 +66,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 
         TransferUpdateHeader( fp );
 
-        if (fpTemp != NULL)
+        if (fpTemp != nullptr)
         {
 /* -------------------------------------------------------------------- */
 /*      Copy in the temporary file contents.                            */
@@ -74,8 +74,8 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
             VSIFCloseL(fpTemp);
             fpTemp = VSIFOpenL( osTempFilename, "r" );
 
-            const char *pszLine = NULL;
-            while( (pszLine = CPLReadLineL(fpTemp)) != NULL )
+            const char *pszLine = nullptr;
+            while( (pszLine = CPLReadLineL(fpTemp)) != nullptr )
             {
                 VSIFWriteL( pszLine, 1, strlen(pszLine), fp );
                 VSIFWriteL( "\n", 1, 1, fp );
@@ -105,7 +105,7 @@ OGRDXFWriterDS::~OGRDXFWriterDS()
 /* -------------------------------------------------------------------- */
 
         VSIFCloseL( fp );
-        fp = NULL;
+        fp = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -126,7 +126,7 @@ int OGRDXFWriterDS::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
         // Unable to have more than one OGR entities layer in a DXF file, with one options blocks layer.
-        return poBlocksLayer == NULL || poLayer == NULL;
+        return poBlocksLayer == nullptr || poLayer == nullptr;
     else
         return FALSE;
 }
@@ -141,7 +141,7 @@ OGRLayer *OGRDXFWriterDS::GetLayer( int iLayer )
     if( iLayer == 0 )
         return poLayer;
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -167,12 +167,12 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Open the standard header, or a user provided header.            */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszOptions,"HEADER") != NULL )
+    if( CSLFetchNameValue(papszOptions,"HEADER") != nullptr )
         osHeaderFile = CSLFetchNameValue(papszOptions,"HEADER");
     else
     {
         const char *pszValue = CPLFindFile( "gdal", "header.dxf" );
-        if( pszValue == NULL )
+        if( pszValue == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to find template header file header.dxf for reading,\nis GDAL_DATA set properly?" );
@@ -184,12 +184,12 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
 /*      Establish the name for our trailer file.                        */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszOptions,"TRAILER") != NULL )
+    if( CSLFetchNameValue(papszOptions,"TRAILER") != nullptr )
         osTrailerFile = CSLFetchNameValue(papszOptions,"TRAILER");
     else
     {
         const char *pszValue = CPLFindFile( "gdal", "trailer.dxf" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             osTrailerFile = pszValue;
     }
 
@@ -204,7 +204,7 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     nNextFID = 131072;
 #endif
 
-    if( CSLFetchNameValue( papszOptions, "FIRST_ENTITY" ) != NULL )
+    if( CSLFetchNameValue( papszOptions, "FIRST_ENTITY" ) != nullptr )
         nNextFID = atoi(CSLFetchNameValue( papszOptions, "FIRST_ENTITY" ));
 
 /* -------------------------------------------------------------------- */
@@ -225,7 +225,7 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenExL( pszFilename, "w+", true );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open '%s' for writing: %s",
@@ -240,7 +240,7 @@ int OGRDXFWriterDS::Open( const char * pszFilename, char **papszOptions )
     osTempFilename += ".tmp";
 
     fpTemp = VSIFOpenL( osTempFilename, "w" );
-    if( fpTemp == NULL )
+    if( fpTemp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open '%s' for writing.",
@@ -261,12 +261,12 @@ OGRLayer *OGRDXFWriterDS::ICreateLayer( const char *pszName,
                                        char ** )
 
 {
-    if( EQUAL(pszName,"blocks") && poBlocksLayer == NULL )
+    if( EQUAL(pszName,"blocks") && poBlocksLayer == nullptr )
     {
         poBlocksLayer = new OGRDXFBlocksWriterLayer( this );
         return poBlocksLayer;
     }
-    else if( poLayer == NULL )
+    else if( poLayer == nullptr )
     {
         poLayer = new OGRDXFWriterLayer( this, fpTemp );
         return poLayer;
@@ -275,7 +275,7 @@ OGRLayer *OGRDXFWriterDS::ICreateLayer( const char *pszName,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to have more than one OGR entities layer in a DXF file, with one options blocks layer." );
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -373,7 +373,7 @@ bool OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
         // If we are at the end of the BLOCKS section, consider inserting
         // supplementary blocks.
         if( nCode == 0 && osSection == "BLOCKS" && EQUAL(szLineBuf,"ENDSEC")
-            && poBlocksLayer != NULL )
+            && poBlocksLayer != nullptr )
         {
             if( !WriteNewBlockDefinitions( fp ) )
                 return false;
@@ -516,7 +516,7 @@ bool OGRDXFWriterDS::TransferUpdateTrailer( VSILFILE *fpOut )
 /* -------------------------------------------------------------------- */
     VSILFILE *l_fp = VSIFOpenL( osTrailerFile, "r" );
 
-    if( l_fp == NULL )
+    if( l_fp == nullptr )
         return false;
 
     OGRDXFReader oReader;
@@ -683,7 +683,7 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions( VSILFILE * fpOut )
 bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
 
 {
-    if( poLayer == NULL )
+    if( poLayer == nullptr )
         return true;
 
     std::map<CPLString,CPLString>::iterator oIt;
@@ -731,7 +731,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fpIn )
 /* -------------------------------------------------------------------- */
         CPLString osBlockName = poThisBlockFeat->GetFieldAsString("Block");
 
-        if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
+        if( oHeaderDS.LookupBlock( osBlockName ) != nullptr )
             continue;
 
 /* -------------------------------------------------------------------- */
@@ -764,7 +764,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords( VSILFILE * fpIn )
 bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 
 {
-    if( poLayer == NULL )
+    if( poLayer == nullptr )
         poLayer = new OGRDXFWriterLayer( this, fpTemp );
     poLayer->ResetFP( fpIn );
 
@@ -780,7 +780,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions( VSILFILE * fpIn )
 /* -------------------------------------------------------------------- */
         CPLString osBlockName = poThisBlockFeat->GetFieldAsString("Block");
 
-        if( oHeaderDS.LookupBlock( osBlockName ) != NULL )
+        if( oHeaderDS.LookupBlock( osBlockName ) != nullptr )
             continue;
 
 /* -------------------------------------------------------------------- */
@@ -861,7 +861,7 @@ void OGRDXFWriterDS::ScanForEntities( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     VSILFILE *l_fp = VSIFOpenL( pszFilename, "r" );
 
-    if( l_fp == NULL )
+    if( l_fp == nullptr )
         return;
 
     OGRDXFReader oReader;

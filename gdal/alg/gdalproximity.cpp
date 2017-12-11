@@ -119,7 +119,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     VALIDATE_POINTER1( hSrcBand, "GDALComputeProximity", CE_Failure );
     VALIDATE_POINTER1( hProximityBand, "GDALComputeProximity", CE_Failure );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
@@ -182,7 +182,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Get input NODATA value.                                         */
 /* -------------------------------------------------------------------- */
     double dfSrcNoDataValue = 0.0;
-    double *pdfSrcNoData = NULL;
+    double *pdfSrcNoData = nullptr;
     if( CPLFetchBool( papszOptions, "USE_INPUT_NODATA", false ) )
     {
         int bSrcHasNoData = 0;
@@ -196,7 +196,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     float fNoDataValue = 0.0f;
     pszOpt = CSLFetchNameValue( papszOptions, "NODATA" );
-    if( pszOpt != NULL )
+    if( pszOpt != nullptr )
     {
         fNoDataValue = static_cast<float>(CPLAtof(pszOpt));
     }
@@ -225,11 +225,11 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Get the target value(s).                                        */
 /* -------------------------------------------------------------------- */
-    int *panTargetValues = NULL;
+    int *panTargetValues = nullptr;
     int nTargetValues = 0;
 
     pszOpt = CSLFetchNameValue( papszOptions, "VALUES" );
-    if( pszOpt != NULL )
+    if( pszOpt != nullptr )
     {
         char **papszValuesTokens =
             CSLTokenizeStringComplex( pszOpt, ",", FALSE, FALSE);
@@ -259,15 +259,15 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      temporary file for this purpose.                                */
 /* -------------------------------------------------------------------- */
     GDALRasterBandH hWorkProximityBand = hProximityBand;
-    GDALDatasetH hWorkProximityDS = NULL;
+    GDALDatasetH hWorkProximityDS = nullptr;
     const GDALDataType eProxType = GDALGetRasterDataType(hProximityBand);
     CPLErr eErr = CE_None;
 
     // TODO(schwehr): Localize after removing gotos.
-    float *pafProximity = NULL;
-    int *panNearX = NULL;
-    int *panNearY = NULL;
-    GInt32 *panSrcScanline = NULL;
+    float *pafProximity = nullptr;
+    int *panNearX = nullptr;
+    int *panNearY = nullptr;
+    GInt32 *panSrcScanline = nullptr;
     bool bTempFileAlreadyDeleted = false;
 
     if( eProxType == GDT_Byte
@@ -275,7 +275,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         || eProxType == GDT_UInt32 )
     {
         GDALDriverH hDriver = GDALGetDriverByName("GTiff");
-        if( hDriver == NULL )
+        if( hDriver == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "GDALComputeProximity needs GTiff driver" );
@@ -285,8 +285,8 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         CPLString osTmpFile = CPLGenerateTempFilename( "proximity" );
         hWorkProximityDS =
             GDALCreate( hDriver, osTmpFile,
-                        nXSize, nYSize, 1, GDT_Float32, NULL );
-        if( hWorkProximityDS == NULL )
+                        nXSize, nYSize, 1, GDT_Float32, nullptr );
+        if( hWorkProximityDS == nullptr )
         {
             eErr = CE_Failure;
             goto end;
@@ -311,10 +311,10 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     panSrcScanline =
         static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
 
-    if( pafProximity == NULL
-        || panNearX == NULL
-        || panNearY == NULL
-        || panSrcScanline == NULL)
+    if( pafProximity == nullptr
+        || panNearX == nullptr
+        || panNearY == nullptr
+        || panSrcScanline == nullptr)
     {
         eErr = CE_Failure;
         goto end;
@@ -445,7 +445,7 @@ end:
     CPLFree( pafProximity );
     CPLFree( panTargetValues );
 
-    if( hWorkProximityDS != NULL )
+    if( hWorkProximityDS != nullptr )
     {
         CPLString osProxFile = GDALGetDescription( hWorkProximityDS );
         GDALClose( hWorkProximityDS );
@@ -582,7 +582,7 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Update our proximity value.                                     */
 /* -------------------------------------------------------------------- */
         if( panNearX[iPixel] != -1
-            && (pdfSrcNoDataValue == NULL
+            && (pdfSrcNoDataValue == nullptr
                 || panSrcScanline[iPixel] != *pdfSrcNoDataValue)
             && dfNearDistSq <= dfMaxDist * dfMaxDist
             && (pafProximity[iPixel] < 0

@@ -64,11 +64,11 @@ CTiledChannel::CTiledChannel( PCIDSKBuffer &image_headerIn,
 
     image_headerIn.Get(64,64,filename);
 
-    assert( strstr(filename.c_str(),"SIS=") != NULL );
+    assert( strstr(filename.c_str(),"SIS=") != nullptr );
 
     image = atoi(strstr(filename.c_str(),"SIS=") + 4);
 
-    vfile = NULL;
+    vfile = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If this is an unassociated channel (i.e. an overview), we        */
@@ -111,7 +111,7 @@ CTiledChannel::~CTiledChannel()
 void CTiledChannel::EstablishAccess() const
 
 {
-    if( vfile != NULL )
+    if( vfile != nullptr )
         return;
     
 /* -------------------------------------------------------------------- */
@@ -120,7 +120,7 @@ void CTiledChannel::EstablishAccess() const
     SysBlockMap *bmap = dynamic_cast<SysBlockMap*>(
         file->GetSegment( SEG_SYS, "SysBMDir" ));
 
-    if( bmap == NULL )
+    if( bmap == nullptr )
         return ThrowPCIDSKException( "Unable to find SysBMDir segment." );
 
     vfile = bmap->GetVirtualFile( image );
@@ -894,7 +894,7 @@ void CTiledChannel::JPEGDecompressBlock( PCIDSKBuffer &oCompressedData,
 
                                
 {
-    if( file->GetInterfaces()->JPEGDecompressBlock == NULL )
+    if( file->GetInterfaces()->JPEGDecompressBlock == nullptr )
         return ThrowPCIDSKException( "JPEG decompression not enabled in the PCIDSKInterfaces of this build." );
 
     file->GetInterfaces()->JPEGDecompressBlock( 
@@ -910,7 +910,7 @@ void CTiledChannel::JPEGDecompressBlock( PCIDSKBuffer &oCompressedData,
 void CTiledChannel::JPEGCompressBlock( PCIDSKBuffer &oDecompressedData,
                                        PCIDSKBuffer &oCompressedData )
 {
-    if( file->GetInterfaces()->JPEGCompressBlock == NULL )
+    if( file->GetInterfaces()->JPEGCompressBlock == nullptr )
         return ThrowPCIDSKException( "JPEG compression not enabled in the PCIDSKInterfaces of this build." );
 
 /* -------------------------------------------------------------------- */

@@ -37,12 +37,12 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRAVCBinDataSource::OGRAVCBinDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
-    psAVC(NULL)
+    pszName(nullptr),
+    psAVC(nullptr)
 {
-    poSRS = NULL;
+    poSRS = nullptr;
 }
 
 /************************************************************************/
@@ -55,7 +55,7 @@ OGRAVCBinDataSource::~OGRAVCBinDataSource()
     if( psAVC )
     {
         AVCE00ReadClose( psAVC );
-        psAVC = NULL;
+        psAVC = nullptr;
     }
 
     CPLFree( pszName );
@@ -88,7 +88,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
         CPLErrorReset();
     }
 
-    if( psAVC == NULL )
+    if( psAVC == nullptr )
         return FALSE;
 
     pszName = CPLStrdup( pszNewName );
@@ -125,7 +125,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
                                                  psAVC->eCoverType,
                                                  psSec->eType,
                                                  psAVC->psDBCSInfo);
-              if( hFile && poSRS == NULL )
+              if( hFile && poSRS == nullptr )
               {
                   char **papszPRJ = AVCBinReadNextPrj( hFile );
 
@@ -135,7 +135,7 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
                       CPLError( CE_Warning, CPLE_AppDefined,
                                 "Failed to parse PRJ section, ignoring." );
                       delete poSRS;
-                      poSRS = NULL;
+                      poSRS = nullptr;
                   }
               }
               if( hFile )
@@ -170,7 +170,7 @@ OGRLayer *OGRAVCBinDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }

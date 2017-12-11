@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage( const char* pszErrorMsg = NULL )
+static void Usage( const char* pszErrorMsg = nullptr )
 
 {
     printf("Usage: gdaladdo [-r {nearest,average,gauss,cubic,cubicspline,lanczos,average_mp,average_magphase,mode}]\n"
@@ -67,7 +67,7 @@ static void Usage( const char* pszErrorMsg = NULL )
            "            --config PHOTOMETRIC_OVERVIEW YCBCR\n"
            "            --config INTERLEAVE_OVERVIEW PIXEL -ro abc.tif\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit(1);
@@ -129,16 +129,16 @@ MAIN_START(nArgc, papszArgv)
         exit(-nArgc);
 
     const char *pszResampling = "nearest";
-    const char *pszFilename = NULL;
+    const char *pszFilename = nullptr;
     int anLevels[1024] = {};
     int nLevelCount = 0;
     int nResultStatus = 0;
     bool bReadOnly = false;
     bool bClean = false;
     GDALProgressFunc pfnProgress = GDALTermProgress;
-    int *panBandList = NULL;
+    int *panBandList = nullptr;
     int nBandCount = 0;
-    char **papszOpenOptions = NULL;
+    char **papszOpenOptions = nullptr;
     int nMinSize = 256;
 
 /* -------------------------------------------------------------------- */
@@ -209,7 +209,7 @@ MAIN_START(nArgc, papszArgv)
         {
             Usage(CPLSPrintf("Unknown option name '%s'", papszArgv[iArg]));
         }
-        else if( pszFilename == NULL )
+        else if( pszFilename == nullptr )
         {
             pszFilename = papszArgv[iArg];
         }
@@ -231,21 +231,21 @@ MAIN_START(nArgc, papszArgv)
         }
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
         Usage("No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open data file.                                                 */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDataset = NULL;
+    GDALDatasetH hDataset = nullptr;
     if( !bReadOnly )
     {
         CPLPushErrorHandler(GDALAddoErrorHandler);
         CPLSetCurrentErrorHandlerCatchDebug(FALSE);
         hDataset = GDALOpenEx(pszFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE,
-                              NULL, papszOpenOptions, NULL);
+                              nullptr, papszOpenOptions, nullptr);
         CPLPopErrorHandler();
-        if( hDataset != NULL )
+        if( hDataset != nullptr )
         {
             for(size_t i=0;i<aoErrors.size();i++)
             {
@@ -255,15 +255,15 @@ MAIN_START(nArgc, papszArgv)
         }
     }
 
-    if( hDataset == NULL )
+    if( hDataset == nullptr )
         hDataset =
             GDALOpenEx(pszFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-                       NULL, papszOpenOptions, NULL);
+                       nullptr, papszOpenOptions, nullptr);
 
     CSLDestroy(papszOpenOptions);
-    papszOpenOptions = NULL;
+    papszOpenOptions = nullptr;
 
-    if( hDataset == NULL )
+    if( hDataset == nullptr )
         exit(2);
 
 /* -------------------------------------------------------------------- */
@@ -271,8 +271,8 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
     if ( bClean )
     {
-        if( GDALBuildOverviews(hDataset,pszResampling, 0, NULL,
-                               0, NULL, pfnProgress, NULL) != CE_None )
+        if( GDALBuildOverviews(hDataset,pszResampling, 0, nullptr,
+                               0, nullptr, pfnProgress, nullptr) != CE_None )
         {
             printf("Cleaning overviews failed.\n");
             nResultStatus = 200;
@@ -304,7 +304,7 @@ MAIN_START(nArgc, papszArgv)
         if( nLevelCount > 0 &&
             GDALBuildOverviews(hDataset,pszResampling, nLevelCount, anLevels,
                                nBandCount, panBandList, pfnProgress,
-                               NULL) != CE_None)
+                               nullptr) != CE_None)
         {
             printf("Overview building failed.\n");
             nResultStatus = 100;

@@ -54,13 +54,13 @@ OGRDXFFeature::OGRDXFFeature( OGRFeatureDefn * poFeatureDefn ):
 OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
 {
     OGRDXFFeature *poNew = new OGRDXFFeature( GetDefnRef() );
-    if( poNew == NULL )
-        return NULL;
+    if( poNew == nullptr )
+        return nullptr;
 
     if( !CopySelfTo( poNew ) )
     {
         delete poNew;
-        return NULL;
+        return nullptr;
     }
 
     poNew->oOCS = oOCS;
@@ -181,7 +181,7 @@ const CPLString OGRDXFFeature::GetColor( OGRDXFDataSource* const poDS,
     if( nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             nColor = atoi(pszValue);
     }
 

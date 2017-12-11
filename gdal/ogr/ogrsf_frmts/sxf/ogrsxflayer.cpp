@@ -107,7 +107,7 @@ OGRSXFLayer::~OGRSXFLayer()
 
 void OGRSXFLayer::AddClassifyCode(unsigned nClassCode, const char *szName)
 {
-    if (szName != NULL)
+    if (szName != nullptr)
     {
         mnClassificators[nClassCode] = CPLString(szName);
     }
@@ -296,14 +296,14 @@ OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
     {
         VSIFSeekL(fpSXF, IT->second, SEEK_SET);
         OGRFeature *poFeature = GetNextRawFeature(IT->first);
-        if (poFeature != NULL && poFeature->GetGeometryRef() != NULL && GetSpatialRef() != NULL)
+        if (poFeature != nullptr && poFeature->GetGeometryRef() != nullptr && GetSpatialRef() != nullptr)
         {
             poFeature->GetGeometryRef()->assignSpatialReference(GetSpatialRef());
         }
         return poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -342,7 +342,7 @@ OGRErr OGRSXFLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 GIntBig OGRSXFLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return static_cast<int>(mnRecordDesc.size());
     else
         return OGRLayer::GetFeatureCount(bForce);
@@ -372,15 +372,15 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 
         ++oNextIt;
 
-        if (poFeature == NULL)
+        if (poFeature == nullptr)
             continue;
 
-        if ((m_poFilterGeom == NULL
+        if ((m_poFilterGeom == nullptr
             || FilterGeometry(poFeature->GetGeometryRef()))
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate(poFeature)))
         {
-            if (poFeature->GetGeometryRef() != NULL && GetSpatialRef() != NULL)
+            if (poFeature->GetGeometryRef() != nullptr && GetSpatialRef() != nullptr)
             {
                 poFeature->GetGeometryRef()->assignSpatialReference(GetSpatialRef());
             }
@@ -390,7 +390,7 @@ OGRFeature *OGRSXFLayer::GetNextFeature()
 
         delete poFeature;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -465,7 +465,7 @@ GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
 
         offset += 4;
 
-        if (dfH != NULL)
+        if (dfH != nullptr)
         {
             if( nBufLen < 4 + 4 )
                 return 0;
@@ -502,7 +502,7 @@ GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
 
         offset += 8;
 
-        if (dfH != NULL)
+        if (dfH != nullptr)
         {
             if( nBufLen < 8 + 4 )
                 return 0;
@@ -546,7 +546,7 @@ GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
         }
         offset += 8;
 
-        if (dfH != NULL)
+        if (dfH != nullptr)
         {
             if( nBufLen < 8 + 4 )
                 return 0;
@@ -583,7 +583,7 @@ GUInt32 OGRSXFLayer::TranslateXYH( const SXFRecordDescription& certifInfo,
 
         offset += 16;
 
-        if (dfH != NULL)
+        if (dfH != nullptr)
         {
             if( nBufLen < 16 + 8 )
                 return 0;
@@ -614,7 +614,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     if (nObjectRead != 1 || stRecordHeader.nID != IDSXFOBJ)
     {
         CPLError(CE_Failure, CPLE_FileIO, "SXF. Read record failed.");
-        return NULL;
+        return nullptr;
     }
 
     SXFGeometryType eGeomType = SXF_GT_Unknown;
@@ -762,19 +762,19 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
     stCertInfo.bFormat = CHECK_BIT(stRecordHeader.nRef[2], 0);
     stCertInfo.eGeomType = eGeomType;
 
-    OGRFeature *poFeature = NULL;
+    OGRFeature *poFeature = nullptr;
     if( stRecordHeader.nGeometryLength > 100 * 1024 * 1024 )
-        return NULL;
+        return nullptr;
     char * recordCertifBuf = (char *)VSI_MALLOC_VERBOSE(stRecordHeader.nGeometryLength);
-    if( recordCertifBuf == NULL )
-        return NULL;
+    if( recordCertifBuf == nullptr )
+        return nullptr;
     nObjectRead = static_cast<int>(VSIFReadL(recordCertifBuf, stRecordHeader.nGeometryLength, 1, fpSXF));
     if (nObjectRead != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
             "SXF. Read geometry failed.");
         CPLFree(recordCertifBuf);
-        return NULL;
+        return nullptr;
     }
 
     if (eGeomType == SXF_GT_Point)
@@ -808,20 +808,20 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
       CPLError( CE_Warning, CPLE_NotSupported,
       "SXF. Geometry type Text Template do not support." );
       CPLFree(recordCertifBuf);
-      return NULL;
+      return nullptr;
     }
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
             "SXF. Unsupported geometry type.");
         CPLFree(recordCertifBuf);
-        return NULL;
+        return nullptr;
     }
 
-    if( poFeature == NULL )
+    if( poFeature == nullptr )
     {
         CPLFree(recordCertifBuf);
-        return NULL;
+        return nullptr;
     }
 
     poFeature->SetField(sFIDColumn_, (int)nFID);
@@ -845,21 +845,21 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
         {
             CPLFree(recordCertifBuf);
             delete poFeature;
-            return NULL;
+            return nullptr;
         }
         size_t  nSemanticsSize = stRecordHeader.nFullLength - 32 - stRecordHeader.nGeometryLength;
         if( nSemanticsSize > 1024 * 1024 )
         {
             CPLFree(recordCertifBuf);
             delete poFeature;
-            return NULL;
+            return nullptr;
         }
         char * psSemanticsdBuf = (char *)VSI_MALLOC_VERBOSE(nSemanticsSize);
-        if( psSemanticsdBuf == NULL )
+        if( psSemanticsdBuf == nullptr )
         {
             CPLFree(recordCertifBuf);
             delete poFeature;
-            return NULL;
+            return nullptr;
         }
         char * psSemanticsdBufOrig = psSemanticsdBuf;
         nObjectRead = static_cast<int>(VSIFReadL(psSemanticsdBuf, nSemanticsSize, 1, fpSXF));
@@ -1052,7 +1052,7 @@ OGRFeature *OGRSXFLayer::GetNextRawFeature(long nFID)
                     CPLFree(recordCertifBuf);
                     CPLFree(psSemanticsdBufOrig);
                     delete poFeature;
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -1089,7 +1089,7 @@ OGRFeature *OGRSXFLayer::TranslatePoint(const SXFRecordDescription& certifInfo,
     }
 
     if( nDelta == 0 )
-        return NULL;
+        return nullptr;
     nOffset += nDelta;
 
     //OGRFeatureDefn *fd = poFeatureDefn->Clone();
@@ -1262,7 +1262,7 @@ OGRFeature *OGRSXFLayer::TranslateVetorAngle(const SXFRecordDescription& certifI
     {
         CPLError(CE_Failure, CPLE_NotSupported,
             "SXF. The vector object should have 2 points, but not.");
-        return NULL;
+        return nullptr;
     }
 
     GUInt32 nOffset = 0;

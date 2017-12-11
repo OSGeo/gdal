@@ -81,7 +81,7 @@ OGRLinearRing::~OGRLinearRing() {}
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
-    if( poSrcRing == NULL )
+    if( poSrcRing == nullptr )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::OGRLinearRing(OGRLinearRing*poSrcRing) - "
@@ -327,11 +327,11 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
         {
             memcpy( pabyData+4+i*32, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*32+8, &(paoPoints[i].y), 8 );
-            if( padfZ == NULL )
+            if( padfZ == nullptr )
                 memset( pabyData+4+i*32+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*32+16, padfZ + i, 8 );
-            if( padfM == NULL )
+            if( padfM == nullptr )
                 memset( pabyData+4+i*32+24, 0, 8 );
             else
                 memcpy( pabyData+4+i*32+24, padfM + i, 8 );
@@ -344,7 +344,7 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
-            if( padfM == NULL )
+            if( padfM == nullptr )
                 memset( pabyData+4+i*24+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*24+16, padfM + i, 8 );
@@ -357,7 +357,7 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
-            if( padfZ == NULL )
+            if( padfZ == nullptr )
                 memset( pabyData+4+i*24+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*24+16, padfZ + i, 8 );
@@ -594,7 +594,7 @@ void OGRLinearRing::closeRings()
 OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
                                         int bTestEnvelope) const
 {
-    if( NULL == poPoint )
+    if( nullptr == poPoint )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointInRing(const OGRPoint* poPoint) - "
@@ -675,7 +675,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
 OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
                                                  int bTestEnvelope ) const
 {
-    if( NULL == poPoint )
+    if( nullptr == poPoint )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointOnRingBoundary(const OGRPoint* "

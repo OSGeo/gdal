@@ -143,7 +143,7 @@ CPLErr JP2LuraRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             reinterpret_cast<JP2LuraRasterBand*>(poGDS->GetRasterBand(iBand));
         GDALRasterBlock* poBlock = poOtherBand->
                                 TryGetLockedBlockRef(nBlockXOff,nBlockYOff);
-        if (poBlock != NULL)
+        if (poBlock != nullptr)
         {
             poBlock->DropLock();
             continue;
@@ -151,7 +151,7 @@ CPLErr JP2LuraRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
         poBlock = poOtherBand->
                             GetLockedBlockRef(nBlockXOff,nBlockYOff, TRUE);
-        if (poBlock == NULL)
+        if (poBlock == nullptr)
         {
             continue;
         }
@@ -221,7 +221,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         poGDS->sOutputData.nBufYSize == nBufYSize &&
         poGDS->sOutputData.eBufType == eBufType )
     {
-        if (poGDS->sOutputData.pDatacache[nBand - 1] != NULL)
+        if (poGDS->sOutputData.pDatacache[nBand - 1] != nullptr)
         {
 #ifdef DEBUG_VERBOSE
             CPLDebug("JP2Lura", "Using cached data");
@@ -250,7 +250,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
         if (nOverview >= 0)
         {
             GDALRasterBand* poOverviewBand = GetOverview(nOverview);
-            if (poOverviewBand == NULL)
+            if (poOverviewBand == nullptr)
                     return CE_Failure;
 
             return poOverviewBand->RasterIO(
@@ -298,7 +298,7 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     poGDS->sOutputData.nBand = nBand;
     poGDS->sOutputData.nBands = poGDS->nBands;
-    if( poGDS->sOutputData.pDatacache == NULL )
+    if( poGDS->sOutputData.pDatacache == nullptr )
     {
         poGDS->sOutputData.pDatacache = reinterpret_cast<unsigned char**>
                             (CPLCalloc( poGDS->nBands, sizeof(unsigned char*)));
@@ -306,10 +306,10 @@ CPLErr JP2LuraRasterBand::IRasterIO(GDALRWFlag eRWFlag,
 
     for (int i = 0; i < poGDS->nBands; i++)
     {
-        if (poGDS->sOutputData.pDatacache[i] != NULL)
+        if (poGDS->sOutputData.pDatacache[i] != nullptr)
         {
             VSIFree(poGDS->sOutputData.pDatacache[i]);
-            poGDS->sOutputData.pDatacache[i] = NULL;
+            poGDS->sOutputData.pDatacache[i] = nullptr;
         }
         if (i == nBand-1)
             continue;
@@ -375,7 +375,7 @@ GDALRasterBand* JP2LuraRasterBand::GetOverview(int iOvrLevel)
 {
     JP2LuraDataset *poGDS = reinterpret_cast<JP2LuraDataset *>(poDS);
     if (iOvrLevel < 0 || iOvrLevel >= poGDS->nOverviewCount)
-        return NULL;
+        return nullptr;
 
     return poGDS->papoOverviewDS[iOvrLevel]->GetRasterBand(nBand);
 }

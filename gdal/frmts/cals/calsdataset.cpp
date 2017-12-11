@@ -54,7 +54,7 @@ class CALSDataset : public GDALPamDataset
                               GInt32 nTagValue );
 
   public:
-                 CALSDataset() : poUnderlyingDS(NULL) {}
+                 CALSDataset() : poUnderlyingDS(nullptr) {}
                 ~CALSDataset();
 
     static int          Identify( GDALOpenInfo * poOpenInfo );
@@ -147,7 +147,7 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
             eDataType = GDT_Byte;
             bInvertValues = true;
             GDALColorTable* poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
-            if( poCT != NULL && poCT->GetColorEntryCount() >= 2 )
+            if( poCT != nullptr && poCT->GetColorEntryCount() >= 2 )
             {
                 const GDALColorEntry* psEntry1 = poCT->GetColorEntry(0);
                 const GDALColorEntry* psEntry2 = poCT->GetColorEntry(1);
@@ -245,8 +245,8 @@ int CALSDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     // If in the ingested bytes we found neither srcdocid: or rtype: 1, give up
     if( poOpenInfo->nHeaderBytes == 0 ||
-        (strstr( (const char*) poOpenInfo->pabyHeader, "srcdocid:") == NULL &&
-         strstr( (const char*) poOpenInfo->pabyHeader, "rtype: 1") == NULL) )
+        (strstr( (const char*) poOpenInfo->pabyHeader, "srcdocid:") == nullptr &&
+         strstr( (const char*) poOpenInfo->pabyHeader, "rtype: 1") == nullptr) )
         return FALSE;
 
     // If we found srcdocid: try to ingest up to 2048 bytes
@@ -254,9 +254,9 @@ int CALSDataset::Identify( GDALOpenInfo * poOpenInfo )
         !poOpenInfo->TryToIngest(2048) )
         return FALSE;
 
-    return strstr((const char*) poOpenInfo->pabyHeader, "rtype: 1") != NULL &&
-           strstr((const char*) poOpenInfo->pabyHeader, "rorient:") != NULL &&
-           strstr((const char*) poOpenInfo->pabyHeader, "rpelcnt:") != NULL;
+    return strstr((const char*) poOpenInfo->pabyHeader, "rtype: 1") != nullptr &&
+           strstr((const char*) poOpenInfo->pabyHeader, "rorient:") != nullptr &&
+           strstr((const char*) poOpenInfo->pabyHeader, "rpelcnt:") != nullptr;
 }
 
 /************************************************************************/
@@ -299,8 +299,8 @@ void CALSDataset::WriteTIFFTAG( VSILFILE* fp, GInt16 nTagName, GInt16 nTagType,
 GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == NULL )
-        return NULL;
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     const char* pszRPelCnt =
         strstr((const char*) poOpenInfo->pabyHeader, "rpelcnt:");
@@ -308,13 +308,13 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     int nYSize = 0;
     if( sscanf(pszRPelCnt+strlen("rpelcnt:"),"%d,%d",&nXSize,&nYSize) != 2 ||
         nXSize <= 0 || nYSize <= 0 )
-        return NULL;
+        return nullptr;
 
     const char* pszOrient =
         strstr((const char*) poOpenInfo->pabyHeader, "rorient:");
     int nAngle1, nAngle2;
     if( sscanf(pszOrient+strlen("rorient:"),"%d,%d",&nAngle1,&nAngle2) != 2 )
-        return NULL;
+        return nullptr;
 
     const char* pszDensity =
         strstr((const char*) poOpenInfo->pabyHeader, "rdensty:");
@@ -325,7 +325,7 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
     int nFAX4BlobSize = static_cast<int>(VSIFTellL(poOpenInfo->fpL)) - 2048;
     if( nFAX4BlobSize < 0 )
-        return NULL;
+        return nullptr;
 
     CALSDataset* poDS = new CALSDataset();
     poDS->nRasterXSize = nXSize;
@@ -389,11 +389,11 @@ GDALDataset *CALSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->poUnderlyingDS = (GDALDataset*) GDALOpenEx(
         CPLSPrintf("/vsisparse/%s", poDS->osSparseFilename.c_str()),
-        GDAL_OF_RASTER | GDAL_OF_INTERNAL, NULL, NULL, NULL);
-    if( poDS->poUnderlyingDS == NULL )
+        GDAL_OF_RASTER | GDAL_OF_INTERNAL, nullptr, nullptr, nullptr);
+    if( poDS->poUnderlyingDS == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( nAngle1 != 0 || nAngle2 != 270 )
@@ -442,17 +442,17 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver only supports single band raster.");
-        return NULL;
+        return nullptr;
     }
     if( poSrcDS->GetRasterBand(1)->
-            GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == NULL ||
+            GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == nullptr ||
         !EQUAL(poSrcDS->GetRasterBand(1)->
                    GetMetadataItem("NBITS", "IMAGE_STRUCTURE"), "1") )
     {
         CPLError( bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "CALS driver only supports 1-bit.");
         if( bStrict )
-            return NULL;
+            return nullptr;
     }
 
     if( poSrcDS->GetRasterXSize() > 999999 ||
@@ -461,22 +461,22 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "CALS driver only supports datasets with dimension <= 999999.");
-        return NULL;
+        return nullptr;
     }
 
     GDALDriver* poGTiffDrv =
         static_cast<GDALDriver *>(GDALGetDriverByName("GTiff"));
-    if( poGTiffDrv == NULL )
+    if( poGTiffDrv == nullptr )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "CALS driver needs GTiff driver." );
-        return NULL;
+        return nullptr;
     }
 
     // Write a in-memory TIFF with just the TIFF header to figure out
     // how large it will be.
     CPLString osTmpFilename(CPLSPrintf("/vsimem/cals/tmp_%p", poSrcDS));
-    char** papszOptions = NULL;
+    char** papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "COMPRESS", "CCITTFAX4");
     papszOptions = CSLSetNameValue(papszOptions, "NBITS", "1");
     papszOptions = CSLSetNameValue(papszOptions, "BLOCKYSIZE",
@@ -487,11 +487,11 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                            poSrcDS->GetRasterYSize(),
                                            1, GDT_Byte,
                                            papszOptions);
-    if( poDS == NULL )
+    if( poDS == nullptr )
     {
         // Should not happen normally (except if CCITTFAX4 not available).
         CSLDestroy(papszOptions);
-        return NULL;
+        return nullptr;
     }
     const char INITIAL_PADDING[] = "12345";
      // To adjust padding.
@@ -502,7 +502,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     {
         // Shoudln't happen really. Just to make Coverity happy.
         CSLDestroy(papszOptions);
-        return NULL;
+        return nullptr;
     }
     int nTIFFHeaderSize = static_cast<int>(sStat.st_size);
     VSIUnlink(osTmpFilename);
@@ -518,14 +518,14 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
                                   pfnProgress, pProgressData );
     delete poTmpDS;
     CSLDestroy(papszOptions);
-    if( poDS == NULL )
-        return NULL;
+    if( poDS == nullptr )
+        return nullptr;
     delete poDS;
 
     // Now replace the TIFF header by the CALS header.
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb+");
-    if( fp == NULL )
-        return NULL; // Shoudln't happen normally.
+    if( fp == nullptr )
+        return nullptr; // Shoudln't happen normally.
     memset(szBuffer, ' ', 2048);
     CPLString osField;
     osField = "srcdocid: NONE";
@@ -586,7 +586,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
     VSIFWriteL(szBuffer, 1, 2048, fp);
     VSIFCloseL(fp);
 
-    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, NULL);
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, nullptr);
     return Open(&oOpenInfo);
 }
 
@@ -597,7 +597,7 @@ GDALDataset *CALSDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_CALS()
 
 {
-    if( GDALGetDriverByName( "CALS" ) != NULL )
+    if( GDALGetDriverByName( "CALS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

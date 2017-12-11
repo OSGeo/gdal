@@ -52,9 +52,9 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver* poDriver) {
 
 static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
 {
-    if( poOpenInfo->fpL == NULL ||
-        strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == NULL )
-        return NULL;
+    if( poOpenInfo->fpL == nullptr ||
+        strstr((const char*)poOpenInfo->pabyHeader, ".HODE") == nullptr )
+        return nullptr;
 
     if ( !bFYBAInit )
     {
@@ -65,7 +65,7 @@ static GDALDataset *OGRSOSIDriverOpen( GDALOpenInfo* poOpenInfo )
     OGRSOSIDataSource   *poDS = new OGRSOSIDataSource();
     if ( !poDS->Open( poOpenInfo->pszFilename, 0 ) ) {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -100,7 +100,7 @@ static GDALDataset *OGRSOSIDriverCreate( const char * pszName,
 /************************************************************************/
 
 void RegisterOGRSOSI() {
-    if( GDALGetDriverByName( "SOSI" ) != NULL )
+    if( GDALGetDriverByName( "SOSI" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

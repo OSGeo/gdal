@@ -114,7 +114,7 @@ class GIFAbstractRasterBand : public GDALPamRasterBand
                                          int bAdvertizeInterlacedMDI );
     virtual       ~GIFAbstractRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable *GetColorTable() override;
 };

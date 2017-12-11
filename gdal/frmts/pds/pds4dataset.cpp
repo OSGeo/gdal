@@ -136,11 +136,11 @@ class PDS4RawRasterBand: public RawRasterBand
                                 GSpacing nPixelSpace, GSpacing nLineSpace,
                                 GDALRasterIOExtraArg* psExtraArg ) override;
 
-        virtual double GetOffset( int *pbSuccess = NULL ) override;
-        virtual double GetScale( int *pbSuccess = NULL ) override;
+        virtual double GetOffset( int *pbSuccess = nullptr ) override;
+        virtual double GetScale( int *pbSuccess = nullptr ) override;
         virtual CPLErr SetOffset( double dfNewOffset ) override;
         virtual CPLErr SetScale( double dfNewScale ) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
         virtual CPLErr SetNoDataValue( double dfNewNoData ) override;
 
         void    SetMaskBand(GDALRasterBand* poMaskBand);
@@ -181,11 +181,11 @@ class PDS4WrapperRasterBand : public GDALProxyRasterBand
                                 GSpacing nPixelSpace, GSpacing nLineSpace,
                                 GDALRasterIOExtraArg* psExtraArg ) override;
 
-        virtual double GetOffset( int *pbSuccess = NULL ) override;
-        virtual double GetScale( int *pbSuccess = NULL ) override;
+        virtual double GetOffset( int *pbSuccess = nullptr ) override;
+        virtual double GetScale( int *pbSuccess = nullptr ) override;
         virtual CPLErr SetOffset( double dfNewOffset ) override;
         virtual CPLErr SetScale( double dfNewScale ) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
         virtual CPLErr SetNoDataValue( double dfNewNoData ) override;
 
         int             GetMaskFlags() override { return nMaskFlags; }
@@ -535,7 +535,7 @@ CPLErr PDS4RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 PDS4MaskBand::PDS4MaskBand( GDALRasterBand* poBaseBand,
                             const std::vector<double>& adfConstants )
     : m_poBaseBand(poBaseBand)
-    , m_pBuffer(NULL)
+    , m_pBuffer(nullptr)
     , m_adfConstants(adfConstants)
 {
     eDataType = GDT_Byte;
@@ -600,10 +600,10 @@ CPLErr PDS4MaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 {
     const GDALDataType eSrcDT = m_poBaseBand->GetRasterDataType();
     const int nSrcDTSize = GDALGetDataTypeSizeBytes(eSrcDT);
-    if( m_pBuffer == NULL )
+    if( m_pBuffer == nullptr )
     {
         m_pBuffer = VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize, nSrcDTSize);
-        if( m_pBuffer == NULL )
+        if( m_pBuffer == nullptr )
             return CE_Failure;
     }
 
@@ -623,7 +623,7 @@ CPLErr PDS4MaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
                                 eSrcDT,
                                 nSrcDTSize,
                                 nSrcDTSize * nBlockXSize,
-                                NULL ) != CE_None )
+                                nullptr ) != CE_None )
     {
         return CE_Failure;
     }
@@ -674,14 +674,14 @@ CPLErr PDS4MaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 /************************************************************************/
 
 PDS4Dataset::PDS4Dataset() :
-    m_fpImage(NULL),
-    m_poExternalDS(NULL),
+    m_fpImage(nullptr),
+    m_poExternalDS(nullptr),
     m_bGotTransform(false),
     m_bMustInitImageFile(false),
     m_bUseSrcLabel(true),
     m_bWriteHeader(false),
     m_bStripFileAreaObservationalFromTemplate(false),
-    m_papszCreationOptions(NULL)
+    m_papszCreationOptions(nullptr)
 {
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -721,7 +721,7 @@ int PDS4Dataset::CloseDependentDatasets()
     {
         bHasDroppedRef = FALSE;
         delete m_poExternalDS;
-        m_poExternalDS = NULL;
+        m_poExternalDS = nullptr;
     }
 
     for( int iBand = 0; iBand < nBands; iBand++ )
@@ -804,10 +804,10 @@ CPLErr PDS4Dataset::SetGeoTransform( double * padfTransform )
 
 CPLErr PDS4Dataset::SetMetadata( char** papszMD, const char* pszDomain )
 {
-    if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != NULL &&
+    if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL( pszDomain, "xml:PDS4" ) )
     {
-        if( papszMD != NULL && papszMD[0] != NULL )
+        if( papszMD != nullptr && papszMD[0] != nullptr )
         {
             m_osXMLPDS4 = papszMD[0];
         }
@@ -847,9 +847,9 @@ int PDS4Dataset::Identify(GDALOpenInfo* poOpenInfo)
 
     return poOpenInfo->nHeaderBytes > 0 &&
            strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
-                  "Product_Observational") != NULL &&
+                  "Product_Observational") != nullptr &&
            strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
-                  "http://pds.nasa.gov/pds4/pds/v1") != NULL;
+                  "http://pds.nasa.gov/pds4/pds/v1") != nullptr;
 }
 
 /************************************************************************/
@@ -873,10 +873,10 @@ static const struct
 static double GetLinearValue(CPLXMLNode* psParent, const char* pszElementName)
 {
     CPLXMLNode* psNode = CPLGetXMLNode(psParent, pszElementName);
-    if( psNode == NULL )
+    if( psNode == nullptr )
         return 0.0;
-    double dfVal = CPLAtof(CPLGetXMLValue(psNode, NULL, ""));
-    const char* pszUnit = CPLGetXMLValue(psNode, "unit", NULL);
+    double dfVal = CPLAtof(CPLGetXMLValue(psNode, nullptr, ""));
+    const char* pszUnit = CPLGetXMLValue(psNode, "unit", nullptr);
     if( pszUnit && !EQUAL(pszUnit, "m") )
     {
         bool bFound = false;
@@ -915,10 +915,10 @@ static const struct
 static double GetResolutionValue(CPLXMLNode* psParent, const char* pszElementName)
 {
     CPLXMLNode* psNode = CPLGetXMLNode(psParent, pszElementName);
-    if( psNode == NULL )
+    if( psNode == nullptr )
         return 0.0;
-    double dfVal = CPLAtof(CPLGetXMLValue(psNode, NULL, ""));
-    const char* pszUnit = CPLGetXMLValue(psNode, "unit", NULL);
+    double dfVal = CPLAtof(CPLGetXMLValue(psNode, nullptr, ""));
+    const char* pszUnit = CPLGetXMLValue(psNode, "unit", nullptr);
     if( pszUnit && !EQUAL(pszUnit, "m/pixel") )
     {
         bool bFound = false;
@@ -958,17 +958,17 @@ static const struct
 };
 
 static double GetAngularValue(CPLXMLNode* psParent, const char* pszElementName,
-                              bool* pbGotVal = NULL)
+                              bool* pbGotVal = nullptr)
 {
     CPLXMLNode* psNode = CPLGetXMLNode(psParent, pszElementName);
-    if( psNode == NULL )
+    if( psNode == nullptr )
     {
         if( pbGotVal )
             *pbGotVal = false;
         return 0.0;
     }
-    double dfVal = CPLAtof(CPLGetXMLValue(psNode, NULL, ""));
-    const char* pszUnit = CPLGetXMLValue(psNode, "unit", NULL);
+    double dfVal = CPLAtof(CPLGetXMLValue(psNode, nullptr, ""));
+    const char* pszUnit = CPLGetXMLValue(psNode, "unit", nullptr);
     if( pszUnit && !EQUAL(pszUnit, "deg") )
     {
         bool bFound = false;
@@ -1003,7 +1003,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
 {
     CPLXMLNode* psCart = CPLGetXMLNode(psProduct,
                                        "Observation_Area.Discipline_Area.Cartography");
-    if( psCart == NULL )
+    if( psCart == nullptr )
     {
         CPLDebug("PDS4", "Did not find Observation_Area.Discipline_Area.Cartography");
         return;
@@ -1015,13 +1015,13 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
     if( psBounding )
     {
         const char* pszWest =
-            CPLGetXMLValue(psBounding, "west_bounding_coordinate", NULL);
+            CPLGetXMLValue(psBounding, "west_bounding_coordinate", nullptr);
         const char* pszEast =
-            CPLGetXMLValue(psBounding, "east_bounding_coordinate", NULL);
+            CPLGetXMLValue(psBounding, "east_bounding_coordinate", nullptr);
         const char* pszNorth =
-            CPLGetXMLValue(psBounding, "north_bounding_coordinate", NULL);
+            CPLGetXMLValue(psBounding, "north_bounding_coordinate", nullptr);
         const char* pszSouth =
-            CPLGetXMLValue(psBounding, "south_bounding_coordinate", NULL);
+            CPLGetXMLValue(psBounding, "south_bounding_coordinate", nullptr);
         if( pszWest )
             CPLDebug("PDS4", "West: %s", pszWest);
         if( pszEast )
@@ -1034,7 +1034,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
 
     CPLXMLNode* psSR = CPLGetXMLNode(psCart,
         "Spatial_Reference_Information.Horizontal_Coordinate_System_Definition");
-    if( psSR == NULL )
+    if( psSR == nullptr )
     {
         CPLDebug("PDS4", "Did not find Spatial_Reference_Information."
                  "Horizontal_Coordinate_System_Definition");
@@ -1051,7 +1051,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
     double dfStdParallel1 = 0.0;
     double dfStdParallel2 = 0.0;
     double dfScale = 1.0;
-    if( psGridCoordinateSystem != NULL )
+    if( psGridCoordinateSystem != nullptr )
     {
         osProjName = CPLGetXMLValue(psGridCoordinateSystem,
                                         "grid_coordinate_system_name", "");
@@ -1064,7 +1064,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                     "Universal_Transverse_Mercator.utm_zone_number");
                 if( psUTMZoneNumber )
                 {
-                    int nZone = atoi(CPLGetXMLValue(psUTMZoneNumber, NULL, ""));
+                    int nZone = atoi(CPLGetXMLValue(psUTMZoneNumber, nullptr, ""));
                     oSRS.SetUTM( std::abs(nZone), nZone >= 0 );
                 }
             }
@@ -1092,7 +1092,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
             }
         }
     }
-    else if( psMapProjection != NULL )
+    else if( psMapProjection != nullptr )
     {
         osProjName = CPLGetXMLValue(psMapProjection,
                                                  "map_projection_name", "");
@@ -1100,7 +1100,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         {
             CPLXMLNode* psProjParamNode = CPLGetXMLNode(psMapProjection,
                           CPLString(osProjName).replaceAll(' ','_').c_str());
-            if( psProjParamNode == NULL &&
+            if( psProjParamNode == nullptr &&
                 // typo in https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1700.sch
                 EQUAL(osProjName, "Orothographic") ) 
             {
@@ -1132,8 +1132,8 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                         "scale_factor_at_central_meridian":
                         "scale_factor_at_projection_origin";
                 const char* pszScaleVal =
-                    CPLGetXMLValue(psProjParamNode, pszScaleParam, NULL);
-                bGotScale = pszScaleVal != NULL;
+                    CPLGetXMLValue(psProjParamNode, pszScaleParam, nullptr);
+                bGotScale = pszScaleVal != nullptr;
                 dfScale = ( pszScaleVal ) ? CPLAtof(pszScaleVal) : 1.0;
             }
 
@@ -1169,7 +1169,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                 }
             }
             else if( EQUAL(osProjName, "Oblique Mercator") &&
-                     (psObliqueAzimuth != NULL || psObliquePoint != NULL) )
+                     (psObliqueAzimuth != nullptr || psObliquePoint != nullptr) )
             {
                 if( psObliqueAzimuth )
                 {
@@ -1304,7 +1304,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
     }
 
     CPLXMLNode* psGeodeticModel = CPLGetXMLNode(psSR, "Geodetic_Model");
-    if( psGeodeticModel != NULL )
+    if( psGeodeticModel != nullptr )
     {
         const char* pszLatitudeType = CPLGetXMLValue(psGeodeticModel,
                                                      "latitude_type",
@@ -1403,7 +1403,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
                      "planar_coordinate_encoding_method = %s not supported",
                      pszPCIEncoding);
         }
-        else if( psCR != NULL )
+        else if( psCR != nullptr )
         {
             double dfXRes = GetResolutionValue(psCR, "pixel_resolution_x");
             double dfYRes = GetResolutionValue(psCR, "pixel_resolution_y");
@@ -1421,7 +1421,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
         }
     }
 
-    char* pszWKT = NULL;
+    char* pszWKT = nullptr;
     oSRS.exportToWkt(&pszWKT);
     if( pszWKT )
         m_osWKT = pszWKT;
@@ -1437,7 +1437,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode* psProduct)
 GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     CPLString osXMLFilename(poOpenInfo->pszFilename);
     int nFAOIdxLookup = -1;
@@ -1473,18 +1473,18 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid syntax for PDS4 subdataset name");
             CSLDestroy(papszTokens);
-            return NULL;
+            return nullptr;
         }
         CSLDestroy(papszTokens);
     }
 
     CPLXMLNode* psRoot = CPLParseXMLFile(osXMLFilename);
     CPLXMLTreeCloser oCloser(psRoot);
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
     CPLXMLNode* psProduct = CPLGetXMLNode(psRoot, "=Product_Observational");
-    if( psProduct == NULL )
-        return NULL;
+    if( psProduct == nullptr )
+        return nullptr;
 
     // Test case: https://starbase.jpl.nasa.gov/pds4/1700/dph_example_products/test_Images_DisplaySettings/TestPattern_Image/TestPattern.xml
     const char* pszVertDir = CPLGetXMLValue(psProduct,
@@ -1497,7 +1497,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
     CPLStringList aosSubdatasets;
     int nFAOIdx = 0;
     for( CPLXMLNode* psIter = psProduct->psChild;
-                     psIter != NULL;
+                     psIter != nullptr;
                      psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element ||
@@ -1509,12 +1509,12 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         nFAOIdx ++;
 
         CPLXMLNode* psFile = CPLGetXMLNode(psIter, "File");
-        if( psFile == NULL )
+        if( psFile == nullptr )
         {
             continue;
         }
-        const char* pszFilename = CPLGetXMLValue(psFile, "file_name", NULL);
-        if( pszFilename == NULL )
+        const char* pszFilename = CPLGetXMLValue(psFile, "file_name", nullptr);
+        if( pszFilename == nullptr )
         {
             continue;
         }
@@ -1522,7 +1522,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
         int nArrayIdx = 0;
         for( CPLXMLNode* psSubIter = psIter->psChild;
              (nFAOIdxLookup < 0 || nFAOIdxLookup == nFAOIdx) &&
-             psSubIter != NULL;
+             psSubIter != nullptr;
              psSubIter = psSubIter->psNext )
         {
             if( psSubIter->eType != CXT_Element )
@@ -1559,9 +1559,9 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             }
 
             const char* pszArrayName = CPLGetXMLValue(psSubIter,
-                                                      "name", NULL);
+                                                      "name", nullptr);
             const char* pszArrayId = CPLGetXMLValue(psSubIter,
-                                                    "local_identifier", NULL);
+                                                    "local_identifier", nullptr);
             vsi_l_offset nOffset = static_cast<vsi_l_offset>(CPLAtoGIntBig(
                                 CPLGetXMLValue(psSubIter, "offset", "0")));
 
@@ -1580,7 +1580,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                                         "Element_Array.data_type", "");
             GDALDataType eDT = GDT_Byte;
             bool bSignedByte = false;
-            bool bLSBOrder = strstr(pszDataType, "LSB") != NULL;
+            bool bLSBOrder = strstr(pszDataType, "LSB") != nullptr;
 
             // ComplexLSB16', 'ComplexLSB8', 'ComplexMSB16', 'ComplexMSB8', 'IEEE754LSBDouble', 'IEEE754LSBSingle', 'IEEE754MSBDouble', 'IEEE754MSBSingle', 'SignedBitString', 'SignedByte', 'SignedLSB2', 'SignedLSB4', 'SignedLSB8', 'SignedMSB2', 'SignedMSB4', 'SignedMSB8', 'UnsignedBitString', 'UnsignedByte', 'UnsignedLSB2', 'UnsignedLSB4', 'UnsignedLSB8', 'UnsignedMSB2', 'UnsignedMSB4', 'UnsignedMSB8'
             if( EQUAL(pszDataType, "ComplexLSB16") ||
@@ -1655,7 +1655,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             int nAxisFound = 0;
             int anElements[3] = { 0 };
             for( CPLXMLNode* psAxisIter = psSubIter->psChild;
-                 psAxisIter != NULL; psAxisIter = psAxisIter->psNext )
+                 psAxisIter != nullptr; psAxisIter = psAxisIter->psNext )
             {
                 if( psAxisIter->eType != CXT_Element ||
                     strcmp(psAxisIter->pszValue, "Axis_Array") != 0 )
@@ -1663,13 +1663,13 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                     continue;
                 }
                 const char* pszAxisName = CPLGetXMLValue(psAxisIter,
-                                                         "axis_name", NULL);
+                                                         "axis_name", nullptr);
                 const char* pszElements = CPLGetXMLValue(psAxisIter,
-                                                         "elements", NULL);
+                                                         "elements", nullptr);
                 const char* pszSequenceNumber = CPLGetXMLValue(psAxisIter,
-                                                    "sequence_number", NULL);
-                if( pszAxisName == NULL || pszElements == NULL ||
-                    pszSequenceNumber == NULL )
+                                                    "sequence_number", nullptr);
+                if( pszAxisName == nullptr || pszElements == nullptr ||
+                    pszSequenceNumber == nullptr )
                 {
                     continue;
                 }
@@ -1752,7 +1752,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
                     nPixelOffset =
                         static_cast<int>(nSpacing * nCountPreviousDim);
@@ -1766,7 +1766,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
                     nLineOffset =
                         static_cast<int>(nSpacing * nCountPreviousDim);
@@ -1787,7 +1787,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             if( psSC )
             {
                 const char* pszMC =
-                    CPLGetXMLValue(psSC, "missing_constant", NULL);
+                    CPLGetXMLValue(psSC, "missing_constant", nullptr);
                 if( pszMC )
                 {
                     bNoDataSet = true;
@@ -1809,7 +1809,7 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
                 for(size_t i=0; i<CPL_ARRAYSIZE(apszConstantNames); i++ )
                 {
                     const char* pszConstant =
-                        CPLGetXMLValue(psSC, apszConstantNames[i], NULL);
+                        CPLGetXMLValue(psSC, apszConstantNames[i], nullptr);
                     if( pszConstant )
                         adfConstants.push_back(CPLAtof(pszConstant));
                 }
@@ -1836,10 +1836,10 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
 
             const char* pszImageFullFilename =
                 CPLFormFilename( CPLGetPath(osXMLFilename.c_str()),
-                                 pszFilename, NULL );
+                                 pszFilename, nullptr );
             VSILFILE* fp = VSIFOpenExL(pszImageFullFilename,
                 (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb", true );
-            if( fp == NULL )
+            if( fp == nullptr )
             {
                 CPLError(CE_Warning, CPLE_FileIO,
                          "Cannt open %s: %s", pszImageFullFilename,
@@ -1866,16 +1866,16 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
             }
 
             CPLXMLNode* psOS = CPLGetXMLNode(psSubIter, "Object_Statistics");
-            const char* pszMin = NULL;
-            const char* pszMax = NULL;
-            const char* pszMean = NULL;
-            const char* pszStdDev = NULL;
+            const char* pszMin = nullptr;
+            const char* pszMax = nullptr;
+            const char* pszMean = nullptr;
+            const char* pszStdDev = nullptr;
             if( psOS )
             {
-                pszMin = CPLGetXMLValue(psOS, "minimum", NULL);
-                pszMax = CPLGetXMLValue(psOS, "maximum", NULL);
-                pszMean = CPLGetXMLValue(psOS, "mean", NULL);
-                pszStdDev = CPLGetXMLValue(psOS, "standard_deviation", NULL);
+                pszMin = CPLGetXMLValue(psOS, "minimum", nullptr);
+                pszMax = CPLGetXMLValue(psOS, "maximum", nullptr);
+                pszMean = CPLGetXMLValue(psOS, "mean", nullptr);
+                pszStdDev = CPLGetXMLValue(psOS, "standard_deviation", nullptr);
             }
 
             for( int i = 0; i < l_nBands; i++ )
@@ -1955,16 +1955,16 @@ GDALDataset* PDS4Dataset::Open(GDALOpenInfo* poOpenInfo)
     else if ( poDS->nBands == 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Expose XML content in xml:PDS4 metadata domain
-    GByte* pabyRet = NULL;
+    GByte* pabyRet = nullptr;
     CPL_IGNORE_RET_VAL(
-        VSIIngestFile(NULL, osXMLFilename, &pabyRet, NULL, 10*1024*1024) );
+        VSIIngestFile(nullptr, osXMLFilename, &pabyRet, nullptr, 10*1024*1024) );
     if( pabyRet )
     {
-        char* apszXML[2] = { reinterpret_cast<char*>(pabyRet), NULL };
+        char* apszXML[2] = { reinterpret_cast<char*>(pabyRet), nullptr };
         poDS->GDALDataset::SetMetadata(apszXML, "xml:PDS4");
     }
     VSIFree(pabyRet);
@@ -2108,7 +2108,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode* psCart)
     typedef std::pair<const char*, double> ProjParam;
     std::vector<ProjParam> aoProjParams;
 
-    if( pszProjection == NULL )
+    if( pszProjection == nullptr )
     {
         pszPDS4ProjectionName = "Equirectangular";
         aoProjParams.push_back(ProjParam("longitude_of_central_meridian", 0.0));
@@ -2497,8 +2497,8 @@ void PDS4Dataset::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
     {
         CPLString osVal(psNode->pszValue);
 
-        if( strstr(psNode->pszValue, "${TITLE}") != NULL && 
-            CSLFetchNameValue(papszDict, "VAR_TITLE") == NULL )
+        if( strstr(psNode->pszValue, "${TITLE}") != nullptr && 
+            CSLFetchNameValue(papszDict, "VAR_TITLE") == nullptr )
         {
             const CPLString osTitle(CPLGetFilename(GetDescription()));
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -2511,7 +2511,7 @@ void PDS4Dataset::SubstituteVariables(CPLXMLNode* psNode, char** papszDict)
         {
             if( STARTS_WITH_CI(*papszIter, "VAR_") )
             {
-                char* pszKey = NULL;
+                char* pszKey = nullptr;
                 const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
                 if( pszKey && pszValue )
                 {
@@ -2613,7 +2613,7 @@ bool PDS4Dataset::InitImageFile()
         else
         {
             void* pBlockData = VSI_MALLOC_VERBOSE(nBlockSizeBytes);
-            if( pBlockData == NULL )
+            if( pBlockData == nullptr )
                 return false;
             GDALCopyWords(&dfNoData, GDT_Float64, 0,
                           pBlockData, eDT, nDTSize,
@@ -2691,7 +2691,7 @@ bool PDS4Dataset::InitImageFile()
     {
         size_t nLineSize = static_cast<size_t>(nRasterXSize) * nDTSize;
         void* pData = VSI_MALLOC_VERBOSE(nLineSize);
-        if( pData == NULL )
+        if( pData == nullptr )
             return false;
         GDALCopyWords(&dfNoData, GDT_Float64, 0,
                       pData, eDT, nDTSize,
@@ -2742,14 +2742,14 @@ static CPLXMLNode* GetSpecialConstants(const CPLString& osPrefix,
             if( psSC )
             {
                 CPLXMLNode* psNext = psSC->psNext;
-                psSC->psNext = NULL;
+                psSC->psNext = nullptr;
                 CPLXMLNode* psRet = CPLCloneXMLTree(psSC);
                 psSC->psNext = psNext;
                 return psRet;
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2776,7 +2776,7 @@ void PDS4Dataset::WriteHeader()
     {
         const char* pszDefaultTemplateFilename =
                                 CPLFindFile("gdal", "pds4_template.xml");
-        if( pszDefaultTemplateFilename == NULL )
+        if( pszDefaultTemplateFilename == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find pds4_template.xml and TEMPLATE "
@@ -2785,18 +2785,18 @@ void PDS4Dataset::WriteHeader()
         }
         psRoot = CPLParseXMLFile(pszDefaultTemplateFilename);
     }
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return;
     CPLXMLTreeCloser oCloser(psRoot);
     CPLString osPrefix;
     CPLXMLNode* psProduct = CPLGetXMLNode(psRoot, "=Product_Observational");
-    if( psProduct == NULL )
+    if( psProduct == nullptr )
     {
         psProduct = CPLGetXMLNode(psRoot, "=pds:Product_Observational");
         if( psProduct )
             osPrefix = "pds:";
     }
-    if( psProduct == NULL )
+    if( psProduct == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find Product_Observational element in template");
@@ -2804,11 +2804,11 @@ void PDS4Dataset::WriteHeader()
     }
 
     if( !m_osWKT.empty() &&
-            CSLFetchNameValue(m_papszCreationOptions, "VAR_TARGET") == NULL )
+            CSLFetchNameValue(m_papszCreationOptions, "VAR_TARGET") == nullptr )
     {
         OGRSpatialReference oSRS;
         oSRS.SetFromUserInput(m_osWKT);
-        const char* pszTarget = NULL;
+        const char* pszTarget = nullptr;
         if( fabs(oSRS.GetSemiMajor() - 6378137) < 0.001 * 6378137 )
         {
             pszTarget = "Earth";
@@ -2843,9 +2843,9 @@ void PDS4Dataset::WriteHeader()
         // from the template
         if( psDisciplineArea )
         {
-            CPLXMLNode* psPrev = NULL;
+            CPLXMLNode* psPrev = nullptr;
             for( CPLXMLNode* psIter = psDisciplineArea->psChild;
-                    psIter != NULL; psPrev = psIter, psIter = psIter->psNext )
+                    psIter != nullptr; psPrev = psIter, psIter = psIter->psNext )
             {
                 if( psIter->eType == CXT_Element &&
                     (strcmp(psIter->pszValue, "Cartography") == 0 ||
@@ -2859,7 +2859,7 @@ void PDS4Dataset::WriteHeader()
                     {
                         psDisciplineArea->psChild = psIter->psNext;
                     }
-                    psIter->psNext = NULL;
+                    psIter->psNext = nullptr;
                     CPLDestroyXMLNode(psIter);
                     break;
                 }
@@ -2868,41 +2868,41 @@ void PDS4Dataset::WriteHeader()
     }
     else
     {
-        if( psDisciplineArea == NULL )
+        if( psDisciplineArea == nullptr )
         {
             CPLXMLNode* psTI = CPLGetXMLNode(psProduct,
                 (osPrefix + "Observation_Area." +
                  osPrefix + "Target_Identification").c_str());
-            if( psTI == NULL )
+            if( psTI == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find Target_Identification element in template");
                 return;
             }
-            psDisciplineArea = CPLCreateXMLNode(NULL, CXT_Element,
+            psDisciplineArea = CPLCreateXMLNode(nullptr, CXT_Element,
                                         (osPrefix + "Discipline_Area").c_str());
             if( psTI->psNext )
                 psDisciplineArea->psNext = psTI->psNext;
             psTI->psNext = psDisciplineArea;
         }
         CPLXMLNode* psCart = CPLGetXMLNode(psDisciplineArea, "cart:Cartography");
-        if( psCart == NULL )
+        if( psCart == nullptr )
             psCart = CPLGetXMLNode(psDisciplineArea, "Cartography");
-        if( psCart == NULL )
+        if( psCart == nullptr )
         {
             psCart = CPLCreateXMLNode(psDisciplineArea,
                                       CXT_Element, "cart:Cartography");
-            if( CPLGetXMLNode(psProduct, "xmlns:cart") == NULL )
+            if( CPLGetXMLNode(psProduct, "xmlns:cart") == nullptr )
             {
-                CPLXMLNode* psNS = CPLCreateXMLNode( NULL, CXT_Attribute,
+                CPLXMLNode* psNS = CPLCreateXMLNode( nullptr, CXT_Attribute,
                                                      "xmlns:cart" );
                 CPLCreateXMLNode(psNS, CXT_Text,
                                  "http://pds.nasa.gov/pds4/cart/v1");
                 CPLAddXMLChild(psProduct, psNS);
                 CPLXMLNode* psSchemaLoc =
                     CPLGetXMLNode(psProduct, "xsi:schemaLocation");
-                if( psSchemaLoc != NULL && psSchemaLoc->psChild != NULL &&
-                    psSchemaLoc->psChild->pszValue != NULL )
+                if( psSchemaLoc != nullptr && psSchemaLoc->psChild != nullptr &&
+                    psSchemaLoc->psChild->pszValue != nullptr )
                 {
                     CPLString osNewVal(psSchemaLoc->psChild->pszValue);
                     osNewVal += " http://pds.nasa.gov/pds4/cart/v1 "
@@ -2917,7 +2917,7 @@ void PDS4Dataset::WriteHeader()
             if( psCart->psChild )
             {
                 CPLDestroyXMLNode(psCart->psChild);
-                psCart->psChild = NULL;
+                psCart->psChild = nullptr;
             }
         }
         WriteGeoreferencing(psCart);
@@ -2926,10 +2926,10 @@ void PDS4Dataset::WriteHeader()
     if( m_bStripFileAreaObservationalFromTemplate )
     {
         m_bStripFileAreaObservationalFromTemplate = false;
-        CPLXMLNode* psObservationArea = NULL;
-        CPLXMLNode* psPrev = NULL;
-        CPLXMLNode* psTemplateSpecialConstants = NULL;
-        for( CPLXMLNode* psIter = psProduct->psChild; psIter != NULL; )
+        CPLXMLNode* psObservationArea = nullptr;
+        CPLXMLNode* psPrev = nullptr;
+        CPLXMLNode* psTemplateSpecialConstants = nullptr;
+        for( CPLXMLNode* psIter = psProduct->psChild; psIter != nullptr; )
         {
             if( psIter->eType == CXT_Element &&
                 psIter->pszValue == osPrefix + "Observation_Area" )
@@ -2955,7 +2955,7 @@ void PDS4Dataset::WriteHeader()
                     psProduct->psChild = psIter->psNext;
                 }
                 CPLXMLNode* psNext = psIter->psNext;
-                psIter->psNext = NULL;
+                psIter->psNext = nullptr;
                 CPLDestroyXMLNode(psIter);
                 psIter = psNext;
             }
@@ -2965,7 +2965,7 @@ void PDS4Dataset::WriteHeader()
                 psIter = psIter->psNext;
             }
         }
-        if( psObservationArea == NULL )
+        if( psObservationArea == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find Observation_Area in template");
@@ -2973,12 +2973,12 @@ void PDS4Dataset::WriteHeader()
             return;
         }
         CPLXMLNode* psFAOPrev = psObservationArea;
-        while( psFAOPrev->psNext != NULL &&
+        while( psFAOPrev->psNext != nullptr &&
                psFAOPrev->psNext->eType == CXT_Comment )
         {
             psFAOPrev = psFAOPrev->psNext;
         }
-        if( psFAOPrev->psNext != NULL )
+        if( psFAOPrev->psNext != nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unexpected content found after Observation_Area in template");
@@ -2986,7 +2986,7 @@ void PDS4Dataset::WriteHeader()
             return;
         }
 
-        CPLXMLNode* psFAO = CPLCreateXMLNode(NULL, CXT_Element,
+        CPLXMLNode* psFAO = CPLCreateXMLNode(nullptr, CXT_Element,
                             (osPrefix + "File_Area_Observational").c_str());
         psFAOPrev->psNext = psFAO;
         CPLXMLNode* psFile = CPLCreateXMLNode(psFAO, CXT_Element,
@@ -3129,7 +3129,7 @@ void PDS4Dataset::WriteHeader()
                 CPLXMLNode* psMC = CPLGetXMLNode(
                     psTemplateSpecialConstants,
                     (osPrefix + "missing_constant").c_str());
-                if( psMC != NULL )
+                if( psMC != nullptr )
                 {
                     if( psMC->psChild && psMC->psChild->eType == CXT_Text )
                     {
@@ -3143,7 +3143,7 @@ void PDS4Dataset::WriteHeader()
                     CPLXMLNode* psSaturatedConstant = CPLGetXMLNode(
                         psTemplateSpecialConstants,
                         (osPrefix + "saturated_constant").c_str());
-                    psMC = CPLCreateXMLElementAndValue(NULL,
+                    psMC = CPLCreateXMLElementAndValue(nullptr,
                         (osPrefix + "missing_constant").c_str(),
                         CPLSPrintf("%.18g", dfNoData));
                     if( psSaturatedConstant )
@@ -3190,14 +3190,14 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The ISIS2 driver does not supporting creating files of type %s.",
                  GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
 
     if( nBands == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid number of bands");
-        return NULL;
+        return nullptr;
     }
 
     const char* pszArrayType = CSLFetchNameValueDef(papszOptions,
@@ -3208,7 +3208,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ARRAY_TYPE=%s is not supported for a multi-band raster",
                  pszArrayType);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3228,7 +3228,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         nPixelOffset = nItemSize * nBands;
         if( nPixelOffset > INT_MAX / nBands )
         {
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nPixelOffset * nXSize;
         nBandOffset = nItemSize;
@@ -3238,7 +3238,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         nPixelOffset = nItemSize;
         if( nPixelOffset > INT_MAX / nXSize )
         {
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nPixelOffset * nXSize;
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nYSize;
@@ -3249,7 +3249,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
         if( nPixelOffset > INT_MAX / nBands ||
             nPixelOffset * nBands > INT_MAX / nXSize )
         {
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nItemSize * nBands * nXSize;
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nXSize;
@@ -3258,7 +3258,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Invalid value for INTERLEAVE");
-        return NULL;
+        return nullptr;
     }
 
     const char* pszImageFormat = CSLFetchNameValueDef(papszOptions,
@@ -3269,25 +3269,25 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
     CPLString osImageFilename(CSLFetchNameValueDef(papszOptions,
         "IMAGE_FILENAME", CPLResetExtension(pszFilename, pszImageExtension)));
 
-    GDALDataset* poExternalDS = NULL;
-    VSILFILE* fpImage = NULL;
+    GDALDataset* poExternalDS = nullptr;
+    VSILFILE* fpImage = nullptr;
     if( EQUAL(pszImageFormat, "GEOTIFF") )
     {
         if( EQUAL(pszInterleave, "BIL") )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "INTERLEAVE=BIL not supported for GeoTIFF in PDS4" );
-            return NULL;
+            return nullptr;
         }
         GDALDriver* poDrv = static_cast<GDALDriver*>(
                                             GDALGetDriverByName("GTiff"));
-        if( poDrv == NULL )
+        if( poDrv == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Cannot find GTiff driver" );
-            return NULL;
+            return nullptr;
         }
-        char** papszGTiffOptions = NULL;
+        char** papszGTiffOptions = nullptr;
 #ifdef notdef
         // In practice I can't see which option we can really use
         const char* pszGTiffOptions = CSLFetchNameValueDef(papszOptions,
@@ -3333,22 +3333,22 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
                                       nBands,
                                       eType, papszGTiffOptions );
         CSLDestroy(papszGTiffOptions);
-        if( poExternalDS == NULL )
+        if( poExternalDS == nullptr )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Cannot create %s",
                       osImageFilename.c_str() );
-            return NULL;
+            return nullptr;
         }
     }
     else
     {
         fpImage = VSIFOpenL(osImageFilename, "wb");
-        if( fpImage == NULL )
+        if( fpImage == nullptr )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
                     osImageFilename.c_str());
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -3380,7 +3380,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 
     for( int i = 0; i < nBands; i++ )
     {
-        if( poDS->m_poExternalDS != NULL )
+        if( poDS->m_poExternalDS != nullptr )
         {
             PDS4WrapperRasterBand* poBand =
                 new PDS4WrapperRasterBand(
@@ -3414,7 +3414,7 @@ GDALDataset *PDS4Dataset::Create(const char *pszFilename,
 
 static GDALDataset* PDS4GetUnderlyingDataset( GDALDataset* poSrcDS )
 {
-    if( poSrcDS->GetDriver() != NULL &&
+    if( poSrcDS->GetDriver() != nullptr &&
         poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
     {
         VRTDataset* poVRTDS = reinterpret_cast<VRTDataset* >(poSrcDS);
@@ -3439,7 +3439,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
                                                        "IMAGE_FORMAT",
                                                        "RAW");
     GDALDataset* poSrcUnderlyingDS = PDS4GetUnderlyingDataset(poSrcDS);
-    if( poSrcUnderlyingDS == NULL )
+    if( poSrcUnderlyingDS == nullptr )
         poSrcUnderlyingDS = poSrcDS;
     if( EQUAL(pszImageFormat, "GEOTIFF") &&
         strcmp(poSrcUnderlyingDS->GetDescription(),
@@ -3448,12 +3448,12 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Output file has same name as input file");
-        return NULL;
+        return nullptr;
     }
     if( poSrcDS->GetRasterCount() == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
-        return NULL;
+        return nullptr;
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -3462,8 +3462,8 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     PDS4Dataset *poDS = reinterpret_cast<PDS4Dataset*>(
         Create( pszFilename, nXSize, nYSize, nBands, eType, papszOptions ));
-    if( poDS == NULL )
-        return NULL;
+    if( poDS == nullptr )
+        return nullptr;
 
     double adfGeoTransform[6] = { 0.0 };
     if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
@@ -3477,7 +3477,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
         poDS->SetGeoTransform( adfGeoTransform );
     }
 
-    if( poSrcDS->GetProjectionRef() != NULL
+    if( poSrcDS->GetProjectionRef() != nullptr
         && strlen(poSrcDS->GetProjectionRef()) > 0 )
     {
         poDS->SetProjection( poSrcDS->GetProjectionRef() );
@@ -3502,25 +3502,25 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
     if( poDS->m_bUseSrcLabel )
     {
         char** papszMD_PDS4 = poSrcDS->GetMetadata("xml:PDS4");
-        if( papszMD_PDS4 != NULL )
+        if( papszMD_PDS4 != nullptr )
         {
             poDS->SetMetadata( papszMD_PDS4, "xml:PDS4" );
         }
     }
 
-    if( poDS->m_poExternalDS == NULL )
+    if( poDS->m_poExternalDS == nullptr )
     {
         // We don't need to initialize the imagery as we are going to copy it
         // completely
         poDS->m_bMustInitImageFile = false;
     }
     CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
-                                           NULL, pfnProgress, pProgressData );
+                                           nullptr, pfnProgress, pProgressData );
     poDS->FlushCache();
     if( eErr != CE_None )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -3534,7 +3534,7 @@ GDALDataset* PDS4Dataset::CreateCopy( const char *pszFilename,
 void GDALRegister_PDS4()
 
 {
-    if( GDALGetDriverByName( "PDS4" ) != NULL )
+    if( GDALGetDriverByName( "PDS4" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

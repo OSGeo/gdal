@@ -45,7 +45,7 @@ MetadataSet::MetadataSet()
 
 
 {
-    this->file = NULL;
+    this->file = nullptr;
     id = -1;
     loaded = false;
 }
@@ -83,7 +83,7 @@ void MetadataSet::Load()
 
     // This legitimately occurs in some situations, such for overview channel
     // objects.
-    if( file == NULL )
+    if( file == nullptr )
     {
         loaded = true;
         return;
@@ -91,7 +91,7 @@ void MetadataSet::Load()
 
     PCIDSKSegment *seg = file->GetSegment( SEG_SYS , "METADATA");
 
-    if( seg == NULL )
+    if( seg == nullptr )
     {
         loaded = true;
         return;
@@ -128,7 +128,7 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
     if( !loaded )
         Load();
 
-    if( file == NULL )
+    if( file == nullptr )
     {
         return ThrowPCIDSKException( "Attempt to set metadata on an unassociated MetadataSet, likely an overview channel." );
     }
@@ -137,7 +137,7 @@ void MetadataSet::SetMetadataValue( const std::string& key, const std::string& v
 
     PCIDSKSegment *seg = file->GetSegment( SEG_SYS , "METADATA");
 
-    if( seg == NULL )
+    if( seg == nullptr )
     {
         file->CreateSegment( "METADATA",
                              "Please do not modify this metadata segment.",

@@ -47,7 +47,7 @@ CPLString MD5String(const char *s) {
 }
 
 CPLString ProjToWKT(const CPLString &proj) {
-    char* wkt = NULL;
+    char* wkt = nullptr;
     OGRSpatialReference sr;
     CPLString srs;
 
@@ -86,13 +86,13 @@ CPLString BufferToVSIFile(GByte *buffer, size_t size) {
 
     file_name.Printf("/vsimem/wms/%p/wmsresult.dat", buffer);
     VSILFILE *f = VSIFileFromMemBuffer(file_name.c_str(), buffer, size, false);
-    if (f == NULL) return CPLString();
+    if (f == nullptr) return CPLString();
     VSIFCloseL(f);
     return file_name;
 }
 
 int VersionStringToInt(const char *version) {
-    if (version == NULL) return -1;
+    if (version == nullptr) return -1;
     const char *p = version;
     int v = 0;
     for (int i = 3; i >= 0; --i) {
@@ -107,7 +107,7 @@ int VersionStringToInt(const char *version) {
 }
 
 int StrToBool(const char *p) {
-    if (p == NULL) return -1;
+    if (p == nullptr) return -1;
     if (EQUAL(p, "1") || EQUAL(p, "true") || EQUAL(p, "yes") || EQUAL(p, "enable") || EQUAL(p, "enabled") || EQUAL(p, "on")) return 1;
     if (EQUAL(p, "0") || EQUAL(p, "false") || EQUAL(p, "no") || EQUAL(p, "disable") || EQUAL(p, "disabled") || EQUAL(p, "off")) return 0;
     return -1;

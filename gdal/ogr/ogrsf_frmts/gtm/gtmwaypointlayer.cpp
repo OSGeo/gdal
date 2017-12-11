@@ -37,22 +37,22 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
                                     CPL_UNUSED int bWriterIn,
                                     OGRGTMDataSource* poDSIn )
 {
-    poCT = NULL;
+    poCT = nullptr;
 
     /* We are implementing just WGS84, although GTM supports other datum
        formats. */
-    if( poSRSIn != NULL )
+    if( poSRSIn != nullptr )
     {
-        poSRS = new OGRSpatialReference(NULL);
+        poSRS = new OGRSpatialReference(nullptr);
         poSRS->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS->IsSame(poSRSIn))
         {
             poCT = OGRCreateCoordinateTransformation( poSRSIn, poSRS );
-            if( poCT == NULL && poDSIn->isFirstCTError() )
+            if( poCT == nullptr && poDSIn->isFirstCTError() )
             {
                 /* If we can't create a transformation, issue a warning - but
                    continue the transformation*/
-                char *pszWKT = NULL;
+                char *pszWKT = nullptr;
 
                 poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
 
@@ -72,7 +72,7 @@ GTMWaypointLayer::GTMWaypointLayer( const char* pszNameIn,
     }
     else
     {
-        poSRS = NULL;
+        poSRS = nullptr;
     }
 
     poDS = poDSIn;
@@ -111,7 +111,7 @@ GTMWaypointLayer::~GTMWaypointLayer() {}
 void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float altitude )
 {
     char psNameField[] = "          ";
-    char* pszcomment = NULL;
+    char* pszcomment = nullptr;
     int icon = 48;
     int date = 0;
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
@@ -171,7 +171,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
         }
     }
 
-    if (pszcomment == NULL)
+    if (pszcomment == nullptr)
         pszcomment = CPLStrdup( "" );
 
     const size_t commentLength = strlen(pszcomment);
@@ -226,18 +226,18 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
 OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fp = poDS->getOutputFP();
-    if (fp == NULL)
+    if (fp == nullptr)
         return OGRERR_FAILURE;
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    if ( poGeom == NULL )
+    if ( poGeom == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Features without geometry not supported by GTM writer in waypoints layer." );
         return OGRERR_FAILURE;
     }
 
-    if (NULL != poCT)
+    if (nullptr != poCT)
     {
         poGeom = poGeom->clone();
         poGeom->transform( poCT );
@@ -272,7 +272,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
     }
     }
 
-    if (NULL != poCT)
+    if (nullptr != poCT)
         delete poGeom;
 
     return OGRERR_NONE;
@@ -281,17 +281,17 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
 OGRFeature* GTMWaypointLayer::GetNextFeature()
 {
     if( bError )
-        return NULL;
+        return nullptr;
 
     while (poDS->hasNextWaypoint())
     {
         Waypoint* poWaypoint = poDS->fetchNextWaypoint();
-        if (poWaypoint == NULL)
+        if (poWaypoint == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not read waypoint. File probably corrupted");
             bError = true;
-            return NULL;
+            return nullptr;
         }
 
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
@@ -328,20 +328,20 @@ OGRFeature* GTMWaypointLayer::GetNextFeature()
 
         poFeature->SetFID( nNextFID++ );
         delete poWaypoint;
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;
     }
-    return NULL;
+    return nullptr;
 }
 
 GIntBig GTMWaypointLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return poDS->getNWpts();
 
     return OGRLayer::GetFeatureCount(bForce);

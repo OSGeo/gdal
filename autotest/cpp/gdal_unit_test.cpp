@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
-    CPLDumpSharedList( NULL );
+    CPLDumpSharedList( nullptr );
     CPLCleanupTLS();
 
     return nRetCode;

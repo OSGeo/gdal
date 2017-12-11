@@ -89,23 +89,23 @@ static const int MAX_JP2GEOTIFF_BOXES = 2;
 
 GDALJP2Metadata::GDALJP2Metadata() :
     nGeoTIFFBoxesCount(0),
-    pasGeoTIFFBoxes(NULL),
+    pasGeoTIFFBoxes(nullptr),
     nMSIGSize(0),
-    pabyMSIGData(NULL),
-    papszGMLMetadata(NULL),
+    pabyMSIGData(nullptr),
+    papszGMLMetadata(nullptr),
     bHaveGeoTransform(false),
 #if HAVE_CXX11
     adfGeoTransform{0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
 #endif
     bPixelIsPoint(false),
-    pszProjection(NULL),
+    pszProjection(nullptr),
     nGCPCount(0),
-    pasGCPList(NULL),
-    papszRPCMD(NULL),
-    papszMetadata(NULL),
-    pszXMPMetadata(NULL),
-    pszGDALMultiDomainMetadata(NULL),
-    pszXMLIPR(NULL)
+    pasGCPList(nullptr),
+    papszRPCMD(nullptr),
+    papszMetadata(nullptr),
+    pszXMPMetadata(nullptr),
+    pszGDALMultiDomainMetadata(nullptr),
+    pszXMLIPR(nullptr)
 {
 #if !HAVE_CXX11
     adfGeoTransform[0] = 0.0;
@@ -159,7 +159,7 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
 
 {
     VSILFILE *fpLL = VSIFOpenL( pszFilename, "rb" );
-    if( fpLL == NULL )
+    if( fpLL == nullptr )
     {
         CPLDebug( "GDALJP2Metadata", "Could not even open %s.",
                   pszFilename );
@@ -181,7 +181,7 @@ int GDALJP2Metadata::ReadAndParse( const char *pszFilename, int nGEOJP2Index,
          !bHaveGeoTransform) )
     {
         bHaveGeoTransform = CPL_TO_BOOL(
-            GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
+            GDALReadWorldFile( pszFilename, nullptr, adfGeoTransform )
             || GDALReadWorldFile( pszFilename, ".wld", adfGeoTransform ) );
         bRet |= bHaveGeoTransform;
     }
@@ -226,8 +226,8 @@ int GDALJP2Metadata::ReadAndParse( VSILFILE *fpLL, int nGEOJP2Index,
 /* -------------------------------------------------------------------- */
     return bHaveGeoTransform
         || nGCPCount > 0
-        || (pszProjection != NULL && strlen(pszProjection) > 0)
-        || papszRPCMD != NULL;
+        || (pszProjection != nullptr && strlen(pszProjection) > 0)
+        || papszRPCMD != nullptr;
 }
 
 /************************************************************************/
@@ -254,8 +254,8 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
             if( !oSubChildBox.ReadFirstChild( &oChildBox ) )
                 break;
 
-            char *pszLabel = NULL;
-            char *pszXML = NULL;
+            char *pszLabel = nullptr;
+            char *pszXML = nullptr;
 
             while( strlen(oSubChildBox.GetType()) > 0 )
             {
@@ -270,7 +270,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                     // Some GML data contains \0 instead of \n.
                     // See http://trac.osgeo.org/gdal/ticket/5760
                     // TODO(schwehr): Explain the numbers in the next line.
-                    if( pszXML != NULL && nXMLLength < 100 * 1024 * 1024 )
+                    if( pszXML != nullptr && nXMLLength < 100 * 1024 * 1024 )
                     {
                         // coverity[tainted_data].
                         for( GIntBig i = nXMLLength - 1; i >= 0; --i )
@@ -292,7 +292,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                             CPLPushErrorHandler(CPLQuietErrorHandler);
                             CPLXMLNode* psNode = CPLParseXMLString(pszXML);
                             CPLPopErrorHandler();
-                            if( psNode == NULL )
+                            if( psNode == nullptr )
                             {
                                 CPLDebug(
                                     "GMLJP2",
@@ -317,17 +317,17 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                     break;
             }
 
-            if( pszLabel != NULL && pszXML != NULL )
+            if( pszLabel != nullptr && pszXML != nullptr )
             {
                 papszGMLMetadata = CSLSetNameValue( papszGMLMetadata,
                                                     pszLabel, pszXML );
 
                 if( strcmp(pszLabel, "gml.root-instance") == 0 &&
-                    pszGDALMultiDomainMetadata == NULL &&
-                    strstr(pszXML, "GDALMultiDomainMetadata") != NULL )
+                    pszGDALMultiDomainMetadata == nullptr &&
+                    strstr(pszXML, "GDALMultiDomainMetadata") != nullptr )
                 {
                     CPLXMLNode* psTree = CPLParseXMLString(pszXML);
-                    if( psTree != NULL )
+                    if( psTree != nullptr )
                     {
                         CPLXMLNode* psGDALMDMD =
                             CPLSearchXMLNode(psTree, "GDALMultiDomainMetadata");
@@ -387,7 +387,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                 const int nGeoTIFFSize =
                     static_cast<int>( oBox.GetDataLength() );
                 GByte* pabyGeoTIFFData = oBox.ReadBoxData();
-                if( pabyGeoTIFFData == NULL )
+                if( pabyGeoTIFFData == nullptr )
                 {
                     CPLDebug( "GDALJP2",
                               "Cannot read data for UUID GeoTIFF box" );
@@ -420,11 +420,11 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                 pabyMSIGData = oBox.ReadBoxData();
 
                 if( nMSIGSize < 70
-                    || pabyMSIGData == NULL
+                    || pabyMSIGData == nullptr
                     || memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 )
                 {
                     CPLFree( pabyMSIGData );
-                    pabyMSIGData = NULL;
+                    pabyMSIGData = nullptr;
                     nMSIGSize = 0;
                 }
             }
@@ -440,7 +440,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
         if( EQUAL(oBox.GetType(),"uuid")
             && memcmp( oBox.GetUUID(), xmp_uuid, 16 ) == 0 )
         {
-            if( pszXMPMetadata == NULL )
+            if( pszXMPMetadata == nullptr )
             {
                 pszXMPMetadata = (char*) oBox.ReadBoxData();
             }
@@ -461,7 +461,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                 EQUAL(oSubBox.GetType(),"lbl ") )
             {
                 char *pszLabel = (char *) oSubBox.ReadBoxData();
-                if( pszLabel != NULL && EQUAL(pszLabel,"gml.data") )
+                if( pszLabel != nullptr && EQUAL(pszLabel,"gml.data") )
                 {
                     CollectGMLData( &oBox );
                 }
@@ -477,13 +477,13 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             CPLString osBoxName;
 
             char *pszXML = (char *) oBox.ReadBoxData();
-            if( pszXML != NULL &&
+            if( pszXML != nullptr &&
                 STARTS_WITH(pszXML, "<GDALMultiDomainMetadata>") )
             {
-                if( pszGDALMultiDomainMetadata == NULL )
+                if( pszGDALMultiDomainMetadata == nullptr )
                 {
                     pszGDALMultiDomainMetadata = pszXML;
-                    pszXML = NULL;
+                    pszXML = nullptr;
                 }
                 else
                 {
@@ -492,7 +492,7 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
                         "Too many GDAL metadata boxes. Ignoring this one");
                 }
             }
-            else if( pszXML != NULL )
+            else if( pszXML != nullptr )
             {
                 osBoxName.Printf( "BOX_%d", iBox++ );
 
@@ -521,9 +521,9 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 
                     // We will use either the resd or resc box, which ever
                     // happens to be first.  Should we prefer resd?
-                    unsigned char *pabyResData = NULL;
+                    unsigned char *pabyResData = nullptr;
                     if( oResBox.GetDataLength() == 10 &&
-                        (pabyResData = oResBox.ReadBoxData()) != NULL )
+                        (pabyResData = oResBox.ReadBoxData()) != nullptr )
                     {
                         int nVertNum, nVertDen, nVertExp;
                         int nHorzNum, nHorzDen, nHorzExp;
@@ -569,14 +569,14 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
 /* -------------------------------------------------------------------- */
         if( EQUAL(oBox.GetType(),"jp2i") )
         {
-            if( pszXMLIPR == NULL )
+            if( pszXMLIPR == nullptr )
             {
                 pszXMLIPR = (char*) oBox.ReadBoxData();
                 CPLXMLNode* psNode = CPLParseXMLString(pszXMLIPR);
-                if( psNode == NULL )
+                if( psNode == nullptr )
                 {
                     CPLFree(pszXMLIPR);
-                    pszXMLIPR = NULL;
+                    pszXMLIPR = nullptr;
                 }
                 else
                     CPLDestroyXMLNode(psNode);
@@ -605,12 +605,12 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         return FALSE;
 
     bool abValidProjInfo[MAX_JP2GEOTIFF_BOXES] = { false };
-    char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { NULL };
+    char* apszProjection[MAX_JP2GEOTIFF_BOXES] = { nullptr };
     double aadfGeoTransform[MAX_JP2GEOTIFF_BOXES][6];
     int anGCPCount[MAX_JP2GEOTIFF_BOXES] = { 0 };
-    GDAL_GCP    *apasGCPList[MAX_JP2GEOTIFF_BOXES] = { NULL };
+    GDAL_GCP    *apasGCPList[MAX_JP2GEOTIFF_BOXES] = { nullptr };
     int abPixelIsPoint[MAX_JP2GEOTIFF_BOXES] = { 0 };
-    char** apapszRPCMD[MAX_JP2GEOTIFF_BOXES] = { NULL };
+    char** apapszRPCMD[MAX_JP2GEOTIFF_BOXES] = { nullptr };
 
     const int nMax = std::min(nGeoTIFFBoxesCount, MAX_JP2GEOTIFF_BOXES);
     for( int i = 0; i < nMax; ++i )
@@ -630,7 +630,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                                &anGCPCount[i], &apasGCPList[i],
                                &abPixelIsPoint[i], &apapszRPCMD[i] ) == CE_None )
         {
-            if( apszProjection[i] != NULL && strlen(apszProjection[i]) != 0 )
+            if( apszProjection[i] != nullptr && strlen(apszProjection[i]) != 0 )
                 abValidProjInfo[i] = true;
         }
     }
@@ -643,7 +643,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         {
             iBestIndex = i;
         }
-        else if( abValidProjInfo[i] && apszProjection[i] != NULL )
+        else if( abValidProjInfo[i] && apszProjection[i] != nullptr )
         {
             // Anything else than a LOCAL_CS will probably be better.
             if( STARTS_WITH_CI(apszProjection[iBestIndex], "LOCAL_CS") )
@@ -662,7 +662,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                 || aadfGeoTransform[i][4] != 0
                 || aadfGeoTransform[i][5] != 1
                 || anGCPCount[i] > 0
-                || apapszRPCMD[i] != NULL )
+                || apapszRPCMD[i] != nullptr )
             {
                 iBestIndex = i;
             }
@@ -757,7 +757,7 @@ static CPLXMLNode *
 GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 
 {
-    char *pszLabel = NULL;
+    char *pszLabel = nullptr;
 
     if( STARTS_WITH_CI(pszURN, "urn:jp2k:xml:") )
         pszLabel = CPLStrdup( pszURN + 13 );
@@ -771,7 +771,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Split out label and fragment id.                                */
 /* -------------------------------------------------------------------- */
-    const char *pszFragmentId = NULL;
+    const char *pszFragmentId = nullptr;
 
     {
         int i = 0;  // Used after for.
@@ -780,7 +780,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
             if( pszLabel[i] == '\0' )
             {
                 CPLFree(pszLabel);
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -794,10 +794,10 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
     const char *pszDictionary =
         CSLFetchNameValue( papszGMLMetadata, pszLabel );
 
-    if( pszDictionary == NULL )
+    if( pszDictionary == nullptr )
     {
         CPLFree(pszLabel);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -805,29 +805,29 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psDictTree = CPLParseXMLString( pszDictionary );
 
-    if( psDictTree == NULL )
+    if( psDictTree == nullptr )
     {
         CPLFree(pszLabel);
-        return NULL;
+        return nullptr;
     }
 
-    CPLStripXMLNamespace( psDictTree, NULL, TRUE );
+    CPLStripXMLNamespace( psDictTree, nullptr, TRUE );
 
     CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "=Dictionary" );
 
-    if( psDictRoot == NULL )
+    if( psDictRoot == nullptr )
     {
         CPLDestroyXMLNode( psDictTree );
         CPLFree(pszLabel);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Search for matching id.                                         */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psEntry, *psHit = NULL;
+    CPLXMLNode *psEntry, *psHit = nullptr;
     for( psEntry = psDictRoot->psChild;
-         psEntry != NULL && psHit == NULL;
+         psEntry != nullptr && psHit == nullptr;
          psEntry = psEntry->psNext )
     {
         const char *pszId;
@@ -838,7 +838,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
         if( !EQUAL(psEntry->pszValue,"dictionaryEntry") )
             continue;
 
-        if( psEntry->psChild == NULL )
+        if( psEntry->psChild == nullptr )
             continue;
 
         pszId = CPLGetXMLValue( psEntry->psChild, "id", "" );
@@ -873,7 +873,7 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 {
     CPLXMLNode *psDictEntry = GetDictionaryItem( papszGMLMetadata, pszURN );
 
-    if( psDictEntry == NULL )
+    if( psDictEntry == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -891,7 +891,7 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
     if( oSRS.importFromXML( pszDictEntryXML ) == OGRERR_NONE )
     {
         CPLFree( pszProjection );
-        pszProjection = NULL;
+        pszProjection = nullptr;
 
         oSRS.exportToWkt( &pszProjection );
         bSuccess = true;
@@ -919,7 +919,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     const char *pszCoverage = CSLFetchNameValue( papszGMLMetadata,
                                                  "gml.root-instance" );
 
-    if( pszCoverage == NULL )
+    if( pszCoverage == nullptr )
         return FALSE;
 
     CPLDebug( "GDALJP2Metadata", "Found GML Box:\n%s", pszCoverage );
@@ -929,37 +929,37 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psXML = CPLParseXMLString( pszCoverage );
 
-    if( psXML == NULL )
+    if( psXML == nullptr )
         return FALSE;
 
-    CPLStripXMLNamespace( psXML, NULL, TRUE );
+    CPLStripXMLNamespace( psXML, nullptr, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Isolate RectifiedGrid.  Eventually we will need to support      */
 /*      other georeferencing objects.                                   */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
-    CPLXMLNode *psOriginPoint = NULL;
-    const char *pszOffset1 = NULL;
-    const char *pszOffset2 = NULL;
+    CPLXMLNode *psOriginPoint = nullptr;
+    const char *pszOffset1 = nullptr;
+    const char *pszOffset2 = nullptr;
 
-    if( psRG != NULL )
+    if( psRG != nullptr )
     {
         psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
 
         CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
-        if( psOffset1 != NULL )
+        if( psOffset1 != nullptr )
         {
-            pszOffset1 = CPLGetXMLValue( psOffset1, "", NULL );
+            pszOffset1 = CPLGetXMLValue( psOffset1, "", nullptr );
             pszOffset2 = CPLGetXMLValue( psOffset1->psNext, "=offsetVector",
-                                         NULL );
+                                         nullptr );
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      If we are missing any of the origin or 2 offsets then give up.  */
 /* -------------------------------------------------------------------- */
-    if( psOriginPoint == NULL || pszOffset1 == NULL || pszOffset2 == NULL )
+    if( psOriginPoint == nullptr || pszOffset1 == nullptr || pszOffset2 == nullptr )
     {
         CPLDestroyXMLNode( psXML );
         return FALSE;
@@ -968,30 +968,30 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
 /*      Extract origin location.                                        */
 /* -------------------------------------------------------------------- */
-    OGRPoint *poOriginGeometry = NULL;
-    const char *pszSRSName = NULL;
+    OGRPoint *poOriginGeometry = nullptr;
+    const char *pszSRSName = nullptr;
 
-    if( psOriginPoint != NULL )
+    if( psOriginPoint != nullptr )
     {
         poOriginGeometry = (OGRPoint *)
             OGR_G_CreateFromGMLTree( psOriginPoint );
 
-        if( poOriginGeometry != NULL
+        if( poOriginGeometry != nullptr
             && wkbFlatten(poOriginGeometry->getGeometryType()) != wkbPoint )
         {
             delete poOriginGeometry;
-            poOriginGeometry = NULL;
+            poOriginGeometry = nullptr;
         }
 
         // SRS?
-        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", NULL );
+        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", nullptr );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Extract offset(s)                                               */
 /* -------------------------------------------------------------------- */
-    char **papszOffset1Tokens = NULL;
-    char **papszOffset2Tokens = NULL;
+    char **papszOffset1Tokens = nullptr;
+    char **papszOffset2Tokens = nullptr;
     bool bSuccess = false;
 
     papszOffset1Tokens =
@@ -1001,7 +1001,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     if( CSLCount(papszOffset1Tokens) >= 2
         && CSLCount(papszOffset2Tokens) >= 2
-        && poOriginGeometry != NULL )
+        && poOriginGeometry != nullptr )
     {
         adfGeoTransform[0] = poOriginGeometry->getX();
         adfGeoTransform[1] = CPLAtof(papszOffset1Tokens[0]);
@@ -1023,7 +1023,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     CSLDestroy( papszOffset1Tokens );
     CSLDestroy( papszOffset2Tokens );
 
-    if( poOriginGeometry != NULL )
+    if( poOriginGeometry != nullptr )
         delete poOriginGeometry;
 
 /* -------------------------------------------------------------------- */
@@ -1032,20 +1032,20 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      (i.e. EuropeRasterTile23.jpx) use this as the only srsName      */
 /*      delivery vehicle.                                               */
 /* -------------------------------------------------------------------- */
-    if( pszSRSName == NULL )
+    if( pszSRSName == nullptr )
     {
         pszSRSName =
             CPLGetXMLValue( psXML,
                             "=FeatureCollection.boundedBy.Envelope.srsName",
-                            NULL );
+                            nullptr );
     }
 /* -------------------------------------------------------------------- */
 /*      Examples of DGIWG_Profile_of_JPEG2000_for_Georeference_Imagery.pdf */
 /*      have srsName only on RectifiedGrid element.                     */
 /* -------------------------------------------------------------------- */
-    if( psRG != NULL && pszSRSName == NULL )
+    if( psRG != nullptr && pszSRSName == nullptr )
     {
-        pszSRSName = CPLGetXMLValue( psRG,  "srsName", NULL );
+        pszSRSName = CPLGetXMLValue( psRG,  "srsName", nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1055,8 +1055,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     bool bNeedAxisFlip = false;
 
     OGRSpatialReference oSRS;
-    if( bSuccess && pszSRSName != NULL
-        && (pszProjection == NULL || strlen(pszProjection) == 0) )
+    if( bSuccess && pszSRSName != nullptr
+        && (pszProjection == nullptr || strlen(pszProjection) == 0) )
     {
         if( STARTS_WITH_CI(pszSRSName, "epsg:") )
         {
@@ -1064,7 +1064,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                 oSRS.exportToWkt( &pszProjection );
         }
         else if( (STARTS_WITH_CI(pszSRSName, "urn:")
-                 && strstr(pszSRSName,":def:") != NULL
+                 && strstr(pszSRSName,":def:") != nullptr
                  && oSRS.importFromURN(pszSRSName) == OGRERR_NONE) ||
                  /* GMLJP2 v2.0 uses CRS URL instead of URN */
                  /* See e.g. http://schemas.opengis.net/gmljp2/2.0/examples/minimalInstance.xml */
@@ -1109,11 +1109,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         // Suppress explicit axis order in SRS definition
 
         OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
-        if( poGEOGCS != NULL )
+        if( poGEOGCS != nullptr )
             poGEOGCS->StripNodes( "AXIS" );
 
         OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
-        if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
+        if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
             poPROJCS->StripNodes( "AXIS" );
 
         CPLFree(pszProjection);
@@ -1122,15 +1122,15 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     /* Some Pleiades files have explicit <gml:axisName>Easting</gml:axisName> */
     /* <gml:axisName>Northing</gml:axisName> to override default EPSG order */
-    if( bNeedAxisFlip && psRG != NULL )
+    if( bNeedAxisFlip && psRG != nullptr )
     {
         int nAxisCount = 0;
         bool bFirstAxisIsEastOrLong = false;
         bool bSecondAxisIsNorthOrLat = false;
-        for(CPLXMLNode* psIter = psRG->psChild; psIter != NULL; psIter = psIter->psNext )
+        for(CPLXMLNode* psIter = psRG->psChild; psIter != nullptr; psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "axisName") == 0 &&
-                psIter->psChild != NULL && psIter->psChild->eType == CXT_Text )
+                psIter->psChild != nullptr && psIter->psChild->eType == CXT_Text )
             {
                 if( nAxisCount == 0 &&
                     (STARTS_WITH_CI(psIter->psChild->pszValue, "EAST") ||
@@ -1157,8 +1157,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     }
 
     CPLDestroyXMLNode( psXML );
-    psXML = NULL;
-    psRG = NULL;
+    psXML = nullptr;
+    psRG = nullptr;
 
     if( bNeedAxisFlip )
     {
@@ -1176,7 +1176,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
         /* Look if we have GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE as a XML comment */
         int bHasAltOffsetVectorOrderComment =
-            strstr(pszCoverage, "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE") != NULL;
+            strstr(pszCoverage, "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER=TRUE") != nullptr;
 
         if( bHasAltOffsetVectorOrderComment ||
             CPLTestBool( CPLGetConfigOption( "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER",
@@ -1207,7 +1207,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         }
     }
 
-    return pszProjection != NULL && bSuccess;
+    return pszProjection != nullptr && bSuccess;
 }
 
 /************************************************************************/
@@ -1271,16 +1271,16 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
     int         nGTBufSize = 0;
-    unsigned char *pabyGTBuf = NULL;
+    unsigned char *pabyGTBuf = nullptr;
 
     if( GTIFMemBufFromWktEx( pszProjection, adfGeoTransform,
                              nGCPCount, pasGCPList,
                              &nGTBufSize, &pabyGTBuf, bPixelIsPoint,
                              papszRPCMD ) != CE_None )
-        return NULL;
+        return nullptr;
 
     if( nGTBufSize == 0 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
@@ -1322,7 +1322,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     {
         const char *pszAuthName = oSRS.GetAuthorityName( "PROJCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "PROJCS" ));
         }
@@ -1331,7 +1331,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
     {
         const char *pszAuthName = oSRS.GetAuthorityName( "GEOGCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
         }
@@ -1426,11 +1426,11 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
 /* -------------------------------------------------------------------- */
     if( nEPSGCode == 0 )
     {
-        char *pszGMLDef = NULL;
+        char *pszGMLDef = nullptr;
 
-        if( oSRS.exportToXML( &pszGMLDef, NULL ) == OGRERR_NONE )
+        if( oSRS.exportToXML( &pszGMLDef, nullptr ) == OGRERR_NONE )
         {
-            char* pszWKT = NULL;
+            char* pszWKT = nullptr;
             oSRS.exportToWkt(&pszWKT);
             char* pszXMLEscapedWKT = CPLEscapeString(pszWKT, -1, CPLES_XML);
             CPLFree(pszWKT);
@@ -1468,16 +1468,16 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 /*      supplied by the user as an external file.  This is mostly       */
 /*      for preparing test files with exotic contents.                  */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "GMLJP2OVERRIDE", NULL ) != NULL )
+    if( CPLGetConfigOption( "GMLJP2OVERRIDE", nullptr ) != nullptr )
     {
         VSILFILE *fp = VSIFOpenL( CPLGetConfigOption( "GMLJP2OVERRIDE",""), "r" );
-        char *pszGML = NULL;
+        char *pszGML = nullptr;
 
-        if( fp == NULL )
+        if( fp == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to open GMLJP2OVERRIDE file." );
-            return NULL;
+            return nullptr;
         }
 
         CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_END ));
@@ -1515,7 +1515,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
                                       adfXVector, adfYVector,
                                       pszComment, osDictBox, bNeedAxisFlip ) )
     {
-        return NULL;
+        return nullptr;
     }
 
     char szSRSName[100];
@@ -1649,12 +1649,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 
 static CPLXMLNode* GDALGMLJP2GetXMLRoot(CPLXMLNode* psNode)
 {
-    for( ; psNode != NULL; psNode = psNode->psNext )
+    for( ; psNode != nullptr; psNode = psNode->psNext )
     {
         if( psNode->eType == CXT_Element && psNode->pszValue[0] != '?' )
             return psNode;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1673,7 +1673,7 @@ static void GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode* psRoot
     if( psRoot->eType == CXT_Element &&
         (strcmp(psRoot->pszValue, "schema") == 0 || strcmp(psRoot->pszValue, "xs:schema") == 0) )
     {
-        for(CPLXMLNode* psIter = psRoot->psChild; psIter != NULL; psIter = psIter->psNext)
+        for(CPLXMLNode* psIter = psRoot->psChild; psIter != nullptr; psIter = psIter->psNext)
         {
             if( psIter->eType == CXT_Element &&
                 (strcmp(psIter->pszValue, "element") == 0 || strcmp(psIter->pszValue, "xs:element") == 0) &&
@@ -1771,11 +1771,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     if( pszDefFilename && !EQUAL(pszDefFilename, "YES") && !EQUAL(pszDefFilename, "TRUE") )
     {
-        GByte* pabyContent = NULL;
+        GByte* pabyContent = nullptr;
         if( pszDefFilename[0] != '{' )
         {
-            if( !VSIIngestFile( NULL, pszDefFilename, &pabyContent, NULL, -1 ) )
-                return NULL;
+            if( !VSIIngestFile( nullptr, pszDefFilename, &pabyContent, nullptr, -1 ) )
+                return nullptr;
         }
 
 /*
@@ -1928,8 +1928,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 }
 */
 
-        json_tokener* jstok = NULL;
-        json_object* poObj = NULL;
+        json_tokener* jstok = nullptr;
+        json_object* poObj = nullptr;
 
         jstok = json_tokener_new();
         poObj = json_tokener_parse_ex(jstok, pabyContent ? (const char*) pabyContent : pszDefFilename, -1);
@@ -1940,7 +1940,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         "JSON parsing error: %s (at offset %d)",
                         json_tokener_error_desc(jstok->err), jstok->char_offset);
             json_tokener_free(jstok);
-            return NULL;
+            return nullptr;
         }
         json_tokener_free(jstok);
 
@@ -2010,7 +2010,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 if( poGCRTFile && json_object_get_type(poGCRTFile) == json_type_string )
                 {
                     CPLXMLNode* psTmp = CPLParseXMLFile(json_object_get_string(poGCRTFile));
-                    if( psTmp != NULL )
+                    if( psTmp != nullptr )
                     {
                         CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
                         if( psTmpRoot )
@@ -2048,18 +2048,18 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
                     else if ( poMetadata && json_object_get_type(poMetadata) == json_type_object )
                     {
-                        const char* pszFile = NULL;
+                        const char* pszFile = nullptr;
                         json_object* poFile = CPL_json_object_object_get(poMetadata, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
-                        const char* pszContent = NULL;
+                        const char* pszContent = nullptr;
                         json_object* poContent = CPL_json_object_object_get(poMetadata, "content");
                         if( poContent && json_object_get_type(poContent) == json_type_string )
                             pszContent = json_object_get_string(poContent);
 
-                        const char* pszTemplate = NULL;
-                        const char* pszSource = NULL;
+                        const char* pszTemplate = nullptr;
+                        const char* pszSource = nullptr;
                         json_object* poDynamicMetadata = CPL_json_object_object_get(poMetadata, "dynamic_metadata");
                         if( poDynamicMetadata && json_object_get_type(poDynamicMetadata) == json_type_object )
                         {
@@ -2088,8 +2088,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             bGDALMetadata = CPL_TO_BOOL(
                                 json_object_get_boolean(poGDALMetadata));
 
-                        if( pszFile != NULL || pszContent != NULL ||
-                            (pszTemplate != NULL && pszSource != NULL) ||
+                        if( pszFile != nullptr || pszContent != nullptr ||
+                            (pszTemplate != nullptr && pszSource != nullptr) ||
                             bGDALMetadata )
                         {
                             GMLJP2V2MetadataDesc oDesc;
@@ -2153,12 +2153,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     if( poGMLFile &&
                         json_object_get_type(poGMLFile) == json_type_object )
                     {
-                        const char* pszFile = NULL;
+                        const char* pszFile = nullptr;
                         json_object* poFile = CPL_json_object_object_get(poGMLFile, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
 
-                        const char* pszRemoteResource = NULL;
+                        const char* pszRemoteResource = nullptr;
                         json_object* poRemoteResource = CPL_json_object_object_get(poGMLFile, "remote_resource");
                         if( poRemoteResource && json_object_get_type(poRemoteResource) == json_type_string )
                             pszRemoteResource = json_object_get_string(poRemoteResource);
@@ -2220,7 +2220,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     json_object* poStyle = json_object_array_get_idx(poStyles, i);
                     if( poStyle && json_object_get_type(poStyle) == json_type_object )
                     {
-                        const char* pszFile = NULL;
+                        const char* pszFile = nullptr;
                         json_object* poFile = CPL_json_object_object_get(poStyle, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
@@ -2265,7 +2265,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     json_object* poExtension = json_object_array_get_idx(poExtensions, i);
                     if( poExtension && json_object_get_type(poExtension) == json_type_object )
                     {
-                        const char* pszFile = NULL;
+                        const char* pszFile = nullptr;
                         json_object* poFile = CPL_json_object_object_get(poExtension, "file");
                         if( poFile && json_object_get_type(poFile) == json_type_string )
                             pszFile = json_object_get_string(poFile);
@@ -2372,8 +2372,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         if( !osGridCoverageFile.empty() )
         {
             CPLXMLNode* psTmp = CPLParseXMLFile(osGridCoverageFile);
-            if( psTmp == NULL )
-                return NULL;
+            if( psTmp == nullptr )
+                return nullptr;
             CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
             if( psTmpRoot )
             {
@@ -2403,7 +2403,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                         adfXVector, adfYVector,
                                         pszComment, osDictBox, bNeedAxisFlip ) )
         {
-            return NULL;
+            return nullptr;
         }
 
         char szSRSName[100] = {0};
@@ -2521,7 +2521,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
         for( int i=0; i < static_cast<int>(aoMetadata.size()); ++i )
         {
-            CPLXMLNode* psMetadata = NULL;
+            CPLXMLNode* psMetadata = nullptr;
             if( !aoMetadata[i].osFile.empty() )
                 psMetadata = CPLParseXMLFile(aoMetadata[i].osFile);
             else if( !aoMetadata[i].osContent.empty() )
@@ -2533,7 +2533,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 {
                     CPLSetXMLValue(psMetadata, "#xmlns", "http://gdal.org");
                     CPLXMLNode* psNewMetadata =
-                        CPLCreateXMLNode(NULL, CXT_Element, "gmljp2:metadata");
+                        CPLCreateXMLNode(nullptr, CXT_Element, "gmljp2:metadata");
                     CPLAddXMLChild(psNewMetadata, psMetadata);
                     psMetadata = psNewMetadata;
                 }
@@ -2542,7 +2542,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 psMetadata =
                     GDALGMLJP2GenerateMetadata(aoMetadata[i].osTemplateFile,
                                                aoMetadata[i].osSourceFile);
-            if( psMetadata == NULL )
+            if( psMetadata == nullptr )
                 continue;
             CPLXMLNode* psMetadataRoot = GDALGMLJP2GetXMLRoot(psMetadata);
             if( psMetadataRoot )
@@ -2550,7 +2550,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 if( strcmp(psMetadataRoot->pszValue,
                            "eop:EarthObservation") == 0 )
                 {
-                    CPLXMLNode* psNewMetadata = CPLCreateXMLNode(NULL, CXT_Element, "gmljp2:eopMetadata");
+                    CPLXMLNode* psNewMetadata = CPLCreateXMLNode(nullptr, CXT_Element, "gmljp2:eopMetadata");
                     CPLAddXMLChild(psNewMetadata, CPLCloneXMLTree(psMetadataRoot));
                     CPLDestroyXMLNode(psMetadata);
                     psMetadata = psMetadataRoot = psNewMetadata;
@@ -2573,13 +2573,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     CPLAssert(psRangeType);
                     CPLXMLNode* psNodeAfterWhichToInsert = psRangeType;
                     CPLXMLNode* psNext = psNodeAfterWhichToInsert->psNext;
-                    while( psNext != NULL && psNext->eType == CXT_Element &&
+                    while( psNext != nullptr && psNext->eType == CXT_Element &&
                            strcmp(psNext->pszValue, "gmlcov:metadata") == 0 )
                     {
                         psNodeAfterWhichToInsert = psNext;
                         psNext = psNext->psNext;
                     }
-                    psNodeAfterWhichToInsert->psNext = NULL;
+                    psNodeAfterWhichToInsert->psNext = nullptr;
                     CPLXMLNode* psGMLCovMetadata = CPLCreateXMLNode(
                         psGMLJP2CoverageCollection, CXT_Element, "gmlcov:metadata" );
                     psGMLCovMetadata->psNext = psNext;
@@ -2613,7 +2613,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoGMLFiles.size()); ++i )
         {
             // Is the file already a GML file?
-            CPLXMLNode* psGMLFile = NULL;
+            CPLXMLNode* psGMLFile = nullptr;
             if( !aoGMLFiles[i].osFile.empty() )
             {
                 if( EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
@@ -2621,11 +2621,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 {
                     psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
                 }
-                GDALDriverH hDrv = NULL;
-                if( psGMLFile == NULL )
+                GDALDriverH hDrv = nullptr;
+                if( psGMLFile == nullptr )
                 {
-                    hDrv = GDALIdentifyDriver(aoGMLFiles[i].osFile, NULL);
-                    if( hDrv == NULL )
+                    hDrv = GDALIdentifyDriver(aoGMLFiles[i].osFile, nullptr);
+                    if( hDrv == nullptr )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "%s is no a GDAL recognized file",
@@ -2634,14 +2634,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
                 }
                 GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
-                if( psGMLFile == NULL && hDrv == hGMLDrv )
+                if( psGMLFile == nullptr && hDrv == hGMLDrv )
                 {
                     // Yes, parse it
                     psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
                 }
-                else if( psGMLFile == NULL )
+                else if( psGMLFile == nullptr )
                 {
-                    if( hGMLDrv == NULL )
+                    if( hGMLDrv == nullptr )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                 "Cannot translate %s to GML",
@@ -2650,14 +2650,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
 
                     // On-the-fly translation to GML 3.2
-                    GDALDatasetH hSrcDS = GDALOpenEx(aoGMLFiles[i].osFile, 0, NULL, NULL, NULL);
+                    GDALDatasetH hSrcDS = GDALOpenEx(aoGMLFiles[i].osFile, 0, nullptr, nullptr, nullptr);
                     if( hSrcDS )
                     {
                         CPLString osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml",
                                                         this,
                                                         i,
                                                         CPLGetBasename(aoGMLFiles[i].osFile));
-                        char ** papszOptions = NULL;
+                        char ** papszOptions = nullptr;
                         papszOptions = CSLSetNameValue(papszOptions,
                                                        "FORMAT", "GML3.2");
                         papszOptions = CSLSetNameValue(papszOptions,
@@ -2681,7 +2681,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         GDALDatasetH hDS = GDALCreateCopy(
                                     hGMLDrv, osTmpFile, hSrcDS,
                                     FALSE,
-                                    papszOptions, NULL, NULL);
+                                    papszOptions, nullptr, nullptr);
                         CSLDestroy(papszOptions);
                         if( hDS )
                         {
@@ -2700,11 +2700,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
                     GDALClose(hSrcDS);
                 }
-                if( psGMLFile == NULL )
+                if( psGMLFile == nullptr )
                     continue;
             }
 
-            CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile) : NULL;
+            CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile) : nullptr;
             if( psGMLFileRoot || !aoGMLFiles[i].osRemoteResource.empty() )
             {
                 CPLXMLNode *node_f;
@@ -2768,8 +2768,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                             CPLSPrintf("gmljp2://xml/%s", oDesc.osLabel.c_str()));
                 }
 
-                if( CPLGetXMLNode(psGMLFileRoot, "xmlns") == NULL &&
-                    CPLGetXMLNode(psGMLFileRoot, "xmlns:gml") == NULL )
+                if( CPLGetXMLNode(psGMLFileRoot, "xmlns") == nullptr &&
+                    CPLGetXMLNode(psGMLFileRoot, "xmlns:gml") == nullptr )
                 {
                     CPLSetXMLValue(psGMLFileRoot, "#xmlns",
                                    "http://www.opengis.net/gml/3.2");
@@ -2783,7 +2783,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                                     CPLSPrintf("%s_%d_%s",
                                                 osRootGMLId.c_str(), i,
                                                 psGMLFileGMLId->psChild->pszValue) );
-                psGMLFileGMLId = NULL;
+                psGMLFileGMLId = nullptr;
                 //PrefixAllGMLIds(psGMLFileRoot, CPLSPrintf("%s_%d_", osRootGMLId.c_str(), i));
 
                 // replace schema location
@@ -2821,11 +2821,11 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         else if( CSLCount(papszTokens) == 2 &&
                                 CPLIsFilenameRelative(papszTokens[1]) &&
                                 VSIStatL(CPLFormFilename(CPLGetDirname(aoGMLFiles[i].osFile),
-                                                        papszTokens[1], NULL),
+                                                        papszTokens[1], nullptr),
                                         &sStat) == 0 )
                         {
                             osXSD = CPLFormFilename(CPLGetDirname(aoGMLFiles[i].osFile),
-                                                        papszTokens[1], NULL);
+                                                        papszTokens[1], nullptr);
                         }
                         if( !osXSD.empty() )
                         {
@@ -2890,14 +2890,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoAnnotations.size()); ++i )
         {
             // Is the file already a KML file?
-            CPLXMLNode* psKMLFile = NULL;
+            CPLXMLNode* psKMLFile = nullptr;
             if( EQUAL(CPLGetExtension(aoAnnotations[i].osFile), "kml") )
                  psKMLFile = CPLParseXMLFile(aoAnnotations[i].osFile);
-            GDALDriverH hDrv = NULL;
-            if( psKMLFile == NULL )
+            GDALDriverH hDrv = nullptr;
+            if( psKMLFile == nullptr )
             {
-                hDrv = GDALIdentifyDriver(aoAnnotations[i].osFile, NULL);
-                if( hDrv == NULL )
+                hDrv = GDALIdentifyDriver(aoAnnotations[i].osFile, nullptr);
+                if( hDrv == nullptr )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "%s is no a GDAL recognized file",
                              aoAnnotations[i].osFile.c_str());
@@ -2906,14 +2906,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             }
             GDALDriverH hKMLDrv = GDALGetDriverByName("KML");
             GDALDriverH hLIBKMLDrv = GDALGetDriverByName("LIBKML");
-            if( psKMLFile == NULL && (hDrv == hKMLDrv || hDrv == hLIBKMLDrv) )
+            if( psKMLFile == nullptr && (hDrv == hKMLDrv || hDrv == hLIBKMLDrv) )
             {
                 // Yes, parse it
                 psKMLFile = CPLParseXMLFile(aoAnnotations[i].osFile);
             }
-            else if( psKMLFile == NULL )
+            else if( psKMLFile == nullptr )
             {
-                if( hKMLDrv == NULL && hLIBKMLDrv == NULL )
+                if( hKMLDrv == nullptr && hLIBKMLDrv == nullptr )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Cannot translate %s to KML",
                              aoAnnotations[i].osFile.c_str());
@@ -2921,14 +2921,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
 
                 // On-the-fly translation to KML
-                GDALDatasetH hSrcDS = GDALOpenEx(aoAnnotations[i].osFile, 0, NULL, NULL, NULL);
+                GDALDatasetH hSrcDS = GDALOpenEx(aoAnnotations[i].osFile, 0, nullptr, nullptr, nullptr);
                 if( hSrcDS )
                 {
                     CPLString osTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.kml",
                                                      this,
                                                      i,
                                                      CPLGetBasename(aoAnnotations[i].osFile));
-                    char** papszOptions = NULL;
+                    char** papszOptions = nullptr;
                     if( aoAnnotations.size() > 1 )
                     {
                         papszOptions = CSLSetNameValue(
@@ -2937,7 +2937,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     }
                     GDALDatasetH hDS = GDALCreateCopy(hLIBKMLDrv ? hLIBKMLDrv : hKMLDrv,
                                                       osTmpFile, hSrcDS,
-                                                      FALSE, papszOptions, NULL, NULL);
+                                                      FALSE, papszOptions, nullptr, nullptr);
                     CSLDestroy(papszOptions);
                     if( hDS )
                     {
@@ -2954,7 +2954,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
                 GDALClose(hSrcDS);
             }
-            if( psKMLFile == NULL )
+            if( psKMLFile == nullptr )
                 continue;
 
             CPLXMLNode* psKMLFileRoot = GDALGMLJP2GetXMLRoot(psKMLFile);
@@ -2971,7 +2971,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 /* Add a xsi:schemaLocation if not already present */
                 if( psKMLFileRoot->eType == CXT_Element &&
                     strcmp(psKMLFileRoot->pszValue, "kml") == 0 &&
-                    CPLGetXMLNode(psKMLFileRoot, "xsi:schemaLocation") == NULL &&
+                    CPLGetXMLNode(psKMLFileRoot, "xsi:schemaLocation") == nullptr &&
                     strcmp(CPLGetXMLValue(psKMLFileRoot, "xmlns", ""),
                            "http://www.opengis.net/kml/2.2") == 0  )
                 {
@@ -2988,13 +2988,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoStyles.size()); ++i )
         {
             CPLXMLNode* psStyle = CPLParseXMLFile(aoStyles[i].osFile);
-            if( psStyle == NULL )
+            if( psStyle == nullptr )
                 continue;
 
             CPLXMLNode* psStyleRoot = GDALGMLJP2GetXMLRoot(psStyle);
             if( psStyleRoot )
             {
-                CPLXMLNode *psGMLJP2Style = NULL;
+                CPLXMLNode *psGMLJP2Style = nullptr;
                 if( aoStyles[i].bParentCoverageCollection )
                 {
                     psGMLJP2Style =
@@ -3016,8 +3016,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
 
                 // Add dummy namespace for validation purposes if needed
-                if( strchr(psStyleRoot->pszValue, ':') == NULL &&
-                    CPLGetXMLValue(psStyleRoot, "xmlns", NULL) == NULL )
+                if( strchr(psStyleRoot->pszValue, ':') == nullptr &&
+                    CPLGetXMLValue(psStyleRoot, "xmlns", nullptr) == nullptr )
                 {
                     CPLSetXMLValue(psStyleRoot, "#xmlns",
                                    "http://undefined_namespace");
@@ -3032,7 +3032,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoExtensions.size()); ++i )
         {
             CPLXMLNode* psExtension = CPLParseXMLFile(aoExtensions[i].osFile);
-            if( psExtension == NULL )
+            if( psExtension == nullptr )
                 continue;
 
             CPLXMLNode* psExtensionRoot = GDALGMLJP2GetXMLRoot(psExtension);
@@ -3060,8 +3060,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 }
 
                 // Add dummy namespace for validation purposes if needed
-                if( strchr(psExtensionRoot->pszValue, ':') == NULL &&
-                    CPLGetXMLValue(psExtensionRoot, "xmlns", NULL) == NULL )
+                if( strchr(psExtensionRoot->pszValue, ':') == nullptr &&
+                    CPLGetXMLValue(psExtensionRoot, "xmlns", nullptr) == nullptr )
                 {
                     CPLSetXMLValue(psExtensionRoot, "#xmlns",
                                    "http://undefined_namespace");
@@ -3075,10 +3075,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
         char* pszRoot = CPLSerializeXMLTree(psRoot);
         CPLDestroyXMLNode(psRoot);
-        psRoot = NULL;
+        psRoot = nullptr;
         osDoc = pszRoot;
         CPLFree(pszRoot);
-        pszRoot = NULL;
+        pszRoot = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3107,12 +3107,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     for( int i = 0; i < static_cast<int>(aoBoxes.size()); ++i )
     {
-        GByte* pabyContent = NULL;
-        if( VSIIngestFile( NULL, aoBoxes[i].osFile, &pabyContent, NULL, -1 ) )
+        GByte* pabyContent = nullptr;
+        if( VSIIngestFile( nullptr, aoBoxes[i].osFile, &pabyContent, nullptr, -1 ) )
         {
             CPLXMLNode* psNode = CPLParseXMLString((const char*)pabyContent);
             CPLFree(pabyContent);
-            pabyContent = NULL;
+            pabyContent = nullptr;
             if( psNode )
             {
                 CPLXMLNode* psRoot = GDALGMLJP2GetXMLRoot(psNode);
@@ -3161,17 +3161,17 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
     GDALMultiDomainMetadata oLocalMDMD;
     char** papszSrcMD = CSLDuplicate(poSrcDS->GetMetadata());
     /* Remove useless metadata */
-    papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, NULL);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", NULL);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XREpsMasterXMLNodeSOLUTION", NULL);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", NULL);
-    papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", NULL); /* from JP2KAK */
-    if( poSrcDS->GetDriver() != NULL &&
+    papszSrcMD = CSLSetNameValue(papszSrcMD, GDALMD_AREA_OR_POINT, nullptr);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_RESOLUTIONUNIT", nullptr);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_XREpsMasterXMLNodeSOLUTION", nullptr);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "TIFFTAG_YRESOLUTION", nullptr);
+    papszSrcMD = CSLSetNameValue(papszSrcMD, "Corder", nullptr); /* from JP2KAK */
+    if( poSrcDS->GetDriver() != nullptr &&
         EQUAL(poSrcDS->GetDriver()->GetDescription(), "JP2ECW") )
     {
-        papszSrcMD = CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", NULL);
-        papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", NULL);
-        papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", NULL);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "COMPRESSION_RATE_TARGET", nullptr);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "COLORSPACE", nullptr);
+        papszSrcMD = CSLSetNameValue(papszSrcMD, "VERSION", nullptr);
     }
 
     bool bHasMD = false;
@@ -3209,11 +3209,11 @@ CPLXMLNode* GDALJP2Metadata::CreateGDALMultiDomainMetadataXML(
         CSLDestroy(papszMDList);
     }
 
-    CPLXMLNode* psMasterXMLNode = NULL;
+    CPLXMLNode* psMasterXMLNode = nullptr;
     if( bHasMD )
     {
         CPLXMLNode* psXMLNode = oLocalMDMD.Serialize();
-        psMasterXMLNode = CPLCreateXMLNode( NULL, CXT_Element,
+        psMasterXMLNode = CPLCreateXMLNode( nullptr, CXT_Element,
                                                     "GDALMultiDomainMetadata" );
         psMasterXMLNode->psChild = psXMLNode;
     }
@@ -3230,8 +3230,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
 {
     CPLXMLNode* psMasterXMLNode = CreateGDALMultiDomainMetadataXML(
                                        poSrcDS, bMainMDDomainOnly );
-    if( psMasterXMLNode == NULL )
-        return NULL;
+    if( psMasterXMLNode == nullptr )
+        return nullptr;
     char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
     CPLDestroyXMLNode(psMasterXMLNode);
 
@@ -3250,7 +3250,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
 GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
                                               int* pnBoxes )
 {
-    GDALJP2Box** papoBoxes = NULL;
+    GDALJP2Box** papoBoxes = nullptr;
     *pnBoxes = 0;
     char** papszMDList = poSrcDS->GetMetadataDomainList();
     for( char** papszMDListIter = papszMDList;
@@ -3285,7 +3285,7 @@ GDALJP2Box** GDALJP2Metadata::CreateXMLBoxes( GDALDataset* poSrcDS,
 GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
 {
     char** papszSrcMD = poSrcDS->GetMetadata("xml:XMP");
-    GDALJP2Box* poBox = NULL;
+    GDALJP2Box* poBox = nullptr;
     if( papszSrcMD && * papszSrcMD )
     {
         poBox = GDALJP2Box::CreateUUIDBox(xmp_uuid,
@@ -3302,7 +3302,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox ( GDALDataset* poSrcDS )
 GDALJP2Box *GDALJP2Metadata::CreateIPRBox ( GDALDataset* poSrcDS )
 {
     char** papszSrcMD = poSrcDS->GetMetadata("xml:IPR");
-    GDALJP2Box* poBox = NULL;
+    GDALJP2Box* poBox = nullptr;
     if( papszSrcMD && * papszSrcMD )
     {
         poBox = new GDALJP2Box();

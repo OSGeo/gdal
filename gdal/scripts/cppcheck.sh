@@ -28,6 +28,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DDEBUG_MUTEX \
         -DDEBUG_PROXY_POOL \
         -Doverride= \
+        -DUNDER_CPPCHECK \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \

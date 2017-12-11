@@ -59,16 +59,16 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
             continue;
 
         GDALPDFObject* poA = poFeatureObj->GetDictionary()->Get("A");
-        if (!(poA != NULL && poA->GetType() == PDFObjectType_Dictionary))
+        if (!(poA != nullptr && poA->GetType() == PDFObjectType_Dictionary))
             continue;
 
         GDALPDFObject* poP = poA->GetDictionary()->Get("P");
-        if (!(poP != NULL && poP->GetType() == PDFObjectType_Array))
+        if (!(poP != nullptr && poP->GetType() == PDFObjectType_Array))
             continue;
 
         GDALPDFObject* poK = poFeatureObj->GetDictionary()->Get("K");
         int nK = -1;
-        if (poK != NULL && poK->GetType() == PDFObjectType_Int)
+        if (poK != nullptr && poK->GetType() == PDFObjectType_Int)
             nK = poK->GetInt();
 
         GDALPDFArray* poPArray = poP->GetArray();
@@ -80,8 +80,8 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != NULL && poN->GetType() == PDFObjectType_String &&
-                    poV != NULL)
+                if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
+                    poV != nullptr)
                 {
                     int nIdx = GetLayerDefn()->GetFieldIndex( poN->GetString().c_str() );
                     OGRFieldType eType = OFTString;
@@ -112,8 +112,8 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
             {
                 GDALPDFObject* poN = poKV->GetDictionary()->Get("N");
                 GDALPDFObject* poV = poKV->GetDictionary()->Get("V");
-                if (poN != NULL && poN->GetType() == PDFObjectType_String &&
-                    poV != NULL)
+                if (poN != nullptr && poN->GetType() == PDFObjectType_String &&
+                    poV != nullptr)
                 {
                     if (poV->GetType() == PDFObjectType_String)
                         poFeature->SetField(poN->GetString().c_str(), poV->GetString().c_str());
@@ -136,7 +136,7 @@ void OGRPDFLayer::Fill( GDALPDFArray* poArray )
         }
 
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
-        if( !bGeomTypeMixed && poGeom != NULL )
+        if( !bGeomTypeMixed && poGeom != nullptr )
         {
             if (!bGeomTypeSet)
             {

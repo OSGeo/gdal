@@ -40,8 +40,8 @@ GDALWMSCache::GDALWMSCache() :
 GDALWMSCache::~GDALWMSCache() {}
 
 CPLErr GDALWMSCache::Initialize(CPLXMLNode *config) {
-    const char *xmlcache_path = CPLGetXMLValue(config, "Path", NULL);
-    const char *usercache_path = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", NULL);
+    const char *xmlcache_path = CPLGetXMLValue(config, "Path", nullptr);
+    const char *usercache_path = CPLGetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", nullptr);
     if(xmlcache_path)
     {
         m_cache_path = xmlcache_path;
@@ -93,7 +93,7 @@ CPLErr GDALWMSCache::Read(const char *key, CPLString *file_name) {
     CPLErr ret = CE_Failure;
     CPLString cache_file(KeyToCacheFile(key));
     VSILFILE* fp = VSIFOpenL(cache_file.c_str(), "rb");
-    if (fp != NULL)
+    if (fp != nullptr)
     {
         VSIFCloseL(fp);
         *file_name = cache_file;

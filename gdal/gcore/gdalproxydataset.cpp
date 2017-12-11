@@ -89,7 +89,7 @@ CPLErr GDALProxyDataset::IRasterIO( GDALRWFlag eRWFlag,
                          poUnderlyingDataset->GetRasterYSize() );
             ret = CE_Failure;
         }
-        else if( panBandMap == NULL && nBandCount > poUnderlyingDataset->GetRasterCount() )
+        else if( panBandMap == nullptr && nBandCount > poUnderlyingDataset->GetRasterCount() )
         {
             ReportError( CE_Failure, CPLE_IllegalArg,
                         "%s: nBandCount cannot be greater than %d",
@@ -101,7 +101,7 @@ CPLErr GDALProxyDataset::IRasterIO( GDALRWFlag eRWFlag,
             ret = CE_None;
             for( int i = 0; i < nBandCount && ret == CE_None; ++i )
             {
-                int iBand = (panBandMap != NULL) ? panBandMap[i] : i + 1;
+                int iBand = (panBandMap != nullptr) ? panBandMap[i] : i + 1;
                 if( iBand < 1 || iBand > poUnderlyingDataset->GetRasterCount() )
                 {
                     ReportError( CE_Failure, CPLE_IllegalArg,
@@ -110,7 +110,7 @@ CPLErr GDALProxyDataset::IRasterIO( GDALRWFlag eRWFlag,
                     ret = CE_Failure;
                 }
 
-                if( ret == CE_None && poUnderlyingDataset->GetRasterBand( iBand ) == NULL )
+                if( ret == CE_None && poUnderlyingDataset->GetRasterBand( iBand ) == nullptr )
                 {
                     ReportError( CE_Failure, CPLE_IllegalArg,
                               "%s: panBandMap[%d]=%d, this band should exist but is NULL!",
@@ -154,29 +154,29 @@ void  GDALProxyDataset::FlushCache()
     }
 }
 
-D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
-D_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
+D_PROXY_METHOD_WITH_RET(char**, nullptr, GetMetadataDomainList, (), ())
+D_PROXY_METHOD_WITH_RET(char**, nullptr, GetMetadata, (const char * pszDomain), (pszDomain))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
                         (char ** papszMetadata, const char * pszDomain),
                         (papszMetadata, pszDomain))
-D_PROXY_METHOD_WITH_RET(const char*, NULL, GetMetadataItem,
+D_PROXY_METHOD_WITH_RET(const char*, nullptr, GetMetadataItem,
                         (const char * pszName, const char * pszDomain),
                         (pszName, pszDomain))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
                         (const char * pszName, const char * pszValue, const char * pszDomain),
                         (pszName, pszValue, pszDomain))
 
-D_PROXY_METHOD_WITH_RET(const char *, NULL, GetProjectionRef, (), ())
+D_PROXY_METHOD_WITH_RET(const char *, nullptr, GetProjectionRef, (), ())
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetProjection, (const char* pszProjection), (pszProjection))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetGeoTransform, (double* padfGeoTransform), (padfGeoTransform))
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGeoTransform, (double* padfGeoTransform), (padfGeoTransform))
 
-D_PROXY_METHOD_WITH_RET(void *, NULL, GetInternalHandle, ( const char * arg1), (arg1))
-D_PROXY_METHOD_WITH_RET(GDALDriver *, NULL, GetDriver, (), ())
-D_PROXY_METHOD_WITH_RET(char **, NULL, GetFileList, (), ())
+D_PROXY_METHOD_WITH_RET(void *, nullptr, GetInternalHandle, ( const char * arg1), (arg1))
+D_PROXY_METHOD_WITH_RET(GDALDriver *, nullptr, GetDriver, (), ())
+D_PROXY_METHOD_WITH_RET(char **, nullptr, GetFileList, (), ())
 D_PROXY_METHOD_WITH_RET(int, 0, GetGCPCount, (), ())
-D_PROXY_METHOD_WITH_RET(const char *, NULL, GetGCPProjection, (), ())
-D_PROXY_METHOD_WITH_RET(const GDAL_GCP *, NULL, GetGCPs, (), ())
+D_PROXY_METHOD_WITH_RET(const char *, nullptr, GetGCPProjection, (), ())
+D_PROXY_METHOD_WITH_RET(const GDAL_GCP *, nullptr, GetGCPs, (), ())
 D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetGCPs,
                         (int nGCPCount, const GDAL_GCP *pasGCPList,
                          const char *pszGCPProjection),
@@ -301,12 +301,12 @@ CPLErr GDALProxyRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     return ret;
 }
 
-RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadataDomainList, (), ())
-RB_PROXY_METHOD_WITH_RET(char**, NULL, GetMetadata, (const char * pszDomain), (pszDomain))
+RB_PROXY_METHOD_WITH_RET(char**, nullptr, GetMetadataDomainList, (), ())
+RB_PROXY_METHOD_WITH_RET(char**, nullptr, GetMetadata, (const char * pszDomain), (pszDomain))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadata,
                         (char ** papszMetadata, const char * pszDomain),
                         (papszMetadata, pszDomain))
-RB_PROXY_METHOD_WITH_RET(const char*, NULL, GetMetadataItem,
+RB_PROXY_METHOD_WITH_RET(const char*, nullptr, GetMetadataItem,
                         (const char * pszName, const char * pszDomain),
                         (pszName, pszDomain))
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetMetadataItem,
@@ -335,15 +335,15 @@ CPLErr GDALProxyRasterBand::FlushCache()
     return ret;
 }
 
-RB_PROXY_METHOD_WITH_RET(char**, NULL, GetCategoryNames, (), ())
+RB_PROXY_METHOD_WITH_RET(char**, nullptr, GetCategoryNames, (), ())
 RB_PROXY_METHOD_WITH_RET(double, 0, GetNoDataValue, (int *pbSuccess), (pbSuccess))
 RB_PROXY_METHOD_WITH_RET(double, 0, GetMinimum, (int *pbSuccess), (pbSuccess))
 RB_PROXY_METHOD_WITH_RET(double, 0, GetMaximum, (int *pbSuccess), (pbSuccess))
 RB_PROXY_METHOD_WITH_RET(double, 0, GetOffset, (int *pbSuccess), (pbSuccess))
 RB_PROXY_METHOD_WITH_RET(double, 0, GetScale, (int *pbSuccess), (pbSuccess))
-RB_PROXY_METHOD_WITH_RET(const char*, NULL, GetUnitType, (), ())
+RB_PROXY_METHOD_WITH_RET(const char*, nullptr, GetUnitType, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALColorInterp, GCI_Undefined, GetColorInterpretation, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALColorTable*, NULL, GetColorTable, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALColorTable*, nullptr, GetColorTable, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, Fill,
                         (double dfRealValue, double dfImaginaryValue),
                         (dfRealValue, dfImaginaryValue))
@@ -378,8 +378,8 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, ComputeRasterMinMax,
 
 RB_PROXY_METHOD_WITH_RET(int, 0, HasArbitraryOverviews, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0,  GetOverviewCount, (), ())
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetOverview, (int arg1), (arg1))
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL,  GetRasterSampleOverview,
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetOverview, (int arg1), (arg1))
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr,  GetRasterSampleOverview,
                         (GUIntBig arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
@@ -414,16 +414,16 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultHistogram,
                         int nBuckets, GUIntBig * panHistogram ),
                         (dfMin, dfMax, nBuckets, panHistogram))
 
-RB_PROXY_METHOD_WITH_RET(GDALRasterAttributeTable *, NULL,
+RB_PROXY_METHOD_WITH_RET(GDALRasterAttributeTable *, nullptr,
                         GetDefaultRAT, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultRAT,
                         ( const GDALRasterAttributeTable * arg1), (arg1))
 
-RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, NULL, GetMaskBand, (), ())
+RB_PROXY_METHOD_WITH_RET(GDALRasterBand*, nullptr, GetMaskBand, (), ())
 RB_PROXY_METHOD_WITH_RET(int, 0, GetMaskFlags, (), ())
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, ( int nFlagsIn ), (nFlagsIn))
 
-RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, NULL, GetVirtualMemAuto,
+RB_PROXY_METHOD_WITH_RET(CPLVirtualMem*, nullptr, GetVirtualMemAuto,
                          ( GDALRWFlag eRWFlag, int *pnPixelSpace, GIntBig *pnLineSpace, char **papszOptions ),
                          (eRWFlag, pnPixelSpace, pnLineSpace, papszOptions) )
 

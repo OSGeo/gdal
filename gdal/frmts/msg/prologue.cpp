@@ -212,8 +212,8 @@ RadiometricProcessingRecord::RadiometricProcessingRecord(std::ifstream & ifile)
 //////////////////////////////////////////////////////////////////////
 
 Prologue::Prologue() :
-    m_idr(0),
-    m_rpr(0)
+    m_idr(nullptr),
+    m_rpr(nullptr)
 {}
 
 Prologue::~Prologue()

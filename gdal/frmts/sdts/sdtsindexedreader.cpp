@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 
 SDTSIndexedReader::SDTSIndexedReader() :
     nIndexSize(-1),
-    papoFeatures(NULL),
+    papoFeatures(nullptr),
     iCurrentFeature(0)
 {}
 
@@ -87,13 +87,13 @@ void SDTSIndexedReader::ClearIndex()
 {
     for( int i = 0; i < nIndexSize; i++ )
     {
-        if( papoFeatures[i] != NULL )
+        if( papoFeatures[i] != nullptr )
             delete papoFeatures[i];
     }
 
     CPLFree( papoFeatures );
 
-    papoFeatures = NULL;
+    papoFeatures = nullptr;
     nIndexSize = 0;
 }
 
@@ -124,13 +124,13 @@ SDTSFeature *SDTSIndexedReader::GetNextFeature()
 
     while( iCurrentFeature < nIndexSize )
     {
-        if( papoFeatures[iCurrentFeature] != NULL )
+        if( papoFeatures[iCurrentFeature] != nullptr )
             return papoFeatures[iCurrentFeature++];
         else
             iCurrentFeature++;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -159,7 +159,7 @@ SDTSFeature *SDTSIndexedReader::GetIndexedFeatureRef( int iRecordId )
         FillIndex();
 
     if( iRecordId < 0 || iRecordId >= nIndexSize )
-        return NULL;
+        return nullptr;
 
     return papoFeatures[iRecordId];
 }
@@ -184,8 +184,8 @@ void SDTSIndexedReader::FillIndex()
     Rewind();
     nIndexSize = 0;
 
-    SDTSFeature *poFeature = NULL;
-    while( (poFeature = GetNextRawFeature()) != NULL )
+    SDTSFeature *poFeature = nullptr;
+    while( (poFeature = GetNextRawFeature()) != nullptr )
     {
         const int iRecordId = poFeature->oModId.nRecord;
 
@@ -194,7 +194,7 @@ void SDTSIndexedReader::FillIndex()
             delete poFeature;
             continue;
         }
-        if( iRecordId < nIndexSize && papoFeatures[iRecordId] != NULL )
+        if( iRecordId < nIndexSize && papoFeatures[iRecordId] != nullptr )
         {
             delete poFeature;
             continue;
@@ -208,7 +208,7 @@ void SDTSIndexedReader::FillIndex()
                 CPLRealloc( papoFeatures, sizeof(void*) * nNewSize ) );
 
             for( int i = nIndexSize; i < nNewSize; i++ )
-                papoFeatures[i] = NULL;
+                papoFeatures[i] = nullptr;
 
             nIndexSize = nNewSize;
         }

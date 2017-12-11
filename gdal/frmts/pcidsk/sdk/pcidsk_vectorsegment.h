@@ -229,7 +229,7 @@ For details on the geosys and parms values see the PCIDSKGeoref class.
         virtual void        AddField( std::string name, ShapeFieldType type,
                                       std::string description,
                                       std::string format,
-                                      ShapeField *default_value=NULL ) = 0;
+                                      ShapeField *default_value=nullptr ) = 0;
 
 /**
 \brief Create a new shape.

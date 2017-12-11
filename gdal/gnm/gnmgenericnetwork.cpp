@@ -42,10 +42,10 @@ GNMGenericNetwork::GNMGenericNetwork() :
     m_nVersion(0),
     m_nGID(0),
     m_nVirtualConnectionGID(-1),
-    m_poMetadataLayer(NULL),
-    m_poGraphLayer(NULL),
-    m_poFeaturesLayer(NULL),
-    m_poLayerDriver(NULL),
+    m_poMetadataLayer(nullptr),
+    m_poGraphLayer(nullptr),
+    m_poFeaturesLayer(nullptr),
+    m_poLayerDriver(nullptr),
     m_bIsRulesChanged(false),
     m_bIsGraphLoaded(false)
 {
@@ -65,7 +65,7 @@ int GNMGenericNetwork::GetLayerCount()
 OGRLayer *GNMGenericNetwork::GetLayer(int nIndex)
 {
     if(nIndex < 0 || nIndex >= (int)m_apoLayers.size())
-        return NULL;
+        return nullptr;
     return m_apoLayers[nIndex];
 }
 
@@ -82,7 +82,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
     // remove layer GFID's from Features layer
 
     m_poFeaturesLayer->ResetReading();
-    while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != nullptr)
     {
         const char *pFeatureClass = poFeature->GetFieldAsString(
                     GNM_SYSFIELD_LAYERNAME);
@@ -98,7 +98,7 @@ OGRErr GNMGenericNetwork::DeleteLayer(int nIndex)
     // remove GFID's from graph layer
 
     m_poGraphLayer->ResetReading();
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         GNMGFID nGFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_SOURCE);
         it = anGFIDs.find(nGFID);
@@ -236,7 +236,7 @@ CPLErr GNMGenericNetwork::ConnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     }
 
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
-    if(poFeature != NULL)
+    if(poFeature != nullptr)
     {
         OGRFeature::DestroyFeature( poFeature );
         CPLError( CE_Failure, CPLE_AppDefined, "The connection already created" );
@@ -307,7 +307,7 @@ CPLErr GNMGenericNetwork::DisconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     }
 
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
-    if (poFeature == NULL)
+    if (poFeature == nullptr)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "The connection not exist" );
         return CE_Failure;
@@ -346,7 +346,7 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
     m_poGraphLayer->SetAttributeFilter(soFilter);
     m_poGraphLayer->ResetReading();
     OGRFeature* poFeature;
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         if(m_poGraphLayer->DeleteFeature(poFeature->GetFID()) != CE_None)
         {
@@ -358,7 +358,7 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
         OGRFeature::DestroyFeature( poFeature );
     }
 
-    m_poGraphLayer->SetAttributeFilter(NULL);
+    m_poGraphLayer->SetAttributeFilter(nullptr);
 
     m_oGraph.DeleteEdge(nFID);
     m_oGraph.DeleteVertex(nFID);
@@ -376,7 +376,7 @@ CPLErr GNMGenericNetwork::ReconnectFeatures(GNMGFID nSrcGFID, GNMGFID nTgtGFID,
     }
 
     OGRFeature *poFeature = FindConnection(nSrcGFID, nTgtGFID, nConGFID);
-    if (poFeature == NULL)
+    if (poFeature == nullptr)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "The connection not exist" );
         return CE_Failure;
@@ -412,7 +412,7 @@ CPLErr GNMGenericNetwork::DisconnectAll()
 
     OGRFeature *poFeature;
     m_poGraphLayer->ResetReading();
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         CPL_IGNORE_RET_VAL(m_poGraphLayer->DeleteFeature(poFeature->GetFID()));
         OGRFeature::DestroyFeature( poFeature );
@@ -431,7 +431,7 @@ OGRFeature *GNMGenericNetwork::GetFeatureByGlobalFID(GNMGFID nFID)
         if(EQUAL(soLayerName, m_apoLayers[i]->GetName()))
             return m_apoLayers[i]->GetFeature(nFID);
     }
-    return NULL;
+    return nullptr;
 }
 
 CPLErr GNMGenericNetwork::CreateRule(const char *pszRuleStr)
@@ -496,13 +496,13 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
     m_poMetadataLayer->ResetReading();
     OGRFeature *poFeature;
     std::vector<GIntBig> aFIDs;
-    while((poFeature = m_poMetadataLayer->GetNextFeature()) != NULL)
+    while((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
     {
         aFIDs.push_back(poFeature->GetFID());
         OGRFeature::DestroyFeature(poFeature);
     }
 
-    m_poMetadataLayer->SetAttributeFilter(NULL);
+    m_poMetadataLayer->SetAttributeFilter(nullptr);
     for(size_t i = 0; i < aFIDs.size(); ++i)
     {
         CPL_IGNORE_RET_VAL(m_poMetadataLayer->DeleteFeature(aFIDs[i]));
@@ -528,7 +528,7 @@ CPLErr GNMGenericNetwork::DeleteRule(const char *pszRuleStr)
 
 char **GNMGenericNetwork::GetRules() const
 {
-    char** papszRules = NULL;
+    char** papszRules = nullptr;
     for(size_t i = 0; i < m_asRules.size(); ++i)
     {
         papszRules = CSLAddString(papszRules, m_asRules[i]);
@@ -552,10 +552,10 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
     int iLayer;
     OGRLayer* poLayer;
 
-    for(iLayer = 0; papszLayerList[iLayer] != NULL; ++iLayer)
+    for(iLayer = 0; papszLayerList[iLayer] != nullptr; ++iLayer)
     {
         poLayer = GetLayerByName(papszLayerList[iLayer]);
-        if(NULL == poLayer)
+        if(nullptr == poLayer)
             continue;
 
         eType = wkbFlatten(poLayer->GetGeomType());
@@ -583,10 +583,10 @@ CPLErr GNMGenericNetwork::ConnectPointsByLines(char **papszLayerList,
         poLayer = paLineLayers[i];
 
         poLayer->ResetReading();
-        while((poFeature = poLayer->GetNextFeature()) != NULL)
+        while((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
             const OGRGeometry* poGeom = poFeature->GetGeometryRef();
-            if(NULL != poGeom)
+            if(nullptr != poGeom)
             {
                 eType = wkbFlatten(poGeom->getGeometryType());
                 if(eType == wkbLineString)
@@ -622,7 +622,7 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
 
     // change block state in layer
     OGRLayer* poLayer = GetLayerByName(m_moFeatureFIDMap[nFID]);
-    if(NULL == poLayer)
+    if(nullptr == poLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to get layer '%s'.",
                   m_moFeatureFIDMap[nFID].c_str() );
@@ -630,7 +630,7 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
     }
 
     OGRFeature* poFeature = poLayer->GetFeature(nFID);
-    if(NULL == poFeature)
+    if(nullptr == poFeature)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to get feature '"
                   GNMGFIDFormat"'.", nFID );
@@ -659,7 +659,7 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
 
     // change block state in graph layer
     m_poGraphLayer->ResetReading();
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         nSrcFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_SOURCE);
         nTgtFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_TARGET);
@@ -714,7 +714,7 @@ CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
 
     OGRFeature *poFeature;
     m_poGraphLayer->ResetReading();
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         if(bIsBlock)
         {
@@ -740,9 +740,9 @@ CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
     for(size_t i = 0; i < m_apoLayers.size(); ++i)
     {
         OGRLayer* poLayer = m_apoLayers[i];
-        if(NULL == poLayer)
+        if(nullptr == poLayer)
             continue;
-        while ((poFeature = poLayer->GetNextFeature()) != NULL)
+        while ((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
             if(bIsBlock)
             {
@@ -775,22 +775,22 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
 
     if(!m_bIsGraphLoaded && LoadGraph() != CE_None)
     {
-        return NULL;
+        return nullptr;
     }
 
     GDALDriver* poMEMDrv =
             OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
-    if (poMEMDrv == NULL)
+    if (poMEMDrv == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
-        return NULL;
+        return nullptr;
     }
 
     GDALDataset* poMEMDS =
-            poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, NULL);
+            poMEMDrv->Create("dummy_name", 0, 0, 0, GDT_Unknown, nullptr);
     OGRSpatialReference oDstSpaRef(GetProjectionRef());
     OGRLayer* poMEMLayer = poMEMDS->CreateLayer(GetAlgorithmName(eAlgorithm,
-                               true), &oDstSpaRef, wkbGeometryCollection, NULL);
+                               true), &oDstSpaRef, wkbGeometryCollection, nullptr);
 
     OGRGNMWrappedResultLayer* poResLayer =
                               new OGRGNMWrappedResultLayer(poMEMDS, poMEMLayer);
@@ -829,10 +829,10 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     case GATConnectedComponents:
         {
             GNMVECTOR anEmitters;
-            if(NULL != papszOptions)
+            if(nullptr != papszOptions)
             {
                 char** papszEmitter = CSLFetchNameValueMultiple(papszOptions, GNM_MD_EMITTER);
-                for(int i = 0; papszEmitter[i] != NULL; ++i)
+                for(int i = 0; papszEmitter[i] != nullptr; ++i)
                 {
                     GNMGFID nEmitter = atol(papszEmitter[i]);
                     anEmitters.push_back(nEmitter);
@@ -919,7 +919,7 @@ GNMGFID GNMGenericNetwork::FindNearestPoint(const OGRPoint* poPoint,
         poLayer->SetSpatialFilterRect(dfMinX, dfMinY,
                                       dfMaxX, dfMaxY);
         poLayer->ResetReading();
-        while((poFeature = poLayer->GetNextFeature()) != NULL)
+        while((poFeature = poLayer->GetNextFeature()) != nullptr)
         {
             GNMGFID nRetFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
             OGRFeature::DestroyFeature(poFeature);
@@ -945,7 +945,7 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
     m_poGraphLayer->SetAttributeFilter(soFilter);
     m_poGraphLayer->ResetReading();
     OGRFeature *f = m_poGraphLayer->GetNextFeature();
-    m_poGraphLayer->SetAttributeFilter(NULL);
+    m_poGraphLayer->SetAttributeFilter(nullptr);
     return f;
 }
 
@@ -996,7 +996,7 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
 
             CPLString soLayerName = m_moFeatureFIDMap[nGFID];
             OGRFeature* poFeature = GetFeatureByGlobalFID(nGFID);
-            if(NULL != poFeature)
+            if(nullptr != poFeature)
             {
                 poResLayer->InsertFeature(poFeature, soLayerName, nNoOfPath,
                                           false);
@@ -1014,7 +1014,7 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
 
             CPLString soLayerName = m_moFeatureFIDMap[nGFID];
             OGRFeature* poFeature = GetFeatureByGlobalFID(nGFID);
-            if(NULL != poFeature)
+            if(nullptr != poFeature)
             {
                 poResLayer->InsertFeature(poFeature, soLayerName, nNoOfPath,
                                           true);
@@ -1027,7 +1027,7 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
 CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
                                         char **papszOptions)
 {
-    if(NULL == m_poLayerDriver)
+    if(nullptr == m_poLayerDriver)
     {
         const char* pszDriverName = CSLFetchNameValueDef(papszOptions,
                                                          GNM_MD_FORMAT,
@@ -1041,7 +1041,7 @@ CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
         }
 
         m_poLayerDriver = GetGDALDriverManager()->GetDriverByName(pszDriverName );
-        if(NULL == m_poLayerDriver)
+        if(nullptr == m_poLayerDriver)
         {
             CPLError( CE_Failure, CPLE_IllegalArg, "%s driver not available",
                       pszDriverName );
@@ -1054,9 +1054,9 @@ CPLErr GNMGenericNetwork::CheckLayerDriver(const char* pszDefaultDriverName,
 CPLErr GNMGenericNetwork::CreateMetadataLayer(GDALDataset * const pDS, int nVersion,
                                            size_t nFieldSize)
 {
-    OGRLayer* pMetadataLayer = pDS->CreateLayer(GNM_SYSLAYER_META, NULL, wkbNone,
-                                                NULL);
-    if (NULL == pMetadataLayer)
+    OGRLayer* pMetadataLayer = pDS->CreateLayer(GNM_SYSLAYER_META, nullptr, wkbNone,
+                                                nullptr);
+    if (nullptr == pMetadataLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
                   GNM_SYSLAYER_META );
@@ -1161,8 +1161,8 @@ CPLErr GNMGenericNetwork::LoadNetworkSrs()
 
 CPLErr GNMGenericNetwork::CreateGraphLayer(GDALDataset * const pDS)
 {
-    m_poGraphLayer = pDS->CreateLayer(GNM_SYSLAYER_GRAPH, NULL, wkbNone, NULL);
-    if (NULL == m_poGraphLayer)
+    m_poGraphLayer = pDS->CreateLayer(GNM_SYSLAYER_GRAPH, nullptr, wkbNone, nullptr);
+    if (nullptr == m_poGraphLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
                   GNM_SYSLAYER_GRAPH );
@@ -1195,8 +1195,8 @@ CPLErr GNMGenericNetwork::CreateGraphLayer(GDALDataset * const pDS)
 
 CPLErr GNMGenericNetwork::CreateFeaturesLayer(GDALDataset * const pDS)
 {
-    m_poFeaturesLayer = pDS->CreateLayer(GNM_SYSLAYER_FEATURES, NULL, wkbNone, NULL);
-    if (NULL == m_poFeaturesLayer)
+    m_poFeaturesLayer = pDS->CreateLayer(GNM_SYSLAYER_FEATURES, nullptr, wkbNone, nullptr);
+    if (nullptr == m_poFeaturesLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' layer failed",
                   GNM_SYSLAYER_FEATURES );
@@ -1222,7 +1222,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
 {
     // read version, description, SRS, classes, rules
     m_poMetadataLayer = pDS->GetLayerByName(GNM_SYSLAYER_META);
-    if(NULL == m_poMetadataLayer)
+    if(nullptr == m_poMetadataLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
                   GNM_SYSLAYER_META );
@@ -1233,7 +1233,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
     int nRulePrefixLen = static_cast<int>(CPLStrnlen(GNM_MD_RULE, 255));
     OGRFeature *poFeature;
     m_poMetadataLayer->ResetReading();
-    while ((poFeature = m_poMetadataLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
     {
         const char *pKey = poFeature->GetFieldAsString(GNM_SYSFIELD_PARAMNAME);
         const char *pValue = poFeature->GetFieldAsString(GNM_SYSFIELD_PARAMVALUE);
@@ -1284,7 +1284,7 @@ CPLErr GNMGenericNetwork::LoadMetadataLayer(GDALDataset * const pDS)
 CPLErr GNMGenericNetwork::LoadGraphLayer(GDALDataset * const pDS)
 {
     m_poGraphLayer = pDS->GetLayerByName(GNM_SYSLAYER_GRAPH);
-    if(NULL == m_poGraphLayer)
+    if(nullptr == m_poGraphLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
                   GNM_SYSLAYER_GRAPH );
@@ -1299,7 +1299,7 @@ CPLErr GNMGenericNetwork::LoadGraph()
     if(m_bIsGraphLoaded)
         return CE_None;
 
-    if(NULL == m_poGraphLayer)
+    if(nullptr == m_poGraphLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Loading of graph data failed");
         return CE_Failure;
@@ -1309,7 +1309,7 @@ CPLErr GNMGenericNetwork::LoadGraph()
     m_poGraphLayer->ResetReading();
     GNMGFID nSrcFID, nTgtFID, nConFID;
     double dfCost, dfInvCost;
-    while ((poFeature = m_poGraphLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poGraphLayer->GetNextFeature()) != nullptr)
     {
         nSrcFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_SOURCE);
         nTgtFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_TARGET);
@@ -1348,7 +1348,7 @@ CPLErr GNMGenericNetwork::LoadGraph()
 CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset * const pDS)
 {
     m_poFeaturesLayer = pDS->GetLayerByName(GNM_SYSLAYER_FEATURES);
-    if(NULL == m_poFeaturesLayer)
+    if(nullptr == m_poFeaturesLayer)
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
                   GNM_SYSLAYER_FEATURES );
@@ -1357,7 +1357,7 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset * const pDS)
 
     OGRFeature *poFeature;
     m_poFeaturesLayer->ResetReading();
-    while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != NULL)
+    while ((poFeature = m_poFeaturesLayer->GetNextFeature()) != nullptr)
     {
         GNMGFID nFID = poFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
         const char *pFeatureClass = poFeature->GetFieldAsString(
@@ -1490,7 +1490,7 @@ CPLErr CPL_STDCALL GNMDeleteRule(GNMGenericNetworkH hNet, const char *pszRuleStr
 
 char** CPL_STDCALL GNMGetRules(GNMGenericNetworkH hNet)
 {
-    VALIDATE_POINTER1( hNet, "GNMDeleteRule", NULL );
+    VALIDATE_POINTER1( hNet, "GNMDeleteRule", nullptr );
 
     return ((GNMGenericNetwork*)hNet)->GetRules();
 }

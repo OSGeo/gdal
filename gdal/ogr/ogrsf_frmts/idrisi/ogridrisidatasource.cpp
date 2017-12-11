@@ -38,8 +38,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRIdrisiDataSource::OGRIdrisiDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0)
 {}
 
@@ -73,7 +73,7 @@ OGRLayer *OGRIdrisiDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -88,43 +88,43 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
     pszName = CPLStrdup( pszFilename );
 
     VSILFILE* fpVCT = VSIFOpenL(pszFilename, "rb");
-    if (fpVCT == NULL)
+    if (fpVCT == nullptr)
         return FALSE;
 
-    char* pszWTKString = NULL;
+    char* pszWTKString = nullptr;
 
 // --------------------------------------------------------------------
 //      Look for .vdc file
 // --------------------------------------------------------------------
     const char* pszVDCFilename = CPLResetExtension(pszFilename, "vdc");
     VSILFILE* fpVDC = VSIFOpenL(pszVDCFilename, "rb");
-    if (fpVDC == NULL)
+    if (fpVDC == nullptr)
     {
         pszVDCFilename = CPLResetExtension(pszFilename, "VDC");
         fpVDC = VSIFOpenL(pszVDCFilename, "rb");
     }
 
-    char** papszVDC = NULL;
-    if (fpVDC != NULL)
+    char** papszVDC = nullptr;
+    if (fpVDC != nullptr)
     {
         VSIFCloseL(fpVDC);
-        fpVDC = NULL;
+        fpVDC = nullptr;
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        papszVDC = CSLLoad2(pszVDCFilename, 1024, 256, NULL);
+        papszVDC = CSLLoad2(pszVDCFilename, 1024, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
     }
 
     OGRwkbGeometryType eType = wkbUnknown;
 
-    if (papszVDC != NULL)
+    if (papszVDC != nullptr)
     {
         CSLSetNameValueSeparator( papszVDC, ":" );
 
         const char *pszVersion = CSLFetchNameValue( papszVDC, "file format" );
 
-        if( pszVersion == NULL || !EQUAL( pszVersion, "IDRISI Vector A.1" ) )
+        if( pszVersion == nullptr || !EQUAL( pszVersion, "IDRISI Vector A.1" ) )
         {
             CSLDestroy( papszVDC );
             VSIFCloseL(fpVCT);
@@ -135,7 +135,7 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
             = CSLFetchNameValue( papszVDC, "ref. system" );
         const char *pszRefUnits = CSLFetchNameValue( papszVDC, "ref. units" );
 
-        if (pszRefSystem != NULL && pszRefUnits != NULL)
+        if (pszRefSystem != nullptr && pszRefUnits != nullptr)
             IdrisiGeoReference2Wkt( pszFilename, pszRefSystem, pszRefUnits,
                                     &pszWTKString);
     }
@@ -174,8 +174,8 @@ int OGRIdrisiDataSource::Open( const char * pszFilename )
     papoLayers = static_cast<OGRLayer**>( CPLMalloc(sizeof(OGRLayer*)) );
     papoLayers[nLayers ++] = poLayer;
 
-    if( pszMinX != NULL && pszMaxX != NULL && pszMinY != NULL &&
-        pszMaxY != NULL)
+    if( pszMinX != nullptr && pszMaxX != nullptr && pszMinY != nullptr &&
+        pszMaxY != nullptr)
     {
         poLayer->SetExtent(
             CPLAtof(pszMinX), CPLAtof(pszMinY), CPLAtof(pszMaxX),

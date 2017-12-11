@@ -109,9 +109,9 @@ class OGRDGNDataSource : public OGRDataSource
     bool                PreCreate( const char *, char ** );
 
     OGRLayer           *ICreateLayer( const char *,
-                                     OGRSpatialReference * = NULL,
+                                     OGRSpatialReference * = nullptr,
                                      OGRwkbGeometryType = wkbUnknown,
-                                     char ** = NULL ) override;
+                                     char ** = nullptr ) override;
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override { return nLayers; }

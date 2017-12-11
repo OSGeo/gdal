@@ -62,8 +62,8 @@ CExternalChannel::CExternalChannel( PCIDSKBuffer &image_headerIn,
         : CPCIDSKChannel( image_headerIn, ih_offsetIn, fileIn, pixel_typeIn, channelnumIn)
 
 {
-    db = NULL;
-    mutex = NULL;
+    db = nullptr;
+    mutex = nullptr;
     writable = false;
     blocks_per_row = 0;
 
@@ -107,7 +107,7 @@ CExternalChannel::~CExternalChannel()
 void CExternalChannel::AccessDB() const
 
 {
-    if( db != NULL )
+    if( db != nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -217,7 +217,7 @@ int CExternalChannel::ReadBlock( int block_index, void *buffer,
     int txoff, tyoff, txsize, tysize;
     int dst_blockx, dst_blocky;
 
-    if( temp_buffer == NULL )
+    if( temp_buffer == nullptr )
         return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
 
     dst_blockx = block_index % blocks_per_row;
@@ -456,7 +456,7 @@ int CExternalChannel::WriteBlock( int block_index, void *buffer )
     int txoff, tyoff, txsize, tysize;
     int dst_blockx, dst_blocky;
 
-    if( temp_buffer == NULL )
+    if( temp_buffer == nullptr )
         return ThrowPCIDSKException(0, "Failed to allocate temporary block buffer." );
 
     dst_blockx = block_index % blocks_per_row;
@@ -733,7 +733,7 @@ void CExternalChannel::SetEChanInfo( std::string filenameIn, int echannelIn,
         CLinkSegment *link = 
             dynamic_cast<CLinkSegment*>( file->GetSegment( link_segment ) );
         
-        if( link != NULL )
+        if( link != nullptr )
         {
             link->SetPath( filenameIn );
             link->Synchronize();

@@ -130,7 +130,7 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 
     VSIFPrintfL( fp, "\n}\n" );
 
-    if( NULL != poFeatureDefn_ )
+    if( nullptr != poFeatureDefn_ )
     {
         poFeatureDefn_->Release();
     }
@@ -147,18 +147,18 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     VSILFILE* fp = poDS_->GetOutputFile();
 
     OGRFeature* poFeatureToWrite;
-    if( poCT_ != NULL || bRFC7946_ )
+    if( poCT_ != nullptr || bRFC7946_ )
     {
         poFeatureToWrite = new OGRFeature(poFeatureDefn_);
         poFeatureToWrite->SetFrom( poFeature );
         OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
         if( poGeometry )
         {
-            const char* const apszOptions[] = { "WRAPDATELINE=YES", NULL };
+            const char* const apszOptions[] = { "WRAPDATELINE=YES", nullptr };
             OGRGeometry* poNewGeom =
                 OGRGeometryFactory::transformWithOptions(
                     poGeometry, poCT_, const_cast<char**>(apszOptions));
-            if( poNewGeom == NULL )
+            if( poNewGeom == nullptr )
             {
                 delete poFeatureToWrite;
                 return OGRERR_FAILURE;
@@ -185,7 +185,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
 
     json_object* poObj =
         OGRGeoJSONWriteFeature( poFeatureToWrite, oWriteOptions_ );
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
 
     if( nOutCounter_ > 0 )
     {
@@ -199,7 +199,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     ++nOutCounter_;
 
     OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
-    if( bWriteFC_BBOX && poGeometry != NULL && !poGeometry->IsEmpty() )
+    if( bWriteFC_BBOX && poGeometry != nullptr && !poGeometry->IsEmpty() )
     {
         OGREnvelope3D sEnvelope = OGRGeoJSONGetBBox( poGeometry,
                                                      oWriteOptions_ );
@@ -296,7 +296,7 @@ OGRErr OGRGeoJSONWriteLayer::CreateField( OGRFieldDefn* poField,
     for( int i = 0; i < poFeatureDefn_->GetFieldCount(); ++i )
     {
         OGRFieldDefn* poDefn = poFeatureDefn_->GetFieldDefn(i);
-        CPLAssert( NULL != poDefn );
+        CPLAssert( nullptr != poDefn );
 
         if( EQUAL( poDefn->GetNameRef(), poField->GetNameRef() ) )
         {

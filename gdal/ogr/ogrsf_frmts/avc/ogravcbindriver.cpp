@@ -38,10 +38,10 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
     if( !poOpenInfo->bStatOK )
-        return NULL;
-    if( poOpenInfo->fpL != NULL )
+        return nullptr;
+    if( poOpenInfo->fpL != nullptr )
     {
         if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00") )
         {
@@ -50,10 +50,10 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
         else
         {
             char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-            if( papszSiblingFiles != NULL )
+            if( papszSiblingFiles != nullptr )
             {
                 bool bFoundCandidateFile = false;
-                for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
+                for( int i = 0; papszSiblingFiles[i] != nullptr; i++ )
                 {
                     if( EQUAL(CPLGetExtension(papszSiblingFiles[i]), "ADF") )
                     {
@@ -62,7 +62,7 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
                     }
                 }
                 if( !bFoundCandidateFile )
-                    return NULL;
+                    return nullptr;
             }
         }
     }
@@ -85,7 +85,7 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     delete poDSE00;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -95,7 +95,7 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAVCBin()
 
 {
-    if( GDALGetDriverByName( "AVCBin" ) != NULL )
+    if( GDALGetDriverByName( "AVCBin" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

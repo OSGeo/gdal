@@ -40,11 +40,11 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGeomediaDataSource::OGRGeomediaDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    papoLayersInvisible(NULL),
+    papoLayersInvisible(nullptr),
     nLayersWithInvisible(0),
-    pszName(NULL),
+    pszName(nullptr),
     bDSUpdate(FALSE)
 {}
 
@@ -111,12 +111,12 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /*      get the DSN.                                                    */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-    char *pszDSN = NULL;
+    char *pszDSN = nullptr;
     if( STARTS_WITH_CI(pszNewName, "GEOMEDIA:") )
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
     {
-        const char *pszDSNStringTemplate = NULL;
+        const char *pszDSNStringTemplate = nullptr;
         pszDSNStringTemplate = CPLGetConfigOption( "GEOMEDIA_DRIVER_TEMPLATE", "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
@@ -136,7 +136,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     CPLDebug( "Geomedia", "EstablishSession(%s)", pszDSN );
 
-    if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
+    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
@@ -179,7 +179,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
         while( oStmt.Fetch() )
         {
             int i, iNew = static_cast<int>(apapszGeomColumns.size());
-            char **papszRecord = NULL;
+            char **papszRecord = nullptr;
             for( i = 0; i < 2; i++ )
                 papszRecord = CSLAddString( papszRecord,
                                             oStmt.GetColData(i) );
@@ -236,7 +236,7 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
         char **papszRecord = apapszGeomColumns[iTable];
         OGRGeomediaTableLayer *poLayer = new OGRGeomediaTableLayer( this );
 
-        if( poLayer->Initialize( papszRecord[0], papszRecord[1], (apoSRS.size()) ? apoSRS[iTable] : NULL )
+        if( poLayer->Initialize( papszRecord[0], papszRecord[1], (apoSRS.size()) ? apoSRS[iTable] : nullptr )
             != CE_None )
         {
             delete poLayer;
@@ -285,17 +285,17 @@ CPLString OGRGeomediaDataSource::GetTableNameFromType(const char* pszTableType)
 OGRSpatialReference* OGRGeomediaDataSource::GetGeomediaSRS(const char* pszGCoordSystemTable,
                                                       const char* pszGCoordSystemGUID)
 {
-    if (pszGCoordSystemTable == NULL || pszGCoordSystemGUID == NULL)
-        return NULL;
+    if (pszGCoordSystemTable == nullptr || pszGCoordSystemGUID == nullptr)
+        return nullptr;
 
     OGRLayer* poGCoordSystemTable = GetLayerByName(pszGCoordSystemTable);
-    if (poGCoordSystemTable == NULL)
-        return NULL;
+    if (poGCoordSystemTable == nullptr)
+        return nullptr;
 
     poGCoordSystemTable->ResetReading();
 
-    OGRFeature* poFeature = NULL;
-    while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
+    OGRFeature* poFeature = nullptr;
+    while((poFeature = poGCoordSystemTable->GetNextFeature()) != nullptr)
     {
         const char* pszCSGUID = poFeature->GetFieldAsString("CSGUID");
         if (pszCSGUID && strcmp(pszCSGUID, pszGCoordSystemGUID) == 0)
@@ -308,7 +308,7 @@ OGRSpatialReference* OGRGeomediaDataSource::GetGeomediaSRS(const char* pszGCoord
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -328,7 +328,7 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -340,8 +340,8 @@ OGRLayer *OGRGeomediaDataSource::GetLayer( int iLayer )
 OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszNameIn )
 
 {
-    if (pszNameIn == NULL)
-        return NULL;
+    if (pszNameIn == nullptr)
+        return nullptr;
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszNameIn);
     if (poLayer)
         return poLayer;
@@ -356,10 +356,10 @@ OGRLayer *OGRGeomediaDataSource::GetLayerByName( const char* pszNameIn )
 
     OGRGeomediaTableLayer *poGeomediaLayer = new OGRGeomediaTableLayer( this );
 
-    if( poGeomediaLayer->Initialize(pszNameIn, NULL, NULL) != CE_None )
+    if( poGeomediaLayer->Initialize(pszNameIn, nullptr, nullptr) != CE_None )
     {
         delete poGeomediaLayer;
-        return NULL;
+        return nullptr;
     }
 
     papoLayersInvisible = (OGRGeomediaLayer**)CPLRealloc(papoLayersInvisible,
@@ -397,7 +397,7 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -407,18 +407,18 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStmt;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRGeomediaSelectLayer *poLayer = NULL;
+    OGRGeomediaSelectLayer *poLayer = nullptr;
 
     poLayer = new OGRGeomediaSelectLayer( this, poStmt );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;

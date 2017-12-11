@@ -123,10 +123,10 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Return requested info.                                          */
 /* -------------------------------------------------------------------- */
-    if( pnType != NULL )
+    if( pnType != nullptr )
         *pnType = nType;
 
-    if( pnLevel != NULL )
+    if( pnLevel != nullptr )
         *pnLevel = nLevel;
 
     return TRUE;
@@ -148,7 +148,7 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
                   GUInt32 *pnXMax, GUInt32 *pnYMax, GUInt32 *pnZMax )
 
 {
-    if( pabyRawData == NULL )
+    if( pabyRawData == nullptr )
         pabyRawData = psDGN->abyElem + 0;
 
     switch( nType )
@@ -171,12 +171,12 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
       case DGNT_3DSOLID_HEADER:
         *pnXMin = DGN_INT32( pabyRawData + 4 );
         *pnYMin = DGN_INT32( pabyRawData + 8 );
-        if( pnZMin != NULL )
+        if( pnZMin != nullptr )
             *pnZMin = DGN_INT32( pabyRawData + 12 );
 
         *pnXMax = DGN_INT32( pabyRawData + 16 );
         *pnYMax = DGN_INT32( pabyRawData + 20 );
-        if( pnZMax != NULL )
+        if( pnZMax != nullptr )
             *pnZMax = DGN_INT32( pabyRawData + 24 );
         return true;
 
@@ -228,7 +228,7 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
 /*      Get the extents if we have raw data in the element, or          */
 /*      loaded in the file buffer.                                      */
 /* -------------------------------------------------------------------- */
-    if( psElement->raw_data != NULL )
+    if( psElement->raw_data != nullptr )
         bResult = DGNGetRawExtents( psDGN, psElement->type,
                                     psElement->raw_data,
                                     anMin + 0, anMin + 1, anMin + 2,
@@ -277,7 +277,7 @@ int DGNGetElementExtents( DGNHandle hDGN, DGNElemCore *psElement,
 static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
 {
-    DGNElemCore *psElement = NULL;
+    DGNElemCore *psElement = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Handle based on element type.                                   */
@@ -493,7 +493,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           if( count < 2 )
           {
               CPLError(CE_Failure, CPLE_AssertionFailed, "count < 2");
-              return NULL;
+              return nullptr;
           }
           DGNElemMultiPoint *psLine = static_cast<DGNElemMultiPoint *>(
               CPLCalloc(sizeof(DGNElemMultiPoint)+(count-1)*sizeof(DGNPoint),
@@ -509,7 +509,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
               {
                   CPLError(CE_Failure, CPLE_AssertionFailed, "new_count < 2");
                   DGNFreeElement(psDGN, psElement);
-                  return NULL;
+                  return nullptr;
               }
               CPLError( CE_Warning, CPLE_AppDefined,
                         "Trimming multipoint vertices to %d from %d because\n"
@@ -863,8 +863,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
         if( nLevel == 24 )
         {
             psElement = DGNParseTagSet( psDGN );
-            if( psElement == NULL )
-                return NULL;
+            if( psElement == nullptr )
+                return nullptr;
         }
         else
         {
@@ -880,7 +880,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           if( psDGN->dimension != 3 )
           {
               CPLError(CE_Failure, CPLE_AssertionFailed, "psDGN->dimension != 3");
-              return NULL;
+              return nullptr;
           }
 
           DGNElemCone *psCone =
@@ -993,7 +993,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           if( numverts <= 0 )
           {
               CPLError(CE_Failure, CPLE_AssertionFailed, "numverts <= 0");
-              return NULL;
+              return nullptr;
           }
 
           DGNElemBSplineSurfaceBoundary *psBounds =
@@ -1150,7 +1150,7 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
         bInsideFilter = true;
 
         if( !DGNLoadRawElement( psDGN, &nType, &nLevel ) )
-            return NULL;
+            return nullptr;
 
         if( psDGN->has_spatial_filter )
         {
@@ -1161,9 +1161,9 @@ DGNElemCore *DGNReadElement( DGNHandle hDGN )
             GUInt32 nXMax = 0;
             GUInt32 nYMin = 0;
             GUInt32 nYMax = 0;
-            if( !DGNGetRawExtents( psDGN, nType, NULL,
-                                   &nXMin, &nYMin, NULL,
-                                   &nXMax, &nYMax, NULL ) )
+            if( !DGNGetRawExtents( psDGN, nType, nullptr,
+                                   &nXMin, &nYMin, nullptr,
+                                   &nXMax, &nYMax, nullptr ) )
             {
                 /* If we don't have spatial characteristics for the element
                    we will pass it through. */
@@ -1388,7 +1388,7 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "nDataOffset >= static_cast<size_t>(psDGN->nElemBytes)");
             DGNFreeElement(psDGN, psElement);
-            return NULL;
+            return nullptr;
         }
 
         /* collect tag name. */
@@ -1557,10 +1557,10 @@ static DGNElemCore *DGNParseTCB( DGNInfo * psDGN )
 
 void DGNFreeElement( CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement )
 {
-    if( psElement->attr_data != NULL )
+    if( psElement->attr_data != nullptr )
         VSIFree( psElement->attr_data );
 
-    if( psElement->raw_data != NULL )
+    if( psElement->raw_data != nullptr )
         VSIFree( psElement->raw_data );
 
     if( psElement->stype == DGNST_TAG_SET )
@@ -1700,7 +1700,7 @@ int DGNLoadTCB( DGNHandle hDGN )
     while( !psDGN->got_tcb )
     {
         DGNElemCore *psElem = DGNReadElement( hDGN );
-        if( psElem == NULL )
+        if( psElem == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "DGNLoadTCB() - unable to find TCB in file." );
@@ -1747,7 +1747,7 @@ const DGNElementInfo *DGNGetElementIndex( DGNHandle hDGN, int *pnElementCount )
 
     DGNBuildIndex( psDGN );
 
-    if( pnElementCount != NULL )
+    if( pnElementCount != nullptr )
         *pnElementCount = psDGN->element_count;
 
     return psDGN->element_index;
@@ -1901,7 +1901,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         if( !(psEI->flags & DGNEIF_DELETED)
             && !(psEI->flags & DGNEIF_COMPLEX)
-            && DGNGetRawExtents( psDGN, nType, NULL,
+            && DGNGetRawExtents( psDGN, nType, nullptr,
                                  anRegion+0, anRegion+1, anRegion+2,
                                  anRegion+3, anRegion+4, anRegion+5 ) )
         {

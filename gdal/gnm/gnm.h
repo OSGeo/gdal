@@ -201,7 +201,7 @@ public:
 
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
-                                   char **papszOptions = NULL ) CPL_OVERRIDE;
+                                   char **papszOptions = nullptr ) CPL_OVERRIDE;
 
     virtual int CloseDependentDatasets() CPL_OVERRIDE;
     virtual void FlushCache(void) CPL_OVERRIDE;
@@ -552,15 +552,15 @@ public:
     /** Intersection */
     OGRErr              Intersection( OGRLayer *pLayerMethod,
                                       OGRLayer *pLayerResult,
-                                      char** papszOptions = NULL,
-                                      GDALProgressFunc pfnProgress = NULL,
-                                      void * pProgressArg = NULL );
+                                      char** papszOptions = nullptr,
+                                      GDALProgressFunc pfnProgress = nullptr,
+                                      void * pProgressArg = nullptr );
     /** Union */
     OGRErr              Union( OGRLayer *pLayerMethod,
                                OGRLayer *pLayerResult,
-                               char** papszOptions = NULL,
-                               GDALProgressFunc pfnProgress = NULL,
-                               void * pProgressArg = NULL );
+                               char** papszOptions = nullptr,
+                               GDALProgressFunc pfnProgress = nullptr,
+                               void * pProgressArg = nullptr );
     /** SymDifference */
     OGRErr              SymDifference( OGRLayer *pLayerMethod,
                                        OGRLayer *pLayerResult,
@@ -570,27 +570,27 @@ public:
     /** Identity */
     OGRErr              Identity( OGRLayer *pLayerMethod,
                                   OGRLayer *pLayerResult,
-                                  char** papszOptions = NULL,
-                                  GDALProgressFunc pfnProgress = NULL,
-                                  void * pProgressArg = NULL );
+                                  char** papszOptions = nullptr,
+                                  GDALProgressFunc pfnProgress = nullptr,
+                                  void * pProgressArg = nullptr );
     /** Update */
     OGRErr              Update( OGRLayer *pLayerMethod,
                                 OGRLayer *pLayerResult,
-                                char** papszOptions = NULL,
-                                GDALProgressFunc pfnProgress = NULL,
-                                void * pProgressArg = NULL );
+                                char** papszOptions = nullptr,
+                                GDALProgressFunc pfnProgress = nullptr,
+                                void * pProgressArg = nullptr );
     /** Clip */
     OGRErr              Clip( OGRLayer *pLayerMethod,
                               OGRLayer *pLayerResult,
-                              char** papszOptions = NULL,
-                              GDALProgressFunc pfnProgress = NULL,
-                              void * pProgressArg = NULL );
+                              char** papszOptions = nullptr,
+                              GDALProgressFunc pfnProgress = nullptr,
+                              void * pProgressArg = nullptr );
     /** Erase */
     OGRErr              Erase( OGRLayer *pLayerMethod,
                                OGRLayer *pLayerResult,
-                               char** papszOptions = NULL,
-                               GDALProgressFunc pfnProgress = NULL,
-                               void * pProgressArg = NULL );
+                               char** papszOptions = nullptr,
+                               GDALProgressFunc pfnProgress = nullptr,
+                               void * pProgressArg = nullptr );
 
     /** GetFeaturesRead */
     GIntBig             GetFeaturesRead();

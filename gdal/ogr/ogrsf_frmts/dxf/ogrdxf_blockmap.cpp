@@ -121,11 +121,11 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
         PushBlockInsertion( osBlockName );
 
-        OGRDXFFeature *poFeature = NULL;
+        OGRDXFFeature *poFeature = nullptr;
         int nIters = 0;
         const int nMaxIters = atoi(
             CPLGetConfigOption("DXF_FEATURE_LIMIT_PER_BLOCK", "10000"));
-        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
+        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != nullptr )
         {
             if( nMaxIters >= 0 && nIters == nMaxIters )
             {
@@ -181,7 +181,7 @@ DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
     CPLString l_osName = pszName;
 
     if( oBlockMap.count( l_osName ) == 0 )
-        return NULL;
+        return nullptr;
     else
         return &(oBlockMap[l_osName]);
 }

@@ -98,7 +98,7 @@ namespace PCIDSK
             nSensor = 0;
             nModel = 0;
             RawToGeo = false;
-            OrbitPtr = NULL;
+            OrbitPtr = nullptr;
         }
         /**
          * destructor
@@ -114,7 +114,7 @@ namespace PCIDSK
          */
         SRITInfo_t(const SRITInfo_t& oSI)
         {
-            OrbitPtr = NULL;
+            OrbitPtr = nullptr;
             Copy(oSI);
         }
 
@@ -139,7 +139,7 @@ namespace PCIDSK
                 return;
             }
             delete OrbitPtr;
-            OrbitPtr = NULL;
+            OrbitPtr = nullptr;
             if(oSI.OrbitPtr)
             {
                 OrbitPtr = new EphemerisSeg_t(*oSI.OrbitPtr);

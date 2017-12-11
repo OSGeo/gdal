@@ -49,7 +49,7 @@ const static int MAGIC1_OFFSET = 28; /* Magic number 1: 0x43534152 */
 class COSARDataset : public GDALDataset
 {
 public:
-        COSARDataset() : fp(NULL) { }
+        COSARDataset() : fp(nullptr) { }
         ~COSARDataset();
         VSILFILE *fp;
 
@@ -143,7 +143,7 @@ CPLErr COSARRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
 COSARDataset::~COSARDataset()
 {
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         VSIFCloseL(fp);
     }
@@ -152,11 +152,11 @@ COSARDataset::~COSARDataset()
 GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     long nRTNB;
     /* Check if we're actually a COSAR data set. */
-    if( pOpenInfo->nHeaderBytes < 4 || pOpenInfo->fpL == NULL)
-        return NULL;
+    if( pOpenInfo->nHeaderBytes < 4 || pOpenInfo->fpL == nullptr)
+        return nullptr;
 
     if (!STARTS_WITH_CI((char *)pOpenInfo->pabyHeader+MAGIC1_OFFSET, "CSAR"))
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -166,7 +166,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The COSAR driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     /* this is a cosar dataset */
@@ -174,7 +174,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 
     /* steal fp */
     pDS->fp = pOpenInfo->fpL;
-    pOpenInfo->fpL = NULL;
+    pOpenInfo->fpL = nullptr;
 
     VSIFSeekL(pDS->fp, RS_OFFSET, SEEK_SET);
     VSIFReadL(&pDS->nRasterXSize, 1, 4, pDS->fp);
@@ -190,7 +190,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
     if( !GDALCheckDatasetDimensions(pDS->nRasterXSize, pDS->nRasterYSize) )
     {
         delete pDS;
-        return NULL;
+        return nullptr;
     }
 
     VSIFSeekL(pDS->fp, RTNB_OFFSET, SEEK_SET);
@@ -208,7 +208,7 @@ GDALDataset *COSARDataset::Open( GDALOpenInfo * pOpenInfo ) {
 void GDALRegister_COSAR()
 
 {
-    if( GDALGetDriverByName( "cosar" ) != NULL )
+    if( GDALGetDriverByName( "cosar" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

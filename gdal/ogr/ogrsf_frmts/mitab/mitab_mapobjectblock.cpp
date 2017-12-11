@@ -122,7 +122,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_OBJECT_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -137,7 +137,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
                  "TABMAPObjectBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
                  m_numDataBytes, nBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -284,7 +284,7 @@ int     TABMAPObjectBlock::CommitToFile()
 {
     int nStatus = 0;
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
      "TABMAPObjectBlock::CommitToFile(): Block has not been initialized yet!");
@@ -666,11 +666,11 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
 {
     CPLErrorReset();
 
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPObjectBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }
@@ -690,7 +690,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         /* We need the mapfile's header block */
         TABRawBinBlock *poBlock =
             TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
-        if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
+        if (poBlock==nullptr || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Failed reading header block.");
@@ -699,8 +699,8 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         TABMAPHeaderBlock *poHeader = (TABMAPHeaderBlock *)poBlock;
 
         Rewind();
-        TABMAPObjHdr *poObjHdr = NULL;
-        while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
+        TABMAPObjHdr *poObjHdr = nullptr;
+        while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != nullptr)
         {
             fprintf(fpOut,
                     "   object id=%d, type=%d, offset=%d (%d), size=%d\n"
@@ -741,7 +741,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
  **********************************************************************/
 TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
 {
-    TABMAPObjHdr *poObj = NULL;
+    TABMAPObjHdr *poObj = nullptr;
 
     switch(nNewObjType)
     {
@@ -834,7 +834,7 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
 TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
                                         TABMAPHeaderBlock *poHeader)
 {
-    TABMAPObjHdr *poObjHdr = NULL;
+    TABMAPObjHdr *poObjHdr = nullptr;
 
     if (poObjBlock->AdvanceToNextObject(poHeader) != -1)
     {
@@ -845,7 +845,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
         {
             // Failed reading object in block... an error was already produced
             delete poObjHdr;
-            return NULL;
+            return nullptr;
         }
     }
 

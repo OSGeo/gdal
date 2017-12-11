@@ -102,7 +102,7 @@ CPLErr RMFRasterBand::ReadBuffer( GByte *pabyBuf, GUInt32 nBytes ) const
 {
     RMFDataset  *poGDS = reinterpret_cast<RMFDataset *>( poDS );
 
-    CPLAssert( pabyBuf != NULL && poGDS->fp != NULL );
+    CPLAssert( pabyBuf != nullptr && poGDS->fp != nullptr );
 
     const vsi_l_offset nOffset = VSIFTellL( poGDS->fp );
 
@@ -157,10 +157,10 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     RMFDataset  *poGDS = reinterpret_cast<RMFDataset *>( poDS );
 
-    CPLAssert( poGDS != NULL
+    CPLAssert( poGDS != nullptr
                && nBlockXOff >= 0
                && nBlockYOff >= 0
-               && pImage != NULL );
+               && pImage != nullptr );
 
     memset( pImage, 0, nBlockBytes );
 
@@ -325,7 +325,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 GByte *pabyRawBuf = reinterpret_cast<GByte *>(
                     VSIMalloc( nRawBytes ) );
-                if( pabyRawBuf == NULL )
+                if( pabyRawBuf == nullptr )
                 {
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Can't allocate a buffer for raw data of "
@@ -502,10 +502,10 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 {
-    CPLAssert( poDS != NULL
+    CPLAssert( poDS != nullptr
                && nBlockXOff >= 0
                && nBlockYOff >= 0
-               && pImage != NULL );
+               && pImage != nullptr );
 
     RMFDataset *poGDS = reinterpret_cast<RMFDataset *>( poDS );
     const GUInt32 nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
@@ -817,17 +817,17 @@ RMFDataset::RMFDataset() :
     eRMFType(RMFT_RSW),
     nXTiles(0),
     nYTiles(0),
-    paiTiles(NULL),
+    paiTiles(nullptr),
     nColorTableSize(0),
-    pabyColorTable(NULL),
-    poColorTable(NULL),
+    pabyColorTable(nullptr),
+    poColorTable(nullptr),
     pszProjection(CPLStrdup( "" )),
     pszUnitType(CPLStrdup( RMF_UnitsEmpty )),
     bBigEndian(false),
     bHeaderDirty(false),
-    pszFilename(NULL),
-    fp(NULL),
-    Decompress(NULL)
+    pszFilename(nullptr),
+    fp(nullptr),
+    Decompress(nullptr)
 {
     nBands = 0;
     adfGeoTransform[0] = 0.0;
@@ -852,7 +852,7 @@ RMFDataset::~RMFDataset()
     CPLFree( pszProjection );
     CPLFree( pszUnitType );
     CPLFree( pabyColorTable );
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         delete poColorTable;
     if( fp )
         VSIFCloseL( fp );
@@ -1131,7 +1131,7 @@ void RMFDataset::FlushCache()
 int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 {
-    if( poOpenInfo->pabyHeader == NULL)
+    if( poOpenInfo->pabyHeader == nullptr)
         return FALSE;
 
     if( memcmp(poOpenInfo->pabyHeader, RMF_SigRSW, sizeof(RMF_SigRSW)) != 0
@@ -1149,20 +1149,20 @@ int RMFDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    GDALDataset* poDS = Open( poOpenInfo, NULL, 0 );
-    if( poDS == NULL )
+    GDALDataset* poDS = Open( poOpenInfo, nullptr, 0 );
+    if( poDS == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     RMFDataset* poCurrentLayer = dynamic_cast<RMFDataset*>( poDS );
     RMFDataset* poParent = poCurrentLayer;
     const int   nMaxPossibleOvCount = 64;
 
-    for( int iOv = 0; iOv < nMaxPossibleOvCount && poCurrentLayer != NULL; ++iOv )
+    for( int iOv = 0; iOv < nMaxPossibleOvCount && poCurrentLayer != nullptr; ++iOv )
     {
         poCurrentLayer = poCurrentLayer->OpenOverview( poParent, poOpenInfo );
-        if( poCurrentLayer == NULL )
+        if( poCurrentLayer == nullptr )
             break;
         poParent->poOvrDatasets.push_back( poCurrentLayer );
     }
@@ -1175,7 +1175,7 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               vsi_l_offset nNextHeaderOffset )
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*  Create a corresponding GDALDataset.                                 */
@@ -1190,7 +1190,7 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
     if( !poDS->fp )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 #define RMF_READ_SHORT(ptr, value, offset)                              \
@@ -1254,7 +1254,7 @@ do {                                                                    \
                        poDS->fp ) != sizeof(abyHeader) )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         if( memcmp(abyHeader, RMF_SigMTW, sizeof(RMF_SigMTW)) == 0 )
@@ -1328,7 +1328,7 @@ do {                                                                    \
         RMF_READ_ULONG( abyHeader, poDS->sHeader.nExtHdrSize, 316 );
     }
 
-    if( poParentDS != NULL )
+    if( poParentDS != nullptr )
     {
         if( 0 != memcmp( poDS->sHeader.bySignature,
                          poParentDS->sHeader.bySignature,
@@ -1337,7 +1337,7 @@ do {                                                                    \
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "Invalid subheader signature." );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1350,14 +1350,14 @@ do {                                                                    \
         if( poDS->sHeader.nExtHdrSize > 1000000 )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         GByte *pabyExtHeader = reinterpret_cast<GByte *>(
             VSICalloc( poDS->sHeader.nExtHdrSize, 1 ) );
-        if( pabyExtHeader == NULL )
+        if( pabyExtHeader == nullptr )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         VSIFSeekL( poDS->fp, poDS->GetFileOffset( poDS->sHeader.nExtHdrOffset ),
@@ -1431,7 +1431,7 @@ do {                                                                    \
         !GDALCheckDatasetDimensions(poDS->sHeader.nWidth, poDS->sHeader.nHeight) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1446,7 +1446,7 @@ do {                                                                    \
         if( nFileSize < poDS->sHeader.nTileTblSize )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1455,7 +1455,7 @@ do {                                                                    \
                    SEEK_SET ) < 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->paiTiles = reinterpret_cast<GUInt32 *>(
@@ -1463,7 +1463,7 @@ do {                                                                    \
     if( !poDS->paiTiles )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFReadL( poDS->paiTiles, 1, poDS->sHeader.nTileTblSize,
@@ -1471,7 +1471,7 @@ do {                                                                    \
     {
         CPLDebug( "RMF", "Can't read tiles offsets/sizes table." );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 #ifdef CPL_MSB
@@ -1524,7 +1524,7 @@ do {                                                                    \
             case 1:
             case 4:
             case 8:
-                if( poParentDS != NULL && poParentDS->poColorTable != NULL )
+                if( poParentDS != nullptr && poParentDS->poColorTable != nullptr )
                 {
                     poDS->poColorTable = poParentDS->poColorTable->Clone();
                 }
@@ -1543,15 +1543,15 @@ do {                                                                    \
                                   nExpectedColorTableBytes,
                                   poDS->sHeader.nClrTblSize );
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
                     poDS->pabyColorTable = reinterpret_cast<GByte *>(
                         VSIMalloc( nExpectedColorTableBytes ) );
-                    if( poDS->pabyColorTable == NULL )
+                    if( poDS->pabyColorTable == nullptr )
                     {
                         CPLDebug( "RMF", "Can't allocate color table." );
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
                     if( VSIFSeekL( poDS->fp,
                                    poDS->GetFileOffset( poDS->sHeader.nClrTblOffset ),
@@ -1560,7 +1560,7 @@ do {                                                                    \
                         CPLDebug( "RMF",
                                   "Can't seek to color table location." );
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
                     if( VSIFReadL( poDS->pabyColorTable, 1,
                                    nExpectedColorTableBytes, poDS->fp )
@@ -1568,7 +1568,7 @@ do {                                                                    \
                     {
                         CPLDebug( "RMF", "Can't read color table." );
                         delete poDS;
-                        return NULL;
+                        return nullptr;
                     }
 
                     poDS->poColorTable = new GDALColorTable();
@@ -1610,7 +1610,7 @@ do {                                                                    \
         CPLDebug("RMF", "Invalid tile dimension : %u x %u",
                  poDS->sHeader.nTileWidth, poDS->sHeader.nTileHeight);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const int nDataSize = GDALGetDataTypeSizeBytes( eType );
@@ -1623,7 +1623,7 @@ do {                                                                    \
     {
         CPLDebug ("RMF", "Too big raster / tile dimension");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nXTiles = DIV_ROUND_UP( poDS->nRasterXSize, nBlockXSize );
@@ -1645,7 +1645,7 @@ do {                                                                    \
              && eType == GDT_Int32 )
         poDS->Decompress = &DEMDecompress;
     else    // No compression
-        poDS->Decompress = NULL;
+        poDS->Decompress = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*  Create band information objects.                                    */
@@ -1767,7 +1767,7 @@ do {                                                                    \
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    if( nNextHeaderOffset == 0 && poParentDS == NULL )
+    if( nNextHeaderOffset == 0 && poParentDS == nullptr )
     {
         poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     }
@@ -1790,7 +1790,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
                   "RMF driver doesn't support %d bands. Must be 1 or 3.",
                   nBands );
 
-        return NULL;
+        return nullptr;
     }
 
     if( nBands == 1
@@ -1806,7 +1806,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
              "by the format for single-band images.",
              GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
     if( nBands == 3 && eType != GDT_Byte )
@@ -1817,7 +1817,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
              "only Byte type supported by the format for three-band images.",
              GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1826,12 +1826,12 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     RMFDataset *poDS = new RMFDataset();
 
     poDS->fp = VSIFOpenL( pszFilename, "w+b" );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Unable to create file %s.",
                   pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->pszFilename = pszFilename;
@@ -1856,7 +1856,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     const char *pszRMFHUGE = CSLFetchNameValue(papszParmList, "RMFHUGE");
     GUInt32 iVersion = RMF_VERSION;
 
-    if( pszRMFHUGE == NULL )
+    if( pszRMFHUGE == nullptr )
         pszRMFHUGE = "NO";// Keep old behavior by default
 
     if( EQUAL(pszRMFHUGE,"NO") )
@@ -1895,13 +1895,13 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
     poDS->sHeader.nWidth = nXSize;
 
     const char *pszValue = CSLFetchNameValue(papszParmList,"BLOCKXSIZE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         nBlockXSize = atoi( pszValue );
     if( static_cast<int>(nBlockXSize) <= 0 )
         nBlockXSize = RMF_DEFAULT_BLOCKXSIZE;
 
     pszValue = CSLFetchNameValue(papszParmList,"BLOCKYSIZE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         nBlockYSize = atoi( pszValue );
     if( static_cast<int>(nBlockYSize) <= 0 )
         nBlockYSize = RMF_DEFAULT_BLOCKXSIZE;
@@ -1940,7 +1940,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
                       "Retry with MTW ?",
                       poDS->sHeader.nBitDepth );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         poDS->sHeader.nClrTblOffset = poDS->GetRMFOffset( nCurPtr, &nCurPtr );
@@ -1948,10 +1948,10 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->sHeader.nClrTblSize = poDS->nColorTableSize * 4;
         poDS->pabyColorTable = reinterpret_cast<GByte *>(
             VSI_MALLOC_VERBOSE( poDS->sHeader.nClrTblSize ) );
-        if( poDS->pabyColorTable == NULL )
+        if( poDS->pabyColorTable == nullptr )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         for( GUInt32 i = 0; i < poDS->nColorTableSize; i++ )
         {
@@ -2051,14 +2051,14 @@ GUInt32 RMFDataset::GetRMFOffset( vsi_l_offset nFileOffset,
         const GUInt32 iRMFOffset = static_cast<GUInt32>(
             (nFileOffset + (RMF_HUGE_OFFSET_FACTOR-1) ) /
             RMF_HUGE_OFFSET_FACTOR );
-        if( pnNewFileOffset != NULL )
+        if( pnNewFileOffset != nullptr )
         {
             *pnNewFileOffset = GetFileOffset( iRMFOffset );
         }
         return iRMFOffset;
     }
 
-    if( pnNewFileOffset != NULL )
+    if( pnNewFileOffset != nullptr )
     {
         *pnNewFileOffset = nFileOffset;
     }
@@ -2069,12 +2069,12 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
 {
     if( sHeader.nOvrOffset == 0 )
     {
-        return NULL;
+        return nullptr;
     }
 
-    if( poParent == NULL )
+    if( poParent == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     vsi_l_offset nSubOffset = GetFileOffset(sHeader.nOvrOffset);
@@ -2091,14 +2091,14 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "Recursive subdataset list is detected. "
                       "Overview open failed." );
-            return NULL;
+            return nullptr;
         }
 
         for( size_t n = 0; n != poParent->poOvrDatasets.size() - 1; ++n )
         {
             RMFDataset* poOvr( poParent->poOvrDatasets[n] );
 
-            if( poOvr == NULL )
+            if( poOvr == nullptr )
                 continue;
             if( poOvr->GetFileOffset( poOvr->sHeader.nOvrOffset ) ==
                 nSubOffset )
@@ -2106,7 +2106,7 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
                 CPLError( CE_Failure, CPLE_IllegalArg,
                           "Recursive subdataset list is detected. "
                           "Overview open failed." );
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -2115,11 +2115,11 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
     GByte * pabyNewHeader;
     pabyNewHeader = static_cast<GByte *>( CPLRealloc(poOpenInfo->pabyHeader,
                                                      nHeaderSize + 1) );
-    if( pabyNewHeader == NULL )
+    if( pabyNewHeader == nullptr )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Can't allocate buffer for overview header" );
-        return NULL;
+        return nullptr;
     }
 
     poOpenInfo->pabyHeader = pabyNewHeader;
@@ -2130,9 +2130,9 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
 
     RMFDataset* poSub = (RMFDataset*)Open( poOpenInfo, poParent, nSubOffset );
 
-    if( poSub == NULL )
+    if( poSub == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     return poSub;
@@ -2145,7 +2145,7 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
 void GDALRegister_RMF()
 
 {
-    if( GDALGetDriverByName( "RMF" ) != NULL )
+    if( GDALGetDriverByName( "RMF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

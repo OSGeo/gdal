@@ -329,25 +329,25 @@ bool MakeDir(const CPLString &dirname)
 
 CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path, const char *value)
 {
-    if (node == NULL) {
-        return NULL;
+    if (node == nullptr) {
+        return nullptr;
     }
-    for (CPLXMLNode *child = node->psChild; child != NULL; child = child->psNext) {
+    for (CPLXMLNode *child = node->psChild; child != nullptr; child = child->psNext) {
         if (EQUAL(CPLGetXMLValue(child, path, ""), value)) {
             return child;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 bool CPLGetXMLBoolean(CPLXMLNode *poRoot, const char *pszPath)
 {
     // returns true if path exists and does not contain untrue value
     poRoot = CPLGetXMLNode(poRoot, pszPath);
-    if (poRoot == NULL) {
+    if (poRoot == nullptr) {
         return false;
     }
-    return CPLTestBool(CPLGetXMLValue(poRoot, NULL, ""));
+    return CPLTestBool(CPLGetXMLValue(poRoot, nullptr, ""));
 }
 
 bool CPLUpdateXML(CPLXMLNode *poRoot, const char *pszPath, const char *new_value)
@@ -369,25 +369,25 @@ bool SetupCache(CPLString &cache, bool clear)
 {
     if (cache == "") {
 #ifdef WIN32
-        const char* home = CPLGetConfigOption("USERPROFILE", NULL);
+        const char* home = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
-        const char* home = CPLGetConfigOption("HOME", NULL);
+        const char* home = CPLGetConfigOption("HOME", nullptr);
 #endif
         if (home) {
-            cache = CPLFormFilename(home, ".gdal", NULL);
+            cache = CPLFormFilename(home, ".gdal", nullptr);
         } else {
-            const char *dir = CPLGetConfigOption("CPL_TMPDIR", NULL);
-            if (!dir) dir = CPLGetConfigOption( "TMPDIR", NULL );
-            if (!dir) dir = CPLGetConfigOption( "TEMP", NULL );
-            const char* username = CPLGetConfigOption("USERNAME", NULL);
-            if (!username) username = CPLGetConfigOption("USER", NULL);
+            const char *dir = CPLGetConfigOption("CPL_TMPDIR", nullptr);
+            if (!dir) dir = CPLGetConfigOption( "TMPDIR", nullptr );
+            if (!dir) dir = CPLGetConfigOption( "TEMP", nullptr );
+            const char* username = CPLGetConfigOption("USERNAME", nullptr);
+            if (!username) username = CPLGetConfigOption("USER", nullptr);
             if (dir && username) {
                 CPLString subdir = ".gdal_";
                 subdir += username;
-                cache = CPLFormFilename(dir, subdir, NULL);
+                cache = CPLFormFilename(dir, subdir, nullptr);
             }
         }
-        cache = CPLFormFilename(cache, "wcs_cache", NULL);
+        cache = CPLFormFilename(cache, "wcs_cache", nullptr);
     }
     if (!MakeDir(cache)) {
         return false;
@@ -399,13 +399,13 @@ bool SetupCache(CPLString &cache, bool clear)
             if (folder[i][0] == '.') {
                 continue;
             }
-            CPLString filepath = CPLFormFilename(cache, folder[i], NULL);
+            CPLString filepath = CPLFormFilename(cache, folder[i], nullptr);
             remove(filepath);
         }
         CSLDestroy(folder);
     }
     // make sure the index exists and is writable
-    CPLString db = CPLFormFilename(cache, "db", NULL);
+    CPLString db = CPLFormFilename(cache, "db", nullptr);
     VSILFILE *f = VSIFOpenL(db, "r");
     if (f) {
         VSIFCloseL(f);
@@ -418,7 +418,7 @@ bool SetupCache(CPLString &cache, bool clear)
             return false;
         }
     }
-    srand((unsigned int)time(NULL)); // not to have the same names in the cache
+    srand((unsigned int)time(nullptr)); // not to have the same names in the cache
     return true;
 }
 
@@ -430,12 +430,12 @@ static bool CompareStrings(const CPLString &a, const CPLString &b)
 std::vector<CPLString> ReadCache(const CPLString &cache)
 {
     std::vector<CPLString> contents;
-    CPLString db = CPLFormFilename(cache, "db", NULL);
+    CPLString db = CPLFormFilename(cache, "db", nullptr);
     char **data = CSLLoad(db);
     if (data) {
         for (int i = 0; data[i]; ++i) {
             char *val = strchr(data[i], '=');
-            if (val != NULL && *val == '=') {
+            if (val != nullptr && *val == '=') {
                 val += 1;
                 if (strcmp(val, "bar") != 0) {
                     contents.push_back(val);
@@ -461,14 +461,14 @@ std::vector<CPLString> ReadCache(const CPLString &cache)
 bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CPLString &value)
 {
     // depending on which one of key & value is not "" delete the relevant entry
-    CPLString db = CPLFormFilename(cache, "db", NULL);
+    CPLString db = CPLFormFilename(cache, "db", nullptr);
     char **data = CSLLoad(db); // returns NULL in error and for empty files
-    char **data2 = CSLAddNameValue(NULL, "foo", "bar");
+    char **data2 = CSLAddNameValue(nullptr, "foo", "bar");
     CPLString filename = "";
     if (data) {
         for (int i = 0; data[i]; ++i) {
             char *val = strchr(data[i], '=');
-            if (val != NULL && *val == '=') {
+            if (val != nullptr && *val == '=') {
                 *val = '\0';
                 val = val + 1;
                 if ((key != "" && key == data[i])
@@ -498,7 +498,7 @@ bool DeleteEntryFromCache(const CPLString &cache, const CPLString &key, const CP
             }
             CPLString name = folder[i];
             if (name.find(filename) != std::string::npos) {
-                CPLString filepath = CPLFormFilename(cache, name, NULL);
+                CPLString filepath = CPLFormFilename(cache, name, nullptr);
                 if (VSIUnlink(filepath) == -1) {
                     // error but can't do much, raise a warning?
                 }
@@ -524,7 +524,7 @@ CPLErr SearchCache(const CPLString &cache,
                    bool &found)
 {
     found = false;
-    CPLString db = CPLFormFilename(cache, "db", NULL);
+    CPLString db = CPLFormFilename(cache, "db", nullptr);
     VSILFILE *f = VSIFOpenL(db, "r");
     if (!f) {
         CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
@@ -532,7 +532,7 @@ CPLErr SearchCache(const CPLString &cache,
     }
     while (const char *line = CPLReadLineL(f)) {
         char *value = strchr((char *)line, '=');
-        if (value == NULL || *value != '=') {
+        if (value == nullptr || *value != '=') {
             continue;
         }
         *value = '\0';
@@ -544,7 +544,7 @@ CPLErr SearchCache(const CPLString &cache,
     }
     VSIFCloseL(f);
     if (found) {
-        filename = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
+        filename = CPLFormFilename(cache, (filename + ext).c_str(), nullptr);
         found = FileIsReadable(filename);
         // if not readable, we should delete the entry
     }
@@ -566,7 +566,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
 {
     // assuming the cache was locked to us and the url is not in the cache
     CPLString store = filename;
-    CPLString db = CPLFormFilename(cache, "db", NULL);
+    CPLString db = CPLFormFilename(cache, "db", nullptr);
     VSILFILE *f = VSIFOpenL(db, "a");
     if (!f) {
         CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n", db.c_str(), errno);
@@ -586,7 +586,7 @@ CPLErr AddEntryToCache(const CPLString &cache,
             }
         }
         // replace X with random character from a-zA-Z
-        path = CPLFormFilename(cache, (filename + ext).c_str(), NULL);
+        path = CPLFormFilename(cache, (filename + ext).c_str(), nullptr);
     } while (VSIStatExL(path, &stat, VSI_STAT_EXISTS_FLAG) == 0);
     VSILFILE *f2 = VSIFOpenL(path, "w");
     if (f2) {
@@ -618,7 +618,7 @@ CPLXMLNode *AddSimpleMetaData(char ***metadata,
             CPLXMLNode *node3 = CPLGetXMLNode(node2, keys[i]);
             if (node3) {
                 CPLString name = path + keys[i];
-                CPLString value = CPLGetXMLValue(node3, NULL, "");
+                CPLString value = CPLGetXMLValue(node3, nullptr, "");
                 value.Trim();
                 *metadata = CSLSetNameValue(*metadata, name, value);
             }
@@ -635,12 +635,12 @@ CPLString GetKeywords(CPLXMLNode *root,
     CPLXMLNode *keywords = (path != "") ? CPLGetXMLNode(root, path) : root;
     if (keywords) {
         std::vector<unsigned int> epsg_codes;
-        for (CPLXMLNode *node = keywords->psChild; node != NULL; node = node->psNext) {
+        for (CPLXMLNode *node = keywords->psChild; node != nullptr; node = node->psNext) {
             if (node->eType != CXT_Element) {
                 continue;
             }
             if (kw == node->pszValue) {
-                CPLString word = CPLGetXMLValue(node, NULL, "");
+                CPLString word = CPLGetXMLValue(node, nullptr, "");
                 word.Trim();
 
                 // crs, replace "http://www.opengis.net/def/crs/EPSG/0/" with EPSG:
@@ -756,10 +756,10 @@ CPLString ParseCRS(CPLXMLNode *node)
 // appropriate means, that the name is a real CRS
 bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projection)
 {
-    if (*projection != NULL) {
+    if (*projection != nullptr) {
         CPLFree(*projection);
     }
-    *projection = NULL;
+    *projection = nullptr;
     if (crs.empty()) {
         return true;
     }
@@ -788,7 +788,7 @@ bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projec
         }
     }
     OGRSpatialReference local_sr;
-    OGRSpatialReference *sr_pointer = sr != NULL ? sr : &local_sr;
+    OGRSpatialReference *sr_pointer = sr != nullptr ? sr : &local_sr;
     if (sr_pointer->SetFromUserInput(crs2) == OGRERR_NONE) {
         sr_pointer->exportToWkt(projection);
         return true;
@@ -799,7 +799,7 @@ bool CRS2Projection(const CPLString &crs, OGRSpatialReference *sr, char **projec
 bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection)
 {
     OGRSpatialReference oSRS;
-    char *tmp = NULL;
+    char *tmp = nullptr;
     swap = false;
     if (!CRS2Projection(crs, &oSRS, &tmp)) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -808,7 +808,7 @@ bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection
         return false;
     }
     if (tmp) {
-        if (projection != NULL) {
+        if (projection != nullptr) {
             *projection = tmp;
         } else {
             CPLFree(tmp);
@@ -845,14 +845,14 @@ std::vector<CPLString> ParseBoundingBox(CPLXMLNode *node)
         lc = CPLGetXMLValue(node, "LowerCorner", "");
     }
     if (lc == "") {
-        for (CPLXMLNode *n = node->psChild; n != NULL; n = n->psNext) {
+        for (CPLXMLNode *n = node->psChild; n != nullptr; n = n->psNext) {
             if (n->eType != CXT_Element || !EQUAL(n->pszValue, "pos")) {
                 continue;
             }
             if (lc == "") {
-                lc = CPLGetXMLValue(node, NULL, "");
+                lc = CPLGetXMLValue(node, nullptr, "");
             } else {
-                uc = CPLGetXMLValue(node, NULL, "");
+                uc = CPLGetXMLValue(node, nullptr, "");
             }
         }
     } else {

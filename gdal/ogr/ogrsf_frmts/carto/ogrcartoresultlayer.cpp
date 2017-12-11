@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 OGRCARTOResultLayer::OGRCARTOResultLayer( OGRCARTODataSource* poDSIn,
                                               const char * pszRawQueryIn ) :
     OGRCARTOLayer(poDSIn),
-    poFirstFeature(NULL)
+    poFirstFeature(nullptr)
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );
@@ -59,7 +59,7 @@ OGRCARTOResultLayer::~OGRCARTOResultLayer()
 
 OGRFeatureDefn * OGRCARTOResultLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         return poFeatureDefn;
 
     EstablishLayerDefn("result", poObjIn);
@@ -76,7 +76,7 @@ OGRFeature  *OGRCARTOResultLayer::GetNextRawFeature()
     if( poFirstFeature )
     {
         OGRFeature* poRet = poFirstFeature;
-        poFirstFeature = NULL;
+        poFirstFeature = nullptr;
         return poRet;
     }
     else

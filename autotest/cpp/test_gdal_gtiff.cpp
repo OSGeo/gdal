@@ -59,7 +59,7 @@ namespace tut
         rasters_t rasters_;
 
         test_gtiff_data()
-            : drv_(NULL), drv_name_("GTiff")
+            : drv_(nullptr), drv_name_("GTiff")
         {
             drv_ = GDALGetDriverByName(drv_name_.c_str());
 
@@ -93,7 +93,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("GDAL::GTiff driver not available", NULL != drv_);
+        ensure("GDAL::GTiff driver not available", nullptr != drv_);
     }
 
     // Test open dataset
@@ -107,7 +107,7 @@ namespace tut
             std::string file(data_ + SEP);
             file += it->file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, NULL != ds);
+            ensure("Can't open dataset: " + file, nullptr != ds);
             GDALClose(ds);
         }
     }
@@ -124,10 +124,10 @@ namespace tut
             file += it->file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, NULL != ds);
+            ensure("Can't open dataset: " + file, nullptr != ds);
 
             GDALRasterBandH band = GDALGetRasterBand(ds, it->band_);
-            ensure("Can't get raster band", NULL != band);
+            ensure("Can't get raster band", nullptr != band);
 
             const int xsize = GDALGetRasterXSize(ds);
             const int ysize = GDALGetRasterYSize(ds);
@@ -146,8 +146,8 @@ namespace tut
     template<>
     void object::test<4>()
     {
-        const char* mdItem = GDALGetMetadataItem(drv_, "DMD_MIMETYPE", NULL);
-        ensure("Can't fetch metadata", NULL != mdItem);
+        const char* mdItem = GDALGetMetadataItem(drv_, "DMD_MIMETYPE", nullptr);
+        ensure("Can't fetch metadata", nullptr != mdItem);
 
         ensure_equals("Invalid MIME type",
             std::string(mdItem), std::string("image/tiff"));
@@ -164,12 +164,12 @@ namespace tut
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, NULL != dsSrc);
+        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
 
         std::string dst(data_tmp_ + "\\test_2.tif");
-        GDALDatasetH dsDst = NULL;
-        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, NULL, NULL, NULL);
-        ensure("Can't copy dataset", NULL != dsDst);
+        GDALDatasetH dsDst = nullptr;
+        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, nullptr, nullptr, nullptr);
+        ensure("Can't copy dataset", nullptr != dsDst);
 
         GDALClose(dsDst);
         GDALClose(dsSrc);
@@ -177,7 +177,7 @@ namespace tut
         // Re-open copied dataset and test it
         dsDst = GDALOpen(dst.c_str(), GA_ReadOnly);
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
@@ -201,18 +201,18 @@ namespace tut
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, NULL != dsSrc);
+        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
 
         std::string dst(data_tmp_ + "\\test_3.tif");
 
-        char** options = NULL;
+        char** options = nullptr;
         options = CSLSetNameValue(options, "TILED", "YES");
         options = CSLSetNameValue(options, "BLOCKXSIZE", "32");
         options = CSLSetNameValue(options, "BLOCKYSIZE", "32");
 
-        GDALDatasetH dsDst = NULL;
-        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, options, NULL, NULL);
-        ensure("Can't copy dataset", NULL != dsDst);
+        GDALDatasetH dsDst = nullptr;
+        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, options, nullptr, nullptr);
+        ensure("Can't copy dataset", nullptr != dsDst);
 
         GDALClose(dsDst);
         CSLDestroy(options);
@@ -221,7 +221,7 @@ namespace tut
         // Re-open copied dataset and test it
         dsDst = GDALOpen(dst.c_str(), GA_ReadOnly);
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
@@ -246,10 +246,10 @@ namespace tut
         std::string src(data_ + SEP);
         src += rasters_.at(fileIdx).file_;
         GDALDatasetH ds = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + src, NULL != ds);
+        ensure("Can't open dataset: " + src, nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
         double expect[2] = { 74.0, 255.0 };
         double minmax[2] = { 0 };

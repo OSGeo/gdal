@@ -279,7 +279,7 @@ class FileGDBTable
                                ~FileGDBTable();
 
        int                      Open(const char* pszFilename,
-                                     const char* pszLayerName = NULL);
+                                     const char* pszLayerName = nullptr);
        void                     Close();
 
        const std::string&       GetFilename() const { return osFilename; }
@@ -291,7 +291,7 @@ class FileGDBTable
        int                      GetGeomFieldIdx() const { return iGeomField; }
        const FileGDBGeomField*  GetGeomField() const {
            return (iGeomField >= 0) ?
-               reinterpret_cast<FileGDBGeomField*>(apoFields[iGeomField]) : NULL; }
+               reinterpret_cast<FileGDBGeomField*>(apoFields[iGeomField]) : nullptr; }
        const std::string&       GetObjectIdColName() const { return osObjectIdColName; }
 
        int                      GetFieldIdx(const std::string& osName) const;

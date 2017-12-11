@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 /**********************************************************************/
 
 SpheroidItem::SpheroidItem() :
-    spheroid_name(NULL),
+    spheroid_name(nullptr),
     equitorial_radius(-1.0),
     polar_radius(-1.0),
     inverse_flattening(-1.0)
@@ -89,7 +89,7 @@ char *SpheroidList::GetSpheroidNameByRadii( double eq_radius, double polar_radiu
       return CPLStrdup(spheroids[index].spheroid_name);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 char *SpheroidList::GetSpheroidNameByEqRadiusAndInvFlattening(
@@ -104,7 +104,7 @@ char *SpheroidList::GetSpheroidNameByEqRadiusAndInvFlattening(
       return CPLStrdup(spheroids[index].spheroid_name);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 double SpheroidList::GetSpheroidEqRadius( const char *spheroid_name )

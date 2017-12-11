@@ -40,10 +40,10 @@ void BNA_FreeRecord(BNARecord* record)
     for( int i = 0; i < NB_MAX_BNA_IDS; i++)
     {
         if (record->ids[i]) VSIFree(record->ids[i]);
-        record->ids[i] = NULL;
+        record->ids[i] = nullptr;
     }
     CPLFree(record->tabCoords);
-    record->tabCoords = NULL;
+    record->tabCoords = nullptr;
     CPLFree(record);
   }
 }
@@ -235,12 +235,12 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
 {
     bool inQuotes = false;
     int numField = 0;
-    char* ptrBeginningOfNumber = NULL;
+    char* ptrBeginningOfNumber = nullptr;
     bool exponentFound = false;
     bool exponentSignFound = false;
     bool dotFound = false;
     int numChar = 0;
-    const char* detailedErrorMsg = NULL;
+    const char* detailedErrorMsg = nullptr;
     BNAFeatureType currentFeatureType = BNA_UNKNOWN;
     int nbExtraId = 0;
     char tmpBuffer[NB_MAX_BNA_IDS][TMP_BUFFER_SIZE+1];
@@ -313,7 +313,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         }
         else if (c == ' ' || c == '\t')
         {
-          if (numField > NB_MIN_BNA_IDS + nbExtraId && ptrBeginningOfNumber != NULL)
+          if (numField > NB_MIN_BNA_IDS + nbExtraId && ptrBeginningOfNumber != nullptr)
           {
             do
             {
@@ -353,7 +353,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               return record;
             }
 
-            ptrBeginningOfNumber = NULL;
+            ptrBeginningOfNumber = nullptr;
             exponentFound = false;
             exponentSignFound = false;
             dotFound = false;
@@ -406,7 +406,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           else if (numField == NB_MIN_BNA_IDS + nbExtraId)
           {
             int nCoords = 0;
-            if (ptrBeginningOfNumber == NULL)
+            if (ptrBeginningOfNumber == nullptr)
             {
               detailedErrorMsg = INTEGER_NUMBER_EXPECTED;
               goto error;
@@ -461,7 +461,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
 
               record->tabCoords =
                   (double(*)[2])VSI_MALLOC2_VERBOSE(record->nCoords, 2 * sizeof(double));
-              if (record->tabCoords == NULL)
+              if (record->tabCoords == nullptr)
               {
                   detailedErrorMsg = NOT_ENOUGH_MEMORY;
                   goto error;
@@ -470,7 +470,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           }
           else if (numField > NB_MIN_BNA_IDS + nbExtraId)
           {
-            if (ptrBeginningOfNumber == NULL)
+            if (ptrBeginningOfNumber == nullptr)
             {
               detailedErrorMsg = FLOAT_NUMBER_EXPECTED;
               goto error;
@@ -505,7 +505,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
           }
 
-          ptrBeginningOfNumber = NULL;
+          ptrBeginningOfNumber = nullptr;
           exponentFound = false;
           exponentSignFound = false;
           dotFound = false;
@@ -523,7 +523,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
           else if ( numField >= NB_MIN_BNA_IDS
                     && currentFeatureType == BNA_UNKNOWN)
           {
-            if (ptrBeginningOfNumber == NULL)
+            if (ptrBeginningOfNumber == nullptr)
             {
               if (nbExtraId == NB_MAX_BNA_IDS - NB_MIN_BNA_IDS)
               {
@@ -560,7 +560,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
             else if (c == '+' || c == '-')
             {
-              if (ptrBeginningOfNumber != NULL)
+              if (ptrBeginningOfNumber != nullptr)
               {
                 detailedErrorMsg = BAD_INTEGER_NUMBER_FORMAT;
                 goto error;
@@ -571,7 +571,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               detailedErrorMsg = BAD_INTEGER_NUMBER_FORMAT;
               goto error;
             }
-            if (ptrBeginningOfNumber == NULL)
+            if (ptrBeginningOfNumber == nullptr)
               ptrBeginningOfNumber = ptrCurLine;
           }
           else
@@ -590,7 +590,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
             else if (c == '+' || c == '-')
             {
-              if (ptrBeginningOfNumber == NULL)
+              if (ptrBeginningOfNumber == nullptr)
               {
               }
               else if (exponentFound)
@@ -615,7 +615,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
             }
             else if (c == 'e' || c == 'E' || c == 'd' || c == 'D')
             {
-              if (ptrBeginningOfNumber == NULL ||
+              if (ptrBeginningOfNumber == nullptr ||
                   !(ptrCurLine[-1] >= '0' && ptrCurLine[-1] <= '9') ||
                   exponentFound )
               {
@@ -629,7 +629,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
               detailedErrorMsg = BAD_FLOAT_NUMBER_FORMAT;
               goto error;
             }
-            if (ptrBeginningOfNumber == NULL)
+            if (ptrBeginningOfNumber == nullptr)
               ptrBeginningOfNumber = ptrCurLine;
           }
         }
@@ -642,7 +642,7 @@ BNARecord* BNA_GetNextRecord(VSILFILE* f,
         /* End of file */
         *ok = 1;
         BNA_FreeRecord(record);
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -666,5 +666,5 @@ error:
       }
     }
     BNA_FreeRecord(record);
-    return NULL;
+    return nullptr;
 }

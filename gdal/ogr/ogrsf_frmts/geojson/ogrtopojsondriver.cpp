@@ -66,7 +66,7 @@ static GDALDataset* OGRTopoJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     GeoJSONSourceType nSrcType = TopoJSONDriverGetSourceType(poOpenInfo);
     if( nSrcType == eGeoJSONSourceUnknown )
-        return NULL;
+        return nullptr;
     return OGRGeoJSONDriverOpenInternal(poOpenInfo, nSrcType, "TopoJSON");
 }
 
@@ -79,7 +79,7 @@ void RegisterOGRTopoJSON()
     if( !GDAL_CHECK_VERSION("OGR/TopoJSON driver") )
         return;
 
-    if( GDALGetDriverByName( "TopoJSON" ) != NULL )
+    if( GDALGetDriverByName( "TopoJSON" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

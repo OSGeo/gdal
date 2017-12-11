@@ -109,7 +109,7 @@ bool GH5_FetchAttribute( hid_t loc_id, const char *pszAttrName,
     // Confirm that we have a single element value.
     hid_t hAttrSpace = H5Aget_space(hAttr);
     hsize_t anSize[64] = {};
-    int nAttrDims = H5Sget_simple_extent_dims(hAttrSpace, anSize, NULL);
+    int nAttrDims = H5Sget_simple_extent_dims(hAttrSpace, anSize, nullptr);
 
     int i, nAttrElements = 1;
 

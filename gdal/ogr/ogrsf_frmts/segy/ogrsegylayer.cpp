@@ -313,12 +313,12 @@ OGRFeature *OGRSEGYLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -363,14 +363,14 @@ static float GetIBMFloat(const GByte* pabyData)
 OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     GByte abyTraceHeader[240];
 
     if( (int)VSIFReadL(abyTraceHeader, 1, 240, fp) != 240 )
     {
         bEOF = true;
-        return NULL;
+        return nullptr;
     }
 
     const int nTraceNumberWithinLine = SEGYReadMSBInt32(abyTraceHeader + 0);
@@ -421,7 +421,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     if( nSamples < 0 )
     {
         bEOF = true;
-        return NULL;
+        return nullptr;
     }
     const int nSampleInterval = SEGYReadMSBInt16(abyTraceHeader + 116);
 
@@ -587,7 +587,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         VSI_MALLOC_VERBOSE(nDataSize * nSamples));
     double* padfValues = static_cast<double *>(
         VSI_CALLOC_VERBOSE(nSamples, sizeof(double)));
-    if( pabyData == NULL || padfValues == NULL )
+    if( pabyData == nullptr || padfValues == nullptr )
     {
         VSIFSeekL( fp, nDataSize * nSamples, SEEK_CUR );
     }
@@ -732,7 +732,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         poFeature->SetField(SHOTPOINT_SCALAR, nShotpointScalar);
     }
 
-    if( nSamples > 0 && padfValues != NULL )
+    if( nSamples > 0 && padfValues != nullptr )
         poFeature->SetField(poFeature->GetFieldCount() - 1,
                             nSamples, padfValues);
 
@@ -869,12 +869,12 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -893,7 +893,7 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
 OGRFeature *OGRSEGYHeaderLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     bEOF = true;
 

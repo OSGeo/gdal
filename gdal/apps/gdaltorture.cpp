@@ -137,7 +137,7 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
     //GDALClose(hDS);
 
     hDS = GDALOpen(pszTarget, GA_ReadOnly);
-    if (hDS == NULL)
+    if (hDS == nullptr)
         return;
 
     // GDALGetMetadata (GDALMajorObjectH, const char *)
@@ -174,7 +174,7 @@ static void TortureDS(const char *pszTarget, int bReadWriteOperations)
     for(iBand=0;iBand<nBands;iBand++)
     {
         hBand = GDALGetRasterBand(hDS, iBand + 1);
-        if (hBand == NULL)
+        if (hBand == nullptr)
             continue;
 
         TortureBand(hBand, bReadWriteOperations, 0);
@@ -199,7 +199,7 @@ static void ProcessTortureTarget( const char *pszTarget,
 
     hDriver = GDALIdentifyDriver( pszTarget, papszSiblingList );
 
-    if( hDriver != NULL )
+    if( hDriver != nullptr )
     {
         printf( "%s: %s\n", pszTarget, GDALGetDriverShortName( hDriver ) );
         TortureDS(pszTarget, bReadWriteOperations);
@@ -207,7 +207,7 @@ static void ProcessTortureTarget( const char *pszTarget,
     else if( bReportFailures )
         printf( "%s: unrecognized\n", pszTarget );
 
-    if( !bRecursive || hDriver != NULL )
+    if( !bRecursive || hDriver != nullptr )
         return;
 
     if( VSIStatL( pszTarget, &sStatBuf ) != 0
@@ -222,7 +222,7 @@ static void ProcessTortureTarget( const char *pszTarget,
             continue;
 
         CPLString osSubTarget =
-            CPLFormFilename( pszTarget, papszSiblingList[i], NULL );
+            CPLFormFilename( pszTarget, papszSiblingList[i], nullptr );
 
         ProcessTortureTarget( osSubTarget, papszSiblingList,
                                bRecursive, bReportFailures, bReadWriteOperations );
@@ -275,7 +275,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     while( argc > 0 )
     {
-        ProcessTortureTarget( papszArgv[0], NULL,
+        ProcessTortureTarget( papszArgv[0], nullptr,
                               bRecursive, bReportFailures, bReadWriteOperations );
         argc--;
         papszArgv++;

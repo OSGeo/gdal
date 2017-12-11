@@ -457,7 +457,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 {
                     /*TODO join the multilinestring into linestring*/
                     OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
-                    OGRLineString * poLine = NULL;
+                    OGRLineString * poLine = nullptr;
                     OGRPoint * poStart = new OGRPoint;
                     OGRPoint * poEnd   = new OGRPoint;
                     for ( int j=0; j<collection->getNumGeometries(); j++ )
@@ -466,7 +466,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                         assert(poSubLine);
                         poSubLine->StartPoint( poStart );
 
-                        if( poLine == NULL )
+                        if( poLine == nullptr )
                         {
                             poLine = static_cast<OGRLineString *>( poSubLine->clone() );
                         }
@@ -728,7 +728,7 @@ OGRFeature *OGRWAsPLayer::GetNextFeature()
     if ( READ_ONLY != eMode)
     {
         CPLError(CE_Failure, CPLE_IllegalArg , "Layer is open write only" );
-        return NULL;
+        return nullptr;
     }
 
     GetLayerDefn();
@@ -736,12 +736,12 @@ OGRFeature *OGRWAsPLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -759,7 +759,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
 
 {
     const char * pszLine = CPLReadLineL( hFile );
-    if ( !pszLine ) return NULL;
+    if ( !pszLine ) return nullptr;
 
     double dfValues[4];
     int iNumValues = 0;
@@ -770,14 +770,14 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         if ( iNumValues < 2 )
         {
             if (iNumValues) CPLError(CE_Failure, CPLE_FileIO, "No enough values" );
-            return NULL;
+            return nullptr;
         }
     }
 
     if( poLayerDefn->GetFieldCount() != iNumValues-1 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "looking for %d values and found %d on line: %s", poLayerDefn->GetFieldCount(), iNumValues-1, pszLine );
-        return NULL;
+        return nullptr;
     }
     const double dfNumPairToRead = dfValues[iNumValues-1];
     if( !(dfNumPairToRead >= 0 && dfNumPairToRead < 1000000) ||
@@ -785,7 +785,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Invalid coordinate number: %f", dfNumPairToRead );
-        return NULL;
+        return nullptr;
     }
 
     UNIQUEPTR< OGRFeature > poFeature( new OGRFeature( poLayerDefn ) );
@@ -798,7 +798,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     std::vector<double> values(iNumValuesToRead);
     for ( pszLine = CPLReadLineL( hFile );
             pszLine;
-            pszLine = iNumValuesToRead > iReadValues ? CPLReadLineL( hFile ) : NULL )
+            pszLine = iNumValuesToRead > iReadValues ? CPLReadLineL( hFile ) : nullptr )
     {
         std::istringstream iss(pszLine);
         while ( iNumValuesToRead > iReadValues && (iss >> values[iReadValues] ) ){++iReadValues;}
@@ -806,7 +806,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     if ( iNumValuesToRead != iReadValues )
     {
         CPLError(CE_Failure, CPLE_FileIO, "No enough values for linestring" );
-        return NULL;
+        return nullptr;
     }
     UNIQUEPTR< OGRLineString > poLine( new OGRLineString );
     poLine->setCoordinateDimension(3);

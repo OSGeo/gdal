@@ -43,12 +43,12 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRILI2DataSource::OGRILI2DataSource() :
-    pszName(NULL),
+    pszName(nullptr),
     poImdReader(new ImdReader(2)),
-    poReader(NULL),
-    fpOutput(NULL),
+    poReader(nullptr),
+    fpOutput(nullptr),
     nLayers(0),
-    papoLayers(NULL)
+    papoLayers(nullptr)
 {}
 
 /************************************************************************/
@@ -64,7 +64,7 @@ OGRILI2DataSource::~OGRILI2DataSource()
     }
     CPLFree( papoLayers );
 
-    if ( fpOutput != NULL )
+    if ( fpOutput != nullptr )
     {
         VSIFPrintfL(fpOutput, "</%s>\n", poImdReader->mainBasketName.c_str());
         VSIFPrintfL(fpOutput, "</DATASECTION>\n");
@@ -88,7 +88,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
     CPLString   osBasename;
     CPLString   osModelFilename;
 
-    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != NULL )
+    if( CSLFetchNameValue(papszOpenOptionsIn, "MODEL") != nullptr )
     {
         osBasename = pszNewName;
         osModelFilename = CSLFetchNameValue(papszOpenOptionsIn, "MODEL");
@@ -116,7 +116,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszName, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         if( !bTestOpen )
             CPLError( CE_Failure, CPLE_OpenFailed,
@@ -141,7 +141,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
             szHeader[nLen] = '\0';
 
         if( szHeader[0] != '<'
-            || strstr(szHeader,"interlis.ch/INTERLIS2") == NULL )
+            || strstr(szHeader,"interlis.ch/INTERLIS2") == nullptr )
         {
             // "www.interlis.ch/INTERLIS2.3"
             VSIFCloseL( fp );
@@ -156,7 +156,7 @@ int OGRILI2DataSource::Open( const char * pszNewName,
     VSIFCloseL( fp );
 
     poReader = CreateILI2Reader();
-    if( poReader == NULL )
+    if( poReader == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File %s appears to be ILI2 but the ILI2 reader cannot\n"
@@ -192,9 +192,9 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 {
     char **filenames = CSLTokenizeString2( pszFilename, ",", 0 );
     pszName = CPLStrdup(filenames[0]);
-    const char *pszModelFilename = (CSLCount(filenames)>1) ? filenames[1] : NULL;
+    const char *pszModelFilename = (CSLCount(filenames)>1) ? filenames[1] : nullptr;
 
-    if( pszModelFilename == NULL )
+    if( pszModelFilename == nullptr )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Model file not specified." );
@@ -215,7 +215,7 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     {
         if (EQUAL(CPLGetExtension(pszName), "zip"))
         {
-            char* pszNewName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", NULL));
+            char* pszNewName = CPLStrdup(CPLFormFilename(pszName, "out.xtf", nullptr));
             CPLFree(pszName);
             pszName = pszNewName;
         }
@@ -224,7 +224,7 @@ int OGRILI2DataSource::Create( const char *pszFilename,
     }
     else
         fpOutput = VSIFOpenL( pszName, "wb+" );
-    if( fpOutput == NULL )
+    if( fpOutput == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create XTF file %s.",
@@ -276,13 +276,13 @@ OGRILI2DataSource::ICreateLayer( const char * pszLayerName,
                                  OGRwkbGeometryType eType,
                                  char ** /* papszOptions */ )
 {
-    if (fpOutput == NULL)
-        return NULL;
+    if (fpOutput == nullptr)
+        return nullptr;
 
     FeatureDefnInfo featureDefnInfo
         = poImdReader->GetFeatureDefnInfo(pszLayerName);
     OGRFeatureDefn* poFeatureDefn = featureDefnInfo.GetTableDefnRef();
-    if (poFeatureDefn == NULL)
+    if (poFeatureDefn == nullptr)
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Layer '%s' not found in model definition. "
@@ -335,5 +335,5 @@ OGRLayer *OGRILI2DataSource::GetLayer( int iLayer )
         return tmpLayer;
     }
 
-    return NULL;
+    return nullptr;
 }

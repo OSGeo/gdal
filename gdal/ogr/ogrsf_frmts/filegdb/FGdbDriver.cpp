@@ -42,7 +42,7 @@ extern "C" void RegisterOGRFileGDB();
 /************************************************************************/
 /*                            FGdbDriver()                              */
 /************************************************************************/
-FGdbDriver::FGdbDriver(): OGRSFDriver(), hMutex(NULL)
+FGdbDriver::FGdbDriver(): OGRSFDriver(), hMutex(nullptr)
 {
 }
 
@@ -55,9 +55,9 @@ FGdbDriver::~FGdbDriver()
     if( !oMapConnections.empty() )
         CPLDebug("FileGDB", "Remaining %d connections. Bug?",
                  (int)oMapConnections.size());
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/
@@ -88,16 +88,16 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
             bool bOK = (nLen2 >= 4 && EQUAL(pszCurrentDir + nLen2 - 4, ".gdb"));
             CPLFree(pszCurrentDir);
             if( !bOK )
-                return NULL;
+                return nullptr;
         }
         else
         {
-            return NULL;
+            return nullptr;
         }
     }
     else if(! ((nLen >= 4 && EQUAL(pszFilename + nLen - 4, ".gdb")) ||
                (nLen >= 5 && EQUAL(pszFilename + nLen - 5, ".gdb/"))) )
-        return NULL;
+        return nullptr;
 
     long hr;
 
@@ -108,19 +108,19 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
     VSIStatBuf stat;
     if( CPLStat( pszFilename, &stat ) != 0 || !VSI_ISDIR(stat.st_mode) )
     {
-        return NULL;
+        return nullptr;
     }
 
     CPLMutexHolderD(&hMutex);
 
     FGdbDatabaseConnection* pConnection = oMapConnections[pszFilename];
-    if( pConnection != NULL )
+    if( pConnection != nullptr )
     {
         if( pConnection->IsFIDHackInProgress() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot open geodatabase at the moment since it is in 'FID hack mode'");
-            return NULL;
+            return nullptr;
         }
 
         pConnection->m_nRefCount ++;
@@ -136,7 +136,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
         {
             delete pGeoDatabase;
 
-            if( OGRGetDriverByName("OpenFileGDB") != NULL && bUpdate == FALSE )
+            if( OGRGetDriverByName("OpenFileGDB") != nullptr && bUpdate == FALSE )
             {
                 std::wstring fgdb_error_desc_w;
                 std::string fgdb_error_desc("Unknown error");
@@ -155,7 +155,7 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
                 GDBErr(hr, "Failed to open Geodatabase");
             }
             oMapConnections.erase(pszFilename);
-            return NULL;
+            return nullptr;
         }
 
         CPLDebug("FileGDB", "Really opening %s", pszFilename);
@@ -167,10 +167,10 @@ OGRDataSource *FGdbDriver::Open( const char* pszFilename, int bUpdate )
 
     pDS = new FGdbDataSource(this, pConnection);
 
-    if(!pDS->Open( pszFilename, bUpdate, NULL ) )
+    if(!pDS->Open( pszFilename, bUpdate, nullptr ) )
     {
         delete pDS;
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -211,7 +211,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "FGDB data source name must use 'gdb' extension.\n" );
-        return NULL;
+        return nullptr;
     }
 
     /* Don't try to create on top of something already there */
@@ -219,7 +219,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s already exists.\n", conn );
-        return NULL;
+        return nullptr;
     }
 
     /* Try to create the geodatabase */
@@ -234,7 +234,7 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
             errstr = "File already exists (%s).\n";
         delete pGeodatabase;
         CPLError( CE_Failure, CPLE_AppDefined, errstr, conn );
-        return NULL;
+        return nullptr;
     }
 
     FGdbDatabaseConnection* pConnection = new FGdbDatabaseConnection(conn, pGeodatabase);
@@ -242,10 +242,10 @@ OGRDataSource* FGdbDriver::CreateDataSource( const char * conn,
 
     /* Ready to embed the Geodatabase in an OGR Datasource */
     FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
-    if ( ! pDS->Open(conn, bUpdate, NULL) )
+    if ( ! pDS->Open(conn, bUpdate, nullptr) )
     {
         delete pDS;
-        return NULL;
+        return nullptr;
     }
     else
         return OGRCreateEmulatedTransactionDataSourceWrapper(
@@ -294,9 +294,9 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
 
     pConnection->m_nRefCount ++;
     delete poDSInOut;
-    poDSInOut = NULL;
-    poMutexedDS = NULL;
-    poDS = NULL;
+    poDSInOut = nullptr;
+    poMutexedDS = nullptr;
+    poDS = nullptr;
 
     pConnection->CloseGeodatabase();
 
@@ -334,8 +334,8 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
                  atoi((*papszIter)+1) <= 8) || EQUAL(*papszIter, "gdb") ||
                  EQUAL(*papszIter, "timestamps") )
             {
-                if( CPLCopyFile(CPLFormFilename(osEditedName, *papszIter, NULL),
-                                CPLFormFilename(osName, *papszIter, NULL)) != 0 )
+                if( CPLCopyFile(CPLFormFilename(osEditedName, *papszIter, nullptr),
+                                CPLFormFilename(osName, *papszIter, nullptr)) != 0 )
                 {
                     bError = TRUE;
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -346,13 +346,13 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
             {
                 CPLString osSourceFile;
                 if( CPLIsFilenameRelative(osName) )
-                    osSourceFile = CPLFormFilename(CPLSPrintf("../%s", CPLGetFilename(osName.c_str())), *papszIter, NULL);
+                    osSourceFile = CPLFormFilename(CPLSPrintf("../%s", CPLGetFilename(osName.c_str())), *papszIter, nullptr);
                 else
                     osSourceFile = osName;
                 if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
                     CPLSymlink( osSourceFile,
-                                CPLFormFilename(osEditedName.c_str(), *papszIter, NULL),
-                                NULL ) != 0 )
+                                CPLFormFilename(osEditedName.c_str(), *papszIter, nullptr),
+                                nullptr ) != 0 )
                 {
                     bError = TRUE;
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -390,7 +390,7 @@ OGRErr FGdbDriver::StartTransaction(OGRDataSource*& poDSInOut, int& bOutHasReope
     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") || FAILED(hr))
     {
         delete pConnection->m_pGeodatabase;
-        pConnection->m_pGeodatabase = NULL;
+        pConnection->m_pGeodatabase = nullptr;
         Release(osName);
         GDBErr(hr, CPLSPrintf("Failed to open %s. Dataset should be closed",
                               osDatabaseToReopen.c_str()));
@@ -449,9 +449,9 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
 
     pConnection->m_nRefCount ++;
     delete poDSInOut;
-    poDSInOut = NULL;
-    poMutexedDS = NULL;
-    poDS = NULL;
+    poDSInOut = nullptr;
+    poMutexedDS = nullptr;
+    poDS = nullptr;
 
     pConnection->CloseGeodatabase();
 
@@ -474,14 +474,14 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                 continue;
             VSIStatBufL sStat;
             if( (*papszIter)[0] == 'a' &&
-                VSIStatL( CPLFormFilename(osEditedName, *papszIter, NULL), &sStat ) != 0 )
+                VSIStatL( CPLFormFilename(osEditedName, *papszIter, nullptr), &sStat ) != 0 )
             {
                 if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE1") ||
-                    VSIRename( CPLFormFilename(osName, *papszIter, NULL),
+                    VSIRename( CPLFormFilename(osName, *papszIter, nullptr),
                                CPLFormFilename(osName, *papszIter, "tmp") ) != 0 )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",
-                             CPLFormFilename(osName, *papszIter, NULL),
+                             CPLFormFilename(osName, *papszIter, nullptr),
                              CPLFormFilename(osName, *papszIter, "tmp"));
                     bError = TRUE;
                 }
@@ -498,24 +498,24 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
             if( strcmp(*papszIter, ".") == 0 || strcmp(*papszIter, "..") == 0 )
                 continue;
             struct stat sStat;
-            if( lstat( CPLFormFilename(osEditedName, *papszIter, NULL), &sStat ) != 0 )
+            if( lstat( CPLFormFilename(osEditedName, *papszIter, nullptr), &sStat ) != 0 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot stat %s",
-                         CPLFormFilename(osEditedName, *papszIter, NULL));
+                         CPLFormFilename(osEditedName, *papszIter, nullptr));
                 bError = TRUE;
             }
             else if( !S_ISLNK(sStat.st_mode) )
             {
                 // If there was such a file in original directory, first rename it
                 // as a temporary file
-                if( lstat( CPLFormFilename(osName, *papszIter, NULL), &sStat ) == 0 )
+                if( lstat( CPLFormFilename(osName, *papszIter, nullptr), &sStat ) == 0 )
                 {
                     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE2") ||
-                        VSIRename( CPLFormFilename(osName, *papszIter, NULL),
+                        VSIRename( CPLFormFilename(osName, *papszIter, nullptr),
                                    CPLFormFilename(osName, *papszIter, "tmp") ) != 0 )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Cannot rename %s to %s",
-                                 CPLFormFilename(osName, *papszIter, NULL),
+                                 CPLFormFilename(osName, *papszIter, nullptr),
                                  CPLFormFilename(osName, *papszIter, "tmp"));
                         bError = TRUE;
                     }
@@ -525,18 +525,18 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
                 if( !bError )
                 {
                     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE3") ||
-                        CPLMoveFile( CPLFormFilename(osName, *papszIter, NULL),
-                                     CPLFormFilename(osEditedName, *papszIter, NULL) ) != 0 )
+                        CPLMoveFile( CPLFormFilename(osName, *papszIter, nullptr),
+                                     CPLFormFilename(osEditedName, *papszIter, nullptr) ) != 0 )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Cannot move %s to %s",
-                                 CPLFormFilename(osEditedName, *papszIter, NULL),
-                                 CPLFormFilename(osName, *papszIter, NULL));
+                                 CPLFormFilename(osEditedName, *papszIter, nullptr),
+                                 CPLFormFilename(osName, *papszIter, nullptr));
                         bError = TRUE;
                     }
                     else
                         CPLDebug("FileGDB", "Move %s to %s",
-                                 CPLFormFilename(osEditedName, *papszIter, NULL),
-                                 CPLFormFilename(osName, *papszIter, NULL));
+                                 CPLFormFilename(osEditedName, *papszIter, nullptr),
+                                 CPLFormFilename(osName, *papszIter, nullptr));
                 }
             }
         }
@@ -621,7 +621,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     if( EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL", ""), "CASE_REOPEN") || FAILED(hr))
     {
         delete pConnection->m_pGeodatabase;
-        pConnection->m_pGeodatabase = NULL;
+        pConnection->m_pGeodatabase = nullptr;
         pConnection->SetLocked(FALSE);
         Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
@@ -629,7 +629,7 @@ OGRErr FGdbDriver::CommitTransaction(OGRDataSource*& poDSInOut, int& bOutHasReop
     }
 
     FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
-    pDS->Open(osNameOri, TRUE, NULL);
+    pDS->Open(osNameOri, TRUE, nullptr);
     //pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
 
@@ -669,9 +669,9 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
 
     pConnection->m_nRefCount ++;
     delete poDSInOut;
-    poDSInOut = NULL;
-    poMutexedDS = NULL;
-    poDS = NULL;
+    poDSInOut = nullptr;
+    poMutexedDS = nullptr;
+    poDS = nullptr;
 
     pConnection->CloseGeodatabase();
 
@@ -693,7 +693,7 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
         FAILED(hr))
     {
         delete pConnection->m_pGeodatabase;
-        pConnection->m_pGeodatabase = NULL;
+        pConnection->m_pGeodatabase = nullptr;
         pConnection->SetLocked(FALSE);
         Release(osName);
         GDBErr(hr, "Failed to re-open Geodatabase. Dataset should be closed");
@@ -701,7 +701,7 @@ OGRErr FGdbDriver::RollbackTransaction(OGRDataSource*& poDSInOut, int& bOutHasRe
     }
 
     FGdbDataSource* pDS = new FGdbDataSource(this, pConnection);
-    pDS->Open(osNameOri, TRUE, NULL);
+    pDS->Open(osNameOri, TRUE, nullptr);
     //pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, hMutex, TRUE);
 
@@ -719,7 +719,7 @@ void FGdbDriver::Release(const char* pszName)
     CPLMutexHolderOptionalLockD(hMutex);
 
     FGdbDatabaseConnection* pConnection = oMapConnections[pszName];
-    if( pConnection != NULL )
+    if( pConnection != nullptr )
     {
         pConnection->m_nRefCount --;
         CPLDebug("FileGDB", "ref_count of %s = %d now", pszName,
@@ -739,12 +739,12 @@ void FGdbDriver::Release(const char* pszName)
 
 void FGdbDatabaseConnection::CloseGeodatabase()
 {
-    if( m_pGeodatabase != NULL )
+    if( m_pGeodatabase != nullptr )
     {
         CPLDebug("FileGDB", "Really closing %s now", m_osName.c_str());
         ::CloseGeodatabase(*m_pGeodatabase);
         delete m_pGeodatabase;
-        m_pGeodatabase = NULL;
+        m_pGeodatabase = nullptr;
     }
 }
 
@@ -759,7 +759,7 @@ int FGdbDatabaseConnection::OpenGeodatabase(const char* pszFSName)
     if (FAILED(hr))
     {
         delete m_pGeodatabase;
-        m_pGeodatabase = NULL;
+        m_pGeodatabase = nullptr;
         return FALSE;
     }
     return TRUE;

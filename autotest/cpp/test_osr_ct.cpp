@@ -46,10 +46,10 @@ namespace tut
         OGRCoordinateTransformationH ct_;
 
         test_osr_ct_data()
-            : err_(OGRERR_NONE), srs_utm_(NULL), srs_ll_(NULL), ct_(NULL)
+            : err_(OGRERR_NONE), srs_utm_(nullptr), srs_ll_(nullptr), ct_(nullptr)
         {
-            srs_utm_ = OSRNewSpatialReference(NULL);
-            srs_ll_ = OSRNewSpatialReference(NULL);
+            srs_utm_ = OSRNewSpatialReference(nullptr);
+            srs_ll_ = OSRNewSpatialReference(nullptr);
         }
 
         ~test_osr_ct_data()
@@ -70,8 +70,8 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("SRS UTM handle is NULL", NULL != srs_utm_);
-        ensure("SRS LL handle is NULL", NULL != srs_ll_);
+        ensure("SRS UTM handle is NULL", nullptr != srs_utm_);
+        ensure("SRS LL handle is NULL", nullptr != srs_ll_);
 
         err_ = OSRSetUTM(srs_utm_, 11, TRUE);
         ensure_equals("Can't set UTM zone", err_, OGRERR_NONE);
@@ -83,7 +83,7 @@ namespace tut
         ensure_equals("Can't set GeogCS", err_, OGRERR_NONE);
 
         ct_ = OCTNewCoordinateTransformation(srs_ll_, srs_utm_);
-        ensure("PROJ.4 missing, transforms not available", NULL != ct_);
+        ensure("PROJ.4 missing, transforms not available", nullptr != ct_);
     }
 
     // Actually perform a simple LL to UTM conversion
@@ -91,8 +91,8 @@ namespace tut
     template<>
     void object::test<2>()
     {
-        ensure("SRS UTM handle is NULL", NULL != srs_utm_);
-        ensure("SRS LL handle is NULL", NULL != srs_ll_);
+        ensure("SRS UTM handle is NULL", nullptr != srs_utm_);
+        ensure("SRS LL handle is NULL", nullptr != srs_ll_);
 
         err_ = OSRSetUTM(srs_utm_, 11, TRUE);
         ensure_equals("Can't set UTM zone", err_, OGRERR_NONE);
@@ -104,7 +104,7 @@ namespace tut
         ensure_equals("Can't set GeogCS", err_, OGRERR_NONE);
 
         ct_ = OCTNewCoordinateTransformation(srs_ll_, srs_utm_);
-        ensure("PROJ.4 missing, transforms not available", NULL != ct_);
+        ensure("PROJ.4 missing, transforms not available", nullptr != ct_);
 
         const int size = 1;
         double x[size] = { -117.5 };
@@ -130,8 +130,8 @@ namespace tut
     template<>
     void object::test<3>()
     {
-        ensure("SRS UTM handle is NULL", NULL != srs_utm_);
-        ensure("SRS LL handle is NULL", NULL != srs_ll_);
+        ensure("SRS UTM handle is NULL", nullptr != srs_utm_);
+        ensure("SRS LL handle is NULL", nullptr != srs_ll_);
 
         err_ = OSRSetUTM(srs_utm_, 11, TRUE);
         ensure_equals("Can't set UTM zone", err_, OGRERR_NONE);
@@ -143,23 +143,23 @@ namespace tut
         ensure_equals("Can't set GeogCS", err_, OGRERR_NONE);
 
         ct_ = OCTNewCoordinateTransformation(srs_ll_, srs_utm_);
-        ensure("PROJ.4 missing, transforms not available", NULL != ct_);
+        ensure("PROJ.4 missing, transforms not available", nullptr != ct_);
 
         const char* wkt = "POINT(-117.5 32.0)";
-        OGRGeometryH geom = NULL;
-        err_ = OGR_G_CreateFromWkt((char**) &wkt, NULL, &geom);
+        OGRGeometryH geom = nullptr;
+        err_ = OGR_G_CreateFromWkt((char**) &wkt, nullptr, &geom);
         ensure_equals("Can't import geometry from WKT", OGRERR_NONE, err_);
-        ensure("Can't create geometry", NULL != geom);
+        ensure("Can't create geometry", nullptr != geom);
 
         err_ = OGR_G_Transform(geom, ct_);
         ensure_equals("OGR_G_Transform() failed", err_, OGRERR_NONE);
 
-        OGRSpatialReferenceH srs = NULL;
+        OGRSpatialReferenceH srs = nullptr;
         srs = OGR_G_GetSpatialReference(geom);
 
-        char* wktSrs = NULL;
+        char* wktSrs = nullptr;
         err_ = OSRExportToPrettyWkt(srs, &wktSrs, FALSE);
-        ensure("Exported SRS to WKT is NULL", NULL != wktSrs);
+        ensure("Exported SRS to WKT is NULL", nullptr != wktSrs);
 
         std::string pretty(wktSrs);
         ensure_equals("SRS output is incorrect", pretty.substr(0, 6), std::string("PROJCS"));

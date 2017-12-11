@@ -68,8 +68,8 @@ class ARGDataset : public RawDataset
 /************************************************************************/
 
 ARGDataset::ARGDataset() :
-    fpImage(NULL),
-    pszFilename(NULL)
+    fpImage(nullptr),
+    pszFilename(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -89,7 +89,7 @@ ARGDataset::~ARGDataset()
     CPLFree(pszFilename);
 
     FlushCache();
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }
 
@@ -123,9 +123,9 @@ static json_object * GetJsonObject(CPLString pszFilename)
 
     json_object *pJSONObject =
         json_object_from_file(const_cast<char *>(osJSONFilename.c_str()));
-    if (pJSONObject == NULL) {
+    if (pJSONObject == nullptr) {
         CPLDebug("ARGDataset", "GetJsonObject(): Could not parse JSON file.");
-        return NULL;
+        return nullptr;
     }
 
     return pJSONObject;
@@ -139,11 +139,11 @@ static const char *GetJsonValueStr( json_object * pJSONObject,
 {
     json_object *pJSONItem =
         CPL_json_object_object_get(pJSONObject, pszKey.c_str());
-    if( pJSONItem == NULL )
+    if( pJSONItem == nullptr )
     {
         CPLDebug("ARGDataset", "GetJsonValueStr(): "
                  "Could not find '%s' in JSON.", pszKey.c_str());
-        return NULL;
+        return nullptr;
     }
 
     return json_object_get_string(pJSONItem);
@@ -155,7 +155,7 @@ static const char *GetJsonValueStr( json_object * pJSONObject,
 static double GetJsonValueDbl( json_object * pJSONObject, CPLString pszKey )
 {
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, pszKey.c_str());
-    if (pszJSONStr == NULL) {
+    if (pszJSONStr == nullptr) {
         return std::numeric_limits<double>::quiet_NaN();
     }
     char *pszTmp = const_cast<char *>(pszJSONStr);
@@ -207,12 +207,12 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
     }
 
     json_object *pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
-    if (pJSONObject == NULL) {
+    if (pJSONObject == nullptr) {
         return FALSE;
     }
 
     json_object_put(pJSONObject);
-    pJSONObject = NULL;
+    pJSONObject = nullptr;
 
     return TRUE;
 }
@@ -223,7 +223,7 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     if ( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Check metadata settings in JSON.                                */
@@ -231,26 +231,26 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 
     json_object *pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
 
-    if (pJSONObject == NULL) {
+    if (pJSONObject == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "Error parsing JSON.");
-        return NULL;
+        return nullptr;
     }
 
     // get the type (always 'arg')
     const char *pszJSONStr = GetJsonValueStr(pJSONObject, "type");
-    if (pszJSONStr == NULL ) {
+    if (pszJSONStr == nullptr ) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'type' is missing from the JSON file.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
     else if (!EQUAL(pszJSONStr, "arg")) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'type' is not recognized: '%s'.", pszJSONStr);
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     double dfNoDataValue;
@@ -259,12 +259,12 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 
     // get the datatype
     pszJSONStr = GetJsonValueStr(pJSONObject, "datatype");
-    if (pszJSONStr == NULL) {
+    if (pszJSONStr == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'datatype' is missing from the JSON file.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
     else if (EQUAL(pszJSONStr, "int8")) {
         CPLDebug("ARGDataset", "Open(): "
@@ -319,8 +319,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
                 "The ARG 'datatype' is unknown: '%s'.", pszJSONStr);
         }
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the xmin of the bounding box
@@ -329,8 +329,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'xmin' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the ymin of the bounding box
@@ -339,8 +339,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'ymin' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the xmax of the bounding box
@@ -349,8 +349,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'xmax' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the ymax of the bounding box
@@ -359,8 +359,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'ymax' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the cell width
@@ -369,8 +369,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'cellwidth' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the cell height
@@ -379,8 +379,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'cellheight' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     double dfXSkew = GetJsonValueDbl(pJSONObject, "xskew");
@@ -401,8 +401,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'rows' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     // get the columns
@@ -411,8 +411,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'cols' is missing or invalid.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
-        return NULL;
+        pJSONObject = nullptr;
+        return nullptr;
     }
 
     int nSrs = GetJsonValueInt(pJSONObject, "epsg");
@@ -438,13 +438,13 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
                       "Please check the 'epsg' value and try again.");
 
             json_object_put(pJSONObject);
-            pJSONObject = NULL;
+            pJSONObject = nullptr;
 
-            return NULL;
+            return nullptr;
         }
     }
 
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
     nErr = oSRS.exportToWkt(&pszWKT);
     if (nErr != OGRERR_NONE) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -452,27 +452,27 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
             "dataset. Please check the 'epsg' value and try again.");
 
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
+        pJSONObject = nullptr;
 
-        return NULL;
+        return nullptr;
     }
 
     // get the layer (always the file basename)
     pszJSONStr = GetJsonValueStr(pJSONObject, "layer");
-    if (pszJSONStr == NULL) {
+    if (pszJSONStr == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "The ARG 'layer' is missing from the JSON file.");
         json_object_put(pJSONObject);
-        pJSONObject = NULL;
+        pJSONObject = nullptr;
         CPLFree(pszWKT);
-        return NULL;
+        return nullptr;
     }
 
     char *pszLayer = CPLStrdup(pszJSONStr);
 
     // done with the json object now
     json_object_put(pJSONObject);
-    pJSONObject = NULL;
+    pJSONObject = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -480,7 +480,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
     ARGDataset *poDS = new ARGDataset();
 
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
-    poDS->SetMetadataItem("LAYER",pszLayer,NULL);
+    poDS->SetMetadataItem("LAYER",pszLayer,nullptr);
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->SetProjection( pszWKT );
@@ -493,12 +493,12 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
 /* -------------------------------------------------------------------- */
     poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpImage == NULL)
+    if (poDS->fpImage == nullptr)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
             "Could not open dataset '%s'", poOpenInfo->pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     poDS->adfGeoTransform[0] = dfXmin;
@@ -554,7 +554,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
               "ARG driver doesn't support %d bands.  Must be 1 band.", nBands );
-        return NULL;
+        return nullptr;
     }
 
     CPLString pszDataType;
@@ -570,7 +570,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
         CPLError( CE_Failure, CPLE_NotSupported,
                   "ARG driver doesn't support data type %s.",
                   GDALGetDataTypeName(eType) );
-        return NULL;
+        return nullptr;
     }
     else if (eType == GDT_Int16) {
         pszDataType = "int16";
@@ -610,14 +610,14 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     if (nErr != OGRERR_NONE) {
         CPLError( CE_Failure, CPLE_NotSupported,
               "Cannot import spatial reference WKT from source dataset.");
-        return NULL;
+        return nullptr;
     }
 
     int nSrs = 0;
-    if (oSRS.GetAuthorityCode("PROJCS") != NULL) {
+    if (oSRS.GetAuthorityCode("PROJCS") != nullptr) {
         nSrs = atoi(oSRS.GetAuthorityCode("PROJCS"));
     }
-    else if (oSRS.GetAuthorityCode("GEOGCS") != NULL) {
+    else if (oSRS.GetAuthorityCode("GEOGCS") != nullptr) {
         nSrs = atoi(oSRS.GetAuthorityCode("GEOGCS"));
     }
     else {
@@ -636,7 +636,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     char **pszTokens = poSrcDS->GetMetadata();
     const char *pszLayer = CSLFetchNameValue(pszTokens, "LAYER");
 
-    if ( pszLayer == NULL) {
+    if ( pszLayer == nullptr) {
         // Set the layer
         json_object_object_add(poJSONObject, "layer", json_object_new_string(
             CPLGetBasename(osJSONFilename)
@@ -687,16 +687,16 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                   "ARG driver can't write companion file.");
 
         json_object_put(poJSONObject);
-        poJSONObject = NULL;
+        poJSONObject = nullptr;
 
-        return NULL;
+        return nullptr;
     }
 
     json_object_put(poJSONObject);
-    poJSONObject = NULL;
+    poJSONObject = nullptr;
 
     VSILFILE *fpImage = VSIFOpenL(pszFilename, "wb");
-    if (fpImage == NULL)
+    if (fpImage == nullptr)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
               "ARG driver can't create data file %s.", pszFilename);
@@ -704,7 +704,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
         // remove JSON file
         VSIUnlink( osJSONFilename.c_str() );
 
-        return NULL;
+        return nullptr;
     }
 
     // only 1 raster band
@@ -744,7 +744,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
 
                 CPLErr eErr = poSrcBand->RasterIO(GF_Read, nXBlock * nXBlockSize,
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize,
-                    1, eType, 0, 0, NULL);
+                    1, eType, 0, 0, nullptr);
 
                 if (eErr != CE_None) {
                     CPLError(CE_Failure, CPLE_AppDefined, "Error reading.");
@@ -753,12 +753,12 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                     delete poDstBand;
                     VSIFCloseL( fpImage );
 
-                    return NULL;
+                    return nullptr;
                 }
 
                 eErr = poDstBand->RasterIO(GF_Write, nXBlock * nXBlockSize,
                     nYBlock * nYBlockSize + nYScanline, nXValid, 1, pabyData, nXBlockSize,
-                    1, eType, 0, 0, NULL);
+                    1, eType, 0, 0, nullptr);
 
                 if (eErr != CE_None) {
                     CPLError(CE_Failure, CPLE_AppDefined, "Error writing.");
@@ -767,7 +767,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
                     delete poDstBand;
                     VSIFCloseL( fpImage );
 
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -786,7 +786,7 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
 
 void GDALRegister_ARG()
 {
-    if( GDALGetDriverByName( "ARG" ) != NULL )
+    if( GDALGetDriverByName( "ARG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

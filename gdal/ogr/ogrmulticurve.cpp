@@ -149,7 +149,7 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                OGRCurve* poCurve )
 {
     OGRMultiCurve *poGeometry = dynamic_cast<OGRMultiCurve *>(poSelf);
-    if( poGeometry == NULL )
+    if( poGeometry == nullptr )
     {
         return OGRERR_FAILURE;
     }
@@ -221,16 +221,16 @@ OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
     for( int i = 0; i < poMC->nGeomCount; ++i )
     {
         OGRCurve * const poCurve = dynamic_cast<OGRCurve *>(poMC->papoGeoms[i]);
-        if( poCurve == NULL ) {
+        if( poCurve == nullptr ) {
             CPLError(
                   CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
             continue;
         }
         poMC->papoGeoms[i] = OGRCurve::CastToLineString( poCurve );
-        if( poMC->papoGeoms[i] == NULL )
+        if( poMC->papoGeoms[i] == nullptr )
         {
             delete poMC;
-            return NULL;
+            return nullptr;
         }
     }
     return dynamic_cast<OGRMultiLineString *>(

@@ -533,7 +533,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
               poExifTags++)
         {
             if(poExifTags->tag == poTIFFDirEntry->tdir_tag) {
-                CPLAssert( NULL != poExifTags->name );
+                CPLAssert( nullptr != poExifTags->name );
 
                 CPLStrlcpy(szName, poExifTags->name, sizeof(szName));
                 break;
@@ -546,7 +546,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
                  poGPSTags++ )
             {
                 if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
-                    CPLAssert( NULL != poGPSTags->name );
+                    CPLAssert( nullptr != poGPSTags->name );
                     CPLStrlcpy(szName, poGPSTags->name, sizeof(szName));
                     break;
                 }
@@ -559,7 +559,7 @@ CPLErr EXIFExtractMetadata(char**& papszMetadata,
             const struct intr_tag *poInterTags = intr_tags;
             for( ; poInterTags->tag; poInterTags++)
                 if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
-                    CPLAssert( NULL != poInterTags->name );
+                    CPLAssert( nullptr != poInterTags->name );
                     CPLStrlcpy(szName, poInterTags->name, sizeof(szName));
                     break;
                 }
@@ -1014,9 +1014,9 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
             }
         }
 
-        char* pszKey = NULL;
+        char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if( !bFound || pszKey == NULL || pszValue == NULL )
+        if( !bFound || pszKey == nullptr || pszValue == nullptr )
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Cannot write unknown %s tag",
@@ -1031,7 +1031,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
             TagValue tag;
             tag.tag = tagdescArray[i].tag;
             tag.datatype = tagdescArray[i].datatype;
-            tag.pabyVal = NULL;
+            tag.pabyVal = nullptr;
             tag.nLength = 0;
             tag.nLengthBytes = 0;
             tag.nRelOffset = -1;
@@ -1323,10 +1323,10 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
             break;
         }
     }
-    if( !bHasEXIFMetadata && pabyThumbnail == NULL )
+    if( !bHasEXIFMetadata && pabyThumbnail == nullptr )
     {
         // Nothing to do
-        return NULL;
+        return nullptr;
     }
 
     GUInt32 nOfflineSizeMain = 0;
@@ -1385,7 +1385,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
     }
     nBufferSize += 4; // Offset of next IFD
 
-    GByte* pabyData = NULL;
+    GByte* pabyData = nullptr;
     if( nBufferSize > 65536 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1396,12 +1396,12 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
     {
         pabyData = static_cast<GByte*>(VSI_CALLOC_VERBOSE(1, nBufferSize));
     }
-    if( pabyData == NULL )
+    if( pabyData == nullptr )
     {
         FreeTags(mainTags);
         FreeTags(exifTags);
         FreeTags(gpsTags);
-        return NULL;
+        return nullptr;
     }
 
     memcpy(pabyData, "Exif\0\0", EXIF_HEADER_SIZE);
@@ -1519,7 +1519,7 @@ GByte* EXIFCreate(char**   papszEXIFMetadata,
     }
 
     CPLAssert( nBufferOff + nThumbnailSize == nBufferSize );
-    if( pabyThumbnail != NULL && nThumbnailSize )
+    if( pabyThumbnail != nullptr && nThumbnailSize )
         memcpy(pabyData + nBufferOff, pabyThumbnail, nThumbnailSize );
 
     FreeTags(mainTags);

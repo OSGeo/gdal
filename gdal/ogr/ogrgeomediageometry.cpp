@@ -49,7 +49,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                               int nBytes )
 
 {
-    *ppoGeom = NULL;
+    *ppoGeom = nullptr;
 
     if( nBytes < 16 )
         return OGRERR_FAILURE;
@@ -172,7 +172,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
         if( nBytes < nExteriorSize )
             return OGRERR_FAILURE;
 
-        OGRGeometry* poExteriorGeom = NULL;
+        OGRGeometry* poExteriorGeom = nullptr;
         if( OGRCreateFromGeomedia( pabyGeom, &poExteriorGeom,
                                    nExteriorSize ) != OGRERR_NONE )
             return OGRERR_FAILURE;
@@ -205,7 +205,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             return OGRERR_FAILURE;
         }
 
-        OGRGeometry* poInteriorGeom = NULL;
+        OGRGeometry* poInteriorGeom = nullptr;
         if( OGRCreateFromGeomedia( pabyGeom, &poInteriorGeom,
                                    nInteriorSize ) != OGRERR_NONE )
         {
@@ -347,7 +347,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                 return OGRERR_FAILURE;
             }
 
-            OGRGeometry* poSubGeom = NULL;
+            OGRGeometry* poSubGeom = nullptr;
             if( OGRCreateFromGeomedia( pabyGeom, &poSubGeom,
                                        nSubBytes ) == OGRERR_NONE )
             {
@@ -390,18 +390,18 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
 
 OGRSpatialReference* OGRGetGeomediaSRS(OGRFeature* poFeature)
 {
-    if( poFeature == NULL )
-        return NULL;
+    if( poFeature == nullptr )
+        return nullptr;
 
     const int nGeodeticDatum = poFeature->GetFieldAsInteger("GeodeticDatum");
     const int nEllipsoid = poFeature->GetFieldAsInteger("Ellipsoid");
     const int nProjAlgorithm = poFeature->GetFieldAsInteger("ProjAlgorithm");
 
     if( !(nGeodeticDatum == 17 && nEllipsoid == 22) )
-        return NULL;
+        return nullptr;
 
     if( nProjAlgorithm != 12 )
-        return NULL;
+        return nullptr;
 
     OGRSpatialReference* poSRS = new OGRSpatialReference();
 

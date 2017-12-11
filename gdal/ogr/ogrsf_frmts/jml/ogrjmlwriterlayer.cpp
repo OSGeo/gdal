@@ -139,7 +139,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
     /* Add geometry */
     VSIFPrintfL(fp, "          <geometry>\n");
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
-    if( poGeom != NULL )
+    if( poGeom != nullptr )
     {
         char* pszGML = poGeom->exportToGML();
         VSIFPrintfL(fp, "                %s\n", pszGML);
@@ -228,7 +228,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <OGR_STYLE>");
         else
             VSIFPrintfL(fp, "          <property name=\"%s\">", "OGR_STYLE");
-        if( poFeature->GetStyleString() != NULL )
+        if( poFeature->GetStyleString() != nullptr )
         {
             char* pszValue = OGRGetXML_UTF8_EscapedString( poFeature->GetStyleString() );
             VSIFPrintfL(fp, "%s", pszValue);
@@ -247,7 +247,7 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             VSIFPrintfL(fp, "          <R_G_B>");
         else
             VSIFPrintfL(fp, "          <property name=\"%s\">", "R_G_B");
-        if( poFeature->GetStyleString() != NULL )
+        if( poFeature->GetStyleString() != nullptr )
         {
             OGRwkbGeometryType eGeomType =
                 poGeom ? wkbFlatten(poGeom->getGeometryType()) : wkbUnknown;
@@ -256,24 +256,24 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             for(int i=0;i<oMgr.GetPartCount();i++)
             {
                 OGRStyleTool* poTool = oMgr.GetPart(i);
-                if( poTool != NULL )
+                if( poTool != nullptr )
                 {
-                    const char* pszColor = NULL;
+                    const char* pszColor = nullptr;
                     if( poTool->GetType() == OGRSTCPen &&
                         eGeomType != wkbPolygon && eGeomType != wkbMultiPolygon )
                     {
                         GBool bIsNull;
                         pszColor = ((OGRStylePen*)poTool)->Color(bIsNull);
-                        if( bIsNull ) pszColor = NULL;
+                        if( bIsNull ) pszColor = nullptr;
                     }
                     else if( poTool->GetType() == OGRSTCBrush )
                     {
                         GBool bIsNull;
                         pszColor = ((OGRStyleBrush*)poTool)->ForeColor(bIsNull);
-                        if( bIsNull ) pszColor = NULL;
+                        if( bIsNull ) pszColor = nullptr;
                     }
                     int R, G, B, A;
-                    if( pszColor != NULL &&
+                    if( pszColor != nullptr &&
                         poTool->GetRGBFromString(pszColor, R, G, B, A) && A != 0 )
                     {
                         VSIFPrintfL(fp, "%02X%02X%02X", R, G, B);
@@ -310,7 +310,7 @@ OGRErr OGRJMLWriterLayer::CreateField( OGRFieldDefn *poFieldDefn,
     if( !bAddRGBField && strcmp( poFieldDefn->GetNameRef(), "R_G_B" ) == 0 )
         return OGRERR_FAILURE;
 
-    const char* pszType = NULL;
+    const char* pszType = nullptr;
     OGRFieldType eType = poFieldDefn->GetType();
     if( eType == OFTInteger )
     {

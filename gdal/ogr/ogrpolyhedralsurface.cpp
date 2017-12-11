@@ -152,14 +152,14 @@ int OGRPolyhedralSurface::getDimension() const
 
 void OGRPolyhedralSurface::empty()
 {
-    if( oMP.papoGeoms != NULL )
+    if( oMP.papoGeoms != nullptr )
     {
         for( int i = 0; i < oMP.nGeomCount; i++ )
             delete oMP.papoGeoms[i];
         CPLFree(oMP.papoGeoms);
     }
     oMP.nGeomCount = 0;
-    oMP.papoGeoms = NULL;
+    oMP.papoGeoms = nullptr;
 }
 
 /************************************************************************/
@@ -171,8 +171,8 @@ OGRGeometry* OGRPolyhedralSurface::clone() const
     OGRPolyhedralSurface *poNewPS;
     poNewPS = dynamic_cast<OGRPolyhedralSurface*>(
                         OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poNewPS == NULL )
-        return NULL;
+    if( poNewPS == nullptr )
+        return nullptr;
 
     poNewPS->assignSpatialReference(getSpatialReference());
     poNewPS->flags = flags;
@@ -183,7 +183,7 @@ OGRGeometry* OGRPolyhedralSurface::clone() const
                       oMP.papoGeoms[i], getSubGeometryType()) != OGRERR_NONE )
         {
             delete poNewPS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -236,7 +236,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
 
     oMP.papoGeoms = reinterpret_cast<OGRGeometry **>(
                             VSI_CALLOC_VERBOSE(sizeof(void*), oMP.nGeomCount));
-    if (oMP.nGeomCount != 0 && oMP.papoGeoms == NULL)
+    if (oMP.nGeomCount != 0 && oMP.papoGeoms == nullptr)
     {
         oMP.nGeomCount = 0;
         return OGRERR_NOT_ENOUGH_MEMORY;
@@ -266,9 +266,9 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
             return OGRERR_CORRUPT_DATA;
         }
 
-        OGRGeometry* poSubGeom = NULL;
+        OGRGeometry* poSubGeom = nullptr;
         int nSubGeomBytesConsumed = -1;
-        eErr = OGRGeometryFactory::createFromWkb( pabySubData, NULL,
+        eErr = OGRGeometryFactory::createFromWkb( pabySubData, nullptr,
                                                   &poSubGeom, nSize,
                                                   eWkbVariant,
                                                   nSubGeomBytesConsumed );
@@ -381,9 +381,9 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 /*      point list buffer from ring to ring to cut down on              */
 /*      allocate/deallocate overhead.                                   */
 /* ==================================================================== */
-    OGRRawPoint *paoPoints = NULL;
+    OGRRawPoint *paoPoints = nullptr;
     int          nMaxPoints = 0;
-    double      *padfZ = NULL;
+    double      *padfZ = nullptr;
 
     do
     {
@@ -419,10 +419,10 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
         /* accepted by PostGIS */
         else if (EQUAL(szToken,getSubGeometryName()))
         {
-            OGRGeometry* poGeom = NULL;
+            OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                    const_cast<char **>(&pszInput), NULL, &poGeom );
+                    const_cast<char **>(&pszInput), nullptr, &poGeom );
             poSurface = reinterpret_cast<OGRSurface*>(poGeom);
         }
         else
@@ -488,7 +488,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
 /*      Build a list of strings containing the stuff for each Geom.     */
 /* -------------------------------------------------------------------- */
     papszGeoms = (oMP.nGeomCount) ? (char **) CPLCalloc(sizeof(char *),
-                                                        oMP.nGeomCount) : NULL;
+                                                        oMP.nGeomCount) : nullptr;
 
     for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
@@ -498,7 +498,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
             goto error;
 
         size_t nSkip = 0;
-        if( pszSkipPrefix != NULL &&
+        if( pszSkipPrefix != nullptr &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
@@ -516,14 +516,14 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
                 CPLDebug( "OGR", "OGR%s::exportToWkt() - skipping %s.",
                           getGeometryName(), papszGeoms[iGeom] );
                 CPLFree( papszGeoms[iGeom] );
-                papszGeoms[iGeom] = NULL;
+                papszGeoms[iGeom] = nullptr;
                 continue;
             }
         }
         else if( eWkbVariant != wkbVariantIso )
         {
             char *substr;
-            if( (substr = strstr(papszGeoms[iGeom], " Z")) != NULL )
+            if( (substr = strstr(papszGeoms[iGeom], " Z")) != nullptr )
                 memmove(substr, substr+strlen(" Z"),
                         1 + strlen(substr+strlen(" Z")));
         }
@@ -561,7 +561,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
     *ppszDstText = (char *) VSI_MALLOC_VERBOSE(
                                    nCumulativeLength + oMP.nGeomCount + 26);
 
-    if( *ppszDstText == NULL )
+    if( *ppszDstText == nullptr )
     {
         eErr = OGRERR_NOT_ENOUGH_MEMORY;
         goto error;
@@ -585,7 +585,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
 
     for( iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
     {
-        if( papszGeoms[iGeom] == NULL )
+        if( papszGeoms[iGeom] == nullptr )
             continue;
 
         if( bMustWriteComma )
@@ -593,7 +593,7 @@ OGRErr OGRPolyhedralSurface::exportToWktInternal ( char ** ppszDstText,
         bMustWriteComma = true;
 
         size_t nSkip = 0;
-        if( pszSkipPrefix != NULL &&
+        if( pszSkipPrefix != nullptr &&
             EQUALN(papszGeoms[iGeom], pszSkipPrefix, strlen(pszSkipPrefix)) &&
             papszGeoms[iGeom][strlen(pszSkipPrefix)] == ' ' )
         {
@@ -659,7 +659,7 @@ static OGRPolygon* CasterToPolygon(OGRSurface* poGeom)
     CPLError(CE_Failure, CPLE_AppDefined,
              "%s found. Conversion impossible", poGeom->getGeometryName());
     delete poGeom;
-    return NULL;
+    return nullptr;
 }
 
 OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
@@ -678,7 +678,7 @@ static OGRCurvePolygon* CasterToCurvePolygon(OGRSurface* poGeom)
     CPLError(CE_Failure, CPLE_AppDefined,
              "%s found. Conversion impossible", poGeom->getGeometryName());
     delete poGeom;
-    return NULL;
+    return nullptr;
 }
 
 OGRSurfaceCasterToCurvePolygon OGRPolyhedralSurface::GetCasterToCurvePolygon() const
@@ -776,7 +776,7 @@ double OGRPolyhedralSurface::get_Area() const
 
     sfcgal_init();
     sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
-    if (poThis == NULL)
+    if (poThis == nullptr)
         return -1.0;
 
     double area = sfcgal_geometry_area_3d(poThis);
@@ -865,7 +865,7 @@ OGRErr OGRPolyhedralSurface::addGeometry (const OGRGeometry *poNewGeom)
     OGRGeometry *poClone = poNewGeom->clone();
     OGRErr      eErr;
 
-    if (poClone == NULL)
+    if (poClone == nullptr)
         return OGRERR_FAILURE;
 
     eErr = addGeometryDirectly(poClone);
@@ -915,7 +915,7 @@ OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
     OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE(
                                         oMP.papoGeoms,
                                         sizeof(void*) * (oMP.nGeomCount+1) );
-    if( papoNewGeoms == NULL )
+    if( papoNewGeoms == nullptr )
         return OGRERR_FAILURE;
 
     oMP.papoGeoms = papoNewGeoms;

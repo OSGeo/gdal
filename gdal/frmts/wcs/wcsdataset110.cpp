@@ -298,14 +298,14 @@ bool WCSDataset110::ExtractGridInfo()
 {
     CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageDescription" );
 
-    if( psCO == NULL )
+    if( psCO == nullptr )
         return false;
 
 /* -------------------------------------------------------------------- */
 /*      We need to strip off name spaces so it is easier to             */
 /*      searchfor plain gml names.                                      */
 /* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psCO, NULL, TRUE );
+    CPLStripXMLNamespace( psCO, nullptr, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Verify we have a SpatialDomain and GridCRS.                     */
@@ -315,7 +315,7 @@ bool WCSDataset110::ExtractGridInfo()
     CPLXMLNode *psGCRS =
         CPLGetXMLNode( psSD, "GridCRS" );
 
-    if( psSD == NULL || psGCRS == NULL )
+    if( psSD == nullptr || psGCRS == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find GridCRS in CoverageDescription,\n"
@@ -430,7 +430,7 @@ bool WCSDataset110::ExtractGridInfo()
     CPLXMLNode *psNode;
 
     for( psNode = psSD->psChild;
-         psNode != NULL && size.size() == 0;
+         psNode != nullptr && size.size() == 0;
          psNode = psNode->psNext )
     {
         if( psNode->eType != CXT_Element
@@ -456,7 +456,7 @@ bool WCSDataset110::ExtractGridInfo()
 /*      system and derive the size from that.                           */
 /* -------------------------------------------------------------------- */
     for( psNode = psSD->psChild;
-         psNode != NULL && size.size() == 0;
+         psNode != nullptr && size.size() == 0;
          psNode = psNode->psNext )
     {
         if( psNode->eType != CXT_Element
@@ -493,7 +493,7 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */
 /* -------------------------------------------------------------------- */
-    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
+    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", nullptr );
 
     if( pszProjOverride )
     {
@@ -518,11 +518,11 @@ bool WCSDataset110::ExtractGridInfo()
 /*      falling back to the first supported format.  Should we          */
 /*      consider preferring the nativeFormat if available?              */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
+    if( CPLGetXMLValue( psService, "PreferredFormat", nullptr ) == nullptr )
     {
         CPLString osPreferredFormat;
 
-        for( psNode = psCO->psChild; psNode != NULL; psNode = psNode->psNext )
+        for( psNode = psCO->psChild; psNode != nullptr; psNode = psNode->psNext )
         {
             if( psNode->eType == CXT_Element
                 && EQUAL(psNode->pszValue,"SupportedFormat")
@@ -532,9 +532,9 @@ bool WCSDataset110::ExtractGridInfo()
                 if( osPreferredFormat.empty() )
                     osPreferredFormat = psNode->psChild->pszValue;
 
-                if( strstr(psNode->psChild->pszValue,"tiff") != NULL
-                    || strstr(psNode->psChild->pszValue,"TIFF") != NULL
-                    || strstr(psNode->psChild->pszValue,"Tiff") != NULL )
+                if( strstr(psNode->psChild->pszValue,"tiff") != nullptr
+                    || strstr(psNode->psChild->pszValue,"TIFF") != nullptr
+                    || strstr(psNode->psChild->pszValue,"Tiff") != nullptr )
                 {
                     osPreferredFormat = psNode->psChild->pszValue;
                     break;
@@ -554,12 +554,12 @@ bool WCSDataset110::ExtractGridInfo()
 /*      Try to identify a nodata value.  For now we only support the    */
 /*      singleValue mechanism.                                          */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "NoDataValue", NULL ) == NULL )
+    if( CPLGetXMLValue( psService, "NoDataValue", nullptr ) == nullptr )
     {
         const char *pszSV =
-            CPLGetXMLValue( psCO, "Range.Field.NullValue", NULL );
+            CPLGetXMLValue( psCO, "Range.Field.NullValue", nullptr );
 
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
+        if( pszSV != nullptr && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
             bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
@@ -570,7 +570,7 @@ bool WCSDataset110::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Grab the field name, if possible.                               */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "FieldName", NULL ) == NULL )
+    if( CPLGetXMLValue( psService, "FieldName", nullptr ) == nullptr )
     {
         CPLString osFieldName =
             CPLGetXMLValue( psCO, "Range.Field.Identifier", "" );
@@ -601,7 +601,7 @@ bool WCSDataset110::ExtractGridInfo()
     if( osBandIdentifier.empty()
         && (EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Band")
             || EQUAL(CPLGetXMLValue(psAxis,"Identifier",""),"Bands"))
-        && CPLGetXMLNode(psAxis,"AvailableKeys") != NULL )
+        && CPLGetXMLNode(psAxis,"AvailableKeys") != nullptr )
     {
         osBandIdentifier = CPLGetXMLValue(psAxis,"Identifier","");
 
@@ -611,12 +611,12 @@ bool WCSDataset110::ExtractGridInfo()
         int iBand;
 
         for( psSV = psValues->psChild, iBand = 1;
-             psSV != NULL;
+             psSV != nullptr;
              psSV = psSV->psNext, iBand++ )
         {
             if( psSV->eType != CXT_Element
                 || !EQUAL(psSV->pszValue,"Key")
-                || psSV->psChild == NULL
+                || psSV->psChild == nullptr
                 || psSV->psChild->eType != CXT_Text
                 || atoi(psSV->psChild->pszValue) != iBand )
             {
@@ -627,13 +627,13 @@ bool WCSDataset110::ExtractGridInfo()
 
         if( !osBandIdentifier.empty() )
         {
-            if( CPLGetXMLValue(psService,"BandIdentifier",NULL) == NULL ) {
+            if( CPLGetXMLValue(psService,"BandIdentifier",nullptr) == nullptr ) {
                 bServiceDirty = true;
                 CPLSetXMLValue( psService, "BandIdentifier",
                                 osBandIdentifier );
             }
 
-            if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL ) {
+            if( CPLGetXMLValue(psService,"BandCount",nullptr) == nullptr ) {
                 bServiceDirty = true;
                 CPLSetXMLValue( psService, "BandCount",
                                 CPLString().Printf("%d",iBand-1));
@@ -643,7 +643,7 @@ bool WCSDataset110::ExtractGridInfo()
         // Is this an ESRI server returning a GDAL recognised data type?
         CPLString osDataType = CPLGetXMLValue( psAxis, "DataType", "" );
         if( GDALGetDataTypeByName(osDataType) != GDT_Unknown
-            && CPLGetXMLValue(psService,"BandType",NULL) == NULL )
+            && CPLGetXMLValue(psService,"BandType",nullptr) == nullptr )
         {
             bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "BandType", osDataType );
@@ -659,7 +659,7 @@ bool WCSDataset110::ExtractGridInfo()
 
 CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString url )
 {
-    CPLStripXMLNamespace(Capabilities, NULL, TRUE);
+    CPLStripXMLNamespace(Capabilities, nullptr, TRUE);
 
     // make sure this is a capabilities document
     if( strcmp(Capabilities->pszValue, "Capabilities") != 0 )
@@ -667,19 +667,19 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
         return CE_Failure;
     }
 
-    char **metadata = NULL;
+    char **metadata = nullptr;
     CPLString path = "WCS_GLOBAL#";
 
     CPLString key = path + "version";
     metadata = CSLSetNameValue(metadata, key, Version());
 
-    for( CPLXMLNode *node = Capabilities->psChild; node != NULL; node = node->psNext)
+    for( CPLXMLNode *node = Capabilities->psChild; node != nullptr; node = node->psNext)
     {
         const char *attr = node->pszValue;
         if( node->eType == CXT_Attribute && EQUAL(attr, "updateSequence") )
         {
             key = path + "updateSequence";
-            CPLString value = CPLGetXMLValue(node, NULL, "");
+            CPLString value = CPLGetXMLValue(node, nullptr, "");
             metadata = CSLSetNameValue(metadata, key, value);
         }
     }
@@ -713,7 +713,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
         if( site )
         {
             CPLString path3 = path2 + "ProviderSite";
-            CPLString value = CPLGetXMLValue(CPLGetXMLNode(site, "href"), NULL, "");
+            CPLString value = CPLGetXMLValue(CPLGetXMLNode(site, "href"), nullptr, "");
             metadata = CSLSetNameValue( metadata, path3, value );
         }
         CPLString path3 = path2;
@@ -752,18 +752,18 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
     CPLXMLNode *service2 = CPLGetXMLNode(Capabilities, "OperationsMetadata");
     if( service2 )
     {
-        for( CPLXMLNode *operation = service2->psChild; operation != NULL; operation = operation->psNext)
+        for( CPLXMLNode *operation = service2->psChild; operation != nullptr; operation = operation->psNext)
         {
             if( operation->eType != CXT_Element
                 || !EQUAL(operation->pszValue, "Operation") )
             {
                 continue;
             }
-            if( EQUAL(CPLGetXMLValue(CPLGetXMLNode(operation, "name"), NULL, ""), "DescribeCoverage") )
+            if( EQUAL(CPLGetXMLValue(CPLGetXMLNode(operation, "name"), nullptr, ""), "DescribeCoverage") )
             {
                 DescribeCoverageURL = CPLGetXMLValue(
                     CPLGetXMLNode(CPLSearchXMLNode(operation, "Get"),
-                                  "href"), NULL, "");
+                                  "href"), nullptr, "");
             }
         }
     }
@@ -800,14 +800,14 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
 
     this->SetMetadata( metadata, "" );
     CSLDestroy( metadata );
-    metadata = NULL;
+    metadata = nullptr;
 
     // contents metadata
     CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "Contents");
     if( contents )
     {
         int index = 1;
-        for( CPLXMLNode *summary = contents->psChild; summary != NULL; summary = summary->psNext)
+        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
         {
             if( summary->eType != CXT_Element
                 || !EQUAL(summary->pszValue, "CoverageSummary") )
@@ -840,9 +840,9 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 value = CPLURLAddKVP(value, "service", "WCS");
                 value = CPLURLAddKVP(value, "version", this->Version());
                 if (EQUAL(node->pszValue, "CoverageId")) {
-                    value = CPLURLAddKVP(value, "coverageId", CPLGetXMLValue(node, NULL, ""));
+                    value = CPLURLAddKVP(value, "coverageId", CPLGetXMLValue(node, nullptr, ""));
                 } else {
-                    value = CPLURLAddKVP(value, "identifiers", CPLGetXMLValue(node, NULL, ""));
+                    value = CPLURLAddKVP(value, "identifiers", CPLGetXMLValue(node, nullptr, ""));
                 }
                 value = "WCS:" + value;
                 // GDAL Data Model:
@@ -871,7 +871,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
                 if (bbox.size() >= 2) {
                     // We don't care if CRSImpliesAxisOrderSwap fails
                     bool swap;
-                    CRSImpliesAxisOrderSwap(CRS, swap, NULL);
+                    CRSImpliesAxisOrderSwap(CRS, swap, nullptr);
                     std::vector<CPLString> b = Split(bbox[0], " ", swap);
                     std::vector<double> low;
                     if (b.size() >= 2) {
@@ -895,7 +895,7 @@ CPLErr WCSDataset110::ParseCapabilities( CPLXMLNode * Capabilities, CPLString ur
             node = CPLGetXMLNode(summary, "CoverageSubtype");
             if (node) {
                 CPLString name = path3 + "TYPE";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
+                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
             }
 
             index++;

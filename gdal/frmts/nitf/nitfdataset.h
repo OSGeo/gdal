@@ -205,7 +205,7 @@ class NITFRasterBand : public GDALPamRasterBand
     virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
     virtual GDALColorTable *GetColorTable() override;
     virtual CPLErr SetColorTable( GDALColorTable * ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     void Unpack(GByte* pData);
 };
@@ -250,9 +250,9 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
                                             const char * pszDomain = "" );*/
         virtual CPLErr FlushCache() override;
         /*virtual char **GetCategoryNames();*/
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-        virtual double GetMinimum( int *pbSuccess = NULL ) override;
-        virtual double GetMaximum(int *pbSuccess = NULL ) override;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+        virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+        virtual double GetMaximum(int *pbSuccess = nullptr ) override;
         /*virtual double GetOffset( int *pbSuccess = NULL );
         virtual double GetScale( int *pbSuccess = NULL );*/
         /*virtual const char *GetUnitType();*/

@@ -86,12 +86,12 @@ class DOQ2Dataset : public RawDataset
 /************************************************************************/
 
 DOQ2Dataset::DOQ2Dataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     dfULX(0.0),
     dfULY(0.0),
     dfXPixelSize(0.0),
     dfYPixelSize(0.0),
-    pszProjection(NULL)
+    pszProjection(nullptr)
 { }
 
 /************************************************************************/
@@ -104,7 +104,7 @@ DOQ2Dataset::~DOQ2Dataset()
     FlushCache();
 
     CPLFree( pszProjection );
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
@@ -146,15 +146,15 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 212 )
-        return NULL;
+        return nullptr;
 
     if(! STARTS_WITH_CI( reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
                          "BEGIN_USGS_DOQ_HEADER" ) )
-        return NULL;
+        return nullptr;
 
     VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == NULL)
-        return NULL;
+    if (fp == nullptr)
+        return nullptr;
 
     int nLineCount = 0;
     int nBytesPerPixel = 0;
@@ -162,9 +162,9 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int nHeight = 0;
     int nBandStorage = 0;
     int nBandTypes = 0;
-    const char *pszDatumLong = NULL;
-    const char *pszDatumShort = NULL;
-    const char *pszUnits = NULL;
+    const char *pszDatumLong = nullptr;
+    const char *pszDatumShort = nullptr;
+    const char *pszUnits = nullptr;
     int nZone = 0;
     int nProjType = 0;
     int nSkipBytes = 0;
@@ -173,13 +173,13 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     double dfULYMap = 0.0;
     double dfXDim = 0.0;
     double dfYDim = 0.0;
-    char **papszMetadata = NULL;
+    char **papszMetadata = nullptr;
 
     /* read and discard the first line */
     CPL_IGNORE_RET_VAL(CPLReadLineL( fp ));
 
-    const char *pszLine = NULL;
-    while( (pszLine = CPLReadLineL( fp )) != NULL )
+    const char *pszLine = nullptr;
+    while( (pszLine = CPLReadLineL( fp )) != nullptr )
     {
         nLineCount++;
 
@@ -299,7 +299,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
             /* we want to generically capture all the other metadata */
             CPLString osMetaDataValue;
 
-            for( int iToken = 1; papszTokens[iToken] != NULL; iToken++ )
+            for( int iToken = 1; papszTokens[iToken] != nullptr; iToken++ )
             {
                 if( EQUAL(papszTokens[iToken],"*") )
                     continue;
@@ -316,7 +316,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszTokens );
     }
 
-    CPLReadLineL( NULL );
+    CPLReadLineL( nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Do these values look coherent for a DOQ file?  It would be      */
@@ -330,7 +330,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CSLDestroy( papszMetadata );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -344,7 +344,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   nBandTypes );
         CSLDestroy( papszMetadata );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -357,7 +357,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "The DOQ2 driver does not support update access to existing"
                   " datasets." );
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -369,7 +369,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
-    papszMetadata = NULL;
+    papszMetadata = nullptr;
 
     poDS->fpImage = fp;
 
@@ -382,7 +382,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( !GDALCheckBandCount(nBandCount, FALSE) )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -390,7 +390,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( nBytesPerPixel > INT_MAX / nBandCount )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         nBytesPerPixel *= nBandCount;
     }
@@ -398,7 +398,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( nBytesPerPixel > INT_MAX / nWidth )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     const int nBytesPerLine = nBytesPerPixel * nWidth;
 
@@ -415,7 +415,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -460,7 +460,7 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_DOQ2()
 
 {
-    if( GDALGetDriverByName( "DOQ2" ) != NULL )
+    if( GDALGetDriverByName( "DOQ2" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

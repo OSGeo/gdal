@@ -38,7 +38,7 @@
 
 #define RET_IF_FAIL(x)      if (!(x)) return;
 
-#define SET_IF_INTEREST_LAYER(x)        poReader->x = ((OGRXPlaneLayer*)x == poLayer) ? x : NULL
+#define SET_IF_INTEREST_LAYER(x)        poReader->x = ((OGRXPlaneLayer*)x == poLayer) ? x : nullptr
 
 class OGRXPlaneLayer;
 class OGRXPlaneDataSource;

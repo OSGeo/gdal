@@ -40,16 +40,16 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGeoconceptDataSource::OGRGeoconceptDataSource() :
-    _papoLayers(NULL),
+    _papoLayers(nullptr),
     _nLayers(0),
-    _pszGCT(NULL),
-    _pszName(NULL),
-    _pszDirectory(NULL),
-    _pszExt(NULL),
-    _papszOptions(NULL),
+    _pszGCT(nullptr),
+    _pszName(nullptr),
+    _pszDirectory(nullptr),
+    _pszExt(nullptr),
+    _papszOptions(nullptr),
     _bSingleNewFile(false),
     _bUpdate(false),
-    _hGXT(NULL)
+    _hGXT(nullptr)
 {}
 
 /************************************************************************/
@@ -142,7 +142,7 @@ int OGRGeoconceptDataSource::Open( const char* pszName, bool bTestOpen,
 int OGRGeoconceptDataSource::LoadFile( const char *pszMode )
 
 {
-    if( _pszExt == NULL)
+    if( _pszExt == nullptr)
     {
       const char* pszExtension = CPLGetExtension(_pszName);
       _pszExt = CPLStrdup(pszExtension);
@@ -152,7 +152,7 @@ int OGRGeoconceptDataSource::LoadFile( const char *pszMode )
     if( !_pszDirectory )
         _pszDirectory = CPLStrdup( CPLGetPath(_pszName) );
 
-    if( (_hGXT= Open_GCIO(_pszName,_pszExt,pszMode,_pszGCT))==NULL )
+    if( (_hGXT= Open_GCIO(_pszName,_pszExt,pszMode,_pszGCT))==nullptr )
     {
       return FALSE;
     }
@@ -223,14 +223,14 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
     _papszOptions = CSLDuplicate( papszOptions );
 
     const char *pszConf = CSLFetchNameValue(papszOptions,"CONFIG");
-    if( pszConf != NULL )
+    if( pszConf != nullptr )
     {
       _pszGCT = CPLStrdup(pszConf);
     }
 
     _pszExt = (char *)CSLFetchNameValue(papszOptions,"EXTENSION");
     const char *pszExtension = CSLFetchNameValue( papszOptions, "EXTENSION" );
-    if( pszExtension == NULL )
+    if( pszExtension == nullptr )
     {
         _pszExt = CPLStrdup(CPLGetExtension(pszName));
     }
@@ -262,7 +262,7 @@ int OGRGeoconceptDataSource::Create( const char *pszName, char** papszOptions )
             pszbName = CPLStrdup(CPLGetBasename( pszNameDup ));
             CPLFree(pszNameDup);
         }
-        _pszName = CPLStrdup((char *)CPLFormFilename( _pszDirectory, pszbName, NULL ));
+        _pszName = CPLStrdup((char *)CPLFormFilename( _pszDirectory, pszbName, nullptr ));
         CPLFree(pszbName);
     }
     else
@@ -302,26 +302,26 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
                                                 char ** papszOptions /* = NULL */ )
 
 {
-    if( _hGXT == NULL )
+    if( _hGXT == nullptr )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Internal Error : null datasource handler."
                 );
-        return NULL;
+        return nullptr;
     }
 
-    if( poSRS == NULL && !_bUpdate)
+    if( poSRS == nullptr && !_bUpdate)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "SRS is mandatory of creating a Geoconcept Layer."
                 );
-        return NULL;
+        return nullptr;
     }
 
     /*
      * pszLayerName Class.Subclass if -nln option used, otherwise file name
      */
-    const char *pszFeatureType = NULL;
+    const char *pszFeatureType = nullptr;
     char pszln[512];
 
     if( !(pszFeatureType = CSLFetchNameValue(papszOptions,"FEATURETYPE")) )
@@ -346,7 +346,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
                 "Feature type name '%s' is incorrect."
                 "Correct syntax is : Class.Subclass.",
                 pszFeatureType );
-      return NULL;
+      return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -405,7 +405,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Geometry type of '%s' not supported in Geoconcept files.",
                   OGRGeometryTypeToName(eType) );
-        return NULL;
+        return nullptr;
     }
 
     /*
@@ -413,21 +413,21 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
      * layer name to exist in the CONFIG as "Class.Subclass".
      * Removing the CONFIG, implies on-the-fly-creation of layers...
      */
-    OGRGeoconceptLayer *poFile= NULL;
+    OGRGeoconceptLayer *poFile= nullptr;
 
     if( _nLayers > 0 )
       for( int iLayer= 0; iLayer<_nLayers; iLayer++)
       {
         poFile= reinterpret_cast<OGRGeoconceptLayer *>( GetLayer(iLayer) );
-        if( poFile != NULL && EQUAL(poFile->GetLayerDefn()->GetName(),pszFeatureType) )
+        if( poFile != nullptr && EQUAL(poFile->GetLayerDefn()->GetName(),pszFeatureType) )
         {
           break;
         }
-        poFile= NULL;
+        poFile= nullptr;
       }
     if( !poFile )
     {
-      GCSubType* aSubclass = NULL;
+      GCSubType* aSubclass = nullptr;
       GCExportFileMetadata* m = GetGCMeta_GCIO(_hGXT);
 
       if( !m )
@@ -435,7 +435,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
         if( !(m= CreateHeader_GCIO()) )
         {
           CSLDestroy(ft);
-          return NULL;
+          return nullptr;
         }
         SetMetaExtent_GCIO(m, CreateExtent_GCIO(HUGE_VAL,HUGE_VAL,-HUGE_VAL,-HUGE_VAL));
         SetGCMeta_GCIO(_hGXT, m);
@@ -446,7 +446,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Layer '%s' already exists.",
                   pszFeatureType );
-        return NULL;
+        return nullptr;
       }
       if( !AddType_GCIO(_hGXT, ft[0], -1L) )
       {
@@ -454,7 +454,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to add layer '%s'.",
                   pszFeatureType );
-        return NULL;
+        return nullptr;
       }
       if( !(aSubclass= AddSubType_GCIO(_hGXT, ft[0], ft[1], -1L, gcioFeaType, gcioDim)) )
       {
@@ -462,28 +462,28 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to add layer '%s'.",
                   pszFeatureType );
-        return NULL;
+        return nullptr;
       }
       /* complete feature type with private fields : */
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kIdentifier_GCIO, -100, vIntFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kClass_GCIO, -101, vMemoFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kSubclass_GCIO, -102, vMemoFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kName_GCIO, -103, vMemoFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kNbFields_GCIO, -104, vIntFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kX_GCIO, -105, vRealFld_GCIO, NULL, NULL);
-      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kY_GCIO, -106, vRealFld_GCIO, NULL, NULL);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kIdentifier_GCIO, -100, vIntFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kClass_GCIO, -101, vMemoFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kSubclass_GCIO, -102, vMemoFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kName_GCIO, -103, vMemoFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kNbFields_GCIO, -104, vIntFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kX_GCIO, -105, vRealFld_GCIO, nullptr, nullptr);
+      AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kY_GCIO, -106, vRealFld_GCIO, nullptr, nullptr);
       /* user's fields will be added with Layer->CreateField() method ... */
       switch( gcioFeaType )
       {
         case vPoint_GCIO :
           break;
         case vLine_GCIO  :
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kXP_GCIO, -107, vRealFld_GCIO, NULL, NULL);
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kYP_GCIO, -108, vRealFld_GCIO, NULL, NULL);
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kXP_GCIO, -107, vRealFld_GCIO, nullptr, nullptr);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kYP_GCIO, -108, vRealFld_GCIO, nullptr, nullptr);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, nullptr, nullptr);
           break;
         default          :
-          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, NULL, NULL);
+          AddSubTypeField_GCIO(_hGXT, ft[0], ft[1], -1L, kGraphics_GCIO, -109, vUnknownItemType_GCIO, nullptr, nullptr);
           break;
       }
       SetSubTypeGCHandle_GCIO(aSubclass,_hGXT);
@@ -494,7 +494,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
       {
         CSLDestroy(ft);
         delete poFile;
-        return NULL;
+        return nullptr;
       }
 
       _papoLayers = static_cast<OGRGeoconceptLayer **>(
@@ -511,7 +511,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Assign the coordinate system (if provided)                      */
 /* -------------------------------------------------------------------- */
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poFile->SetSpatialRef( poSRS );
 
     return poFile;
@@ -538,7 +538,7 @@ OGRLayer *OGRGeoconceptDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
-      return NULL;
+      return nullptr;
 
     OGRLayer *poFile = _papoLayers[iLayer];
     return poFile;

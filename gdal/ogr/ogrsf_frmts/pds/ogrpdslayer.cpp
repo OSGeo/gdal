@@ -59,7 +59,7 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
     nNextFID(0),
     nLongitudeIndex(-1),
     nLatitudeIndex(-1),
-    pasFieldDesc(NULL)
+    pasFieldDesc(nullptr)
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
@@ -143,7 +143,7 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
 
 {
     VSILFILE* fpStructure = VSIFOpenL(osStructureFilename, "rb");
-    if (fpStructure == NULL)
+    if (fpStructure == nullptr)
         return;
 
     int nFields = 0;
@@ -161,10 +161,10 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
     while( true )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        const char* pszLine = CPLReadLine2L(fpStructure, 256, NULL);
+        const char* pszLine = CPLReadLine2L(fpStructure, 256, nullptr);
         CPLPopErrorHandler();
         CPLErrorReset();
-        if (pszLine == NULL)
+        if (pszLine == nullptr)
             break;
 
         char **papszTokens =
@@ -315,14 +315,14 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
             if (EQUAL(papszTokens[0], "PDS_VERSION_ID"))
             {
                 CSLDestroy(papszTokens);
-                papszTokens = NULL;
+                papszTokens = nullptr;
                 while( true )
                 {
                     CPLPushErrorHandler(CPLQuietErrorHandler);
-                    pszLine = CPLReadLine2L(fpStructure, 256, NULL);
+                    pszLine = CPLReadLine2L(fpStructure, 256, nullptr);
                     CPLPopErrorHandler();
                     CPLErrorReset();
-                    if (pszLine == NULL)
+                    if (pszLine == nullptr)
                         break;
                     papszTokens =
                         CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
@@ -334,11 +334,11 @@ void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
                         break;
                     }
                     CSLDestroy(papszTokens);
-                    papszTokens = NULL;
+                    papszTokens = nullptr;
                 }
                 CSLDestroy(papszTokens);
-                papszTokens = NULL;
-                if (pszLine == NULL)
+                papszTokens = nullptr;
+                if (pszLine == nullptr)
                     break;
             }
             else if (EQUAL(papszTokens[0], "ROW_BYTES"))
@@ -470,12 +470,12 @@ OGRFeature *OGRPDSLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -492,14 +492,14 @@ OGRFeature *OGRPDSLayer::GetNextFeature()
 OGRFeature *OGRPDSLayer::GetNextRawFeature()
 {
     if (nNextFID == nRecords)
-        return NULL;
+        return nullptr;
     int nRead = (int)VSIFReadL( pabyRecord, 1, nRecordSize, fpPDS);
     if (nRead != nRecordSize)
-        return NULL;
+        return nullptr;
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     int nFieldCount = poFeatureDefn->GetFieldCount();
-    if (pasFieldDesc != NULL)
+    if (pasFieldDesc != nullptr)
     {
         for( int i=0;i<nFieldCount;i++)
         {
@@ -719,14 +719,14 @@ int OGRPDSLayer::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap,OLCFastFeatureCount) &&
-        m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+        m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return TRUE;
 
     if (EQUAL(pszCap,OLCRandomRead))
         return TRUE;
 
     if (EQUAL(pszCap,OLCFastSetNextByIndex) &&
-        m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+        m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return TRUE;
 
     return FALSE;
@@ -751,7 +751,7 @@ GIntBig OGRPDSLayer::GetFeatureCount(int bForce )
 OGRFeature *OGRPDSLayer::GetFeature( GIntBig nFID )
 {
     if (nFID < 0 || nFID >= nRecords)
-        return NULL;
+        return nullptr;
 
     nNextFID = (int)nFID;
     VSIFSeekL( fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET );

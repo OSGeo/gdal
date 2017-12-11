@@ -155,7 +155,7 @@ public:
    LTIDLLReader(LTIOStreamInf &oStream,
                 bool useWorldFile = false) : T(oStream, useWorldFile) {}
    LTIDLLReader(LTIOStreamInf *poStream,
-                LTIOStreamInf *poWorldFile = NULL) : T(poStream, poWorldFile) {}
+                LTIOStreamInf *poWorldFile = nullptr) : T(poStream, poWorldFile) {}
    virtual ~LTIDLLReader() {}
 };
 
@@ -215,7 +215,7 @@ public:
     {
         if (!m_f)
             return LT_STS_BadContext;
-        if( !m_f( fraction, NULL, m_arg ) )
+        if( !m_f( fraction, nullptr, m_arg ) )
             return LT_STS_Failure;
         return LT_STS_Success;
     }
@@ -571,9 +571,9 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if ( !poGDS->poBuffer )
         {
             poGDS->poBuffer =
-                new LTIDLLBuffer<LTISceneBuffer>( *poPixel, nBlockXSize, nBlockYSize, NULL );
+                new LTIDLLBuffer<LTISceneBuffer>( *poPixel, nBlockXSize, nBlockYSize, nullptr );
 //            poGDS->poBuffer =
-//                new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
+//                new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, nullptr );
         }
 
         if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
@@ -604,10 +604,10 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 CPLErr MrSIDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                      void * pImage )
 {
-    CPLAssert( poGDS != NULL
+    CPLAssert( poGDS != nullptr
                && nBlockXOff >= 0
                && nBlockYOff >= 0
-               && pImage != NULL );
+               && pImage != nullptr );
 
 #ifdef DEBUG
     CPLDebug( "MrSID", "IWriteBlock(): nBlockXOff=%d, nBlockYOff=%d",
@@ -765,7 +765,7 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 
 {
     if( i < 0 || i >= poGDS->nOverviewCount )
-        return NULL;
+        return nullptr;
     else
         return poGDS->papoOverviewDS[i]->GetRasterBand( nBand );
 }
@@ -781,28 +781,28 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
     eDataType(GDT_Byte),
     eColorSpace(LTI_COLORSPACE_INVALID)
 {
-    poStream = NULL;
-    poImageReader = NULL;
+    poStream = nullptr;
+    poImageReader = nullptr;
 #ifdef MRSID_ESDK
-    poImageWriter = NULL;
+    poImageWriter = nullptr;
 #endif
-    poLTINav = NULL;
-    poMetadata = NULL;
-    poNDPixel = NULL;
+    poLTINav = nullptr;
+    poMetadata = nullptr;
+    poNDPixel = nullptr;
     nBands = 0;
 
-    poBuffer = NULL;
+    poBuffer = nullptr;
     bPrevBlockRead = FALSE;
     nPrevBlockXOff = 0;
     nPrevBlockYOff = 0;
 
-    psDefn = NULL;
+    psDefn = nullptr;
 
     dfCurrentMag = 1.0;
     bIsOverview = FALSE;
     poParentDS = this;
     nOverviewCount = 0;
-    papoOverviewDS = NULL;
+    papoOverviewDS = nullptr;
 
     poDriver = (GDALDriver*) GDALGetDriverByName( bIsJPEG2000 ? "JP2MrSID" : "MrSID" );
 }
@@ -830,13 +830,13 @@ MrSIDDataset::~MrSIDDataset()
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 7
     {
         poImageReader->release();
-        poImageReader = NULL;
+        poImageReader = nullptr;
     }
 #else
         delete poImageReader;
 #endif
     // points to another member, don't delete
-    poStream = NULL;
+    poStream = nullptr;
 
     if ( psDefn )
         delete psDefn;
@@ -856,7 +856,7 @@ int MrSIDDataset::CloseDependentDatasets()
         for( int i = 0; i < nOverviewCount; i++ )
             delete papoOverviewDS[i];
         CPLFree( papoOverviewDS );
-        papoOverviewDS = NULL;
+        papoOverviewDS = nullptr;
         bRet = TRUE;
     }
     return bRet;
@@ -959,7 +959,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( (sceneUlYOff + sceneHeight) > (int) maxHeight )
         sceneHeight = maxHeight - sceneUlYOff;
 
-    LTISceneBuffer oLTIBuffer( oPixel, sceneWidth, sceneHeight, NULL );
+    LTISceneBuffer oLTIBuffer( oPixel, sceneWidth, sceneHeight, nullptr );
 
     nTmpPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
 
@@ -1088,7 +1088,7 @@ CPLErr MrSIDDataset::IBuildOverviews( const char *, int, int *,
 char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec )
 {
     GUInt32  iNumDims = 0;
-    const GUInt32  *paiDims = NULL;
+    const GUInt32  *paiDims = nullptr;
     const void     *pData = poMetadataRec->getArrayData( iNumDims, paiDims );
     GUInt32        i, j, k = 0, iLength;
     char           *pszMetadata = CPLStrdup( "" );
@@ -1158,10 +1158,10 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
     if ( !poMetadata->has( pszKey ) )
         return FALSE;
 
-    const LTIMetadataRecord *poMetadataRec = NULL;
+    const LTIMetadataRecord *poMetadataRec = nullptr;
     poMetadata->get( pszKey, poMetadataRec );
 
-    if ( poMetadataRec == NULL || !poMetadataRec->isScalar() )
+    if ( poMetadataRec == nullptr || !poMetadataRec->isScalar() )
         return FALSE;
 
     // XXX: return FALSE if we have more than one element in metadata record
@@ -1310,7 +1310,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     else if( iZoom == 0 )
     {
         bGeoTransformValid =
-            GDALReadWorldFile( GetDescription(), NULL,
+            GDALReadWorldFile( GetDescription(), nullptr,
                                adfGeoTransform )
             || GDALReadWorldFile( GetDescription(), ".wld",
                                   adfGeoTransform );
@@ -1327,7 +1327,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         if( oGeo.getWKT() )
         {
             /* Workaround probable issue with GeoDSK 7 on 64bit Linux */
-            if (!(pszProjection != NULL && !STARTS_WITH_CI(pszProjection, "LOCAL_CS")
+            if (!(pszProjection != nullptr && !STARTS_WITH_CI(pszProjection, "LOCAL_CS")
                 && STARTS_WITH_CI(oGeo.getWKT(), "LOCAL_CS")))
             {
                 CPLFree( pszProjection );
@@ -1342,19 +1342,19 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 /*      where LandSat .SID are accompanied by a .met file with the      */
 /*      projection                                                      */
 /* -------------------------------------------------------------------- */
-    if (iZoom == 0 && (pszProjection == NULL || pszProjection[0] == '\0') &&
+    if (iZoom == 0 && (pszProjection == nullptr || pszProjection[0] == '\0') &&
         EQUAL(CPLGetExtension(GetDescription()), "sid"))
     {
         const char* pszMETFilename = CPLResetExtension(GetDescription(), "met");
         VSILFILE* fp = VSIFOpenL(pszMETFilename, "rb");
         if (fp)
         {
-            const char* pszLine = NULL;
+            const char* pszLine = nullptr;
             int nCountLine = 0;
             int nUTMZone = 0;
             int bWGS84 = FALSE;
             int bUnitsMeter = FALSE;
-            while ( (pszLine = CPLReadLine2L(fp, 200, NULL)) != NULL &&
+            while ( (pszLine = CPLReadLine2L(fp, 200, nullptr)) != nullptr &&
                     ++nCountLine < 1000 )
             {
                 if (nCountLine == 1 && strcmp(pszLine, "::MetadataFile") != 0)
@@ -1378,7 +1378,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
                 OGRSpatialReference oSRS;
                 oSRS.importFromEPSG(32600 + nUTMZone);
                 CPLFree(pszProjection);
-                pszProjection = NULL;
+                pszProjection = nullptr;
                 oSRS.exportToWkt(&pszProjection);
             }
         }
@@ -1435,7 +1435,7 @@ static int MrSIDIdentify( GDALOpenInfo * poOpenInfo )
 static GDALDataset* MrSIDOpen( GDALOpenInfo *poOpenInfo )
 {
     if (!MrSIDIdentify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     return MrSIDDataset::Open( poOpenInfo, FALSE );
 }
@@ -1480,7 +1480,7 @@ static int JP2Identify( GDALOpenInfo *poOpenInfo )
 static GDALDataset* JP2Open( GDALOpenInfo *poOpenInfo )
 {
     if (!JP2Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     return MrSIDDataset::Open( poOpenInfo, TRUE );
 }
@@ -1496,7 +1496,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
     if(poOpenInfo->fpL)
     {
         VSIFCloseL( poOpenInfo->fpL );
-        poOpenInfo->fpL = NULL;
+        poOpenInfo->fpL = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1531,7 +1531,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
                       "failed to open file \"%s\".\n%s",
                       poOpenInfo->pszFilename, getLastStatusString( eStat ) );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         eStat = poDS->oVSIStream.open();
@@ -1542,7 +1542,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
                       "failed to open file \"%s\".\n%s",
                       poOpenInfo->pszFilename, getLastStatusString( eStat ) );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         poDS->poStream = &(poDS->oVSIStream);
@@ -1561,7 +1561,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 #endif /* MRSID_J2K */
     {
         MrSIDImageReader    *reader = MrSIDImageReader::create();
-        eStat = reader->initialize( poDS->poStream, NULL );
+        eStat = reader->initialize( poDS->poStream, nullptr );
         poDS->poImageReader = reader;
     }
 
@@ -1578,7 +1578,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 #endif /* MRSID_J2K */
     {
         poDS->poImageReader =
-            new LTIDLLReader<MrSIDImageReader>( poDS->poStream, NULL );
+            new LTIDLLReader<MrSIDImageReader>( poDS->poStream, nullptr );
         eStat = poDS->poImageReader->initialize();
     }
 
@@ -1591,7 +1591,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
                   "failed to initialize reader from the stream \"%s\".\n%s",
                   poOpenInfo->pszFilename, getLastStatusString( eStat ) );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1603,7 +1603,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJP2 )
 
     for ( GUInt32 i = 0; i < iNumRecs; i++ )
     {
-        const LTIMetadataRecord *poMetadataRec = NULL;
+        const LTIMetadataRecord *poMetadataRec = nullptr;
         if ( LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)) )
         {
             char    *pszElement = poDS->SerializeMetadataRec( poMetadataRec );
@@ -1824,9 +1824,9 @@ static int SetGTParmIds( int nCTProjection,
 {
     int anWorkingDummy[7];
 
-    if( panEPSGCodes == NULL )
+    if( panEPSGCodes == nullptr )
         panEPSGCodes = anWorkingDummy;
-    if( panProjParmId == NULL )
+    if( panProjParmId == nullptr )
         panProjParmId = anWorkingDummy;
 
     memset( panEPSGCodes, 0, sizeof(int) * 7 );
@@ -1943,7 +1943,7 @@ static const char * const papszDatumEquiv[] =
     "WGS_1972",
     "European_Terrestrial_Reference_System_89",
     "European_Reference_System_1989",
-    NULL
+    nullptr
 };
 
 /************************************************************************/
@@ -1995,7 +1995,7 @@ static void WKTMassageDatum( char ** ppszDatum )
 /*      Search for datum equivalences.  Specific massaged names get     */
 /*      mapped to OpenGIS specified names.                              */
 /* -------------------------------------------------------------------- */
-    for( i = 0; papszDatumEquiv[i] != NULL; i += 2 )
+    for( i = 0; papszDatumEquiv[i] != nullptr; i += 2 )
     {
         if( EQUAL(*ppszDatum,papszDatumEquiv[i]) )
         {
@@ -2477,7 +2477,7 @@ void MrSIDDataset::GetGTIFDefn()
         /*
          * Translate this into useful information.
          */
-        GTIFGetPCSInfo( psDefn->PCS, NULL, &(psDefn->ProjCode),
+        GTIFGetPCSInfo( psDefn->PCS, nullptr, &(psDefn->ProjCode),
                         &(psDefn->UOMLength), &(psDefn->GCS) );
     }
 
@@ -2515,7 +2515,7 @@ void MrSIDDataset::GetGTIFDefn()
          * The nProjTRFCode itself would correspond to the name
          * ``UTM zone 11N'', and doesn't include datum info.
          */
-        GTIFGetProjTRFInfo( psDefn->ProjCode, NULL, &(psDefn->Projection),
+        GTIFGetProjTRFInfo( psDefn->ProjCode, nullptr, &(psDefn->Projection),
                             psDefn->ProjParm );
 
         /*
@@ -2524,7 +2524,7 @@ void MrSIDDataset::GetGTIFDefn()
         psDefn->CTProjection = (short)
             EPSGProjMethodToCTProjMethod( psDefn->Projection );
 
-        SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, NULL);
+        SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, nullptr);
         psDefn->nParms = 7;
     }
 
@@ -2540,7 +2540,7 @@ void MrSIDDataset::GetGTIFDefn()
 /* -------------------------------------------------------------------- */
     if( psDefn->GCS != KvUserDefined )
     {
-        GTIFGetGCSInfo( psDefn->GCS, NULL, &(psDefn->Datum), &(psDefn->PM),
+        GTIFGetGCSInfo( psDefn->GCS, nullptr, &(psDefn->Datum), &(psDefn->PM),
                         &(psDefn->UOMAngle) );
     }
 
@@ -2552,7 +2552,7 @@ void MrSIDDataset::GetGTIFDefn()
                         &(psDefn->UOMAngle) );
     if( psDefn->UOMAngle != KvUserDefined )
     {
-        GTIFGetUOMAngleInfo( psDefn->UOMAngle, NULL,
+        GTIFGetUOMAngleInfo( psDefn->UOMAngle, nullptr,
                              &(psDefn->UOMAngleInDegrees) );
     }
 
@@ -2565,7 +2565,7 @@ void MrSIDDataset::GetGTIFDefn()
 
     if( psDefn->Datum != KvUserDefined )
     {
-        GTIFGetDatumInfo( psDefn->Datum, NULL, &(psDefn->Ellipsoid) );
+        GTIFGetDatumInfo( psDefn->Datum, nullptr, &(psDefn->Ellipsoid) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2577,7 +2577,7 @@ void MrSIDDataset::GetGTIFDefn()
 
     if( psDefn->Ellipsoid != KvUserDefined )
     {
-        GTIFGetEllipsoidInfo( psDefn->Ellipsoid, NULL,
+        GTIFGetEllipsoidInfo( psDefn->Ellipsoid, nullptr,
                               &(psDefn->SemiMajor), &(psDefn->SemiMinor) );
     }
 
@@ -2606,7 +2606,7 @@ void MrSIDDataset::GetGTIFDefn()
 
     if( psDefn->PM != KvUserDefined )
     {
-        GTIFGetPMInfo( psDefn->PM, NULL, &(psDefn->PMLongToGreenwich) );
+        GTIFGetPMInfo( psDefn->PM, nullptr, &(psDefn->PMLongToGreenwich) );
     }
     else
     {
@@ -2629,7 +2629,7 @@ void MrSIDDataset::GetGTIFDefn()
 
     if( psDefn->UOMLength != KvUserDefined )
     {
-        GTIFGetUOMLengthInfo( psDefn->UOMLength, NULL,
+        GTIFGetUOMLengthInfo( psDefn->UOMLength, nullptr,
                               &(psDefn->UOMLengthInMeters) );
     }
 
@@ -2693,7 +2693,7 @@ void MrSIDDataset::GetGTIFDefn()
 static void GTIFToCPLRecycleString( char **ppszTarget )
 
 {
-    if( *ppszTarget == NULL )
+    if( *ppszTarget == nullptr )
         return;
 
     char *pszTempString = CPLStrdup(*ppszTarget);
@@ -2724,9 +2724,9 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 
         if( psDefnIn->PCS != KvUserDefined )
         {
-            char *pszPCSName = NULL;
+            char *pszPCSName = nullptr;
 
-            if( GTIFGetPCSInfo( psDefnIn->PCS, &pszPCSName, NULL, NULL, NULL ) )
+            if( GTIFGetPCSInfo( psDefnIn->PCS, &pszPCSName, nullptr, nullptr, nullptr ) )
                 bPCSNameSet = TRUE;
 
             oSRS.SetNode( "PROJCS", bPCSNameSet ? pszPCSName : "unnamed" );
@@ -2748,11 +2748,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* ==================================================================== */
 /*      Setup the GeogCS                                                */
 /* ==================================================================== */
-    char        *pszGeogName = NULL;
-    char        *pszDatumName = NULL;
-    char        *pszPMName = NULL;
-    char        *pszSpheroidName = NULL;
-    char        *pszAngularUnits = NULL;
+    char        *pszGeogName = nullptr;
+    char        *pszDatumName = nullptr;
+    char        *pszPMName = nullptr;
+    char        *pszSpheroidName = nullptr;
+    char        *pszAngularUnits = nullptr;
     double      dfInvFlattening, dfSemiMajor;
     char        szGCSName[200];
 
@@ -2761,22 +2761,22 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
         pszGeogName = CPLStrdup(szGCSName);
     else
     {
-        GTIFGetGCSInfo( psDefnIn->GCS, &pszGeogName, NULL, NULL, NULL );
+        GTIFGetGCSInfo( psDefnIn->GCS, &pszGeogName, nullptr, nullptr, nullptr );
         GTIFToCPLRecycleString(&pszGeogName);
     }
-    GTIFGetDatumInfo( psDefnIn->Datum, &pszDatumName, NULL );
+    GTIFGetDatumInfo( psDefnIn->Datum, &pszDatumName, nullptr );
     GTIFToCPLRecycleString(&pszDatumName);
-    GTIFGetPMInfo( psDefnIn->PM, &pszPMName, NULL );
+    GTIFGetPMInfo( psDefnIn->PM, &pszPMName, nullptr );
     GTIFToCPLRecycleString(&pszPMName);
-    GTIFGetEllipsoidInfo( psDefnIn->Ellipsoid, &pszSpheroidName, NULL, NULL );
+    GTIFGetEllipsoidInfo( psDefnIn->Ellipsoid, &pszSpheroidName, nullptr, nullptr );
     GTIFToCPLRecycleString(&pszSpheroidName);
 
-    GTIFGetUOMAngleInfo( psDefnIn->UOMAngle, &pszAngularUnits, NULL );
+    GTIFGetUOMAngleInfo( psDefnIn->UOMAngle, &pszAngularUnits, nullptr );
     GTIFToCPLRecycleString(&pszAngularUnits);
-    if( pszAngularUnits == NULL )
+    if( pszAngularUnits == nullptr )
         pszAngularUnits = CPLStrdup("unknown");
 
-    if( pszDatumName != NULL )
+    if( pszDatumName != nullptr )
         WKTMassageDatum( &pszDatumName );
 
     dfSemiMajor = psDefnIn->SemiMajor;
@@ -2973,11 +2973,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
 /*      Set projection units.                                           */
 /* -------------------------------------------------------------------- */
-        char    *pszUnitsName = NULL;
+        char    *pszUnitsName = nullptr;
 
-        GTIFGetUOMLengthInfo( psDefnIn->UOMLength, &pszUnitsName, NULL );
+        GTIFGetUOMLengthInfo( psDefnIn->UOMLength, &pszUnitsName, nullptr );
 
-        if( pszUnitsName != NULL && psDefnIn->UOMLength != KvUserDefined )
+        if( pszUnitsName != nullptr && psDefnIn->UOMLength != KvUserDefined )
         {
             oSRS.SetLinearUnits( pszUnitsName, psDefnIn->UOMLengthInMeters );
             oSRS.SetAuthority( "PROJCS|UNIT", "EPSG", psDefnIn->UOMLength );
@@ -2993,11 +2993,11 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefnIn )
 /* -------------------------------------------------------------------- */
     oSRS.FixupOrdering();
 
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
     if( oSRS.exportToWkt( &pszWKT ) == OGRERR_NONE )
         return pszWKT;
     else
-        return NULL;
+        return nullptr;
 }
 
 #ifdef MRSID_ESDK
@@ -3041,7 +3041,7 @@ class MrSIDDummyImageReader : public LTIImageReader
 MrSIDDummyImageReader::MrSIDDummyImageReader( GDALDataset *poSrcDS ) :
                                             LTIImageReader(), poDS(poSrcDS)
 {
-    poPixel = NULL;
+    poPixel = nullptr;
 }
 
 /************************************************************************/
@@ -3125,7 +3125,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
         LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
                           adfGeoTransform[3] + adfGeoTransform[5] / 2,
                           adfGeoTransform[1], adfGeoTransform[5],
-                          adfGeoTransform[2], adfGeoTransform[4], NULL,
+                          adfGeoTransform[2], adfGeoTransform[4], nullptr,
                           poDS->GetProjectionRef() );
 #else
         LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
@@ -3185,8 +3185,8 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
     }
 
     poDS->RasterIO( GF_Read, nXOff, nYOff, nBufXSize, nBufYSize,
-                    pData, nBufXSize, nBufYSize, eDataType, nBands, NULL,
-                    0, 0, 0, NULL );
+                    pData, nBufXSize, nBufYSize, eDataType, nBands, nullptr,
+                    0, 0, 0, nullptr );
 
     stripData.importDataBSQ( pData );
     CPLFree( pData );
@@ -3227,14 +3227,14 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     bool bMeter = true;
 #endif
 
-    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "MrSID driver ignores color table. "
                   "The source raster band will be considered as grey level.\n"
                   "Consider using color table expansion (-expand option in gdal_translate)\n");
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
     MrSIDProgress oProgressDelegate(pfnProgress, pProgressData);
@@ -3243,7 +3243,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDProgress.setProgressStatus failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
     // Create the file.
@@ -3253,10 +3253,10 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDDummyImageReader.Initialize failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
-    LTIGeoFileImageWriter *poImageWriter = NULL;
+    LTIGeoFileImageWriter *poImageWriter = nullptr;
     switch (iVersion)
     {
     case 2: {
@@ -3276,7 +3276,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG2ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
@@ -3288,7 +3288,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG2ImageWriter.setEncodingApplication() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 #endif
 
@@ -3298,7 +3298,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         // check for compression option
         const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             poMG2ImageWriter->params().setCompressionRatio( (float)CPLAtof(pszValue) );
 
         poImageWriter = poMG2ImageWriter;
@@ -3321,7 +3321,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 
 #if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 8
@@ -3333,7 +3333,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.setEncodingApplication() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 #endif
 
@@ -3346,12 +3346,12 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
         // set 2 pass optimizer option
-        if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+        if( CSLFetchNameValue(papszOptions, "TWOPASS") != nullptr )
             poMG3ImageWriter->params().setTwoPassOptimizer( true );
 
         // set filesize in KB
         const char* pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             poMG3ImageWriter->params().setTargetFilesize( atoi(pszValue) );
 
         poImageWriter = poMG3ImageWriter;
@@ -3362,14 +3362,14 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         // Output Mrsid Version 4 file.
         LTIDLLDefault<MG4ImageWriter> *poMG4ImageWriter;
         poMG4ImageWriter = new LTIDLLDefault<MG4ImageWriter>;
-        eStat = poMG4ImageWriter->initialize(&oImageReader, NULL, NULL);
+        eStat = poMG4ImageWriter->initialize(&oImageReader, nullptr, nullptr);
         if( LT_FAILURE( eStat ) )
         {
             delete poMG4ImageWriter;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.initialize() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 
         eStat = poMG4ImageWriter->setEncodingApplication("MrSID Driver",
@@ -3380,19 +3380,19 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "MG3ImageWriter.setEncodingApplication() failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
 
         // usage meter should only be disabled for debugging
         poMG4ImageWriter->setUsageMeterEnabled(bMeter);
 
         // set 2 pass optimizer option
-        if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+        if( CSLFetchNameValue(papszOptions, "TWOPASS") != nullptr )
             poMG4ImageWriter->params().setTwoPassOptimizer( true );
 
         // set filesize in KB
         const char* pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             poMG4ImageWriter->params().setTargetFilesize( atoi(pszValue) );
 
         poImageWriter = poMG4ImageWriter;
@@ -3403,7 +3403,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid MrSID generation specified (VERSION=%s).",
                   pszVersion );
-        return NULL;
+        return nullptr;
     }
 
     // set output filename
@@ -3416,7 +3416,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     poImageWriter->setStripHeight(poImageWriter->getStripHeight());
 
     // set MrSID world file
-    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != nullptr )
         poImageWriter->setWorldFileSupport( true );
 
     // write the scene
@@ -3429,7 +3429,7 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MG2ImageWriter.write() failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
     delete poImageWriter;
@@ -3466,14 +3466,14 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int nYSize = poSrcDS->GetRasterYSize();
     LT_STATUS  eStat;
 
-    if (poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+    if (poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "MrSID driver ignores color table. "
                   "The source raster band will be considered as grey level.\n"
                   "Consider using color table expansion (-expand option in gdal_translate)\n");
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
     MrSIDProgress oProgressDelegate(pfnProgress, pProgressData);
@@ -3482,7 +3482,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDProgress.setProgressStatus failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
     // Create the file.
@@ -3493,7 +3493,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDDummyImageReader.Initialize failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
 #if !defined(MRSID_POST5)
@@ -3511,7 +3511,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "J2KImageWriter.Initialize failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
 #if !defined(LTI_SDK_MAJOR) || LTI_SDK_MAJOR < 8
@@ -3531,16 +3531,16 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     //oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
     // set MrSID world file
-    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != nullptr )
         oImageWriter.setWorldFileSupport( true );
 
     // check for compression option
     const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         oImageWriter.params().setCompressionRatio( (float)CPLAtof(pszValue) );
 
     pszValue = CSLFetchNameValue(papszOptions, "XMLPROFILE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
     {
         LTFileSpec xmlprofile(pszValue);
         eStat = oImageWriter.params().readProfile(xmlprofile);
@@ -3549,7 +3549,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "JPCWriterParams.readProfile failed.\n%s",
                       getLastStatusString( eStat ) );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -3561,7 +3561,7 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "J2KImageWriter.write() failed.\n%s",
                   getLastStatusString( eStat ) );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3591,7 +3591,7 @@ void GDALRegister_MrSID()
 /* -------------------------------------------------------------------- */
 /*      MrSID driver.                                                   */
 /* -------------------------------------------------------------------- */
-    if( GDALGetDriverByName( "MrSID" ) != NULL )
+    if( GDALGetDriverByName( "MrSID" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

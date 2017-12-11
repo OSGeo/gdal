@@ -46,8 +46,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 GMLReadState::GMLReadState() :
-    m_poFeature(NULL),
-    m_poParentState(NULL),
+    m_poFeature(nullptr),
+    m_poParentState(nullptr),
     m_nPathLength(0)
 {}
 
@@ -63,8 +63,8 @@ GMLReadState::~GMLReadState() {}
 
 void GMLReadState::Reset()
 {
-    m_poFeature = NULL;
-    m_poParentState = NULL;
+    m_poFeature = nullptr;
+    m_poParentState = nullptr;
 
     osPath.resize(0);
     m_nPathLength = 0;

@@ -5403,6 +5403,52 @@ else
 fi
 
 
+HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=no
+as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wzero-as-null-pointer-constant" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Wzero-as-null-pointer-constant" >&5
+$as_echo_n "checking whether C++ compiler accepts -Wzero-as-null-pointer-constant... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wzero-as-null-pointer-constant"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CXX_WFLAGS="$CXX_WFLAGS -Wzero-as-null-pointer-constant" HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=yes
+else
+  :
+fi
+
+if test "$HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT" = "yes"; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT 1
+_ACEOF
+
+fi
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'

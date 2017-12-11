@@ -113,7 +113,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
                   m_osRPBSourceFilename.c_str() );
 }
 
-GDALMDReaderPleiades::GDALMDReaderPleiades() : GDALMDReaderBase(NULL, NULL)
+GDALMDReaderPleiades::GDALMDReaderPleiades() : GDALMDReaderBase(nullptr, nullptr)
 {
 }
 
@@ -149,7 +149,7 @@ bool GDALMDReaderPleiades::HasRequiredFiles() const
  */
 char** GDALMDReaderPleiades::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
     if(!m_osRPBSourceFilename.empty())
@@ -170,11 +170,11 @@ void GDALMDReaderPleiades::LoadMetadata()
     {
         CPLXMLNode* psNode = CPLParseXMLFile(m_osIMDSourceFilename);
 
-        if(psNode != NULL)
+        if(psNode != nullptr)
         {
             CPLXMLNode* psisdNode = CPLSearchXMLNode(psNode, "=Dimap_Document");
 
-            if(psisdNode != NULL)
+            if(psisdNode != nullptr)
             {
                 m_papszIMDMD = ReadXMLToList(psisdNode->psChild, m_papszIMDMD);
             }
@@ -191,7 +191,7 @@ void GDALMDReaderPleiades::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
-    if(NULL == m_papszIMDMD)
+    if(nullptr == m_papszIMDMD)
     {
         return;
     }
@@ -200,7 +200,7 @@ void GDALMDReaderPleiades::LoadMetadata()
     int nCounter = -1;
     const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD,
                   "Dataset_Sources.Source_Identification.Strip_Source.MISSION");
-    if(NULL == pszSatId1)
+    if(nullptr == pszSatId1)
     {
         nCounter = 1;
         for(int i = 0; i < 5; i++)
@@ -208,7 +208,7 @@ void GDALMDReaderPleiades::LoadMetadata()
             pszSatId1 = CSLFetchNameValue(m_papszIMDMD,
             CPLSPrintf("Dataset_Sources.Source_Identification_%d.Strip_Source.MISSION",
                        nCounter));
-            if(NULL != pszSatId1)
+            if(nullptr != pszSatId1)
                 break;
             nCounter++;
         }
@@ -223,19 +223,19 @@ void GDALMDReaderPleiades::LoadMetadata()
             "Dataset_Sources.Source_Identification_%d.Strip_Source.MISSION_INDEX",
             nCounter));
 
-    if(NULL != pszSatId1 && NULL != pszSatId2)
+    if(nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                            MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
                            CPLStripQuotes(pszSatId1).c_str(),
                            CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(NULL != pszSatId1 && NULL == pszSatId2)
+    else if(nullptr != pszSatId1 && nullptr == pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
     }
-    else if(NULL == pszSatId1 && NULL != pszSatId2)
+    else if(nullptr == pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
@@ -250,7 +250,7 @@ void GDALMDReaderPleiades::LoadMetadata()
              "Dataset_Sources.Source_Identification_%d.Strip_Source.IMAGING_DATE",
              nCounter));
 
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         const char* pszTime;
         if(nCounter == -1)
@@ -261,7 +261,7 @@ void GDALMDReaderPleiades::LoadMetadata()
              "Dataset_Sources.Source_Identification_%d.Strip_Source.IMAGING_TIME",
              nCounter));
 
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
             pszTime = "00:00:00.0Z";
 
         char buffer[80];
@@ -291,7 +291,7 @@ static const char * const apszRPBMap[] = {
     RPC_LAT_SCALE,  "RFM_Validity.LAT_SCALE",
     RPC_LONG_SCALE, "RFM_Validity.LONG_SCALE",
     RPC_HEIGHT_SCALE,   "RFM_Validity.HEIGHT_SCALE",
-    NULL,             NULL };
+    nullptr,             nullptr };
 
 static const char * const apszRPCTXT20ValItems[] =
 {
@@ -299,29 +299,29 @@ static const char * const apszRPCTXT20ValItems[] =
     RPC_LINE_DEN_COEFF,
     RPC_SAMP_NUM_COEFF,
     RPC_SAMP_DEN_COEFF,
-    NULL
+    nullptr
 };
 
 char** GDALMDReaderPleiades::LoadRPCXmlFile()
 {
     CPLXMLNode* pNode = CPLParseXMLFile(m_osRPBSourceFilename);
 
-    if(NULL == pNode)
-        return NULL;
+    if(nullptr == pNode)
+        return nullptr;
 
     // search Global_RFM
-    char** papszRawRPCList = NULL;
+    char** papszRawRPCList = nullptr;
     CPLXMLNode* pGRFMNode = CPLSearchXMLNode(pNode, "=Global_RFM");
 
-    if(pGRFMNode != NULL)
+    if(pGRFMNode != nullptr)
     {
         papszRawRPCList = ReadXMLToList(pGRFMNode->psChild, papszRawRPCList);
     }
 
-    if( NULL == papszRawRPCList )
+    if( nullptr == papszRawRPCList )
     {
         CPLDestroyXMLNode(pNode);
-        return NULL;
+        return nullptr;
     }
 
     // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
@@ -332,7 +332,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
         CPLString osKey;
         osKey.Printf("Raster_Data.Data_Access.Data_Files.Data_File_%d.DATA_FILE_PATH.href", i);
         const char* pszHref = CSLFetchNameValue(m_papszIMDMD, osKey);
-        if( pszHref == NULL )
+        if( pszHref == nullptr )
             break;
         if( strcmp( CPLGetFilename(pszHref), CPLGetFilename(m_osBaseFilename) ) == 0 )
         {
@@ -360,8 +360,8 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     }
 
     // format list
-    char** papszRPB = NULL;
-    for( int i = 0; apszRPBMap[i] != NULL; i += 2 )
+    char** papszRPB = nullptr;
+    for( int i = 0; apszRPBMap[i] != nullptr; i += 2 )
     {
         // Pleiades RPCs use "center of upper left pixel is 1,1" convention, convert to
         // Digital globe convention of "center of upper left pixel is 0,0".
@@ -387,7 +387,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
     }
 
     // merge coefficients
-    for( int i = 0; apszRPCTXT20ValItems[i] != NULL; i++ )
+    for( int i = 0; apszRPCTXT20ValItems[i] != nullptr; i++ )
     {
         CPLString value;
         for( int j = 1; j < 21; j++ )
@@ -398,7 +398,7 @@ char** GDALMDReaderPleiades::LoadRPCXmlFile()
             // supplies geographic coordinates (lon, lat) and an altitude (alt)"""
             const char* pszValue = CSLFetchNameValue(papszRawRPCList,
                  CPLSPrintf("Inverse_Model.%s_%d", apszRPCTXT20ValItems[i], j));
-            if(NULL != pszValue)
+            if(nullptr != pszValue)
                 value = value + " " + CPLString(pszValue);
         }
         papszRPB = CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);

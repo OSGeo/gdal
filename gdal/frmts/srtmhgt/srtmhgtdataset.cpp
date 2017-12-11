@@ -93,7 +93,7 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 
     virtual GDALColorInterp GetColorInterpretation() override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double  GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     virtual const char* GetUnitType() override { return "m"; }
 };
@@ -192,8 +192,8 @@ GDALColorInterp SRTMHGTRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 SRTMHGTDataset::SRTMHGTDataset() :
-    fpImage(NULL),
-    panBuffer(NULL)
+    fpImage(nullptr),
+    panBuffer(nullptr)
 {
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -210,7 +210,7 @@ SRTMHGTDataset::SRTMHGTDataset() :
 SRTMHGTDataset::~SRTMHGTDataset()
 {
   FlushCache();
-  if(fpImage != NULL)
+  if(fpImage != nullptr)
     VSIFCloseL(fpImage);
   CPLFree(panBuffer);
 }
@@ -292,7 +292,7 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 {
   if (!Identify(poOpenInfo))
-      return NULL;
+      return nullptr;
 
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
   if( !STARTS_WITH(fileName, "/vsizip/") &&
@@ -305,7 +305,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       osFilename += ".hgt";
       GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
       GDALDataset* poDS = Open(&oOpenInfo);
-      if( poDS != NULL )
+      if( poDS != nullptr )
       {
           // override description with the main one
           poDS->SetDescription(poOpenInfo->pszFilename);
@@ -327,14 +327,14 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   else if(fileName[0] == 'S' || fileName[0] == 's')
     southWestLat = southWestLat * -1;
   else
-    return NULL;
+    return nullptr;
 
   if(fileName[3] == 'E' || fileName[3] == 'e')
     /*southWestLon = southWestLon */;
   else if(fileName[3] == 'W' || fileName[3] == 'w')
     southWestLon = southWestLon * -1;
   else
-    return NULL;
+    return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -342,13 +342,13 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
   SRTMHGTDataset* poDS  = new SRTMHGTDataset();
 
   poDS->fpImage = poOpenInfo->fpL;
-  poOpenInfo->fpL = NULL;
+  poOpenInfo->fpL = nullptr;
 
   VSIStatBufL fileStat;
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
   {
       delete poDS;
-      return NULL;
+      return nullptr;
   }
 
   int numPixels_x, numPixels_y;
@@ -433,14 +433,14 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "SRTMHGT driver does not support source dataset with zero band.\n");
-        return NULL;
+        return nullptr;
     }
     else if (nBands != 1)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "SRTMHGT driver only uses the first band of the dataset.\n");
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -470,7 +470,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Source image must have a geo transform matrix.");
-        return NULL;
+        return nullptr;
     }
 
     const int nLLOriginLat = static_cast<int>(
@@ -503,7 +503,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Image dimensions should be 1201x1201, 3601x3601 or 1801x3601.");
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -527,11 +527,11 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Write output file.                                              */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if (fp == NULL)
+    if (fp == nullptr)
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Cannot create file %s", pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     GInt16* panData
@@ -545,11 +545,11 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
     {
         if( poSrcBand->RasterIO( GF_Read, 0, iY, nXSize, 1,
                                  reinterpret_cast<void *>( panData ), nXSize, 1,
-                                 GDT_Int16, 0, 0, NULL ) != CE_None )
+                                 GDT_Int16, 0, 0, nullptr ) != CE_None )
         {
             VSIFCloseL(fp);
             CPLFree( panData );
-            return NULL;
+            return nullptr;
         }
 
         /* Translate nodata values */
@@ -573,17 +573,17 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
                       iY );
             VSIFCloseL(fp);
             CPLFree( panData );
-            return NULL;
+            return nullptr;
         }
 
         if( pfnProgress && !pfnProgress( (iY+1) / static_cast<double>( nYSize ),
-                                         NULL, pProgressData ) )
+                                         nullptr, pProgressData ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
             VSIFCloseL(fp);
             CPLFree( panData );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -607,7 +607,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /************************************************************************/
 void GDALRegister_SRTMHGT()
 {
-    if( GDALGetDriverByName( "SRTMHGT" ) != NULL )
+    if( GDALGetDriverByName( "SRTMHGT" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

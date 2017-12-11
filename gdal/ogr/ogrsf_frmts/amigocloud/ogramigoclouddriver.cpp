@@ -49,7 +49,7 @@ static GDALDataset *OGRAmigoCloudDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRAmigoCloudDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRAmigoCloudDataSource   *poDS = new OGRAmigoCloudDataSource();
 
@@ -57,7 +57,7 @@ static GDALDataset *OGRAmigoCloudDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -77,10 +77,10 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
 {
     OGRAmigoCloudDataSource   *poDS = new OGRAmigoCloudDataSource();
 
-    if( !poDS->Open( pszName, NULL, TRUE ) )
+    if( !poDS->Open( pszName, nullptr, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -92,7 +92,7 @@ static GDALDataset *OGRAmigoCloudDriverCreate( const char * pszName,
 
 void RegisterOGRAmigoCloud()
 {
-    if( GDALGetDriverByName( "AmigoCloud" ) != NULL )
+    if( GDALGetDriverByName( "AmigoCloud" ) != nullptr )
         return;
 
     GDALDriver* poDriver = new GDALDriver();

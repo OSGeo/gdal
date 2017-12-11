@@ -47,7 +47,7 @@ static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
 {
     bool bRet = false;
     const char* pszDriverExtensions =
-        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, NULL );
+        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, nullptr );
     if( pszDriverExtensions )
     {
         char** papszTokens = CSLTokenizeString( pszDriverExtensions );
@@ -78,12 +78,12 @@ std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
     for( int i = 0; i < nDriverCount; i++ )
     {
         GDALDriverH hDriver = GDALGetDriver(i);
-        if( (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL ||
-             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL ) &&
+        if( (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr ||
+             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr ) &&
             (((nFlagRasterVector & GDAL_OF_RASTER) &&
-                GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL ) != NULL) ||
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr ) != nullptr) ||
             ((nFlagRasterVector & GDAL_OF_VECTOR) &&
-                GDALGetMetadataItem( hDriver, GDAL_DCAP_VECTOR, NULL ) != NULL)) )
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_VECTOR, nullptr ) != nullptr)) )
         {
             if( !osExt.empty() && DoesDriverHandleExtension(hDriver, osExt) )
             {
@@ -92,7 +92,7 @@ std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
             else
             {
                 const char* pszPrefix = GDALGetMetadataItem(hDriver,
-                    GDAL_DMD_CONNECTION_PREFIX, NULL);
+                    GDAL_DMD_CONNECTION_PREFIX, nullptr);
                 if( pszPrefix && STARTS_WITH_CI(pszDestFilename, pszPrefix) )
                 {
                     aoDriverList.push_back( GDALGetDriverShortName(hDriver) );

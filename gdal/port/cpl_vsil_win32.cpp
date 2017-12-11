@@ -236,14 +236,14 @@ int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
     if( GetLastError() != NO_ERROR )
     {
 #ifdef notdef
-        LPVOID      lpMsgBuf = NULL;
+        LPVOID      lpMsgBuf = nullptr;
 
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       NULL, GetLastError(),
+                       nullptr, GetLastError(),
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                       (LPTSTR) &lpMsgBuf, 0, NULL );
+                       (LPTSTR) &lpMsgBuf, 0, nullptr );
 
         printf( "[ERROR %d]\n %s\n", GetLastError(), (char *) lpMsgBuf );/*ok*/
         printf( "nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",/*ok*/
@@ -299,7 +299,7 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
     DWORD dwSizeRead = 0;
     size_t nResult = 0;
 
-    if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, NULL ) )
+    if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, nullptr ) )
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
@@ -326,7 +326,7 @@ size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
     size_t nResult = 0;
 
     if( !WriteFile(hFile, (void *)pBuffer,
-                   (DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
+                   (DWORD)(nSize*nCount),&dwSizeWritten,nullptr) )
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
@@ -361,7 +361,7 @@ int VSIWin32Handle::Truncate( vsi_l_offset nNewSize )
     {
         // Enable sparse files if growing size
         DWORD dwTemp;
-        DeviceIoControl(hFile, FSCTL_SET_SPARSE, NULL, 0, NULL, 0, &dwTemp, NULL);
+        DeviceIoControl(hFile, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &dwTemp, nullptr);
     }
     Seek( nNewSize, SEEK_SET );
     BOOL bRes = SetEndOfFile( hFile );
@@ -399,7 +399,7 @@ VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset
     if( !DeviceIoControl(hFile, FSCTL_QUERY_ALLOCATED_RANGES,
                         &sQueryRange, sizeof(sQueryRange),
                         asOutputRange, sizeof(asOutputRange),
-                        &nOutputBytes, NULL) )
+                        &nOutputBytes, nullptr) )
     {
         if( GetLastError() == ERROR_MORE_DATA )
         {
@@ -433,13 +433,13 @@ VSIRangeStatus VSIWin32Handle::GetRangeStatus( vsi_l_offset
 static const char* CPLGetWineVersion()
 {
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
-    if( hntdll == NULL )
-        return NULL;
+    if( hntdll == nullptr )
+        return nullptr;
 
     static const char * (CDECL *pwine_get_version)(void);
     pwine_get_version = ( const char* (*)(void) ) GetProcAddress(hntdll, "wine_get_version");
-    if( pwine_get_version == NULL )
-        return NULL;
+    if( pwine_get_version == nullptr )
+        return nullptr;
 
     return pwine_get_version();
 }
@@ -550,13 +550,13 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
     // GENERICs are used instead of FILE_GENERIC_READ.
     dwDesiredAccess = GENERIC_READ;
-    if (strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != NULL)
+    if (strchr(pszAccess, '+') != nullptr || strchr(pszAccess, 'w') != nullptr)
         dwDesiredAccess |= GENERIC_WRITE;
 
     // Append mode only makes sense on files and pipes, have to use FILE_ access
     // these are very different from the GENERICs
     // Append is read and write but not overwrite data (only append data)
-    if (strchr(pszAccess, 'a') != NULL )
+    if (strchr(pszAccess, 'a') != nullptr )
     {
         dwDesiredAccess =
             FILE_GENERIC_READ | (FILE_GENERIC_WRITE ^ FILE_WRITE_DATA);
@@ -566,7 +566,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         // resulting semantics isn't completely conformant.
         // See https://bugs.winehq.org/show_bug.cgi?id=33232
         const char* pszWineVersion = CPLGetWineVersion();
-        if( pszWineVersion != NULL )
+        if( pszWineVersion != nullptr )
         {
             int nVersion = atoi(pszWineVersion) * 10000;
             const char* pszDot = strchr(pszWineVersion, '.');
@@ -591,9 +591,9 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         }
     }
 
-    if( strstr(pszAccess, "w") != NULL )
+    if( strstr(pszAccess, "w") != nullptr )
         dwCreationDisposition = CREATE_ALWAYS;
-    else if( strstr(pszAccess, "a") != NULL )
+    else if( strstr(pszAccess, "a") != nullptr )
         dwCreationDisposition = OPEN_ALWAYS;
     else
         dwCreationDisposition = OPEN_EXISTING;
@@ -614,8 +614,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
 
         hFile = CreateFileW( pwszFilename, dwDesiredAccess,
                             bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
-                            NULL, dwCreationDisposition,  dwFlagsAndAttributes,
-                            NULL );
+                            nullptr, dwCreationDisposition,  dwFlagsAndAttributes,
+                            nullptr );
         if ( hFile == INVALID_HANDLE_VALUE &&
             !VSIWin32IsLongFilename(pwszFilename) )
         {
@@ -642,8 +642,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
             nLastError = 0;
             hFile = CreateFileW( pwszFilename, dwDesiredAccess,
                             bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
-                            NULL, dwCreationDisposition,  dwFlagsAndAttributes,
-                            NULL );
+                            nullptr, dwCreationDisposition,  dwFlagsAndAttributes,
+                            nullptr );
         }
         CPLFree( pwszFilename );
     }
@@ -651,8 +651,8 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     {
         hFile = CreateFile( pszFilename, dwDesiredAccess,
                             bShared ? FILE_SHARE_READ | FILE_SHARE_WRITE : 0,
-                            NULL, dwCreationDisposition,  dwFlagsAndAttributes,
-                            NULL );
+                            nullptr, dwCreationDisposition,  dwFlagsAndAttributes,
+                            nullptr );
     }
 
     if( hFile == INVALID_HANDLE_VALUE )
@@ -666,7 +666,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                         "file used by other process": strerror(nError));
         }
         errno = nError;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -677,7 +677,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
     poHandle->hFile = hFile;
     poHandle->bEOF = FALSE;
 
-    if (strchr(pszAccess, 'a') != 0)
+    if (strchr(pszAccess, 'a') != nullptr)
         poHandle->Seek(0, SEEK_END);
 
 /* -------------------------------------------------------------------- */
@@ -741,7 +741,7 @@ int VSIWin32FilesystemHandler::Stat( const char * pszFilename,
             // nResult = _wstat64( pwszFilename, pStatBuf );
 
             VSIVirtualHandle* poHandle = Open( pszFilename, "rb");
-            if( poHandle != NULL )
+            if( poHandle != nullptr )
             {
                 nResult = 0;
                 memset( pStatBuf, 0, sizeof(VSIStatBufL) );
@@ -961,7 +961,7 @@ GIntBig VSIWin32FilesystemHandler::GetDiskFreeSpace( const char* pszDirname )
 {
     GIntBig nRet = -1;
     ULARGE_INTEGER nFreeBytesAvailable;
-    if( GetDiskFreeSpaceEx(pszDirname, &nFreeBytesAvailable, NULL, NULL) )
+    if( GetDiskFreeSpaceEx(pszDirname, &nFreeBytesAvailable, nullptr, nullptr) )
     {
         nRet = static_cast<GIntBig>(nFreeBytesAvailable.QuadPart);
     }
@@ -988,8 +988,8 @@ int VSIWin32FilesystemHandler::SupportsSparseFiles( const char* pszPath )
         osPath.resize(3);
     }
 
-    GetVolumeInformation(osPath.c_str(), NULL, 0, NULL,
-                         NULL, &dwVolFlags, NULL, 0);
+    GetVolumeInformation(osPath.c_str(), nullptr, 0, nullptr,
+                         nullptr, &dwVolFlags, nullptr, 0);
     return (dwVolFlags & FILE_SUPPORTS_SPARSE_FILES);
 }
 

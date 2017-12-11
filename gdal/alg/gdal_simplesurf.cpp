@@ -138,7 +138,7 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     GDALRasterBand *red, GDALRasterBand *green, GDALRasterBand *blue,
     int nXSize, int nYSize, double **padfImg, int nHeight, int nWidth )
 {
-    if( red == NULL || green == NULL || blue == NULL )
+    if( red == nullptr || green == nullptr || blue == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Raster bands are not specified");
@@ -152,7 +152,7 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
         return CE_Failure;
     }
 
-    if( padfImg == NULL )
+    if( padfImg == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer isn't specified");
         return CE_Failure;
@@ -175,13 +175,13 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
 
     CPLErr eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer,
-                                nWidth, nHeight, eRedType, 0, 0, NULL);
+                                nWidth, nHeight, eRedType, 0, 0, nullptr);
     if( eErr == CE_None )
         eErr = green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer,
-                               nWidth, nHeight, eGreenType, 0, 0, NULL);
+                               nWidth, nHeight, eGreenType, 0, 0, nullptr);
     if( eErr == CE_None )
         eErr = blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer,
-                              nWidth, nHeight, eBlueType, 0, 0, NULL);
+                              nWidth, nHeight, eBlueType, 0, 0, nullptr);
 
     double maxValue = 255.0;
     for( int row = 0; row < nHeight && eErr == CE_None; row++ )
@@ -371,14 +371,14 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
-    if( poMatchPairs == NULL )
+    if( poMatchPairs == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Matched points collection isn't specified" );
         return CE_Failure;
     }
 
-    if( poFirstCollect == NULL || poSecondCollect == NULL )
+    if( poFirstCollect == nullptr || poSecondCollect == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Feature point collections are not specified");

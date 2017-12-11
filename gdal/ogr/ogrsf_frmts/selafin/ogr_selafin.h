@@ -44,15 +44,15 @@ class Range {
             SelafinTypeDef eType;
             int nMin,nMax;
             List *poNext;
-            List():eType(POINTS),nMin(0),nMax(0),poNext(NULL) {}
+            List():eType(POINTS),nMin(0),nMax(0),poNext(nullptr) {}
             List(SelafinTypeDef eTypeP,int nMinP,int nMaxP,List *poNextP):eType(eTypeP),nMin(nMinP),nMax(nMaxP),poNext(poNextP) {}
         } List;
         List *poVals,*poActual;
         int nMaxValue;
-        static void sortList(List *&poList,List *poEnd=NULL);
+        static void sortList(List *&poList,List *poEnd=nullptr);
         static void deleteList(List *poList);
     public:
-        Range():poVals(NULL),poActual(NULL),nMaxValue(0) {}
+        Range():poVals(nullptr),poActual(nullptr),nMaxValue(0) {}
         void setRange(const char *pszStr);
         ~Range();
         void setMaxValue(int nMaxValueP);
@@ -125,7 +125,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         const char *GetName() override { return pszName; }
         int GetLayerCount() override { return nLayers; }
         OGRLayer *GetLayer( int ) override;
-        virtual OGRLayer *ICreateLayer( const char *pszName, OGRSpatialReference *poSpatialRefP = NULL, OGRwkbGeometryType eGType = wkbUnknown, char ** papszOptions = NULL ) override;
+        virtual OGRLayer *ICreateLayer( const char *pszName, OGRSpatialReference *poSpatialRefP = nullptr, OGRwkbGeometryType eGType = wkbUnknown, char ** papszOptions = nullptr ) override;
         virtual OGRErr DeleteLayer(int) override;
         int TestCapability( const char * ) override;
         void SetDefaultSelafinName( const char *pszNameIn ) { osDefaultSelafinName = pszNameIn; }

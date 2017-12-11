@@ -182,7 +182,7 @@ static void Usage(const char* pszAdditionalMsg, bool bShort = true)
 
 static void Usage(bool bShort = TRUE)
 {
-    Usage(NULL, bShort);
+    Usage(nullptr, bShort);
 }
 
 /************************************************************************/
@@ -231,20 +231,20 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = NULL;
-    GDALDatasetH hODS = NULL;
+    GDALDatasetH hDS = nullptr;
+    GDALDatasetH hODS = nullptr;
     bool bCloseODS = true;
     int bUsageError = FALSE;
-    GDALDatasetH hDstDS = NULL;
+    GDALDatasetH hDstDS = nullptr;
     int nRetCode = 1;
-    GDALVectorTranslateOptionsForBinary* psOptionsForBinary = NULL;
-    GDALVectorTranslateOptions *psOptions = NULL;
+    GDALVectorTranslateOptionsForBinary* psOptionsForBinary = nullptr;
+    GDALVectorTranslateOptions *psOptions = nullptr;
 
     nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
 
     if( nArgc < 1 )
     {
-        papszArgv = NULL;
+        papszArgv = nullptr;
         nRetCode = -nArgc;
         goto exit;
     }
@@ -273,17 +273,17 @@ MAIN_START(nArgc, papszArgv)
     psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
     psOptions = GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
         GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
 
-    if( psOptionsForBinary->pszDataSource == NULL ||
-        psOptionsForBinary->pszDestDataSource == NULL )
+    if( psOptionsForBinary->pszDataSource == nullptr ||
+        psOptionsForBinary->pszDestDataSource == nullptr )
     {
-        if( psOptionsForBinary->pszDestDataSource == NULL )
+        if( psOptionsForBinary->pszDestDataSource == nullptr )
             Usage("no target datasource provided");
         else
             Usage("no source datasource provided");
@@ -305,9 +305,9 @@ MAIN_START(nArgc, papszArgv)
         strcmp(psOptionsForBinary->pszDestDataSource, psOptionsForBinary->pszDataSource) == 0)
     {
         hODS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                GDAL_OF_UPDATE | GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
-        GDALDriverH hDriver = NULL;
-        if( hODS != NULL )
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr, psOptionsForBinary->papszOpenOptions, nullptr );
+        GDALDriverH hDriver = nullptr;
+        if( hODS != nullptr )
             hDriver = GDALGetDatasetDriver(hODS);
 
         /* Restrict to those 3 drivers. For example it is known to break with */
@@ -317,7 +317,7 @@ MAIN_START(nArgc, papszArgv)
                          EQUAL(GDALGetDescription(hDriver), "GPKG")))
         {
             hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
+                        GDAL_OF_VECTOR, nullptr, psOptionsForBinary->papszOpenOptions, nullptr );
         }
         else
         {
@@ -328,13 +328,13 @@ MAIN_START(nArgc, papszArgv)
     else
     {
         hDS = GDALOpenEx( psOptionsForBinary->pszDataSource,
-                        GDAL_OF_VECTOR, NULL, psOptionsForBinary->papszOpenOptions, NULL );
+                        GDAL_OF_VECTOR, nullptr, psOptionsForBinary->papszOpenOptions, nullptr );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
 /* -------------------------------------------------------------------- */
-    if( hDS == NULL )
+    if( hDS == nullptr )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
@@ -357,12 +357,12 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    if( hODS != NULL && psOptionsForBinary->pszFormat != NULL )
+    if( hODS != nullptr && psOptionsForBinary->pszFormat != nullptr )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
         GDALDriver* poDriver = poDM->GetDriverByName(psOptionsForBinary->pszFormat);
-        if( poDriver == NULL )
+        if( poDriver == nullptr )
         {
             fprintf( stderr,  "Unable to find driver `%s'.\n", psOptionsForBinary->pszFormat );
             fprintf( stderr,  "The following drivers are available:\n" );
@@ -386,7 +386,7 @@ MAIN_START(nArgc, papszArgv)
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
     hDstDS = GDALVectorTranslate(psOptionsForBinary->pszDestDataSource, hODS,

@@ -76,7 +76,7 @@ EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string&
 {
     // it would be nice to be able to pass in an appropriate PCIDSKInterface!
 
-    PCIDSKFile *file = PCIDSK::Open( filename, access, NULL );
+    PCIDSKFile *file = PCIDSK::Open( filename, access, nullptr );
 
     return new PCIDSK_EDBFile( file );
 }
@@ -88,10 +88,10 @@ EDBFile *PCIDSK::DefaultOpenEDB( const std::string& filename, const std::string&
 int PCIDSK_EDBFile::Close() const
 
 {
-    if( file != NULL )
+    if( file != nullptr )
     {
         delete file;
-        file = NULL;
+        file = nullptr;
     }
 
     return 1;

@@ -73,7 +73,7 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
 
 {
     if( !STARTS_WITH_CI(pszFilename, "gltp:") )
-        return NULL;
+        return nullptr;
 
 #if OGDI_RELEASEDATE >= 20160705
     // Available only in post OGDI 3.2.0beta2
@@ -86,15 +86,15 @@ OGRDataSource *OGROGDIDriver::Open( const char * pszFilename,
     if( !poDS->Open( pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if ( poDS != NULL && bUpdate )
+    if ( poDS != nullptr && bUpdate )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "OGDI Driver doesn't support update." );
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;

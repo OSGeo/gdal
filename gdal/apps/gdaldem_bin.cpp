@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf( " Usage: \n"
@@ -88,7 +88,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "   Scale is the ratio of vertical units to horizontal\n"
             "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -161,26 +161,26 @@ MAIN_START(argc, argv)
         GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALDEMProcessingOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALDEMProcessingOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSrcFilename == NULL )
+    if( psOptionsForBinary->pszSrcFilename == nullptr )
     {
         Usage("Missing source.");
     }
     if ( EQUAL(psOptionsForBinary->pszProcessing, "color-relief") &&
-         psOptionsForBinary->pszColorFilename == NULL )
+         psOptionsForBinary->pszColorFilename == nullptr )
     {
         Usage("Missing color file.");
     }
-    if( psOptionsForBinary->pszDstFilename == NULL )
+    if( psOptionsForBinary->pszDstFilename == nullptr )
     {
         Usage("Missing destination.");
     }
@@ -189,7 +189,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hSrcDataset =
         GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
 
-    if( hSrcDataset == NULL )
+    if( hSrcDataset == nullptr )
     {
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",

@@ -112,7 +112,7 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     numYBlocks(0),
     bytesPerComponent(0),
     bytesPerPixel(0),
-    tmpImage( NULL )
+    tmpImage( nullptr )
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -264,7 +264,7 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         fastpath = TRUE;
 
     size_t nRead = 0;
-    char *p = NULL;
+    char *p = nullptr;
     if (! fastpath) {
         nRead = VSIFReadL( tmpImage, recordSize, 1, poFIT_DS->fp );
         // offset to correct component to swap
@@ -767,8 +767,8 @@ GDALColorInterp FITRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 FITDataset::FITDataset() :
-    fp( NULL ),
-    info( NULL )
+    fp( nullptr ),
+    info( nullptr )
 {
     adfGeoTransform[0] = 0.0; // x origin (top left corner)
     adfGeoTransform[1] = 1.0; // x pixel size
@@ -811,7 +811,7 @@ public:
     T *take()
     {
         T *tmp = _ptr;
-        _ptr = NULL;
+        _ptr = nullptr;
         return tmp;
     }
 
@@ -861,18 +861,18 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     if( poOpenInfo->nHeaderBytes < 5 )
-        return NULL;
+        return nullptr;
 
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT01") &&
         !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT02") )
-        return NULL;
+        return nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The FIT driver does not support update access to existing"
                   " files.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -892,7 +892,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s with FIT driver.\n",
                   poOpenInfo->pszFilename );
-        return NULL;
+        return nullptr;
     }
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -908,7 +908,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     if (STARTS_WITH_CI((const char *) &head->version, "02")) {
         // incomplete header
         if( poOpenInfo->nHeaderBytes < (signed) sizeof(FIThead02) )
-            return NULL;
+            return nullptr;
 
         CPLDebug("FIT", "Loading file with header version 02");
 
@@ -924,7 +924,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     else if (STARTS_WITH_CI((const char *) &head->version, "01")) {
         // incomplete header
         if( poOpenInfo->nHeaderBytes < (signed) sizeof(FIThead01) )
-            return NULL;
+            return nullptr;
 
         CPLDebug("FIT", "Loading file with header version 01");
 
@@ -940,7 +940,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT - unsupported header version %.2s\n",
                   (const char*) &head->version);
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug("FIT", "userOffset %i, dataOffset %i",
@@ -992,7 +992,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         head->xPageSize == 0 ||
         head->yPageSize == 0)
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1003,21 +1003,21 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT driver - unsupported zSize %i\n", info->zSize);
-        return NULL;
+        return nullptr;
     }
 
     if( info->order != 1 ) // interleaved - RGBRGB
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT driver - unsupported order %i\n", info->order);
-        return NULL;
+        return nullptr;
     }
 
     if( info->zPageSize != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT driver - unsupported zPageSize %i\n", info->zPageSize);
-        return NULL;
+        return nullptr;
     }
 
     if( info->cPageSize != info->cSize )
@@ -1025,7 +1025,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT driver - unsupported cPageSize %i (!= %i)\n",
                   info->cPageSize, info->cSize);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1035,8 +1035,8 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         FITRasterBand* poBand = new FITRasterBand( poDS, i+1, (int)head->cSize );
         poDS->SetBand( i+1,  poBand);
-        if( poBand->tmpImage == NULL )
-            return NULL;
+        if( poBand->tmpImage == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1070,25 +1070,25 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "FIT driver does not support source dataset with zero band.\n");
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
 /* -------------------------------------------------------------------- */
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE *fpImage = VSIFOpenL( pszFilename, "wb" );
-    if( fpImage == NULL )
+    if( fpImage == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "FIT - unable to create file %s.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1119,13 +1119,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     GDALRasterBand *firstBand = poSrcDS->GetRasterBand(1);
     if (! firstBand) {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
-        return NULL;
+        return nullptr;
     }
 
     head->dtype = fitGetDataType(firstBand->GetRasterDataType());
     if (! head->dtype) {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
-        return NULL;
+        return nullptr;
     }
     gst_swapb(head->dtype);
     head->order = 1; // interleaved - RGBRGB
@@ -1152,7 +1152,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         blockY = 256;
     }
 
-    if( CSLFetchNameValue(papszOptions,"PAGESIZE") != NULL )
+    if( CSLFetchNameValue(papszOptions,"PAGESIZE") != nullptr )
     {
         const char *str = CSLFetchNameValue(papszOptions,"PAGESIZE");
         int newBlockX, newBlockY;
@@ -1209,7 +1209,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "FITRasterBand couldn't allocate %lu bytes", pageBytes);
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
-        return NULL;
+        return nullptr;
     }
     FreeGuard<char> guardOutput( output );
 
@@ -1256,7 +1256,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                                       firstBand->GetRasterDataType(),
                                       // eBufType
                                       bytesPerPixel, // nPixelSpace
-                                      bytesPerPixel * blockX, NULL); // nLineSpace
+                                      bytesPerPixel * blockX, nullptr); // nLineSpace
                 if (eErr != CE_None)
                     CPLError(CE_Failure, CPLE_FileIO,
                              "FIT write - CreateCopy got read error %i", eErr);
@@ -1291,13 +1291,13 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
             CPL_IGNORE_RET_VAL(VSIFWriteL(output, pageBytes, 1, fpImage));
 
             double perc = ((double) (y * maxx + x)) / (maxx * maxy);
-            if( !pfnProgress( perc, NULL, pProgressData ) )
+            if( !pfnProgress( perc, nullptr, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 //free(output);
                 CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
                 VSIUnlink( pszFilename );
-                return NULL;
+                return nullptr;
             }
         } // for x
 
@@ -1305,7 +1305,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
-    pfnProgress( 1.0, NULL, pProgressData );
+    pfnProgress( 1.0, nullptr, pProgressData );
 
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxiliary pam information.         */
@@ -1337,7 +1337,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 void GDALRegister_FIT()
 
 {
-    if( GDALGetDriverByName( "FIT" ) != NULL )
+    if( GDALGetDriverByName( "FIT" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

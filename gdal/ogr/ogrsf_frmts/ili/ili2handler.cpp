@@ -48,8 +48,8 @@ static const char* const ILI2_DATASECTION = "DATASECTION";
 ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
     m_poReader(poReader),
     level(0),
-    dom_doc(NULL),
-    dom_elem(NULL),
+    dom_doc(nullptr),
+    dom_elem(nullptr),
     m_nEntityCounter(0)
 {
   XMLCh *tmpCh = XMLString::transcode("CORE");
@@ -58,7 +58,7 @@ ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
 
   // the root element
   tmpCh = XMLString::transcode("ROOT");
-  dom_doc = impl->createDocument(NULL,tmpCh,NULL);
+  dom_doc = impl->createDocument(nullptr,tmpCh,nullptr);
   XMLString::release(&tmpCh);
 
   // the first element is root
@@ -68,7 +68,7 @@ ILI2Handler::ILI2Handler( ILI2Reader *poReader ) :
 ILI2Handler::~ILI2Handler() {
   // remove all elements
   DOMNode *tmpNode = dom_doc->getFirstChild();
-  while (tmpNode != NULL) {
+  while (tmpNode != nullptr) {
     /*tmpNode = */dom_doc->removeChild(tmpNode);
     tmpNode = dom_doc->getFirstChild();
   }
@@ -94,7 +94,7 @@ void ILI2Handler::startElement(
     const Attributes& attrs
     ) {
   // start to add the layers, features with the DATASECTION
-  char *tmpC = NULL;
+  char *tmpC = nullptr;
   m_nEntityCounter = 0;
   if ((level >= 0) || (cmpStr(ILI2_DATASECTION,
                               tmpC = XMLString::transcode(qname)) == 0)) {

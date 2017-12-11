@@ -155,9 +155,9 @@ class EHdrRasterBand : public RawRasterBand
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum(int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double GetMaximum(int *pbSuccess = nullptr ) override;
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax,
                                   double *pdfMean, double *pdfStdDev ) override;

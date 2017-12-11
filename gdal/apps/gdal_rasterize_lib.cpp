@@ -59,9 +59,9 @@ CPL_CVSID("$Id$")
 static bool ArgIsNumeric( const char *pszArg )
 
 {
-    char* pszEnd = NULL;
+    char* pszEnd = nullptr;
     CPLStrtod(pszArg, &pszEnd);
-    return pszEnd != NULL && pszEnd[0] == '\0';
+    return pszEnd != nullptr && pszEnd[0] == '\0';
 }
 
 /************************************************************************/
@@ -146,34 +146,34 @@ static CPLErr ProcessLayer(
 /*      Checkout that SRS are the same.                                 */
 /*      If -a_srs is specified, skip the test                           */
 /* -------------------------------------------------------------------- */
-    OGRCoordinateTransformationH hCT = NULL;
+    OGRCoordinateTransformationH hCT = nullptr;
     if (!bSRSIsSet)
     {
-        OGRSpatialReferenceH  hDstSRS = NULL;
+        OGRSpatialReferenceH  hDstSRS = nullptr;
         const char* pszProjection = GDALGetProjectionRef( hDstDS );
-        if( pszProjection != NULL && pszProjection[0] != '\0' )
+        if( pszProjection != nullptr && pszProjection[0] != '\0' )
         {
-            hDstSRS = OSRNewSpatialReference(NULL);
+            hDstSRS = OSRNewSpatialReference(nullptr);
             char* pszProjectionTmp = const_cast<char*>(pszProjection);
             if( OSRImportFromWkt( hDstSRS, &pszProjectionTmp ) != OGRERR_NONE )
             {
                 OSRDestroySpatialReference(hDstSRS);
-                hDstSRS = NULL;
+                hDstSRS = nullptr;
             }
         }
-        else if( GDALGetMetadata(hDstDS, "RPC") != NULL )
+        else if( GDALGetMetadata(hDstDS, "RPC") != nullptr )
         {
-            hDstSRS = OSRNewSpatialReference(NULL);
+            hDstSRS = OSRNewSpatialReference(nullptr);
             CPL_IGNORE_RET_VAL( OSRSetFromUserInput(hDstSRS, SRS_WKT_WGS84) );
         }
 
         OGRSpatialReferenceH hSrcSRS = OGR_L_GetSpatialRef(hSrcLayer);
-        if( hDstSRS != NULL && hSrcSRS != NULL )
+        if( hDstSRS != nullptr && hSrcSRS != nullptr )
         {
             if( OSRIsSame(hSrcSRS, hDstSRS) == FALSE )
             {
                 hCT = OCTNewCoordinateTransformation(hSrcSRS, hDstSRS);
-                if( hCT == NULL )
+                if( hCT == nullptr )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                         "The output raster dataset and the input vector layer do not have the same SRS.\n"
@@ -181,20 +181,20 @@ static CPLErr ProcessLayer(
                 }
             }
         }
-        else if( hDstSRS != NULL && hSrcSRS == NULL )
+        else if( hDstSRS != nullptr && hSrcSRS == nullptr )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                     "The output raster dataset has a SRS, but the input vector layer SRS is unknown.\n"
                     "Ensure input vector has the same SRS, otherwise results might be incorrect.");
         }
-        else if( hDstSRS == NULL && hSrcSRS != NULL )
+        else if( hDstSRS == nullptr && hSrcSRS != nullptr )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                     "The input vector layer has a SRS, but the output raster dataset SRS is unknown.\n"
                     "Ensure output raster dataset has the same SRS, otherwise results might be incorrect.");
         }
 
-        if( hDstSRS != NULL )
+        if( hDstSRS != nullptr )
         {
             OSRDestroySpatialReference(hDstSRS);
         }
@@ -214,7 +214,7 @@ static CPLErr ProcessLayer(
             CPLError(CE_Failure, CPLE_AppDefined, "Failed to find field %s on layer %s, skipping.",
                     pszBurnAttribute,
                     OGR_FD_GetName( OGR_L_GetLayerDefn( hSrcLayer ) ) );
-            if( hCT != NULL )
+            if( hCT != nullptr )
                 OCTDestroyCoordinateTransformation(hCT);
             return CE_Failure;
         }
@@ -224,22 +224,22 @@ static CPLErr ProcessLayer(
 /*      Collect the geometries from this layer, and build list of       */
 /*      burn values.                                                    */
 /* -------------------------------------------------------------------- */
-    OGRFeatureH hFeat = NULL;
+    OGRFeatureH hFeat = nullptr;
     std::vector<OGRGeometryH> ahGeometries;
     std::vector<double> adfFullBurnValues;
 
     OGR_L_ResetReading( hSrcLayer );
 
-    while( (hFeat = OGR_L_GetNextFeature( hSrcLayer )) != NULL )
+    while( (hFeat = OGR_L_GetNextFeature( hSrcLayer )) != nullptr )
     {
-        if( OGR_F_GetGeometryRef( hFeat ) == NULL )
+        if( OGR_F_GetGeometryRef( hFeat ) == nullptr )
         {
             OGR_F_Destroy( hFeat );
             continue;
         }
 
         OGRGeometryH hGeom = OGR_G_Clone( OGR_F_GetGeometryRef( hFeat ) );
-        if( hCT != NULL )
+        if( hCT != nullptr )
         {
             if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )
             {
@@ -273,7 +273,7 @@ static CPLErr ProcessLayer(
         OGR_F_Destroy( hFeat );
     }
 
-    if( hCT != NULL )
+    if( hCT != nullptr )
         OCTDestroyCoordinateTransformation(hCT);
 
 /* -------------------------------------------------------------------- */
@@ -310,29 +310,29 @@ static CPLErr ProcessLayer(
 /*      options.                                                        */
 /* -------------------------------------------------------------------- */
 
-    void* pTransformArg = NULL;
-    GDALTransformerFunc pfnTransformer = NULL;
+    void* pTransformArg = nullptr;
+    GDALTransformerFunc pfnTransformer = nullptr;
     CPLErr eErr = CE_None;
-    if( papszTO != NULL )
+    if( papszTO != nullptr )
     {
         GDALDataset* poDS = reinterpret_cast<GDALDataset*>(hDstDS);
         char** papszTransformerOptions = CSLDuplicate(papszTO);
         double adfGeoTransform[6] = { 0.0 };
         if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None &&
             poDS->GetGCPCount() == 0 &&
-            poDS->GetMetadata("RPC") == NULL )
+            poDS->GetMetadata("RPC") == nullptr )
         {
             papszTransformerOptions = CSLSetNameValue(
                 papszTransformerOptions, "DST_METHOD", "NO_GEOTRANSFORM");
         }
 
         pTransformArg =
-            GDALCreateGenImgProjTransformer2( NULL, hDstDS,
+            GDALCreateGenImgProjTransformer2( nullptr, hDstDS,
                                               papszTransformerOptions );
         CSLDestroy( papszTransformerOptions );
 
         pfnTransformer = GDALGenImgProjTransform;
-        if( pTransformArg == NULL )
+        if( pTransformArg == nullptr )
         {
             eErr = CE_Failure;
         }
@@ -383,7 +383,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
                                  int bNoDataSet, double dfNoData)
 {
     bool bFirstLayer = true;
-    char* pszWKT = NULL;
+    char* pszWKT = nullptr;
 
     for( unsigned int i = 0; i < ahLayers.size(); i++ )
     {
@@ -396,7 +396,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
             if (OGR_L_GetExtent(hLayer, &sLayerEnvelop, TRUE) != OGRERR_NONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot get layer extent");
-                return NULL;
+                return nullptr;
             }
 
             /* Voluntarily increase the extent by a half-pixel size to avoid */
@@ -416,7 +416,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
                 sEnvelop.MaxX = sLayerEnvelop.MaxX;
                 sEnvelop.MaxY = sLayerEnvelop.MaxY;
 
-                if (hSRS == NULL)
+                if (hSRS == nullptr)
                     hSRS = OGR_L_GetSpatialRef(hLayer);
 
                 bFirstLayer = false;
@@ -433,7 +433,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         {
             if (bFirstLayer)
             {
-                if (hSRS == NULL)
+                if (hSRS == nullptr)
                     hSRS = OGR_L_GetSpatialRef(hLayer);
 
                 bFirstLayer = false;
@@ -447,7 +447,7 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Size and resolutions are missing");
-            return NULL;
+            return nullptr;
         }
         dfXRes = (sEnvelop.MaxX - sEnvelop.MinX) / nXSize;
         dfYRes = (sEnvelop.MaxY - sEnvelop.MinY) / nYSize;
@@ -474,10 +474,10 @@ GDALDatasetH CreateOutputDataset(std::vector<OGRLayerH> ahLayers,
     GDALDatasetH hDstDS = GDALCreate(hDriver, pszDest, nXSize, nYSize,
                                      nBandCount, eOutputType,
                                      papszCreationOptions);
-    if (hDstDS == NULL)
+    if (hDstDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create %s", pszDest);
-        return NULL;
+        return nullptr;
     }
 
     GDALSetGeoTransform(hDstDS, adfProjection);
@@ -584,44 +584,44 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                             GDALDatasetH hSrcDataset,
                             const GDALRasterizeOptions *psOptionsIn, int *pbUsageError )
 {
-    if( pszDest == NULL && hDstDS == NULL )
+    if( pszDest == nullptr && hDstDS == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "pszDest == NULL && hDstDS == NULL");
 
         if(pbUsageError)
             *pbUsageError = TRUE;
-        return NULL;
+        return nullptr;
     }
-    if( hSrcDataset == NULL )
+    if( hSrcDataset == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "hSrcDataset== NULL");
 
         if(pbUsageError)
             *pbUsageError = TRUE;
-        return NULL;
+        return nullptr;
     }
-    if( hDstDS != NULL && psOptionsIn && psOptionsIn->bCreateOutput )
+    if( hDstDS != nullptr && psOptionsIn && psOptionsIn->bCreateOutput )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "hDstDS != NULL but options that imply creating a new dataset have been set.");
 
         if(pbUsageError)
             *pbUsageError = TRUE;
-        return NULL;
+        return nullptr;
     }
 
-    GDALRasterizeOptions* psOptionsToFree = NULL;
+    GDALRasterizeOptions* psOptionsToFree = nullptr;
     const GDALRasterizeOptions* psOptions = psOptionsIn;
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
-        psOptionsToFree = GDALRasterizeOptionsNew(NULL, NULL);
+        psOptionsToFree = GDALRasterizeOptionsNew(nullptr, nullptr);
         psOptions = psOptionsToFree;
     }
 
-    const bool bCloseOutDSOnError = hDstDS == NULL;
-    if( pszDest == NULL )
+    const bool bCloseOutDSOnError = hDstDS == nullptr;
+    if( pszDest == nullptr )
         pszDest = GDALGetDescription(hDstDS);
 
-    if( psOptions->pszSQL == NULL && psOptions->papszLayers == NULL &&
+    if( psOptions->pszSQL == nullptr && psOptions->papszLayers == nullptr &&
         GDALDatasetGetLayerCount(hSrcDataset) != 1 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -629,26 +629,26 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
         if( pbUsageError )
             *pbUsageError = TRUE;
         GDALRasterizeOptionsFree(psOptionsToFree);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open target raster file.  Eventually we will add optional       */
 /*      creation.                                                       */
 /* -------------------------------------------------------------------- */
-    const bool bCreateOutput = psOptions->bCreateOutput || hDstDS == NULL;
+    const bool bCreateOutput = psOptions->bCreateOutput || hDstDS == nullptr;
 
-    GDALDriverH hDriver = NULL;
+    GDALDriverH hDriver = nullptr;
     if (bCreateOutput)
     {
         CPLString osFormat;
-        if( psOptions->pszFormat == NULL )
+        if( psOptions->pszFormat == nullptr )
         {
             osFormat = GetOutputDriverForRaster(pszDest);
             if( osFormat.empty() )
             {
                 GDALRasterizeOptionsFree(psOptionsToFree);
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -660,8 +660,8 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
         hDriver = GDALGetDriverByName( osFormat );
-        char** papszDriverMD = hDriver ? GDALGetMetadata(hDriver, NULL): NULL;
-        if( hDriver == NULL
+        char** papszDriverMD = hDriver ? GDALGetMetadata(hDriver, nullptr): nullptr;
+        if( hDriver == nullptr
             || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER, "FALSE") )
             || !CPLTestBool( CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE, "FALSE") ) )
         {
@@ -669,7 +669,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                       "Output driver `%s' not recognised or does not support "
                       "direct output file creation.", osFormat.c_str());
             GDALRasterizeOptionsFree(psOptionsToFree);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -678,11 +678,11 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_Failure;
 
-    if( psOptions->pszSQL != NULL )
+    if( psOptions->pszSQL != nullptr )
     {
         OGRLayerH hLayer = GDALDatasetExecuteSQL(
-            hSrcDataset, psOptions->pszSQL, NULL, psOptions->pszDialect);
-        if( hLayer != NULL )
+            hSrcDataset, psOptions->pszSQL, nullptr, psOptions->pszDialect);
+        if( hLayer != nullptr )
         {
             if (bCreateOutput)
             {
@@ -697,15 +697,15 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                  static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
                                  psOptions->papszCreationOptions, psOptions->adfInitVals,
                                  psOptions->bNoDataSet, psOptions->dfNoData);
-                if( hDstDS == NULL )
+                if( hDstDS == nullptr )
                 {
                     GDALDatasetReleaseResultSet( hSrcDataset, hLayer );
                     GDALRasterizeOptionsFree(psOptionsToFree);
-                    return NULL;
+                    return nullptr;
                 }
             }
 
-            eErr = ProcessLayer( hLayer, psOptions->hSRS != NULL, hDstDS, psOptions->anBandList,
+            eErr = ProcessLayer( hLayer, psOptions->hSRS != nullptr, hDstDS, psOptions->anBandList,
                           psOptions->adfBurnValues, psOptions->b3D, psOptions->bInverse, psOptions->pszBurnAttribute,
                           psOptions->papszRasterizeOptions,
                           psOptions->papszTO,
@@ -720,10 +720,10 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
 /*      Create output file if necessary.                                */
 /* -------------------------------------------------------------------- */
     const int nLayerCount =
-        (psOptions->pszSQL == NULL && psOptions->papszLayers == NULL)
+        (psOptions->pszSQL == nullptr && psOptions->papszLayers == nullptr)
         ? 1 : CSLCount(psOptions->papszLayers);
 
-    if (bCreateOutput && hDstDS == NULL)
+    if (bCreateOutput && hDstDS == nullptr)
     {
         std::vector<OGRLayerH> ahLayers;
 
@@ -734,7 +734,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                 hLayer = GDALDatasetGetLayerByName( hSrcDataset, psOptions->papszLayers[i] );
             else
                 hLayer = GDALDatasetGetLayer(hSrcDataset, 0);
-            if( hLayer == NULL )
+            if( hLayer == nullptr )
             {
                 continue;
             }
@@ -749,10 +749,10 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
                                 static_cast<int>(psOptions->anBandList.size()), psOptions->eOutputType,
                                 psOptions->papszCreationOptions, psOptions->adfInitVals,
                                 psOptions->bNoDataSet, psOptions->dfNoData);
-        if( hDstDS == NULL )
+        if( hDstDS == nullptr )
         {
             GDALRasterizeOptionsFree(psOptionsToFree);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -767,7 +767,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
             hLayer = GDALDatasetGetLayerByName( hSrcDataset, psOptions->papszLayers[i] );
         else
             hLayer = GDALDatasetGetLayer(hSrcDataset, 0);
-        if( hLayer == NULL )
+        if( hLayer == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\", skipping.",
                      psOptions->papszLayers ? psOptions->papszLayers[i] : "0" );
@@ -784,7 +784,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
             GDALCreateScaledProgress( 0.0, 1.0 * (i + 1) / nLayerCount,
                                       psOptions->pfnProgress, psOptions->pProgressData );
 
-        eErr = ProcessLayer( hLayer, psOptions->hSRS != NULL, hDstDS, psOptions->anBandList,
+        eErr = ProcessLayer( hLayer, psOptions->hSRS != nullptr, hDstDS, psOptions->anBandList,
                       psOptions->adfBurnValues, psOptions->b3D, psOptions->bInverse, psOptions->pszBurnAttribute,
                       psOptions->papszRasterizeOptions,
                       psOptions->papszTO,
@@ -801,7 +801,7 @@ GDALDatasetH GDALRasterize( const char *pszDest, GDALDatasetH hDstDS,
     {
         if( bCloseOutDSOnError )
             GDALClose(hDstDS);
-        return NULL;
+        return nullptr;
     }
 
     return hDstDS;
@@ -830,21 +830,21 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
 {
     GDALRasterizeOptions *psOptions = new GDALRasterizeOptions;
 
-    psOptions->pszFormat = NULL;
+    psOptions->pszFormat = nullptr;
     psOptions->pfnProgress = GDALDummyProgress;
-    psOptions->pProgressData = NULL;
+    psOptions->pProgressData = nullptr;
     psOptions->bCreateOutput = false;
     psOptions->b3D = false;
     psOptions->bInverse = false;
     // sEnvelop implicitly initialized
-    psOptions->papszCreationOptions = NULL;
-    psOptions->papszLayers = NULL;
-    psOptions->pszSQL = NULL;
-    psOptions->pszDialect = NULL;
-    psOptions->pszBurnAttribute = NULL;
-    psOptions->pszWHERE = NULL;
-    psOptions->papszRasterizeOptions = NULL;
-    psOptions->papszTO = NULL;
+    psOptions->papszCreationOptions = nullptr;
+    psOptions->papszLayers = nullptr;
+    psOptions->pszSQL = nullptr;
+    psOptions->pszDialect = nullptr;
+    psOptions->pszBurnAttribute = nullptr;
+    psOptions->pszWHERE = nullptr;
+    psOptions->papszRasterizeOptions = nullptr;
+    psOptions->papszTO = nullptr;
     psOptions->dfXRes = 0;
     psOptions->dfYRes = 0;
     psOptions->eOutputType = GDT_Float64;
@@ -853,14 +853,14 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
     psOptions->bGotBounds = false;
     psOptions->nXSize = 0;
     psOptions->nYSize = 0;
-    psOptions->hSRS = NULL;
+    psOptions->hSRS = nullptr;
     psOptions->bTargetAlignedPixels = false;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
     const int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != NULL && i < argc; i++ )
+    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
     {
         if( i < argc-1 && (EQUAL(papszArgv[i],"-of") || EQUAL(papszArgv[i],"-f")) )
         {
@@ -1011,7 +1011,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         else if( i < argc-1 && EQUAL(papszArgv[i],"-a_srs") )
         {
             OSRDestroySpatialReference(psOptions->hSRS);
-            psOptions->hSRS = OSRNewSpatialReference( NULL );
+            psOptions->hSRS = OSRNewSpatialReference( nullptr );
 
             if( OSRSetFromUserInput(psOptions->hSRS, papszArgv[i+1]) != OGRERR_NONE )
             {
@@ -1019,7 +1019,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                          "Failed to process SRS definition: %s",
                          papszArgv[i+1] );
                 GDALRasterizeOptionsFree(psOptions);
-                return NULL;
+                return nullptr;
             }
 
             i++;
@@ -1054,7 +1054,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             for( int iType = 1; iType < GDT_TypeCount; iType++ )
             {
                 const GDALDataType eType = static_cast<GDALDataType>(iType);
-                if( GDALGetDataTypeName(eType) != NULL
+                if( GDALGetDataTypeName(eType) != nullptr
                     && EQUAL(GDALGetDataTypeName(eType),
                              papszArgv[i+1]) )
                 {
@@ -1067,7 +1067,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unknown output pixel type: %s", papszArgv[i+1] );
                 GDALRasterizeOptionsFree(psOptions);
-                return NULL;
+                return nullptr;
             }
             i++;
             psOptions->bCreateOutput = true;
@@ -1081,7 +1081,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Wrong value for -outsize parameter.");
                 GDALRasterizeOptionsFree(psOptions);
-                return NULL;
+                return nullptr;
             }
             psOptions->bCreateOutput = true;
         }
@@ -1094,7 +1094,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Wrong value for -tr parameter.");
                 GDALRasterizeOptionsFree(psOptions);
-                return NULL;
+                return nullptr;
             }
             psOptions->bCreateOutput = true;
         }
@@ -1114,13 +1114,13 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unknown option name '%s'", papszArgv[i]);
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
-        else if( psOptionsForBinary && psOptionsForBinary->pszSource == NULL )
+        else if( psOptionsForBinary && psOptionsForBinary->pszSource == nullptr )
         {
             psOptionsForBinary->pszSource = CPLStrdup(papszArgv[i]);
         }
-        else if( psOptionsForBinary && psOptionsForBinary->pszDest == NULL )
+        else if( psOptionsForBinary && psOptionsForBinary->pszDest == nullptr )
         {
             psOptionsForBinary->pszDest = CPLStrdup(papszArgv[i]);
         }
@@ -1129,17 +1129,17 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many command options '%s'", papszArgv[i]);
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
     }
 
     int nExclusiveOptionsCount = 0;
     nExclusiveOptionsCount += !psOptions->adfBurnValues.empty() ? 1 : 0;
-    nExclusiveOptionsCount += psOptions->pszBurnAttribute != NULL ? 1 : 0;
+    nExclusiveOptionsCount += psOptions->pszBurnAttribute != nullptr ? 1 : 0;
     nExclusiveOptionsCount += psOptions->b3D ? 1 : 0;
     if( nExclusiveOptionsCount != 1 )
     {
-        if( nExclusiveOptionsCount == 0 && psOptionsForBinary == NULL )
+        if( nExclusiveOptionsCount == 0 && psOptionsForBinary == nullptr )
         {
             psOptions->adfBurnValues.push_back(255);
         }
@@ -1147,7 +1147,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported, "One and only one of -3d, -burn or -a is required." );
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1157,21 +1157,21 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported, "'-tr xres yres' or '-ts xsize ysize' is required." );
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
 
         if (psOptions->bTargetAlignedPixels && psOptions->dfXRes == 0 && psOptions->dfYRes == 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-tap option cannot be used without using -tr.");
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
 
         if( !psOptions->anBandList.empty() )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "-b option cannot be used when creating a GDAL dataset." );
             GDALRasterizeOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
 
         int nBandCount = 1;
@@ -1197,7 +1197,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
             psOptions->anBandList.push_back( 1 );
     }
 
-    if( psOptions->pszDialect != NULL && psOptions->pszWHERE != NULL && psOptions->pszSQL == NULL )
+    if( psOptions->pszDialect != nullptr && psOptions->pszWHERE != nullptr && psOptions->pszSQL == nullptr )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "-dialect is ignored with -where. Use -sql instead" );
@@ -1227,7 +1227,7 @@ GDALRasterizeOptions *GDALRasterizeOptionsNew(char** papszArgv,
 
 void GDALRasterizeOptionsFree(GDALRasterizeOptions *psOptions)
 {
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
         return;
 
     CPLFree(psOptions->pszFormat);

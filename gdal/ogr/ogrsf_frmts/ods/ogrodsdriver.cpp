@@ -51,7 +51,7 @@ static int OGRODSDriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return poOpenInfo->nHeaderBytes != 0 &&
                strstr(reinterpret_cast<const char*>(poOpenInfo->pabyHeader),
-                      "<office:document-content") != NULL;
+                      "<office:document-content") != nullptr;
     }
 
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ODS") &&
@@ -74,14 +74,14 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRODSDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     const char* pszFilename = poOpenInfo->pszFilename;
     CPLString osExt(CPLGetExtension(pszFilename));
     CPLString osContentFilename(pszFilename);
 
-    VSILFILE* fpContent = NULL;
-    VSILFILE* fpSettings = NULL;
+    VSILFILE* fpContent = nullptr;
+    VSILFILE* fpSettings = nullptr;
 
     CPLString osPrefixedFilename("/vsizip/");
     osPrefixedFilename += poOpenInfo->pszFilename;
@@ -97,7 +97,7 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     else if (poOpenInfo->eAccess == GA_Update) /* We cannot update the xml file, only the .ods */
     {
-        return NULL;
+        return nullptr;
     }
 
     if (STARTS_WITH_CI(osContentFilename, "ODS:") ||
@@ -107,17 +107,17 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
             osContentFilename = osContentFilename.substr(4);
 
         fpContent = VSIFOpenL(osContentFilename, "rb");
-        if (fpContent == NULL)
-            return NULL;
+        if (fpContent == nullptr)
+            return nullptr;
 
         char szBuffer[1024];
         int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
         szBuffer[nRead] = 0;
 
-        if (strstr(szBuffer, "<office:document-content") == NULL)
+        if (strstr(szBuffer, "<office:document-content") == nullptr)
         {
             VSIFCloseL(fpContent);
-            return NULL;
+            return nullptr;
         }
 
         /* We could also check that there's a <office:spreadsheet>, but it might be further */
@@ -125,7 +125,7 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
 
     if (EQUAL(osExt, "ODS") || EQUAL(osExt, "ODS)"))
@@ -139,7 +139,7 @@ static GDALDataset *OGRODSDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( pszFilename, fpContent, fpSettings, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -161,7 +161,7 @@ GDALDataset *OGRODSDriverCreate( const char *pszName,
     if (!EQUAL(CPLGetExtension(pszName), "ODS"))
     {
         CPLError( CE_Failure, CPLE_AppDefined, "File extension should be ODS" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -175,7 +175,7 @@ GDALDataset *OGRODSDriverCreate( const char *pszName,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -186,7 +186,7 @@ GDALDataset *OGRODSDriverCreate( const char *pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -199,7 +199,7 @@ GDALDataset *OGRODSDriverCreate( const char *pszName,
 void RegisterOGRODS()
 
 {
-    if( GDALGetDriverByName( "ODS" ) != NULL )
+    if( GDALGetDriverByName( "ODS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

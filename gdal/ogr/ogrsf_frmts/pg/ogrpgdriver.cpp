@@ -51,7 +51,7 @@ static GDALDataset *OGRPGDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRPGDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRPGDataSource *poDS = new OGRPGDataSource();
 
@@ -60,7 +60,7 @@ static GDALDataset *OGRPGDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -86,7 +86,7 @@ static GDALDataset *OGRPGDriverCreate( const char * pszName,
         CPLError( CE_Failure, CPLE_AppDefined,
          "PostgreSQL driver doesn't currently support database creation.\n"
                   "Please create database with the `createdb' command." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -102,7 +102,7 @@ void RegisterOGRPG()
     if (! GDAL_CHECK_VERSION("PG driver"))
         return;
 
-    if( GDALGetDriverByName( "PostgreSQL" ) != NULL )
+    if( GDALGetDriverByName( "PostgreSQL" ) != nullptr )
         return;
 
     GDALDriver* poDriver = new GDALDriver();

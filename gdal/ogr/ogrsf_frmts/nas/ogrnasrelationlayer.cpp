@@ -102,7 +102,7 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
     {
         // out of features?
         if( iNextFeature >= static_cast<int>(aoRelationCollection.size()) )
-            return NULL;
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      The from/type/to values are stored in a packed string with      */
@@ -128,14 +128,14 @@ OGRFeature *OGRNASRelationLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
 /* -------------------------------------------------------------------- */
-        if( m_poAttrQuery != NULL
+        if( m_poAttrQuery != nullptr
             && !m_poAttrQuery->Evaluate( poFeature ) )
             delete poFeature;
         else
             return poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -148,7 +148,7 @@ GIntBig OGRNASRelationLayer::GetFeatureCount( int bForce )
     if( !bPopulated )
         poDS->PopulateRelations();
 
-    if( m_poAttrQuery == NULL )
+    if( m_poAttrQuery == nullptr )
         return aoRelationCollection.size();
 
     return OGRLayer::GetFeatureCount( bForce );
@@ -165,7 +165,7 @@ int OGRNASRelationLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return bPopulated && m_poAttrQuery == NULL;
+        return bPopulated && m_poAttrQuery == nullptr;
 
     if( EQUAL(pszCap,OLCStringsAsUTF8) )
         return TRUE;

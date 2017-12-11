@@ -103,8 +103,8 @@ OGRFeature *OGRSelafinLayer::GetNextFeature() {
     //CPLDebug("Selafin","GetNextFeature(%li)",nCurrentId+1);
     while (true) {
         OGRFeature *poFeature=GetFeature(++nCurrentId);
-        if (poFeature==NULL) return NULL;
-        if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) ) return poFeature;
+        if (poFeature==nullptr) return nullptr;
+        if( (m_poFilterGeom == nullptr || FilterGeometry( poFeature->GetGeometryRef() ) ) && (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate( poFeature )) ) return poFeature;
         delete poFeature;
     }
 }
@@ -156,9 +156,9 @@ int OGRSelafinLayer::TestCapability(const char *pszCap) {
 /************************************************************************/
 OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
     CPLDebug("Selafin","GetFeature(" CPL_FRMT_GIB ")",nFID);
-    if (nFID<0) return NULL;
+    if (nFID<0) return nullptr;
     if (eType==POINTS) {
-        if (nFID>=poHeader->nPoints) return NULL;
+        if (nFID>=poHeader->nPoints) return nullptr;
         OGRFeature *poFeature=new OGRFeature(poFeatureDefn);
         poFeature->SetGeometryDirectly(new OGRPoint(poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]));
         poFeature->SetFID(nFID);
@@ -170,10 +170,10 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
         }
         return poFeature;
     } else {
-        if (nFID>=poHeader->nElements) return NULL;
+        if (nFID>=poHeader->nElements) return nullptr;
         double *anData = (double*)
             VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nVar);
-        if (poHeader->nVar>0 && anData==NULL) return NULL;
+        if (poHeader->nVar>0 && anData==nullptr) return nullptr;
         for (int i=0;i<poHeader->nVar;++i) anData[i]=0;
         OGRFeature *poFeature=new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nFID);
@@ -202,14 +202,14 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
 /************************************************************************/
 GIntBig OGRSelafinLayer::GetFeatureCount(int bForce) {
     //CPLDebug("Selafin","GetFeatureCount(%i)",bForce);
-    if (m_poFilterGeom==NULL && m_poAttrQuery==NULL) return (eType==POINTS)?poHeader->nPoints:poHeader->nElements;
+    if (m_poFilterGeom==nullptr && m_poAttrQuery==nullptr) return (eType==POINTS)?poHeader->nPoints:poHeader->nElements;
     if( !bForce ) return -1;
     int i = 0;
     int nFeatureCount = 0;
     const int nMax = eType == POINTS ? poHeader->nPoints : poHeader->nElements;
     while (i<nMax) {
         OGRFeature *poFeature=GetFeature(i++);
-        if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) ) && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) ) ++nFeatureCount;
+        if( (m_poFilterGeom == nullptr || FilterGeometry( poFeature->GetGeometryRef() ) ) && (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate( poFeature )) ) ++nFeatureCount;
         delete poFeature;
     }
     return nFeatureCount;
@@ -236,7 +236,7 @@ OGRErr OGRSelafinLayer::GetExtent(OGREnvelope *psExtent,
 /************************************************************************/
 OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
     OGRGeometry *poGeom=poFeature->GetGeometryRef();
-    if (poGeom==NULL) return OGRERR_FAILURE;
+    if (poGeom==nullptr) return OGRERR_FAILURE;
     if (eType==POINTS) {
         // If it's a point layer, it's the "easy" case: we change the coordinates and attributes of the feature and update the file
         if (poGeom->getGeometryType()!=wkbPoint) {
@@ -248,10 +248,10 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
         poHeader->paadfCoords[0][nFID]=poPoint->getX();
         poHeader->paadfCoords[1][nFID]=poPoint->getY();
         CPLDebug("Selafin","SetFeature(" CPL_FRMT_GIB ",%f,%f)",nFID,poHeader->paadfCoords[0][nFID],poHeader->paadfCoords[1][nFID]);
-        if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=NULL)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
+        if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=nullptr)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
         CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0]);
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[0][nFID]-poHeader->adfOrigin[0])==0) return OGRERR_FAILURE;
-        if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=NULL)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
+        if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=nullptr)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nFID*4,SEEK_SET)!=0) return OGRERR_FAILURE;
         CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1]);
         if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[1][nFID]-poHeader->adfOrigin[1])==0) return OGRERR_FAILURE;
         for (int i=0;i<poHeader->nVar;++i) {
@@ -279,10 +279,10 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
             int nPointId=poHeader->panConnectivity[nFID*poHeader->nPointsPerElement+i]-1;
             poHeader->paadfCoords[0][nPointId]=poLinearRing->getX(i);
             poHeader->paadfCoords[1][nPointId]=poLinearRing->getY(i);
-            if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=NULL)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
+            if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=nullptr)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
             CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[0][nPointId]-poHeader->adfOrigin[0]);
             if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[0][nPointId]-poHeader->adfOrigin[0])==0) return OGRERR_FAILURE;
-            if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=NULL)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
+            if (VSIFSeekL(poHeader->fp,88+16+40*poHeader->nVar+48+((poHeader->panStartDate!=nullptr)?32:0)+24+(poHeader->nElements*poHeader->nPointsPerElement+2)*4+(poHeader->nPoints+2)*4+(poHeader->nPoints+2)*4+4+nPointId*4,SEEK_SET)!=0) return OGRERR_FAILURE;
             CPLDebug("Selafin","Write_float(" CPL_FRMT_GUIB ",%f)",VSIFTellL(poHeader->fp),poHeader->paadfCoords[1][nPointId]-poHeader->adfOrigin[1]);
             if (Selafin::write_float(poHeader->fp,poHeader->paadfCoords[1][nPointId]-poHeader->adfOrigin[1])==0) return OGRERR_FAILURE;
         }
@@ -297,7 +297,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
 /************************************************************************/
 OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     OGRGeometry *poGeom=poFeature->GetGeometryRef();
-    if (poGeom==NULL) return OGRERR_FAILURE;
+    if (poGeom==nullptr) return OGRERR_FAILURE;
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;
     if (eType==POINTS) {
         // If it's a point layer, it's the "easy" case: we add a new point feature and update the file
@@ -334,7 +334,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
             poHeader->nPointsPerElement=nNum-1;
             if (poHeader->nElements>0) {
                 poHeader->panConnectivity=(int*)CPLRealloc(poHeader->panConnectivity,poHeader->nElements*poHeader->nPointsPerElement);
-                if (poHeader->panConnectivity==NULL) return OGRERR_FAILURE;
+                if (poHeader->panConnectivity==nullptr) return OGRERR_FAILURE;
             }
         } else {
             if (poLinearRing->getNumPoints()!=poHeader->nPointsPerElement+1) {
@@ -346,7 +346,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         // Now we look for vertices that are already referenced as points in the file
         int *anMap = (int*)
             VSI_MALLOC2_VERBOSE(sizeof(int), poHeader->nPointsPerElement);
-        if (anMap==NULL) {
+        if (anMap==nullptr) {
             return OGRERR_FAILURE;
         }
         for (int i=0;i<poHeader->nPointsPerElement;++i) anMap[i]=-1;
@@ -375,9 +375,9 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     }
 
     // Now comes the real insertion. Since values have to be inserted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile=CPLGenerateTempFilename(NULL);
+    const char *pszTempfile=CPLGenerateTempFilename(nullptr);
     VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
-    if( fpNew == NULL ) {
+    if( fpNew == nullptr ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
@@ -402,7 +402,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         }
         for( int j = 0; j < poHeader->nVar; ++j )
         {
-            double *padfValues = NULL;
+            double *padfValues = nullptr;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
@@ -410,7 +410,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
             }
             padfValues = (double*)
                 CPLRealloc(padfValues, sizeof(double)*poHeader->nPoints);
-            if (padfValues==NULL) {
+            if (padfValues==nullptr) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
                 return OGRERR_FAILURE;
@@ -464,9 +464,9 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
     poFeatureDefn->AddFieldDefn(poField);
 
     // Now comes the real insertion. Since values have to be inserted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile=CPLGenerateTempFilename(NULL);
+    const char *pszTempfile=CPLGenerateTempFilename(nullptr);
     VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
-    if( fpNew == NULL ) {
+    if( fpNew == nullptr ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
@@ -488,7 +488,7 @@ OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
             VSIUnlink(pszTempfile);
             return OGRERR_FAILURE;
         }
-        double *padfValues = NULL;
+        double *padfValues = nullptr;
         for (int j=0;j<poHeader->nVar-1;++j) {
             if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
@@ -534,9 +534,9 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
     poFeatureDefn->DeleteFieldDefn(iField);
 
     // Now comes the real deletion. Since values have to be deleted nearly everywhere in the file and we don't want to store everything in memory to overwrite it, we create a new copy of it where we write the new values
-    const char *pszTempfile=CPLGenerateTempFilename(NULL);
+    const char *pszTempfile=CPLGenerateTempFilename(nullptr);
     VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
-    if( fpNew == NULL ) {
+    if( fpNew == nullptr ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
@@ -559,7 +559,7 @@ OGRErr OGRSelafinLayer::DeleteField(int iField) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
-            double *padfValues = NULL;
+            double *padfValues = nullptr;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);
@@ -596,9 +596,9 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
     poFeatureDefn->ReorderFieldDefns(panMap);
 
     // Now comes the real change.
-    const char *pszTempfile=CPLGenerateTempFilename(NULL);
+    const char *pszTempfile=CPLGenerateTempFilename(nullptr);
     VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
-    if( fpNew == NULL ) {
+    if( fpNew == nullptr ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
@@ -607,7 +607,7 @@ OGRErr OGRSelafinLayer::ReorderFields(int *panMap) {
         VSIUnlink(pszTempfile);
         return OGRERR_FAILURE;
     }
-    double *padfValues=NULL;
+    double *padfValues=nullptr;
     for (int i=0;i<poHeader->nSteps;++i) {
         int nLen = 0;
         double dfDate = 0.0;
@@ -685,9 +685,9 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
     }
 
     // Now we perform the deletion by creating a new temporary layer
-    const char *pszTempfile=CPLGenerateTempFilename(NULL);
+    const char *pszTempfile=CPLGenerateTempFilename(nullptr);
     VSILFILE *fpNew = VSIFOpenL(pszTempfile, "wb+");
-    if( fpNew == NULL ) {
+    if( fpNew == nullptr ) {
         CPLError( CE_Failure, CPLE_OpenFailed, "Failed to open temporary file %s with write access, %s.",pszTempfile, VSIStrerror( errno ) );
         return OGRERR_FAILURE;
     }
@@ -710,7 +710,7 @@ OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID) {
             return OGRERR_FAILURE;
         }
         for (int j=0;j<poHeader->nVar;++j) {
-            double *padfValues = NULL;
+            double *padfValues = nullptr;
             if (Selafin::read_floatarray(poHeader->fp,&padfValues,poHeader->nFileSize)==-1) {
                 VSIFCloseL(fpNew);
                 VSIUnlink(pszTempfile);

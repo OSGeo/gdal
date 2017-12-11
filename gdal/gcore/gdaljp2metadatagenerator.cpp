@@ -50,6 +50,10 @@ CPL_CVSID("$Id$")
 #pragma clang diagnostic pop
 #endif
 
+// For CHECK_ARITY and clang 5
+#undef NULL
+#define NULL nullptr
+
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/
@@ -148,14 +152,14 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build( const char* pszOriStr,
         pszStr += strlen("{{{");
         SkipSpaces(pszStr);
         GDALGMLJP2Expr* poExpr = Build(pszOriStr, pszStr);
-        if( poExpr == NULL )
-            return NULL;
+        if( poExpr == nullptr )
+            return nullptr;
         SkipSpaces(pszStr);
         if( !STARTS_WITH_CI(pszStr, "}}}") )
         {
             ReportError(pszOriStr, pszStr);
             delete poExpr;
-            return NULL;
+            return nullptr;
         }
         pszStr += strlen("}}}");
         return poExpr;
@@ -167,7 +171,7 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build( const char* pszOriStr,
         if( *pszStr != '(' )
         {
             ReportError(pszOriStr, pszStr);
-            return NULL;
+            return nullptr;
         }
         ++pszStr;
         SkipSpaces(pszStr);
@@ -220,12 +224,12 @@ GDALGMLJP2Expr* GDALGMLJP2Expr::Build( const char* pszOriStr,
             }
         }
         ReportError(pszOriStr, pszStr);
-        return NULL;
+        return nullptr;
     }
     else
     {
         ReportError(pszOriStr, pszStr);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -255,7 +259,7 @@ GDALGMLJP2Expr GDALGMLJP2Expr::Evaluate(xmlXPathContextPtr pXPathCtx,
         {
             xmlXPathObjectPtr pXPathObj = xmlXPathEvalExpression(
                     (const xmlChar*)osValue.c_str(), pXPathCtx);
-            if( pXPathObj == NULL )
+            if( pXPathObj == nullptr )
                 return GDALGMLJP2Expr("");
 
             // Add result of the evaluation.
@@ -316,7 +320,7 @@ static CPLString GDALGMLJP2EvalExpr(const CPLString& osTemplate,
 
         const char* pszExpr = osTemplate.c_str() + nStartPos;
         GDALGMLJP2Expr* poExpr = GDALGMLJP2Expr::Build(pszExpr, pszExpr);
-        if( poExpr == NULL )
+        if( poExpr == nullptr )
             break;
         nPos = (size_t)(pszExpr - osTemplate.c_str());
         osXMLRes += poExpr->Evaluate(pXPathCtx,pDoc).osValue;
@@ -333,7 +337,7 @@ static void GDALGMLJP2XPathErrorHandler( void * /* userData */,
                                          xmlErrorPtr error)
 {
     if( error->domain == XML_FROM_XPATH &&
-        error->str1 != NULL &&
+        error->str1 != nullptr &&
         error->int1 < (int)strlen(error->str1) )
     {
         GDALGMLJP2Expr::ReportError(error->str1,
@@ -357,7 +361,7 @@ static void GDALGMLJP2RegisterNamespaces(xmlXPathContextPtr pXPathCtx,
     {
         if( pNode->type == XML_ELEMENT_NODE)
         {
-            if( pNode->ns != NULL && pNode->ns->prefix != NULL )
+            if( pNode->ns != nullptr && pNode->ns->prefix != nullptr )
             {
                 //printf("%s %s\n",pNode->ns->prefix, pNode->ns->href);
                 if(xmlXPathRegisterNs(pXPathCtx, pNode->ns->prefix, pNode->ns->href) != 0)
@@ -410,7 +414,7 @@ static void GDALGMLJP2XPathUUID(xmlXPathParserContextPtr ctxt, int nargs)
 
     CPLString osRet;
     static int nCounter = 0;
-    srand(static_cast<unsigned int>(time(NULL)) + nCounter);
+    srand(static_cast<unsigned int>(time(nullptr)) + nCounter);
     ++nCounter;
     for( int i=0; i<4; i ++ )
         osRet += GDALGMLJP2HexFormatter(rand() & 0xFF);
@@ -449,31 +453,31 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     const CPLString& osSourceFile
 )
 {
-    GByte* pabyStr = NULL;
-    if( !VSIIngestFile( NULL, osTemplateFile, &pabyStr, NULL, -1 ) )
-        return NULL;
+    GByte* pabyStr = nullptr;
+    if( !VSIIngestFile( nullptr, osTemplateFile, &pabyStr, nullptr, -1 ) )
+        return nullptr;
     CPLString osTemplate(reinterpret_cast<char *>(pabyStr));
     CPLFree(pabyStr);
 
-    if( !VSIIngestFile( NULL, osSourceFile, &pabyStr, NULL, -1 ) )
-        return NULL;
+    if( !VSIIngestFile( nullptr, osSourceFile, &pabyStr, nullptr, -1 ) )
+        return nullptr;
     CPLString osSource(reinterpret_cast<char *>(pabyStr));
     CPLFree(pabyStr);
 
     xmlDocPtr pDoc = xmlParseDoc(
         reinterpret_cast<const xmlChar *>(osSource.c_str()));
-    if( pDoc == NULL )
+    if( pDoc == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse %s",
                  osSourceFile.c_str());
-        return NULL;
+        return nullptr;
     }
 
     xmlXPathContextPtr pXPathCtx = xmlXPathNewContext(pDoc);
-    if( pXPathCtx == NULL )
+    if( pXPathCtx == nullptr )
     {
         xmlFreeDoc(pDoc);
-        return NULL;
+        return nullptr;
     }
 
     xmlXPathRegisterFunc(pXPathCtx, reinterpret_cast<const xmlChar *>("if"),
@@ -498,6 +502,6 @@ CPLXMLNode* GDALGMLJP2GenerateMetadata(
     const CPLString&  /* osSourceFile */
 )
 {
-    return NULL;
+    return nullptr;
 }
 #endif  // HAVE_LIBXML2

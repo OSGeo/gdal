@@ -303,11 +303,11 @@ Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
 
 static int GDALExit( int nCode )
 {
-  const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
+  const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",nullptr);
   if( pszDebug && (EQUAL(pszDebug,"ON") || EQUAL(pszDebug,"") ) )
   {
     GDALDumpOpenDatasets( stderr );
-    CPLDumpSharedList( NULL );
+    CPLDumpSharedList( nullptr );
   }
 
   GDALDestroyDriverManager();
@@ -321,7 +321,7 @@ static int GDALExit( int nCode )
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
@@ -343,7 +343,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "Available resampling methods:\n"
         "    near (default), bilinear, cubic, cubicspline, lanczos, average, mode,  max, min, med, Q1, Q3.\n" );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     GDALExit( 1 );
@@ -406,7 +406,7 @@ static void CPL_STDCALL ErrorHandlerAccumulator( CPLErr eErr, CPLErrorNum no,
 MAIN_START(argc, argv)
 
 {
-    GDALDatasetH *pahSrcDS = NULL;
+    GDALDatasetH *pahSrcDS = nullptr;
     int nSrcCount = 0;
 
     EarlySetConfigOptions(argc, argv);
@@ -420,7 +420,7 @@ MAIN_START(argc, argv)
     if( argc < 1 )
         GDALExit( -argc );
 
-    for( int i = 0; argv != NULL && argv[i] != NULL; i++ )
+    for( int i = 0; argv != nullptr && argv[i] != nullptr; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -431,7 +431,7 @@ MAIN_START(argc, argv)
         }
         else if( EQUAL(argv[i],"--help") )
         {
-            Usage(NULL);
+            Usage(nullptr);
         }
     }
 
@@ -443,7 +443,7 @@ MAIN_START(argc, argv)
 /*      And some datasets may need 2 file descriptors, so divide by 2   */
 /*      for security.                                                   */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", NULL) == NULL )
+    if( CPLGetConfigOption("GDAL_MAX_DATASET_POOL_SIZE", nullptr) == nullptr )
     {
 #if defined(__MACH__) && defined(__APPLE__)
         // On Mach, the default limit is 256 files per process
@@ -459,12 +459,12 @@ MAIN_START(argc, argv)
     GDALWarpAppOptions *psOptions = GDALWarpAppOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
-        Usage(NULL);
+        Usage(nullptr);
     }
 
-    if( psOptionsForBinary->pszDstFilename == NULL )
+    if( psOptionsForBinary->pszDstFilename == nullptr )
     {
         Usage("No target filename specified.");
     }
@@ -480,14 +480,14 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Open Source files.                                              */
 /* -------------------------------------------------------------------- */
-    for(int i = 0; psOptionsForBinary->papszSrcFiles[i] != NULL; i++)
+    for(int i = 0; psOptionsForBinary->papszSrcFiles[i] != nullptr; i++)
     {
         nSrcCount++;
         pahSrcDS = (GDALDatasetH *) CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount);
-        pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, NULL,
-                                            (const char* const* )psOptionsForBinary->papszOpenOptions, NULL );
+        pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
+                                            (const char* const* )psOptionsForBinary->papszOpenOptions, nullptr );
 
-        if( pahSrcDS[nSrcCount-1] == NULL )
+        if( pahSrcDS[nSrcCount-1] == nullptr )
             GDALExit(2);
     }
 
@@ -517,7 +517,7 @@ MAIN_START(argc, argv)
     }
 #endif
 
-    GDALDatasetH hDstDS = NULL;
+    GDALDatasetH hDstDS = nullptr;
     if( bOutStreaming )
     {
         GDALWarpAppOptionsSetWarpOption(psOptions, "STREAMABLE_OUTPUT", "YES");
@@ -527,9 +527,9 @@ MAIN_START(argc, argv)
         std::vector<ErrorStruct> aoErrors;
         CPLPushErrorHandlerEx( ErrorHandlerAccumulator, &aoErrors );
         hDstDS = GDALOpenEx( psOptionsForBinary->pszDstFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-                             NULL, psOptionsForBinary->papszDestOpenOptions, NULL );
+                             nullptr, psOptionsForBinary->papszDestOpenOptions, nullptr );
         CPLPopErrorHandler();
-        if( hDstDS != NULL )
+        if( hDstDS != nullptr )
         {
             for( size_t i = 0; i < aoErrors.size(); i++ )
             {
@@ -539,13 +539,13 @@ MAIN_START(argc, argv)
         }
     }
 
-    if( hDstDS != NULL && psOptionsForBinary->bOverwrite )
+    if( hDstDS != nullptr && psOptionsForBinary->bOverwrite )
     {
         GDALClose(hDstDS);
-        hDstDS = NULL;
+        hDstDS = nullptr;
     }
 
-    if( hDstDS != NULL && psOptionsForBinary->bCreateOutput )
+    if( hDstDS != nullptr && psOptionsForBinary->bCreateOutput )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                  "Output dataset %s exists,\n"
@@ -557,7 +557,7 @@ MAIN_START(argc, argv)
 
     /* Avoid overwriting an existing destination file that cannot be opened in */
     /* update mode with a new GTiff file */
-    if ( !bOutStreaming && hDstDS == NULL && !psOptionsForBinary->bOverwrite )
+    if ( !bOutStreaming && hDstDS == nullptr && !psOptionsForBinary->bOverwrite )
     {
         CPLPushErrorHandler( CPLQuietErrorHandler );
         hDstDS = GDALOpen( psOptionsForBinary->pszDstFilename, GA_ReadOnly );
@@ -575,7 +575,7 @@ MAIN_START(argc, argv)
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
     int bUsageError = FALSE;

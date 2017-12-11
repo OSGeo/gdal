@@ -189,7 +189,7 @@ OGRErr OGRTriangulatedSurface::addGeometry (const OGRGeometry *poNewGeom)
         OGRErr eErr = OGRERR_FAILURE;
         OGRTriangle *poTriangle = new OGRTriangle(
                     *(reinterpret_cast<const OGRPolygon *>(poNewGeom)), eErr);
-        if (poTriangle != NULL && eErr == OGRERR_NONE)
+        if (poTriangle != nullptr && eErr == OGRERR_NONE)
         {
             eErr = addGeometryDirectly(poTriangle);
 
@@ -233,7 +233,7 @@ OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygonImpl(
     {
         OGRTriangle *geom =
             reinterpret_cast<OGRTriangle *>(poTS->oMP.papoGeoms[i]);
-        poTS->oMP.papoGeoms[i] = NULL;
+        poTS->oMP.papoGeoms[i] = nullptr;
         OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
         poMultiPolygon->addGeometryDirectly(poPolygon);
     }
@@ -267,7 +267,7 @@ OGRPolyhedralSurface* OGRTriangulatedSurface::CastToPolyhedralSurface(
     {
         OGRTriangle *geom =
             reinterpret_cast<OGRTriangle *>(poTS->oMP.papoGeoms[i]);
-        poTS->oMP.papoGeoms[i] = NULL;
+        poTS->oMP.papoGeoms[i] = nullptr;
         OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
         poPS->oMP.addGeometryDirectly(poPolygon);
     }

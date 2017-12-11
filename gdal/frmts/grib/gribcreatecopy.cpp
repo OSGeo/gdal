@@ -160,11 +160,11 @@ class GRIB2Section3Writer
 
         bool WriteGeographic();
         bool WriteMercator1SP();
-        bool WriteMercator2SP(OGRSpatialReference* poSRS = NULL);
+        bool WriteMercator2SP(OGRSpatialReference* poSRS = nullptr);
         bool WriteTransverseMercator();
         bool WritePolarSteregraphic();
         bool WriteLCC1SP();
-        bool WriteLCC2SPOrAEA(OGRSpatialReference* poSRS = NULL);
+        bool WriteLCC2SPOrAEA(OGRSpatialReference* poSRS = nullptr);
         bool WriteLAEA();
 
     public:
@@ -313,7 +313,7 @@ bool GRIB2Section3Writer::TransformToGeo(double& dfX, double& dfY)
     oLL.CopyGeogCSFrom(&oSRS);
     OGRCoordinateTransformation *poTransformSRSToLL =
         OGRCreateCoordinateTransformation( &(oSRS), &(oLL));
-    if( poTransformSRSToLL == NULL ||
+    if( poTransformSRSToLL == nullptr ||
         !poTransformSRSToLL->Transform(1, &dfX, &dfY) )
     {
         delete poTransformSRSToLL;
@@ -346,7 +346,7 @@ bool GRIB2Section3Writer::WriteMercator1SP()
 
     OGRSpatialReference* poMerc2SP =
         oSRS.convertToOtherProjection(SRS_PT_MERCATOR_2SP);
-    if( poMerc2SP == NULL )
+    if( poMerc2SP == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Cannot get Mercator_2SP formulation");
@@ -364,7 +364,7 @@ bool GRIB2Section3Writer::WriteMercator1SP()
 
 bool GRIB2Section3Writer::WriteMercator2SP(OGRSpatialReference* poSRS)
 {
-    if( poSRS == NULL )
+    if( poSRS == nullptr )
         poSRS = &oSRS;
 
     if( poSRS->GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0) != 0.0 )
@@ -476,7 +476,7 @@ bool GRIB2Section3Writer::WriteLCC1SP()
 {
     OGRSpatialReference* poLCC2SP =
         oSRS.convertToOtherProjection(SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP);
-    if( poLCC2SP == NULL )
+    if( poLCC2SP == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Cannot get Lambert_Conformal_Conic_2SP formulation");
@@ -494,7 +494,7 @@ bool GRIB2Section3Writer::WriteLCC1SP()
 
 bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference* poSRS)
 {
-    if( poSRS == NULL )
+    if( poSRS == nullptr )
         poSRS = &oSRS;
     if( EQUAL(poSRS->GetAttrValue("PROJECTION"),
               SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
@@ -610,12 +610,12 @@ bool GRIB2Section3Writer::Write()
     {
         bRet = WritePolarSteregraphic();
     }
-    else if( pszProjection != NULL &&
+    else if( pszProjection != nullptr &&
              EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
     {
         bRet = WriteLCC1SP();
     }
-    else if( pszProjection != NULL &&
+    else if( pszProjection != nullptr &&
              (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) ||
               EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA)) )
     {
@@ -643,16 +643,16 @@ static const char* GetBandOption(char** papszOptions,
 {
     const char* pszVal = CSLFetchNameValue(papszOptions,
                                 CPLSPrintf("BAND_%d_%s", nBand, pszKey));
-    if( pszVal == NULL )
+    if( pszVal == nullptr )
     {
         pszVal = CSLFetchNameValue(papszOptions, pszKey);
     }
-    if( pszVal == NULL && poSrcDS != NULL )
+    if( pszVal == nullptr && poSrcDS != nullptr )
     {
         pszVal = poSrcDS->GetRasterBand(nBand)->GetMetadataItem(
                     (CPLString("GRIB_") + pszKey).c_str());
     }
-    if( pszVal == NULL )
+    if( pszVal == nullptr )
     {
         pszVal = pszDefault;
     }
@@ -739,9 +739,9 @@ float* GRIB2Section567Writer::GetFloatData()
 {
     float* pafData =
         static_cast<float*>(VSI_MALLOC2_VERBOSE(m_nDataPoints, sizeof(float)));
-    if( pafData == NULL )
+    if( pafData == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
     CPLErr eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
         GF_Read,
@@ -754,7 +754,7 @@ float* GRIB2Section567Writer::GetFloatData()
         m_adfGeoTransform[5] < 0 ?
             static_cast<GSpacing>(-m_nXSize * sizeof(float)):
             static_cast<GSpacing>(m_nXSize * sizeof(float)),
-        NULL);
+        nullptr);
     if( eErr != CE_None && (m_eDT == GDT_Float32 || m_eDT == GDT_Float64) )
     {
         for( GUInt32 i = 0; i < m_nDataPoints; i++ )
@@ -772,7 +772,7 @@ float* GRIB2Section567Writer::GetFloatData()
     if( eErr != CE_None )
     {
         VSIFree(pafData);
-        return NULL;
+        return nullptr;
     }
 
     m_fMin = std::numeric_limits<float>::max();
@@ -801,7 +801,7 @@ float* GRIB2Section567Writer::GetFloatData()
                  "Scaled min value not representable on IEEE754 "
                  "single precision float");
         VSIFree(pafData);
-        return NULL;
+        return nullptr;
     }
 
     const double dfScaledMaxDiff = (m_fMax-m_fMin)* m_dfDecimalScale;
@@ -825,7 +825,7 @@ float* GRIB2Section567Writer::GetFloatData()
 bool GRIB2Section567Writer::WriteSimplePacking()
 {
     float* pafData = GetFloatData();
-    if( pafData == NULL )
+    if( pafData == nullptr )
         return false;
 
     const int nBitCorrectionForDec = static_cast<int>(
@@ -843,7 +843,7 @@ bool GRIB2Section567Writer::WriteSimplePacking()
 
     const int nMaxSize = (m_nDataPoints * nMaxBitsPerElt + 7) / 8;
     void* pabyData = VSI_MALLOC_VERBOSE(nMaxSize);
-    if( pabyData == NULL )
+    if( pabyData == nullptr )
     {
         VSIFree(pafData);
         VSIFree(pabyData);
@@ -934,7 +934,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     }
 
     float* pafData = GetFloatData();
-    if( pafData == NULL )
+    if( pafData == nullptr )
         return false;
 
     const float fNoData = static_cast<float>(m_dfNoData);
@@ -998,7 +998,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     // packing and multiply by 2, plus some constant...
     const int nMaxSize = 10000 + 2 * ((m_nDataPoints * nMaxBitsPerElt + 7) / 8);
     void* pabyData = VSI_MALLOC_VERBOSE(nMaxSize);
-    if( pabyData == NULL )
+    if( pabyData == nullptr )
     {
         VSIFree(pafData);
         VSIFree(pabyData);
@@ -1170,7 +1170,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
             m_nXSize, 1,
             pData,
             m_nXSize, 1,
-            eReqDT, 0, 0, NULL);
+            eReqDT, 0, 0, nullptr);
         if( m_fValOffset != 0.0 )
         {
             if( eReqDT == GDT_Float32 )
@@ -1206,7 +1206,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
         }
         if( !GDALScaledProgress(
                 static_cast<double>(i+1) / m_nYSize,
-                NULL, pScaledProgressData ) )
+                nullptr, pScaledProgressData ) )
         {
             CPLFree(pData);
             GDALDestroyScaledProgress(pScaledProgressData);
@@ -1231,8 +1231,8 @@ static GDALDataset* WrapArrayAsMemDataset(int nXSize, int nYSize,
     GDALDriver* poMEMDrv = reinterpret_cast<GDALDriver*>(
                                     GDALGetDriverByName("MEM"));
     GDALDataset* poMEMDS = poMEMDrv->Create("",
-        nXSize, nYSize, 0, eReducedDT , NULL);
-    char** papszMEMOptions = NULL;
+        nXSize, nYSize, 0, eReducedDT , nullptr);
+    char** papszMEMOptions = nullptr;
     char szDataPointer[32];
     {
          GByte* pabyData = reinterpret_cast<GByte*>(pData);
@@ -1281,9 +1281,9 @@ GUInt16* GetScaledData(GUInt32 nDataPoints, const float* pafData,
     nBinaryScaleFactor = 0;
     GUInt16* panData = static_cast<GUInt16*>(
             VSI_MALLOC2_VERBOSE(nDataPoints, sizeof(GUInt16)));
-    if( panData == NULL )
+    if( panData == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     const double dfScaledMaxDiff = (fMax-fMin)* dfDecimalScale;
@@ -1342,7 +1342,7 @@ GUInt16* GetScaledData(GUInt32 nDataPoints, const float* pafData,
 bool GRIB2Section567Writer::WritePNG()
 {
     float* pafData = GetFloatData();
-    if( pafData == NULL )
+    if( pafData == nullptr )
         return false;
 
     if( m_bUseZeroBits )
@@ -1376,7 +1376,7 @@ bool GRIB2Section567Writer::WritePNG()
 
     GDALDriver* poPNGDriver = reinterpret_cast<GDALDriver*>(
                                 GDALGetDriverByName("PNG"));
-    if( poPNGDriver == NULL )
+    if( poPNGDriver == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot find PNG driver");
@@ -1387,7 +1387,7 @@ bool GRIB2Section567Writer::WritePNG()
     GUInt16* panData = GetScaledData(m_nDataPoints, pafData, m_fMin, m_fMax,
                                      m_dfDecimalScale, m_dfMinScaled,
                                      true, m_nBits, nBinaryScaleFactor);
-    if( panData == NULL )
+    if( panData == nullptr )
     {
         VSIFree(pafData);
         return false;
@@ -1404,8 +1404,8 @@ bool GRIB2Section567Writer::WritePNG()
 
     CPLString osTmpFile(CPLSPrintf("/vsimem/grib_driver_%p.png", m_poSrcDS));
     GDALDataset* poPNGDS = poPNGDriver->CreateCopy(
-        osTmpFile, poMEMDS, FALSE, aosPNGOptions.List(), NULL, NULL);
-    if( poPNGDS == NULL )
+        osTmpFile, poMEMDS, FALSE, aosPNGOptions.List(), nullptr, nullptr);
+    if( poPNGDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "PNG compression failed");
@@ -1458,7 +1458,7 @@ bool GRIB2Section567Writer::WritePNG()
 bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
 {
     float* pafData = GetFloatData();
-    if( pafData == NULL )
+    if( pafData == nullptr )
         return false;
 
     if( m_bUseZeroBits )
@@ -1492,9 +1492,9 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
         return true;
     }
 
-    GDALDriver* poJ2KDriver = NULL;
+    GDALDriver* poJ2KDriver = nullptr;
     const char* pszJ2KDriver = GetBandOption(
-        papszOptions, NULL, m_nBand, "JPEG2000_DRIVER", NULL);
+        papszOptions, nullptr, m_nBand, "JPEG2000_DRIVER", nullptr);
     if( pszJ2KDriver )
     {
         poJ2KDriver = reinterpret_cast<GDALDriver*>(
@@ -1514,7 +1514,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
             }
         }
     }
-    if( poJ2KDriver == NULL )
+    if( poJ2KDriver == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot find JPEG2000 driver");
@@ -1526,7 +1526,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
     GUInt16* panData = GetScaledData(m_nDataPoints, pafData, m_fMin, m_fMax,
                                      m_dfDecimalScale, m_dfMinScaled,
                                      false, m_nBits, nBinaryScaleFactor);
-    if( panData == NULL )
+    if( panData == nullptr )
     {
         VSIFree(pafData);
         return false;
@@ -1536,7 +1536,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
 
     CPLStringList aosJ2KOptions;
     int nCompressionRatio = atoi(GetBandOption(papszOptions,
-                                    NULL, m_nBand, "COMPRESSION_RATIO", "1"));
+                                    nullptr, m_nBand, "COMPRESSION_RATIO", "1"));
     if( m_nDataPoints < 10000 && nCompressionRatio > 1 )
     {
         // Lossy compression with too few pixels is really lossy due to how
@@ -1601,8 +1601,8 @@ bool GRIB2Section567Writer::WriteJPEG2000(char** papszOptions)
 
     CPLString osTmpFile(CPLSPrintf("/vsimem/grib_driver_%p.j2k", m_poSrcDS));
     GDALDataset* poJ2KDS = poJ2KDriver->CreateCopy(
-        osTmpFile, poMEMDS, FALSE, aosJ2KOptions.List(), NULL, NULL);
-    if( poJ2KDS == NULL )
+        osTmpFile, poMEMDS, FALSE, aosJ2KOptions.List(), nullptr, nullptr);
+    if( poJ2KDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "JPEG2000 compression failed");
@@ -1681,12 +1681,12 @@ bool GRIB2Section567Writer::Write(float fValOffset,
         return false;
     }
     const char* pszDataEncoding =
-        GetBandOption(papszOptions, NULL, m_nBand, "DATA_ENCODING", "AUTO");
+        GetBandOption(papszOptions, nullptr, m_nBand, "DATA_ENCODING", "AUTO");
     GRIBDataEncoding eDataEncoding(SIMPLE_PACKING);
     const char* pszJ2KDriver = GetBandOption(
-            papszOptions, NULL, m_nBand, "JPEG2000_DRIVER", NULL);
+            papszOptions, nullptr, m_nBand, "JPEG2000_DRIVER", nullptr);
     const char* pszSpatialDifferencingOrder = GetBandOption(
-            papszOptions, NULL, m_nBand, "SPATIAL_DIFFERENCING_ORDER", NULL);
+            papszOptions, nullptr, m_nBand, "SPATIAL_DIFFERENCING_ORDER", nullptr);
     if( pszJ2KDriver && pszSpatialDifferencingOrder)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1696,11 +1696,11 @@ bool GRIB2Section567Writer::Write(float fValOffset,
     }
 
     if( m_bHasNoData && !EQUAL(pszDataEncoding, "COMPLEX_PACKING") &&
-        pszSpatialDifferencingOrder == NULL )
+        pszSpatialDifferencingOrder == nullptr )
     {
         double* padfVals = static_cast<double*>(
                 VSI_MALLOC2_VERBOSE(m_nXSize, sizeof(double)));
-        if( padfVals == NULL )
+        if( padfVals == nullptr )
             return false;
         bool bFoundNoData = false;
         for( int j = 0; j < m_nYSize; j++ )
@@ -1711,7 +1711,7 @@ bool GRIB2Section567Writer::Write(float fValOffset,
                 m_nXSize, 1,
                 padfVals,
                 m_nXSize, 1,
-                GDT_Float64, 0, 0, NULL);
+                GDT_Float64, 0, 0, nullptr);
             if( eErr != CE_None )
             {
                 VSIFree(padfVals);
@@ -1738,12 +1738,12 @@ bool GRIB2Section567Writer::Write(float fValOffset,
 
     if( EQUAL(pszDataEncoding, "AUTO") )
     {
-        if( m_bHasNoData || pszSpatialDifferencingOrder != NULL )
+        if( m_bHasNoData || pszSpatialDifferencingOrder != nullptr )
         {
             eDataEncoding = COMPLEX_PACKING;
             CPLDebug("GRIB", "Using COMPLEX_PACKING");
         }
-        else if( pszJ2KDriver != NULL )
+        else if( pszJ2KDriver != nullptr )
         {
             eDataEncoding = JPEG2000;
             CPLDebug("GRIB", "Using JPEG2000");
@@ -1786,18 +1786,18 @@ bool GRIB2Section567Writer::Write(float fValOffset,
     }
 
     const char* pszBits = GetBandOption(
-        papszOptions, NULL, m_nBand, "NBITS", NULL);
-    if( pszBits == NULL && eDataEncoding != IEEE_FLOATING_POINT )
+        papszOptions, nullptr, m_nBand, "NBITS", nullptr);
+    if( pszBits == nullptr && eDataEncoding != IEEE_FLOATING_POINT )
     {
         pszBits = m_poSrcDS->GetRasterBand(m_nBand)->GetMetadataItem(
                 "DRS_NBITS", "GRIB");
     }
-    else if( pszBits != NULL && eDataEncoding == IEEE_FLOATING_POINT )
+    else if( pszBits != nullptr && eDataEncoding == IEEE_FLOATING_POINT )
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "NBITS ignored for DATA_ENCODING = IEEE_FLOATING_POINT");
     }
-    if( pszBits == NULL )
+    if( pszBits == nullptr )
     {
         pszBits = "0";
     }
@@ -1810,8 +1810,8 @@ bool GRIB2Section567Writer::Write(float fValOffset,
 
 
     const char* pszDecimalScaleFactor = GetBandOption(
-        papszOptions, NULL, m_nBand, "DECIMAL_SCALE_FACTOR", NULL);
-    if( pszDecimalScaleFactor != NULL )
+        papszOptions, nullptr, m_nBand, "DECIMAL_SCALE_FACTOR", nullptr);
+    if( pszDecimalScaleFactor != nullptr )
     {
         m_nDecimalScaleFactor = atoi(pszDecimalScaleFactor);
         if( m_nDecimalScaleFactor != 0 && eDataEncoding == IEEE_FLOATING_POINT )
@@ -1833,14 +1833,14 @@ bool GRIB2Section567Writer::Write(float fValOffset,
         pszDecimalScaleFactor =
             m_poSrcDS->GetRasterBand(m_nBand)->GetMetadataItem(
                 "DRS_DECIMAL_SCALE_FACTOR", "GRIB");
-        if( pszDecimalScaleFactor != NULL )
+        if( pszDecimalScaleFactor != nullptr )
         {
             m_nDecimalScaleFactor = atoi(pszDecimalScaleFactor);
         }
     }
     m_dfDecimalScale = pow(10.0,static_cast<double>(m_nDecimalScaleFactor));
 
-    if( pszJ2KDriver != NULL && eDataEncoding != JPEG2000 )
+    if( pszJ2KDriver != nullptr && eDataEncoding != JPEG2000 )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "JPEG2000_DRIVER option ignored for "
@@ -1892,13 +1892,13 @@ static const char* GetIDSOption(char** papszOptions,
                                 const char* pszKey, const char* pszDefault)
 {
     const char* pszValue = GetBandOption(
-            papszOptions, NULL,
-            nBand, (CPLString("IDS_") + pszKey).c_str(), NULL);
-    if( pszValue == NULL )
+            papszOptions, nullptr,
+            nBand, (CPLString("IDS_") + pszKey).c_str(), nullptr);
+    if( pszValue == nullptr )
     {
         const char* pszIDS = GetBandOption(papszOptions, poSrcDS,
-                                           nBand, "IDS", NULL);
-        if( pszIDS != NULL )
+                                           nBand, "IDS", nullptr);
+        if( pszIDS != nullptr )
         {
             char** papszTokens = CSLTokenizeString2(pszIDS, " ", 0);
             pszValue = CSLFetchNameValue(papszTokens, pszKey);
@@ -1907,7 +1907,7 @@ static const char* GetIDSOption(char** papszOptions,
             CSLDestroy(papszTokens);
         }
     }
-    if( pszValue == NULL )
+    if( pszValue == nullptr )
         pszValue = pszDefault;
     return pszValue;
 }
@@ -2083,7 +2083,7 @@ static float ComputeValOffset(int nTokens, char** papszTokens,
             nParamNumber != 16 )
         {
             bIsTemperature = true;
-            if( pszInputUnit == NULL || EQUAL(pszInputUnit, "C") )
+            if( pszInputUnit == nullptr || EQUAL(pszInputUnit, "C") )
             {
                 fValOffset = 273.15f;
                 CPLDebug("GRIB",
@@ -2099,7 +2099,7 @@ static float ComputeValOffset(int nTokens, char** papszTokens,
         }
     }
 
-    if( !bIsTemperature && pszInputUnit != NULL )
+    if( !bIsTemperature && pszInputUnit != nullptr )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "INPUT_UNIT ignored for that product template");
@@ -2129,26 +2129,26 @@ static bool WriteSection4( VSILFILE* fp,
     int nPDTN = atoi(GetBandOption(
             papszOptions, poSrcDS, nBand, "PDS_PDTN", "0")); 
     const char* pszPDSTemplateNumbers = GetBandOption(
-            papszOptions, NULL, nBand, "PDS_TEMPLATE_NUMBERS", NULL);
+            papszOptions, nullptr, nBand, "PDS_TEMPLATE_NUMBERS", nullptr);
     const char* pszPDSTemplateAssembledValues = GetBandOption(
-            papszOptions, NULL, nBand, "PDS_TEMPLATE_ASSEMBLED_VALUES", NULL);
-    if( pszPDSTemplateNumbers == NULL && pszPDSTemplateAssembledValues == NULL )
+            papszOptions, nullptr, nBand, "PDS_TEMPLATE_ASSEMBLED_VALUES", nullptr);
+    if( pszPDSTemplateNumbers == nullptr && pszPDSTemplateAssembledValues == nullptr )
     {
         pszPDSTemplateNumbers = GetBandOption(
-            papszOptions, poSrcDS, nBand, "PDS_TEMPLATE_NUMBERS", NULL);
+            papszOptions, poSrcDS, nBand, "PDS_TEMPLATE_NUMBERS", nullptr);
     }
     const char* pszInputUnit = GetBandOption(
-            papszOptions, NULL, nBand, "INPUT_UNIT", NULL);
-    if( pszInputUnit == NULL )
+            papszOptions, nullptr, nBand, "INPUT_UNIT", nullptr);
+    if( pszInputUnit == nullptr )
     {
         const char* pszGribUnit =
             poSrcDS->GetRasterBand(nBand)->GetMetadataItem("GRIB_UNIT");
-        if( pszGribUnit != NULL && EQUAL(pszGribUnit, "[K]") )
+        if( pszGribUnit != nullptr && EQUAL(pszGribUnit, "[K]") )
             pszInputUnit = "K";
     }
     WriteUInt16(fp, nPDTN); // PDTN
-    if( nPDTN == 0 && pszPDSTemplateNumbers == NULL &&
-        pszPDSTemplateAssembledValues == NULL )
+    if( nPDTN == 0 && pszPDSTemplateNumbers == nullptr &&
+        pszPDSTemplateAssembledValues == nullptr )
     {
         // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp4-0.shtml
         WriteByte(fp, GRIB2MISSING_u1); // Parameter category = Missing
@@ -2169,30 +2169,30 @@ static bool WriteSection4( VSILFILE* fp,
         // Scaled value of second fixed surface
         WriteUInt32(fp, GRIB2MISSING_u4); 
     }
-    else if( pszPDSTemplateNumbers == NULL &&
-             pszPDSTemplateAssembledValues == NULL )
+    else if( pszPDSTemplateNumbers == nullptr &&
+             pszPDSTemplateAssembledValues == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "PDS_PDTN != 0 specified but both PDS_TEMPLATE_NUMBERS and "
                  "PDS_TEMPLATE_ASSEMBLED_VALUES missing");
         return false;
     }
-    else if( pszPDSTemplateNumbers != NULL &&
-             pszPDSTemplateAssembledValues != NULL )
+    else if( pszPDSTemplateNumbers != nullptr &&
+             pszPDSTemplateAssembledValues != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "PDS_TEMPLATE_NUMBERS and "
                  "PDS_TEMPLATE_ASSEMBLED_VALUES are exclusive");
         return false;
     }
-    else if( pszPDSTemplateNumbers != NULL )
+    else if( pszPDSTemplateNumbers != nullptr )
     {
         char** papszTokens = CSLTokenizeString2(pszPDSTemplateNumbers, " ", 0);
         const int nTokens = CSLCount(papszTokens);
 
         fValOffset = ComputeValOffset(nTokens, papszTokens, pszInputUnit);
 
-        for( int i = 0; papszTokens[i] != NULL; i++ )
+        for( int i = 0; papszTokens[i] != nullptr; i++ )
         {
             int nVal = atoi(papszTokens[i]);
             if( nVal < 0 || nVal > 255 )
@@ -2219,9 +2219,9 @@ static bool WriteSection4( VSILFILE* fp,
         // Check consistency with template definition
         g2int iofst = 0;
         g2int pdsnum = 0;
-        g2int *pdstempl = NULL;
+        g2int *pdstempl = nullptr;
         g2int mappdslen = 0;
-        g2float *coordlist = NULL;
+        g2float *coordlist = nullptr;
         g2int numcoord = 0;
         int ret = g2_unpack4(pabySect4,static_cast<g2int>(nSizeSect4),&iofst,
                         &pdsnum,&pdstempl,&mappdslen,
@@ -2280,7 +2280,7 @@ static bool WriteSection4( VSILFILE* fp,
     else
     {
         gtemplate* mappds = getpdstemplate(nPDTN);
-        if( mappds == NULL )
+        if( mappds == nullptr )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                     "PDS_PDTN = %d is unknown, so it is not possible to use "
@@ -2312,7 +2312,7 @@ static bool WriteSection4( VSILFILE* fp,
         {
             free(mappds);
             mappds=extpdstemplate(nPDTN,&anVals[0]);
-            if( mappds == NULL )
+            if( mappds == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Could not get extended template definition");
@@ -2441,7 +2441,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot create GRIB2 rasters with more than 2 billion pixels");
-        return NULL;
+        return nullptr;
     }
 
     double adfGeoTransform[6];
@@ -2449,13 +2449,13 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset must have a geotransform");
-        return NULL;
+        return nullptr;
     }
     if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Geotransform with rotation terms not supported");
-        return NULL;
+        return nullptr;
     }
 
     OGRSpatialReference oSRS;
@@ -2463,7 +2463,7 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( oSRS.IsProjected() )
     {
         const char *pszProjection = oSRS.GetAttrValue("PROJECTION");
-        if( pszProjection == NULL ||
+        if( pszProjection == nullptr ||
             !(EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) ||
               EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) ||
               EQUAL(pszProjection, SRS_PT_MERCATOR_2SP) ||
@@ -2476,24 +2476,24 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unsupported projection: %s",
                      pszProjection ? pszProjection : "");
-            return NULL;
+            return nullptr;
         }
     }
     else if( !oSRS.IsGeographic() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupported or missing spatial reference system");
-        return NULL;
+        return nullptr;
     }
 
     const bool bAppendSubdataset =
         CPLTestBool(CSLFetchNameValueDef(
             papszOptions, "APPEND_SUBDATASET", "NO"));
     VSILFILE* fp = VSIFOpenL(pszFilename, bAppendSubdataset ? "rb+" : "wb+");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
-        return NULL;
+        return nullptr;
     }
     VSIFSeekL(fp, 0, SEEK_END);
 
@@ -2503,15 +2503,15 @@ GRIBDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                          pfnProgress, pProgressData ) )
         {
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
 
         if( pfnProgress &&
             !pfnProgress(static_cast<double>(i+1) / poSrcDS->GetRasterCount(),
-                    NULL, pProgressData ) )
+                    nullptr, pProgressData ) )
         {
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
     }
 

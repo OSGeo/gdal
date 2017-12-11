@@ -64,12 +64,12 @@ static void ProcessIdentifyTarget( const char *pszTarget,
 
     hDriver = GDALIdentifyDriver( pszTarget, papszSiblingList );
 
-    if( hDriver != NULL )
+    if( hDriver != nullptr )
         printf( "%s: %s\n", pszTarget, GDALGetDriverShortName( hDriver ) );
     else if( bReportFailures )
         printf( "%s: unrecognized\n", pszTarget );
 
-    if( !bRecursive || hDriver != NULL )
+    if( !bRecursive || hDriver != nullptr )
         return;
 
     if( VSIStatL( pszTarget, &sStatBuf ) != 0
@@ -84,7 +84,7 @@ static void ProcessIdentifyTarget( const char *pszTarget,
             continue;
 
         CPLString osSubTarget =
-            CPLFormFilename( pszTarget, papszSiblingList[i], NULL );
+            CPLFormFilename( pszTarget, papszSiblingList[i], nullptr );
 
         ProcessIdentifyTarget( osSubTarget, papszSiblingList,
                                bRecursive, bReportFailures );
@@ -122,7 +122,7 @@ static void Identify( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
     while( nArgc > 0 )
     {
-        ProcessIdentifyTarget( papszArgv[0], NULL,
+        ProcessIdentifyTarget( papszArgv[0], nullptr,
                                bRecursive, bReportFailures );
         nArgc--;
         papszArgv++;
@@ -166,8 +166,8 @@ static void Copy( GDALDriverH hDriver, int nArgc, char **papszArgv,
 MAIN_START(argc, argv)
 
 {
-    char *pszDriver = NULL;
-    GDALDriverH hDriver = NULL;
+    char *pszDriver = nullptr;
+    GDALDriverH hDriver = nullptr;
 
     /* Check that we are running against at least GDAL 1.5 */
     /* Note to developers : if we use newer API, please change the requirement */
@@ -207,10 +207,10 @@ MAIN_START(argc, argv)
         nRemainingArgc -= 2;
     }
 
-    if( pszDriver != NULL )
+    if( pszDriver != nullptr )
     {
         hDriver = GDALGetDriverByName( pszDriver );
-        if( hDriver == NULL )
+        if( hDriver == nullptr )
         {
             fprintf( stderr, "Unable to find driver named '%s'.\n",
                      pszDriver );

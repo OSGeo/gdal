@@ -300,13 +300,13 @@ static cl_device_id get_device(OCLVendor *peVendor)
             err = CL_DEVICE_NOT_FOUND;
         else
             err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 1,
-                                 &device, NULL);
+                                 &device, nullptr);
         is_gpu = (err == CL_SUCCESS);
         if (err != CL_SUCCESS)
         {
             // Find the CPU CL device, as a fallback
             err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_CPU, 1,
-                                 &device, NULL);
+                                 &device, nullptr);
             if( err != CL_SUCCESS || device == 0 )
                 continue;
         }
@@ -322,7 +322,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
             CPLDebug( "OpenCL", "Found vendor='%s' / device='%s' (%s implementation).",
                       vendor_name, device_name, (is_gpu) ? "GPU" : "CPU");
         
-        pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", NULL);
+        pszBlacklistedVendor = CPLGetConfigOption("BLACKLISTED_OPENCL_VENDOR", nullptr);
         if( pszBlacklistedVendor &&
             EQUAL( (const char*)vendor_name, pszBlacklistedVendor ) ) 
         {
@@ -337,7 +337,7 @@ static cl_device_id get_device(OCLVendor *peVendor)
             preferred_is_gpu = is_gpu;
         }
             
-        pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", NULL);
+        pszPreferredVendor = CPLGetConfigOption("PREFERRED_OPENCL_VENDOR", nullptr);
         if( pszPreferredVendor )
         {
             if( EQUAL( (const char*)vendor_name, pszPreferredVendor ) )
@@ -464,12 +464,12 @@ cl_int alloc_pinned_mem(struct oclWarper *warper, int imgNum, size_t dataSz,
     cl_int err = CL_SUCCESS;
     wrkCL[imgNum] = clCreateBuffer(warper->context,
                                    CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR,
-                                   dataSz, NULL, &err);
+                                   dataSz, nullptr, &err);
 
     if (err == CL_SUCCESS) {
         wrkPtr[imgNum] = (void *)clEnqueueMapBuffer(warper->queue, wrkCL[imgNum],
                                                     CL_FALSE, CL_MAP_WRITE,
-                                                    0, dataSz, 0, NULL, NULL, &err);
+                                                    0, dataSz, 0, nullptr, nullptr, &err);
         handleErr(err);
     } else {
         wrkCL[imgNum] = NULL;
@@ -1343,20 +1343,20 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
             dVecf, dUseVec, warper->resampAlg == OCL_CubicSpline,
             warper->nBandSrcValidCL != NULL, warper->coordMult);
 
-    (*clErr) = err = clBuildProgram(program, 1, &(warper->dev), buffer, NULL, NULL);
+    (*clErr) = err = clBuildProgram(program, 1, &(warper->dev), buffer, nullptr, nullptr);
 
     //Detailed debugging info
     if (err != CL_SUCCESS)
     {
         const char* pszStatus = "unknown_status";
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_LOG,
-                                    128000*sizeof(char), buffer, NULL);
+                                    128000*sizeof(char), buffer, nullptr);
         handleErrGoto(err, error_free_program);
 
         CPLError(CE_Failure, CPLE_AppDefined, "Error: Failed to build program executable!\nBuild Log:\n%s", buffer);
 
         err = clGetProgramBuildInfo(program, warper->dev, CL_PROGRAM_BUILD_STATUS,
-                                    128000*sizeof(char), buffer, NULL);
+                                    128000*sizeof(char), buffer, nullptr);
         handleErrGoto(err, error_free_program);
 
         if(buffer[0] == CL_BUILD_NONE)
@@ -1464,7 +1464,7 @@ cl_int set_unified_data(struct oclWarper *warper,
     //Copy unifiedSrcDensity if it exists
     if (unifiedSrcDensity == NULL) {
         //Alloc dummy device RAM
-        (*unifiedSrcDensityCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*unifiedSrcDensityCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     } else {
         //Alloc & copy all density data
@@ -1477,7 +1477,7 @@ cl_int set_unified_data(struct oclWarper *warper,
     //Copy unifiedSrcValid if it exists
     if (unifiedSrcValid == NULL) {
         //Alloc dummy device RAM
-        (*unifiedSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*unifiedSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     } else {
         //Alloc & copy all validity data
@@ -1496,7 +1496,7 @@ cl_int set_unified_data(struct oclWarper *warper,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        (*useBandSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*useBandSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     }
 
@@ -1518,7 +1518,7 @@ cl_int set_unified_data(struct oclWarper *warper,
         handleErr(err);
     } else {
         //Make a fake image so we don't have a NULL pointer
-        (*nBandSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*nBandSrcValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     }
 
@@ -1637,7 +1637,7 @@ cl_int set_dst_rast_data(struct oclWarper *warper, int iImg, size_t sz,
                                     sz, warper->dstImagWork.v[iImg], &err);
         handleErr(err);
     } else {
-        (*dstImag) = clCreateBuffer(warper->context, CL_MEM_READ_WRITE, 1, NULL, &err);
+        (*dstImag) = clCreateBuffer(warper->context, CL_MEM_READ_WRITE, 1, nullptr, &err);
         handleErr(err);
     }
 
@@ -1670,13 +1670,13 @@ cl_int get_dst_rast_data(struct oclWarper *warper, int iImg, size_t wordSz,
     //Copy from dev into working memory
     handleErr(err = clEnqueueReadBuffer(warper->queue, dstReal,
                                         CL_FALSE, 0, sz, warper->dstRealWork.v[iImg],
-                                        0, NULL, NULL));
+                                        0, nullptr, nullptr));
 
     //If we are expecting the imag channel, then copy it back also
     if (warper->dstImagWork.v != NULL && warper->dstImagWork.v[iImg] != NULL) {
         handleErr(err = clEnqueueReadBuffer(warper->queue, dstImag,
                                             CL_FALSE, 0, sz, warper->dstImagWork.v[iImg],
-                                            0, NULL, NULL));
+                                            0, nullptr, nullptr));
     }
 
     //The copy requests were non-blocking, so we'll need to make sure they finish.
@@ -1703,7 +1703,7 @@ cl_int set_dst_data(struct oclWarper *warper,
 
     //Copy the no-data value(s)
     if (dstNoDataReal == NULL) {
-        (*dstNoDataRealCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*dstNoDataRealCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     } else {
         (*dstNoDataRealCL) = clCreateBuffer(warper->context,
@@ -1714,7 +1714,7 @@ cl_int set_dst_data(struct oclWarper *warper,
 
     //Copy unifiedSrcDensity if it exists
     if (dstDensity == NULL) {
-        (*dstDensityCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*dstDensityCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     } else {
         (*dstDensityCL) = clCreateBuffer(warper->context,
@@ -1725,7 +1725,7 @@ cl_int set_dst_data(struct oclWarper *warper,
 
     //Copy unifiedSrcValid if it exists
     if (dstValid == NULL) {
-        (*dstValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, NULL, &err);
+        (*dstValidCL) = clCreateBuffer(warper->context, CL_MEM_READ_ONLY, 1, nullptr, &err);
         handleErr(err);
     } else {
         (*dstValidCL) = clCreateBuffer(warper->context,
@@ -1796,20 +1796,20 @@ cl_int execute_kern(struct oclWarper *warper, cl_kernel kern, size_t loc_size)
         ceil_runs[1] = warper->dstHeight;
 
 #ifdef DEBUG_OPENCL
-    handleErr(err = clSetCommandQueueProperty(warper->queue, CL_QUEUE_PROFILING_ENABLE, CL_TRUE, NULL));
+    handleErr(err = clSetCommandQueueProperty(warper->queue, CL_QUEUE_PROFILING_ENABLE, CL_TRUE, nullptr));
 #endif
 
     // Run the calculation by enqueuing it and forcing the
     // command queue to complete the task
-    handleErr(err = clEnqueueNDRangeKernel(warper->queue, kern, 2, NULL,
-                                           ceil_runs, group_size, 0, NULL, &ev));
+    handleErr(err = clEnqueueNDRangeKernel(warper->queue, kern, 2, nullptr,
+                                           ceil_runs, group_size, 0, nullptr, &ev));
     handleErr(err = clFinish(warper->queue));
 
 #ifdef DEBUG_OPENCL
     handleErr(err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_START,
-                                            sizeof(size_t), &start_time, NULL));
+                                            sizeof(size_t), &start_time, nullptr));
     handleErr(err = clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_END,
-                                            sizeof(size_t), &end_time, NULL));
+                                            sizeof(size_t), &end_time, nullptr));
     assert(end_time != 0);
     assert(start_time != 0);
     handleErr(err = clReleaseEvent(ev));
@@ -2095,7 +2095,7 @@ struct oclWarper* GDALWarpKernelOpenCL_createEnv(int srcWidth, int srcHeight,
 
     warper->dev = device;
 
-    warper->context = clCreateContext(0, 1, &(warper->dev), NULL, NULL, &err);
+    warper->context = clCreateContext(0, 1, &(warper->dev), nullptr, nullptr, &err);
     handleErrGoto(err, error_label);
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || defined(__clang__)
 #pragma GCC diagnostic push
@@ -2463,7 +2463,7 @@ cl_int GDALWarpKernelOpenCL_runResamp(struct oclWarper *warper,
         // Start with the vector kernel
         handleErr(clGetKernelWorkGroupInfo(warper->kern4, warper->dev,
                                            CL_KERNEL_WORK_GROUP_SIZE,
-                                           sizeof(size_t), &groupSize, NULL));
+                                           sizeof(size_t), &groupSize, nullptr));
         kern = warper->kern4;
         chSize = warper->imgChSize4;
         chOrder = warper->imgChOrder4;
@@ -2471,7 +2471,7 @@ cl_int GDALWarpKernelOpenCL_runResamp(struct oclWarper *warper,
         // We're only using the float kernel
         handleErr(clGetKernelWorkGroupInfo(warper->kern1, warper->dev,
                                            CL_KERNEL_WORK_GROUP_SIZE,
-                                           sizeof(size_t), &groupSize, NULL));
+                                           sizeof(size_t), &groupSize, nullptr));
         kern = warper->kern1;
         chSize = warper->imgChSize1;
         chOrder = warper->imgChOrder1;
@@ -2491,7 +2491,7 @@ cl_int GDALWarpKernelOpenCL_runResamp(struct oclWarper *warper,
             if (kern == warper->kern4) {
                 handleErr(clGetKernelWorkGroupInfo(warper->kern1, warper->dev,
                                                    CL_KERNEL_WORK_GROUP_SIZE,
-                                                   sizeof(size_t), &groupSize, NULL));
+                                                   sizeof(size_t), &groupSize, nullptr));
                 kern = warper->kern1;
                 chSize = warper->imgChSize1;
                 chOrder = warper->imgChOrder1;

@@ -37,11 +37,11 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGREDIGEODataSource::OGREDIGEODataSource() :
-    pszName(NULL),
-    fpTHF(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    fpTHF(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    poSRS(NULL),
+    poSRS(nullptr),
     bExtentValid(FALSE),
     dfMinX(0),
     dfMinY(0),
@@ -108,7 +108,7 @@ OGRLayer *OGREDIGEODataSource::GetLayer( int iLayer )
 {
     ReadEDIGEO();
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -129,8 +129,8 @@ int OGREDIGEODataSource::GetLayerCount()
 
 int OGREDIGEODataSource::ReadTHF(VSILFILE* fp)
 {
-    const char* pszLine = NULL;
-    while((pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL)
+    const char* pszLine = nullptr;
+    while((pszLine = CPLReadLine2L(fp, 81, nullptr)) != nullptr)
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -203,7 +203,7 @@ VSILFILE* OGREDIGEODataSource::OpenFile(const char *pszType,
     CPLString osFilename = CPLFormCIFilename(CPLGetPath(pszName),
                                              osTmp.c_str(), osExt.c_str());
     VSILFILE* fp = VSIFOpenL(osFilename, "rb");
-    if (fp == NULL)
+    if (fp == nullptr)
     {
         CPLString osExtLower = osExt;
         for(int i=0;i<(int)osExt.size();i++)
@@ -211,7 +211,7 @@ VSILFILE* OGREDIGEODataSource::OpenFile(const char *pszType,
         CPLString osFilename2 = CPLFormCIFilename(CPLGetPath(pszName),
                                              osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");
-        if (fp == NULL)
+        if (fp == nullptr)
         {
             CPLDebug("EDIGEO", "Cannot open %s", osFilename.c_str());
         }
@@ -226,11 +226,11 @@ VSILFILE* OGREDIGEODataSource::OpenFile(const char *pszType,
 int OGREDIGEODataSource::ReadGEO()
 {
     VSILFILE* fp = OpenFile(osGON, "GEO");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
-    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
+    const char* pszLine = nullptr;
+    while( (pszLine = CPLReadLine2L(fp, 81, nullptr)) != nullptr )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -271,7 +271,7 @@ int OGREDIGEODataSource::ReadGEO()
         {
             CPLDebug("EDIGEO", "Cannot resolve %s SRS. Check that the IGNF file is in the directory of PROJ.4 resource files", osREL.c_str());
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -285,13 +285,13 @@ int OGREDIGEODataSource::ReadGEO()
 int OGREDIGEODataSource::ReadGEN()
 {
     VSILFILE* fp = OpenFile(osGNN, "GEN");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     CPLString osCM1;
     CPLString osCM2;
-    while( (pszLine = CPLReadLine2L(fp, 81, NULL)) != NULL )
+    while( (pszLine = CPLReadLine2L(fp, 81, nullptr)) != nullptr )
     {
         if (strlen(pszLine) < 8 || pszLine[7] != ':')
             continue;
@@ -334,24 +334,24 @@ int OGREDIGEODataSource::ReadGEN()
 int OGREDIGEODataSource::ReadDIC()
 {
     VSILFILE* fp = OpenFile(osDIN, "DIC");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     CPLString osRTY;
     CPLString osRID;
     CPLString osLAB;
     CPLString osTYP;
     while( true )
     {
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-        if (pszLine != NULL)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+        if (pszLine != nullptr)
         {
             if (strlen(pszLine) < 8 || pszLine[7] != ':')
                 continue;
         }
 
-        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
+        if (pszLine == nullptr || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "DID")
             {
@@ -368,7 +368,7 @@ int OGREDIGEODataSource::ReadDIC()
                 sAttributeDef.osTYP = osTYP;
                 mapAttributes[osRID] = sAttributeDef;
             }
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
             osRTY = pszLine + 8;
             osRID = "";
@@ -395,23 +395,23 @@ int OGREDIGEODataSource::ReadDIC()
 int OGREDIGEODataSource::ReadSCD()
 {
     VSILFILE* fp = OpenFile(osSCN, "SCD");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     CPLString osRTY, osRID, osNameRID, osKND;
     strListType aosAttrRID;
     int nWidth = 0;
     while( true )
     {
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-        if (pszLine != NULL)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+        if (pszLine != nullptr)
         {
             if (strlen(pszLine) < 8 || pszLine[7] != ':')
                 continue;
         }
 
-        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
+        if (pszLine == nullptr || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "OBJ")
             {
@@ -453,7 +453,7 @@ int OGREDIGEODataSource::ReadSCD()
                     mapAttributesSCD[osRID] = attDesc;
                 }
             }
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
             osRTY = pszLine + 8;
             osRID = "";
@@ -503,30 +503,30 @@ int OGREDIGEODataSource::ReadSCD()
 int OGREDIGEODataSource::ReadQAL()
 {
     VSILFILE* fp = OpenFile(osQAN, "QAL");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     CPLString osRTY;
     CPLString osRID;
     int nODA = 0;
     int nUDA = 0;
     while( true )
     {
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-        if (pszLine != NULL)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+        if (pszLine != nullptr)
         {
             if (strlen(pszLine) < 8 || pszLine[7] != ':')
                 continue;
         }
 
-        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
+        if (pszLine == nullptr || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "QUP")
             {
                 mapQAL[osRID] = intintType(nODA, nUDA);
             }
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
             osRTY = pszLine + 8;
             osRID = "";
@@ -639,10 +639,10 @@ int OGREDIGEODataSource::CreateLayerFromObjectDesc(const OGREDIGEOObjectDescript
 int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
 {
     VSILFILE* fp = OpenFile(pszVECName, "VEC");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     CPLString osRTY, osRID;
     xyPairListType aXY;
     CPLString osLnkStartType, osLnkStartName, osLnkEndType, osLnkEndName;
@@ -655,15 +655,15 @@ int OGREDIGEODataSource::ReadVEC(const char* pszVECName)
 
     while( true )
     {
-        pszLine = CPLReadLine2L(fp, 81, NULL);
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
 skip_read_next_line:
-        if (pszLine != NULL)
+        if (pszLine != nullptr)
         {
             if (strlen(pszLine) < 8 || pszLine[7] != ':')
                 continue;
         }
 
-        if (pszLine == NULL || STARTS_WITH(pszLine, "RTYSA"))
+        if (pszLine == nullptr || STARTS_WITH(pszLine, "RTYSA"))
         {
             if (osRTY == "PAR")
             {
@@ -750,7 +750,7 @@ skip_read_next_line:
                     mapPNO[osRID] = aXY[0];
                 }
             }
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
             osRTY = pszLine + 8;
             osRID = "";
@@ -831,8 +831,8 @@ skip_read_next_line:
             CPLString osAttVal = pszLine + 8;
             while( true )
             {
-                pszLine = CPLReadLine2L(fp, 81, NULL);
-                if (pszLine != NULL &&
+                pszLine = CPLReadLine2L(fp, 81, nullptr);
+                if (pszLine != nullptr &&
                     strlen(pszLine) >= 8 &&
                     pszLine[7] == ':' &&
                     STARTS_WITH(pszLine, "NEXT "))
@@ -906,7 +906,7 @@ OGRFeature* OGREDIGEODataSource::CreateFeature(const CPLString& osFEA)
     if (itFEA == mapFEA.end())
     {
         CPLDebug("EDIGEO", "ERROR: Cannot find FEA %s", osFEA.c_str());
-        return NULL;
+        return nullptr;
     }
 
     const OGREDIGEOFEADesc& fea = itFEA->second;
@@ -952,7 +952,7 @@ OGRFeature* OGREDIGEODataSource::CreateFeature(const CPLString& osFEA)
     else
     {
         CPLDebug("EDIGEO", "ERROR: Cannot find layer %s", fea.osSCP.c_str());
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -966,9 +966,9 @@ int OGREDIGEODataSource::SetStyle(const CPLString& osFEA,
     /* EDIGEO PCI specific */
     /* See EDIGeO_PCI.pdf, chapter 3 "Principes généraux de */
     /* positionnement de la toponymie. */
-    const char* pszATR = NULL;
+    const char* pszATR = nullptr;
     if (strcmp(poFeature->GetDefnRef()->GetName(), "ID_S_OBJ_Z_1_2_2") == 0 &&
-        iATR != -1 && (pszATR = poFeature->GetFieldAsString(iATR)) != NULL)
+        iATR != -1 && (pszATR = poFeature->GetFieldAsString(iATR)) != nullptr)
     {
         const CPLString osATR = pszATR;
         std::map< CPLString, CPLString>::iterator itFEA_FEA =
@@ -1002,7 +1002,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString& osFEA,
                             dfSize = poFeature->GetFieldAsDouble(iHEI);
                         if (dfSize <= 0 || dfSize >= 100)
                             dfSize = 1;
-                        const char* pszFontFamily = NULL;
+                        const char* pszFontFamily = nullptr;
                         if (iFON != -1)
                             pszFontFamily = poFeature->GetFieldAsString(iFON);
 
@@ -1014,7 +1014,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString& osFEA,
                             osStyle += ",a:";
                             osStyle += CPLString().Printf("%.1f", dfAngle);
                         }
-                        if (pszFontFamily != NULL && bIncludeFontFamily)
+                        if (pszFontFamily != nullptr && bIncludeFontFamily)
                         {
                             osStyle += ",f:\"";
                             osStyle += pszFontFamily;
@@ -1094,8 +1094,8 @@ int OGREDIGEODataSource::BuildLineStrings()
         OGRFeature* poFeature = CreateFeature(osFEA);
         if (poFeature)
         {
-            OGRGeometry* poGeom = NULL;
-            OGRMultiLineString* poMulti = NULL;
+            OGRGeometry* poGeom = nullptr;
+            OGRMultiLineString* poMulti = nullptr;
             for(int k=0;k<(int)aosPAR.size();k++)
             {
                 const std::map< CPLString, xyPairListType >::iterator itPAR =
@@ -1111,9 +1111,9 @@ int OGREDIGEODataSource::BuildLineStrings()
                         poLS->setPoint(i, arc[i].first, arc[i].second);
                     }
 
-                    if (poGeom != NULL)
+                    if (poGeom != nullptr)
                     {
-                        if (poMulti == NULL)
+                        if (poMulti == nullptr)
                         {
                             poMulti = new OGRMultiLineString();
                             poMulti->addGeometryDirectly(poGeom);
@@ -1128,7 +1128,7 @@ int OGREDIGEODataSource::BuildLineStrings()
                     CPLDebug("EDIGEO",
                              "ERROR: Cannot find ARC %s", aosPAR[k].c_str());
             }
-            if( poGeom != NULL )
+            if( poGeom != nullptr )
             {
                 poGeom->assignSpatialReference(poSRS);
                 poFeature->SetGeometryDirectly(poGeom);
@@ -1181,7 +1181,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
 
     for( int j = 0; j < (int)aoPARPtrList.size(); j++ )
     {
-        if (aoPARPtrList[j] == NULL)
+        if (aoPARPtrList[j] == nullptr)
             continue;
         const xyPairListType& sFirstRing = *(aoPARPtrList[j]);
         const xyPairType* psNext = &(sFirstRing.back());
@@ -1189,7 +1189,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         xyPairListType aoXY;
         for( int i = 0; i < (int)sFirstRing.size(); i++ )
             aoXY.push_back(sFirstRing[i]);
-        aoPARPtrList[j] = NULL;
+        aoPARPtrList[j] = nullptr;
 
         int nIter = 1;
         while(aoXY.back() != aoXY[0] && nIter < (int)aoPARPtrList.size())
@@ -1199,7 +1199,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
             int i = 0;  // Used after for.
             for( ; i < (int)aoPARPtrList.size(); i++ )
             {
-                if (aoPARPtrList[i] != NULL)
+                if (aoPARPtrList[i] != nullptr)
                 {
                     const xyPairListType& sSecondRing = *(aoPARPtrList[i]);
                     if (*psNext == sSecondRing[0])
@@ -1226,7 +1226,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
             else
             {
                 const xyPairListType& secondRing = *(aoPARPtrList[i]);
-                aoPARPtrList[i] = NULL;
+                aoPARPtrList[i] = nullptr;
                 if( !bReverseSecond )
                 {
                     for(i=1;i<(int)secondRing.size();i++)
@@ -1270,7 +1270,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString& osFEA,
         int bIsValidGeometry = FALSE;
         OGRGeometry* poGeom = OGRGeometryFactory::organizePolygons(
             &aosPolygons[0], (int)aosPolygons.size(),
-            &bIsValidGeometry, NULL);
+            &bIsValidGeometry, nullptr);
         if (poGeom)
         {
             if (poSRS)
@@ -1353,13 +1353,13 @@ int OGREDIGEODataSource::Open( const char * pszFilename )
     pszName = CPLStrdup( pszFilename );
 
     fpTHF = VSIFOpenL(pszFilename, "rb");
-    if (fpTHF == NULL)
+    if (fpTHF == nullptr)
         return FALSE;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     int i = 0;
     bool bIsEDIGEO = false;
-    while( i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, NULL)) != NULL )
+    while( i < 100 && (pszLine = CPLReadLine2L(fpTHF, 81, nullptr)) != nullptr )
     {
         if (strcmp(pszLine, "RTYSA03:GTS") == 0)
         {
@@ -1372,7 +1372,7 @@ int OGREDIGEODataSource::Open( const char * pszFilename )
     if( !bIsEDIGEO )
     {
         VSIFCloseL(fpTHF);
-        fpTHF = NULL;
+        fpTHF = nullptr;
         return FALSE;
     }
 
@@ -1397,11 +1397,11 @@ void OGREDIGEODataSource::ReadEDIGEO()
     if (!ReadTHF(fpTHF))
     {
         VSIFCloseL(fpTHF);
-        fpTHF = NULL;
+        fpTHF = nullptr;
         return;
     }
     VSIFCloseL(fpTHF);
-    fpTHF = NULL;
+    fpTHF = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read .GEO file                                                  */
@@ -1507,14 +1507,14 @@ void OGREDIGEODataSource::ReadEDIGEO()
 void OGREDIGEODataSource::CreateLabelLayers()
 {
     OGRLayer* poLayer = GetLayerByName("ID_S_OBJ_Z_1_2_2");
-    if (poLayer == NULL)
+    if (poLayer == nullptr)
         return;
 
     std::map<CPLString, OGREDIGEOLayer*> mapLayerNameToLayer;
 
-    OGRFeature* poFeature = NULL;
+    OGRFeature* poFeature = nullptr;
     OGRFeatureDefn* poFeatureDefn = poLayer->GetLayerDefn();
-    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    while( (poFeature = poLayer->GetNextFeature()) != nullptr )
     {
         const char* pszBelongingLayerName =
             poFeature->GetFieldAsString(iOBJ_LNK_LAYER);
@@ -1523,7 +1523,7 @@ void OGREDIGEODataSource::CreateLabelLayers()
             CPLString osBelongingLayerName = pszBelongingLayerName;
             std::map<CPLString, OGREDIGEOLayer*>::iterator it =
                         mapLayerNameToLayer.find(osBelongingLayerName);
-            OGREDIGEOLayer* poLabelLayer = NULL;
+            OGREDIGEOLayer* poLabelLayer = nullptr;
 
             if (it == mapLayerNameToLayer.end())
             {

@@ -85,8 +85,8 @@ static const char * const apszDefDefn[] = {
     "Eprj_Spheroid",
     "{0:pcsphereName,1:da,1:db,1:deSquared,1:dradius,}Eprj_Spheroid",
 
-    NULL,
-    NULL };
+    nullptr,
+    nullptr };
 
 /************************************************************************/
 /* ==================================================================== */
@@ -101,18 +101,18 @@ static const char * const apszDefDefn[] = {
 HFADictionary::HFADictionary( const char *pszString ) :
     nTypes(0),
     nTypesMax(0),
-    papoTypes(NULL),
+    papoTypes(nullptr),
     osDictionaryText(pszString),
     bDictionaryTextDirty(false)
 {
     // Read all the types.
     // TODO(schwehr): Refactor this approach to be more obvious.
-    while( pszString != NULL && *pszString != '.' )
+    while( pszString != nullptr && *pszString != '.' )
     {
         HFAType *poNewType = new HFAType();
         pszString = poNewType->Initialize(pszString);
 
-        if( pszString != NULL )
+        if( pszString != nullptr )
             AddType(poNewType);
         else
             delete poNewType;
@@ -148,7 +148,7 @@ void HFADictionary::AddType( HFAType *poType )
     if( nTypes == nTypesMax
 #ifdef DEBUG
         // To please Coverity.
-        || papoTypes == NULL
+        || papoTypes == nullptr
 #endif
         )
     {
@@ -169,7 +169,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
 {
     for( int i = 0; i < nTypes; i++ )
     {
-        if( papoTypes[i]->pszTypeName != NULL &&
+        if( papoTypes[i]->pszTypeName != nullptr &&
             strcmp(pszName, papoTypes[i]->pszTypeName) == 0 )
             return papoTypes[i];
     }
@@ -177,7 +177,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
     // Check if this is a type have other knowledge of.  If so, add
     // it to the dictionary now.  I'm not sure how some files end
     // up being distributed using types not in the dictionary.
-    for( int i = 0; apszDefDefn[i] != NULL; i += 2 )
+    for( int i = 0; apszDefDefn[i] != nullptr; i += 2 )
     {
         if( strcmp(pszName, apszDefDefn[i]) == 0 )
         {
@@ -187,7 +187,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
             if( !poNewType->CompleteDefn(this) )
             {
                 delete poNewType;
-                return NULL;
+                return nullptr;
             }
             AddType(poNewType);
 
@@ -202,7 +202,7 @@ HFAType * HFADictionary::FindType( const char * pszName )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

@@ -62,10 +62,10 @@ TABMAPIndexBlock::TABMAPIndexBlock( TABAccess eAccessMode /*= TABRead*/ ) :
     m_nMinY(1000000000),
     m_nMaxX(-1000000000),
     m_nMaxY(-1000000000),
-    m_poBlockManagerRef(NULL),
-    m_poCurChild(NULL),
+    m_poBlockManagerRef(nullptr),
+    m_poCurChild(nullptr),
     m_nCurChildIndex(-1),
-    m_poParentRef(NULL)
+    m_poParentRef(nullptr)
 {
     memset(m_asEntries, 0, sizeof(m_asEntries));
 }
@@ -91,7 +91,7 @@ void TABMAPIndexBlock::UnsetCurChild()
         if (m_eAccess == TABWrite || m_eAccess == TABReadWrite)
             m_poCurChild->CommitToFile();
         delete m_poCurChild;
-        m_poCurChild = NULL;
+        m_poCurChild = nullptr;
     }
     m_nCurChildIndex = -1;
 }
@@ -131,7 +131,7 @@ int     TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_INDEX_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -164,7 +164,7 @@ int     TABMAPIndexBlock::CommitToFile()
 {
     int nStatus = 0;
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitToFile(): Block has not been initialized yet!");
@@ -375,7 +375,7 @@ int     TABMAPIndexBlock::GetNumFreeEntries()
 TABMAPIndexEntry *TABMAPIndexBlock::GetEntry( int iIndex )
 {
     if( iIndex < 0 || iIndex >= m_numEntries )
-        return NULL;
+        return nullptr;
 
     return m_asEntries + iIndex;
 }
@@ -580,7 +580,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     {
         m_poCurChild->CommitToFile();
         delete m_poCurChild;
-        m_poCurChild = NULL;
+        m_poCurChild = nullptr;
         m_nCurChildIndex = -1;
     }
 
@@ -593,7 +593,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     // Try to load corresponding child... if it fails then we are
     // likely in a leaf node, so we'll add the new entry in the current
     // node.
-    TABRawBinBlock *poBlock = NULL;
+    TABRawBinBlock *poBlock = nullptr;
 
     // Prevent error message if referred block not committed yet.
     CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -601,10 +601,10 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     poBlock = TABCreateMAPBlockFromFile(m_fp,
                                     m_asEntries[nBestCandidate].nBlockPtr,
                                     m_nBlockSize, TRUE, TABReadWrite);
-    if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
+    if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
     {
         m_poCurChild = (TABMAPIndexBlock*)poBlock;
-        poBlock = NULL;
+        poBlock = nullptr;
         m_nCurChildIndex = nBestCandidate;
         m_poCurChild->SetParentRef(this);
         m_poCurChild->SetMAPBlockManagerRef(m_poBlockManagerRef);
@@ -782,7 +782,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
         {
             m_poCurChild->CommitToFile();
             delete m_poCurChild;
-            m_poCurChild = NULL;
+            m_poCurChild = nullptr;
             m_nCurChildIndex = -1;
         }
 
@@ -795,7 +795,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
             // Try to load corresponding child... if it fails then we are
             // likely in a leaf node, so we'll add the new entry in the current
             // node.
-            TABRawBinBlock *poBlock = NULL;
+            TABRawBinBlock *poBlock = nullptr;
 
             // Prevent error message if referred block not committed yet.
             CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -803,10 +803,10 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
             poBlock = TABCreateMAPBlockFromFile(m_fp,
                                        m_asEntries[nBestCandidate].nBlockPtr,
                                        m_nBlockSize, TRUE, TABReadWrite);
-            if (poBlock != NULL && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
+            if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
             {
                 m_poCurChild = (TABMAPIndexBlock*)poBlock;
-                poBlock = NULL;
+                poBlock = nullptr;
                 m_nCurChildIndex = nBestCandidate;
                 m_poCurChild->SetParentRef(this);
                 m_poCurChild->SetMAPBlockManagerRef(m_poBlockManagerRef);
@@ -842,7 +842,7 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
          *------------------------------------------------------------*/
         if (GetNumFreeEntries() < 1)
         {
-            if (m_poParentRef == NULL)
+            if (m_poParentRef == nullptr)
             {
                 /*-----------------------------------------------------
                  * Splitting the root node adds one level to the tree, so
@@ -1298,7 +1298,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
                                     GInt32 nNewEntryXMax, GInt32 nNewEntryYMax)
 {
     CPLAssert(m_poBlockManagerRef);
-    CPLAssert(m_poParentRef == NULL);
+    CPLAssert(m_poParentRef == nullptr);
 
     /*-----------------------------------------------------------------
      * Since a root note cannot be split, we add a level of nodes
@@ -1332,7 +1332,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
     {
         poNewNode->SetCurChildRef(m_poCurChild, m_nCurChildIndex);
         m_poCurChild->SetParentRef(poNewNode);
-        m_poCurChild = NULL;
+        m_poCurChild = nullptr;
         m_nCurChildIndex = -1;
     }
 
@@ -1499,11 +1499,11 @@ void    TABMAPIndexBlock::SetCurChildRef(TABMAPIndexBlock *poChild,
 
 void TABMAPIndexBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPIndexBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }

@@ -226,7 +226,7 @@ OGRLinearRing* OGRGeoJSONReadLinearRing( json_object* poObj );
 OGRPolygon* OGRGeoJSONReadPolygon( json_object* poObj , bool bRaw=false);
 OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj );
 OGRGeometryCollection* OGRGeoJSONReadGeometryCollection( json_object* poObj,
-                                                         OGRSpatialReference* poSRS = NULL );
+                                                         OGRSpatialReference* poSRS = nullptr );
 OGRSpatialReference* OGRGeoJSONReadSpatialReference( json_object* poObj );
 
 /************************************************************************/

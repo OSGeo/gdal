@@ -92,13 +92,13 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
     bOwnData(true),
     bNoDataSet(FALSE),
     dfNoData(0.0),
-    poColorTable(NULL),
+    poColorTable(nullptr),
     eColorInterp(GCI_Undefined),
-    pszUnitType(NULL),
-    papszCategoryNames(NULL),
+    pszUnitType(nullptr),
+    papszCategoryNames(nullptr),
     dfOffset(0.0),
     dfScale(1.0),
-    psSavedHistograms(NULL)
+    psSavedHistograms(nullptr)
 {
     eAccess = GA_Update;
     eDataType = eTypeIn;
@@ -125,13 +125,13 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
     bOwnData(bAssumeOwnership),
     bNoDataSet(FALSE),
     dfNoData(0.0),
-    poColorTable(NULL),
+    poColorTable(nullptr),
     eColorInterp(GCI_Undefined),
-    pszUnitType(NULL),
-    papszCategoryNames(NULL),
+    pszUnitType(nullptr),
+    papszCategoryNames(nullptr),
     dfOffset(0.0),
     dfScale(1.0),
-    psSavedHistograms(NULL)
+    psSavedHistograms(nullptr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -165,13 +165,13 @@ MEMRasterBand::~MEMRasterBand()
         VSIFree( pabyData );
     }
 
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         delete poColorTable;
 
     CPLFree( pszUnitType );
     CSLDestroy( papszCategoryNames );
 
-    if (psSavedHistograms != NULL)
+    if (psSavedHistograms != nullptr)
         CPLDestroyXMLNode(psSavedHistograms);
 }
 
@@ -326,7 +326,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
         nPixelSpaceBuf == nBandSpaceBuf * nBands )
     {
         GDALDataType eDT = GDT_Unknown;
-        GByte* pabyData = NULL;
+        GByte* pabyData = nullptr;
         GSpacing nPixelOffset = 0;
         GSpacing nLineOffset = 0;
         int eDTSize = 0;
@@ -414,7 +414,7 @@ CPLErr MEMDataset::IRasterIO( GDALRWFlag eRWFlag,
     {
         GDALRasterBand *poBand = GetRasterBand(panBandMap[iBandIndex]);
 
-        if (poBand == NULL)
+        if (poBand == nullptr)
         {
             eErr = CE_Failure;
             break;
@@ -490,7 +490,7 @@ CPLErr MEMRasterBand::DeleteNoDataValue()
 GDALColorInterp MEMRasterBand::GetColorInterpretation()
 
 {
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         return GCI_PaletteIndex;
 
     return eColorInterp;
@@ -525,11 +525,11 @@ GDALColorTable *MEMRasterBand::GetColorTable()
 CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
 
 {
-    if( poColorTable != NULL )
+    if( poColorTable != nullptr )
         delete poColorTable;
 
-    if( poCT == NULL )
-        poColorTable = NULL;
+    if( poCT == nullptr )
+        poColorTable = nullptr;
     else
         poColorTable = poCT->Clone();
 
@@ -543,7 +543,7 @@ CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
 const char *MEMRasterBand::GetUnitType()
 
 {
-    if( pszUnitType == NULL )
+    if( pszUnitType == nullptr )
         return "";
 
     return pszUnitType;
@@ -558,8 +558,8 @@ CPLErr MEMRasterBand::SetUnitType( const char *pszNewValue )
 {
     CPLFree( pszUnitType );
 
-    if( pszNewValue == NULL )
-        pszUnitType = NULL;
+    if( pszNewValue == nullptr )
+        pszUnitType = nullptr;
     else
         pszUnitType = CPLStrdup(pszNewValue);
 
@@ -573,7 +573,7 @@ CPLErr MEMRasterBand::SetUnitType( const char *pszNewValue )
 double MEMRasterBand::GetOffset( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
 
     return dfOffset;
@@ -597,7 +597,7 @@ CPLErr MEMRasterBand::SetOffset( double dfNewOffset )
 double MEMRasterBand::GetScale( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
 
     return dfScale;
@@ -651,7 +651,7 @@ CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     CPLXMLNode *psNode = PamFindMatchingHistogram( psSavedHistograms,
                                                    dfMin, dfMax, nBuckets,
                                                    TRUE, TRUE );
-    if( psNode != NULL )
+    if( psNode != nullptr )
     {
         /* blow this one away */
         CPLRemoveXMLChild( psSavedHistograms, psNode );
@@ -663,7 +663,7 @@ CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets,
                                                     panHistogram, TRUE, FALSE );
-    if( psHistItem == NULL )
+    if( psHistItem == nullptr )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -671,8 +671,8 @@ CPLErr MEMRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /*      histogram list so that it will be the default histogram.        */
 /* -------------------------------------------------------------------- */
 
-    if( psSavedHistograms == NULL )
-        psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+    if( psSavedHistograms == nullptr )
+        psSavedHistograms = CPLCreateXMLNode( nullptr, CXT_Element,
                                               "Histograms" );
 
     psHistItem->psNext = psSavedHistograms->psChild;
@@ -693,10 +693,10 @@ MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                     void *pProgressData )
 
 {
-    if( psSavedHistograms != NULL )
+    if( psSavedHistograms != nullptr )
     {
         for( CPLXMLNode *psXMLHist = psSavedHistograms->psChild;
-             psXMLHist != NULL;
+             psXMLHist != nullptr;
              psXMLHist = psXMLHist->psNext )
         {
             if( psXMLHist->eType != CXT_Element
@@ -726,7 +726,7 @@ MEMRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 int MEMRasterBand::GetOverviewCount()
 {
     MEMDataset* poMemDS = dynamic_cast<MEMDataset*>(poDS);
-    if( poMemDS == NULL )
+    if( poMemDS == nullptr )
         return 0;
     return poMemDS->m_nOverviewDSCount;
 }
@@ -739,10 +739,10 @@ GDALRasterBand * MEMRasterBand::GetOverview( int i )
 
 {
     MEMDataset* poMemDS = dynamic_cast<MEMDataset*>(poDS);
-    if( poMemDS == NULL )
-        return NULL;
+    if( poMemDS == nullptr )
+        return nullptr;
     if( i < 0 || i >= poMemDS->m_nOverviewDSCount )
-        return NULL;
+        return nullptr;
     return poMemDS->m_papoOverviewDS[i]->GetRasterBand(nBand);
 }
 
@@ -755,24 +755,24 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
     InvalidateMaskBand();
 
     MEMDataset* poMemDS = dynamic_cast<MEMDataset*>(poDS);
-    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand != 1 && poMemDS != NULL )
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand != 1 && poMemDS != nullptr )
     {
         MEMRasterBand* poFirstBand =
             reinterpret_cast<MEMRasterBand*>(poMemDS->GetRasterBand(1));
-        if( poFirstBand != NULL)
+        if( poFirstBand != nullptr)
             return poFirstBand->CreateMaskBand( nFlagsIn );
     }
 
     GByte* pabyMaskData = static_cast<GByte*>(VSI_CALLOC_VERBOSE(nRasterXSize,
                                                                  nRasterYSize));
-    if( pabyMaskData == NULL )
+    if( pabyMaskData == nullptr )
         return CE_Failure;
 
     nMaskFlags = nFlagsIn;
     bOwnMask = true;
     poMask = new MEMRasterBand( pabyMaskData, GDT_Byte,
                                 nRasterXSize, nRasterYSize );
-    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != NULL )
+    if( (nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != nullptr )
     {
         for( int i = 2; i <= poMemDS->GetRasterCount(); ++i )
         {
@@ -800,11 +800,11 @@ CPLErr MEMRasterBand::CreateMaskBand( int nFlagsIn )
 MEMDataset::MEMDataset() :
     GDALDataset(FALSE),
     bGeoTransformSet(FALSE),
-    pszProjection(NULL),
+    pszProjection(nullptr),
     nGCPCount(0),
-    pasGCPs(NULL),
+    pasGCPs(nullptr),
     m_nOverviewDSCount(0),
-    m_papoOverviewDS(NULL)
+    m_papoOverviewDS(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -859,7 +859,7 @@ void MEMDataset::LeaveReadWrite()
 const char *MEMDataset::GetProjectionRef()
 
 {
-    if( pszProjection == NULL )
+    if( pszProjection == nullptr )
         return "";
 
     return pszProjection;
@@ -924,7 +924,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest )
             // we're within a MEMDataset so the only thing a RasterBand
             // could be is a MEMRasterBand
 
-            if( RequestedRasterBand != NULL )
+            if( RequestedRasterBand != nullptr )
             {
                 // return the internal band data pointer
                 return RequestedRasterBand->GetData();
@@ -932,7 +932,7 @@ void *MEMDataset::GetInternalHandle( const char * pszRequest )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 /************************************************************************/
 /*                            GetGCPCount()                             */
@@ -975,7 +975,7 @@ CPLErr MEMDataset::SetGCPs( int nNewCount, const GDAL_GCP *pasNewGCPList,
     GDALDeinitGCPs( nGCPCount, pasGCPs );
     CPLFree( pasGCPs );
 
-    if( pszGCPProjection == NULL )
+    if( pszGCPProjection == nullptr )
         osGCPProjection = "";
     else
         osGCPProjection = pszGCPProjection;
@@ -1004,19 +1004,19 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 /*      Do we need to allocate the memory ourselves?  This is the       */
 /*      simple case.                                                    */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == NULL )
+    if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == nullptr )
     {
         const GSpacing nTmp = nPixelSize * GetRasterXSize();
-        GByte *pData = NULL;
+        GByte *pData = nullptr;
 #if SIZEOF_VOIDP == 4
         if( nTmp > INT_MAX )
-            pData = NULL;
+            pData = nullptr;
         else
 #endif
             pData = reinterpret_cast<GByte *>(
                 VSI_CALLOC_VERBOSE((size_t)nTmp, GetRasterYSize() ) );
 
-        if( pData == NULL )
+        if( pData == nullptr )
         {
             return CE_Failure;
         }
@@ -1038,14 +1038,14 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
 
     const char *pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
     GSpacing nPixelOffset;
-    if( pszOption == NULL )
+    if( pszOption == nullptr )
         nPixelOffset = nPixelSize;
     else
         nPixelOffset = CPLAtoGIntBig(pszOption);
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
     GSpacing nLineOffset;
-    if( pszOption == NULL )
+    if( pszOption == nullptr )
         nLineOffset = GetRasterXSize() * static_cast<size_t>( nPixelOffset );
     else
         nLineOffset = CPLAtoGIntBig(pszOption);
@@ -1089,7 +1089,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             delete m_papoOverviewDS[i];
         CPLFree(m_papoOverviewDS);
         m_nOverviewDSCount = 0;
-        m_papoOverviewDS = NULL;
+        m_papoOverviewDS = nullptr;
         return CE_None;
     }
 
@@ -1149,7 +1149,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         for( int j = 0; j < poBand->GetOverviewCount(); j++ )
         {
             GDALRasterBand * poOverview = poBand->GetOverview( j );
-            if( poOverview == NULL )
+            if( poOverview == nullptr )
                 continue;
 
             int nOvFactor =
@@ -1181,7 +1181,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             {
                 const GDALDataType eDT =
                             GetRasterBand(iBand+1)->GetRasterDataType();
-                if( poOvrDS->AddBand( eDT, NULL ) != CE_None )
+                if( poOvrDS->AddBand( eDT, nullptr ) != CE_None )
                 {
                     delete poOvrDS;
                     return CE_Failure;
@@ -1249,7 +1249,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
         // for it
         MEMRasterBand* poMEMBand = reinterpret_cast<MEMRasterBand*>(poBand);
         const bool bMustGenerateMaskOvr =
-                ( (poMEMBand->bOwnMask && poMEMBand->poMask != NULL) ||
+                ( (poMEMBand->bOwnMask && poMEMBand->poMask != nullptr) ||
         // Or if it is a per-dataset mask, in which case just do it for the
         // first band
                   ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0) );
@@ -1260,7 +1260,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
             {
                 MEMRasterBand* poMEMOvrBand =
                     reinterpret_cast<MEMRasterBand*>(papoOverviewBands[i]);
-                if( !(poMEMOvrBand->bOwnMask && poMEMOvrBand->poMask != NULL) &&
+                if( !(poMEMOvrBand->bOwnMask && poMEMOvrBand->poMask != nullptr) &&
                     (poMEMOvrBand->nMaskFlags & GMF_PER_DATASET) == 0 )
                 {
                     poMEMOvrBand->CreateMaskBand( poMEMBand->nMaskFlags );
@@ -1324,7 +1324,7 @@ CPLErr MEMDataset::IBuildOverviews( const char *pszResampling,
 CPLErr MEMDataset::CreateMaskBand( int nFlagsIn )
 {
     GDALRasterBand* poFirstBand = GetRasterBand(1);
-    if( poFirstBand == NULL )
+    if( poFirstBand == nullptr )
         return CE_Failure;
     return poFirstBand->CreateMaskBand( nFlagsIn | GMF_PER_DATASET );
 }
@@ -1341,8 +1341,8 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      description strings?                                            */
 /* -------------------------------------------------------------------- */
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "MEM:::")
-        || poOpenInfo->fpL != NULL )
-        return NULL;
+        || poOpenInfo->fpL != nullptr )
+        return nullptr;
 
     char **papszOptions
         = CSLTokenizeStringComplex(poOpenInfo->pszFilename+6, ",",
@@ -1351,9 +1351,9 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify we have all required fields                              */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszOptions, "PIXELS" ) == NULL
-        || CSLFetchNameValue( papszOptions, "LINES" ) == NULL
-        || CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == NULL )
+    if( CSLFetchNameValue( papszOptions, "PIXELS" ) == nullptr
+        || CSLFetchNameValue( papszOptions, "LINES" ) == nullptr
+        || CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == nullptr )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -1361,7 +1361,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
             "Unable to access in-memory array." );
 
         CSLDestroy( papszOptions );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1378,7 +1378,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     const char *pszOption = CSLFetchNameValue(papszOptions,"BANDS");
     int nBands = 1;
-    if( pszOption != NULL )
+    if( pszOption != nullptr )
     {
         nBands = atoi(pszOption);
     }
@@ -1388,12 +1388,12 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CSLDestroy( papszOptions );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     pszOption = CSLFetchNameValue(papszOptions,"DATATYPE");
     GDALDataType eType = GDT_Byte;
-    if( pszOption != NULL )
+    if( pszOption != nullptr )
     {
         if( atoi(pszOption) > 0 && atoi(pszOption) < GDT_TypeCount )
             eType = static_cast<GDALDataType>( atoi(pszOption) );
@@ -1417,14 +1417,14 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
                           pszOption );
                 CSLDestroy( papszOptions );
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
         }
     }
 
     pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
     GSpacing nPixelOffset;
-    if( pszOption == NULL )
+    if( pszOption == nullptr )
         nPixelOffset = GDALGetDataTypeSizeBytes(eType);
     else
         nPixelOffset = CPLScanUIntBig(pszOption,
@@ -1432,7 +1432,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
     GSpacing nLineOffset = 0;
-    if( pszOption == NULL )
+    if( pszOption == nullptr )
         nLineOffset = poDS->nRasterXSize * static_cast<size_t>( nPixelOffset );
     else
         nLineOffset = CPLScanUIntBig(pszOption,
@@ -1440,7 +1440,7 @@ GDALDataset *MEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
     pszOption = CSLFetchNameValue(papszOptions, "BANDOFFSET");
     GSpacing nBandOffset = 0;
-    if( pszOption == NULL )
+    if( pszOption == nullptr )
         nBandOffset = nLineOffset * static_cast<size_t>( poDS->nRasterYSize );
     else
         nBandOffset = CPLScanUIntBig(pszOption,
@@ -1502,7 +1502,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
         (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBands)) )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
-        return NULL;
+        return nullptr;
     }
 
     const GUIntBig nGlobalBigSize
@@ -1526,7 +1526,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
         apbyBandData.push_back(
             reinterpret_cast<GByte *>( VSI_CALLOC_VERBOSE( 1, nGlobalSize ) ) );
 
-        if( apbyBandData[0] == NULL )
+        if( apbyBandData[0] == nullptr )
             bAllocOK = FALSE;
         else
         {
@@ -1543,7 +1543,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
                     VSI_CALLOC_VERBOSE(
                         1,
                         static_cast<size_t>(nWordSize) * nXSize * nYSize ) ) );
-            if( apbyBandData[iBand] == NULL )
+            if( apbyBandData[iBand] == nullptr )
             {
                 bAllocOK = FALSE;
                 break;
@@ -1560,7 +1560,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
             if( apbyBandData[iBand] )
                 VSIFree( apbyBandData[iBand] );
         }
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1584,7 +1584,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
     {
-        MEMRasterBand *poNewBand = NULL;
+        MEMRasterBand *poNewBand = nullptr;
 
         if( bPixelInterleaved )
             poNewBand = new MEMRasterBand( poDS, iBand+1, apbyBandData[iBand],
@@ -1610,7 +1610,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
 static int MEMDatasetIdentify( GDALOpenInfo * poOpenInfo )
 {
     return (STARTS_WITH(poOpenInfo->pszFilename, "MEM:::") &&
-            poOpenInfo->fpL == NULL);
+            poOpenInfo->fpL == nullptr);
 }
 
 /************************************************************************/
@@ -1630,7 +1630,7 @@ static CPLErr MEMDatasetDelete( const char* /* fileName */)
 void GDALRegister_MEM()
 
 {
-    if( GDALGetDriverByName( "MEM" ) != NULL )
+    if( GDALGetDriverByName( "MEM" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

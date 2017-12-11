@@ -102,7 +102,7 @@ class OGRS57DataSource : public OGRDataSource
     OGREnvelope         oExtents;
 
   public:
-    explicit            OGRS57DataSource(char** papszOpenOptions = NULL);
+    explicit            OGRS57DataSource(char** papszOpenOptions = nullptr);
                         ~OGRS57DataSource();
 
     void                SetOptionList( char ** );

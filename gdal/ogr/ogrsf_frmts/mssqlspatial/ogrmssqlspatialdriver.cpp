@@ -60,14 +60,14 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
     OGRMSSQLSpatialDataSource     *poDS;
 
     if( !STARTS_WITH_CI(pszFilename, "MSSQL:") )
-        return NULL;
+        return nullptr;
 
     poDS = new OGRMSSQLSpatialDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -81,7 +81,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
                                                         CPL_UNUSED char **papszOptions )
 {
     if( !STARTS_WITH_CI(pszName, "MSSQL:") )
-        return NULL;
+        return nullptr;
 
     OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
     if( !poDS->Open( pszName, TRUE, TRUE ) )
@@ -90,7 +90,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
         CPLError( CE_Failure, CPLE_AppDefined,
          "MSSQL Spatial driver doesn't currently support database creation.\n"
                   "Please create database with the Microsoft SQL Server Client Tools." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;

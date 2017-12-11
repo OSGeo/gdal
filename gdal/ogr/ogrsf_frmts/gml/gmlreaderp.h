@@ -428,12 +428,12 @@ public:
 
     GMLFeature       *NextFeature() override;
 
-    bool             LoadClasses( const char *pszFile = NULL ) override;
-    bool             SaveClasses( const char *pszFile = NULL ) override;
+    bool             LoadClasses( const char *pszFile = nullptr ) override;
+    bool             SaveClasses( const char *pszFile = nullptr ) override;
 
     bool             ResolveXlinks( const char *pszFile,
                                     bool* pbOutIsTempFile,
-                                    char **papszSkip = NULL,
+                                    char **papszSkip = nullptr,
                                     const bool bStrict = false ) override;
 
     bool             HugeFileResolver( const char *pszFile,
@@ -456,7 +456,7 @@ public:
     bool             ShouldLookForClassAtAnyLevel() { return m_bLookForClassAtAnyLevel; }
 
     int         GetFeatureElementIndex( const char *pszElement, int nLen, GMLAppSchemaType eAppSchemaType );
-    int         GetAttributeElementIndex( const char *pszElement, int nLen, const char* pszAttrKey = NULL );
+    int         GetAttributeElementIndex( const char *pszElement, int nLen, const char* pszAttrKey = nullptr );
     bool        IsCityGMLGenericAttributeElement( const char *pszElement, void* attr );
 
     void        PushFeature( const char *pszElement,

@@ -49,11 +49,11 @@ CPL_CVSID("$Id$")
  * must be called.
  */
 CPLWorkerThreadPool::CPLWorkerThreadPool() :
-    hCond(NULL),
+    hCond(nullptr),
     eState(CPLWTS_OK),
-    psJobQueue(NULL),
+    psJobQueue(nullptr),
     nPendingJobs(0),
-    psWaitingWorkerThreadsList(NULL),
+    psWaitingWorkerThreadsList(nullptr),
     nWaitingWorkerThreads(0)
 {
     hMutex = CPLCreateMutexEx(CPL_MUTEX_REGULAR);
@@ -110,7 +110,7 @@ void CPLWorkerThreadPool::WorkerThreadFunction(void* user_data)
     while( true )
     {
         CPLWorkerThreadJob* psJob = poTP->GetNextJob(psWT);
-        if( psJob == NULL )
+        if( psJob == nullptr )
             break;
 
         if( psJob->pfnFunc )
@@ -141,14 +141,14 @@ bool CPLWorkerThreadPool::SubmitJob( CPLThreadFunc pfnFunc, void* pData )
 
     CPLWorkerThreadJob* psJob = static_cast<CPLWorkerThreadJob *>(
         VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob)));
-    if( psJob == NULL )
+    if( psJob == nullptr )
         return false;
     psJob->pfnFunc = pfnFunc;
     psJob->pData = pData;
 
     CPLList* psItem =
         static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
-    if( psItem == NULL )
+    if( psItem == nullptr )
     {
         VSIFree(psJob);
         return false;
@@ -219,7 +219,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
     {
         CPLWorkerThreadJob* psJob = static_cast<CPLWorkerThreadJob*>(
             VSI_MALLOC_VERBOSE(sizeof(CPLWorkerThreadJob)));
-        if( psJob == NULL )
+        if( psJob == nullptr )
         {
             bRet = false;
             break;
@@ -229,7 +229,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 
         CPLList* psItem =
             static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
-        if( psItem == NULL )
+        if( psItem == nullptr )
         {
             VSIFree(psJob);
             bRet = false;
@@ -354,7 +354,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
     CPLAssert( nThreads > 0 );
 
     hCond = CPLCreateCond();
-    if( hCond == NULL )
+    if( hCond == nullptr )
         return false;
 
     bool bRet = true;
@@ -362,11 +362,11 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
     for(int i=0;i<nThreads;i++)
     {
         aWT[i].pfnInitFunc = pfnInitFunc;
-        aWT[i].pInitData = pasInitData ? pasInitData[i] : NULL;
+        aWT[i].pInitData = pasInitData ? pasInitData[i] : nullptr;
         aWT[i].poTP = this;
 
         aWT[i].hMutex = CPLCreateMutexEx(CPL_MUTEX_REGULAR);
-        if( aWT[i].hMutex == NULL )
+        if( aWT[i].hMutex == nullptr )
         {
             nThreads = i;
             aWT.resize(nThreads);
@@ -375,7 +375,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
         }
         CPLReleaseMutex(aWT[i].hMutex);
         aWT[i].hCond = CPLCreateCond();
-        if( aWT[i].hCond == NULL )
+        if( aWT[i].hCond == nullptr )
         {
             CPLDestroyMutex(aWT[i].hMutex);
             nThreads = i;
@@ -389,7 +389,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
 
         aWT[i].hThread =
             CPLCreateJoinableThread(WorkerThreadFunction, &(aWT[i]));
-        if( aWT[i].hThread == NULL )
+        if( aWT[i].hThread == nullptr )
         {
             nThreads = i;
             aWT.resize(nThreads);
@@ -441,7 +441,7 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
         if( eState == CPLWTS_STOP )
         {
             CPLReleaseMutex(hMutex);
-            return NULL;
+            return nullptr;
         }
         CPLList* psTopJobIter = psJobQueue;
         if( psTopJobIter )
@@ -466,13 +466,13 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
 
             CPLList* psItem =
                 static_cast<CPLList *>(VSI_MALLOC_VERBOSE(sizeof(CPLList)));
-            if( psItem == NULL )
+            if( psItem == nullptr )
             {
                 eState = CPLWTS_ERROR;
                 CPLCondSignal(hCond);
 
                 CPLReleaseMutex(hMutex);
-                return NULL;
+                return nullptr;
             }
 
             psItem->pData = psWorkerThread;

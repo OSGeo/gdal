@@ -154,7 +154,7 @@ public:
 class WMSMiniDriver {
 friend class GDALWMSDataset;
 public:
-    WMSMiniDriver() : m_parent_dataset(NULL) {}
+    WMSMiniDriver() : m_parent_dataset(nullptr) {}
     virtual ~WMSMiniDriver() {}
 
 public:
@@ -185,11 +185,11 @@ public:
     virtual const char *GetProjectionInWKT() {
         if (!m_projection_wkt.empty())
             return m_projection_wkt.c_str();
-        return NULL;
+        return nullptr;
     }
 
     virtual char **GetMetadataDomainList() {
-        return NULL;
+        return nullptr;
     }
 
 protected:
@@ -326,12 +326,12 @@ public:
     }
 
     static void list2vec(std::vector<double> &v,const char *pszList) {
-        if ((pszList==NULL)||(pszList[0]==0)) return;
+        if ((pszList==nullptr)||(pszList[0]==0)) return;
         char **papszTokens=CSLTokenizeString2(pszList," \t\n\r",
                                               CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
         v.clear();
         for (int i=0;i<CSLCount(papszTokens);i++)
-            v.push_back(CPLStrtod(papszTokens[i],NULL));
+            v.push_back(CPLStrtod(papszTokens[i],nullptr));
         CSLDestroy(papszTokens);
     }
 

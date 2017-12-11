@@ -74,7 +74,7 @@ class CTable2Dataset : public RawDataset
 /************************************************************************/
 
 CTable2Dataset::CTable2Dataset() :
-    fpImage(NULL)
+    fpImage(nullptr)
 {
     memset( adfGeoTransform, 0, sizeof(adfGeoTransform) );
 }
@@ -88,7 +88,7 @@ CTable2Dataset::~CTable2Dataset()
 {
     FlushCache();
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
         {
@@ -133,7 +133,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -151,10 +151,10 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->fpImage = VSIFOpenL( osFilename, "rb+" );
 
-    if( poDS->fpImage == NULL )
+    if( poDS->fpImage == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -192,7 +192,7 @@ GDALDataset *CTable2Dataset::Open( GDALOpenInfo * poOpenInfo )
         nRasterXSize >= INT_MAX / 8 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = nRasterXSize;
@@ -347,7 +347,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
             CE_Failure, CPLE_AppDefined,
             "Attempt to create CTable2 file with unsupported data type '%s'.",
             GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -355,12 +355,12 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -372,7 +372,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 
     memcpy( achHeader+0, "CTABLE V2.0     ", 16 );
 
-    if( CSLFetchNameValue( papszOptions, "DESCRIPTION" ) != NULL )
+    if( CSLFetchNameValue( papszOptions, "DESCRIPTION" ) != nullptr )
         strncpy( achHeader + 16,
                  CSLFetchNameValue( papszOptions, "DESCRIPTION" ),
                  80 );
@@ -422,7 +422,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
             CPLError( CE_Failure, CPLE_FileIO,
                       "Write failed at line %d, perhaps the disk is full?",
                       i );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -434,7 +434,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
     if( VSIFCloseL( fp ) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "I/O error");
-        return NULL;
+        return nullptr;
     }
 
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
@@ -447,7 +447,7 @@ GDALDataset *CTable2Dataset::Create( const char * pszFilename,
 void GDALRegister_CTable2()
 
 {
-    if( GDALGetDriverByName( "CTable2" ) != NULL )
+    if( GDALGetDriverByName( "CTable2" ) != nullptr )
       return;
 
     GDALDriver *poDriver = new GDALDriver();

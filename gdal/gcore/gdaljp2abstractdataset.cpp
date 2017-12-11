@@ -53,9 +53,9 @@
 /************************************************************************/
 
 GDALJP2AbstractDataset::GDALJP2AbstractDataset() :
-    pszWldFilename(NULL),
-    poMemDS(NULL),
-    papszMetadataFiles(NULL),
+    pszWldFilename(nullptr),
+    poMemDS(nullptr),
+    papszMetadataFiles(nullptr),
     m_nWORLDFILEIndex(-1)
 {}
 
@@ -78,11 +78,11 @@ int GDALJP2AbstractDataset::CloseDependentDatasets()
 {
     const bool bRet =
         CPL_TO_BOOL( GDALGeorefPamDataset::CloseDependentDatasets() );
-    if( poMemDS == NULL )
+    if( poMemDS == nullptr )
       return bRet;
 
     GDALClose(poMemDS);
-    poMemDS = NULL;
+    poMemDS = nullptr;
     return true;
 }
 
@@ -94,7 +94,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
     GDALOpenInfo* poOpenInfo, const char* pszOverrideFilenameIn )
 {
     const char* pszOverrideFilename = pszOverrideFilenameIn;
-    if( pszOverrideFilename == NULL )
+    if( pszOverrideFilename == nullptr )
         pszOverrideFilename = poOpenInfo->pszFilename;
 
 /* -------------------------------------------------------------------- */
@@ -102,7 +102,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
     const char* pszGeorefSourcesOption =
         CSLFetchNameValue( poOpenInfo->papszOpenOptions, "GEOREF_SOURCES");
-    bool bGeorefSourcesConfigOption = pszGeorefSourcesOption != NULL;
+    bool bGeorefSourcesConfigOption = pszGeorefSourcesOption != nullptr;
     CPLString osGeorefSources = (pszGeorefSourcesOption) ?
         pszGeorefSourcesOption :
         CPLGetConfigOption("GDAL_GEOREF_SOURCES", "PAM,INTERNAL,WORLDFILE");
@@ -146,10 +146,10 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
     GDALJP2Metadata oJP2Geo;
     int nIndexUsed = -1;
-    if( ((poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL &&
+    if( ((poOpenInfo->fpL != nullptr && pszOverrideFilenameIn == nullptr &&
          oJP2Geo.ReadAndParse(poOpenInfo->fpL, nGEOJP2Index, nGMLJP2Index,
                               nMSIGIndex, &nIndexUsed) ) ||
-        (!(poOpenInfo->fpL != NULL && pszOverrideFilenameIn == NULL) &&
+        (!(poOpenInfo->fpL != nullptr && pszOverrideFilenameIn == nullptr) &&
          oJP2Geo.ReadAndParse( pszOverrideFilename, nGEOJP2Index, nGMLJP2Index,
                                nMSIGIndex, m_nWORLDFILEIndex, &nIndexUsed ))) &&
         (nGMLJP2Index >= 0 || nGEOJP2Index >= 0 || nMSIGIndex >= 0 ||
@@ -187,7 +187,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
     if( oJP2Geo.pszXMPMetadata )
     {
-        char *apszMDList[2] = { oJP2Geo.pszXMPMetadata, NULL };
+        char *apszMDList[2] = { oJP2Geo.pszXMPMetadata, nullptr };
         GDALDataset::SetMetadata(apszMDList, "xml:XMP");
     }
 
@@ -199,16 +199,16 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 
     for( int iBox = 0;
          oJP2Geo.papszGMLMetadata
-             && oJP2Geo.papszGMLMetadata[iBox] != NULL;
+             && oJP2Geo.papszGMLMetadata[iBox] != nullptr;
          ++iBox )
     {
-        char *pszName = NULL;
+        char *pszName = nullptr;
         const char *pszXML =
             CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox],
                                 &pszName );
         CPLString osDomain;
         osDomain.Printf( "xml:%s", pszName );
-        char *apszMDList[2] = { const_cast<char *>(pszXML), NULL };
+        char *apszMDList[2] = { const_cast<char *>(pszXML), nullptr };
 
         GDALDataset::SetMetadata( apszMDList, osDomain );
 
@@ -218,7 +218,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Do we have GDAL metadata?                                       */
 /* -------------------------------------------------------------------- */
-    if( oJP2Geo.pszGDALMultiDomainMetadata != NULL )
+    if( oJP2Geo.pszGDALMultiDomainMetadata != nullptr )
     {
         CPLErr eLastErr = CPLGetLastErrorType();
         int nLastErrNo = CPLGetLastErrorNo();
@@ -240,7 +240,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
                 if( !EQUAL(*papszIter, "") &&
                     !EQUAL(*papszIter, "IMAGE_STRUCTURE") )
                 {
-                    if( GDALDataset::GetMetadata(*papszIter) != NULL )
+                    if( GDALDataset::GetMetadata(*papszIter) != nullptr )
                     {
                         CPLDebug(
                             "GDALJP2",
@@ -264,7 +264,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Do we have other misc metadata (from resd box for now) ?        */
 /* -------------------------------------------------------------------- */
-    if( oJP2Geo.papszMetadata != NULL )
+    if( oJP2Geo.papszMetadata != nullptr )
     {
         char **papszMD = CSLDuplicate(GDALDataset::GetMetadata());
 
@@ -277,9 +277,9 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
 /* -------------------------------------------------------------------- */
 /*      Do we have XML IPR ?                                            */
 /* -------------------------------------------------------------------- */
-    if( oJP2Geo.pszXMLIPR != NULL )
+    if( oJP2Geo.pszXMLIPR != nullptr )
     {
-        char* apszMD[2] = { oJP2Geo.pszXMLIPR, NULL };
+        char* apszMD[2] = { oJP2Geo.pszXMLIPR, nullptr };
         GDALDataset::SetMetadata( apszMD, "xml:IPR" );
     }
 
@@ -291,7 +291,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
                     m_nGeoTransformGeorefSrcIndex) || !bGeoTransformValid) )
     {
         bGeoTransformValid |=
-            GDALReadWorldFile2( pszOverrideFilename, NULL,
+            GDALReadWorldFile2( pszOverrideFilename, nullptr,
                                 adfGeoTransform,
                                 poOpenInfo->GetSiblingFiles(), &pszWldFilename )
             || GDALReadWorldFile2( pszOverrideFilename, ".wld",
@@ -310,7 +310,7 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(
     GDALMDReaderBase* mdreader =
         mdreadermanager.GetReader(poOpenInfo->pszFilename,
                                   poOpenInfo->GetSiblingFiles(), MDR_ANY);
-    if(NULL != mdreader)
+    if(nullptr != mdreader)
     {
         mdreader->FillMetadata(&(oMDMD));
         papszMetadataFiles = mdreader->GetMetadataFiles();
@@ -326,7 +326,7 @@ char **GDALJP2AbstractDataset::GetFileList()
 {
     char **papszFileList = GDALGeorefPamDataset::GetFileList();
 
-    if( pszWldFilename != NULL &&
+    if( pszWldFilename != nullptr &&
         m_nGeoTransformGeorefSrcIndex == m_nWORLDFILEIndex &&
         CSLFindString( papszFileList, pszWldFilename ) == -1 )
     {
@@ -337,9 +337,9 @@ char **GDALJP2AbstractDataset::GetFileList()
             papszFileList = CSLAddString( papszFileList, pszWldFilename );
         }
     }
-    if( papszMetadataFiles != NULL )
+    if( papszMetadataFiles != nullptr )
     {
-        for( int i = 0; papszMetadataFiles[i] != NULL; ++i )
+        for( int i = 0; papszMetadataFiles[i] != nullptr; ++i )
         {
             papszFileList =
                 CSLAddString( papszFileList, papszMetadataFiles[i] );
@@ -355,11 +355,11 @@ char **GDALJP2AbstractDataset::GetFileList()
 void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
 {
     char** papszGMLJP2 = GetMetadata("xml:gml.root-instance");
-    if( papszGMLJP2 == NULL )
+    if( papszGMLJP2 == nullptr )
         return;
     GDALDriver * const poMemDriver =
         static_cast<GDALDriver *>(GDALGetDriverByName("Memory"));
-    if( poMemDriver == NULL )
+    if( poMemDriver == nullptr )
         return;
 
     CPLErr eLastErr = CPLGetLastErrorType();
@@ -369,11 +369,11 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
     if( CPLGetLastErrorType() == CE_None && eLastErr != CE_None )
         CPLErrorSetState( eLastErr, nLastErrNo, osLastErrorMsg.c_str() );
 
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return;
     CPLXMLNode* const psCC =
         CPLGetXMLNode(psRoot, "=gmljp2:GMLJP2CoverageCollection");
-    if( psCC == NULL )
+    if( psCC == nullptr )
     {
         CPLDestroyXMLNode(psRoot);
         return;
@@ -384,32 +384,32 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
     int nLayersAtGC = 0;
     // CPLXMLNode* psCCChildIter = psCC->psChild;
     for( CPLXMLNode* psCCChildIter = psCC->psChild;
-         psCCChildIter != NULL;
+         psCCChildIter != nullptr;
          psCCChildIter = psCCChildIter->psNext )
     {
         if( psCCChildIter->eType != CXT_Element ||
             strcmp(psCCChildIter->pszValue, "gmljp2:featureMember") != 0 ||
-            psCCChildIter->psChild == NULL ||
+            psCCChildIter->psChild == nullptr ||
             psCCChildIter->psChild->eType != CXT_Element )
             continue;
 
         CPLXMLNode * const psGCorGMLJP2Features = psCCChildIter->psChild;
         bool bIsGC =
-            strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != NULL;
+            strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != nullptr;
 
         for( CPLXMLNode *psGCorGMLJP2FeaturesChildIter =
                  psGCorGMLJP2Features->psChild;
-             psGCorGMLJP2FeaturesChildIter != NULL;
+             psGCorGMLJP2FeaturesChildIter != nullptr;
              psGCorGMLJP2FeaturesChildIter =
                  psGCorGMLJP2FeaturesChildIter->psNext )
         {
             if( psGCorGMLJP2FeaturesChildIter->eType != CXT_Element ||
                 strcmp(psGCorGMLJP2FeaturesChildIter->pszValue,
                        "gmljp2:feature") != 0 ||
-                psGCorGMLJP2FeaturesChildIter->psChild == NULL )
+                psGCorGMLJP2FeaturesChildIter->psChild == nullptr )
                 continue;
 
-            CPLXMLNode* psFC = NULL;
+            CPLXMLNode* psFC = nullptr;
             bool bFreeFC = false;
 
             CPLXMLNode * const psChild = psGCorGMLJP2FeaturesChildIter->psChild;
@@ -421,7 +421,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                     psChild->psChild->pszValue + strlen("gmljp2://xml/");
                 char** papszBoxData =
                     GetMetadata(CPLSPrintf("xml:%s", pszBoxName));
-                if( papszBoxData != NULL )
+                if( papszBoxData != nullptr )
                 {
                     psFC = CPLParseXMLString(papszBoxData[0]);
                     bFreeFC = true;
@@ -452,17 +452,17 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                         "/vsicurl/" + CPLString(psChild->psChild->pszValue);
             }
             else if( psChild->eType == CXT_Element &&
-                     strstr(psChild->pszValue, "FeatureCollection") != NULL )
+                     strstr(psChild->pszValue, "FeatureCollection") != nullptr )
             {
                 psFC = psChild;
             }
 
-            if( psFC == NULL && osGMLTmpFile.empty() )
+            if( psFC == nullptr && osGMLTmpFile.empty() )
             {
                 continue;
             }
 
-            if( psFC != NULL )
+            if( psFC != nullptr )
             {
                 osGMLTmpFile = CPLSPrintf("/vsimem/gmljp2/%p/my.gml", this);
                 // Create temporary .gml file.
@@ -478,7 +478,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
             {
                 // Try to localize its .xsd schema in a GMLJP2 auxiliary box
                 const char * const pszSchemaLocation =
-                    CPLGetXMLValue(psFC, "xsi:schemaLocation", NULL);
+                    CPLGetXMLValue(psFC, "xsi:schemaLocation", nullptr);
                 if( pszSchemaLocation )
                 {
                     char **papszTokens = CSLTokenizeString2(
@@ -489,7 +489,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                     if( (CSLCount(papszTokens) % 2) == 0 )
                     {
                         for( char** papszIter = papszTokens;
-                             *papszIter != NULL;
+                             *papszIter != nullptr;
                              papszIter += 2 )
                         {
                             if( STARTS_WITH(papszIter[1], "gmljp2://xml/") )
@@ -499,7 +499,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                                 char** papszBoxData =
                                     GetMetadata(CPLSPrintf("xml:%s",
                                                            pszBoxName));
-                                if( papszBoxData != NULL )
+                                if( papszBoxData != nullptr )
                                 {
                                     osXSDTmpFile =
                                         CPLSPrintf("/vsimem/gmljp2/%p/my.xsd",
@@ -529,35 +529,35 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                 if( bFreeFC )
                 {
                     CPLDestroyXMLNode(psFC);
-                    psFC = NULL;
+                    psFC = nullptr;
                 }
             }
 
-            GDALDriverH hDrv = GDALIdentifyDriver(osGMLTmpFile, NULL);
+            GDALDriverH hDrv = GDALIdentifyDriver(osGMLTmpFile, nullptr);
             GDALDriverH hGMLDrv = GDALGetDriverByName("GML");
-            if( hDrv != NULL && hDrv == hGMLDrv )
+            if( hDrv != nullptr && hDrv == hGMLDrv )
             {
                 char* apszOpenOptions[2] = {
-                    const_cast<char *>( "FORCE_SRS_DETECTION=YES" ), NULL };
+                    const_cast<char *>( "FORCE_SRS_DETECTION=YES" ), nullptr };
                 GDALDataset* poTmpDS = static_cast<GDALDataset *>(
-                    GDALOpenEx( osGMLTmpFile, GDAL_OF_VECTOR, NULL,
-                                apszOpenOptions, NULL ) );
+                    GDALOpenEx( osGMLTmpFile, GDAL_OF_VECTOR, nullptr,
+                                apszOpenOptions, nullptr ) );
                 if( poTmpDS )
                 {
                     int nLayers = poTmpDS->GetLayerCount();
                     for( int i = 0; i < nLayers; ++i )
                     {
-                        if( poMemDS == NULL )
+                        if( poMemDS == nullptr )
                             poMemDS =
                                 poMemDriver->Create("", 0, 0, 0,
-                                                    GDT_Unknown, NULL);
+                                                    GDT_Unknown, nullptr);
                         OGRLayer* poSrcLyr = poTmpDS->GetLayer(i);
                         const char* const pszLayerName = bIsGC ?
                             CPLSPrintf("FC_GridCoverage_%d_%s",
                                        ++nLayersAtGC, poSrcLyr->GetName()) :
                             CPLSPrintf("FC_CoverageCollection_%d_%s",
                                        ++nLayersAtCC, poSrcLyr->GetName());
-                        poMemDS->CopyLayer(poSrcLyr, pszLayerName, NULL);
+                        poMemDS->CopyLayer(poSrcLyr, pszLayerName, nullptr);
                     }
                     GDALClose(poTmpDS);
 
@@ -582,32 +582,32 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
     // Find annotations
     int nAnnotations = 0;
     for( CPLXMLNode* psCCChildIter = psCC->psChild;
-         psCCChildIter != NULL;
+         psCCChildIter != nullptr;
          psCCChildIter = psCCChildIter->psNext )
     {
         if( psCCChildIter->eType != CXT_Element ||
             strcmp(psCCChildIter->pszValue, "gmljp2:featureMember") != 0 ||
-            psCCChildIter->psChild == NULL ||
+            psCCChildIter->psChild == nullptr ||
             psCCChildIter->psChild->eType != CXT_Element )
             continue;
         CPLXMLNode * const psGCorGMLJP2Features = psCCChildIter->psChild;
         bool bIsGC =
-            strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != NULL;
+            strstr(psGCorGMLJP2Features->pszValue, "GridCoverage") != nullptr;
         if( !bIsGC )
             continue;
         for( CPLXMLNode* psGCorGMLJP2FeaturesChildIter =
                  psGCorGMLJP2Features->psChild;
-             psGCorGMLJP2FeaturesChildIter != NULL;
+             psGCorGMLJP2FeaturesChildIter != nullptr;
              psGCorGMLJP2FeaturesChildIter =
                  psGCorGMLJP2FeaturesChildIter->psNext )
         {
             if( psGCorGMLJP2FeaturesChildIter->eType != CXT_Element ||
                 strcmp(psGCorGMLJP2FeaturesChildIter->pszValue,
                        "gmljp2:annotation") != 0 ||
-                psGCorGMLJP2FeaturesChildIter->psChild == NULL ||
+                psGCorGMLJP2FeaturesChildIter->psChild == nullptr ||
                 psGCorGMLJP2FeaturesChildIter->psChild->eType != CXT_Element ||
                 strstr(psGCorGMLJP2FeaturesChildIter->psChild->pszValue,
-                       "kml") == NULL )
+                       "kml") == nullptr )
                 continue;
 
             CPLDebug("GMLJP2", "Found a KML annotation");
@@ -619,20 +619,20 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
             GDALDataset * const poTmpDS = static_cast<GDALDataset *>(
-                GDALOpenEx( osKMLTmpFile, GDAL_OF_VECTOR, NULL, NULL, NULL ) );
+                GDALOpenEx( osKMLTmpFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ) );
             if( poTmpDS )
             {
                 int nLayers = poTmpDS->GetLayerCount();
                 for( int i = 0; i < nLayers; ++i )
                 {
-                    if( poMemDS == NULL )
+                    if( poMemDS == nullptr )
                         poMemDS =
-                            poMemDriver->Create("", 0, 0, 0, GDT_Unknown, NULL);
+                            poMemDriver->Create("", 0, 0, 0, GDT_Unknown, nullptr);
                     OGRLayer* const poSrcLyr = poTmpDS->GetLayer(i);
                     const char* pszLayerName =
                         CPLSPrintf("Annotation_%d_%s",
                                    ++nAnnotations, poSrcLyr->GetName());
-                    poMemDS->CopyLayer(poSrcLyr, pszLayerName, NULL);
+                    poMemDS->CopyLayer(poSrcLyr, pszLayerName, nullptr);
                 }
                 GDALClose(poTmpDS);
             }
@@ -655,7 +655,7 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
 
 int GDALJP2AbstractDataset::GetLayerCount()
 {
-    return poMemDS != NULL ? poMemDS->GetLayerCount() : 0;
+    return poMemDS != nullptr ? poMemDS->GetLayerCount() : 0;
 }
 
 /************************************************************************/
@@ -664,7 +664,7 @@ int GDALJP2AbstractDataset::GetLayerCount()
 
 OGRLayer* GDALJP2AbstractDataset::GetLayer( int i )
 {
-    return poMemDS != NULL ? poMemDS->GetLayer(i) : NULL;
+    return poMemDS != nullptr ? poMemDS->GetLayer(i) : nullptr;
 }
 
 /*! @endcond */

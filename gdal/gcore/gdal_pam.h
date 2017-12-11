@@ -128,10 +128,10 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLXMLNode *SerializeToXML( const char *);
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
 
-    virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL);
+    virtual CPLErr TryLoadXML(char **papszSiblingFiles = nullptr);
     virtual CPLErr TrySaveXML();
 
-    CPLErr  TryLoadAux(char **papszSiblingFiles = NULL);
+    CPLErr  TryLoadAux(char **papszSiblingFiles = nullptr);
     CPLErr  TrySaveAux();
 
     virtual const char *BuildPamFilename();
@@ -262,7 +262,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual void        SetDescription( const char * ) CPL_OVERRIDE;
 
     virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
 
     virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
@@ -277,9 +277,9 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual char **GetCategoryNames() CPL_OVERRIDE;
     virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
 
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetOffset( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetOffset( double ) CPL_OVERRIDE;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetScale( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetScale( double ) CPL_OVERRIDE;
 
     virtual CPLErr  GetHistogram( double dfMin, double dfMax,

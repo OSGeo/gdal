@@ -137,7 +137,7 @@ NTFStrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
 
     if( !NTFArcCenterFromEdgePoints( dfStartX, dfStartY, dfAlongX, dfAlongY,
                                      dfEndX, dfEndY, &dfCenterX, &dfCenterY ) )
-        return NULL;
+        return nullptr;
 
     if( dfStartX == dfEndX && dfStartY == dfEndY )
     {

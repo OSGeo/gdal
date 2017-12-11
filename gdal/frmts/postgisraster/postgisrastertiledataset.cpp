@@ -42,7 +42,7 @@ PostGISRasterTileDataset::PostGISRasterTileDataset( PostGISRasterDataset* poRDSI
                                                     int nXSize,
                                                     int nYSize ) :
     poRDS(poRDSIn),
-    pszPKID(NULL)
+    pszPKID(nullptr)
 {
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
@@ -62,7 +62,7 @@ PostGISRasterTileDataset::~PostGISRasterTileDataset()
 {
     if (pszPKID) {
         CPLFree(pszPKID);
-        pszPKID = NULL;
+        pszPKID = nullptr;
     }
 }
 

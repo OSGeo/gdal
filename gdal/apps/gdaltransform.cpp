@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
@@ -62,7 +62,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "    [srcfile [dstfile]]\n"
         "\n" );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -77,8 +77,8 @@ static char *SanitizeSRS( const char *pszUserInput )
 {
     CPLErrorReset();
 
-    char *pszResult = NULL;
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(NULL);
+    char *pszResult = nullptr;
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
     {
         OSRExportToWkt( hSRS, &pszResult );
@@ -124,15 +124,15 @@ MAIN_START(argc, argv)
     if( argc < 1 )
         exit( -argc );
 
-    const char         *pszSrcFilename = NULL;
-    const char         *pszDstFilename = NULL;
+    const char         *pszSrcFilename = nullptr;
+    const char         *pszDstFilename = nullptr;
     int                 nOrder = 0;
     void               *hTransformArg;
-    GDALTransformerFunc pfnTransformer = NULL;
+    GDALTransformerFunc pfnTransformer = nullptr;
     int                 nGCPCount = 0;
-    GDAL_GCP            *pasGCPs = NULL;
+    GDAL_GCP            *pasGCPs = nullptr;
     int                 bInverse = FALSE;
-    char              **papszTO = NULL;
+    char              **papszTO = nullptr;
     int                 bOutputXY = FALSE;
     double              dfX = 0.0;
     double              dfY = 0.0;
@@ -142,7 +142,7 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Parse arguments.                                                */
 /* -------------------------------------------------------------------- */
-    for( int i = 1; i < argc && argv[i] != NULL; i++ )
+    for( int i = 1; i < argc && argv[i] != nullptr; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -201,7 +201,7 @@ MAIN_START(argc, argv)
         else if( EQUAL(argv[i],"-gcp") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            char* endptr = NULL;
+            char* endptr = nullptr;
             /* -gcp pixel line easting northing [elev] */
 
             nGCPCount++;
@@ -213,7 +213,7 @@ MAIN_START(argc, argv)
             pasGCPs[nGCPCount-1].dfGCPLine = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPX = CPLAtof(argv[++i]);
             pasGCPs[nGCPCount-1].dfGCPY = CPLAtof(argv[++i]);
-            if( argv[i+1] != NULL &&
+            if( argv[i+1] != nullptr &&
                 (CPLStrtod(argv[i+1], &endptr) != 0.0 || argv[i+1][0] == '0') )
             {
                 // Check that last argument is really a number and not a
@@ -241,11 +241,11 @@ MAIN_START(argc, argv)
         {
             Usage(CPLSPrintf("Unknown option name '%s'", argv[i]));
         }
-        else if( pszSrcFilename == NULL )
+        else if( pszSrcFilename == nullptr )
         {
             pszSrcFilename = argv[i];
         }
-        else if( pszDstFilename == NULL )
+        else if( pszDstFilename == nullptr )
         {
             pszDstFilename = argv[i];
         }
@@ -258,23 +258,23 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Open src and destination file, if appropriate.                  */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = NULL;
-    if( pszSrcFilename != NULL )
+    GDALDatasetH hSrcDS = nullptr;
+    if( pszSrcFilename != nullptr )
     {
         hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
-        if( hSrcDS == NULL )
+        if( hSrcDS == nullptr )
             exit( 1 );
     }
 
-    GDALDatasetH hDstDS = NULL;
-    if( pszDstFilename != NULL )
+    GDALDatasetH hDstDS = nullptr;
+    if( pszDstFilename != nullptr )
     {
         hDstDS = GDALOpen( pszDstFilename, GA_ReadOnly );
-        if( hDstDS == NULL )
+        if( hDstDS == nullptr )
             exit( 1 );
     }
 
-    if( hSrcDS != NULL && nGCPCount > 0 )
+    if( hSrcDS != nullptr && nGCPCount > 0 )
     {
         fprintf(stderr,
                 "Command line GCPs and input file specified, "
@@ -307,7 +307,7 @@ MAIN_START(argc, argv)
 
     CSLDestroy( papszTO );
 
-    if( hTransformArg == NULL )
+    if( hTransformArg == nullptr )
     {
         exit( 1 );
     }
@@ -321,7 +321,7 @@ MAIN_START(argc, argv)
         {
             char szLine[1024];
 
-            if( fgets( szLine, sizeof(szLine)-1, stdin ) == NULL )
+            if( fgets( szLine, sizeof(szLine)-1, stdin ) == nullptr )
                 break;
 
             char **papszTokens = CSLTokenizeString(szLine);

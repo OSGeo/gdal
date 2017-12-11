@@ -64,9 +64,9 @@ public:
     GDALRasterBand *poBand;
     int             bTriedToOpen;
 
-    VRTOverviewInfo() : nBand(0), poBand(NULL), bTriedToOpen(FALSE) {}
+    VRTOverviewInfo() : nBand(0), poBand(nullptr), bTriedToOpen(FALSE) {}
     ~VRTOverviewInfo() {
-        if( poBand == NULL )
+        if( poBand == nullptr )
             /* do nothing */;
         else if( poBand->GetDataset()->GetShared() )
             GDALClose( /* (GDALDatasetH) */ poBand->GetDataset() );
@@ -187,7 +187,7 @@ class CPL_DLL VRTDataset : public GDALDataset
                             const char *pszGCPProjection ) CPL_OVERRIDE;
 
     virtual CPLErr AddBand( GDALDataType eType,
-                            char **papszOptions=NULL ) CPL_OVERRIDE;
+                            char **papszOptions=nullptr ) CPL_OVERRIDE;
 
     virtual char      **GetFileList() CPL_OVERRIDE;
 
@@ -220,7 +220,7 @@ class CPL_DLL VRTDataset : public GDALDataset
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *OpenXML( const char *, const char * = NULL,
+    static GDALDataset *OpenXML( const char *, const char * = nullptr,
                                  GDALAccess eAccess = GA_ReadOnly );
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
@@ -278,7 +278,7 @@ public:
     virtual CPLErr    XMLInit( CPLXMLNode *, const char * ) CPL_OVERRIDE;
 
     virtual CPLErr AddBand( GDALDataType eType,
-                            char **papszOptions=NULL ) CPL_OVERRIDE;
+                            char **papszOptions=nullptr ) CPL_OVERRIDE;
 
     virtual char      **GetFileList() CPL_OVERRIDE;
 
@@ -349,7 +349,7 @@ public:
                                GDALRasterBandH* pahInputSpectralBandsIn );
 
     virtual CPLErr AddBand( GDALDataType eType,
-                            char **papszOptions=NULL ) CPL_OVERRIDE;
+                            char **papszOptions=nullptr ) CPL_OVERRIDE;
 
     virtual char      **GetFileList() CPL_OVERRIDE;
 
@@ -411,7 +411,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
 
     virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
 
     virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
@@ -430,9 +430,9 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
                                     const char *pszDomain = "" ) CPL_OVERRIDE;
 
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetOffset( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetOffset( double ) CPL_OVERRIDE;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetScale( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetScale( double ) CPL_OVERRIDE;
 
     virtual int GetOverviewCount() CPL_OVERRIDE;
@@ -527,8 +527,8 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char *, void* ) CPL_OVERRIDE;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) CPL_OVERRIDE;
 
-    virtual double GetMinimum( int *pbSuccess = NULL ) CPL_OVERRIDE;
-    virtual double GetMaximum(int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) CPL_OVERRIDE;
+    virtual double GetMaximum(int *pbSuccess = nullptr ) CPL_OVERRIDE;
     virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax ) CPL_OVERRIDE;
     virtual CPLErr ComputeStatistics( int bApproxOK,
                                       double *pdfMin, double *pdfMax,
@@ -685,8 +685,8 @@ class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
     virtual CPLErr         XMLInit( CPLXMLNode *, const char *, void* ) CPL_OVERRIDE;
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath ) CPL_OVERRIDE;
 
-    virtual double GetMinimum( int *pbSuccess = NULL ) CPL_OVERRIDE;
-    virtual double GetMaximum(int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) CPL_OVERRIDE;
+    virtual double GetMaximum(int *pbSuccess = nullptr ) CPL_OVERRIDE;
     virtual CPLErr ComputeRasterMinMax( int bApproxOK, double* adfMinMax ) CPL_OVERRIDE;
     virtual CPLErr ComputeStatistics( int bApproxOK,
                                       double *pdfMin, double *pdfMax,

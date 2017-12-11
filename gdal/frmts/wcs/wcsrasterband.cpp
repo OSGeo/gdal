@@ -45,7 +45,7 @@ WCSRasterBand::WCSRasterBand( WCSDataset *poDSIn, int nBandIn,
     nResFactor(1 << (iOverviewIn+1)), // iOverview == -1 is base layer
     poODS(poDSIn),
     nOverviewCount(0),
-    papoOverviews(NULL)
+    papoOverviews(nullptr)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -138,7 +138,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     CPLErr eErr;
-    CPLHTTPResult *psResult = NULL;
+    CPLHTTPResult *psResult = nullptr;
 
     // if INTERLEAVE is set to PIXEL, then we'll request all bands.
     // That is necessary at least with MapServer, which seems to often
@@ -164,7 +164,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = poODS->GDALOpenResult( psResult );
 
-    if( poTileDS == NULL )
+    if( poTileDS == nullptr )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -220,7 +220,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             eErr = poTileBand->RasterIO( GF_Read,
                                          0, 0, nBlockXSize, nBlockYSize,
                                          pImage, nBlockXSize, nBlockYSize,
-                                         eDataType, 0, 0, NULL );
+                                         eDataType, 0, 0, nullptr );
         }
         else
         {
@@ -232,13 +232,13 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             GDALRasterBlock *poBlock = poTargBand->GetLockedBlockRef(
                 nBlockXOff, nBlockYOff, TRUE );
 
-            if( poBlock != NULL )
+            if( poBlock != nullptr )
             {
                 eErr = poTileBand->RasterIO( GF_Read,
                                             0, 0, nBlockXSize, nBlockYSize,
                                             poBlock->GetDataRef(),
                                             nBlockXSize, nBlockYSize,
-                                            eDataType, 0, 0, NULL );
+                                            eDataType, 0, 0, nullptr );
                 poBlock->DropLock();
             }
             else
@@ -294,9 +294,9 @@ CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 double WCSRasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    const char *pszSV = CPLGetXMLValue( poODS->psService, "NoDataValue", NULL);
+    const char *pszSV = CPLGetXMLValue( poODS->psService, "NoDataValue", nullptr);
 
-    if( pszSV == NULL )
+    if( pszSV == nullptr )
         return GDALPamRasterBand::GetNoDataValue( pbSuccess );
     else
     {
@@ -324,7 +324,7 @@ GDALRasterBand *WCSRasterBand::GetOverview( int iOverviewIn )
 
 {
     if( iOverviewIn < 0 || iOverviewIn >= nOverviewCount )
-        return NULL;
+        return nullptr;
     else
         return papoOverviews[iOverviewIn];
 }

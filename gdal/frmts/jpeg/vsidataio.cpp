@@ -247,7 +247,7 @@ void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile)
     // one image, we'd likely lose the start of the next one.)
     // This makes it unsafe to use this manager and a different source
     // manager serially with the same JPEG object.  Caveat programmer.
-    if(cinfo->src == NULL)
+    if(cinfo->src == nullptr)
     {
         // First time for this JPEG object?
         cinfo->src = (struct jpeg_source_mgr *)(*cinfo->mem->alloc_small)(
@@ -270,7 +270,7 @@ void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile)
     src->pub.term_source = term_source;
     src->infile = infile;
     src->pub.bytes_in_buffer = 0;     // Forces fill_input_buffer on first read.
-    src->pub.next_input_byte = NULL;  // Until buffer loaded.
+    src->pub.next_input_byte = nullptr;  // Until buffer loaded.
 }
 
 /* ==================================================================== */
@@ -399,7 +399,7 @@ void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile)
     // This makes it dangerous to use this manager and a different destination
     // manager serially with the same JPEG object, because their private object
     // sizes may be different.  Caveat programmer.
-    if(cinfo->dest == NULL)
+    if(cinfo->dest == nullptr)
     {
         // First time for this JPEG object?
         cinfo->dest = (struct jpeg_destination_mgr *)(*cinfo->mem->alloc_small)(

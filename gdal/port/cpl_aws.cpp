@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 // #define DEBUG_VERBOSE 1
 
 #ifdef HAVE_CURL
-static CPLMutex *hMutex = NULL;
+static CPLMutex *hMutex = nullptr;
 static CPLString osIAMRole;
 static CPLString osGlobalAccessKeyId;
 static CPLString osGlobalSecretAccessKey;
@@ -136,7 +136,7 @@ CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
     CPLString osKey(pszKey);
     osKey += ":";
     const struct curl_slist* psIter = psExistingHeaders;
-    for(; psIter != NULL; psIter = psIter->next)
+    for(; psIter != nullptr; psIter = psIter->next)
     {
         if( STARTS_WITH(psIter->data, osKey.c_str()) )
             return CPLString(psIter->data + osKey.size()).Trim();
@@ -311,7 +311,7 @@ CPLGetAWS_SIGN4_Authorization( const CPLString& osSecretAccessKey,
 CPLString CPLGetAWS_SIGN4_Timestamp()
 {
     struct tm brokenDown;
-    CPLUnixTimeToYMDHMS(time(NULL), &brokenDown);
+    CPLUnixTimeToYMDHMS(time(nullptr), &brokenDown);
 
     char szTimeStamp[4+2+2+1+2+2+2+1+1] = {};
     snprintf(szTimeStamp, sizeof(szTimeStamp), "%04d%02d%02dT%02d%02d%02dZ",
@@ -440,7 +440,7 @@ CPLString IVSIS3LikeHandleHelper::BuildCanonicalizedHeaders(
                             const char* pszHeaderPrefix)
 {
     const struct curl_slist* psIter = psExistingHeaders;
-    for(; psIter != NULL; psIter = psIter->next)
+    for(; psIter != nullptr; psIter = psIter->next)
     {
         if( STARTS_WITH_CI(psIter->data, pszHeaderPrefix) )
         {
@@ -557,7 +557,7 @@ static bool IsMachinePotentiallyEC2Instance()
         {
             char uuid[36+1] = { 0 };
             VSILFILE* fp = VSIFOpenL("/sys/hypervisor/uuid", "rb");
-            if( fp != NULL )
+            if( fp != nullptr )
             {
                 VSIFReadL( uuid, 1, sizeof(uuid)-1, fp );
                 bAttemptNetworkAccess = EQUALN( uuid, "ec2", 3 );
@@ -610,7 +610,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
         // If we don't know yet the IAM role, fetch it
         if( IsMachinePotentiallyEC2Instance() )
         {
-            char** papszOptions = CSLSetNameValue(NULL, "TIMEOUT", "1");
+            char** papszOptions = CSLSetNameValue(nullptr, "TIMEOUT", "1");
             CPLPushErrorHandler(CPLQuietErrorHandler);
             CPLHTTPResult* psResult =
                         CPLHTTPFetch( osEC2CredentialsURL, papszOptions );
@@ -618,7 +618,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
             CSLDestroy(papszOptions);
             if( psResult )
             {
-                if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+                if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
                 {
                     osIAMRole = reinterpret_cast<char*>(psResult->pabyData);
                 }
@@ -632,10 +632,10 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(CPLString& osSecretAccessKey,
     // Now fetch the refreshed credentials
     CPLStringList oResponse;
     CPLHTTPResult* psResult = CPLHTTPFetch(
-        (osEC2CredentialsURL + osIAMRole).c_str(), NULL );
+        (osEC2CredentialsURL + osIAMRole).c_str(), nullptr );
     if( psResult )
     {
-        if( psResult->nStatus == 0 && psResult->pabyData != NULL )
+        if( psResult->nStatus == 0 && psResult->pabyData != nullptr )
         {
             const CPLString osJSon =
                     reinterpret_cast<char*>(psResult->pabyData);
@@ -714,7 +714,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
     static const char SEP_STRING[] = "\\";
 #else
-    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
     static const char SEP_STRING[] = "/";
 #endif
 
@@ -727,7 +727,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     // GDAL specific config option (mostly for testing purpose, but also
     // used in production in some cases)
     const char* pszCredentials =
-                    CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE", NULL );
+                    CPLGetConfigOption( "CPL_AWS_CREDENTIALS_FILE", nullptr );
     if( pszCredentials )
     {
         osCredentials = pszCredentials;
@@ -739,12 +739,12 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         osCredentials += "credentials";
     }
     VSILFILE* fp = VSIFOpenL( osCredentials, "rb" );
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         const char* pszLine;
         bool bInProfile = false;
         const CPLString osBracketedProfile("[" + osProfile + "]");
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             if( pszLine[0] == '[' )
             {
@@ -755,7 +755,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
             }
             else if( bInProfile )
             {
-                char* pszKey = NULL;
+                char* pszKey = nullptr;
                 const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if( pszKey && pszValue )
                 {
@@ -774,7 +774,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
     // And then ~/.aws/config file (unless AWS_CONFIG_FILE is defined)
     const char* pszAWSConfigFileEnv =
-                            CPLGetConfigOption( "AWS_CONFIG_FILE", NULL );
+                            CPLGetConfigOption( "AWS_CONFIG_FILE", nullptr );
     CPLString osConfig;
     if( pszAWSConfigFileEnv )
     {
@@ -787,13 +787,13 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         osConfig += "credentials";
     }
     fp = VSIFOpenL( osConfig, "rb" );
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         const char* pszLine;
         bool bInProfile = false;
         const CPLString osBracketedProfile("[" + osProfile + "]");
         const CPLString osBracketedProfileProfile("[profile " + osProfile + "]");
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             if( pszLine[0] == '[' )
             {
@@ -809,7 +809,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
             }
             else if( bInProfile )
             {
-                char* pszKey = NULL;
+                char* pszKey = nullptr;
                 const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
                 if( pszKey && pszValue )
                 {
@@ -847,7 +847,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
         }
         VSIFCloseL(fp);
     }
-    else if( pszAWSConfigFileEnv != NULL )
+    else if( pszAWSConfigFileEnv != nullptr )
     {
         if( pszAWSConfigFileEnv[0] != '\0' )
         {
@@ -916,9 +916,9 @@ bool VSIS3HandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
 
 void VSIS3HandleHelper::CleanMutex()
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/
@@ -951,7 +951,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
     if( !GetConfiguration(osSecretAccessKey, osAccessKeyId,
                           osSessionToken, osRegion) )
     {
-        return NULL;
+        return nullptr;
     }
 
     // According to http://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html
@@ -968,11 +968,11 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
         CPLGetConfigOption("AWS_REQUEST_PAYER", "");
     CPLString osBucket;
     CPLString osObjectKey;
-    if( pszURI != NULL && pszURI[0] != '\0' &&
+    if( pszURI != nullptr && pszURI[0] != '\0' &&
         !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
                                osBucket, osObjectKey) )
     {
-        return NULL;
+        return nullptr;
     }
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("AWS_HTTPS", "YES"));
     const bool bIsValidNameForVirtualHosting =
@@ -1082,7 +1082,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         osXAMZContentSHA256,
         osXAMZDate);
 
-    struct curl_slist *headers=NULL;
+    struct curl_slist *headers=nullptr;
     headers = curl_slist_append(
         headers, CPLSPrintf("x-amz-date: %s", osXAMZDate.c_str()));
     headers = curl_slist_append(
@@ -1114,7 +1114,7 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
     CPLDebug("S3", "%s", pszHeaders ? pszHeaders : "");
 #endif
 
-    if( pbUpdateMap != NULL )
+    if( pbUpdateMap != nullptr )
         *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
@@ -1127,7 +1127,7 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
     }
 
     CPLXMLNode* psTree = CPLParseXMLString(pszErrorMsg);
-    if( psTree == NULL )
+    if( psTree == nullptr )
     {
         if( bSetError )
         {
@@ -1137,8 +1137,8 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
         return false;
     }
 
-    const char* pszCode = CPLGetXMLValue(psTree, "=Error.Code", NULL);
-    if( pszCode == NULL )
+    const char* pszCode = CPLGetXMLValue(psTree, "=Error.Code", nullptr);
+    if( pszCode == nullptr )
     {
         CPLDestroyXMLNode(psTree);
         if( bSetError )
@@ -1151,8 +1151,8 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
 
     if( EQUAL(pszCode, "AuthorizationHeaderMalformed") )
     {
-        const char* pszRegion = CPLGetXMLValue(psTree, "=Error.Region", NULL);
-        if( pszRegion == NULL )
+        const char* pszRegion = CPLGetXMLValue(psTree, "=Error.Region", nullptr);
+        if( pszRegion == nullptr )
         {
             CPLDestroyXMLNode(psTree);
             if( bSetError )
@@ -1172,8 +1172,8 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
     {
         const bool bIsTemporaryRedirect = EQUAL(pszCode, "TemporaryRedirect");
         const char* pszEndpoint =
-            CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
-        if( pszEndpoint == NULL ||
+            CPLGetXMLValue(psTree, "=Error.Endpoint", nullptr);
+        if( pszEndpoint == nullptr ||
             (m_bUseVirtualHosting &&
              (strncmp(pszEndpoint, m_osBucket.c_str(),
                       m_osBucket.size()) != 0 ||
@@ -1198,9 +1198,9 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
             and the bucket name has dot in it,
             then we must use s3.$(x-amz-bucket-region).amazon.com as endpoint.
             See #7154 */
-            const char* pszRegionPtr = (pszHeaders != NULL) ?
-                strstr(pszHeaders, "x-amz-bucket-region: "): NULL;
-            if( strchr(m_osBucket.c_str(), '.') != NULL && pszRegionPtr != NULL )
+            const char* pszRegionPtr = (pszHeaders != nullptr) ?
+                strstr(pszHeaders, "x-amz-bucket-region: "): nullptr;
+            if( strchr(m_osBucket.c_str(), '.') != nullptr && pszRegionPtr != nullptr )
             {
                 CPLString osRegion(pszRegionPtr + strlen("x-amz-bucket-region: "));
                 size_t nPos = osRegion.find('\r');
@@ -1211,7 +1211,7 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
                 CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
                 CPLDebug("S3", "Switching to region %s", m_osRegion.c_str());
                 CPLDestroyXMLNode(psTree);
-                if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+                if( bIsTemporaryRedirect && pbUpdateMap != nullptr)
                     *pbUpdateMap = false;
                 return true;
             }
@@ -1226,7 +1226,7 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
         CPLDebug("S3", "Switching to endpoint %s", m_osEndpoint.c_str());
         CPLDestroyXMLNode(psTree);
 
-        if( bIsTemporaryRedirect && pbUpdateMap != NULL)
+        if( bIsTemporaryRedirect && pbUpdateMap != nullptr)
             *pbUpdateMap = false;
 
         return true;
@@ -1235,9 +1235,9 @@ bool VSIS3HandleHelper::CanRestartOnError( const char* pszErrorMsg,
     if( bSetError )
     {
         // Translate AWS errors into VSI errors.
-        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL);
+        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", nullptr);
 
-        if( pszMessage == NULL ) {
+        if( pszMessage == nullptr ) {
             VSIError(VSIE_AWSError, "%s", pszErrorMsg);
         } else if( EQUAL(pszCode, "AccessDenied") ) {
             VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);

@@ -310,7 +310,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         }
     }
     // Set bitmask if it has some ndvs
-    Lerc2 lerc2(w, h, (ndv_count == 0) ? NULL : bitMask.Bits());
+    Lerc2 lerc2(w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
@@ -443,21 +443,21 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     if(poOpenInfo->nHeaderBytes <
         static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
     {
-        return NULL;
+        return nullptr;
     }
 
     if (poOpenInfo->eAccess != GA_ReadOnly
-        || poOpenInfo->pszFilename == NULL
-        || poOpenInfo->pabyHeader == NULL
+        || poOpenInfo->pszFilename == nullptr
+        || poOpenInfo->pabyHeader == nullptr
         || strlen(poOpenInfo->pszFilename) < 2)
-        return NULL;
+        return nullptr;
 
     // Check the header too
     char *psz = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     CPLString sHeader;
     sHeader.assign(psz, psz + poOpenInfo->nHeaderBytes);
     if (!IsLerc(sHeader))
-        return NULL;
+        return nullptr;
 
     // Get the desired type
     const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
@@ -498,10 +498,10 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     }
 
     if (size.x <=0 || size.y <=0 || dt == GDT_Unknown)
-        return NULL;
+        return nullptr;
 
     // Build and return the MRF configuration for a single tile reader
-    CPLXMLNode *config = CPLCreateXMLNode(NULL, CXT_Element, "MRF_META");
+    CPLXMLNode *config = CPLCreateXMLNode(nullptr, CXT_Element, "MRF_META");
     CPLXMLNode *raster = CPLCreateXMLNode(config, CXT_Element, "Raster");
     XMLSetAttributeVal(raster, "Size", size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", size, "%.0f");
@@ -520,10 +520,10 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
 {
     // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 )
-        precision = strtod(GetOptionValue( "LERC_PREC" , ".001" ),NULL);
+        precision = strtod(GetOptionValue( "LERC_PREC" , ".001" ),nullptr);
     else
         precision =
-            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), NULL));
+            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), nullptr));
 
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;

@@ -48,9 +48,9 @@ IVFKFeature::IVFKFeature( IVFKDataBlock *poDataBlock ) :
     m_nGeometryType(poDataBlock->GetGeometryType()),
     m_bGeometry(false),
     m_bValid(false),
-    m_paGeom(NULL)
+    m_paGeom(nullptr)
 {
-    CPLAssert(NULL != poDataBlock);
+    CPLAssert(nullptr != poDataBlock);
 }
 
 /*!
@@ -61,7 +61,7 @@ IVFKFeature::~IVFKFeature()
     if( m_paGeom )
         delete m_paGeom;
 
-    m_poDataBlock = NULL;
+    m_poDataBlock = nullptr;
 }
 
 /*!
@@ -104,7 +104,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
     m_bGeometry = true;
 
     delete m_paGeom;
-    m_paGeom = NULL;
+    m_paGeom = nullptr;
     m_bValid = true;
 
     if (!poGeom) {
@@ -148,7 +148,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
             OGRPoint pt;
             OGRCircularString poGeomString;
 
-            OGRGeometry *poGeomCurved = NULL;
+            OGRGeometry *poGeomCurved = nullptr;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
                 const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
@@ -383,7 +383,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
     unsigned int iIndex = 0;
     unsigned int nLength = 0;
     bool inString = false;
-    char* pszProp = NULL;
+    char* pszProp = nullptr;
     std::vector<CPLString> oPropList;
     while( *poChar != '\0' )
     {
@@ -526,7 +526,7 @@ const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 {
     if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() ||
         size_t(iIndex) >= m_propertyList.size())
-        return NULL;
+        return nullptr;
 
     const VFKProperty* poProperty = &m_propertyList[iIndex];
     return poProperty;

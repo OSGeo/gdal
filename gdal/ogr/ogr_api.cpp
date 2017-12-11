@@ -490,7 +490,7 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
               OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
               *pdfX = poPoint->getX();
               *pdfY = poPoint->getY();
-              if( pdfZ != NULL )
+              if( pdfZ != nullptr )
                   *pdfZ = poPoint->getZ();
           }
           else
@@ -510,14 +510,14 @@ void OGR_G_GetPoint( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = 0.0;
               *pdfY = 0.0;
-              if( pdfZ != NULL )
+              if( pdfZ != nullptr )
                   *pdfZ = 0.0;
           }
           else
           {
             *pdfX = poSC->getX( i );
             *pdfY = poSC->getY( i );
-            if( pdfZ != NULL )
+            if( pdfZ != nullptr )
                 *pdfZ = poSC->getZ( i );
           }
       }
@@ -561,9 +561,9 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
               OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
               *pdfX = poPoint->getX();
               *pdfY = poPoint->getY();
-              if( pdfZ != NULL )
+              if( pdfZ != nullptr )
                   *pdfZ = poPoint->getZ();
-              if( pdfM != NULL )
+              if( pdfM != nullptr )
                   *pdfM = poPoint->getM();
           }
           else
@@ -583,18 +583,18 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               *pdfX = 0.0;
               *pdfY = 0.0;
-              if( pdfZ != NULL )
+              if( pdfZ != nullptr )
                   *pdfZ = 0.0;
-              if( pdfM != NULL )
+              if( pdfM != nullptr )
                   *pdfM = 0.0;
           }
           else
           {
               *pdfX = poSC->getX( i );
               *pdfY = poSC->getY( i );
-              if( pdfZ != NULL )
+              if( pdfZ != nullptr )
                   *pdfZ = poSC->getZ( i );
-              if( pdfM != NULL )
+              if( pdfM != nullptr )
                   *pdfM = poSC->getM( i );
           }
       }
@@ -635,7 +635,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoints" );
 
-    if( pabyX == NULL || pabyY == NULL )
+    if( pabyX == nullptr || pabyY == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "pabyX == NULL || pabyY == NULL");
@@ -654,7 +654,7 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
           OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(hGeom);
           poPoint->setX( *padfX );
           poPoint->setY( *padfY );
-          if( pabyZ != NULL )
+          if( pabyZ != nullptr )
               poPoint->setZ(*( padfZ ) );
           break;
       }
@@ -666,8 +666,8 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
         const int nSizeDouble = (int)sizeof(double);
         if( nXStride == nSizeDouble &&
             nYStride == nSizeDouble &&
-            ((nZStride == 0 && pabyZ == NULL) ||
-             (nZStride == nSizeDouble && pabyZ != NULL)) )
+            ((nZStride == 0 && pabyZ == nullptr) ||
+             (nZStride == nSizeDouble && pabyZ != nullptr)) )
         {
             poSC->setPoints(nPointsIn, padfX, padfY, padfZ);
         }
@@ -735,7 +735,7 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPointsZM" );
 
-    if( pabyX == NULL || pabyY == NULL )
+    if( pabyX == nullptr || pabyY == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "pabyX == NULL || pabyY == NULL");
@@ -769,10 +769,10 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
         const int nSizeDouble = static_cast<int>(sizeof(double));
         if( nXStride == nSizeDouble &&
             nYStride == nSizeDouble &&
-            ((nZStride == 0 && padfZ == NULL) ||
-             (nZStride == nSizeDouble && padfZ != NULL)) &&
-            ((nMStride == 0 && padfM == NULL) ||
-             (nMStride == nSizeDouble && padfM != NULL)) )
+            ((nZStride == 0 && padfZ == nullptr) ||
+             (nZStride == nSizeDouble && padfZ != nullptr)) &&
+            ((nMStride == 0 && padfM == nullptr) ||
+             (nMStride == nSizeDouble && padfM != nullptr)) )
         {
             if( !padfZ && !padfM )
                 poSC->setPoints( nPointsIn, padfX, padfY );
@@ -1314,7 +1314,7 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
         if( reinterpret_cast<OGRCurvePolygon *>(hGeom)->
-                getExteriorRingCurve() == NULL )
+                getExteriorRingCurve() == nullptr )
             return 0;
         else
             return reinterpret_cast<OGRCurvePolygon *>(hGeom)->
@@ -1375,7 +1375,7 @@ int OGR_G_GetGeometryCount( OGRGeometryH hGeom )
 OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
 
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryRef", NULL );
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryRef", nullptr );
 
     const OGRwkbGeometryType eType =
         wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
@@ -1411,7 +1411,7 @@ OGRGeometryH OGR_G_GetGeometryRef( OGRGeometryH hGeom, int iSubGeom )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Incompatible geometry for operation");
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -1791,7 +1791,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
                                               double dfMaxAngleStepSizeDegrees,
                                               char** papszOptions )
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetLinearGeometry", NULL );
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetLinearGeometry", nullptr );
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRGeometry *>(hGeom)->
             getLinearGeometry(dfMaxAngleStepSizeDegrees,
@@ -1830,7 +1830,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry( OGRGeometryH hGeom,
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
                                              char** papszOptions )
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetCurveGeometry", NULL );
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetCurveGeometry", nullptr );
 
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRGeometry *>(hGeom)->
@@ -1858,7 +1858,7 @@ OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry( OGRGeometryH hGeom,
 
 OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_Value", NULL );
+    VALIDATE_POINTER1( hGeom, "OGR_G_Value", nullptr );
 
     if( OGR_GT_IsCurve(reinterpret_cast<OGRGeometry *>(hGeom)->
                            getGeometryType()) )
@@ -1868,7 +1868,7 @@ OGRGeometryH OGR_G_Value( OGRGeometryH hGeom, double dfDistance )
         return reinterpret_cast<OGRGeometryH>(p);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

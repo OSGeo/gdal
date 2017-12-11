@@ -79,10 +79,10 @@ void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double toleranc
 template <typename T>
 void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const& list)
 {
-    ensure("Layer is NULL", NULL != layer);
+    ensure("Layer is NULL", nullptr != layer);
 
     OGRFeatureDefnH featDefn = OGR_L_GetLayerDefn(layer);
-    ensure("Layer schema is NULL", NULL != featDefn);
+    ensure("Layer schema is NULL",nullptr != featDefn);
 
     int fldIndex = OGR_FD_GetFieldIndex(featDefn, field.c_str());
     std::ostringstream os;
@@ -90,8 +90,8 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
     ensure(os.str(), fldIndex >= 0);
 
     // Test value in tested field from subsequent features
-    OGRFeatureH feat = NULL;
-    OGRFieldDefnH fldDefn = NULL;
+    OGRFeatureH feat = nullptr;
+    OGRFieldDefnH fldDefn = nullptr;
     typename T::value_type attrVal;
 
     for (typename T::const_iterator it = list.begin(); it != list.end(); ++it)
@@ -99,7 +99,7 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
         feat = OGR_L_GetNextFeature(layer);
 
         fldDefn = OGR_F_GetFieldDefnRef(feat, fldIndex);
-        ensure("Field schema is NULL", NULL != fldDefn);
+        ensure("Field schema is NULL",nullptr != fldDefn);
 
         read_feature_attribute(feat, fldIndex, attrVal);
 
@@ -111,7 +111,7 @@ void ensure_equal_attributes(OGRLayerH layer, std::string const& field, T const&
 
     // Check if not too many features filtered
     feat = OGR_L_GetNextFeature(layer);
-    bool notTooMany = (NULL == feat);
+    bool notTooMany = (nullptr == feat);
     OGR_F_Destroy(feat);
 
     ensure("Got more features than expected", notTooMany);

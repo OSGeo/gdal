@@ -122,7 +122,7 @@ static const char *Lookup(const char * const *table, size_t n, size_t index)
  */
 char *Print(const char *label, const char *varName, int fmt, ...)
 {
-   static char *buffer = NULL; /* Copy of message generated so far. */
+   static char *buffer = nullptr; /* Copy of message generated so far. */
    va_list ap;          /* pointer to variable argument list. */
    sInt4 lival;         /* Store a sInt4 val from argument list. */
    char *sval;          /* Store a string val from argument. */
@@ -132,7 +132,7 @@ char *Print(const char *label, const char *varName, int fmt, ...)
 
    if (fmt == Prt_NULL) {
       ans = buffer;
-      buffer = NULL;
+      buffer = nullptr;
       return ans;
    }
    va_start (ap, fmt);  /* make ap point to 1st unnamed arg. */
@@ -198,7 +198,7 @@ char *Print(const char *label, const char *varName, int fmt, ...)
          reallocSprintf (&buffer, "ERROR: Invalid Print option '%d'\n", fmt);
    }
    va_end (ap);         /* clean up when done. */
-   return NULL;
+   return nullptr;
 }
 
 #if 0  // Unused with GDAL.

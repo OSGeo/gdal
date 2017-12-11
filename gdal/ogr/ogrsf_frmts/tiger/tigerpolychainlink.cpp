@@ -83,7 +83,7 @@ static const TigerRecordInfo rtI_info =
 
 TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
                                         CPL_UNUSED const char * pszPrototypeModule ) :
-    TigerFileBase(NULL, FILE_CODE)
+    TigerFileBase(nullptr, FILE_CODE)
 {
     OGRFieldDefn        oField("",OFTInteger);
 

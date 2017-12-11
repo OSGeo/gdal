@@ -89,9 +89,9 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
     } else {
         ret = poTiff->RasterIO(GF_Write, 0,0,img.pagesize.x,img.pagesize.y,
             src.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-            NULL, 0,0,0
+            nullptr, 0,0,0
 #if GDAL_VERSION_MAJOR >= 2
-            ,NULL
+            ,nullptr
 #endif
             );
     }
@@ -114,7 +114,7 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img, char *
     }
 
     VSILFILE *pf = VSIFOpenL(fname,"rb");
-    if (pf == NULL)
+    if (pf == nullptr)
     {
         CPLError(CE_Failure,CPLE_AppDefined,
             "MRF: TIFF, can't open %s", fname.c_str());
@@ -143,12 +143,12 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
         return CE_Failure;
     }
 #if GDAL_VERSION_MAJOR >= 2
-    const char* const apszAllowedDrivers[] = { "GTiff", NULL };
-    GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpenEx(fname, GDAL_OF_RASTER, apszAllowedDrivers, NULL, NULL));
+    const char* const apszAllowedDrivers[] = { "GTiff", nullptr };
+    GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpenEx(fname, GDAL_OF_RASTER, apszAllowedDrivers, nullptr, nullptr));
 #else
     GDALDataset *poTiff = reinterpret_cast<GDALDataset*>(GDALOpen(fname, GA_ReadOnly));
 #endif
-    if (poTiff == NULL) {
+    if (poTiff == nullptr) {
         CPLError(CE_Failure,CPLE_AppDefined,
             "MRF: TIFF, can't open page as a Tiff");
         VSIUnlink(fname);
@@ -180,9 +180,9 @@ static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     } else {
         ret = poTiff->RasterIO(GF_Read,0,0,img.pagesize.x,img.pagesize.y,
             dst.buffer, img.pagesize.x, img.pagesize.y, img.dt, img.pagesize.c,
-            NULL, 0,0,0
+            nullptr, 0,0,0
 #if GDAL_VERSION_MAJOR >= 2
-            ,NULL
+            ,nullptr
 #endif
             );
     }
@@ -210,7 +210,7 @@ TIF_Band::TIF_Band( GDALMRFDataset *pDS, const ILImage &image,
     pDS->SetPBufferSize(image.pageSizeBytes + 1024);
 
     // Static create options for TIFF tiles
-    papszOptions = CSLAddNameValue(NULL, "COMPRESS", "DEFLATE");
+    papszOptions = CSLAddNameValue(nullptr, "COMPRESS", "DEFLATE");
     papszOptions = CSLAddNameValue(papszOptions, "TILED", "Yes");
     papszOptions = CSLAddNameValue(papszOptions, "BLOCKXSIZE",
                                    CPLString().Printf("%d",img.pagesize.x));

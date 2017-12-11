@@ -45,7 +45,7 @@ class DerivedDataset : public VRTDataset
 DerivedDataset::DerivedDataset(int nXSize, int nYSize) :
     VRTDataset(nXSize, nYSize)
 {
-    poDriver = NULL;
+    poDriver = nullptr;
     SetWritable(FALSE);
 }
 
@@ -78,7 +78,7 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     if (dsds_pos != 0)
     {
         /* Unable to Open in this case */
-        return NULL;
+        return nullptr;
     }
 
     /* Next, we need to now which derived dataset to compute */
@@ -86,7 +86,7 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     if (alg_pos == std::string::npos)
     {
         /* Unable to Open if we do not find the name of the derived dataset */
-        return NULL;
+        return nullptr;
     }
 
     CPLString odDerivedName = filename.substr(nPrefixLen,alg_pos-nPrefixLen);
@@ -113,22 +113,22 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if(!datasetFound)
     {
-        return NULL;
+        return nullptr;
     }
 
     CPLString odFilename = filename.substr(alg_pos+1,filename.size() - alg_pos);
 
     GDALDataset * poTmpDS = (GDALDataset*)GDALOpen(odFilename, GA_ReadOnly);
 
-    if( poTmpDS == NULL )
-        return NULL;
+    if( poTmpDS == nullptr )
+        return nullptr;
 
     int nbBands = poTmpDS->GetRasterCount();
 
     if(nbBands == 0)
     {
         GDALClose(poTmpDS);
-        return NULL;
+        return nullptr;
     }
 
     int nRows = poTmpDS->GetRasterYSize();
@@ -193,7 +193,7 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLString path = CPLGetPath(odFilename);
         CPLString ovrFileName = "DERIVED_DATASET_"+odDerivedName+"_"+CPLGetFilename(odFilename);
-        CPLString ovrFilePath = CPLFormFilename(path,ovrFileName,NULL);
+        CPLString ovrFilePath = CPLFormFilename(path,ovrFileName,nullptr);
 
         poDS->oOvManager.Initialize( poDS, ovrFilePath );
     }
@@ -203,7 +203,7 @@ GDALDataset * DerivedDataset::Open( GDALOpenInfo * poOpenInfo )
 
 void GDALRegister_Derived()
 {
-    if( GDALGetDriverByName( "DERIVED" ) != NULL )
+    if( GDALGetDriverByName( "DERIVED" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -98,7 +98,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
     {
         DXF_LAYER_READER_ERROR();
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
     if( nCode == 0 )

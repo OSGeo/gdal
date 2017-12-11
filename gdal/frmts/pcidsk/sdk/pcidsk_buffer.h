@@ -63,7 +63,7 @@ namespace PCIDSK
 
         void        Put( const char *value,  int offset, int size, bool null_term = false );
         void        Put( uint64 value, int offset, int size );
-        void        Put( double value, int offset, int size, const char *fmt=NULL );
+        void        Put( double value, int offset, int size, const char *fmt=nullptr );
         void        Put( int value, int offset, int size ) 
             { Put( (uint64) value, offset, size ); }
         void        Put( unsigned int value, int offset, int size ) 

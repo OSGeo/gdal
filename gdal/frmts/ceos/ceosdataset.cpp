@@ -112,7 +112,7 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 CEOSDataset::CEOSDataset() :
-    psCEOS(NULL)
+    psCEOS(nullptr)
 {}
 
 /************************************************************************/
@@ -139,20 +139,20 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      record is in fact a CEOS file descriptor record.                */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 100 )
-        return NULL;
+        return nullptr;
 
     if( poOpenInfo->pabyHeader[4] != 0x3f
         || poOpenInfo->pabyHeader[5] != 0xc0
         || poOpenInfo->pabyHeader[6] != 0x12
         || poOpenInfo->pabyHeader[7] != 0x12 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     CEOSImage *psCEOS = CEOSOpen( poOpenInfo->pszFilename, "rb" );
-    if( psCEOS == NULL )
-        return NULL;
+    if( psCEOS == nullptr )
+        return nullptr;
 
     if( psCEOS->nBitsPerPixel != 8 )
     {
@@ -160,14 +160,14 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The CEOS driver cannot handle nBitsPerPixel = %d",
                   psCEOS->nBitsPerPixel );
         CEOSClose(psCEOS);
-        return NULL;
+        return nullptr;
     }
 
     if( !GDALCheckDatasetDimensions(psCEOS->nPixels, psCEOS->nBands) ||
         !GDALCheckBandCount(psCEOS->nBands, FALSE) )
     {
         CEOSClose( psCEOS );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -179,7 +179,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The CEOS driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -223,7 +223,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_CEOS()
 
 {
-    if( GDALGetDriverByName( "CEOS" ) != NULL )
+    if( GDALGetDriverByName( "CEOS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

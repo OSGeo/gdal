@@ -38,9 +38,9 @@ CPL_CVSID("$Id$")
 static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL ||
+        poOpenInfo->fpL == nullptr ||
         poOpenInfo->nHeaderBytes < 13)
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If it looks like a GZip header, this may be a .gtz file, so     */
@@ -57,7 +57,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
         if (version != 211 ||
             !STARTS_WITH((const char*)poOpenInfo->pabyHeader + 2, "TrackMaker") )
         {
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -66,7 +66,7 @@ static GDALDataset *OGRGTMDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename, FALSE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
     return poDS;
 }
@@ -82,7 +82,7 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
                                         CPL_UNUSED GDALDataType eDT,
                                         char **papszOptions )
 {
-    CPLAssert( NULL != pszName );
+    CPLAssert( nullptr != pszName );
     CPLDebug( "GTM", "Attempt to create: %s", pszName );
 
     OGRGTMDataSource *poDS = new OGRGTMDataSource();
@@ -90,7 +90,7 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -102,7 +102,7 @@ static GDALDataset *OGRGTMDriverCreate( const char * pszName,
 
 void RegisterOGRGTM()
 {
-    if( GDALGetDriverByName( "GPSTrackMaker" ) != NULL )
+    if( GDALGetDriverByName( "GPSTrackMaker" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

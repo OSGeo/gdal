@@ -92,18 +92,6 @@ matrix:
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=gcc48_stdcpp11
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: precise
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
         - BUILD_NAME=gcc52_stdcpp14_sanitize
         - DETAILS=""
     - os: linux

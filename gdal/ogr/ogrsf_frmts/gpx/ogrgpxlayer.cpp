@@ -64,7 +64,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     bWriteMode(CPL_TO_BOOL(bWriteModeIn)),
     nNextFID(0),
 #ifdef HAVE_EXPAT
-    oSchemaParser(NULL),
+    oSchemaParser(nullptr),
 #endif
     inInterestingElement(false),
     hasFoundLat(false),
@@ -74,12 +74,12 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     lonVal(0.0),
     iCurrentField(0),
 #endif
-    multiLineString(NULL),
-    lineString(NULL),
+    multiLineString(nullptr),
+    lineString(nullptr),
     depthLevel(0),
     interestingDepthLevel(0),
 #ifdef HAVE_EXPAT
-    currentFieldDefn(NULL),
+    currentFieldDefn(nullptr),
     inExtensions(false),
     extensionsDepthLevel(0),
     inLink(false),
@@ -304,11 +304,11 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     /* Number of 'standard' GPX attributes */
     nGPXFields = poFeatureDefn->GetFieldCount();
 
-    ppoFeatureTab = NULL;
+    ppoFeatureTab = nullptr;
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
-    pszSubElementName = NULL;
-    pszSubElementValue = NULL;
+    pszSubElementName = nullptr;
+    pszSubElementValue = nullptr;
     nSubElementValueLen = 0;
 
     poSRS = new OGRSpatialReference("GEOGCS[\"WGS 84\", "
@@ -324,16 +324,16 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
     if( poFeatureDefn->GetGeomFieldCount() != 0 )
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
 
-    poFeature = NULL;
+    poFeature = nullptr;
 
 #ifdef HAVE_EXPAT
-    oParser = NULL;
+    oParser = nullptr;
 #endif
 
     if( !bWriteMode )
     {
         fpGPX = VSIFOpenL( pszFilename, "r" );
-        if( fpGPX == NULL )
+        if( fpGPX == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s", pszFilename);
             return;
@@ -346,7 +346,7 @@ OGRGPXLayer::OGRGPXLayer( const char* pszFilename,
         }
     }
     else
-        fpGPX = NULL;
+        fpGPX = nullptr;
 
     ResetReading();
 }
@@ -364,7 +364,7 @@ OGRGPXLayer::~OGRGPXLayer()
 #endif
     poFeatureDefn->Release();
 
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
     CPLFree(pszSubElementName);
@@ -426,9 +426,9 @@ void OGRGPXLayer::ResetReading()
     hasFoundLon = false;
     inInterestingElement = false;
     CPLFree(pszSubElementName);
-    pszSubElementName = NULL;
+    pszSubElementName = nullptr;
     CPLFree(pszSubElementValue);
-    pszSubElementValue = NULL;
+    pszSubElementValue = nullptr;
     nSubElementValueLen = 0;
 
     for( int i = nFeatureTabIndex;i<nFeatureTabLength; i++ )
@@ -436,12 +436,12 @@ void OGRGPXLayer::ResetReading()
     CPLFree(ppoFeatureTab);
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
-    ppoFeatureTab = NULL;
+    ppoFeatureTab = nullptr;
     if (poFeature)
         delete poFeature;
-    poFeature = NULL;
-    multiLineString = NULL;
-    lineString = NULL;
+    poFeature = nullptr;
+    multiLineString = nullptr;
+    lineString = nullptr;
 
     depthLevel = 0;
     interestingDepthLevel = 0;
@@ -477,7 +477,7 @@ void OGRGPXLayer::AddStrToSubElementValue(const char* pszStr)
     char* pszNewSubElementValue = static_cast<char *>(
             VSI_REALLOC_VERBOSE(
                 pszSubElementValue, nSubElementValueLen + len + 1) );
-    if (pszNewSubElementValue == NULL)
+    if (pszNewSubElementValue == nullptr)
     {
         XML_StopParser(oParser, XML_FALSE);
         bStopParsing = true;
@@ -565,7 +565,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         inInterestingElement = true;
 
         multiLineString = new OGRMultiLineString ();
-        lineString = NULL;
+        lineString = nullptr;
 
         poFeature->SetFID( nNextFID++ );
         poFeature->SetGeometryDirectly( multiLineString );
@@ -679,7 +679,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         }
         else if (bEleAs25D &&
                  strcmp(pszName, "ele") == 0 &&
-                 lineString != NULL &&
+                 lineString != nullptr &&
                  ((gpxGeomType == GPX_ROUTE && depthLevel == interestingDepthLevel + 2) ||
                   (gpxGeomType == GPX_TRACK && depthLevel == interestingDepthLevel + 3)))
         {
@@ -698,7 +698,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                  (inExtensions && depthLevel == interestingDepthLevel + 2) )
         {
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             iCurrentField = -1;
 
             if (strcmp(pszName, "link") == 0)
@@ -764,7 +764,7 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         else if (depthLevel == interestingDepthLevel + 2 && inLink)
         {
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             iCurrentField = -1;
             if (iCountLink <= nMaxLinks)
             {
@@ -787,14 +787,14 @@ void OGRGPXLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         else if (inExtensions && depthLevel > interestingDepthLevel + 2)
         {
             AddStrToSubElementValue(
-               (ppszAttr[0] == NULL) ? CPLSPrintf("<%s>", pszName) :
+               (ppszAttr[0] == nullptr) ? CPLSPrintf("<%s>", pszName) :
                                     CPLSPrintf("<%s ", pszName));
             for( int i = 0; ppszAttr[i]; i += 2 )
             {
                 AddStrToSubElementValue(
                     CPLSPrintf("%s=\"%s\" ", ppszAttr[i], ppszAttr[i + 1]));
             }
-            if (ppszAttr[0] != NULL)
+            if (ppszAttr[0] != nullptr)
             {
                 AddStrToSubElementValue(">");
             }
@@ -826,12 +826,12 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             inInterestingElement = false;
 
             if( bIsValid
-                &&  (m_poFilterGeom == NULL
+                &&  (m_poFilterGeom == nullptr
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == NULL
+                && (m_poAttrQuery == nullptr
                     || m_poAttrQuery->Evaluate( poFeature )) )
             {
-                if( poFeature->GetGeometryRef() != NULL )
+                if( poFeature->GetGeometryRef() != nullptr )
                 {
                     poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
 
@@ -864,17 +864,17 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             {
                 delete poFeature;
             }
-            poFeature = NULL;
+            poFeature = nullptr;
         }
         else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trk") == 0)
         {
             inInterestingElement = false;
-            if( (m_poFilterGeom == NULL
+            if( (m_poFilterGeom == nullptr
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == NULL
+                && (m_poAttrQuery == nullptr
                     || m_poAttrQuery->Evaluate( poFeature )) )
             {
-                if( poFeature->GetGeometryRef() != NULL )
+                if( poFeature->GetGeometryRef() != nullptr )
                 {
                     poFeature->GetGeometryRef()->
                         assignSpatialReference( poSRS );
@@ -891,24 +891,24 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             {
                 delete poFeature;
             }
-            poFeature = NULL;
-            multiLineString = NULL;
-            lineString = NULL;
+            poFeature = nullptr;
+            multiLineString = nullptr;
+            lineString = nullptr;
         }
         else if (gpxGeomType == GPX_TRACK && strcmp(pszName, "trkseg") == 0 &&
                  depthLevel == interestingDepthLevel + 1)
         {
-            lineString = NULL;
+            lineString = nullptr;
         }
         else if (gpxGeomType == GPX_ROUTE && strcmp(pszName, "rte") == 0)
         {
             inInterestingElement = false;
-            if( (m_poFilterGeom == NULL
+            if( (m_poFilterGeom == nullptr
                     || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == NULL
+                && (m_poAttrQuery == nullptr
                     || m_poAttrQuery->Evaluate( poFeature )) )
             {
-                if( poFeature->GetGeometryRef() != NULL )
+                if( poFeature->GetGeometryRef() != nullptr )
                 {
                     poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
                 }
@@ -923,12 +923,12 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             {
                 delete poFeature;
             }
-            poFeature = NULL;
-            lineString = NULL;
+            poFeature = nullptr;
+            lineString = nullptr;
         }
         else if (bEleAs25D &&
                  strcmp(pszName, "ele") == 0 &&
-                 lineString != NULL &&
+                 lineString != nullptr &&
                  ((gpxGeomType == GPX_ROUTE &&
                    depthLevel == interestingDepthLevel + 2) ||
                  (gpxGeomType == GPX_TRACK &&
@@ -948,9 +948,9 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             }
 
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             CPLFree(pszSubElementValue);
-            pszSubElementValue = NULL;
+            pszSubElementValue = nullptr;
             nSubElementValueLen = 0;
         }
         else if (depthLevel == interestingDepthLevel + 1 &&
@@ -989,9 +989,9 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                 inLink = false;
 
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             CPLFree(pszSubElementValue);
-            pszSubElementValue = NULL;
+            pszSubElementValue = nullptr;
             nSubElementValueLen = 0;
         }
         else if (inLink && depthLevel == interestingDepthLevel + 2)
@@ -1004,9 +1004,9 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
             }
 
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             CPLFree(pszSubElementValue);
-            pszSubElementValue = NULL;
+            pszSubElementValue = nullptr;
             nSubElementValueLen = 0;
         }
         else if (inExtensions && depthLevel > interestingDepthLevel + 2)
@@ -1046,7 +1046,7 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
         char* pszNewSubElementValue = static_cast<char*>(
             VSI_REALLOC_VERBOSE(
                 pszSubElementValue, nSubElementValueLen + nLen + 1) );
-        if (pszNewSubElementValue == NULL)
+        if (pszNewSubElementValue == nullptr)
         {
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = true;
@@ -1077,16 +1077,16 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot read features when writing a GPX file");
-        return NULL;
+        return nullptr;
     }
 
-    if (fpGPX == NULL)
-        return NULL;
+    if (fpGPX == nullptr)
+        return nullptr;
 
 #ifdef HAVE_EXPAT
 
     if (bStopParsing)
-        return NULL;
+        return nullptr;
 
     if (nFeatureTabIndex < nFeatureTabLength)
     {
@@ -1094,12 +1094,12 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     }
 
     if (VSIFEofL(fpGPX))
-        return NULL;
+        return nullptr;
 
     char aBuf[BUFSIZ];
 
     CPLFree(ppoFeatureTab);
-    ppoFeatureTab = NULL;
+    ppoFeatureTab = nullptr;
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
     nWithoutEventCounter = 0;
@@ -1133,9 +1133,9 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         bStopParsing = true;
     }
 
-    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
+    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : nullptr;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 
@@ -1168,7 +1168,7 @@ static char* OGRGPX_GetXMLCompatibleTagName(const char* pszExtensionsNS,
 
 static char* OGRGPX_GetUTF8String(const char* pszString)
 {
-    char *pszEscaped = NULL;
+    char *pszEscaped = nullptr;
     if (!CPLIsUTF8(pszString, -1) &&
          CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")))
     {
@@ -1213,7 +1213,7 @@ bool OGRGPXLayer::OGRGPX_WriteXMLExtension( const char* pszTagName,
             pszTagNameWithNS[pszUnderscore - pszTagName] = ':';
 
         /* If we detect a Garmin GPX extension, add its xmlns */
-        const char* pszXMLNS = NULL;
+        const char* pszXMLNS = nullptr;
         if (strcmp(pszTagName, "gpxx_WaypointExtension") == 0)
             pszXMLNS = " xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\"";
 
@@ -1337,7 +1337,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
                     else if (STARTS_WITH(pszRaw, "&lt;") &&
                             STARTS_WITH(pszRaw + strlen(pszRaw) - 4, "&gt;"))
                     {
-                        char* pszUnescapedContent = CPLUnescapeString( pszRaw, NULL, CPLES_XML );
+                        char* pszUnescapedContent = CPLUnescapeString( pszRaw, nullptr, CPLES_XML );
 
                         if( OGRGPX_WriteXMLExtension(compatibleName,
                                                      pszUnescapedContent) )
@@ -1381,7 +1381,7 @@ void OGRGPXLayer::WriteFeatureAttributes( OGRFeature *poFeatureIn, int nIdentLev
 
 OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double* pdfLongitude )
 {
-    if (pdfLatitude != NULL && (*pdfLatitude < -90 || *pdfLatitude > 90))
+    if (pdfLatitude != nullptr && (*pdfLatitude < -90 || *pdfLatitude > 90))
     {
         static bool bFirstWarning = true;
         if (bFirstWarning)
@@ -1395,7 +1395,7 @@ OGRErr OGRGPXLayer::CheckAndFixCoordinatesValidity( double* pdfLatitude, double*
         return OGRERR_FAILURE;
     }
 
-    if (pdfLongitude != NULL && (*pdfLongitude < -180 || *pdfLongitude > 180))
+    if (pdfLongitude != nullptr && (*pdfLongitude < -180 || *pdfLongitude > 180))
     {
         static bool bFirstWarning = true;
         if (bFirstWarning)
@@ -1427,7 +1427,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
 {
     VSILFILE* fp = poDS->GetOutputFP();
-    if (fp == NULL)
+    if (fp == nullptr)
         return OGRERR_FAILURE;
 
     char szLat[64];
@@ -1454,7 +1454,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
 
-        if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
+        if ( poGeom == nullptr || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in waypoints layer." );
@@ -1497,9 +1497,9 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
 
-        OGRLineString* line = NULL;
+        OGRLineString* line = nullptr;
 
-        if ( poGeom == NULL )
+        if ( poGeom == nullptr )
         {
             poDS->PrintLine("<rte>");
             WriteFeatureAttributes(poFeatureIn);
@@ -1523,7 +1523,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
                     poGeom)->getNumGeometries ();
                 if (nGeometries == 0)
                 {
-                    line = NULL;
+                    line = nullptr;
                 }
                 else if (nGeometries == 1)
                 {
@@ -1589,7 +1589,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         poDS->SetLastGPXGeomTypeWritten(gpxGeomType);
 
-        if (poGeom == NULL)
+        if (poGeom == nullptr)
         {
             poDS->PrintLine("<trk>");
             WriteFeatureAttributes(poFeatureIn);
@@ -1688,7 +1688,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
+        if ( poGeom == nullptr || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in route_points layer." );
@@ -1756,7 +1756,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             poDS->nLastRteId = -1;
         }
 
-        if ( poGeom == NULL || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
+        if ( poGeom == nullptr || wkbFlatten(poGeom->getGeometryType()) != wkbPoint )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Features without geometry or with non-ponctual geometries not supported by GPX writer in track_points layer." );
@@ -1928,9 +1928,9 @@ void OGRGPXLayer::LoadExtensionsSchema()
     inInterestingElement = false;
     inExtensions = false;
     depthLevel = 0;
-    currentFieldDefn = NULL;
-    pszSubElementName = NULL;
-    pszSubElementValue = NULL;
+    currentFieldDefn = nullptr;
+    pszSubElementName = nullptr;
+    pszSubElementValue = nullptr;
     nSubElementValueLen = 0;
     nWithoutEventCounter = 0;
     bStopParsing = false;
@@ -1965,7 +1965,7 @@ void OGRGPXLayer::LoadExtensionsSchema()
     }
 
     XML_ParserFree(oSchemaParser);
-    oSchemaParser = NULL;
+    oSchemaParser = nullptr;
 
     VSIFSeekL( fpGPX, 0, SEEK_SET );
 }
@@ -2145,9 +2145,9 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
                 if (currentFieldDefn->GetType() == OFTInteger ||
                     currentFieldDefn->GetType() == OFTReal)
                 {
-                    char* pszRemainingStr = NULL;
+                    char* pszRemainingStr = nullptr;
                     CPLStrtod(pszSubElementValue, &pszRemainingStr);
-                    if (pszRemainingStr == NULL ||
+                    if (pszRemainingStr == nullptr ||
                         *pszRemainingStr == 0 ||
                         *pszRemainingStr == ' ')
                     {
@@ -2167,11 +2167,11 @@ void OGRGPXLayer::endElementLoadSchemaCbk(const char *pszName)
             }
 
             CPLFree(pszSubElementName);
-            pszSubElementName = NULL;
+            pszSubElementName = nullptr;
             CPLFree(pszSubElementValue);
-            pszSubElementValue = NULL;
+            pszSubElementValue = nullptr;
             nSubElementValueLen = 0;
-            currentFieldDefn = NULL;
+            currentFieldDefn = nullptr;
         }
     }
 }
@@ -2201,7 +2201,7 @@ void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         char* pszNewSubElementValue = static_cast<char*>(
             VSI_REALLOC_VERBOSE(
                 pszSubElementValue, nSubElementValueLen + nLen + 1) );
-        if (pszNewSubElementValue == NULL)
+        if (pszNewSubElementValue == nullptr)
         {
             XML_StopParser(oSchemaParser, XML_FALSE);
             bStopParsing = true;

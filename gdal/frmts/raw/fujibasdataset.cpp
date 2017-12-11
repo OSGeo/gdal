@@ -60,8 +60,8 @@ class FujiBASDataset : public RawDataset
 /************************************************************************/
 
 FujiBASDataset::FujiBASDataset() :
-    fpImage(NULL),
-    papszHeader(NULL)
+    fpImage(nullptr),
+    papszHeader(nullptr)
 {}
 
 /************************************************************************/
@@ -72,7 +72,7 @@ FujiBASDataset::~FujiBASDataset()
 
 {
     FlushCache();
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         VSIFCloseL( fpImage );
     CSLDestroy( papszHeader );
 }
@@ -100,31 +100,31 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the header (.pcb) file.       */
 /*      Does this appear to be a pcb file?                              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 80 || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( !STARTS_WITH_CI( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                          "[Raw data]")
         || strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader), "Fuji BAS")
-        == NULL )
-        return NULL;
+        == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Load the header file.                                           */
 /* -------------------------------------------------------------------- */
     char **papszHeader = CSLLoad( poOpenInfo->pszFilename );
 
-    if( papszHeader == NULL )
-        return NULL;
+    if( papszHeader == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Munge header information into form suitable for CSL functions.  */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; papszHeader[i] != NULL; i++ )
+    for( int i = 0; papszHeader[i] != nullptr; i++ )
     {
         char *pszSep = strstr(papszHeader[i]," = ");
 
-        if( pszSep != NULL )
+        if( pszSep != nullptr )
         {
             memmove( pszSep + 1, pszSep + 3, strlen(pszSep+3)+1 );
             *pszSep = '=';
@@ -134,12 +134,12 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Fetch required fields.                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszHeader, "width") == NULL
-        || CSLFetchNameValue(papszHeader, "height") == NULL
-        || CSLFetchNameValue(papszHeader, "OrgFile") == NULL )
+    if( CSLFetchNameValue(papszHeader, "width") == nullptr
+        || CSLFetchNameValue(papszHeader, "height") == nullptr
+        || CSLFetchNameValue(papszHeader, "OrgFile") == nullptr )
     {
         CSLDestroy( papszHeader );
-        return NULL;
+        return nullptr;
     }
 
     const int nYSize = atoi(CSLFetchNameValue(papszHeader,"width"));
@@ -150,7 +150,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nXSize < 1 || nYSize < 1 )
     {
         CSLDestroy( papszHeader );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -161,7 +161,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The FUJIBAS driver does not support update access to "
                   " existing datasets." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -172,7 +172,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszPath );
 
     VSILFILE *fpRaw = VSIFOpenL( pszRawFile, "rb" );
-    if( fpRaw == NULL )
+    if( fpRaw == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Trying to open Fuji BAS image with the header file:\n"
@@ -184,7 +184,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename,
                   pszRawFile );
         CSLDestroy( papszHeader );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -237,7 +237,7 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_FujiBAS()
 
 {
-    if( GDALGetDriverByName( "FujiBAS" ) != NULL )
+    if( GDALGetDriverByName( "FujiBAS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

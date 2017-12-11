@@ -59,7 +59,7 @@ namespace tut
         rasters_t rasters_;
 
         test_dted_data()
-            : drv_(NULL), drv_name_("DTED")
+            : drv_(nullptr), drv_name_("DTED")
         {
             drv_ = GDALGetDriverByName(drv_name_.c_str());
 
@@ -85,7 +85,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("GDAL::DTED driver not available", NULL != drv_);
+        ensure("GDAL::DTED driver not available", nullptr != drv_);
     }
 
     // Test open dataset
@@ -99,7 +99,7 @@ namespace tut
             std::string file(data_ + SEP);
             file += it->file_;
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, NULL != ds);
+            ensure("Can't open dataset: " + file, nullptr != ds);
             GDALClose(ds);
         }
     }
@@ -117,10 +117,10 @@ namespace tut
             file += it->file_;
 
             GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-            ensure("Can't open dataset: " + file, NULL != ds);
+            ensure("Can't open dataset: " + file, nullptr != ds);
 
             GDALRasterBandH band = GDALGetRasterBand(ds, it->band_);
-            ensure("Can't get raster band", NULL != band);
+            ensure("Can't get raster band", nullptr != band);
 
             const int xsize = GDALGetRasterXSize(ds);
             const int ysize = GDALGetRasterYSize(ds);
@@ -146,7 +146,7 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, NULL != ds);
+        ensure("Can't open dataset: " + file, nullptr != ds);
 
         double geoTransform[6] = { 0 };
         CPLErr err = GDALGetGeoTransform(ds, geoTransform);
@@ -181,7 +181,7 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, NULL != ds);
+        ensure("Can't open dataset: " + file, nullptr != ds);
 
         std::string proj(GDALGetProjectionRef(ds));
         ensure_equals("Projection definition is not available", proj.empty(), false);
@@ -204,12 +204,12 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, NULL != ds);
+        ensure("Can't open dataset: " + file, nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
-        const double noData = GDALGetRasterNoDataValue(band, NULL);
+        const double noData = GDALGetRasterNoDataValue(band, nullptr);
         ensure_equals("Grid NODATA value wrong or missing", noData, -32767);
 
         ensure_equals("Data type is not GDT_Int16", GDALGetRasterDataType(band), GDT_Int16);
@@ -229,15 +229,15 @@ namespace tut
         src += rasters_.at(fileIdx).file_;
 
         GDALDatasetH dsSrc = GDALOpen(src.c_str(), GA_ReadOnly);
-        ensure("Can't open source dataset: " + src, NULL != dsSrc);
+        ensure("Can't open source dataset: " + src, nullptr != dsSrc);
 
         std::string dst(data_tmp_ + SEP);
         dst += rasters_.at(fileIdx).file_;
 
-        GDALDatasetH dsDst = NULL;
-        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, NULL, NULL, NULL);
+        GDALDatasetH dsDst = nullptr;
+        dsDst = GDALCreateCopy(drv_, dst.c_str(), dsSrc, FALSE, nullptr, nullptr, nullptr);
         GDALClose(dsSrc);
-        ensure("Can't copy dataset", NULL != dsDst);
+        ensure("Can't copy dataset", nullptr != dsDst);
 
         std::string proj(GDALGetProjectionRef(dsDst));
         ensure_equals("Projection definition is not available", proj.empty(), false);
@@ -246,7 +246,7 @@ namespace tut
         ensure_equals("Projection does not match expected", proj, expect);
 
         GDALRasterBandH band = GDALGetRasterBand(dsDst, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
         const int xsize = GDALGetRasterXSize(dsDst);
         const int ysize = GDALGetRasterYSize(dsDst);
@@ -271,10 +271,10 @@ namespace tut
         file += rasters_.at(fileIdx).file_;
 
         GDALDatasetH ds = GDALOpen(file.c_str(), GA_ReadOnly);
-        ensure("Can't open dataset: " + file, NULL != ds);
+        ensure("Can't open dataset: " + file, nullptr != ds);
 
         GDALRasterBandH band = GDALGetRasterBand(ds, rasters_.at(fileIdx).band_);
-        ensure("Can't get raster band", NULL != band);
+        ensure("Can't get raster band", nullptr != band);
 
         // Sub-windows size
         const int win[4] = { 5, 5, 5, 5 };

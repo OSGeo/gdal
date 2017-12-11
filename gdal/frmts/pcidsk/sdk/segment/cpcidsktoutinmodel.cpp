@@ -63,7 +63,7 @@ CPCIDSKToutinModelSegment::CPCIDSKToutinModelSegment(PCIDSKFile *fileIn,
 {
     loaded_ = false;
     mbModified = false;
-    mpoInfo = NULL;
+    mpoInfo = nullptr;
     Load();
 }
 
@@ -179,7 +179,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
     if (!STARTS_WITH(seg_data.buffer, "MODEL   ")) 
     {
         seg_data.Put("MODEL   ",0,8);
-        return NULL;
+        return nullptr;
         // Something has gone terribly wrong!
         /*throw PCIDSKException("A segment that was previously "
             "identified as an RFMODEL "
@@ -325,14 +325,14 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 /* -------------------------------------------------------------------- */
 /*      Get the attitude data for SPOT                                  */
 /* -------------------------------------------------------------------- */
-        if (SRITModel->OrbitPtr->AttitudeSeg != NULL ||
-            SRITModel->OrbitPtr->RadarSeg != NULL)
+        if (SRITModel->OrbitPtr->AttitudeSeg != nullptr ||
+            SRITModel->OrbitPtr->RadarSeg != nullptr)
         {
             AttitudeSeg_t *attitudeSeg
                 = SRITModel->OrbitPtr->AttitudeSeg;
 
             if (SRITModel->OrbitPtr->Type == OrbAttitude &&
-                attitudeSeg != NULL)
+                attitudeSeg != nullptr)
             {
                 int  ndata;
 
@@ -459,12 +459,12 @@ CPCIDSKToutinModelSegment::SRITInfoToBinary( SRITInfo_t *SRITModel )
     seg_data.Put("2",nPos+10,1);
     seg_data.Put("0",nPos+20,1);
 
-    if (SRITModel->OrbitPtr->AttitudeSeg != NULL ||
-        SRITModel->OrbitPtr->RadarSeg != NULL ||
-        SRITModel->OrbitPtr->AvhrrSeg != NULL )
+    if (SRITModel->OrbitPtr->AttitudeSeg != nullptr ||
+        SRITModel->OrbitPtr->RadarSeg != nullptr ||
+        SRITModel->OrbitPtr->AvhrrSeg != nullptr )
     {
         if (SRITModel->OrbitPtr->Type == OrbAttitude &&
-            SRITModel->OrbitPtr->AttitudeSeg != NULL) 
+            SRITModel->OrbitPtr->AttitudeSeg != nullptr) 
         {
             if (SRITModel->OrbitPtr->AttitudeSeg->NumberOfLine != 0)
                 seg_data.Put("3",nPos+20,1);

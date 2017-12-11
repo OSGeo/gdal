@@ -100,7 +100,7 @@ string trim(string tmpstr) {
 
 static int getGeometryTypeOfElem(DOMElement* elem) {
   int type = ILI2_STRING_TYPE;
-  if( elem == NULL )
+  if( elem == nullptr )
       return type;
   char* pszTagName = XMLString::transcode(elem->getTagName());
 
@@ -125,12 +125,12 @@ static int getGeometryTypeOfElem(DOMElement* elem) {
 
 static char *getObjValue(DOMElement *elem) {
   DOMNode* child = elem->getFirstChild();
-  if ((child != NULL) && (child->getNodeType() == DOMNode::TEXT_NODE))
+  if ((child != nullptr) && (child->getNodeType() == DOMNode::TEXT_NODE))
   {
     return CPLStrdup(transcode(child->getNodeValue()));
   }
 
-  return NULL;
+  return nullptr;
 }
 
 static char *getREFValue(DOMElement *elem) {
@@ -141,11 +141,11 @@ static char *getREFValue(DOMElement *elem) {
 static OGRPoint *getPoint(DOMElement *elem) {
   // elem -> COORD (or ARC)
   DOMElement *coordElem = dynamic_cast<DOMElement*>(elem->getFirstChild());
-  if( coordElem == NULL )
-      return NULL;
+  if( coordElem == nullptr )
+      return nullptr;
   OGRPoint *pt = new OGRPoint();
 
-  while (coordElem != NULL) {
+  while (coordElem != nullptr) {
     char* pszTagName = XMLString::transcode(coordElem->getTagName());
     char* pszObjValue = getObjValue(coordElem);
     if( pszObjValue )
@@ -168,8 +168,8 @@ static OGRPoint *getPoint(DOMElement *elem) {
 OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
   // previous point -> start point
   OGRPoint *ptStart = getPoint(dynamic_cast<DOMElement*>(elem->getPreviousSibling())); // COORD or ARC
-  if( ptStart == NULL )
-      return NULL;
+  if( ptStart == nullptr )
+      return nullptr;
   
   // elem -> ARC
   OGRCircularString *arc = new OGRCircularString();
@@ -180,7 +180,7 @@ OGRCircularString *ILI2Reader::getArc(DOMElement *elem) {
   // double radius = 0; // radius
 
   DOMElement *arcElem = dynamic_cast<DOMElement*>(elem->getFirstChild());
-  while (arcElem != NULL) {
+  while (arcElem != nullptr) {
     char* pszTagName = XMLString::transcode(arcElem->getTagName());
     char* pszObjValue = getObjValue(arcElem);
     if( pszObjValue )
@@ -220,7 +220,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
   OGRLineString *ls = new OGRLineString();
 
   DOMElement *lineElem = dynamic_cast<DOMElement *>(elem->getFirstChild());
-  while (lineElem != NULL) {
+  while (lineElem != nullptr) {
     char* pszTagName = XMLString::transcode(lineElem->getTagName());
     if (cmpStr(ILI2_COORD, pszTagName) == 0)
     {
@@ -248,7 +248,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
       // double radius = 0;
 
       DOMElement *arcElem = dynamic_cast<DOMElement *>(lineElem->getFirstChild());
-      while (arcElem != NULL) {
+      while (arcElem != nullptr) {
         char* pszTagName2 = XMLString::transcode(arcElem->getTagName());
         char* pszObjValue = getObjValue(arcElem);
         if( pszObjValue )
@@ -304,7 +304,7 @@ static OGRCompoundCurve *getPolyline(DOMElement *elem) {
 static OGRCompoundCurve *getBoundary(DOMElement *elem) {
 
   DOMElement *lineElem = dynamic_cast<DOMElement *>(elem->getFirstChild());
-  if (lineElem != NULL)
+  if (lineElem != nullptr)
   {
     char* pszTagName = XMLString::transcode(lineElem->getTagName());
     if (cmpStr(ILI2_POLYLINE, pszTagName) == 0)
@@ -322,7 +322,7 @@ static OGRCurvePolygon *getPolygon(DOMElement *elem) {
   OGRCurvePolygon *pg = new OGRCurvePolygon();
 
   DOMElement *boundaryElem = dynamic_cast<DOMElement *>(elem->getFirstChild()); // outer boundary
-  while (boundaryElem != NULL) {
+  while (boundaryElem != nullptr) {
     char* pszTagName = XMLString::transcode(boundaryElem->getTagName());
     if (cmpStr(ILI2_BOUNDARY, pszTagName) == 0)
     {
@@ -343,7 +343,7 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
   OGRGeometryCollection *gm = new OGRGeometryCollection();
 
   DOMElement *childElem = elem;
-  while (childElem != NULL) {
+  while (childElem != nullptr) {
     char* pszTagName = XMLString::transcode(childElem->getTagName());
     switch (type) {
       case ILI2_COORD_TYPE :
@@ -410,7 +410,7 @@ int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename) {
   poImdReader->ReadModel(modelFilename);
   for (FeatureDefnInfos::const_iterator it = poImdReader->featureDefnInfos.begin(); it != poImdReader->featureDefnInfos.end(); ++it)
   {
-    OGRLayer* layer = new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, NULL);
+    OGRLayer* layer = new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, nullptr);
     m_listLayer.push_back(layer);
   }
   return 0;
@@ -427,7 +427,7 @@ static char* fieldName(DOMElement* elem) {
     node = elem;
     for (int d = 0; d<depth-4; ++d) node = node->getParentNode();
   }
-  if( node == NULL )
+  if( node == nullptr )
   {
       CPLError(CE_Failure, CPLE_AssertionFailed, "node == NULL");
       return CPLStrdup("***bug***");
@@ -475,7 +475,7 @@ void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
         int fIndex = feature->GetFieldIndex(fName);
         if (fIndex != -1) {
           char * objVal = getObjValue(childElem);
-          if (objVal == NULL)
+          if (objVal == nullptr)
             objVal = getREFValue(childElem); // only to try
           feature->SetField(fIndex, objVal);
           CPLFree(objVal);
@@ -515,9 +515,9 @@ IILI2Reader::~IILI2Reader() {
 }
 
 ILI2Reader::ILI2Reader() :
-    m_pszFilename(NULL),
-    m_poILI2Handler(NULL),
-    m_poSAXReader(NULL),
+    m_pszFilename(nullptr),
+    m_poILI2Handler(nullptr),
+    m_poSAXReader(nullptr),
     m_bReadStarted(FALSE),
     m_bXercesInitialized(false)
 {
@@ -555,7 +555,7 @@ int ILI2Reader::SetupParser() {
     }
 
     // Cleanup any old parser.
-    if( m_poSAXReader != NULL )
+    if( m_poSAXReader != nullptr )
         CleanupParser();
 
     // Create and initialize parser.
@@ -597,26 +597,26 @@ int ILI2Reader::SetupParser() {
 }
 
 void ILI2Reader::CleanupParser() {
-    if( m_poSAXReader == NULL )
+    if( m_poSAXReader == nullptr )
         return;
 
     delete m_poSAXReader;
-    m_poSAXReader = NULL;
+    m_poSAXReader = nullptr;
 
     delete m_poILI2Handler;
-    m_poILI2Handler = NULL;
+    m_poILI2Handler = nullptr;
 
     m_bReadStarted = FALSE;
 }
 
-int ILI2Reader::SaveClasses( const char *pszFile = NULL ) {
+int ILI2Reader::SaveClasses( const char *pszFile = nullptr ) {
 
     // Add logic later to determine reasonable default schema file.
-    if( pszFile == NULL )
+    if( pszFile == nullptr )
         return FALSE;
     
     VSILFILE* fp = VSIFOpenL(pszFile, "rb");
-    if( fp == NULL )
+    if( fp == nullptr )
         return FALSE;
 
     InputSource* is = OGRCreateXercesInputSource(fp);
@@ -681,7 +681,7 @@ OGRLayer* ILI2Reader::GetLayer(const char* pszName) {
       return *layerIt;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 int ILI2Reader::AddFeature(DOMElement *elem) {
@@ -690,7 +690,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
 
   // test if this layer exist
   OGRILI2Layer* curLayer = dynamic_cast<OGRILI2Layer*>(GetLayer(osName));
-  bool newLayer = (curLayer == NULL);
+  bool newLayer = (curLayer == nullptr);
 
   // add a layer
   if (newLayer) {
@@ -698,7 +698,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
     OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn(osName);
     poFeatureDefn->SetGeomType( wkbUnknown );
     GeomFieldInfos oGeomFieldInfos;
-    curLayer = new OGRILI2Layer(poFeatureDefn, oGeomFieldInfos, NULL);
+    curLayer = new OGRILI2Layer(poFeatureDefn, oGeomFieldInfos, nullptr);
     m_listLayer.push_back(curLayer);
   }
 

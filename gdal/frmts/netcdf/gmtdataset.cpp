@@ -113,8 +113,8 @@ GMTRasterBand::GMTRasterBand( GMTDataset *poDSIn, int nZIdIn, int nBandIn ) :
 /* -------------------------------------------------------------------- */
 /*      Get the type of the "z" variable, our target raster array.      */
 /* -------------------------------------------------------------------- */
-    if( nc_inq_var( poDSIn->cdfid, nZId, NULL, &nc_datatype, NULL, NULL,
-                    NULL ) != NC_NOERR )
+    if( nc_inq_var( poDSIn->cdfid, nZId, nullptr, &nc_datatype, nullptr, nullptr,
+                    nullptr ) != NC_NOERR )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Error in nc_var_inq() on 'z'." );
@@ -228,14 +228,14 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this file have the GMT magic number?                    */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 50 )
-        return NULL;
+    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 50 )
+        return nullptr;
 
     if( poOpenInfo->pabyHeader[0] != 'C'
         || poOpenInfo->pabyHeader[1] != 'D'
         || poOpenInfo->pabyHeader[2] != 'F'
         || poOpenInfo->pabyHeader[3] != 1 )
-        return NULL;
+        return nullptr;
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // We don't necessarily want to catch bugs in libnetcdf ...
@@ -252,7 +252,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int cdfid = 0;
     if( nc_open( poOpenInfo->pszFilename, NC_NOWRITE, &cdfid ) != NC_NOERR )
-        return NULL;
+        return nullptr;
 
     int nm_id = 0;
     int z_id = 0;
@@ -265,14 +265,14 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
 #endif
         nc_close( cdfid );
-        return NULL;
+        return nullptr;
     }
 
     int dim_count = 0;
     if( nc_inq_ndims( cdfid, &dim_count ) != NC_NOERR || dim_count < 2 )
     {
         nc_close( cdfid );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -284,7 +284,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The GMT driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -299,7 +299,7 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !GDALCheckDatasetDimensions(nm[0], nm[1]) )
     {
         nc_close( cdfid );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -436,7 +436,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Currently GMT export only supports 1 band datasets." );
-        return NULL;
+        return nullptr;
     }
 
     GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
@@ -459,7 +459,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Band data type %s not supported in GMT, giving up.",
                   GDALGetDataTypeName( poBand->GetRasterDataType() ) );
-        return NULL;
+        return nullptr;
     }
     else if( poBand->GetRasterDataType() == GDT_Byte )
         nc_datatype = NC_SHORT;
@@ -482,7 +482,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( bStrict ? CE_Failure : CE_Warning, CPLE_AppDefined,
                   "Geotransform has rotational coefficients not supported in GMT." );
         if( bStrict )
-            return NULL;
+            return nullptr;
     }
 
     const double dfXMax = adfGeoTransform[0] + adfGeoTransform[1] * nXSize;
@@ -499,7 +499,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "nc_create(%s): %s",
                   pszFilename, nc_strerror( err ) );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -585,11 +585,11 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         start[0] = iLine * nXSize;
         if( poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                          padfData, nXSize, 1, GDT_Float64, 0, 0, NULL ) != CE_None )
+                          padfData, nXSize, 1, GDT_Float64, 0, 0, nullptr ) != CE_None )
         {
             nc_close (cdfid);
             CPLFree( padfData );
-            return NULL;
+            return nullptr;
         }
         err = nc_put_vara_double( cdfid, z_id, start, edge, padfData );
         if( err != NC_NOERR )
@@ -599,7 +599,7 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       pszFilename, nc_strerror( err ) );
             nc_close (cdfid);
             CPLFree( padfData );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -632,7 +632,7 @@ void GDALRegister_GMT()
     if( !GDAL_CHECK_VERSION( "GMT driver" ) )
         return;
 
-    if( GDALGetDriverByName( "GMT" ) != NULL )
+    if( GDALGetDriverByName( "GMT" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -151,7 +151,7 @@ CPLString GMLASResourceCache::GetCachedFilename(const CPLString& osResource)
                     osLaunderedName.c_str());
     }
 
-    return CPLFormFilename( m_osCacheDirectory, osLaunderedName, NULL );
+    return CPLFormFilename( m_osCacheDirectory, osLaunderedName, nullptr );
 }
 
 /************************************************************************/
@@ -197,7 +197,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         }
 
         osOutFilename = CPLFormFilename(osBasePathModified,
-                                        osResourceModified, NULL);
+                                        osResourceModified, nullptr);
     }
 
     CPLDebug("GMLAS", "Resolving %s (%s) to %s",
@@ -205,7 +205,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
                 osBasePath.c_str(),
                 osOutFilename.c_str());
 
-    VSILFILE* fp = NULL;
+    VSILFILE* fp = nullptr;
     if( !m_osCacheDirectory.empty() &&
         osOutFilename.find("/vsicurl_streaming/") == 0 &&
         RecursivelyCreateDirectoryIfNeeded() )
@@ -217,7 +217,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         {
             fp = VSIFOpenL( osCachedFileName, "rb");
         }
-        if( fp != NULL )
+        if( fp != nullptr )
         {
             CPLDebug("GMLAS", "Use cached %s", osCachedFileName.c_str());
         }
@@ -257,7 +257,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         }
     }
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot resolve %s", osResource.c_str());

@@ -247,7 +247,7 @@ CPLString PrintDouble(double d, const char *frmt = "%12.8f");
 void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
     const double val, const char *frmt = "%12.8f");
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
-    const char*pszName, const ILSize &sz, const char *frmt = NULL);
+    const char*pszName, const ILSize &sz, const char *frmt = nullptr);
 void XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, std::vector<double> const &values);
 //
@@ -527,9 +527,9 @@ public:
     virtual double  GetMaximum(int *) override;
 
     // MRF specific, fetch is from a remote source
-    CPLErr FetchBlock(int xblk, int yblk, void *buffer = NULL);
+    CPLErr FetchBlock(int xblk, int yblk, void *buffer = nullptr);
     // Fetch a block from a cloned MRF
-    CPLErr FetchClonedBlock(int xblk, int yblk, void *buffer = NULL);
+    CPLErr FetchClonedBlock(int xblk, int yblk, void *buffer = nullptr);
 
     // Block not stored on disk
     CPLErr FillBlock(void *buffer);
@@ -599,7 +599,7 @@ protected:
 class PNG_Codec {
 public:
     explicit PNG_Codec(const ILImage &image) : img(image),
-        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {}
+        PNGColors(nullptr), PNGAlpha(nullptr), PalSize(0), TransSize(0), deflate_flags(0) {}
 
     virtual ~PNG_Codec() {
         CPLFree(PNGColors);
@@ -770,7 +770,7 @@ public:
 
 protected:
     virtual int GetOverviewCount() override { return 0; }
-    virtual GDALRasterBand *GetOverview(int ) override { return NULL; }
+    virtual GDALRasterBand *GetOverview(int ) override { return nullptr; }
 
     GDALMRFRasterBand *pBand;
 };

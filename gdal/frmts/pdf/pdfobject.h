@@ -246,7 +246,7 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     public:
         GDALPDFObjectPoppler(Object* po, int bDestroy) :
                 m_po(po), m_bDestroy(bDestroy),
-                m_poDict(NULL), m_poArray(NULL), m_poStream(NULL),
+                m_poDict(nullptr), m_poArray(nullptr), m_poStream(nullptr),
                 m_nRefNum(0), m_nRefGen(0) {}
 
         void SetRefNumAndGen(int nNum, int nGen);

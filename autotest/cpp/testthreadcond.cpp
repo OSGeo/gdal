@@ -33,9 +33,9 @@
 
 #include "cpl_multiproc.h"
 
-CPLCond* hCond = NULL;
-CPLCond* hCondJobFinished = NULL;
-CPLMutex* hClientMutex = NULL;
+CPLCond* hCond = nullptr;
+CPLCond* hCondJobFinished = nullptr;
+CPLMutex* hClientMutex = nullptr;
 
 struct _JobItem
 {
@@ -44,7 +44,7 @@ struct _JobItem
 };
 typedef struct _JobItem JobItem;
 
-JobItem* psJobList = NULL;
+JobItem* psJobList = nullptr;
 int nJobListSize = 0;
 int nThreadTotal = 0;
 int bProducedFinished = 0;
@@ -102,7 +102,7 @@ static void ConsumerThread(void* pIndex)
     while(TRUE)
     {
         CPLAcquireMutex(hClientMutex, 1000.0);
-        while(psJobList == NULL && !bProducedFinished)
+        while(psJobList == nullptr && !bProducedFinished)
             CPLCondWait(hCond, hClientMutex);
         if (bProducedFinished)
         {
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
     hClientMutex = CPLCreateMutex();
     CPLReleaseMutex(hClientMutex);
 
-    CPLCreateThread(ProducerThread, NULL);
+    CPLCreateThread(ProducerThread, nullptr);
 
     for(i = 0; i < 10;i++)
     {

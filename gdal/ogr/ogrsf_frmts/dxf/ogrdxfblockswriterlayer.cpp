@@ -155,9 +155,9 @@ OGRFeature *OGRDXFBlocksWriterLayer::FindBlock( const char *pszBlockName )
     {
         const char *pszThisName = apoBlocks[i]->GetFieldAsString("Block");
 
-        if( pszThisName != NULL && strcmp(pszBlockName,pszThisName) == 0 )
+        if( pszThisName != nullptr && strcmp(pszBlockName,pszThisName) == 0 )
             return apoBlocks[i];
     }
 
-    return NULL;
+    return nullptr;
 }

@@ -98,23 +98,23 @@ CPL_CVSID("$Id$")
  ************************/
 PostGISRasterDataset::PostGISRasterDataset() :
     VRTDataset(0, 0),
-    papszSubdatasets(NULL),
+    papszSubdatasets(nullptr),
     nSrid(-1),
     nOverviewFactor(1),
     nBandsToCreate(0),
-    poConn(NULL),
+    poConn(nullptr),
     bRegularBlocking(false),
     bAllTilesSnapToSameGrid(false),
     bCheckAllTiles(CPLTestBool(
         CPLGetConfigOption("PR_ALLOW_WHOLE_TABLE_SCAN", "YES"))),
-    pszSchema(NULL),
-    pszTable(NULL),
-    pszColumn(NULL),
-    pszWhere(NULL),
-    pszPrimaryKeyName(NULL),
+    pszSchema(nullptr),
+    pszTable(nullptr),
+    pszColumn(nullptr),
+    pszWhere(nullptr),
+    pszPrimaryKeyName(nullptr),
     bIsFastPK(false),
     bHasTriedFetchingPrimaryKeyName(false),
-    pszProjection(NULL),
+    pszProjection(nullptr),
     // Default
     resolutionStrategy(AVERAGE_APPROX_RESOLUTION),
     nMode(NO_MODE),
@@ -123,12 +123,12 @@ PostGISRasterDataset::PostGISRasterDataset() :
     ymin(0.0),
     xmax(0.0),
     ymax(0.0),
-    papoSourcesHolders(NULL),
-    hQuadTree(NULL),
+    papoSourcesHolders(nullptr),
+    hQuadTree(nullptr),
     bHasBuiltOverviews(false),
     nOverviewCount(0),
-    poParentDS(NULL),
-    papoOverviewDS(NULL),
+    poParentDS(nullptr),
+    papoOverviewDS(nullptr),
     bAssumeMultiBandReadPattern(true),
     nNextExpectedBand(1),
     nXOffPrev(0),
@@ -152,7 +152,7 @@ PostGISRasterDataset::PostGISRasterDataset() :
     adfGeoTransform[GEOTRSFRM_NS_RES] =
         CPLAtof(CPLGetConfigOption("PR_NS_RES", NO_VALID_RES));
 
-    const char * pszTmp = NULL;
+    const char * pszTmp = nullptr;
     // We ignore this option if we provided the desired resolution
     if (CPLIsEqual(adfGeoTransform[GEOTRSFRM_WE_RES], CPLAtof(NO_VALID_RES)) ||
         CPLIsEqual(adfGeoTransform[GEOTRSFRM_NS_RES], CPLAtof(NO_VALID_RES))) {
@@ -189,7 +189,7 @@ PostGISRasterDataset::PostGISRasterDataset() :
                 "STRATEGY = %s", pszTmp);
 #endif
 
-    poDriver = NULL;
+    poDriver = nullptr;
 
     nRasterXSize = 0;
     nRasterYSize = 0;
@@ -210,42 +210,42 @@ PostGISRasterDataset::~PostGISRasterDataset() {
 
     if (pszSchema) {
         CPLFree(pszSchema);
-        pszSchema = NULL;
+        pszSchema = nullptr;
     }
 
     if (pszTable) {
         CPLFree(pszTable);
-        pszTable = NULL;
+        pszTable = nullptr;
     }
 
     if (pszColumn) {
         CPLFree(pszColumn);
-        pszColumn = NULL;
+        pszColumn = nullptr;
     }
 
     if (pszWhere) {
         CPLFree(pszWhere);
-        pszWhere = NULL;
+        pszWhere = nullptr;
     }
 
     if (pszProjection) {
         CPLFree(pszProjection);
-        pszProjection = NULL;
+        pszProjection = nullptr;
     }
 
     if (pszPrimaryKeyName) {
         CPLFree(pszPrimaryKeyName);
-        pszPrimaryKeyName = NULL;
+        pszPrimaryKeyName = nullptr;
     }
 
     if (papszSubdatasets) {
         CSLDestroy(papszSubdatasets);
-        papszSubdatasets = NULL;
+        papszSubdatasets = nullptr;
     }
 
     if (hQuadTree) {
         CPLQuadTreeDestroy(hQuadTree);
-        hQuadTree = NULL;
+        hQuadTree = nullptr;
     }
 
     // Call it now so that the VRT sources
@@ -265,7 +265,7 @@ PostGISRasterDataset::~PostGISRasterDataset() {
         }
 
         VSIFree(papoSourcesHolders);
-        papoSourcesHolders = NULL;
+        papoSourcesHolders = nullptr;
     }
 }
 
@@ -284,7 +284,7 @@ int PostGISRasterDataset::CloseDependentDatasets()
             delete papoOverviewDS[i];
         }
         CPLFree(papoOverviewDS);
-        papoOverviewDS = NULL;
+        papoOverviewDS = nullptr;
         nOverviewCount = 0;
         bHasDroppedRef = TRUE;
     }
@@ -299,7 +299,7 @@ int PostGISRasterDataset::CloseDependentDatasets()
 GBool PostGISRasterDataset::HasSpatialIndex()
 {
     CPLString osCommand;
-    PGresult* poResult = NULL;
+    PGresult* poResult = nullptr;
 
     // If exists, return it
     if (bHasTriedHasSpatialIndex) {
@@ -338,7 +338,7 @@ GBool PostGISRasterDataset::HasSpatialIndex()
 
     poResult = PQexec(poConn, osCommand.c_str());
 
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0 )
     {
@@ -365,7 +365,7 @@ GBool PostGISRasterDataset::HasSpatialIndex()
 const char * PostGISRasterDataset::GetPrimaryKeyRef()
 {
     CPLString osCommand;
-    PGresult* poResult = NULL;
+    PGresult* poResult = nullptr;
 
     // If exists, return it
     if (bHasTriedFetchingPrimaryKeyName) {
@@ -376,7 +376,7 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 
     /* For debugging purposes only */
     if( CPLTestBool(CPLGetConfigOption("PR_DISABLE_PK", "FALSE") ) )
-        return NULL;
+        return nullptr;
 
     /* Determine the primary key/unique column on the table */
     osCommand.Printf("select d.attname from pg_catalog.pg_constraint "
@@ -395,7 +395,7 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 
     poResult = PQexec(poConn, osCommand.c_str());
 
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0 ) {
 
@@ -421,7 +421,7 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 
         poResult = PQexec(poConn, osCommand.c_str());
 
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) <= 0) {
 
@@ -431,7 +431,7 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
             "table %s.%s. For better performance, creating a primary key on the table is advised.",
             pszSchema, pszTable);
 
-            pszPrimaryKeyName = NULL; // Just in case
+            pszPrimaryKeyName = nullptr; // Just in case
         }
         else
         {
@@ -467,19 +467,19 @@ const char * PostGISRasterDataset::GetPrimaryKeyRef()
 GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
         const char* pszValidConnectionString) {
 
-    char* l_pszSchema = NULL;
-    char* l_pszTable = NULL;
-    char* l_pszColumn = NULL;
+    char* l_pszSchema = nullptr;
+    char* l_pszTable = nullptr;
+    char* l_pszColumn = nullptr;
 
     int i = 0;
     int nTuples = 0;
-    PGresult * poResult = NULL;
+    PGresult * poResult = nullptr;
     CPLString osCommand;
 
     /*************************************************************
      * Fetch all the raster tables and store them as subdatasets
      *************************************************************/
-    if (pszCurrentSchema == NULL) {
+    if (pszCurrentSchema == nullptr) {
         osCommand.Printf("select pg_namespace.nspname as schema, "
             "pg_class.relname as table, pg_attribute.attname as column "
             "from pg_class, pg_namespace,pg_attribute, pg_type where "
@@ -489,14 +489,14 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
             "pg_type.typname = 'raster'");
 
         poResult = PQexec(poConn, osCommand.c_str());
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) <= 0) {
 
             ReportError(CE_Failure, CPLE_AppDefined,
                 "Error browsing database for PostGIS Raster tables: %s",
                 PQerrorMessage(poConn));
-            if (poResult != NULL)
+            if (poResult != nullptr)
                 PQclear(poResult);
 
             return false;
@@ -538,7 +538,7 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
             "pg_namespace.nspname = '%s'", pszCurrentSchema);
 
         poResult = PQexec(poConn, osCommand.c_str());
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) <= 0) {
 
@@ -546,7 +546,7 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
                 "Error browsing database for PostGIS Raster tables: %s",
                 PQerrorMessage(poConn));
 
-            if (poResult != NULL)
+            if (poResult != nullptr)
                 PQclear(poResult);
 
             return false;
@@ -580,9 +580,9 @@ GBool PostGISRasterDataset::BrowseDatabase(const char* pszCurrentSchema,
  **********************************************************************/
 PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
 {
-    PROverview * poOV = NULL;
+    PROverview * poOV = nullptr;
     CPLString osCommand;
-    PGresult * poResult = NULL;
+    PGresult * poResult = nullptr;
 
     osCommand.Printf("SELECT o_table_name, overview_factor, "
             "o_raster_column, o_table_schema FROM raster_overviews "
@@ -598,7 +598,7 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
 
     poResult = PQexec(poConn, osCommand.c_str());
 
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) < 0) {
 
@@ -609,7 +609,7 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
         if (poResult)
             PQclear(poResult);
 
-        return NULL;
+        return nullptr;
     }
 
     else if (PQntuples(poResult) == 0) {
@@ -620,19 +620,19 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
         if (poResult)
             PQclear(poResult);
 
-        return NULL;
+        return nullptr;
     }
 
     int nTuples = PQntuples(poResult);
 
     poOV = (PROverview *)VSIMalloc2(nTuples, sizeof(PROverview));
-    if (poOV == NULL) {
+    if (poOV == nullptr) {
         ReportError(CE_Failure, CPLE_AppDefined,
             "Error looking for overview tables");
 
         PQclear(poResult);
 
-        return NULL;
+        return nullptr;
     }
 
     int iOVerview = 0;
@@ -663,7 +663,7 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
  ***********************************************************************/
 void PostGISRasterDataset::BuildOverviews()
 {
-    if( bHasBuiltOverviews || poParentDS != NULL )
+    if( bHasBuiltOverviews || poParentDS != nullptr )
         return;
 
     bHasBuiltOverviews = true;
@@ -690,11 +690,11 @@ void PostGISRasterDataset::BuildOverviews()
             poOvrDS->pszSchema = poOV[iOV].pszSchema; // takes ownership
             poOvrDS->pszTable = poOV[iOV].pszTable; // takes ownership
             poOvrDS->pszColumn = poOV[iOV].pszColumn; // takes ownership
-            poOvrDS->pszWhere = pszWhere ? CPLStrdup(pszWhere) : NULL;
+            poOvrDS->pszWhere = pszWhere ? CPLStrdup(pszWhere) : nullptr;
             poOvrDS->poParentDS = this;
 
             if (!CPLTestBool(CPLGetConfigOption("PG_DEFERRED_OVERVIEWS", "YES")) &&
-                (!poOvrDS->SetRasterProperties(NULL) ||
+                (!poOvrDS->SetRasterProperties(nullptr) ||
                 poOvrDS->GetRasterCount() != GetRasterCount()))
             {
                 delete poOvrDS;
@@ -724,7 +724,7 @@ int PostGISRasterDataset::GetOverviewCount()
 PostGISRasterDataset* PostGISRasterDataset::GetOverviewDS(int iOvr)
 {
     if( iOvr < 0 || iOvr > GetOverviewCount() )
-        return NULL;
+        return nullptr;
     return papoOverviewDS[iOvr];
 }
 
@@ -831,7 +831,7 @@ PostGISRasterTileDataset *
                                                double dfUpperLeftY)
 {
     int i;
-    PostGISRasterTileDataset * poRTDS = NULL;
+    PostGISRasterTileDataset * poRTDS = nullptr;
 
     for(i = 0; i < m_nTiles; i++)
     {
@@ -846,7 +846,7 @@ PostGISRasterTileDataset *
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -884,7 +884,7 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
     int nTileYSize = atoi(papszParams[POS_HEIGHT]);
 
     CSLDestroy(papszParams);
-    papszParams = NULL;
+    papszParams = nullptr;
 
     /**
         * Get actual raster band data
@@ -913,13 +913,13 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
     int bSwap = bIsLittleEndian;
 #endif
 
-    PostGISRasterTileDataset* poRTDS = NULL;
-    if( GetPrimaryKeyRef() != NULL )
+    PostGISRasterTileDataset* poRTDS = nullptr;
+    if( GetPrimaryKeyRef() != nullptr )
         poRTDS = GetMatchingSourceRef(pszPKID);
     else
         poRTDS = GetMatchingSourceRef(dfTilePixelSizeX,
                                       dfTilePixelSizeY);
-    if( poRTDS == NULL )
+    if( poRTDS == nullptr )
     {
         CPLFree(pbyData);
         return;
@@ -954,7 +954,7 @@ void PostGISRasterDataset::CacheTile(const char* pszMetadata,
         if (poRTB)
         {
             GDALRasterBlock* poBlock = poRTB->GetLockedBlockRef(0, 0, TRUE);
-            if( poBlock != NULL )
+            if( poBlock != nullptr )
             {
                 // Point block data ref to fetched data
                 memcpy(poBlock->GetDataRef(), (void *)pbyDataToRead,
@@ -1010,7 +1010,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
     int bLoadRasters = FALSE;
     int bAllBandCaching = FALSE;
 
-    PGresult *poResult = NULL;
+    PGresult *poResult = nullptr;
     if( m_nTiles > 0 && !bFetchAll )
     {
         osCommand.Printf("SELECT %s FROM %s.%s",
@@ -1028,7 +1028,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
     #endif
 
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) < 0) {
 
@@ -1064,7 +1064,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             const char* pszPKID = PQgetvalue(poResult, i, 0);
             PostGISRasterTileDataset *poTile = GetMatchingSourceRef(pszPKID);
             int bFetchTile = FALSE;
-            if( poTile == NULL )
+            if( poTile == nullptr )
                 bFetchTile = TRUE;
             else if( bLoadRasters )
             {
@@ -1121,7 +1121,7 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
 #endif
 
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) < 0) {
 
@@ -1141,11 +1141,11 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
             const char* pszMetadata = PQgetvalue(poResult, i, 1);
 
             PostGISRasterTileDataset* poRTDS = GetMatchingSourceRef(pszPKID);
-            if( poRTDS == NULL )
+            if( poRTDS == nullptr )
             {
                 poRTDS = BuildRasterTileDataset(
-                        pszMetadata, pszPKID, GetRasterCount(), NULL);
-                if( poRTDS != NULL )
+                        pszMetadata, pszPKID, GetRasterCount(), nullptr);
+                if( poRTDS != nullptr )
                 {
                     if( AddComplexSource(poRTDS) )
                     {
@@ -1158,12 +1158,12 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
                     else
                     {
                         delete poRTDS;
-                        poRTDS = NULL;
+                        poRTDS = nullptr;
                     }
                 }
             }
 
-            if( bLoadRasters && poRTDS != NULL )
+            if( bLoadRasters && poRTDS != nullptr )
             {
                 const char* pszRaster = PQgetvalue(poResult, i, 2);
                 CacheTile(pszMetadata, pszRaster, pszPKID, nBand, bAllBandCaching);
@@ -1188,12 +1188,12 @@ GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize, int nY
  **********************************************************************/
 BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
 {
-    BandMetadata * poBMD = NULL;
-    PGresult * poResult = NULL;
+    BandMetadata * poBMD = nullptr;
+    PGresult * poResult = nullptr;
     CPLString osCommand;
-    char * pszRes = NULL;
-    char * pszFilteredRes = NULL;
-    char ** papszParams = NULL;
+    char * pszRes = nullptr;
+    char * pszFilteredRes = nullptr;
+    char ** papszParams = nullptr;
 
     osCommand.Printf("select st_bandmetadata(%s, band) from "
       "(select %s, generate_series(1, %d) band from "
@@ -1209,7 +1209,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
 
     poResult = PQexec(poConn, osCommand.c_str());
     /* Error getting info from database */
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0) {
 
@@ -1224,17 +1224,17 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
         if (poResult)
             PQclear(poResult);
 
-        return NULL;
+        return nullptr;
     }
 
     // Matches nBands
     int nTuples = PQntuples(poResult);
 
     poBMD = (BandMetadata *)VSI_MALLOC2_VERBOSE(nTuples, sizeof(BandMetadata));
-    if (poBMD == NULL) {
+    if (poBMD == nullptr) {
         PQclear(poResult);
 
-        return NULL;
+        return nullptr;
     }
 
     int iBand = 0;
@@ -1262,7 +1262,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
             &(poBMD[iBand].eDataType), &(poBMD[iBand].nBitsDepth),
             &(poBMD[iBand].bSignedByte));
 
-        if (papszParams[POS_NODATAVALUE] == NULL ||
+        if (papszParams[POS_NODATAVALUE] == nullptr ||
             EQUAL(papszParams[POS_NODATAVALUE], "NULL") ||
             EQUAL(papszParams[POS_NODATAVALUE], "f") ||
             EQUAL(papszParams[POS_NODATAVALUE], "")) {
@@ -1278,7 +1278,7 @@ BandMetadata * PostGISRasterDataset::GetBandsMetadata(int * pnBands)
         }
 
         // TODO: Manage outdb and get path
-        poBMD[iBand].bIsOffline = (papszParams[POS_ISOUTDB] != NULL) ?
+        poBMD[iBand].bIsOffline = (papszParams[POS_ISOUTDB] != nullptr) ?
             EQUAL(papszParams[POS_ISOUTDB], "t") :
             false;
 
@@ -1373,7 +1373,7 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
             "rotated rasters yet.");
 
         CSLDestroy(papszParams);
-        return NULL;
+        return nullptr;
     }
 
     int l_nTileWidth = atoi(papszParams[POS_WIDTH]);
@@ -1397,13 +1397,13 @@ PostGISRasterTileDataset* PostGISRasterDataset::BuildRasterTileDataset(const cha
 
         CSLDestroy(papszParams);
 
-        return NULL;
+        return nullptr;
     }
 
     PostGISRasterTileDataset* poRTDS =
         new PostGISRasterTileDataset(this, l_nTileWidth, l_nTileHeight);
 
-    if (GetPrimaryKeyRef() != NULL)
+    if (GetPrimaryKeyRef() != nullptr)
     {
         poRTDS->pszPKID = CPLStrdup(pszPKID);
     }
@@ -1580,7 +1580,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 
     adfGeoTransform[GEOTRSFRM_TOPLEFT_X] = xmin;
 
-    int nField = (GetPrimaryKeyRef() != NULL) ? 1 : 0;
+    int nField = (GetPrimaryKeyRef() != nullptr) ? 1 : 0;
     /**
      * Optimization - Just one tile: The dataset's geotransform is the
      * tile's geotransform. And we don't need to construct sources for
@@ -1676,7 +1676,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
         papoSourcesHolders = (PostGISRasterTileDataset **)
             VSI_CALLOC_VERBOSE(l_nTiles, sizeof(PostGISRasterTileDataset *));
 
-        if (papoSourcesHolders == NULL) {
+        if (papoSourcesHolders == nullptr) {
             VSIFree(poBandMetaData);
 
             return false;
@@ -1687,10 +1687,10 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
         {
             PostGISRasterTileDataset* poRTDS =
                 BuildRasterTileDataset(PQgetvalue(poResult, i, nField),
-                                       (GetPrimaryKeyRef() != NULL) ? PQgetvalue(poResult, i, 0) : NULL,
+                                       (GetPrimaryKeyRef() != nullptr) ? PQgetvalue(poResult, i, 0) : nullptr,
                                        nBandsFetched,
                                        poBandMetaData);
-            if( poRTDS == NULL )
+            if( poRTDS == nullptr )
                 continue;
 
             if( nOverviewFactor == 1 && resolutionStrategy != USER_RESOLUTION )
@@ -1800,7 +1800,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 
                 continue;
             }
-            if( poRTDS->pszPKID != NULL )
+            if( poRTDS->pszPKID != nullptr )
                 oMapPKIDToRTDS[poRTDS->pszPKID] = poRTDS;
             CPLQuadTreeInsert(hQuadTree, poRTDS);
         }
@@ -1830,11 +1830,11 @@ const char * pszValidConnectionString)
     double dfTileUpperLeftY = 0;
 
     papszSubdatasets = (char**)VSICalloc(2 * l_nTiles + 1, sizeof(char*));
-    if( papszSubdatasets == NULL )
+    if( papszSubdatasets == nullptr )
         return false;
 
     // Subdatasets identified by primary key
-    if (GetPrimaryKeyRef() != NULL) {
+    if (GetPrimaryKeyRef() != nullptr) {
 
         for(i = 0; i < l_nTiles; i++) {
 
@@ -1932,7 +1932,7 @@ const char * pszValidConnectionString)
 GBool PostGISRasterDataset::SetRasterProperties
     (const char * pszValidConnectionString)
 {
-    PGresult* poResult = NULL;
+    PGresult* poResult = nullptr;
     CPLString osCommand;
     GBool bDataFoundInRasterColumns = false;
     GBool bNeedToCheckWholeTable = false;
@@ -1945,7 +1945,7 @@ GBool PostGISRasterDataset::SetRasterProperties
      * need a ST_RotatedExtent function in PostGIS. Without that
      * function, we should not allow rotated rasters.
      ******************************************************************/
-    if (pszWhere != NULL) {
+    if (pszWhere != nullptr) {
         osCommand.Printf(
             "select srid, nbband, ST_XMin(geom) as xmin, "
             "ST_XMax(geom) as xmax, ST_YMin(geom) as ymin, "
@@ -1995,7 +1995,7 @@ GBool PostGISRasterDataset::SetRasterProperties
         poResult = PQexec(poConn, osCommand.c_str());
 
         // Query execution error
-        if(poResult == NULL ||
+        if(poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) < 0)
         {
@@ -2026,7 +2026,7 @@ GBool PostGISRasterDataset::SetRasterProperties
         /* There's a result but the row has empty values */
         else if (PQntuples(poResult) == 1 &&
                  (PQgetvalue(poResult, 0, 1)[0] == '\0' ||
-                 (poParentDS == NULL &&
+                 (poParentDS == nullptr &&
                   (PQgetvalue(poResult, 0, 2)[0] == '\0' ||
                   PQgetvalue(poResult, 0, 3)[0] == '\0' ||
                   PQgetvalue(poResult, 0, 4)[0] == '\0' ||
@@ -2088,7 +2088,7 @@ GBool PostGISRasterDataset::SetRasterProperties
     }
 
     // Query execution error
-    if(poResult == NULL ||
+    if(poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) < 0) {
 
@@ -2096,7 +2096,7 @@ GBool PostGISRasterDataset::SetRasterProperties
             "Error browsing database for PostGIS Raster "
             "properties : %s",  PQerrorMessage(poConn));
 
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
 
         return false;
@@ -2135,7 +2135,7 @@ GBool PostGISRasterDataset::SetRasterProperties
     // Get some information we will probably need further
     nSrid = atoi(PQgetvalue(poResult, 0, 0));
     nBandsToCreate = atoi(PQgetvalue(poResult, 0, 1));
-    if( poParentDS != NULL )
+    if( poParentDS != nullptr )
     {
         /* If we are an overview of a parent dataset, we need to adjust */
         /* to its extent, otherwise IRasterIO() will not work properly */
@@ -2162,7 +2162,7 @@ GBool PostGISRasterDataset::SetRasterProperties
 
     double scale_x = CPLAtof(PQgetvalue(poResult, 0, 6));
     double scale_y = CPLAtof(PQgetvalue(poResult, 0, 7));
-    if( nOverviewFactor > 1 && poParentDS != NULL )
+    if( nOverviewFactor > 1 && poParentDS != nullptr )
     {
         scale_x = poParentDS->adfGeoTransform[GEOTRSFRM_WE_RES] * nOverviewFactor;
         scale_y = poParentDS->adfGeoTransform[GEOTRSFRM_NS_RES] * nOverviewFactor;
@@ -2206,9 +2206,9 @@ GBool PostGISRasterDataset::SetRasterProperties
      * a problem.
      ******************************************************************/
     // We'll identify each tile for its primary key/unique id (ideal)
-    if (GetPrimaryKeyRef() != NULL)
+    if (GetPrimaryKeyRef() != nullptr)
     {
-        if (pszWhere == NULL)
+        if (pszWhere == nullptr)
         {
             /* If we don't know the pixel size, then guess it from averaging the metadata */
             /* of a maximum 10 rasters */
@@ -2226,7 +2226,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                 #endif
 
                 poResult = PQexec(poConn, osCommand.c_str());
-                if (poResult == NULL ||
+                if (poResult == nullptr ||
                     PQresultStatus(poResult) != PGRES_TUPLES_OK ||
                     PQntuples(poResult) <= 0) {
 
@@ -2237,7 +2237,7 @@ GBool PostGISRasterDataset::SetRasterProperties
                         "PostGISRasterDataset::SetRasterProperties(): %s",
                         PQerrorMessage(poConn));
 
-                    if (poResult != NULL)
+                    if (poResult != nullptr)
                         PQclear(poResult);
 
                     return false;
@@ -2322,7 +2322,7 @@ GBool PostGISRasterDataset::SetRasterProperties
 
     // No primary key/unique id found. We rely on upper left pixel
     else {
-        if (pszWhere == NULL) {
+        if (pszWhere == nullptr) {
             osCommand.Printf("select st_metadata(%s) from %s.%s",
                 pszColumn, pszSchema, pszTable);
         }
@@ -2340,7 +2340,7 @@ GBool PostGISRasterDataset::SetRasterProperties
 #endif
 
     poResult = PQexec(poConn, osCommand.c_str());
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0) {
 
@@ -2351,7 +2351,7 @@ GBool PostGISRasterDataset::SetRasterProperties
             "PostGISRasterDataset::SetRasterProperties(): %s",
             PQerrorMessage(poConn));
 
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
 
         return false;
@@ -2447,9 +2447,9 @@ GetConnectionInfo(const char * pszFilename,
     WorkingMode * nMode, GBool * bBrowseDatabase)
 {
     int nPos = -1, i;
-    char * pszTmp = NULL;
+    char * pszTmp = nullptr;
     char **papszParams = ParseConnectionString(pszFilename);
-    if (papszParams == NULL) {
+    if (papszParams == nullptr) {
         return false;
     }
 
@@ -2463,7 +2463,7 @@ GetConnectionInfo(const char * pszFilename,
     nPos = CSLFindName(papszParams, "mode");
     if (nPos != -1) {
         int tmp;
-        tmp = atoi(CPLParseNameValue(papszParams[nPos], NULL));
+        tmp = atoi(CPLParseNameValue(papszParams[nPos], nullptr));
 
         // default value
         *nMode = ONE_RASTER_PER_ROW;
@@ -2473,7 +2473,7 @@ GetConnectionInfo(const char * pszFilename,
         }
 
         /* Remove the mode from connection string */
-        papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+        papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
     }
         /* Default mode */
     else
@@ -2494,7 +2494,7 @@ GetConnectionInfo(const char * pszFilename,
     }
 
     *ppszDbname =
-        CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+        CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
 
     /**
      * Case 2: There's database name, but no table name: activate a flag
@@ -2509,10 +2509,10 @@ GetConnectionInfo(const char * pszFilename,
         nPos = CSLFindName(papszParams, "schema");
         if (nPos != -1) {
             *ppszSchema =
-                CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+                CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
 
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
 
         /**
@@ -2522,19 +2522,19 @@ GetConnectionInfo(const char * pszFilename,
         nPos = CSLFindName(papszParams, "column");
         if (nPos != -1) {
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
 
         nPos = CSLFindName(papszParams, "where");
         if (nPos != -1) {
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
     } else {
         *ppszTable =
-            CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
         /* Delete this pair from params array */
-        papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+        papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
 
         /**
          * Case 3: There's database and table name, but no column
@@ -2551,10 +2551,10 @@ GetConnectionInfo(const char * pszFilename,
          **/
         else {
             *ppszColumn =
-                CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+                CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
 
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
 
         /* Get the rest of the parameters, if exist */
@@ -2563,19 +2563,19 @@ GetConnectionInfo(const char * pszFilename,
             *ppszSchema = CPLStrdup(DEFAULT_SCHEMA);
         } else {
             *ppszSchema =
-                CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+                CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
 
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
 
         nPos = CSLFindName(papszParams, "where");
         if (nPos != -1) {
             *ppszWhere =
-                CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+                CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
 
             /* Delete this pair from params array */
-            papszParams = CSLRemoveStrings(papszParams, nPos, 1, NULL);
+            papszParams = CSLRemoveStrings(papszParams, nPos, 1, nullptr);
         }
     }
 
@@ -2599,13 +2599,13 @@ GetConnectionInfo(const char * pszFilename,
     nPos = CSLFindName(papszParams, "host");
     if (nPos != -1) {
         *ppszHost =
-            CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
     }
-    else if (CPLGetConfigOption("PGHOST", NULL) != NULL) {
-        *ppszHost = CPLStrdup(CPLGetConfigOption("PGHOST", NULL));
+    else if (CPLGetConfigOption("PGHOST", nullptr) != nullptr) {
+        *ppszHost = CPLStrdup(CPLGetConfigOption("PGHOST", nullptr));
     }
     else
-        *ppszHost = NULL;
+        *ppszHost = nullptr;
     /*else {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Host parameter must be provided, or PGHOST environment "
@@ -2619,13 +2619,13 @@ GetConnectionInfo(const char * pszFilename,
     nPos = CSLFindName(papszParams, "port");
     if (nPos != -1) {
         *ppszPort =
-            CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
     }
-    else if (CPLGetConfigOption("PGPORT", NULL) != NULL ) {
-        *ppszPort = CPLStrdup(CPLGetConfigOption("PGPORT", NULL));
+    else if (CPLGetConfigOption("PGPORT", nullptr) != nullptr ) {
+        *ppszPort = CPLStrdup(CPLGetConfigOption("PGPORT", nullptr));
     }
     else
-        *ppszPort = NULL;
+        *ppszPort = nullptr;
     /*else {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Port parameter must be provided, or PGPORT environment "
@@ -2639,13 +2639,13 @@ GetConnectionInfo(const char * pszFilename,
     nPos = CSLFindName(papszParams, "user");
     if (nPos != -1) {
         *ppszUser =
-            CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
     }
-    else if (CPLGetConfigOption("PGUSER", NULL) != NULL ) {
-        *ppszUser = CPLStrdup(CPLGetConfigOption("PGUSER", NULL));
+    else if (CPLGetConfigOption("PGUSER", nullptr) != nullptr ) {
+        *ppszUser = CPLStrdup(CPLGetConfigOption("PGUSER", nullptr));
     }
     else
-        *ppszUser = NULL;
+        *ppszUser = nullptr;
     /*else {
         CPLError(CE_Failure, CPLE_AppDefined,
             "User parameter must be provided, or PGUSER environment "
@@ -2659,13 +2659,13 @@ GetConnectionInfo(const char * pszFilename,
     nPos = CSLFindName(papszParams, "password");
     if (nPos != -1) {
         *ppszPassword =
-            CPLStrdup(CPLParseNameValue(papszParams[nPos], NULL));
+            CPLStrdup(CPLParseNameValue(papszParams[nPos], nullptr));
     }
-    else if (CPLGetConfigOption("PGPASSWORD", NULL) != NULL ) {
-        *ppszPassword = CPLStrdup(CPLGetConfigOption("PGPASSWORD", NULL));
+    else if (CPLGetConfigOption("PGPASSWORD", nullptr) != nullptr ) {
+        *ppszPassword = CPLStrdup(CPLGetConfigOption("PGPASSWORD", nullptr));
     }
     else
-        *ppszPassword = NULL;
+        *ppszPassword = nullptr;
 
     CSLDestroy(papszParams);
 
@@ -2698,12 +2698,12 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
     char ** ppszSchema, char ** ppszTable, char ** ppszColumn,
     char ** ppszWhere, WorkingMode * nMode, GBool * bBrowseDatabase)
 {
-    PGconn * poConn = NULL;
-    char * pszDbname = NULL;
-    char * pszHost = NULL;
-    char * pszPort = NULL;
-    char * pszUser = NULL;
-    char * pszPassword = NULL;
+    PGconn * poConn = nullptr;
+    char * pszDbname = nullptr;
+    char * pszHost = nullptr;
+    char * pszPort = nullptr;
+    char * pszUser = nullptr;
+    char * pszPassword = nullptr;
 
     if (GetConnectionInfo(pszFilename, ppszConnectionString, &pszDbname, ppszSchema,
         ppszTable, ppszColumn, ppszWhere, &pszHost, &pszPort, &pszUser,
@@ -2718,7 +2718,7 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
         poConn = poDriver->GetConnection(*ppszConnectionString,
                 pszDbname, pszHost, pszPort, pszUser);
 
-        if (poConn == NULL) {
+        if (poConn == nullptr) {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Couldn't establish a database connection");
         }
@@ -2739,8 +2739,8 @@ GetConnection(const char * pszFilename, char ** ppszConnectionString,
 
 int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
 {
-    if (poOpenInfo->pszFilename == NULL ||
-        poOpenInfo->fpL != NULL ||
+    if (poOpenInfo->pszFilename == nullptr ||
+        poOpenInfo->fpL != nullptr ||
         !STARTS_WITH_CI(poOpenInfo->pszFilename, "PG:"))
     {
         return FALSE;
@@ -2769,14 +2769,14 @@ int PostGISRasterDataset::Identify(GDALOpenInfo* poOpenInfo)
  * These pairs are used for selecting the right raster table.
  **********************************************************************/
 GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
-    char* pszConnectionString = NULL;
-    char* pszSchema = NULL;
-    char* pszTable = NULL;
-    char* pszColumn = NULL;
-    char* pszWhere = NULL;
+    char* pszConnectionString = nullptr;
+    char* pszSchema = nullptr;
+    char* pszTable = nullptr;
+    char* pszColumn = nullptr;
+    char* pszWhere = nullptr;
     WorkingMode nMode = NO_MODE;
-    PGconn * poConn = NULL;
-    PostGISRasterDataset* poDS = NULL;
+    PGconn * poConn = nullptr;
+    PostGISRasterDataset* poDS = nullptr;
     GBool bBrowseDatabase = false;
     CPLString osCommand;
 
@@ -2784,18 +2784,18 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
      * Check input parameter
      **************************/
     if (!Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     poConn = GetConnection(poOpenInfo->pszFilename,
         &pszConnectionString, &pszSchema, &pszTable, &pszColumn,
         &pszWhere, &nMode, &bBrowseDatabase);
-    if (poConn == NULL) {
+    if (poConn == nullptr) {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
         CPLFree(pszTable);
         CPLFree(pszColumn);
         CPLFree(pszWhere);
-        return NULL;
+        return nullptr;
     }
 
     /*******************************************************************
@@ -2829,7 +2829,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
             if (pszWhere)
                 CPLFree(pszWhere);
 
-            return NULL;
+            return nullptr;
         }
 
         if (pszSchema)
@@ -2868,7 +2868,7 @@ GDALDataset* PostGISRasterDataset::Open(GDALOpenInfo* poOpenInfo) {
         if (!poDS->SetRasterProperties(pszConnectionString)) {
             CPLFree(pszConnectionString);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -2893,7 +2893,7 @@ char **PostGISRasterDataset::GetMetadataDomainList()
  * calling ST_Metadata, for example)
  *****************************************/
 char** PostGISRasterDataset::GetMetadata(const char *pszDomain) {
-    if (pszDomain != NULL && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
         return papszSubdatasets;
     else
         return GDALDataset::GetMetadata(pszDomain);
@@ -2972,7 +2972,7 @@ CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
                     r_table_name = '%s' AND r_column = '%s'",
                 nSrid, pszTable, pszColumn);
         poResult = PQexec(poConn, osCommand.c_str());
-        if (poResult == NULL || PQresultStatus(poResult) != PGRES_COMMAND_OK) {
+        if (poResult == nullptr || PQresultStatus(poResult) != PGRES_COMMAND_OK) {
             ReportError(CE_Failure, CPLE_AppDefined,
                     "Couldn't update raster_columns table: %s",
                     PQerrorMessage(poConn));
@@ -3004,7 +3004,7 @@ CPLErr PostGISRasterDataset::SetProjection(const char * pszProjectionRef) {
                     nSrid, pszTable, pszColumn);
 
             poResult = PQexec(poConn, osCommand.c_str());
-            if (poResult == NULL ||
+            if (poResult == nullptr ||
                     PQresultStatus(poResult) != PGRES_COMMAND_OK) {
                 ReportError(CE_Failure, CPLE_AppDefined,
                         "Couldn't update raster_columns table: %s",
@@ -3071,7 +3071,7 @@ CPLErr PostGISRasterDataset::GetGeoTransform(double * padfGeoTransform) {
  *********************************************************/
 char **PostGISRasterDataset::GetFileList()
 {
-    return NULL;
+    return nullptr;
 }
 
 /********************************************************
@@ -3085,15 +3085,15 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
                                   CPL_UNUSED GDALProgressFunc pfnProgress,
                                   CPL_UNUSED void * pProgressData )
 {
-    char* pszSchema = NULL;
-    char* pszTable = NULL;
-    char* pszColumn = NULL;
-    char* pszWhere = NULL;
+    char* pszSchema = nullptr;
+    char* pszTable = nullptr;
+    char* pszColumn = nullptr;
+    char* pszWhere = nullptr;
     GBool bBrowseDatabase = false;
     WorkingMode nMode;
-    char* pszConnectionString = NULL;
-    PGconn * poConn = NULL;
-    PGresult * poResult = NULL;
+    char* pszConnectionString = nullptr;
+    PGconn * poConn = nullptr;
+    PGresult * poResult = nullptr;
     CPLString osCommand;
     GBool bInsertSuccess;
 
@@ -3102,14 +3102,14 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         CPLError( CE_Failure, CPLE_NotSupported,
             "PostGISRasterDataset::CreateCopy() only works on source "
             "datasets that are PostGISRaster" );
-        return NULL;
+        return nullptr;
     }
 
     // Now we can do the cast
     PostGISRasterDataset *poSrcDS = (PostGISRasterDataset *)poGSrcDS;
 
     // Check connection string
-    if (pszFilename == NULL ||
+    if (pszFilename == nullptr ||
         !STARTS_WITH_CI(pszFilename, "PG:")) {
         /**
          * The connection string provided is not a valid connection
@@ -3118,12 +3118,12 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         CPLError( CE_Failure, CPLE_NotSupported,
             "PostGIS Raster driver was unable to parse the provided "
             "connection string." );
-        return NULL;
+        return nullptr;
     }
 
     poConn = GetConnection(pszFilename, &pszConnectionString, &pszSchema,
         &pszTable, &pszColumn, &pszWhere, &nMode, &bBrowseDatabase);
-    if (poConn == NULL || bBrowseDatabase || pszTable == NULL)
+    if (poConn == nullptr || bBrowseDatabase || pszTable == nullptr)
     {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
@@ -3132,17 +3132,17 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         CPLFree(pszWhere);
 
         // if connection info fails, browsing mode, or no table set
-        return NULL;
+        return nullptr;
     }
 
     // begin transaction
     poResult = PQexec(poConn, "begin");
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_COMMAND_OK) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Error beginning database transaction: %s",
             PQerrorMessage(poConn));
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
         if (pszSchema)
             CPLFree(pszSchema);
@@ -3155,7 +3155,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
         CPLFree(pszConnectionString);
 
-        return NULL;
+        return nullptr;
     }
 
     PQclear(poResult);
@@ -3169,25 +3169,25 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         pszSchema, pszTable, pszColumn, pszTable);
     poResult = PQexec(poConn, osCommand.c_str());
     if (
-            poResult == NULL ||
+            poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Error creating needed tables: %s",
                 PQerrorMessage(poConn));
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
 
         // rollback
         poResult = PQexec(poConn, "rollback");
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
             CPLError(CE_Failure, CPLE_AppDefined,
                 "Error rolling back transaction: %s",
                 PQerrorMessage(poConn));
         }
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
         if (pszSchema)
             CPLFree(pszSchema);
@@ -3200,7 +3200,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
         CPLFree(pszConnectionString);
 
-        return NULL;
+        return nullptr;
     }
 
     PQclear(poResult);
@@ -3210,25 +3210,25 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         pszSchema, pszTable, pszColumn);
     poResult = PQexec(poConn, osCommand.c_str());
     if (
-            poResult == NULL ||
+            poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Error creating needed index: %s",
                 PQerrorMessage(poConn));
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
 
         // rollback
         poResult = PQexec(poConn, "rollback");
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
             CPLError(CE_Failure, CPLE_AppDefined,
                 "Error rolling back transaction: %s",
                 PQerrorMessage(poConn));
         }
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
         if (pszSchema)
             CPLFree(pszSchema);
@@ -3241,13 +3241,13 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
         CPLFree(pszConnectionString);
 
-        return NULL;
+        return nullptr;
     }
 
     PQclear(poResult);
 
-    const char* pszSubdatasetName = NULL;
-    PostGISRasterDataset *poSubDS = NULL;
+    const char* pszSubdatasetName = nullptr;
+    PostGISRasterDataset *poSubDS = nullptr;
     if (poSrcDS->nMode == ONE_RASTER_PER_TABLE) {
         // one raster per table
 
@@ -3257,14 +3257,14 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
         if (!bInsertSuccess) {
             // rollback
             poResult = PQexec(poConn, "rollback");
-            if (poResult == NULL ||
+            if (poResult == nullptr ||
                 PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "Error rolling back transaction: %s",
                     PQerrorMessage(poConn));
             }
-            if (poResult != NULL)
+            if (poResult != nullptr)
                 PQclear(poResult);
             if (pszSchema)
                 CPLFree(pszSchema);
@@ -3277,7 +3277,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
             CPLFree(pszConnectionString);
 
-            return NULL;
+            return nullptr;
         }
     }
     else if (poSrcDS->nMode == ONE_RASTER_PER_ROW) {
@@ -3285,8 +3285,8 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
         // papszSubdatasets contains name/desc for each subdataset
         for (int i = 0; i < CSLCount(poSrcDS->papszSubdatasets); i += 2) {
-            pszSubdatasetName = CPLParseNameValue( poSrcDS->papszSubdatasets[i], NULL);
-            if (pszSubdatasetName == NULL) {
+            pszSubdatasetName = CPLParseNameValue( poSrcDS->papszSubdatasets[i], nullptr);
+            if (pszSubdatasetName == nullptr) {
                 CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
                 "Could not parse name/value out of subdataset list: "
                 "%s", poSrcDS->papszSubdatasets[i]);
@@ -3298,7 +3298,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
             // open the subdataset
             poSubDS = (PostGISRasterDataset *)Open(&poOpenInfo);
 
-            if (poSubDS == NULL) {
+            if (poSubDS == nullptr) {
                 // notify!
                 CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
                     "Could not open a subdataset: %s",
@@ -3324,12 +3324,12 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
     // commit transaction
     poResult = PQexec(poConn, "commit");
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_COMMAND_OK) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Error committing database transaction: %s",
             PQerrorMessage(poConn));
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
         if (pszSchema)
             CPLFree(pszSchema);
@@ -3342,7 +3342,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
 
         CPLFree(pszConnectionString);
 
-        return NULL;
+        return nullptr;
     }
 
     PQclear(poResult);
@@ -3366,7 +3366,7 @@ PostGISRasterDataset::CreateCopy( CPL_UNUSED const char * pszFilename,
     // open the newdataset
     poSubDS = (PostGISRasterDataset *)Open(&poOpenInfo);
 
-    if (poSubDS == NULL) {
+    if (poSubDS == nullptr) {
         CPLDebug("PostGIS_Raster", "PostGISRasterDataset::CreateCopy(): "
             "New dataset could not be opened.");
     }
@@ -3383,9 +3383,9 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
     const char * pszTable, const char * pszColumn)
 {
     CPLString osCommand;
-    PGresult * poResult = NULL;
+    PGresult * poResult = nullptr;
 
-    if (poSrcDS->pszWhere == NULL) {
+    if (poSrcDS->pszWhere == nullptr) {
         osCommand.Printf("insert into %s.%s (%s) (select %s from %s.%s)",
             pszSchema, pszTable, pszColumn, poSrcDS->pszColumn,
             poSrcDS->pszSchema, poSrcDS->pszTable);
@@ -3403,13 +3403,13 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
 
     poResult = PQexec(poConn, osCommand.c_str());
     if (
-            poResult == NULL ||
+            poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Error inserting raster: %s",
                 PQerrorMessage(poConn));
-        if (poResult != NULL)
+        if (poResult != nullptr)
             PQclear(poResult);
 
         return false;
@@ -3426,20 +3426,20 @@ PostGISRasterDataset::InsertRaster(PGconn * poConn,
 CPLErr
 PostGISRasterDataset::Delete(const char* pszFilename)
 {
-    char* pszSchema = NULL;
-    char* pszTable = NULL;
-    char* pszColumn = NULL;
-    char* pszWhere = NULL;
+    char* pszSchema = nullptr;
+    char* pszTable = nullptr;
+    char* pszColumn = nullptr;
+    char* pszWhere = nullptr;
     GBool bBrowseDatabase;
-    char* pszConnectionString = NULL;
+    char* pszConnectionString = nullptr;
     WorkingMode nMode;
-    PGconn * poConn = NULL;
-    PGresult * poResult = NULL;
+    PGconn * poConn = nullptr;
+    PGresult * poResult = nullptr;
     CPLString osCommand;
     CPLErr nError = CE_Failure;
 
     // Check connection string
-    if (pszFilename == NULL ||
+    if (pszFilename == nullptr ||
         !STARTS_WITH_CI(pszFilename, "PG:")) {
         /**
          * The connection string provided is not a valid connection
@@ -3454,7 +3454,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     poConn = GetConnection(pszFilename, &pszConnectionString,
         &pszSchema, &pszTable, &pszColumn, &pszWhere,
         &nMode, &bBrowseDatabase);
-    if (poConn == NULL || pszSchema == NULL || pszTable == NULL) {
+    if (poConn == nullptr || pszSchema == nullptr || pszTable == nullptr) {
         CPLFree(pszConnectionString);
         CPLFree(pszSchema);
         CPLFree(pszTable);
@@ -3466,7 +3466,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
 
     // begin transaction
     poResult = PQexec(poConn, "begin");
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_COMMAND_OK) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Error beginning database transaction: %s",
@@ -3479,14 +3479,14 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     PQclear(poResult);
 
     if ( nMode == ONE_RASTER_PER_TABLE ||
-        (nMode == ONE_RASTER_PER_ROW && pszWhere == NULL)) {
+        (nMode == ONE_RASTER_PER_ROW && pszWhere == nullptr)) {
         // without a where clause, this delete command shall delete
         // all subdatasets, even if the mode is ONE_RASTER_PER_ROW
 
         // drop table <schema>.<table>;
         osCommand.Printf("drop table %s.%s", pszSchema, pszTable);
         poResult = PQexec(poConn, osCommand.c_str());
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Couldn't drop the table %s.%s: %s",
@@ -3503,7 +3503,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
         osCommand.Printf("delete from %s.%s where %s", pszSchema,
             pszTable, pszWhere);
         poResult = PQexec(poConn, osCommand.c_str());
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Couldn't delete records from the table %s.%s: %s",
@@ -3519,7 +3519,7 @@ PostGISRasterDataset::Delete(const char* pszFilename)
     // so no commit is necessary
     if (nMode != NO_MODE) {
         poResult = PQexec(poConn, "commit");
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_COMMAND_OK) {
 
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -3610,7 +3610,7 @@ void GDALRegister_PostGISRaster()
     if( !GDAL_CHECK_VERSION( "PostGISRaster driver" ) )
         return;
 
-    if( GDALGetDriverByName( "PostGISRaster" ) != NULL )
+    if( GDALGetDriverByName( "PostGISRaster" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new PostGISRasterDriver();

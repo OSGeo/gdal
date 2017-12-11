@@ -45,7 +45,7 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
     m_nClientID(poODS->GetClientID()),
     m_pszOGDILayerName(CPLStrdup(pszName)),
     m_eFamily(eFamily),
-    m_poFeatureDefn(NULL),
+    m_poFeatureDefn(nullptr),
     // Keep a reference on the SpatialRef (owned by the dataset).
     m_poSpatialRef(m_poODS->GetSpatialRef()),
     m_sFilterBounds(*(m_poODS->GetGlobalBounds())),
@@ -67,7 +67,7 @@ OGROGDILayer::OGROGDILayer( OGROGDIDataSource *poODS,
 OGROGDILayer::~OGROGDILayer()
 
 {
-    if( m_nFeaturesRead > 0 && m_poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && m_poFeatureDefn != nullptr )
     {
         CPLDebug( "OGDI", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -135,7 +135,7 @@ void OGROGDILayer::ResetReading()
     }
 
     /* Reset spatial filter */
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
     {
         OGREnvelope oEnv;
 
@@ -191,15 +191,15 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Do we need to apply an attribute test?                          */
     /* -------------------------------------------------------------------- */
-        if( (m_poAttrQuery != NULL
+        if( (m_poAttrQuery != nullptr
             && !m_poAttrQuery->Evaluate( poFeature ) )
-            || (m_poFilterGeom != NULL
+            || (m_poFilterGeom != nullptr
                 && !FilterGeometry( poFeature->GetGeometryRef() ) ) )
         {
             m_nFilteredOutShapes ++;
@@ -223,8 +223,8 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
     if (! ECSSUCCESS(psResult))
     {
         if( ECSERROR( psResult ) &&
-            (psResult->message == NULL ||
-             strstr(psResult->message, "End of selection") == NULL) )
+            (psResult->message == nullptr ||
+             strstr(psResult->message, "End of selection") == nullptr) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Access to next object of layer '%s' failed: %s\n",
@@ -233,7 +233,7 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
         }
         // We probably reached EOF... keep track of shape count.
         m_nTotalShapeCount = m_iNextShapeId - m_nFilteredOutShapes;
-        return NULL;
+        return nullptr;
     }
 
     OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
@@ -316,12 +316,12 @@ OGRFeature *OGROGDILayer::GetNextRawFeature()
 
     for( int iField = 0; iField < m_poFeatureDefn->GetFieldCount(); iField++ )
     {
-        char *pszFieldStart = NULL;
+        char *pszFieldStart = nullptr;
         int nNameLen = 0;
 
         /* parse out the next attribute value */
         if( !ecs_FindElement( pszAttrList, &pszFieldStart, &pszAttrList,
-                              &nNameLen, NULL ) )
+                              &nNameLen, nullptr ) )
         {
             nNameLen = 0;
             pszFieldStart = pszAttrList;
@@ -372,12 +372,12 @@ OGRFeature *OGROGDILayer::GetFeature( GIntBig nFeatureId )
 {
 
     if (m_nTotalShapeCount != -1 && nFeatureId > m_nTotalShapeCount)
-        return NULL;
+        return nullptr;
 
     /* Unset spatial filter */
-    OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != NULL ) ? m_poFilterGeom->clone() : NULL;
-    if( poOldFilterGeom != NULL )
-        SetSpatialFilter(NULL);
+    OGRGeometry* poOldFilterGeom = ( m_poFilterGeom != nullptr ) ? m_poFilterGeom->clone() : nullptr;
+    if( poOldFilterGeom != nullptr )
+        SetSpatialFilter(nullptr);
 
     /* Reset reading if we are not the current layer */
     /* WARNING : this does not allow interleaved reading of layers */
@@ -398,18 +398,18 @@ OGRFeature *OGROGDILayer::GetFeature( GIntBig nFeatureId )
         {
             // We probably reached EOF... keep track of shape count.
             m_nTotalShapeCount = m_iNextShapeId;
-            if( poOldFilterGeom != NULL )
+            if( poOldFilterGeom != nullptr )
             {
                 SetSpatialFilter(poOldFilterGeom);
                 delete poOldFilterGeom;
             }
-            return NULL;
+            return nullptr;
         }
     }
 
     // OK, we're ready to read the requested feature...
     OGRFeature* poFeature = GetNextRawFeature();
-    if( poOldFilterGeom != NULL )
+    if( poOldFilterGeom != nullptr )
     {
         SetSpatialFilter(poOldFilterGeom);
         delete poOldFilterGeom;
@@ -475,7 +475,7 @@ int OGROGDILayer::TestCapability( const char * pszCap )
 
 void OGROGDILayer::BuildFeatureDefn()
 {
-    const char  *pszGeomName = NULL;
+    const char  *pszGeomName = nullptr;
     OGRwkbGeometryType eLayerGeomType = wkbUnknown;
 
 /* -------------------------------------------------------------------- */
@@ -506,7 +506,7 @@ void OGROGDILayer::BuildFeatureDefn()
         break;
     }
 
-    char* pszFeatureDefnName = NULL;
+    char* pszFeatureDefnName = nullptr;
     if (m_poODS->LaunderLayerNames())
     {
         pszFeatureDefnName = CPLStrdup(m_pszOGDILayerName);
@@ -525,7 +525,7 @@ void OGROGDILayer::BuildFeatureDefn()
     m_poFeatureDefn = new OGRFeatureDefn(pszFeatureDefnName);
     SetDescription( m_poFeatureDefn->GetName() );
     CPLFree(pszFeatureDefnName);
-    pszFeatureDefnName = NULL;
+    pszFeatureDefnName = nullptr;
 
     m_poFeatureDefn->SetGeomType(eLayerGeomType);
     m_poFeatureDefn->Reference();

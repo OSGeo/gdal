@@ -328,7 +328,7 @@ public:
 
     virtual ~PostGISRasterRasterBand();
 
-    virtual double GetNoDataValue(int *pbSuccess = NULL) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *,
                              int, int, GDALDataType,
