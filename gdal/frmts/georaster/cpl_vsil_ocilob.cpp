@@ -101,9 +101,9 @@ class VSIOCILobHandle : public VSIVirtualHandle
 
 WSIOCILobFSHandle::WSIOCILobFSHandle()
 {
-    poStatement  = NULL;
-    phLocator    = NULL;
-    poConnection = NULL;
+    poStatement  = nullptr;
+    phLocator    = nullptr;
+    poConnection = nullptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -136,7 +136,7 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
 {
     if( strncmp(pszFilename, "/vsiocilob/", strlen("/vsiocilob/") ) != 0 )
     {
-        return NULL;
+        return nullptr;
     }
 
     char** papszParam = CSLTokenizeString2( 
@@ -147,7 +147,7 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
     if( CSLCount( papszParam ) < 6 )
     {
         CSLDestroy( papszParam );
-        return NULL;
+        return nullptr;
     }
 
     return papszParam;
@@ -165,13 +165,13 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
 
     if( ! papszParam )
     {
-        return NULL;
+        return nullptr;
     }
 
     if( ! EQUAL( papszParam[5], "noext" ) )
     {
         CSLDestroy( papszParam );
-        return NULL;
+        return nullptr;
     }
 
     poConnection = new OWConnection( papszParam[0],
@@ -181,14 +181,14 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
     if( ! poConnection->Succeeded() )
     {
         CSLDestroy( papszParam );
-        return NULL;
+        return nullptr;
     }
 
     const char *pszUpdate = "";
     boolean bUpdate = false;
 
-    if( strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr ||
+        strchr(pszAccess, '+') != nullptr )
     {
         pszUpdate = "for update";
         bUpdate = true;
@@ -204,7 +204,7 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
 
     if( ! poStatement->Execute() )
     {
-        return NULL;
+        return nullptr;
     }
 
     return new VSIOCILobHandle( poConnection, poStatement, phLocator, bUpdate );
