@@ -33,7 +33,7 @@
 CPL_CVSID("$Id$")
 
 static int nFieldBufSize = 0;
-static char *pszFieldBuf = NULL;
+static char *pszFieldBuf = nullptr;
 
 static const int MAX_RECORD_LEN = 160;
 
@@ -47,9 +47,9 @@ static const int MAX_RECORD_LEN = 160;
 NTFRecord::NTFRecord( VSILFILE * fp ) :
     nType(99),
     nLength(0),
-    pszData(NULL)
+    pszData(nullptr)
 {
-    if( fp == NULL )
+    if( fp == nullptr )
         return;
 
 /* ==================================================================== */
@@ -71,15 +71,15 @@ NTFRecord::NTFRecord( VSILFILE * fp ) :
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Corrupt NTF record, missing end '%%'." );
             CPLFree( pszData );
-            pszData = NULL;
+            pszData = nullptr;
             break;
         }
 
-        if( pszData == NULL )
+        if( pszData == nullptr )
         {
             nLength = nNewLength - 2;
             pszData = static_cast<char *>(VSI_MALLOC_VERBOSE(nLength+1));
-            if (pszData == NULL)
+            if (pszData == nullptr)
             {
                 return;
             }
@@ -92,16 +92,16 @@ NTFRecord::NTFRecord( VSILFILE * fp ) :
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Invalid line");
                 VSIFree(pszData);
-                pszData = NULL;
+                pszData = nullptr;
                 return;
             }
 
             char* pszNewData = static_cast<char *>(
                 VSI_REALLOC_VERBOSE(pszData, nLength + (nNewLength - 4) + 1));
-            if (pszNewData == NULL)
+            if (pszNewData == nullptr)
             {
                 VSIFree(pszData);
-                pszData = NULL;
+                pszData = nullptr;
                 return;
             }
 
@@ -115,7 +115,7 @@ NTFRecord::NTFRecord( VSILFILE * fp ) :
 /* -------------------------------------------------------------------- */
 /*      Figure out the record type.                                     */
 /* -------------------------------------------------------------------- */
-    if( pszData != NULL )
+    if( pszData != nullptr )
     {
         char  szType[3];
 
@@ -135,10 +135,10 @@ NTFRecord::~NTFRecord()
 {
     CPLFree( pszData );
 
-    if( pszFieldBuf != NULL )
+    if( pszFieldBuf != nullptr )
     {
         CPLFree( pszFieldBuf );
-        pszFieldBuf = NULL;
+        pszFieldBuf = nullptr;
         nFieldBufSize = 0;
     }
 }
@@ -224,7 +224,7 @@ const char * NTFRecord::GetField( int nStart, int nEnd )
 {
     const int nSize = nEnd - nStart + 1;
 
-    if( pszData == NULL )
+    if( pszData == nullptr )
         return "";
 
 /* -------------------------------------------------------------------- */

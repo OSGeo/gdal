@@ -41,12 +41,12 @@ CPL_CVSID("$Id$")
 OGRMDBDataSource::OGRMDBDataSource()
 
 {
-    pszName = NULL;
-    papoLayers = NULL;
-    papoLayersInvisible = NULL;
+    pszName = nullptr;
+    papoLayers = nullptr;
+    papoLayersInvisible = nullptr;
     nLayers = 0;
     nLayersWithInvisible = 0;
-    poDB = NULL;
+    poDB = nullptr;
 }
 
 /************************************************************************/
@@ -98,7 +98,7 @@ int OGRMDBDataSource::OpenGDB(OGRMDBTable* poGDB_GeomColumns)
 
         char* pszTableName = poGDB_GeomColumns->GetColumnAsString(iTableName);
         char* pszFieldName = poGDB_GeomColumns->GetColumnAsString(iFieldName);
-        if (pszTableName == NULL || pszFieldName == NULL)
+        if (pszTableName == nullptr || pszFieldName == nullptr)
         {
             CPLFree(pszTableName);
             CPLFree(pszFieldName);
@@ -106,7 +106,7 @@ int OGRMDBDataSource::OpenGDB(OGRMDBTable* poGDB_GeomColumns)
         }
 
         OGRMDBTable* poTable = poDB->GetTable(pszTableName);
-        if (poTable == NULL)
+        if (poTable == nullptr)
         {
             CPLFree(pszTableName);
             CPLFree(pszFieldName);
@@ -153,13 +153,13 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
     if (iTableName < 0 || iTableType < 0)
         return FALSE;
 
-    char* pszFeatureTableName = NULL;
-    char* pszGeometryProperties = NULL;
-    char* pszGCoordSystemTable = NULL;
+    char* pszFeatureTableName = nullptr;
+    char* pszGeometryProperties = nullptr;
+    char* pszGCoordSystemTable = nullptr;
     while(poGAliasTable->GetNextRow())
     {
         char* pszTableType = poGAliasTable->GetColumnAsString(iTableType);
-        if (pszTableType == NULL)
+        if (pszTableType == nullptr)
             continue;
 
         if (strcmp(pszTableType, "INGRFeatures") == 0)
@@ -178,7 +178,7 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
         CPLFree(pszTableType);
     }
 
-    if (pszFeatureTableName == NULL)
+    if (pszFeatureTableName == nullptr)
     {
         CPLFree(pszGeometryProperties);
         CPLFree(pszGCoordSystemTable);
@@ -187,17 +187,17 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
 
     OGRMDBTable* poGFeaturesTable = poDB->GetTable(pszFeatureTableName);
     CPLFree(pszFeatureTableName);
-    pszFeatureTableName = NULL;
+    pszFeatureTableName = nullptr;
 
     OGRMDBTable* poGeometryPropertiesTable;
     if (pszGeometryProperties)
         poGeometryPropertiesTable = poDB->GetTable(pszGeometryProperties);
     else
-        poGeometryPropertiesTable = NULL;
+        poGeometryPropertiesTable = nullptr;
     CPLFree(pszGeometryProperties);
-    pszGeometryProperties = NULL;
+    pszGeometryProperties = nullptr;
 
-    if (poGFeaturesTable == NULL)
+    if (poGFeaturesTable == nullptr)
     {
         delete poGeometryPropertiesTable;
         CPLFree(pszGCoordSystemTable);
@@ -216,10 +216,10 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
         return FALSE;
     }
 
-    if (poGeometryPropertiesTable != NULL && poGeometryPropertiesTable->GetRowCount() != poGFeaturesTable->GetRowCount())
+    if (poGeometryPropertiesTable != nullptr && poGeometryPropertiesTable->GetRowCount() != poGFeaturesTable->GetRowCount())
     {
         delete poGeometryPropertiesTable;
-        poGeometryPropertiesTable = NULL;
+        poGeometryPropertiesTable = nullptr;
     }
 
     int iGCoordSystemGUID = -1;
@@ -236,7 +236,7 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
     }
 
     while(poGFeaturesTable->GetNextRow() &&
-          (poGeometryPropertiesTable == NULL || poGeometryPropertiesTable->GetNextRow()))
+          (poGeometryPropertiesTable == nullptr || poGeometryPropertiesTable->GetNextRow()))
     {
         char* pszFeatureName = poGFeaturesTable->GetColumnAsString(iFeatureName);
         //int nGeometryType = poGFeaturesTable->GetColumnAsInt(iGeometryType);
@@ -245,7 +245,7 @@ int OGRMDBDataSource::OpenGeomediaWarehouse(OGRMDBTable* poGAliasTable)
         if (poGeometryPropertiesTable)
             pszGCoordSystemGUID = poGeometryPropertiesTable->GetColumnAsString(iGCoordSystemGUID);
         else
-            pszGCoordSystemGUID = NULL;
+            pszGCoordSystemGUID = nullptr;
         if (pszFeatureName && pszGeometryFieldName)
         {
             OGRMDBTable* poTable = poDB->GetTable(pszFeatureName);
@@ -324,7 +324,7 @@ int OGRMDBDataSource::Open( const char * pszNewName )
     for(int i=0;i<nTables;i++)
     {
         OGRMDBTable* poTable = poDB->GetTable(poDB->apoTableNames[i]);
-        if (poTable == NULL)
+        if (poTable == nullptr)
             continue;
 
         OGRMDBLayer* poLayer = new OGRMDBLayer( this, poTable );
@@ -359,7 +359,7 @@ OGRLayer *OGRMDBDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -371,8 +371,8 @@ OGRLayer *OGRMDBDataSource::GetLayer( int iLayer )
 OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszNameIn )
 
 {
-    if (pszNameIn == NULL)
-        return NULL;
+    if (pszNameIn == nullptr)
+        return nullptr;
     OGRLayer* poLayer = OGRDataSource::GetLayerByName(pszNameIn);
     if (poLayer)
         return poLayer;
@@ -386,14 +386,14 @@ OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszNameIn )
     }
 
     OGRMDBTable* poTable = poDB->GetTable(pszNameIn);
-    if (poTable == NULL)
-        return NULL;
+    if (poTable == nullptr)
+        return nullptr;
 
     OGRMDBLayer* poMDBLayer = new OGRMDBLayer( this, poTable );
     if( poMDBLayer->BuildFeatureDefn() != CE_None )
     {
         delete poMDBLayer;
-        return NULL;
+        return nullptr;
     }
 
     papoLayersInvisible = (OGRMDBLayer**)CPLRealloc(papoLayersInvisible,
@@ -410,17 +410,17 @@ OGRLayer *OGRMDBDataSource::GetLayerByName( const char* pszNameIn )
 OGRSpatialReference* OGRMDBDataSource::GetGeomediaSRS(const char* pszGCoordSystemTable,
                                                       const char* pszGCoordSystemGUID)
 {
-    if (pszGCoordSystemTable == NULL || pszGCoordSystemGUID == NULL)
-        return NULL;
+    if (pszGCoordSystemTable == nullptr || pszGCoordSystemGUID == nullptr)
+        return nullptr;
 
     OGRLayer* poGCoordSystemTable = GetLayerByName(pszGCoordSystemTable);
-    if (poGCoordSystemTable == NULL)
-        return NULL;
+    if (poGCoordSystemTable == nullptr)
+        return nullptr;
 
     poGCoordSystemTable->ResetReading();
 
     OGRFeature* poFeature;
-    while((poFeature = poGCoordSystemTable->GetNextFeature()) != NULL)
+    while((poFeature = poGCoordSystemTable->GetNextFeature()) != nullptr)
     {
         const char* pszCSGUID = poFeature->GetFieldAsString("CSGUID");
         if (pszCSGUID && strcmp(pszCSGUID, pszGCoordSystemGUID) == 0)
@@ -433,5 +433,5 @@ OGRSpatialReference* OGRMDBDataSource::GetGeomediaSRS(const char* pszGCoordSyste
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }

@@ -96,13 +96,13 @@ OGRFeature *OGRILI2Layer::GetNextFeature()
     {
       OGRFeature *poFeature = *(listFeatureIt++);
       //apply filters
-      if( (m_poFilterGeom == NULL
+      if( (m_poFilterGeom == nullptr
            || FilterGeometry( poFeature->GetGeometryRef() ) )
-          && (m_poAttrQuery == NULL
+          && (m_poAttrQuery == nullptr
               || m_poAttrQuery->Evaluate( poFeature )) )
           return poFeature->Clone();
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -111,7 +111,7 @@ OGRFeature *OGRILI2Layer::GetNextFeature()
 
 GIntBig OGRILI2Layer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
         return listFeature.size();
     }
@@ -206,10 +206,10 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
             VSIFPrintfL(fp, "<BOUNDARY>\n");
         }
 
-        if( poPolygon->getExteriorRing() != NULL )
+        if( poPolygon->getExteriorRing() != nullptr )
         {
             if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp,
-                                        NULL, "" ) )
+                                        nullptr, "" ) )
                 return FALSE;
         }
 
@@ -217,7 +217,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
         {
             OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
 
-            if( !OGR2ILIGeometryAppend( poRing, fp, NULL, "" ) )
+            if( !OGR2ILIGeometryAppend( poRing, fp, nullptr, "" ) )
                 return FALSE;
         }
         if( iliGeomType == "Surface" || iliGeomType == "Area" )
@@ -258,7 +258,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
         {
             OGRGeometry *poMember = poGC->getGeometryRef( iMember );
 
-            if( !OGR2ILIGeometryAppend( poMember, fp, NULL, "" ) )
+            if( !OGR2ILIGeometryAppend( poMember, fp, nullptr, "" ) )
                 return FALSE;
         }
     }
@@ -275,7 +275,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
 
 OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     char szTempBuffer[80];
-    const char* tid = NULL;
+    const char* tid = nullptr;
     int iField = 0;
     if( poFeatureDefn->GetFieldCount() &&
         EQUAL(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(), "TID") )
@@ -291,7 +291,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
     }
 
     VSILFILE* fp = poDS->GetOutputFP();
-    if (fp == NULL)
+    if (fp == nullptr)
         return OGRERR_FAILURE;
 
     VSIFPrintfL(fp, "<%s TID=\"%s\">\n", poFeatureDefn->GetName(), tid);
@@ -304,7 +304,7 @@ OGRErr OGRILI2Layer::ICreateFeature( OGRFeature *poFeature ) {
         OGRGeomFieldDefn *poFieldDefn
             = poFeatureDefn->GetGeomFieldDefn(iGeomField);
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iGeomField);
-        if( poGeom != NULL )
+        if( poGeom != nullptr )
         {
             CPLString iliGeomType = GetIliGeomType(poFieldDefn->GetNameRef());
             OGR2ILIGeometryAppend( poGeom, fp, poFieldDefn->GetNameRef(),

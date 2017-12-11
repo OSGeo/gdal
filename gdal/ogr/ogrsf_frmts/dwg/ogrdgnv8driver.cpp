@@ -50,7 +50,7 @@ static int OGRDGNV8DriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
     VSIStatBuf sStat;
-    if(  poOpenInfo->fpL != NULL &&
+    if(  poOpenInfo->fpL != nullptr &&
          poOpenInfo->nHeaderBytes >= 512 )
     {
         // Is it a DGN v7 cell library?
@@ -59,7 +59,7 @@ static int OGRDGNV8DriverIdentify( GDALOpenInfo* poOpenInfo )
             && poOpenInfo->pabyHeader[2] == 0x17
             && poOpenInfo->pabyHeader[3] == 0x00 )
         {
-            return GDALGetDriverByName("DGN") == NULL &&
+            return GDALGetDriverByName("DGN") == nullptr &&
                    VSIStat(poOpenInfo->pszFilename, &sStat) == 0;
         }
 
@@ -70,12 +70,12 @@ static int OGRDGNV8DriverIdentify( GDALOpenInfo* poOpenInfo )
             && poOpenInfo->pabyHeader[2] == 0xFE
             && poOpenInfo->pabyHeader[3] == 0x02 )
         {
-            return GDALGetDriverByName("DGN") == NULL &&
+            return GDALGetDriverByName("DGN") == nullptr &&
                    VSIStat(poOpenInfo->pszFilename, &sStat) == 0;
         }
     }
 
-    return poOpenInfo->fpL != NULL &&
+    return poOpenInfo->fpL != nullptr &&
            poOpenInfo->nHeaderBytes >= 512 &&
            EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "DGN" ) &&
            memcmp(poOpenInfo->pabyHeader,
@@ -91,17 +91,17 @@ static GDALDataset *OGRDGNV8DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRDGNV8DriverIdentify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     if( !OGRTEIGHAInitialize() )
-        return NULL;
+        return nullptr;
 
     OGRDGNV8DataSource *poDS = new OGRDGNV8DataSource(OGRDGNV8GetServices());
     if( !poDS->Open( poOpenInfo->pszFilename,
                      poOpenInfo->eAccess == GA_Update) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -119,13 +119,13 @@ static GDALDataset *OGRDGNV8DriverCreate( const char * pszName,
                                         char **papszOptions )
 {
     if( !OGRTEIGHAInitialize() )
-        return NULL;
+        return nullptr;
 
     OGRDGNV8DataSource *poDS = new OGRDGNV8DataSource(OGRDGNV8GetServices());
     if( !poDS->PreCreate( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -138,7 +138,7 @@ static GDALDataset *OGRDGNV8DriverCreate( const char * pszName,
 void RegisterOGRDGNV8()
 
 {
-    if( GDALGetDriverByName( "DGNV8" ) != NULL )
+    if( GDALGetDriverByName( "DGNV8" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

@@ -44,7 +44,7 @@ int CPL_DLL CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* f
 #ifdef WIN32
 #include <windows.h>
 typedef HANDLE CPL_FILE_HANDLE;
-#define CPL_FILE_INVALID_HANDLE NULL
+#define CPL_FILE_INVALID_HANDLE NULL_OR_NULLPTR
 typedef DWORD  CPL_PID;
 #else
 #include <sys/types.h>

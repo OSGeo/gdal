@@ -42,16 +42,16 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
                                 OGRCoordinateTransformation* poCT,
                                 OGRCoordinateTransformation* poReversedCT ) :
     OGRLayerDecorator(poDecoratedLayer, bTakeOwnership),
-    m_poFeatureDefn(NULL),
+    m_poFeatureDefn(nullptr),
     m_iGeomField(iGeomField),
     m_poCT(poCT),
     m_poReversedCT(poReversedCT),
     m_poSRS(m_poCT->GetTargetCS())
 {
-    CPLAssert(poCT != NULL);
+    CPLAssert(poCT != nullptr);
     SetDescription( poDecoratedLayer->GetDescription() );
 
-    if( m_poSRS != NULL )
+    if( m_poSRS != nullptr )
     {
         m_poSRS->Reference();
     }
@@ -63,9 +63,9 @@ OGRWarpedLayer::OGRWarpedLayer( OGRLayer* poDecoratedLayer,
 
 OGRWarpedLayer::~OGRWarpedLayer()
 {
-    if( m_poFeatureDefn != NULL )
+    if( m_poFeatureDefn != nullptr )
         m_poFeatureDefn->Release();
-    if( m_poSRS != NULL )
+    if( m_poSRS != nullptr )
         m_poSRS->Release();
     delete m_poCT;
     delete m_poReversedCT;
@@ -109,10 +109,10 @@ void OGRWarpedLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
 
     if( m_iGeomFieldFilter == m_iGeomField )
     {
-        if( poGeom == NULL || m_poReversedCT == NULL )
+        if( poGeom == nullptr || m_poReversedCT == nullptr )
         {
             m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
-                                                NULL);
+                                                nullptr);
         }
         else
         {
@@ -138,7 +138,7 @@ void OGRWarpedLayer::SetSpatialFilter( int iGeomField, OGRGeometry *poGeom )
             else
             {
                 m_poDecoratedLayer->SetSpatialFilter(m_iGeomFieldFilter,
-                                                    NULL);
+                                                    nullptr);
             }
         }
     }
@@ -170,7 +170,7 @@ OGRFeature *OGRWarpedLayer::SrcFeatureToWarpedFeature(OGRFeature* poSrcFeature)
     poFeature->SetFID(poSrcFeature->GetFID());
 
     OGRGeometry* poGeom = poFeature->GetGeomFieldRef(m_iGeomField);
-    if( poGeom == NULL )
+    if( poGeom == nullptr )
         return poFeature;
 
     if( poGeom->transform(m_poCT) != OGRERR_NONE )
@@ -192,18 +192,18 @@ OGRFeature *OGRWarpedLayer::WarpedFeatureToSrcFeature(OGRFeature* poFeature)
     poSrcFeature->SetFID(poFeature->GetFID());
 
     OGRGeometry* poGeom = poSrcFeature->GetGeomFieldRef(m_iGeomField);
-    if( poGeom != NULL )
+    if( poGeom != nullptr )
     {
-        if( m_poReversedCT == NULL )
+        if( m_poReversedCT == nullptr )
         {
             delete poSrcFeature;
-            return NULL;
+            return nullptr;
         }
 
         if( poGeom->transform(m_poReversedCT) != OGRERR_NONE )
         {
             delete poSrcFeature;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -219,14 +219,14 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
     while( true )
     {
         OGRFeature* poFeature = m_poDecoratedLayer->GetNextFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
         OGRFeature* poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
         delete poFeature;
 
         OGRGeometry* poGeom = poFeatureNew->GetGeomFieldRef(m_iGeomField);
-        if( m_poFilterGeom != NULL && !FilterGeometry( poGeom ) )
+        if( m_poFilterGeom != nullptr && !FilterGeometry( poGeom ) )
         {
             delete poFeatureNew;
             continue;
@@ -243,7 +243,7 @@ OGRFeature *OGRWarpedLayer::GetNextFeature()
 OGRFeature *OGRWarpedLayer::GetFeature( GIntBig nFID )
 {
     OGRFeature* poFeature = m_poDecoratedLayer->GetFeature(nFID);
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
     {
         OGRFeature* poFeatureNew = SrcFeatureToWarpedFeature(poFeature);
         delete poFeature;
@@ -261,7 +261,7 @@ OGRErr      OGRWarpedLayer::ISetFeature( OGRFeature *poFeature )
     OGRErr eErr;
 
     OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
-    if( poFeatureNew == NULL )
+    if( poFeatureNew == nullptr )
         return OGRERR_FAILURE;
 
     eErr = m_poDecoratedLayer->SetFeature(poFeatureNew);
@@ -280,7 +280,7 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
     OGRErr eErr;
 
     OGRFeature* poFeatureNew = WarpedFeatureToSrcFeature(poFeature);
-    if( poFeatureNew == NULL )
+    if( poFeatureNew == nullptr )
         return OGRERR_FAILURE;
 
     eErr = m_poDecoratedLayer->CreateFeature(poFeatureNew);
@@ -296,7 +296,7 @@ OGRErr      OGRWarpedLayer::ICreateFeature( OGRFeature *poFeature )
 
 OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn()
 {
-    if( m_poFeatureDefn != NULL )
+    if( m_poFeatureDefn != nullptr )
         return m_poFeatureDefn;
 
     m_poFeatureDefn = m_poDecoratedLayer->GetLayerDefn()->Clone();
@@ -325,7 +325,7 @@ OGRSpatialReference *OGRWarpedLayer::GetSpatialRef()
 
 GIntBig OGRWarpedLayer::GetFeatureCount( int bForce )
 {
-    if( m_poFilterGeom == NULL )
+    if( m_poFilterGeom == nullptr )
         return m_poDecoratedLayer->GetFeatureCount(bForce);
 
     return OGRLayer::GetFeatureCount(bForce);
@@ -381,7 +381,7 @@ static double TransformAndUpdateBBAndReturnX(
     double& dfMinX, double& dfMinY, double& dfMaxX, double& dfMaxY )
 {
     int bSuccess = FALSE;
-    poCT->TransformEx( 1, &dfX, &dfY, NULL, &bSuccess );
+    poCT->TransformEx( 1, &dfX, &dfY, nullptr, &bSuccess );
     if( bSuccess )
     {
         if( dfX < dfMinX ) dfMinX = dfX;
@@ -436,7 +436,7 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
         VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(double));
     int* pabSuccess = (int*)
         VSI_MALLOC_VERBOSE((NSTEP + 1) * (NSTEP + 1) * sizeof(int));
-    if( padfX == NULL || padfY == NULL || pabSuccess == NULL)
+    if( padfX == nullptr || padfY == nullptr || pabSuccess == nullptr)
     {
         VSIFree(padfX);
         VSIFree(padfY);
@@ -455,7 +455,7 @@ int OGRWarpedLayer::ReprojectEnvelope( OGREnvelope* psEnvelope,
 
     int bRet = FALSE;
 
-    if( poCT->TransformEx( (NSTEP + 1) * (NSTEP + 1), padfX, padfY, NULL,
+    if( poCT->TransformEx( (NSTEP + 1) * (NSTEP + 1), padfX, padfY, nullptr,
                             pabSuccess ) )
     {
         double dfMinX = 0.0;
@@ -546,12 +546,12 @@ int  OGRWarpedLayer::TestCapability( const char * pszCapability )
         EQUAL(pszCapability, OLCSequentialWrite) )
     {
         if( bVal )
-            bVal = m_poReversedCT != NULL;
+            bVal = m_poReversedCT != nullptr;
     }
     else if( EQUAL(pszCapability, OLCFastFeatureCount) )
     {
         if( bVal )
-            bVal = m_poFilterGeom == NULL;
+            bVal = m_poFilterGeom == nullptr;
     }
 
     return bVal;

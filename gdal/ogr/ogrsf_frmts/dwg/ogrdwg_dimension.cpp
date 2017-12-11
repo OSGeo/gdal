@@ -272,7 +272,7 @@ the approach is as above in all these cases.
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             nColor = atoi(pszValue);
     }
 
@@ -302,7 +302,7 @@ the approach is as above in all these cases.
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma = NULL;
+    char* pszComma = nullptr;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\",p:5",osText.c_str());
 

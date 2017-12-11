@@ -77,12 +77,12 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
 
     OGRDB2DataSource* poGDS = (OGRDB2DataSource* )poDS;
     if( poGDS->nBands != 1 )
-        return NULL;
+        return nullptr;
 
     if( !poGDS->m_bTriedEstablishingCT )
     {
         poGDS->m_bTriedEstablishingCT = TRUE;
-        if( poGDS->m_poParentDS != NULL )
+        if( poGDS->m_poParentDS != nullptr )
         {
             poGDS->m_poCT = poGDS->m_poParentDS->GetRasterBand(1)->GetColorTable();
             if( poGDS->m_poCT )
@@ -113,7 +113,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
             CPLDebug("GDALDB2RasterBand::GetColorTable",
                      "Failed reading color table; error: %s",
                      oSession->GetLastError());
-            return NULL;
+            return nullptr;
         }
 
         nRetCode = SQLFetch(oStatement.GetStatement() );
@@ -127,7 +127,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
             CPLDebug("GDALDB2RasterBand::GetColorTable",
                      "Failed fetching color table; error: %s",
                      oSession->GetLastError());
-            return NULL;
+            return nullptr;
         }
 
 // If we got color data, process it.
@@ -139,7 +139,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                                   SQL_C_SLONG,
                                   (SQLPOINTER) &nDataLen,
                                   4,
-                                  0);
+                                  nullptr);
 
             if (nRetCode != SQL_SUCCESS)
             {
@@ -149,7 +149,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                 CPLDebug("OGRDB2DataSource::ReadTile",
                          "Failed fetching tile_data; error: %s",
                          oSession->GetLastError());
-                return NULL;
+                return nullptr;
             }
 
 // Allocate a buffer to read the tile BLOB into based on the
@@ -172,7 +172,7 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
                 CPLDebug("OGRDB2DataSource::ReadTile",
                          "Failed fetching tile_data; error: %s",
                          oSession->GetLastError());
-                return NULL;
+                return nullptr;
             }
 
             CPLString osMemFileName;
@@ -182,16 +182,16 @@ GDALColorTable* GDALDB2RasterBand::GetColorTable()
             VSIFCloseL(fp);
 
             /* Only PNG can have color table */
-            const char* apszDrivers[] = { "PNG", NULL };
+            const char* apszDrivers[] = { "PNG", nullptr };
             GDALDataset* poDSTile = (GDALDataset*)GDALOpenEx(osMemFileName.c_str(),
                                     GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                                    apszDrivers, NULL, NULL);
-            if( poDSTile != NULL )
+                                    apszDrivers, nullptr, nullptr);
+            if( poDSTile != nullptr )
             {
                 if( poDSTile->GetRasterCount() == 1 )
                 {
                     poGDS->m_poCT = poDSTile->GetRasterBand(1)->GetColorTable();
-                    if( poGDS->m_poCT != NULL )
+                    if( poGDS->m_poCT != nullptr )
                         poGDS->m_poCT = poGDS->m_poCT->Clone();
                 }
                 GDALClose( poDSTile );
@@ -226,10 +226,10 @@ CPLErr GDALDB2RasterBand::SetColorTable(GDALColorTable* poCT)
 
     poGDS->m_bTriedEstablishingCT = TRUE;
     delete poGDS->m_poCT;
-    if( poCT != NULL )
+    if( poCT != nullptr )
         poGDS->m_poCT = poCT->Clone();
     else
-        poGDS->m_poCT = NULL;
+        poGDS->m_poCT = nullptr;
     return CE_None;
 }
 
@@ -306,13 +306,13 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
                                   int* pbIsLossyFormat)
 {
     CPLDebug("OGRDB2DataSource::ReadTile0","Entering; memFile: %s", osMemFileName.c_str());
-    const char* apszDrivers[] = { "JPEG", "PNG", "WEBP", NULL };
+    const char* apszDrivers[] = { "JPEG", "PNG", "WEBP", nullptr };
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
     GDALDataset* poDSTile = (GDALDataset*)GDALOpenEx(osMemFileName.c_str(),
                             GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                            apszDrivers, NULL, NULL);
-    if( poDSTile == NULL )
+                            apszDrivers, nullptr, nullptr);
+    if( poDSTile == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot parse tile data");
@@ -337,15 +337,15 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
                            pabyTileData,
                            nBlockXSize, nBlockYSize,
                            GDT_Byte,
-                           poDSTile->GetRasterCount(), NULL,
-                           0, 0, 0, NULL) != CE_None )
+                           poDSTile->GetRasterCount(), nullptr,
+                           0, 0, 0, nullptr) != CE_None )
     {
         GDALClose(poDSTile);
         memset(pabyTileData, 0, nBands * nBlockXSize * nBlockYSize );
         return CE_Failure;
     }
 
-    GDALColorTable* poCT = NULL;
+    GDALColorTable* poCT = nullptr;
     if( nBands == 1 || nTileBandCount == 1 )
     {
         poCT = poDSTile->GetRasterBand(1)->GetColorTable();
@@ -354,10 +354,10 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
     CPLDebug("DB2_RB","get description: '%s'", poDSTile->GetDriver()->GetDescription());
     if( pbIsLossyFormat )
         *pbIsLossyFormat = !EQUAL(poDSTile->GetDriver()->GetDescription(), "PNG") ||
-                           (poCT != NULL && poCT->GetColorEntryCount() == 256) /* PNG8 */;
+                           (poCT != nullptr && poCT->GetColorEntryCount() == 256) /* PNG8 */;
 
     /* Map RGB(A) tile to single-band color indexed */
-    if( nBands == 1 && m_poCT != NULL && nTileBandCount != 1 )
+    if( nBands == 1 && m_poCT != nullptr && nTileBandCount != 1 )
     {
         std::map< GUInt32, int > oMapEntryToIndex;
         int nEntries = MIN(256, m_poCT->GetColorEntryCount());
@@ -396,14 +396,14 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
         return CE_None;
     }
 
-    if( nBands == 1 && nTileBandCount == 1 && poCT != NULL && m_poCT != NULL &&
+    if( nBands == 1 && nTileBandCount == 1 && poCT != nullptr && m_poCT != nullptr &&
             !poCT->IsSame(m_poCT) )
     {
         CPLError(CE_Warning, CPLE_NotSupported, "Different color tables. Unhandled for now");
     }
     else if( (nBands == 1 && nTileBandCount >= 3) ||
-             (nBands == 1 && nTileBandCount == 1 && m_poCT != NULL && poCT == NULL) ||
-             ((nBands == 1 || nBands == 2) && nTileBandCount == 1 && m_poCT == NULL && poCT != NULL) )
+             (nBands == 1 && nTileBandCount == 1 && m_poCT != nullptr && poCT == nullptr) ||
+             ((nBands == 1 || nBands == 2) && nTileBandCount == 1 && m_poCT == nullptr && poCT != nullptr) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Inconsistent dataset and tiles band characteristics");
@@ -436,10 +436,10 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
         memcpy(pabyTileData + 2 * nBlockXSize * nBlockYSize,
                pabyTileData, nBlockXSize * nBlockYSize);
     }
-    else if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != NULL) )
+    else if( nTileBandCount == 1 && !(nBands == 1 && m_poCT != nullptr) )
     {
         /* Expand color indexed to RGB(A) */
-        if( poCT != NULL )
+        if( poCT != nullptr )
         {
             int i;
             GByte abyCT[4*256];
@@ -500,7 +500,7 @@ CPLErr OGRDB2DataSource::ReadTile(const CPLString& osMemFileName,
 GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol)
 {
     CPLDebug("OGRDB2DataSource::ReadTile1","Entering; nRow: %d; nCol: %d", nRow, nCol);
-    GByte* pabyData = NULL;
+    GByte* pabyData = nullptr;
 
     int nBlockXSize, nBlockYSize;
     GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -591,7 +591,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed reading tile_data; error: %s",
                  GetSession()->GetLastError());
-        return NULL;
+        return nullptr;
     }
 
     nRetCode = SQLFetch(oStatement.GetStatement() );
@@ -602,7 +602,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed fetching tile_data; error: %s",
                  GetSession()->GetLastError());
-        return NULL;
+        return nullptr;
     }
 
 // If we got tile_data, process it. SQL_NO_DATA means try partial
@@ -613,7 +613,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
                               SQL_C_SLONG,
                               (SQLPOINTER) &nDataLen,
                               4,
-                              0);
+                              nullptr);
 
         if (nRetCode != SQL_SUCCESS)
         {
@@ -623,7 +623,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
             CPLDebug("OGRDB2DataSource::ReadTile",
                      "Failed fetching tile_data; error: %s",
                      GetSession()->GetLastError());
-            return NULL;
+            return nullptr;
         }
 
 // Allocate a buffer to read the tile BLOB into based on the
@@ -646,7 +646,7 @@ GByte* OGRDB2DataSource::ReadTile(int nRow, int nCol, GByte* pabyData,
             CPLDebug("OGRDB2DataSource::ReadTile",
                      "Failed fetching tile_data; error: %s",
                      GetSession()->GetLastError());
-            return NULL;
+            return nullptr;
         }
 
         CPLString osMemFileName;
@@ -822,12 +822,12 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         for(int nCol = nColMin; nCol <= nColMax; nCol++ )
         {
             GByte* pabyTileData = poGDS->ReadTile(nRow, nCol);
-            if( pabyTileData == NULL )
+            if( pabyTileData == nullptr )
                 return CE_Failure;
 
             for(int iBand=1; iBand<=poGDS->nBands; iBand++)
             {
-                GDALRasterBlock* poBlock = NULL;
+                GDALRasterBlock* poBlock = nullptr;
                 GByte* pabyDest;
                 if( iBand == nBand )
                 {
@@ -837,7 +837,7 @@ CPLErr GDALDB2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 {
                     poBlock =
                         poGDS->GetRasterBand(iBand)->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
-                    if( poBlock == NULL )
+                    if( poBlock == nullptr )
                         continue;
                     if( poBlock->GetDirty() )
                     {
@@ -914,14 +914,14 @@ static int WEBPSupports4Bands()
     if( bRes < 0 )
     {
         GDALDriver* poDrv = (GDALDriver*) GDALGetDriverByName("WEBP");
-        if( poDrv == NULL || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
+        if( poDrv == nullptr || CPLTestBool(CPLGetConfigOption("GPKG_SIMUL_WEBP_3BAND", "FALSE")) )
             bRes = FALSE;
         else
         {
             // LOSSLESS and RGBA support appeared in the same version
-            bRes = strstr(poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST), "LOSSLESS") != NULL;
+            bRes = strstr(poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST), "LOSSLESS") != nullptr;
         }
-        if( poDrv != NULL && !bRes )
+        if( poDrv != nullptr && !bRes )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "The version of WEBP available does not support 4-band RGBA");
@@ -1059,7 +1059,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
     CPLErr eErr = CE_Failure;
 
     int bAllOpaque = TRUE;
-    if( m_poCT == NULL && nAlphaBand != 0 )
+    if( m_poCT == nullptr && nAlphaBand != 0 )
     {
         GByte byFirstAlphaVal =  m_pabyCachedTiles[(nAlphaBand-1) * nBlockXSize * nBlockYSize];
         for(i=1; i<nBlockXSize * nBlockYSize; i++)
@@ -1123,7 +1123,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         bTileDriverSupports1Band = TRUE;
 
         if( bPartialTile || (nBands == 2 && !bAllOpaque)
-                || (nBands == 4 && !bAllOpaque) || m_poCT != NULL )
+                || (nBands == 4 && !bAllOpaque) || m_poCT != nullptr )
         {
             pszDriverName = "PNG";
             bTileDriverSupports2Bands = TRUE;
@@ -1158,12 +1158,12 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
     }
 
     GDALDriver* l_poDriver = (GDALDriver*) GDALGetDriverByName(pszDriverName);
-    if( l_poDriver != NULL)
+    if( l_poDriver != nullptr)
     {
         GDALDataset* poMEMDS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
-                               0, GDT_Byte, NULL);
+                               0, GDT_Byte, nullptr);
         int nTileBands = nBands;
-        if( bPartialTile && nBands == 1 && m_poCT == NULL && bTileDriverSupports2Bands )
+        if( bPartialTile && nBands == 1 && m_poCT == nullptr && bTileDriverSupports2Bands )
             nTileBands = 2;
         else if( bPartialTile && bTileDriverSupports4Bands )
             nTileBands = 4;
@@ -1188,7 +1188,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         }
         else if( nBands == 4 && (bAllOpaque || !bTileDriverSupports4Bands) )
             nTileBands = 3;
-        else if( nBands == 1 && m_poCT != NULL && !bTileDriverSupportsCT )
+        else if( nBands == 1 && m_poCT != nullptr && !bTileDriverSupportsCT )
         {
             nTileBands = 3;
             if( bTileDriverSupports4Bands )
@@ -1204,7 +1204,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
                 }
             }
         }
-        else if( nBands == 1 && m_poCT == NULL && !bTileDriverSupports1Band )
+        else if( nBands == 1 && m_poCT == nullptr && !bTileDriverSupports1Band )
             nTileBands = 3;
 
         if( bPartialTile && (nTileBands == 2 || nTileBands == 4) )
@@ -1221,12 +1221,12 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
 
         for(i=0; i<nTileBands; i++)
         {
-            char** papszOptions = NULL;
+            char** papszOptions = nullptr;
             char szDataPointer[32];
             int iSrc = i;
-            if( nBands == 1 && m_poCT == NULL && nTileBands == 3 )
+            if( nBands == 1 && m_poCT == nullptr && nTileBands == 3 )
                 iSrc = 0;
-            else if( nBands == 1 && m_poCT == NULL && bPartialTile && nTileBands == 4 )
+            else if( nBands == 1 && m_poCT == nullptr && bPartialTile && nTileBands == 4 )
                 iSrc = (i < 3) ? 0 : 3;
             else if( nBands == 2 && nTileBands >= 3 )
                 iSrc = (i < 3) ? 0 : 1;
@@ -1236,7 +1236,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
             szDataPointer[nRet] = '\0';
             papszOptions = CSLSetNameValue(papszOptions, "DATAPOINTER", szDataPointer);
             poMEMDS->AddBand(GDT_Byte, papszOptions);
-            if( i == 0 && nTileBands == 1 && m_poCT != NULL )
+            if( i == 0 && nTileBands == 1 && m_poCT != nullptr )
                 poMEMDS->GetRasterBand(1)->SetColorTable(m_poCT);
             CSLDestroy(papszOptions);
         }
@@ -1244,10 +1244,10 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         if( m_eTF == GPKG_TF_PNG8 && nTileBands == 1 && nBands >= 3 )
         {
             GDALDataset* poMEM_RGB_DS = MEMDataset::Create("", nBlockXSize, nBlockYSize,
-                                        0, GDT_Byte, NULL);
+                                        0, GDT_Byte, nullptr);
             for(i=0; i<3; i++)
             {
-                char** papszOptions = NULL;
+                char** papszOptions = nullptr;
                 char szDataPointer[32];
                 int nRet = CPLPrintPointer(szDataPointer,
                                            m_pabyCachedTiles + i * nBlockXSize * nBlockYSize,
@@ -1258,7 +1258,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
                 CSLDestroy(papszOptions);
             }
 
-            if( m_pabyHugeColorArray == NULL )
+            if( m_pabyHugeColorArray == nullptr )
             {
                 if( nBlockXSize <= 65536 / nBlockYSize )
                     m_pabyHugeColorArray = (GByte*) VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
@@ -1274,12 +1274,12 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
                                              m_pabyCachedTiles,
                                              m_pabyCachedTiles + nBlockXSize * nBlockYSize,
                                              m_pabyCachedTiles + 2 * nBlockXSize * nBlockYSize,
-                                             NULL,
+                                             nullptr,
                                              256, /* max colors */
                                              8, /* bit depth */
                                              (GUInt32*)m_pabyHugeColorArray, /* preallocated histogram */
                                              poCT,
-                                             NULL, NULL );
+                                             nullptr, nullptr );
 
             GDALDitherRGB2PCTInternal( poMEM_RGB_DS->GetRasterBand(1),
                                        poMEM_RGB_DS->GetRasterBand(2),
@@ -1289,12 +1289,12 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
                                        8, /* bit depth */
                                        (GInt16*)m_pabyHugeColorArray, /* pasDynamicColorMap */
                                        m_bDither,
-                                       NULL, NULL );
+                                       nullptr, nullptr );
             poMEMDS->GetRasterBand(1)->SetColorTable(poCT);
             delete poCT;
             GDALClose( poMEM_RGB_DS );
         }
-        else if( nBands == 1 && m_poCT != NULL && nTileBands > 1 )
+        else if( nBands == 1 && m_poCT != nullptr && nTileBands > 1 )
         {
             GByte abyCT[4*256];
             int nEntries = MIN(256, m_poCT->GetColorEntryCount());
@@ -1358,7 +1358,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
             }
         }
 
-        char** papszDriverOptions = CSLSetNameValue(NULL, "_INTERNAL_DATASET", "YES");
+        char** papszDriverOptions = CSLSetNameValue(nullptr, "_INTERNAL_DATASET", "YES");
         if( EQUAL(pszDriverName, "JPEG") || EQUAL(pszDriverName, "WEBP") )
         {
             papszDriverOptions = CSLSetNameValue(
@@ -1374,7 +1374,7 @@ CPLErr OGRDB2DataSource::WriteTileInternal()
         CPLAssert(VSIStatL(osMemFileName, &sStat) != 0);
 #endif
         GDALDataset* poOutDS = l_poDriver->CreateCopy(osMemFileName, poMEMDS,
-                               FALSE, papszDriverOptions, NULL, NULL);
+                               FALSE, papszDriverOptions, nullptr, nullptr);
         CSLDestroy( papszDriverOptions );
         if( poOutDS )
         {
@@ -2021,7 +2021,7 @@ CPLErr GDALDB2RasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             int bAllDirty = TRUE;
             for(int iBand=1; iBand<=poGDS->nBands; iBand++)
             {
-                GDALRasterBlock* poBlock = NULL;
+                GDALRasterBlock* poBlock = nullptr;
                 GByte* pabySrc;
                 if( iBand == nBand )
                 {
@@ -2155,7 +2155,7 @@ GDALRasterBand* GDALDB2RasterBand::GetOverview(int nIdx)
 {
     OGRDB2DataSource* poGDS = (OGRDB2DataSource* )poDS;
     if( nIdx < 0 || nIdx >= poGDS->m_nOverviewCount )
-        return NULL;
+        return nullptr;
     return poGDS->m_papoOverviewDS[nIdx]->GetRasterBand(nBand);
 }
 

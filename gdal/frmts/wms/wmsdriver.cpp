@@ -52,7 +52,7 @@ CPL_CVSID("$Id$")
 // It makes opening and reopening rasters from the same server faster
 //
 GDALWMSDataset::StringMap_t GDALWMSDataset::cfg;
-CPLMutex *GDALWMSDataset::cfgmtx = NULL;
+CPLMutex *GDALWMSDataset::cfgmtx = nullptr;
 
 
 /************************************************************************/
@@ -83,22 +83,22 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     CPLString osBaseURL = pszBaseURL;
     /* Remove all keywords to get base URL */
 
-    osBaseURL = CPLURLAddKVP(osBaseURL, "VERSION", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "LAYERS", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "SRS", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "CRS", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "BBOX", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "FORMAT", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "TRANSPARENT", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "STYLES", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "WIDTH", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "HEIGHT", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "VERSION", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "REQUEST", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "LAYERS", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "SRS", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "CRS", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "BBOX", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "FORMAT", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "TRANSPARENT", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "STYLES", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "WIDTH", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "HEIGHT", nullptr);
 
-    osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", NULL);
-    osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", NULL);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "OVERVIEWCOUNT", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "TILESIZE", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "MINRESOLUTION", nullptr);
+    osBaseURL = CPLURLAddKVP(osBaseURL, "BBOXORDER", nullptr);
 
     if (!osBaseURL.empty() && osBaseURL.back() == '&')
         osBaseURL.resize(osBaseURL.size() - 1);
@@ -144,7 +144,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     if (CSLCount(papszTokens) != 4)
     {
         CSLDestroy(papszTokens);
-        return NULL;
+        return nullptr;
     }
     const char* pszMinX = papszTokens[0];
     const char* pszMinY = papszTokens[1];
@@ -165,7 +165,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     if (dfMaxY <= dfMinY || dfMaxX <= dfMinX)
     {
         CSLDestroy(papszTokens);
-        return NULL;
+        return nullptr;
     }
 
     int nTileSize = atoi(osTileSize);
@@ -306,14 +306,14 @@ static
 CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
 {
     CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=TileMap" );
-    if (psRoot == NULL)
-        return NULL;
+    if (psRoot == nullptr)
+        return nullptr;
 
     CPLXMLNode* psTileSets = CPLGetXMLNode(psRoot, "TileSets");
-    if (psTileSets == NULL)
-        return NULL;
+    if (psTileSets == nullptr)
+        return nullptr;
 
-    const char* pszURL = CPLGetXMLValue(psRoot, "tilemapservice", NULL);
+    const char* pszURL = CPLGetXMLValue(psRoot, "tilemapservice", nullptr);
 
     int bCanChangeURL = TRUE;
 
@@ -332,67 +332,67 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
         osURL += "${z}/${x}/${y}.${format}";
     }
 
-    const char* pszSRS = CPLGetXMLValue(psRoot, "SRS", NULL);
-    if (pszSRS == NULL)
-        return NULL;
+    const char* pszSRS = CPLGetXMLValue(psRoot, "SRS", nullptr);
+    if (pszSRS == nullptr)
+        return nullptr;
 
     CPLXMLNode* psBoundingBox = CPLGetXMLNode( psRoot, "BoundingBox" );
-    if (psBoundingBox == NULL)
-        return NULL;
+    if (psBoundingBox == nullptr)
+        return nullptr;
 
-    const char* pszMinX = CPLGetXMLValue(psBoundingBox, "minx", NULL);
-    const char* pszMinY = CPLGetXMLValue(psBoundingBox, "miny", NULL);
-    const char* pszMaxX = CPLGetXMLValue(psBoundingBox, "maxx", NULL);
-    const char* pszMaxY = CPLGetXMLValue(psBoundingBox, "maxy", NULL);
-    if (pszMinX == NULL || pszMinY == NULL || pszMaxX == NULL || pszMaxY == NULL)
-        return NULL;
+    const char* pszMinX = CPLGetXMLValue(psBoundingBox, "minx", nullptr);
+    const char* pszMinY = CPLGetXMLValue(psBoundingBox, "miny", nullptr);
+    const char* pszMaxX = CPLGetXMLValue(psBoundingBox, "maxx", nullptr);
+    const char* pszMaxY = CPLGetXMLValue(psBoundingBox, "maxy", nullptr);
+    if (pszMinX == nullptr || pszMinY == nullptr || pszMaxX == nullptr || pszMaxY == nullptr)
+        return nullptr;
 
     double dfMinX = CPLAtofM(pszMinX);
     double dfMinY = CPLAtofM(pszMinY);
     double dfMaxX = CPLAtofM(pszMaxX);
     double dfMaxY = CPLAtofM(pszMaxY);
     if (dfMaxY <= dfMinY || dfMaxX <= dfMinX)
-        return NULL;
+        return nullptr;
 
     CPLXMLNode* psTileFormat = CPLGetXMLNode( psRoot, "TileFormat" );
-    if (psTileFormat == NULL)
-        return NULL;
+    if (psTileFormat == nullptr)
+        return nullptr;
 
-    const char* pszTileWidth = CPLGetXMLValue(psTileFormat, "width", NULL);
-    const char* pszTileHeight = CPLGetXMLValue(psTileFormat, "height", NULL);
-    const char* pszTileFormat = CPLGetXMLValue(psTileFormat, "extension", NULL);
-    if (pszTileWidth == NULL || pszTileHeight == NULL || pszTileFormat == NULL)
-        return NULL;
+    const char* pszTileWidth = CPLGetXMLValue(psTileFormat, "width", nullptr);
+    const char* pszTileHeight = CPLGetXMLValue(psTileFormat, "height", nullptr);
+    const char* pszTileFormat = CPLGetXMLValue(psTileFormat, "extension", nullptr);
+    if (pszTileWidth == nullptr || pszTileHeight == nullptr || pszTileFormat == nullptr)
+        return nullptr;
 
     int nTileWidth = atoi(pszTileWidth);
     int nTileHeight = atoi(pszTileHeight);
     if (nTileWidth < 128 || nTileHeight < 128)
-        return NULL;
+        return nullptr;
 
     CPLXMLNode* psIter = psTileSets->psChild;
     int nLevelCount = 0;
     double dfPixelSize = 0;
-    for(; psIter != NULL; psIter = psIter->psNext)
+    for(; psIter != nullptr; psIter = psIter->psNext)
     {
         if (psIter->eType == CXT_Element &&
             EQUAL(psIter->pszValue, "TileSet"))
         {
             const char* pszOrder =
-                CPLGetXMLValue(psIter, "order", NULL);
-            if (pszOrder == NULL)
+                CPLGetXMLValue(psIter, "order", nullptr);
+            if (pszOrder == nullptr)
             {
                 CPLDebug("WMS", "Cannot find order attribute");
-                return NULL;
+                return nullptr;
             }
             if (atoi(pszOrder) != nLevelCount)
             {
                 CPLDebug("WMS", "Expected order=%d, got %s", nLevelCount, pszOrder);
-                return NULL;
+                return nullptr;
             }
 
             const char* pszHref =
-                CPLGetXMLValue(psIter, "href", NULL);
-            if (nLevelCount == 0 && pszHref != NULL)
+                CPLGetXMLValue(psIter, "href", nullptr);
+            if (nLevelCount == 0 && pszHref != nullptr)
             {
                 if (bCanChangeURL && strlen(pszHref) > 10 &&
                     strcmp(pszHref + strlen(pszHref) - strlen("/0"), "/0") == 0)
@@ -403,9 +403,9 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
                 }
             }
             const char* pszUnitsPerPixel =
-                CPLGetXMLValue(psIter, "units-per-pixel", NULL);
-            if (pszUnitsPerPixel == NULL)
-                return NULL;
+                CPLGetXMLValue(psIter, "units-per-pixel", nullptr);
+            if (pszUnitsPerPixel == nullptr)
+                return nullptr;
             dfPixelSize = CPLAtofM(pszUnitsPerPixel);
 
             nLevelCount++;
@@ -413,7 +413,7 @@ CPLXMLNode * GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode* psXML)
     }
 
     if (nLevelCount == 0 || osURL.empty())
-        return NULL;
+        return nullptr;
 
     int nXSize = 0;
     int nYSize = 0;
@@ -477,12 +477,12 @@ static const char* GetJSonValue(const char* pszLine, const char* pszKey)
 {
     const char* pszJSonKey = CPLSPrintf("\"%s\" : ", pszKey);
     const char* pszPtr;
-    if( (pszPtr = strstr(pszLine, pszJSonKey)) != NULL )
+    if( (pszPtr = strstr(pszLine, pszJSonKey)) != nullptr )
         return pszPtr + strlen(pszJSonKey);
     pszJSonKey = CPLSPrintf("\"%s\": ", pszKey);
-    if( (pszPtr = strstr(pszLine, pszJSonKey)) != NULL )
+    if( (pszPtr = strstr(pszLine, pszJSonKey)) != nullptr )
         return pszPtr + strlen(pszJSonKey);
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -510,14 +510,14 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     int bHasMaxY = FALSE;
     int nExpectedLevel = 0;
     double dfBaseResolution = 0.0;
-    while((pszLine = CPLReadLine2L(fp, 4096, NULL)) != NULL)
+    while((pszLine = CPLReadLine2L(fp, 4096, nullptr)) != nullptr)
     {
         const char* pszVal;
-        if ((pszVal = GetJSonValue(pszLine, "rows")) != NULL)
+        if ((pszVal = GetJSonValue(pszLine, "rows")) != nullptr)
             nTileHeight = atoi(pszVal);
-        else if ((pszVal = GetJSonValue(pszLine, "cols")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "cols")) != nullptr)
             nTileWidth = atoi(pszVal);
-        else if ((pszVal = GetJSonValue(pszLine, "wkid")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "wkid")) != nullptr)
         {
             int nVal = atoi(pszVal);
             if (nWKID < 0)
@@ -526,10 +526,10 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
             {
                 CPLDebug("WMS", "Inconsistent WKID values : %d, %d", nVal, nWKID);
                 VSIFCloseL(fp);
-                return NULL;
+                return nullptr;
             }
         }
-        else if ((pszVal = GetJSonValue(pszLine, "latestWkid")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "latestWkid")) != nullptr)
         {
             int nVal = atoi(pszVal);
             if (nLatestWKID < 0)
@@ -538,10 +538,10 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
             {
                 CPLDebug("WMS", "Inconsistent latestWkid values : %d, %d", nVal, nLatestWKID);
                 VSIFCloseL(fp);
-                return NULL;
+                return nullptr;
             }
         }
-        else if ((pszVal = GetJSonValue(pszLine, "wkt")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "wkt")) != nullptr)
         {
             osWKT = pszVal;
             size_t nPos;
@@ -562,35 +562,35 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                 osWKT.clear();
             }
         }
-        else if ((pszVal = GetJSonValue(pszLine, "x")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "x")) != nullptr)
         {
             bHasMinX = TRUE;
             dfMinX = CPLAtofM(pszVal);
         }
-        else if ((pszVal = GetJSonValue(pszLine, "y")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "y")) != nullptr)
         {
             bHasMaxY = TRUE;
             dfMaxY = CPLAtofM(pszVal);
         }
-        else if ((pszVal = GetJSonValue(pszLine, "level")) != NULL)
+        else if ((pszVal = GetJSonValue(pszLine, "level")) != nullptr)
         {
             int nLevel = atoi(pszVal);
             if (nLevel != nExpectedLevel)
             {
                 CPLDebug("WMS", "Expected level : %d, got : %d", nExpectedLevel, nLevel);
                 VSIFCloseL(fp);
-                return NULL;
+                return nullptr;
             }
 
             pszVal = GetJSonValue(pszLine, "resolution");
-            if( pszVal == NULL )
+            if( pszVal == nullptr )
             {
-                pszLine = CPLReadLine2L(fp, 4096, NULL);
-                if( pszLine == NULL )
+                pszLine = CPLReadLine2L(fp, 4096, nullptr);
+                if( pszLine == nullptr )
                     break;
                 pszVal = GetJSonValue(pszLine, "resolution");
             }
-            if (pszVal != NULL)
+            if (pszVal != nullptr)
             {
                 double dfResolution = CPLAtofM(pszVal);
                 if (nLevel == 0)
@@ -600,7 +600,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
             {
                 CPLDebug("WMS", "Did not get resolution");
                 VSIFCloseL(fp);
-                return NULL;
+                return nullptr;
             }
             nExpectedLevel ++;
         }
@@ -611,33 +611,33 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
     if (nLevelCount < 1)
     {
         CPLDebug("WMS", "Did not get levels");
-        return NULL;
+        return nullptr;
     }
 
     if (nTileWidth <= 0)
     {
         CPLDebug("WMS", "Did not get tile width");
-        return NULL;
+        return nullptr;
     }
     if (nTileHeight <= 0)
     {
         CPLDebug("WMS", "Did not get tile height");
-        return NULL;
+        return nullptr;
     }
     if (nWKID <= 0 && osWKT.empty())
     {
         CPLDebug("WMS", "Did not get WKID");
-        return NULL;
+        return nullptr;
     }
     if (!bHasMinX)
     {
         CPLDebug("WMS", "Did not get min x");
-        return NULL;
+        return nullptr;
     }
     if (!bHasMaxY)
     {
         CPLDebug("WMS", "Did not get max y");
-        return NULL;
+        return nullptr;
     }
 
     if( nLatestWKID > 0 )
@@ -647,7 +647,7 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         nWKID = 3857;
 
     const char* pszEndURL = strstr(pszURL, "/?f=json");
-    if( pszEndURL == NULL )
+    if( pszEndURL == nullptr )
         pszEndURL = strstr(pszURL, "?f=json");
     CPLAssert(pszEndURL);
     CPLString osURL(pszURL);
@@ -682,22 +682,22 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
         oSRS.morphFromESRI();
 
         int nEntries = 0;
-        int* panConfidence = NULL;
+        int* panConfidence = nullptr;
         OGRSpatialReferenceH* pahSRS =
-            oSRS.FindMatches(NULL, &nEntries, &panConfidence);
+            oSRS.FindMatches(nullptr, &nEntries, &panConfidence);
         if( nEntries == 1 && panConfidence[0] == 100 )
         {
             OGRSpatialReference* poSRS =
                 reinterpret_cast<OGRSpatialReference*>(pahSRS[0]);
             oSRS = *poSRS;
-            const char* pszCode = oSRS.GetAuthorityCode(NULL);
+            const char* pszCode = oSRS.GetAuthorityCode(nullptr);
             if( pszCode )
                 nWKID = atoi(pszCode);
         }
         OSRFreeSRSArray(pahSRS);
         CPLFree(panConfidence);
 
-        char* pszWKT = NULL;
+        char* pszWKT = nullptr;
         oSRS.exportToWkt(&pszWKT);
         osWKT = pszWKT;
         CPLFree(pszWKT);
@@ -762,39 +762,39 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             (strstr(pabyHeader, "<WMT_MS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<WMS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != NULL))
+             (strstr(pabyHeader, "<WMT_MS_Capabilities") != nullptr ||
+              strstr(pabyHeader, "<WMS_Capabilities") != nullptr ||
+              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != nullptr))
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<WMS_Tile_Service") != NULL)
+             strstr(pabyHeader, "<WMS_Tile_Service") != nullptr)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != NULL)
+             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != nullptr)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<Services") != NULL &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0") != NULL)
+             strstr(pabyHeader, "<Services") != nullptr &&
+             strstr(pabyHeader, "<TileMapService version=\"1.0") != nullptr)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
+             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != nullptr)
     {
         return TRUE;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
              STARTS_WITH_CI(pszFilename, "http") &&
-             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
-              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
-              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
-              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
+             (strstr(pszFilename, "/MapServer?f=json") != nullptr ||
+              strstr(pszFilename, "/MapServer/?f=json") != nullptr ||
+              strstr(pszFilename, "/ImageServer?f=json") != nullptr ||
+              strstr(pszFilename, "/ImageServer/?f=json") != nullptr) )
     {
         return TRUE;
     }
@@ -818,7 +818,7 @@ int GDALWMSDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    CPLXMLNode *config = NULL;
+    CPLXMLNode *config = nullptr;
     CPLErr ret = CE_None;
 
     const char* pszFilename = poOpenInfo->pszFilename;
@@ -837,23 +837,23 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
              (STARTS_WITH_CI(pszFilename, "WMS:http") ||
               STARTS_WITH_CI(pszFilename, "http")) &&
-             (strstr(pszFilename, "/MapServer?f=json") != NULL ||
-              strstr(pszFilename, "/MapServer/?f=json") != NULL ||
-              strstr(pszFilename, "/ImageServer?f=json") != NULL ||
-              strstr(pszFilename, "/ImageServer/?f=json") != NULL) )
+             (strstr(pszFilename, "/MapServer?f=json") != nullptr ||
+              strstr(pszFilename, "/MapServer/?f=json") != nullptr ||
+              strstr(pszFilename, "/ImageServer?f=json") != nullptr ||
+              strstr(pszFilename, "/ImageServer/?f=json") != nullptr) )
     {
         if (STARTS_WITH_CI(pszFilename, "WMS:http"))
             pszFilename += 4;
         CPLString osURL(pszFilename);
-        if (strstr(pszFilename, "&pretty=true") == NULL)
+        if (strstr(pszFilename, "&pretty=true") == nullptr)
             osURL += "&pretty=true";
-        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), NULL);
-        if (psResult == NULL)
-            return NULL;
-        if (psResult->pabyData == NULL)
+        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), nullptr);
+        if (psResult == nullptr)
+            return nullptr;
+        if (psResult->pabyData == nullptr)
         {
             CPLHTTPDestroyResult(psResult);
-            return NULL;
+            return nullptr;
         }
         config = GDALWMSDatasetGetConfigFromArcGISJSON(osURL,
                                                        (const char*)psResult->pabyData);
@@ -874,51 +874,51 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
             return GDALWMSMetaDataset::DownloadGetCapabilities(poOpenInfo);
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             (strstr(pabyHeader, "<WMT_MS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<WMS_Capabilities") != NULL ||
-              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != NULL))
+             (strstr(pabyHeader, "<WMT_MS_Capabilities") != nullptr ||
+              strstr(pabyHeader, "<WMS_Capabilities") != nullptr ||
+              strstr(pabyHeader, "<!DOCTYPE WMT_MS_Capabilities") != nullptr))
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-        if (psXML == NULL)
-            return NULL;
+        if (psXML == nullptr)
+            return nullptr;
         GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetCapabilities(psXML);
         CPLDestroyXMLNode( psXML );
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<WMS_Tile_Service") != NULL)
+             strstr(pabyHeader, "<WMS_Tile_Service") != nullptr)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-        if (psXML == NULL)
-            return NULL;
+        if (psXML == nullptr)
+            return nullptr;
         GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeGetTileService(psXML);
         CPLDestroyXMLNode( psXML );
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != NULL)
+             strstr(pabyHeader, "<TileMap version=\"1.0.0\"") != nullptr)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-        if (psXML == NULL)
-            return NULL;
+        if (psXML == nullptr)
+            return nullptr;
         config = GDALWMSDatasetGetConfigFromTileMap(psXML);
         CPLDestroyXMLNode( psXML );
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<Services") != NULL &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0") != NULL)
+             strstr(pabyHeader, "<Services") != nullptr &&
+             strstr(pabyHeader, "<TileMapService version=\"1.0") != nullptr)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-        if (psXML == NULL)
-            return NULL;
+        if (psXML == nullptr)
+            return nullptr;
         CPLXMLNode* psRoot = CPLGetXMLNode( psXML, "=Services" );
-        GDALDataset* poRet = NULL;
+        GDALDataset* poRet = nullptr;
         if (psRoot)
         {
             CPLXMLNode* psTileMapService = CPLGetXMLNode(psRoot, "TileMapService");
             if (psTileMapService)
             {
-                const char* pszHref = CPLGetXMLValue(psTileMapService, "href", NULL);
+                const char* pszHref = CPLGetXMLValue(psTileMapService, "href", nullptr);
                 if (pszHref)
                 {
                     poRet = (GDALDataset*) GDALOpen(pszHref, GA_ReadOnly);
@@ -929,11 +929,11 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         return poRet;
     }
     else if (poOpenInfo->nHeaderBytes != 0 &&
-             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != NULL)
+             strstr(pabyHeader, "<TileMapService version=\"1.0.0\"") != nullptr)
     {
         CPLXMLNode* psXML = CPLParseXMLFile(pszFilename);
-        if (psXML == NULL)
-            return NULL;
+        if (psXML == nullptr)
+            return nullptr;
         GDALDataset* poRet = GDALWMSMetaDataset::AnalyzeTileMapService(psXML);
         CPLDestroyXMLNode( psXML );
         return poRet;
@@ -941,20 +941,20 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "AGS:"))
     {
-        return NULL;
+        return nullptr;
     }
     else if (poOpenInfo->nHeaderBytes == 0 &&
               STARTS_WITH_CI(pszFilename, "IIP:"))
     {
         CPLString osURL(pszFilename + 4);
         osURL += "&obj=Basic-Info";
-        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), NULL);
-        if (psResult == NULL)
-            return NULL;
-        if (psResult->pabyData == NULL)
+        CPLHTTPResult *psResult = CPLHTTPFetch(osURL.c_str(), nullptr);
+        if (psResult == nullptr)
+            return nullptr;
+        if (psResult->pabyData == nullptr)
         {
             CPLHTTPDestroyResult(psResult);
-            return NULL;
+            return nullptr;
         }
         int nXSize, nYSize;
         const char* pszMaxSize = strstr((const char*)psResult->pabyData, "Max-size:");
@@ -988,8 +988,8 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLHTTPDestroyResult(psResult);
     }
     else
-        return NULL;
-    if (config == NULL) return NULL;
+        return nullptr;
+    if (config == nullptr) return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -1000,21 +1000,21 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The WMS poDriver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     GDALWMSDataset *ds = new GDALWMSDataset();
     ret = ds->Initialize(config, poOpenInfo->papszOpenOptions);
     if (ret != CE_None) {
         delete ds;
-        ds = NULL;
+        ds = nullptr;
     }
     CPLDestroyXMLNode(config);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    if (ds != NULL)
+    if (ds != nullptr)
     {
         ds->SetMetadataItem( "INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE" );
         ds->SetDescription( poOpenInfo->pszFilename );
@@ -1038,11 +1038,11 @@ const char *GDALWMSDataset::GetServerConfig(const char *URI, char **papszHTTPOpt
 
     CPLHTTPResult *psResult = CPLHTTPFetch(URI, papszHTTPOptions);
 
-    if (NULL == psResult)
-        return NULL;
+    if (nullptr == psResult)
+        return nullptr;
 
     // Capture the result in buffer, get rid of http result
-    if ((psResult->nStatus == 0) && (NULL != psResult->pabyData) && ('\0' != psResult->pabyData[0]))
+    if ((psResult->nStatus == 0) && (nullptr != psResult->pabyData) && ('\0' != psResult->pabyData[0]))
         cfg.insert(make_pair(URI, static_cast<CPLString>(reinterpret_cast<const char *>(psResult->pabyData))));
 
     CPLHTTPDestroyResult(psResult);
@@ -1050,7 +1050,7 @@ const char *GDALWMSDataset::GetServerConfig(const char *URI, char **papszHTTPOpt
     if (cfg.end() != cfg.find(URI))
         return cfg.find(URI)->second;
     else
-        return NULL;
+        return nullptr;
 }
 
 // Empties the server configuration cache and removes the mutex
@@ -1063,7 +1063,7 @@ void GDALWMSDataset::ClearConfigCache() {
 void GDALWMSDataset::DestroyCfgMutex() {
     if (cfgmtx)
         CPLDestroyMutex(cfgmtx);
-    cfgmtx = NULL;
+    cfgmtx = nullptr;
 }
 
 /************************************************************************/
@@ -1077,25 +1077,25 @@ GDALDataset *GDALWMSDataset::CreateCopy( const char * pszFilename,
                                          CPL_UNUSED GDALProgressFunc pfnProgress,
                                          CPL_UNUSED void * pProgressData )
 {
-    if (poSrcDS->GetDriver() == NULL ||
+    if (poSrcDS->GetDriver() == nullptr ||
         !EQUAL(poSrcDS->GetDriver()->GetDescription(), "WMS"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset must be a WMS dataset");
-        return NULL;
+        return nullptr;
     }
 
     const char* pszXML = poSrcDS->GetMetadataItem("XML", "WMS");
-    if (pszXML == NULL)
+    if (pszXML == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot get XML definition of source WMS dataset");
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if (fp == NULL)
-        return NULL;
+    if (fp == nullptr)
+        return nullptr;
 
     VSIFWriteL(pszXML, 1, strlen(pszXML), fp);
     VSIFCloseL(fp);
@@ -1125,7 +1125,7 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d) {
 void GDALRegister_WMS()
 
 {
-    if( GDALGetDriverByName( "WMS" ) != NULL )
+    if( GDALGetDriverByName( "WMS" ) != nullptr )
         return;
 
     // Register all minidrivers here

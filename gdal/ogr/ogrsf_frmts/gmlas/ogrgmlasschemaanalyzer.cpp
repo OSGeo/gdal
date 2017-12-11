@@ -624,8 +624,8 @@ XSElementDeclaration* GMLASSchemaAnalyzer::GetTopElementDeclarationFromXPath(
     const char* pszName = strrchr(pszTypename, ':');
     if( pszName )
         pszName ++;
-    XSElementDeclaration* poEltDecl = NULL;
-    if( pszName != NULL )
+    XSElementDeclaration* poEltDecl = nullptr;
+    if( pszName != nullptr )
     {
         CPLString osNSPrefix = pszTypename;
         osNSPrefix.resize( pszName - 1 - pszTypename );
@@ -653,7 +653,7 @@ XSElementDeclaration* GMLASSchemaAnalyzer::GetTopElementDeclarationFromXPath(
     else
     {
         XMLCh* xmlName = XMLString::transcode(pszTypename);
-        poEltDecl = poModel->getElementDeclaration(xmlName, NULL);
+        poEltDecl = poModel->getElementDeclaration(xmlName, nullptr);
         XMLString::release( &xmlName );
     }
     return poEltDecl;
@@ -680,7 +680,7 @@ static XSComplexTypeDefinition* IsEltCompatibleOfFC(
             return poCT;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -694,7 +694,7 @@ bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration* poEltDecl)
     {
         XSElementDeclaration* poSubstGroup =
             poIter->getSubstitutionGroupAffiliation();
-        if( poSubstGroup == NULL )
+        if( poSubstGroup == nullptr )
             break;
         const CPLString osSubstNS(
                     transcode(poSubstGroup->getNamespace()) );
@@ -772,7 +772,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         //
         poParser->setFeature (XMLUni::fgXercesLoadSchema, false);
 
-        Grammar* poGrammar = NULL;
+        Grammar* poGrammar = nullptr;
         if( !GMLASReader::LoadXSDInParser( poParser.get(),
                                            oCache,
                                            oXSDEntityResolver,
@@ -854,7 +854,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
                                             xmlNamespace);
 
         // Remember group models that have names
-        for(XMLSize_t i = 0; poMapModelGroupDefinition != NULL &&
+        for(XMLSize_t i = 0; poMapModelGroupDefinition != nullptr &&
                              i <  poMapModelGroupDefinition->getLength(); i++ )
         {
             XSModelGroupDefinition* modelGroupDefinition =
@@ -870,7 +870,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
                             XSConstants::ELEMENT_DECLARATION, xmlNamespace);
 
-        for(XMLSize_t i = 0; poMapElements != NULL &&
+        for(XMLSize_t i = 0; poMapElements != nullptr &&
                              i < poMapElements->getLength(); i++ )
         {
             XSElementDeclaration* poEltDecl =
@@ -925,7 +925,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
             XSConstants::ELEMENT_DECLARATION, xmlNamespace);
         bFoundElementsInFirstChoiceNamespaces = 
-            poMapElements != NULL && poMapElements->getLength() > 0;
+            poMapElements != nullptr && poMapElements->getLength() > 0;
         XMLString::release(&xmlNamespace);
     }
     if( !bFoundElementsInFirstChoiceNamespaces )
@@ -975,13 +975,13 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
             XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
                 XSConstants::ELEMENT_DECLARATION, xmlNamespace);
 
-            for(XMLSize_t i = 0; poMapElements != NULL &&
+            for(XMLSize_t i = 0; poMapElements != nullptr &&
                                 i < poMapElements->getLength(); i++ )
             {
                 XSElementDeclaration* poEltDecl =
                     reinterpret_cast<XSElementDeclaration*>(poMapElements->item(i));
                 XSComplexTypeDefinition* poCT = IsEltCompatibleOfFC(poEltDecl);
-                if( !poEltDecl->getAbstract() && poCT != NULL  )
+                if( !poEltDecl->getAbstract() && poCT != nullptr  )
                 {
                     const CPLString osXPath(MakeXPath(
                                     transcode(poEltDecl->getNamespace()),
@@ -1092,7 +1092,7 @@ static CPLString GetAnnotationDoc( const XSAnnotation* annotation )
         return CPLString();
     CPLString osAnnot(transcode(annotation->getAnnotationString()));
     CPLXMLNode* psRoot = CPLParseXMLString(osAnnot);
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
     CPLString osDoc( CPLGetXMLValue(psRoot, "=annotation.documentation", "") );
     CPLDestroyXMLNode(psRoot);
     return osDoc.Trim();
@@ -1128,8 +1128,8 @@ static CPLString GetAnnotationDoc( const XSElementDeclaration* poEltDecl )
 {
     XSTypeDefinition* poTypeDef = poEltDecl->getTypeDefinition();
     CPLString osDoc = GetAnnotationDoc( poEltDecl->getAnnotation() );
-    XSAnnotationList* list = NULL;
-    while( poTypeDef != NULL )
+    XSAnnotationList* list = nullptr;
+    while( poTypeDef != nullptr )
     {
         if( poTypeDef->getTypeCategory() == XSTypeDefinition::COMPLEX_TYPE )
         {
@@ -1143,7 +1143,7 @@ static CPLString GetAnnotationDoc( const XSElementDeclaration* poEltDecl )
                         reinterpret_cast<XSSimpleTypeDefinition*>(poTypeDef);
             list = poST->getAnnotations();
         }
-        if( list != NULL )
+        if( list != nullptr )
             break;
         XSTypeDefinition* poNewTypeDef = poTypeDef->getBaseType();
         if( poNewTypeDef == poTypeDef )
@@ -1172,7 +1172,7 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 {
     bError = false;
     XSComplexTypeDefinition* poCT = IsEltCompatibleOfFC(poEltDecl);
-    if( !poEltDecl->getAbstract() && poCT != NULL )
+    if( !poEltDecl->getAbstract() && poCT != nullptr )
     {
         GMLASFeatureClass oClass;
         const CPLString osEltName( transcode(poEltDecl->getName()) );
@@ -1203,14 +1203,14 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 #endif
         oClass.SetXPath( osXPath );
         oClass.SetIsTopLevelElt(
-            GetTopElementDeclarationFromXPath(osXPath, poModel) != NULL );
+            GetTopElementDeclarationFromXPath(osXPath, poModel) != nullptr );
 
         std::set<XSModelGroup*> oSetVisitedModelGroups;
 
         oClass.SetDocumentation( GetAnnotationDoc(poEltDecl) );
 
         // might be NULL on swe:values for example
-        if( poCT->getParticle() != NULL )
+        if( poCT->getParticle() != nullptr )
         {
             std::map< CPLString, int > oMapCountOccurrencesOfSameName;
             BuildMapCountOccurrencesOfSameName(
@@ -1275,12 +1275,12 @@ void GMLASSchemaAnalyzer::SetFieldTypeAndWidthFromDefinition(
     {
         const XMLCh* maxLength = poST->getLexicalFacetValue(
                                     XSSimpleTypeDefinition::FACET_LENGTH );
-        if( maxLength == NULL )
+        if( maxLength == nullptr )
         {
             maxLength = poST->getLexicalFacetValue(
                                 XSSimpleTypeDefinition::FACET_MAXLENGTH );
         }
-        if( maxLength != NULL )
+        if( maxLength != nullptr )
             nMaxLength = MAX(nMaxLength, atoi( transcode(maxLength) ) );
         poST = reinterpret_cast<XSSimpleTypeDefinition*>(poST->getBaseType());
     }
@@ -1401,7 +1401,7 @@ XSModelGroupDefinition* GMLASSchemaAnalyzer::GetGroupDefinition( const XSModelGr
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1415,13 +1415,13 @@ static bool IsAnyType(XSComplexTypeDefinition* poType)
         transcode( poType->getBaseType()->getName() ) == szXS_ANY_TYPE )
     {
         XSParticle* poParticle = poType->getParticle();
-        if( poParticle != NULL )
+        if( poParticle != nullptr )
         {
             XSModelGroup* poGroupTerm = poParticle->getModelGroupTerm();
-            if( poGroupTerm != NULL )
+            if( poGroupTerm != nullptr )
             {
                 XSParticleList* poParticles =  poGroupTerm->getParticles();
-                if( poParticles != NULL )
+                if( poParticles != nullptr )
                 {
                     return poParticles->size() == 1 &&
                            poParticles->elementAt(0)->getTermType() ==
@@ -2083,8 +2083,8 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         XSComplexTypeDefinition* poSubEltCT =
                                             IsEltCompatibleOfFC(poSubElt);
                         if( !bAlreadyVisitedMG &&
-                            poSubEltCT != NULL &&
-                            poSubEltCT->getParticle() != NULL )
+                            poSubEltCT != nullptr &&
+                            poSubEltCT->getParticle() != nullptr )
                         {
                             bool bSubSimpleEnoughOut = true;
                             int nSubCountSubElt = 0;
@@ -2161,7 +2161,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                         oSetVisitedEltDecl.insert(poElt);
 
                         if( !bAlreadyVisitedMG &&
-                            poEltCT->getParticle() != NULL )
+                            poEltCT->getParticle() != nullptr )
                         {
                             bool bSubSimpleEnoughOut = true;
                             int nSubCountSubElt = 0;
@@ -2169,7 +2169,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                             // Process attributes
                             XSAttributeUseList* poAttrList =
                                                     poEltCT->getAttributeUses();
-                            const size_t nAttrListSize = (poAttrList != NULL) ?
+                            const size_t nAttrListSize = (poAttrList != nullptr) ?
                                                                 poAttrList->size(): 0;
                             for(size_t j=0; bSubSimpleEnoughOut && j< nAttrListSize; ++j )
                             {
@@ -2238,7 +2238,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
 // Process attributes
                         XSAttributeUseList* poAttrList =
                                                 poEltCT->getAttributeUses();
-                        const size_t nAttrListSize = (poAttrList != NULL) ?
+                        const size_t nAttrListSize = (poAttrList != nullptr) ?
                                                             poAttrList->size(): 0;
                         for(size_t j=0; bSimpleEnoughOut && j< nAttrListSize; ++j )
                         {
@@ -2259,7 +2259,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                 }
 
                 CPLString osTargetElement;
-                if( poElt->getAnnotation() != NULL )
+                if( poElt->getAnnotation() != nullptr )
                 {
                     CPLString osAnnot(transcode(
                         poElt->getAnnotation()->getAnnotationString()));
@@ -2268,7 +2268,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                     CPLDebug("GMLAS", "Annot: %s", osAnnot.c_str());
 #endif
                     CPLXMLNode* psRoot = CPLParseXMLString(osAnnot);
-                    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+                    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
                     osTargetElement =
                         CPLGetXMLValue(psRoot,
                                        "=annotation.appinfo.targetElement", "");
@@ -2292,7 +2292,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                                             poModel);
                     // TODO: even for non abstract we should probably
                     // handle substitutions
-                    if( poTargetElt != NULL && !poTargetElt->getAbstract() )
+                    if( poTargetElt != nullptr && !poTargetElt->getAbstract() )
                     {
                         const CPLString osTargetEltXPath( MakeXPath(
                                     transcode(poTargetElt->getNamespace()),
@@ -2333,7 +2333,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
                                     IsEltCompatibleOfFC(poTargetElt);
                         if( !bAlreadyVisitedMG &&
                             poTargetEltCT &&
-                            poTargetEltCT->getParticle() != NULL )
+                            poTargetEltCT->getParticle() != nullptr )
                         {
                             bool bSubSimpleEnoughOut = true;
                             int nSubCountSubElt = 0;
@@ -2516,7 +2516,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
         return false;
     }
 
-    if( poMainAttrList != NULL )
+    if( poMainAttrList != nullptr )
     {
         const size_t nMainAttrListSize = poMainAttrList->size();
         for(size_t j=0; j < nMainAttrListSize; ++j )
@@ -2560,7 +2560,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
     {
         XSElementDeclaration* poGMLMetadata =
             GetTopElementDeclarationFromXPath("gml:_MetaData", poModel);
-        if( poGMLMetadata != NULL )
+        if( poGMLMetadata != nullptr )
         {
             std::vector<XSElementDeclaration*> apoImplEltList;
             GetConcreteImplementationTypes(poGMLMetadata, apoImplEltList);
@@ -2623,7 +2623,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             }
 
             CPLString osTargetElement;
-            if( poElt->getAnnotation() != NULL )
+            if( poElt->getAnnotation() != nullptr )
             {
                 CPLString osAnnot(transcode(
                     poElt->getAnnotation()->getAnnotationString()));
@@ -2632,7 +2632,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 CPLDebug("GMLAS", "Annot: %s", osAnnot.c_str());
 #endif
                 CPLXMLNode* psRoot = CPLParseXMLString(osAnnot);
-                CPLStripXMLNamespace(psRoot, NULL, TRUE);
+                CPLStripXMLNamespace(psRoot, nullptr, TRUE);
                 osTargetElement =
                     CPLGetXMLValue(psRoot, "=annotation.appinfo.targetElement", "");
                 CPLDestroyXMLNode(psRoot);
@@ -2896,7 +2896,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 // Process attributes
                 XSAttributeUseList* poAttrList =
                                         poEltCT->getAttributeUses();
-                const size_t nAttrListSize = (poAttrList != NULL) ?
+                const size_t nAttrListSize = (poAttrList != nullptr) ?
                                                     poAttrList->size(): 0;
                 for(size_t j=0; j< nAttrListSize; ++j )
                 {
@@ -2935,7 +2935,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
 
                 // Deal with anyAttributes (or any element that also imply it)
                 XSWildcard* poAttrWildcard = poEltCT->getAttributeWildcard();
-                if( poAttrWildcard != NULL )
+                if( poAttrWildcard != nullptr )
                 {
                     GMLASField oField;
                     oField.SetType( GMLASField::GetTypeFromString(szXS_STRING),
@@ -2956,7 +2956,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 }
 
                 XSSimpleTypeDefinition* poST = poEltCT->getSimpleType();
-                if( poST != NULL )
+                if( poST != nullptr )
                 {
                     /* Case of an element, generally with attributes */
 
@@ -3057,7 +3057,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 }
 
                 // Is it an element that we already visited ? (cycle)
-                else if( poEltCT->getParticle() != NULL &&
+                else if( poEltCT->getParticle() != nullptr &&
                          oSetVisitedModelGroups.find(
                             poEltCT->getParticle()->getModelGroupTerm()) !=
                                                 oSetVisitedModelGroups.end() )
@@ -3085,7 +3085,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
 
                     // NULL can happen, for example for gml:ReferenceType
                     // that is an empty sequence with just attributes
-                    if( poEltCT->getParticle() != NULL )
+                    if( poEltCT->getParticle() != nullptr )
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GMLAS", "Exploring %s",
@@ -3102,7 +3102,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         if( !ExploreModelGroup(
                                            poEltCT->getParticle()->
                                                             getModelGroupTerm(),
-                                           NULL,
+                                           nullptr,
                                            oNestedClass,
                                            nRecursionCounter + 1,
                                            oSetNewVisitedModelGroups,
@@ -3125,7 +3125,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                                               poModel);
                         // TODO: even for non abstract we should probably
                         // handle substitutions
-                        if( poTargetElt != NULL && !poTargetElt->getAbstract() )
+                        if( poTargetElt != nullptr && !poTargetElt->getAbstract() )
                         {
                             bool bHasRequiredId = false;
                             XSComplexTypeDefinition* poTargetEltCT =
@@ -3134,7 +3134,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             {
                                 XSAttributeUseList* poTargetEltAttrList =
                                         poTargetEltCT->getAttributeUses();
-                                const size_t nTEAttrListSize = (poTargetEltAttrList != NULL) ?
+                                const size_t nTEAttrListSize = (poTargetEltAttrList != nullptr) ?
                                                                 poTargetEltAttrList->size(): 0;
                                 for(size_t j=0; j< nTEAttrListSize; ++j )
                                 {
@@ -3182,7 +3182,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 aoFields.push_back( oField );
                             }
                         }
-                        else if( poTargetElt != NULL && poTargetElt->getAbstract() )
+                        else if( poTargetElt != nullptr && poTargetElt->getAbstract() )
                         {
                             // If the element is nillable, then we
                             // need an extra field to be able to distinguish between the
@@ -3245,7 +3245,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oField.SetName( 
                                 osPrefixedEltName + "_" + oField.GetName() );
                             if( nMinOccurs == 0 ||
-                                (poEltCT->getParticle() != NULL &&
+                                (poEltCT->getParticle() != nullptr &&
                                  poEltCT->getParticle()->getMinOccurs() == 0) )
                             {
                                 oField.SetMinOccurs(0);
@@ -3287,7 +3287,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                             oField.GetName() );
                             if( oField.GetMaxOccurs() == 1 &&
                                 bEltRepeatedParticle &&
-                                poEltCT->getParticle() != NULL )
+                                poEltCT->getParticle() != nullptr )
                             {
                                 oField.SetMaxOccurs( nMaxOccursEltParticle );
                             }
@@ -3353,7 +3353,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             oField.SetXPath( osElementXPath );
                             if( bRepeatedParticle )
                             {
-                                if( poEltCT->getParticle() != NULL )
+                                if( poEltCT->getParticle() != nullptr )
                                 {
                                     oField.SetMinOccurs( ComposeMinOccurs(
                                         nMinOccurs, nMinOccursEltParticle) );
@@ -3366,7 +3366,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                     oField.SetMaxOccurs( nMaxOccurs );
                                 }
                             }
-                            else if( poEltCT->getParticle() != NULL )
+                            else if( poEltCT->getParticle() != nullptr )
                             {
                                 if( nMaxOccursEltParticle != 1 )
                                     oField.SetRepetitionOnSequence( true );
@@ -3426,7 +3426,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 CPLString osGroupName;
                 XSModelGroupDefinition* psGroupDefinition =
                                             GetGroupDefinition(psSubModelGroup);
-                if( psGroupDefinition != NULL )
+                if( psGroupDefinition != nullptr )
                 {
                     osGroupName = transcode( psGroupDefinition->getName() );
                     oNestedClass.SetDocumentation(
@@ -3444,7 +3444,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                         oTmpClass.SetName( oClass.GetName() );
                         oTmpClass.SetXPath( oClass.GetXPath() );
                         if( !ExploreModelGroup( psSubModelGroup,
-                                                NULL,
+                                                nullptr,
                                                 oTmpClass,
                                                 nRecursionCounter + 1,
                                                 oSetNewVisitedModelGroups,
@@ -3486,7 +3486,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 std::set<XSModelGroup*>
                     oSetNewVisitedModelGroups(oSetVisitedModelGroups);
                 if( !ExploreModelGroup( psSubModelGroup,
-                                        NULL,
+                                        nullptr,
                                         oNestedClass,
                                         nRecursionCounter + 1,
                                         oSetNewVisitedModelGroups,
@@ -3527,7 +3527,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                 std::set<XSModelGroup*>
                     oSetNewVisitedModelGroups(oSetVisitedModelGroups);
                 if( !ExploreModelGroup( psSubModelGroup,
-                                        NULL,
+                                        nullptr,
                                         oClass,
                                         nRecursionCounter + 1,
                                         oSetNewVisitedModelGroups,

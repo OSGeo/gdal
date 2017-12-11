@@ -163,7 +163,7 @@ class OGRJMLWriterLayer : public OGRLayer
                         ~OGRJMLWriterLayer();
 
     void                ResetReading() override {}
-    OGRFeature *        GetNextFeature() override { return NULL; }
+    OGRFeature *        GetNextFeature() override { return nullptr; }
 
     OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK ) override;
@@ -188,7 +188,7 @@ class OGRJMLDataset : public GDALDataset
                         OGRJMLDataset();
                         ~OGRJMLDataset();
 
-    int                 GetLayerCount() override { return poLayer != NULL ? 1 : 0; }
+    int                 GetLayerCount() override { return poLayer != nullptr ? 1 : 0; }
     OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,

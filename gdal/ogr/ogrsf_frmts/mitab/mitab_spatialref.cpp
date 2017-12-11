@@ -258,7 +258,7 @@ const MapInfoDatumInfo asDatumInfoList[] =
 { 0,    9999,"Bosnia-Herzegovina",         10, 472.8677, 187.8769, 544.7084, -5.76198422, -5.3222842, 12.80666941, 1.54517287, 0 },
 { 6181, 9999,"Luxembourg 1930 / Gauss",     4, -192.986, 13.673, -39.309, 0.4099, 2.9332, -2.6881, 0.43, 0 },
 
-{ -1,   -1, NULL,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
+{ -1,   -1, nullptr,                          0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 /* -------------------------------------------------------------------- */
@@ -322,7 +322,7 @@ const MapInfoSpheroidInfo asSpheroidInfoList[] =
 {28,"WGS 84",                                   6378137.0,      298.257223563},
 {29,"WGS 84 (MAPINFO Datum 0)",                 6378137.01,     298.257223563},
 {54,"WGS 84 (MAPINFO Datum 157)",               6378137.01,     298.257223563},
-{-1,NULL,                                       0.0,            0.0}
+{-1,nullptr,                                       0.0,            0.0}
 };
 
 /* For LCC, standard parallel 1 and 2 can be switched indifferently */
@@ -658,17 +658,17 @@ static const MapInfoLCCSRS asMapInfoLCCSRSList[] = {
  **********************************************************************/
 OGRSpatialReference *TABFile::GetSpatialRef()
 {
-    if (m_poMAPFile == NULL )
+    if (m_poMAPFile == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "GetSpatialRef() failed: file has not been opened yet.");
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If projection params have already been processed, just use them.
      *----------------------------------------------------------------*/
-    if (m_poSpatialRef != NULL)
+    if (m_poSpatialRef != nullptr)
         return m_poSpatialRef;
 
     /*-----------------------------------------------------------------
@@ -676,13 +676,13 @@ OGRSpatialReference *TABFile::GetSpatialRef()
      *----------------------------------------------------------------*/
     TABProjInfo sTABProj;
 
-    TABMAPHeaderBlock *poHeader = NULL;
-    if ((poHeader = m_poMAPFile->GetHeaderBlock()) == NULL ||
+    TABMAPHeaderBlock *poHeader = nullptr;
+    if ((poHeader = m_poMAPFile->GetHeaderBlock()) == nullptr ||
         poHeader->GetProjInfo( &sTABProj ) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "GetSpatialRef() failed reading projection parameters.");
-        return NULL;
+        return nullptr;
     }
 
     m_poSpatialRef = GetSpatialRefFromTABProj(sTABProj);
@@ -704,8 +704,8 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Get the units name, and translation factor.
      *----------------------------------------------------------------*/
-    const char *pszUnitsName = NULL;
-    const char *pszUnitsConv = NULL;
+    const char *pszUnitsName = nullptr;
+    const char *pszUnitsConv = nullptr;
     /* double      dfConv = 1.0; */
 
     switch( sTABProj.nUnitsId )
@@ -1119,7 +1119,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     /*-----------------------------------------------------------------
      * Collect units definition.
      *----------------------------------------------------------------*/
-    if( sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != NULL )
+    if( sTABProj.nProjId != 1 && poSpatialRef->GetRoot() != nullptr )
     {
         OGR_SRSNode     *poUnits = new OGR_SRSNode("UNIT");
 
@@ -1145,7 +1145,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      * were in the order of 1e-150 when they should have actually been zeros,
      * we will use an epsilon in our scan instead of looking for equality.
      *----------------------------------------------------------------*/
-    const MapInfoDatumInfo *psDatumInfo = NULL;
+    const MapInfoDatumInfo *psDatumInfo = nullptr;
 
     for( int iDatumInfo = 0;
          asDatumInfoList[iDatumInfo].nMapInfoDatumID != -1;
@@ -1167,11 +1167,11 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
               && TAB_EQUAL(psDatumInfo->dfDatumParm4,sTABProj.adDatumParams[4]))))
             break;
 
-        psDatumInfo = NULL;
+        psDatumInfo = nullptr;
     }
 
     char szDatumName[200] = {};
-    if( psDatumInfo == NULL )
+    if( psDatumInfo == nullptr )
     {
         if( sTABProj.adDatumParams[0] == 0.0
             && sTABProj.adDatumParams[1] == 0.0
@@ -1254,7 +1254,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
      *----------------------------------------------------------------*/
     double dfSemiMajor = 0.0;
     double dfInvFlattening = 0.0;
-    const char *pszSpheroidName = NULL;
+    const char *pszSpheroidName = nullptr;
 
     for( int i = 0; asSpheroidInfoList[i].nMapInfoId != -1; i++ )
     {
@@ -1268,7 +1268,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
     }
 
     // use WGS 84 if nothing is known.
-    if( pszSpheroidName == NULL )
+    if( pszSpheroidName == nullptr )
     {
         pszSpheroidName = "unknown";
         dfSemiMajor = 6378137.0;
@@ -1302,7 +1302,7 @@ OGRSpatialReference* TABFile::GetSpatialRefFromTABProj(const TABProjInfo& sTABPr
                                pszPMName, dfPMOffset,
                                SRS_UA_DEGREE, CPLAtof(SRS_UA_DEGREE_CONV));
 
-    if( psDatumInfo != NULL )
+    if( psDatumInfo != nullptr )
     {
         poSpatialRef->SetTOWGS84( psDatumInfo->dfShiftX,
                                     psDatumInfo->dfShiftY,
@@ -1390,14 +1390,14 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         return -1;
     }
 
-    if (m_poMAPFile == NULL )
+    if (m_poMAPFile == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "SetSpatialRef() failed: file has not been opened yet.");
         return -1;
     }
 
-    if( poSpatialRef == NULL )
+    if( poSpatialRef == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "SetSpatialRef() failed: Called with NULL poSpatialRef.");
@@ -1466,7 +1466,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     /*-----------------------------------------------------------------
      * Get the linear units and conversion.
      *----------------------------------------------------------------*/
-    char *pszLinearUnits = NULL;
+    char *pszLinearUnits = nullptr;
     double dfLinearConv = poSpatialRef->GetLinearUnits( &pszLinearUnits );
     if( dfLinearConv == 0.0 )
         dfLinearConv = 1.0;
@@ -1478,13 +1478,13 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     double      *parms = sTABProj.adProjParams;
     nParmCount = 0;
 
-    if( pszProjection == NULL && poSpatialRef->GetAttrNode("GEOGCS") == NULL)
+    if( pszProjection == nullptr && poSpatialRef->GetAttrNode("GEOGCS") == nullptr)
     {
         /* nonearth */
         sTABProj.nProjId = 0;
     }
 
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
         sTABProj.nProjId = 1;
     }
@@ -1812,7 +1812,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
      * Translate Datum and Ellipsoid
      * ============================================================== */
     const char *pszWKTDatum = poSpatialRef->GetAttrValue("DATUM");
-    const MapInfoDatumInfo *psDatumInfo = NULL;
+    const MapInfoDatumInfo *psDatumInfo = nullptr;
 
     int nDatumEPSGCode = -1;
     const char *pszDatumAuthority = poSpatialRef->GetAuthorityName("DATUM");
@@ -1826,7 +1826,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     /*-----------------------------------------------------------------
      * Default to WGS84 if we have no datum at all.
      *----------------------------------------------------------------*/
-    if( pszWKTDatum == NULL )
+    if( pszWKTDatum == nullptr )
     {
         CPLDebug("MITAB", "Cannot find MapInfo datum matching %d. Defaulting to WGS 84",
                  nDatumEPSGCode);
@@ -1854,7 +1854,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
             }
         }
 
-        if( psDatumInfo == NULL )
+        if( psDatumInfo == nullptr )
         {
             CPLDebug("MITAB", "Cannot find MapInfo datum matching %s. Defaulting to WGS 84",
                      pszWKTDatum);
@@ -1916,7 +1916,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
             }
         }
 
-        if( psDatumInfo == NULL )
+        if( psDatumInfo == nullptr )
         {
             CPLDebug("MITAB", "Cannot find MapInfo datum matching %s,%d. Defaulting to WGS 84",
                      pszWKTDatum, nDatumEPSGCode);
@@ -1924,7 +1924,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
         }
     }
 
-    if( psDatumInfo != NULL )
+    if( psDatumInfo != nullptr )
     {
         sTABProj.nEllipsoidId = (GByte)psDatumInfo->nEllipsoid;
         sTABProj.nDatumId = (GInt16)psDatumInfo->nMapInfoDatumID;
@@ -1973,14 +1973,14 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     }
 
     // Google Merc
-    const char* pszAuthorityName = NULL;
-    const char* pszAuthorityCode = NULL;
-    const char* pszExtension = NULL;
-    if( ((pszAuthorityName = poSpatialRef->GetAuthorityName(NULL)) != NULL &&
+    const char* pszAuthorityName = nullptr;
+    const char* pszAuthorityCode = nullptr;
+    const char* pszExtension = nullptr;
+    if( ((pszAuthorityName = poSpatialRef->GetAuthorityName(nullptr)) != nullptr &&
         EQUAL(pszAuthorityName, "EPSG") &&
-        (pszAuthorityCode = poSpatialRef->GetAuthorityCode(NULL)) != NULL &&
+        (pszAuthorityCode = poSpatialRef->GetAuthorityCode(nullptr)) != nullptr &&
         atoi(pszAuthorityCode) == 3857) ||
-        ((pszExtension = poSpatialRef->GetExtension(NULL, "PROJ4")) != NULL &&
+        ((pszExtension = poSpatialRef->GetExtension(nullptr, "PROJ4")) != nullptr &&
          EQUAL(pszExtension,
                "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")) )
     {
@@ -1991,7 +1991,7 @@ int TABFile::GetTABProjFromSpatialRef(const OGRSpatialReference* poSpatialRef,
     /*-----------------------------------------------------------------
      * Translate the units
      *----------------------------------------------------------------*/
-    if( sTABProj.nProjId == 1 || pszLinearUnits == NULL )
+    if( sTABProj.nProjId == 1 || pszLinearUnits == nullptr )
         sTABProj.nUnitsId = 13;
     else if( dfLinearConv == 1000.0 )
         sTABProj.nUnitsId = 1;

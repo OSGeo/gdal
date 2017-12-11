@@ -58,10 +58,10 @@ class Lerc2
 {
 public:
   Lerc2();
-  Lerc2(int nCols, int nRows, const Byte* pMaskBits = NULL);    // valid / invalid bits as byte array
+  Lerc2(int nCols, int nRows, const Byte* pMaskBits = nullptr);    // valid / invalid bits as byte array
   virtual ~Lerc2()  {}
 
-  bool Set(int nCols, int nRows, const Byte* pMaskBits = NULL);
+  bool Set(int nCols, int nRows, const Byte* pMaskBits = nullptr);
   bool Set(const BitMask2& bitMask);
 
   template<class T>
@@ -98,7 +98,7 @@ public:
 
   /// does not allocate memory;  byte ptr is moved like a file pointer
   template<class T>
-  bool Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* pMaskBits = 0);    // if mask ptr is not 0, mask bits are returned (even if all valid or same as previous)
+  bool Decode(const Byte** ppByte, size_t& nRemainingBytes, T* arr, Byte* pMaskBits = nullptr);    // if mask ptr is not 0, mask bits are returned (even if all valid or same as previous)
 
 private:
   int         m_currentVersion,
@@ -240,7 +240,7 @@ unsigned int Lerc2::ComputeNumBytesNeededToWrite(const T* arr, double maxZError,
   // data
   m_writeDataOneSweep = false;
   int nBytes = 0;
-  Byte* ptr = NULL;    // only emulate the writing and just count the bytes needed
+  Byte* ptr = nullptr;    // only emulate the writing and just count the bytes needed
 
   if (!WriteTiles(arr, &ptr, nBytes, m_headerInfo.zMin, m_headerInfo.zMax))
     return 0;

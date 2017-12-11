@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
     printf("end of cache fill\n");
     printf("buf[0]=%d\n\n", (int)buf[0]);
 
-    hThread = CPLCreateJoinableThread(thread_func, NULL);
+    hThread = CPLCreateJoinableThread(thread_func, nullptr);
     CPLSleep(0.3);
 
     printf("re read block\n");
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
 
     printf("re read block\n");
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func3, NULL);
+    hThread = CPLCreateJoinableThread(thread_func3, nullptr);
 
     printf("re read block\n");
     CPLSetThreadLocalConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0.6");
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
     printf("before GDALFlushRasterCache\n");
     GDALFlushRasterCache(GDALGetRasterBand(hDS, 1));
@@ -135,14 +135,14 @@ int main(int argc, char* argv[])
     assert( GDALGetCacheUsed64() == 0 );
 
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
     GDALClose(hDS);
     CPLJoinThread(hThread);
 
     hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
-    hThread = CPLCreateJoinableThread(thread_func4, NULL);
+    hThread = CPLCreateJoinableThread(thread_func4, nullptr);
     CPLSleep(0.3);
     GDALClose(hDS);
     CPLJoinThread(hThread);

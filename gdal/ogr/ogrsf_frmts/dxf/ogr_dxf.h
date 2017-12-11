@@ -128,15 +128,15 @@ public:
         return oResult;
     }
 
-    OGRSpatialReference *GetSourceCS() override { return NULL; }
-    OGRSpatialReference *GetTargetCS() override { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return nullptr; }
+    OGRSpatialReference *GetTargetCS() override { return nullptr; }
     int Transform( int nCount,
         double *x, double *y, double *z ) override
-    { return TransformEx( nCount, x, y, z, NULL ); }
+    { return TransformEx( nCount, x, y, z, nullptr ); }
 
     int TransformEx( int nCount,
-        double *x, double *y, double *z = NULL,
-        int *pabSuccess = NULL ) override
+        double *x, double *y, double *z = nullptr,
+        int *pabSuccess = nullptr ) override
     {
         for( int i = 0; i < nCount; i++ )
         {
@@ -230,7 +230,7 @@ class OGRDXFFeature : public OGRFeature
 
     void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
     const CPLString   GetColor( OGRDXFDataSource* const poDS,
-                                OGRDXFFeature* const poBlockFeature = NULL );
+                                OGRDXFFeature* const poBlockFeature = nullptr );
 };
 
 /************************************************************************/
@@ -254,11 +254,11 @@ class OGRDXFLayer : public OGRLayer
                                                   int nCode, char *pszValue );
 
     void                PrepareFeatureStyle( OGRDXFFeature* const poFeature,
-                            OGRDXFFeature* const poBlockFeature = NULL );
+                            OGRDXFFeature* const poBlockFeature = nullptr );
     void                PrepareHatchStyle( OGRDXFFeature* const poFeature,
-                            OGRDXFFeature* const poBlockFeature = NULL );
+                            OGRDXFFeature* const poBlockFeature = nullptr );
     void                PrepareLineStyle( OGRDXFFeature* const poFeature,
-                            OGRDXFFeature* const poBlockFeature = NULL );
+                            OGRDXFFeature* const poBlockFeature = nullptr );
 
     OGRDXFFeature *     TranslatePOINT();
     OGRDXFFeature *     TranslateLINE();
@@ -450,7 +450,7 @@ class OGRDXFDataSource : public OGRDataSource
     // Header variables.
     bool               ReadHeaderSection();
     const char         *GetVariable(const char *pszName,
-                                    const char *pszDefault=NULL );
+                                    const char *pszDefault=nullptr );
 
     const char         *GetEncoding() { return osEncoding; }
 
@@ -486,8 +486,8 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteCore( OGRFeature* );
     OGRErr              WritePOINT( OGRFeature* );
     OGRErr              WriteTEXT( OGRFeature* );
-    OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = NULL );
-    OGRErr              WriteHATCH( OGRFeature*, OGRGeometry* = NULL );
+    OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = nullptr );
+    OGRErr              WriteHATCH( OGRFeature*, OGRGeometry* = nullptr );
     OGRErr              WriteINSERT( OGRFeature* );
 
     static CPLString    TextEscape( const char * );
@@ -503,7 +503,7 @@ class OGRDXFWriterLayer : public OGRLayer
     ~OGRDXFWriterLayer();
 
     void                ResetReading() override {}
-    OGRFeature         *GetNextFeature() override { return NULL; }
+    OGRFeature         *GetNextFeature() override { return nullptr; }
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
@@ -530,7 +530,7 @@ class OGRDXFBlocksWriterLayer : public OGRLayer
     ~OGRDXFBlocksWriterLayer();
 
     void                ResetReading() override {}
-    OGRFeature         *GetNextFeature() override { return NULL; }
+    OGRFeature         *GetNextFeature() override { return nullptr; }
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
@@ -600,9 +600,9 @@ class OGRDXFWriterDS : public OGRDataSource
     int                 TestCapability( const char * ) override;
 
     OGRLayer           *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
 
     bool                CheckEntityID( const char *pszEntityID );
     long                WriteEntityID( VSILFILE * fp,

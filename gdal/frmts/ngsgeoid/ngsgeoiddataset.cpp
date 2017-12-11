@@ -144,7 +144,7 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 NGSGEOIDDataset::NGSGEOIDDataset() :
-    fp(NULL),
+    fp(nullptr),
     bIsLittleEndian(TRUE)
 {
     adfGeoTransform[0] = 0;
@@ -325,19 +325,19 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     if (poOpenInfo->eAccess == GA_Update)
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The NGSGEOID driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE* fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if (fp == NULL)
-        return NULL;
+    if (fp == nullptr)
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -401,7 +401,7 @@ const char* NGSGEOIDDataset::GetProjectionRef()
 void GDALRegister_NGSGEOID()
 
 {
-    if( GDALGetDriverByName( "NGSGEOID" ) != NULL )
+    if( GDALGetDriverByName( "NGSGEOID" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

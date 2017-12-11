@@ -38,15 +38,19 @@
 #define E00ReadClose        GDALE00GRIDReadClose
 #define E00ReadNextLine     GDALE00GRIDReadNextLine
 #define E00ReadRewind       GDALE00GRIDReadRewind
+
+CPL_CVSID("$Id$")
+
+#undef NULL
+#define NULL nullptr
 #include "e00read.c"
+#undef NULL
 
 static const int E00_INT_SIZE = 10;
 // #define E00_INT14_SIZE  14
 static const int E00_FLOAT_SIZE = 14;
 static const int E00_DOUBLE_SIZE = 21;
 static const int VALS_PER_LINE = 5;
-
-CPL_CVSID("$Id$")
 
 /* g++ -fPIC -Wall -g frmts/e00grid/e00griddataset.cpp -shared -o gdal_E00GRID.so -Iport -Igcore -Iogr -L. -lgdal */
 
@@ -128,10 +132,10 @@ class E00GRIDRasterBand : public GDALPamRasterBand
 
     virtual CPLErr      IReadBlock( int, int, void * ) override;
 
-    virtual double      GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double      GetNoDataValue( int *pbSuccess = nullptr ) override;
     virtual const char *GetUnitType() override;
-    virtual double      GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double      GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double      GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double      GetMaximum( int *pbSuccess = nullptr ) override;
     virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
                                        double *pdfMin, double *pdfMax,
                                        double *pdfMean, double *padfStdDev ) override;
@@ -211,13 +215,13 @@ CPLErr E00GRIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
             poGDS->nMaxYOffset = nBlockYOff;
         }
 
-        const char* pszLine = NULL;
+        const char* pszLine = nullptr;
         for(int i=0;i<nBlockXSize;i++)
         {
             if ((i % VALS_PER_LINE) == 0)
             {
                 pszLine = E00ReadNextLine(poGDS->e00ReadPtr);
-                if (pszLine == NULL || strlen(pszLine) < 5 * E00_FLOAT_SIZE)
+                if (pszLine == nullptr || strlen(pszLine) < 5 * E00_FLOAT_SIZE)
                     return CE_Failure;
             }
             if (eDataType == GDT_Float32)
@@ -295,7 +299,7 @@ const char * E00GRIDRasterBand::GetUnitType()
 
     poGDS->ReadMetadata();
 
-    if (poGDS->papszPrj == NULL)
+    if (poGDS->papszPrj == nullptr)
         return GDALPamRasterBand::GetUnitType();
 
     char** papszIter = poGDS->papszPrj;
@@ -333,7 +337,7 @@ double E00GRIDRasterBand::GetMinimum( int *pbSuccess )
 
     if (poGDS->bHasStats)
     {
-        if( pbSuccess != NULL )
+        if( pbSuccess != nullptr )
             *pbSuccess = TRUE;
 
         return poGDS->dfMin;
@@ -354,7 +358,7 @@ double E00GRIDRasterBand::GetMaximum( int *pbSuccess )
 
     if (poGDS->bHasStats)
     {
-        if( pbSuccess != NULL )
+        if( pbSuccess != nullptr )
             *pbSuccess = TRUE;
 
         return poGDS->dfMax;
@@ -398,16 +402,16 @@ CPLErr E00GRIDRasterBand::GetStatistics( int bApproxOK, int bForce,
 /************************************************************************/
 
 E00GRIDDataset::E00GRIDDataset() :
-    e00ReadPtr(NULL),
-    fp(NULL),
+    e00ReadPtr(nullptr),
+    fp(nullptr),
     nDataStart(0),
     nBytesEOL(1),
     nPosBeforeReadLine(0),
-    panOffsets(NULL),
+    panOffsets(nullptr),
     nLastYOff(-1),
     nMaxYOffset(-1),
     dfNoData(0),
-    papszPrj(NULL),
+    papszPrj(nullptr),
     bHasReadMetadata(FALSE),
     bHasStats(FALSE),
     dfMin(0),
@@ -452,7 +456,7 @@ int E00GRIDDataset::Identify( GDALOpenInfo * poOpenInfo )
         return FALSE;
 
     /* FIXME: handle GRD  3 if that ever exists ? */
-    if (strstr((const char*)poOpenInfo->pabyHeader, "GRD  2") == NULL)
+    if (strstr((const char*)poOpenInfo->pabyHeader, "GRD  2") == nullptr)
         return FALSE;
 
     return TRUE;
@@ -466,7 +470,7 @@ const char* E00GRIDDataset::ReadNextLine(void * ptr)
 {
     E00GRIDDataset* poDS = (E00GRIDDataset*) ptr;
     poDS->nPosBeforeReadLine = VSIFTellL(poDS->fp);
-    return CPLReadLine2L(poDS->fp, 256, NULL);
+    return CPLReadLine2L(poDS->fp, 256, nullptr);
 }
 
 /************************************************************************/
@@ -487,14 +491,14 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Find dataset characteristics                                    */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == NULL)
-        return NULL;
+    if (fp == nullptr)
+        return nullptr;
 
     if (poOpenInfo->eAccess == GA_Update)
     {
@@ -502,38 +506,38 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The E00GRID driver does not support update access to existing"
                   " datasets.\n" );
         VSIFCloseL(fp);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     E00GRIDDataset *poDS = new E00GRIDDataset();
-    if (strstr((const char*)poOpenInfo->pabyHeader, "\r\n") != NULL)
+    if (strstr((const char*)poOpenInfo->pabyHeader, "\r\n") != nullptr)
         poDS->nBytesEOL = 2;
     poDS->fp = fp;
 
     /* read EXP  0 or EXP  1 line */
-    const char* pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL)
+    const char* pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr)
     {
         CPLDebug("E00GRID", "Bad 1st line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     bool bCompressed = STARTS_WITH_CI(pszLine, "EXP  1");
 
-    E00ReadPtr e00ReadPtr = NULL;
+    E00ReadPtr e00ReadPtr = nullptr;
     if (bCompressed)
     {
         VSIRewindL(fp);
         e00ReadPtr = E00ReadCallbackOpen(poDS,
                                          E00GRIDDataset::ReadNextLine,
                                          E00GRIDDataset::Rewind);
-        if (e00ReadPtr == NULL)
+        if (e00ReadPtr == nullptr)
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         E00ReadNextLine(e00ReadPtr);
         poDS->e00ReadPtr = e00ReadPtr;
@@ -543,25 +547,25 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (e00ReadPtr)
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || !STARTS_WITH_CI(pszLine, "GRD  2"))
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr || !STARTS_WITH_CI(pszLine, "GRD  2"))
     {
         CPLDebug("E00GRID", "Bad 2nd line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* read ncols, nrows and nodata value */
     if (e00ReadPtr)
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || strlen(pszLine) <
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr || strlen(pszLine) <
                 E00_INT_SIZE+E00_INT_SIZE+2+E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 3rd line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const int nRasterXSize = atoi(pszLine);
@@ -573,7 +577,7 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
         nRasterYSize > 100000 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     GDALDataType eDT = GDT_Float32;
@@ -593,12 +597,12 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (e00ReadPtr)
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 4th line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 /*
     double dfPixelX = CPLAtof(pszLine);
@@ -609,12 +613,12 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (e00ReadPtr)
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 5th line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     const double dfMinX = CPLAtof(pszLine);
     const double dfMinY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
@@ -623,12 +627,12 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     if (e00ReadPtr)
         pszLine = E00ReadNextLine(e00ReadPtr);
     else
-        pszLine = CPLReadLine2L(fp, 81, NULL);
-    if (pszLine == NULL || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
+        pszLine = CPLReadLine2L(fp, 81, nullptr);
+    if (pszLine == nullptr || strlen(pszLine) < 2*E00_DOUBLE_SIZE)
     {
         CPLDebug("E00GRID", "Bad 6th line");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     const double dfMaxX = CPLAtof(pszLine);
     const double dfMaxY = CPLAtof(pszLine + E00_DOUBLE_SIZE);
@@ -647,10 +651,10 @@ GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->panOffsets = (vsi_l_offset*)
                         VSIMalloc2(sizeof(vsi_l_offset), nRasterYSize);
-        if (poDS->panOffsets == NULL)
+        if (poDS->panOffsets == nullptr)
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 /* -------------------------------------------------------------------- */
@@ -694,7 +698,7 @@ const char* E00GRIDDataset::ReadLine()
     if (e00ReadPtr)
         return E00ReadNextLine(e00ReadPtr);
 
-    return CPLReadLine2L(fp, 81, NULL);
+    return CPLReadLine2L(fp, 81, nullptr);
 }
 
 /************************************************************************/
@@ -720,7 +724,7 @@ void E00GRIDDataset::ReadMetadata()
 
     bHasReadMetadata = TRUE;
 
-    if (e00ReadPtr == NULL)
+    if (e00ReadPtr == nullptr)
     {
         const int nRoundedBlockXSize =
             DIV_ROUND_UP(nRasterXSize, VALS_PER_LINE) * VALS_PER_LINE;
@@ -820,15 +824,15 @@ void E00GRIDDataset::ReadMetadata()
             return;
     }
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     bool bPRJFound = false;
     bool bStatsFound = false;
-    while((pszLine = ReadLine()) != NULL)
+    while((pszLine = ReadLine()) != nullptr)
     {
         if (STARTS_WITH_CI(pszLine, "PRJ  2"))
         {
             bPRJFound = true;
-            while((pszLine = ReadLine()) != NULL)
+            while((pszLine = ReadLine()) != nullptr)
             {
                 if (EQUAL(pszLine, "EOP"))
                 {
@@ -845,8 +849,8 @@ void E00GRIDDataset::ReadMetadata()
             }
             else
             {
-                char* pszWKT = NULL;
-                if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE && pszWKT != NULL)
+                char* pszWKT = nullptr;
+                if (oSRS.exportToWkt(&pszWKT) == OGRERR_NONE && pszWKT != nullptr)
                     osProjection = pszWKT;
                 CPLFree(pszWKT);
             }
@@ -889,7 +893,7 @@ void E00GRIDDataset::ReadMetadata()
 void GDALRegister_E00GRID()
 
 {
-    if( GDALGetDriverByName( "E00GRID" ) != NULL )
+    if( GDALGetDriverByName( "E00GRID" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

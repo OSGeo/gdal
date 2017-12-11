@@ -126,8 +126,8 @@ void    IEEE2DGNDouble(void * dbl)
 
 {
     double64_t dt;
-    GByte  *src = NULL;
-    GByte *dest = NULL;
+    GByte  *src = nullptr;
+    GByte *dest = nullptr;
 
 #ifdef CPL_LSB
     src  = (GByte *) dbl;

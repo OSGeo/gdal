@@ -378,8 +378,8 @@ class SDTSAttrReader : public SDTSIndexedReader
    virtual     ~SDTSAttrReader();
 
     int         Open( const char * );
-    DDFField    *GetNextRecord( SDTSModId * = NULL,
-                                DDFRecord ** = NULL,
+    DDFField    *GetNextRecord( SDTSModId * = nullptr,
+                                DDFRecord ** = nullptr,
                                 int bDuplicate = FALSE );
     SDTSAttrRecord *GetNextAttrRecord();
     void        Close();
@@ -652,7 +652,7 @@ class SDTSTransfer
     SDTS_XREF   *GetXREF() { return &oXREF; }
 
     SDTSFeature *GetIndexedFeatureRef( SDTSModId *,
-                                       SDTSLayerType *peType = NULL);
+                                       SDTSLayerType *peType = nullptr);
 
     DDFField *GetAttr( SDTSModId * );
 

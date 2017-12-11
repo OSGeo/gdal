@@ -37,7 +37,7 @@ void GDALRegister_PCRaster()
     if( !GDAL_CHECK_VERSION( "PCRaster driver" ) )
         return;
 
-    if( GDALGetDriverByName( "PCRaster" ) != NULL )
+    if( GDALGetDriverByName( "PCRaster" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

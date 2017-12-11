@@ -62,7 +62,7 @@ WMSMiniDriverFactory *WMSMiniDriverManager::Find(const CPLString &name) {
     for (size_t i = 0; i < m_mdfs.size(); i++)
         if (EQUAL(name.c_str(), m_mdfs[i]->m_name))
             return m_mdfs[i];
-    return NULL;
+    return nullptr;
 }
 
 void WMSMiniDriverManager::Register(WMSMiniDriverFactory *mdf) {
@@ -79,7 +79,7 @@ static WMSMiniDriverManager g_mini_driver_manager;
 // If a matching factory is found in the global minidriver manager, it returns a new minidriver object
 WMSMiniDriver *NewWMSMiniDriver(const CPLString &name) {
     const WMSMiniDriverFactory *factory = g_mini_driver_manager.Find(name);
-    if (factory == NULL) return NULL;
+    if (factory == nullptr) return nullptr;
     return factory->New();
 }
 

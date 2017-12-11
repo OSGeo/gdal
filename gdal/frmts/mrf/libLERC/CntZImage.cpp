@@ -503,7 +503,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
   // first, do the entire image as 1 block
   numTilesVertA = 1;
   numTilesHoriA = 1;
-  if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, NULL, numBytesOptA, maxValInImgA))
+  if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, nullptr, numBytesOptA, maxValInImgA))
   {
     return false;
   }
@@ -532,7 +532,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
 
     int numBytes = 0;
     float maxVal;
-    if (!writeTiles(zPart, maxZError, cntsNoIntIn, numTilesVert, numTilesHori, NULL, numBytes, maxVal))
+    if (!writeTiles(zPart, maxZError, cntsNoIntIn, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
       return false;
 
     if (numBytes < numBytesOptA)

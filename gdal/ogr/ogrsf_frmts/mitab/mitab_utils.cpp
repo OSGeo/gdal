@@ -319,7 +319,7 @@ char *TABGetBasename(const char *pszFname)
  **********************************************************************/
 char **TAB_CSLLoad(const char *pszFname)
 {
-    char **papszStrList = NULL;
+    char **papszStrList = nullptr;
 
     VSILFILE *fp = VSIFOpenL(pszFname, "rt");
 
@@ -327,8 +327,8 @@ char **TAB_CSLLoad(const char *pszFname)
     {
         while(!VSIFEofL(fp))
         {
-            const char *pszLine = NULL;
-            if ( (pszLine = CPLReadLineL(fp)) != NULL )
+            const char *pszLine = nullptr;
+            if ( (pszLine = CPLReadLineL(fp)) != nullptr )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
             }
@@ -356,7 +356,7 @@ char **TAB_CSLLoad(const char *pszFname)
 char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
 {
     // First check if we need to do any replacement.
-    if (pszString == NULL || strstr(pszString, "\\n") == NULL)
+    if (pszString == nullptr || strstr(pszString, "\\n") == nullptr)
     {
         return pszString;
     }
@@ -368,7 +368,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
     // return a copy.  It is up to the caller to decide if the source needs
     // to be freed based on context and by comparing pszString with
     // the returned pointer (pszWorkString) to see if they are identical.
-    char *pszWorkString = NULL;
+    char *pszWorkString = nullptr;
     if (bSrcIsConst)
     {
         // We have to create a copy to work on.
@@ -424,7 +424,7 @@ char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
 char *TABEscapeString(char *pszString)
 {
     // First check if we need to do any replacement
-    if (pszString == NULL || strchr(pszString, '\n') == NULL)
+    if (pszString == nullptr || strchr(pszString, '\n') == nullptr)
     {
         return pszString;
     }
@@ -554,12 +554,12 @@ static const MapInfoUnitsInfo gasUnitsList[] =
     {7, "m"},
     {8, "survey ft"},
     {8, "survey foot"}, // alternate
-    {13, NULL},
+    {13, nullptr},
     {9, "nmi"},
     {30, "li"},
     {31, "ch"},
     {32, "rd"},
-    {-1, NULL}
+    {-1, nullptr}
 };
 
 /**********************************************************************
@@ -593,14 +593,14 @@ const char *TABUnitIdToString(int nId)
  **********************************************************************/
 int TABUnitIdFromString(const char *pszName)
 {
-    if( pszName == NULL )
+    if( pszName == nullptr )
         return 13;
 
     const MapInfoUnitsInfo *psList = gasUnitsList;
 
     while(psList->nUnitId != -1)
     {
-        if (psList->pszAbbrev != NULL &&
+        if (psList->pszAbbrev != nullptr &&
             EQUAL(psList->pszAbbrev, pszName))
             return psList->nUnitId;
         psList++;

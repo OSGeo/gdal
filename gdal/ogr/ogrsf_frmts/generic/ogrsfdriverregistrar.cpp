@@ -91,7 +91,7 @@ void OGRCleanupAll()
     {
         OGRRegisterMutexedDataSource();
         OGRRegisterMutexedLayer();
-        OGRCreateEmulatedTransactionDataSourceWrapper(NULL,NULL,FALSE,FALSE);
+        OGRCreateEmulatedTransactionDataSourceWrapper(nullptr,nullptr,FALSE,FALSE);
     }
 #endif
 }
@@ -104,15 +104,15 @@ OGRDataSourceH OGROpen( const char *pszName, int bUpdate,
                         OGRSFDriverH *pahDriverList )
 
 {
-    VALIDATE_POINTER1( pszName, "OGROpen", NULL );
+    VALIDATE_POINTER1( pszName, "OGROpen", nullptr );
 
 #ifdef OGRAPISPY_ENABLED
     int iSnapshot = OGRAPISpyOpenTakeSnapshot(pszName, bUpdate);
 #endif
 
     GDALDatasetH hDS = GDALOpenEx(pszName, GDAL_OF_VECTOR |
-                            ((bUpdate) ? GDAL_OF_UPDATE: 0), NULL, NULL, NULL);
-    if( hDS != NULL && pahDriverList != NULL )
+                            ((bUpdate) ? GDAL_OF_UPDATE: 0), nullptr, nullptr, nullptr);
+    if( hDS != nullptr && pahDriverList != nullptr )
         *pahDriverList = (OGRSFDriverH) GDALGetDatasetDriver(hDS);
 
 #ifdef OGRAPISPY_ENABLED
@@ -130,11 +130,11 @@ OGRDataSourceH OGROpenShared( const char *pszName, int bUpdate,
                               OGRSFDriverH *pahDriverList )
 
 {
-    VALIDATE_POINTER1( pszName, "OGROpenShared", NULL );
+    VALIDATE_POINTER1( pszName, "OGROpenShared", nullptr );
 
     GDALDatasetH hDS = GDALOpenEx(pszName, GDAL_OF_VECTOR |
-            ((bUpdate) ? GDAL_OF_UPDATE: 0) | GDAL_OF_SHARED, NULL, NULL, NULL);
-    if( hDS != NULL && pahDriverList != NULL )
+            ((bUpdate) ? GDAL_OF_UPDATE: 0) | GDAL_OF_SHARED, nullptr, nullptr, nullptr);
+    if( hDS != nullptr && pahDriverList != nullptr )
         *pahDriverList = (OGRSFDriverH) GDALGetDatasetDriver(hDS);
     return (OGRDataSourceH) hDS;
 }
@@ -189,7 +189,7 @@ int OGRGetOpenDSCount()
 OGRDataSource *OGRSFDriverRegistrar::GetOpenDS( CPL_UNUSED int iDS )
 {
     CPLError(CE_Failure, CPLE_AppDefined, "Stub implementation in GDAL 2.0");
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -212,7 +212,7 @@ GDALDataset* OGRSFDriverRegistrar::OpenWithDriverArg(GDALDriver* poDriver,
     OGRDataSource* poDS = (OGRDataSource*)
                 ((OGRSFDriver*)poDriver)->Open(poOpenInfo->pszFilename,
                                         poOpenInfo->eAccess == GA_Update);
-    if( poDS != NULL )
+    if( poDS != nullptr )
         poDS->SetDescription( poDS->GetName() );
     return poDS;
 }
@@ -227,7 +227,7 @@ GDALDataset* OGRSFDriverRegistrar::CreateVectorOnly( GDALDriver* poDriver,
 {
     OGRDataSource* poDS = (OGRDataSource*)
         ((OGRSFDriver*)poDriver)->CreateDataSource(pszName, papszOptions);
-    if( poDS != NULL && poDS->GetName() != NULL )
+    if( poDS != nullptr && poDS->GetName() != nullptr )
         poDS->SetDescription( poDS->GetName() );
     return poDS;
 }
@@ -253,12 +253,12 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
 
 {
     GDALDriver* poGDALDriver = (GDALDriver*) GDALGetDriverByName( poDriver->GetName() ) ;
-    if( poGDALDriver == NULL)
+    if( poGDALDriver == nullptr)
     {
         poDriver->SetDescription( poDriver->GetName() );
         poDriver->SetMetadataItem("OGR_DRIVER", "YES");
 
-        if( poDriver->GetMetadataItem(GDAL_DMD_LONGNAME) == NULL )
+        if( poDriver->GetMetadataItem(GDAL_DMD_LONGNAME) == nullptr )
             poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, poDriver->GetName() );
 
         poDriver->pfnOpenWithDriverArg = OpenWithDriverArg;
@@ -279,7 +279,7 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
     }
     else
     {
-        if( poGDALDriver->GetMetadataItem("OGR_DRIVER") == NULL)
+        if( poGDALDriver->GetMetadataItem("OGR_DRIVER") == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "A non OGR driver is registered with the same name: %s", poDriver->GetName());
@@ -326,7 +326,7 @@ int OGRSFDriverRegistrar::GetDriverCount()
     for(int i=0;i<nTotal;i++)
     {
         GDALDriver* poDriver = poDriverManager->GetDriver(i);
-        if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != NULL )
+        if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != nullptr )
             nOGRDriverCount ++;
     }
     return nOGRDriverCount;
@@ -356,14 +356,14 @@ GDALDriver *OGRSFDriverRegistrar::GetDriver( int iDriver )
     for(int i=0;i<nTotal;i++)
     {
         GDALDriver* poDriver = poDriverManager->GetDriver(i);
-        if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != NULL )
+        if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != nullptr )
         {
             if( nOGRDriverCount == iDriver )
                 return poDriver;
             nOGRDriverCount ++;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -386,11 +386,11 @@ GDALDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName )
     GDALDriverManager* poDriverManager = GetGDALDriverManager();
     GDALDriver* poGDALDriver =
         poDriverManager->GetDriverByName(CPLSPrintf("OGR_%s", pszName));
-    if( poGDALDriver == NULL )
+    if( poGDALDriver == nullptr )
         poGDALDriver = poDriverManager->GetDriverByName(pszName);
-    if( poGDALDriver == NULL ||
-        poGDALDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == NULL )
-        return NULL;
+    if( poGDALDriver == nullptr ||
+        poGDALDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr )
+        return nullptr;
     return poGDALDriver;
 }
 
@@ -401,7 +401,7 @@ GDALDriver *OGRSFDriverRegistrar::GetDriverByName( const char * pszName )
 OGRSFDriverH OGRGetDriverByName( const char *pszName )
 
 {
-    VALIDATE_POINTER1( pszName, "OGRGetDriverByName", NULL );
+    VALIDATE_POINTER1( pszName, "OGRGetDriverByName", nullptr );
 
     return (OGRSFDriverH)
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName( pszName );

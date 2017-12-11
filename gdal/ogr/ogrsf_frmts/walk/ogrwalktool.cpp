@@ -152,7 +152,7 @@ OGRWalkArcToLineString( double dfStartX, double dfStartY,
             dfRadius, dfRadius, 0.0,
             dfStartAngle, dfEndAngle, 0.0 );
 
-    if( poArcpoLS == NULL )
+    if( poArcpoLS == nullptr )
         return false;
 
     poLS->addSubLineString(poArcpoLS);
@@ -382,7 +382,7 @@ OGRErr Binary2WkbGeom(unsigned char *p, WKBGeometry* geom, int nBytes)
 /************************************************************************/
 static bool TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 {
-    if ( poPoint == NULL || pWalkWkbPoint == NULL )
+    if ( poPoint == nullptr || pWalkWkbPoint == nullptr )
         return false;
 
     poPoint->setX(pWalkWkbPoint->x);
@@ -396,7 +396,7 @@ static bool TranslateWalkPoint(OGRPoint *poPoint, WKBPoint* pWalkWkbPoint)
 /************************************************************************/
 static bool TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 {
-    if ( poLS == NULL || pSegment == NULL )
+    if ( poLS == nullptr || pSegment == nullptr )
         return false;
 
     switch(pSegment->lineType)
@@ -449,7 +449,7 @@ static bool TranslateCurveSegment(OGRLineString *poLS, CurveSegment* pSegment)
 static bool TranslateWalkLineString( OGRLineString *poLS,
                                      LineString* pLineString )
 {
-    if( poLS == NULL || pLineString == NULL )
+    if( poLS == nullptr || pLineString == nullptr )
         return false;
 
     for( GUInt32 i = 0; i < pLineString->numSegments; ++i )
@@ -467,7 +467,7 @@ static bool TranslateWalkLineString( OGRLineString *poLS,
 static bool TranslateWalkLinearring( OGRLinearRing *poRing,
                                      LineString* pLineString )
 {
-    if( poRing == NULL || pLineString == NULL )
+    if( poRing == nullptr || pLineString == nullptr )
         return false;
 
     for( GUInt32 i = 0; i < pLineString->numSegments; i++ )
@@ -482,7 +482,7 @@ static bool TranslateWalkLinearring( OGRLinearRing *poRing,
 static bool TranslateWalkPolygon( OGRPolygon *poPolygon,
                                   WKBPolygon* pWalkWkbPolgon )
 {
-    if ( poPolygon == NULL || pWalkWkbPolgon == NULL )
+    if ( poPolygon == nullptr || pWalkWkbPolgon == nullptr )
         return false;
 
     for( GUInt32 i = 0; i < pWalkWkbPolgon->numRings; ++i )
@@ -501,13 +501,13 @@ static bool TranslateWalkPolygon( OGRPolygon *poPolygon,
 /************************************************************************/
 OGRErr TranslateWalkGeom(OGRGeometry **ppoGeom, WKBGeometry* geom)
 {
-    if ( ppoGeom == NULL || geom == NULL )
+    if ( ppoGeom == nullptr || geom == nullptr )
         return OGRERR_NOT_ENOUGH_DATA;
 
     OGRGeometry* poGeom =
         OGRGeometryFactory::createGeometry(wkbFlatten(geom->wkbType));
 
-    if ( poGeom == NULL )
+    if ( poGeom == nullptr )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
     switch (geom->wkbType)

@@ -83,7 +83,7 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
 
     // Optimization if GDALCreateScaledProgress() provided with
     // GDALDummyProgress.
-    if( psInfo == NULL )
+    if( psInfo == nullptr )
         return TRUE;
 
     return psInfo->pfnProgress( dfComplete * (psInfo->dfMax - psInfo->dfMin)
@@ -144,8 +144,8 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
                                              void * pData )
 
 {
-    if( pfnProgress == NULL || pfnProgress == GDALDummyProgress )
-        return NULL;
+    if( pfnProgress == nullptr || pfnProgress == GDALDummyProgress )
+        return nullptr;
 
     GDALScaledProgressInfo *psInfo =
         static_cast<GDALScaledProgressInfo *>(

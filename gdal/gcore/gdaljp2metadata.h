@@ -60,7 +60,7 @@ class CPL_DLL GDALJP2Box
     GByte      *pabyData;
 
 public:
-    explicit    GDALJP2Box( VSILFILE * = NULL );
+    explicit    GDALJP2Box( VSILFILE * = nullptr );
                 ~GDALJP2Box();
 
     int         SetOffset( GIntBig nNewOffset );
@@ -171,10 +171,10 @@ public:
 
     int     ReadAndParse( VSILFILE * fpVSIL,
                           int nGEOJP2Index = 0, int nGMLJP2Index = 1,
-                          int nMSIGIndex = 2, int *pnIndexUsed = NULL );
+                          int nMSIGIndex = 2, int *pnIndexUsed = nullptr );
     int     ReadAndParse( const char *pszFilename, int nGEOJP2Index = 0,
                           int nGMLJP2Index = 1, int nMSIGIndex = 2,
-                          int nWorldFileIndex = 3, int *pnIndexUsed = NULL );
+                          int nWorldFileIndex = 3, int *pnIndexUsed = nullptr );
 
     // Write oriented.
     void    SetProjection( const char *pszWKT );

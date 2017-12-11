@@ -318,21 +318,21 @@ DGNHandle
 /*      Open output file.                                               */
 /* -------------------------------------------------------------------- */
     VSILFILE *fpNew = VSIFOpenL( pszNewFilename, "wb" );
-    if( fpNew == NULL )
+    if( fpNew == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open output file: %s", pszNewFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Open seed file, and read TCB element.                           */
 /* -------------------------------------------------------------------- */
     DGNInfo *psSeed = (DGNInfo *) DGNOpen( pszSeedFile, FALSE );
-    if( psSeed == NULL )
+    if( psSeed == nullptr )
     {
         VSIFCloseL( fpNew );
-        return NULL;
+        return nullptr;
     }
 
     DGNSetOptions( psSeed, DGNO_CAPTURE_RAW_DATA );
@@ -399,10 +399,10 @@ DGNHandle
 /* -------------------------------------------------------------------- */
 /*      Now copy over elements according to options in effect.          */
 /* -------------------------------------------------------------------- */
-    DGNElemCore *psSrcElement = NULL;
-    DGNElemCore *psDstElement = NULL;
+    DGNElemCore *psSrcElement = nullptr;
+    DGNElemCore *psDstElement = nullptr;
 
-    while( (psSrcElement = DGNReadElement( psSeed )) != NULL )
+    while( (psSrcElement = DGNReadElement( psSeed )) != nullptr )
     {
         if( (nCreationFlags & DGNCF_COPY_WHOLE_SEED_FILE)
             || (psSrcElement->stype == DGNST_COLORTABLE
@@ -449,7 +449,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
                               DGNElemCore *psSrcElement )
 
 {
-    DGNElemCore *psClone = NULL;
+    DGNElemCore *psClone = nullptr;
 
     DGNLoadTCB( hDGNDst );
 
@@ -647,7 +647,7 @@ DGNElemCore *DGNCloneElement( CPL_UNUSED DGNHandle hDGNSrc,
     else
     {
         CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -740,7 +740,7 @@ int DGNUpdateElemCoreExtended( CPL_UNUSED DGNHandle hDGN,
     GByte *rd = psElement->raw_data;
     const int nWords = (psElement->raw_bytes / 2) - 2;
 
-    if( psElement->raw_data == NULL
+    if( psElement->raw_data == nullptr
         || psElement->raw_bytes < 36 )
     {
         CPLAssert( false );
@@ -873,7 +873,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
                   "Attempt to create %s element with %d points failed.\n"
                   "Element would be too large.",
                   DGNTypeToName( nType ), nPointCount );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -967,7 +967,7 @@ DGNCreateArcElem2D( DGNHandle hDGN, int nType,
     return DGNCreateArcElem( hDGN, nType, dfOriginX, dfOriginY, 0.0,
                              dfPrimaryAxis, dfSecondaryAxis,
                              dfStartAngle, dfSweepAngle,
-                             dfRotation, NULL );
+                             dfRotation, nullptr );
 }
 
 /************************************************************************/
@@ -1036,7 +1036,7 @@ DGNCreateArcElem( DGNHandle hDGN, int nType,
     psArc->sweepang = dfSweepAngle;
 
     psArc->rotation = dfRotation;
-    if( panQuaternion == NULL )
+    if( panQuaternion == nullptr )
     {
         DGNRotationToQuaternion( dfRotation, psArc->quat );
     }
@@ -1260,7 +1260,7 @@ DGNCreateConeElem( DGNHandle hDGN,
     psCone->radius_2 = dfRadius_2;
 
     memset( psCone->quat, 0, sizeof(int) * 4 );
-    if( panQuaternion != NULL )
+    if( panQuaternion != nullptr )
     {
         memcpy( psCone->quat, panQuaternion, sizeof(int)*4 );
     }
@@ -1443,7 +1443,7 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     {
         int anQuaternion[4];
 
-        if( panQuaternion == NULL )
+        if( panQuaternion == nullptr )
             DGNRotationToQuaternion( dfRotation, anQuaternion );
         else
             memcpy( anQuaternion, panQuaternion, sizeof(int) * 4 );
@@ -1701,11 +1701,11 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType,
 {
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a complex group." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1878,11 +1878,11 @@ DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
 {
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a solid." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2187,11 +2187,11 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 
     DGNLoadTCB( hDGN );
 
-    if( nNumElems < 1 || papsElems == NULL )
+    if( nNumElems < 1 || papsElems == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Need at least one element to form a cell." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2261,7 +2261,7 @@ DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName,
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding cell header.                           */
 /* -------------------------------------------------------------------- */
-    if( panLevels == NULL )
+    if( panLevels == nullptr )
         panLevels = (short *) abyLevelsOccurring + 0;
 
     DGNElemCore *psCH =
@@ -2435,8 +2435,8 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
     int iLinkage = 0;  // Used after for.
     for( ; ; iLinkage++ )
     {
-        if( DGNGetLinkage( hDGN, psElement, iLinkage, NULL, NULL, NULL, NULL )
-            == NULL )
+        if( DGNGetLinkage( hDGN, psElement, iLinkage, nullptr, nullptr, nullptr, nullptr )
+            == nullptr )
             break;
     }
 

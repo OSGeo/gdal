@@ -278,7 +278,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(),
                            true );
 
-        if (NULL == szAltitudeMode)
+        if (nullptr == szAltitudeMode)
         {
             _GrowBuffer( *pnLength + strlen(szCoordinate) + 70,
                          ppszText, pnMaxLength );
@@ -315,7 +315,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<LineString>" );
 
-        if (NULL != szAltitudeMode)
+        if (nullptr != szAltitudeMode)
         {
             AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode);
         }
@@ -341,12 +341,12 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 
         AppendString( ppszText, pnLength, pnMaxLength, "<Polygon>" );
 
-        if (NULL != szAltitudeMode)
+        if (nullptr != szAltitudeMode)
         {
             AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode);
         }
 
-        if( poPolygon->getExteriorRing() != NULL )
+        if( poPolygon->getExteriorRing() != nullptr )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<outerBoundaryIs>" );
@@ -390,7 +390,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
              || wkbFlatten(poGeometry->getGeometryType()) ==
                 wkbGeometryCollection )
     {
-        OGRGeometryCollection* poGC = NULL;
+        OGRGeometryCollection* poGC = nullptr;
         poGC = static_cast<OGRGeometryCollection*>(poGeometry);
 
         AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
@@ -501,14 +501,14 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
     char szAltitudeMode[128];
 
     // TODO - mloskot: Should we use VALIDATE_POINTER1 here?
-    if( hGeometry == NULL )
+    if( hGeometry == nullptr )
         return CPLStrdup( "" );
 
     size_t nMaxLength = 1;
     char* pszText = static_cast<char *>(CPLMalloc(nMaxLength));
     pszText[0] = '\0';
 
-    if (NULL != pszAltitudeMode && strlen(pszAltitudeMode) < 128 - (29 + 1))
+    if (nullptr != pszAltitudeMode && strlen(pszAltitudeMode) < 128 - (29 + 1))
     {
         snprintf( szAltitudeMode, sizeof(szAltitudeMode),
                   "<altitudeMode>%s</altitudeMode>", pszAltitudeMode);
@@ -524,7 +524,7 @@ char *OGR_G_ExportToKML( OGRGeometryH hGeometry, const char *pszAltitudeMode )
         &nLength, &nMaxLength, szAltitudeMode ) )
     {
         CPLFree( pszText );
-        return NULL;
+        return nullptr;
     }
 
     return pszText;

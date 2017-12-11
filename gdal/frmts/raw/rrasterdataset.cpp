@@ -80,8 +80,8 @@ class RRASTERRasterBand: public RawRasterBand
                     GDALDataType eDataType, int bNativeOrder );
 
       void SetMinMax( double dfMin, double dfMax );
-      virtual double GetMinimum( int *pbSuccess = NULL ) override;
-      virtual double GetMaximum(int *pbSuccess = NULL ) override;
+      virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+      virtual double GetMaximum(int *pbSuccess = nullptr ) override;
 
 #ifdef UPDATE_SUPPORTED
   protected:
@@ -193,7 +193,7 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 RRASTERDataset::RRASTERDataset() :
-    m_fpImage(NULL)
+    m_fpImage(nullptr)
 {
     m_adfGeoTransform[0] = 0.0;
     m_adfGeoTransform[1] = 1.0;
@@ -211,7 +211,7 @@ RRASTERDataset::~RRASTERDataset()
 
 {
     FlushCache();
-    if( m_fpImage != NULL )
+    if( m_fpImage != nullptr )
         VSIFCloseL(m_fpImage);
 }
 
@@ -256,15 +256,15 @@ int RRASTERDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 40
-        || poOpenInfo->fpL == NULL
+        || poOpenInfo->fpL == nullptr
         || !EQUAL( CPLGetExtension(poOpenInfo->pszFilename), "grd" )
-        || strstr((const char *) poOpenInfo->pabyHeader, "ncols") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "nrows") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "xmin") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "ymin") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "xmax") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "ymax") == NULL
-        || strstr((const char *) poOpenInfo->pabyHeader, "datatype") == NULL )
+        || strstr((const char *) poOpenInfo->pabyHeader, "ncols") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "nrows") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "xmin") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "ymin") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "xmax") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "ymax") == nullptr
+        || strstr((const char *) poOpenInfo->pabyHeader, "datatype") == nullptr )
     {
         return FALSE;
     }
@@ -279,15 +279,15 @@ int RRASTERDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
-        return NULL;
+        return nullptr;
     }
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     int nRows = 0;
     int nCols = 0;
     double dfXMin = 0.0;
@@ -303,9 +303,9 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osMinValue;
     CPLString osMaxValue;
     VSIRewindL(poOpenInfo->fpL);
-    while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024, NULL)) != NULL )
+    while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024, nullptr)) != nullptr )
     {
-        char* pszKey = NULL;
+        char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
         if( pszKey && pszValue )
         {
@@ -341,9 +341,9 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree(pszKey);
     }
     if( !GDALCheckDatasetDimensions(nCols, nRows) )
-        return NULL;
+        return nullptr;
     if( !GDALCheckBandCount(l_nBands, FALSE) )
-        return NULL;
+        return nullptr;
 
     GDALDataType eDT = GDT_Unknown;
     if( EQUAL(osDataType, "LOG1S") )
@@ -370,13 +370,13 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unhandled datatype=%s", osDataType.c_str() );
-        return NULL;
+        return nullptr;
     }
     if( l_nBands > 1 && osBandOrder.empty() )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing 'bandorder'" );
-        return NULL;
+        return nullptr;
     }
 
     int bNativeOrder = TRUE;
@@ -406,7 +406,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
             nCols > INT_MAX / ( l_nBands * nPixelSize ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nPixelSize * nCols * l_nBands;
         nBandOffset = nPixelSize * nCols;
@@ -417,7 +417,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
             nCols > INT_MAX / ( l_nBands * nPixelSize ) )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return NULL;
+            return nullptr;
         }
         nPixelOffset = nPixelSize * l_nBands;
         nLineOffset = nPixelSize * nCols * l_nBands;
@@ -428,7 +428,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         if( nPixelSize != 0 && nCols > INT_MAX / nPixelSize )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return NULL;
+            return nullptr;
         }
         nPixelOffset = nPixelSize;
         nLineOffset = nPixelSize * nCols;
@@ -437,7 +437,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( l_nBands > 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Unknown bandorder" );
-        return NULL;
+        return nullptr;
     }
 
     CPLString osGriFilename;
@@ -449,11 +449,11 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     if( papszSiblings )
     {
         int iFile = CSLFindString(papszSiblings,
-                            CPLFormFilename(NULL, osBasename, osGRIExtension) );
+                            CPLFormFilename(nullptr, osBasename, osGRIExtension) );
         if( iFile < 0 )
-            return NULL;
+            return nullptr;
         osGriFilename = CPLFormFilename( osDirname,
-                                         papszSiblings[iFile], NULL );
+                                         papszSiblings[iFile], nullptr );
     }
     else
     {
@@ -461,8 +461,8 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     VSILFILE* fpImage = VSIFOpenL( osGriFilename, "rb" );
-    if( fpImage == NULL )
-        return NULL;
+    if( fpImage == nullptr )
+        return nullptr;
 
     RRASTERDataset* poDS = new RRASTERDataset;
     poDS->nRasterXSize = nCols;
@@ -481,7 +481,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         OGRSpatialReference oSRS;
         if( oSRS.importFromProj4( osProjection.c_str() ) == OGRERR_NONE )
         {
-            char* pszWKT = NULL;
+            char* pszWKT = nullptr;
             oSRS.exportToWkt( &pszWKT );
             if( pszWKT )
                 poDS->m_osProjection = pszWKT;
@@ -496,8 +496,8 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CSLDestroy(papszMinValues);
         CSLDestroy(papszMaxValues);
-        papszMinValues = NULL;
-        papszMaxValues = NULL;
+        papszMinValues = nullptr;
+        papszMaxValues = nullptr;
     }
 
     for( int i=1; i<=l_nBands; i++ )
@@ -536,7 +536,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_RRASTER()
 
 {
-    if( GDALGetDriverByName( "RRASTER" ) != NULL )
+    if( GDALGetDriverByName( "RRASTER" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

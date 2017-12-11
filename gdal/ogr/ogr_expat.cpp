@@ -56,7 +56,7 @@ static void* OGRExpatMalloc( size_t size )
     CPLError(CE_Failure, CPLE_OutOfMemory,
              "Expat tried to malloc %d bytes. File probably corrupted",
              static_cast<int>(size));
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -74,7 +74,7 @@ static void* OGRExpatRealloc( void *ptr, size_t size )
              "Expat tried to realloc %d bytes. File probably corrupted",
              static_cast<int>(size));
     free(ptr);
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -173,9 +173,9 @@ static int OGRExpatUnknownEncodingHandler(
         return XML_STATUS_ERROR;
     }
 
-    info->data    = NULL;
-    info->convert = NULL;
-    info->release = NULL;
+    info->data    = nullptr;
+    info->convert = nullptr;
+    info->release = nullptr;
 
     return XML_STATUS_OK;
 }
@@ -190,11 +190,11 @@ XML_Parser OGRCreateExpatXMLParser()
     memsuite.malloc_fcn = OGRExpatMalloc;
     memsuite.realloc_fcn = OGRExpatRealloc;
     memsuite.free_fcn = free;
-    XML_Parser hParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    XML_Parser hParser = XML_ParserCreate_MM(nullptr, &memsuite, nullptr);
 
     XML_SetUnknownEncodingHandler(hParser,
                                   OGRExpatUnknownEncodingHandler,
-                                  NULL);
+                                  nullptr);
 
     return hParser;
 }

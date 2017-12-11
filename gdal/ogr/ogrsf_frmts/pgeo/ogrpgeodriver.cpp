@@ -60,14 +60,14 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
 
 {
     if( STARTS_WITH_CI(pszFilename, "WALK:") )
-        return NULL;
+        return nullptr;
 
     if( STARTS_WITH_CI(pszFilename, "GEOMEDIA:") )
-        return NULL;
+        return nullptr;
 
     if( !STARTS_WITH_CI(pszFilename, "PGEO:")
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
-        return NULL;
+        return nullptr;
 
     // Disabling the attempt to guess if a MDB file is a PGeo database
     // or not. The mention to GDB_GeomColumns might be quite far in
@@ -134,7 +134,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -182,7 +182,7 @@ bool OGRODBCMDBDriver::InstallMdbDriver()
         // Create installer and register driver
         CPLODBCDriverInstaller dri;
 
-        if ( !dri.InstallDriver(driver.c_str(), NULL, ODBC_INSTALL_COMPLETE) )
+        if ( !dri.InstallDriver(driver.c_str(), nullptr, ODBC_INSTALL_COMPLETE) )
         {
             // Report ODBC error
             CPLError( CE_Failure, CPLE_AppDefined, "ODBC: %s", dri.GetLastError() );
@@ -213,8 +213,8 @@ bool OGRODBCMDBDriver::FindDriverLib()
 
     CPLString strLibPath("");
 
-    const char* pszDrvCfg = CPLGetConfigOption("MDBDRIVER_PATH", NULL);
-    if ( NULL != pszDrvCfg )
+    const char* pszDrvCfg = CPLGetConfigOption("MDBDRIVER_PATH", nullptr);
+    if ( nullptr != pszDrvCfg )
     {
         // Directory or file path
         strLibPath = pszDrvCfg;
@@ -224,8 +224,8 @@ bool OGRODBCMDBDriver::FindDriverLib()
              && VSI_ISDIR( sStatBuf.st_mode ) )
         {
             // Find default library in custom directory
-            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], NULL );
-            CPLAssert( NULL != pszDriverFile );
+            const char* pszDriverFile = CPLFormFilename( pszDrvCfg, aszDefaultLibName[0], nullptr );
+            CPLAssert( nullptr != pszDriverFile );
 
             strLibPath = pszDriverFile;
         }
@@ -243,8 +243,8 @@ bool OGRODBCMDBDriver::FindDriverLib()
     {
         for ( int j = 0; j < nLibNames; j++ )
         {
-            const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], NULL );
-            CPLAssert( NULL != pszDriverFile );
+            const char* pszDriverFile = CPLFormFilename( libPath[i], aszDefaultLibName[j], nullptr );
+            CPLAssert( nullptr != pszDriverFile );
 
             if ( LibraryExists( pszDriverFile ) )
             {
@@ -266,7 +266,7 @@ bool OGRODBCMDBDriver::FindDriverLib()
 
 bool OGRODBCMDBDriver::LibraryExists(const char* pszLibPath)
 {
-    CPLAssert( NULL != pszLibPath );
+    CPLAssert( nullptr != pszLibPath );
 
     VSIStatBuf stb;
 

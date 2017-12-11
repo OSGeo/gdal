@@ -144,10 +144,10 @@ CPLErr RRasterBand::IReadBlock( int /* nBlockXOff */,
 /************************************************************************/
 
 RDataset::RDataset() :
-    fp(NULL),
+    fp(nullptr),
     bASCII(FALSE),
     nStartOfData(0),
-    padfMatrixValues(NULL)
+    padfMatrixValues(nullptr)
 {}
 
 /************************************************************************/
@@ -251,7 +251,7 @@ const char *RDataset::ReadString()
     const size_t nLen = static_cast<size_t>(nLenSigned);
 
     char *pachWrkBuf = static_cast<char *>(VSIMalloc(nLen));
-    if (pachWrkBuf == NULL)
+    if (pachWrkBuf == nullptr)
     {
         osLastStringRead = "";
         return "";
@@ -303,7 +303,7 @@ bool RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
 
     // Read the object name.
     const char *pszName = ReadString();
-    if( pszName == NULL || pszName[0] == '\0' )
+    if( pszName == nullptr || pszName[0] == '\0' )
         return false;
 
     osObjName = pszName;
@@ -349,7 +349,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 #else
     // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 #endif
 
     // Confirm the requested access is supported.
@@ -358,7 +358,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The R driver does not support update access to existing"
                  " datasets.");
-        return NULL;
+        return nullptr;
     }
 
     // Do we need to route the file through the decompression machinery?
@@ -371,10 +371,10 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     RDataset *poDS = new RDataset();
 
     poDS->fp = VSIFOpenL(osAdjustedFilename, "r");
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->bASCII = STARTS_WITH_CI(
@@ -388,7 +388,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "It appears %s is not a version 2 R object file after all!",
                  poOpenInfo->pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     // Skip the version values.
@@ -402,7 +402,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->ReadPair(osObjName, nObjCode) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( nObjCode % 256 != R_REALSXP )
@@ -410,7 +410,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to find expected numeric vector object.");
-        return NULL;
+        return nullptr;
     }
 
     poDS->SetMetadataItem("R_OBJECT_NAME", osObjName);
@@ -422,7 +422,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(
             CE_Failure, CPLE_AppDefined, "nValueCount < 0: %d", nValueCount);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nStartOfData = VSIFTellL(poDS->fp);
@@ -443,7 +443,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
             nValueCount,
             stat.st_size - poDS->nStartOfData);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Read/Skip ahead to attributes.
@@ -451,12 +451,12 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->padfMatrixValues =
             static_cast<double *>(VSIMalloc2(nValueCount, sizeof(double)));
-        if (poDS->padfMatrixValues == NULL)
+        if (poDS->padfMatrixValues == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot allocate %d doubles", nValueCount);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         for( int iValue = 0; iValue < nValueCount; iValue++ )
             poDS->padfMatrixValues[iValue] = poDS->ReadFloat();
@@ -494,7 +494,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "R 'dim' dimension wrong.");
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
         }
         else if( nObjCode % 256 == R_REALSXP )
@@ -535,14 +535,14 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find dim dimension information for R dataset.");
-        return NULL;
+        return nullptr;
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandCount, TRUE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     GIntBig result = 0;
@@ -553,13 +553,13 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Not enough pixel data.");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Create the raster band object(s).
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand = NULL;
+        GDALRasterBand *poBand = nullptr;
 
         if( poDS->bASCII )
             poBand = new RRasterBand(
@@ -595,7 +595,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_R()
 
 {
-    if( GDALGetDriverByName("R") != NULL )
+    if( GDALGetDriverByName("R") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

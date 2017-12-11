@@ -382,7 +382,7 @@ int VSIBufferedReaderHandle::Close()
     {
         m_poBaseHandle->Close();
         delete m_poBaseHandle;
-        m_poBaseHandle = NULL;
+        m_poBaseHandle = nullptr;
     }
     return 0;
 }

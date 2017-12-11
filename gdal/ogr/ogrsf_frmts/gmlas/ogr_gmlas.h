@@ -1131,8 +1131,8 @@ class OGRGMLASDataSource: public GDALDataset
         OGRGMLASLayer*          GetLayerByXPath( const CPLString& osXPath );
 
         GMLASReader*            CreateReader( VSILFILE*& fpGML,
-                                              GDALProgressFunc pfnProgress = NULL,
-                                              void* pProgressData = NULL );
+                                              GDALProgressFunc pfnProgress = nullptr,
+                                              void* pProgressData = nullptr );
 
         GMLASXSDCache& GetCache() { return m_oCache; }
 
@@ -1590,9 +1590,9 @@ class GMLASReader : public DefaultHandler
 
         void SetFileSize(vsi_l_offset nFileSize) { m_nFileSize = nFileSize; }
 
-        OGRFeature* GetNextFeature( OGRGMLASLayer** ppoBelongingLayer = NULL,
-                                    GDALProgressFunc pfnProgress = NULL,
-                                    void* pProgressData = NULL );
+        OGRFeature* GetNextFeature( OGRGMLASLayer** ppoBelongingLayer = nullptr,
+                                    GDALProgressFunc pfnProgress = nullptr,
+                                    void* pProgressData = nullptr );
 
         virtual void startElement(
             const   XMLCh* const    uri,

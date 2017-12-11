@@ -56,8 +56,8 @@ CPL_CVSID("$Id$")
 
 OGR_SRSNode::OGR_SRSNode( const char * pszValueIn ) :
     pszValue(CPLStrdup(pszValueIn)),
-    papoChildNodes(NULL),
-    poParent(NULL),
+    papoChildNodes(nullptr),
+    poParent(nullptr),
     nChildren(0)
 {}
 
@@ -89,7 +89,7 @@ void OGR_SRSNode::ClearChildren()
 
     CPLFree( papoChildNodes );
 
-    papoChildNodes = NULL;
+    papoChildNodes = nullptr;
     nChildren = 0;
 }
 
@@ -123,7 +123,7 @@ OGR_SRSNode *OGR_SRSNode::GetChild( int iChild )
 
 {
     if( iChild < 0 || iChild >= nChildren )
-        return NULL;
+        return nullptr;
 
     return papoChildNodes[iChild];
 }
@@ -142,7 +142,7 @@ const OGR_SRSNode *OGR_SRSNode::GetChild( int iChild ) const
 
 {
     if( iChild < 0 || iChild >= nChildren )
-        return NULL;
+        return nullptr;
 
     return papoChildNodes[iChild];
 }
@@ -191,11 +191,11 @@ OGR_SRSNode *OGR_SRSNode::GetNode( const char * pszName )
     for( int i = 0; i < nChildren; i++ )
     {
         OGR_SRSNode *poNode = papoChildNodes[i]->GetNode( pszName );
-        if( poNode != NULL )
+        if( poNode != nullptr )
             return poNode;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -400,12 +400,12 @@ int OGR_SRSNode::NeedsQuoting() const
 
     // As per bugzilla bug 201, the OGC spec says the authority code
     // needs to be quoted even though it appears well behaved.
-    if( poParent != NULL && EQUAL(poParent->GetValue(), "AUTHORITY") )
+    if( poParent != nullptr && EQUAL(poParent->GetValue(), "AUTHORITY") )
         return TRUE;
 
     // As per bugzilla bug 294, the OGC spec says the direction
     // values for the AXIS keywords should *not* be quoted.
-    if( poParent != NULL && EQUAL(poParent->GetValue(), "AXIS")
+    if( poParent != nullptr && EQUAL(poParent->GetValue(), "AXIS")
         && this != poParent->GetChild(0) )
         return FALSE;
 
@@ -818,9 +818,9 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /* -------------------------------------------------------------------- */
 /*      Scan for value, and replace if our parent was a "hit".          */
 /* -------------------------------------------------------------------- */
-    if( bChildOfHit || pszNode == NULL )
+    if( bChildOfHit || pszNode == nullptr )
     {
-        for( int i = 0; papszSrcValues[i] != NULL; i += nStepSize )
+        for( int i = 0; papszSrcValues[i] != nullptr; i += nStepSize )
         {
             if( EQUAL(papszSrcValues[i], pszValue) &&
                 !EQUAL(papszDstValues[i], "") )
@@ -834,7 +834,7 @@ OGRErr OGR_SRSNode::applyRemapper( const char *pszNode,
 /* -------------------------------------------------------------------- */
 /*      Is this the target node?                                        */
 /* -------------------------------------------------------------------- */
-    if( pszNode != NULL )
+    if( pszNode != nullptr )
         bChildOfHit = EQUAL(pszValue, pszNode);
 
 /* -------------------------------------------------------------------- */
@@ -885,23 +885,23 @@ void OGR_SRSNode::StripNodes( const char * pszName )
 // EXTENSION, being a OSR extension, is arbitrary placed before the AUTHORITY.
 static const char * const apszPROJCSRule[] =
 { "PROJCS", "GEOGCS", "PROJECTION", "PARAMETER", "UNIT", "AXIS", "EXTENSION",
-  "AUTHORITY", NULL };
+  "AUTHORITY", nullptr };
 
 static const char * const apszDATUMRule[] =
-{ "DATUM", "SPHEROID", "TOWGS84", "EXTENSION", "AUTHORITY", NULL };
+{ "DATUM", "SPHEROID", "TOWGS84", "EXTENSION", "AUTHORITY", nullptr };
 
 static const char * const apszGEOGCSRule[] =
-{ "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
+{ "GEOGCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", nullptr };
 
 static const char * const apszGEOCCSRule[] =
-{ "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", NULL };
+{ "GEOCCS", "DATUM", "PRIMEM", "UNIT", "AXIS", "AUTHORITY", nullptr };
 
 static const char * const apszVERTCSRule[] =
-{ "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", NULL };
+{ "VERT_CS", "VERT_DATUM", "UNIT", "AXIS", "EXTENSION", "AUTHORITY", nullptr };
 
 static const char * const * const apszOrderingRules[] = {
     apszPROJCSRule, apszGEOGCSRule, apszDATUMRule, apszGEOCCSRule,
-    apszVERTCSRule, NULL };
+    apszVERTCSRule, nullptr };
 
 /**
  * Correct parameter ordering to match CT Specification.
@@ -933,9 +933,9 @@ OGRErr OGR_SRSNode::FixupOrdering()
 /* -------------------------------------------------------------------- */
 /*      Is this a node for which an ordering rule exists?               */
 /* -------------------------------------------------------------------- */
-    const char * const * papszRule = NULL;
+    const char * const * papszRule = nullptr;
 
-    for( int i = 0; apszOrderingRules[i] != NULL; i++ )
+    for( int i = 0; apszOrderingRules[i] != nullptr; i++ )
     {
         if( EQUAL(apszOrderingRules[i][0], pszValue) )
         {
@@ -944,7 +944,7 @@ OGRErr OGR_SRSNode::FixupOrdering()
         }
     }
 
-    if( papszRule == NULL )
+    if( papszRule == nullptr )
         return OGRERR_NONE;
 
 /* -------------------------------------------------------------------- */

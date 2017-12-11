@@ -66,9 +66,9 @@ static int OGRVRTDriverIdentify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     }
 
-    return poOpenInfo->fpL != NULL &&
+    return poOpenInfo->fpL != nullptr &&
         strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-               "<OGRVRTDataSource") != NULL;
+               "<OGRVRTDataSource") != nullptr;
 }
 
 /************************************************************************/
@@ -80,7 +80,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if( !OGRVRTDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 #endif
 
     // Are we being passed the XML definition directly?
@@ -90,7 +90,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
            isspace(static_cast<unsigned char>(*pszTestXML)) )
         pszTestXML++;
 
-    char *pszXML = NULL;
+    char *pszXML = nullptr;
     if( STARTS_WITH_CI(pszTestXML, "<OGRVRTDataSource>") )
     {
         pszXML = CPLStrdup(pszTestXML);
@@ -108,15 +108,15 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
             sStatBuf.st_size > 1024 * 1024 )
         {
             CPLDebug("VRT", "Unreasonable long file, not likely really VRT");
-            return NULL;
+            return nullptr;
         }
 
         // It is the right file, now load the full XML definition.
         const int nLen = static_cast<int>(sStatBuf.st_size);
 
         pszXML = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen + 1));
-        if( pszXML == NULL )
-            return NULL;
+        if( pszXML == nullptr )
+            return nullptr;
 
         pszXML[nLen] = '\0';
         VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
@@ -124,36 +124,36 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
                 VSIFReadL(pszXML, 1, nLen, poOpenInfo->fpL)) != nLen )
         {
             CPLFree(pszXML);
-            return NULL;
+            return nullptr;
         }
         VSIFCloseL(poOpenInfo->fpL);
-        poOpenInfo->fpL = NULL;
+        poOpenInfo->fpL = nullptr;
     }
 
     // Parse the XML.
     CPLXMLNode *psTree = CPLParseXMLString(pszXML);
 
-    if( psTree == NULL )
+    if( psTree == nullptr )
     {
         CPLFree(pszXML);
-        return NULL;
+        return nullptr;
     }
 
     // XML Validation.
     if( CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
     {
         const char *pszXSD = CPLFindFile("gdal", "ogrvrt.xsd");
-        if( pszXSD != NULL )
+        if( pszXSD != nullptr )
         {
             std::vector<CPLString> aosErrors;
             CPLPushErrorHandlerEx(OGRVRTErrorHandler, &aosErrors);
-            const int bRet = CPLValidateXML(pszXML, pszXSD, NULL);
+            const int bRet = CPLValidateXML(pszXML, pszXSD, nullptr);
             CPLPopErrorHandler();
             if( !bRet )
             {
                 if( !aosErrors.empty() &&
                     strstr(aosErrors[0].c_str(), "missing libxml2 support") ==
-                        NULL )
+                        nullptr )
                 {
                     for( size_t i = 0; i < aosErrors.size(); i++ )
                     {
@@ -176,7 +176,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
                           poOpenInfo->eAccess == GA_Update) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -189,7 +189,7 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
 void RegisterOGRVRT()
 
 {
-    if( GDALGetDriverByName("OGR_VRT") != NULL )
+    if( GDALGetDriverByName("OGR_VRT") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

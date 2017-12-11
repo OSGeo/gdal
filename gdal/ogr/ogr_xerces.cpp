@@ -44,7 +44,7 @@ CPL_CVSID("$Id$")
 
 #ifdef HAVE_XERCES
 
-static CPLMutex* hMutex = NULL;
+static CPLMutex* hMutex = nullptr;
 static int nCounter = 0;
 
 /************************************************************************/
@@ -106,9 +106,9 @@ void OGRDeinitializeXerces(void)
 
 void OGRCleanupXercesMutex(void)
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 namespace OGR
@@ -128,7 +128,7 @@ CPLString transcode( const XMLCh *panXMLString, int nLimitingChars )
 CPLString& transcode( const XMLCh *panXMLString, CPLString& osRet,
                       int nLimitingChars )
 {
-    if( panXMLString == NULL )
+    if( panXMLString == nullptr )
     {
         osRet = "(null)";
         return osRet;

@@ -121,7 +121,7 @@ static void Usage(const char* pszErrorMsg)
 #endif
     printf("\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         // cppcheck-suppress nullPointer
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
@@ -143,14 +143,14 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
 #ifdef HAVE_GETADDRINFO
     int nRet;
     struct addrinfo sHints;
-    struct addrinfo* psResults = NULL, *psResultsIter;
+    struct addrinfo* psResults = nullptr, *psResultsIter;
     memset(&sHints, 0, sizeof(struct addrinfo));
     sHints.ai_family = AF_UNSPEC;
     sHints.ai_socktype = SOCK_STREAM;
     sHints.ai_flags = AI_PASSIVE;
     sHints.ai_protocol = IPPROTO_TCP;
 
-    nRet = getaddrinfo(NULL, pszService, &sHints, &psResults);
+    nRet = getaddrinfo(nullptr, pszService, &sHints, &psResults);
     if (nRet)
     {
         fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(nRet));
@@ -158,7 +158,7 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
     }
 
     for( psResultsIter = psResults;
-         psResultsIter != NULL;
+         psResultsIter != nullptr;
          psResultsIter = psResultsIter->ai_next)
     {
         nListenSocket = socket(psResultsIter->ai_family,
@@ -182,7 +182,7 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
 
     freeaddrinfo(psResults);
 
-    if (psResultsIter == NULL)
+    if (psResultsIter == nullptr)
     {
         fprintf(stderr, "Could not bind()\n");
         return INVALID_SOCKET;
@@ -270,7 +270,7 @@ int RunServer(const char* pszApplication,
         CPL_SOCKET nConnSocket;
         char szReady[5];
         int bOK = TRUE;
-        const char* apszArgs[] = { NULL, "-newconnection", NULL };
+        const char* apszArgs[] = { nullptr, "-newconnection", nullptr };
 
         apszArgs[0] = pszApplication;
         nConnSocket = accept(nListenSocket, &sockAddr, &nLen);
@@ -282,13 +282,13 @@ int RunServer(const char* pszApplication,
             return 1;
         }
 
-        psProcess = CPLSpawnAsync( NULL,
+        psProcess = CPLSpawnAsync( nullptr,
                                    apszArgs,
                                    TRUE,
                                    TRUE,
                                    FALSE,
-                                   NULL);
-        if( psProcess == NULL )
+                                   nullptr);
+        if( psProcess == nullptr )
         {
             fprintf(stderr, "CPLSpawnAsync() function failed.\n");
             closesocket(nConnSocket);
@@ -440,7 +440,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     if( !bFork )
         signal(SIGPIPE, SIG_IGN);
 
-    if( pszUnixSocketFilename != NULL )
+    if( pszUnixSocketFilename != nullptr )
     {
         struct sockaddr_un sockAddrUnix;
         int len;
@@ -472,7 +472,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
     }
     else
     {
-        nListenSocket = CreateSocketAndBindAndListen(pszService, NULL, NULL, NULL);
+        nListenSocket = CreateSocketAndBindAndListen(pszService, nullptr, nullptr, nullptr);
         if (nListenSocket < 0)
         {
             return 1;
@@ -507,7 +507,7 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
             tv.tv_usec = 0;
             waitpid(-1, &nStatus, WNOHANG);
         }
-        while( select(nMaxSocket + 1, &read_fds, NULL, NULL, &tv) < 1 );
+        while( select(nMaxSocket + 1, &read_fds, nullptr, nullptr, &tv) < 1 );
 
         if( bFork )
         {
@@ -633,7 +633,7 @@ static int GDALServerLoopWin32()
 MAIN_START(argc, argv)
 {
     int i, nRet, bStdinout = FALSE, bPipeIn = FALSE, bPipeOut = FALSE, bNewConnection = FALSE;
-    const char* pszService = NULL, *pszUnixSocketFilename = NULL;
+    const char* pszService = nullptr, *pszUnixSocketFilename = nullptr;
 #ifndef WIN32
     int pipe_in = fileno(stdin);
     int pipe_out = fileno(stdout);
@@ -663,7 +663,7 @@ MAIN_START(argc, argv)
             return 0;
         }
         else if( EQUAL(argv[i],"--help") )
-            Usage(NULL);
+            Usage(nullptr);
         else if( EQUAL(argv[i],"-tcpserver") )
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
@@ -724,10 +724,10 @@ MAIN_START(argc, argv)
             Usage("Too many command options.");
     }
     if( !bStdinout && !(bPipeIn && bPipeOut) &&
-        pszService == NULL && pszUnixSocketFilename == NULL && !bNewConnection )
-        Usage(NULL);
+        pszService == nullptr && pszUnixSocketFilename == nullptr && !bNewConnection )
+        Usage(nullptr);
 
-    if( pszService != NULL || pszUnixSocketFilename != NULL )
+    if( pszService != nullptr || pszUnixSocketFilename != nullptr )
         nRet = RunServer(argv[0], pszService, pszUnixSocketFilename, bFork);
 #ifdef WIN32
     else if( bNewConnection )

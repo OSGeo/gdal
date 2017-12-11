@@ -72,7 +72,7 @@ class CPL_DLL OGR_SRSNode
     OGRErr      importFromWkt( char **, int nRecLevel, int* pnNodes );
 
   public:
-    explicit     OGR_SRSNode(const char * = NULL);
+    explicit     OGR_SRSNode(const char * = nullptr);
                 ~OGR_SRSNode();
 
     /** Return whether this is a leaf node.
@@ -163,7 +163,7 @@ class CPL_DLL OGRSpatialReference
 
   public:
                 OGRSpatialReference(const OGRSpatialReference&);
-    explicit    OGRSpatialReference(const char * = NULL);
+    explicit    OGRSpatialReference(const char * = nullptr);
 
     virtual    ~OGRSpatialReference();
 
@@ -185,7 +185,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
     OGRErr      exportToUSGS( long *, long *, double **, long * ) const;
-    OGRErr      exportToXML( char **, const char * = NULL ) const;
+    OGRErr      exportToXML( char **, const char * = nullptr ) const;
     OGRErr      exportToPanorama( long *, long *, long *, long *,
                                   double * ) const;
     OGRErr      exportToERM( char *pszProj, char *pszDatum, char *pszUnits );
@@ -196,8 +196,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromEPSG( int );
     OGRErr      importFromEPSGA( int );
     OGRErr      importFromESRI( char ** );
-    OGRErr      importFromPCI( const char *, const char * = NULL,
-                               double * = NULL );
+    OGRErr      importFromPCI( const char *, const char * = nullptr,
+                               double * = nullptr );
 
 #define USGS_ANGLE_DECIMALDEGREES 0     /**< Angle is in decimal degrees. */
 #define USGS_ANGLE_PACKEDDMS      TRUE  /**< Angle is in packed degree minute second. */
@@ -222,10 +222,10 @@ class CPL_DLL OGRSpatialReference
 
     OGRSpatialReference* convertToOtherProjection(
                                     const char* pszTargetProjection,
-                                    const char* const* papszOptions = NULL ) const;
+                                    const char* const* papszOptions = nullptr ) const;
 
     OGRErr      Validate();
-    OGRErr      StripCTParms( OGR_SRSNode * = NULL );
+    OGRErr      StripCTParms( OGR_SRSNode * = nullptr );
     OGRErr      StripVertical();
     OGRErr      FixupOrdering();
     OGRErr      Fixup();
@@ -260,14 +260,14 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     OGRErr      SetTargetLinearUnits( const char *pszTargetKey,
                                       const char *pszName, double dfInMeters );
-    double      GetLinearUnits( char ** = NULL ) const;
+    double      GetLinearUnits( char ** = nullptr ) const;
     double      GetTargetLinearUnits( const char *pszTargetKey,
-                                      char ** ppszRetName = NULL ) const;
+                                      char ** ppszRetName = nullptr ) const;
 
     OGRErr      SetAngularUnits( const char *pszName, double dfInRadians );
-    double      GetAngularUnits( char ** = NULL ) const;
+    double      GetAngularUnits( char ** = nullptr ) const;
 
-    double      GetPrimeMeridian( char ** = NULL ) const;
+    double      GetPrimeMeridian( char ** = nullptr ) const;
 
     int         IsGeographic() const;
     int         IsProjected() const;
@@ -292,9 +292,9 @@ class CPL_DLL OGRSpatialReference
                            const char * pszDatumName,
                            const char * pszEllipsoidName,
                            double dfSemiMajor, double dfInvFlattening,
-                           const char * pszPMName = NULL,
+                           const char * pszPMName = nullptr,
                            double dfPMOffset = 0.0,
-                           const char * pszUnits = NULL,
+                           const char * pszUnits = nullptr,
                            double dfConvertToRadians = 0.0 );
     OGRErr      SetWellKnownGeogCS( const char * );
     OGRErr      CopyGeogCSFrom( const OGRSpatialReference * poSrcSRS );
@@ -312,9 +312,9 @@ class CPL_DLL OGRSpatialReference
                             double = 0.0 );
     OGRErr      GetTOWGS84( double *padfCoef, int nCoeff = 7 ) const;
 
-    double      GetSemiMajor( OGRErr * = NULL ) const;
-    double      GetSemiMinor( OGRErr * = NULL ) const;
-    double      GetInvFlattening( OGRErr * = NULL ) const;
+    double      GetSemiMajor( OGRErr * = nullptr ) const;
+    double      GetSemiMinor( OGRErr * = nullptr ) const;
+    double      GetInvFlattening( OGRErr * = nullptr ) const;
     double      GetEccentricity() const;
     double      GetSquaredEccentricity() const;
 
@@ -334,18 +334,18 @@ class CPL_DLL OGRSpatialReference
 
     const char *GetExtension( const char *pszTargetKey,
                               const char *pszName,
-                              const char *pszDefault = NULL ) const;
+                              const char *pszDefault = nullptr ) const;
     OGRErr      SetExtension( const char *pszTargetKey,
                               const char *pszName,
                               const char *pszValue );
 
     int         FindProjParm( const char *pszParameter,
-                              const OGR_SRSNode *poPROJCS=NULL ) const;
+                              const OGR_SRSNode *poPROJCS=nullptr ) const;
     OGRErr      SetProjParm( const char *, double );
-    double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
+    double      GetProjParm( const char *, double =0.0, OGRErr* = nullptr ) const;
 
     OGRErr      SetNormProjParm( const char *, double );
-    double      GetNormProjParm( const char *, double=0.0, OGRErr* =NULL)const;
+    double      GetNormProjParm( const char *, double=0.0, OGRErr* =nullptr)const;
 
     static int  IsAngularParameter( const char * );
     static int  IsLongitudeParameter( const char * );
@@ -567,7 +567,7 @@ class CPL_DLL OGRSpatialReference
 
     /** Universal Transverse Mercator */
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
-    int         GetUTMZone( int *pbNorth = NULL ) const;
+    int         GetUTMZone( int *pbNorth = nullptr ) const;
 
     /** Wagner I -- VII */
     OGRErr      SetWagner( int nVariation, double dfCenterLat,
@@ -581,18 +581,18 @@ class CPL_DLL OGRSpatialReference
                         double dfPegHeading, double dfPegHgt);
     /** State Plane */
     OGRErr      SetStatePlane( int nZone, int bNAD83 = TRUE,
-                               const char *pszOverrideUnitName = NULL,
+                               const char *pszOverrideUnitName = nullptr,
                                double dfOverrideUnit = 0.0 );
 
     /** ImportFromESRIStatePlaneWKT */
     OGRErr      ImportFromESRIStatePlaneWKT(
         int nCode, const char* pszDatumName, const char* pszUnitsName,
-        int nPCSCode, const char* pszCSName = NULL );
+        int nPCSCode, const char* pszCSName = nullptr );
 
     /** ImportFromESRIWisconsinWKT */
     OGRErr      ImportFromESRIWisconsinWKT(
         const char* pszPrjName, double dfCentralMeridian, double dfLatOfOrigin,
-        const char* pszUnitsName, const char* pszCSName = NULL );
+        const char* pszUnitsName, const char* pszCSName = nullptr );
 
     static OGRSpatialReference* GetWGS84SRS();
 };
@@ -652,7 +652,7 @@ public:
      * transform.
      */
     virtual int Transform( int nCount,
-                           double *x, double *y, double *z = NULL ) = 0;
+                           double *x, double *y, double *z = nullptr ) = 0;
 
     /**
      * Transform points from source to destination space.
@@ -670,8 +670,8 @@ public:
      * if none transform.
      */
     virtual int TransformEx( int nCount,
-                             double *x, double *y, double *z = NULL,
-                             int *pabSuccess = NULL ) = 0;
+                             double *x, double *y, double *z = nullptr,
+                             int *pabSuccess = nullptr ) = 0;
 };
 
 OGRCoordinateTransformation CPL_DLL *

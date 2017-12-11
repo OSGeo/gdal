@@ -250,11 +250,11 @@ GMLASWriter::GMLASWriter(const char * pszFilename,
 #endif
     , m_poSrcDS(poSrcDS)
     , m_papszOptions(CSLDuplicate(papszOptions))
-    , m_fpXML(NULL)
-    , m_poTmpDS(NULL)
-    , m_poLayersMDLayer(NULL)
-    , m_poFieldsMDLayer(NULL)
-    , m_poLayerRelationshipsLayer(NULL)
+    , m_fpXML(nullptr)
+    , m_poTmpDS(nullptr)
+    , m_poLayersMDLayer(nullptr)
+    , m_poFieldsMDLayer(nullptr)
+    , m_poLayerRelationshipsLayer(nullptr)
     , m_osTargetNameSpace(szOGRGMLAS_URI)
     , m_osTargetNameSpacePrefix(szOGRGMLAS_PREFIX)
     , m_osIndentation(std::string(INDENT_SIZE_DEFAULT, ' '))
@@ -279,11 +279,11 @@ GMLASWriter::~GMLASWriter()
 
 void GMLASWriter::Close()
 {
-    if( m_fpXML != NULL )
+    if( m_fpXML != nullptr )
         VSIFCloseL( m_fpXML );
-    m_fpXML = NULL;
+    m_fpXML = nullptr;
     delete m_poTmpDS;
-    m_poTmpDS = NULL;
+    m_poTmpDS = nullptr;
 }
 
 /************************************************************************/
@@ -294,7 +294,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
                         void * pProgressData)
 {
     if( m_poSrcDS->GetLayerCount() == 0 &&
-        m_poSrcDS->GetLayerByName(szOGR_OTHER_METADATA) == NULL )
+        m_poSrcDS->GetLayerByName(szOGR_OTHER_METADATA) == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Source dataset has no layers");
         return false;
@@ -342,7 +342,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
                                                      osXSDFilenames);
         bool bRet = m_poTmpDS->Open(&oOpenInfo);
         CSLDestroy(oOpenInfo.papszOpenOptions);
-        oOpenInfo.papszOpenOptions = NULL;
+        oOpenInfo.papszOpenOptions = nullptr;
         if( !bRet )
         {
             return false;
@@ -355,7 +355,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     // dataset contains all the metadata layers we need
     OGRLayer* poOtherMetadataLayer =
                         poQueryDS->GetLayerByName(szOGR_OTHER_METADATA);
-    if( poOtherMetadataLayer == NULL )
+    if( poOtherMetadataLayer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot establish schema since no %s creation option "
@@ -372,19 +372,19 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         poQueryDS->GetLayerByName(szOGR_FIELDS_METADATA);
     m_poLayerRelationshipsLayer =
         poQueryDS->GetLayerByName(szOGR_LAYER_RELATIONSHIPS);
-    if( m_poLayersMDLayer == NULL )
+    if( m_poLayersMDLayer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s not found",
                  szOGR_LAYERS_METADATA);
         return false;
     }
-    if( m_poFieldsMDLayer == NULL )
+    if( m_poFieldsMDLayer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s not found",
                  szOGR_FIELDS_METADATA);
         return false;
     }
-    if( m_poLayerRelationshipsLayer == NULL )
+    if( m_poLayerRelationshipsLayer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s not found",
                  szOGR_LAYER_RELATIONSHIPS);
@@ -397,7 +397,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     while( true )
     {
         OGRFeature* poFeature = poOtherMetadataLayer->GetNextFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
         const char* pszKey = poFeature->GetFieldAsString(szKEY);
         int i = 0;
@@ -458,7 +458,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         }
 
         char** papszLayers = CSLTokenizeString2(pszLayers, ",", 0);
-        for( char** papszIter = papszLayers; *papszIter != NULL; ++papszIter )
+        for( char** papszIter = papszLayers; *papszIter != nullptr; ++papszIter )
         {
             if( EQUAL(*papszIter, "{SPATIAL_LAYERS}") )
             {
@@ -517,10 +517,10 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         szWFS2_FEATURECOLLECTION);
 
     if( pfnProgress == GDALDummyProgress )
-        pfnProgress = NULL;
+        pfnProgress = nullptr;
     // Compute total number of top level features
     GIntBig nTotalTopLevelFeatures = -1;
-    if( pfnProgress != NULL || bWFS2FeatureCollection )
+    if( pfnProgress != nullptr || bWFS2FeatureCollection )
     {
         nTotalTopLevelFeatures = 0;
         std::map<CPLString, int>::const_iterator oLayerIter =
@@ -529,7 +529,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         {
             const LayerDescription& oDesc = m_aoLayerDesc[oLayerIter->second];
             OGRLayer* poSrcLayer = m_poSrcDS->GetLayerByName(oDesc.osName);
-            if( oDesc.bIsSelected && poSrcLayer != NULL )
+            if( oDesc.bIsSelected && poSrcLayer != nullptr )
             {
                 nTotalTopLevelFeatures += poSrcLayer->GetFeatureCount(true);
                 nTotalTopLevelFeatures -=
@@ -674,7 +674,7 @@ bool GMLASWriter::WriteXSD( const CPLString& osXSDFilenameIn,
         !osXSDFilenameIn.empty() ? osXSDFilenameIn :
                 CPLString(CPLResetExtension( m_osFilename, "xsd" )) );
     VSILFILE* fpXSD = VSIFOpenL( osXSDFilename, "wb" );
-    if( fpXSD == NULL )
+    if( fpXSD == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot create %s", osXSDFilename.c_str());
@@ -763,7 +763,7 @@ bool GMLASWriter::WriteXMLHeader(
                         const std::map<CPLString, CPLString>& oMapURIToPrefix )
 {
     m_fpXML = VSIFOpenL( m_osFilename, "wb" );
-    if( m_fpXML == NULL )
+    if( m_fpXML == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot create %s", m_osFilename.c_str());
@@ -789,7 +789,7 @@ bool GMLASWriter::WriteXMLHeader(
         if( osTimestamp.empty() )
         {
             struct tm sTime;
-            CPLUnixTimeToYMDHMS(time(NULL), &sTime);
+            CPLUnixTimeToYMDHMS(time(nullptr), &sTime);
             PrintLine( m_fpXML,
                        "    timeStamp=\"%04d-%02d-%02dT%02d:%02d:%02dZ\"",
                        sTime.tm_year + 1900,
@@ -969,12 +969,12 @@ bool GMLASWriter::CollectLayers()
         }
     }
 
-    m_poLayersMDLayer->SetAttributeFilter(NULL);
+    m_poLayersMDLayer->SetAttributeFilter(nullptr);
     m_poLayersMDLayer->ResetReading();
     while( true )
     {
         OGRFeature* poFeature = m_poLayersMDLayer->GetNextFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
         LayerDescription desc;
         desc.osName = poFeature->GetFieldAsString(szLAYER_NAME);
@@ -1067,7 +1067,7 @@ bool GMLASWriter::CollectFields()
     while( true )
     {
         OGRFeature* poFeature = m_poFieldsMDLayer->GetNextFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
         GMLASField oField;
@@ -1263,13 +1263,13 @@ bool GMLASWriter::CollectRelationships()
         }
     }
 
-    m_poLayerRelationshipsLayer->SetAttributeFilter( NULL );
+    m_poLayerRelationshipsLayer->SetAttributeFilter( nullptr );
     m_poLayerRelationshipsLayer->ResetReading();
 
     while( true )
     {
         OGRFeature* poFeature = m_poLayerRelationshipsLayer->GetNextFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
         const CPLString osParentLayer(
@@ -1332,7 +1332,7 @@ void GMLASWriter::ComputeTopLevelFIDs()
     {
         LayerDescription& oDesc = m_aoLayerDesc[i];
         OGRLayer* poLayer = GetLayerByName(oDesc.osName);
-        if( oDesc.bIsTopLevel && poLayer != NULL &&
+        if( oDesc.bIsTopLevel && poLayer != nullptr &&
             !oDesc.aoReferencingLayers.empty() )
         {
             for( size_t j = 0; j < oDesc.aoReferencingLayers.size(); ++j )
@@ -1397,13 +1397,13 @@ void GMLASWriter::ComputeTopLevelFIDs()
                 }
 
                 CPLDebug("GMLAS", "Executing %s", osSQL.c_str());
-                OGRLayer* poSQLLyr = m_poSrcDS->ExecuteSQL( osSQL, NULL, NULL );
+                OGRLayer* poSQLLyr = m_poSrcDS->ExecuteSQL( osSQL, nullptr, nullptr );
                 if( poSQLLyr )
                 {
                     while( true )
                     {
                         OGRFeature* poFeature = poSQLLyr->GetNextFeature();
-                        if( poFeature == NULL )
+                        if( poFeature == nullptr )
                             break;
 
                         const GIntBig nFID = poFeature->GetFieldAsInteger64(0);
@@ -1429,13 +1429,13 @@ static XPathComponents SplitXPathInternal( const CPLString& osXPath )
 {
     char** papszTokens = CSLTokenizeString2(osXPath, "/", 0);
     XPathComponents aoComponents;
-    for( int i = 0; papszTokens[i] != NULL; ++i )
+    for( int i = 0; papszTokens[i] != nullptr; ++i )
     {
         const bool bAttr = (papszTokens[i][0] == '@');
         char** papszNSElt = CSLTokenizeString2(papszTokens[i] +
                                                     (bAttr ? 1 : 0), ":", 0);
-        if( papszNSElt[0] != NULL && papszNSElt[1] != NULL &&
-            papszNSElt[2] == NULL )
+        if( papszNSElt[0] != nullptr && papszNSElt[1] != nullptr &&
+            papszNSElt[2] == nullptr )
         {
             CPLString osVal(papszNSElt[1]);
             size_t nPos = osVal.find(szEXTRA_SUFFIX);
@@ -1444,7 +1444,7 @@ static XPathComponents SplitXPathInternal( const CPLString& osXPath )
             aoComponents.push_back( PairNSElement( papszNSElt[0],
                     (bAttr ? CPLString("@") : CPLString()) + osVal ) );
         }
-        else if( papszNSElt[0] != NULL && papszNSElt[1] == NULL )
+        else if( papszNSElt[0] != nullptr && papszNSElt[1] == nullptr )
         {
             CPLString osVal(papszNSElt[0]);
             size_t nPos = osVal.find(szEXTRA_SUFFIX);
@@ -1511,7 +1511,7 @@ bool GMLASWriter::WriteLayer( bool bWFS2FeatureCollection,
                               void* pProgressData )
 {
     OGRLayer* poSrcLayer = GetLayerByName(oDesc.osName);
-    if( poSrcLayer == NULL )
+    if( poSrcLayer == nullptr )
         return true;
 
     poSrcLayer->ResetReading();
@@ -1522,7 +1522,7 @@ bool GMLASWriter::WriteLayer( bool bWFS2FeatureCollection,
     while( bRet )
     {
         OGRFeature* poFeature = poSrcLayer->GetNextFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
         if( oDesc.aoSetReferencedFIDs.find( poFeature->GetFID() )
@@ -1887,7 +1887,7 @@ bool GMLASWriter::GetCoordSwap( const OGRSpatialReference* poSRS )
                                                 "PROJCS" : "GEOGCS";
     const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
     const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-    if( NULL != pszAuthName && NULL != pszAuthCode &&
+    if( nullptr != pszAuthName && nullptr != pszAuthCode &&
         EQUAL( pszAuthName, "EPSG" ) &&
         m_osSRSNameFormat != "SHORT" &&
         !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
@@ -2066,19 +2066,19 @@ bool GMLASWriter::WriteFieldRegular(
 
     if( !bEmptyContent && oField.GetTypeName() == szFAKEXS_JSON_DICT )
     {
-        json_object* poObj = NULL;
+        json_object* poObj = nullptr;
         if( OGRJSonParse( poFeature->GetFieldAsString(nFieldIdx),
                             &poObj ) )
         {
             if( json_type_object == json_object_get_type( poObj ) )
             {
                 json_object_iter it;
-                it.key = NULL;
-                it.val = NULL;
-                it.entry = NULL;
+                it.key = nullptr;
+                it.val = nullptr;
+                it.entry = nullptr;
                 json_object_object_foreachC( poObj, it )
                 {
-                    if( it.val != NULL &&
+                    if( it.val != nullptr &&
                         json_object_get_type(it.val) ==
                                                 json_type_string )
                     {
@@ -2114,8 +2114,8 @@ bool GMLASWriter::WriteFieldRegular(
                     OGRGeometryCollection* poGC = new OGRGeometryCollection();
                     char** papszValues = poFeature->
                                         GetFieldAsStringList(nFieldXMLIdx);
-                    for( int j = 0; papszValues != NULL &&
-                                    papszValues[j] != NULL; ++j )
+                    for( int j = 0; papszValues != nullptr &&
+                                    papszValues[j] != nullptr; ++j )
                     {
                         OGRGeometry* poPart = reinterpret_cast<OGRGeometry*>(
                                         OGR_G_CreateFromGML(papszValues[j]));
@@ -2124,8 +2124,8 @@ bool GMLASWriter::WriteFieldRegular(
                     }
                     if( AreGeomsEqualAxisOrderInsensitive(poGeom, poGC) )
                     {
-                        for( int j = 0; papszValues != NULL &&
-                                    papszValues[j] != NULL; ++j )
+                        for( int j = 0; papszValues != nullptr &&
+                                    papszValues[j] != nullptr; ++j )
                         {
                             if( j > 0 )
                                 PrintMultipleValuesSeparator(oField,
@@ -2143,7 +2143,7 @@ bool GMLASWriter::WriteFieldRegular(
                 OGRGeometry* poOrigGeom = reinterpret_cast<OGRGeometry*>(
                                                 OGR_G_CreateFromGML(pszXML));
 
-                if( poOrigGeom != NULL )
+                if( poOrigGeom != nullptr )
                 {
                     if( AreGeomsEqualAxisOrderInsensitive(poGeom, poOrigGeom) )
                     {
@@ -2180,7 +2180,7 @@ bool GMLASWriter::WriteFieldRegular(
 
             const double dfGMLVersion =
                 m_osGMLVersion.empty() ? 3.2 : CPLAtof(m_osGMLVersion);
-            char** papszOptions = CSLSetNameValue(NULL, "FORMAT",
+            char** papszOptions = CSLSetNameValue(nullptr, "FORMAT",
                     (dfGMLVersion >= 2.0 && dfGMLVersion < 3.0) ?  "GML2" :
                     (dfGMLVersion >= 3.0 && dfGMLVersion < 3.2) ?  "GML3" :
                                                                    "GML32" );
@@ -2192,7 +2192,7 @@ bool GMLASWriter::WriteFieldRegular(
                 bool bSwap = false;
                 const OGRSpatialReference* poSRS =
                                                 poGeom->getSpatialReference();
-                if( poSRS != NULL && GetCoordSwap(poSRS) )
+                if( poSRS != nullptr && GetCoordSwap(poSRS) )
                     bSwap = true;
                 papszOptions = CSLSetNameValue(papszOptions, "COORD_SWAP",
                                                     bSwap ? "TRUE" : "FALSE");
@@ -2289,7 +2289,7 @@ bool GMLASWriter::WriteFieldRegular(
         // Check that the content is valid XML
         CPLString osValidatingXML( "<X>" + osXML + "</X>" );
         CPLXMLNode* psNode = CPLParseXMLString(osValidatingXML);
-        if( psNode != NULL )
+        if( psNode != nullptr )
         {
             VSIFPrintfL(m_fpXML, "%s", osXML.c_str());
             CPLDestroyXMLNode(psNode);
@@ -2344,7 +2344,7 @@ bool GMLASWriter::WriteFieldRegular(
                                 poFeature->GetRawFieldRef(nFieldIdx));
                     char* pszT = strchr(pszFormatted, 'T');
                     if( oField.GetType() == GMLAS_FT_TIME &&
-                        pszT != NULL )
+                        pszT != nullptr )
                     {
                         VSIFPrintfL(m_fpXML, "%s", pszT+1);
                     }
@@ -2425,8 +2425,8 @@ bool GMLASWriter::WriteFieldRegular(
                     {
                         char** papszValues = poFeature->
                                         GetFieldAsStringList(nFieldIdx);
-                        for( int j = 0; papszValues != NULL &&
-                                        papszValues[j] != NULL; ++j )
+                        for( int j = 0; papszValues != nullptr &&
+                                        papszValues[j] != nullptr; ++j )
                         {
                             if( j > 0 )
                                 PrintMultipleValuesSeparator(oField,
@@ -2531,7 +2531,7 @@ bool GMLASWriter::WriteFieldNoLink(
     const LayerDescription& oChildLayerDesc =
                                     m_aoLayerDesc[oIter->second];
     OGRLayer* poRelLayer = GetLayerByName( oChildLayerDesc.osName );
-    if( poRelLayer == NULL )
+    if( poRelLayer == nullptr )
     {
         // Not necessary to be more verbose in case of truncated
         // source dataset
@@ -2609,7 +2609,7 @@ bool GMLASWriter::WriteFieldNoLink(
 
     OGRFeature* poChildFeature = poRelLayer->GetNextFeature();
     XPathComponents aoNewInitialContext;
-    if( poChildFeature != NULL )
+    if( poChildFeature != nullptr )
     {
         if( aoFieldComponents.size() == aoLayerComponents.size() + 1 &&
             oField.GetRepetitionOnSequence() )
@@ -2710,20 +2710,20 @@ OGRLayer* GMLASWriter::GetFilteredLayer(
     // RDBMS drivers will really create a new iterator independent of the
     // underlying layer when using a SELECT statement
     GDALDriver* poDriver = m_poSrcDS->GetDriver();
-    if( poDriver != NULL &&
+    if( poDriver != nullptr &&
         ( EQUAL( poDriver->GetDescription(), "SQLite" ) ||
           EQUAL( poDriver->GetDescription(), "PostgreSQL" ) ) )
     {
         CPLString osSQL;
         osSQL.Printf("SELECT * FROM \"%s\" WHERE %s",
                      poSrcLayer->GetName(), osFilter.c_str());
-        return m_poSrcDS->ExecuteSQL(osSQL, NULL, NULL);
+        return m_poSrcDS->ExecuteSQL(osSQL, nullptr, nullptr);
     }
 
     // TODO ?
     CPLDebug("GMLAS", "Cannot recursively iterate on %s on this driver",
              poSrcLayer->GetName());
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2770,7 +2770,7 @@ bool GMLASWriter::WriteFieldWithLink(
     const LayerDescription& oChildLayerDesc =
                                     m_aoLayerDesc[oIter->second];
     OGRLayer* poRelLayer = GetLayerByName( oChildLayerDesc.osName );
-    if( poRelLayer == NULL )
+    if( poRelLayer == nullptr )
     {
         // Not necessary to be more verbose in case of truncated
         // source dataset
@@ -2836,7 +2836,7 @@ bool GMLASWriter::WriteFieldWithLink(
                                           osChildPKID.c_str() ) );
     OGRLayer* poIterLayer = GetFilteredLayer(poRelLayer, osFilter,
                                              oSetLayersInIteration);
-    if( poIterLayer == NULL )
+    if( poIterLayer == nullptr )
     {
         return true;
     }
@@ -2857,7 +2857,7 @@ bool GMLASWriter::WriteFieldWithLink(
 
     OGRFeature* poChildFeature = poIterLayer->GetNextFeature();
     XPathComponents aoInitialComponents;
-    const bool bHasChild = poChildFeature != NULL;
+    const bool bHasChild = poChildFeature != nullptr;
     if( bHasChild )
     {
         aoInitialComponents = aoFieldComponents;
@@ -2926,7 +2926,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
     const LayerDescription& oRelLayerDesc = m_aoLayerDesc[oIter->second];
     OGRLayer* poRelLayer = GetLayerByName(oRelLayerDesc.osName);
     OGRLayer* poJunctionLayer = GetLayerByName( oField.GetJunctionLayer() );
-    if( poRelLayer == NULL )
+    if( poRelLayer == nullptr )
     {
         // Not necessary to be more verbose in case of truncated
         // source dataset
@@ -2935,7 +2935,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
                     oLayerDesc.osName.c_str());
         return true;
     }
-    if( poJunctionLayer == NULL )
+    if( poJunctionLayer == nullptr )
     {
         // Not necessary to be more verbose in case of truncated
         // source dataset
@@ -3001,7 +3001,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
     while( true )
     {
         OGRFeature* poJunctionFeature = poJunctionLayer->GetNextFeature();
-        if( poJunctionFeature == NULL )
+        if( poJunctionFeature == nullptr )
             break;
 
         aoChildPKIDs.push_back(
@@ -3022,13 +3022,13 @@ bool GMLASWriter::WriteFieldJunctionTable(
                         aoChildPKIDs[j].c_str() );
         OGRLayer* poIterLayer = GetFilteredLayer(poRelLayer, osFilter,
                                                  oSetLayersInIteration);
-        if( poIterLayer == NULL )
+        if( poIterLayer == nullptr )
         {
             return true;
         }
 
         OGRFeature* poChildFeature = poIterLayer->GetNextFeature();
-        if( poChildFeature != NULL )
+        if( poChildFeature != nullptr )
         {
             if( !bHasChild )
             {
@@ -3129,7 +3129,7 @@ GDALDataset *OGRGMLASDriverCreateCopy(
     if( strcmp(CPLGetExtension(pszFilename), "xsd") == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, ".xsd extension is not valid");
-        return NULL;
+        return nullptr;
     }
 
     // Strip GMLAS: prefix if specified
@@ -3138,7 +3138,7 @@ GDALDataset *OGRGMLASDriverCreateCopy(
 
     GMLAS::GMLASWriter oWriter(pszFilename, poSrcDS, papszOptions);
     if( !oWriter.Write(pfnProgress, pProgressData) )
-        return NULL;
+        return nullptr;
 
     if( CPLString(pszFilename) == "/vsistdout/" ||
         // This option is mostly useful for tests where we don't want
@@ -3155,7 +3155,7 @@ GDALDataset *OGRGMLASDriverCreateCopy(
         if( !poOutDS->Open(  &oOpenInfo ) )
         {
             delete poOutDS;
-            poOutDS = NULL;
+            poOutDS = nullptr;
         }
         return poOutDS;
     }

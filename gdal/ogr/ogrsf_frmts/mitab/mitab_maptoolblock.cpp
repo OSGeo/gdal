@@ -58,7 +58,7 @@ TABMAPToolBlock::TABMAPToolBlock( TABAccess eAccessMode /*= TABRead*/ ) :
     m_numDataBytes(0),
     m_nNextToolBlock(0),
     m_numBlocksInChain(1),  // Current block counts as 1
-    m_poBlockManagerRef(NULL)
+    m_poBlockManagerRef(nullptr)
 {}
 
 /**********************************************************************
@@ -120,7 +120,7 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_TOOL_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -135,7 +135,7 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
                  "TABMAPToolBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
                  m_numDataBytes, nBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -146,7 +146,7 @@ int     TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf,
         CPLError(CE_Failure, CPLE_FileIO,
                  "InitBlockFromData(): self referencing block");
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -175,7 +175,7 @@ int     TABMAPToolBlock::CommitToFile()
 {
     int nStatus = 0;
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitToFile(): Block has not been initialized yet!");
@@ -425,11 +425,11 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
 
 void TABMAPToolBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPToolBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }

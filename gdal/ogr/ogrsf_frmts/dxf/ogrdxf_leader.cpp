@@ -284,7 +284,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     DXFMLEADERLeader oLeader;
     std::vector<DXFMLEADERLeader> aoLeaders;
 
-    OGRLineString *poLine = NULL;
+    OGRLineString *poLine = nullptr;
     bool bHaveX = false;
     bool bHaveY = false;
     double dfCurrentX = 0.0;
@@ -515,7 +515,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                     bHaveX = bHaveY = false;
                 }
                 oLeader.apoLeaderLines.push_back( poLine );
-                poLine = NULL;
+                poLine = nullptr;
                 break;
 
               case 10:
@@ -547,7 +547,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     if( poLine )
     {
         delete poLine;
-        poLine = NULL;
+        poLine = nullptr;
     }
 
     // delete any lines left in a stray, unclosed LEADER{...} group
@@ -577,7 +577,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     {
         DXF_LAYER_READER_ERROR();
         delete poOverallFeature;
-        return NULL;
+        return nullptr;
     }
     if( nCode == 0 )
         poDS->UnreadValue();
@@ -750,7 +750,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                         osAttribString.length() + 1 );
                 }
 
-                apszAttribs.push_back( NULL );
+                apszAttribs.push_back( nullptr );
 
                 poBlockFeature->SetField( "BlockAttributes", &apszAttribs[0] );
             }
@@ -771,7 +771,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             {
                 // Block doesn't exist
                 delete poBlockFeature;
-                poBlockFeature = NULL;
+                poBlockFeature = nullptr;
             }
 
             // Add the block geometries to the pending feature stack.
@@ -1045,7 +1045,7 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
         // no entities, so the data source didn't read it in.
         // In this case, no arrowhead is required.
         delete poArrowheadFeature;
-        poArrowheadFeature = NULL;
+        poArrowheadFeature = nullptr;
     }
 
     // Add the arrowhead geometries to the pending feature stack.

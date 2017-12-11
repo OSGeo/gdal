@@ -84,12 +84,12 @@ static const int MAX_EPSG = 3768;
 /************************************************************************/
 
 OGRSXFDataSource::OGRSXFDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    fpSXF(NULL),
-    hIOMutex(NULL)
+    fpSXF(nullptr),
+    hIOMutex(nullptr)
 {
-    oSXFPassport.stMapDescription.pSpatRef = NULL;
+    oSXFPassport.stMapDescription.pSpatRef = nullptr;
 }
 
 /************************************************************************/
@@ -103,17 +103,17 @@ OGRSXFDataSource::~OGRSXFDataSource()
         delete papoLayers[i];
     CPLFree( papoLayers );
 
-    if (NULL != oSXFPassport.stMapDescription.pSpatRef)
+    if (nullptr != oSXFPassport.stMapDescription.pSpatRef)
     {
         oSXFPassport.stMapDescription.pSpatRef->Release();
     }
 
     CloseFile();
 
-    if (hIOMutex != NULL)
+    if (hIOMutex != nullptr)
     {
         CPLDestroyMutex(hIOMutex);
-        hIOMutex = NULL;
+        hIOMutex = nullptr;
     }
 }
 
@@ -122,10 +122,10 @@ OGRSXFDataSource::~OGRSXFDataSource()
 /************************************************************************/
 void  OGRSXFDataSource::CloseFile()
 {
-    if (NULL != fpSXF)
+    if (nullptr != fpSXF)
     {
         VSIFCloseL( fpSXF );
-        fpSXF = NULL;
+        fpSXF = nullptr;
     }
 }
 
@@ -146,7 +146,7 @@ OGRLayer *OGRSXFDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= (int)nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -165,7 +165,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     pszName = pszFilename;
 
     fpSXF = VSIFOpenL(pszName, "rb");
-    if ( fpSXF == NULL )
+    if ( fpSXF == nullptr )
     {
         CPLError(CE_Warning, CPLE_OpenFailed, "SXF open file %s failed", pszFilename);
         return FALSE;
@@ -245,7 +245,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
 
     CPLString soRSCRileName;
     const char* pszRSCRileName = CPLGetConfigOption("SXF_RSC_FILENAME", "");
-    if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
+    if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
     {
         soRSCRileName = pszRSCRileName;
     }
@@ -253,7 +253,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     if(soRSCRileName.empty())
     {
         pszRSCRileName = CPLResetExtension(pszFilename, "rsc");
-        if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
+        if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
         {
             soRSCRileName = pszRSCRileName;
         }
@@ -262,7 +262,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     if(soRSCRileName.empty())
     {
         pszRSCRileName = CPLResetExtension(pszFilename, "RSC");
-        if (CPLCheckForFile((char *)pszRSCRileName, NULL) == TRUE)
+        if (CPLCheckForFile((char *)pszRSCRileName, nullptr) == TRUE)
         {
             soRSCRileName = pszRSCRileName;
         }
@@ -274,7 +274,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     if(soRSCRileName.empty())
     {
         pszRSCRileName = CPLFindFile( "gdal", "default.rsc" );
-        if (NULL != pszRSCRileName)
+        if (nullptr != pszRSCRileName)
         {
             soRSCRileName = pszRSCRileName;
         }
@@ -291,7 +291,7 @@ int OGRSXFDataSource::Open( const char * pszFilename, int bUpdateIn)
     else
     {
         VSILFILE* fpRSC = VSIFOpenL(soRSCRileName, "rb");
-        if (fpRSC == NULL)
+        if (fpRSC == nullptr)
         {
             CPLError(CE_Warning, CPLE_OpenFailed, "RSC file %s open failed",
                      soRSCRileName.c_str());
@@ -616,7 +616,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE* fpSXFIn, SXFPassport& p
         }
     }
 
-    if (NULL != passport.stMapDescription.pSpatRef)
+    if (nullptr != passport.stMapDescription.pSpatRef)
     {
         return OGRERR_NONE;
     }
@@ -961,7 +961,7 @@ OGRSXFLayer* OGRSXFDataSource::GetLayerById(GByte nID)
             return pOGRSXFLayer;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void OGRSXFDataSource::CreateLayers()
@@ -1023,7 +1023,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         papoLayers = (OGRLayer**)CPLRealloc(papoLayers, sizeof(OGRLayer*)* (nLayers + 1));
         bool bLayerFullName = CPLTestBool(CPLGetConfigOption("SXF_LAYER_FULLNAME", "NO"));
 
-        char* pszRecoded = NULL;
+        char* pszRecoded = nullptr;
         if (bLayerFullName)
         {
             if(LAYER.szName[0] == 0)
@@ -1088,9 +1088,9 @@ void OGRSXFDataSource::CreateLayers(VSILFILE* fpRSC)
         VSIFReadL(&OBJECT, sizeof(_object), 1, fpRSC);
 
         OGRSXFLayer* pLayer = GetLayerById(OBJECT.szLayernNo);
-        if (NULL != pLayer)
+        if (nullptr != pLayer)
         {
-            char* pszRecoded = NULL;
+            char* pszRecoded = nullptr;
             if(OBJECT.szName[0] == 0)
                 pszRecoded = CPLStrdup("Unnamed");
             else if (stRSCFileHeader.nFontEnc == 125)

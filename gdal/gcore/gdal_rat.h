@@ -52,7 +52,7 @@ public:
      *
      * Creates a new copy of an existing raster attribute table.  The new copy
      * becomes the responsibility of the caller to destroy.
-     * May fail (return NULL) if the attribute table is too large to clone
+     * May fail (return nullptr) if the attribute table is too large to clone
      * (GetRowCount() * GetColCount() > RAT_MAX_ELEM_FOR_CLONE)
      *
      * This method is the same as the C function GDALRATClone().
@@ -261,7 +261,7 @@ public:
     /**
      * \brief Serialize
      *
-     * May fail (return NULL) if the attribute table is too large to serialize
+     * May fail (return nullptr) if the attribute table is too large to serialize
      * (GetRowCount() * GetColCount() > RAT_MAX_ELEM_FOR_CLONE)
      */
     virtual CPLXMLNode   *Serialize() const;
@@ -271,7 +271,7 @@ public:
     virtual CPLErr        InitializeFromColorTable( const GDALColorTable * );
     virtual GDALColorTable *TranslateToColorTable( int nEntryCount = -1 );
 
-    virtual void          DumpReadable( FILE * = NULL );
+    virtual void          DumpReadable( FILE * = nullptr );
 };
 
 /************************************************************************/

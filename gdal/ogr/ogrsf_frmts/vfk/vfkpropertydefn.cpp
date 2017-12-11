@@ -47,7 +47,7 @@ VFKPropertyDefn::VFKPropertyDefn( const char *pszName, const char *pszType,
                                   bool bLatin2 ) :
     m_pszName(CPLStrdup(pszName)),
     m_pszType(CPLStrdup(pszType)),
-    m_pszEncoding(NULL),
+    m_pszEncoding(nullptr),
     m_nWidth(0),
     m_nPrecision(0)
 {

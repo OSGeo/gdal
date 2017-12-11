@@ -215,7 +215,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
 
-        virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
+        virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
         virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
         virtual char **     GetMetadataDomainList() override;
@@ -435,7 +435,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    void                CreateTriggers(const char* pszTableName = NULL);
+    void                CreateTriggers(const char* pszTableName = nullptr);
     void                DisableTriggers(bool bNullifyFeatureCount = true);
 #endif
 
@@ -505,10 +505,10 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                 { m_eASPatialVariant = eASPatialVariant; }
 
     void                CreateSpatialIndexIfNecessary();
-    bool                CreateSpatialIndex(const char* pszTableName = NULL);
+    bool                CreateSpatialIndex(const char* pszTableName = nullptr);
     bool                DropSpatialIndex(bool bCalledFromSQLFunction = false);
 
-    virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
+    virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
     virtual char **     GetMetadataDomainList() override;

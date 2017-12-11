@@ -76,7 +76,7 @@ class OGRXLSLayer : public OGRLayer
 
     virtual int                 TestCapability( const char * ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
+    virtual OGRSpatialReference *GetSpatialRef() override { return nullptr; }
 };
 
 /************************************************************************/

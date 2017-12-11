@@ -55,7 +55,7 @@ CPL_CVSID("$Id$")
 
 class SFRegion {
 public:
-    SFRegion() : fp(NULL), nDstOffset(0), nSrcOffset(0), nLength(0),
+    SFRegion() : fp(nullptr), nDstOffset(0), nSrcOffset(0), nLength(0),
                  byValue(0), bTriedOpen(false) {}
 
     CPLString     osFilename;
@@ -151,7 +151,7 @@ int VSISparseFileHandle::Close()
 {
     for( unsigned int i = 0; i < aoRegions.size(); i++ )
     {
-        if( aoRegions[i].fp != NULL )
+        if( aoRegions[i].fp != nullptr )
             CPL_IGNORE_RET_VAL(VSIFCloseL( aoRegions[i].fp ));
     }
 
@@ -288,20 +288,20 @@ size_t VSISparseFileHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /* -------------------------------------------------------------------- */
     else
     {
-        if( aoRegions[iRegion].fp == NULL )
+        if( aoRegions[iRegion].fp == nullptr )
         {
             if( !aoRegions[iRegion].bTriedOpen )
             {
                 aoRegions[iRegion].fp =
                     VSIFOpenL( aoRegions[iRegion].osFilename, "r" );
-                if( aoRegions[iRegion].fp == NULL )
+                if( aoRegions[iRegion].fp == nullptr )
                 {
                     CPLDebug( "/vsisparse/", "Failed to open '%s'.",
                               aoRegions[iRegion].osFilename.c_str() );
                 }
                 aoRegions[iRegion].bTriedOpen = true;
             }
-            if( aoRegions[iRegion].fp == NULL )
+            if( aoRegions[iRegion].fp == nullptr )
             {
                 return 0;
             }
@@ -379,17 +379,17 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsisparse/") )
-        return NULL;
+        return nullptr;
 
     if( !EQUAL(pszAccess, "r") && !EQUAL(pszAccess, "rb") )
     {
         errno = EACCES;
-        return NULL;
+        return nullptr;
     }
 
     // Arbitrary number.
     if( GetRecCounter() == 32 )
-        return NULL;
+        return nullptr;
 
     const CPLString osSparseFilePath = pszFilename + 11;
 
@@ -397,8 +397,8 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /*      Does this file even exist?                                      */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osSparseFilePath, "r" );
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
@@ -406,8 +406,8 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psXMLRoot = CPLParseXMLFile( osSparseFilePath );
 
-    if( psXMLRoot == NULL )
-        return NULL;
+    if( psXMLRoot == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the file handle on this file.                             */
@@ -418,7 +418,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
 /*      Translate the desired fields out of the XML tree.               */
 /* -------------------------------------------------------------------- */
     for( CPLXMLNode *psRegion = psXMLRoot->psChild;
-         psRegion != NULL;
+         psRegion != nullptr;
          psRegion = psRegion->psNext )
     {
         if( psRegion->eType != CXT_Element )
@@ -435,7 +435,7 @@ VSISparseFileFilesystemHandler::Open( const char *pszFilename,
         {
             const CPLString osSFPath = CPLGetPath(osSparseFilePath);
             oRegion.osFilename = CPLFormFilename( osSFPath,
-                                                  oRegion.osFilename, NULL );
+                                                  oRegion.osFilename, nullptr );
         }
 
         // TODO(schwehr): Symbolic constant and an explanation for 32.
@@ -492,7 +492,7 @@ int VSISparseFileFilesystemHandler::Stat( const char * pszFilename,
 
     memset( psStatBuf, 0, sizeof(VSIStatBufL) );
 
-    if( poFile == NULL )
+    if( poFile == nullptr )
         return -1;
 
     poFile->Seek( 0, SEEK_END );
@@ -545,7 +545,7 @@ int VSISparseFileFilesystemHandler::Rmdir( const char * /* pszPathname */ )
 char **VSISparseFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 {
     errno = EACCES;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

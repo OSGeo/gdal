@@ -46,7 +46,7 @@ PCIDSKBuffer::PCIDSKBuffer( int size )
 
 {
     buffer_size = 0;
-    buffer = NULL;
+    buffer = nullptr;
 
     if( size > 0 )
         SetSize( size );
@@ -60,7 +60,7 @@ PCIDSKBuffer::PCIDSKBuffer( const char *src, int size )
 
 {
     buffer_size = 0;
-    buffer = NULL;
+    buffer = nullptr;
 
     SetSize( size );
     memcpy( buffer, src, size );
@@ -86,17 +86,17 @@ void PCIDSKBuffer::SetSize( int size )
     if( size < 0 )
     {
         free( buffer );
-        buffer = NULL;
+        buffer = nullptr;
         buffer_size = 0;
         throw PCIDSKException( "Invalid buffer size: %d", size );
     }
     buffer_size = size;
     char* new_buffer = (char *) realloc(buffer,size+1);
 
-    if( new_buffer == NULL )
+    if( new_buffer == nullptr )
     {
         free( buffer );
-        buffer = NULL;
+        buffer = nullptr;
         buffer_size = 0;
         throw PCIDSKException( "Out of memory allocating %d byte PCIDSKBuffer.",
                                size );
@@ -266,14 +266,14 @@ void PCIDSKBuffer::Put( double value, int offset, int size,
                         const char *fmt )
 
 {
-    if( fmt == NULL )
+    if( fmt == nullptr )
         fmt = "%g";
 
     char wrk[128];
     CPLsnprintf( wrk, 127, fmt, value );
 
     char *exponent = strstr(wrk,"E");
-    if( exponent != NULL )
+    if( exponent != nullptr )
         *exponent = 'D';
 
     Put( wrk, offset, size );

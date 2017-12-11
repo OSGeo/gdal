@@ -163,14 +163,14 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex,
                                 const char *pszFileIn,
                                 int nLineIn,
                                 int nOptions ) :
-    hMutex(NULL),
+    hMutex(nullptr),
     pszFile(pszFileIn),
     nLine(nLineIn)
 {
-    if( phMutex == NULL )
+    if( phMutex == nullptr )
     {
         fprintf( stderr, "CPLMutexHolder: phMutex )) NULL !\n" );
-        hMutex = NULL;
+        hMutex = nullptr;
         return;
     }
 
@@ -190,7 +190,7 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex **phMutex,
     if( !CPLCreateOrAcquireMutexEx( phMutex, dfWaitInSeconds, nOptions ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
-        hMutex = NULL;
+        hMutex = nullptr;
     }
     else
     {
@@ -222,11 +222,11 @@ CPLMutexHolder::CPLMutexHolder( CPLMutex *hMutexIn, double dfWaitInSeconds,
     pszFile(pszFileIn),
     nLine(nLineIn)
 {
-    if( hMutex != NULL &&
+    if( hMutex != nullptr &&
         !CPLAcquireMutex( hMutex, dfWaitInSeconds ) )
     {
         fprintf( stderr, "CPLMutexHolder: Failed to acquire mutex!\n" );
-        hMutex = NULL;
+        hMutex = nullptr;
     }
 }
 #endif  // ndef MUTEX_NONE
@@ -240,7 +240,7 @@ CPLMutexHolder::~CPLMutexHolder() {}
 #else
 CPLMutexHolder::~CPLMutexHolder()
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,
@@ -266,7 +266,7 @@ int CPLCreateOrAcquireMutex( CPLMutex **phMutex, double dfWaitInSeconds )
 #ifndef CPL_MULTIPROC_PTHREAD
 
 #ifndef MUTEX_NONE
-static CPLMutex *hCOAMutex = NULL;
+static CPLMutex *hCOAMutex = nullptr;
 #endif
 
 #ifdef MUTEX_NONE
@@ -285,12 +285,12 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
     // Ironically, creation of this initial mutex is not threadsafe
     // even though we use it to ensure that creation of other mutexes
     // is threadsafe.
-    if( hCOAMutex == NULL )
+    if( hCOAMutex == nullptr )
     {
         hCOAMutex = CPLCreateMutex();
-        if( hCOAMutex == NULL )
+        if( hCOAMutex == nullptr )
         {
-            *phMutex = NULL;
+            *phMutex = nullptr;
             return FALSE;
         }
     }
@@ -299,10 +299,10 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
         CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
     }
 
-    if( *phMutex == NULL )
+    if( *phMutex == nullptr )
     {
         *phMutex = CPLCreateMutexEx( nOptions );
-        bSuccess = *phMutex != NULL;
+        bSuccess = *phMutex != nullptr;
         CPLReleaseMutex( hCOAMutex );
     }
     else
@@ -338,12 +338,12 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     // Ironically, creation of this initial mutex is not threadsafe
     // even though we use it to ensure that creation of other mutexes.
     // is threadsafe.
-    if( hCOAMutex == NULL )
+    if( hCOAMutex == nullptr )
     {
         hCOAMutex = CPLCreateMutex();
-        if( hCOAMutex == NULL )
+        if( hCOAMutex == nullptr )
         {
-            *phLock = NULL;
+            *phLock = nullptr;
             return FALSE;
         }
     }
@@ -352,7 +352,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
         CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
     }
 
-    if( *phLock == NULL )
+    if( *phLock == nullptr )
     {
         *phLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
         if( *phLock )
@@ -362,13 +362,13 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
                 (eType == LOCK_RECURSIVE_MUTEX)
                 ? CPL_MUTEX_RECURSIVE
                 : CPL_MUTEX_ADAPTIVE );
-            if( (*phLock)->u.hMutex == NULL )
+            if( (*phLock)->u.hMutex == nullptr )
             {
                 free(*phLock);
-                *phLock = NULL;
+                *phLock = nullptr;
             }
         }
-        bSuccess = *phLock != NULL;
+        bSuccess = *phLock != nullptr;
         CPLReleaseMutex( hCOAMutex );
     }
     else
@@ -394,10 +394,10 @@ void CPLCleanupMasterMutex()
 {
 #ifndef CPL_MULTIPROC_PTHREAD
 #ifndef MUTEX_NONE
-    if( hCOAMutex != NULL )
+    if( hCOAMutex != nullptr )
     {
         CPLDestroyMutex( hCOAMutex );
-        hCOAMutex = NULL;
+        hCOAMutex = nullptr;
     }
 #endif
 #endif
@@ -417,16 +417,16 @@ static void CPLCleanupTLSList( void **papTLSList )
     printf( "CPLCleanupTLSList(%p)\n", papTLSList );  /*ok*/
 #endif
 
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
         return;
 
     for( int i = 0; i < CTLS_MAX; i++ )
     {
-        if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
+        if( papTLSList[i] != nullptr && papTLSList[i+CTLS_MAX] != nullptr )
         {
             CPLTLSFreeFunc pfnFree = (CPLTLSFreeFunc) papTLSList[i + CTLS_MAX];
             pfnFree( papTLSList[i] );
-            papTLSList[i] = NULL;
+            papTLSList[i] = nullptr;
         }
     }
 
@@ -476,8 +476,8 @@ CPLMutex *CPLCreateMutex()
 CPLMutex *CPLCreateMutex()
 {
     unsigned char *pabyMutex = static_cast<unsigned char *>(malloc(4));
-    if( pabyMutex == NULL )
-        return NULL;
+    if( pabyMutex == nullptr )
+        return nullptr;
 
     pabyMutex[0] = 1;
     pabyMutex[1] = 'r';
@@ -564,7 +564,7 @@ void CPLDestroyMutex( CPLMutex *hMutex )
 
 CPLCond *CPLCreateCond()
 {
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -619,7 +619,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
     snprintf( pszLockFilename, strlen(pszPath) + 30, "%s.lock", pszPath );
 
     FILE *fpLock = fopen( pszLockFilename, "r" );
-    while( fpLock != NULL && dfWaitInSeconds > 0.0 )
+    while( fpLock != nullptr && dfWaitInSeconds > 0.0 )
     {
         fclose( fpLock );
         CPLSleep( std::min(dfWaitInSeconds, 0.5) );
@@ -628,19 +628,19 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         fpLock = fopen( pszLockFilename, "r" );
     }
 
-    if( fpLock != NULL )
+    if( fpLock != nullptr )
     {
         fclose( fpLock );
         CPLFree( pszLockFilename );
-        return NULL;
+        return nullptr;
     }
 
     fpLock = fopen( pszLockFilename, "w" );
 
-    if( fpLock == NULL )
+    if( fpLock == nullptr )
     {
         CPLFree( pszLockFilename );
-        return NULL;
+        return nullptr;
     }
 
     fwrite( "held\n", 1, 5, fpLock );
@@ -658,7 +658,7 @@ void CPLUnlockFile( void *hLock )
 {
     char *pszLockFilename = static_cast<char *>(hLock);
 
-    if( hLock == NULL )
+    if( hLock == nullptr )
         return;
 
     VSIUnlink( pszLockFilename );
@@ -696,7 +696,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc /* pfnMain */,
 {
     CPLDebug( "CPLCreateJoinableThread", "Fails to dummy implementation" );
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -726,25 +726,25 @@ void CPLSleep( double dfWaitInSeconds )
 /*                           CPLGetTLSList()                            */
 /************************************************************************/
 
-static void **papTLSList = NULL;
+static void **papTLSList = nullptr;
 
 static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
 
 {
     if( pbMemoryErrorOccurred )
         *pbMemoryErrorOccurred = FALSE;
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
     {
         papTLSList =
             static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX * 2));
-        if( papTLSList == NULL )
+        if( papTLSList == nullptr )
         {
             if( pbMemoryErrorOccurred )
             {
                 *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr,
                         "CPLGetTLSList() failed to allocate TLS list!\n");
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         }
@@ -770,7 +770,7 @@ void CPLCleanupTLS()
 
 {
     CPLCleanupTLSList( papTLSList );
-    papTLSList = NULL;
+    papTLSList = nullptr;
 }
 
 // endif CPL_MULTIPROC_STUB
@@ -823,7 +823,7 @@ CPLMutex *CPLCreateMutex()
 
 {
 #ifdef USE_WIN32_MUTEX
-    HANDLE hMutex = CreateMutex( NULL, TRUE, NULL );
+    HANDLE hMutex = CreateMutex( nullptr, TRUE, nullptr );
 
     return (CPLMutex *) hMutex;
 #else
@@ -943,16 +943,16 @@ typedef struct
 CPLCond *CPLCreateCond()
 {
     Win32Cond* psCond = static_cast<Win32Cond *>(malloc(sizeof(Win32Cond)));
-    if( psCond == NULL )
-        return NULL;
+    if( psCond == nullptr )
+        return nullptr;
     psCond->hInternalMutex = CPLCreateMutex();
-    if( psCond->hInternalMutex == NULL )
+    if( psCond->hInternalMutex == nullptr )
     {
         free(psCond);
-        return NULL;
+        return nullptr;
     }
     CPLReleaseMutex(psCond->hInternalMutex);
-    psCond->psWaiterList = NULL;
+    psCond->psWaiterList = nullptr;
     return (CPLCond*) psCond;
 }
 
@@ -970,13 +970,13 @@ void CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
     Win32Cond* psCond = (Win32Cond*) hCond;
 
     HANDLE hEvent = (HANDLE) CPLGetTLS(CTLS_WIN32_COND);
-    if( hEvent == NULL )
+    if( hEvent == nullptr )
     {
-        hEvent = CreateEvent(NULL, /* security attributes */
+        hEvent = CreateEvent(nullptr, /* security attributes */
                              0,    /* manual reset = no */
                              0,    /* initial state = unsignaled */
-                             NULL  /* no name */);
-        CPLAssert(hEvent != NULL);
+                             nullptr  /* no name */);
+        CPLAssert(hEvent != nullptr);
 
         CPLSetTLSWithFreeFunc(CTLS_WIN32_COND, hEvent, CPLTLSFreeEvent);
     }
@@ -985,7 +985,7 @@ void CPLCondWait( CPLCond *hCond, CPLMutex* hClientMutex )
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psItem = static_cast<WaiterItem *>(malloc(sizeof(WaiterItem)));
-    CPLAssert(psItem != NULL);
+    CPLAssert(psItem != nullptr);
 
     psItem->hEvent = hEvent;
     psItem->psNext = psCond->psWaiterList;
@@ -1017,7 +1017,7 @@ void CPLCondSignal( CPLCond *hCond )
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
-    if( psIter != NULL )
+    if( psIter != nullptr )
     {
         SetEvent(psIter->hEvent);
         psCond->psWaiterList = psIter->psNext;
@@ -1039,14 +1039,14 @@ void CPLCondBroadcast( CPLCond *hCond )
     CPLAcquireMutex(psCond->hInternalMutex, 1000.0);
 
     WaiterItem* psIter = psCond->psWaiterList;
-    while( psIter != NULL )
+    while( psIter != nullptr )
     {
         WaiterItem* psNext = psIter->psNext;
         SetEvent(psIter->hEvent);
         free(psIter);
         psIter = psNext;
     }
-    psCond->psWaiterList = NULL;
+    psCond->psWaiterList = nullptr;
 
     CPLReleaseMutex(psCond->hInternalMutex);
 }
@@ -1059,8 +1059,8 @@ void CPLDestroyCond( CPLCond *hCond )
 {
     Win32Cond* psCond = (Win32Cond*) hCond;
     CPLDestroyMutex(psCond->hInternalMutex);
-    psCond->hInternalMutex = NULL;
-    CPLAssert(psCond->psWaiterList == NULL);
+    psCond->hInternalMutex = nullptr;
+    CPLAssert(psCond->psWaiterList == nullptr);
     free(psCond);
 }
 
@@ -1077,8 +1077,8 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
 
     // FIXME: use CreateFileW()
     HANDLE hLockFile =
-        CreateFileA(pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
-                   FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        CreateFileA(pszLockFilename, GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+                   FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE, nullptr);
 
     while( GetLastError() == ERROR_ALREADY_EXISTS
            && dfWaitInSeconds > 0.0 )
@@ -1088,20 +1088,20 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         dfWaitInSeconds -= 0.125;
 
         hLockFile =
-            CreateFileA( pszLockFilename, GENERIC_WRITE, 0, NULL, CREATE_NEW,
+            CreateFileA( pszLockFilename, GENERIC_WRITE, 0, nullptr, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE,
-                        NULL );
+                        nullptr );
     }
 
     CPLFree( pszLockFilename );
 
     if( hLockFile == INVALID_HANDLE_VALUE )
-        return NULL;
+        return nullptr;
 
     if( GetLastError() == ERROR_ALREADY_EXISTS )
     {
         CloseHandle( hLockFile );
-        return NULL;
+        return nullptr;
     }
 
     return (void *) hLockFile;
@@ -1146,7 +1146,7 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 
     psInfo->pfnMain( psInfo->pAppData );
 
-    if( psInfo->hThread == NULL )
+    if( psInfo->hThread == nullptr )
         CPLFree( psInfo );  // Only for detached threads.
 
     CPLCleanupTLS();
@@ -1169,13 +1169,13 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
         CPLCalloc(sizeof(CPLStdCallThreadInfo), 1));
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
-    psInfo->hThread = NULL;
+    psInfo->hThread = nullptr;
 
     DWORD nThreadId = 0;
-    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+    HANDLE hThread = CreateThread( nullptr, 0, CPLStdCallThreadJacket, psInfo,
                                    0, &nThreadId );
 
-    if( hThread == NULL )
+    if( hThread == nullptr )
         return -1;
 
     CloseHandle( hThread );
@@ -1197,11 +1197,11 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     psInfo->pfnMain = pfnMain;
 
     DWORD nThreadId = 0;
-    HANDLE hThread = CreateThread( NULL, 0, CPLStdCallThreadJacket, psInfo,
+    HANDLE hThread = CreateThread( nullptr, 0, CPLStdCallThreadJacket, psInfo,
                                    0, &nThreadId );
 
-    if( hThread == NULL )
-        return NULL;
+    if( hThread == nullptr )
+        return nullptr;
 
     psInfo->hThread = hThread;
     return (CPLJoinableThread*) psInfo;
@@ -1240,7 +1240,7 @@ static DWORD nTLSKey = 0;
 static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
 
 {
-    void **papTLSList = NULL;
+    void **papTLSList = nullptr;
 
     if( pbMemoryErrorOccurred )
         *pbMemoryErrorOccurred = FALSE;
@@ -1253,7 +1253,7 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
             {
                 *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList(): TlsAlloc() failed!\n" );
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError( "CPLGetTLSList(): TlsAlloc() failed!" );
         }
@@ -1261,18 +1261,18 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
     }
 
     papTLSList = (void **) TlsGetValue( nTLSKey );
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
     {
         papTLSList =
             static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX * 2));
-        if( papTLSList == NULL )
+        if( papTLSList == nullptr )
         {
             if( pbMemoryErrorOccurred )
             {
                 *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr,
                         "CPLGetTLSList() failed to allocate TLS list!\n" );
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         }
@@ -1282,7 +1282,7 @@ static void **CPLGetTLSList( int *pbMemoryErrorOccurred )
             {
                 *pbMemoryErrorOccurred = TRUE;
                 fprintf(stderr, "CPLGetTLSList(): TlsSetValue() failed!\n" );
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError( "CPLGetTLSList(): TlsSetValue() failed!" );
         }
@@ -1311,10 +1311,10 @@ void CPLCleanupTLS()
         return;
 
     void **papTLSList = (void **) TlsGetValue( nTLSKey );
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
         return;
 
-    TlsSetValue( nTLSKey, NULL );
+    TlsSetValue( nTLSKey, nullptr );
 
     CPLCleanupTLSList( papTLSList );
 }
@@ -1351,8 +1351,15 @@ int CPLGetNumCPUs()
 /************************************************************************/
 /*                      CPLCreateOrAcquireMutex()                       */
 /************************************************************************/
-
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
+
 static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
                                          int nOptions );
 
@@ -1363,10 +1370,10 @@ int CPLCreateOrAcquireMutexEx( CPLMutex **phMutex, double dfWaitInSeconds,
     bool bSuccess = false;
 
     pthread_mutex_lock(&global_mutex);
-    if( *phMutex == NULL )
+    if( *phMutex == nullptr )
     {
         *phMutex = CPLCreateMutexInternal(true, nOptions);
-        bSuccess = *phMutex != NULL;
+        bSuccess = *phMutex != nullptr;
         pthread_mutex_unlock(&global_mutex);
     }
     else
@@ -1390,7 +1397,7 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
     bool bSuccess = false;
 
     pthread_mutex_lock(&global_mutex);
-    if( *phLock == NULL )
+    if( *phLock == nullptr )
     {
         *phLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
         if( *phLock )
@@ -1400,13 +1407,13 @@ int CPLCreateOrAcquireMutexInternal( CPLLock **phLock, double dfWaitInSeconds,
                 true,
                 eType == LOCK_RECURSIVE_MUTEX
                 ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE );
-            if( (*phLock)->u.hMutex == NULL )
+            if( (*phLock)->u.hMutex == nullptr )
             {
                 free(*phLock);
-                *phLock = NULL;
+                *phLock = nullptr;
             }
         }
-        bSuccess = *phLock != NULL;
+        bSuccess = *phLock != nullptr;
         pthread_mutex_unlock(&global_mutex);
     }
     else
@@ -1442,13 +1449,20 @@ struct _MutexLinkedElt
     _MutexLinkedElt  *psPrev;
     _MutexLinkedElt  *psNext;
 };
-static MutexLinkedElt* psMutexList = NULL;
+static MutexLinkedElt* psMutexList = nullptr;
 
 static void CPLInitMutex( MutexLinkedElt* psItem )
 {
     if( psItem->nOptions == CPL_MUTEX_REGULAR )
     {
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
         pthread_mutex_t tmp_mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
         psItem->sMutex = tmp_mutex;
         return;
     }
@@ -1498,15 +1512,15 @@ static CPLMutex *CPLCreateMutexInternal( bool bAlreadyInGlobalLock,
 {
     MutexLinkedElt* psItem = static_cast<MutexLinkedElt *>(
         malloc(sizeof(MutexLinkedElt)) );
-    if( psItem == NULL )
+    if( psItem == nullptr )
     {
         fprintf(stderr, "CPLCreateMutexInternal() failed.\n");
-        return NULL;
+        return nullptr;
     }
 
     if( !bAlreadyInGlobalLock )
         pthread_mutex_lock(&global_mutex);
-    psItem->psPrev = NULL;
+    psItem->psPrev = nullptr;
     psItem->psNext = psMutexList;
     if( psMutexList )
         psMutexList->psPrev = psItem;
@@ -1608,12 +1622,19 @@ void CPLReinitAllMutex();  // TODO(schwehr): Put this in a header.
 void CPLReinitAllMutex()
 {
     MutexLinkedElt* psItem = psMutexList;
-    while( psItem != NULL )
+    while( psItem != nullptr )
     {
         CPLInitMutex(psItem);
         psItem = psItem->psNext;
     }
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
     pthread_mutex_t tmp_global_mutex = PTHREAD_MUTEX_INITIALIZER;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
     global_mutex = tmp_global_mutex;
 }
 
@@ -1625,11 +1646,11 @@ CPLCond *CPLCreateCond()
 {
     pthread_cond_t* pCond =
       static_cast<pthread_cond_t *>(malloc(sizeof(pthread_cond_t)));
-    if( pCond && pthread_cond_init(pCond, NULL) == 0 )
+    if( pCond && pthread_cond_init(pCond, nullptr) == 0 )
         return (CPLCond*) pCond;
     fprintf(stderr, "CPLCreateCond() failed.\n");
     free(pCond);
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1696,7 +1717,7 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
     snprintf( pszLockFilename, nLen, "%s.lock", pszPath );
 
     FILE *fpLock = fopen( pszLockFilename, "r" );
-    while( fpLock != NULL && dfWaitInSeconds > 0.0 )
+    while( fpLock != nullptr && dfWaitInSeconds > 0.0 )
     {
         fclose( fpLock );
         CPLSleep( std::min(dfWaitInSeconds, 0.5) );
@@ -1705,19 +1726,19 @@ void *CPLLockFile( const char *pszPath, double dfWaitInSeconds )
         fpLock = fopen( pszLockFilename, "r" );
     }
 
-    if( fpLock != NULL )
+    if( fpLock != nullptr )
     {
         fclose( fpLock );
         CPLFree( pszLockFilename );
-        return NULL;
+        return nullptr;
     }
 
     fpLock = fopen( pszLockFilename, "w" );
 
-    if( fpLock == NULL )
+    if( fpLock == nullptr )
     {
         CPLFree( pszLockFilename );
-        return NULL;
+        return nullptr;
     }
 
     fwrite( "held\n", 1, 5, fpLock );
@@ -1735,7 +1756,7 @@ void CPLUnlockFile( void *hLock )
 {
     char *pszLockFilename = static_cast<char *>(hLock);
 
-    if( hLock == NULL )
+    if( hLock == nullptr )
         return;
 
     VSIUnlink( pszLockFilename );
@@ -1787,24 +1808,24 @@ static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
         {
             fprintf(stderr, "CPLGetTLSList(): pthread_once() failed!\n" );
             *pbMemoryErrorOccurred = TRUE;
-            return NULL;
+            return nullptr;
         }
         CPLEmergencyError( "CPLGetTLSList(): pthread_once() failed!" );
     }
 
     void **papTLSList = (void **) pthread_getspecific( oTLSKey );
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
     {
         papTLSList =
             static_cast<void **>(VSICalloc(sizeof(void*), CTLS_MAX * 2));
-        if( papTLSList == NULL )
+        if( papTLSList == nullptr )
         {
             if( pbMemoryErrorOccurred )
             {
                 fprintf(stderr,
                         "CPLGetTLSList() failed to allocate TLS list!\n" );
                 *pbMemoryErrorOccurred = TRUE;
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError("CPLGetTLSList() failed to allocate TLS list!");
         }
@@ -1815,7 +1836,7 @@ static void **CPLGetTLSList( int* pbMemoryErrorOccurred )
                 fprintf(stderr,
                         "CPLGetTLSList(): pthread_setspecific() failed!\n" );
                 *pbMemoryErrorOccurred = TRUE;
-                return NULL;
+                return nullptr;
             }
             CPLEmergencyError(
                 "CPLGetTLSList(): pthread_setspecific() failed!" );
@@ -1864,7 +1885,7 @@ static void *CPLStdCallThreadJacket( void *pData )
     if( !psInfo->bJoinable )
         CPLFree( psInfo );
 
-    return NULL;
+    return nullptr;
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
 error:
@@ -1890,7 +1911,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 {
     CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
         VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo), 1));
-    if( psInfo == NULL )
+    if( psInfo == nullptr )
         return -1;
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
@@ -1960,8 +1981,8 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
 {
     CPLStdCallThreadInfo *psInfo = static_cast<CPLStdCallThreadInfo *>(
         VSI_CALLOC_VERBOSE(sizeof(CPLStdCallThreadInfo), 1));
-    if( psInfo == NULL )
-        return NULL;
+    if( psInfo == nullptr )
+        return nullptr;
     psInfo->pAppData = pThreadArg;
     psInfo->pfnMain = pfnMain;
     psInfo->bJoinable = true;
@@ -1989,7 +2010,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
 #endif
         CPLFree( psInfo );
         fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
-        return NULL;
+        return nullptr;
     }
 
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
@@ -2029,7 +2050,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
 void CPLJoinThread(CPLJoinableThread* hJoinableThread)
 {
     CPLStdCallThreadInfo *psInfo = (CPLStdCallThreadInfo*) hJoinableThread;
-    if( psInfo == NULL )
+    if( psInfo == nullptr )
         return;
 
     void* status;
@@ -2073,10 +2094,10 @@ void CPLCleanupTLS()
 
 {
     void **papTLSList = (void **) pthread_getspecific( oTLSKey );
-    if( papTLSList == NULL )
+    if( papTLSList == nullptr )
         return;
 
-    pthread_setspecific( oTLSKey, NULL );
+    pthread_setspecific( oTLSKey, nullptr );
 
     CPLCleanupTLSList( papTLSList );
 }
@@ -2097,7 +2118,7 @@ CPLSpinLock *CPLCreateSpinLock()
 {
     CPLSpinLock* psSpin =
         static_cast<CPLSpinLock *>(malloc(sizeof(CPLSpinLock)));
-    if( psSpin != NULL &&
+    if( psSpin != nullptr &&
         pthread_spin_init(&(psSpin->spin), PTHREAD_PROCESS_PRIVATE) == 0 )
     {
         return psSpin;
@@ -2106,7 +2127,7 @@ CPLSpinLock *CPLCreateSpinLock()
     {
         fprintf(stderr, "CPLCreateSpinLock() failed.\n");
         free(psSpin);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -2126,23 +2147,23 @@ int   CPLAcquireSpinLock( CPLSpinLock* psSpin )
 int CPLCreateOrAcquireSpinLockInternal( CPLLock** ppsLock )
 {
     pthread_mutex_lock(&global_mutex);
-    if( *ppsLock == NULL )
+    if( *ppsLock == nullptr )
     {
         *ppsLock = static_cast<CPLLock *>(calloc(1, sizeof(CPLLock)));
-        if( *ppsLock != NULL )
+        if( *ppsLock != nullptr )
         {
             (*ppsLock)->eType = LOCK_SPIN;
             (*ppsLock)->u.hSpinLock = CPLCreateSpinLock();
-            if( (*ppsLock)->u.hSpinLock == NULL )
+            if( (*ppsLock)->u.hSpinLock == nullptr )
             {
                 free(*ppsLock);
-                *ppsLock = NULL;
+                *ppsLock = nullptr;
             }
         }
     }
     pthread_mutex_unlock(&global_mutex);
     // coverity[missing_unlock]
-    return( *ppsLock != NULL && CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
+    return( *ppsLock != nullptr && CPLAcquireSpinLock( (*ppsLock)->u.hSpinLock ) );
 }
 
 /************************************************************************/
@@ -2174,7 +2195,7 @@ void CPLDestroySpinLock( CPLSpinLock* psSpin )
 void *CPLGetTLS( int nIndex )
 
 {
-    void** l_papTLSList = CPLGetTLSList(NULL);
+    void** l_papTLSList = CPLGetTLSList(nullptr);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
@@ -2189,8 +2210,8 @@ void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccurred )
 
 {
     void** l_papTLSList = CPLGetTLSList(pbMemoryErrorOccurred);
-    if( l_papTLSList == NULL )
-        return NULL;
+    if( l_papTLSList == nullptr )
+        return nullptr;
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
@@ -2204,7 +2225,7 @@ void *CPLGetTLSEx( int nIndex, int* pbMemoryErrorOccurred )
 void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 
 {
-    CPLSetTLSWithFreeFunc(nIndex, pData, (bFreeOnExit) ? CPLFree : NULL);
+    CPLSetTLSWithFreeFunc(nIndex, pData, (bFreeOnExit) ? CPLFree : nullptr);
 }
 
 /************************************************************************/
@@ -2216,7 +2237,7 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 void CPLSetTLSWithFreeFunc( int nIndex, void *pData, CPLTLSFreeFunc pfnFree )
 
 {
-    void **l_papTLSList = CPLGetTLSList(NULL);
+    void **l_papTLSList = CPLGetTLSList(nullptr);
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
@@ -2311,14 +2332,14 @@ CPLLock *CPLCreateLock( CPLLockType eType )
                 eType == LOCK_RECURSIVE_MUTEX
                 ? CPL_MUTEX_RECURSIVE : CPL_MUTEX_ADAPTIVE);
             if( !hMutex )
-                return NULL;
+                return nullptr;
             CPLReleaseMutex(hMutex);
             CPLLock* psLock = static_cast<CPLLock *>(malloc(sizeof(CPLLock)));
-            if( psLock == NULL )
+            if( psLock == nullptr )
             {
                 fprintf(stderr, "CPLCreateLock() failed.\n");
                 CPLDestroyMutex(hMutex);
-                return NULL;
+                return nullptr;
             }
             psLock->eType = eType;
             psLock->u.hMutex = hMutex;
@@ -2333,13 +2354,13 @@ CPLLock *CPLCreateLock( CPLLockType eType )
         {
             CPLSpinLock* hSpinLock = CPLCreateSpinLock();
             if( !hSpinLock )
-                return NULL;
+                return nullptr;
             CPLLock* psLock = static_cast<CPLLock *>(malloc(sizeof(CPLLock)));
-            if( psLock == NULL )
+            if( psLock == nullptr )
             {
                 fprintf(stderr, "CPLCreateLock() failed.\n");
                 CPLDestroySpinLock(hSpinLock);
-                return NULL;
+                return nullptr;
             }
             psLock->eType = eType;
             psLock->u.hSpinLock = hSpinLock;
@@ -2352,7 +2373,7 @@ CPLLock *CPLCreateLock( CPLLockType eType )
         }
         default:
             CPLAssert(false);
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -2533,7 +2554,7 @@ CPLLockHolder::CPLLockHolder( CPLLock **phLock,
     if( !CPLCreateOrAcquireLock( phLock, eType ) )
     {
         fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
-        hLock = NULL;
+        hLock = nullptr;
     }
     else
     {
@@ -2562,12 +2583,12 @@ CPLLockHolder::CPLLockHolder( CPLLock *hLockIn,
     nLine = nLineIn;
     hLock = hLockIn;
 
-    if( hLock != NULL )
+    if( hLock != nullptr )
     {
         if( !CPLAcquireLock( hLock ) )
         {
             fprintf( stderr, "CPLLockHolder: Failed to acquire lock!\n" );
-            hLock = NULL;
+            hLock = nullptr;
         }
     }
 #endif // ndef MUTEX_NONE
@@ -2581,7 +2602,7 @@ CPLLockHolder::~CPLLockHolder()
 
 {
 #ifndef MUTEX_NONE
-    if( hLock != NULL )
+    if( hLock != nullptr )
     {
 #ifdef DEBUG_MUTEX
         fprintf( stderr,

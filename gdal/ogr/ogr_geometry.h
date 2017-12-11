@@ -209,10 +209,10 @@ class CPL_DLL OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const = 0;
     OGRwkbGeometryType    getIsoGeometryType() const;
     virtual const char *getGeometryName() const = 0;
-    virtual void   dumpReadable( FILE *, const char * = NULL
-                                 , char** papszOptions = NULL ) const;
+    virtual void   dumpReadable( FILE *, const char * = nullptr
+                                 , char** papszOptions = nullptr ) const;
     virtual void   flattenTo2D() = 0;
-    virtual char * exportToGML( const char* const * papszOptions = NULL ) const;
+    virtual char * exportToGML( const char* const * papszOptions = nullptr ) const;
     virtual char * exportToKML() const;
     virtual char * exportToJson() const;
 
@@ -222,10 +222,10 @@ class CPL_DLL OGRGeometry
         const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRGeometry* getCurveGeometry(
-        const char* const* papszOptions = NULL ) const CPL_WARN_UNUSED_RESULT;
+        const char* const* papszOptions = nullptr ) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL ) const CPL_WARN_UNUSED_RESULT;
+        const char* const* papszOptions = nullptr ) const CPL_WARN_UNUSED_RESULT;
 
     // SFCGAL interfacing methods.
 //! @cond Doxygen_Suppress
@@ -467,7 +467,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual int  get_IsClosed() const;
     virtual void Value( double, OGRPoint * ) const = 0;
     virtual OGRLineString* CurveToLine( double dfMaxAngleStepSizeDegrees = 0,
-                                        const char* const* papszOptions = NULL)
+                                        const char* const* papszOptions = nullptr)
         const = 0;
     virtual int getDimension() const CPL_OVERRIDE;
 
@@ -581,13 +581,13 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        setPoint( int, double, double, double );
     void        setPointM( int, double, double, double );
     void        setPoint( int, double, double, double, double );
-    void        setPoints( int, OGRRawPoint *, double * = NULL );
+    void        setPoints( int, OGRRawPoint *, double * = nullptr );
     void        setPointsM( int, OGRRawPoint *, double * );
     void        setPoints( int, OGRRawPoint *, double *, double * );
     void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZIn = NULL );
+                           double *padfZIn = nullptr );
     void        setPointsM( int, double * padfX, double * padfY,
-                            double *padfMIn = NULL );
+                            double *padfMIn = nullptr );
     void        setPoints( int, double * padfX, double * padfY,
                            double *padfZIn, double *padfMIn );
     void        addPoint( const OGRPoint * );
@@ -596,10 +596,10 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        addPointM( double, double, double );
     void        addPoint( double, double, double, double );
 
-    void        getPoints( OGRRawPoint *, double * = NULL ) const;
+    void        getPoints( OGRRawPoint *, double * = nullptr ) const;
     void        getPoints( void* pabyX, int nXStride,
                            void* pabyY, int nYStride,
-                           void* pabyZ = NULL, int nZStride = 0 ) const;
+                           void* pabyZ = nullptr, int nZStride = 0 ) const;
     void        getPoints( void* pabyX, int nXStride,
                            void* pabyY, int nYStride,
                            void* pabyZ, int nZStride,
@@ -657,10 +657,10 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     OGRLineString& operator=(const OGRLineString& other);
 
     virtual OGRLineString* CurveToLine( double dfMaxAngleStepSizeDegrees = 0,
-                                        const char* const* papszOptions = NULL )
+                                        const char* const* papszOptions = nullptr )
         const CPL_OVERRIDE;
     virtual OGRGeometry* getCurveGeometry(
-        const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
     virtual double get_Area() const CPL_OVERRIDE;
 
     // Non-standard from OGRGeometry.
@@ -812,7 +812,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     // ICurve methods.
     virtual double get_Length() const CPL_OVERRIDE;
     virtual OGRLineString* CurveToLine( double dfMaxAngleStepSizeDegrees = 0,
-                                        const char* const* papszOptions = NULL )
+                                        const char* const* papszOptions = nullptr )
         const CPL_OVERRIDE;
     virtual void Value( double, OGRPoint * ) const CPL_OVERRIDE;
     virtual double get_Area() const CPL_OVERRIDE;
@@ -825,7 +825,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
         const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr) const CPL_OVERRIDE;
 };
 
 /************************************************************************/
@@ -986,7 +986,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual void EndPoint( OGRPoint * ) const CPL_OVERRIDE;
     virtual void Value( double, OGRPoint * ) const CPL_OVERRIDE;
     virtual OGRLineString* CurveToLine( double dfMaxAngleStepSizeDegrees = 0,
-                                        const char* const* papszOptions = NULL )
+                                        const char* const* papszOptions = nullptr )
         const CPL_OVERRIDE;
 
     virtual int getNumPoints() const CPL_OVERRIDE;
@@ -1023,7 +1023,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
         const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr) const CPL_OVERRIDE;
 
     virtual void        swapXY() CPL_OVERRIDE;
 };
@@ -1120,7 +1120,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
         const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
 
     // ISurface Interface
     virtual double      get_Area() const CPL_OVERRIDE;
@@ -1148,7 +1148,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     // ICurvePolygon
     virtual OGRPolygon* CurvePolyToPoly(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL ) const;
+        const char* const* papszOptions = nullptr ) const;
 
     // ISpatialRelation
     virtual OGRBoolean  Equals( OGRGeometry * ) const CPL_OVERRIDE;
@@ -1227,10 +1227,10 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const CPL_OVERRIDE;
     virtual OGRGeometry* getCurveGeometry(
-    const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+    const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr) const CPL_OVERRIDE;
 
     // ISurface Interface.
     virtual OGRErr        PointOnSurface( OGRPoint * poPoint )
@@ -1253,7 +1253,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     // ICurvePolygon.
     virtual OGRPolygon* CurvePolyToPoly(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
 
     OGRLinearRing *getExteriorRing();
     const OGRLinearRing *getExteriorRing() const;
@@ -1370,10 +1370,10 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const CPL_OVERRIDE;
     virtual OGRGeometry* getCurveGeometry(
-        const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
-        const char* const* papszOptions = NULL ) const CPL_OVERRIDE;
+        const char* const* papszOptions = nullptr ) const CPL_OVERRIDE;
 
     // IWks Interface
     virtual int WkbSize() const CPL_OVERRIDE;
@@ -1791,7 +1791,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
     static OGRErr createFromFgf( unsigned char *, OGRSpatialReference *,
-                                 OGRGeometry **, int = -1, int * = NULL );
+                                 OGRGeometry **, int = -1, int * = nullptr );
     static OGRGeometry *createFromGML( const char * );
     static OGRGeometry *createFromGEOS( GEOSContextHandle_t hGEOSCtxt,
                                         GEOSGeom );
@@ -1808,12 +1808,12 @@ class CPL_DLL OGRGeometryFactory
 
     static OGRGeometry * forceTo( OGRGeometry* poGeom,
                                   OGRwkbGeometryType eTargetType,
-                                  const char*const* papszOptions = NULL );
+                                  const char*const* papszOptions = nullptr );
 
     static OGRGeometry * organizePolygons( OGRGeometry **papoPolygons,
                                            int nPolygonCount,
                                            int *pbResultValidGeometry,
-                                           const char **papszOptions = NULL);
+                                           const char **papszOptions = nullptr);
     static bool haveGEOS();
 
     static OGRGeometry* transformWithOptions( const OGRGeometry* poSrcGeom,
@@ -1839,10 +1839,10 @@ class CPL_DLL OGRGeometryFactory
         double x2, double y2, double z2,
         int bHasZ,
         double dfMaxAngleStepSizeDegrees,
-        const char* const * papszOptions = NULL );
+        const char* const * papszOptions = nullptr );
     static OGRCurve* curveFromLineString(
         const OGRLineString* poLS,
-        const char* const * papszOptions = NULL);
+        const char* const * papszOptions = nullptr);
 };
 
 OGRwkbGeometryType CPL_DLL OGRFromOGCGeomType( const char *pszGeomType );

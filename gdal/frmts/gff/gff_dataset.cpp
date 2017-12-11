@@ -79,7 +79,7 @@ public:
 };
 
 GFFDataset::GFFDataset() :
-    fp(NULL),
+    fp(nullptr),
     eDataType(GDT_Unknown),
     nEndianness(0),
     nVersionMajor(0),
@@ -95,7 +95,7 @@ GFFDataset::GFFDataset() :
 
 GFFDataset::~GFFDataset()
 {
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL(fp);
 }
 
@@ -205,7 +205,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
     if (!GFFDataset::Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -215,16 +215,16 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The GFF driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     GFFDataset *poDS = new GFFDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* Check the endianness of the file */
@@ -299,7 +299,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
       default:
         CPLError(CE_Failure, CPLE_AppDefined, "Unknown image type found!");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* Set raster width/height
@@ -322,7 +322,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid raster dimensions : %d x %d",
                  poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->SetBand(1, new GFFRasterBand(poDS, 1, poDS->eDataType));
@@ -347,7 +347,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 
 void GDALRegister_GFF()
 {
-    if( GDALGetDriverByName( "GFF" ) != NULL )
+    if( GDALGetDriverByName( "GFF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

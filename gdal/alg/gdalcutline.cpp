@@ -99,10 +99,10 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
                           nXOff - (dfBlendDist + 1),
                           nYOff - (dfBlendDist + 1) );
 
-    OGRPolygon *poClipRect = NULL;
+    OGRPolygon *poClipRect = nullptr;
     char *pszWKT = const_cast<char *>(osClipRectWKT.c_str());
 
-    OGRGeometryFactory::createFromWkt( &pszWKT, NULL,
+    OGRGeometryFactory::createFromWkt( &pszWKT, nullptr,
                                        (OGRGeometry**) (&poClipRect) );
 
     if( poClipRect )
@@ -289,14 +289,14 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
 
-    if( psWO == NULL || psWO->hCutline == NULL )
+    if( psWO == nullptr || psWO->hCutline == nullptr )
     {
         CPLAssert( false );
         return CE_Failure;
     }
 
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if( hMemDriver == NULL )
+    if( hMemDriver == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALWarpCutlineMasker needs MEM driver");
@@ -348,8 +348,8 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
         static_cast<int>(sizeof(szDataPointer) - strlen(szDataPointer)) );
 
     GDALDatasetH hMemDS = GDALCreate( hMemDriver, "warp_temp",
-                                      nXSize, nYSize, 0, GDT_Byte, NULL );
-    char *apszOptions[] = { szDataPointer, NULL };
+                                      nXSize, nYSize, 0, GDT_Byte, nullptr );
+    char *apszOptions[] = { szDataPointer, nullptr };
     GDALAddBand( hMemDS, GDT_Byte, apszOptions );
 
     double adfGeoTransform[6] = { 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
@@ -360,7 +360,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
 /* -------------------------------------------------------------------- */
     int nTargetBand = 1;
     double dfBurnValue = 255.0;
-    char **papszRasterizeOptions = NULL;
+    char **papszRasterizeOptions = nullptr;
 
     if( CPLFetchBool( psWO->papszWarpOptions, "CUTLINE_ALL_TOUCHED", false ))
         papszRasterizeOptions =
@@ -373,7 +373,7 @@ GDALWarpCutlineMasker( void *pMaskFuncArg,
                                  1, &hPolygon,
                                  CutlineTransformer, anXYOff,
                                  &dfBurnValue, papszRasterizeOptions,
-                                 NULL, NULL );
+                                 nullptr, nullptr );
 
     CSLDestroy( papszRasterizeOptions );
 

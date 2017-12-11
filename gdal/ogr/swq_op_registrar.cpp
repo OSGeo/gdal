@@ -91,7 +91,7 @@ const swq_operation *swq_op_registrar::GetOperator( const char *pszName )
             return &(swq_apsOperations[i]);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -107,7 +107,7 @@ const swq_operation *swq_op_registrar::GetOperator( swq_op eOperator )
             return &(swq_apsOperations[i]);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -126,7 +126,7 @@ static swq_field_type SWQColumnFuncChecker(
         swq_op_registrar::GetOperator(static_cast<swq_op>(poNode->nOperation));
     CPLError( CE_Failure, CPLE_AppDefined,
               "Column Summary Function '%s' found in an inappropriate context.",
-              poOp != NULL ? poOp->pszName : "" );
+              poOp != nullptr ? poOp->pszName : "" );
     return SWQ_ERROR;
 }
 //! @endcond

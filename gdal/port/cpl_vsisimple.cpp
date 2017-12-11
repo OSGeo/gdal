@@ -865,7 +865,7 @@ void VSIFree( void * pData )
 #endif
 
 #else
-    if( pData != NULL )
+    if( pData != nullptr )
         free( pData );
 #endif
 }
@@ -888,10 +888,10 @@ void VSIFree( void * pData )
 void* VSIMallocAligned( size_t nAlignment, size_t nSize )
 {
 #if defined(HAVE_POSIX_MEMALIGN) && !defined(DEBUG_VSIMALLOC)
-    void* pRet = NULL;
+    void* pRet = nullptr;
     if( posix_memalign( &pRet, nAlignment, nSize ) != 0 )
     {
-        pRet = NULL;
+        pRet = nullptr;
     }
     return pRet;
 #elif defined(_WIN32) && !defined(DEBUG_VSIMALLOC)
@@ -948,7 +948,7 @@ void *VSIMallocAlignedAutoVerbose( size_t nSize, const char* pszFile,
                                    int nLine )
 {
     void* pRet = VSIMallocAlignedAuto(nSize);
-    if( pRet == NULL && nSize != 0 )
+    if( pRet == nullptr && nSize != 0 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -993,8 +993,8 @@ char *VSIStrdup( const char * pszString )
 {
     const size_t nSize = strlen(pszString) + 1;
     char* ptr = static_cast<char*>( VSIMalloc(nSize) );
-    if( ptr == NULL )
-        return NULL;
+    if( ptr == nullptr )
+        return nullptr;
     memcpy(ptr, pszString, nSize);
     return ptr;
 }
@@ -1111,7 +1111,7 @@ static size_t VSICheckMul3( size_t mul1, size_t mul2, size_t mul3,
 */
 void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 )
 {
-    return VSIMalloc2Verbose( nSize1, nSize2, NULL, 0);
+    return VSIMalloc2Verbose( nSize1, nSize2, nullptr, 0);
 }
 
 /**
@@ -1124,7 +1124,7 @@ void CPL_DLL *VSIMalloc2( size_t nSize1, size_t nSize2 )
 */
 void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 {
-    return VSIMalloc3Verbose( nSize1, nSize2, nSize3, NULL, 0);
+    return VSIMalloc3Verbose( nSize1, nSize2, nSize3, nullptr, 0);
 }
 
 /************************************************************************/
@@ -1134,7 +1134,7 @@ void CPL_DLL *VSIMalloc3( size_t nSize1, size_t nSize2, size_t nSize3 )
 void *VSIMallocVerbose( size_t nSize, const char* pszFile, int nLine )
 {
     void* pRet = VSIMalloc(nSize);
-    if( pRet == NULL && nSize != 0 )
+    if( pRet == nullptr && nSize != 0 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -1155,10 +1155,10 @@ void *VSIMalloc2Verbose( size_t nSize1, size_t nSize2, const char* pszFile,
     const size_t nSizeToAllocate =
         VSICheckMul2( nSize1, nSize2, &bOverflowFlag, pszFile, nLine );
     if( bOverflowFlag || nSizeToAllocate == 0 )
-        return NULL;
+        return nullptr;
 
     void* pRet = VSIMalloc(nSizeToAllocate);
-    if( pRet == NULL )
+    if( pRet == nullptr )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -1180,10 +1180,10 @@ void *VSIMalloc3Verbose( size_t nSize1, size_t nSize2, size_t nSize3,
     size_t nSizeToAllocate = VSICheckMul3( nSize1, nSize2, nSize3,
                                            &bOverflowFlag, pszFile, nLine );
     if( bOverflowFlag || nSizeToAllocate == 0 )
-        return NULL;
+        return nullptr;
 
     void* pRet = VSIMalloc(nSizeToAllocate);
-    if( pRet == NULL )
+    if( pRet == nullptr )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -1202,7 +1202,7 @@ void *VSICallocVerbose( size_t nCount, size_t nSize, const char* pszFile,
                         int nLine )
 {
     void* pRet = VSICalloc(nCount, nSize);
-    if( pRet == NULL && nCount != 0 && nSize != 0 )
+    if( pRet == nullptr && nCount != 0 && nSize != 0 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB " bytes",
@@ -1221,7 +1221,7 @@ void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile,
                          int nLine )
 {
     void* pRet = VSIRealloc(pOldPtr, nNewSize);
-    if( pRet == NULL && nNewSize != 0 )
+    if( pRet == nullptr && nNewSize != 0 )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -1238,7 +1238,7 @@ void *VSIReallocVerbose( void* pOldPtr, size_t nNewSize, const char* pszFile,
 char *VSIStrdupVerbose( const char* pszStr, const char* pszFile, int nLine )
 {
     char* pRet = VSIStrdup(pszStr);
-    if( pRet == NULL )
+    if( pRet == nullptr )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "%s, %d: cannot allocate " CPL_FRMT_GUIB " bytes",
@@ -1281,9 +1281,9 @@ unsigned long VSITime( unsigned long * pnTimeToSet )
 {
     time_t tTime;
 
-    tTime = time( NULL );
+    tTime = time( nullptr );
 
-    if( pnTimeToSet != NULL )
+    if( pnTimeToSet != nullptr )
         *pnTimeToSet = static_cast<unsigned long>( tTime );
 
     return static_cast<unsigned long>( tTime );

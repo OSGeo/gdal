@@ -112,7 +112,7 @@ int main(int /* argc */, char* /* argv */ [])
         printf("4-byte stride Byte ->packed Byte : %.2f\n",
                 (end - start) * 1.0 / CLOCKS_PER_SEC);
     }
-    CPLSetConfigOption("GDAL_USE_SSSE3", NULL);
+    CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
 
     return 0;
 }

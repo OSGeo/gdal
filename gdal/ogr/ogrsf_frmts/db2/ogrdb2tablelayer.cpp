@@ -79,9 +79,9 @@ OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn ) :
 
 {
     poDS = poDSIn;
-    m_poStmt = NULL;
-    m_poPrepStmt = NULL;
-    m_pszQuery = NULL;
+    m_poStmt = nullptr;
+    m_poPrepStmt = nullptr;
+    m_pszQuery = nullptr;
     m_nFeaturesRead = 0;
 
     bUpdateAccess = TRUE;
@@ -90,12 +90,12 @@ OGRDB2TableLayer::OGRDB2TableLayer( OGRDB2DataSource *poDSIn ) :
 
     nSRSId = -1;
 
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
-    pszTableName = NULL;
-    m_pszLayerName = NULL;
-    pszSchemaName = NULL;
-    pszFIDColumn = NULL;
+    pszTableName = nullptr;
+    m_pszLayerName = nullptr;
+    pszSchemaName = nullptr;
+    pszFIDColumn = nullptr;
 
     bLaunderColumnNames = false;
     bPreservePrecision = false;
@@ -117,10 +117,10 @@ OGRDB2TableLayer::~OGRDB2TableLayer()
 
     CPLFree( m_pszQuery );
     ClearStatement();
-    if( m_poPrepStmt != NULL )
+    if( m_poPrepStmt != nullptr )
     {
         delete m_poPrepStmt;
-        m_poPrepStmt = NULL;
+        m_poPrepStmt = nullptr;
     }
     CPLDebug("OGRDB2TableLayer::~OGRDB2TableLayer","exiting");
 }
@@ -151,7 +151,7 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
     CPLDebug( "OGR_DB2TableLayer::GetLayerDefn",
               "pszTableName: %s; pszSchemaName: %s",
               pszTableName, pszSchemaName);
-    if( oGetKey.GetPrimaryKeys( pszTableName, NULL, pszSchemaName ) ) {
+    if( oGetKey.GetPrimaryKeys( pszTableName, nullptr, pszSchemaName ) ) {
         if( oGetKey.Fetch() )
         {
             pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
@@ -159,7 +159,7 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
             {
                 oGetKey.Clear();
                 CPLFree( pszFIDColumn );
-                pszFIDColumn = NULL;
+                pszFIDColumn = nullptr;
                 CPLDebug( "OGR_DB2TableLayer::GetLayerDefn",
                           "Table %s has multiple primary key fields, "
                           "ignoring them all.", pszTableName );
@@ -194,7 +194,7 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
                     // on z/OS, get all the column data for table and loop
                     // through looking for the FID column, then check the
                     // column default information for 'IDENTIY' and 'ALWAYS'
-                    if (oGetKey.GetColumns(pszTableName, NULL, pszSchemaName))
+                    if (oGetKey.GetColumns(pszTableName, nullptr, pszSchemaName))
                     {
                         CPLDebug( "OGR_DB2TableLayer::GetLayerDefn",
                                   "GetColumns succeeded");
@@ -235,11 +235,11 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
     CPLErr eErr;
 
     if( !oGetCol.GetColumns( pszTableName, "", pszSchemaName ) )
-        return NULL;
+        return nullptr;
 
     eErr = BuildFeatureDefn( m_pszLayerName, &oGetCol );
     if( eErr != CE_None )
-        return NULL;
+        return nullptr;
 
     if (eGeomType != wkbNone)
         poFeatureDefn->SetGeomType(eGeomType);
@@ -248,20 +248,20 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSRS );
 
     if( poFeatureDefn->GetFieldCount() == 0 &&
-            pszFIDColumn == NULL && pszGeomColumn == NULL )
+            pszFIDColumn == nullptr && pszGeomColumn == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No column definitions found for table '%s', "
                   "layer not usable.",
                   m_pszLayerName );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      If we got a geometry column, does it exist?  Is it binary?      */
     /* -------------------------------------------------------------------- */
 
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
     {
         poFeatureDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
         int iColumn = oGetCol.GetColId( pszGeomColumn );
@@ -272,7 +272,7 @@ OGRFeatureDefn* OGRDB2TableLayer::GetLayerDefn()
                       "but it does not exist.",
                       pszGeomColumn );
             CPLFree( pszGeomColumn );
-            pszGeomColumn = NULL;
+            pszGeomColumn = nullptr;
         }
     }
 
@@ -292,7 +292,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
                                      OGRwkbGeometryType eType )
 {
 //    CPLFree( pszFIDColumn );
-    pszFIDColumn = NULL;
+    pszFIDColumn = nullptr;
 
     CPLDebug( "OGR_DB2TableLayer::Initialize",
               "schema: '%s', layerName: '%s', geomCol: '%s'",
@@ -307,7 +307,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
     /*      it is in the form <schema>.<tablename>                          */
     /* -------------------------------------------------------------------- */
     const char *pszDot = strstr(pszLayerName,".");
-    if( pszDot != NULL )
+    if( pszDot != nullptr )
     {
         pszTableName = CPLStrdup(pszDot + 1);
         pszSchemaName = CPLStrdup(pszLayerName);
@@ -329,7 +329,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
     /*      Have we been provided a geometry column?                        */
     /* -------------------------------------------------------------------- */
 //    CPLFree( pszGeomColumn ); LATER
-    if( pszGeomCol == NULL )
+    if( pszGeomCol == nullptr )
         GetLayerDefn(); /* fetch geom column if not specified */
     else
         pszGeomColumn = CPLStrdup( pszGeomCol );
@@ -350,7 +350,7 @@ CPLErr OGRDB2TableLayer::Initialize( const char *pszSchema,
         if( poSRS->importFromWkt( (char**)&pszSRText ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -556,10 +556,10 @@ CPLString OGRDB2TableLayer::BuildFields()
 void OGRDB2TableLayer::ClearStatement()
 
 {
-    if( m_poStmt != NULL )
+    if( m_poStmt != nullptr )
     {
         delete m_poStmt;
-        m_poStmt = NULL;
+        m_poStmt = nullptr;
     }
 }
 
@@ -570,7 +570,7 @@ void OGRDB2TableLayer::ClearStatement()
 OGRDB2Statement *OGRDB2TableLayer::GetStatement()
 
 {
-    if( m_poStmt == NULL )
+    if( m_poStmt == nullptr )
     {
         m_poStmt = BuildStatement(BuildFields());
         iNextShapeId = 0;
@@ -595,13 +595,13 @@ OGRDB2Statement* OGRDB2TableLayer::BuildStatement(const char* pszColumns)
     poStatement->Append( pszTableName );
 
     /* Append attribute query if we have it */
-    if( m_pszQuery != NULL )
+    if( m_pszQuery != nullptr )
         poStatement->Appendf( " where (%s)", m_pszQuery );
 
     /* If we have a spatial filter, query on it */
-    if ( m_poFilterGeom != NULL )
+    if ( m_poFilterGeom != nullptr )
     {
-        if( m_pszQuery == NULL )
+        if( m_pszQuery == nullptr )
             poStatement->Append( " where" );
         else
             poStatement->Append( " and" );
@@ -620,7 +620,7 @@ OGRDB2Statement* OGRDB2TableLayer::BuildStatement(const char* pszColumns)
     {
         delete poStatement;
         CPLDebug( "OGR_DB2TableLayer::BuildStatement", "ExecuteSQL Failed" );
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -643,7 +643,7 @@ OGRFeature *OGRDB2TableLayer::GetFeature( GIntBig nFeatureId )
 
 {
 
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
         return OGRDB2Layer::GetFeature( nFeatureId );
 
     ClearStatement();
@@ -658,8 +658,8 @@ OGRFeature *OGRDB2TableLayer::GetFeature( GIntBig nFeatureId )
     if( !m_poStmt->DB2Execute("OGR_DB2TableLayer::GetFeature") )
     {
         delete m_poStmt;
-        m_poStmt = NULL;
-        return NULL;
+        m_poStmt = nullptr;
+        return nullptr;
     }
 
     return GetNextRawFeature();
@@ -673,15 +673,15 @@ OGRErr OGRDB2TableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : NULL;
+    m_pszAttrQueryString = (pszQuery) ? CPLStrdup(pszQuery) : nullptr;
 
-    if( (pszQuery == NULL && this->m_pszQuery == NULL)
-            || (pszQuery != NULL && this->m_pszQuery != NULL
+    if( (pszQuery == nullptr && this->m_pszQuery == nullptr)
+            || (pszQuery != nullptr && this->m_pszQuery != nullptr
                 && EQUAL(pszQuery,this->m_pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( this->m_pszQuery );
-    this->m_pszQuery = (pszQuery) ? CPLStrdup( pszQuery ) : NULL;
+    this->m_pszQuery = (pszQuery) ? CPLStrdup( pszQuery ) : nullptr;
 
     ClearStatement();
 
@@ -702,7 +702,7 @@ int OGRDB2TableLayer::TestCapability( const char * pszCap )
             return TRUE;
 
         else if( EQUAL(pszCap,OLCRandomWrite) )
-            return pszFIDColumn != NULL;
+            return pszFIDColumn != nullptr;
     }
 
     if( EQUAL(pszCap,OLCTransactions) )
@@ -712,7 +712,7 @@ int OGRDB2TableLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     if( EQUAL(pszCap,OLCRandomRead) )
-        return pszFIDColumn != NULL;
+        return pszFIDColumn != nullptr;
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;
     else
@@ -735,7 +735,7 @@ GIntBig OGRDB2TableLayer::GetFeatureCount( int bForce )
 
     OGRDB2Statement* poStatement = BuildStatement( "count(*)" );
 
-    if (poStatement == NULL || !poStatement->Fetch())
+    if (poStatement == nullptr || !poStatement->Fetch())
     {
         delete poStatement;
         return OGRDB2Layer::GetFeatureCount( bForce );
@@ -882,7 +882,7 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
 
     GetLayerDefn();
 
-    if( NULL == poFeature )
+    if( nullptr == poFeature )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "NULL pointer to OGRFeature passed to SetFeature()." );
@@ -918,9 +918,9 @@ OGRErr OGRDB2TableLayer::ISetFeature( OGRFeature *poFeature )
 
     /* Set the geometry */
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    char    *pszWKT = NULL;
+    char    *pszWKT = nullptr;
 
-    if (poGeom != NULL && pszGeomColumn != NULL)
+    if (poGeom != nullptr && pszGeomColumn != nullptr)
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
@@ -991,7 +991,7 @@ OGRErr OGRDB2TableLayer::DeleteFeature( GIntBig nFID )
              " entering, nFID: " CPL_FRMT_GIB,nFID);
     GetLayerDefn();
 
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "DeleteFeature() without any FID column." );
@@ -1056,7 +1056,7 @@ OGRErr OGRDB2TableLayer::PrepareFeature( OGRFeature *poFeature, char cType )
     if (m_poPrepStmt) delete m_poPrepStmt;
     m_poPrepStmt =  new OGRDB2Statement( poDS->GetSession());
 
-    char    *pszWKT = NULL;
+    char    *pszWKT = nullptr;
     CPLString osValues= " VALUES(";
     int nFieldCount = poFeatureDefn->GetFieldCount();
 
@@ -1069,7 +1069,7 @@ OGRErr OGRDB2TableLayer::PrepareFeature( OGRFeature *poFeature, char cType )
     int bNeedComma = FALSE;
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    if (poGeom != NULL && pszGeomColumn != NULL)
+    if (poGeom != nullptr && pszGeomColumn != nullptr)
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
@@ -1093,7 +1093,7 @@ OGRErr OGRDB2TableLayer::PrepareFeature( OGRFeature *poFeature, char cType )
 
 // Explicitly add FID column and value if needed
     if( cType == 'I' && poFeature->GetFID() != OGRNullFID
-            && pszFIDColumn != NULL && cGenerated != 'A' )
+            && pszFIDColumn != nullptr && cGenerated != 'A' )
     {
         if (bNeedComma)
         {
@@ -1152,7 +1152,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
 {
     GetLayerDefn();
 
-    if( NULL == poFeature )
+    if( nullptr == poFeature )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "NULL pointer to OGRFeature passed to CreateFeature()." );
@@ -1162,14 +1162,14 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
     if (PrepareFeature(poFeature, 'I'))
         return OGRERR_FAILURE;
 
-    char    *pszWKT = NULL;
+    char    *pszWKT = nullptr;
     int nFieldCount = poFeatureDefn->GetFieldCount();
     int nBindNum = 0;
     void** papBindBuffer = (void**)CPLMalloc(sizeof(void*)
                                                 * (nFieldCount + 1));
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    if (poGeom != NULL && pszGeomColumn != NULL)
+    if (poGeom != nullptr && pszGeomColumn != nullptr)
     {
         if( poGeom->exportToWkt( &pszWKT ) == OGRERR_NONE)
         {
@@ -1197,7 +1197,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
 
 // Explicitly add FID column and value if needed
     if( poFeature->GetFID() != OGRNullFID
-            && pszFIDColumn != NULL && cGenerated != 'A' )
+            && pszFIDColumn != nullptr && cGenerated != 'A' )
     {
         GIntBig nFID = poFeature->GetFID();
         if (m_poPrepStmt->DB2BindParameterIn(
@@ -1208,7 +1208,7 @@ OGRErr OGRDB2TableLayer::ICreateFeature( OGRFeature *poFeature )
                     sizeof(GIntBig),
                     (void *)(&nFID)))
         {
-            papBindBuffer[nBindNum] = NULL;
+            papBindBuffer[nBindNum] = nullptr;
             nBindNum++;
         }
         else
@@ -1307,14 +1307,14 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement * /*poStatement*/,
     int nOGRFieldType = poFeatureDefn->GetFieldDefn(i)->GetType();
 
     int nLen = 0;
-    void * pValuePointer = NULL;
+    void * pValuePointer = nullptr;
     int nValueType = 0;
     int nParameterType = 0;
 
     if( nOGRFieldType == OFTString ) {
-        const char *stringValue = NULL;
+        const char *stringValue = nullptr;
         stringValue = poFeature->GetFieldAsString(i);
-        papBindBuffer[nBindNum] = NULL; // Don't free
+        papBindBuffer[nBindNum] = nullptr; // Don't free
         nLen = (int) strlen(stringValue);
         pValuePointer = (void *) stringValue;
         nValueType = SQL_C_CHAR;

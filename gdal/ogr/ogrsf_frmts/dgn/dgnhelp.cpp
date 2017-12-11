@@ -365,8 +365,8 @@ int DGNGetShapeFillInfo( DGNHandle hDGN, DGNElemCore *psElem, int *pnColor )
         int nLinkSize = 0;
         unsigned char *pabyData =
             DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                           NULL, NULL, &nLinkSize );
-        if( pabyData == NULL )
+                           nullptr, nullptr, &nLinkSize );
+        if( pabyData == nullptr )
             return FALSE;
 
         if( nLinkType == DGNLT_SHAPE_FILL && nLinkSize >= 9 )
@@ -403,8 +403,8 @@ int DGNGetAssocID( DGNHandle hDGN, DGNElemCore *psElem )
         int nLinkSize = 0;
         unsigned char *pabyData =
             DGNGetLinkage( hDGN, psElem, iLink, &nLinkType,
-                           NULL, NULL, &nLinkSize );
-        if( pabyData == NULL )
+                           nullptr, nullptr, &nLinkSize );
+        if( pabyData == nullptr )
             return -1;
 
         if( nLinkType == DGNLT_ASSOC_ID && nLinkSize >= 8 )
@@ -1021,7 +1021,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             unsigned char *pabyData =
                 DGNGetLinkage( hDGN, psElement, iLink, &nLinkType,
                                &nEntityNum, &nMSLink, &nLinkSize );
-            if( pabyData == NULL )
+            if( pabyData == nullptr )
                 break;
 
             fprintf( fp, "Type=0x%04x", nLinkType );
@@ -1256,13 +1256,13 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
             if( nLinkSize <= 4 )
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed, "nLinkSize <= 4");
-                return NULL;
+                return nullptr;
             }
             if( nLinkSize + nAttrOffset > psElement->attr_bytes )
             {
                 CPLError(CE_Failure, CPLE_AssertionFailed,
                          "nLinkSize + nAttrOffset > psElement->attr_bytes");
-                return NULL;
+                return nullptr;
             }
 
             int nLinkageType = 0;
@@ -1296,20 +1296,20 @@ unsigned char *DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement,
                     | (psElement->attr_data[nAttrOffset+11] << 24);
             }
 
-            if( pnLinkageType != NULL )
+            if( pnLinkageType != nullptr )
                 *pnLinkageType = nLinkageType;
-            if( pnEntityNum != NULL )
+            if( pnEntityNum != nullptr )
                 *pnEntityNum = nEntityNum;
-            if( pnMSLink != NULL )
+            if( pnMSLink != nullptr )
                 *pnMSLink = nMSLink;
-            if( pnLength != NULL )
+            if( pnLength != nullptr )
                 *pnLength = nLinkSize;
 
             return psElement->attr_data + nAttrOffset;
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

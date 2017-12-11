@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 
 OGRARCGENLayer::OGRARCGENLayer( const char* pszFilename,
                                 VSILFILE* fpIn, OGRwkbGeometryType eType ) :
-    poFeatureDefn(NULL),
+    poFeatureDefn(nullptr),
     fp(fpIn),
     bEOF(false),
     nNextFID(0)
@@ -87,12 +87,12 @@ OGRFeature *OGRARCGENLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -109,7 +109,7 @@ OGRFeature *OGRARCGENLayer::GetNextFeature()
 OGRFeature *OGRARCGENLayer::GetNextRawFeature()
 {
     if (bEOF)
-        return NULL;
+        return nullptr;
 
     OGRwkbGeometryType eType = poFeatureDefn->GetGeomType();
 
@@ -117,11 +117,11 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
     {
         while( true )
         {
-            const char* pszLine = CPLReadLine2L(fp,256,NULL);
-            if (pszLine == NULL || EQUAL(pszLine, "END"))
+            const char* pszLine = CPLReadLine2L(fp,256,nullptr);
+            if (pszLine == nullptr || EQUAL(pszLine, "END"))
             {
                 bEOF = true;
-                return NULL;
+                return nullptr;
             }
             char** papszTokens = CSLTokenizeString2( pszLine, " ,", 0 );
             int nTokens = CSLCount(papszTokens);
@@ -153,8 +153,8 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
         OGRGeometryFactory::createGeometry( (bIsPoly) ? wkbLinearRing : wkbLineString ));
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fp,256,NULL);
-        if (pszLine == NULL)
+        const char* pszLine = CPLReadLine2L(fp,256,nullptr);
+        if (pszLine == nullptr)
             break;
 
         if (EQUAL(pszLine, "END"))
@@ -212,7 +212,7 @@ OGRFeature *OGRARCGENLayer::GetNextRawFeature()
 
     bEOF = true;
     delete poLS;
-    return NULL;
+    return nullptr;
 }
 /************************************************************************/
 /*                           TestCapability()                           */

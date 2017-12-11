@@ -83,12 +83,12 @@ public:
 
         virtual struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const struct curl_slist* psExistingHeaders,
-                                          const void *pabyDataContent = NULL,
+                                          const void *pabyDataContent = nullptr,
                                           size_t nBytesContent = 0) const = 0;
 
         virtual bool AllowAutomaticRedirection() { return true; }
         virtual bool CanRestartOnError(const char*, const char* /* pszHeaders*/,
-                                       bool /*bSetError*/, bool* /*pbUpdateMap*/ = NULL) { return false;}
+                                       bool /*bSetError*/, bool* /*pbUpdateMap*/ = nullptr) { return false;}
 
         virtual const CPLString& GetURL() const = 0;
 
@@ -153,12 +153,12 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
                                           const struct curl_slist* psExistingHeaders,
-                                          const void *pabyDataContent = NULL,
+                                          const void *pabyDataContent = nullptr,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
         bool AllowAutomaticRedirection() CPL_OVERRIDE { return false; }
         bool CanRestartOnError(const char*, const char* pszHeaders,
-                               bool bSetError, bool* pbUpdateMap = NULL) CPL_OVERRIDE;
+                               bool bSetError, bool* pbUpdateMap = nullptr) CPL_OVERRIDE;
 
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }

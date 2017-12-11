@@ -224,7 +224,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         VSI_CALLOC_VERBOSE( nExtraXSize * nExtraYSize,
                    GDALGetDataTypeSize(eOperDataType) / 8 ) );
 
-    if( pabyWorkData == NULL )
+    if( pabyWorkData == nullptr )
     {
         return CE_Failure;
     }
@@ -239,7 +239,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     GByte *pabyOutData = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE( nExtraXSize, nExtraYSize, nPixelOffset ) );
-    if( pabyOutData == NULL )
+    if( pabyOutData == nullptr )
     {
         CPLFree( pabyWorkData );
         return CE_Failure;
@@ -395,7 +395,7 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
 VRTKernelFilteredSource::VRTKernelFilteredSource() :
     m_nKernelSize(0),
     m_bSeparable(FALSE),
-    m_padfKernelCoefs(NULL),
+    m_padfKernelCoefs(nullptr),
     m_bNormalized(FALSE)
 {
     GDALDataType aeSupTypes[] = { GDT_Float32 };
@@ -625,8 +625,8 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML( const char *pszVRTPath )
 {
     CPLXMLNode *psSrc = VRTFilteredSource::SerializeToXML( pszVRTPath );
 
-    if( psSrc == NULL )
-        return NULL;
+    if( psSrc == nullptr )
+        return nullptr;
 
     CPLFree( psSrc->pszValue );
     psSrc->pszValue = CPLStrdup("KernelFilteredSource" );
@@ -680,7 +680,7 @@ VRTSource *VRTParseFilterSources( CPLXMLNode *psChild, const char *pszVRTPath,
         delete poSrc;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*! @endcond */

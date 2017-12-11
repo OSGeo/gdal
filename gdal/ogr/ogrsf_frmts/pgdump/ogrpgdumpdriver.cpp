@@ -49,7 +49,7 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
     if( !poDS->Log("SET standard_conforming_strings = OFF") )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -62,7 +62,7 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
 void RegisterOGRPGDump()
 
 {
-    if( GDALGetDriverByName( "PGDUMP" ) != NULL )
+    if( GDALGetDriverByName( "PGDUMP" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -151,7 +151,7 @@ class OGRVDVWriterLayer: public OGRLayer
                                           const char* pszName,
                                           VSILFILE* fpL,
                                           bool bOwnFP,
-                                          OGRVDV452Table* poVDV452Table = NULL,
+                                          OGRVDV452Table* poVDV452Table = nullptr,
                                           const CPLString& osVDV452Lang = "",
                                           bool bProfileStrict = false
                                           );

@@ -134,7 +134,7 @@ void __cdecl operator delete( void * p )
 
 #endif  // defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
 
-static GByte* pabyGlobalKey = NULL;
+static GByte* pabyGlobalKey = nullptr;
 static int nGlobalKeySize = 0;
 
 typedef enum
@@ -196,15 +196,15 @@ typedef enum
  */
 void VSISetCryptKey( const GByte* pabyKey, int nKeySize )
 {
-    CPLAssert( (pabyKey != NULL && nKeySize != 0) ||
-               (pabyKey == NULL && nKeySize == 0) );
+    CPLAssert( (pabyKey != nullptr && nKeySize != 0) ||
+               (pabyKey == nullptr && nKeySize == 0) );
     if( pabyGlobalKey )
     {
         // Make some effort to clear the memory, although it could have leaked
         // elsewhere...
         memset( pabyGlobalKey, 0, nGlobalKeySize );
         CPLFree(pabyGlobalKey);
-        pabyGlobalKey = NULL;
+        pabyGlobalKey = nullptr;
         nGlobalKeySize = 0;
     }
     if( pabyKey )
@@ -297,7 +297,7 @@ static CryptoPP::BlockCipher* GetEncBlockCipher( VSICryptAlg eAlg )
         CASE_ALG(Twofish)
         CASE_ALG(XTEA)
 #endif
-        default: return NULL;
+        default: return nullptr;
     }
 }
 
@@ -342,7 +342,7 @@ static CryptoPP::BlockCipher* GetDecBlockCipher( VSICryptAlg eAlg )
         CASE_ALG(Twofish)
         CASE_ALG(XTEA)
 #endif
-        default: return NULL;
+        default: return nullptr;
     }
 }
 
@@ -563,7 +563,7 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
                      nKeyCheckSize) != nKeyCheckSize )
             return VSICryptReadError();
 
-        if( osKey.empty() && pabyGlobalKey == NULL )
+        if( osKey.empty() && pabyGlobalKey == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Encryption key not defined as key/key_b64 parameter, "
@@ -573,7 +573,7 @@ int VSICryptFileHeader::ReadFromFile( VSIVirtualHandle* fp,
         }
 
         CryptoPP::BlockCipher* poEncCipher = GetEncBlockCipher(eAlg);
-        if( poEncCipher == NULL )
+        if( poEncCipher == nullptr )
             return FALSE;
 
         if( osIV.size() != poEncCipher->BlockSize() )
@@ -790,11 +790,11 @@ VSICryptFileHandle::VSICryptFileHandle( CPLString osBaseFilenameIn,
     bUpdateHeader(false),
     nCurPos(0),
     bEOF(false),
-    poEncCipher(NULL),
-    poDecCipher(NULL),
+    poEncCipher(nullptr),
+    poDecCipher(nullptr),
     nBlockSize(0),
     nWBOffset(0),
-    pabyWB(NULL),
+    pabyWB(nullptr),
     nWBSize(0),
     bWBDirty(false),
     bLastSectorWasModified(false)
@@ -820,7 +820,7 @@ VSICryptFileHandle::~VSICryptFileHandle()
 int VSICryptFileHandle::Init( const CPLString& osKey, bool bWriteHeader )
 {
     poEncCipher = GetEncBlockCipher(poHeader->eAlg);
-    if( poEncCipher == NULL )
+    if( poEncCipher == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cipher algorithm not supported in this build: %d",
@@ -941,8 +941,8 @@ bool VSICryptFileHandle::DecryptBlock( GByte* pabyData, vsi_l_offset nOffset )
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
     CPLAssert( static_cast<int>(osIV.size()) == nBlockSize );
     CryptoPP::StringSink* poSink = new CryptoPP::StringSink(osRes);
-    CryptoPP::StreamTransformation* poMode = NULL;
-    CryptoPP::StreamTransformationFilter* poDec = NULL;
+    CryptoPP::StreamTransformation* poMode = nullptr;
+    CryptoPP::StreamTransformationFilter* poDec = nullptr;
 
     try
     {
@@ -1399,13 +1399,13 @@ int VSICryptFileHandle::Flush()
 int VSICryptFileHandle::Close()
 {
     int nRet = 0;
-    if( poBaseHandle != NULL && poHeader != NULL )
+    if( poBaseHandle != nullptr && poHeader != nullptr )
     {
         if( Flush() != 0 )
             return -1;
         nRet = poBaseHandle->Close();
         delete poBaseHandle;
-        poBaseHandle = NULL;
+        poBaseHandle = nullptr;
     }
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Close(%s)", osBaseFilename.c_str());
@@ -1464,7 +1464,7 @@ static CPLString GetFilename( const char* pszFilename )
                        strlen(VSICRYPT_PREFIX)) == 0 );
     pszFilename += strlen(VSICRYPT_PREFIX);
     const char* pszFileArg = strstr(pszFilename, "file=");
-    if( pszFileArg == NULL )
+    if( pszFileArg == nullptr )
         return pszFilename;
     CPLString osRet(pszFileArg + strlen("file="));
     return osRet;
@@ -1481,7 +1481,7 @@ static CPLString GetArgument( const char* pszFilename, const char* pszParamName,
     osParamName += "=";
 
     const char* pszNeedle = strstr(pszFilename, osParamName);
-    if( pszNeedle == NULL )
+    if( pszNeedle == nullptr )
         return pszDefault;
 
     CPLString osRet(pszNeedle + osParamName.size());
@@ -1545,24 +1545,24 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     CPLString osFilename(GetFilename(pszFilename));
 
     CPLString osKey(GetKey(pszFilename));
-    if( osKey.empty() && pabyGlobalKey == NULL )
+    if( osKey.empty() && pabyGlobalKey == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Encryption key not defined as key/key_b64 parameter, "
                 "VSICRYPT_KEY/VSICRYPT_KEY_B64 configuration option or "
                  "VSISetCryptKey() API");
-        return NULL;
+        return nullptr;
     }
 
     if( strchr(pszAccess, 'r') )
     {
         CPLString osAccess(pszAccess);
-        if( strchr(pszAccess, 'b') == NULL )
+        if( strchr(pszAccess, 'b') == nullptr )
             osAccess += "b";
         VSIVirtualHandle* fpBase =
             (VSIVirtualHandle*)VSIFOpenL(osFilename, osAccess);
-        if( fpBase == NULL )
-            return NULL;
+        if( fpBase == nullptr )
+            return nullptr;
         VSICryptFileHeader* poHeader = new VSICryptFileHeader();
         if( !poHeader->ReadFromFile(fpBase, osKey) )
         {
@@ -1570,7 +1570,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             fpBase->Close();
             delete fpBase;
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
 
         VSICryptFileHandle* poHandle =
@@ -1583,7 +1583,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         memset((void*)osKey.c_str(), 0, osKey.size());
         return poHandle;
@@ -1625,13 +1625,13 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
 
         /* Generate random initial vector */
         CryptoPP::BlockCipher* poBlock = GetEncBlockCipher(eAlg);
-        if( poBlock == NULL )
+        if( poBlock == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cipher algorithm not supported in this build: %s",
                      osAlg.c_str());
             memset((void*)osKey.c_str(), 0, osKey.size());
-            return NULL;
+            return nullptr;
         }
         int nMinKeySize = static_cast<int>(poBlock->MinKeyLength());
         int nMaxKeySize = static_cast<int>(poBlock->MaxKeyLength());
@@ -1646,7 +1646,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
                          "IV should be %d byte large",
                          nBlockSize);
                 memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -1690,15 +1690,15 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
                      "Key is too short: %d bytes. Should be at least %d bytes",
                      nKeyLength, nMinKeySize);
             memset((void*)osKey.c_str(), 0, osKey.size());
-            return NULL;
+            return nullptr;
         }
 
         VSIVirtualHandle* fpBase =
             reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osFilename, "wb+"));
-        if( fpBase == NULL )
+        if( fpBase == nullptr )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
-            return NULL;
+            return nullptr;
         }
 
         VSICryptFileHeader* poHeader = new VSICryptFileHeader();
@@ -1719,7 +1719,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         memset((void*)osKey.c_str(), 0, osKey.size());
         return poHandle;
@@ -1728,7 +1728,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
     {
         VSIVirtualHandle* fpBase =
             reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osFilename, "rb+"));
-        if( fpBase == NULL )
+        if( fpBase == nullptr )
         {
             memset((void*)osKey.c_str(), 0, osKey.size());
             return VSIFilesystemHandler::Open(pszFilename, "wb+");
@@ -1740,7 +1740,7 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
             fpBase->Close();
             delete fpBase;
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
 
         VSICryptFileHandle* poHandle =
@@ -1749,15 +1749,15 @@ VSIVirtualHandle *VSICryptFilesystemHandler::Open( const char *pszFilename,
         if( !poHandle->Init(osKey) )
         {
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         memset((void*)osKey.c_str(), 0, osKey.size());
-        if( poHandle != NULL )
+        if( poHandle != nullptr )
             poHandle->Seek(0, SEEK_END);
         return poHandle;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1774,7 +1774,7 @@ int VSICryptFilesystemHandler::Stat( const char *pszFilename,
     if( VSIStatExL( osFilename, pStatBuf, nFlags ) != 0 )
         return -1;
     VSIVirtualHandle* fp = (VSIVirtualHandle*)VSIFOpenL(osFilename, "rb");
-    if( fp == NULL )
+    if( fp == nullptr )
         return -1;
     VSICryptFileHeader* poHeader = new VSICryptFileHeader();
     CPLString osKey(GetKey(pszFilename));
@@ -2071,7 +2071,7 @@ public:
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
-        return NULL;
+        return nullptr;
     }
 
     virtual int Stat( const char * /* pszFilename */,

@@ -14,7 +14,6 @@ GDAL - Geospatial Data Abstraction Library
 | MinGW_W64                | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=mingw_w64&label=mingw_w64)](https://travis-ci.org/OSGeo/gdal) |
 | Android                  | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=android&label=android)](https://travis-ci.org/OSGeo/gdal) |
 | Big endian host          | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=big_endian&label=big_endian)](https://travis-ci.org/OSGeo/gdal) |
-| GCC 4.8 C++11            | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=gcc48_stdcpp11&label=gcc48_stdcpp11)](https://travis-ci.org/OSGeo/gdal) |
 | GCC 5.2 C++14 -fsanitize | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=gcc52_stdcpp14_sanitize&label=gcc52_stdcpp14_sanitize)](https://travis-ci.org/OSGeo/gdal) |
 | Clang Static Analyzer    | [![Build Status](https://travis-ci.org/rouault/gdal_coverage.svg?branch=trunk_clang_static_analyzer)](https://travis-ci.org/rouault/gdal_coverage) |
 | Coverity Scan            | [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal) |

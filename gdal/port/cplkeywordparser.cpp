@@ -55,7 +55,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 CPLKeywordParser::CPLKeywordParser() :
-    papszKeywordList(NULL), pszHeaderNext(NULL)
+    papszKeywordList(nullptr), pszHeaderNext(nullptr)
 { }
 
 /************************************************************************/
@@ -66,7 +66,7 @@ CPLKeywordParser::~CPLKeywordParser()
 
 {
     CSLDestroy( papszKeywordList );
-    papszKeywordList = NULL;
+    papszKeywordList = nullptr;
 }
 
 /************************************************************************/
@@ -90,14 +90,14 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
         if( nBytesRead < 512 )
             break;
 
-        const char *pszCheck = NULL;
+        const char *pszCheck = nullptr;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck, "\r\nEND;\r\n") != NULL
-            || strstr(pszCheck, "\nEND;\n") != NULL )
+        if( strstr(pszCheck, "\r\nEND;\r\n") != nullptr
+            || strstr(pszCheck, "\nEND;\n") != nullptr )
             break;
     }
 
@@ -366,7 +366,7 @@ const char *CPLKeywordParser::GetKeyword( const char *pszPath,
 
 {
     const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
         return pszDefault;
 
     return pszResult;

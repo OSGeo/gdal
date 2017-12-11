@@ -427,7 +427,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
     if( !padfPrjParams )
         return OGRERR_CORRUPT_DATA;
 
-    double (*pfnUnpackAnglesFn)(double) = NULL;
+    double (*pfnUnpackAnglesFn)(double) = nullptr;
 
     if( nUSGSAngleFormat == USGS_ANGLE_DECIMALDEGREES )
         pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackNoOp;
@@ -676,7 +676,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 
     if( !IsLocal() )
     {
-        char *pszName = NULL;
+        char *pszName = nullptr;
         double dfSemiMajor = 0.0;
         double dfInvFlattening = 0.0;
 
@@ -702,7 +702,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 SetGeogCS( "Unknown datum based upon the custom spheroid",
                            "Not specified (based on custom spheroid)",
                            "Custom spheroid", padfPrjParams[0], dfInvFlattening,
-                           NULL, 0, NULL, 0 );
+                           nullptr, 0, nullptr, 0 );
             }
             else if( padfPrjParams[1] > 0.0 )  // Clarke 1866.
             {
@@ -716,7 +716,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                     "Not specified (based on %s spheroid)",
                                     pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
-                               NULL, 0.0, NULL, 0.0 );
+                               nullptr, 0.0, nullptr, 0.0 );
                     SetAuthority( "SPHEROID", "EPSG", 7008 );
                 }
             }
@@ -732,7 +732,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                     "Not specified (based on %s spheroid)",
                                     pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
-                               NULL, 0.0, NULL, 0.0 );
+                               nullptr, 0.0, nullptr, 0.0 );
                     SetAuthority( "SPHEROID", "EPSG", 7047 );
                 }
             }
@@ -750,7 +750,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                "Not specified (based on %s spheroid)",
                                pszName),
                            pszName, dfSemiMajor, dfInvFlattening,
-                           NULL, 0.0, NULL, 0.0 );
+                           nullptr, 0.0, nullptr, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
             }
             else
@@ -802,7 +802,7 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToUSGS", OGRERR_FAILURE );
 
-    *ppadfPrjParams = NULL;
+    *ppadfPrjParams = nullptr;
 
     return ((OGRSpatialReference *) hSRS)->exportToUSGS( piProjSys, piZone,
                                                          ppadfPrjParams,
@@ -856,7 +856,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
     if( IsLocal() )
         *piProjSys = GEO;
 
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
 #ifdef DEBUG
         CPLDebug( "OSR_USGS",
@@ -1178,7 +1178,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                 double dfSM = 0.0;
                 double dfIF = 0.0;
 
-                if( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
                                          &dfSM, &dfIF ) == OGRERR_NONE
                     && CPLIsEqual( dfSemiMajor, dfSM )
                     && CPLIsEqual( dfInvFlattening, dfIF ) )

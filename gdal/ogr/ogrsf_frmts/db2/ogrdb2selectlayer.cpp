@@ -45,25 +45,25 @@ OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
     SQLCHAR     szTableName[256];
     SQLCHAR     szSchemaName[256];
     SQLSMALLINT nNameLength = 0;
-    OGRDB2Layer *poBaseLayer = NULL;
+    OGRDB2Layer *poBaseLayer = nullptr;
     poDS = poDSIn;
 
     iNextShapeId = 0;
     nSRSId = -1;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
     m_poStmt = poStmtIn;
     pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
     CPLDebug("OGR_DB2SelectLayer::OGRDB2SelectLayer", "SQL: '%s'",
              pszBaseStatement);
 
-    pszGeomColumn = NULL;
+    pszGeomColumn = nullptr;
 
     /* get schema and table names for first column, column 1 */
     SQLColAttribute(m_poStmt->GetStatement(), (SQLSMALLINT)(1),
                     SQL_DESC_SCHEMA_NAME,
                     szSchemaName, sizeof(szSchemaName),
-                    &nNameLength, NULL);
+                    &nNameLength, nullptr);
     /* The schema name is sometimes right padded with blanks */
     /* Replace blanks with nulls to terminate string for sprintf below */
     for (int i = 0; i < nNameLength; i++) {
@@ -72,7 +72,7 @@ OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
     SQLColAttribute(m_poStmt->GetStatement(), (SQLSMALLINT)(1),
                     SQL_DESC_TABLE_NAME,
                     szTableName, sizeof(szTableName),
-                    &nNameLength, NULL);
+                    &nNameLength, nullptr);
     CPLDebug("OGR_DB2SelectLayer::OGRDB2SelectLayer",
              "szSchemaName: '%s'; szTableName: '%s'",
              szSchemaName, szTableName);
@@ -82,7 +82,7 @@ OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
         snprintf(szLayerName, sizeof(szLayerName), "%s.%s",szSchemaName, szTableName);
         poBaseLayer = (OGRDB2Layer *) poDS->GetLayerByName((const char*)
                       szLayerName);
-        if (poBaseLayer != NULL)
+        if (poBaseLayer != nullptr)
             CPLDebug("OGR_DB2SelectLayer::OGRDB2SelectLayer",
                      "base geom col: '%s'", poBaseLayer->GetGeometryColumn());
         else CPLDebug("OGR_DB2SelectLayer::OGRDB2SelectLayer",
@@ -96,7 +96,7 @@ OGRDB2SelectLayer::OGRDB2SelectLayer( OGRDB2DataSource *poDSIn,
                 EQUAL(m_poStmt->GetColTypeName( iColumn ),
                       "VARCHAR () FOR BIT DATA"))
         {
-            if (poBaseLayer != NULL
+            if (poBaseLayer != nullptr
                     && EQUAL(poBaseLayer->GetGeometryColumn(),
                              m_poStmt->GetColName(iColumn)))
             {
@@ -134,10 +134,10 @@ OGRDB2SelectLayer::~OGRDB2SelectLayer()
 void OGRDB2SelectLayer::ClearStatement()
 
 {
-    if( m_poStmt != NULL )
+    if( m_poStmt != nullptr )
     {
         delete m_poStmt;
-        m_poStmt = NULL;
+        m_poStmt = nullptr;
     }
 }
 
@@ -148,7 +148,7 @@ void OGRDB2SelectLayer::ClearStatement()
 OGRDB2Statement *OGRDB2SelectLayer::GetStatement()
 
 {
-    if( m_poStmt == NULL )
+    if( m_poStmt == nullptr )
         ResetStatement();
 
     return m_poStmt;
@@ -174,7 +174,7 @@ OGRErr OGRDB2SelectLayer::ResetStatement()
     else
     {
         delete m_poStmt;
-        m_poStmt = NULL;
+        m_poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }

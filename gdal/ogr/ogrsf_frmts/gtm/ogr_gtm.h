@@ -173,9 +173,9 @@ public:
     OGRLayer* GetLayer( int ) override;
 
     OGRLayer* ICreateLayer(const char *pszName,
-                           OGRSpatialReference *poSpatialRef=NULL,
+                           OGRSpatialReference *poSpatialRef=nullptr,
                            OGRwkbGeometryType eGType=wkbUnknown,
-                           char **papszOptions=NULL) override;
+                           char **papszOptions=nullptr) override;
     int TestCapability( const char * ) override;
 
     // OGRGTMDataSource Methods

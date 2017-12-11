@@ -187,9 +187,9 @@ class ods_formula_parse_context {
 public:
     ods_formula_parse_context() :
         nStartToken(0),
-        pszInput(NULL),
-        pszNext(NULL),
-        poRoot(NULL) {}
+        pszInput(nullptr),
+        pszNext(nullptr),
+        poRoot(nullptr) {}
 
     int        nStartToken;
     const char *pszInput;

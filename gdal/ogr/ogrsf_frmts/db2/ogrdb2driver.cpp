@@ -50,7 +50,7 @@ static int OGRDB2DriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRDB2DriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     CPLDebug( "OGRDB2DriverOpen", "pszFilename: '%s'",
               poOpenInfo->pszFilename);
@@ -61,7 +61,7 @@ static GDALDataset *OGRDB2DriverOpen( GDALOpenInfo* poOpenInfo )
     {
         CPLDebug( "OGRDB2DriverOpen", "open error");
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
     CPLDebug( "OGRDB2DriverOpen", "Exit");
     return poDS;
@@ -85,7 +85,7 @@ static GDALDataset* OGRDB2DriverCreate( const char * pszFilename,
                        nBands, eDT, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
     return poDS;
 }
@@ -112,7 +112,7 @@ static CPLErr OGRDB2DriverDelete( const char *pszFilename )
 
 void RegisterOGRDB2()
 {
-    if( GDALGetDriverByName("DB2ODBC") != NULL )
+    if( GDALGetDriverByName("DB2ODBC") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

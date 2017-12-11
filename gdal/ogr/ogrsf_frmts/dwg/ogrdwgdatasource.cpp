@@ -37,11 +37,11 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRDWGDataSource::OGRDWGDataSource() :
-  fp(NULL),
+  fp(nullptr),
   iEntitiesSectionOffset(0),
   bInlineBlocks(FALSE),
-  poServices(NULL),
-  poDb(static_cast<const OdRxObject*>(NULL))
+  poServices(nullptr),
+  poDb(static_cast<const OdRxObject*>(nullptr))
 
 {
 }
@@ -81,7 +81,7 @@ OGRLayer *OGRDWGDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= (int) apoLayers.size() )
-        return NULL;
+        return nullptr;
     else
         return apoLayers[iLayer];
 }
@@ -202,13 +202,13 @@ const char *OGRDWGDataSource::LookupLayerProperty( const char *pszLayer,
                                                    const char *pszProperty )
 
 {
-    if( pszLayer == NULL )
-        return NULL;
+    if( pszLayer == nullptr )
+        return nullptr;
 
     try {
         return (oLayerTable[pszLayer])[pszProperty];
     } catch( ... ) {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -262,7 +262,7 @@ const char *OGRDWGDataSource::LookupLineType( const char *pszName )
     if( oLineTypeTable.count(pszName) > 0 )
         return oLineTypeTable[pszName];
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -305,8 +305,8 @@ void OGRDWGDataSource::ReadHeaderSection()
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
-    if( CPLGetConfigOption( "DWG_ENCODING", NULL ) != NULL )
-        osEncoding = CPLGetConfigOption( "DWG_ENCODING", NULL );
+    if( CPLGetConfigOption( "DWG_ENCODING", nullptr ) != nullptr )
+        osEncoding = CPLGetConfigOption( "DWG_ENCODING", nullptr );
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
         CPLDebug( "DWG", "Treating DWG as encoding '%s', $DWGCODEPAGE='%s'",

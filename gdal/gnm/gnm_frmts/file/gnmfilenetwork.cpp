@@ -35,9 +35,9 @@ CPL_CVSID("$Id$")
 
 GNMFileNetwork::GNMFileNetwork() : GNMGenericNetwork()
 {
-    m_pMetadataDS = NULL;
-    m_pGraphDS = NULL;
-    m_pFeaturesDS = NULL;
+    m_pMetadataDS = nullptr;
+    m_pGraphDS = nullptr;
+    m_pFeaturesDS = nullptr;
 }
 
 GNMFileNetwork::~GNMFileNetwork()
@@ -71,7 +71,7 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
 
     // search for metadata file
     CPLString soMetadatafile;
-    for( int i = 0; papszFiles[i] != NULL; i++ )
+    for( int i = 0; papszFiles[i] != nullptr; i++ )
     {
         if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
             continue;
@@ -79,7 +79,7 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
         if( EQUAL(CPLGetBasename(papszFiles[i]), GNM_SYSLAYER_META) )
         {
             soMetadatafile = CPLFormFilename(m_soNetworkFullName, papszFiles[i],
-                                             NULL);
+                                             nullptr);
             break;
         }
     }
@@ -87,8 +87,8 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
     CSLDestroy( papszFiles );
 
     m_pMetadataDS = (GDALDataset*) GDALOpenEx( soMetadatafile, GDAL_OF_VECTOR |
-                                               GDAL_OF_UPDATE, NULL, NULL, NULL );
-    if( NULL == m_pMetadataDS )
+                                               GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
+    if( nullptr == m_pMetadataDS )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' file failed",
                   m_soNetworkFullName.c_str() );
@@ -106,8 +106,8 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
     CPLString soGraphfile = CPLFormFilename(m_soNetworkFullName,
                                             GNM_SYSLAYER_GRAPH, pszExt);
     m_pGraphDS = (GDALDataset*) GDALOpenEx( soGraphfile, GDAL_OF_VECTOR |
-                                            GDAL_OF_UPDATE, NULL, NULL, NULL );
-    if( NULL == m_pGraphDS )
+                                            GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
+    if( nullptr == m_pGraphDS )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' file failed",
                   m_soNetworkFullName.c_str() );
@@ -122,8 +122,8 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
     CPLString soFeaturesfile = CPLFormFilename(m_soNetworkFullName,
                                             GNM_SYSLAYER_FEATURES, pszExt);
     m_pFeaturesDS = (GDALDataset*) GDALOpenEx( soFeaturesfile, GDAL_OF_VECTOR |
-                                               GDAL_OF_UPDATE, NULL, NULL, NULL );
-    if( NULL == m_pFeaturesDS )
+                                               GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
+    if( nullptr == m_pFeaturesDS )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' file failed",
                   m_soNetworkFullName.c_str() );
@@ -150,7 +150,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
     {
         const char* pszNetworkName = CSLFetchNameValue(papszOptions, GNM_MD_NAME);
 
-        if( NULL != pszNetworkName )
+        if( nullptr != pszNetworkName )
         {
             m_soName = pszNetworkName;
         }
@@ -161,7 +161,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
         return TRUE;
     }
 
-    if (CPLCheckForFile((char*)m_soNetworkFullName.c_str(), NULL))
+    if (CPLCheckForFile((char*)m_soNetworkFullName.c_str(), nullptr))
     {
         char **papszFiles = VSIReadDir( m_soNetworkFullName );
         if( CSLCount(papszFiles) == 0 )
@@ -170,7 +170,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
         }
 
         // search for base GNM files
-        for(int i = 0; papszFiles[i] != NULL; i++ )
+        for(int i = 0; papszFiles[i] != nullptr; i++ )
         {
             if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
                 continue;
@@ -183,7 +183,7 @@ int GNMFileNetwork::CheckNetworkExist(const char *pszFilename, char **papszOptio
                 if( bOverwrite )
                 {
                     const char* pszDeleteFile = CPLFormFilename(
-                                m_soNetworkFullName, papszFiles[i], NULL);
+                                m_soNetworkFullName, papszFiles[i], nullptr);
                     CPLDebug("GNM", "Delete file: %s", pszDeleteFile);
                     if( VSIUnlink(pszDeleteFile) != 0 )
                     {
@@ -218,7 +218,7 @@ CPLErr GNMFileNetwork::Delete()
     // check if folder empty
     char **papszFiles = VSIReadDir( m_soNetworkFullName );
     bool bIsEmpty = true;
-    for(int i = 0; papszFiles[i] != NULL; ++i)
+    for(int i = 0; papszFiles[i] != nullptr; ++i)
     {
         if( !(EQUAL(papszFiles[i], "..") || EQUAL(papszFiles[i], ".")) )
         {
@@ -252,8 +252,8 @@ CPLErr GNMFileNetwork::CreateMetadataLayerFromFile( const char* pszFilename, int
                                                 GNM_SYSLAYER_META, pszExt);
 
     m_pMetadataDS = m_poLayerDriver->Create(osDSFileName, 0, 0, 0, GDT_Unknown,
-                                            NULL );
-    if( NULL == m_pMetadataDS )
+                                            nullptr );
+    if( nullptr == m_pMetadataDS )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' file failed",
                   osDSFileName.c_str() );
@@ -266,9 +266,9 @@ CPLErr GNMFileNetwork::CreateMetadataLayerFromFile( const char* pszFilename, int
 CPLErr GNMFileNetwork::StoreNetworkSrs()
 {
     const char* pszSrsFileName = CPLFormFilename(m_soNetworkFullName,
-                                                 GNM_SRSFILENAME, NULL);
+                                                 GNM_SRSFILENAME, nullptr);
     VSILFILE *fpSrsPrj = VSIFOpenL(pszSrsFileName, "w");
-    if (fpSrsPrj != NULL)
+    if (fpSrsPrj != nullptr)
     {
         if(VSIFWriteL(m_soSRS, (int)m_soSRS.size(), 1, fpSrsPrj) != 1)
         {
@@ -284,9 +284,9 @@ CPLErr GNMFileNetwork::StoreNetworkSrs()
 CPLErr GNMFileNetwork::LoadNetworkSrs()
 {
     const char* pszSrsFileName = CPLFormFilename(m_soNetworkFullName,
-                                                 GNM_SRSFILENAME, NULL);
+                                                 GNM_SRSFILENAME, nullptr);
     char** papszLines = CSLLoad(pszSrsFileName);
-    if ( NULL == papszLines )
+    if ( nullptr == papszLines )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Loading of '%s' layer failed",
                   GNM_SYSLAYER_META );
@@ -302,10 +302,10 @@ CPLErr GNMFileNetwork::LoadNetworkSrs()
 
 CPLErr GNMFileNetwork::DeleteMetadataLayer()
 {
-    if(NULL != m_pMetadataDS)
+    if(nullptr != m_pMetadataDS)
     {
         const char* pszSrsFileName = CPLFormFilename(m_soNetworkFullName,
-                                                     GNM_SRSFILENAME, NULL);
+                                                     GNM_SRSFILENAME, nullptr);
         VSIUnlink(pszSrsFileName); // just try to delete as file may not be existed
         return m_pMetadataDS->DeleteLayer(0) == OGRERR_NONE ? CE_None : CE_Failure;
     }
@@ -327,9 +327,9 @@ CPLErr GNMFileNetwork::CreateGraphLayerFromFile( const char* pszFilename, char**
                                                 GNM_SYSLAYER_GRAPH, pszExt);
 
     m_pGraphDS = m_poLayerDriver->Create(osDSFileName, 0, 0, 0, GDT_Unknown,
-                                            NULL );
+                                            nullptr );
 
-    if( m_pGraphDS == NULL )
+    if( m_pGraphDS == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' file failed",
                   osDSFileName.c_str() );
@@ -341,7 +341,7 @@ CPLErr GNMFileNetwork::CreateGraphLayerFromFile( const char* pszFilename, char**
 
 CPLErr GNMFileNetwork::DeleteGraphLayer()
 {
-    if(NULL != m_pGraphDS)
+    if(nullptr != m_pGraphDS)
     {
         return m_pGraphDS->DeleteLayer(0) == OGRERR_NONE ? CE_None : CE_Failure;
     }
@@ -363,9 +363,9 @@ CPLErr GNMFileNetwork::CreateFeaturesLayerFromFile( const char* pszFilename, cha
                                                 GNM_SYSLAYER_FEATURES, pszExt);
 
     m_pFeaturesDS = m_poLayerDriver->Create(osDSFileName, 0, 0, 0, GDT_Unknown,
-                                            NULL );
+                                            nullptr );
 
-    if( m_pFeaturesDS == NULL )
+    if( m_pFeaturesDS == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Creation of '%s' file failed",
                   osDSFileName.c_str() );
@@ -377,7 +377,7 @@ CPLErr GNMFileNetwork::CreateFeaturesLayerFromFile( const char* pszFilename, cha
 
 CPLErr GNMFileNetwork::DeleteFeaturesLayer()
 {
-    if(NULL != m_pFeaturesDS)
+    if(nullptr != m_pFeaturesDS)
     {
         return m_pFeaturesDS->DeleteLayer(0) == OGRERR_NONE ? CE_None : CE_Failure;
     }
@@ -408,8 +408,8 @@ CPLErr GNMFileNetwork::LoadNetworkLayer(const char *pszLayername)
 
     CPLString soFile = CPLFormFilename(m_soNetworkFullName, pszLayername, pszExt);
     GDALDataset *poDS = (GDALDataset*) GDALOpenEx( soFile, GDAL_OF_VECTOR |
-                                            GDAL_OF_UPDATE, NULL, NULL, NULL );
-    if( NULL == poDS )
+                                            GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
+    if( nullptr == poDS )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Open '%s' file failed",
                   soFile.c_str() );
@@ -417,7 +417,7 @@ CPLErr GNMFileNetwork::LoadNetworkLayer(const char *pszLayername)
     }
 
     OGRLayer* poLayer = poDS->GetLayer(0);
-    if(NULL == poLayer)
+    if(nullptr == poLayer)
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "Layer '%s' is not exist",
                   pszLayername );
@@ -446,13 +446,13 @@ CPLErr GNMFileNetwork::FormPath(const char *pszFilename, char **papszOptions)
     if(m_soNetworkFullName.empty())
     {
         const char* pszNetworkName = CSLFetchNameValue(papszOptions, GNM_MD_NAME);
-        if(NULL == pszNetworkName)
+        if(nullptr == pszNetworkName)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "The network name should be present" );
             return CE_Failure;
         }
-        m_soNetworkFullName = CPLFormFilename(pszFilename, pszNetworkName, NULL);
+        m_soNetworkFullName = CPLFormFilename(pszFilename, pszNetworkName, nullptr);
 
         CPLDebug( "GNM", "Network name: %s", m_soNetworkFullName.c_str() );
     }
@@ -481,7 +481,7 @@ OGRErr GNMFileNetwork::DeleteLayer(int nIndex)
     OGRLayer* pLayer = GetLayer(nIndex);
 
     GDALDataset* poDS = m_mpLayerDatasetMap[pLayer];
-    if(NULL == poDS)
+    if(nullptr == poDS)
     {
         return OGRERR_FAILURE;
     }
@@ -505,24 +505,24 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
                                 CPL_UNUSED OGRSpatialReference *poSpatialRef,
                                 OGRwkbGeometryType eGType, char **papszOptions)
 {
-    if(NULL == m_poLayerDriver)
+    if(nullptr == m_poLayerDriver)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "The network storage format driver is not defined." );
-        return NULL;
+        return nullptr;
     }
 
     //check if layer with such name exist
     for(int i = 0; i < GetLayerCount(); ++i)
     {
         OGRLayer* pLayer = GetLayer(i);
-        if(NULL == pLayer)
+        if(nullptr == pLayer)
             continue;
         if(EQUAL(pLayer->GetName(), pszName))
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "The network layer '%s' already exist.", pszName );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -532,20 +532,20 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
 
     GDALDataset *poDS = m_poLayerDriver->Create( soPath, 0, 0, 0, GDT_Unknown,
                                                  papszOptions );
-    if( poDS == NULL )
+    if( poDS == nullptr )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Creation of output file failed." );
-        return NULL;
+        return nullptr;
     }
 
     OGRSpatialReference oSpaRef(m_soSRS);
 
     OGRLayer *poLayer = poDS->CreateLayer( pszName, &oSpaRef, eGType, papszOptions );
-    if( poLayer == NULL )
+    if( poLayer == nullptr )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Layer creation failed." );
         GDALClose(poDS);
-        return NULL;
+        return nullptr;
     }
 
     OGRFieldDefn oField( GNM_SYSFIELD_GFID, GNMGFIDInt );
@@ -553,7 +553,7 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
     {
         CPLError( CE_Failure, CPLE_FileIO, "Creating global identificator field failed." );
         GDALClose(poDS);
-        return NULL;
+        return nullptr;
     }
 
     OGRFieldDefn oFieldBlock(GNM_SYSFIELD_BLOCKED, OFTInteger);
@@ -561,7 +561,7 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
     {
         CPLError( CE_Failure, CPLE_FileIO, "Creating is blocking field failed." );
         GDALClose(poDS);
-        return NULL;
+        return nullptr;
     }
 
     GNMGenericLayer* pGNMLayer = new GNMGenericLayer(poLayer, this);
@@ -577,7 +577,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
     // check name
     const char* pszNetworkName = CSLFetchNameValue(papszOptions, GNM_MD_NAME);
 
-    if( NULL == pszNetworkName )
+    if( nullptr == pszNetworkName )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "The network name should be present" );
@@ -590,12 +590,12 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
 
     const char* pszNetworkDescription = CSLFetchNameValue(papszOptions,
                                                          GNM_MD_DESCR);
-    if(NULL != pszNetworkDescription)
+    if(nullptr != pszNetworkDescription)
         sDescription = pszNetworkDescription;
 
     // check Spatial reference
     const char* pszSRS = CSLFetchNameValue(papszOptions, GNM_MD_SRS);
-    if( NULL == pszSRS )
+    if( nullptr == pszSRS )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "The network spatial reference should be present" );
@@ -611,7 +611,7 @@ CPLErr GNMFileNetwork::Create( const char* pszFilename, char** papszOptions )
             return CE_Failure;
         }
 
-        char *wktSrs = NULL;
+        char *wktSrs = nullptr;
         if (spatialRef.exportToWkt(&wktSrs) != OGRERR_NONE)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,

@@ -126,12 +126,12 @@ int OGRGFTTableLayer::FetchDescribe()
         osSQL += osTableId;
         CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
 
-        if (psResult == NULL)
+        if (psResult == nullptr)
             return FALSE;
 
         char* pszLine = (char*) psResult->pabyData;
-        if (pszLine == NULL ||
-            psResult->pszErrBuf != NULL ||
+        if (pszLine == nullptr ||
+            psResult->pszErrBuf != nullptr ||
             !STARTS_WITH(pszLine, "column id,name,type"))        {
             CPLHTTPDestroyResult(psResult);
             return FALSE;
@@ -183,11 +183,11 @@ int OGRGFTTableLayer::FetchDescribe()
 
         CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
 
-        if (psResult == NULL)
+        if (psResult == nullptr)
             return FALSE;
 
         char* pszLine = (char*) psResult->pabyData;
-        if (pszLine == NULL || psResult->pszErrBuf != NULL)
+        if (pszLine == nullptr || psResult->pszErrBuf != nullptr)
         {
             CPLHTTPDestroyResult(psResult);
             return FALSE;
@@ -254,7 +254,7 @@ int OGRGFTTableLayer::FetchDescribe()
                 for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
                 {
                     const char* pszVal = papszTokens[i];
-                    if (pszVal != NULL &&
+                    if (pszVal != nullptr &&
                         (STARTS_WITH(pszVal, "<Point>") ||
                          STARTS_WITH(pszVal, "<LineString>") ||
                          STARTS_WITH(pszVal, "<Polygon>") ||
@@ -372,14 +372,14 @@ int OGRGFTTableLayer::FetchNextRows()
     CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
     CPLPopErrorHandler();
 
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         bEOF = TRUE;
         return FALSE;
     }
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL || psResult->pszErrBuf != NULL)
+    if (pszLine == nullptr || psResult->pszErrBuf != nullptr)
     {
         CPLDebug("GFT", "Error : %s", pszLine ? pszLine : psResult->pszErrBuf);
         CPLHTTPDestroyResult(psResult);
@@ -431,22 +431,22 @@ OGRFeature * OGRGFTTableLayer::GetFeature( GIntBig nFID )
     CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
     CPLPopErrorHandler();
 
-    if (psResult == NULL)
-        return NULL;
+    if (psResult == nullptr)
+        return nullptr;
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL || psResult->pszErrBuf != NULL)
+    if (pszLine == nullptr || psResult->pszErrBuf != nullptr)
     {
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     /* skip header line */
     pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL || pszLine[0] == 0)
+    if (pszLine == nullptr || pszLine[0] == 0)
     {
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     int nLen = (int)strlen(pszLine);
@@ -466,10 +466,10 @@ OGRFeature * OGRGFTTableLayer::GetFeature( GIntBig nFID )
 
 OGRFeatureDefn * OGRGFTTableLayer::GetLayerDefn()
 {
-    if (poFeatureDefn == NULL)
+    if (poFeatureDefn == nullptr)
     {
         if (osTableId.empty())
-            return NULL;
+            return nullptr;
         FetchDescribe();
     }
 
@@ -494,13 +494,13 @@ GIntBig OGRGFTTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 
     CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
 
-    if (psResult == NULL)
+    if (psResult == nullptr)
         return 0;
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
+    if (pszLine == nullptr ||
         !STARTS_WITH(pszLine, "count()") ||
-        psResult->pszErrBuf != NULL)
+        psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GetFeatureCount() failed");
         CPLHTTPDestroyResult(psResult);
@@ -508,7 +508,7 @@ GIntBig OGRGFTTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
     }
 
     pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL)
+    if (pszLine == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GetFeatureCount() failed");
         CPLHTTPDestroyResult(psResult);
@@ -654,16 +654,16 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     osSQL += ")";
 
     CPLHTTPResult * psResult = poDS->RunSQL(osSQL);
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Table creation failed");
         return;
     }
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
+    if (pszLine == nullptr ||
         !STARTS_WITH(pszLine, "tableid") ||
-        psResult->pszErrBuf != NULL)
+        psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Table creation failed");
         CPLHTTPDestroyResult(psResult);
@@ -671,7 +671,7 @@ void OGRGFTTableLayer::CreateTableIfNecessary()
     }
 
     pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL)
+    if (pszLine == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Table creation failed");
         CPLHTTPDestroyResult(psResult);
@@ -751,14 +751,14 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
         /* If there's a geometry, let's use it in priority over the textual */
         /* content of the field. */
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
+            (iField == nFieldCount || poGeom != nullptr || !poFeature->IsFieldSetAndNotNull( iField )))
         {
-            if (poGeom == NULL)
+            if (poGeom == nullptr)
                 osCommand += "''";
             else
             {
-                char* pszKML = NULL;
-                if (poGeom->getSpatialReference() != NULL &&
+                char* pszKML = nullptr;
+                if (poGeom->getSpatialReference() != nullptr &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {
                     OGRGeometry* poGeom4326 = poGeom->clone();
@@ -832,16 +832,16 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature creation failed");
         return OGRERR_FAILURE;
     }
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
+    if (pszLine == nullptr ||
         !STARTS_WITH(pszLine, "rowid") ||
-        psResult->pszErrBuf != NULL)
+        psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature creation failed");
         CPLHTTPDestroyResult(psResult);
@@ -849,7 +849,7 @@ OGRErr OGRGFTTableLayer::ICreateFeature( OGRFeature *poFeature )
     }
 
     pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL)
+    if (pszLine == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature creation failed");
         CPLHTTPDestroyResult(psResult);
@@ -932,14 +932,14 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 
         OGRGeometry* poGeom = poFeature->GetGeometryRef();
         if (iGeometryField != iLatitudeField && iField == iGeometryField &&
-            (iField == nFieldCount || poGeom != NULL || !poFeature->IsFieldSetAndNotNull( iField )))
+            (iField == nFieldCount || poGeom != nullptr || !poFeature->IsFieldSetAndNotNull( iField )))
         {
-            if (poGeom == NULL)
+            if (poGeom == nullptr)
                 osCommand += "''";
             else
             {
-                char* pszKML = NULL;
-                if (poGeom->getSpatialReference() != NULL &&
+                char* pszKML = nullptr;
+                if (poGeom->getSpatialReference() != nullptr &&
                     !poGeom->getSpatialReference()->IsSame(poSRS))
                 {
                     OGRGeometry* poGeom4326 = poGeom->clone();
@@ -1004,7 +1004,7 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
     osCommand += "'";
 
     CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature update failed (1)");
         return OGRERR_FAILURE;
@@ -1014,9 +1014,9 @@ OGRErr      OGRGFTTableLayer::ISetFeature( OGRFeature *poFeature )
 /*      We expect a response like "affected_rows\n1".                   */
 /* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
+    if (pszLine == nullptr ||
         !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
-        psResult->pszErrBuf != NULL)
+        psResult->pszErrBuf != nullptr)
     {
         CPLDebug( "GFT", "%s/%s",
                   pszLine ? pszLine : "null",
@@ -1071,7 +1071,7 @@ OGRErr OGRGFTTableLayer::DeleteFeature( GIntBig nFID )
     //CPLDebug("GFT", "%s",  osCommand.c_str());
 
     CPLHTTPResult * psResult = poDS->RunSQL(osCommand);
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Feature deletion failed (1)");
         return OGRERR_FAILURE;
@@ -1081,9 +1081,9 @@ OGRErr OGRGFTTableLayer::DeleteFeature( GIntBig nFID )
 /*      We expect a response like "affected_rows\n1".                   */
 /* -------------------------------------------------------------------- */
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
+    if (pszLine == nullptr ||
         !STARTS_WITH(pszLine, "affected_rows\n1\n") ||
-        psResult->pszErrBuf != NULL)
+        psResult->pszErrBuf != nullptr)
     {
         CPLDebug( "GFT", "%s/%s",
                   pszLine ? pszLine : "null",
@@ -1169,16 +1169,16 @@ OGRErr OGRGFTTableLayer::CommitTransaction()
         osTransaction.resize(0);
         nFeaturesInTransaction = 0;
 
-        if (psResult == NULL)
+        if (psResult == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "CommitTransaction failed");
             return OGRERR_FAILURE;
         }
 
         char* pszLine = (char*) psResult->pabyData;
-        if (pszLine == NULL ||
+        if (pszLine == nullptr ||
             !STARTS_WITH(pszLine, "rowid") ||
-            psResult->pszErrBuf != NULL)
+            psResult->pszErrBuf != nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "CommitTransaction failed : %s",
                      pszLine ? pszLine : psResult->pszErrBuf);
@@ -1231,7 +1231,7 @@ OGRErr OGRGFTTableLayer::SetAttributeFilter( const char *pszQuery )
 {
     GetLayerDefn();
 
-    if( pszQuery == NULL )
+    if( pszQuery == nullptr )
         osQuery = "";
     else
     {
@@ -1274,7 +1274,7 @@ void OGRGFTTableLayer::BuildWhere()
 {
     osWHERE = "";
 
-    if( m_poFilterGeom != NULL && iGeometryField >= 0)
+    if( m_poFilterGeom != nullptr && iGeometryField >= 0)
     {
         OGREnvelope  sEnvelope;
 

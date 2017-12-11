@@ -144,7 +144,7 @@ CPLErr JPEGLSRasterBand::IReadBlock( int /*nBlockXOff*/, int /*nBlockYOff*/,
             return eErr;
     }
 
-    if (poGDS->pabyUncompressedData == NULL)
+    if (poGDS->pabyUncompressedData == nullptr)
         return CE_Failure;
 
     int i, j;
@@ -217,8 +217,8 @@ GDALColorInterp JPEGLSRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 JPEGLSDataset::JPEGLSDataset() :
-    fpL(NULL),
-    pabyUncompressedData(NULL),
+    fpL(nullptr),
+    pabyUncompressedData(nullptr),
     bHasUncompressed(FALSE),
     nBitsPerSample(0),
     nOffset(0)
@@ -231,7 +231,7 @@ JPEGLSDataset::JPEGLSDataset() :
 JPEGLSDataset::~JPEGLSDataset()
 
 {
-    if( fpL != NULL )
+    if( fpL != nullptr )
         VSIFCloseL(fpL);
     VSIFree(pabyUncompressedData);
 }
@@ -247,7 +247,7 @@ CPLErr JPEGLSDataset::Uncompress()
 
     bHasUncompressed = TRUE;
 
-    CPLAssert( fpL != NULL );
+    CPLAssert( fpL != nullptr );
     VSIFSeekL(fpL, 0, SEEK_END);
     const vsi_l_offset nFileSizeBig = VSIFTellL(fpL) - nOffset;
     VSIFSeekL(fpL, 0, SEEK_SET);
@@ -260,10 +260,10 @@ CPLErr JPEGLSDataset::Uncompress()
 #endif
 
     GByte* pabyCompressedData = (GByte*)VSIMalloc(nFileSize);
-    if (pabyCompressedData == NULL)
+    if (pabyCompressedData == nullptr)
     {
         VSIFCloseL(fpL);
-        fpL = NULL;
+        fpL = nullptr;
         return CE_Failure;
     }
 
@@ -271,11 +271,11 @@ CPLErr JPEGLSDataset::Uncompress()
     if( VSIFReadL(pabyCompressedData, 1, nFileSize, fpL) != nFileSize )
     {
         VSIFCloseL(fpL);
-        fpL = NULL;
+        fpL = nullptr;
         return CE_Failure;
     }
     VSIFCloseL(fpL);
-    fpL = NULL;
+    fpL = nullptr;
 
     const GUIntBig nUncompressedSizeBig = static_cast<GUIntBig>(nRasterXSize) *
         nRasterYSize * nBands *
@@ -289,14 +289,14 @@ CPLErr JPEGLSDataset::Uncompress()
     }
 #endif
     pabyUncompressedData = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
-    if (pabyUncompressedData == NULL)
+    if (pabyUncompressedData == nullptr)
     {
         VSIFree(pabyCompressedData);
         return CE_Failure;
     }
 
     JLS_ERROR eError = JpegLsDecode( pabyUncompressedData, nUncompressedSize,
-                                     pabyCompressedData, nFileSize, NULL);
+                                     pabyCompressedData, nFileSize, nullptr);
     if (eError != OK)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -304,7 +304,7 @@ CPLErr JPEGLSDataset::Uncompress()
                   JPEGLSGetErrorAsString(eError) );
         VSIFree(pabyCompressedData);
         VSIFree(pabyUncompressedData);
-        pabyUncompressedData = NULL;
+        pabyUncompressedData = nullptr;
         return CE_Failure;
     }
 
@@ -325,7 +325,7 @@ int JPEGLSDataset::Identify( GDALOpenInfo * poOpenInfo, int& bIsDCOM )
 
     bIsDCOM = FALSE;
 
-    if( poOpenInfo->fpL == NULL || nHeaderBytes < 10 )
+    if( poOpenInfo->fpL == nullptr || nHeaderBytes < 10 )
         return FALSE;
 
     if( pabyHeader[0] != 0xff
@@ -394,7 +394,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int bIsDCOM;
     if (!Identify(poOpenInfo, bIsDCOM))
-        return NULL;
+        return nullptr;
 
     JlsParameters sParams;
 
@@ -417,7 +417,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
             if (VSIFReadL(abyBuffer, 1, 1028, fp) != 1028)
             {
                 VSIFCloseL(fp);
-                return NULL;
+                return nullptr;
             }
             int i;
             for(i=0;i<1024;i++)
@@ -448,7 +448,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read header : %s",
                      JPEGLSGetErrorAsString(eError));
-        return NULL;
+        return nullptr;
     }
 
     if (sParams.bitspersample > 16)
@@ -456,7 +456,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unsupport bitspersample : %d",
                  sParams.bitspersample);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -470,7 +470,7 @@ GDALDataset *JPEGLSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBitsPerSample = sParams.bitspersample;
     poDS->nOffset = nOffset;
     poDS->fpL = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -524,18 +524,18 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "JPGLS driver doesn't support %d bands.  Must be 1 (grey), "
                   "3 (RGB) or 4 bands.\n", nBands );
 
-        return NULL;
+        return nullptr;
     }
 
     if (nBands == 1 &&
-        poSrcDS->GetRasterBand(1)->GetColorTable() != NULL)
+        poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr)
     {
         CPLError( (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                   "JPGLS driver ignores color table. "
                   "The source raster band will be considered as grey level.\n"
                   "Consider using color table expansion (-expand option in gdal_translate)\n");
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -548,7 +548,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
     const int nWordSize = GDALGetDataTypeSizeBytes(eDT);
@@ -568,23 +568,23 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     const size_t nCompressedSize = nUncompressedSize + 256;
     GByte* pabyDataCompressed = (GByte*)VSI_MALLOC_VERBOSE(nCompressedSize);
     GByte* pabyDataUncompressed = (GByte*)VSI_MALLOC_VERBOSE(nUncompressedSize);
-    if (pabyDataCompressed == NULL || pabyDataUncompressed == NULL)
+    if (pabyDataCompressed == nullptr || pabyDataUncompressed == nullptr)
     {
         VSIFree(pabyDataCompressed);
         VSIFree(pabyDataUncompressed);
-        return NULL;
+        return nullptr;
     }
 
     CPLErr eErr;
     eErr = poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize,
                       pabyDataUncompressed, nXSize, nYSize,
-                      eDT, nBands, NULL,
-                      nBands * nWordSize, nBands * nWordSize * nXSize, nWordSize, NULL);
+                      eDT, nBands, nullptr,
+                      nBands * nWordSize, nBands * nWordSize * nXSize, nWordSize, nullptr);
     if (eErr != CE_None)
     {
         VSIFree(pabyDataCompressed);
         VSIFree(pabyDataUncompressed);
-        return NULL;
+        return nullptr;
     }
 
     size_t nWritten = 0;
@@ -622,7 +622,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     const char* pszNBITS = poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS", "IMAGE_STRUCTURE" );
-    if (pszNBITS != NULL)
+    if (pszNBITS != nullptr)
     {
         int nBits = atoi(pszNBITS);
         if (nBits != 8 && nBits != 16)
@@ -636,7 +636,7 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     &sParams);
 
     VSIFree(pabyDataUncompressed);
-    pabyDataUncompressed = NULL;
+    pabyDataUncompressed = nullptr;
 
     if (eError != OK)
     {
@@ -644,15 +644,15 @@ JPEGLSDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  "Compression of data failed : %s",
                  JPEGLSGetErrorAsString(eError));
         VSIFree(pabyDataCompressed);
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if (fp == NULL)
+    if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s", pszFilename);
         VSIFree(pabyDataCompressed);
-        return NULL;
+        return nullptr;
     }
     VSIFWriteL(pabyDataCompressed, 1, nWritten, fp);
 
@@ -681,7 +681,7 @@ void GDALRegister_JPEGLS()
     if( !GDAL_CHECK_VERSION( "JPEGLS driver" ) )
         return;
 
-    if( GDALGetDriverByName( "JPEGLS" ) != NULL )
+    if( GDALGetDriverByName( "JPEGLS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

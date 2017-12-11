@@ -121,6 +121,13 @@ AX_CHECK_COMPILE_FLAG([-Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloa
 dnl Forbid use of 'or', 'and', ... alias operators
 AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=no
+AX_CHECK_COMPILE_FLAG([-Wzero-as-null-pointer-constant], [CXX_WFLAGS="$CXX_WFLAGS -Wzero-as-null-pointer-constant" HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=yes],,[$ERROR_ON_UNKNOWN_OPTIONS])
+if test "$HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT" = "yes"; then
+AC_DEFINE_UNQUOTED(HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT, 1,
+          [Define to 1 if the compiler suports -Wzero-as-null-pointer-constant])
+fi
+
 AC_LANG_POP([C++])
 
 CXX14_SUPPORT=no

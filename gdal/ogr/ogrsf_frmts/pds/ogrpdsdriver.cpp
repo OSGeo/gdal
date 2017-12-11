@@ -43,18 +43,18 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL )
-        return NULL;
+        poOpenInfo->fpL == nullptr )
+        return nullptr;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "PDS_VERSION_ID") == NULL )
-        return NULL;
+    if( strstr((const char*)poOpenInfo->pabyHeader, "PDS_VERSION_ID") == nullptr )
+        return nullptr;
 
     OGRPDSDataSource *poDS = new OGRPDSDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -67,7 +67,7 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRPDS()
 
 {
-    if( GDALGetDriverByName( "OGR_PDS" ) != NULL )
+    if( GDALGetDriverByName( "OGR_PDS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

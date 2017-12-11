@@ -67,7 +67,7 @@ class OGRODSLayer : public OGRMemLayer
 
     const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); }
     OGRwkbGeometryType  GetGeomType() override { return wkbNone; }
-    virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
+    virtual OGRSpatialReference *GetSpatialRef() override { return nullptr; }
 
     /* For external usage. Mess with FID */
     virtual OGRFeature *        GetNextFeature() override;

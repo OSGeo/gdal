@@ -38,10 +38,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    fpOutput(NULL),
+    fpOutput(nullptr),
 #ifdef HAVE_EXPAT
     validity(GEORSS_VALIDITY_UNKNOWN),
 #endif
@@ -51,7 +51,7 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
     bWriteHeaderAndFooter(true)
 #ifdef HAVE_EXPAT
     ,
-    oCurrentParser(NULL),
+    oCurrentParser(nullptr),
     nDataHandlerCounter(0)
 #endif
 {}
@@ -63,7 +63,7 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource() :
 OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 
 {
-    if( fpOutput != NULL )
+    if( fpOutput != nullptr )
     {
         if( bWriteHeaderAndFooter )
         {
@@ -109,7 +109,7 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -123,10 +123,10 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
                                               CPL_UNUSED OGRwkbGeometryType eType,
                                               CPL_UNUSED char ** papszOptions )
 {
-    if (fpOutput == NULL)
-        return NULL;
+    if (fpOutput == nullptr)
+        return nullptr;
 
-    if (poSRS != NULL && eGeomDialect != GEORSS_GML)
+    if (poSRS != nullptr && eGeomDialect != GEORSS_GML)
     {
         OGRSpatialReference oSRS;
         oSRS.SetWellKnownGeogCS("WGS84");
@@ -134,7 +134,7 @@ OGRLayer * OGRGeoRSSDataSource::ICreateLayer( const char * pszLayerName,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "For a non GML dialect, only WGS84 SRS is supported");
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -233,14 +233,14 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*      Try to open the file.                                           */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     validity = GEORSS_VALIDITY_UNKNOWN;
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
-    XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
+    XML_SetElementHandler(oParser, ::startElementValidateCbk, nullptr);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
     oCurrentParser = oParser;
 
@@ -303,7 +303,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 
         nLayers = 1;
         papoLayers = (OGRGeoRSSLayer **) CPLRealloc(papoLayers, nLayers * sizeof(OGRGeoRSSLayer*));
-        papoLayers[0] = new OGRGeoRSSLayer( pszName, "georss", this, NULL, FALSE );
+        papoLayers[0] = new OGRGeoRSSLayer( pszName, "georss", this, nullptr, FALSE );
     }
 
     return validity == GEORSS_VALIDITY_VALID;
@@ -332,7 +332,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 int OGRGeoRSSDataSource::Create( const char *pszFilename,
                                  char **papszOptions )
 {
-    if( fpOutput != NULL)
+    if( fpOutput != nullptr)
     {
         CPLAssert( false );
         return FALSE;
@@ -360,7 +360,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     pszName = CPLStrdup( pszFilename );
 
     fpOutput = VSIFOpenL( pszFilename, "w" );
-    if( fpOutput == NULL )
+    if( fpOutput == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create GeoRSS file %s.",
@@ -406,46 +406,46 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
         return TRUE;
     }
 
-    const char* pszHeader = NULL;
-    const char* pszTitle = NULL;
-    const char* pszDescription = NULL;
-    const char* pszLink = NULL;
-    const char* pszUpdated = NULL;
-    const char* pszAuthorName = NULL;
-    const char* pszId = NULL;
+    const char* pszHeader = nullptr;
+    const char* pszTitle = nullptr;
+    const char* pszDescription = nullptr;
+    const char* pszLink = nullptr;
+    const char* pszUpdated = nullptr;
+    const char* pszAuthorName = nullptr;
+    const char* pszId = nullptr;
 
     pszHeader = CSLFetchNameValue(papszOptions, "HEADER");
 
-    if (eFormat == GEORSS_RSS && pszHeader == NULL)
+    if (eFormat == GEORSS_RSS && pszHeader == nullptr)
     {
         pszTitle = CSLFetchNameValue(papszOptions, "TITLE");
-        if (pszTitle == NULL)
+        if (pszTitle == nullptr)
             pszTitle = "title";
 
         pszDescription = CSLFetchNameValue(papszOptions, "DESCRIPTION");
-        if (pszDescription == NULL)
+        if (pszDescription == nullptr)
             pszDescription = "channel_description";
 
         pszLink = CSLFetchNameValue(papszOptions, "LINK");
-        if (pszLink == NULL)
+        if (pszLink == nullptr)
             pszLink = "channel_link";
     }
-    else if (eFormat == GEORSS_ATOM && pszHeader == NULL)
+    else if (eFormat == GEORSS_ATOM && pszHeader == nullptr)
     {
         pszTitle = CSLFetchNameValue(papszOptions, "TITLE");
-        if (pszTitle == NULL)
+        if (pszTitle == nullptr)
             pszTitle = "title";
 
         pszUpdated = CSLFetchNameValue(papszOptions, "UPDATED");
-        if (pszUpdated == NULL)
+        if (pszUpdated == nullptr)
             pszUpdated = "2009-01-01T00:00:00Z";
 
         pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
-        if (pszAuthorName == NULL)
+        if (pszAuthorName == nullptr)
             pszAuthorName = "author";
 
         pszId = CSLFetchNameValue(papszOptions, "ID");
-        if (pszId == NULL)
+        if (pszId == nullptr)
             pszId = "id";
     }
 

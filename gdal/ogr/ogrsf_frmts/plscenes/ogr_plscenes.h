@@ -78,7 +78,7 @@ class OGRPLScenesDataV1Dataset: public GDALDataset
                                        int bQuiet404Error = FALSE,
                                        const char* pszHTTPVerb = "GET",
                                        bool bExpectJSonReturn = true,
-                                       const char* pszPostContent = NULL);
+                                       const char* pszPostContent = nullptr);
 
         bool                DoesFollowLinks() const { return m_bFollowLinks; }
         const CPLString&    GetFilter() const { return m_osFilter; }
@@ -99,7 +99,7 @@ class OGRPLScenesDataV1FeatureDefn: public OGRFeatureDefn
 
        virtual int GetFieldCount() override;
 
-       void DropRefToLayer() { m_poLayer = NULL; }
+       void DropRefToLayer() { m_poLayer = nullptr; }
 };
 
 class OGRPLScenesDataV1Layer: public OGRLayer

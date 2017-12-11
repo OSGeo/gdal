@@ -41,18 +41,18 @@ CPL_CVSID("$Id$")
 
 int     bReadOnly = FALSE;
 int     bVerbose = TRUE;
-const char  *pszDataSource = NULL;
-char** papszLayers = NULL;
-const char  *pszSQLStatement = NULL;
-const char  *pszDialect = NULL;
+const char  *pszDataSource = nullptr;
+char** papszLayers = nullptr;
+const char  *pszSQLStatement = nullptr;
+const char  *pszDialect = nullptr;
 int nLoops = 1;
 int     bFullSpatialFilter = FALSE;
-char  **papszOpenOptions = NULL;
-const char* pszDriver = NULL;
+char  **papszOpenOptions = nullptr;
+const char* pszDriver = nullptr;
 int bAllDrivers = FALSE;
-const char* pszLogFilename = NULL;
-char** papszDSCO = NULL;
-char** papszLCO = NULL;
+const char* pszLogFilename = nullptr;
+char** papszDSCO = nullptr;
+char** papszLCO = nullptr;
 
 typedef struct
 {
@@ -73,10 +73,10 @@ static const char* Log(const char* pszMsg, int nLineNumber);
 
 static const char* Log(const char* pszMsg, int nLineNumber)
 {
-    if( pszLogFilename == NULL )
+    if( pszLogFilename == nullptr )
         return pszMsg;
     FILE* f = fopen(pszLogFilename, "at");
-    if( f == NULL )
+    if( f == nullptr )
         return pszMsg;
     fprintf(f, "%d: %s\n", nLineNumber, pszMsg);
     fclose(f);
@@ -93,7 +93,7 @@ static const char* Log(const char* pszMsg, int nLineNumber)
 static void DestroyFeatureAndNullify( OGRFeature*& poFeature )
 {
     OGRFeature::DestroyFeature(poFeature);
-    poFeature = NULL;
+    poFeature = nullptr;
 }
 
 /************************************************************************/
@@ -139,7 +139,7 @@ MAIN_START(nArgc, papszArgv)
             bVerbose = FALSE;
         else if( EQUAL(papszArgv[iArg],"-sql") && iArg + 1 < nArgc)
             pszSQLStatement = papszArgv[++iArg];
-        else if( EQUAL(papszArgv[iArg],"-dialect") && papszArgv[iArg+1] != NULL )
+        else if( EQUAL(papszArgv[iArg],"-dialect") && papszArgv[iArg+1] != nullptr )
         {
             pszDialect = papszArgv[++iArg];
         }
@@ -182,15 +182,15 @@ MAIN_START(nArgc, papszArgv)
         {
             Usage();
         }
-        else if (pszDataSource == NULL)
+        else if (pszDataSource == nullptr)
             pszDataSource = papszArgv[iArg];
         else
             papszLayers = CSLAddString(papszLayers, papszArgv[iArg]);
     }
 
-    if( pszDataSource == NULL && pszDriver == NULL && !bAllDrivers )
+    if( pszDataSource == nullptr && pszDriver == nullptr && !bAllDrivers )
         Usage();
-    if( nThreads > 1 && !bReadOnly && pszDataSource != NULL )
+    if( nThreads > 1 && !bReadOnly && pszDataSource != nullptr )
     {
         fprintf(stderr, "-threads must be used with -ro or -driver/-all_drivers option.\n");
         exit(1);
@@ -265,11 +265,11 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
 {
     int bRet = TRUE;
 
-    GDALDriver         *poDriver = NULL;
+    GDALDriver         *poDriver = nullptr;
 
-    if( pszDataSource != NULL )
+    if( pszDataSource != nullptr )
         bRet = TestDataset( &poDriver );
-    else if( pszDriver != NULL )
+    else if( pszDriver != nullptr )
     {
         poDriver = (GDALDriver*) GDALGetDriverByName(pszDriver);
         if( poDriver )
@@ -286,7 +286,7 @@ static void ThreadFunctionInternal( ThreadContext* psContext )
         for(int i=0;i<nCount;i++)
         {
             poDriver = (GDALDriver*) GDALGetDriver(i);
-            if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != NULL )
+            if( poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) != nullptr )
                 bRet &= TestCreate( poDriver, TRUE );
         }
     }
@@ -307,29 +307,29 @@ static int TestDataset( GDALDriver** ppoDriver )
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
     GDALDataset        *poDS;
-    GDALDriver         *poDriver = NULL;
+    GDALDriver         *poDriver = nullptr;
 
     poDS = (GDALDataset*) GDALOpenEx( pszDataSource,
             (!bReadOnly ? GDAL_OF_UPDATE : GDAL_OF_READONLY) | GDAL_OF_VECTOR,
-            NULL, papszOpenOptions, NULL );
-    if( poDS == NULL && !bReadOnly )
+            nullptr, papszOpenOptions, nullptr );
+    if( poDS == nullptr && !bReadOnly )
     {
         poDS = (GDALDataset*) GDALOpenEx( pszDataSource, GDAL_OF_VECTOR,
-                                          NULL, papszOpenOptions, NULL );
-        if( poDS != NULL && bVerbose )
+                                          nullptr, papszOpenOptions, nullptr );
+        if( poDS != nullptr && bVerbose )
         {
             printf( "Had to open data source read-only.\n" );
             bReadOnly = TRUE;
         }
     }
-    if( poDS != NULL )
+    if( poDS != nullptr )
         poDriver = poDS->GetDriver();
     *ppoDriver = poDriver;
 
 /* -------------------------------------------------------------------- */
 /*      Report failure                                                  */
 /* -------------------------------------------------------------------- */
-    if( poDS == NULL )
+    if( poDS == nullptr )
     {
         OGRSFDriverRegistrar    *poR = OGRSFDriverRegistrar::GetRegistrar();
 
@@ -362,11 +362,11 @@ static int TestDataset( GDALDriver** ppoDriver )
 /* -------------------------------------------------------------------- */
 /*      Process optional SQL request.                                   */
 /* -------------------------------------------------------------------- */
-    if (pszSQLStatement != NULL)
+    if (pszSQLStatement != nullptr)
     {
         OGRLayer *poResultSet
-            = poDS->ExecuteSQL(pszSQLStatement, NULL, pszDialect);
-        if (poResultSet == NULL)
+            = poDS->ExecuteSQL(pszSQLStatement, nullptr, pszDialect);
+        if (poResultSet == nullptr)
         {
             GDALClose(poDS);
             return FALSE;
@@ -390,13 +390,13 @@ static int TestDataset( GDALDriver** ppoDriver )
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
-    else if (papszLayers == NULL)
+    else if (papszLayers == nullptr)
     {
         for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
         {
             OGRLayer        *poLayer = poDS->GetLayer(iLayer);
 
-            if( poLayer == NULL )
+            if( poLayer == nullptr )
             {
                 printf( "FAILURE: Couldn't fetch advertised layer %d!\n",
                         iLayer );
@@ -421,8 +421,8 @@ static int TestDataset( GDALDriver** ppoDriver )
         if (poDS->GetLayerCount() >= 2)
         {
             GDALClose(poDS);
-            poDS = NULL;
-            bRetLocal = TestInterleavedReading( pszDataSource, NULL );
+            poDS = nullptr;
+            bRetLocal = TestInterleavedReading( pszDataSource, nullptr );
             bRet &= bRetLocal;
         }
     }
@@ -436,7 +436,7 @@ static int TestDataset( GDALDriver** ppoDriver )
         {
             OGRLayer        *poLayer = poDS->GetLayerByName(*papszLayerIter);
 
-            if( poLayer == NULL )
+            if( poLayer == nullptr )
             {
                 printf( "FAILURE: Couldn't fetch requested layer %s!\n",
                         *papszLayerIter );
@@ -463,7 +463,7 @@ static int TestDataset( GDALDriver** ppoDriver )
         if (CSLCount(papszLayers) >= 2)
         {
             GDALClose(poDS);
-            poDS = NULL;
+            poDS = nullptr;
             bRetLocal = TestInterleavedReading( pszDataSource, papszLayers );
             bRet &= bRetLocal;
         }
@@ -472,7 +472,7 @@ static int TestDataset( GDALDriver** ppoDriver )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
-    if( poDS != NULL )
+    if( poDS != nullptr )
         GDALClose(poDS);
 
     return bRet;
@@ -484,7 +484,7 @@ static int TestDataset( GDALDriver** ppoDriver )
 
 static const char* GetWKT(OGRwkbGeometryType eGeomType)
 {
-    const char* pszWKT = NULL;
+    const char* pszWKT = nullptr;
     if( eGeomType == wkbUnknown || eGeomType == wkbPoint )
         pszWKT = "POINT (0 0)";
     else if( eGeomType == wkbLineString )
@@ -528,7 +528,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
     static int nCounter = 0;
     CPLString osFilename = CPLFormFilename("/vsimem", CPLSPrintf("test%d", ++nCounter), pszExt);
     GDALDataset* poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, papszDSCO));
-    if( poDS == NULL )
+    if( poDS == nullptr )
     {
         if( bVerbose )
             printf("INFO: %s: Creation of %s failed.\n",
@@ -537,11 +537,11 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
     }
     CPLPushErrorHandler(CPLQuietErrorHandler);
     int bCreateLayerCap = LOG_ACTION(poDS->TestCapability(ODsCCreateLayer));
-    OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), NULL, eGeomType, papszLCO));
+    OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType, papszLCO));
     CPLPopErrorHandler();
     CPLString osLayerNameToTest;
     OGRwkbGeometryType eExpectedGeomType = wkbUnknown;
-    if( poLayer != NULL )
+    if( poLayer != nullptr )
     {
         if( bCreateLayerCap == FALSE )
         {
@@ -550,7 +550,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             bRet = FALSE;
         }
 
-        if( LOG_ACTION(poLayer->GetLayerDefn()) == NULL )
+        if( LOG_ACTION(poLayer->GetLayerDefn()) == nullptr )
         {
             printf("ERROR: %s: GetLayerDefn() returns NUL just after layer creation.\n",
                    poDriver->GetDescription());
@@ -691,10 +691,10 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             poFeature->SetField(iFieldDateTime, "2014/10/20 12:34:56");
 
         const char* pszWKT = GetWKT(eGeomType);
-        if( pszWKT != NULL )
+        if( pszWKT != nullptr )
         {
-            OGRGeometry* poGeom = NULL;
-            OGRGeometryFactory::createFromWkt( (char**) &pszWKT, NULL, &poGeom);
+            OGRGeometry* poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt( (char**) &pszWKT, nullptr, &poGeom);
             poFeature->SetGeometryDirectly(poGeom);
         }
 
@@ -734,10 +734,10 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
               wkbSetZ(static_cast<OGRwkbGeometryType>(
                   ((static_cast<int>(wkbFlatten(eGeomType)) % 7) + 1 )));
         pszWKT = GetWKT(eOtherGeomType);
-        if( pszWKT != NULL )
+        if( pszWKT != nullptr )
         {
-            OGRGeometry* poGeom = NULL;
-            OGRGeometryFactory::createFromWkt( (char**) &pszWKT, NULL, &poGeom);
+            OGRGeometry* poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt( (char**) &pszWKT, nullptr, &poGeom);
             poFeature->SetGeometryDirectly(poGeom);
         }
 
@@ -764,14 +764,14 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         /* Some drivers don't like more than one layer per dataset */
         CPLPushErrorHandler(CPLQuietErrorHandler);
         int bCreateLayerCap2 = LOG_ACTION(poDS->TestCapability(ODsCCreateLayer));
-        OGRLayer* poLayer2 = LOG_ACTION(poDS->CreateLayer(CPLSPrintf("%s2",CPLGetFilename(osFilename)), NULL, eGeomType));
+        OGRLayer* poLayer2 = LOG_ACTION(poDS->CreateLayer(CPLSPrintf("%s2",CPLGetFilename(osFilename)), nullptr, eGeomType));
         CPLPopErrorHandler();
-        if( poLayer2 == NULL && bCreateLayerCap2 )
+        if( poLayer2 == nullptr && bCreateLayerCap2 )
         {
             printf("INFO: %s: Creation of second layer failed but TestCapability(ODsCCreateLayer) succeeded.\n",
                    poDriver->GetDescription());
         }
-        else if( !EQUAL(poDriver->GetDescription(), "CSV") && poLayer2 != NULL )
+        else if( !EQUAL(poDriver->GetDescription(), "CSV") && poLayer2 != nullptr )
         {
             OGRFieldDefn oFieldStr("str", OFTString);
             CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -780,10 +780,10 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
 
             poFeature = new OGRFeature( poLayer2->GetLayerDefn() );
             pszWKT = GetWKT(eGeomType);
-            if( pszWKT != NULL )
+            if( pszWKT != nullptr )
             {
-                OGRGeometry* poGeom = NULL;
-                OGRGeometryFactory::createFromWkt( (char**) &pszWKT, NULL, &poGeom);
+                OGRGeometry* poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt( (char**) &pszWKT, nullptr, &poGeom);
                 poFeature->SetGeometryDirectly(poGeom);
             }
             CPLErrorReset();
@@ -813,7 +813,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
                 bRet = FALSE;
             }
 
-            if( LOG_ACTION(poDS->GetLayerByName(CPLGetFilename(osFilename))) != NULL )
+            if( LOG_ACTION(poDS->GetLayerByName(CPLGetFilename(osFilename))) != nullptr )
             {
                 printf("ERROR: %s: DeleteLayer() declared success, but layer can still be fetched.\n",
                    poDriver->GetDescription());
@@ -849,11 +849,11 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         /* Reopen dataset */
         poDS = LOG_ACTION((GDALDataset*)GDALOpenEx( osFilename,
                                                     GDAL_OF_VECTOR,
-                                                    NULL, NULL, NULL ));
-        if( poDS != NULL )
+                                                    nullptr, nullptr, nullptr ));
+        if( poDS != nullptr )
         {
             poLayer = LOG_ACTION(poDS->GetLayerByName(osLayerNameToTest));
-            if( poLayer != NULL )
+            if( poLayer != nullptr )
             {
                 if( poLayer->GetGeomType() != eExpectedGeomType )
                 {
@@ -873,15 +873,15 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
     CPLPopErrorHandler();
     VSIUnlink(osFilename);
 
-    if( poLayer != NULL )
+    if( poLayer != nullptr )
     {
         /* Test creating empty layer */
         osFilename = CPLFormFilename("/vsimem", CPLSPrintf("test%d", ++nCounter), pszExt);
-        poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, NULL));
-        if( poDS != NULL )
+        poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, nullptr));
+        if( poDS != nullptr )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), NULL, eGeomType));
+            poLayer = LOG_ACTION(poDS->CreateLayer(CPLGetFilename(osFilename), nullptr, eGeomType));
             CPLPopErrorHandler();
             LOG_ACTION(GDALClose(poDS));
 
@@ -902,8 +902,8 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
 static int TestCreate( GDALDriver* poDriver, int bFromAllDrivers )
 {
     int bRet = TRUE;
-    int bVirtualIO =  poDriver->GetMetadataItem(GDAL_DCAP_VIRTUALIO) != NULL;
-    if( poDriver->GetMetadataItem(GDAL_DCAP_CREATE) == NULL || !bVirtualIO)
+    int bVirtualIO =  poDriver->GetMetadataItem(GDAL_DCAP_VIRTUALIO) != nullptr;
+    if( poDriver->GetMetadataItem(GDAL_DCAP_CREATE) == nullptr || !bVirtualIO)
     {
         if( bVerbose && !bFromAllDrivers )
             printf("INFO: %s: TestCreate skipped.\n", poDriver->GetDescription());
@@ -915,13 +915,13 @@ static int TestCreate( GDALDriver* poDriver, int bFromAllDrivers )
     const char* pszExt = poDriver->GetMetadataItem(GDAL_DMD_EXTENSION);
     CPLString osFilename = CPLFormFilename("/foo", "test", pszExt);
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    GDALDataset* poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, NULL));
+    GDALDataset* poDS = LOG_ACTION(poDriver->Create(osFilename, 0, 0, 0, GDT_Unknown, nullptr));
     CPLPopErrorHandler();
-    if( poDS != NULL )
+    if( poDS != nullptr )
     {
         /* Sometimes actual file creation is deferred */
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer("test", NULL, wkbPoint));
+        OGRLayer* poLayer = LOG_ACTION(poDS->CreateLayer("test", nullptr, wkbPoint));
         CPLPopErrorHandler();
 
         /* Or sometimes writing is deferred at dataset closing */
@@ -929,7 +929,7 @@ static int TestCreate( GDALDriver* poDriver, int bFromAllDrivers )
         CPLPushErrorHandler(CPLQuietErrorHandler);
         LOG_ACTION(GDALClose(poDS));
         CPLPopErrorHandler();
-        if( poLayer != NULL && CPLGetLastErrorType() == 0 )
+        if( poLayer != nullptr && CPLGetLastErrorType() == 0 )
         {
             printf("INFO: %s: Creation of %s should have failed.\n",
                 poDriver->GetDescription(), osFilename.c_str());
@@ -1011,13 +1011,13 @@ static int TestBasic( OGRLayer *poLayer )
                     eGeomType, poFDefn->GetGeomType());
     }
 
-    if( LOG_ACTION(poLayer->GetFIDColumn()) == NULL )
+    if( LOG_ACTION(poLayer->GetFIDColumn()) == nullptr )
     {
         bRet = FALSE;
         printf( "ERROR: poLayer->GetFIDColumn() returned NULL.\n" );
     }
 
-    if( LOG_ACTION(poLayer->GetGeometryColumn()) == NULL )
+    if( LOG_ACTION(poLayer->GetGeometryColumn()) == nullptr )
     {
         bRet = FALSE;
         printf( "ERROR: poLayer->GetGeometryColumn() returned NULL.\n" );
@@ -1071,7 +1071,7 @@ static int TestBasic( OGRLayer *poLayer )
 static int TestLayerErrorConditions( OGRLayer* poLyr )
 {
     int bRet = TRUE;
-    OGRFeature* poFeat = NULL;
+    OGRFeature* poFeat = nullptr;
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
@@ -1082,14 +1082,14 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
         goto bye;
     }
 
-    if (LOG_ACTION(poLyr->GetFeature(-10)) != NULL)
+    if (LOG_ACTION(poLyr->GetFeature(-10)) != nullptr)
     {
         printf( "ERROR: GetFeature(-10) should have returned NULL\n" );
         bRet = FALSE;
         goto bye;
     }
 
-    if (LOG_ACTION(poLyr->GetFeature(2000000000)) != NULL)
+    if (LOG_ACTION(poLyr->GetFeature(2000000000)) != nullptr)
     {
         printf( "ERROR: GetFeature(2000000000) should have returned NULL\n" );
         bRet = FALSE;
@@ -1097,7 +1097,7 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
     }
 
     // This should detect int overflow
-    if (LOG_ACTION(poLyr->GetFeature((GIntBig)INT_MAX + 1)) != NULL)
+    if (LOG_ACTION(poLyr->GetFeature((GIntBig)INT_MAX + 1)) != nullptr)
     {
         printf( "ERROR: GetFeature((GIntBig)INT_MAX + 1) should have returned NULL\n" );
         bRet = FALSE;
@@ -1141,7 +1141,7 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
     }
 
     if (LOG_ACTION(poLyr->SetNextByIndex(2000000000)) == OGRERR_NONE &&
-        LOG_ACTION(poLyr->GetNextFeature()) != NULL)
+        LOG_ACTION(poLyr->GetNextFeature()) != nullptr)
     {
         printf( "ERROR: SetNextByIndex(2000000000) and then GetNextFeature() should have returned NULL\n" );
         bRet = FALSE;
@@ -1220,7 +1220,7 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
     poLayer->ResetReading();
     CPLErrorReset();
 
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         nFC++;
 
@@ -1240,10 +1240,10 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
                 poLayerDefn->GetGeomFieldDefn(iGeom)->GetSpatialRef();
 
             // Compatibility with old drivers anterior to RFC 41
-            if( iGeom == 0 && nGeomFieldCount == 1 && poGFldSRS == NULL )
+            if( iGeom == 0 && nGeomFieldCount == 1 && poGFldSRS == nullptr )
                 poGFldSRS = poLayer->GetSpatialRef();
 
-            if( poGeom != NULL
+            if( poGeom != nullptr
                 && poGeom->getSpatialReference() != poGFldSRS
                 && !bWarnAboutSRS )
             {
@@ -1251,12 +1251,12 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
 
                 bWarnAboutSRS = TRUE;
 
-                if( poGFldSRS != NULL )
+                if( poGFldSRS != nullptr )
                     poGFldSRS->exportToWkt( &pszLayerSRSWKT );
                 else
                     pszLayerSRSWKT = CPLStrdup("(NULL)");
 
-                if( poGeom->getSpatialReference() != NULL )
+                if( poGeom->getSpatialReference() != nullptr )
                     poGeom->
                         getSpatialReference()->exportToWkt( &pszFeatureSRSWKT );
                 else
@@ -1306,11 +1306,11 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer, int b
 
         osSQL.Printf("SELECT COUNT(*) FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
 
-        OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL);
+        OGRLayer* poSQLLyr = poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
         if (poSQLLyr)
         {
             OGRFeature* poFeatCount = poSQLLyr->GetNextFeature();
-            if (poFeatCount == NULL)
+            if (poFeatCount == nullptr)
             {
                 bRet = FALSE;
                 printf( "ERROR: '%s' failed.\n", osSQL.c_str() );
@@ -1346,10 +1346,10 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
-    OGRFeature  *papoFeatures[5], *poFeature = NULL;
+    OGRFeature  *papoFeatures[5], *poFeature = nullptr;
     int         iFeature;
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
@@ -1368,12 +1368,12 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
-        papoFeatures[iFeature] = NULL;
+        papoFeatures[iFeature] = nullptr;
     }
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
         papoFeatures[iFeature] = LOG_ACTION(poLayer->GetNextFeature());
-        if( papoFeatures[iFeature] == NULL )
+        if( papoFeatures[iFeature] == nullptr )
         {
             if( bVerbose )
                 printf( "INFO: Only %d features on layer,"
@@ -1387,7 +1387,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 2.                                                 */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature( papoFeatures[1]->GetFID() ));
-    if (poFeature == NULL)
+    if (poFeature == nullptr)
     {
         printf( "ERROR: Cannot fetch feature " CPL_FRMT_GIB ".\n",
                  papoFeatures[1]->GetFID() );
@@ -1413,7 +1413,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 5.                                                 */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature( papoFeatures[4]->GetFID() ));
-    if( poFeature == NULL || !poFeature->Equal( papoFeatures[4] ) )
+    if( poFeature == nullptr || !poFeature->Equal( papoFeatures[4] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to randomly read feature " CPL_FRMT_GIB " appears to\n"
@@ -1430,7 +1430,7 @@ static int TestOGRLayerRandomRead( OGRLayer *poLayer )
 /*      Test feature 2 again                                            */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature( papoFeatures[2]->GetFID() ));
-    if( poFeature == NULL || !poFeature->Equal( papoFeatures[2] ) )
+    if( poFeature == nullptr || !poFeature->Equal( papoFeatures[2] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to randomly read feature " CPL_FRMT_GIB " appears to\n"
@@ -1465,12 +1465,12 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
-    OGRFeature  *papoFeatures[5], *poFeature = NULL;
+    OGRFeature  *papoFeatures[5], *poFeature = nullptr;
     int         iFeature;
 
     memset(papoFeatures, 0, sizeof(papoFeatures));
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
@@ -1490,7 +1490,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
         papoFeatures[iFeature] = LOG_ACTION(poLayer->GetNextFeature());
-        if( papoFeatures[iFeature] == NULL )
+        if( papoFeatures[iFeature] == nullptr )
         {
             bRet = FALSE;
             printf( "ERROR: Cannot get feature %d.\n", iFeature );
@@ -1509,7 +1509,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     }
 
     poFeature = LOG_ACTION(poLayer->GetNextFeature());
-    if( poFeature == NULL || !poFeature->Equal( papoFeatures[1] ) )
+    if( poFeature == nullptr || !poFeature->Equal( papoFeatures[1] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to read feature at index %d appears to\n"
@@ -1523,7 +1523,7 @@ static int TestOGRLayerSetNextByIndex( OGRLayer *poLayer )
     DestroyFeatureAndNullify(poFeature);
 
     poFeature = LOG_ACTION(poLayer->GetNextFeature());
-    if( poFeature == NULL || !poFeature->Equal( papoFeatures[2] ) )
+    if( poFeature == nullptr || !poFeature->Equal( papoFeatures[2] ) )
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to read feature after feature at index %d appears to\n"
@@ -1604,7 +1604,7 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 
     memset(papoFeatures, 0, sizeof(papoFeatures));
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     if( LOG_ACTION(poLayer->GetFeatureCount()) < 5 )
     {
@@ -1632,7 +1632,7 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
     for( iFeature = 0; iFeature < 5; iFeature++ )
     {
         papoFeatures[iFeature] = LOG_ACTION(poLayer->GetNextFeature());
-        if( papoFeatures[iFeature] == NULL )
+        if( papoFeatures[iFeature] == nullptr )
         {
             bRet = FALSE;
             printf( "ERROR: Cannot get feature %d.\n", iFeature );
@@ -1669,7 +1669,7 @@ static int TestOGRLayerRandomWrite( OGRLayer *poLayer )
 /*      Now re-read feature 2 to verify the effect stuck.               */
 /* -------------------------------------------------------------------- */
     poFeature = LOG_ACTION(poLayer->GetFeature( nFID5 ));
-    if(poFeature == NULL)
+    if(poFeature == nullptr)
     {
         bRet = FALSE;
         printf( "ERROR: Attempt to GetFeature( nFID5 ) failed.\n" );
@@ -1743,7 +1743,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     LOG_ACTION(poLayer->ResetReading());
     poTargetFeature = LOG_ACTION(poLayer->GetNextFeature());
 
-    if( poTargetFeature == NULL )
+    if( poTargetFeature == nullptr )
     {
         if( bVerbose )
         {
@@ -1755,7 +1755,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     }
 
     OGRGeometry* poGeom = poTargetFeature->GetGeomFieldRef(iGeomField);
-    if( poGeom == NULL || poGeom->IsEmpty() )
+    if( poGeom == nullptr || poGeom->IsEmpty() )
     {
         if( bVerbose )
         {
@@ -1801,7 +1801,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
     bool bFound = false;
     GIntBig nIterCount = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
@@ -1835,7 +1835,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=1"));
     GIntBig nShouldBeSame = LOG_ACTION(poLayer->GetFeatureCount());
-    LOG_ACTION(poLayer->SetAttributeFilter(NULL));
+    LOG_ACTION(poLayer->SetAttributeFilter(nullptr));
     if( nShouldBeSame != nInclusiveCount )
     {
         bRet = FALSE;
@@ -1845,7 +1845,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
     LOG_ACTION(poLayer->SetAttributeFilter("1=0"));
     GIntBig nShouldBeZero = LOG_ACTION(poLayer->GetFeatureCount());
-    LOG_ACTION(poLayer->SetAttributeFilter(NULL));
+    LOG_ACTION(poLayer->SetAttributeFilter(nullptr));
     if( nShouldBeZero != 0 )
     {
         bRet = FALSE;
@@ -1871,7 +1871,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /* -------------------------------------------------------------------- */
     LOG_ACTION(poLayer->ResetReading());
 
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
@@ -1882,7 +1882,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
             DestroyFeatureAndNullify(poFeature);
     }
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
     {
         bRet = FALSE;
         printf( "ERROR: Spatial filter (%d) failed to eliminate"
@@ -1903,7 +1903,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 
     // Check that GetFeature() ignores the spatial filter
     poFeature = LOG_ACTION(poLayer->GetFeature( poTargetFeature->GetFID() ));
-    if( poFeature == NULL || !poFeature->Equal(poTargetFeature) )
+    if( poFeature == nullptr || !poFeature->Equal(poTargetFeature) )
     {
         bRet = FALSE;
         printf( "ERROR: Spatial filter has been taken into account by GetFeature()\n");
@@ -1912,13 +1912,13 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     {
         printf( "INFO: Spatial filter is ignored by GetFeature() as expected.\n");
     }
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
         DestroyFeatureAndNullify(poFeature);
 
     if( bRet )
     {
         LOG_ACTION(poLayer->ResetReading());
-        while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+        while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
         {
             if( poFeature->Equal(poTargetFeature) )
             {
@@ -1928,7 +1928,7 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
             else
                 DestroyFeatureAndNullify(poFeature);
         }
-        if( poFeature != NULL )
+        if( poFeature != nullptr )
         {
             bRet = FALSE;
             printf( "ERROR: Spatial filter has not been restored correctly after GetFeature()\n");
@@ -1956,9 +1956,9 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     LOG_ACTION(poLayer->SetSpatialFilter( iGeomField, &oInfinityFilter ));
     LOG_ACTION(poLayer->ResetReading());
     int nCountInf = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
             nCountInf ++;
         delete poFeature;
     }
@@ -1981,9 +1981,9 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     LOG_ACTION(poLayer->SetSpatialFilter( iGeomField, &oHugeFilter ));
     LOG_ACTION(poLayer->ResetReading());
     int nCountHuge = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
             nCountHuge ++;
         delete poFeature;
     }
@@ -1991,13 +1991,13 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /* -------------------------------------------------------------------- */
 /*     Reset spatial filter                                             */
 /* -------------------------------------------------------------------- */
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     int nExpected = 0;
     poLayer->ResetReading();
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != NULL )
+        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
             nExpected ++;
         delete poFeature;
     }
@@ -2055,18 +2055,18 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
     /* -------------------------------------------------------------------- */
     /*      Read the target feature.                                        */
     /* -------------------------------------------------------------------- */
-        LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+        LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
         LOG_ACTION(poLayer->ResetReading());
         LOG_ACTION(poLayer->SetNextByIndex(i));
         poTargetFeature = LOG_ACTION(poLayer->GetNextFeature());
 
-        if( poTargetFeature == NULL )
+        if( poTargetFeature == nullptr )
         {
             continue;
         }
 
         OGRGeometry* poGeom = poTargetFeature->GetGeomFieldRef(iGeomField);
-        if( poGeom == NULL || poGeom->IsEmpty() )
+        if( poGeom == nullptr || poGeom->IsEmpty() )
         {
             DestroyFeatureAndNullify(poTargetFeature);
             continue;
@@ -2094,7 +2094,7 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
         LOG_ACTION(poLayer->ResetReading());
 
         bool bFound = false;
-        while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+        while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
         {
             if( poFeature->Equal(poTargetFeature) )
             {
@@ -2121,7 +2121,7 @@ static int TestFullSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /* -------------------------------------------------------------------- */
 /*     Reset spatial filter                                             */
 /* -------------------------------------------------------------------- */
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     if( bRet && bVerbose )
     {
@@ -2139,7 +2139,7 @@ static int TestSpatialFilter( OGRLayer *poLayer )
     LOG_ACTION(poLayer->ResetReading());
     OGRFeature* poTargetFeature = LOG_ACTION(poLayer->GetNextFeature());
 
-    if( poTargetFeature == NULL )
+    if( poTargetFeature == nullptr )
     {
         if( bVerbose )
         {
@@ -2214,7 +2214,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
     LOG_ACTION(poLayer->ResetReading());
     poTargetFeature = LOG_ACTION(poLayer->GetNextFeature());
 
-    if( poTargetFeature == NULL )
+    if( poTargetFeature == nullptr )
     {
         if( bVerbose )
         {
@@ -2273,7 +2273,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
         osAttributeFilter += "'";
     /* Make sure that the literal will be recognized as a float value */
     /* to avoid int underflow/overflow */
-    else if (eType == OFTReal && strchr(osValue, '.') == NULL)
+    else if (eType == OFTReal && strchr(osValue, '.') == nullptr)
         osAttributeFilter += ".";
     LOG_ACTION(poLayer->SetAttributeFilter( osAttributeFilter ));
 
@@ -2283,7 +2283,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
     LOG_ACTION(poLayer->ResetReading());
 
     bool bFoundFeature = false;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
@@ -2326,7 +2326,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
         osAttributeFilter += "'";
     /* Make sure that the literal will be recognized as a float value */
     /* to avoid int underflow/overflow */
-    else if (eType == OFTReal && strchr(osValue, '.') == NULL)
+    else if (eType == OFTReal && strchr(osValue, '.') == nullptr)
         osAttributeFilter += ".";
     LOG_ACTION(poLayer->SetAttributeFilter( osAttributeFilter ));
 
@@ -2336,7 +2336,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
     LOG_ACTION(poLayer->ResetReading());
 
     GIntBig nExclusiveCountWhileIterating = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
@@ -2354,7 +2354,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
     poFeature2 = LOG_ACTION(poLayer->GetFeature( poTargetFeature->GetFID() ));
 
     poLayer->ResetReading();
-    while( (poFeature3 = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature3 = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( poFeature3->Equal(poTargetFeature) )
         {
@@ -2365,11 +2365,11 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
             DestroyFeatureAndNullify(poFeature3);
     }
 
-    LOG_ACTION(poLayer->SetAttributeFilter( NULL ));
+    LOG_ACTION(poLayer->SetAttributeFilter( nullptr ));
 
     nTotalCount = LOG_ACTION(poLayer->GetFeatureCount());
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
     {
         bRet = FALSE;
         printf( "ERROR: Attribute filter failed to eliminate "
@@ -2390,7 +2390,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
         printf( "INFO: Attribute filter exclusion seems to work.\n" );
     }
 
-    if( poFeature2 == NULL || !poFeature2->Equal(poTargetFeature) )
+    if( poFeature2 == nullptr || !poFeature2->Equal(poTargetFeature) )
     {
         bRet = FALSE;
         printf( "ERROR: Attribute filter has been taken into account by GetFeature()\n");
@@ -2400,13 +2400,13 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS, OGRLayer *poLayer 
         printf( "INFO: Attribute filter is ignored by GetFeature() as expected.\n");
     }
 
-    if( poFeature3 != NULL )
+    if( poFeature3 != nullptr )
     {
         bRet = FALSE;
         printf( "ERROR: Attribute filter has not been restored correctly after GetFeature()\n");
     }
 
-    if( poFeature2 != NULL )
+    if( poFeature2 != nullptr )
         DestroyFeatureAndNullify(poFeature2);
 
     DestroyFeatureAndNullify(poTargetFeature);
@@ -2422,8 +2422,8 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
 {
     int bRet = TRUE;
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
-    LOG_ACTION(poLayer->SetAttributeFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
+    LOG_ACTION(poLayer->SetAttributeFilter( nullptr ));
     LOG_ACTION(poLayer->ResetReading());
 
     int bIsAdvertizedAsUTF8 = LOG_ACTION(poLayer->TestCapability( OLCStringsAsUTF8 ));
@@ -2433,8 +2433,8 @@ static int TestOGRLayerUTF8 ( OGRLayer *poLayer )
     int bFoundUTF8 = FALSE;
     int bCanAdvertizeUTF8 = TRUE;
 
-    OGRFeature* poFeature = NULL;
-    while( bRet && (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    OGRFeature* poFeature = nullptr;
+    while( bRet && (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         for(int i = 0; i<nFields; i++)
         {
@@ -2526,8 +2526,8 @@ static int TestGetExtent ( OGRLayer *poLayer, int iGeomField )
 {
     int bRet = TRUE;
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
-    LOG_ACTION(poLayer->SetAttributeFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
+    LOG_ACTION(poLayer->SetAttributeFilter( nullptr ));
     LOG_ACTION(poLayer->ResetReading());
 
     OGREnvelope sExtent;
@@ -2633,11 +2633,11 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
 
 {
     int bRet = TRUE;
-    OGRFeature  * poFeature = NULL;
-    OGRFeature  * poFeatureTest = NULL;
+    OGRFeature  * poFeature = nullptr;
+    OGRFeature  * poFeatureTest = nullptr;
     GIntBig nFID;
 
-    LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+    LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
 
     if( !LOG_ACTION(poLayer->TestCapability( OLCRandomRead )) )
     {
@@ -2663,7 +2663,7 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
 
     LOG_ACTION(poLayer->SetNextByIndex(poLayer->GetFeatureCount() - 1));
     poFeature = LOG_ACTION(poLayer->GetNextFeature());
-    if (poFeature == NULL)
+    if (poFeature == nullptr)
     {
         bRet = FALSE;
         printf( "ERROR: Could not get last feature of layer.\n" );
@@ -2691,7 +2691,7 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
     CPLPushErrorHandler(CPLQuietErrorHandler); /* silent legitimate error message */
     poFeatureTest = LOG_ACTION(poLayer->GetFeature( nFID ));
     CPLPopErrorHandler();
-    if( poFeatureTest != NULL)
+    if( poFeatureTest != nullptr)
     {
         bRet = FALSE;
         printf( "ERROR: The feature was not deleted.\n" );
@@ -2726,7 +2726,7 @@ static int TestOGRLayerDeleteAndCreateFeature( OGRLayer *poLayer )
 /*      Now re-read the feature to verify the create effect worked.     */
 /* -------------------------------------------------------------------- */
     poFeatureTest = LOG_ACTION(poLayer->GetFeature( nFID ));
-    if( poFeatureTest == NULL)
+    if( poFeatureTest == nullptr)
     {
         bRet = FALSE;
         printf( "ERROR: The feature was not created.\n" );
@@ -2754,7 +2754,7 @@ end:
 static int TestTransactions( OGRLayer *poLayer )
 
 {
-    OGRFeature* poFeature = NULL;
+    OGRFeature* poFeature = nullptr;
     GIntBig nInitialFeatureCount = LOG_ACTION(poLayer->GetFeatureCount());
 
     OGRErr eErr = LOG_ACTION(poLayer->StartTransaction());
@@ -2829,7 +2829,7 @@ static int TestTransactions( OGRLayer *poLayer )
         poFeature->SetField(0, "0");
     eErr = LOG_ACTION(poLayer->CreateFeature(poFeature));
     delete poFeature;
-    poFeature = NULL;
+    poFeature = nullptr;
 
     if (eErr == OGRERR_FAILURE)
     {
@@ -2871,7 +2871,7 @@ static int TestTransactions( OGRLayer *poLayer )
         eErr = poLayer->CreateFeature(poFeature);
         GIntBig nFID = poFeature->GetFID();
         delete poFeature;
-        poFeature = NULL;
+        poFeature = nullptr;
 
         if (eErr == OGRERR_FAILURE)
         {
@@ -2936,7 +2936,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
     OGRFeature* poFeature;
 
     LOG_ACTION(poLayer->ResetReading());
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( iFieldNonEmpty < 0 )
         {
@@ -2961,7 +2961,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
             }
         }
 
-        if( !bGeomNonEmpty && poFeature->GetGeometryRef() != NULL)
+        if( !bGeomNonEmpty && poFeature->GetGeometryRef() != nullptr)
             bGeomNonEmpty = TRUE;
 
         delete poFeature;
@@ -2976,7 +2976,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
         return TRUE;
     }
 
-    char** papszIgnoredFields = NULL;
+    char** papszIgnoredFields = nullptr;
     if( iFieldNonEmpty >= 0 )
         papszIgnoredFields = CSLAddString(papszIgnoredFields,
             poLayer->GetLayerDefn()->GetFieldDefn(iFieldNonEmpty)->GetNameRef());
@@ -2990,31 +2990,31 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
     if( eErr == OGRERR_FAILURE )
     {
         printf( "ERROR: SetIgnoredFields() failed.\n" );
-        poLayer->SetIgnoredFields(NULL);
+        poLayer->SetIgnoredFields(nullptr);
         return FALSE;
     }
 
     int bFoundNonEmpty2 = FALSE;
 
     LOG_ACTION(poLayer->ResetReading());
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != NULL )
+    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
     {
         if( iFieldNonEmpty >= 0 && poFeature->IsFieldSetAndNotNull(iFieldNonEmpty) )
         {
             delete poFeature;
             printf( "ERROR: After SetIgnoredFields(), found a non empty field that should have been ignored.\n" );
-            poLayer->SetIgnoredFields(NULL);
+            poLayer->SetIgnoredFields(nullptr);
             return FALSE;
         }
 
         if( iFieldNonEmpty2 >= 0 && poFeature->IsFieldSetAndNotNull(iFieldNonEmpty2) )
             bFoundNonEmpty2 = TRUE;
 
-        if( bGeomNonEmpty && poFeature->GetGeometryRef() != NULL)
+        if( bGeomNonEmpty && poFeature->GetGeometryRef() != nullptr)
         {
             delete poFeature;
             printf( "ERROR: After SetIgnoredFields(), found a non empty geometry that should have been ignored.\n" );
-            poLayer->SetIgnoredFields(NULL);
+            poLayer->SetIgnoredFields(nullptr);
             return FALSE;
         }
 
@@ -3024,11 +3024,11 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
     if( iFieldNonEmpty2 >= 0 && !bFoundNonEmpty2)
     {
         printf( "ERROR: SetIgnoredFields() discarded fields that it should not have discarded.\n" );
-        poLayer->SetIgnoredFields(NULL);
+        poLayer->SetIgnoredFields(nullptr);
         return FALSE;
     }
 
-    LOG_ACTION(poLayer->SetIgnoredFields(NULL));
+    LOG_ACTION(poLayer->SetIgnoredFields(nullptr));
 
     if( bVerbose )
     {
@@ -3046,9 +3046,9 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
 {
     int bRet = TRUE;
-    OGRLayer* poSQLLyr = NULL;
-    OGRFeature* poLayerFeat = NULL;
-    OGRFeature* poSQLFeat = NULL;
+    OGRLayer* poSQLLyr = nullptr;
+    OGRFeature* poLayerFeat = nullptr;
+    OGRFeature* poSQLFeat = nullptr;
     int bGotFeature = FALSE;
 
     CPLString osSQL;
@@ -3063,8 +3063,8 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     LOG_ACTION(poLayer->ResetReading());
 
     osSQL.Printf("SELECT * FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL));
-    if( poSQLLyr == NULL )
+    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
+    if( poSQLLyr == nullptr )
     {
         printf( "ERROR: ExecuteSQL(%s) failed.\n", osSQL.c_str() );
         bRet = FALSE;
@@ -3073,19 +3073,19 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     else
     {
         poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
-        if( poSQLFeat != NULL )
+        if( poSQLFeat != nullptr )
             bGotFeature = TRUE;
-        if( poLayerFeat == NULL && poSQLFeat != NULL )
+        if( poLayerFeat == nullptr && poSQLFeat != nullptr )
         {
             printf( "ERROR: poLayerFeat == NULL && poSQLFeat != NULL.\n" );
             bRet = FALSE;
         }
-        else if( poLayerFeat != NULL && poSQLFeat == NULL )
+        else if( poLayerFeat != nullptr && poSQLFeat == nullptr )
         {
             printf( "ERROR: poLayerFeat != NULL && poSQLFeat == NULL.\n" );
             bRet = FALSE;
         }
-        else if( poLayerFeat != NULL && poSQLFeat != NULL )
+        else if( poLayerFeat != nullptr && poSQLFeat != nullptr )
         {
             if( poLayer->GetLayerDefn()->GetGeomFieldCount() !=
                 poSQLLyr->GetLayerDefn()->GetGeomFieldCount() )
@@ -3116,33 +3116,33 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
                         iOtherI = 0;
                     OGRGeometry* poLayerFeatGeom = poLayerFeat->GetGeomFieldRef(i);
                     OGRGeometry* poSQLFeatGeom = poSQLFeat->GetGeomFieldRef(iOtherI);
-                    if( poLayerFeatGeom == NULL && poSQLFeatGeom != NULL )
+                    if( poLayerFeatGeom == nullptr && poSQLFeatGeom != nullptr )
                     {
                         printf( "ERROR: poLayerFeatGeom[%d] == NULL && poSQLFeatGeom[%d] != NULL.\n",
                                 i, iOtherI );
                         bRet = FALSE;
                     }
-                    else if( poLayerFeatGeom != NULL && poSQLFeatGeom == NULL )
+                    else if( poLayerFeatGeom != nullptr && poSQLFeatGeom == nullptr )
                     {
                         printf( "ERROR: poLayerFeatGeom[%d] != NULL && poSQLFeatGeom[%d] == NULL.\n",
                                 i, iOtherI );
                         bRet = FALSE;
                     }
-                    else if( poLayerFeatGeom != NULL && poSQLFeatGeom != NULL )
+                    else if( poLayerFeatGeom != nullptr && poSQLFeatGeom != nullptr )
                     {
                         OGRSpatialReference* poLayerFeatSRS = poLayerFeatGeom->getSpatialReference();
                         OGRSpatialReference* poSQLFeatSRS = poSQLFeatGeom->getSpatialReference();
-                        if( poLayerFeatSRS == NULL && poSQLFeatSRS != NULL )
+                        if( poLayerFeatSRS == nullptr && poSQLFeatSRS != nullptr )
                         {
                             printf( "ERROR: poLayerFeatSRS == NULL && poSQLFeatSRS != NULL.\n" );
                             bRet = FALSE;
                         }
-                        else if( poLayerFeatSRS != NULL && poSQLFeatSRS == NULL )
+                        else if( poLayerFeatSRS != nullptr && poSQLFeatSRS == nullptr )
                         {
                             printf( "ERROR: poLayerFeatSRS != NULL && poSQLFeatSRS == NULL.\n" );
                             bRet = FALSE;
                         }
-                        else if( poLayerFeatSRS != NULL && poSQLFeatSRS != NULL )
+                        else if( poLayerFeatSRS != nullptr && poSQLFeatSRS != nullptr )
                         {
                             if( !(poLayerFeatSRS->IsSame(poSQLFeatSRS)) )
                             {
@@ -3162,12 +3162,12 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     if( poSQLLyr )
     {
         LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-        poSQLLyr = NULL;
+        poSQLLyr = nullptr;
     }
 
     /* Try ResetReading(), GetNextFeature(), ResetReading(), GetNextFeature() */
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL));
-    if( poSQLLyr == NULL )
+    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
+    if( poSQLLyr == nullptr )
     {
         printf( "ERROR: ExecuteSQL(%s) failed at line %d "
                 "(but succeeded before).\n",
@@ -3178,7 +3178,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     LOG_ACTION(poSQLLyr->ResetReading());
 
     poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
-    if( poSQLFeat == NULL && bGotFeature )
+    if( poSQLFeat == nullptr && bGotFeature )
     {
         printf( "ERROR: Should have got feature (1)\n" );
         bRet = FALSE;
@@ -3188,7 +3188,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     LOG_ACTION(poSQLLyr->ResetReading());
 
     poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
-    if( poSQLFeat == NULL && bGotFeature )
+    if( poSQLFeat == nullptr && bGotFeature )
     {
         printf( "ERROR: Should have got feature (2)\n" );
         bRet = FALSE;
@@ -3200,11 +3200,11 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     /* Return an empty layer */
     osSQL.Printf("SELECT * FROM %s WHERE 0 = 1", GetLayerNameForSQL(poDS, poLayer->GetName()));
 
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), NULL, NULL));
+    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
     if (poSQLLyr)
     {
         poSQLFeat = LOG_ACTION(poSQLLyr->GetNextFeature());
-        if (poSQLFeat != NULL)
+        if (poSQLFeat != nullptr)
         {
             bRet = FALSE;
             printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
@@ -3233,7 +3233,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     oPoly.addRing( &oRing );
 
     CPLErrorReset();
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, NULL));
+    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, nullptr));
     if( CPLGetLastErrorType() != CE_None )
     {
         bRet = FALSE;
@@ -3248,7 +3248,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
             bRet = FALSE;
             printf( "ERROR: GetNextFeature() triggered an unexpected error.\n" );
         }
-        if (poSQLFeat != NULL)
+        if (poSQLFeat != nullptr)
         {
             bRet = FALSE;
             printf( "ERROR: ExecuteSQL() should have returned a layer without features.\n" );
@@ -3280,11 +3280,11 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 /* -------------------------------------------------------------------- */
 /*      Verify that there is no spatial filter in place by default.     */
 /* -------------------------------------------------------------------- */
-    if( LOG_ACTION(poLayer->GetSpatialFilter()) != NULL )
+    if( LOG_ACTION(poLayer->GetSpatialFilter()) != nullptr )
     {
         printf( "WARN: Spatial filter in place by default on layer %s.\n",
                 poLayer->GetName() );
-        LOG_ACTION(poLayer->SetSpatialFilter( NULL ));
+        LOG_ACTION(poLayer->SetSpatialFilter( nullptr ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -3380,23 +3380,23 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLayersIn )
 {
     int bRet = TRUE;
-    GDALDataset* poDS = NULL;
-    GDALDataset* poDS2 = NULL;
-    OGRLayer* poLayer1 = NULL;
-    OGRLayer* poLayer2 = NULL;
-    OGRFeature* poFeature11_Ref = NULL;
-    OGRFeature* poFeature12_Ref = NULL;
-    OGRFeature* poFeature21_Ref = NULL;
-    OGRFeature* poFeature22_Ref = NULL;
-    OGRFeature* poFeature11 = NULL;
-    OGRFeature* poFeature12 = NULL;
-    OGRFeature* poFeature21 = NULL;
-    OGRFeature* poFeature22 = NULL;
+    GDALDataset* poDS = nullptr;
+    GDALDataset* poDS2 = nullptr;
+    OGRLayer* poLayer1 = nullptr;
+    OGRLayer* poLayer2 = nullptr;
+    OGRFeature* poFeature11_Ref = nullptr;
+    OGRFeature* poFeature12_Ref = nullptr;
+    OGRFeature* poFeature21_Ref = nullptr;
+    OGRFeature* poFeature22_Ref = nullptr;
+    OGRFeature* poFeature11 = nullptr;
+    OGRFeature* poFeature12 = nullptr;
+    OGRFeature* poFeature21 = nullptr;
+    OGRFeature* poFeature22 = nullptr;
 
     /* Check that we have 2 layers with at least 2 features */
     poDS = LOG_ACTION((GDALDataset*) GDALOpenEx( pszDataSourceIn,
-                            GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL ));
-    if (poDS == NULL)
+                            GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr ));
+    if (poDS == nullptr)
     {
         if( bVerbose )
         {
@@ -3407,7 +3407,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
 
     poLayer1 = LOG_ACTION(papszLayersIn ? poDS->GetLayerByName(papszLayersIn[0]) : poDS->GetLayer(0));
     poLayer2 = LOG_ACTION(papszLayersIn ? poDS->GetLayerByName(papszLayersIn[1]) : poDS->GetLayer(1));
-    if (poLayer1 == NULL || poLayer2 == NULL ||
+    if (poLayer1 == nullptr || poLayer2 == nullptr ||
         LOG_ACTION(poLayer1->GetFeatureCount()) < 2 || LOG_ACTION(poLayer2->GetFeatureCount()) < 2)
     {
         if( bVerbose )
@@ -3420,10 +3420,10 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     /* Test normal reading */
     LOG_ACTION(GDALClose(poDS));
     poDS = LOG_ACTION((GDALDataset*) GDALOpenEx( pszDataSourceIn,
-                                GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL ));
+                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr ));
     poDS2 = LOG_ACTION((GDALDataset*) GDALOpenEx( pszDataSourceIn,
-                                GDAL_OF_VECTOR, NULL, papszOpenOptions, NULL ));
-    if (poDS == NULL || poDS2 == NULL)
+                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr ));
+    if (poDS == nullptr || poDS2 == nullptr)
     {
         if( bVerbose )
         {
@@ -3434,7 +3434,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
 
     poLayer1 = LOG_ACTION(papszLayersIn ? poDS->GetLayerByName(papszLayersIn[0]) : poDS->GetLayer(0));
     poLayer2 = LOG_ACTION(papszLayersIn ? poDS->GetLayerByName(papszLayersIn[1]) : poDS->GetLayer(1));
-    if (poLayer1 == NULL || poLayer2 == NULL)
+    if (poLayer1 == nullptr || poLayer2 == nullptr)
     {
         printf( "ERROR: Skipping TestInterleavedReading(). Test conditions are not met\n" );
         bRet = FALSE;
@@ -3445,7 +3445,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     poFeature12_Ref = LOG_ACTION(poLayer1->GetNextFeature());
     poFeature21_Ref = LOG_ACTION(poLayer2->GetNextFeature());
     poFeature22_Ref = LOG_ACTION(poLayer2->GetNextFeature());
-    if (poFeature11_Ref == NULL || poFeature12_Ref == NULL || poFeature21_Ref == NULL || poFeature22_Ref == NULL)
+    if (poFeature11_Ref == nullptr || poFeature12_Ref == nullptr || poFeature21_Ref == nullptr || poFeature22_Ref == nullptr)
     {
         printf( "ERROR: TestInterleavedReading() failed: poFeature11_Ref=%p, poFeature12_Ref=%p, poFeature21_Ref=%p, poFeature22_Ref=%p\n",
                 poFeature11_Ref, poFeature12_Ref, poFeature21_Ref, poFeature22_Ref);
@@ -3456,7 +3456,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     /* Test interleaved reading */
     poLayer1 = LOG_ACTION(papszLayersIn ? poDS2->GetLayerByName(papszLayersIn[0]) : poDS2->GetLayer(0));
     poLayer2 = LOG_ACTION(papszLayersIn ? poDS2->GetLayerByName(papszLayersIn[1]) : poDS2->GetLayer(1));
-    if (poLayer1 == NULL || poLayer2 == NULL)
+    if (poLayer1 == nullptr || poLayer2 == nullptr)
     {
         printf( "ERROR: Skipping TestInterleavedReading(). Test conditions are not met\n" );
         bRet = FALSE;
@@ -3468,7 +3468,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     poFeature12 = LOG_ACTION(poLayer1->GetNextFeature());
     poFeature22 = LOG_ACTION(poLayer2->GetNextFeature());
 
-    if (poFeature11 == NULL || poFeature21 == NULL || poFeature12 == NULL || poFeature22 == NULL)
+    if (poFeature11 == nullptr || poFeature21 == nullptr || poFeature12 == nullptr || poFeature22 == nullptr)
     {
         printf( "ERROR: TestInterleavedReading() failed: poFeature11=%p, poFeature21=%p, poFeature12=%p, poFeature22=%p\n",
                 poFeature11, poFeature21, poFeature12, poFeature22);
@@ -3488,8 +3488,8 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     if (poFeature12_Ref->GetFID() != poFeature12->GetFID())
     {
         printf( "ERROR: TestInterleavedReading() failed: poFeature12_Ref != poFeature12\n" );
-        poFeature12_Ref->DumpReadable(stdout, NULL);
-        poFeature12->DumpReadable(stdout, NULL);
+        poFeature12_Ref->DumpReadable(stdout, nullptr);
+        poFeature12->DumpReadable(stdout, nullptr);
         bRet = FALSE;
         goto bye;
     }
@@ -3508,9 +3508,9 @@ bye:
     DestroyFeatureAndNullify(poFeature21);
     DestroyFeatureAndNullify(poFeature12);
     DestroyFeatureAndNullify(poFeature22);
-    if( poDS != NULL)
+    if( poDS != nullptr)
         LOG_ACTION(GDALClose(poDS));
-    if( poDS2 != NULL )
+    if( poDS2 != nullptr )
         LOG_ACTION(GDALClose(poDS2));
     return bRet;
 }
@@ -3533,29 +3533,29 @@ static int TestDSErrorConditions( GDALDataset * poDS )
         goto bye;
     }
 
-    if (LOG_ACTION(poDS->GetLayer(-1)) != NULL)
+    if (LOG_ACTION(poDS->GetLayer(-1)) != nullptr)
     {
         printf( "ERROR: GetLayer(-1) should have returned NULL\n" );
         bRet = FALSE;
         goto bye;
     }
 
-    if (LOG_ACTION(poDS->GetLayer(poDS->GetLayerCount())) != NULL)
+    if (LOG_ACTION(poDS->GetLayer(poDS->GetLayerCount())) != nullptr)
     {
         printf( "ERROR: GetLayer(poDS->GetLayerCount()) should have returned NULL\n" );
         bRet = FALSE;
         goto bye;
     }
 
-    if (LOG_ACTION(poDS->GetLayerByName("non_existing_layer")) != NULL)
+    if (LOG_ACTION(poDS->GetLayerByName("non_existing_layer")) != nullptr)
     {
         printf( "ERROR: GetLayerByName(\"non_existing_layer\") should have returned NULL\n" );
         bRet = FALSE;
         goto bye;
     }
 
-    poLyr = LOG_ACTION(poDS->ExecuteSQL("a fake SQL command", NULL, NULL));
-    if (poLyr != NULL)
+    poLyr = LOG_ACTION(poDS->ExecuteSQL("a fake SQL command", nullptr, nullptr));
+    if (poLyr != nullptr)
     {
         LOG_ACTION(poDS->ReleaseResultSet(poLyr));
         printf( "ERROR: ExecuteSQL(\"a fake SQL command\") should have returned NULL\n" );
@@ -3584,7 +3584,7 @@ static int TestVirtualIO( GDALDataset * poDS )
         return TRUE;
 
     // Don't try with ODBC (will avoid a useless error message in ogr_odbc.py)
-    if( poDS->GetDriver() != NULL &&
+    if( poDS->GetDriver() != nullptr &&
         EQUAL(poDS->GetDriver()->GetDescription(), "ODBC") )
     {
         return TRUE;
@@ -3594,7 +3594,7 @@ static int TestVirtualIO( GDALDataset * poDS )
     char** papszIter = papszFileList;
     CPLString osPath;
     int bAllPathIdentical = TRUE;
-    for( ; *papszIter != NULL; papszIter++ )
+    for( ; *papszIter != nullptr; papszIter++ )
     {
         if( papszIter == papszFileList )
             osPath = CPLGetPath(*papszIter);
@@ -3607,30 +3607,30 @@ static int TestVirtualIO( GDALDataset * poDS )
     CPLString osVirtPath;
     if( bAllPathIdentical && CSLCount(papszFileList) > 1 )
     {
-        osVirtPath = CPLFormFilename("/vsimem", CPLGetFilename(osPath), NULL);
+        osVirtPath = CPLFormFilename("/vsimem", CPLGetFilename(osPath), nullptr);
         VSIMkdir(osVirtPath, 0666);
     }
     else
         osVirtPath = "/vsimem";
     papszIter = papszFileList;
-    for( ; *papszIter != NULL; papszIter++ )
+    for( ; *papszIter != nullptr; papszIter++ )
     {
-        const char* pszDestFile = CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), NULL);
+        const char* pszDestFile = CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), nullptr);
         /* CPLDebug("test_ogrsf", "Copying %s to %s", *papszIter, pszDestFile); */
         CPLCopyFile( pszDestFile, *papszIter );
     }
 
     const char* pszVirtFile;
     if( VSI_ISREG(sStat.st_mode) )
-        pszVirtFile = CPLFormFilename(osVirtPath, CPLGetFilename(poDS->GetDescription()), NULL);
+        pszVirtFile = CPLFormFilename(osVirtPath, CPLGetFilename(poDS->GetDescription()), nullptr);
     else
         pszVirtFile = osVirtPath;
     CPLDebug("test_ogrsf", "Trying to open %s", pszVirtFile);
     GDALDataset* poDS2 = LOG_ACTION((GDALDataset*)GDALOpenEx(
-        pszVirtFile, GDAL_OF_VECTOR, NULL, NULL, NULL ));
-    if( poDS2 != NULL )
+        pszVirtFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ));
+    if( poDS2 != nullptr )
     {
-        if( poDS->GetDriver()->GetMetadataItem( GDAL_DCAP_VIRTUALIO ) == NULL )
+        if( poDS->GetDriver()->GetMetadataItem( GDAL_DCAP_VIRTUALIO ) == nullptr )
         {
             printf("WARNING: %s driver apparently supports VirtualIO but does not declare it.\n",
                     poDS->GetDriver()->GetDescription() );
@@ -3649,7 +3649,7 @@ static int TestVirtualIO( GDALDataset * poDS )
     }
     else
     {
-        if( poDS->GetDriver()->GetMetadataItem( GDAL_DCAP_VIRTUALIO ) != NULL )
+        if( poDS->GetDriver()->GetMetadataItem( GDAL_DCAP_VIRTUALIO ) != nullptr )
         {
             printf("WARNING: %s driver declares supporting VirtualIO but "
                     "test with /vsimem does not work. It might be a sign that "
@@ -3659,9 +3659,9 @@ static int TestVirtualIO( GDALDataset * poDS )
     }
 
     papszIter = papszFileList;
-    for( ; *papszIter != NULL; papszIter++ )
+    for( ; *papszIter != nullptr; papszIter++ )
     {
-        VSIUnlink( CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), NULL) );
+        VSIUnlink( CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), nullptr) );
     }
     CSLDestroy(papszFileList);
 

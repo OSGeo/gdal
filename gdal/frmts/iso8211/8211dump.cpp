@@ -38,7 +38,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule   oModule;
-    const char  *pszFilename = NULL;
+    const char  *pszFilename = nullptr;
     bool        bFSPTHack = false;
     bool        bXML = false;
     bool        bAllDetails = false;
@@ -67,7 +67,7 @@ int main( int nArgc, char ** papszArgv )
         }
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         printf( "Usage: 8211dump [-xml|-xml_all_details] "
                 "[-fspt_repeating] filename\n" );
@@ -87,7 +87,7 @@ int main( int nArgc, char ** papszArgv )
     {
         DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
 
-        if( poFSPT == NULL )
+        if( poFSPT == nullptr )
             fprintf( stderr,
                      "unable to find FSPT field to set repeating flag.\n" );
         else
@@ -119,7 +119,7 @@ int main( int nArgc, char ** papszArgv )
         for( int i = 0; i < nFieldDefnCount; i++ )
         {
             DDFFieldDefn* poFieldDefn = oModule.GetField(i);
-            const char* pszDataStructCode = NULL;
+            const char* pszDataStructCode = nullptr;
             switch( poFieldDefn->GetDataStructCode() )
             {
                 case dsc_elementary:
@@ -143,7 +143,7 @@ int main( int nArgc, char ** papszArgv )
                     break;
             }
 
-            const char* pszDataTypeCode = NULL;
+            const char* pszDataTypeCode = nullptr;
             switch( poFieldDefn->GetDataTypeCode() )
             {
                 case dtc_char_string:
@@ -203,7 +203,7 @@ int main( int nArgc, char ** papszArgv )
 
         // DDFRecord       *poRecord;
         for( DDFRecord *poRecord = oModule.ReadRecord();
-             poRecord != NULL;
+             poRecord != nullptr;
              poRecord = oModule.ReadRecord() )
         {
             printf("<DDFRecord");
@@ -252,10 +252,10 @@ int main( int nArgc, char ** papszArgv )
                         int nMaxBytes = nDataSize - iOffset;
                         if( eType == DDFFloat )
                             printf("type=\"float\">%f",
-                                   poSubFieldDefn->ExtractFloatData( pachSubdata, nMaxBytes, NULL ) );
+                                   poSubFieldDefn->ExtractFloatData( pachSubdata, nMaxBytes, nullptr ) );
                         else if( eType == DDFInt )
                             printf("type=\"integer\">%d",
-                                   poSubFieldDefn->ExtractIntData( pachSubdata, nMaxBytes, NULL ) );
+                                   poSubFieldDefn->ExtractIntData( pachSubdata, nMaxBytes, nullptr ) );
                         else if( eType == DDFBinaryString )
                         {
                             int     nBytes, i;
@@ -268,7 +268,7 @@ int main( int nArgc, char ** papszArgv )
                         }
                         else
                         {
-                            GByte* pabyString = (GByte *)poSubFieldDefn->ExtractStringData( pachSubdata, nMaxBytes, NULL );
+                            GByte* pabyString = (GByte *)poSubFieldDefn->ExtractStringData( pachSubdata, nMaxBytes, nullptr );
                             int bBinary = FALSE;
                             int i;
                             for( i = 0; pabyString[i] != '\0'; i ++ )
@@ -312,7 +312,7 @@ int main( int nArgc, char ** papszArgv )
 
         nStartLoc = VSIFTellL( oModule.GetFP() );
         for( DDFRecord *poRecord = oModule.ReadRecord();
-             poRecord != NULL;
+             poRecord != nullptr;
              poRecord = oModule.ReadRecord() )
         {
             printf( "File Offset: %ld\n", nStartLoc );

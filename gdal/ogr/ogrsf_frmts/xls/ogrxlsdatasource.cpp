@@ -43,10 +43,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRXLSDataSource::OGRXLSDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    xlshandle(NULL)
+    xlshandle(nullptr)
 {}
 
 /************************************************************************/
@@ -90,7 +90,7 @@ OGRLayer *OGRXLSDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -151,7 +151,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     {
         freexl_select_active_worksheet(xlshandle, i);
 
-        const char* pszSheetname = NULL;
+        const char* pszSheetname = nullptr;
         if (freexl_get_worksheet_name(xlshandle, i, &pszSheetname) != FREEXL_OK)
             return FALSE;
 
@@ -169,7 +169,7 @@ int OGRXLSDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     freexl_close(xlshandle);
-    xlshandle = NULL;
+    xlshandle = nullptr;
 
     return TRUE;
 }
@@ -184,7 +184,7 @@ const void* OGRXLSDataSource::GetXLSHandle()
         return xlshandle;
 
     if (freexl_open (m_osANSIFilename, &xlshandle) != FREEXL_OK)
-        return NULL;
+        return nullptr;
 
     return xlshandle;
 }

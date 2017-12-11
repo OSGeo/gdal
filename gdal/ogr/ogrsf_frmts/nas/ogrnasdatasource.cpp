@@ -39,7 +39,7 @@ static const char * const apszURNNames[] =
     "DE_DHDN_3GK3_*", "EPSG:31467",
     "ETRS89_UTM32", "EPSG:25832",
     "ETRS89_UTM33", "EPSG:25833",
-    NULL, NULL
+    nullptr, nullptr
 };
 
 /************************************************************************/
@@ -47,11 +47,11 @@ static const char * const apszURNNames[] =
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    poRelationLayer(NULL),
-    pszName(NULL),
-    poReader(NULL)
+    poRelationLayer(nullptr),
+    pszName(nullptr),
+    poReader(nullptr)
 {}
 
 /************************************************************************/
@@ -80,7 +80,7 @@ int OGRNASDataSource::Open( const char * pszNewName )
 
 {
     poReader = CreateNASReader();
-    if( poReader == NULL )
+    if( poReader == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File %s appears to be NAS but the NAS reader cannot\n"
@@ -99,8 +99,8 @@ int OGRNASDataSource::Open( const char * pszNewName )
     VSIStatBufL sGFSStatBuf;
 
     // Is some NAS Feature Schema (.gfs) TEMPLATE required?
-    const char *pszNASTemplateName = CPLGetConfigOption("NAS_GFS_TEMPLATE", NULL);
-    if( pszNASTemplateName != NULL )
+    const char *pszNASTemplateName = CPLGetConfigOption("NAS_GFS_TEMPLATE", nullptr);
+    if( pszNASTemplateName != nullptr )
     {
         // Load the TEMPLATE.
         if( !poReader->LoadClasses(pszNASTemplateName) )
@@ -161,11 +161,11 @@ int OGRNASDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
     if( !bHaveSchema && poReader->GetClassCount() > 0 )
     {
-        VSILFILE *fp = NULL;
+        VSILFILE *fp = nullptr;
 
         pszGFSFilename = CPLResetExtension( pszNewName, "gfs" );
         if( VSIStatL( pszGFSFilename, &sGFSStatBuf ) != 0
-            && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != NULL )
+            && (fp = VSIFOpenL( pszGFSFilename, "wt" )) != nullptr )
         {
             VSIFCloseL( fp );
             poReader->SaveClasses( pszGFSFilename );
@@ -223,17 +223,17 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
 /*      Translate SRS.                                                  */
 /* -------------------------------------------------------------------- */
     const char* pszSRSName = poClass->GetSRSName();
-    OGRSpatialReference* poSRS = NULL;
+    OGRSpatialReference* poSRS = nullptr;
     if (pszSRSName)
     {
         const char *pszHandle = strrchr( pszSRSName, ':' );
-        if( pszHandle != NULL )
+        if( pszHandle != nullptr )
         {
             pszHandle += 1;
 
             poSRS = new OGRSpatialReference();
 
-            for( int i = 0; apszURNNames[i*2+0] != NULL; i++ )
+            for( int i = 0; apszURNNames[i*2+0] != nullptr; i++ )
             {
                 const char *pszTarget = apszURNNames[i*2+0];
                 const int nTLen = static_cast<int>(strlen(pszTarget));
@@ -256,7 +256,7 @@ OGRNASLayer *OGRNASDataSource::TranslateNASSchema( GMLFeatureClass *poClass )
                 CPLDebug( "NAS", "Failed to translate srsName='%s'",
                         pszSRSName );
                 delete poSRS;
-                poSRS = NULL;
+                poSRS = nullptr;
             }
         }
     }
@@ -334,7 +334,7 @@ OGRLayer *OGRNASDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -357,25 +357,25 @@ void OGRNASDataSource::PopulateRelations()
 {
     poReader->ResetReading();
 
-    GMLFeature  *poFeature = NULL;
-    while( (poFeature = poReader->NextFeature()) != NULL )
+    GMLFeature  *poFeature = nullptr;
+    while( (poFeature = poReader->NextFeature()) != nullptr )
     {
         char **papszOBProperties = poFeature->GetOBProperties();
 
         for( int i = 0;
-             papszOBProperties != NULL && papszOBProperties[i] != NULL;
+             papszOBProperties != nullptr && papszOBProperties[i] != nullptr;
              i++ )
         {
             const int nGMLIdIndex =
                 poFeature->GetClass()->GetPropertyIndex( "gml_id" );
             const GMLProperty *psGMLId =
-              (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : NULL;
-            char *l_pszName = NULL;
+              (nGMLIdIndex >= 0) ? poFeature->GetProperty(nGMLIdIndex ) : nullptr;
+            char *l_pszName = nullptr;
             const char *pszValue = CPLParseNameValue( papszOBProperties[i],
                                                       &l_pszName );
 
             if( STARTS_WITH_CI(pszValue, "urn:adv:oid:")
-                && psGMLId != NULL && psGMLId->nSubProperties == 1 )
+                && psGMLId != nullptr && psGMLId->nSubProperties == 1 )
             {
                 poRelationLayer->AddRelation( psGMLId->papszSubProperties[0],
                                               l_pszName,

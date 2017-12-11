@@ -86,7 +86,7 @@ static CameraPtr feat2kmlcamera( const struct fieldconfig& oFC,
         (iRoll >= 0 && poOgrFeat->IsFieldSetAndNotNull(iRoll)));
 
     if( !bNeedCamera )
-        return NULL;
+        return nullptr;
 
     CameraPtr const camera = poKmlFactory->CreateCamera();
     camera->set_latitude(poOgrFeat->GetFieldAsDouble(iCameraLatitudeField));
@@ -237,7 +237,7 @@ FeaturePtr feat2kml(
     KmlFactory * poKmlFactory,
     int bUseSimpleField )
 {
-    FeaturePtr poKmlFeature = NULL;
+    FeaturePtr poKmlFeature = nullptr;
 
     struct fieldconfig oFC;
     get_fieldconfig( &oFC );
@@ -250,14 +250,14 @@ FeaturePtr feat2kml(
     const int iModel = poOgrFeat->GetFieldIndex(oFC.modelfield);
     const int iNetworkLink = poOgrFeat->GetFieldIndex(oFC.networklinkfield);
     const int iPhotoOverlay = poOgrFeat->GetFieldIndex(oFC.photooverlayfield);
-    CameraPtr camera = NULL;
+    CameraPtr camera = nullptr;
 
     // PhotoOverlay.
     if( iPhotoOverlay >= 0 && poOgrFeat->IsFieldSetAndNotNull(iPhotoOverlay) &&
-        poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+        poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
         (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
-                                 poOgrFeat, poKmlFactory)) != NULL)
+                                 poOgrFeat, poKmlFactory)) != nullptr)
     {
         const int iLeftFovField = poOgrFeat->GetFieldIndex(oFC.leftfovfield);
         const int iRightFovField = poOgrFeat->GetFieldIndex(oFC.rightfovfield);
@@ -297,7 +297,7 @@ FeaturePtr feat2kml(
                 if( strstr(osURL, ".kmz/") )
                     osURL = "/vsizip/" + osURL;
                 GDALDatasetH hDS = GDALOpen( osURL, GA_ReadOnly );
-                if( hDS != NULL )
+                if( hDS != nullptr )
                 {
                     nTileSize = GDALGetRasterXSize(hDS);
                     if( nTileSize != GDALGetRasterYSize(hDS) )
@@ -477,7 +477,7 @@ FeaturePtr feat2kml(
     }
 
     // NetworkLink.
-    if( poKmlFeature == NULL && iNetworkLink >= 0 &&
+    if( poKmlFeature == nullptr && iNetworkLink >= 0 &&
         poOgrFeat->IsFieldSetAndNotNull(iNetworkLink) )
     {
         const NetworkLinkPtr poKmlNetworkLink =
@@ -595,10 +595,10 @@ FeaturePtr feat2kml(
         {
             const char* const pszHttpQuery =
                 poOgrFeat->GetFieldAsString(iHttpQuery);
-            if( strstr(pszHttpQuery, "[clientVersion]") != NULL ||
-                strstr(pszHttpQuery, "[kmlVersion]") != NULL ||
-                strstr(pszHttpQuery, "[clientName]") != NULL ||
-                strstr(pszHttpQuery, "[language]") != NULL )  // ATC 47
+            if( strstr(pszHttpQuery, "[clientVersion]") != nullptr ||
+                strstr(pszHttpQuery, "[kmlVersion]") != nullptr ||
+                strstr(pszHttpQuery, "[clientName]") != nullptr ||
+                strstr(pszHttpQuery, "[language]") != nullptr )  // ATC 47
             {
                 poKmlLink->set_httpquery(pszHttpQuery);
             }
@@ -606,20 +606,20 @@ FeaturePtr feat2kml(
     }
 
     // Model.
-    else if( poKmlFeature == NULL &&
+    else if( poKmlFeature == nullptr &&
              iModel >= 0 &&
              poOgrFeat->IsFieldSetAndNotNull(iModel) &&
-             poOgrGeom != NULL && !poOgrGeom->IsEmpty() &&
+             poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint )
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
         const OGRPoint* const poOgrPoint = dynamic_cast<OGRPoint *>(poOgrGeom);
-        if( poOgrPoint == NULL )
+        if( poOgrPoint == nullptr )
         {
           CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-          return NULL;
+          return nullptr;
         }
         ModelPtr model = poKmlFactory->CreateModel();
 
@@ -699,7 +699,7 @@ FeaturePtr feat2kml(
         if( EQUAL(CPLGetExtension(pszURL), "dae") &&
             CPLTestBool(CPLGetConfigOption("LIBKML_ADD_RESOURCE_MAP", "TRUE")) )
         {
-            VSILFILE* fp = NULL;
+            VSILFILE* fp = nullptr;
             bool bIsURL = false;
             if( STARTS_WITH_CI(pszURL, "http://") ||
                 STARTS_WITH_CI(pszURL, "https://") )
@@ -707,7 +707,7 @@ FeaturePtr feat2kml(
                 bIsURL = true;
                 fp = VSIFOpenL(CPLSPrintf("/vsicurl/%s", pszURL), "rb");
             }
-            else if( strstr(pszURL, ".kmz/") != NULL )
+            else if( strstr(pszURL, ".kmz/") != nullptr )
             {
                 fp = VSIFOpenL(CPLSPrintf("/vsizip/%s", pszURL), "rb");
             }
@@ -715,11 +715,11 @@ FeaturePtr feat2kml(
             {
                 fp = VSIFOpenL(pszURL, "rb");
             }
-            if( fp != NULL )
+            if( fp != nullptr )
             {
-                ResourceMapPtr resourceMap = NULL;
-                const char* pszLine = NULL;
-                while( (pszLine = CPLReadLineL(fp)) != NULL )
+                ResourceMapPtr resourceMap = nullptr;
+                const char* pszLine = nullptr;
+                while( (pszLine = CPLReadLineL(fp)) != nullptr )
                 {
                     const char* pszInitFrom = strstr(pszLine, "<init_from>");
                     if( pszInitFrom )
@@ -738,7 +738,7 @@ FeaturePtr feat2kml(
                                 EQUAL(pszExtension, "png") ||
                                 EQUAL(pszExtension, "gif") )
                             {
-                                if( resourceMap == NULL )
+                                if( resourceMap == nullptr )
                                     resourceMap =
                                         poKmlFactory->CreateResourceMap();
                                 const AliasPtr alias =
@@ -752,7 +752,7 @@ FeaturePtr feat2kml(
                                                 osImage.c_str()));
                                     else
                                         alias->set_targethref(CPLFormFilename(
-                                            CPLGetPath(pszURL), osImage, NULL));
+                                            CPLGetPath(pszURL), osImage, nullptr));
                                 }
                                 else
                                     alias->set_targethref(osImage);
@@ -762,7 +762,7 @@ FeaturePtr feat2kml(
                         }
                     }
                 }
-                if( resourceMap != NULL )
+                if( resourceMap != nullptr )
                     model->set_resourcemap(resourceMap);
                 VSIFCloseL(fp);
             }
@@ -772,7 +772,7 @@ FeaturePtr feat2kml(
     }
 
     // Camera.
-    else if( poKmlFeature == NULL && poOgrGeom != NULL &&
+    else if( poKmlFeature == nullptr && poOgrGeom != nullptr &&
              !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
              poOgrFeat->GetFieldIndex(oFC.camera_longitude_field) < 0 &&
@@ -784,10 +784,10 @@ FeaturePtr feat2kml(
         poKmlFeature = poKmlPlacemark;
 
         const OGRPoint* const poOgrPoint = dynamic_cast<OGRPoint *>(poOgrGeom);
-              if( poOgrPoint == NULL )
+              if( poOgrPoint == nullptr )
         {
           CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-          return NULL;
+          return nullptr;
         }
 
         camera = poKmlFactory->CreateCamera();
@@ -830,7 +830,7 @@ FeaturePtr feat2kml(
             camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
         poKmlPlacemark->set_abstractview(camera);
     }
-    else if( poKmlFeature == NULL )
+    else if( poKmlFeature == nullptr )
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
@@ -840,10 +840,10 @@ FeaturePtr feat2kml(
         poKmlPlacemark->set_geometry( AsGeometry( poKmlElement ) );
     }
 
-    if( camera == NULL )
+    if( camera == nullptr )
         camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
                                 poOgrFeat, poKmlFactory);
-    if( camera != NULL )
+    if( camera != nullptr )
         poKmlFeature->set_abstractview(camera);
 
     /***** style *****/
@@ -853,10 +853,10 @@ FeaturePtr feat2kml(
     /***** fields *****/
     OGRLIBKMLLayer * const poKmlLayer =
         dynamic_cast<OGRLIBKMLLayer *>(poOgrLayer);
-    if( poKmlLayer == NULL )
+    if( poKmlLayer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-        return NULL;
+        return nullptr;
     }
     field2kml( poOgrFeat, poKmlLayer, poKmlFactory,
                poKmlFeature, bUseSimpleField );

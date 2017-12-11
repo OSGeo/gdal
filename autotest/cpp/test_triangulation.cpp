@@ -38,7 +38,7 @@ namespace tut
     {
         GDALTriangulation* psDT;
 
-        test_triangulation_data() : psDT(NULL) {}
+        test_triangulation_data() : psDT(nullptr) {}
         ~test_triangulation_data() { GDALTriangulationFree(psDT); }
     };
 
@@ -58,7 +58,7 @@ namespace tut
             CPLPushErrorHandler(CPLQuietErrorHandler);
             psDT = GDALTriangulationCreateDelaunay(2, adfX, adfY);
             CPLPopErrorHandler();
-            ensure(psDT == NULL);
+            ensure(psDT == nullptr);
         }
     }
 
@@ -73,7 +73,7 @@ namespace tut
             CPLPushErrorHandler(CPLQuietErrorHandler);
             psDT = GDALTriangulationCreateDelaunay(4, adfX, adfY);
             CPLPopErrorHandler();
-            ensure(psDT == NULL);
+            ensure(psDT == nullptr);
         }
     }
 
@@ -88,7 +88,7 @@ namespace tut
                 double adfY[] = { 0, -5, 5, -5, 5 };
                 int i, j;
                 psDT = GDALTriangulationCreateDelaunay(5, adfX, adfY);
-                ensure(psDT != NULL);
+                ensure(psDT != nullptr);
                 ensure_equals(psDT->nFacets, 4);
                 for(i=0;i<psDT->nFacets;i++)
                 {

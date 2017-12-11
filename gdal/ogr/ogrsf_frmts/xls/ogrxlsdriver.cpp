@@ -59,12 +59,12 @@ OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
 {
     if (bUpdate)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!EQUAL(CPLGetExtension(pszFilename), "XLS"))
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRXLSDataSource   *poDS = new OGRXLSDataSource();
@@ -72,7 +72,7 @@ OGRDataSource *OGRXLSDriver::Open( const char * pszFilename, int bUpdate )
     if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;

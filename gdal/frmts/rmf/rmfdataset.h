@@ -207,7 +207,7 @@ class RMFRasterBand : public GDALRasterBand
 
     virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IWriteBlock( int, int, void * ) override;
-    virtual double          GetNoDataValue(int *pbSuccess = NULL) override;
+    virtual double          GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual const char      *GetUnitType() override;
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable  *GetColorTable() override;

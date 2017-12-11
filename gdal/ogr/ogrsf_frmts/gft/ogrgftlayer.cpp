@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 
 OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
     poDS(poDSIn),
-    poFeatureDefn(NULL),
+    poFeatureDefn(nullptr),
     poSRS(new OGRSpatialReference(SRS_WKT_WGS84)),
     nNextInSeq(0),
     iGeometryField(-1),
@@ -56,10 +56,10 @@ OGRGFTLayer::OGRGFTLayer(OGRGFTDataSource* poDSIn) :
 OGRGFTLayer::~OGRGFTLayer()
 
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         poFeatureDefn->Release();
 }
 
@@ -99,20 +99,20 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
             nNextInSeq >= nOffset + static_cast<int>(aosRows.size()))
         {
             if (bEOF)
-                return NULL;
+                return nullptr;
 
             nOffset += static_cast<int>(aosRows.size());
             if (!FetchNextRows())
-                return NULL;
+                return nullptr;
         }
 
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -134,11 +134,11 @@ OGRFeature *OGRGFTLayer::GetNextFeature()
 char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
 
 {
-    char **papszRetList = NULL;
+    char **papszRetList = nullptr;
     char *pszToken = (char *) CPLCalloc(10,1);
     int nTokenMax = 10;
 
-    while( pszString != NULL && *pszString != '\0' )
+    while( pszString != nullptr && *pszString != '\0' )
     {
         int     bInString = FALSE;
 
@@ -190,7 +190,7 @@ char **OGRGFTCSVSplitLine( const char *pszString, char chDelimiter )
         }
     }
 
-    if( papszRetList == NULL )
+    if( papszRetList == nullptr )
         papszRetList = (char **) CPLCalloc(sizeof(char *),1);
 
     CPLFree( pszToken );
@@ -222,11 +222,11 @@ static void ParseLineString(OGRLineString* poLS,
 
 static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
 {
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
     const char* pszGeomType = psXML->pszValue;
     if (strcmp(pszGeomType, "Point") == 0)
     {
-        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", NULL);
+        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", nullptr);
         if (pszCoordinates)
         {
             char** papszTokens = CSLTokenizeString2(pszCoordinates, ",", 0);
@@ -240,7 +240,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
     }
     else if (strcmp(pszGeomType, "LineString") == 0)
     {
-        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", NULL);
+        const char* pszCoordinates = CPLGetXMLValue(psXML, "coordinates", nullptr);
         if (pszCoordinates)
         {
             OGRLineString* poLS = new OGRLineString();
@@ -250,13 +250,13 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
     }
     else if (strcmp(pszGeomType, "Polygon") == 0)
     {
-        OGRPolygon* poPoly = NULL;
+        OGRPolygon* poPoly = nullptr;
         CPLXMLNode* psOuterBoundary = CPLGetXMLNode(psXML, "outerBoundaryIs");
         if (psOuterBoundary)
         {
             CPLXMLNode* psLinearRing = CPLGetXMLNode(psOuterBoundary, "LinearRing");
             const char* pszCoordinates = CPLGetXMLValue(
-                psLinearRing ? psLinearRing : psOuterBoundary, "coordinates", NULL);
+                psLinearRing ? psLinearRing : psOuterBoundary, "coordinates", nullptr);
             if (pszCoordinates)
             {
                 OGRLinearRing* poLS = new OGRLinearRing();
@@ -276,7 +276,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
                     {
                         psLinearRing = CPLGetXMLNode(psIter, "LinearRing");
                         pszCoordinates = CPLGetXMLValue(
-                            psLinearRing ? psLinearRing : psIter, "coordinates", NULL);
+                            psLinearRing ? psLinearRing : psIter, "coordinates", nullptr);
                         if (pszCoordinates)
                         {
                             OGRLinearRing* poLS = new OGRLinearRing();
@@ -291,7 +291,7 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
     }
     else if (strcmp(pszGeomType, "MultiGeometry") == 0)
     {
-        CPLXMLNode* psIter = NULL;
+        CPLXMLNode* psIter = nullptr;
         OGRwkbGeometryType eType = wkbUnknown;
         for(psIter = psXML->psChild; psIter; psIter = psIter->psNext)
         {
@@ -318,8 +318,8 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
                     break;
             }
         }
-        OGRGeometryCollection* poColl = NULL;
-        if (psIter != NULL)
+        OGRGeometryCollection* poColl = nullptr;
+        if (psIter != nullptr)
             poColl = new OGRGeometryCollection();
         else if (eType == wkbPoint)
             poColl = new OGRMultiPoint();
@@ -350,13 +350,13 @@ static OGRGeometry* ParseKMLGeometry(/* const */ CPLXMLNode* psXML)
 static OGRGeometry* ParseKMLGeometry(const char* pszKML)
 {
     CPLXMLNode* psXML = CPLParseXMLString(pszKML);
-    if (psXML == NULL)
-        return NULL;
+    if (psXML == nullptr)
+        return nullptr;
 
     if (psXML->eType != CXT_Element)
     {
         CPLDestroyXMLNode(psXML);
-        return NULL;
+        return nullptr;
     }
 
     OGRGeometry* poGeom = ParseKMLGeometry(psXML);
@@ -474,7 +474,7 @@ OGRFeature *OGRGFTLayer::GetNextRawFeature()
 {
     if (nNextInSeq < nOffset ||
         nNextInSeq - nOffset >= (int)aosRows.size())
-        return NULL;
+        return nullptr;
 
     OGRFeature* poFeature = BuildFeatureFromSQL(aosRows[nNextInSeq - nOffset]);
 
@@ -517,7 +517,7 @@ int OGRGFTLayer::TestCapability( const char * pszCap )
 int OGRGFTLayer::ParseCSVResponse(char* pszLine,
                                   std::vector<CPLString>& aosRes)
 {
-    while(pszLine != NULL && *pszLine != 0)
+    while(pszLine != nullptr && *pszLine != 0)
     {
         char* pszNextLine = OGRGFTGotoNextLine(pszLine);
         if (pszNextLine)
@@ -544,7 +544,7 @@ int OGRGFTLayer::ParseCSVResponse(char* pszLine,
             CPLString osLine(pszLine);
 
             pszLine = pszNextLine;
-            while(pszLine != NULL && *pszLine != 0)
+            while(pszLine != nullptr && *pszLine != 0)
             {
                 pszNextLine = OGRGFTGotoNextLine(pszLine);
                 if (pszNextLine)
@@ -640,7 +640,7 @@ void OGRGFTLayer::SetGeomFieldName()
 {
     if (iGeometryField >= 0 && poFeatureDefn->GetGeomFieldCount() > 0)
     {
-        const char* pszGeomColName = NULL;
+        const char* pszGeomColName = nullptr;
         if (iGeometryField == poFeatureDefn->GetFieldCount())
         {
             CPLAssert(bHiddenGeometryField);

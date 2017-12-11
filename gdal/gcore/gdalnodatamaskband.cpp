@@ -50,7 +50,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand( GDALRasterBand *poParentIn ) :
     dfNoDataValue(poParentIn->GetNoDataValue()),
     poParent(poParentIn)
 {
-    poDS = NULL;
+    poDS = nullptr;
     nBand = 0;
 
     nRasterXSize = poParent->GetXSize();
@@ -120,7 +120,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     GByte *pabySrc = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE( GDALGetDataTypeSizeBytes(eWrkDT),
                              nBlockXSize, nBlockYSize ) );
-    if (pabySrc == NULL)
+    if (pabySrc == nullptr)
     {
         return CE_Failure;
     }
@@ -148,7 +148,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                             pabySrc, nXSizeRequest, nYSizeRequest,
                             eWrkDT, 0,
                             nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
-                            NULL );
+                            nullptr );
     if( eErr != CE_None )
     {
         CPLFree(pabySrc);

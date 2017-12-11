@@ -189,7 +189,7 @@ GDALColorInterp BSBRasterBand::GetColorInterpretation()
 
 BSBDataset::BSBDataset() :
     nGCPCount(0),
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     osGCPProjection(
         "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
         "SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",7030]],"
@@ -198,7 +198,7 @@ BSBDataset::BSBDataset() :
         "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
         "AUTHORITY[\"EPSG\",4326]]"),
     bGeoTransformSet(FALSE),
-    psInfo(NULL)
+    psInfo(nullptr)
 {
     adfGeoTransform[0] = 0.0;     /* X Origin (top left corner) */
     adfGeoTransform[1] = 1.0;     /* X Pixel size */
@@ -220,7 +220,7 @@ BSBDataset::~BSBDataset()
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
 
-    if( psInfo != NULL )
+    if( psInfo != nullptr )
         BSBClose( psInfo );
 }
 
@@ -393,10 +393,10 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect coordinate system related parameters from header.       */
 /* -------------------------------------------------------------------- */
-    const char *pszKNP=NULL;
-    const char *pszKNQ=NULL;
+    const char *pszKNP=nullptr;
+    const char *pszKNQ=nullptr;
 
-    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != nullptr; i++ )
     {
         if( STARTS_WITH_CI(psInfo->papszHeader[i], "KNP/") )
         {
@@ -416,7 +416,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 /*      mercator. In the future we should consider others.              */
 /* -------------------------------------------------------------------- */
     CPLString osUnderlyingSRS;
-    if( pszKNP != NULL )
+    if( pszKNP != nullptr )
     {
         const char *pszPR = strstr(pszKNP,"PR=");
         const char *pszGD = strstr(pszKNP,"GD=");
@@ -425,12 +425,12 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
         // Capture the PP string.
         const char *pszValue = strstr(pszKNP,"PP=");
-        const char *pszEnd = pszValue ? strstr(pszValue,",") : NULL;
+        const char *pszEnd = pszValue ? strstr(pszValue,",") : nullptr;
         if( pszValue && pszEnd )
             osPP.assign(pszValue+3,pszEnd-pszValue-3);
 
         // Look at the datum
-        if( pszGD == NULL )
+        if( pszGD == nullptr )
         {
             /* no match. We'll default to EPSG:4326 */
         }
@@ -440,7 +440,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
 
         // Look at the projection
-        if( pszPR == NULL )
+        if( pszPR == nullptr )
         {
             /* no match */
         }
@@ -481,7 +481,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         }
 
         else if( STARTS_WITH_CI(pszPR, "PR=LAMBERT CONFORMAL CONIC")
-                 && !osPP.empty() && pszKNQ != NULL )
+                 && !osPP.empty() && pszKNQ != nullptr )
         {
             CPLString osP2, osP3;
 
@@ -525,7 +525,7 @@ void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
         OGRCoordinateTransformation *poCT
             = OGRCreateCoordinateTransformation( &oGeog_SRS,
                                                  &oProjected_SRS );
-        if( poCT != NULL )
+        if( poCT != nullptr )
         {
             for( int i = 0; i < nGCPCount; i++ )
             {
@@ -569,7 +569,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     const char *extension = CPLGetExtension(pszFilename);
 
     // pseudointelligently try and guess whether we want a .geo or a .GEO
-    const char *geofile = NULL;
+    const char *geofile = nullptr;
     if (extension[1] == 'O')
     {
         geofile = CPLResetExtension( pszFilename, "GEO");
@@ -578,7 +578,7 @@ void BSBDataset::ScanForGCPsNos( const char *pszFilename )
     }
 
     FILE *gfp = VSIFOpen( geofile, "r" );  // Text files
-    if( gfp == NULL )
+    if( gfp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't find a matching .GEO file: %s", geofile );
@@ -644,14 +644,14 @@ void BSBDataset::ScanForGCPsBSB()
     int fileGCPCount=0;
 
     // Count the GCPs (reference points) in psInfo->papszHeader
-    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != nullptr; i++ )
         if( STARTS_WITH_CI(psInfo->papszHeader[i], "REF/") )
             fileGCPCount++;
 
     // Memory has not been allocated to fileGCPCount yet
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),fileGCPCount+1);
 
-    for( int i = 0; psInfo->papszHeader[i] != NULL; i++ )
+    for( int i = 0; psInfo->papszHeader[i] != nullptr; i++ )
     {
 
         if( !STARTS_WITH_CI(psInfo->papszHeader[i], "REF/") )
@@ -731,9 +731,9 @@ int BSBDataset::IdentifyInternal( GDALOpenInfo * poOpenInfo, bool& isNosOut )
 
     /* Additional test to avoid false positive. See #2881 */
     const char* pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "RA=");
-    if (pszRA == NULL) /* This may be a NO1 file */
+    if (pszRA == nullptr) /* This may be a NO1 file */
         pszRA = strstr((const char*)poOpenInfo->pabyHeader + i, "[JF");
-    if (pszRA == NULL || pszRA - ((const char*)poOpenInfo->pabyHeader + i) > 100 )
+    if (pszRA == nullptr || pszRA - ((const char*)poOpenInfo->pabyHeader + i) > 100 )
         return FALSE;
 
     return TRUE;
@@ -759,14 +759,14 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     bool isNos = false;
     if (!IdentifyInternal(poOpenInfo, isNos))
-        return NULL;
+        return nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The BSB driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -778,10 +778,10 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     poDS->psInfo = BSBOpen( poOpenInfo->pszFilename );
-    if( poDS->psInfo == NULL )
+    if( poDS->psInfo == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = poDS->psInfo->nXSize;
@@ -1157,7 +1157,7 @@ BSBCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 void GDALRegister_BSB()
 
 {
-    if( GDALGetDriverByName( "BSB" ) != NULL )
+    if( GDALGetDriverByName( "BSB" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

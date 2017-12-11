@@ -63,14 +63,14 @@ OGRDataSource *OGRODBCDriver::Open( const char * pszFilename,
         && !EQUAL(CPLGetExtension(pszFilename), "MDB")
 #endif
         )
-        return NULL;
+        return nullptr;
 
     OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -85,7 +85,7 @@ OGRDataSource *OGRODBCDriver::CreateDataSource( const char * pszName,
 
 {
     if( !STARTS_WITH_CI(pszName, "ODBC:") )
-        return NULL;
+        return nullptr;
 
     OGRODBCDataSource *poDS = new OGRODBCDataSource();
 
@@ -95,7 +95,7 @@ OGRDataSource *OGRODBCDriver::CreateDataSource( const char * pszName,
         CPLError( CE_Failure, CPLE_AppDefined,
          "ODBC driver doesn't currently support database creation.\n"
                   "Please create database with the `createdb' command." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;

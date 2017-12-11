@@ -58,7 +58,7 @@ OGRNTFLayer::OGRNTFLayer( OGRNTFDataSource *poDSIn,
 OGRNTFLayer::~OGRNTFLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "Mem", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -88,13 +88,13 @@ void OGRNTFLayer::ResetReading()
 OGRFeature *OGRNTFLayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Have we processed all features already?                         */
 /* -------------------------------------------------------------------- */
     if( iCurrentReader == poDS->GetFileCount() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to open a file?                                      */
@@ -106,7 +106,7 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
     }
 
     NTFFileReader       *poCurrentReader = poDS->GetFileReader(iCurrentReader);
-    if( poCurrentReader->GetFP() == NULL )
+    if( poCurrentReader->GetFP() == nullptr )
     {
         poCurrentReader->Open();
     }
@@ -128,15 +128,15 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
     while( true )
     {
         poFeature = poCurrentReader->ReadOGRFeature( this );
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
         m_nFeaturesRead++;
 
-        if( (m_poFilterGeom == NULL
-             || poFeature->GetGeometryRef() == NULL
+        if( (m_poFilterGeom == nullptr
+             || poFeature->GetGeometryRef() == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
@@ -147,11 +147,11 @@ OGRFeature *OGRNTFLayer::GetNextFeature()
 /*      If we get NULL the file must be all consumed, advance to the    */
 /*      next file that contains features for this layer.                */
 /* -------------------------------------------------------------------- */
-    if( poFeature == NULL )
+    if( poFeature == nullptr )
     {
         poCurrentReader->Close();
 
-        if( poDS->GetOption("CACHING") != NULL
+        if( poDS->GetOption("CACHING") != nullptr
             && EQUAL(poDS->GetOption("CACHING"),"OFF") )
         {
             poCurrentReader->DestroyIndex();
@@ -193,8 +193,8 @@ OGRFeature * OGRNTFLayer::FeatureTranslate( NTFFileReader *poReader,
                                             NTFRecord ** papoGroup )
 
 {
-    if( pfnTranslator == NULL )
-        return NULL;
+    if( pfnTranslator == nullptr )
+        return nullptr;
 
     return pfnTranslator( poReader, this, papoGroup );
 }

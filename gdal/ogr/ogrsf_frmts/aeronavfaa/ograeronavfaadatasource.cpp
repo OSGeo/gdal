@@ -37,8 +37,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRAeronavFAADataSource::OGRAeronavFAADataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0)
 {}
 
@@ -73,7 +73,7 @@ OGRLayer *OGRAeronavFAADataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -92,7 +92,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
 // --------------------------------------------------------------------
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     char szBuffer[10000];
@@ -116,7 +116,7 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
 
     const bool bIsIAP =
         strstr(szBuffer,
-               "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != NULL &&
+               "INSTRUMENT APPROACH PROCEDURE NAVAID & FIX DATA") != nullptr &&
         szBuffer[85] == 13 && szBuffer[85+1] == 10;
 
     bool bIsROUTE = STARTS_WITH(
@@ -156,8 +156,8 @@ int OGRAeronavFAADataSource::Open( const char * pszFilename )
     else if (bIsROUTE)
     {
         const bool bIsDPOrSTARS =
-            strstr(szBuffer, "DPs - DEPARTURE PROCEDURES") != NULL ||
-            strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != NULL;
+            strstr(szBuffer, "DPs - DEPARTURE PROCEDURES") != nullptr ||
+            strstr(szBuffer, "STARS - STANDARD TERMINAL ARRIVALS") != nullptr;
         VSIFSeekL( fp, 0, SEEK_SET );
         nLayers = 1;
         papoLayers = static_cast<OGRLayer **>(CPLMalloc(sizeof(OGRLayer*)));

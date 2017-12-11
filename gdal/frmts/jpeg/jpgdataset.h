@@ -140,7 +140,7 @@ typedef struct GDALJPEGErrorStruct
     void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
     GDALJPEGErrorStruct() :
         bNonFatalErrorEncountered(false),
-        p_previous_emit_message(NULL)
+        p_previous_emit_message(nullptr)
     {
         memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
     }

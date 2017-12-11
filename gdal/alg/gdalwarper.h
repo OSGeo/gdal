@@ -477,7 +477,7 @@ public:
 
     CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
     void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize, 
-                                             int *pbWasInitialized = NULL );
+                                             int *pbWasInitialized = nullptr );
     static void     DestroyDestinationBuffer(void* pDstBuffer);
 
     const GDALWarpOptions         *GetOptions();

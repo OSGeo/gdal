@@ -76,7 +76,7 @@ static const TigerRecordInfo rt5_info =
 
 TigerFeatureIds::TigerFeatureIds( OGRTigerDataSource * poDSIn,
                                   CPL_UNUSED const char * pszPrototypeModule ) :
-    TigerFileBase(NULL, FILE_CODE)
+    TigerFileBase(nullptr, FILE_CODE)
 {
   poDS = poDSIn;
   poFeatureDefn = new OGRFeatureDefn( "FeatureIds" );

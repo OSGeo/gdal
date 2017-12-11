@@ -53,7 +53,7 @@ static const int block_page_size = 8192;
 VecSegHeader::VecSegHeader()
 
 {
-    vs = NULL;
+    vs = nullptr;
     initialized = false;
     needs_swap = !BigEndianSystem();
     header_blocks = 0;
@@ -166,7 +166,7 @@ void VecSegHeader::InitializeExisting()
         { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
           0, 0, 0, 21, 0, 0, 0, 4, 0, 0, 0, 19, 0, 0, 0, 69 };
 
-    if( memcmp( vs->GetData( sec_raw, 0, NULL, 24 ), magic, 24 ) != 0 )
+    if( memcmp( vs->GetData( sec_raw, 0, nullptr, 24 ), magic, 24 ) != 0 )
     {
         return ThrowPCIDSKException( "Unexpected vector header values, possibly it is not a V6 vector segment?" );
     }
@@ -174,14 +174,14 @@ void VecSegHeader::InitializeExisting()
 /* -------------------------------------------------------------------- */
 /*      Establish how big the header is currently.                      */
 /* -------------------------------------------------------------------- */
-    memcpy( &header_blocks, vs->GetData( sec_raw, 68, NULL, 4 ), 4 );
+    memcpy( &header_blocks, vs->GetData( sec_raw, 68, nullptr, 4 ), 4 );
     if( needs_swap )
         SwapData( &header_blocks, 4, 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Load section offsets.                                           */
 /* -------------------------------------------------------------------- */
-    memcpy( section_offsets, vs->GetData( sec_raw, 72, NULL, 16 ), 16 );
+    memcpy( section_offsets, vs->GetData( sec_raw, 72, nullptr, 16 ), 16 );
     if( needs_swap )
         SwapData( section_offsets, 4, 4 );
 
@@ -252,7 +252,7 @@ void VecSegHeader::InitializeExisting()
 /* -------------------------------------------------------------------- */
 /*      Fetch the shapeid basics.                                       */
 /* -------------------------------------------------------------------- */
-    memcpy( &(vs->shape_count), vs->GetData(sec_raw,next_off,NULL,4), 4);
+    memcpy( &(vs->shape_count), vs->GetData(sec_raw,next_off,nullptr,4), 4);
     if( needs_swap )
         SwapData( &(vs->shape_count), 4, 1 );
     if( vs->shape_count < 0 )

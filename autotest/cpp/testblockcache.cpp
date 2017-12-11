@@ -38,7 +38,7 @@
 #include <cstdlib>
 #include <vector>
 
-CPLLock* psLock = NULL;
+CPLLock* psLock = nullptr;
 
 static void Usage()
 {
@@ -50,7 +50,7 @@ static void Usage()
 }
 
 int nLoops = 1;
-const char* pszDataset = NULL;
+const char* pszDataset = nullptr;
 int bCheck = FALSE;
 
 typedef enum
@@ -84,9 +84,9 @@ typedef struct
     int nBufferSize;
 } ThreadDescription;
 
-static Request* psGlobalRequestList = NULL;
-static Resource* psGlobalResourceList = NULL;
-static Resource* psGlobalResourceLast = NULL;
+static Request* psGlobalRequestList = nullptr;
+static Resource* psGlobalResourceList = nullptr;
+static Resource* psGlobalResourceLast = nullptr;
 
 /* according to rand() man page, POSIX.1-2001 proposes the following implementation */
 /* RAND_MAX assumed to be 32767 */
@@ -120,10 +120,10 @@ static void ReadRaster(GDALDataset* poDS, int nXSize, int nYSize, int nBands,
     CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Read, nXOff, nYOff, nXWin, nYWin,
                     pBuffer, nXWin, nYWin,
                     GDT_Byte,
-                    nBands, NULL,
+                    nBands, nullptr,
                     0, 0, 0
 #ifdef GDAL_COMPILATION
-                    , NULL
+                    , nullptr
 #endif
                     ));
     if( bCheck )
@@ -147,7 +147,7 @@ static void AddRequest(Request*& psRequestList, Request*& psRequestLast,
     else
         psRequestList = psRequest;
     psRequestLast = psRequest;
-    psRequest->psNext = NULL;
+    psRequest->psNext = nullptr;
 }
 
 static Request* GetNextRequest(Request*& psRequestList)
@@ -157,7 +157,7 @@ static Request* GetNextRequest(Request*& psRequestList)
     if( psRequestList )
     {
         psRequestList = psRequestList->psNext;
-        psRet->psNext = NULL;
+        psRet->psNext = nullptr;
     }
     if( psLock ) CPLReleaseLock(psLock);
     return psRet;
@@ -169,11 +169,11 @@ static Resource* AcquireFirstResource()
     Resource* psRet = psGlobalResourceList;
     psGlobalResourceList = psGlobalResourceList->psNext;
     if( psGlobalResourceList )
-        psGlobalResourceList->psPrev = NULL;
+        psGlobalResourceList->psPrev = nullptr;
     else
-        psGlobalResourceLast = NULL;
-    psRet->psNext = NULL;
-    assert(psRet->psPrev == NULL);
+        psGlobalResourceLast = nullptr;
+    psRet->psNext = nullptr;
+    assert(psRet->psPrev == nullptr);
     if( psLock ) CPLReleaseLock(psLock);
     return psRet;
 }
@@ -182,8 +182,8 @@ static void PutResourceAtEnd(Resource* psResource)
 {
     if( psLock ) CPLAcquireLock(psLock);
     psResource->psPrev = psGlobalResourceLast;
-    psResource->psNext = NULL;
-    if( psGlobalResourceList == NULL )
+    psResource->psNext = nullptr;
+    if( psGlobalResourceList == nullptr )
         psGlobalResourceList = psResource;
     else
         psGlobalResourceLast->psNext = psResource;
@@ -197,7 +197,7 @@ static void ThreadFuncDedicatedDataset(void* _psThreadDescription)
     int nXSize = psThreadDescription->poDS->GetRasterXSize();
     int nYSize = psThreadDescription->poDS->GetRasterYSize();
     void* pBuffer = CPLMalloc(psThreadDescription->nBufferSize);
-    while( psThreadDescription->psRequestList != NULL )
+    while( psThreadDescription->psRequestList != nullptr )
     {
         Request* psRequest = GetNextRequest(psThreadDescription->psRequestList);
         ReadRaster(psThreadDescription->poDS, nXSize, nYSize, psRequest->nBands,
@@ -210,7 +210,7 @@ static void ThreadFuncDedicatedDataset(void* _psThreadDescription)
 static void ThreadFuncWithMigration(void* /* _unused */)
 {
     Request* psRequest;
-    while( (psRequest = GetNextRequest(psGlobalRequestList)) != NULL )
+    while( (psRequest = GetNextRequest(psGlobalRequestList)) != nullptr )
     {
         Resource* psResource = AcquireFirstResource();
         assert(psResource);
@@ -324,11 +324,11 @@ int main(int argc, char* argv[])
     int nXSize = 5000;
     int nYSize = 5000;
     int nBands = 4;
-    char** papszOptions = NULL;
+    char** papszOptions = nullptr;
     int bOnDisk = FALSE;
     std::vector<ThreadDescription> asThreadDescription;
     int bMemDriver = FALSE;
-    GDALDataset* poMEMDS = NULL;
+    GDALDataset* poMEMDS = nullptr;
     int bMigrate = FALSE;
     int nMaxRequests = -1;
 
@@ -410,7 +410,7 @@ int main(int argc, char* argv[])
             bMigrate = TRUE;
         else if( argv[i][0] == '-' )
             Usage();
-        else if( pszDataset == NULL )
+        else if( pszDataset == nullptr )
             pszDataset = argv[i];
         else
         {
@@ -418,13 +418,13 @@ int main(int argc, char* argv[])
         }
     }
 
-    if( pszDataset != NULL && bNewDatasetOption )
+    if( pszDataset != nullptr && bNewDatasetOption )
         Usage();
 
     CPLDebug("TEST", "Using %d threads", nThreads);
 
     int bCreatedDataset = FALSE;
-    if( pszDataset == NULL )
+    if( pszDataset == nullptr )
     {
         bCreatedDataset = TRUE;
         if( bOnDisk )
@@ -449,10 +449,10 @@ int main(int argc, char* argv[])
                 CPL_IGNORE_RET_VAL(poDS->RasterIO(GF_Write, 0, iY, nXSize, 1,
                                pabyLine, nXSize, 1,
                                GDT_Byte,
-                               nBands, NULL,
+                               nBands, nullptr,
                                0, 0, 0
 #ifdef GDAL_COMPILATION
-                               , NULL
+                               , nullptr
 #endif
                                ));
             }
@@ -468,9 +468,9 @@ int main(int argc, char* argv[])
         bCheck = FALSE;
     }
     CSLDestroy(papszOptions);
-    papszOptions = NULL;
+    papszOptions = nullptr;
 
-    Request* psGlobalRequestLast = NULL;
+    Request* psGlobalRequestLast = nullptr;
 
     for(i = 0; i < nThreads; i++ )
     {
@@ -483,7 +483,7 @@ int main(int argc, char* argv[])
         else
         {
             poDS = (GDALDataset*)GDALOpen(pszDataset, GA_ReadOnly);
-            if( poDS == NULL )
+            if( poDS == nullptr )
                 exit(1);
         }
         if( bMigrate )
@@ -507,8 +507,8 @@ int main(int argc, char* argv[])
         {
             ThreadDescription sThreadDescription;
             sThreadDescription.poDS = poDS;
-            sThreadDescription.psRequestList = NULL;
-            Request* psRequestLast = NULL;
+            sThreadDescription.psRequestList = nullptr;
+            Request* psRequestLast = nullptr;
             if( eStrategy == STRATEGY_RANDOM )
                 sThreadDescription.nBufferSize = CreateRandomStrategyRequests(
                         poDS, nMaxRequests, sThreadDescription.psRequestList, psRequestLast);
@@ -522,7 +522,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if( bCreatedDataset && poMEMDS == NULL && bOnDisk )
+    if( bCreatedDataset && poMEMDS == nullptr && bOnDisk )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         VSIUnlink(pszDataset);
@@ -538,7 +538,7 @@ int main(int argc, char* argv[])
     {
         CPLJoinableThread* pThread;
         if( bMigrate )
-            pThread = CPLCreateJoinableThread(ThreadFuncWithMigration, NULL);
+            pThread = CPLCreateJoinableThread(ThreadFuncWithMigration, nullptr);
         else
             pThread = CPLCreateJoinableThread(ThreadFuncDedicatedDataset,
                                               &(asThreadDescription[i]));
@@ -547,13 +547,13 @@ int main(int argc, char* argv[])
     for(i = 0; i < nThreads; i++ )
     {
         CPLJoinThread(apsThreads[i]);
-        if( !bMigrate && poMEMDS == NULL )
+        if( !bMigrate && poMEMDS == nullptr )
             GDALClose(asThreadDescription[i].poDS);
     }
-    while( psGlobalResourceList != NULL )
+    while( psGlobalResourceList != nullptr )
     {
         CPLFree( psGlobalResourceList->pBuffer);
-        if( poMEMDS == NULL )
+        if( poMEMDS == nullptr )
             GDALClose(psGlobalResourceList->poDS);
         Resource* psNext = psGlobalResourceList->psNext;
         CPLFree( psGlobalResourceList );
@@ -565,7 +565,7 @@ int main(int argc, char* argv[])
         CPLDestroyLock( psLock );
     }
 
-    if( bCreatedDataset && poMEMDS == NULL  )
+    if( bCreatedDataset && poMEMDS == nullptr  )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         VSIUnlink(pszDataset);

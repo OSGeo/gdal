@@ -121,5 +121,5 @@ const char *NTFCodeList::Lookup( const char * pszCode )
             return papszCodeDes[i];
     }
 
-    return NULL;
+    return nullptr;
 }

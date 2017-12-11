@@ -58,7 +58,7 @@ public:
     PLLinkedDataset       *psPrev;
     PLLinkedDataset       *psNext;
 
-                        PLLinkedDataset() : poDS(NULL), psPrev(NULL), psNext(NULL) {}
+                        PLLinkedDataset() : poDS(nullptr), psPrev(nullptr), psNext(nullptr) {}
 };
 
 class PLMosaicRasterBand;
@@ -215,7 +215,7 @@ CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const int sub_tile_y = nBlockYOff % (poMOSDS->nQuadSize / nBlockYSize);
 
     GDALDataset *poMetaTileDS = poMOSDS->GetMetaTile(meta_tile_x, meta_tile_y);
-    if( poMetaTileDS == NULL )
+    if( poMetaTileDS == nullptr )
     {
         memset(pImage, 0,
                nBlockXSize * nBlockYSize * (GDALGetDataTypeSize(eDataType)/8));
@@ -229,7 +229,7 @@ CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         nBlockXSize,
                         nBlockYSize,
                         pImage, nBlockXSize, nBlockYSize,
-                        eDataType, 0, 0, NULL);
+                        eDataType, 0, 0, nullptr);
 }
 
 /************************************************************************/
@@ -263,7 +263,7 @@ const char* PLMosaicRasterBand::GetMetadataItem( const char* pszName,
                                                  const char* pszDomain )
 {
     int nPixel, nLine;
-    if( pszName != NULL && pszDomain != NULL && EQUAL(pszDomain, "LocationInfo") &&
+    if( pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "LocationInfo") &&
         sscanf(pszName, "Pixel_%d_%d", &nPixel, &nLine) == 2 )
     {
         PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
@@ -294,7 +294,7 @@ GDALRasterBand* PLMosaicRasterBand::GetOverview(int iOvrLevel)
 {
     PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>( poDS );
     if (iOvrLevel < 0 || iOvrLevel >= GetOverviewCount())
-        return NULL;
+        return nullptr;
 
     poGDS->CreateMosaicCachePathIfNecessary();
 
@@ -336,15 +336,15 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
 PLMosaicDataset::PLMosaicDataset() :
     bMustCleanPersistent(FALSE),
     bTrustCache(FALSE),
-    pszWKT(NULL),
+    pszWKT(nullptr),
     nQuadSize(0),
     bHasGeoTransform(FALSE),
     nZoomLevel(0),
     bUseTMSForMain(FALSE),
-    poTMSDS(NULL),
+    poTMSDS(nullptr),
     nCacheMaxSize(10),
-    psHead(NULL),
-    psTail(NULL),
+    psHead(nullptr),
+    psTail(nullptr),
     nLastMetaTileX(-1),
     nLastMetaTileY(-1)
 {
@@ -372,7 +372,7 @@ PLMosaicDataset::~PLMosaicDataset()
     if (bMustCleanPersistent)
     {
         char** papszOptions
-            = CSLSetNameValue(NULL, "CLOSE_PERSISTENT",
+            = CSLSetNameValue(nullptr, "CLOSE_PERSISTENT",
                               CPLSPrintf("PLMOSAIC:%p", this));
         CPLHTTPDestroyResult( CPLHTTPFetch( osBaseURL, papszOptions) );
         CSLDestroy(papszOptions);
@@ -385,7 +385,7 @@ PLMosaicDataset::~PLMosaicDataset()
 
 void PLMosaicDataset::FlushDatasetsCache()
 {
-    for( PLLinkedDataset* psIter = psHead; psIter != NULL;  )
+    for( PLLinkedDataset* psIter = psHead; psIter != nullptr;  )
     {
         PLLinkedDataset* psNext = psIter->psNext;
         if( psIter->poDS )
@@ -393,8 +393,8 @@ void PLMosaicDataset::FlushDatasetsCache()
         delete psIter;
         psIter = psNext;
     }
-    psHead = NULL;
-    psTail = NULL;
+    psHead = nullptr;
+    psTail = nullptr;
     oMapLinkedDatasets.clear();
 }
 
@@ -434,7 +434,7 @@ char** PLMosaicDataset::GetBaseHTTPOptions()
     bMustCleanPersistent = TRUE;
 
     char** papszOptions
-        = CSLAddString(NULL, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
+        = CSLAddString(nullptr, CPLSPrintf("PERSISTENT=PLMOSAIC:%p", this));
     /* Use basic auth, rather than Authorization headers since curl would forward it to S3 */
     papszOptions = CSLAddString(papszOptions, CPLSPrintf("USERPWD=%s:", osAPIKey.c_str()));
 
@@ -448,8 +448,8 @@ char** PLMosaicDataset::GetBaseHTTPOptions()
 CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
                                          int bQuiet404Error)
 {
-    char** papszOptions = CSLAddString(GetBaseHTTPOptions(), NULL);
-    CPLHTTPResult *psResult = NULL;
+    char** papszOptions = CSLAddString(GetBaseHTTPOptions(), nullptr);
+    CPLHTTPResult *psResult = nullptr;
     if( STARTS_WITH(osBaseURL, "/vsimem/") &&
         STARTS_WITH(pszURL, "/vsimem/") )
     {
@@ -488,7 +488,7 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
     }
     CSLDestroy(papszOptions);
 
-    if( psResult->pszErrBuf != NULL )
+    if( psResult->pszErrBuf != nullptr )
     {
         if( !(bQuiet404Error && strstr(psResult->pszErrBuf, "404")) )
         {
@@ -498,14 +498,14 @@ CPLHTTPResult* PLMosaicDataset::Download(const char* pszURL,
                       psResult->pszErrBuf );
         }
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
-    if( psResult->pabyData == NULL )
+    if( psResult->pabyData == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Empty content returned by server");
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     return psResult;
@@ -519,17 +519,17 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
                                          int bQuiet404Error)
 {
     CPLHTTPResult * psResult = Download(pszURL, bQuiet404Error);
-    if( psResult == NULL )
+    if( psResult == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
-    json_object* poObj = NULL;
+    json_object* poObj = nullptr;
     const char* pszText = reinterpret_cast<const char*>(psResult->pabyData);
     if( !OGRJSonParse(pszText, &poObj, true) )
     {
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     CPLHTTPDestroyResult(psResult);
@@ -538,7 +538,7 @@ json_object* PLMosaicDataset::RunRequest(const char* pszURL,
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Return is not a JSON dictionary");
         json_object_put(poObj);
-        poObj = NULL;
+        poObj = nullptr;
     }
 
     return poObj;
@@ -566,7 +566,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     PLMosaicDataset* poDS = new PLMosaicDataset();
 
@@ -576,9 +576,9 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
             poOpenInfo->pszFilename+strlen("PLMosaic:"), ",", TRUE, FALSE );
     for( char** papszIter = papszOptions; papszIter && *papszIter; papszIter ++ )
     {
-        char* pszKey = NULL;
+        char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
         {
             if( !EQUAL(pszKey, "api_key") &&
                 !EQUAL(pszKey, "mosaic") &&
@@ -590,7 +590,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLFree(pszKey);
                 delete poDS;
                 CSLDestroy(papszOptions);
-                return NULL;
+                return nullptr;
             }
             CPLFree(pszKey);
         }
@@ -605,7 +605,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
                  "Missing PL_API_KEY configuration option or API_KEY open option");
         delete poDS;
         CSLDestroy(papszOptions);
-        return NULL;
+        return nullptr;
     }
 
     poDS->osMosaic = PLMosaicGetParameter(poOpenInfo, papszOptions, "mosaic", "");
@@ -620,14 +620,14 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
                         poOpenInfo, papszOptions, "use_tiles", "FALSE"));
 
     CSLDestroy(papszOptions);
-    papszOptions = NULL;
+    papszOptions = nullptr;
 
     if( !poDS->osMosaic.empty() )
     {
         if( !poDS->OpenMosaic() )
         {
             delete poDS;
-            poDS = NULL;
+            poDS = nullptr;
         }
     }
     else
@@ -635,7 +635,7 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !poDS->ListSubdatasets() )
         {
             delete poDS;
-            poDS = NULL;
+            poDS = nullptr;
         }
         else
         {
@@ -687,9 +687,9 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
     if( !osCachePathRoot.empty() )
     {
         const CPLString osCachePath(
-            CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
+            CPLFormFilename(osCachePathRoot, "plmosaic_cache", nullptr));
         const CPLString osMosaicPath(
-            CPLFormFilename(osCachePath, osMosaic, NULL));
+            CPLFormFilename(osCachePath, osMosaic, nullptr));
 
         return osMosaicPath;
     }
@@ -705,9 +705,9 @@ void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
     if( !osCachePathRoot.empty() )
     {
         const CPLString osCachePath(
-            CPLFormFilename(osCachePathRoot, "plmosaic_cache", NULL));
+            CPLFormFilename(osCachePathRoot, "plmosaic_cache", nullptr));
         const CPLString osMosaicPath(
-            CPLFormFilename(osCachePath, osMosaic, NULL));
+            CPLFormFilename(osCachePath, osMosaic, nullptr));
 
         VSIStatBufL sStatBuf;
         if( VSIStatL(osMosaicPath, &sStatBuf) != 0 )
@@ -732,7 +732,7 @@ int PLMosaicDataset::OpenMosaic()
         osURL += '/';
     osURL += osMosaic;
     json_object* poObj = RunRequest(osURL);
-    if( poObj == NULL )
+    if( poObj == nullptr )
     {
         return FALSE;
     }
@@ -743,20 +743,20 @@ int PLMosaicDataset::OpenMosaic()
     json_object* poQuadSize = CPL_json_object_object_get(poObj, "quad_size");
     json_object* poResolution = CPL_json_object_object_get(poObj, "resolution");
     json_object* poLinks = CPL_json_object_object_get(poObj, "links");
-    json_object* poLinksQuads = NULL;
-    json_object* poLinksTiles = NULL;
-    if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
+    json_object* poLinksQuads = nullptr;
+    json_object* poLinksTiles = nullptr;
+    if( poLinks != nullptr && json_object_get_type(poLinks) == json_type_object )
     {
         poLinksQuads = CPL_json_object_object_get(poLinks, "quads");
         poLinksTiles = CPL_json_object_object_get(poLinks, "tiles");
     }
-    if( poCoordinateSystem == NULL || json_object_get_type(poCoordinateSystem) != json_type_string ||
-        poDataType == NULL || json_object_get_type(poDataType) != json_type_string ||
-        poQuadPattern == NULL || json_object_get_type(poQuadPattern) != json_type_string ||
-        poQuadSize == NULL || json_object_get_type(poQuadSize) != json_type_int ||
-        poResolution == NULL || (json_object_get_type(poResolution) != json_type_int &&
+    if( poCoordinateSystem == nullptr || json_object_get_type(poCoordinateSystem) != json_type_string ||
+        poDataType == nullptr || json_object_get_type(poDataType) != json_type_string ||
+        poQuadPattern == nullptr || json_object_get_type(poQuadPattern) != json_type_string ||
+        poQuadSize == nullptr || json_object_get_type(poQuadSize) != json_type_int ||
+        poResolution == nullptr || (json_object_get_type(poResolution) != json_type_int &&
                                  json_object_get_type(poResolution) != json_type_double) ||
-        poLinksQuads == NULL || json_object_get_type(poLinksQuads) != json_type_string )
+        poLinksQuads == nullptr || json_object_get_type(poLinksQuads) != json_type_string )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Missing required parameter");
         json_object_put(poObj);
@@ -832,8 +832,8 @@ int PLMosaicDataset::OpenMosaic()
     }
 
     const char* pszQuadPattern = json_object_get_string(poQuadPattern);
-    if( strstr(pszQuadPattern, "{tilex:") == NULL ||
-        strstr(pszQuadPattern, "{tiley:") == NULL )
+    if( strstr(pszQuadPattern, "{tilex:") == nullptr ||
+        strstr(pszQuadPattern, "{tiley:") == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid quad_pattern = %s",
                  pszQuadPattern);
@@ -845,11 +845,11 @@ int PLMosaicDataset::OpenMosaic()
 
     // Use WMS/TMS driver for overviews (only for byte)
     if( eDT == GDT_Byte && EQUAL(pszSRS, "EPSG:3857") &&
-        poLinksTiles != NULL && json_object_get_type(poLinksTiles) == json_type_string )
+        poLinksTiles != nullptr && json_object_get_type(poLinksTiles) == json_type_string )
     {
         const char* pszLinksTiles = json_object_get_string(poLinksTiles);
-        if( strstr(pszLinksTiles, "{x}") == NULL || strstr(pszLinksTiles, "{y}") == NULL ||
-            strstr(pszLinksTiles, "{z}") == NULL )
+        if( strstr(pszLinksTiles, "{x}") == nullptr || strstr(pszLinksTiles, "{y}") == nullptr ||
+            strstr(pszLinksTiles, "{z}") == nullptr )
         {
             CPLError(CE_Warning, CPLE_NotSupported, "Invalid links.tiles = %s",
                      pszLinksTiles);
@@ -911,11 +911,11 @@ int PLMosaicDataset::OpenMosaic()
 
             poTMSDS = reinterpret_cast<GDALDataset *>(
                 GDALOpenEx( osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                           NULL, NULL, NULL ) );
+                           nullptr, nullptr, nullptr ) );
         }
     }
 
-    if( bUseTMSForMain && poTMSDS == NULL )
+    if( bUseTMSForMain && poTMSDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot find tile definition, so use_tiles will be ignored");
@@ -926,19 +926,19 @@ int PLMosaicDataset::OpenMosaic()
         SetBand(i + 1, new PLMosaicRasterBand(this, i + 1, eDT));
 
     json_object* poFirstAcquired = CPL_json_object_object_get(poObj, "first_acquired");
-    if( poFirstAcquired != NULL && json_object_get_type(poFirstAcquired) == json_type_string )
+    if( poFirstAcquired != nullptr && json_object_get_type(poFirstAcquired) == json_type_string )
     {
         SetMetadataItem("FIRST_ACQUIRED",
                                  json_object_get_string(poFirstAcquired));
     }
     json_object* poLastAcquired = CPL_json_object_object_get(poObj, "last_acquired");
-    if( poLastAcquired != NULL && json_object_get_type(poLastAcquired) == json_type_string )
+    if( poLastAcquired != nullptr && json_object_get_type(poLastAcquired) == json_type_string )
     {
         SetMetadataItem("LAST_ACQUIRED",
                                  json_object_get_string(poLastAcquired));
     }
     json_object* poTitle = CPL_json_object_object_get(poObj, "title");
-    if( poTitle != NULL && json_object_get_type(poTitle) == json_type_string )
+    if( poTitle != nullptr && json_object_get_type(poTitle) == json_type_string )
     {
         SetMetadataItem("TITLE", json_object_get_string(poTitle));
     }
@@ -958,24 +958,24 @@ int PLMosaicDataset::ListSubdatasets()
     while(osURL.size())
     {
         json_object* poObj = RunRequest(osURL);
-        if( poObj == NULL )
+        if( poObj == nullptr )
         {
             return FALSE;
         }
 
         osURL = "";
         json_object* poLinks = CPL_json_object_object_get(poObj, "links");
-        if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
+        if( poLinks != nullptr && json_object_get_type(poLinks) == json_type_object )
         {
             json_object* poNext = CPL_json_object_object_get(poLinks, "next");
-            if( poNext != NULL && json_object_get_type(poNext) == json_type_string )
+            if( poNext != nullptr && json_object_get_type(poNext) == json_type_string )
             {
                 osURL = json_object_get_string(poNext);
             }
         }
 
         json_object* poMosaics = CPL_json_object_object_get(poObj, "mosaics");
-        if( poMosaics == NULL || json_object_get_type(poMosaics) != json_type_array )
+        if( poMosaics == nullptr || json_object_get_type(poMosaics) != json_type_array )
         {
             json_object_put(poObj);
             return FALSE;
@@ -984,28 +984,28 @@ int PLMosaicDataset::ListSubdatasets()
         const int nMosaics = json_object_array_length(poMosaics);
         for(int i=0;i< nMosaics;i++)
         {
-            const char* pszName = NULL;
-            const char* pszTitle = NULL;
-            const char* pszSelf = NULL;
-            const char* pszCoordinateSystem = NULL;
+            const char* pszName = nullptr;
+            const char* pszTitle = nullptr;
+            const char* pszSelf = nullptr;
+            const char* pszCoordinateSystem = nullptr;
             json_object* poMosaic = json_object_array_get_idx(poMosaics, i);
             if( poMosaic && json_object_get_type(poMosaic) == json_type_object )
             {
                 json_object* poName = CPL_json_object_object_get(poMosaic, "name");
-                if( poName != NULL && json_object_get_type(poName) == json_type_string )
+                if( poName != nullptr && json_object_get_type(poName) == json_type_string )
                 {
                     pszName = json_object_get_string(poName);
                 }
                 json_object* poTitle = CPL_json_object_object_get(poMosaic, "title");
-                if( poTitle != NULL && json_object_get_type(poTitle) == json_type_string )
+                if( poTitle != nullptr && json_object_get_type(poTitle) == json_type_string )
                 {
                     pszTitle = json_object_get_string(poTitle);
                 }
                 poLinks = CPL_json_object_object_get(poMosaic, "links");
-                if( poLinks != NULL && json_object_get_type(poLinks) == json_type_object )
+                if( poLinks != nullptr && json_object_get_type(poLinks) == json_type_object )
                 {
                     json_object* poSelf = CPL_json_object_object_get(poLinks, "self");
-                    if( poSelf != NULL && json_object_get_type(poSelf) == json_type_string )
+                    if( poSelf != nullptr && json_object_get_type(poSelf) == json_type_string )
                     {
                         pszSelf = json_object_get_string(poSelf);
                     }
@@ -1109,7 +1109,7 @@ void PLMosaicDataset::InsertNewDataset(CPLString osKey, GDALDataset* poDS)
                  psTail->osKey.c_str());
         oMapLinkedDatasets.erase(psTail->osKey);
         PLLinkedDataset* psNewTail = psTail->psPrev;
-        psNewTail->psNext = NULL;
+        psNewTail->psNext = nullptr;
         if( psTail->poDS )
             GDALClose( psTail->poDS );
         delete psTail;
@@ -1123,7 +1123,7 @@ void PLMosaicDataset::InsertNewDataset(CPLString osKey, GDALDataset* poDS)
     psLinkedDataset->psNext = psHead;
     psLinkedDataset->poDS = poDS;
     psHead = psLinkedDataset;
-    if( psTail == NULL )
+    if( psTail == nullptr )
         psTail = psHead;
     oMapLinkedDatasets[osKey] = psLinkedDataset;
 }
@@ -1135,11 +1135,11 @@ void PLMosaicDataset::InsertNewDataset(CPLString osKey, GDALDataset* poDS)
 GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
                                                       CPLString osTilename)
 {
-    const char* const apszAllowedDrivers[2] = { "GTiff", NULL };
+    const char* const apszAllowedDrivers[2] = { "GTiff", nullptr };
     GDALDataset* poDS = reinterpret_cast<GDALDataset *>(
         GDALOpenEx( osTmpFilename, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                    apszAllowedDrivers, NULL, NULL ) );
-    if( poDS != NULL )
+                    apszAllowedDrivers, nullptr, nullptr ) );
+    if( poDS != nullptr )
     {
         if( poDS->GetRasterXSize() != nQuadSize ||
             poDS->GetRasterYSize() != nQuadSize ||
@@ -1148,7 +1148,7 @@ GDALDataset* PLMosaicDataset::OpenAndInsertNewDataset(CPLString osTmpFilename,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Inconsistent metatile characteristics");
             GDALClose(poDS);
-            poDS = NULL;
+            poDS = nullptr;
         }
     }
     else
@@ -1176,7 +1176,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 
         const CPLString osMosaicPath(GetMosaicCachePath());
         osTmpFilename = CPLFormFilename(osMosaicPath,
-                CPLSPrintf("%s_%s.tif", osMosaic.c_str(), CPLGetFilename(osTilename)), NULL);
+                CPLSPrintf("%s_%s.tif", osMosaic.c_str(), CPLGetFilename(osTilename)), nullptr);
         VSIStatBufL sStatBuf;
         if( !osCachePathRoot.empty() && VSIStatL(osTmpFilename, &sStatBuf) == 0 )
         {
@@ -1189,11 +1189,11 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
                      osTmpFilename.c_str());
             // Fetch metatile metadata
             json_object* poObj = RunRequest((osQuadsURL + osTilename).c_str());
-            if( poObj == NULL )
+            if( poObj == nullptr )
             {
                 CPLDebug("PLMOSAIC", "Cannot get tile metadata");
-                InsertNewDataset(osTilename, NULL);
-                return NULL;
+                InsertNewDataset(osTilename, nullptr);
+                return nullptr;
             }
 
             // Currently we only check by file size, which should be good enough
@@ -1226,15 +1226,15 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         osURL += "/full";
 
         CPLHTTPResult* psResult = Download(osURL, TRUE);
-        if( psResult == NULL )
+        if( psResult == nullptr )
         {
-            InsertNewDataset(osTilename, NULL);
-            return NULL;
+            InsertNewDataset(osTilename, nullptr);
+            return nullptr;
         }
 
         CreateMosaicCachePathIfNecessary();
 
-        VSILFILE* fp = osCachePathRoot.size() ? VSIFOpenL(osTmpFilename, "wb") : NULL;
+        VSILFILE* fp = osCachePathRoot.size() ? VSIFOpenL(osTmpFilename, "wb") : nullptr;
         if( fp )
         {
             VSIFWriteL(psResult->pabyData, 1, psResult->nDataLen, fp);
@@ -1283,7 +1283,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
         if( psLinkedDataset->psNext )
             psLinkedDataset->psNext->psPrev = psLinkedDataset->psPrev;
         psLinkedDataset->psNext = psHead;
-        psLinkedDataset->psPrev = NULL;
+        psLinkedDataset->psPrev = nullptr;
         psHead->psPrev = psLinkedDataset;
         psHead = psLinkedDataset;
     }
@@ -1335,12 +1335,12 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
     osLastRetGetLocationInfo = "";
 
-    CPLXMLNode* psRoot = CPLCreateXMLNode(NULL, CXT_Element, "LocationInfo");
+    CPLXMLNode* psRoot = CPLCreateXMLNode(nullptr, CXT_Element, "LocationInfo");
 
     if( !osLastQuadInformation.empty() )
     {
-        const char* const apszAllowedDrivers[2] = { "GeoJSON", NULL };
-        const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };
+        const char* const apszAllowedDrivers[2] = { "GeoJSON", nullptr };
+        const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", nullptr };
         CPLString osTmpJSonFilename;
         osTmpJSonFilename.Printf("/vsimem/plmosaic/%p/quad.json", this);
 
@@ -1352,15 +1352,15 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
         GDALDataset* poDS = reinterpret_cast<GDALDataset *>(
             GDALOpenEx( osTmpJSonFilename, GDAL_OF_VECTOR,
-                        apszAllowedDrivers, apszOptions, NULL ) );
+                        apszAllowedDrivers, apszOptions, nullptr ) );
         VSIUnlink(osTmpJSonFilename);
 
         if( poDS )
         {
             CPLXMLNode* psQuad = CPLCreateXMLNode(psRoot, CXT_Element, "Quad");
             OGRLayer* poLayer = poDS->GetLayer(0);
-            OGRFeature* poFeat = NULL;
-            while( (poFeat = poLayer->GetNextFeature()) != NULL )
+            OGRFeature* poFeat = nullptr;
+            while( (poFeat = poLayer->GetNextFeature()) != nullptr )
             {
                 for(int i=0;i<poFeat->GetFieldCount();i++)
                 {
@@ -1375,7 +1375,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                 if( poGeom )
                 {
                     CPLXMLNode* psItem = CPLCreateXMLNode(psQuad, CXT_Element, "geometry");
-                    char* l_pszWKT = NULL;
+                    char* l_pszWKT = nullptr;
                     poGeom->exportToWkt(&l_pszWKT);
                     CPLCreateXMLNode(psItem, CXT_Text, l_pszWKT);
                     CPLFree(l_pszWKT);
@@ -1387,10 +1387,10 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         }
     }
 
-    if( !osLastQuadSceneInformation.empty() && pszWKT != NULL )
+    if( !osLastQuadSceneInformation.empty() && pszWKT != nullptr )
     {
-        const char* const apszAllowedDrivers[2] = { "GeoJSON", NULL };
-        const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", NULL };
+        const char* const apszAllowedDrivers[2] = { "GeoJSON", nullptr };
+        const char* const apszOptions[2] = { "FLATTEN_NESTED_ATTRIBUTES=YES", nullptr };
         CPLString osTmpJSonFilename;
         osTmpJSonFilename.Printf("/vsimem/plmosaic/%p/scenes.json", this);
 
@@ -1402,7 +1402,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
 
         GDALDataset* poDS = reinterpret_cast<GDALDataset*>(
             GDALOpenEx( osTmpJSonFilename, GDAL_OF_VECTOR,
-                        apszAllowedDrivers, apszOptions, NULL ) );
+                        apszAllowedDrivers, apszOptions, nullptr ) );
         VSIUnlink(osTmpJSonFilename);
 
         OGRSpatialReference oSRSSrc, oSRSDst;
@@ -1414,16 +1414,16 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
         double y = adfGeoTransform[3] + nLine * adfGeoTransform[5];
         if( poDS && poCT && poCT->Transform(1, &x, &y))
         {
-            CPLXMLNode* psScenes = NULL;
+            CPLXMLNode* psScenes = nullptr;
             OGRLayer* poLayer = poDS->GetLayer(0);
             poLayer->SetSpatialFilterRect(x,y,x,y);
-            OGRFeature* poFeat = NULL;
-            while( (poFeat = poLayer->GetNextFeature()) != NULL )
+            OGRFeature* poFeat = nullptr;
+            while( (poFeat = poLayer->GetNextFeature()) != nullptr )
             {
                 OGRGeometry* poGeom = poFeat->GetGeometryRef();
                 if( poGeom )
                 {
-                    if( psScenes == NULL )
+                    if( psScenes == nullptr )
                         psScenes = CPLCreateXMLNode(psRoot, CXT_Element, "Scenes");
                     CPLXMLNode* psScene = CPLCreateXMLNode(psScenes, CXT_Element, "Scene");
                     for(int i=0;i<poFeat->GetFieldCount();i++)
@@ -1436,7 +1436,7 @@ const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
                         }
                     }
                     CPLXMLNode* psItem = CPLCreateXMLNode(psScene, CXT_Element, "geometry");
-                    char* l_pszWKT = NULL;
+                    char* l_pszWKT = nullptr;
                     poGeom->exportToWkt(&l_pszWKT);
                     CPLCreateXMLNode(psItem, CXT_Text, l_pszWKT);
                     CPLFree(l_pszWKT);
@@ -1491,7 +1491,7 @@ CPLErr  PLMosaicDataset::IRasterIO( GDALRWFlag eRWFlag,
 void GDALRegister_PLMOSAIC()
 
 {
-    if( GDALGetDriverByName( "PLMOSAIC" ) != NULL )
+    if( GDALGetDriverByName( "PLMOSAIC" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

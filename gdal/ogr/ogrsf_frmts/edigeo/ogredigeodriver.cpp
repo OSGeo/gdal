@@ -42,7 +42,7 @@ extern "C" void RegisterOGREDIGEO();
 static int OGREDIGEODriverIdentify( GDALOpenInfo * poOpenInfo )
 
 {
-    return poOpenInfo->fpL != NULL &&
+    return poOpenInfo->fpL != nullptr &&
            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "thf");
 }
 
@@ -55,14 +55,14 @@ static GDALDataset *OGREDIGEODriverOpen( GDALOpenInfo * poOpenInfo )
 {
     if( poOpenInfo->eAccess == GA_Update ||
         !OGREDIGEODriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGREDIGEODataSource   *poDS = new OGREDIGEODataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -75,7 +75,7 @@ static GDALDataset *OGREDIGEODriverOpen( GDALOpenInfo * poOpenInfo )
 void RegisterOGREDIGEO()
 
 {
-    if( GDALGetDriverByName( "EDIGEO" ) != NULL )
+    if( GDALGetDriverByName( "EDIGEO" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

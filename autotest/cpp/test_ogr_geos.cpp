@@ -47,7 +47,7 @@ namespace tut
         OGRGeometryH g3_;
 
         test_geos_data()
-            : err_(OGRERR_NONE), g1_(NULL), g2_(NULL), g3_(NULL)
+            : err_(OGRERR_NONE), g1_(nullptr), g2_(nullptr), g3_(nullptr)
         {}
 
         ~test_geos_data()

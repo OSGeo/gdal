@@ -66,7 +66,7 @@ void GMLASXLinkResolver::SetConf( const GMLASXLinkResolutionConf& oConf )
 CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
                                               const char* pszHeaders)
 {
-    char** papszOptions = NULL;
+    char** papszOptions = nullptr;
     if( m_oConf.m_nMaxGlobalResolutionTime > 0 &&
         m_nGlobalResolutionTime > m_oConf.m_nMaxGlobalResolutionTime )
     {
@@ -115,21 +115,21 @@ CPLString GMLASXLinkResolver::FetchRawContent(const CPLString& osURL,
         papszOptions = CSLSetNameValue(papszOptions, "PROXYAUTH",
                                        m_oConf.m_osProxyAuth);
     }
-    if( pszHeaders != NULL )
+    if( pszHeaders != nullptr )
     {
         papszOptions = CSLSetNameValue(papszOptions, "HEADERS",
                                        pszHeaders);
     }
-    time_t nTimeStart = time(NULL);
+    time_t nTimeStart = time(nullptr);
     CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
-    time_t nTimeStop = time(NULL);
+    time_t nTimeStop = time(nullptr);
     m_nGlobalResolutionTime += static_cast<int>(nTimeStop - nTimeStart);
     CSLDestroy(papszOptions);
-    if( psResult == NULL )
+    if( psResult == nullptr )
         return CPLString();
 
     if( psResult->nStatus != 0 ||
-        psResult->pabyData == NULL )
+        psResult->pabyData == nullptr )
     {
         CPLHTTPDestroyResult(psResult);
         return CPLString();
@@ -158,20 +158,20 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
         bDiskCacheAvailable = true;
 
         CPLString osCachedFileName(GetCachedFilename(osURL));
-        VSILFILE* fp = NULL;
+        VSILFILE* fp = nullptr;
         if( !m_bRefresh ||
             m_aoSetRefreshedFiles.find(osCachedFileName) !=
                                             m_aoSetRefreshedFiles.end() )
         {
             fp = VSIFOpenL( osCachedFileName, "rb");
         }
-        if( fp != NULL )
+        if( fp != nullptr )
         {
             CPLDebug("GMLAS", "Use cached %s", osCachedFileName.c_str());
-            GByte* pabyRet = NULL;
+            GByte* pabyRet = nullptr;
             vsi_l_offset nSize = 0;
             CPLString osContent;
-            if( VSIIngestFile( fp, NULL, &pabyRet, &nSize, -1 ) )
+            if( VSIIngestFile( fp, nullptr, &pabyRet, &nSize, -1 ) )
             {
                 osContent.assign( reinterpret_cast<const char*>(pabyRet),
                                   static_cast<size_t>(nSize) );
@@ -210,7 +210,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
         CPLString osCachedFileName(GetCachedFilename(osURL));
         CPLString osTmpfilename( osCachedFileName + ".tmp" );
         VSILFILE* fpTemp = VSIFOpenL( osTmpfilename, "wb" );
-        if( fpTemp != NULL )
+        if( fpTemp != nullptr )
         {
             const bool bSuccess = VSIFWriteL( osContent.data(),
                                               osContent.size(), 1,
@@ -281,7 +281,7 @@ int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString& osURL) const
 CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL)
 {
     return GetRawContent(osURL,
-                         NULL,
+                         nullptr,
                          m_oConf.m_bDefaultAllowRemoteDownload,
                          m_oConf.m_bDefaultCacheResults);
 }
@@ -306,7 +306,7 @@ CPLString GMLASXLinkResolver::GetRawContentForRule(const CPLString& osURL,
         osHeaders += oRule.m_aosNameValueHTTPHeaders[i].second;
     }
     return GetRawContent(osURL,
-                         osHeaders.empty() ? NULL : osHeaders.c_str(),
+                         osHeaders.empty() ? nullptr : osHeaders.c_str(),
                          oRule.m_bAllowRemoteDownload,
                          oRule.m_bCacheResults);
 }

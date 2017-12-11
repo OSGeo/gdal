@@ -39,10 +39,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 S57Writer::S57Writer() :
-    poModule(NULL),
+    poModule(nullptr),
     nNext0001Index(0),
-    poRegistrar(NULL),
-    poClassContentExplorer(NULL),
+    poRegistrar(nullptr),
+    poClassContentExplorer(nullptr),
     nCOMF(10000000),
     nSOMF(10)
 {}
@@ -66,11 +66,11 @@ S57Writer::~S57Writer()
 bool S57Writer::Close()
 
 {
-    if( poModule != NULL )
+    if( poModule != nullptr )
     {
         poModule->Close();
         delete poModule;
-        poModule = NULL;
+        poModule = nullptr;
     }
     return true;
 }
@@ -420,7 +420,7 @@ bool S57Writer::CreateS57File( const char *pszFilename )
     if( !poModule->Create( pszFilename ) )
     {
         delete poModule;
-        poModule = NULL;
+        poModule = nullptr;
         return false;
     }
 
@@ -443,19 +443,19 @@ bool S57Writer::WriteDSID( int nEXPP /*1*/, int nINTU /*4*/,
 /* -------------------------------------------------------------------- */
 /*      Default values.                                                 */
 /* -------------------------------------------------------------------- */
-    if( pszDSNM == NULL )
+    if( pszDSNM == nullptr )
         pszDSNM = "";
-    if( pszEDTN == NULL )
+    if( pszEDTN == nullptr )
         pszEDTN = "2";
-    if( pszUPDN == NULL )
+    if( pszUPDN == nullptr )
         pszUPDN = "0";
-    if( pszISDT == NULL )
+    if( pszISDT == nullptr )
         pszISDT = "20030801";
-    if( pszUADT == NULL )
+    if( pszUADT == nullptr )
         pszUADT = pszISDT;
-    if( pszSTED == NULL )
+    if( pszSTED == nullptr )
         pszSTED = "03.1";
-    if( pszCOMT == NULL )
+    if( pszCOMT == nullptr )
         pszCOMT = "";
 
 /* -------------------------------------------------------------------- */
@@ -596,7 +596,7 @@ bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
 {
     const char *pszFieldName = "SG2D";
 
-    if( padfZ != NULL )
+    if( padfZ != nullptr )
         pszFieldName = "SG3D";
 
     DDFField *poField =
@@ -616,7 +616,7 @@ bool S57Writer::WriteGeometry( DDFRecord *poRec, int nVertCount,
         const GInt32 nYCOO = CPL_LSBWORD32(
             static_cast<GInt32>( floor(padfY[i] * nCOMF + 0.5)) );
 
-        if( padfZ == NULL )
+        if( padfZ == nullptr )
         {
             memcpy( pabyRawData + i * 8, &nYCOO, 4 );
             memcpy( pabyRawData + i * 8 + 4, &nXCOO, 4 );
@@ -667,7 +667,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Handle simple point.                                            */
 /* -------------------------------------------------------------------- */
-    if( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
+    if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
         OGRPoint *poPoint = (OGRPoint *) poGeom;
 
@@ -679,7 +679,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
         double dfZ = poPoint->getZ();
 
         if( dfZ == 0.0 )
-            WriteGeometry( poRec, 1, &dfX, &dfY, NULL );
+            WriteGeometry( poRec, 1, &dfX, &dfY, nullptr );
         else
             WriteGeometry( poRec, 1, &dfX, &dfY, &dfZ );
     }
@@ -687,7 +687,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      For multipoints we assuming SOUNDG, and write out as SG3D.      */
 /* -------------------------------------------------------------------- */
-    else if( poGeom != NULL
+    else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
     {
         OGRMultiPoint *poMP = (OGRMultiPoint *) poGeom;
@@ -718,7 +718,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Handle LINESTRINGs (edge) geometry.                             */
 /* -------------------------------------------------------------------- */
-    else if( poGeom != NULL
+    else if( poGeom != nullptr
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
         OGRLineString *poLS = (OGRLineString *) poGeom;
@@ -736,7 +736,7 @@ bool S57Writer::WritePrimitive( OGRFeature *poFeature )
         }
 
         if (nVCount)
-            WriteGeometry( poRec, nVCount, padfX, padfY, NULL );
+            WriteGeometry( poRec, nVCount, padfX, padfY, nullptr );
 
         CPLFree( padfX );
         CPLFree( padfY );
@@ -885,7 +885,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
 /*      ATTF support.                                                   */
 /* -------------------------------------------------------------------- */
 
-    if( poRegistrar != NULL
+    if( poRegistrar != nullptr
         && poClassContentExplorer->SelectClass( poFeature->GetDefnRef()->GetName() )
         && !WriteATTF( poRec, poFeature ) )
     {
@@ -943,7 +943,7 @@ bool S57Writer::WriteCompleteFeature( OGRFeature *poFeature )
     {
         int i, nRefCount = CSLCount(papszLNAM_REFS);
         const int *panRIND =
-            poFeature->GetFieldAsIntegerList( "FFPT_RIND", NULL );
+            poFeature->GetFieldAsIntegerList( "FFPT_RIND", nullptr );
 
         poRec->AddField( poModule->FindFieldDefn( "FFPT" ) );
 
@@ -1004,7 +1004,7 @@ void S57Writer::SetClassBased( S57ClassRegistrar * poReg,
 
 bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
 {
-    CPLAssert( poRegistrar != NULL );
+    CPLAssert( poRegistrar != nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all attributes.                                       */
@@ -1013,9 +1013,9 @@ bool S57Writer::WriteATTF( DDFRecord *poRec, OGRFeature *poFeature )
     int nACount = 0;
     char achRawData[5000] = {};
 
-    char **papszAttrList = poClassContentExplorer->GetAttributeList(NULL);
+    char **papszAttrList = poClassContentExplorer->GetAttributeList(nullptr);
 
-    for( int iAttr = 0; papszAttrList[iAttr] != NULL; iAttr++ )
+    for( int iAttr = 0; papszAttrList[iAttr] != nullptr; iAttr++ )
     {
         const int iField = poFeature->GetFieldIndex( papszAttrList[iAttr] );
         OGRFieldType eFldType =

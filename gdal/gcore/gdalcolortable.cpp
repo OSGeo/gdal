@@ -117,7 +117,7 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 
 {
     if( i < 0 || i >= static_cast<int>(aoEntries.size()) )
-        return NULL;
+        return nullptr;
 
     return &aoEntries[i];
 }
@@ -135,7 +135,7 @@ const GDALColorEntry * CPL_STDCALL
 GDALGetColorEntry( GDALColorTableH hTable, int i )
 
 {
-    VALIDATE_POINTER1( hTable, "GDALGetColorEntry", NULL );
+    VALIDATE_POINTER1( hTable, "GDALGetColorEntry", nullptr );
 
     return reinterpret_cast<GDALColorTable *>( hTable )->GetColorEntry( i );
 }
@@ -280,7 +280,7 @@ GDALColorTable *GDALColorTable::Clone() const
 GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 
 {
-    VALIDATE_POINTER1( hTable, "GDALCloneColorTable", NULL );
+    VALIDATE_POINTER1( hTable, "GDALCloneColorTable", nullptr );
 
     return reinterpret_cast<GDALColorTableH>(
         reinterpret_cast<GDALColorTable *>( hTable )->Clone() );
@@ -391,7 +391,7 @@ int GDALColorTable::CreateColorRamp(
     }
 
     // Validate color entries.
-    if( psStartColor == NULL || psEndColor == NULL )
+    if( psStartColor == nullptr || psEndColor == nullptr )
     {
         return -1;
     }

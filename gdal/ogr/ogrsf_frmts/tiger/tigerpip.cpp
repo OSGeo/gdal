@@ -72,7 +72,7 @@ static const TigerRecordInfo rtP_info =
 
 TigerPIP::TigerPIP( OGRTigerDataSource * poDSIn,
                     CPL_UNUSED const char * pszPrototypeModule )
-  : TigerPoint(TRUE, NULL, FILE_CODE)
+  : TigerPoint(TRUE, nullptr, FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PIP" );

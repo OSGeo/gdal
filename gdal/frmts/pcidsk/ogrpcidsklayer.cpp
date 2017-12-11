@@ -42,7 +42,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                                 bool bUpdate )
 
 {
-    poSRS = NULL;
+    poSRS = nullptr;
     bUpdateAccess = bUpdate;
     poSeg = poSegIn;
     poVecSeg = poVecSegIn;
@@ -120,7 +120,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
 /*      Look for a coordinate system.                                   */
 /* -------------------------------------------------------------------- */
         CPLString osGeosys;
-        const char *pszUnits = NULL;
+        const char *pszUnits = nullptr;
         std::vector<double> adfParameters;
 
         adfParameters = poVecSeg->GetProjection( osGeosys );
@@ -144,7 +144,7 @@ OGRPCIDSKLayer::OGRPCIDSKLayer( PCIDSK::PCIDSKSegment *poSegIn,
                                   &(adfParameters[0]) ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -203,7 +203,7 @@ void OGRPCIDSKLayer::ResetReading()
 OGRFeature *OGRPCIDSKLayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
@@ -212,12 +212,12 @@ OGRFeature *OGRPCIDSKLayer::GetNextFeature()
     while( true )
     {
         poFeature = GetNextUnfilteredFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             break;
 
@@ -245,7 +245,7 @@ OGRFeature *OGRPCIDSKLayer::GetNextUnfilteredFeature()
             hLastShapeId = poVecSeg->FindNext( hLastShapeId );
 
         if( hLastShapeId == PCIDSK::NullShapeId )
-            return NULL;
+            return nullptr;
 
         return GetFeature( hLastShapeId );
     }
@@ -253,7 +253,7 @@ OGRFeature *OGRPCIDSKLayer::GetNextUnfilteredFeature()
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "PCIDSK Exception while iterating features.\n%s", ex.what() );
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -431,14 +431,14 @@ OGRFeature *OGRPCIDSKLayer::GetFeature( GIntBig nFID )
         delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", ex.what() );
-        return NULL;
+        return nullptr;
     }
     catch(...)
     {
         delete poFeature;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Non-PCIDSK exception trapped." );
-        return NULL;
+        return nullptr;
     }
 
     m_nFeaturesRead++;
@@ -457,7 +457,7 @@ int OGRPCIDSKLayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
     else if( EQUAL(pszCap,OLCSequentialWrite)
              || EQUAL(pszCap,OLCRandomWrite) )
@@ -479,7 +479,7 @@ int OGRPCIDSKLayer::TestCapability( const char * pszCap )
 GIntBig OGRPCIDSKLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
         return OGRLayer::GetFeatureCount( bForce );
 
     try {
@@ -697,7 +697,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
         std::vector<PCIDSK::ShapeVertex> aoVertices;
         OGRGeometry *poGeometry = poFeature->GetGeometryRef();
 
-        if( poGeometry == NULL )
+        if( poGeometry == nullptr )
         {
             // TODO: What?  Is this really a NOP?
         }

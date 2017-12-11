@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
+    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0 )
         return FALSE;
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
         return TRUE;
@@ -83,14 +83,14 @@ static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRDXFDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRDXFDataSource *poDS = new OGRDXFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -114,7 +114,7 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
     else
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -125,7 +125,7 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
 void RegisterOGRDXF()
 
 {
-    if( GDALGetDriverByName( "DXF" ) != NULL )
+    if( GDALGetDriverByName( "DXF" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

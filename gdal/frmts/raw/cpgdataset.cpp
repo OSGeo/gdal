@@ -100,9 +100,9 @@ class CPGDataset : public RawDataset
 
 CPGDataset::CPGDataset() :
     nGCPCount(0),
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     nLoadedStokesLine(-1),
-    padfStokesMatrix(NULL),
+    padfStokesMatrix(nullptr),
     nInterleave(0)
 {
     pszProjection = CPLStrdup("");
@@ -115,7 +115,7 @@ CPGDataset::CPGDataset() :
     adfGeoTransform[5] = 1.0;
 
     for( int iBand = 0; iBand < 4; iBand++ )
-        afpImage[iBand] = NULL;
+        afpImage[iBand] = nullptr;
 }
 
 /************************************************************************/
@@ -129,7 +129,7 @@ CPGDataset::~CPGDataset()
 
     for( int iBand = 0; iBand < 4; iBand++ )
     {
-        if( afpImage[iBand] != NULL )
+        if( afpImage[iBand] != nullptr )
             VSIFCloseL( afpImage[iBand] );
     }
 
@@ -238,13 +238,13 @@ int CPGDataset::AdjustFilename( char **pszFilename,
     else if (strlen(pszPolarization) == 2)
     {
         char *subptr = strstr(*pszFilename,"hh");
-        if (subptr == NULL)
+        if (subptr == nullptr)
             subptr = strstr(*pszFilename,"hv");
-        if (subptr == NULL)
+        if (subptr == nullptr)
             subptr = strstr(*pszFilename,"vv");
-        if (subptr == NULL)
+        if (subptr == nullptr)
             subptr = strstr(*pszFilename,"vh");
-        if (subptr == NULL)
+        if (subptr == nullptr)
           return FALSE;
 
         strncpy( subptr, pszPolarization, 2);
@@ -274,8 +274,8 @@ int CPGDataset::FindType1( const char *pszFilename )
 {
   const int nNameLen = static_cast<int>(strlen(pszFilename));
 
-  if ((strstr(pszFilename,"sso") == NULL) &&
-      (strstr(pszFilename,"polgasp") == NULL))
+  if ((strstr(pszFilename,"sso") == nullptr) &&
+      (strstr(pszFilename,"polgasp") == nullptr))
       return FALSE;
 
   if (( strlen(pszFilename) < 5) ||
@@ -355,7 +355,7 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
 /* -------------------------------------------------------------------- */
 /*      allocate working buffers if we don't have them already.         */
 /* -------------------------------------------------------------------- */
-    if( padfStokesMatrix == NULL )
+    if( padfStokesMatrix == nullptr )
     {
         padfStokesMatrix = reinterpret_cast<float *>(
             CPLMalloc( sizeof(float) * nRasterXSize * 16 ) );
@@ -379,7 +379,7 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                   "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
             CPLFree( padfStokesMatrix );
-            padfStokesMatrix = NULL;
+            padfStokesMatrix = nullptr;
             nLoadedStokesLine = -1;
             return CE_Failure;
         }
@@ -402,7 +402,7 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                   "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
                 CPLFree( padfStokesMatrix );
-                padfStokesMatrix = NULL;
+                padfStokesMatrix = nullptr;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
             }
@@ -427,7 +427,7 @@ CPLErr CPGDataset::LoadStokesLine( int iLine, int bNativeOrder )
                   "Reading file %s failed.",
                   nBytesToRead, offset, GetDescription() );
                 CPLFree( padfStokesMatrix );
-                padfStokesMatrix = NULL;
+                padfStokesMatrix = nullptr;
                 nLoadedStokesLine = -1;
                 return CE_Failure;
             }
@@ -479,7 +479,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     AdjustFilename( &pszWorkname, "hh", "hdr" );
     char **papszHdrLines = CSLLoad( pszWorkname );
 
-    for( int iLine = 0; papszHdrLines && papszHdrLines[iLine] != NULL; iLine++ )
+    for( int iLine = 0; papszHdrLines && papszHdrLines[iLine] != nullptr; iLine++ )
     {
         char **papszTokens = CSLTokenizeString( papszHdrLines[iLine] );
 
@@ -583,7 +583,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
     if( nError )
     {
         CPLFree(pszWorkname);
-        return NULL;
+        return nullptr;
     }
 
     if( nLines <= 0 || nSamples <= 0 )
@@ -592,7 +592,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
           "Did not find valid number_lines or number_samples keywords in %s.",
                   pszWorkname );
         CPLFree(pszWorkname);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -616,14 +616,14 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
 
         AdjustFilename( &pszWorkname, "" , "img" );
         poDS->afpImage[0] = VSIFOpenL( pszWorkname, "rb" );
-        if( poDS->afpImage[0] == NULL )
+        if( poDS->afpImage[0] == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open .img file: %s",
                       pszWorkname );
             CPLFree(pszWorkname);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         poDS->aosImageFilenames.push_back(pszWorkname);
         for( int iBand = 0; iBand < 4; iBand++ )
@@ -642,14 +642,14 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
             AdjustFilename( &pszWorkname, apszPolarizations[iBand], "img" );
 
             poDS->afpImage[iBand] = VSIFOpenL( pszWorkname, "rb" );
-            if( poDS->afpImage[iBand] == NULL )
+            if( poDS->afpImage[iBand] == nullptr )
             {
                 CPLError( CE_Failure, CPLE_OpenFailed,
                           "Failed to open .img file: %s",
                           pszWorkname );
                 CPLFree(pszWorkname);
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             poDS->aosImageFilenames.push_back(pszWorkname);
 
@@ -710,7 +710,7 @@ GDALDataset* CPGDataset::InitializeType1Or2Dataset( const char *pszFilename )
         /* Assuming WGS84 */
         oUTM.SetWellKnownGeogCS( "WGS84" );
         CPLFree( poDS->pszProjection );
-        poDS->pszProjection = NULL;
+        poDS->pszProjection = nullptr;
         oUTM.exportToWkt( &(poDS->pszProjection) );
     }
     else if (iGeoParamsFound == 5)
@@ -1092,8 +1092,8 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
       int nNameLen = static_cast<int>(strlen(poOpenInfo->pszFilename));
       if ( (nNameLen > 8) &&
-           ( ( strstr(poOpenInfo->pszFilename,"sso") != NULL ) ||
-             ( strstr(poOpenInfo->pszFilename,"polgasp") != NULL ) ) &&
+           ( ( strstr(poOpenInfo->pszFilename,"sso") != nullptr ) ||
+             ( strstr(poOpenInfo->pszFilename,"polgasp") != nullptr ) ) &&
            ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-7,"img_def") ) )
@@ -1104,7 +1104,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
               "are expected for scattering matrix format, two for Stokes)." );
       }
       else if ( (nNameLen > 8) &&
-                ( strstr(poOpenInfo->pszFilename,"SIRC") != NULL )  &&
+                ( strstr(poOpenInfo->pszFilename,"SIRC") != nullptr )  &&
            ( EQUAL(poOpenInfo->pszFilename+nNameLen-4,"img") ||
              EQUAL(poOpenInfo->pszFilename+nNameLen-4,"hdr")))
       {
@@ -1112,7 +1112,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
                 "Apparent attempt to open SIRC Convair PolGASP data failed \n"
                 "as one of the expected files is missing (hdr or img)!" );
       }
-      return NULL;
+      return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1123,11 +1123,11 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The CPG driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     /* Read the header info and create the dataset */
-    CPGDataset *poDS = NULL;
+    CPGDataset *poDS = nullptr;
 
 #ifdef notdef
     if ( CPGType < 3 )
@@ -1139,8 +1139,8 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
       poDS = reinterpret_cast<CPGDataset *>(
           InitializeType3Dataset( poOpenInfo->pszFilename ) );
 #endif
-    if( poDS == NULL )
-        return NULL;
+    if( poDS == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
@@ -1655,7 +1655,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 void GDALRegister_CPG()
 
 {
-    if( GDALGetDriverByName( "CPG" ) != NULL )
+    if( GDALGetDriverByName( "CPG" ) != nullptr )
       return;
 
     GDALDriver *poDriver = new GDALDriver();

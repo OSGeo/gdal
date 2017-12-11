@@ -289,7 +289,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         papabySrcData[iBand] = static_cast<GByte *>(
             VSI_MALLOC2_VERBOSE(nSrcXSize, nSrcYSize) );
-        if( papabySrcData[iBand] == NULL )
+        if( papabySrcData[iBand] == nullptr )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "GDALSimpleImageWarp out of memory." );
@@ -457,7 +457,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             }
         }
 
-        if( pfnProgress != NULL )
+        if( pfnProgress != nullptr )
         {
             if( !pfnProgress( (iDstY + 1) / static_cast<double>(nDstYSize),
                               "", pProgressArg ) )

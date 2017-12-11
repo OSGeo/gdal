@@ -38,10 +38,10 @@ CPL_CVSID("$Id$");
 
 OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services* poServices) :
     m_poServices(poServices),
-    m_papoLayers(NULL),
+    m_papoLayers(nullptr),
     m_nLayers(0),
-    m_papszOptions(NULL),
-    m_poDb(static_cast<const OdRxObject*>(NULL)),
+    m_papszOptions(nullptr),
+    m_poDb(static_cast<const OdRxObject*>(nullptr)),
     m_bUpdate(false),
     m_bModified(false)
 {}
@@ -188,7 +188,7 @@ OGRLayer *OGRDGNV8DataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= m_nLayers )
-        return NULL;
+        return nullptr;
 
     return m_papoLayers[iLayer];
 }
@@ -345,7 +345,7 @@ char **OGRDGNV8DataSource::GetMetadataDomainList()
 
 char** OGRDGNV8DataSource::GetMetadata(const char* pszDomain)
 {
-    if( pszDomain != NULL && EQUAL(pszDomain, "DGN") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "DGN") )
     {
         m_osDGNMD.Clear();
         OdDgSummaryInformationPtr summary = oddgGetSummaryInformation(m_poDb);
@@ -396,7 +396,7 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
     SetDescription( pszFilename );
     
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot write %s", pszFilename);
@@ -444,7 +444,7 @@ bool OGRDGNV8DataSource::PreCreate( const char *pszFilename,
     osDefaultAppName += " with " + ToUTF8(summary->getApplicationName());
     const char* pszAppName = CSLFetchNameValue(m_papszOptions,
                                                   "APPLICATION");
-    if( pszSeed == NULL && pszAppName == NULL )
+    if( pszSeed == nullptr && pszAppName == nullptr )
         pszAppName = osDefaultAppName;
     if( pszAppName )
         summary->setApplicationName(FromUTF8(pszAppName));
@@ -547,7 +547,7 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "CreateLayer() only supported on update mode." );
-        return NULL;
+        return nullptr;
     }
 
     OdDgModelPtr model;
@@ -581,7 +581,7 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
         }
         
         const char* pszDim = CSLFetchNameValue(papszOptions, "DIM");
-        if( pszDim != NULL )
+        if( pszDim != nullptr )
         {
             model->setModelIs3dFlag( EQUAL(pszDim, "3") );
         }
@@ -600,19 +600,19 @@ OGRLayer *OGRDGNV8DataSource::ICreateLayer( const char *pszLayerName,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Teigha DGN error occurred: %s",
                  ToUTF8(e.description()).c_str());
-        return NULL;
+        return nullptr;
     }
     catch (const std::exception &exc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "std::exception occurred: %s", exc.what());
-        return NULL;
+        return nullptr;
     }
     catch (...)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unknown exception occurred");
-        return NULL;
+        return nullptr;
     }
     
     m_bModified = true;

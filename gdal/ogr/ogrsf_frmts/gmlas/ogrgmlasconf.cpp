@@ -89,32 +89,32 @@ GMLASConfiguration::~GMLASConfiguration()
 CPLString GMLASConfiguration::GetBaseCacheDirectory()
 {
 #ifdef WIN32
-    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
-    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
 #endif
-    if( pszHome != NULL )
+    if( pszHome != nullptr )
     {
-        return CPLFormFilename( pszHome, ".gdal", NULL) ;
+        return CPLFormFilename( pszHome, ".gdal", nullptr) ;
     }
     else
     {
-        const char *pszDir = CPLGetConfigOption( "CPL_TMPDIR", NULL );
+        const char *pszDir = CPLGetConfigOption( "CPL_TMPDIR", nullptr );
 
-        if( pszDir == NULL )
-            pszDir = CPLGetConfigOption( "TMPDIR", NULL );
+        if( pszDir == nullptr )
+            pszDir = CPLGetConfigOption( "TMPDIR", nullptr );
 
-        if( pszDir == NULL )
-            pszDir = CPLGetConfigOption( "TEMP", NULL );
+        if( pszDir == nullptr )
+            pszDir = CPLGetConfigOption( "TEMP", nullptr );
 
-        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
-        if( pszUsername == NULL )
-            pszUsername = CPLGetConfigOption("USER", NULL);
+        const char* pszUsername = CPLGetConfigOption("USERNAME", nullptr);
+        if( pszUsername == nullptr )
+            pszUsername = CPLGetConfigOption("USER", nullptr);
 
-        if( pszDir != NULL && pszUsername != NULL )
+        if( pszDir != nullptr && pszUsername != nullptr )
         {
             return CPLFormFilename( pszDir,
-                    CPLSPrintf(".gdal_%s", pszUsername), NULL) ;
+                    CPLSPrintf(".gdal_%s", pszUsername), nullptr) ;
         }
     }
     return CPLString();
@@ -137,7 +137,7 @@ void GMLASConfiguration::Finalize()
         else
         {
             m_osXSDCacheDirectory = CPLFormFilename( m_osXSDCacheDirectory,
-                                                  "gmlas_xsd_cache", NULL) ;
+                                                  "gmlas_xsd_cache", nullptr) ;
             CPLDebug("GMLAS", "XSD cache directory: %s",
                      m_osXSDCacheDirectory.c_str());
         }
@@ -152,7 +152,7 @@ static bool CPLGetXMLBoolValue(CPLXMLNode* psNode,
                                const char* pszKey,
                                bool bDefault)
 {
-    const char* pszVal = CPLGetXMLValue(psNode, pszKey, NULL);
+    const char* pszVal = CPLGetXMLValue(psNode, pszKey, nullptr);
     if( pszVal )
         return CPLTestBool(pszVal);
     else
@@ -233,10 +233,10 @@ static void ParseNamespaces(CPLXMLNode* psContainerNode,
                             std::map<CPLString, CPLString>& oMap)
 {
     CPLXMLNode* psNamespaces = CPLGetXMLNode(psContainerNode, "Namespaces");
-    if( psNamespaces != NULL )
+    if( psNamespaces != nullptr )
     {
         for( CPLXMLNode* psIter = psNamespaces->psChild;
-                            psIter != NULL;
+                            psIter != nullptr;
                             psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -277,7 +277,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
     CPLXMLNode* psRoot = STARTS_WITH(pszFilename, "<Configuration") ?
                                 CPLParseXMLString(pszFilename) :
                                 CPLParseXMLFile(pszFilename);
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
     {
         Finalize();
         return false;
@@ -288,17 +288,17 @@ bool GMLASConfiguration::Load(const char* pszFilename)
     if( CPLTestBool(CPLGetConfigOption("GDAL_XML_VALIDATION", "YES")) )
     {
         const char* pszXSD = CPLFindFile( "gdal", "gmlasconf.xsd" );
-        if( pszXSD != NULL )
+        if( pszXSD != nullptr )
         {
             std::vector<CPLString> aosErrors;
             const CPLErr eErrClass = CPLGetLastErrorType();
             const CPLErrorNum nErrNum = CPLGetLastErrorNo();
             const CPLString osErrMsg = CPLGetLastErrorMsg();
             CPLPushErrorHandlerEx(GMLASConfigurationErrorHandler, &aosErrors);
-            int bRet = CPLValidateXML(pszFilename, pszXSD, NULL);
+            int bRet = CPLValidateXML(pszFilename, pszXSD, nullptr);
             CPLPopErrorHandler();
             if( !bRet && !aosErrors.empty() &&
-                strstr(aosErrors[0].c_str(), "missing libxml2 support") == NULL )
+                strstr(aosErrors[0].c_str(), "missing libxml2 support") == nullptr )
             {
                 for(size_t i = 0; i < aosErrors.size(); i++)
                 {
@@ -395,7 +395,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
         ParseNamespaces(psFlatteningRules, m_oMapPrefixToURIFlatteningRules);
 
         for( CPLXMLNode* psIter = psFlatteningRules->psChild;
-                         psIter != NULL;
+                         psIter != nullptr;
                          psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -436,7 +436,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
         ParseNamespaces(psTypingConstraints, m_oMapPrefixToURITypeConstraints);
 
         for( CPLXMLNode* psIter = psTypingConstraints->psChild;
-                         psIter != NULL;
+                         psIter != nullptr;
                          psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -447,8 +447,8 @@ bool GMLASConfiguration::Load(const char* pszFilename)
                 if( IsValidXPath(osXPath) )
                 {
                     for( CPLXMLNode* psIter2 =
-                            psChildrenTypes ? psChildrenTypes->psChild : NULL;
-                                     psIter2 != NULL;
+                            psChildrenTypes ? psChildrenTypes->psChild : nullptr;
+                                     psIter2 != nullptr;
                                      psIter2 = psIter2->psNext )
                     {
                         if( psIter2->eType == CXT_Element &&
@@ -481,7 +481,7 @@ bool GMLASConfiguration::Load(const char* pszFilename)
         ParseNamespaces(psIgnoredXPaths, m_oMapPrefixToURIIgnoredXPaths);
 
         for( CPLXMLNode* psIter = psIgnoredXPaths->psChild;
-                         psIter != NULL;
+                         psIter != nullptr;
                          psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -510,13 +510,13 @@ bool GMLASConfiguration::Load(const char* pszFilename)
 
     CPLXMLNode* psXLinkResolutionNode = CPLGetXMLNode( psRoot,
                                             "=Configuration.XLinkResolution");
-    if( psXLinkResolutionNode != NULL )
+    if( psXLinkResolutionNode != nullptr )
         m_oXLinkResolution.LoadFromXML( psXLinkResolutionNode );
 
     // Parse WriterConfig
     CPLXMLNode* psWriterConfig = CPLGetXMLNode( psRoot,
                                                 "=Configuration.WriterConfig");
-    if( psWriterConfig != NULL )
+    if( psWriterConfig != nullptr )
     {
         m_nIndentSize = atoi( CPLGetXMLValue( psWriterConfig,
                                     "IndentationSize",
@@ -588,7 +588,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
         {
             m_osCacheDirectory = CPLFormFilename( m_osCacheDirectory,
                                                   "xlink_resolved_cache",
-                                                  NULL );
+                                                  nullptr );
         }
     }
 
@@ -611,7 +611,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
                                     CACHE_RESULTS_DEFAULT);
 
     CPLXMLNode* psIterURL = psRoot->psChild;
-    for( ; psIterURL != NULL; psIterURL = psIterURL->psNext )
+    for( ; psIterURL != nullptr; psIterURL = psIterURL->psNext )
     {
         if( psIterURL->eType == CXT_Element &&
             strcmp(psIterURL->pszValue, "URLSpecificResolution") == 0 )
@@ -638,7 +638,7 @@ bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode* psRoot)
                                                         CACHE_RESULTS_DEFAULT);
 
             CPLXMLNode* psIter = psIterURL->psChild;
-            for( ; psIter != NULL; psIter = psIter->psNext )
+            for( ; psIter != nullptr; psIter = psIter->psNext )
             {
                 if( psIter->eType == CXT_Element &&
                     strcmp(psIter->pszValue, "HTTPHeader") == 0 )

@@ -62,7 +62,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 /*      Use default interfaces if none are passed in.                   */
 /* -------------------------------------------------------------------- */
     PCIDSKInterfaces default_interfaces;
-    if( interfaces == NULL )
+    if( interfaces == nullptr )
         interfaces = &default_interfaces;
 
 /* -------------------------------------------------------------------- */
@@ -71,7 +71,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
 /* -------------------------------------------------------------------- */
     void *io_handle = interfaces->io->Open( filename, access );
 
-    assert( io_handle != NULL );
+    assert( io_handle != nullptr );
 
     char header_check[6];
 
@@ -93,7 +93,7 @@ PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
     file->io_handle = io_handle;
     file->io_mutex = interfaces->CreateMutex();
 
-    if( strstr(access.c_str(),"+") != NULL )
+    if( strstr(access.c_str(),"+") != nullptr )
         file->updatable = true;
 
 /* -------------------------------------------------------------------- */

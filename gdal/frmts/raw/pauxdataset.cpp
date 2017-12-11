@@ -101,7 +101,7 @@ class PAuxRasterBand : public RawRasterBand
 
     virtual ~PAuxRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
     virtual CPLErr SetNoDataValue( double ) override;
 
     virtual GDALColorTable *GetColorTable() override;
@@ -130,7 +130,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
     char szTarget[128] = { '\0' };
 
     snprintf( szTarget, sizeof(szTarget), "ChanDesc-%d", nBand );
-    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
+    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != nullptr )
         GDALRasterBand::SetDescription(
             CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) );
 
@@ -140,7 +140,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
 /* -------------------------------------------------------------------- */
     snprintf( szTarget, sizeof(szTarget),
               "METADATA_IMG_%d_Class_%d_Color", nBand, 0 );
-    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != NULL )
+    if( CSLFetchNameValue( poPDS->papszAuxLines, szTarget ) != nullptr )
     {
         poCT = new GDALColorTable();
 
@@ -157,7 +157,7 @@ PAuxRasterBand::PAuxRasterBand( GDALDataset *poDSIn, int nBandIn,
             int nGreen = 0;
             int nBlue = 0;
             // TODO(schwehr): Replace sscanf with something safe.
-            if( pszLine != NULL
+            if( pszLine != nullptr
                 && STARTS_WITH_CI(pszLine, "(RGB:")
                 && sscanf( pszLine+5, "%d %d %d",
                            &nRed, &nGreen, &nBlue ) == 3 )
@@ -198,10 +198,10 @@ double PAuxRasterBand::GetNoDataValue( int *pbSuccess )
     PAuxDataset *poPDS = reinterpret_cast<PAuxDataset *>( poDS );
     const char  *pszLine = CSLFetchNameValue( poPDS->papszAuxLines, szTarget );
 
-    if( pbSuccess != NULL )
-        *pbSuccess = (pszLine != NULL);
+    if( pbSuccess != nullptr )
+        *pbSuccess = (pszLine != nullptr);
 
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
         return -1.0e8;
 
     return CPLAtof(pszLine);
@@ -280,7 +280,7 @@ GDALColorTable *PAuxRasterBand::GetColorTable()
 GDALColorInterp PAuxRasterBand::GetColorInterpretation()
 
 {
-    if( poCT == NULL )
+    if( poCT == nullptr )
         return GCI_Undefined;
 
     return GCI_PaletteIndex;
@@ -297,13 +297,13 @@ GDALColorInterp PAuxRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 PAuxDataset::PAuxDataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     nGCPCount(0),
-    pasGCPList(NULL),
-    pszGCPProjection(NULL),
-    pszProjection(NULL),
-    pszAuxFilename(NULL),
-    papszAuxLines(NULL),
+    pasGCPList(nullptr),
+    pszGCPProjection(nullptr),
+    pszProjection(nullptr),
+    pszAuxFilename(nullptr),
+    papszAuxLines(nullptr),
     bAuxUpdated(FALSE)
 {}
 
@@ -315,7 +315,7 @@ PAuxDataset::~PAuxDataset()
 
 {
     FlushCache();
-    if( fpImage != NULL && VSIFCloseL( fpImage ) != 0 )
+    if( fpImage != nullptr && VSIFCloseL( fpImage ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
     }
@@ -367,12 +367,12 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 /* -------------------------------------------------------------------- */
     double adfProjParms[16] = { 0.0 };
 
-    if( pszProjParms != NULL )
+    if( pszProjParms != nullptr )
     {
         char **papszTokens = CSLTokenizeString( pszProjParms );
 
         for( int i = 0;
-             i < 16 && papszTokens != NULL && papszTokens[i] != NULL;
+             i < 16 && papszTokens != nullptr && papszTokens[i] != nullptr;
              i++ )
             adfProjParms[i] = CPLAtof(papszTokens[i]);
 
@@ -383,16 +383,16 @@ char *PAuxDataset::PCI2WKT( const char *pszGeosys,
 /*      Convert to SRS.                                                 */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    if( oSRS.importFromPCI( pszGeosys, NULL, adfProjParms ) == OGRERR_NONE )
+    if( oSRS.importFromPCI( pszGeosys, nullptr, adfProjParms ) == OGRERR_NONE )
     {
-        char *pszResult = NULL;
+        char *pszResult = nullptr;
 
         oSRS.exportToWkt( &pszResult );
 
         return pszResult;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -405,7 +405,7 @@ void PAuxDataset::ScanForGCPs()
     const int MAX_GCP = 256;
 
     nGCPCount = 0;
-    CPLAssert( pasGCPList == NULL );
+    CPLAssert( pasGCPList == nullptr );
     pasGCPList = reinterpret_cast<GDAL_GCP *>(
         CPLCalloc( sizeof(GDAL_GCP), MAX_GCP ) );
 
@@ -417,7 +417,7 @@ void PAuxDataset::ScanForGCPs()
     const char *pszProjParms =
         CSLFetchNameValue( papszAuxLines, "GCP_1_ProjParms" );
 
-    if( pszMapUnits != NULL )
+    if( pszMapUnits != nullptr )
         pszGCPProjection = PCI2WKT( pszMapUnits, pszProjParms );
 
 /* -------------------------------------------------------------------- */
@@ -429,7 +429,7 @@ void PAuxDataset::ScanForGCPs()
     {
         char szName[50] = { '\0' };
         snprintf( szName, sizeof(szName), "GCP_1_%d", i+1 );
-        if( CSLFetchNameValue( papszAuxLines, szName ) == NULL )
+        if( CSLFetchNameValue( papszAuxLines, szName ) == nullptr )
             break;
 
         char **papszTokens = CSLTokenizeStringComplex(
@@ -489,7 +489,7 @@ int PAuxDataset::GetGCPCount()
 const char *PAuxDataset::GetGCPProjection()
 
 {
-    if( nGCPCount > 0 && pszGCPProjection != NULL )
+    if( nGCPCount > 0 && pszGCPProjection != nullptr )
         return pszGCPProjection;
 
     return "";
@@ -525,10 +525,10 @@ const char *PAuxDataset::GetProjectionRef()
 CPLErr PAuxDataset::GetGeoTransform( double * padfGeoTransform )
 
 {
-    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") == NULL
-        || CSLFetchNameValue(papszAuxLines, "UpLeftY") == NULL
-        || CSLFetchNameValue(papszAuxLines, "LoRightX") == NULL
-        || CSLFetchNameValue(papszAuxLines, "LoRightY") == NULL )
+    if( CSLFetchNameValue(papszAuxLines, "UpLeftX") == nullptr
+        || CSLFetchNameValue(papszAuxLines, "UpLeftY") == nullptr
+        || CSLFetchNameValue(papszAuxLines, "LoRightX") == nullptr
+        || CSLFetchNameValue(papszAuxLines, "LoRightY") == nullptr )
     {
         padfGeoTransform[0] = 0.0;
         padfGeoTransform[1] = 1.0;
@@ -617,7 +617,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 1 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If this is an .aux file, fetch out and form the name of the     */
@@ -644,7 +644,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         szAuxTarget[sizeof(szAuxTarget) - 1] = '\0';
 
         const std::string osPath(CPLGetPath(poOpenInfo->pszFilename));
-        osTarget = CPLFormFilename(osPath.c_str(), szAuxTarget, NULL);
+        osTarget = CPLFormFilename(osPath.c_str(), szAuxTarget, nullptr);
     }
 
 /* -------------------------------------------------------------------- */
@@ -657,22 +657,22 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have a .aux file?                                         */
 /* -------------------------------------------------------------------- */
     char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-    if( papszSiblingFiles != NULL
+    if( papszSiblingFiles != nullptr
         && CSLFindString( papszSiblingFiles,
                           CPLGetFilename(osAuxFilename) ) == -1 )
     {
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE *fp = VSIFOpenL( osAuxFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         osAuxFilename = CPLResetExtension(osTarget,"AUX");
         fp = VSIFOpenL( osAuxFilename, "r" );
     }
 
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Is this file a PCI .aux file?  Check the first line for the     */
@@ -685,11 +685,11 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
-    if( pszLine == NULL
+    if( pszLine == nullptr
         || (!STARTS_WITH_CI(pszLine, "AuxilaryTarget")
             && !STARTS_WITH_CI(pszLine, "AuxiliaryTarget")) )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -711,10 +711,10 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // It seems PCI now writes out .aux files without RawDefinition in
     // some cases.  See bug 947.
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     char **papszTokens = CSLTokenizeString(pszLine);
@@ -726,7 +726,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
                   poOpenInfo->pszFilename );
         delete poDS;
         CSLDestroy( papszTokens );
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = atoi(papszTokens[0]);
@@ -740,7 +740,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         !GDALCheckBandCount(poDS->nBands, FALSE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -750,26 +750,26 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->fpImage = VSIFOpenL( osTarget, "rb+" );
 
-        if( poDS->fpImage == NULL )
+        if( poDS->fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s is missing or read-only, check permissions.",
                       osTarget.c_str() );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
     {
         poDS->fpImage = VSIFOpenL( osTarget, "rb" );
 
-        if( poDS->fpImage == NULL )
+        if( poDS->fpImage == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s is missing or unreadable.",
                       osTarget.c_str() );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -784,7 +784,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
         snprintf( szDefnName, sizeof(szDefnName), "ChanDefinition-%d", i+1 );
 
         pszLine = CSLFetchNameValue(poDS->papszAuxLines, szDefnName);
-        if (pszLine == NULL)
+        if (pszLine == nullptr)
         {
             continue;
         }
@@ -850,7 +850,7 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszProjParms =
         CSLFetchNameValue( poDS->papszAuxLines, "ProjParms" );
 
-    if( pszMapUnits != NULL )
+    if( pszMapUnits != nullptr )
         poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParms );
 
 /* -------------------------------------------------------------------- */
@@ -881,7 +881,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 
 {
     const char *pszInterleave = CSLFetchNameValue( papszOptions, "INTERLEAVE" );
-    if( pszInterleave == NULL )
+    if( pszInterleave == nullptr )
         pszInterleave = "BAND";
 
 /* -------------------------------------------------------------------- */
@@ -895,7 +895,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
               "data type (%s).\n",
               GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -910,12 +910,12 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, "w" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -947,12 +947,12 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenL( pszAuxFilename, "wt" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszAuxFilename );
-        return NULL;
+        return nullptr;
     }
     CPLFree( pszAuxFilename );
 
@@ -1012,7 +1012,7 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out line indicating layout.                               */
 /* -------------------------------------------------------------------- */
-        const char *pszTypeName = NULL;
+        const char *pszTypeName = nullptr;
         if( eType == GDT_Float32 )
             pszTypeName = "32R";
         else if( eType == GDT_Int16 )
@@ -1054,7 +1054,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
 
 {
     VSILFILE *fp = VSIFOpenL( CPLResetExtension( pszBasename, "aux" ), "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a PAux dataset: "
@@ -1066,7 +1066,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
     const char *pszLine = CPLReadLineL( fp );
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
-    if( pszLine == NULL || !STARTS_WITH_CI(pszLine, "AuxilaryTarget") )
+    if( pszLine == nullptr || !STARTS_WITH_CI(pszLine, "AuxilaryTarget") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a PAux dataset:"
@@ -1094,7 +1094,7 @@ static CPLErr PAuxDelete( const char * pszBasename )
 void GDALRegister_PAux()
 
 {
-    if( GDALGetDriverByName( "PAux" ) != NULL )
+    if( GDALGetDriverByName( "PAux" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

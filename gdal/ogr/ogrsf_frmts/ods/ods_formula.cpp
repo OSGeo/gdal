@@ -69,7 +69,7 @@ const SingleOpStruct* ODSGetSingleOpEntry(const char* pszName)
         if (EQUAL(pszName, apsSingleOp[i].pszName))
             return &apsSingleOp[i];
     }
-    return NULL;
+    return nullptr;
 }
 
 const SingleOpStruct* ODSGetSingleOpEntry(ods_formula_op eOp)
@@ -79,7 +79,7 @@ const SingleOpStruct* ODSGetSingleOpEntry(ods_formula_op eOp)
         if (eOp == apsSingleOp[i].eOp)
             return &apsSingleOp[i];
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -92,7 +92,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
 {
     const char *pszInput = context->pszNext;
 
-    *ppNode = NULL;
+    *ppNode = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a start symbol to return?                            */
@@ -328,7 +328,7 @@ int ods_formulalex( YYSTYPE *ppNode, ods_formula_parse_context *context )
         else
         {
             const SingleOpStruct* psSingleOp = ODSGetSingleOpEntry(osToken);
-            if (psSingleOp != NULL)
+            if (psSingleOp != nullptr)
             {
                 *ppNode = new ods_formula_node( psSingleOp->eOp );
                 nReturn = ODST_FUNCTION_SINGLE_ARG;
@@ -373,5 +373,5 @@ ods_formula_node* ods_formula_compile( const char *expr )
     }
 
     delete context.poRoot;
-    return NULL;
+    return nullptr;
 }

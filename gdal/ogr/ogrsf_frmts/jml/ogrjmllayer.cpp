@@ -44,7 +44,7 @@ OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
     nNextFID(0),
     fp(fpIn),
     bHasReadSchema(false),
-    oParser(NULL),
+    oParser(nullptr),
     currentDepth(0),
     bStopParsing(false),
     nWithoutEventCounter(0),
@@ -53,8 +53,8 @@ OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
     pszElementValue(static_cast<char*>(CPLCalloc(1024, 1))),
     nElementValueLen(0),
     nElementValueAlloc(1024),
-    poFeature(NULL),
-    ppoFeatureTab(NULL),
+    poFeature(nullptr),
+    ppoFeatureTab(nullptr),
     nFeatureTabLength(0),
     nFeatureTabIndex(0),
     bSchemaFinished(false),
@@ -145,7 +145,7 @@ void OGRJMLLayer::ResetReading()
     nFeatureTabIndex = 0;
     nFeatureTabLength = 0;
     delete poFeature;
-    poFeature = NULL;
+    poFeature = nullptr;
 
     currentDepth = 0;
 
@@ -192,9 +192,9 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
             if( oColumn.bIsBody )
             {
                 if( !oColumn.osAttributeName.empty() &&
-                    ppszAttr != NULL &&
-                    ppszAttr[0] != NULL &&
-                    ppszAttr[1] != NULL &&
+                    ppszAttr != nullptr &&
+                    ppszAttr[0] != nullptr &&
+                    ppszAttr[1] != nullptr &&
                     oColumn.osAttributeName.compare(ppszAttr[0]) == 0 &&
                     oColumn.osAttributeValue.compare(ppszAttr[1]) == 0 )
                 {
@@ -216,9 +216,9 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
                 }
             }
             else if( !oColumn.osAttributeName.empty() &&
-                      ppszAttr != NULL &&
-                      ppszAttr[0] != NULL &&
-                      ppszAttr[1] != NULL &&
+                      ppszAttr != nullptr &&
+                      ppszAttr[0] != nullptr &&
+                      ppszAttr[1] != nullptr &&
                       oColumn.osAttributeName.compare(ppszAttr[0]) == 0 )
             {
                 /* <osElementName osAttributeName="value"></osElementName> */
@@ -237,7 +237,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
         AddStringToElementValue(pszName, (int)strlen(pszName));
 
         const char** papszIter = ppszAttr;
-        while( papszIter && *papszIter != NULL )
+        while( papszIter && *papszIter != nullptr )
         {
             AddStringToElementValue(" ", 1);
             AddStringToElementValue(papszIter[0], (int)strlen(papszIter[0]));
@@ -309,7 +309,7 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         {
             OGRGeometry* poGeom = reinterpret_cast<OGRGeometry *>(
                 OGR_G_CreateFromGML(pszElementValue) );
-            if( poGeom != NULL &&
+            if( poGeom != nullptr &&
                 poGeom->getGeometryType() == wkbGeometryCollection &&
                 poGeom->IsEmpty() )
             {
@@ -331,7 +331,7 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         unsigned int G = 0;
         unsigned int B = 0;
         if( iRGBField >= 0 && poFeature->IsFieldSetAndNotNull(iRGBField) &&
-            poFeature->GetStyleString() == NULL && poGeom != NULL &&
+            poFeature->GetStyleString() == nullptr && poGeom != nullptr &&
             sscanf(poFeature->GetFieldAsString(iRGBField),
                        "%02X%02X%02X", &R, &G, &B) == 3 )
         {
@@ -352,9 +352,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
 
         poFeature->SetFID(nNextFID++);
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
                 || FilterGeometry( poGeom ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             ppoFeatureTab = static_cast<OGRFeature**>(
@@ -367,7 +367,7 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
         {
             delete poFeature;
         }
-        poFeature = NULL;
+        poFeature = nullptr;
         iAttr = -1;
 
         nFeatureElementDepth = 0;
@@ -397,7 +397,7 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
         char* pszNewElementValue = static_cast<char*>(
             VSI_REALLOC_VERBOSE( pszElementValue,
                                  nElementValueLen + nLen + 1 + 1000) );
-        if (pszNewElementValue == NULL)
+        if (pszNewElementValue == nullptr)
         {
             XML_StopParser(oParser, XML_FALSE);
             bStopParsing = true;
@@ -447,7 +447,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         LoadSchema();
 
     if (bStopParsing)
-        return NULL;
+        return nullptr;
 
     if (nFeatureTabIndex < nFeatureTabLength)
     {
@@ -455,7 +455,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
     }
 
     if (VSIFEofL(fp))
-        return NULL;
+        return nullptr;
 
     char aBuf[BUFSIZ];
 
@@ -492,7 +492,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         bStopParsing = true;
     }
 
-    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : NULL;
+    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : nullptr;
 }
 
 static void XMLCALL startElementLoadSchemaCbk( void *pUserData,
@@ -552,7 +552,7 @@ void OGRJMLLayer::LoadSchema()
               nWithoutEventCounter < 10 );
 
     XML_ParserFree(oParser);
-    oParser = NULL;
+    oParser = nullptr;
 
     if (nWithoutEventCounter == 10)
     {
@@ -632,7 +632,7 @@ void OGRJMLLayer::startElementLoadSchemaCbk( const char *pszName,
             else if( strcmp(pszName, "valueElement") == 0 )
             {
                 const char** papszIter = ppszAttr;
-                while( papszIter && *papszIter != NULL )
+                while( papszIter && *papszIter != nullptr )
                 {
                     if( strcmp(*papszIter, "elementName") == 0 )
                         oCurColumn.osElementName = papszIter[1];
@@ -646,7 +646,7 @@ void OGRJMLLayer::startElementLoadSchemaCbk( const char *pszName,
             else if( strcmp(pszName, "valueLocation") == 0 )
             {
                 const char** papszIter = ppszAttr;
-                while( papszIter && *papszIter != NULL )
+                while( papszIter && *papszIter != nullptr )
                 {
                     if( strcmp(*papszIter, "position") == 0 )
                         oCurColumn.bIsBody = strcmp(papszIter[1], "body") == 0;

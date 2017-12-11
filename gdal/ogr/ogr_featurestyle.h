@@ -120,30 +120,30 @@ class CPL_DLL OGRStyleMgr
     char            *m_pszStyleString;
 
   public:
-    explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
+    explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = nullptr);
     ~OGRStyleMgr();
 
-    GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
+    GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=nullptr,
                                 GBool bNoMatching = FALSE);
     /* It will set in the given feature the pszStyleString with
             the style or will set the style name found in
             dataset StyleTable (if bNoMatching == FALSE). */
 
     const char *InitFromFeature(OGRFeature *);
-    GBool InitStyleString(const char *pszStyleString = NULL);
+    GBool InitStyleString(const char *pszStyleString = nullptr);
 
-    const char *GetStyleName(const char *pszStyleString= NULL);
+    const char *GetStyleName(const char *pszStyleString= nullptr);
     const char *GetStyleByName(const char *pszStyleName);
 
-    GBool AddStyle(const char *pszStyleName, const char *pszStyleString=NULL);
+    GBool AddStyle(const char *pszStyleName, const char *pszStyleString=nullptr);
 
-    const char *GetStyleString(OGRFeature * = NULL);
+    const char *GetStyleString(OGRFeature * = nullptr);
 
     GBool AddPart(OGRStyleTool *);
     GBool AddPart(const char *);
 
-    int GetPartCount(const char *pszStyleString = NULL);
-    OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = NULL);
+    int GetPartCount(const char *pszStyleString = nullptr);
+    OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = nullptr);
 
     /* It could have a reference counting process us for the OGRStyleTable, if
       needed. */
@@ -184,7 +184,7 @@ class CPL_DLL OGRStyleTool
         m_dfScale(0.0),
         m_eUnit(OGRSTUGround),
         m_eClassId(OGRSTCNone),
-        m_pszStyleString(NULL)
+        m_pszStyleString(nullptr)
         {}
     explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();

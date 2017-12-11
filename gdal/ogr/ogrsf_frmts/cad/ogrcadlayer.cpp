@@ -162,7 +162,7 @@ OGRCADLayer::OGRCADLayer( CADLayer &poCADLayer_, OGRSpatialReference *poSR,
 
 GIntBig OGRCADLayer::GetFeatureCount( int bForce )
 {
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
         return OGRLayer::GetFeatureCount( bForce );
 
     return poCADLayer.getGeometryCount();
@@ -185,16 +185,16 @@ OGRFeature *OGRCADLayer::GetNextFeature()
     OGRFeature *poFeature = GetFeature( nNextFID );
     ++nNextFID;
 
-    if( poFeature == NULL )
-        return NULL;
+    if( poFeature == nullptr )
+        return nullptr;
 
-    if( ( m_poFilterGeom == NULL ||  FilterGeometry( poFeature->GetGeometryRef() ) )
-        && ( m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature ) ) )
+    if( ( m_poFilterGeom == nullptr ||  FilterGeometry( poFeature->GetGeometryRef() ) )
+        && ( m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate( poFeature ) ) )
     {
         return poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
@@ -202,18 +202,18 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
     if( poCADLayer.getGeometryCount() <= static_cast<size_t>(nFID)
         || nFID < 0 )
     {
-        return NULL;
+        return nullptr;
     }
 
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
     CADGeometry *poCADGeometry = poCADLayer.getGeometry( static_cast<size_t>(nFID) );
 
-    if( NULL == poCADGeometry || GetLastErrorCode() != CADErrorCodes::SUCCESS )
+    if( nullptr == poCADGeometry || GetLastErrorCode() != CADErrorCodes::SUCCESS )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                  "Failed to get geometry with ID = " CPL_FRMT_GIB " from layer \"%s\". Libopencad errorcode: %d",
                  nFID, poCADLayer.getName().c_str(), GetLastErrorCode() );
-        return NULL;
+        return nullptr;
     }
 
     poFeature = new OGRFeature( poFeatureDefn );

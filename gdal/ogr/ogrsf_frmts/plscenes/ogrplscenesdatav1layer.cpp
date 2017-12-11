@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 
 int OGRPLScenesDataV1FeatureDefn::GetFieldCount()
 {
-    if( nFieldCount == 0 && m_poLayer != NULL )
+    if( nFieldCount == 0 && m_poLayer != nullptr )
         m_poLayer->EstablishLayerDefn();
     return nFieldCount;
 }
@@ -58,10 +58,10 @@ OGRPLScenesDataV1Layer::OGRPLScenesDataV1Layer( OGRPLScenesDataV1Dataset* poDS,
     m_bStillInFirstPage(true),
     m_nPageSize(atoi(CPLGetConfigOption("PLSCENES_PAGE_SIZE", "250"))),
     m_bInFeatureCountOrGetExtent(false),
-    m_poPageObj(NULL),
-    m_poFeatures(NULL),
+    m_poPageObj(nullptr),
+    m_poFeatures(nullptr),
     m_nFeatureIdx(0),
-    m_poAttributeFilter(NULL),
+    m_poAttributeFilter(nullptr),
     m_bFilterMustBeClientSideEvaluated(false)
 {
     // Cannot be moved to initializer list because of use of this, which MSVC 2008 doesn't like
@@ -83,9 +83,9 @@ OGRPLScenesDataV1Layer::~OGRPLScenesDataV1Layer()
     m_poFeatureDefn->DropRefToLayer();
     m_poFeatureDefn->Release();
     m_poSRS->Release();
-    if( m_poPageObj != NULL )
+    if( m_poPageObj != nullptr )
         json_object_put(m_poPageObj);
-    if( m_poAttributeFilter != NULL )
+    if( m_poAttributeFilter != nullptr )
         json_object_put(m_poAttributeFilter);
 }
 
@@ -126,19 +126,19 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
     m_bFeatureDefnEstablished = true;
 
     const char* pszConfFile = CPLFindFile("gdal", "plscenesconf.json");
-    if( pszConfFile == NULL )
+    if( pszConfFile == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find plscenesconf.json");
         return;
     }
 
-    GByte* pabyRet = NULL;
-    if( !VSIIngestFile( NULL, pszConfFile, &pabyRet, NULL, -1 ) )
+    GByte* pabyRet = nullptr;
+    if( !VSIIngestFile( nullptr, pszConfFile, &pabyRet, nullptr, -1 ) )
     {
         return;
     }
 
-    json_object* poRoot = NULL;
+    json_object* poRoot = nullptr;
     const char* pzText = reinterpret_cast<char*>(pabyRet);
     if( !OGRJSonParse( pzText, &poRoot ) )
     {
@@ -148,7 +148,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
     VSIFree(pabyRet);
 
     json_object* poV1Data = CPL_json_object_object_get(poRoot, "v1_data");
-    if( poV1Data == NULL || json_object_get_type(poV1Data) != json_type_object )
+    if( poV1Data == nullptr || json_object_get_type(poV1Data) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find v1_data object in plscenesconf.json");
@@ -158,7 +158,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
 
     json_object* poItemType = CPL_json_object_object_get(poV1Data,
                                                          GetDescription());
-    if( poItemType == NULL ||
+    if( poItemType == nullptr ||
         json_object_get_type(poItemType) != json_type_object )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -169,7 +169,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
     }
 
     json_object* poFields = CPL_json_object_object_get(poItemType, "fields");
-    if( poFields == NULL ||
+    if( poFields == nullptr ||
         json_object_get_type(poFields) != json_type_array )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -220,23 +220,23 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
 
     {
         OGRFieldDefn oFieldDefn("self_link", OFTString);
-        RegisterField(&oFieldDefn, NULL, "_links._self");
+        RegisterField(&oFieldDefn, nullptr, "_links._self");
     }
 
     {
         OGRFieldDefn oFieldDefn("assets_link", OFTString);
-        RegisterField(&oFieldDefn, NULL, "_links.assets");
+        RegisterField(&oFieldDefn, nullptr, "_links.assets");
     }
 
     {
         OGRFieldDefn oFieldDefn("permissions", OFTStringList);
-        RegisterField(&oFieldDefn, NULL, "_permissions");
+        RegisterField(&oFieldDefn, nullptr, "_permissions");
     }
 
     if( m_poDS->DoesFollowLinks() )
     {
         json_object* poAssets = CPL_json_object_object_get(poItemType, "assets");
-        if( poAssets == NULL ||
+        if( poAssets == nullptr ||
             json_object_get_type(poAssets) != json_type_array )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -260,7 +260,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_self_link";
                     OGRFieldDefn oFieldDefn(osName, OFTString);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s._links._self", pszAsset));
                 }
                 {
@@ -268,7 +268,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_activate_link";
                     OGRFieldDefn oFieldDefn(osName, OFTString);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s._links.activate", pszAsset));
                 }
                 {
@@ -276,7 +276,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_permissions";
                     OGRFieldDefn oFieldDefn(osName, OFTStringList);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s._permissions", pszAsset));
                 }
                 {
@@ -284,7 +284,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_expires_at";
                     OGRFieldDefn oFieldDefn(osName, OFTDateTime);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s.expires_at", pszAsset));
                 }
                 {
@@ -292,7 +292,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_location";
                     OGRFieldDefn oFieldDefn(osName, OFTString);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s.location", pszAsset));
                 }
                 {
@@ -300,7 +300,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
                     osName += pszAsset;
                     osName += "_status";
                     OGRFieldDefn oFieldDefn(osName, OFTString);
-                    RegisterField(&oFieldDefn, NULL,
+                    RegisterField(&oFieldDefn, nullptr,
                                   CPLSPrintf("/assets.%s.status", pszAsset));
                 }
             }
@@ -316,7 +316,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
 
 char **OGRPLScenesDataV1Layer::GetMetadata( const char * pszDomain  )
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         EstablishLayerDefn();
     }
@@ -329,7 +329,7 @@ char **OGRPLScenesDataV1Layer::GetMetadata( const char * pszDomain  )
 
 const char *OGRPLScenesDataV1Layer::GetMetadataItem( const char * pszName, const char* pszDomain )
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         EstablishLayerDefn();
     }
@@ -342,10 +342,10 @@ const char *OGRPLScenesDataV1Layer::GetMetadataItem( const char * pszName, const
 
 bool OGRPLScenesDataV1Layer::GetNextPage()
 {
-    if( m_poPageObj != NULL )
+    if( m_poPageObj != nullptr )
         json_object_put(m_poPageObj);
-    m_poPageObj = NULL;
-    m_poFeatures = NULL;
+    m_poPageObj = nullptr;
+    m_poFeatures = nullptr;
     m_nFeatureIdx = 0;
 
     if( m_osRequestURL.empty() )
@@ -372,7 +372,7 @@ bool OGRPLScenesDataV1Layer::GetNextPage()
             json_object* poConfig = json_object_new_array();
             json_object_object_add(poFilter, "config", poConfig);
 
-            if( m_poFilterGeom != NULL )
+            if( m_poFilterGeom != nullptr )
             {
                 json_object* poGeomFilter = json_object_new_object();
                 json_object_array_add(poConfig, poGeomFilter);
@@ -386,7 +386,7 @@ bool OGRPLScenesDataV1Layer::GetNextPage()
                 json_object_object_add(poGeomFilter, "config",
                                        poGeoJSONGeom);
             }
-            if( m_poAttributeFilter != NULL )
+            if( m_poAttributeFilter != nullptr )
             {
                 json_object_get(m_poAttributeFilter);
                 json_object_array_add(poConfig, m_poAttributeFilter);
@@ -402,20 +402,20 @@ bool OGRPLScenesDataV1Layer::GetNextPage()
     {
         poObj = m_poDS->RunRequest(m_osRequestURL);
     }
-    if( poObj == NULL )
+    if( poObj == nullptr )
     {
         m_bEOF = true;
         return false;
     }
 
     json_object* poFeatures = CPL_json_object_object_get(poObj, "features");
-    if( poFeatures == NULL ||
+    if( poFeatures == nullptr ||
         json_object_get_type(poFeatures) != json_type_array ||
         json_object_array_length(poFeatures) == 0 )
     {
         // If this is a single item, then wrap it in a features array
         json_object* poProperties = CPL_json_object_object_get(poObj, "properties");
-        if( poProperties != NULL )
+        if( poProperties != nullptr )
         {
             m_poPageObj = json_object_new_object();
             poFeatures = json_object_new_array();
@@ -457,10 +457,10 @@ void OGRPLScenesDataV1Layer::ResetReading()
 {
     m_bEOF = false;
 
-    if( m_poFeatures != NULL && m_bStillInFirstPage )
+    if( m_poFeatures != nullptr && m_bStillInFirstPage )
         m_nFeatureIdx = 0;
     else
-        m_poFeatures = NULL;
+        m_poFeatures = nullptr;
     m_nNextFID = 1;
     m_bStillInFirstPage = true;
     m_osRequestURL = m_poDS->GetBaseURL() +
@@ -473,7 +473,7 @@ void OGRPLScenesDataV1Layer::ResetReading()
 
 void OGRPLScenesDataV1Layer::SetSpatialFilter(  OGRGeometry *poGeomIn )
 {
-    m_poFeatures = NULL;
+    m_poFeatures = nullptr;
 
     if( poGeomIn )
     {
@@ -598,7 +598,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                 json_object_put(poFilter1);
             if( poFilter2 )
                 json_object_put(poFilter2);
-            return NULL;
+            return nullptr;
         }
     }
     else if( poNode->eNodeType == SNT_OPERATION &&
@@ -615,7 +615,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
         }
         else
         {
-            return NULL;
+            return nullptr;
         }
     }
     else if( IsSimpleComparison(poNode) )
@@ -637,7 +637,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
             }
             else
             {
-                return NULL;
+                return nullptr;
             }
         }
         else if( poNode->nOperation == SWQ_EQ &&
@@ -773,7 +773,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                 {
                     json_object_put(poFilter);
                     m_bFilterMustBeClientSideEvaluated = true;
-                    return NULL;
+                    return nullptr;
                 }
                 json_object_array_add(poConfig, json_object_new_string(
                                     poNode->papoSubExpr[i]->string_value));
@@ -797,7 +797,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
                 {
                     json_object_put(poFilter);
                     m_bFilterMustBeClientSideEvaluated = true;
-                    return NULL;
+                    return nullptr;
                 }
                 json_object_array_add(poConfig, json_object_new_int64(
                                     poNode->papoSubExpr[i]->int_value));
@@ -842,7 +842,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
             {
                 json_object_put(poFilter);
                 m_bFilterMustBeClientSideEvaluated = true;
-                return NULL;
+                return nullptr;
             }
             json_object_array_add(poConfig, json_object_new_string(
                                     poNode->papoSubExpr[i]->string_value));
@@ -851,7 +851,7 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
     }
 
     m_bFilterMustBeClientSideEvaluated = true;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -861,22 +861,22 @@ json_object* OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node* poNode)
 OGRErr OGRPLScenesDataV1Layer::SetAttributeFilter( const char *pszQuery )
 
 {
-    m_poFeatures = NULL;
+    m_poFeatures = nullptr;
 
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszQuery);
 
     if( m_poAttributeFilter )
         json_object_put(m_poAttributeFilter);
-    m_poAttributeFilter = NULL;
+    m_poAttributeFilter = nullptr;
     m_bFilterMustBeClientSideEvaluated = false;
-    if( m_poAttrQuery != NULL )
+    if( m_poAttrQuery != nullptr )
     {
         swq_expr_node* poNode = (swq_expr_node*) m_poAttrQuery->GetSWQExpr();
 
         poNode->ReplaceBetweenByGEAndLERecurse();
 
         m_poAttributeFilter = BuildFilter(poNode);
-        if( m_poAttributeFilter == NULL )
+        if( m_poAttributeFilter == nullptr )
         {
             CPLDebug("PLSCENES",
                         "Full filter will be evaluated on client side.");
@@ -902,10 +902,10 @@ OGRFeature *OGRPLScenesDataV1Layer::GetNextFeature()
     while( true )
     {
         OGRFeature  *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if( m_poAttrQuery == NULL ||
+        if( m_poAttrQuery == nullptr ||
             !m_bFilterMustBeClientSideEvaluated ||
             m_poAttrQuery->Evaluate( poFeature ) )
         {
@@ -926,12 +926,12 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
 {
     EstablishLayerDefn();
     if( m_bEOF )
-        return NULL;
+        return nullptr;
 
-    if( m_poFeatures == NULL )
+    if( m_poFeatures == nullptr )
     {
         if( !GetNextPage() )
-            return NULL;
+            return nullptr;
     }
 
     if( m_nFeatureIdx == json_object_array_length(m_poFeatures) )
@@ -939,29 +939,29 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
         if( m_nFeatureIdx < m_nPageSize &&
             m_poDS->GetBaseURL().find("/vsimem/") != 0  )
         {
-            return NULL;
+            return nullptr;
         }
         m_osRequestURL = m_osNextURL;
         m_bStillInFirstPage = false;
         if( !GetNextPage() )
-            return NULL;
+            return nullptr;
     }
     json_object* poJSonFeature = json_object_array_get_idx(m_poFeatures, m_nFeatureIdx);
     m_nFeatureIdx ++;
-    if( poJSonFeature == NULL || json_object_get_type(poJSonFeature) != json_type_object )
+    if( poJSonFeature == nullptr || json_object_get_type(poJSonFeature) != json_type_object )
     {
         m_bEOF = true;
-        return NULL;
+        return nullptr;
     }
 
     OGRFeature* poFeature = new OGRFeature(m_poFeatureDefn);
     poFeature->SetFID(m_nNextFID++);
 
     json_object* poJSonGeom = CPL_json_object_object_get(poJSonFeature, "geometry");
-    if( poJSonGeom != NULL && json_object_get_type(poJSonGeom) == json_type_object )
+    if( poJSonGeom != nullptr && json_object_get_type(poJSonGeom) == json_type_object )
     {
         OGRGeometry* poGeom = OGRGeoJSONReadGeometry(poJSonGeom);
-        if( poGeom != NULL )
+        if( poGeom != nullptr )
         {
             if( poGeom->getGeometryType() == wkbPolygon )
             {
@@ -975,7 +975,7 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
     }
 
     json_object* poId = CPL_json_object_object_get(poJSonFeature, "id");
-    if( poId != NULL && json_object_get_type(poId) == json_type_string )
+    if( poId != nullptr && json_object_get_type(poId) == json_type_string )
     {
         std::map<CPLString, int>::const_iterator oIter =
             m_oMapPrefixedJSonFieldNameToFieldIdx.find("id");
@@ -988,7 +988,7 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
 
     json_object* poPermissions =
         CPL_json_object_object_get(poJSonFeature, "_permissions");
-    if( poPermissions != NULL &&
+    if( poPermissions != nullptr &&
         json_object_get_type(poPermissions) == json_type_array )
     {
         std::map<CPLString, int>::const_iterator oIter =
@@ -1018,13 +1018,13 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
         const char* pszFeaturePart = (i == 0) ? "properties": "_links";
         json_object* poProperties =
                 CPL_json_object_object_get(poJSonFeature, pszFeaturePart);
-        if( poProperties != NULL &&
+        if( poProperties != nullptr &&
             json_object_get_type(poProperties) == json_type_object )
         {
             json_object_iter it;
-            it.key = NULL;
-            it.val = NULL;
-            it.entry = NULL;
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
             json_object_object_foreachC( poProperties, it )
             {
                 CPLString osPrefixedJSonFieldName(pszFeaturePart);
@@ -1049,9 +1049,9 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
         }
     }
 
-    json_object* poAssets = NULL;
+    json_object* poAssets = nullptr;
     if( m_poDS->DoesFollowLinks() &&
-        (!m_bInFeatureCountOrGetExtent || m_poAttrQuery != NULL)  )
+        (!m_bInFeatureCountOrGetExtent || m_poAttrQuery != nullptr)  )
     {
         std::map<CPLString, int>::const_iterator oIter =
                 m_oMapPrefixedJSonFieldNameToFieldIdx.find("_links.assets");
@@ -1065,12 +1065,12 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
             }
         }
     }
-    if( poAssets != NULL )
+    if( poAssets != nullptr )
     {
         json_object_iter itAsset;
-        itAsset.key = NULL;
-        itAsset.val = NULL;
-        itAsset.entry = NULL;
+        itAsset.key = nullptr;
+        itAsset.val = nullptr;
+        itAsset.entry = nullptr;
         json_object_object_foreachC( poAssets, itAsset )
         {
             if( m_oSetAssets.find(itAsset.key) == m_oSetAssets.end() )
@@ -1088,23 +1088,23 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
             }
 
             json_object* poAsset = itAsset.val;
-            if( poAsset != NULL &&
+            if( poAsset != nullptr &&
                 json_object_get_type(poAsset) == json_type_object )
             {
                 json_object_iter it;
-                it.key = NULL;
-                it.val = NULL;
-                it.entry = NULL;
+                it.key = nullptr;
+                it.val = nullptr;
+                it.entry = nullptr;
                 json_object_object_foreachC( poAsset, it )
                 {
-                    if( it.val == NULL ) continue;
+                    if( it.val == nullptr ) continue;
                     CPLString osPrefixedJSonFieldName(
                                     "/assets." + CPLString(itAsset.key));
                     osPrefixedJSonFieldName += "." + CPLString(it.key);
                     if( strcmp(it.key, "_links") == 0 &&
                         json_object_get_type(it.val) == json_type_object )
                     {
-                        if( CPL_json_object_object_get(it.val, "_self") != NULL )
+                        if( CPL_json_object_object_get(it.val, "_self") != nullptr )
                         {
                             CPLString osPrefixedJSonFieldNameNew(
                                 osPrefixedJSonFieldName + "._self");
@@ -1112,7 +1112,7 @@ OGRFeature* OGRPLScenesDataV1Layer::GetNextRawFeature()
                                 poFeature, osPrefixedJSonFieldNameNew,
                                 CPL_json_object_object_get(it.val, "_self"));
                         }
-                        if( CPL_json_object_object_get(it.val, "activate") != NULL )
+                        if( CPL_json_object_object_get(it.val, "activate") != nullptr )
                         {
                             CPLString osPrefixedJSonFieldNameNew(
                                 osPrefixedJSonFieldName + ".activate");
@@ -1146,7 +1146,7 @@ bool OGRPLScenesDataV1Layer::SetFieldFromPrefixedJSonFieldName(
 {
     std::map<CPLString, int>::const_iterator oIter =
         m_oMapPrefixedJSonFieldNameToFieldIdx.find(osPrefixedJSonFieldName);
-    if( poVal != NULL && oIter != m_oMapPrefixedJSonFieldNameToFieldIdx.end() )
+    if( poVal != nullptr && oIter != m_oMapPrefixedJSonFieldNameToFieldIdx.end() )
     {
         const int iField = oIter->second;
         json_type eJSonType = json_object_get_type(poVal);
@@ -1181,7 +1181,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
     if( m_poDS->GetFilter().empty() )
     {
         if( m_nTotalFeatures >= 0 &&
-            m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+            m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
         {
             return m_nTotalFeatures;
         }
@@ -1201,7 +1201,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
         json_object_object_add(poFilter, "config", poConfig);
 
         // We need to put a dummy filter
-        if( m_poFilterGeom == NULL && m_poAttributeFilter == NULL )
+        if( m_poFilterGeom == nullptr && m_poAttributeFilter == nullptr )
         {
             json_object* poRangeFilter = json_object_new_object();
             json_object_array_add(poConfig, poRangeFilter);
@@ -1216,7 +1216,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
                                    poRangeFilterConfig);
         }
 
-        if( m_poFilterGeom != NULL )
+        if( m_poFilterGeom != nullptr )
         {
             json_object* poGeomFilter = json_object_new_object();
             json_object_array_add(poConfig, poGeomFilter);
@@ -1230,7 +1230,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
             json_object_object_add(poGeomFilter, "config",
                                     poGeoJSONGeom);
         }
-        if( m_poAttributeFilter != NULL )
+        if( m_poAttributeFilter != nullptr )
         {
             json_object_get(m_poAttributeFilter);
             json_object_array_add(poConfig, m_poAttributeFilter);
@@ -1243,7 +1243,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
                                    (m_poDS->GetBaseURL() + "stats").c_str(),
                                    FALSE, "POST", true,
                                    osFilter);
-        if( poObj != NULL )
+        if( poObj != nullptr )
         {
             json_object* poBuckets =
                                 CPL_json_object_object_get(poObj, "buckets");
@@ -1268,7 +1268,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
                         }
                     }
                 }
-                if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+                if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
                     m_nTotalFeatures = nRes;
 
                 json_object_put(poObj);
@@ -1290,7 +1290,7 @@ GIntBig OGRPLScenesDataV1Layer::GetFeatureCount(int bForce)
 
 OGRErr OGRPLScenesDataV1Layer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
     {
         m_bInFeatureCountOrGetExtent = true;
         OGRErr eErr = OGRLayer::GetExtentInternal(0, psExtent, bForce);

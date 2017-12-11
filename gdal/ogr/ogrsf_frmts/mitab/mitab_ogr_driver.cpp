@@ -46,7 +46,7 @@ static int OGRTABDriverIdentify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
         return -1;  // Unsure.
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
         return FALSE;
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
@@ -86,19 +86,19 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo *poOpenInfo )
 {
     if( OGRTABDriverIdentify(poOpenInfo) == FALSE )
     {
-        return NULL;
+        return nullptr;
     }
 
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
     {
         if( poOpenInfo->eAccess == GA_Update )
-            return NULL;
+            return nullptr;
     }
 
 #ifdef DEBUG
     // For AFL, so that .cur_input is detected as the archive filename.
-    if( poOpenInfo->fpL != NULL &&
+    if( poOpenInfo->fpL != nullptr &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
@@ -114,7 +114,7 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo *poOpenInfo )
     if( !poDS->Open(poOpenInfo, TRUE) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -136,7 +136,7 @@ static GDALDataset *OGRTABDriverCreate( const char *pszName,
     if( !poDS->Create(pszName, papszOptions) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -149,14 +149,14 @@ static GDALDataset *OGRTABDriverCreate( const char *pszName,
 static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
-    GDALDataset *poDS = NULL;
+    GDALDataset *poDS = nullptr;
     {
         // Make sure that the file opened by GDALOpenInfo is closed
         // when the object goes out of scope
         GDALOpenInfo oOpenInfo(pszDataSource, GA_ReadOnly);
         poDS = OGRTABDriverOpen(&oOpenInfo);
     }
-    if( poDS == NULL )
+    if( poDS == nullptr )
         return CE_Failure;
     char **papszFileList = poDS->GetFileList();
     delete poDS;
@@ -194,7 +194,7 @@ static void OGRTABDriverUnload(CPL_UNUSED GDALDriver *poDriver)
 void RegisterOGRTAB()
 
 {
-    if( GDALGetDriverByName("MapInfo File") != NULL )
+    if( GDALGetDriverByName("MapInfo File") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

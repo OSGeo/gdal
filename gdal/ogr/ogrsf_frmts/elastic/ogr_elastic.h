@@ -161,7 +161,7 @@ public:
                                          const char* pszMappingName,
                                          OGRElasticDataSource* poDS,
                                          char** papszOptions,
-                                         const char* pszESSearch = NULL);
+                                         const char* pszESSearch = nullptr);
                         virtual ~OGRElasticLayer();
 
     virtual void        ResetReading() override;
@@ -266,7 +266,7 @@ public:
     static bool         UploadFile(const CPLString &url, const CPLString &data);
     static void         Delete(const CPLString &url);
 
-    json_object*        RunRequest(const char* pszURL, const char* pszPostContent = NULL);
+    json_object*        RunRequest(const char* pszURL, const char* pszPostContent = nullptr);
     const CPLString&    GetFID() const { return m_osFID; }
 };
 

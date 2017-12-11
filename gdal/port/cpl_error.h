@@ -197,7 +197,7 @@ CPL_C_END
 
 /** Validate that a pointer is not NULL */
 #define VALIDATE_POINTER0(ptr, func) \
-   do { if( NULL == ptr ) \
+   do { if( NULL_OR_NULLPTR == ptr ) \
       { \
         CPLErr const ret = VALIDATE_POINTER_ERR; \
         CPLError( ret, CPLE_ObjectNull, \
@@ -206,7 +206,7 @@ CPL_C_END
 
 /** Validate that a pointer is not NULL, and return rc if it is NULL */
 #define VALIDATE_POINTER1(ptr, func, rc) \
-   do { if( NULL == ptr ) \
+   do { if( NULL_OR_NULLPTR == ptr ) \
       { \
           CPLErr const ret = VALIDATE_POINTER_ERR; \
           CPLError( ret, CPLE_ObjectNull, \

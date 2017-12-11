@@ -72,16 +72,16 @@ class VizGeorefSpline2D
 #endif
         _dx(0.0),
         _dy(0.0),
-        x(NULL),
-        y(NULL),
-        u(NULL),
-        unused(NULL),
-        index(NULL)
+        x(nullptr),
+        y(nullptr),
+        u(nullptr),
+        unused(nullptr),
+        index(nullptr)
     {
         for( int i = 0; i < VIZGEOREF_MAX_VARS; i++ )
         {
-            rhs[i] = NULL;
-            coef[i] = NULL;
+            rhs[i] = nullptr;
+            coef[i] = nullptr;
         }
 
         grow_points();

@@ -73,12 +73,12 @@ static const char * const apszDatumEquiv[] =
     "WGS_1972",
     "European_Terrestrial_Reference_System_89",
     "European_Reference_System_1989",
-    NULL
+    nullptr
 };
 
-static CPLMutex* hFindMatchesMutex = NULL;
-static std::vector<OGRSpatialReference*>* papoSRSCache_PROJCS = NULL;
-static std::vector<OGRSpatialReference*>* papoSRSCache_GEOGCS = NULL;
+static CPLMutex* hFindMatchesMutex = nullptr;
+static std::vector<OGRSpatialReference*>* papoSRSCache_PROJCS = nullptr;
+static std::vector<OGRSpatialReference*>* papoSRSCache_GEOGCS = nullptr;
 
 /************************************************************************/
 /*                      OGREPSGDatumNameMassage()                       */
@@ -129,7 +129,7 @@ void OGREPSGDatumNameMassage( char ** ppszDatum )
 /*      Search for datum equivelences.  Specific massaged names get     */
 /*      mapped to OpenGIS specified names.                              */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; apszDatumEquiv[i] != NULL; i += 2 )
+    for( int i = 0; apszDatumEquiv[i] != nullptr; i += 2 )
     {
         if( EQUAL(*ppszDatum, apszDatumEquiv[i]) )
         {
@@ -156,7 +156,7 @@ EPSGAngleStringToDD( const char * pszAngle, int nUOMAngle )
     {
         dfAngle = std::abs(atoi(pszAngle));
         const char *pszDecimal = strchr(pszAngle, '.');
-        if( pszDecimal != NULL && strlen(pszDecimal) > 1 )
+        if( pszDecimal != nullptr && strlen(pszDecimal) > 1 )
         {
             char szMinutes[3] = { '\0', '\0', '\0' };
 
@@ -233,9 +233,9 @@ static bool EPSGGetUOMAngleInfo( int nUOMAngleCode,
         || nUOMAngleCode == 9108 || nUOMAngleCode == 9110
         || nUOMAngleCode == 9122 )
     {
-        if( ppszUOMName != NULL )
+        if( ppszUOMName != nullptr )
             *ppszUOMName = CPLStrdup("degree");
-        if( pdfInDegrees != NULL )
+        if( pdfInDegrees != nullptr )
             *pdfInDegrees = 1.0;
         return true;
     }
@@ -323,10 +323,10 @@ static bool EPSGGetUOMAngleInfo( int nUOMAngleCode,
 /* -------------------------------------------------------------------- */
 /*      Return to caller.                                               */
 /* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL )
+    if( ppszUOMName != nullptr )
         *ppszUOMName = CPLStrdup( pszUOMName );
 
-    if( pdfInDegrees != NULL )
+    if( pdfInDegrees != nullptr )
         *pdfInDegrees = dfInDegrees;
 
     return true;
@@ -350,9 +350,9 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 /* -------------------------------------------------------------------- */
     if( nUOMLengthCode == 9001 )
     {
-        if( ppszUOMName != NULL )
+        if( ppszUOMName != nullptr )
             *ppszUOMName = CPLStrdup( "metre" );
-        if( pdfInMeters != NULL )
+        if( pdfInMeters != nullptr )
             *pdfInMeters = 1.0;
 
         return true;
@@ -369,13 +369,13 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
     char **papszUnitsRecord =
         CSVScanFileByName( uom_filename, "UOM_CODE", szSearchKey, CC_Integer );
 
-    if( papszUnitsRecord == NULL )
+    if( papszUnitsRecord == nullptr )
         return false;
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
-    if( ppszUOMName != NULL )
+    if( ppszUOMName != nullptr )
     {
         const int iNameField =
             CSVGetFileFieldId( uom_filename, "UNIT_OF_MEAS_NAME" );
@@ -386,7 +386,7 @@ EPSGGetUOMLengthInfo( int nUOMLengthCode,
 /*      Get the A and B factor fields, and create the multiplicative    */
 /*      factor.                                                         */
 /* -------------------------------------------------------------------- */
-    if( pdfInMeters != NULL )
+    if( pdfInMeters != nullptr )
     {
         const int iBFactorField = CSVGetFileFieldId( uom_filename, "FACTOR_B" );
         const int iCFactorField = CSVGetFileFieldId( uom_filename, "FACTOR_C" );
@@ -446,7 +446,7 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
     snprintf( szCode, sizeof(szCode), "%d", nGeogCS );
     char **papszLine = CSVScanFileByName(
         pszFilename, "COORD_REF_SYS_CODE", szCode, CC_Integer );
-    if( papszLine == NULL )
+    if( papszLine == nullptr )
     {
         pszFilename = CSVFilename("gcs.csv");
         snprintf( szCode, sizeof(szCode), "%d", nGeogCS );
@@ -455,7 +455,7 @@ int EPSGGetWGS84Transform( int nGeogCS, std::vector<CPLString>& asTransform )
                                        szCode, CC_Integer );
     }
 
-    if( papszLine == NULL )
+    if( papszLine == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -518,9 +518,9 @@ EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
     // 8901 is the official current code for Greenwich.
     if( nPMCode == 7022 /* PM_Greenwich */ || nPMCode == 8901 )
     {
-        if( pdfOffset != NULL )
+        if( pdfOffset != nullptr )
             *pdfOffset = 0.0;
-        if( ppszName != NULL )
+        if( ppszName != nullptr )
             *ppszName = CPLStrdup( "Greenwich" );
         return true;
     }
@@ -542,7 +542,7 @@ EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 /* -------------------------------------------------------------------- */
 /*      Get the PM offset.                                              */
 /* -------------------------------------------------------------------- */
-    if( pdfOffset != NULL )
+    if( pdfOffset != nullptr )
     {
         *pdfOffset =
             EPSGAngleStringToDD(
@@ -555,7 +555,7 @@ EPSGGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
-    if( ppszName != NULL )
+    if( ppszName != nullptr )
         *ppszName =
             CPLStrdup(
                 CSVGetField( PM_FILENAME,
@@ -603,7 +603,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
     if( nDatum < 1 )
         return false;
 
-    if( pnDatum != NULL )
+    if( pnDatum != nullptr )
         *pnDatum = nDatum;
 
 /* -------------------------------------------------------------------- */
@@ -616,7 +616,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
     if( nPM < 1 )
         return false;
 
-    if( pnPM != NULL )
+    if( pnPM != nullptr )
         *pnPM = nPM;
 
 /* -------------------------------------------------------------------- */
@@ -629,7 +629,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
     if( nEllipsoid < 1 )
         return false;
 
-    if( pnEllipsoid != NULL )
+    if( pnEllipsoid != nullptr )
         *pnEllipsoid = nEllipsoid;
 
 /* -------------------------------------------------------------------- */
@@ -642,13 +642,13 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
     if( nUOMAngle < 1 )
         return false;
 
-    if( pnUOMAngle != NULL )
+    if( pnUOMAngle != nullptr )
         *pnUOMAngle = nUOMAngle;
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
-    if( ppszName != NULL )
+    if( ppszName != nullptr )
         *ppszName =
             CPLStrdup(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
                                    szSearchKey, CC_Integer,
@@ -657,7 +657,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the datum name, if requested.                               */
 /* -------------------------------------------------------------------- */
-    if( ppszDatumName != NULL )
+    if( ppszDatumName != nullptr )
         *ppszDatumName =
             CPLStrdup(CSVGetField( pszFilename, "COORD_REF_SYS_CODE",
                                    szSearchKey, CC_Integer,
@@ -670,7 +670,7 @@ EPSGGetGCSInfo( int nGCSCode, char ** ppszName,
                                        szSearchKey, CC_Integer,
                                        "COORD_SYS_CODE" ) );
 
-    if( pnCoordSysCode != NULL )
+    if( pnCoordSysCode != nullptr )
         *pnCoordSysCode = nCSC;
 
     return TRUE;
@@ -728,21 +728,21 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
                                              CC_Integer,
                                              "UOM_CODE" ));
     double dfToMeters = 1.0;
-    if( !EPSGGetUOMLengthInfo( nUOMLength, NULL, &dfToMeters ) )
+    if( !EPSGGetUOMLengthInfo( nUOMLength, nullptr, &dfToMeters ) )
     {
         dfToMeters = 1.0;
     }
 
     dfSemiMajor *= dfToMeters;
 
-    if( pdfSemiMajor != NULL )
+    if( pdfSemiMajor != nullptr )
         *pdfSemiMajor = dfSemiMajor;
 
 /* -------------------------------------------------------------------- */
 /*      Get the semi-minor if requested.  If the Semi-minor axis        */
 /*      isn't available, compute it based on the inverse flattening.    */
 /* -------------------------------------------------------------------- */
-    if( pdfInvFlattening != NULL )
+    if( pdfInvFlattening != nullptr )
     {
         *pdfInvFlattening =
             CPLAtof(CSVGetField( CSVFilename("ellipsoid.csv" ),
@@ -767,7 +767,7 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
-    if( ppszName != NULL )
+    if( ppszName != nullptr )
         *ppszName =
             CPLStrdup(CSVGetField( CSVFilename("ellipsoid.csv" ),
                                    "ELLIPSOID_CODE", szSearchKey, CC_Integer,
@@ -851,7 +851,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 
     for( int i = 0; i < 7; i++ )
     {
-        if( panParmIds == NULL )
+        if( panParmIds == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "panParmIds cannot be NULL." );
@@ -895,7 +895,7 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
         {
             double dfInMeters = 0.0;
 
-            if( !EPSGGetUOMLengthInfo( nUOM, NULL, &dfInMeters ) )
+            if( !EPSGGetUOMLengthInfo( nUOM, nullptr, &dfInMeters ) )
                 dfInMeters = 1.0;
             adfProjParms[i] = CPLAtof(pszValue) * dfInMeters;
         }
@@ -918,10 +918,10 @@ EPSGGetProjTRFInfo( int nPCS, int * pnProjMethod,
 /* -------------------------------------------------------------------- */
 /*      Transfer requested data into passed variables.                  */
 /* -------------------------------------------------------------------- */
-    if( pnProjMethod != NULL )
+    if( pnProjMethod != nullptr )
         *pnProjMethod = nProjMethod;
 
-    if( padfProjParms != NULL )
+    if( padfProjParms != nullptr )
     {
         for( int i = 0; i < 7; i++ )
             padfProjParms[i] = adfProjParms[i];
@@ -952,7 +952,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                             szSearchKey, CC_Integer );
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
     {
         pszFilename = CSVFilename( "pcs.csv" );
         snprintf( szSearchKey, sizeof(szSearchKey), "%d", nPCSCode );
@@ -960,13 +960,13 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                                          szSearchKey, CC_Integer );
     }
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
         return false;
 
 /* -------------------------------------------------------------------- */
 /*      Get the name, if requested.                                     */
 /* -------------------------------------------------------------------- */
-    if( ppszEPSGName != NULL )
+    if( ppszEPSGName != nullptr )
     {
         CPLString osPCSName =
             CSLGetField( papszRecord,
@@ -978,7 +978,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                          CSVGetFileFieldId(pszFilename,
                                            "DEPRECATED") );
 
-        if( pszDeprecated != NULL && *pszDeprecated == '1' )
+        if( pszDeprecated != nullptr && *pszDeprecated == '1' )
             osPCSName += " (deprecated)";
 
         *ppszEPSGName = CPLStrdup(osPCSName);
@@ -987,7 +987,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
 /*      Get the UOM Length code, if requested.                          */
 /* -------------------------------------------------------------------- */
-    if( pnUOMLengthCode != NULL )
+    if( pnUOMLengthCode != nullptr )
     {
         const char *pszValue =
             CSLGetField( papszRecord,
@@ -1001,7 +1001,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
 /*      Get the UOM Angle code, if requested.                           */
 /* -------------------------------------------------------------------- */
-    if( pnUOMAngleCode != NULL )
+    if( pnUOMAngleCode != nullptr )
     {
         const char *pszValue =
             CSLGetField( papszRecord,
@@ -1016,7 +1016,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
 /*      Get the GeogCS (Datum with PM) code, if requested.              */
 /* -------------------------------------------------------------------- */
-    if( pnGeogCS != NULL )
+    if( pnGeogCS != nullptr )
     {
         const char *pszValue =
             CSLGetField( papszRecord,
@@ -1030,7 +1030,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
 /*      Get the GeogCS (Datum with PM) code, if requested.              */
 /* -------------------------------------------------------------------- */
-    if( pnTRFCode != NULL )
+    if( pnTRFCode != nullptr )
     {
         const char *pszValue =
             CSLGetField( papszRecord,
@@ -1049,7 +1049,7 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
                                        szSearchKey, CC_Integer,
                                        "COORD_SYS_CODE" ) );
 
-    if( pnCoordSysCode != NULL )
+    if( pnCoordSysCode != nullptr )
         *pnCoordSysCode = nCSC;
 
 /* -------------------------------------------------------------------- */
@@ -1112,9 +1112,9 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_SYS_CODE",
                                             szSearchKey, CC_Integer );
 
-    char **papszAxis1 = NULL;
-    char **papszAxis2 = NULL;
-    if( papszRecord != NULL )
+    char **papszAxis1 = nullptr;
+    char **papszAxis2 = nullptr;
+    if( papszRecord != nullptr )
     {
         papszAxis1 = CSLDuplicate( papszRecord );
         papszRecord = CSVGetNextLine( pszFilename );
@@ -1123,7 +1123,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
             papszAxis2 = CSLDuplicate( papszRecord );
     }
 
-    if( papszAxis2 == NULL )
+    if( papszAxis2 == nullptr )
     {
         CSLDestroy( papszAxis1 );
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -1258,16 +1258,16 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
     int nUOMAngle = 0;
     int nEllipsoidCode = 0;
     int nCSC = 0;
-    char *pszGeogCSName = NULL;
-    char *pszDatumName = NULL;
-    char *pszAngleName = NULL;
+    char *pszGeogCSName = nullptr;
+    char *pszDatumName = nullptr;
+    char *pszAngleName = nullptr;
 
     if( !EPSGGetGCSInfo( nGeogCS, &pszGeogCSName,
                          &nDatumCode, &pszDatumName,
                          &nPMCode, &nEllipsoidCode, &nUOMAngle, &nCSC ) )
         return OGRERR_UNSUPPORTED_SRS;
 
-    char *pszPMName = NULL;
+    char *pszPMName = nullptr;
     double dfPMOffset = 0.0;
     if( !EPSGGetPMInfo( nPMCode, &pszPMName, &dfPMOffset ) )
     {
@@ -1278,7 +1278,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 
     OGREPSGDatumNameMassage( &pszDatumName );
 
-    char *pszEllipsoidName = NULL;
+    char *pszEllipsoidName = nullptr;
     double dfSemiMajor = 0.0;
     double dfInvFlattening = 0.0;
     if( OSRGetEllipsoidInfo( nEllipsoidCode, &pszEllipsoidName,
@@ -1437,7 +1437,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
     int nUOMLength = 0;
     int nTRFCode = 0;
     int nCSC = 0;
-    char *pszPCSName = NULL;
+    char *pszPCSName = nullptr;
     double adfTOWGS84[7] = { std::numeric_limits<double>::infinity(),
                              std::numeric_limits<double>::infinity(),
                              std::numeric_limits<double>::infinity(),
@@ -1486,7 +1486,7 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
 /* -------------------------------------------------------------------- */
 /*      Set linear units.                                               */
 /* -------------------------------------------------------------------- */
-    char *pszUOMLengthName = NULL;
+    char *pszUOMLengthName = nullptr;
     double dfInMeters = 0.0;
 
     if( !EPSGGetUOMLengthInfo( nUOMLength, &pszUOMLengthName, &dfInMeters ) )
@@ -1738,14 +1738,14 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                      szSearchKey, CC_Integer );
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
     {
         pszFilename = CSVFilename( "vertcs.csv" );
         papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                          szSearchKey, CC_Integer );
     }
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
@@ -1789,7 +1789,7 @@ static OGRErr SetEPSGVertCS( OGRSpatialReference * poSRS, int nVertCSCode )
         atoi(CSLGetField( papszRecord,
                           CSVGetFileFieldId(pszFilename, "UOM_CODE")));
 
-    char *pszUOMLengthName = NULL;
+    char *pszUOMLengthName = nullptr;
     double dfInMeters = 0.0;
 
     if( !EPSGGetUOMLengthInfo( nUOM_CODE, &pszUOMLengthName, &dfInMeters ) )
@@ -1836,7 +1836,7 @@ static OGRErr SetEPSGCompdCS( OGRSpatialReference * poSRS, int nCCSCode )
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                             szSearchKey, CC_Integer );
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
@@ -1922,7 +1922,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
     char **papszRecord = CSVScanFileByName( pszFilename, "COORD_REF_SYS_CODE",
                                             szSearchKey, CC_Integer );
 
-    if( papszRecord == NULL )
+    if( papszRecord == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
@@ -1955,7 +1955,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 /* -------------------------------------------------------------------- */
 /*      Get prime meridian information.                                 */
 /* -------------------------------------------------------------------- */
-    char *pszPMName = NULL;
+    char *pszPMName = nullptr;
     double dfPMOffset = 0.0;
 
     if( !EPSGGetPMInfo( nPMCode, &pszPMName, &dfPMOffset ) )
@@ -1967,7 +1967,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
 /* -------------------------------------------------------------------- */
 /*      Get the ellipsoid information.                                  */
 /* -------------------------------------------------------------------- */
-    char *pszEllipsoidName = NULL;
+    char *pszEllipsoidName = nullptr;
     double dfSemiMajor = 0.0;
     double dfInvFlattening = 0.0;
 
@@ -2050,7 +2050,7 @@ static OGRErr SetEPSGGeocCS( OGRSpatialReference * poSRS, int nGCSCode )
                                                          "UOM_CODE")));
 
     double dfInMeters = 1.0;
-    char *pszUOMLengthName = NULL;
+    char *pszUOMLengthName = nullptr;
     if( !EPSGGetUOMLengthInfo( nUOMLength, &pszUOMLengthName, &dfInMeters ) )
     {
         return OGRERR_UNSUPPORTED_SRS;
@@ -2141,11 +2141,11 @@ OGRErr OGRSpatialReference::importFromEPSG( int nCode )
     {
         OGR_SRSNode *poGEOGCS = GetAttrNode( "GEOGCS" );
 
-        if( poGEOGCS != NULL )
+        if( poGEOGCS != nullptr )
             poGEOGCS->StripNodes( "AXIS" );
 
         OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
-        if( poPROJCS != NULL && EPSGTreatsAsNorthingEasting() )
+        if( poPROJCS != nullptr && EPSGTreatsAsNorthingEasting() )
             poPROJCS->StripNodes( "AXIS" );
     }
 
@@ -2199,7 +2199,7 @@ OGRErr CPL_STDCALL OSRImportFromEPSG( OGRSpatialReferenceH hSRS, int nCode )
 OGRErr OGRSpatialReference::importFromEPSGA( int nCode )
 
 {
-    return importFromEPSGAInternal(nCode, NULL);
+    return importFromEPSGAInternal(nCode, nullptr);
 }
 
 /************************************************************************/
@@ -2218,10 +2218,10 @@ OGRErr OGRSpatialReference::importFromEPSGAInternal( int nCode,
 /* -------------------------------------------------------------------- */
 /*      Clear any existing definition.                                  */
 /* -------------------------------------------------------------------- */
-    if( GetRoot() != NULL )
+    if( GetRoot() != nullptr )
     {
         delete poRoot;
-        poRoot = NULL;
+        poRoot = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2229,7 +2229,7 @@ OGRErr OGRSpatialReference::importFromEPSGAInternal( int nCode,
 /* -------------------------------------------------------------------- */
     if( CSVScanFileByName( CSVFilename( "gcs.csv" ),
                            "COORD_REF_SYS_CODE",
-                           "4269", CC_Integer ) == NULL )
+                           "4269", CC_Integer ) == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to open EPSG support file %s.  "
@@ -2291,7 +2291,7 @@ OGRErr OGRSpatialReference::importFromEPSGAInternal( int nCode,
 
         char *pszNormalized = OCTProj4Normalize( szWrkDefn );
 
-        if( strstr(pszNormalized, "proj=") != NULL )
+        if( strstr(pszNormalized, "proj=") != nullptr )
             eErr = importFromProj4( pszNormalized );
 
         CPLFree( pszNormalized );
@@ -2301,14 +2301,14 @@ OGRErr OGRSpatialReference::importFromEPSGAInternal( int nCode,
 /*      Push in authority information if we were successful, and it     */
 /*      is not already present.                                         */
 /* -------------------------------------------------------------------- */
-    const char *pszAuthName = NULL;
+    const char *pszAuthName = nullptr;
 
     if( IsProjected() )
         pszAuthName = GetAuthorityName( "PROJCS" );
     else
         pszAuthName = GetAuthorityName( "GEOGCS" );
 
-    if( eErr == OGRERR_NONE && (pszAuthName == NULL || nCode != nCodeIn) )
+    if( eErr == OGRERR_NONE && (pszAuthName == nullptr || nCode != nCodeIn) )
     {
         if( IsProjected() )
             SetAuthority( "PROJCS", "EPSG", nCodeIn );
@@ -2475,7 +2475,7 @@ OGRErr OGRSpatialReference::SetStatePlane( int nZone, int bNAD83,
         SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
         OGR_SRSNode * const poPROJCS = GetAttrNode( "PROJCS" );
-        if( poPROJCS != NULL && poPROJCS->FindChild( "AUTHORITY" ) != -1 )
+        if( poPROJCS != nullptr && poPROJCS->FindChild( "AUTHORITY" ) != -1 )
         {
             poPROJCS->DestroyChild( poPROJCS->FindChild( "AUTHORITY" ) );
         }
@@ -2547,7 +2547,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
 /*      Do we already have it?                                          */
 /* -------------------------------------------------------------------- */
-    if( pszAuthName != NULL && EQUAL(pszAuthName, "epsg") )
+    if( pszAuthName != nullptr && EQUAL(pszAuthName, "epsg") )
         return atoi(GetAuthorityCode( "GEOGCS" ));
 
 /* -------------------------------------------------------------------- */
@@ -2557,20 +2557,20 @@ int OGRSpatialReference::GetEPSGGeogCS()
     const char *pszDatum = GetAttrValue( "DATUM" );
 
     // We can only operate on coordinate systems with a geogcs.
-    if( pszGEOGCS == NULL || pszDatum == NULL )
+    if( pszGEOGCS == nullptr || pszDatum == nullptr )
         return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Is this a "well known" geographic coordinate system?            */
 /* -------------------------------------------------------------------- */
-    const bool bWGS = strstr(pszGEOGCS, "WGS") != NULL
+    const bool bWGS = strstr(pszGEOGCS, "WGS") != nullptr
         || strstr(pszDatum, "WGS")
         || strstr(pszGEOGCS, "World Geodetic System")
         || strstr(pszGEOGCS, "World_Geodetic_System")
         || strstr(pszDatum, "World Geodetic System")
         || strstr(pszDatum, "World_Geodetic_System");
 
-    const bool bNAD = strstr(pszGEOGCS, "NAD") != NULL
+    const bool bNAD = strstr(pszGEOGCS, "NAD") != nullptr
         || strstr(pszDatum, "NAD")
         || strstr(pszGEOGCS, "North American")
         || strstr(pszGEOGCS, "North_American")
@@ -2595,7 +2595,7 @@ int OGRSpatialReference::GetEPSGGeogCS()
 /* -------------------------------------------------------------------- */
     pszAuthName = GetAuthorityName( "GEOGCS|DATUM" );
 
-    if( pszAuthName != NULL
+    if( pszAuthName != nullptr
         && EQUAL(pszAuthName, "epsg")
         && GetPrimeMeridian() == 0.0 )
     {
@@ -2644,14 +2644,14 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 /*      guessing it.                                                    */
 /* -------------------------------------------------------------------- */
     if( (IsProjected() || IsGeographic())
-        && GetAuthorityCode( "GEOGCS" ) == NULL )
+        && GetAuthorityCode( "GEOGCS" ) == nullptr )
     {
         const int nGCS = GetEPSGGeogCS();
         if( nGCS != -1 )
             SetAuthority( "GEOGCS", "EPSG", nGCS );
     }
 
-    if( IsProjected() && GetAuthorityCode( "PROJCS") == NULL )
+    if( IsProjected() && GetAuthorityCode( "PROJCS") == nullptr )
     {
         const char *pszProjection = GetAttrValue( "PROJECTION" );
 
@@ -2665,7 +2665,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
             const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
             const char *pszAuthCode = GetAuthorityCode( "PROJCS|GEOGCS" );
 
-            if( pszAuthName == NULL || pszAuthCode == NULL )
+            if( pszAuthName == nullptr || pszAuthCode == nullptr )
             {
                 // Don't exactly recognise datum.
             }
@@ -2699,7 +2699,7 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 /* -------------------------------------------------------------------- */
 /*      Is this a Polar Stereographic system on WGS 84 ?                */
 /* -------------------------------------------------------------------- */
-        else if ( pszProjection != NULL &&
+        else if ( pszProjection != nullptr &&
                   EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
         {
             const char *pszAuthName = GetAuthorityName( "PROJCS|GEOGCS" );
@@ -2707,8 +2707,8 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
             const double dfLatOrigin = GetNormProjParm(
                                             SRS_PP_LATITUDE_OF_ORIGIN, 0.0 );
 
-            if( pszAuthName != NULL && EQUAL(pszAuthName, "EPSG") &&
-                pszAuthCode != NULL && atoi(pszAuthCode) == 4326 &&
+            if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
+                pszAuthCode != nullptr && atoi(pszAuthCode) == 4326 &&
                 fabs( fabs(dfLatOrigin ) - 71.0 ) < 1e-15 &&
                 fabs(GetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, 0.0 )) < 1e-15 &&
                 fabs(GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) - 1.0) < 1e-15 &&
@@ -2729,10 +2729,10 @@ OGRErr OGRSpatialReference::AutoIdentifyEPSG()
 /* -------------------------------------------------------------------- */
 /*      Return.                                                         */
 /* -------------------------------------------------------------------- */
-    if( IsProjected() && GetAuthorityCode("PROJCS") != NULL )
+    if( IsProjected() && GetAuthorityCode("PROJCS") != nullptr )
         return OGRERR_NONE;
 
-    if( IsGeographic() && GetAuthorityCode("GEOGCS") != NULL )
+    if( IsGeographic() && GetAuthorityCode("GEOGCS") != nullptr )
         return OGRERR_NONE;
 
     return OGRERR_UNSUPPORTED_SRS;
@@ -2789,12 +2789,12 @@ int OGRSpatialReference::EPSGTreatsAsLatLong()
 
     const char *pszAuth = GetAuthorityName( "GEOGCS" );
 
-    if( pszAuth == NULL || !EQUAL(pszAuth, "EPSG") )
+    if( pszAuth == nullptr || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
     OGR_SRSNode * const poFirstAxis = GetAttrNode( "GEOGCS|AXIS" );
 
-    if( poFirstAxis == NULL )
+    if( poFirstAxis == nullptr )
         return FALSE;
 
     if( poFirstAxis->GetChildCount() >= 2
@@ -2852,12 +2852,12 @@ int OGRSpatialReference::EPSGTreatsAsNorthingEasting()
 
     const char *pszAuth = GetAuthorityName( "PROJCS" );
 
-    if( pszAuth == NULL || !EQUAL(pszAuth, "EPSG") )
+    if( pszAuth == nullptr || !EQUAL(pszAuth, "EPSG") )
         return FALSE;
 
     OGR_SRSNode * const poFirstAxis = GetAttrNode( "PROJCS|AXIS" );
 
-    if( poFirstAxis == NULL )
+    if( poFirstAxis == nullptr )
         return FALSE;
 
     if( poFirstAxis->GetChildCount() >= 2
@@ -2896,24 +2896,24 @@ int OSREPSGTreatsAsNorthingEasting( OGRSpatialReferenceH hSRS )
 
 void CleanupFindMatchesCacheAndMutex()
 {
-    if( hFindMatchesMutex != NULL )
+    if( hFindMatchesMutex != nullptr )
     {
         CPLDestroyMutex(hFindMatchesMutex);
-        hFindMatchesMutex = NULL;
+        hFindMatchesMutex = nullptr;
     }
     if( papoSRSCache_GEOGCS )
     {
         for( size_t i = 0; i < papoSRSCache_GEOGCS->size(); i++ )
             delete (*papoSRSCache_GEOGCS)[i];
         delete papoSRSCache_GEOGCS;
-        papoSRSCache_GEOGCS = NULL;
+        papoSRSCache_GEOGCS = nullptr;
     }
     if( papoSRSCache_PROJCS )
     {
         for( size_t i = 0; i < papoSRSCache_PROJCS->size(); i++ )
             delete (*papoSRSCache_PROJCS)[i];
         delete papoSRSCache_PROJCS;
-        papoSRSCache_PROJCS = NULL;
+        papoSRSCache_PROJCS = nullptr;
     }
 }
 
@@ -3021,11 +3021,11 @@ static void IngestDict(const char* pszDictFile,
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
         return;
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return;
 
     if( fpOut )
@@ -3036,8 +3036,8 @@ static void IngestDict(const char* pszDictFile,
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
 /* -------------------------------------------------------------------- */
-    const char *pszLine = NULL;
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    const char *pszLine = nullptr;
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
     {
         if( pszLine[0] == '#' )
             continue;
@@ -3101,10 +3101,10 @@ static void IngestDict(const char* pszDictFile,
 const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
                                                     const char* pszSRSType)
 {
-    if( pszSRSType == NULL )
-        return NULL;
+    if( pszSRSType == nullptr )
+        return nullptr;
 
-    std::vector<OGRSpatialReference*>* papoSRSCache = NULL;
+    std::vector<OGRSpatialReference*>* papoSRSCache = nullptr;
 
     CPLMutexHolderD(&hFindMatchesMutex);
     CPLString osFilename;
@@ -3112,7 +3112,7 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
     if( EQUAL(pszSRSType, "PROJCS") )
     {
         pszFilename = "pcs.csv";
-        if( papoSRSCache_PROJCS != NULL )
+        if( papoSRSCache_PROJCS != nullptr )
             return papoSRSCache_PROJCS;
         papoSRSCache_PROJCS = new std::vector<OGRSpatialReference*>();
         papoSRSCache = papoSRSCache_PROJCS;
@@ -3120,46 +3120,46 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
     else if( EQUAL(pszSRSType, "GEOGCS") )
     {
         pszFilename = "gcs.csv" ;
-        if( papoSRSCache_GEOGCS != NULL )
+        if( papoSRSCache_GEOGCS != nullptr )
             return papoSRSCache_GEOGCS;
         papoSRSCache_GEOGCS = new std::vector<OGRSpatialReference*>();
         papoSRSCache = papoSRSCache_GEOGCS;
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
 
     // First try to look an already built SRS cache in ~/.gdal/X.Y/srs_cache
 #ifdef WIN32
-    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
-    const char* pszHome = CPLGetConfigOption("HOME", NULL);
+    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
 #endif
     const char* pszCSVFilename = CSVFilename(pszFilename);
     CPLString osCacheFilename;
     CPLString osCacheDirectory =
             CPLGetConfigOption("OSR_SRS_CACHE_DIRECTORY", "");
-    if( (pszHome != NULL || !osCacheDirectory.empty()) &&
+    if( (pszHome != nullptr || !osCacheDirectory.empty()) &&
         CPLTestBool(CPLGetConfigOption("OSR_SRS_CACHE", "YES")) )
     {
         if( osCacheDirectory.empty() )
         {
-            osCacheDirectory = CPLFormFilename(pszHome, ".gdal", NULL);
+            osCacheDirectory = CPLFormFilename(pszHome, ".gdal", nullptr);
             // Version this, because might be sensitive to GDAL / 
             // EPSG versions
             osCacheDirectory = CPLFormFilename(osCacheDirectory,
                 CPLSPrintf("%d.%d",
                             GDAL_VERSION_MAJOR,
-                            GDAL_VERSION_MINOR), NULL);
+                            GDAL_VERSION_MINOR), nullptr);
             osCacheDirectory = CPLFormFilename(osCacheDirectory,
-                                                "srs_cache", NULL);
+                                                "srs_cache", nullptr);
         }
         osCacheFilename = CPLFormFilename(osCacheDirectory,
-                        CPLResetExtension(pszFilename, "wkt"), NULL);
+                        CPLResetExtension(pszFilename, "wkt"), nullptr);
         VSIStatBufL sStatCache;
         VSIStatBufL sStatCSV;
-        VSILFILE* fp = NULL;
+        VSILFILE* fp = nullptr;
         if( VSIStatL((osCacheFilename + ".gz").c_str(), &sStatCache) == 0 &&
             VSIStatL(pszCSVFilename, &sStatCSV) == 0 &&
             sStatCache.st_mtime >= sStatCSV.st_mtime &&
@@ -3184,7 +3184,7 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             CPLDebug("OSR", "Using %s cache",
                         osCacheFilename.c_str());
             const char* pszLine;
-            while( (pszLine = CPLReadLineL(fp)) != NULL )
+            while( (pszLine = CPLReadLineL(fp)) != nullptr )
             {
                 OGRSpatialReference* poSRS =
                                 new OGRSpatialReference();
@@ -3201,11 +3201,11 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
     // cache
     CPLDebug("OSR", "Building %s cache", pszSRSType);
     VSILFILE* fp = VSIFOpenL(pszCSVFilename, "rb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
-    VSILFILE* fpOut = NULL;
+    VSILFILE* fpOut = nullptr;
     if( !osCacheFilename.empty() )
     {
         CPLString osDirname(CPLGetDirname(osCacheFilename));
@@ -3217,19 +3217,19 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
         VSIMkdir( osDirname, 0755 );
         fpOut = VSIFOpenL(
             ("/vsigzip/" + osCacheFilename + ".gz").c_str(), "wb");
-        if( fpOut == NULL )
+        if( fpOut == nullptr )
             fpOut = VSIFOpenL(osCacheFilename, "wb");
-        if( fpOut != NULL )
+        if( fpOut != nullptr )
         {
             VSIFPrintfL(fpOut, "# From %s\n", pszFilename);
         }
     }
     const char* pszLine;
-    OGRSpatialReference* poSRS = NULL;
+    OGRSpatialReference* poSRS = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
     {
-        if( poSRS == NULL )
+        if( poSRS == nullptr )
             poSRS = new OGRSpatialReference();
         int nCode = atoi(pszLine);
         if( nCode > 0 &&
@@ -3239,17 +3239,17 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             // Strip AXIS like in importFromEPSG()
             OGR_SRSNode *poGEOGCS = poSRS->GetAttrNode( "GEOGCS" );
 
-            if( poGEOGCS != NULL )
+            if( poGEOGCS != nullptr )
                 poGEOGCS->StripNodes( "AXIS" );
 
             OGR_SRSNode *poPROJCS = poSRS->GetAttrNode( "PROJCS" );
-            if( poPROJCS != NULL &&
+            if( poPROJCS != nullptr &&
                 poSRS->EPSGTreatsAsNorthingEasting() )
                 poPROJCS->StripNodes( "AXIS" );
 
             if( fpOut )
             {
-                char* pszWKT = NULL;
+                char* pszWKT = nullptr;
                 poSRS->exportToWkt(&pszWKT);
                 if( pszWKT )
                 {
@@ -3259,7 +3259,7 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             }
 
             papoSRSCache->push_back(poSRS);
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
     CPLPopErrorHandler();
@@ -3327,12 +3327,12 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     if( pnEntries )
         *pnEntries = 0;
     if( ppanMatchConfidence )
-        *ppanMatchConfidence = NULL;
+        *ppanMatchConfidence = nullptr;
 
     OGRSpatialReference oSRSClone(*this);
     if( oSRSClone.AutoIdentifyEPSG() == OGRERR_NONE )
     {
-        const char* pszCode = oSRSClone.GetAuthorityCode(NULL);
+        const char* pszCode = oSRSClone.GetAuthorityCode(nullptr);
         if( pszCode )
             oSRSClone.importFromEPSG(atoi(pszCode));
         OGRSpatialReferenceH* pahRet =
@@ -3360,19 +3360,19 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
     const char*pszSRSName = GetAttrValue(pszSRSType);
-    if( pszSRSName == NULL )
-        return NULL;
+    if( pszSRSName == nullptr )
+        return nullptr;
 
     const std::vector<OGRSpatialReference*>* papoSRSCache =
                                                     GetSRSCache(pszSRSType);
-    if( papoSRSCache == NULL )
-        return NULL;
+    if( papoSRSCache == nullptr )
+        return nullptr;
 
     std::vector< OGRSpatialReference* > apoSameSRS;
-    const char* apszOptions[] = { "TOWGS84=ONLY_IF_IN_BOTH", NULL };
+    const char* apszOptions[] = { "TOWGS84=ONLY_IF_IN_BOTH", nullptr };
     CPLString osSRSName(MassageSRSName(pszSRSName, false));
     CPLString osSRSNameExtra(MassageSRSName(osSRSName, true));
     std::vector<size_t> anMatchingSRSNameIndices;
@@ -3386,7 +3386,7 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
         }
 #endif
         const char* pszOtherSRSName = poOtherSRS->GetAttrValue(pszSRSType);
-        if( pszOtherSRSName == NULL )
+        if( pszOtherSRSName == nullptr )
             continue;
         CPLString osOtherSRSName(
             MassageSRSName(pszOtherSRSName, false));
@@ -3492,7 +3492,7 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     }
 
     if( nSameCount == 0 )
-        return NULL;
+        return nullptr;
 
     if( pnEntries )
         *pnEntries = static_cast<int>(nSameCount);
@@ -3511,7 +3511,7 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
         if( ppanMatchConfidence )
             (*ppanMatchConfidence)[i] = 90; // Arbitrary...
     }
-    pahRet[ nSameCount ] = NULL;
+    pahRet[ nSameCount ] = nullptr;
 
     return pahRet;
 }

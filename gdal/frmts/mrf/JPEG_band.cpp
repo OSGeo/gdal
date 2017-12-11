@@ -88,7 +88,7 @@ typedef struct MRFJPEGStruct
     MRFJPEGStruct()
     {
         memset(&setjmpBuffer, 0, sizeof(setjmpBuffer));
-        mask = NULL;
+        mask = nullptr;
         mask_state = NO_MASK;
     }
 } MRFJPEGErrorStruct;
@@ -291,7 +291,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
         update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
 
     // In case we need to build a Zen chunk
-    char *buffer = NULL; 
+    char *buffer = nullptr; 
 
     if (nzeros != 0) { // build the Zen chunk
         mbuffer.size = 2 * mask.size() + CHUNK_NAME_SIZE;
@@ -539,7 +539,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 #endif
 
         if( nRequiredMemory > GDAL_LIBJPEG_LARGEST_MEM_ALLOC &&
-            CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", NULL) == NULL )
+            CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) == nullptr )
         {
                 CPLError(CE_Failure, CPLE_NotSupported,
                     "Reading this image would require libjpeg to allocate "

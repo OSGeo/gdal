@@ -69,8 +69,8 @@ OGRDB2Session::OGRDB2Session()
 {
     DB2_DEBUG_ENTER("OGRDB2Session::OGRDB2Session");
     m_szLastError[0] = '\0';
-    m_hEnv = NULL;
-    m_hDBC = NULL;
+    m_hEnv = nullptr;
+    m_hDBC = nullptr;
     m_bInTransaction = FALSE;
     m_bAutoCommit = TRUE;
 }
@@ -114,20 +114,20 @@ int OGRDB2Session::RollbackTransaction()
 int OGRDB2Session::CloseSession()
 
 {
-    if( m_hDBC!=NULL )
+    if( m_hDBC!=nullptr )
     {
         if ( IsInTransaction() )
             CPLError( CE_Warning, CPLE_AppDefined, "Closing session with active transactions." );
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
-        m_hDBC = NULL;
+        m_hDBC = nullptr;
     }
 
-    if( m_hEnv!=NULL )
+    if( m_hEnv!=nullptr )
     {
         SQLFreeEnv( m_hEnv );
-        m_hEnv = NULL;
+        m_hEnv = nullptr;
     }
 
     return TRUE;
@@ -147,7 +147,7 @@ int OGRDB2Session::ClearTransaction()
 
     SQLUINTEGER bAutoCommit;
     /* See if we already in manual commit mode */
-    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), nullptr) ) )
         return FALSE;
 
     if (bAutoCommit == SQL_AUTOCOMMIT_OFF)
@@ -175,7 +175,7 @@ int OGRDB2Session::BeginTransaction()
 CPLDebug("int OGRDB2Session::BeginTransaction","Enter");
     SQLUINTEGER bAutoCommit;
     /* See if we already in manual commit mode */
-    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), NULL) ) )
+    if ( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit, sizeof(SQLUINTEGER), nullptr) ) )
         return FALSE;
 
     if (bAutoCommit == SQL_AUTOCOMMIT_ON)
@@ -290,14 +290,14 @@ int OGRDB2Session::EstablishSession( const char *pszDSN,
 #pragma warning( pop )
 #endif
 
-    if( pszUserid == NULL )
+    if( pszUserid == nullptr )
         pszUserid = "";
-    if( pszPassword == NULL )
+    if( pszPassword == nullptr )
         pszPassword = "";
     CPLDebug( "OGRDB2Session::EstablishSession",
             "pszDSN: '%s'", pszDSN );
     int bFailed;
-    if( strstr(pszDSN,"=") != NULL )
+    if( strstr(pszDSN,"=") != nullptr )
     {
         SQLCHAR szOutConnString[1024];
         SQLSMALLINT nOutConnStringLen = 0;
@@ -305,7 +305,7 @@ int OGRDB2Session::EstablishSession( const char *pszDSN,
         CPLDebug( "OGRDB2Session::EstablishSession",
                 "SQLDriverConnect(%s)", pszDSN );
         bFailed = Failed(
-            SQLDriverConnect( m_hDBC, NULL,
+            SQLDriverConnect( m_hDBC, nullptr,
                               (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
                               szOutConnString, sizeof(szOutConnString),
                               &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
@@ -374,23 +374,23 @@ OGRDB2Statement::OGRDB2Statement( OGRDB2Session *poSession )
     if( Failed(
             SQLAllocStmt( poSession->GetConnection(), &m_hStmt ) ) )
     {
-        m_hStmt = NULL;
+        m_hStmt = nullptr;
         return;
     }
 
     m_nColCount = 0;
-    m_papszColNames = NULL;
-    m_panColType = NULL;
-    m_papszColTypeNames = NULL;
-    m_panColSize = NULL;
-    m_panColPrecision = NULL;
-    m_panColNullable = NULL;
-    m_papszColColumnDef = NULL;
+    m_papszColNames = nullptr;
+    m_panColType = nullptr;
+    m_papszColTypeNames = nullptr;
+    m_panColSize = nullptr;
+    m_panColPrecision = nullptr;
+    m_panColNullable = nullptr;
+    m_papszColColumnDef = nullptr;
 
-    m_papszColValues = NULL;
-    m_panColValueLengths = NULL;
+    m_papszColValues = nullptr;
+    m_panColValueLengths = nullptr;
 
-    m_pszStatement = NULL;
+    m_pszStatement = nullptr;
     m_nStatementMax = 0;
     m_nStatementLen = 0;
 }
@@ -406,7 +406,7 @@ OGRDB2Statement::~OGRDB2Statement()
 
     Clear();
 
-    if( m_hStmt != NULL )
+    if( m_hStmt != nullptr )
         SQLFreeStmt( m_hStmt, SQL_DROP );
 }
 
@@ -416,7 +416,7 @@ OGRDB2Statement::~OGRDB2Statement()
 
 int OGRDB2Statement::DB2Prepare(const char *pszCallingFunction)
 {
-    if ( m_poSession == NULL || m_hStmt == NULL )
+    if ( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // we should post an error.
         return FALSE;
@@ -446,7 +446,7 @@ int OGRDB2Statement::DB2BindParameterIn(const char *pszCallingFunction,
                                         int nLen,
                                         void * pValuePointer)
 {
-    if ( m_poSession == NULL || m_hStmt == NULL )
+    if ( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // we should post an error.
         return FALSE;
@@ -461,7 +461,7 @@ int OGRDB2Statement::DB2BindParameterIn(const char *pszCallingFunction,
                                       (SQLSMALLINT) nValueType,
                                       (SQLSMALLINT) nParameterType,
                                       nLen, 0, pValuePointer,
-                                      0, NULL);
+                                      0, nullptr);
     if (m_nLastRetCode != SQL_SUCCESS
             && m_nLastRetCode != SQL_SUCCESS_WITH_INFO)
     {
@@ -476,7 +476,7 @@ int OGRDB2Statement::DB2BindParameterIn(const char *pszCallingFunction,
 
 int OGRDB2Statement::DB2Execute(const char *pszCallingFunction)
 {
-    if ( m_poSession == NULL || m_hStmt == NULL )
+    if ( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // we should post an error.
         return FALSE;
@@ -522,13 +522,13 @@ int OGRDB2Statement::DB2Execute(const char *pszCallingFunction)
 int OGRDB2Statement::ExecuteSQL( const char *pszStatement )
 
 {
-    if( m_poSession == NULL || m_hStmt == NULL )
+    if( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // we should post an error.
         return FALSE;
     }
 
-    if( pszStatement != NULL )
+    if( pszStatement != nullptr )
     {
         Clear();
         Append( pszStatement );
@@ -558,7 +558,7 @@ int OGRDB2Statement::ExecuteSQL( const char *pszStatement )
 int OGRDB2Statement::CollectResultsInfo()
 
 {
-    if( m_poSession == NULL || m_hStmt == NULL )
+    if( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // we should post an error.
         return FALSE;
@@ -605,7 +605,7 @@ int OGRDB2Statement::CollectResultsInfo()
         // In addition to above data we need data type name.
         if ( Failed( SQLColAttribute(m_hStmt, iCol + 1, SQL_DESC_TYPE_NAME,
                                      szName, sizeof(szName),
-                                     &nNameLength, NULL) ) )
+                                     &nNameLength, nullptr) ) )
             return FALSE;
 
         szName[nNameLength] = '\0';  // Paranoid
@@ -663,7 +663,7 @@ const char *OGRDB2Statement::GetColName( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
     else
         return m_papszColNames[iCol];
 }
@@ -714,7 +714,7 @@ const char *OGRDB2Statement::GetColTypeName( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
     else
         return m_papszColTypeNames[iCol];
 }
@@ -802,7 +802,7 @@ const char *OGRDB2Statement::GetColColumnDef( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
     else
         return m_papszColColumnDef[iCol];
 }
@@ -835,7 +835,7 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
 
 {
     ClearColumnData();
-    if( m_hStmt == NULL || m_nColCount < 1 )
+    if( m_hStmt == nullptr || m_nColCount < 1 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -918,7 +918,7 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
 
         if( cbDataLen == SQL_NULL_DATA )
         {
-            m_papszColValues[iCol] = NULL;
+            m_papszColValues[iCol] = nullptr;
             m_panColValueLengths[iCol] = 0;
         }
 
@@ -999,7 +999,7 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
         }
 
         // Trim white space off end, if there is any.
-        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != NULL )
+        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != nullptr )
         {
             char *pszTarget = m_papszColValues[iCol];
             size_t iEnd = strlen(pszTarget);
@@ -1009,7 +1009,7 @@ int OGRDB2Statement::Fetch( int nOrientation, int nOffset )
         }
 
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
-        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != NULL
+        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != nullptr
             && m_panColValueLengths[iCol] > 0 )
         {
             wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
@@ -1050,7 +1050,7 @@ const char *OGRDB2Statement::GetColData( int iCol, const char *pszDefault )
 {
     if( iCol < 0 || iCol >= m_nColCount )
         return pszDefault;
-    else if( m_papszColValues[iCol] != NULL )
+    else if( m_papszColValues[iCol] != nullptr )
         return m_papszColValues[iCol];
     else
         return pszDefault;
@@ -1097,7 +1097,7 @@ int OGRDB2Statement::GetColDataLength( int iCol )
 {
     if( iCol < 0 || iCol >= m_nColCount )
         return 0;
-    else if( m_papszColValues[iCol] != NULL )
+    else if( m_papszColValues[iCol] != nullptr )
         return (int)m_panColValueLengths[iCol];
     else
         return 0;
@@ -1139,10 +1139,10 @@ void OGRDB2Statement::ClearColumnData()
     {
         for( int iCol = 0; iCol < m_nColCount; iCol++ )
         {
-            if( m_papszColValues[iCol] != NULL )
+            if( m_papszColValues[iCol] != nullptr )
             {
                 CPLFree( m_papszColValues[iCol] );
-                m_papszColValues[iCol] = NULL;
+                m_papszColValues[iCol] = nullptr;
             }
         }
     }
@@ -1155,7 +1155,7 @@ void OGRDB2Statement::ClearColumnData()
 int OGRDB2Statement::Failed( int nResultCode )
 
 {
-    if( m_poSession != NULL )
+    if( m_poSession != nullptr )
         return m_poSession->Failed( nResultCode, m_hStmt );
     return TRUE;
 }
@@ -1180,7 +1180,7 @@ void OGRDB2Statement::Append( const char *pszText )
     if( m_nStatementMax < m_nStatementLen + nTextLen + 1 )
     {
         m_nStatementMax = (m_nStatementLen + nTextLen) * 2 + 100;
-        if( m_pszStatement == NULL )
+        if( m_pszStatement == nullptr )
         {
             m_pszStatement = (char *) VSIMalloc(m_nStatementMax);
             m_pszStatement[0] = '\0';
@@ -1330,15 +1330,15 @@ void OGRDB2Statement::Clear()
 
 {
     /* Closing the cursor if opened */
-    if( m_hStmt != NULL )
+    if( m_hStmt != nullptr )
         SQLFreeStmt( m_hStmt, SQL_CLOSE );
 
     ClearColumnData();
 
-    if( m_pszStatement != NULL )
+    if( m_pszStatement != nullptr )
     {
         CPLFree( m_pszStatement );
-        m_pszStatement = NULL;
+        m_pszStatement = nullptr;
     }
 
     m_nStatementLen = 0;
@@ -1349,31 +1349,31 @@ void OGRDB2Statement::Clear()
     if( m_papszColNames )
     {
         CPLFree( m_panColType );
-        m_panColType = NULL;
+        m_panColType = nullptr;
 
         CSLDestroy( m_papszColTypeNames );
-        m_papszColTypeNames = NULL;
+        m_papszColTypeNames = nullptr;
 
         CPLFree( m_panColSize );
-        m_panColSize = NULL;
+        m_panColSize = nullptr;
 
         CPLFree( m_panColPrecision );
-        m_panColPrecision = NULL;
+        m_panColPrecision = nullptr;
 
         CPLFree( m_panColNullable );
-        m_panColNullable = NULL;
+        m_panColNullable = nullptr;
 
         CSLDestroy( m_papszColColumnDef );
-        m_papszColColumnDef = NULL;
+        m_papszColColumnDef = nullptr;
 
         CSLDestroy( m_papszColNames );
-        m_papszColNames = NULL;
+        m_papszColNames = nullptr;
 
         CPLFree( m_papszColValues );
-        m_papszColValues = NULL;
+        m_papszColValues = nullptr;
 
         CPLFree( m_panColValueLengths );
-        m_panColValueLengths = NULL;
+        m_panColValueLengths = nullptr;
     }
 }
 
@@ -1430,7 +1430,7 @@ int OGRDB2Statement::GetColumns( const char *pszTable,
                             (SQLCHAR *) pszCatalog, SQL_NTS,
                             (SQLCHAR *) pszSchema, SQL_NTS,
                             (SQLCHAR *) pszTable, SQL_NTS,
-                            (SQLCHAR *) NULL /* "" */, SQL_NTS ) ) )
+                            (SQLCHAR *) nullptr /* "" */, SQL_NTS ) ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1544,9 +1544,9 @@ int OGRDB2Statement::GetPrimaryKeys( const char *pszTable,
                                       const char *pszSchema )
 
 {
-    if( pszCatalog == NULL )
+    if( pszCatalog == nullptr )
         pszCatalog = "";
-    if( pszSchema == NULL )
+    if( pszSchema == nullptr )
         pszSchema = "";
 
 #if (ODBCVER >= 0x0300)
@@ -1615,7 +1615,7 @@ int OGRDB2Statement::GetTables( const char *pszCatalog,
     if( Failed( SQLTables( m_hStmt,
                            (SQLCHAR *) pszCatalog, SQL_NTS,
                            (SQLCHAR *) pszSchema, SQL_NTS,
-                           (SQLCHAR *) NULL, SQL_NTS,
+                           (SQLCHAR *) nullptr, SQL_NTS,
                            (SQLCHAR *) "'TABLE','VIEW'", SQL_NTS ) ) )
         return FALSE;
     else

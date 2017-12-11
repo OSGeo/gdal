@@ -320,7 +320,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     // Read block to memory
     GByte *blockData = reinterpret_cast<GByte *>( VSI_MALLOC_VERBOSE(nBlockSize) );
-    if( blockData == NULL )
+    if( blockData == nullptr )
         return CE_Failure;
     if( VSIFReadL( blockData, 1, nBlockSize, poRDS->fp ) != nBlockSize )
     {
@@ -605,15 +605,15 @@ GDALColorTable *RIKRasterBand::GetColorTable()
 /************************************************************************/
 
 RIKDataset::RIKDataset() :
-    fp( NULL ),
+    fp( nullptr ),
     nBlockXSize( 0 ),
     nBlockYSize( 0 ),
     nHorBlocks( 0 ),
     nVertBlocks( 0 ),
     nFileSize( 0 ),
-    pOffsets( NULL ),
+    pOffsets( nullptr ),
     options( 0 ),
-    poColorTable( NULL )
+    poColorTable( nullptr )
 
 {
     memset( adfTransform, 0, sizeof(adfTransform) );
@@ -628,7 +628,7 @@ RIKDataset::~RIKDataset()
 {
     FlushCache();
     CPLFree( pOffsets );
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL( fp );
     delete poColorTable;
 }
@@ -690,7 +690,7 @@ static GUInt16 GetRikString( VSILFILE *fp,
 int RIKDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 50 )
         return FALSE;
 
     if( STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "RIK3") )
@@ -733,7 +733,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( Identify(poOpenInfo) == FALSE )
-        return NULL;
+        return nullptr;
 
     bool rik3header = false;
 
@@ -755,13 +755,13 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nameLength > sizeof(name) - 1 )
     {
-        return NULL;
+        return nullptr;
     }
 
     if( !rik3header )
     {
         if( nameLength == 0 || nameLength != strlen(name) )
-            return NULL;
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -789,7 +789,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( projLength > sizeof(projection) - 1 )
         {
             // Unreasonable string length, assume wrong format
-            return NULL;
+            return nullptr;
         }
 
         // Read unknown string
@@ -806,7 +806,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( tmpLength > sizeof(tmpStr) - 1 )
         {
             // Unreasonable string length, assume wrong format
-            return NULL;
+            return nullptr;
         }
 
         header.fNorth = CPLAtof( tmpStr );
@@ -819,7 +819,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( tmpLength > sizeof(tmpStr) - 1 )
         {
             // Unreasonable string length, assume wrong format
-            return NULL;
+            return nullptr;
         }
 
         header.fWest = CPLAtof( tmpStr );
@@ -841,7 +841,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
         if ( header.iMPPNum == 0 )
-            return NULL;
+            return nullptr;
 
         VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fpL );
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fpL );
@@ -883,7 +883,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             !CPLIsFinite(header.fEast) ||
             header.iMPPNum == 0)
         {
-            return NULL;
+            return nullptr;
         }
 
         const bool offsetBounds = header.fSouth < 4000000;
@@ -902,7 +902,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPL_SWAP32PTR( &header.iMPPDen );
 #endif
             if( header.iMPPDen == 0 )
-                return NULL;
+                return nullptr;
 
             headerType = "RIK1";
         }
@@ -924,7 +924,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if(( header.iBlockWidth > 2000 ) || ( header.iBlockWidth < 10 ) ||
            ( header.iBlockHeight > 2000 ) || ( header.iBlockHeight < 10 ))
-           return NULL;
+           return nullptr;
 
         if( !offsetBounds )
         {
@@ -939,7 +939,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             double dfVertBlocks = ceil( (header.fNorth - header.fSouth) /
                       (header.iBlockHeight * metersPerPixel) );
             if( dfVertBlocks < 1 || dfVertBlocks > INT_MAX )
-                return NULL;
+                return nullptr;
             header.iVertBlocks = static_cast<GUInt32>(dfVertBlocks);
         }
 
@@ -956,7 +956,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s has unsupported number of bits per pixel.\n",
                       poOpenInfo->pszFilename );
-            return NULL;
+            return nullptr;
         }
 
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fpL );
@@ -971,7 +971,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "File %s. Unknown map options.\n",
                       poOpenInfo->pszFilename );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -985,7 +985,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         header.iVertBlocks >= INT_MAX / (int)sizeof(GUInt32) ||
         header.iHorBlocks >= INT_MAX / (header.iVertBlocks * (int)sizeof(GUInt32)) )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1014,7 +1014,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "File %s. Unable to allocate offset table.\n",
                   poOpenInfo->pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     if( header.iOptions == 0x00 )
@@ -1027,7 +1027,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                     "File %s. Read past end of file.\n",
                     poOpenInfo->pszFilename );
             CPLFree(offsets);
-            return NULL;
+            return nullptr;
         }
 
         VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
@@ -1049,7 +1049,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                         "File %s too short.\n",
                         poOpenInfo->pszFilename );
             CPLFree( offsets );
-            return NULL;
+            return nullptr;
         }
 
         for( GUInt32 i = 1; i < blocks; i++ )
@@ -1091,7 +1091,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                   "File %s. Read past end of file.\n",
                   poOpenInfo->pszFilename );
         CPLFree(offsets);
-        return NULL;
+        return nullptr;
     }
 
     VSIFSeekL( poOpenInfo->fpL, 0, SEEK_END );
@@ -1124,7 +1124,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                               "File %s too short.\n",
                               poOpenInfo->pszFilename );
                     CPLFree( offsets );
-                    return NULL;
+                    return nullptr;
                 }
                 header.iVertBlocks = y;
                 break;
@@ -1138,7 +1138,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                               "File %s. Corrupt offset table.\n",
                               poOpenInfo->pszFilename );
                     CPLFree( offsets );
-                    return NULL;
+                    return nullptr;
                 }
                 header.iVertBlocks = y;
                 break;
@@ -1198,7 +1198,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     RIKDataset *poDS = new RIKDataset();
 
     poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->adfTransform[0] = header.fWest - metersPerPixel / 2.0;
     poDS->adfTransform[1] = metersPerPixel;
@@ -1259,7 +1259,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The RIK driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -1272,7 +1272,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_RIK()
 
 {
-    if( GDALGetDriverByName( "RIK" ) != NULL )
+    if( GDALGetDriverByName( "RIK" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

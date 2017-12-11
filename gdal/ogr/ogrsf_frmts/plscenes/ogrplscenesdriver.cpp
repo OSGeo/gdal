@@ -46,7 +46,7 @@ static int OGRPLScenesIdentify(GDALOpenInfo* poOpenInfo)
 static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
 {
     if( !OGRPLScenesIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
     char** papszOptions = CSLTokenizeStringComplex(
             poOpenInfo->pszFilename+strlen("PLScenes:"), ",", TRUE, FALSE );
@@ -59,7 +59,7 @@ static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "This API version has been removed or deprecated. "
                  "Please use DATA_V1 API instead");
-        return NULL;
+        return nullptr;
     }
     else if( EQUAL(osVersion, "data_v1") || EQUAL(osVersion, "")  )
     {
@@ -69,7 +69,7 @@ static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Unhandled API version: %s", osVersion.c_str());
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -80,7 +80,7 @@ static GDALDataset* OGRPLScenesOpen(GDALOpenInfo* poOpenInfo)
 void RegisterOGRPLSCENES()
 
 {
-    if( GDALGetDriverByName( "PLSCENES" ) != NULL )
+    if( GDALGetDriverByName( "PLSCENES" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

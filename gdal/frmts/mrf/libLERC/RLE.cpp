@@ -29,7 +29,7 @@ NAMESPACE_LERC_START
 
 size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
 {
-  if (arr == NULL || numBytes == 0)
+  if (arr == nullptr || numBytes == 0)
     return 0;
 
   const Byte* ptr = arr;
@@ -122,7 +122,7 @@ size_t RLE::computeNumBytesRLE(const Byte* arr, size_t numBytes) const
 bool RLE::compress(const Byte* arr, size_t numBytes,
                    Byte** arrRLE, size_t& numBytesRLE, bool verify) const
 {
-  if (arr == NULL || numBytes == 0)
+  if (arr == nullptr || numBytes == 0)
     return false;
 
   numBytesRLE = computeNumBytesRLE(arr, numBytes);
@@ -226,7 +226,7 @@ bool RLE::compress(const Byte* arr, size_t numBytes,
 
   if (verify)
   {
-    Byte* arr2 = NULL;
+    Byte* arr2 = nullptr;
     size_t numBytes2 = 0;
     if (!decompress(*arrRLE, numBytesRLE, &arr2, numBytes2) || numBytes2 != numBytes)
     {
@@ -283,7 +283,7 @@ bool RLE::decompress(const Byte* arrRLE, size_t nRemainingSizeIn, Byte** arr, si
   numBytes = sum;
   if( numBytes == 0 )
   {
-    *arr = NULL;
+    *arr = nullptr;
     return true;
   }
   *arr = new Byte[numBytes];

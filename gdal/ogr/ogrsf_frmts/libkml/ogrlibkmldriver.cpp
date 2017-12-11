@@ -37,8 +37,8 @@ CPL_CVSID("$Id$")
 
 using kmldom::KmlFactory;
 
-static CPLMutex *hMutex = NULL;
-static KmlFactory* m_poKmlFactory = NULL;
+static CPLMutex *hMutex = nullptr;
+static KmlFactory* m_poKmlFactory = nullptr;
 
 /******************************************************************************
  OGRLIBKMLDriverUnload()
@@ -46,10 +46,10 @@ static KmlFactory* m_poKmlFactory = NULL;
 
 static void OGRLIBKMLDriverUnload( GDALDriver * /* poDriver */ )
 {
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
-    m_poKmlFactory = NULL;
+    hMutex = nullptr;
+    m_poKmlFactory = nullptr;
 }
 
 /************************************************************************/
@@ -76,11 +76,11 @@ static int OGRLIBKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRLIBKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( OGRLIBKMLDriverIdentify(poOpenInfo) == FALSE )
-        return NULL;
+        return nullptr;
 
     {
         CPLMutexHolderD(&hMutex);
-        if( m_poKmlFactory == NULL )
+        if( m_poKmlFactory == nullptr )
             m_poKmlFactory = KmlFactory::GetFactory();
     }
 
@@ -91,7 +91,7 @@ static GDALDataset *OGRLIBKMLDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         delete poDS;
 
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -108,12 +108,12 @@ static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
                                            GDALDataType /* eDT */,
                                            char **papszOptions )
 {
-    CPLAssert( NULL != pszName );
+    CPLAssert( nullptr != pszName );
     CPLDebug( "LIBKML", "Attempt to create: %s", pszName );
 
     {
         CPLMutexHolderD(&hMutex);
-        if( m_poKmlFactory == NULL )
+        if( m_poKmlFactory == nullptr )
             m_poKmlFactory = KmlFactory::GetFactory();
     }
 
@@ -122,7 +122,7 @@ static GDALDataset *OGRLIBKMLDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) ) {
         delete poDS;
 
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -144,7 +144,7 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
     {
         char **papszDirList = VSIReadDir( pszName );
         for( int iFile = 0;
-             papszDirList != NULL && papszDirList[iFile] != NULL;
+             papszDirList != nullptr && papszDirList[iFile] != nullptr;
              iFile++ )
         {
             if( CE_Failure == OGRLIBKMLDriverDelete( papszDirList[iFile] ) )
@@ -191,7 +191,7 @@ static CPLErr OGRLIBKMLDriverDelete( const char *pszName )
 
 void RegisterOGRLIBKML()
 {
-    if( GDALGetDriverByName( "LIBKML" ) != NULL )
+    if( GDALGetDriverByName( "LIBKML" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

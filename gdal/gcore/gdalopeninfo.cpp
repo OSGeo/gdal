@@ -66,18 +66,18 @@ CPL_CVSID("$Id$")
 GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
                             char **papszSiblingsIn ) :
     bHasGotSiblingFiles(false),
-    papszSiblingFiles(NULL),
+    papszSiblingFiles(nullptr),
     nHeaderBytesTried(0),
     pszFilename(CPLStrdup(pszFilenameIn)),
-    papszOpenOptions(NULL),
+    papszOpenOptions(nullptr),
     eAccess(nOpenFlagsIn & GDAL_OF_UPDATE ? GA_Update : GA_ReadOnly),
     nOpenFlags(nOpenFlagsIn),
     bStatOK(FALSE),
     bIsDirectory(FALSE),
-    fpL(NULL),
+    fpL(nullptr),
     nHeaderBytes(0),
-    pabyHeader(NULL),
-    papszAllowedDrivers(NULL)
+    pabyHeader(nullptr),
+    papszAllowedDrivers(nullptr)
 {
 
 /* -------------------------------------------------------------------- */
@@ -156,7 +156,7 @@ retry:  // TODO(schwehr): Stop using goto.
     if( !bIsDirectory ) {
         fpL = VSIFOpenExL( pszFilename, (eAccess == GA_Update) ? "r+b" : "rb", (nOpenFlagsIn & GDAL_OF_VERBOSE_ERROR) > 0);
     }
-    if( fpL != NULL )
+    if( fpL != nullptr )
     {
         bStatOK = TRUE;
         int nBufSize =
@@ -179,9 +179,9 @@ retry:  // TODO(schwehr): Stop using goto.
             VSI_ISDIR( sStat.st_mode ) )
         {
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
-            fpL = NULL;
+            fpL = nullptr;
             CPLFree(pabyHeader);
-            pabyHeader = NULL;
+            pabyHeader = nullptr;
             bIsDirectory = TRUE;
         }
     }
@@ -213,7 +213,7 @@ retry:  // TODO(schwehr): Stop using goto.
                 szPointerFilename[std::min(nBytes, nBufSize - 1)] = 0;
                 CPLFree(pszFilename);
                 pszFilename = CPLStrdup(szPointerFilename);
-                papszSiblingsIn = NULL;
+                papszSiblingsIn = nullptr;
                 bHasRetried = true;
                 goto retry;
             }
@@ -225,7 +225,7 @@ retry:  // TODO(schwehr): Stop using goto.
 /*      Capture sibling list either from passed in values, or by        */
 /*      scanning for them only if requested through GetSiblingFiles().  */
 /* -------------------------------------------------------------------- */
-    if( papszSiblingsIn != NULL )
+    if( papszSiblingsIn != nullptr )
     {
         papszSiblingFiles = CSLDuplicate( papszSiblingsIn );
         bHasGotSiblingFiles = true;
@@ -237,25 +237,25 @@ retry:  // TODO(schwehr): Stop using goto.
         if (EQUAL(pszOptionVal, "EMPTY_DIR"))
         {
             papszSiblingFiles =
-                CSLAddString( NULL, CPLGetFilename(pszFilename) );
+                CSLAddString( nullptr, CPLGetFilename(pszFilename) );
             bHasGotSiblingFiles = true;
         }
         else if( CPLTestBool(pszOptionVal) )
         {
             /* skip reading the directory */
-            papszSiblingFiles = NULL;
+            papszSiblingFiles = nullptr;
             bHasGotSiblingFiles = true;
         }
         else
         {
             /* will be lazy loaded */
-            papszSiblingFiles = NULL;
+            papszSiblingFiles = nullptr;
             bHasGotSiblingFiles = false;
         }
     }
     else
     {
-        papszSiblingFiles = NULL;
+        papszSiblingFiles = nullptr;
         bHasGotSiblingFiles = true;
     }
 }
@@ -270,7 +270,7 @@ GDALOpenInfo::~GDALOpenInfo()
     VSIFree( pabyHeader );
     CPLFree( pszFilename );
 
-    if( fpL != NULL )
+    if( fpL != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpL ));
     CSLDestroy( papszSiblingFiles );
 }
@@ -297,16 +297,16 @@ char** GDALOpenInfo::GetSiblingFiles()
         CPLDebug("GDAL", "GDAL_READDIR_LIMIT_ON_OPEN reached on %s",
                  osDir.c_str());
         CSLDestroy(papszSiblingFiles);
-        papszSiblingFiles = NULL;
+        papszSiblingFiles = nullptr;
     }
 
     /* Small optimization to avoid unnecessary stat'ing from PAux or ENVI */
     /* drivers. The MBTiles driver needs no companion file. */
-    if( papszSiblingFiles == NULL &&
+    if( papszSiblingFiles == nullptr &&
         STARTS_WITH(pszFilename, "/vsicurl/") &&
         EQUAL(CPLGetExtension( pszFilename ),"mbtiles") )
     {
-        papszSiblingFiles = CSLAddString( NULL, CPLGetFilename(pszFilename) );
+        papszSiblingFiles = CSLAddString( nullptr, CPLGetFilename(pszFilename) );
     }
 
     return papszSiblingFiles;
@@ -326,7 +326,7 @@ char** GDALOpenInfo::GetSiblingFiles()
 char** GDALOpenInfo::StealSiblingFiles()
 {
     char** papszRet = GetSiblingFiles();
-    papszSiblingFiles = NULL;
+    papszSiblingFiles = nullptr;
     return papszRet;
 }
 
@@ -352,7 +352,7 @@ bool GDALOpenInfo::AreSiblingFilesLoaded() const
  */
 int GDALOpenInfo::TryToIngest(int nBytes)
 {
-    if( fpL == NULL )
+    if( fpL == nullptr )
         return FALSE;
     if( nHeaderBytes < nHeaderBytesTried )
         return TRUE;

@@ -76,7 +76,7 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
         double dfWeightSum = 0.0;
 
         // Previous line.
-        if( pafLastLine != NULL )
+        if( pafLastLine != nullptr )
         {
             if( iX > 0 && pabyLastTMask[iX-1] )
             {
@@ -113,7 +113,7 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
         }
 
         // Next line.
-        if( pafNextLine != NULL )
+        if( pafNextLine != nullptr )
         {
             if( iX > 0 && pabyNextTMask[iX-1] )
             {
@@ -185,8 +185,8 @@ GDALMultiFilter( GDALRasterBandH hTargetBand,
 
     float *paf3PassLineBuf = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nXSize, nBufLines, 3 * sizeof(float)));
-    if( pabyTMaskBuf == NULL || pabyFMaskBuf == NULL ||
-        paf3PassLineBuf == NULL )
+    if( pabyTMaskBuf == nullptr || pabyFMaskBuf == nullptr ||
+        paf3PassLineBuf == nullptr )
     {
         CPLFree( pabyTMaskBuf );
         CPLFree( pabyFMaskBuf );
@@ -431,7 +431,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         nNoDataVal = 4000002;
     }
 
-    if( hMaskBand == NULL )
+    if( hMaskBand == nullptr )
         hMaskBand = GDALGetMaskBand( hTargetBand );
 
     // If there are smoothing iterations, reserve 10% of the progress for them.
@@ -440,7 +440,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 /* -------------------------------------------------------------------- */
 /*      Initialize progress counter.                                    */
 /* -------------------------------------------------------------------- */
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     if( !pfnProgress( 0.0, "Filling...", pProgressArg ) )
@@ -456,21 +456,21 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
             papszOptions, "TEMP_FILE_DRIVER", "GTiff");
     GDALDriverH hDriver = GDALGetDriverByName(osTmpFileDriver.c_str());
 
-    if( hDriver == NULL )
+    if( hDriver == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Given driver is not registered");
         return CE_Failure;
     }
 
-    if( GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, NULL) == NULL )
+    if( GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Given driver is incapable of creating temp work files");
         return CE_Failure;
     }
 
-    char **papszWorkFileOptions = NULL;
+    char **papszWorkFileOptions = nullptr;
     if( osTmpFileDriver == "GTiff" )
     {
         papszWorkFileOptions = CSLSetNameValue(
@@ -489,7 +489,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         GDALCreate( hDriver, osYTmpFile, nXSize, nYSize, 1,
                     eType, papszWorkFileOptions );
 
-    if( hYDS == NULL )
+    if( hYDS == nullptr )
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
@@ -510,7 +510,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
                     GDALGetRasterDataType( hTargetBand ),
                     papszWorkFileOptions );
 
-    if( hValDS == NULL )
+    if( hValDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Could not create XY value work file. Check driver capabilities.");
@@ -529,7 +529,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         GDALCreate( hDriver, osFiltMaskTmpFile, nXSize, nYSize, 1,
                     GDT_Byte, papszWorkFileOptions );
 
-    if( hFiltMaskDS == NULL )
+    if( hFiltMaskDS == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Could not create mask work file. Check driver capabilities.");
@@ -561,10 +561,10 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
 
     CPLErr eErr = CE_None;
 
-    if( panLastY == NULL || panThisY == NULL || panTopDownY == NULL ||
-        pafLastValue == NULL || pafThisValue == NULL ||
-        pafTopDownValue == NULL ||
-        pafScanline == NULL || pabyMask == NULL || pabyFiltMask == NULL )
+    if( panLastY == nullptr || panThisY == nullptr || panTopDownY == nullptr ||
+        pafLastValue == nullptr || pafThisValue == nullptr ||
+        pafTopDownValue == nullptr ||
+        pafScanline == nullptr || pabyMask == nullptr || pabyFiltMask == nullptr )
     {
         eErr = CE_Failure;
         goto end;
@@ -845,7 +845,7 @@ GDALFillNodata( GDALRasterBandH hTargetBand,
         GDALFlushRasterCache( hMaskBand );
 
         void *pScaledProgress =
-            GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, NULL );
+            GDALCreateScaledProgress( dfProgressRatio, 1.0, pfnProgress, nullptr );
 
         eErr = GDALMultiFilter( hTargetBand, hMaskBand, hFiltMaskBand,
                                 nSmoothingIterations,

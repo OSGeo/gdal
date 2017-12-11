@@ -45,7 +45,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString& osName,
                                             CSLT_ALLOWEMPTYTOKENS );
     std::vector< char > achDelimiters;
     std::vector< CPLString > aosTokens;
-    for( int j=0; papszTokens[j] != NULL; ++j )
+    for( int j=0; papszTokens[j] != nullptr; ++j )
     {
         const char* pszToken = papszTokens[j];
         bool bIsCamelCase = false;

@@ -77,7 +77,7 @@ SysBlockMap::~SysBlockMap()
     for( i = 0; i < virtual_files.size(); i++ )
     {
         delete virtual_files[i];
-        virtual_files[i] = NULL;
+        virtual_files[i] = nullptr;
     }
 
     try
@@ -253,7 +253,7 @@ void SysBlockMap::AllocateBlocks()
         PCIDSKSegment *l_seg;
         int  previous = 0;
 
-        while( (l_seg=file->GetSegment( SEG_SYS, "SysBData", previous )) != NULL )
+        while( (l_seg=file->GetSegment( SEG_SYS, "SysBData", previous )) != nullptr )
         {
             previous = l_seg->GetSegmentNumber();
             
@@ -396,7 +396,7 @@ SysVirtualFile *SysBlockMap::GetVirtualFile( int image )
         return (SysVirtualFile*)ThrowPCIDSKExceptionPtr( "GetImageSysFile(%d): invalid image index",
                               image );
 
-    if( virtual_files[image] != NULL )
+    if( virtual_files[image] != nullptr )
         return virtual_files[image];
 
     uint64  vfile_length = layer_data.GetUInt64( 24*image + 12, 12 );
@@ -439,7 +439,7 @@ int SysBlockMap::CreateVirtualFile()
     {
         layer_index = static_cast<int>(virtual_files.size());
         layer_data.SetSize( (layer_index+1) * 24 );
-        virtual_files.push_back( NULL );
+        virtual_files.push_back( nullptr );
     }
 
 /* -------------------------------------------------------------------- */

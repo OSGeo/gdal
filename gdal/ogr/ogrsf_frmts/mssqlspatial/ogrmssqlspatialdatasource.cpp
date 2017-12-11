@@ -38,23 +38,23 @@ CPL_CVSID("$Id$")
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() :
     bDSUpdate(FALSE)
 {
-    pszName = NULL;
-    pszCatalog = NULL;
-    papoLayers = NULL;
+    pszName = nullptr;
+    pszCatalog = nullptr;
+    papoLayers = nullptr;
     nLayers = 0;
 
     nKnownSRID = 0;
-    panSRID = NULL;
-    papoSRS = NULL;
+    panSRID = nullptr;
+    papoSRS = nullptr;
 
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
-    pszConnection = NULL;
+    pszConnection = nullptr;
 
     bUseGeometryColumns = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_COLUMNS", "YES"));
     bListAllTables = CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_LIST_ALL_TABLES", "NO"));
 
-    const char* nBCPSizeParam = CPLGetConfigOption("MSSQLSPATIAL_BCP_SIZE", NULL);
-    if( nBCPSizeParam != NULL )
+    const char* nBCPSizeParam = CPLGetConfigOption("MSSQLSPATIAL_BCP_SIZE", nullptr);
+    if( nBCPSizeParam != nullptr )
         nBCPSize = atoi(nBCPSizeParam);
     else
         nBCPSize = 1000;
@@ -82,7 +82,7 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 
     for( int i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL )
+        if( papoSRS[i] != nullptr )
             papoSRS[i]->Release();
     }
     CPLFree( panSRID );
@@ -117,7 +117,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -130,13 +130,13 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
 
 {
     if (!pszLayerName)
-        return NULL;
+        return nullptr;
 
-    char *pszTableName = NULL;
-    char *pszSchemaName = NULL;
+    char *pszTableName = nullptr;
+    char *pszSchemaName = nullptr;
 
     const char* pszDotPos = strstr(pszLayerName,".");
-    if ( pszDotPos != NULL )
+    if ( pszDotPos != nullptr )
     {
       int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
@@ -164,7 +164,7 @@ OGRLayer *OGRMSSQLSpatialDataSource::GetLayerByName( const char* pszLayerName )
     CPLFree( pszSchemaName );
     CPLFree( pszTableName );
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -237,18 +237,18 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
                                           char ** papszOptions )
 
 {
-    char                *pszTableName = NULL;
-    char                *pszSchemaName = NULL;
-    const char          *pszGeomType = NULL;
-    const char          *pszGeomColumn = NULL;
+    char                *pszTableName = nullptr;
+    char                *pszSchemaName = nullptr;
+    const char          *pszGeomType = nullptr;
+    const char          *pszGeomColumn = nullptr;
     int                 nCoordDimension = 3;
-    char                *pszFIDColumnName = NULL;
+    char                *pszFIDColumnName = nullptr;
 
     /* determine the dimension */
     if( eType == wkbFlatten(eType) )
         nCoordDimension = 2;
 
-    if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
+    if( CSLFetchNameValue( papszOptions, "DIM") != nullptr )
         nCoordDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
 
     int bExtractSchemaFromLayerName = CPLTestBool(CSLFetchNameValueDef(
@@ -260,11 +260,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
        specified
     */
     const char* pszDotPos = strstr(pszLayerName,".");
-    if ( pszDotPos != NULL && bExtractSchemaFromLayerName )
+    if ( pszDotPos != nullptr && bExtractSchemaFromLayerName )
     {
       int length = static_cast<int>(pszDotPos - pszLayerName);
       pszSchemaName = (char*)CPLMalloc(length+1);
-      CPLAssert(pszSchemaName != NULL); /* to make Coverity happy and not believe a REVERSE_INULL is possible */
+      CPLAssert(pszSchemaName != nullptr); /* to make Coverity happy and not believe a REVERSE_INULL is possible */
       strncpy(pszSchemaName, pszLayerName, length);
       pszSchemaName[length] = '\0';
 
@@ -281,13 +281,13 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
           pszTableName = CPLStrdup( pszLayerName ); //skip "."
     }
 
-    if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != NULL )
+    if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != nullptr )
     {
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
     }
 
-    if (pszSchemaName == NULL)
+    if (pszSchemaName == nullptr)
         pszSchemaName = CPLStrdup("dbo");
 
 /* -------------------------------------------------------------------- */
@@ -301,7 +301,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if( EQUAL(pszTableName,papoLayers[iLayer]->GetTableName()) &&
             EQUAL(pszSchemaName,papoLayers[iLayer]->GetSchemaName()) )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
                 CPLFree(pszSchemaName);
@@ -319,7 +319,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
                 CPLFree( pszSchemaName );
                 CPLFree( pszTableName );
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -343,7 +343,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 
             CPLFree( pszSchemaName );
             CPLFree( pszTableName );
-            return NULL;
+            return nullptr;
         }
 
         /* determine the geometry column name */
@@ -364,7 +364,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
     {
         CPLFree( pszSchemaName );
         CPLFree( pszTableName );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -373,10 +373,10 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     int nSRSId = 0;
 
-    if( CSLFetchNameValue( papszOptions, "SRID") != NULL )
+    if( CSLFetchNameValue( papszOptions, "SRID") != nullptr )
         nSRSId = atoi(CSLFetchNameValue( papszOptions, "SRID"));
 
-    if( nSRSId == 0 && poSRS != NULL )
+    if( nSRSId == 0 && poSRS != nullptr )
         nSRSId = FetchSRSId( poSRS );
 
 /* -------------------------------------------------------------------- */
@@ -442,7 +442,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         if (!bInTransaction)
             oSession.RollbackTransaction();
 
-        return NULL;
+        return nullptr;
     }
 
     if (!bInTransaction)
@@ -467,8 +467,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         poLayer->SetUseCopy(nBCPSize);
 
     const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
-    int bCreateSpatialIndex = ( pszSI == NULL || CPLTestBool(pszSI) );
-    if (pszGeomColumn == NULL)
+    int bCreateSpatialIndex = ( pszSI == nullptr || CPLTestBool(pszSI) );
+    if (pszGeomColumn == nullptr)
         bCreateSpatialIndex = FALSE;
 
     poLayer->SetSpatialIndexFlag( bCreateSpatialIndex );
@@ -482,11 +482,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
             poLayer->SetUploadGeometryFormat(MSSQLGEOMETRY_WKT);
     }
 
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
     {
         CPLFree(pszWKT);
-        pszWKT = NULL;
+        pszWKT = nullptr;
     }
 
     if( bFID64 )
@@ -497,7 +497,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ICreateLayer( const char * pszLayerName,
         CPLFree( pszSchemaName );
         CPLFree( pszTableName );
         CPLFree( pszWKT );
-        return NULL;
+        return nullptr;
     }
 
     CPLFree( pszSchemaName );
@@ -564,7 +564,7 @@ int OGRMSSQLSpatialDataSource::GetLayerCount()
 int OGRMSSQLSpatialDataSource::ParseValue(char** pszValue, char* pszSource, const char* pszKey, int nStart, int nNext, int nTerm, int bRemove)
 {
     int nLen = static_cast<int>(strlen(pszKey));
-    if ((*pszValue) == NULL && nStart + nLen < nNext &&
+    if ((*pszValue) == nullptr && nStart + nLen < nNext &&
             EQUALN(pszSource + nStart, pszKey, nLen))
     {
         *pszValue = (char*)CPLMalloc( sizeof(char) * (nNext - nStart - nLen + 1) );
@@ -604,10 +604,10 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* Determine if the connection string contains specific values */
-    char* pszTableSpec = NULL;
-    char* pszGeometryFormat = NULL;
+    char* pszTableSpec = nullptr;
+    char* pszGeometryFormat = nullptr;
     char* pszConnectionName = CPLStrdup(pszNewName + 6);
-    char* pszDriver = NULL;
+    char* pszDriver = nullptr;
     int nCurrent, nNext, nTerm;
     nCurrent = nNext = nTerm = static_cast<int>(strlen(pszConnectionName));
 
@@ -657,13 +657,13 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             }
 
             CPLFree(pszGeometryFormat);
-            pszGeometryFormat = NULL;
+            pszGeometryFormat = nullptr;
             continue;
         }
     }
 
     /* Determine if the connection string contains the catalog portion */
-    if( pszCatalog == NULL )
+    if( pszCatalog == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                       "'%s' does not contain the 'database' portion\n", pszNewName );
@@ -677,15 +677,15 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     pszName = CPLStrdup(pszNewName);
 
-    char  **papszTableNames=NULL;
-    char  **papszSchemaNames=NULL;
-    char  **papszGeomColumnNames=NULL;
-    char  **papszCoordDimensions=NULL;
-    char  **papszSRIds=NULL;
-    char  **papszSRTexts=NULL;
+    char  **papszTableNames=nullptr;
+    char  **papszSchemaNames=nullptr;
+    char  **papszGeomColumnNames=nullptr;
+    char  **papszCoordDimensions=nullptr;
+    char  **papszSRIds=nullptr;
+    char  **papszSRTexts=nullptr;
 
     /* Determine if the connection string contains the TABLES portion */
-    if( pszTableSpec != NULL )
+    if( pszTableSpec != nullptr )
     {
         char          **papszTableList;
         int             i;
@@ -703,9 +703,9 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             /* Find the geometry column name if specified */
             if( CSLCount( papszQualifiedParts ) >= 1 )
             {
-                char* pszGeomColumnName = NULL;
+                char* pszGeomColumnName = nullptr;
                 char* pos = strchr(papszQualifiedParts[CSLCount( papszQualifiedParts ) - 1], '(');
-                if (pos != NULL)
+                if (pos != nullptr)
                 {
                     *pos = '\0';
                     pszGeomColumnName = pos+1;
@@ -739,7 +739,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
 
     CPLFree(pszTableSpec);
 
-    if ( pszDriver == NULL )
+    if ( pszDriver == nullptr )
     {
         char* pszConnectionName2 = pszConnectionName;
 #if SQLNCLI_VERSION == 11
@@ -788,7 +788,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
                 "%s\n", pszNewName, oSession.GetLastError() );
         }
 
-        if( hEnv != NULL )
+        if( hEnv != nullptr )
             SQLFreeEnv( hEnv );
 
         CSLDestroy( papszTableNames );
@@ -802,13 +802,13 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
         return FALSE;
     }
 
-    char** papszTypes = NULL;
+    char** papszTypes = nullptr;
 
     /* read metadata for the specified tables */
-    if (papszTableNames != NULL && bUseGeometryColumns)
+    if (papszTableNames != nullptr && bUseGeometryColumns)
     {
         for( int iTable = 0;
-            papszTableNames != NULL && papszTableNames[iTable] != NULL;
+            papszTableNames != nullptr && papszTableNames[iTable] != nullptr;
             iTable++ )
         {
             CPLODBCStatement oStmt( &oSession );
@@ -820,7 +820,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 while( oStmt.Fetch() )
                 {
-                    if (papszGeomColumnNames == NULL)
+                    if (papszGeomColumnNames == nullptr)
                             papszGeomColumnNames = CSLAddString( papszGeomColumnNames, oStmt.GetColData(0) );
                     else if (*papszGeomColumnNames[iTable] == 0)
                     {
@@ -847,7 +847,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* if requesting all user database table then this takes priority */
-    if (papszTableNames == NULL && bListAllTables)
+    if (papszTableNames == nullptr && bListAllTables)
     {
         CPLODBCStatement oStmt( &oSession );
 
@@ -868,7 +868,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* Determine the available tables if not specified. */
-    if (papszTableNames == NULL && bUseGeometryColumns)
+    if (papszTableNames == nullptr && bUseGeometryColumns)
     {
         CPLODBCStatement oStmt( &oSession );
 
@@ -903,7 +903,7 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     /* Query catalog for tables having geometry columns */
-    if (papszTableNames == NULL)
+    if (papszTableNames == nullptr)
     {
         CPLODBCStatement oStmt( &oSession );
 
@@ -927,30 +927,30 @@ int OGRMSSQLSpatialDataSource::Open( const char * pszNewName, int bUpdate,
     OGRwkbGeometryType eType;
 
     for( int iTable = 0;
-         papszTableNames != NULL && papszTableNames[iTable] != NULL;
+         papszTableNames != nullptr && papszTableNames[iTable] != nullptr;
          iTable++ )
     {
-        if (papszSRIds != NULL)
+        if (papszSRIds != nullptr)
             nSRId = atoi(papszSRIds[iTable]);
         else
             nSRId = -1;
 
-        if (papszCoordDimensions != NULL)
+        if (papszCoordDimensions != nullptr)
             nCoordDimension = atoi(papszCoordDimensions[iTable]);
         else
             nCoordDimension = 2;
 
-        if (papszTypes != NULL)
+        if (papszTypes != nullptr)
             eType = OGRFromOGCGeomType(papszTypes[iTable]);
         else
             eType = wkbUnknown;
 
         if( strlen(papszGeomColumnNames[iTable]) > 0 )
             OpenTable( papszSchemaNames[iTable], papszTableNames[iTable], papszGeomColumnNames[iTable],
-                    nCoordDimension, nSRId, papszSRTexts? papszSRTexts[iTable] : NULL, eType, bUpdate );
+                    nCoordDimension, nSRId, papszSRTexts? papszSRTexts[iTable] : nullptr, eType, bUpdate );
         else
-            OpenTable( papszSchemaNames[iTable], papszTableNames[iTable], NULL,
-                    nCoordDimension, nSRId, papszSRTexts? papszSRTexts[iTable] : NULL, wkbNone, bUpdate );
+            OpenTable( papszSchemaNames[iTable], papszTableNames[iTable], nullptr,
+                    nCoordDimension, nSRId, papszSRTexts? papszSRTexts[iTable] : nullptr, wkbNone, bUpdate );
     }
 
     CSLDestroy( papszTableNames );
@@ -1008,7 +1008,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
                 break;
             }
         }
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug( "MSSQLSpatial", "ExecuteSQL(%s) called.", pszSQLCommand );
@@ -1020,7 +1020,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( NULL, pszSQLCommand + 22, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
+            if( poLayer->Initialize( nullptr, pszSQLCommand + 22, nullptr, 0, 0, nullptr, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize layer '%s'", pszSQLCommand + 22 );
@@ -1028,7 +1028,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
             poLayer->DropSpatialIndex();
             delete poLayer;
         }
-        return NULL;
+        return nullptr;
     }
     else if( STARTS_WITH_CI(pszSQLCommand, "CREATE SPATIAL INDEX ON ") )
     {
@@ -1037,7 +1037,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         if (poLayer)
         {
-            if( poLayer->Initialize( NULL, pszSQLCommand + 24, NULL, 0, 0, NULL, wkbUnknown ) != CE_None )
+            if( poLayer->Initialize( nullptr, pszSQLCommand + 24, nullptr, 0, 0, nullptr, wkbUnknown ) != CE_None )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to initialize layer '%s'", pszSQLCommand + 24 );
@@ -1045,7 +1045,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
             poLayer->CreateSpatialIndex();
             delete poLayer;
         }
-        return NULL;
+        return nullptr;
     }
 
     /* Execute the command natively */
@@ -1057,7 +1057,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1067,7 +1067,7 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStmt;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1075,11 +1075,11 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
 
-    OGRMSSQLSpatialSelectLayer *poLayer = NULL;
+    OGRMSSQLSpatialSelectLayer *poLayer = nullptr;
 
     poLayer = new OGRMSSQLSpatialSelectLayer( this, poStmt );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;
@@ -1177,7 +1177,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
 
 {
     if( nId <= 0 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      First, we look through our SRID cache, is it there?             */
@@ -1190,7 +1190,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
             return papoSRS[i];
     }
 
-    OGRSpatialReference *poSRS = NULL;
+    OGRSpatialReference *poSRS = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try looking up in spatial_ref_sys table                         */
@@ -1209,7 +1209,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
                 if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
                 {
                     delete poSRS;
-                    poSRS = NULL;
+                    poSRS = nullptr;
                 }
             }
         }
@@ -1224,7 +1224,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
         if( poSRS->importFromEPSG( nId ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -1254,36 +1254,36 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
 int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 
 {
-    char                *pszWKT = NULL;
+    char                *pszWKT = nullptr;
     int                 nSRSId = 0;
     const char*         pszAuthorityName;
 
-    if( poSRS == NULL )
+    if( poSRS == nullptr )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
     // cppcheck-suppress uselessAssignmentPtrArg
-    poSRS = NULL;
+    poSRS = nullptr;
 
-    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+    pszAuthorityName = oSRS.GetAuthorityName(nullptr);
 
-    if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
+    if( pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0 )
     {
 /* -------------------------------------------------------------------- */
 /*      Try to identify an EPSG code                                    */
 /* -------------------------------------------------------------------- */
         oSRS.AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(NULL);
-        if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char* pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
-            if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            if ( pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0 )
             {
                 /* Import 'clean' SRS */
                 oSRS.importFromEPSG( atoi(pszAuthorityCode) );
 
-                pszAuthorityName = oSRS.GetAuthorityName(NULL);
+                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
             }
         }
     }
@@ -1292,12 +1292,12 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 /*      SRS ID.                                                         */
 /* -------------------------------------------------------------------- */
     int  nAuthorityCode = 0;
-    if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
+    if( pszAuthorityName != nullptr && EQUAL( pszAuthorityName, "EPSG" ) )
     {
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        nAuthorityCode = atoi( oSRS.GetAuthorityCode(nullptr) );
 
         CPLODBCStatement oStmt( &oSession );
         oStmt.Appendf("SELECT srid FROM spatial_ref_sys WHERE "
@@ -1354,7 +1354,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId( OGRSpatialReference * poSRS)
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
-    char    *pszProj4 = NULL;
+    char    *pszProj4 = nullptr;
     if( oSRS.exportToProj4( &pszProj4 ) != OGRERR_NONE )
     {
         CPLFree( pszProj4 );

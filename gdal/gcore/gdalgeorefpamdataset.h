@@ -63,7 +63,7 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
         GDALGeorefPamDataset();
         virtual ~GDALGeorefPamDataset();
 
-    virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL) CPL_OVERRIDE;
+    virtual CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) CPL_OVERRIDE;
 
     virtual CPLErr          GetGeoTransform( double * ) CPL_OVERRIDE;
     virtual const char     *GetProjectionRef() CPL_OVERRIDE;

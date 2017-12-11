@@ -83,7 +83,7 @@ void OGRNASLayer::ResetReading()
 OGRFeature *OGRNASLayer::GetNextFeature()
 
 {
-    GMLFeature  *poNASFeature = NULL;
+    GMLFeature  *poNASFeature = nullptr;
 
     if( iNextNASId == 0 )
         ResetReading();
@@ -99,8 +99,8 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
         delete poNASFeature;
         poNASFeature = poDS->GetReader()->NextFeature();
-        if( poNASFeature == NULL )
-            return NULL;
+        if( poNASFeature == nullptr )
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Is it of the proper feature class?                              */
@@ -127,9 +127,9 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         bool bErrored = false, bFiltered = false;
         CPLString osLastErrorMsg;
         for( int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom ) {
-            if ( papsGeometry[iGeom] == NULL )
+            if ( papsGeometry[iGeom] == nullptr )
             {
-                poGeom[iGeom] = NULL;
+                poGeom[iGeom] = nullptr;
             }
             else
             {
@@ -137,17 +137,17 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
                 poGeom[iGeom] = (OGRGeometry*) OGR_G_CreateFromGMLTree(papsGeometry[iGeom]);
                 CPLPopErrorHandler();
-                if( poGeom[iGeom] == NULL )
+                if( poGeom[iGeom] == nullptr )
                     osLastErrorMsg = CPLGetLastErrorMsg();
                 poGeom[iGeom] = NASReader::ConvertGeometry(poGeom[iGeom]);
                 poGeom[iGeom] = OGRGeometryFactory::forceTo(poGeom[iGeom], GetGeomType());
                 // poGeom->dumpReadable( 0, "NAS: " );
 
-                if( poGeom[iGeom] == NULL )
+                if( poGeom[iGeom] == nullptr )
                     bErrored = true;
             }
 
-            bFiltered = m_poFilterGeom != NULL && !FilterGeometry( poGeom[iGeom] );
+            bFiltered = m_poFilterGeom != nullptr && !FilterGeometry( poGeom[iGeom] );
             if( bErrored || bFiltered )
             {
                 while (iGeom > 0)
@@ -173,7 +173,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             }
 
             delete poNASFeature;
-            poNASFeature = NULL;
+            poNASFeature = nullptr;
 
             const bool bGoOn = CPLTestBool(
                     CPLGetConfigOption("NAS_SKIP_CORRUPTED_FEATURES", "NO"));
@@ -187,7 +187,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
             if( bGoOn )
                 continue;
 
-            return NULL;
+            return nullptr;
         }
 
         if( bFiltered )
@@ -204,7 +204,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         {
             const GMLProperty *psGMLProperty =
                 poNASFeature->GetProperty( iField );
-            if( psGMLProperty == NULL || psGMLProperty->nSubProperties == 0 )
+            if( psGMLProperty == nullptr || psGMLProperty->nSubProperties == 0 )
                 continue;
 
             switch( poFClass->GetProperty(iField)->GetType()  )
@@ -262,14 +262,14 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
         for ( int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom ) {
             poOGRFeature->SetGeomFieldDirectly(iGeom, poGeom[iGeom]);
-            poGeom[iGeom] = NULL;
+            poGeom[iGeom] = nullptr;
         }
         poGeom.clear();
 
 /* -------------------------------------------------------------------- */
 /*      Test against the attribute query.                               */
 /* -------------------------------------------------------------------- */
-        if( m_poAttrQuery != NULL
+        if( m_poAttrQuery != nullptr
             && !m_poAttrQuery->Evaluate( poOGRFeature ) )
         {
             delete poOGRFeature;
@@ -284,7 +284,7 @@ OGRFeature *OGRNASLayer::GetNextFeature()
         return poOGRFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -294,10 +294,10 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 GIntBig OGRNASLayer::GetFeatureCount( int bForce )
 
 {
-    if( poFClass == NULL )
+    if( poFClass == nullptr )
         return 0;
 
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
         return OGRLayer::GetFeatureCount( bForce );
 
     return poFClass->GetFeatureCount();
@@ -315,7 +315,7 @@ OGRErr OGRNASLayer::GetExtent(OGREnvelope *psExtent, int bForce )
     double dfYMin = 0.0;
     double dfYMax = 0.0;
 
-    if( poFClass != NULL &&
+    if( poFClass != nullptr &&
         poFClass->GetExtents( &dfXMin, &dfXMax, &dfYMin, &dfYMax ) )
     {
         psExtent->MinX = dfXMin;
@@ -338,7 +338,7 @@ int OGRNASLayer::TestCapability( const char * pszCap )
 {
     if( EQUAL(pszCap,OLCFastGetExtent) )
     {
-        if( poFClass == NULL )
+        if( poFClass == nullptr )
             return FALSE;
 
         double dfXMin = 0.0;
@@ -351,9 +351,9 @@ int OGRNASLayer::TestCapability( const char * pszCap )
 
     if( EQUAL(pszCap,OLCFastFeatureCount) )
     {
-        if( poFClass == NULL
-            || m_poFilterGeom != NULL
-            || m_poAttrQuery != NULL )
+        if( poFClass == nullptr
+            || m_poFilterGeom != nullptr
+            || m_poAttrQuery != nullptr )
             return FALSE;
 
         return poFClass->GetFeatureCount() != -1;

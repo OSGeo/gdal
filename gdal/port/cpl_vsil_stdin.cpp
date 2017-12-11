@@ -60,7 +60,7 @@ CPL_CVSID("$Id$")
 // TODO(schwehr): Make BUFFER_SIZE a static const.
 #define BUFFER_SIZE (1024 * 1024)
 
-static GByte* pabyBuffer = NULL;
+static GByte* pabyBuffer = nullptr;
 static GUInt32 nBufferLen = 0;
 static GUIntBig nRealPos = 0;
 
@@ -70,7 +70,7 @@ static GUIntBig nRealPos = 0;
 
 static void VSIStdinInit()
 {
-    if( pabyBuffer == NULL )
+    if( pabyBuffer == nullptr )
     {
 #ifdef WIN32
         setmode( fileno( stdin ), O_BINARY );
@@ -334,7 +334,7 @@ int VSIStdinHandle::Close()
 
 VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 {
-    pabyBuffer = NULL;
+    pabyBuffer = nullptr;
     nBufferLen = 0;
     nRealPos = 0;
 }
@@ -346,7 +346,7 @@ VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 {
     CPLFree(pabyBuffer);
-    pabyBuffer = NULL;
+    pabyBuffer = nullptr;
 }
 
 /************************************************************************/
@@ -360,22 +360,22 @@ VSIStdinFilesystemHandler::Open( const char *pszFilename,
 
 {
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
-        return NULL;
+        return nullptr;
 
     if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
                 "enable it");
-        return NULL;
+        return nullptr;
     }
 
-    if( strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr ||
+        strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Write or update mode not supported on /vsistdin");
-        return NULL;
+        return nullptr;
     }
 
     return new VSIStdinHandle;

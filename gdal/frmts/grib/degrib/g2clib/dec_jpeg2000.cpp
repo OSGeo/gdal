@@ -63,7 +63,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     GDALDataset* poJ2KDataset = (GDALDataset *)
         GDALOpen( osFileName, GA_ReadOnly );
 
-    if( poJ2KDataset == NULL )
+    if( poJ2KDataset == nullptr )
     {
         fprintf(stderr, "dec_jpeg2000: Unable to open JPEG2000 image within GRIB file.\n"
                   "Is the JPEG2000 driver available?" );
@@ -102,7 +102,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
        return (-5);
     }
     *outfld=(g2int *)calloc(outpixels,sizeof(g2int));
-    if ( *outfld == NULL ) {
+    if ( *outfld == nullptr ) {
         fprintf(stderr, "Could not allocate space in jpcunpack.\n"
                 "Data field NOT unpacked.\n");
         GDALClose( poJ2KDataset );
@@ -115,7 +115,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     int nBufYSize = nYSize;
     GDALDataType eBufType = GDT_Int32; // map to type of "outfld" buffer: g2int*
     int nBandCount = 1;
-    int* panBandMap = NULL;
+    int* panBandMap = nullptr;
     int nPixelSpace = 0;
     int nLineSpace = 0;
     int nBandSpace = 0;
@@ -124,7 +124,7 @@ int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels)
     const CPLErr eErr = poJ2KDataset->RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
                             *outfld, nBufXSize, nBufYSize, eBufType,
                             nBandCount, panBandMap,
-                            nPixelSpace, nLineSpace, nBandSpace, NULL );
+                            nPixelSpace, nLineSpace, nBandSpace, nullptr );
 
     // close source file, and "unlink" it.
     GDALClose( poJ2KDataset );

@@ -201,8 +201,8 @@ public:
 
     GMLFeature       *NextFeature() override;
 
-    bool             LoadClasses( const char *pszFile = NULL ) override;
-    bool             SaveClasses( const char *pszFile = NULL ) override;
+    bool             LoadClasses( const char *pszFile = nullptr ) override;
+    bool             SaveClasses( const char *pszFile = nullptr ) override;
 
     bool             PrescanForSchema(bool bGetExtents = true,
                                       bool bAnalyzeSRSPerFeature = true,
@@ -214,7 +214,7 @@ public:
 
     bool             ResolveXlinks( const char *pszFile,
                                     bool* pbOutIsTempFile,
-                                    char **papszSkip = NULL,
+                                    char **papszSkip = nullptr,
                                     const bool bStrict = false ) override;
 
     bool             HugeFileResolver( const char *pszFile,
@@ -243,7 +243,7 @@ public:
                                    const Attributes &attrs,
                                    char **ppszCurField );
 
-    virtual const char* GetGlobalSRSName() override { return NULL; }
+    virtual const char* GetGlobalSRSName() override { return nullptr; }
 
     virtual bool        CanUseGlobalSRSName() override { return false; }
 

@@ -49,9 +49,9 @@ CPL_CVSID("$Id$")
  *====================================================================*/
 
 MIDDATAFile::MIDDATAFile( const char* pszEncoding ) :
-    m_fp(NULL),
+    m_fp(nullptr),
     m_pszDelimiter("\t"),  // Encom 2003 (was NULL).
-    m_pszFname(NULL),
+    m_pszFname(nullptr),
     m_eAccessMode(TABRead),
     // TODO(schwehr): m_szLastRead({}),
     // TODO(schwehr): m_szSavedLine({}),
@@ -70,7 +70,7 @@ MIDDATAFile::~MIDDATAFile() { Close(); }
 
 void MIDDATAFile::SaveLine(const char *pszLine)
 {
-    if(pszLine == NULL)
+    if(pszLine == nullptr)
     {
         m_szSavedLine[0] = '\0';
     }
@@ -109,10 +109,10 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
     m_pszFname = CPLStrdup(pszFname);
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
-    if(m_fp == NULL)
+    if(m_fp == nullptr)
     {
         CPLFree(m_pszFname);
-        m_pszFname = NULL;
+        m_pszFname = nullptr;
         return -1;
     }
 
@@ -122,7 +122,7 @@ int MIDDATAFile::Open(const char *pszFname, const char *pszAccess)
 
 int MIDDATAFile::Rewind()
 {
-    if(m_fp == NULL || m_eAccessMode == TABWrite)
+    if(m_fp == nullptr || m_eAccessMode == TABWrite)
         return -1;
 
     else
@@ -135,18 +135,18 @@ int MIDDATAFile::Rewind()
 
 int MIDDATAFile::Close()
 {
-    if(m_fp == NULL)
+    if(m_fp == nullptr)
         return 0;
 
     // Close file
     VSIFCloseL(m_fp);
-    m_fp = NULL;
+    m_fp = nullptr;
 
     // clear readline buffer.
-    CPLReadLineL(NULL);
+    CPLReadLineL(nullptr);
 
     CPLFree(m_pszFname);
-    m_pszFname = NULL;
+    m_pszFname = nullptr;
 
     return 0;
 }
@@ -156,12 +156,12 @@ const char *MIDDATAFile::GetLine()
     if(m_eAccessMode != TABRead)
     {
         CPLAssert(false);
-        return NULL;
+        return nullptr;
     }
 
     const char *pszLine = CPLReadLineL(m_fp);
 
-    if(pszLine == NULL)
+    if(pszLine == nullptr)
     {
         SetEof(TRUE);
         m_szLastRead[0] = '\0';
@@ -189,7 +189,7 @@ const char *MIDDATAFile::GetLastLine()
     // Return NULL if EOF.
     if(GetEof())
     {
-        return NULL;
+        return nullptr;
     }
     if(m_eAccessMode == TABRead)
     {
@@ -201,7 +201,7 @@ const char *MIDDATAFile::GetLastLine()
 
     // We should never get here.  Read/Write mode not implemented.
     CPLAssert(false);
-    return NULL;
+    return nullptr;
 }
 
 void MIDDATAFile::WriteLine(const char *pszFormat, ...)

@@ -73,7 +73,7 @@ class GTXDataset : public RawDataset
     double      adfGeoTransform[6];
 
   public:
-                GTXDataset() : fpImage(NULL) {
+                GTXDataset() : fpImage(nullptr) {
                       adfGeoTransform[0] = 0.0;
                       adfGeoTransform[1] = 1.0;
                       adfGeoTransform[2] = 0.0;
@@ -111,7 +111,7 @@ class GTXRasterBand : public RawRasterBand
 
     virtual ~GTXRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 
@@ -169,7 +169,7 @@ GTXDataset::~GTXDataset()
 {
     FlushCache();
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
         {
@@ -202,7 +202,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -219,10 +219,10 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
 
-    if( poDS->fpImage == NULL )
+    if( poDS->fpImage == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -271,7 +271,7 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -395,26 +395,26 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create gtx file with unsupported data type '%s'.",
                   GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
 
     if( !EQUAL(CPLGetExtension(pszFilename),"gtx") )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create gtx file with extension other than gtx." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -460,7 +460,7 @@ GDALDataset *GTXDataset::Create( const char * pszFilename,
 void GDALRegister_GTX()
 
 {
-    if( GDALGetDriverByName( "GTX" ) != NULL )
+    if( GDALGetDriverByName( "GTX" ) != nullptr )
       return;
 
     GDALDriver *poDriver = new GDALDriver();

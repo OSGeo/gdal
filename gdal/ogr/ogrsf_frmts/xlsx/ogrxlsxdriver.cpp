@@ -66,7 +66,7 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if (!OGRXLSXDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     CPLString osPrefixedFilename("/vsizip/");
     osPrefixedFilename += poOpenInfo->pszFilename;
@@ -79,8 +79,8 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
     CPLString osTmpFilename;
     osTmpFilename = CPLSPrintf("%s/[Content_Types].xml", osPrefixedFilename.c_str());
     VSILFILE* fpContent = VSIFOpenL(osTmpFilename, "rb");
-    if (fpContent == NULL)
-        return NULL;
+    if (fpContent == nullptr)
+        return nullptr;
 
     char szBuffer[2048];
     int nRead = (int)VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fpContent);
@@ -88,20 +88,20 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
 
     VSIFCloseL(fpContent);
 
-    if (strstr(szBuffer, XLSX_MIMETYPE) == NULL)
-        return NULL;
+    if (strstr(szBuffer, XLSX_MIMETYPE) == nullptr)
+        return nullptr;
 
     osTmpFilename = CPLSPrintf("%s/xl/workbook.xml", osPrefixedFilename.c_str());
     VSILFILE* fpWorkbook = VSIFOpenL(osTmpFilename, "rb");
-    if (fpWorkbook == NULL)
-        return NULL;
+    if (fpWorkbook == nullptr)
+        return nullptr;
 
     osTmpFilename = CPLSPrintf("%s/xl/_rels/workbook.xml.rels", osPrefixedFilename.c_str());
     VSILFILE* fpWorkbookRels = VSIFOpenL(osTmpFilename, "rb");
-    if (fpWorkbookRels == NULL)
+    if (fpWorkbookRels == nullptr)
     {
         VSIFCloseL(fpWorkbook);
-        return NULL;
+        return nullptr;
     }
 
     osTmpFilename = CPLSPrintf("%s/xl/sharedStrings.xml", osPrefixedFilename.c_str());
@@ -116,7 +116,7 @@ static GDALDataset* OGRXLSXDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -138,7 +138,7 @@ GDALDataset *OGRXLSXDriverCreate( const char *pszName,
     if (!EQUAL(CPLGetExtension(pszName), "XLSX"))
     {
         CPLError( CE_Failure, CPLE_AppDefined, "File extension should be XLSX" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -152,7 +152,7 @@ GDALDataset *OGRXLSXDriverCreate( const char *pszName,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -163,7 +163,7 @@ GDALDataset *OGRXLSXDriverCreate( const char *pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -176,7 +176,7 @@ GDALDataset *OGRXLSXDriverCreate( const char *pszName,
 void RegisterOGRXLSX()
 
 {
-    if( GDALGetDriverByName( "XLSX" ) != NULL )
+    if( GDALGetDriverByName( "XLSX" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -64,9 +64,9 @@ class SDTS_CATDEntry
 /************************************************************************/
 
 SDTS_CATD::SDTS_CATD() :
-    pszPrefixPath(NULL),
+    pszPrefixPath(nullptr),
     nEntries(0),
-    papoEntries(NULL)
+    papoEntries(nullptr)
 {}
 
 /************************************************************************/
@@ -112,7 +112,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      record and we won't even try reading the first record for       */
 /*      fear it will we a huge honking ADRG data record or something.   */
 /* -------------------------------------------------------------------- */
-    if( oCATDFile.FindFieldDefn( "CATD" ) == NULL )
+    if( oCATDFile.FindFieldDefn( "CATD" ) == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -138,16 +138,16 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      Loop reading CATD records, and adding to our list of entries    */
 /*      for each.                                                       */
 /* ==================================================================== */
-    DDFRecord *poRecord = NULL;
+    DDFRecord *poRecord = nullptr;
     int nIters = 0;
-    while( (poRecord = oCATDFile.ReadRecord()) != NULL && nIters < 1000 )
+    while( (poRecord = oCATDFile.ReadRecord()) != nullptr && nIters < 1000 )
     {
         nIters ++;
 
 /* -------------------------------------------------------------------- */
 /*      Verify that we have a proper CATD record.                       */
 /* -------------------------------------------------------------------- */
-        if( poRecord->GetStringSubfield( "CATD", 0, "MODN", 0 ) == NULL )
+        if( poRecord->GetStringSubfield( "CATD", 0, "MODN", 0 ) == nullptr )
             continue;
 
 /* -------------------------------------------------------------------- */
@@ -180,7 +180,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /* -------------------------------------------------------------------- */
         poEntry->pszFullPath =
             CPLStrdup(CPLFormCIFilename( pszPrefixPath, poEntry->pszFile,
-                                         NULL ));
+                                         nullptr ));
 
 /* -------------------------------------------------------------------- */
 /*      Add the entry to the list.                                      */
@@ -206,7 +206,7 @@ const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
             return papoEntries[i]->pszFullPath;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -217,7 +217,7 @@ const char * SDTS_CATD::GetEntryModule( int iEntry )
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
-        return NULL;
+        return nullptr;
 
     return papoEntries[iEntry]->pszModule;
 }
@@ -241,7 +241,7 @@ const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
-        return NULL;
+        return nullptr;
 
     return papoEntries[iEntry]->pszType;
 }
@@ -318,7 +318,7 @@ const char * SDTS_CATD::GetEntryFilePath( int iEntry )
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
-        return NULL;
+        return nullptr;
 
     return papoEntries[iEntry]->pszFullPath;
 }

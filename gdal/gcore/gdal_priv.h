@@ -193,8 +193,8 @@ class CPL_DLL GDALDefaultOverviews
                GDALDefaultOverviews();
                ~GDALDefaultOverviews();
 
-    void       Initialize( GDALDataset *poDSIn, const char *pszName = NULL,
-                           char **papszSiblingFiles = NULL,
+    void       Initialize( GDALDataset *poDSIn, const char *pszName = nullptr,
+                           char **papszSiblingFiles = nullptr,
                            int bNameIsOVR = FALSE );
 
     void       TransferSiblingFiles( char** papszSiblingFiles );
@@ -230,8 +230,8 @@ class CPL_DLL GDALDefaultOverviews
     GDALRasterBand *GetMaskBand( int nBand );
     int        GetMaskFlags( int nBand );
 
-    int        HaveMaskFile( char **papszSiblings = NULL,
-                             const char *pszBasename = NULL );
+    int        HaveMaskFile( char **papszSiblings = nullptr,
+                             const char *pszBasename = nullptr );
 
     char**     GetSiblingFiles() { return papszInitSiblingFiles; }
 
@@ -253,7 +253,7 @@ class CPL_DLL GDALOpenInfo
 
   public:
                 GDALOpenInfo( const char * pszFile, int nOpenFlagsIn,
-                              char **papszSiblingFiles = NULL );
+                              char **papszSiblingFiles = nullptr );
                 ~GDALOpenInfo( void );
 
     /** Filename */
@@ -462,7 +462,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr SetGeoTransform( double * padfTransform );
 
     virtual CPLErr        AddBand( GDALDataType eType,
-                                   char **papszOptions=NULL );
+                                   char **papszOptions=nullptr );
 
     virtual void *GetInternalHandle( const char * pszHandleName );
     virtual GDALDriver *GetDriver(void);
@@ -498,7 +498,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                           int, int *, GSpacing, GSpacing, GSpacing,
                           GDALRasterIOExtraArg* psExtraArg
 #ifndef DOXYGEN_SKIP
-                          OPTIONAL_OUTSIDE_GDAL(NULL)
+                          OPTIONAL_OUTSIDE_GDAL(nullptr)
 #endif
                           ) CPL_WARN_UNUSED_RESULT;
 
@@ -568,12 +568,12 @@ private:
     virtual int         TestCapability( const char * );
 
     virtual OGRLayer   *CreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
+                                     char ** papszOptions = nullptr );
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
-                                   char **papszOptions = NULL );
+                                   char **papszOptions = nullptr );
 
     virtual OGRStyleTable *GetStyleTable();
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
@@ -608,9 +608,9 @@ private:
 
   protected:
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL );
+                                     char ** papszOptions = nullptr );
 
 //! @cond Doxygen_Suppress
     OGRErr              ProcessSQLCreateIndex( const char * );
@@ -943,7 +943,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                           void *, int, int, GDALDataType,
                           GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg
 #ifndef DOXYGEN_SKIP
-                          OPTIONAL_OUTSIDE_GDAL(NULL)
+                          OPTIONAL_OUTSIDE_GDAL(nullptr)
 #endif
                           ) CPL_WARN_UNUSED_RESULT;
     CPLErr      ReadBlock( int, int, void * ) CPL_WARN_UNUSED_RESULT;
@@ -955,18 +955,18 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     CPLErr      FlushBlock( int, int, int bWriteDirtyBlock = TRUE );
 
     unsigned char*  GetIndexColorTranslationTo(/* const */ GDALRasterBand* poReferenceBand,
-                                               unsigned char* pTranslationTable = NULL,
-                                               int* pApproximateMatching = NULL);
+                                               unsigned char* pTranslationTable = nullptr,
+                                               int* pApproximateMatching = nullptr);
 
     // New OpengIS CV_SampleDimension stuff.
 
     virtual CPLErr FlushCache();
     virtual char **GetCategoryNames();
-    virtual double GetNoDataValue( int *pbSuccess = NULL );
-    virtual double GetMinimum( int *pbSuccess = NULL );
-    virtual double GetMaximum(int *pbSuccess = NULL );
-    virtual double GetOffset( int *pbSuccess = NULL );
-    virtual double GetScale( int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = nullptr );
+    virtual double GetMinimum( int *pbSuccess = nullptr );
+    virtual double GetMaximum(int *pbSuccess = nullptr );
+    virtual double GetOffset( int *pbSuccess = nullptr );
+    virtual double GetScale( int *pbSuccess = nullptr );
     virtual const char *GetUnitType();
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
@@ -1045,7 +1045,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int GetDataCoverageStatus( int nXOff, int nYOff,
                                int nXSize, int nYSize,
                                int nMaskFlagStop = 0,
-                               double* pdfDataPct = NULL );
+                               double* pdfDataPct = nullptr );
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
@@ -1280,7 +1280,7 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
     GDALDriver  *GetDriver_unlocked( int iDriver )
             { return (iDriver >= 0 && iDriver < nDrivers) ?
-                  papoDrivers[iDriver] : NULL; }
+                  papoDrivers[iDriver] : nullptr; }
 
     GDALDriver  *GetDriverByName_unlocked( const char * pszName )
             { return oMapNameToDrivers[CPLString(pszName).toupper()]; }

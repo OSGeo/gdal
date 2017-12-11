@@ -73,7 +73,7 @@ public:
     CPLErr SetMetadata(char **papszMetadata, const char *pszDomain="") override;
 
     // virtual methods for the no data value
-    double GetNoDataValue(int *pbSuccess=NULL) override;
+    double GetNoDataValue(int *pbSuccess=nullptr) override;
     CPLErr SetNoDataValue(double dfNoData) override;
     virtual CPLErr DeleteNoDataValue() override;
 

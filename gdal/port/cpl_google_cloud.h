@@ -80,7 +80,7 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
                                           const  struct curl_slist* psExistingHeaders,
-                                          const void *pabyDataContent = NULL,
+                                          const void *pabyDataContent = nullptr,
                                           size_t nBytesContent = 0) const CPL_OVERRIDE;
 
         const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }

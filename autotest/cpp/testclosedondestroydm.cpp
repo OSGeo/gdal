@@ -48,11 +48,11 @@ static void OpenJPEG2000(const char* pszFilename)
 
     for(i=0;i<N_DRIVERS;i++)
     {
-        if( aphDrivers[i] == NULL )
+        if( aphDrivers[i] == nullptr )
             continue;
         for(j=0;j<N_DRIVERS;j++)
         {
-            if( i == j || aphDrivers[j] == NULL )
+            if( i == j || aphDrivers[j] == nullptr )
                 continue;
             GDALDeregisterDriver(aphDrivers[j]);
         }
@@ -60,11 +60,11 @@ static void OpenJPEG2000(const char* pszFilename)
         hDS = GDALOpen(pszFilename, GA_ReadOnly);
         if( !EQUAL(apszDrivers[i], "JP2Lura") )
         {
-            assert( hDS != NULL );
+            assert( hDS != nullptr );
         }
         for(j=0;j<N_DRIVERS;j++)
         {
-            if( i == j || aphDrivers[j] == NULL )
+            if( i == j || aphDrivers[j] == nullptr )
                 continue;
             GDALRegisterDriver(aphDrivers[j]);
         }
@@ -79,8 +79,8 @@ int main(int /* argc*/ , char* /* argv */[])
     GDALDatasetH hSrcDS;
     FILE* f;
 
-    const char* pszGDAL_SKIP = CPLGetConfigOption("GDAL_SKIP", NULL);
-    if( pszGDAL_SKIP == NULL )
+    const char* pszGDAL_SKIP = CPLGetConfigOption("GDAL_SKIP", nullptr);
+    if( pszGDAL_SKIP == nullptr )
         CPLSetConfigOption("GDAL_SKIP", "GIF");
     else
         CPLSetConfigOption("GDAL_SKIP", CPLSPrintf("%s GIF", pszGDAL_SKIP));
@@ -131,13 +131,13 @@ int main(int /* argc*/ , char* /* argv */[])
 
     /* Create external overviews */
     hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
-    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte.tif", hSrcDS, 0, NULL, NULL, NULL);
+    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte.tif", hSrcDS, 0, nullptr, nullptr, nullptr);
     GDALClose(hSrcDS);
-    hSrcDS = NULL;
+    hSrcDS = nullptr;
     hDS = GDALOpen("byte.tif", GA_ReadOnly);
     nOvrLevel = 2;
     nBandNum = 1;
-    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, nullptr, nullptr));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte.tif", GA_ReadOnly);
@@ -145,13 +145,13 @@ int main(int /* argc*/ , char* /* argv */[])
 
     /* Create internal overviews */
     hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
-    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte2.tif", hSrcDS, 0, NULL, NULL, NULL);
+    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte2.tif", hSrcDS, 0, nullptr, nullptr, nullptr);
     GDALClose(hSrcDS);
-    hSrcDS = NULL;
+    hSrcDS = nullptr;
     hDS = GDALOpen("byte2.tif", GA_Update);
     nOvrLevel = 2;
     nBandNum = 1;
-    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, nullptr, nullptr));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte2.tif", GA_ReadOnly);
@@ -159,9 +159,9 @@ int main(int /* argc*/ , char* /* argv */[])
 
     /* Create external mask */
     hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
-    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte3.tif", hSrcDS, 0, NULL, NULL, NULL);
+    hDS = GDALCreateCopy(GDALGetDriverByName("GTiff"), "byte3.tif", hSrcDS, 0, nullptr, nullptr, nullptr);
     GDALClose(hSrcDS);
-    hSrcDS = NULL;
+    hSrcDS = nullptr;
     hDS = GDALOpen("byte3.tif", GA_ReadOnly);
     GDALCreateDatasetMaskBand(hDS, GMF_PER_DATASET);
     GDALClose(hDS);
@@ -186,7 +186,7 @@ int main(int /* argc*/ , char* /* argv */[])
     hDS = GDALOpen("byte.vrt", GA_ReadOnly);
     nOvrLevel = 2;
     nBandNum = 1;
-    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, NULL, NULL));
+    CPL_IGNORE_RET_VAL(GDALBuildOverviews( hDS, "NEAR", 1, &nOvrLevel, 1, &nBandNum, nullptr, nullptr));
     GDALClose(hDS);
 
     hDS = GDALOpen("byte.vrt", GA_ReadOnly);

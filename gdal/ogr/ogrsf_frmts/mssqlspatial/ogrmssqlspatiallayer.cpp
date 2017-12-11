@@ -36,20 +36,20 @@ CPL_CVSID("$Id$")
 OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
 
 {
-    poDS = NULL;
+    poDS = nullptr;
 
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
     nGeomColumnType = -1;
-    pszGeomColumn = NULL;
-    pszFIDColumn = NULL;
+    pszGeomColumn = nullptr;
+    pszFIDColumn = nullptr;
     bIsIdentityFid = FALSE;
-    panFieldOrdinals = NULL;
+    panFieldOrdinals = nullptr;
 
-    poStmt = NULL;
+    poStmt = nullptr;
 
     iNextShapeId = 0;
 
-    poSRS = NULL;
+    poSRS = nullptr;
     nSRSId = -1; // we haven't even queried the database for it yet.
     nLayerStatus = MSSQLLAYERSTATUS_ORIGINAL;
 
@@ -65,7 +65,7 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
 OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "OGR_MSSQLSpatial", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -75,7 +75,7 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
     if( poStmt )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 
     CPLFree( pszGeomColumn );
@@ -85,7 +85,7 @@ OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
     if( poFeatureDefn )
     {
         poFeatureDefn->Release();
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
     }
 
     if( poSRS )
@@ -113,7 +113,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 
     for( int iCol = 0; iCol < nRawColumns; iCol++ )
     {
-        if ( pszGeomColumn == NULL )
+        if ( pszGeomColumn == nullptr )
         {
             /* need to identify the geometry column */
             if ( EQUAL(poStmtIn->GetColTypeName( iCol ), "geometry") )
@@ -146,7 +146,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
             }
         }
 
-        if( pszFIDColumn != NULL)
+        if( pszFIDColumn != nullptr)
         {
             if (EQUAL(poStmtIn->GetColName(iCol), pszFIDColumn) )
             {
@@ -169,7 +169,7 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
                     CPLDebug("MSSQL", "Ignoring FID column %s as it is of non integer type",
                              pszFIDColumn);
                     CPLFree(pszFIDColumn);
-                    pszFIDColumn = NULL;
+                    pszFIDColumn = nullptr;
                 }
                 else
                 {
@@ -298,14 +298,14 @@ CPLErr OGRMSSQLSpatialLayer::BuildFeatureDefn( const char *pszLayerName,
 /*      If we don't already have an FID, check if there is a special    */
 /*      FID named column available.                                     */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
     {
         const char *pszOGR_FID = CPLGetConfigOption("MSSQLSPATIAL_OGR_FID","OGR_FID");
         if( poFeatureDefn->GetFieldIndex( pszOGR_FID ) != -1 )
             pszFIDColumn = CPLStrdup(pszOGR_FID);
     }
 
-    if( pszFIDColumn != NULL )
+    if( pszFIDColumn != nullptr )
         CPLDebug( "OGR_MSSQLSpatial", "Using column %s as FID for table %s.",
                   pszFIDColumn, poFeatureDefn->GetName() );
     else
@@ -337,12 +337,12 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextFeature()
         OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
@@ -357,8 +357,8 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextFeature()
 OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
 
 {
-    if( GetStatement() == NULL )
-        return NULL;
+    if( GetStatement() == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we are marked to restart then do so, and fetch a record.     */
@@ -366,8 +366,8 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
     if( !poStmt->Fetch() )
     {
         delete poStmt;
-        poStmt = NULL;
-        return NULL;
+        poStmt = nullptr;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -376,8 +376,8 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     const char* pszFID;
-    if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 &&
-        (pszFID = poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) != NULL )
+    if( pszFIDColumn != nullptr && poStmt->GetColId(pszFIDColumn) > -1 &&
+        (pszFID = poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) != nullptr )
         poFeature->SetFID( CPLAtoGIntBig(pszFID) );
     else
         poFeature->SetFID( iNextShapeId );
@@ -396,7 +396,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
         int iSrcField = panFieldOrdinals[iField];
         const char *pszValue = poStmt->GetColData( iSrcField );
 
-        if( pszValue == NULL )
+        if( pszValue == nullptr )
             poFeature->SetFieldNull( iField );
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
             poFeature->SetField( iField,
@@ -409,14 +409,14 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Try to extract a geometry.                                      */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn != NULL && !poFeatureDefn->IsGeometryIgnored())
+    if( pszGeomColumn != nullptr && !poFeatureDefn->IsGeometryIgnored())
     {
         int iField = poStmt->GetColId( pszGeomColumn );
         const char *pszGeomText = poStmt->GetColData( iField );
-        OGRGeometry *poGeom = NULL;
+        OGRGeometry *poGeom = nullptr;
         OGRErr eErr = OGRERR_NONE;
 
-        if( pszGeomText != NULL )
+        if( pszGeomText != nullptr )
         {
             int nLength = poStmt->GetColDataLength( iField );
 
@@ -437,18 +437,18 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                 case MSSQLGEOMETRY_WKB:
                 case MSSQLGEOMETRY_WKBZM:
                     eErr = OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
-                                                      NULL, &poGeom, nLength);
+                                                      nullptr, &poGeom, nLength);
                     break;
                 case MSSQLGEOMETRY_WKT:
                     eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
-                                                      NULL, &poGeom);
+                                                      nullptr, &poGeom);
                     break;
                 }
             }
             else if (nGeomColumnType == MSSQLCOLTYPE_TEXT)
             {
                 eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
-                                                      NULL, &poGeom);
+                                                      nullptr, &poGeom);
             }
         }
 
@@ -474,7 +474,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                      "GetNextRawFeature(): %s", pszMessage);
         }
 
-        if( poGeom != NULL )
+        if( poGeom != nullptr )
         {
             if ( GetSpatialRef() )
                 poGeom->assignSpatialReference( poSRS );
@@ -562,10 +562,10 @@ OGRErr OGRMSSQLSpatialLayer::RollbackTransaction()
 OGRSpatialReference *OGRMSSQLSpatialLayer::GetSpatialRef()
 
 {
-    if( poSRS == NULL && nSRSId > 0 )
+    if( poSRS == nullptr && nSRSId > 0 )
     {
         poSRS = poDS->FetchSRS( nSRSId );
-        if( poSRS != NULL )
+        if( poSRS != nullptr )
             poSRS->Reference();
         else
             nSRSId = 0;
@@ -583,7 +583,7 @@ const char *OGRMSSQLSpatialLayer::GetFIDColumn()
 {
     GetLayerDefn();
 
-    if( pszFIDColumn != NULL )
+    if( pszFIDColumn != nullptr )
         return pszFIDColumn;
     else
         return "";
@@ -598,7 +598,7 @@ const char *OGRMSSQLSpatialLayer::GetGeometryColumn()
 {
     GetLayerDefn();
 
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
         return pszGeomColumn;
     else
         return "";

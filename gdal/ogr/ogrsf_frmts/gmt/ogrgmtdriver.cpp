@@ -56,14 +56,14 @@ OGRDataSource *OGRGmtDriver::Open( const char * pszFilename, int bUpdate )
 
 {
     if( !EQUAL(CPLGetExtension(pszFilename),"gmt") )
-        return NULL;
+        return nullptr;
 
     OGRGmtDataSource *poDS = new OGRGmtDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -83,7 +83,7 @@ OGRDataSource *OGRGmtDriver::CreateDataSource( const char * pszName,
         return poDS;
 
     delete poDS;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

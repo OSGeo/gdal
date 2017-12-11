@@ -123,10 +123,10 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 {
     for( size_t io=0; io < overview_bands.size(); io++ )
     {
-        if( overview_bands[io] != NULL )
+        if( overview_bands[io] != nullptr )
         {
             delete overview_bands[io];
-            overview_bands[io] = NULL;
+            overview_bands[io] = nullptr;
         }
     }
 
@@ -177,7 +177,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
         std::string value = GetMetadataValue( keys[i] );
 
         overview_infos.push_back( value );
-        overview_bands.push_back( NULL );
+        overview_bands.push_back( nullptr );
         overview_decimations.push_back( atoi(keys[i].c_str()+10) );
     }
 }
@@ -224,7 +224,7 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
         return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Non existent overview (%d) requested.", 
                               overview_index );
 
-    if( overview_bands[overview_index] == NULL )
+    if( overview_bands[overview_index] == nullptr )
     {
         PCIDSKBuffer image_header(1024), file_header(1024);
         char  pseudo_filename[65];

@@ -120,9 +120,9 @@ class OGRILI1DataSource : public OGRDataSource
     VSILFILE   *GetTransferFile() { return fpTransfer; }
 
     virtual OGRLayer *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     int         TestCapability( const char * ) override;
 };

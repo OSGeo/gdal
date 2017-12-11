@@ -104,12 +104,12 @@ class OGRDataSourceWithTransaction : public OGRDataSource
     virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
-                                   char **papszOptions = NULL ) override;
+                                   char **papszOptions = nullptr ) override;
 
     virtual OGRStyleTable *GetStyleTable() override;
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable ) override;
@@ -213,8 +213,8 @@ void OGRDataSourceWithTransaction::RemapLayers()
     for(; oIter != m_oSetLayers.end(); ++oIter )
     {
         OGRLayerWithTransaction* poWrappedLayer = *oIter;
-        if( m_poBaseDataSource == NULL )
-            poWrappedLayer->m_poDecoratedLayer = NULL;
+        if( m_poBaseDataSource == nullptr )
+            poWrappedLayer->m_poDecoratedLayer = nullptr;
         else
         {
             poWrappedLayer->m_poDecoratedLayer =
@@ -238,13 +238,13 @@ int         OGRDataSourceWithTransaction::GetLayerCount()
 
 OGRLayer    *OGRDataSourceWithTransaction::GetLayer(int iIndex)
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return WrapLayer(m_poBaseDataSource->GetLayer(iIndex));
 }
 
 OGRLayer    *OGRDataSourceWithTransaction::GetLayerByName(const char *pszName)
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return WrapLayer(m_poBaseDataSource->GetLayerByName(pszName));
 }
 
@@ -284,7 +284,7 @@ OGRLayer   *OGRDataSourceWithTransaction::ICreateLayer( const char *pszName,
                                      OGRwkbGeometryType eGType,
                                      char ** papszOptions)
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return WrapLayer(m_poBaseDataSource->CreateLayer(pszName, poSpatialRef, eGType, papszOptions));
 }
 
@@ -292,13 +292,13 @@ OGRLayer   *OGRDataSourceWithTransaction::CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
                                    char **papszOptions )
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return WrapLayer(m_poBaseDataSource->CopyLayer(poSrcLayer, pszNewName, papszOptions ));
 }
 
 OGRStyleTable *OGRDataSourceWithTransaction::GetStyleTable()
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return m_poBaseDataSource->GetStyleTable();
 }
 
@@ -318,10 +318,10 @@ OGRLayer *  OGRDataSourceWithTransaction::ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
                                     const char *pszDialect )
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     OGRLayer* poLayer = m_poBaseDataSource->ExecuteSQL(pszStatement, poSpatialFilter,
                                                        pszDialect);
-    if( poLayer != NULL )
+    if( poLayer != nullptr )
         m_oSetExecuteSQLLayers.insert(poLayer);
     return poLayer;
 }
@@ -423,7 +423,7 @@ OGRErr OGRDataSourceWithTransaction::RollbackTransaction()
 
 char      **OGRDataSourceWithTransaction::GetMetadata( const char * pszDomain )
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return m_poBaseDataSource->GetMetadata(pszDomain);
 }
 
@@ -437,7 +437,7 @@ CPLErr      OGRDataSourceWithTransaction::SetMetadata( char ** papszMetadata,
 const char *OGRDataSourceWithTransaction::GetMetadataItem( const char * pszName,
                                               const char * pszDomain )
 {
-    if( !m_poBaseDataSource ) return NULL;
+    if( !m_poBaseDataSource ) return nullptr;
     return m_poBaseDataSource->GetMetadataItem(pszName, pszDomain);
 }
 
@@ -457,7 +457,7 @@ OGRLayerWithTransaction::OGRLayerWithTransaction(
     OGRDataSourceWithTransaction* poDS, OGRLayer* poBaseLayer) :
     OGRLayerDecorator(poBaseLayer, FALSE),
     m_poDS(poDS),
-    m_poFeatureDefn(NULL)
+    m_poFeatureDefn(nullptr)
 {}
 
 OGRLayerWithTransaction::~OGRLayerWithTransaction()
@@ -470,14 +470,14 @@ OGRFeatureDefn *OGRLayerWithTransaction::GetLayerDefn()
 {
     if( !m_poDecoratedLayer )
     {
-        if( m_poFeatureDefn == NULL )
+        if( m_poFeatureDefn == nullptr )
         {
             m_poFeatureDefn = new OGRFeatureDefn(GetDescription());
             m_poFeatureDefn->Reference();
         }
         return m_poFeatureDefn;
     }
-    else if( m_poFeatureDefn == NULL )
+    else if( m_poFeatureDefn == nullptr )
     {
         OGRFeatureDefn* poSrcFeatureDefn = m_poDecoratedLayer->GetLayerDefn();
         m_poFeatureDefn = poSrcFeatureDefn->Clone();
@@ -553,10 +553,10 @@ OGRErr      OGRLayerWithTransaction::AlterFieldDefn( int iField,
 
 OGRFeature * OGRLayerWithTransaction::GetNextFeature()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     OGRFeature* poSrcFeature = m_poDecoratedLayer->GetNextFeature();
     if( !poSrcFeature )
-        return NULL;
+        return nullptr;
     OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
     poFeature->SetFrom(poSrcFeature);
     poFeature->SetFID(poSrcFeature->GetFID());
@@ -566,10 +566,10 @@ OGRFeature * OGRLayerWithTransaction::GetNextFeature()
 
 OGRFeature * OGRLayerWithTransaction::GetFeature( GIntBig nFID )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     OGRFeature* poSrcFeature = m_poDecoratedLayer->GetFeature(nFID);
     if( !poSrcFeature )
-        return NULL;
+        return nullptr;
     OGRFeature* poFeature = new OGRFeature(GetLayerDefn());
     poFeature->SetFrom(poSrcFeature);
     poFeature->SetFID(poSrcFeature->GetFID());

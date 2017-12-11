@@ -196,9 +196,9 @@ class OGRWAsPDataSource : public OGRDataSource
     virtual OGRLayer   *GetLayerByName( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
 
     virtual int        TestCapability( const char * ) override;
     OGRErr             Load( bool bSilent = false );
@@ -218,7 +218,7 @@ class OGRWAsPDriver : public OGRSFDriver
     virtual OGRDataSource*      Open( const char *, int ) override;
 
     virtual OGRDataSource       *CreateDataSource( const char *pszName,
-                                                   char ** = NULL ) override;
+                                                   char ** = nullptr ) override;
 
     virtual OGRErr              DeleteDataSource (const char *pszName) override;
 

@@ -50,9 +50,9 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process commandline arguments.                                  */
 /* -------------------------------------------------------------------- */
-    char **papszOptions = NULL;
+    char **papszOptions = nullptr;
     bool bReturnPrimitives = false;
-    char *pszDataPath = NULL;
+    char *pszDataPath = nullptr;
 
     for( int iArg = 1; iArg < nArgc-1; iArg++ )
     {
@@ -87,9 +87,9 @@ int main( int nArgc, char ** papszArgv )
 /*      Load the class definitions into the registrar.                  */
 /* -------------------------------------------------------------------- */
     S57ClassRegistrar oRegistrar;
-    bool bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, NULL, true );
+    bool bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, nullptr, true );
 
-    S57ClassContentExplorer *poClassContentExplorer = NULL;
+    S57ClassContentExplorer *poClassContentExplorer = nullptr;
     if (bRegistrarLoaded)
         poClassContentExplorer = new S57ClassContentExplorer(&oRegistrar);
 
@@ -99,14 +99,14 @@ int main( int nArgc, char ** papszArgv )
     char **papszFiles = S57FileCollector( papszArgv[nArgc-1] );
 
     for( int iFile = 0;
-         papszFiles != NULL && papszFiles[iFile] != NULL;
+         papszFiles != nullptr && papszFiles[iFile] != nullptr;
          iFile++ )
     {
         printf( "Found: %s\n", papszFiles[iFile] );
     }
 
     for( int iFile = 0;
-         papszFiles != NULL && papszFiles[iFile] != NULL;
+         papszFiles != nullptr && papszFiles[iFile] != nullptr;
          iFile++ )
     {
         printf( "<------------------------------------------------------------"
@@ -188,10 +188,10 @@ int main( int nArgc, char ** papszArgv )
 
         oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
 
-        OGRFeature *poFeature = NULL;
+        OGRFeature *poFeature = nullptr;
         int nFeatures = 0;
 
-        while( (poFeature = oReader.ReadNextFeature()) != NULL )
+        while( (poFeature = oReader.ReadNextFeature()) != nullptr )
         {
             poFeature->DumpReadable( stdout );
             nFeatures++;

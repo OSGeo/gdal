@@ -40,9 +40,9 @@ CPL_CVSID("$Id$")
 static int OGRGMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
     {
-        if( strstr(poOpenInfo->pszFilename, "xsd=") != NULL )
+        if( strstr(poOpenInfo->pszFilename, "xsd=") != nullptr )
             return -1; /* must be later checked */
         return FALSE;
     }
@@ -86,17 +86,17 @@ static GDALDataset *OGRGMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
     if( OGRGMLDriverIdentify( poOpenInfo ) == FALSE )
-        return NULL;
+        return nullptr;
 
     OGRGMLDataSource *poDS = new OGRGMLDataSource();
 
     if( !poDS->Open(  poOpenInfo ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -118,7 +118,7 @@ static GDALDataset *OGRGMLDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -131,7 +131,7 @@ static GDALDataset *OGRGMLDriverCreate( const char * pszName,
 void RegisterOGRGML()
 
 {
-    if( GDALGetDriverByName( "GML" ) != NULL )
+    if( GDALGetDriverByName( "GML" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

@@ -66,7 +66,7 @@ bool VSILFileIO::Open(int mode)
 
     m_oFileStream = VSIFOpenL( m_soFilePath.c_str(), sOpenMode.c_str() );
 
-    if( m_oFileStream != NULL )
+    if( m_oFileStream != nullptr )
         m_bIsOpened = true;
 
     return m_bIsOpened;

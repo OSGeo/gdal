@@ -407,8 +407,8 @@ public:
 
     // Geomeasure support.
     virtual const char* GetUnitType() override;
-    virtual double GetScale(int* pbSuccess = NULL) override;
-    virtual double GetOffset(int* pbSuccess = NULL) override;
+    virtual double GetScale(int* pbSuccess = nullptr) override;
+    virtual double GetOffset(int* pbSuccess = nullptr) override;
 
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual CPLErr IWriteBlock( int, int, void * ) override;
@@ -420,7 +420,7 @@ public:
 /************************************************************************/
 
 LevellerRasterBand::LevellerRasterBand( LevellerDataset *poDSIn ) :
-    m_pLine(NULL),
+    m_pLine(nullptr),
     m_bFirstTime(true)
 {
     poDS = poDSIn;
@@ -440,7 +440,7 @@ bool LevellerRasterBand::Init()
 {
     m_pLine = reinterpret_cast<float*>(
         VSI_MALLOC2_VERBOSE( sizeof(float), nBlockXSize) );
-    return m_pLine != NULL;
+    return m_pLine != nullptr;
 }
 
 LevellerRasterBand::~LevellerRasterBand()
@@ -460,8 +460,8 @@ CPLErr LevellerRasterBand::IWriteBlock
 )
 {
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
-    CPLAssert( m_pLine != NULL );
+    CPLAssert( pImage != nullptr );
+    CPLAssert( m_pLine != nullptr );
 
 /*  #define sgn(_n) ((_n) < 0 ? -1 : ((_n) > 0 ? 1 : 0) )
     #define sround(_f)                          \
@@ -524,7 +524,7 @@ CPLErr LevellerRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
+    CPLAssert( pImage != nullptr );
 
     LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
 
@@ -603,7 +603,7 @@ const char *LevellerRasterBand::GetUnitType()
 double LevellerRasterBand::GetScale(int* pbSuccess)
 {
     LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
     return poGDS->m_dElevScale;
 }
@@ -615,7 +615,7 @@ double LevellerRasterBand::GetScale(int* pbSuccess)
 double LevellerRasterBand::GetOffset(int* pbSuccess)
 {
     LevellerDataset *poGDS = reinterpret_cast<LevellerDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
     return poGDS->m_dElevBase;
 }
@@ -632,11 +632,11 @@ double LevellerRasterBand::GetOffset(int* pbSuccess)
 
 LevellerDataset::LevellerDataset() :
     m_version(0),
-    m_pszFilename(NULL),
-    m_pszProjection(NULL),
+    m_pszFilename(nullptr),
+    m_pszProjection(nullptr),
     m_dElevScale(),
     m_dElevBase(),
-    m_fp(NULL),
+    m_fp(nullptr),
     m_nDataOffset()
 {
     memset( m_szElevUnits, 0, sizeof(m_szElevUnits) );
@@ -655,7 +655,7 @@ LevellerDataset::~LevellerDataset()
     CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);
 
-    if( m_fp != NULL )
+    if( m_fp != nullptr )
         VSIFCloseL( m_fp );
 }
 
@@ -680,7 +680,7 @@ bool LevellerDataset::compute_elev_scaling
     const OGRSpatialReference& sr
 )
 {
-    const char* pszGroundUnits = NULL;
+    const char* pszGroundUnits = nullptr;
 
     if(!sr.IsGeographic())
     {
@@ -690,7 +690,7 @@ bool LevellerDataset::compute_elev_scaling
 
         const double dfLinear = sr.GetLinearUnits();
         const measurement_unit* pu = this->get_uom(dfLinear);
-        if(pu == NULL)
+        if(pu == nullptr)
             return false;
 
         pszGroundUnits = pu->pszID;
@@ -728,7 +728,7 @@ bool LevellerDataset::compute_elev_scaling
     const measurement_unit* puG = this->get_uom(pszGroundUnits);
     const measurement_unit* puE = this->get_uom(m_szElevUnits);
 
-    if(puG == NULL || puE == NULL)
+    if(puG == nullptr || puE == nullptr)
         return false;
 
     const double g_to_e = puG->dScale / puE->dScale;
@@ -754,7 +754,7 @@ bool LevellerDataset::write_header()
     m_dElevBase = 0.0;
     m_dElevScale = 1.0;
 
-    if(m_pszProjection == NULL || m_pszProjection[0] == 0)
+    if(m_pszProjection == nullptr || m_pszProjection[0] == 0)
     {
         write_tag("csclass", LEV_COORDSYS_RASTER);
     }
@@ -863,19 +863,19 @@ GDALDataset* LevellerDataset::Create
     if(nBands != 1)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Band count must be 1" );
-        return NULL;
+        return nullptr;
     }
 
     if(eType != GDT_Float32)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "Pixel type must be Float32" );
-        return NULL;
+        return nullptr;
     }
 
     if(nXSize < 2 || nYSize < 2)
     {
         CPLError( CE_Failure, CPLE_IllegalArg, "One or more raster dimensions too small" );
-        return NULL;
+        return nullptr;
     }
 
     LevellerDataset* poDS = new LevellerDataset;
@@ -886,13 +886,13 @@ GDALDataset* LevellerDataset::Create
 
     poDS->m_fp = VSIFOpenL( pszFilename, "wb+" );
 
-    if( poDS->m_fp == NULL )
+    if( poDS->m_fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.",
                   pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Header will be written the first time IWriteBlock
@@ -903,19 +903,19 @@ GDALDataset* LevellerDataset::Create
 
     const char* pszValue = CSLFetchNameValue(
         papszOptions,"MINUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[0] = CPLAtof( pszValue );
     else
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "MINUSERPIXELVALUE must be specified." );
-        return NULL;
+        return nullptr;
     }
 
     pszValue = CSLFetchNameValue(
         papszOptions,"MAXUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
     if(poDS->m_dLogSpan[1] < poDS->m_dLogSpan[0])
@@ -934,7 +934,7 @@ GDALDataset* LevellerDataset::Create
     if( !poBand->Init() )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -1135,7 +1135,7 @@ UNITLABEL LevellerDataset::meter_measure_to_code(double dM) const
     // require exact equality, otherwise be loose.
 
     const measurement_unit* pu = this->get_uom(dM);
-    return pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN;
+    return pu != nullptr ? pu->oemCode : UNITLABEL_UNKNOWN;
 }
 
 UNITLABEL LevellerDataset::id_to_code(const char* pszUnits) const
@@ -1143,7 +1143,7 @@ UNITLABEL LevellerDataset::id_to_code(const char* pszUnits) const
     // Convert a readable UOM to its OEM code.
 
     const measurement_unit* pu = this->get_uom(pszUnits);
-    return pu != NULL ? pu->oemCode : UNITLABEL_UNKNOWN;
+    return pu != nullptr ? pu->oemCode : UNITLABEL_UNKNOWN;
 }
 
 const char* LevellerDataset::code_to_id(UNITLABEL code) const
@@ -1151,7 +1151,7 @@ const char* LevellerDataset::code_to_id(UNITLABEL code) const
     // Convert a measurement unit's OEM ID to its readable ID.
 
     const measurement_unit* pu = this->get_uom(code);
-    return pu != NULL ? pu->pszID : NULL;
+    return pu != nullptr ? pu->pszID : nullptr;
 }
 
 const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
@@ -1163,7 +1163,7 @@ const measurement_unit* LevellerDataset::get_uom(const char* pszUnits) const
     }
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement units: %s", pszUnits );
-    return NULL;
+    return nullptr;
 }
 
 const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
@@ -1175,7 +1175,7 @@ const measurement_unit* LevellerDataset::get_uom(UNITLABEL code) const
     }
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement unit code: %08x", code );
-    return NULL;
+    return nullptr;
 }
 
 const measurement_unit* LevellerDataset::get_uom(double dM) const
@@ -1192,7 +1192,7 @@ const measurement_unit* LevellerDataset::get_uom(double dM) const
     }
     CPLError( CE_Failure, CPLE_AppDefined,
               "Unknown measurement conversion factor: %f", dM );
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1235,7 +1235,7 @@ bool LevellerDataset::make_local_coordsys(const char* pszName, const char* pszUn
 bool LevellerDataset::make_local_coordsys(const char* pszName, UNITLABEL code)
 {
     const char* pszUnitID = code_to_id(code);
-    return pszUnitID != NULL && make_local_coordsys(pszName, pszUnitID);
+    return pszUnitID != nullptr && make_local_coordsys(pszName, pszUnitID);
 }
 
 /************************************************************************/
@@ -1304,7 +1304,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
         if(csclass != LEV_COORDSYS_RASTER)
         {
             // Get projection details and units.
-            CPLAssert(m_pszProjection == NULL);
+            CPLAssert(m_pszProjection == nullptr);
 
             if(csclass == LEV_COORDSYS_LOCAL)
             {
@@ -1367,7 +1367,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
             {
                 unitcode = static_cast<UNITLABEL>( unitcode_int );
                 const char* pszUnitID = code_to_id(unitcode);
-                if(pszUnitID != NULL)
+                if(pszUnitID != nullptr)
                 {
                     strncpy(m_szElevUnits, pszUnitID, sizeof(m_szElevUnits));
                     m_szElevUnits[sizeof(m_szElevUnits) - 1] = '\0';
@@ -1399,7 +1399,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
           {
               // Drop long name, if present.
               char* p = strchr(szWorldUnits, ' ');
-              if(p != NULL)
+              if(p != nullptr)
                   *p = 0;
           }
 
@@ -1445,7 +1445,7 @@ bool LevellerDataset::load_from_file(VSILFILE* file, const char* pszFilename)
 
 const char* LevellerDataset::GetProjectionRef(void)
 {
-    return m_pszProjection == NULL ? "" : m_pszProjection;
+    return m_pszProjection == nullptr ? "" : m_pszProjection;
 }
 
 /************************************************************************/
@@ -1481,14 +1481,14 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     // and hf_w, hf_b, and hf_data tags.
 
     if( poOpenInfo->nHeaderBytes < 5+13+13+16 )
-        return NULL;
+        return nullptr;
 
     if( !LevellerDataset::Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     const int version = poOpenInfo->pabyHeader[4];
     if(version < 4 || version > 9)
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1504,13 +1504,13 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
-    if( poDS->m_fp == NULL )
+    if( poDS->m_fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within Leveller driver.",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -1520,7 +1520,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->load_from_file( poDS->m_fp, poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1531,7 +1531,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poBand->Init() )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
@@ -1557,7 +1557,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_Leveller()
 
 {
-    if( GDALGetDriverByName( "Leveller" ) != NULL )
+    if( GDALGetDriverByName( "Leveller" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

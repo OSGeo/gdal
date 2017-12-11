@@ -113,7 +113,7 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
         explicit VSITarReader(const char* pszTarFileName);
         virtual ~VSITarReader();
 
-        int IsValid() { return fp != NULL; }
+        int IsValid() { return fp != nullptr; }
 
         virtual int GotoFirstFile() override;
         virtual int GotoNextFile() override;
@@ -156,7 +156,7 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     m_abyBufferIdx = 0;
     m_abyBufferSize = 0;
     m_nCurOffsetOld = 0;
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         GByte abySignature[24] = {};
         m_bIsFuzzerFriendly =
@@ -435,13 +435,13 @@ VSIArchiveReader* VSITarFilesystemHandler::CreateReader(const char* pszTarFileNa
     if (!poReader->IsValid())
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     if (!poReader->GotoFirstFile())
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     return poReader;
@@ -456,25 +456,25 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
                                                  bool /* bSetError */ )
 {
 
-    if (strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL)
+    if (strchr(pszAccess, 'w') != nullptr ||
+        strchr(pszAccess, '+') != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Only read-only mode is supported for /vsitar");
-        return NULL;
+        return nullptr;
     }
 
     CPLString osTarInFileName;
     char* tarFilename
         = SplitFilename(pszFilename, osTarInFileName, TRUE);
-    if (tarFilename == NULL)
-        return NULL;
+    if (tarFilename == nullptr)
+        return nullptr;
 
     VSIArchiveReader* poReader = OpenArchiveFile(tarFilename, osTarInFileName);
-    if (poReader == NULL)
+    if (poReader == nullptr)
     {
         CPLFree(tarFilename);
-        return NULL;
+        return nullptr;
     }
 
     CPLString osSubFileName("/vsisubfile/");
@@ -497,7 +497,7 @@ VSIVirtualHandle* VSITarFilesystemHandler::Open( const char *pszFilename,
     delete(poReader);
 
     CPLFree(tarFilename);
-    tarFilename = NULL;
+    tarFilename = nullptr;
 
     return reinterpret_cast<VSIVirtualHandle*>(VSIFOpenL(osSubFileName, "rb"));
 }

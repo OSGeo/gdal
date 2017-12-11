@@ -124,7 +124,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
 
         virtual OGRSpatialReference* GetSpatialRef() override;
 
-        void UnsetLayer() { poLayer = NULL; }
+        void UnsetLayer() { poLayer = nullptr; }
 
         int nSRSId;
         int GeometryTypeFlags;
@@ -138,7 +138,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
 class OGRPGFeatureDefn : public OGRFeatureDefn
 {
     public:
-        explicit OGRPGFeatureDefn( const char * pszName = NULL ) :
+        explicit OGRPGFeatureDefn( const char * pszName = nullptr ) :
             OGRFeatureDefn(pszName)
         {
             SetGeomType(wkbNone);
@@ -537,9 +537,9 @@ class OGRPGDataSource : public OGRDataSource
     virtual void        FlushCache() override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 

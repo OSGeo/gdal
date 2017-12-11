@@ -46,10 +46,10 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
 
 inline void OGRPGClearResult( PGresult*& hResult )
 {
-    if( NULL != hResult )
+    if( nullptr != hResult )
     {
         PQclear( hResult );
-        hResult = NULL;
+        hResult = nullptr;
     }
 }
 

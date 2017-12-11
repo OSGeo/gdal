@@ -51,14 +51,14 @@ char **S57FileCollector( const char *pszDataset )
                   "No S-57 files found, %s\nisn't a directory or a file.\n",
                   pszDataset );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      We handle directories by scanning for all S-57 data files in    */
 /*      them, but not for catalogs.                                     */
 /* -------------------------------------------------------------------- */
-    char **papszRetList = NULL;
+    char **papszRetList = nullptr;
 
     if( VSI_ISDIR(sStatBuf.st_mode) )
     {
@@ -66,18 +66,18 @@ char **S57FileCollector( const char *pszDataset )
         DDFModule oModule;
 
         for( int iFile = 0;
-             papszDirFiles != NULL && papszDirFiles[iFile] != NULL;
+             papszDirFiles != nullptr && papszDirFiles[iFile] != nullptr;
              iFile++ )
         {
             char *pszFullFile = CPLStrdup(
-                CPLFormFilename( pszDataset, papszDirFiles[iFile], NULL ) );
+                CPLFormFilename( pszDataset, papszDirFiles[iFile], nullptr ) );
 
             // Add to list if it is an S-57 _data_ file.
             if( VSIStat( pszFullFile, &sStatBuf ) == 0
                 && VSI_ISREG( sStatBuf.st_mode )
                 && oModule.Open( pszFullFile, TRUE ) )
             {
-                if( oModule.FindFieldDefn("DSID") != NULL )
+                if( oModule.FindFieldDefn("DSID") != nullptr )
                     papszRetList = CSLAddString( papszRetList, pszFullFile );
             }
 
@@ -99,15 +99,15 @@ char **S57FileCollector( const char *pszDataset )
                   "The file %s isn't an S-57 data file, or catalog.\n",
                   pszDataset );
 
-        return NULL;
+        return nullptr;
     }
 
     DDFRecord *poRecord = oModule.ReadRecord();
-    if( poRecord == NULL )
-        return NULL;
+    if( poRecord == nullptr )
+        return nullptr;
 
-    if( poRecord->FindField( "CATD" ) == NULL
-        || oModule.FindFieldDefn("CATD")->FindSubfieldDefn( "IMPL" ) == NULL )
+    if( poRecord->FindField( "CATD" ) == nullptr
+        || oModule.FindFieldDefn("CATD")->FindSubfieldDefn( "IMPL" ) == nullptr )
     {
         papszRetList = CSLAddString( papszRetList, pszDataset );
         return papszRetList;
@@ -120,17 +120,17 @@ char **S57FileCollector( const char *pszDataset )
 /*      build a base path for our purposes.                             */
 /* -------------------------------------------------------------------- */
     char        *pszCatDir = CPLStrdup( CPLGetPath( pszDataset ) );
-    char        *pszRootDir = NULL;
+    char        *pszRootDir = nullptr;
 
-    if( CPLStat( CPLFormFilename(pszCatDir,"ENC_ROOT",NULL), &sStatBuf ) == 0
+    if( CPLStat( CPLFormFilename(pszCatDir,"ENC_ROOT",nullptr), &sStatBuf ) == 0
         && VSI_ISDIR(sStatBuf.st_mode) )
     {
-        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "ENC_ROOT", NULL ));
+        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "ENC_ROOT", nullptr ));
     }
-    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", NULL ),
+    else if( CPLStat( CPLFormFilename( pszCatDir, "enc_root", nullptr ),
                       &sStatBuf ) == 0 && VSI_ISDIR(sStatBuf.st_mode) )
     {
-        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "enc_root", NULL ));
+        pszRootDir = CPLStrdup(CPLFormFilename( pszCatDir, "enc_root", nullptr ));
     }
 
     if( pszRootDir )
@@ -142,9 +142,9 @@ char **S57FileCollector( const char *pszDataset )
 /*      IMPL of BIN.  Is there be a better way of testing               */
 /*      whether a file is a data file or another catalog file?          */
 /* -------------------------------------------------------------------- */
-    for( ; poRecord != NULL; poRecord = oModule.ReadRecord() )
+    for( ; poRecord != nullptr; poRecord = oModule.ReadRecord() )
     {
-        if( poRecord->FindField( "CATD" ) != NULL
+        if( poRecord->FindField( "CATD" ) != nullptr
             && EQUAL(poRecord->GetStringSubfield("CATD",0,"IMPL",0),"BIN") )
         {
             const char  *pszFile
@@ -154,11 +154,11 @@ char **S57FileCollector( const char *pszDataset )
             // this file.
 
             const char  *pszWholePath
-                = CPLFormFilename( pszCatDir, pszFile, NULL );
+                = CPLFormFilename( pszCatDir, pszFile, nullptr );
             if( CPLStat( pszWholePath, &sStatBuf ) != 0
-                && pszRootDir != NULL )
+                && pszRootDir != nullptr )
             {
-                pszWholePath = CPLFormFilename( pszRootDir, pszFile, NULL );
+                pszWholePath = CPLFormFilename( pszRootDir, pszFile, nullptr );
             }
 
             if( CPLStat( pszWholePath, &sStatBuf ) != 0 )

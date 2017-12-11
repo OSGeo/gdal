@@ -30,7 +30,7 @@ NAMESPACE_LERC_START
 class BitMask
 {
 public:
-  BitMask(int nCols, int nRows) : m_pBits(NULL), m_nRows(nRows), m_nCols(nCols)
+  BitMask(int nCols, int nRows) : m_pBits(nullptr), m_nRows(nRows), m_nCols(nCols)
   {
       m_pBits = new Byte[Size()];
       if (!m_pBits)

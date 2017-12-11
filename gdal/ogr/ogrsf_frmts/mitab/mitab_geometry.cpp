@@ -130,7 +130,7 @@ static const int NUM_SCANLINES = 5;
 
 int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 {
-    if (poPoly == NULL)
+    if (poPoly == nullptr)
         return OGRERR_FAILURE;
 
     OGREnvelope   oEnv;
@@ -158,7 +158,7 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         return OGRERR_FAILURE;
 
     double *xintersect = (double *)calloc(n, sizeof(double));
-    if( xintersect == NULL )
+    if( xintersect == nullptr )
         return OGRERR_FAILURE;
 
     double max_len = 0.0;
@@ -371,7 +371,7 @@ int OGRGetCentroid(OGRPolygon *poPoly, OGRPoint *poCentroid)
 
 int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 {
-    if (poLine == NULL || poLine->getNumPoints() < 2)
+    if (poLine == nullptr || poLine->getNumPoints() < 2)
         return OGRERR_FAILURE;
 
     if (poLine->getNumPoints() % 2 == 0)
@@ -400,7 +400,7 @@ int OGRPolylineCenterPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 
 int OGRPolylineLabelPoint(OGRLineString *poLine, OGRPoint *poLabelPoint)
 {
-    if (poLine == NULL || poLine->getNumPoints() < 2)
+    if (poLine == nullptr || poLine->getNumPoints() < 2)
         return OGRERR_FAILURE;
 
     double max_segment_length = -1.0;

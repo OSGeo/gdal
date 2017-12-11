@@ -64,10 +64,10 @@ CPLErr RasterliteDataset::ReloadOverviews()
                      osTableName.c_str());
      }
 
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-    if (hSQLLyr == NULL)
+    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+    if (hSQLLyr == nullptr)
     {
-        if (hRasterPyramidsLyr == NULL)
+        if (hRasterPyramidsLyr == nullptr)
             return CE_Failure;
 
         osSQL.Printf("SELECT DISTINCT(pixel_x_size), pixel_y_size "
@@ -75,8 +75,8 @@ CPLErr RasterliteDataset::ReloadOverviews()
                      "ORDER BY pixel_x_size ASC",
                      osTableName.c_str());
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-        if (hSQLLyr == NULL)
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        if (hSQLLyr == nullptr)
             return CE_Failure;
     }
 
@@ -86,11 +86,11 @@ CPLErr RasterliteDataset::ReloadOverviews()
     for( int i = 1; i < nResolutions; i++ )
         delete papoOverviews[i-1];
     CPLFree(papoOverviews);
-    papoOverviews = NULL;
+    papoOverviews = nullptr;
     CPLFree(padfXResolutions);
-    padfXResolutions = NULL;
+    padfXResolutions = nullptr;
     CPLFree(padfYResolutions);
-    padfYResolutions = NULL;
+    padfYResolutions = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Rebuild arrays                                                  */
@@ -107,7 +107,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
         // Exstra scope for i.
         int i = 0;
         OGRFeatureH hFeat;
-        while((hFeat = OGR_L_GetNextFeature(hSQLLyr)) != NULL)
+        while((hFeat = OGR_L_GetNextFeature(hSQLLyr)) != nullptr)
         {
             padfXResolutions[i] = OGR_F_GetFieldAsDouble(hFeat, 0);
             padfYResolutions[i] = OGR_F_GetFieldAsDouble(hFeat, 1);
@@ -119,7 +119,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
     }
 
     OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
-    hSQLLyr = NULL;
+    hSQLLyr = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Add overview levels as internal datasets                        */
@@ -157,7 +157,7 @@ CPLErr RasterliteDataset::ReloadOverviews()
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot find block characteristics for overview %d", nLev);
-                papoOverviews[nLev-1] = NULL;
+                papoOverviews[nLev-1] = nullptr;
             }
         }
     }
@@ -175,7 +175,7 @@ CPLErr RasterliteDataset::CleanOverviews()
         return CE_Failure;
 
     CPLString osSQL("BEGIN");
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     const CPLString osResolutionCond =
         "NOT " + RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]);
@@ -184,27 +184,27 @@ CPLErr RasterliteDataset::CleanOverviews()
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
                   osTableName.c_str(), osTableName.c_str(),
                   osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     osSQL.Printf("DELETE FROM \"%s_metadata\" WHERE %s",
                   osTableName.c_str(), osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     OGRLayerH hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr)
     {
         osSQL.Printf("DELETE FROM raster_pyramids WHERE table_prefix = '%s' AND %s",
                       osTableName.c_str(), osResolutionCond.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     }
 
     osSQL = "COMMIT";
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     for( int i = 1; i < nResolutions; i++ )
         delete papoOverviews[i-1];
     CPLFree(papoOverviews);
-    papoOverviews = NULL;
+    papoOverviews = nullptr;
     nResolutions = 1;
 
     return CE_None;
@@ -238,7 +238,7 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
 /* -------------------------------------------------------------------- */
 
     CPLString osSQL("BEGIN");
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     CPLString osResolutionCond =
         RasterliteGetPixelSizeCond(padfXResolutions[iLev], padfYResolutions[iLev]);
@@ -247,22 +247,22 @@ CPLErr RasterliteDataset::CleanOverviewLevel(int nOvrFactor)
                  "IN(SELECT id FROM \"%s_metadata\" WHERE %s)",
                   osTableName.c_str(), osTableName.c_str(),
                   osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     osSQL.Printf("DELETE FROM \"%s_metadata\" WHERE %s",
                   osTableName.c_str(), osResolutionCond.c_str());
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     OGRLayerH hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
     if (hRasterPyramidsLyr)
     {
         osSQL.Printf("DELETE FROM raster_pyramids WHERE table_prefix = '%s' AND %s",
                       osTableName.c_str(), osResolutionCond.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     }
 
     osSQL = "COMMIT";
-    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
     return CE_None;
 }
@@ -309,14 +309,14 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         return CE_Failure;
     }
     GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
-    if (hTileDriver == NULL)
+    if (hTileDriver == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL %s driver", pszDriverName);
         return CE_Failure;
     }
 
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if (hMemDriver == NULL)
+    if (hMemDriver == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL MEM driver");
         return CE_Failure;
@@ -326,7 +326,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
     int nDataTypeSize = GDALGetDataTypeSize(eDataType) / 8;
     GByte* pabyMEMDSBuffer = reinterpret_cast<GByte *>(
         VSIMalloc3( nBlockXSize, nBlockYSize, nBands * nDataTypeSize ) );
-    if (pabyMEMDSBuffer == NULL)
+    if (pabyMEMDSBuffer == nullptr)
     {
         return CE_Failure;
     }
@@ -360,7 +360,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                  "%s LIMIT 1",
                  osMetatadataLayer.c_str(),
                  RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]).c_str());
-    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr)
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -394,18 +394,18 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 /* -------------------------------------------------------------------- */
 
     GDALDataset* poPrevOvrLevel =
-        (papoOverviews != NULL && iLev >= 2 && iLev <= nResolutions && papoOverviews[iLev-2]) ?
+        (papoOverviews != nullptr && iLev >= 2 && iLev <= nResolutions && papoOverviews[iLev-2]) ?
             papoOverviews[iLev-2] : this;
     const double dfRatioPrevOvr = static_cast<double>(poPrevOvrLevel->GetRasterBand(1)->GetXSize()) / nOvrXSize;
     const int nPrevOvrBlockXSize = static_cast<int>( nBlockXSize * dfRatioPrevOvr + 0.5 );
     const int nPrevOvrBlockYSize = static_cast<int>(nBlockYSize * dfRatioPrevOvr + 0.5 );
-    GByte* pabyPrevOvrMEMDSBuffer = NULL;
+    GByte* pabyPrevOvrMEMDSBuffer = nullptr;
 
     if( !STARTS_WITH_CI(pszResampling, "NEAR"))
     {
         pabyPrevOvrMEMDSBuffer = reinterpret_cast<GByte*>(
             VSIMalloc3( nPrevOvrBlockXSize, nPrevOvrBlockYSize, nBands * nDataTypeSize ) );
-        if (pabyPrevOvrMEMDSBuffer == NULL)
+        if (pabyPrevOvrMEMDSBuffer == nullptr)
         {
             VSIFree(pabyMEMDSBuffer);
             return CE_Failure;
@@ -418,14 +418,14 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
     char** papszTileDriverOptions = RasterliteGetTileDriverOptions(papszOptions);
 
-    OGR_DS_ExecuteSQL(hDS, "BEGIN", NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, "BEGIN", nullptr, nullptr);
 
     CPLErr eErr = CE_None;
     for( int nBlockYOff = 0; eErr == CE_None && nBlockYOff < nYBlocks; nBlockYOff++ )
     {
         for( int nBlockXOff = 0; eErr == CE_None && nBlockXOff < nXBlocks; nBlockXOff++ )
         {
-            GDALDatasetH hPrevOvrMemDS = NULL;
+            GDALDatasetH hPrevOvrMemDS = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create in-memory tile                                           */
@@ -437,7 +437,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
             if ((nBlockYOff+1) * nBlockYSize > nOvrYSize)
                 nReqYSize = nOvrYSize - nBlockYOff * nBlockYSize;
 
-            if( pabyPrevOvrMEMDSBuffer != NULL )
+            if( pabyPrevOvrMEMDSBuffer != nullptr )
             {
                 int nPrevOvrReqXSize =
                     static_cast<int>( nReqXSize * dfRatioPrevOvr + 0.5 );
@@ -449,8 +449,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                 nBlockYOff * nBlockYSize * nOvrFactor,
                                 nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
                                 pabyPrevOvrMEMDSBuffer, nPrevOvrReqXSize, nPrevOvrReqYSize,
-                                eDataType, nBands, NULL,
-                                0, 0, 0, NULL);
+                                eDataType, nBands, nullptr,
+                                0, 0, 0, nullptr);
 
                 if (eErr != CE_None)
                 {
@@ -459,9 +459,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
                 hPrevOvrMemDS = GDALCreate(hMemDriver, "MEM:::",
                                            nPrevOvrReqXSize, nPrevOvrReqYSize, 0,
-                                           eDataType, NULL);
+                                           eDataType, nullptr);
 
-                if (hPrevOvrMemDS == NULL)
+                if (hPrevOvrMemDS == nullptr)
                 {
                     eErr = CE_Failure;
                     break;
@@ -475,7 +475,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                     pabyPrevOvrMEMDSBuffer + iBand * nDataTypeSize *
                                     nPrevOvrReqXSize * nPrevOvrReqYSize, sizeof(szTmp));
                     char** l_papszOptions
-                        = CSLSetNameValue(NULL, "DATAPOINTER", szTmp);
+                        = CSLSetNameValue(nullptr, "DATAPOINTER", szTmp);
                     GDALAddBand(hPrevOvrMemDS, eDataType, l_papszOptions);
                     CSLDestroy(l_papszOptions);
                 }
@@ -487,8 +487,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                 nBlockYOff * nBlockYSize * nOvrFactor,
                                 nReqXSize * nOvrFactor, nReqYSize * nOvrFactor,
                                 pabyMEMDSBuffer, nReqXSize, nReqYSize,
-                                eDataType, nBands, NULL,
-                                0, 0, 0, NULL);
+                                eDataType, nBands, nullptr,
+                                0, 0, 0, nullptr);
                 if (eErr != CE_None)
                 {
                     break;
@@ -497,8 +497,8 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
                                               nReqXSize, nReqYSize, 0,
-                                              eDataType, NULL);
-            if (hMemDS == NULL)
+                                              eDataType, nullptr);
+            if (hMemDS == nullptr)
             {
                 eErr = CE_Failure;
                 break;
@@ -512,12 +512,12 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                                 pabyMEMDSBuffer + iBand * nDataTypeSize *
                                 nReqXSize * nReqYSize, sizeof(szTmp));
                 char** l_papszOptions
-                    = CSLSetNameValue(NULL, "DATAPOINTER", szTmp);
+                    = CSLSetNameValue(nullptr, "DATAPOINTER", szTmp);
                 GDALAddBand(hMemDS, eDataType, l_papszOptions);
                 CSLDestroy(l_papszOptions);
             }
 
-            if( hPrevOvrMemDS != NULL )
+            if( hPrevOvrMemDS != nullptr )
             {
                 for(int iBand = 0; iBand < nBands; iBand ++)
                 {
@@ -526,7 +526,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                     eErr = GDALRegenerateOverviews( GDALGetRasterBand(hPrevOvrMemDS, iBand+1),
                                                     1, &hDstOvrBand,
                                                     pszResampling,
-                                                    NULL, NULL );
+                                                    nullptr, nullptr );
                     if( eErr != CE_None )
                         break;
                 }
@@ -536,7 +536,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
             GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
                                         osTempFileName.c_str(), hMemDS, FALSE,
-                                        papszTileDriverOptions, NULL, NULL);
+                                        papszTileDriverOptions, nullptr, nullptr);
 
             GDALClose(hMemDS);
             if (! hOutDS)
@@ -608,7 +608,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
             nBlocks++;
             if (pfnProgress && !pfnProgress(1.0 * nBlocks / nTotalBlocks,
-                                            NULL, pProgressData))
+                                            nullptr, pProgressData))
                 eErr = CE_Failure;
         }
     }
@@ -616,15 +616,15 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
     nLimitOvrCount = -1;
 
     if (eErr == CE_None)
-        OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, "COMMIT", nullptr, nullptr);
     else
-        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", nullptr, nullptr);
 
     VSIFree(pabyMEMDSBuffer);
     VSIFree(pabyPrevOvrMEMDSBuffer);
 
     CSLDestroy(papszTileDriverOptions);
-    papszTileDriverOptions = NULL;
+    papszTileDriverOptions = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Update raster_pyramids table                                    */
@@ -633,14 +633,14 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         return eErr;
 
     OGRLayerH hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
-    if (hRasterPyramidsLyr == NULL)
+    if (hRasterPyramidsLyr == nullptr)
     {
         osSQL.Printf   ("CREATE TABLE raster_pyramids ("
                         "table_prefix TEXT NOT NULL,"
                         "pixel_x_size DOUBLE NOT NULL,"
                         "pixel_y_size DOUBLE NOT NULL,"
                         "tile_count INTEGER NOT NULL)");
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
         /* Re-open the DB to take into account the new tables*/
         OGRReleaseDataSource(hDS);
@@ -648,7 +648,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
         hDS = RasterliteOpenSQLiteDB(osFileName.c_str(), GA_Update);
 
         hRasterPyramidsLyr = OGR_DS_GetLayerByName(hDS, "raster_pyramids");
-        if (hRasterPyramidsLyr == NULL)
+        if (hRasterPyramidsLyr == nullptr)
             return CE_Failure;
     }
     OGRFeatureDefnH hFDefn = OGR_L_GetLayerDefn(hRasterPyramidsLyr);
@@ -659,7 +659,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
                  "table_prefix = '%s' AND %s",
                  osTableName.c_str(),
                  RasterliteGetPixelSizeCond(padfXResolutions[0], padfYResolutions[0]).c_str());
-    hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr)
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -679,7 +679,7 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
         int nBlocksMainRes = 0;
 
-        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        hSQLLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         if (hSQLLyr)
         {
             OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
@@ -777,8 +777,8 @@ CPLErr RasterliteDataset::IBuildOverviews( const char * pszResampling,
         return CE_Failure;
     }
 
-    const char* pszOvrOptions = CPLGetConfigOption("RASTERLITE_OVR_OPTIONS", NULL);
-    char** papszOptions = (pszOvrOptions) ? CSLTokenizeString2( pszOvrOptions, ",", 0) : NULL;
+    const char* pszOvrOptions = CPLGetConfigOption("RASTERLITE_OVR_OPTIONS", nullptr);
+    char** papszOptions = (pszOvrOptions) ? CSLTokenizeString2( pszOvrOptions, ",", 0) : nullptr;
     GDALValidateCreationOptions( GetDriver(), papszOptions);
 
     CPLErr eErr = CE_None;

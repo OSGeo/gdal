@@ -387,7 +387,7 @@ public:
      * string. */
     void Seize( char *pszValue )
     {
-        if (pszValue == NULL )
+        if (pszValue == nullptr )
             Clear();
         else
         {
@@ -404,7 +404,7 @@ public:
     CPLString &vPrintf(
         CPL_FORMAT_STRING(const char *pszFormat), va_list args )
         CPL_PRINT_FUNC_FORMAT(2, 0);
-    CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
+    CPLString &FormatC( double dfValue, const char *pszFormat = nullptr );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
     CPLString &replaceAll(

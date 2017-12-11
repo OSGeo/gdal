@@ -53,7 +53,7 @@ HFAPCSStructToWKT( const Eprj_Datum *,
                    const Eprj_MapInfo *,
                    HFAEntry * )
 {
-    return NULL;
+    return nullptr;
 }
 #endif
 
@@ -67,7 +67,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Handle arguments.                                               */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename = NULL;
+    const char *pszFilename = nullptr;
     bool bDumpTree = false;
     bool bDumpDict = false;
     bool bRastReport = false;
@@ -86,7 +86,7 @@ int main( int argc, char ** argv )
         {
             bRastReport = true;
         }
-        else if( pszFilename == NULL )
+        else if( pszFilename == nullptr )
         {
             pszFilename = argv[i];
         }
@@ -97,7 +97,7 @@ int main( int argc, char ** argv )
         }
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         Usage();
         exit( 1 );
@@ -108,7 +108,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     HFAHandle hHFA = HFAOpen( pszFilename, "r" );
 
-    if( hHFA == NULL )
+    if( hHFA == nullptr )
     {
         printf( "HFAOpen() failed.\n" );
         exit( 100 );
@@ -160,17 +160,17 @@ int main( int argc, char ** argv )
             {
                 HFAGetOverviewInfo( hHFA, i, iOverview,
                                     &nXSize, &nYSize,
-                                    &nBlockXSize, &nBlockYSize, NULL );
+                                    &nBlockXSize, &nBlockYSize, nullptr );
                 printf( "  Overview: %dx%d (blocksize %dx%d)\n",
                         nXSize, nYSize, nBlockXSize, nBlockYSize );
             }
 
             int nColors = 0;
-            double *padfRed = NULL;
-            double *padfGreen = NULL;
-            double *padfBlue = NULL;
-            double *padfAlpha = NULL;
-            double *padfBins = NULL;
+            double *padfRed = nullptr;
+            double *padfGreen = nullptr;
+            double *padfBlue = nullptr;
+            double *padfAlpha = nullptr;
+            double *padfBins = nullptr;
             if( HFAGetPCT( hHFA, i, &nColors, &padfRed, &padfGreen,
                            &padfBlue, &padfAlpha, &padfBins )
                 == CE_None )
@@ -178,7 +178,7 @@ int main( int argc, char ** argv )
                 for( int j = 0; j < nColors; j++ )
                 {
                     printf( "PCT[%d] = %f,%f,%f %f\n",
-                            (padfBins != NULL)
+                            (padfBins != nullptr)
                             ? static_cast<int>(padfBins[j])
                             : j,
                             padfRed[j], padfGreen[j],
@@ -192,7 +192,7 @@ int main( int argc, char ** argv )
             HFABand *poBand = hHFA->papoBand[i-1];
             HFAEntry *poStats = poBand->poNode->GetNamedChild( "Statistics" );
 
-            if( poStats != NULL )
+            if( poStats != nullptr )
             {
                 printf( "  Min: %g   Max: %g   Mean: %g\n",
                         poStats->GetDoubleField( "minimum" ),
@@ -214,7 +214,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
         const Eprj_MapInfo *psMapInfo = HFAGetMapInfo( hHFA );
 
-        if( psMapInfo != NULL )
+        if( psMapInfo != nullptr )
         {
             printf( "MapInfo.proName = %s\n", psMapInfo->proName );
             printf( "MapInfo.upperLeftCenter.x = %.2f\n",

@@ -45,7 +45,7 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
 
     iNextShapeId = 0;
     nSRSId = -1;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
 
@@ -56,10 +56,10 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer( OGRPGeoDataSource *poDSIn,
 
         OGRLayer* poBaseLayer =
             poDSIn->GetLayerByName(pszBaseStatement + strlen("SELECT * FROM "));
-        if( poBaseLayer != NULL )
+        if( poBaseLayer != nullptr )
         {
             poSRS = poBaseLayer->GetSpatialRef();
-            if( poSRS != NULL )
+            if( poSRS != nullptr )
                 poSRS->Reference();
         }
     }
@@ -85,10 +85,10 @@ OGRPGeoSelectLayer::~OGRPGeoSelectLayer()
 void OGRPGeoSelectLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 }
 
@@ -99,7 +99,7 @@ void OGRPGeoSelectLayer::ClearStatement()
 CPLODBCStatement *OGRPGeoSelectLayer::GetStatement()
 
 {
-    if( poStmt == NULL )
+    if( poStmt == nullptr )
         ResetStatement();
 
     return poStmt;
@@ -125,7 +125,7 @@ OGRErr OGRPGeoSelectLayer::ResetStatement()
     else
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }

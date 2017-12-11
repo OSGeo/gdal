@@ -45,7 +45,7 @@ static int OGRShapeDriverIdentify( GDALOpenInfo* poOpenInfo )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
         return -1;  // Unsure.
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
     {
         return FALSE;
     }
@@ -94,11 +94,11 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( OGRShapeDriverIdentify(poOpenInfo) == FALSE )
-        return NULL;
+        return nullptr;
 
 #ifdef DEBUG
     // For AFL, so that .cur_input is detected as the archive filename.
-    if( poOpenInfo->fpL != NULL &&
+    if( poOpenInfo->fpL != nullptr &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
@@ -115,7 +115,7 @@ static GDALDataset *OGRShapeDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo, true ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -146,7 +146,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                       "%s is not a directory.",
                       pszName );
 
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -172,7 +172,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
                       "for shapefile datastore.",
                       pszName );
 
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -185,7 +185,7 @@ static GDALDataset *OGRShapeDriverCreate( const char * pszName,
     if( !poDS->Open( &oOpenInfo, false, bSingleNewFile ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -211,14 +211,14 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 
     static const char * const apszExtensions[] =
         { "shp", "shx", "dbf", "sbn", "sbx", "prj", "idm", "ind",
-          "qix", "cpg", NULL };
+          "qix", "cpg", nullptr };
 
     if( VSI_ISREG(sStatBuf.st_mode)
         && (EQUAL(CPLGetExtension(pszDataSource), "shp")
             || EQUAL(CPLGetExtension(pszDataSource), "shx")
             || EQUAL(CPLGetExtension(pszDataSource), "dbf")) )
     {
-        for( int iExt = 0; apszExtensions[iExt] != NULL; iExt++ )
+        for( int iExt = 0; apszExtensions[iExt] != nullptr; iExt++ )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
                                                     apszExtensions[iExt]);
@@ -231,7 +231,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
         char **papszDirEntries = VSIReadDir( pszDataSource );
 
         for( int iFile = 0;
-             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++ )
         {
             if( CSLFindString( apszExtensions,
@@ -239,7 +239,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
             {
                 VSIUnlink( CPLFormFilename( pszDataSource,
                                             papszDirEntries[iFile],
-                                            NULL ) );
+                                            nullptr ) );
             }
         }
 
@@ -258,7 +258,7 @@ static CPLErr OGRShapeDriverDelete( const char *pszDataSource )
 void RegisterOGRShape()
 
 {
-    if( GDALGetDriverByName( "ESRI Shapefile" ) != NULL )
+    if( GDALGetDriverByName( "ESRI Shapefile" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

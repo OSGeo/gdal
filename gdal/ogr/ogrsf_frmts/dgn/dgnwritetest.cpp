@@ -46,7 +46,7 @@ int main( int /* argc */, char ** /* argv */ )
                                    | DGNCF_USE_SEED_ORIGIN,
                                    0.0, 0.0, 0.0, 0, 0, "", "" );
 
-    if( hNewDGN == NULL )
+    if( hNewDGN == nullptr )
     {
         printf( "DGNCreate failed.\n" );/*ok*/
         exit( 10 );
@@ -90,7 +90,7 @@ int main( int /* argc */, char ** /* argv */ )
 /* -------------------------------------------------------------------- */
     psLine = DGNCreateArcElem( hNewDGN, DGNT_ARC,
                                2000.0, 3000.0, 500.0, 2000.0, 1000.0,
-                               0.0, 270.0, 0.0, NULL );
+                               0.0, 270.0, 0.0, nullptr );
 
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
@@ -101,7 +101,7 @@ int main( int /* argc */, char ** /* argv */ )
 /* -------------------------------------------------------------------- */
     psLine = DGNCreateArcElem( hNewDGN, DGNT_ELLIPSE,
                                200.0, 30.0, 5.0, 10.0, 10.0,
-                               0.0, 360.0, 0.0, NULL );
+                               0.0, 360.0, 0.0, nullptr );
 
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
     DGNWriteElement( hNewDGN, psLine );
@@ -111,7 +111,7 @@ int main( int /* argc */, char ** /* argv */ )
 /*      Write some text.                                                */
 /* -------------------------------------------------------------------- */
     psLine = DGNCreateTextElem( hNewDGN, "This is a test string",
-                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 0.0, NULL,
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 0.0, nullptr,
                                 2000.0, 3000.0, 0.0 );
 
     DGNAddMSLink( hNewDGN, psLine, DGNLT_XBASE, 7, 101 );
@@ -121,7 +121,7 @@ int main( int /* argc */, char ** /* argv */ )
     DGNFreeElement( hNewDGN, psLine );
 
     psLine = DGNCreateTextElem( hNewDGN, "------- 30 degrees",
-                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 30.0, NULL,
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 30.0, nullptr,
                                 2000.0, 3000.0, 0.0 );
 
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
@@ -129,7 +129,7 @@ int main( int /* argc */, char ** /* argv */ )
     DGNFreeElement( hNewDGN, psLine );
 
     psLine = DGNCreateTextElem( hNewDGN, "------- 90 degrees",
-                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 90.0, NULL,
+                                0, DGNJ_CENTER_TOP, 200.0, 200.0, 90.0, nullptr,
                                 2000.0, 3000.0, 0.0 );
 
     DGNUpdateElemCore( hNewDGN, psLine, 15, 0, 3, 1, 0 );
@@ -204,7 +204,7 @@ int main( int /* argc */, char ** /* argv */ )
     asPoints[0].x = 5000;
     asPoints[0].y = 5000;
 
-    psLine = DGNCreateCellHeaderFromGroup( hNewDGN, "BE70", 1, NULL,
+    psLine = DGNCreateCellHeaderFromGroup( hNewDGN, "BE70", 1, nullptr,
                                            2, psMembers, asPoints + 0,
                                            1.0, 1.0, 0.0 );
 

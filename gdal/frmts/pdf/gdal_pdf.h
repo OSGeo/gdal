@@ -225,7 +225,7 @@ class PDFDataset : public GDALPamDataset
 
     double       dfMaxArea;
     int          ParseLGIDictObject(GDALPDFObject* poLGIDict);
-    int          ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict, int* pbIsBestCandidate = NULL);
+    int          ParseLGIDictDictFirstPass(GDALPDFDictionary* poLGIDict, int* pbIsBestCandidate = nullptr);
     int          ParseLGIDictDictSecondPass(GDALPDFDictionary* poLGIDict);
     int          ParseProjDict(GDALPDFDictionary* poProjDict);
     int          ParseVP(GDALPDFObject* poVP, double dfMediaBoxWidth, double dfMediaBoxHeight);
@@ -353,7 +353,7 @@ private:
 #endif  // ~ HAVE_PDFIUM
 
   public:
-                 PDFDataset(PDFDataset* poParentDS = NULL, int nXSize = 0, int nYSize = 0);
+                 PDFDataset(PDFDataset* poParentDS = nullptr, int nXSize = 0, int nYSize = 0);
     virtual     ~PDFDataset();
 
     virtual const char* GetProjectionRef() override;

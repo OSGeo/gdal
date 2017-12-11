@@ -67,7 +67,7 @@ static CPLString CoverageSubtype(CPLXMLNode *coverage)
 
 static CPLXMLNode *GetGridNode(CPLXMLNode *coverage, const CPLString &subtype)
 {
-    CPLXMLNode *grid = NULL;
+    CPLXMLNode *grid = nullptr;
     // Construct the name of the node that we look under domainSet.
     // For now we can handle RectifiedGrid and ReferenceableGridByVectors.
     // Note that if this is called at GetCoverage stage, the grid should not be NULL.
@@ -348,7 +348,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
 
     // origin position, center of cell
     CPLXMLNode *point = CPLGetXMLNode(grid, "origin.Point.pos");
-    origin = Flist(Split(CPLGetXMLValue(point, NULL, ""), " ", axis_order_swap), 0, 2);
+    origin = Flist(Split(CPLGetXMLValue(point, nullptr, ""), " ", axis_order_swap), 0, 2);
 
     // offsets = coefficients of affine transformation from cell coords to
     // CRS coords, (1,2) and (4,5)
@@ -357,11 +357,11 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
 
         // for rectified grid the geo transform is from origin and offsetVectors
         int i = 0;
-        for (CPLXMLNode *node = grid->psChild; node != NULL; node = node->psNext) {
+        for (CPLXMLNode *node = grid->psChild; node != nullptr; node = node->psNext) {
             if (node->eType != CXT_Element || !EQUAL(node->pszValue, "offsetVector")) {
                 continue;
             }
-            offset.push_back(Flist(Split(CPLGetXMLValue(node, NULL, ""), " ", axis_order_swap), 0, 2));
+            offset.push_back(Flist(Split(CPLGetXMLValue(node, nullptr, ""), " ", axis_order_swap), 0, 2));
             if (i == 1) {
                 break;
             }
@@ -393,7 +393,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
         // for vector referenceable grid the geo transform is from
         // offsetVector, coefficients, gridAxesSpanned, sequenceRule
         // in generalGridAxis.GeneralGridAxis
-        for (CPLXMLNode *node = grid->psChild; node != NULL; node = node->psNext) {
+        for (CPLXMLNode *node = grid->psChild; node != nullptr; node = node->psNext) {
             CPLXMLNode *axis = CPLGetXMLNode(node, "GeneralGridAxis");
             if (!axis) {
                 continue;
@@ -418,7 +418,7 @@ bool WCSDataset201::GridOffsets(CPLXMLNode *grid,
             }
             CPLXMLNode *offset_node = CPLGetXMLNode(axis, "offsetVector");
             if (offset_node) {
-                offset.push_back(Flist(Split(CPLGetXMLValue(offset_node, NULL, ""), " ", axis_order_swap), 0, 2));
+                offset.push_back(Flist(Split(CPLGetXMLValue(offset_node, nullptr, ""), " ", axis_order_swap), 0, 2));
             } else {
                 CPLError(CE_Failure, CPLE_AppDefined, "Missing offset vector in grid axis.");
                 return false;
@@ -443,11 +443,11 @@ CPLString WCSDataset201::GetSubdataset(const CPLString &coverage)
 {
     char **metadata = GDALPamDataset::GetMetadata("SUBDATASETS");
     CPLString subdataset;
-    if (metadata != NULL) {
-        for (int i = 0; metadata[i] != NULL; ++i) {
+    if (metadata != nullptr) {
+        for (int i = 0; metadata[i] != nullptr; ++i) {
             char *key;
             CPLString url = CPLParseNameValue(metadata[i], &key);
-            if (key != NULL && strstr(key, "SUBDATASET_") && strstr(key, "_NAME")) {
+            if (key != nullptr && strstr(key, "SUBDATASET_") && strstr(key, "_NAME")) {
                 if (coverage == CPLURLGetValue(url, "coverageId")) {
                     subdataset = key;
                     subdataset.erase(subdataset.find("_NAME"), 5);
@@ -481,9 +481,9 @@ bool WCSDataset201::SetFormat(CPLXMLNode *coverage)
 /*      falling back to the first supported format.  Should we          */
 /*      consider preferring the nativeFormat if available?              */
 
-    char **metadata = GDALPamDataset::GetMetadata(NULL);
+    char **metadata = GDALPamDataset::GetMetadata(nullptr);
     const char *value = CSLFetchNameValue(metadata, "WCS_GLOBAL#formatSupported");
-    if (value == NULL) {
+    if (value == nullptr) {
         format = CPLGetXMLValue(coverage, "ServiceParameters.nativeFormat", "");
     } else {
         std::vector<CPLString> format_list = Split(value, ",");
@@ -560,7 +560,7 @@ int WCSDataset201::ParseRange(CPLXMLNode *coverage, const CPLString &range_subse
     CPLString field_name;
     std::vector<CPLString> nodata_array;
 
-    for (CPLXMLNode *field = record->psChild; field != NULL; field = field->psNext) {
+    for (CPLXMLNode *field = record->psChild; field != nullptr; field = field->psNext) {
         if (field->eType != CXT_Element || !EQUAL(field->pszValue, "field")) {
             continue;
         }
@@ -653,7 +653,7 @@ bool WCSDataset201::ExtractGridInfo()
 
     CPLXMLNode *coverage = CPLGetXMLNode(psService, "CoverageDescription");
 
-    if (coverage == NULL) {
+    if (coverage == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined, "CoverageDescription missing from service.");
         return false;
     }

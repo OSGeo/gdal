@@ -50,7 +50,7 @@ const char *OGRMemDriver::GetName() { return "Memory"; }
 
 OGRDataSource *OGRMemDriver::Open( const char * /* pszFilename */, int )
 {
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -84,7 +84,7 @@ int OGRMemDriver::TestCapability( const char *pszCap )
 void RegisterOGRMEM()
 
 {
-    if( GDALGetDriverByName("Memory") != NULL )
+    if( GDALGetDriverByName("Memory") != nullptr )
         return;
 
     OGRSFDriver *poDriver = new OGRMemDriver;

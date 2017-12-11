@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 GDALAllValidMaskBand::GDALAllValidMaskBand( GDALRasterBand *poParent ) :
     GDALRasterBand(FALSE)
 {
-    poDS = NULL;
+    poDS = nullptr;
     nBand = 0;
 
     nRasterXSize = poParent->GetXSize();

@@ -62,7 +62,7 @@ void ReprojFunc(void* unused)
         CPLAtomicInc(&nIter);
         memcpy(padfResultX, padfRefX, 1024 * sizeof(double));
         memcpy(padfResultY, padfRefY, 1024 * sizeof(double));
-        poCT->TransformEx( 1024, padfResultX, padfResultY, NULL, NULL );
+        poCT->TransformEx( 1024, padfResultX, padfResultY, nullptr, nullptr );
 
         /* Check that the results are consistent with the reference results */
         assert(memcmp(padfResultX, padfRefResultX, 1024 * sizeof(double)) == 0);
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     oSrcSRS.importFromEPSG(4326);
     oDstSRS.importFromEPSG(32631);
     poCT = OGRCreateCoordinateTransformation(&oSrcSRS,&oDstSRS);
-    if (poCT == NULL)
+    if (poCT == nullptr)
         return -1;
 
     padfRefX = static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
@@ -106,10 +106,10 @@ int main(int argc, char* argv[])
     memcpy(padfRefResultX, padfRefX, 1024 * sizeof(double));
     memcpy(padfRefResultY, padfRefY, 1024 * sizeof(double));
 
-    poCT->TransformEx( 1024, padfRefResultX, padfRefResultY, NULL, NULL );
+    poCT->TransformEx( 1024, padfRefResultX, padfRefResultY, nullptr, nullptr );
 
     for(int i=0;i<nThreads;i++)
-        CPLCreateThread(ReprojFunc, NULL);
+        CPLCreateThread(ReprojFunc, nullptr);
 
     while(nIter < nCountIter)
         CPLSleep(0.001);

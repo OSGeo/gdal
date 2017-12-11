@@ -41,9 +41,9 @@ public:
     virtual CPLErr Create( const char* pszFilename, char** papszOptions ) override;
 protected:
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                   OGRSpatialReference *poSpatialRef = NULL,
+                                   OGRSpatialReference *poSpatialRef = nullptr,
                                    OGRwkbGeometryType eGType = wkbUnknown,
-                                   char ** papszOptions = NULL ) override;
+                                   char ** papszOptions = nullptr ) override;
     virtual int CheckNetworkExist( const char* pszFilename, char** papszOptions ) override;
 protected:
     virtual CPLErr DeleteMetadataLayer() override;

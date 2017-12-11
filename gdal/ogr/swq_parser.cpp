@@ -1859,7 +1859,7 @@ yyreduce:
             (yyval)->table_name = (yyval)->string_value;
             (yyval)->string_value = CPLStrdup((yyvsp[0])->string_value);
             delete (yyvsp[0]);
-            (yyvsp[0]) = NULL;
+            (yyvsp[0]) = nullptr;
         }
 #line 1865 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -1907,7 +1907,7 @@ yyreduce:
   case 37:
 #line 397 "swq_parser.y" /* yacc.c:1646  */
     {
-            (yyval) = new swq_expr_node((const char*)NULL);
+            (yyval) = new swq_expr_node((const char*)nullptr);
         }
 #line 1913 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -1987,7 +1987,7 @@ yyreduce:
             const swq_operation *poOp =
                     swq_op_registrar::GetOperator( (yyvsp[-3])->string_value );
 
-            if( poOp == NULL )
+            if( poOp == nullptr )
             {
                 if( context->bAcceptCustomFuncs )
                 {
@@ -2179,7 +2179,7 @@ yyreduce:
             CPLString osTableName = (yyvsp[-2])->string_value;
 
             delete (yyvsp[-2]);
-            (yyvsp[-2]) = NULL;
+            (yyvsp[-2]) = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -2211,7 +2211,7 @@ yyreduce:
             }
 
             delete (yyvsp[-3]);
-            (yyvsp[-3]) = NULL;
+            (yyvsp[-3]) = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -2246,7 +2246,7 @@ yyreduce:
             }
 
             delete (yyvsp[-4]);
-            (yyvsp[-4]) = NULL;
+            (yyvsp[-4]) = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -2288,7 +2288,7 @@ yyreduce:
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( (yyvsp[-1]) );
 
-            if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
+            if( !context->poCurSelect->PushField( count, nullptr, TRUE ) )
             {
                 delete count;
                 YYERROR;
@@ -2370,7 +2370,7 @@ yyreduce:
     {
             context->poCurSelect->PushOrderBy( (yyvsp[0])->table_name, (yyvsp[0])->string_value, TRUE );
             delete (yyvsp[0]);
-            (yyvsp[0]) = NULL;
+            (yyvsp[0]) = nullptr;
         }
 #line 2376 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2380,7 +2380,7 @@ yyreduce:
     {
             context->poCurSelect->PushOrderBy( (yyvsp[-1])->table_name, (yyvsp[-1])->string_value, TRUE );
             delete (yyvsp[-1]);
-            (yyvsp[-1]) = NULL;
+            (yyvsp[-1]) = nullptr;
         }
 #line 2386 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2390,7 +2390,7 @@ yyreduce:
     {
             context->poCurSelect->PushOrderBy( (yyvsp[-1])->table_name, (yyvsp[-1])->string_value, FALSE );
             delete (yyvsp[-1]);
-            (yyvsp[-1]) = NULL;
+            (yyvsp[-1]) = nullptr;
         }
 #line 2396 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2400,7 +2400,7 @@ yyreduce:
     {
         context->poCurSelect->SetLimit( (yyvsp[0])->int_value );
         delete (yyvsp[0]);
-        (yyvsp[0]) = NULL;
+        (yyvsp[0]) = nullptr;
     }
 #line 2406 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2410,7 +2410,7 @@ yyreduce:
     {
         context->poCurSelect->SetOffset( (yyvsp[0])->int_value );
         delete (yyvsp[0]);
-        (yyvsp[0]) = NULL;
+        (yyvsp[0]) = nullptr;
     }
 #line 2416 "swq_parser.cpp" /* yacc.c:1646  */
     break;
@@ -2419,8 +2419,8 @@ yyreduce:
 #line 835 "swq_parser.y" /* yacc.c:1646  */
     {
         const int iTable =
-            context->poCurSelect->PushTableDef( NULL, (yyvsp[0])->string_value,
-                                                NULL );
+            context->poCurSelect->PushTableDef( nullptr, (yyvsp[0])->string_value,
+                                                nullptr );
         delete (yyvsp[0]);
 
         (yyval) = new swq_expr_node( iTable );
@@ -2432,7 +2432,7 @@ yyreduce:
 #line 845 "swq_parser.y" /* yacc.c:1646  */
     {
         const int iTable =
-            context->poCurSelect->PushTableDef( NULL, (yyvsp[-1])->string_value,
+            context->poCurSelect->PushTableDef( nullptr, (yyvsp[-1])->string_value,
                                                 (yyvsp[0])->string_value );
         delete (yyvsp[-1]);
         delete (yyvsp[0]);
@@ -2447,7 +2447,7 @@ yyreduce:
     {
         const int iTable =
             context->poCurSelect->PushTableDef( (yyvsp[-2])->string_value,
-                                                (yyvsp[0])->string_value, NULL );
+                                                (yyvsp[0])->string_value, nullptr );
         delete (yyvsp[-2]);
         delete (yyvsp[0]);
 
@@ -2477,7 +2477,7 @@ yyreduce:
     {
         const int iTable =
             context->poCurSelect->PushTableDef( (yyvsp[-2])->string_value,
-                                                (yyvsp[0])->string_value, NULL );
+                                                (yyvsp[0])->string_value, nullptr );
         delete (yyvsp[-2]);
         delete (yyvsp[0]);
 

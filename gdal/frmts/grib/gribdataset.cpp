@@ -72,7 +72,7 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
-static CPLMutex *hGRIBMutex = NULL;
+static CPLMutex *hGRIBMutex = nullptr;
 
 /************************************************************************/
 /*                         ConvertUnitInText()                          */
@@ -99,8 +99,8 @@ GRIBRasterBand::GRIBRasterBand( GRIBDataset *poDSIn, int nBandIn,
     start(psInv->start),
     subgNum(psInv->subgNum),
     longFstLevel(CPLStrdup(psInv->longFstLevel)),
-    m_Grib_Data(NULL),
-    m_Grib_MetaData(NULL),
+    m_Grib_Data(nullptr),
+    m_Grib_MetaData(nullptr),
     nGribDataXSize(poDSIn->nRasterXSize),
     nGribDataYSize(poDSIn->nRasterYSize),
     m_nGribVersion(psInv->GribVersion),
@@ -349,9 +349,9 @@ void GRIBRasterBand::FindPDSTemplate()
 
             g2int iofst = 0;
             g2int pdsnum = 0;
-            g2int *pdstempl = NULL;
+            g2int *pdstempl = nullptr;
             g2int mappdslen = 0;
-            g2float *coordlist = NULL;
+            g2float *coordlist = nullptr;
             g2int numcoord = 0;
             if( getpdsindex(nPDTN) < 0 )
             {
@@ -570,7 +570,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
 
 const char *GRIBRasterBand::GetDescription() const
 {
-    if( longFstLevel == NULL )
+    if( longFstLevel == nullptr )
         return GDALPamRasterBand::GetDescription();
 
     return longFstLevel;
@@ -623,11 +623,11 @@ CPLErr GRIBRasterBand::LoadData()
         if( !m_Grib_Data )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Out of memory.");
-            if (m_Grib_MetaData != NULL)
+            if (m_Grib_MetaData != nullptr)
             {
                 MetaFree(m_Grib_MetaData);
                 delete m_Grib_MetaData;
-                m_Grib_MetaData = NULL;
+                m_Grib_MetaData = nullptr;
             }
             return CE_Failure;
         }
@@ -645,7 +645,7 @@ CPLErr GRIBRasterBand::LoadData()
                      nGribDataXSize, nGribDataYSize);
             MetaFree(m_Grib_MetaData);
             delete m_Grib_MetaData;
-            m_Grib_MetaData = NULL;
+            m_Grib_MetaData = nullptr;
             return CE_Failure;
         }
 
@@ -730,7 +730,7 @@ double GRIBRasterBand::GetNoDataValue( int *pbSuccess )
 
     CPLErr eErr = LoadData();
     if (eErr != CE_None ||
-        m_Grib_MetaData == NULL ||
+        m_Grib_MetaData == nullptr ||
         m_Grib_MetaData->gridAttrib.f_miss == 0)
     {
         if (pbSuccess)
@@ -797,8 +797,8 @@ void GRIBRasterBand::ReadGribData( DataSource &fp, sInt4 start, int subgNum,
                     majEarth, minEarth, f_SimpleVer, simpWWA, &f_endMsg, &lwlf, &uprt);
 
     // No intention to show errors, just swallow it and free the memory.
-    char *errMsg = errSprintf(NULL);
-    if( errMsg != NULL )
+    char *errMsg = errSprintf(nullptr);
+    if( errMsg != nullptr )
         CPLDebug("GRIB", "%s", errMsg);
     free(errMsg);
     IS_Free(&is);
@@ -812,13 +812,13 @@ void GRIBRasterBand::UncacheData()
 {
     if (m_Grib_Data)
         free(m_Grib_Data);
-    m_Grib_Data = NULL;
+    m_Grib_Data = nullptr;
     if (m_Grib_MetaData)
     {
         MetaFree(m_Grib_MetaData);
         delete m_Grib_MetaData;
     }
-    m_Grib_MetaData = NULL;
+    m_Grib_MetaData = nullptr;
 }
 
 /************************************************************************/
@@ -838,7 +838,7 @@ GRIBRasterBand::~GRIBRasterBand()
 /************************************************************************/
 
 GRIBDataset::GRIBDataset() :
-    fp(NULL),
+    fp(nullptr),
     pszProjection(CPLStrdup("")),
     nCachedBytes(0),
     // Switch caching strategy once 100 MB threshold is reached.
@@ -847,7 +847,7 @@ GRIBDataset::GRIBDataset() :
         static_cast<GIntBig>(atoi(CPLGetConfigOption("GRIB_CACHEMAX", "100")))
         * 1024 * 1024),
     bCacheOnlyOneBand(FALSE),
-    poLastUsedBand(NULL)
+    poLastUsedBand(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -865,7 +865,7 @@ GRIBDataset::~GRIBDataset()
 
 {
     FlushCache();
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL(fp);
 
     CPLFree(pszProjection);
@@ -922,13 +922,13 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 #endif
-    if( poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     // A fast "probe" on the header that is partially read in memory.
-    char *buff = NULL;
+    char *buff = nullptr;
     uInt4 buffLen = 0;
     sInt4 sect0[SECT0LEN_WORD] = { 0 };
     uInt4 gribLen = 0;
@@ -940,11 +940,11 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
     MemoryDataSource mds(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
     if (ReadSECT0(mds, &buff, &buffLen, -1, sect0, &gribLen, &version) < 0) {
         free(buff);
-        char *errMsg = errSprintf(NULL);
-        if( errMsg != NULL && strstr(errMsg,"Ran out of file") == NULL )
+        char *errMsg = errSprintf(nullptr);
+        if( errMsg != nullptr && strstr(errMsg,"Ran out of file") == nullptr )
             CPLDebug("GRIB", "%s", errMsg);
         free(errMsg);
-        return NULL;
+        return nullptr;
     }
     free(buff);
 
@@ -954,14 +954,14 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The GRIB driver does not support update access to existing "
                  "datasets.");
-        return NULL;
+        return nullptr;
     }
 
     // Create a corresponding GDALDataset.
     GRIBDataset *poDS = new GRIBDataset();
 
     poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
 
     // Make an inventory of the GRIB file.
     // The inventory does not contain all the information needed for
@@ -979,8 +979,8 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( oInventories.result() <= 0 )
     {
-        char *errMsg = errSprintf(NULL);
-        if( errMsg != NULL )
+        char *errMsg = errSprintf(nullptr);
+        if( errMsg != nullptr )
             CPLDebug("GRIB", "%s", errMsg);
         free(errMsg);
 
@@ -993,14 +993,14 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLReleaseMutex(hGRIBMutex);
         delete poDS;
         CPLAcquireMutex(hGRIBMutex, 1000.0);
-        return NULL;
+        return nullptr;
     }
 
     // Create band objects.
     for (uInt4 i = 0; i < oInventories.length(); ++i)
     {
         inventoryType *psInv = oInventories.get(i);
-        GRIBRasterBand *gribBand = NULL;
+        GRIBRasterBand *gribBand = nullptr;
         uInt4 bandNr = i + 1;
 
         // GRIB messages can be preceded by "garbage". GRIB2Inventory()
@@ -1030,12 +1030,12 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
         {
             // Important: set DataSet extents before creating first RasterBand
             // in it.
-            double *data = NULL;
-            grib_MetaData *metaData = NULL;
+            double *data = nullptr;
+            grib_MetaData *metaData = nullptr;
             GRIBRasterBand::ReadGribData(grib_fp, 0,
                                          psInv->subgNum,
                                          &data, &metaData);
-            if( data == NULL || metaData == NULL || metaData->gds.Nx < 1 ||
+            if( data == nullptr || metaData == nullptr || metaData->gds.Nx < 1 ||
                 metaData->gds.Ny < 1 )
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
@@ -1047,16 +1047,16 @@ GDALDataset *GRIBDataset::Open( GDALOpenInfo *poOpenInfo )
                 CPLReleaseMutex(hGRIBMutex);
                 delete poDS;
                 CPLAcquireMutex(hGRIBMutex, 1000.0);
-                if (metaData != NULL)
+                if (metaData != nullptr)
                 {
                     MetaFree(metaData);
                     delete metaData;
                 }
-                if (data != NULL)
+                if (data != nullptr)
                 {
                     free(data);
                 }
-                return NULL;
+                return nullptr;
             }
 
             // Set the DataSet's x,y size, georeference and projection from
@@ -1189,7 +1189,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 
     if (meta->gds.f_sphere)
     {
-        oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
+        oSRS.SetGeogCS("Coordinate System imported from GRIB file", nullptr,
                        "Sphere", a, 0.0);
     }
     else
@@ -1210,12 +1210,12 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         else if( std::abs(a-6378137.0) < 0.01
                 && std::abs(fInv-298.257222101) < 1e-9 ) // GRS80
         {
-            oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
+            oSRS.SetGeogCS("Coordinate System imported from GRIB file", nullptr,
                            "GRS80", 6378137., 298.257222101);
         }
         else
         {
-            oSRS.SetGeogCS("Coordinate System imported from GRIB file", NULL,
+            oSRS.SetGeogCS("Coordinate System imported from GRIB file", nullptr,
                         "Spheroid imported from GRIB file", a, fInv);
         }
     }
@@ -1257,7 +1257,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
         OGRCoordinateTransformation *poTransformLLtoSRS =
             OGRCreateCoordinateTransformation(&(oLL), &(oSRS));
         // Transform it to meters.
-        if( (poTransformLLtoSRS != NULL) &&
+        if( (poTransformLLtoSRS != nullptr) &&
             poTransformLLtoSRS->Transform(1, &rMinX, &rMaxY) )
         {
             if (meta->gds.scan == GRIB2BIT_2)  // Y is minY, GDAL wants maxY.
@@ -1360,7 +1360,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     }
 
     CPLFree(pszProjection);
-    pszProjection = NULL;
+    pszProjection = nullptr;
     oSRS.exportToWkt(&pszProjection);
 }
 
@@ -1370,10 +1370,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 
 static void GDALDeregister_GRIB( GDALDriver * )
 {
-    if( hGRIBMutex != NULL )
+    if( hGRIBMutex != nullptr )
     {
         CPLDestroyMutex(hGRIBMutex);
-        hGRIBMutex = NULL;
+        hGRIBMutex = nullptr;
     }
 }
 
@@ -1419,7 +1419,7 @@ GDALGRIBDriver::GDALGRIBDriver() : bHasFullInitMetadata(false)
 
 char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
@@ -1430,7 +1430,7 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
             std::vector<CPLString> aosJ2KDrivers;
             for( size_t i = 0; i < CPL_ARRAYSIZE(apszJ2KDrivers); i++ )
             {
-                if( GDALGetDriverByName(apszJ2KDrivers[i]) != NULL )
+                if( GDALGetDriverByName(apszJ2KDrivers[i]) != nullptr )
                 {
                     aosJ2KDrivers.push_back(apszJ2KDrivers[i]);
                 }
@@ -1444,7 +1444,7 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
 "       <Value>SIMPLE_PACKING</Value>"
 "       <Value>COMPLEX_PACKING</Value>"
 "       <Value>IEEE_FLOATING_POINT</Value>");
-            if( GDALGetDriverByName("PNG") != NULL )
+            if( GDALGetDriverByName("PNG") != nullptr )
                 osCreationOptionList +=
 "       <Value>PNG</Value>";
             if( !aosJ2KDrivers.empty() )
@@ -1510,7 +1510,7 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
         }
         return aosMetadata.List();
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1520,7 +1520,7 @@ char** GDALGRIBDriver::GetMetadata(const char* pszDomain)
 const char* GDALGRIBDriver::GetMetadataItem(const char* pszName,
                                             const char* pszDomain)
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         // Defer until necessary the setting of the CreationOptionList
         // to let a chance to JPEG2000 drivers to have been loaded.
@@ -1538,7 +1538,7 @@ CPLErr GDALGRIBDriver::SetMetadataItem(
                 const char* pszName, const char* pszValue,
                 const char* pszDomain)
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         aosMetadata.SetNameValue(pszName, pszValue);
         return CE_None;
@@ -1553,7 +1553,7 @@ CPLErr GDALGRIBDriver::SetMetadataItem(
 void GDALRegister_GRIB()
 
 {
-    if( GDALGetDriverByName("GRIB") != NULL )
+    if( GDALGetDriverByName("GRIB") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALGRIBDriver();

@@ -136,11 +136,11 @@ public:
     //int         GetMaxAttrIndex() { return nAttrMax; }
     const S57AttrInfo *GetAttrInfo( int i );
     const char *GetAttrName( int i )
-    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osName.c_str(); }
+    { return GetAttrInfo(i) == nullptr ? nullptr : aoAttrInfos[i]->osName.c_str(); }
     const char *GetAttrAcronym( int i )
-    { return GetAttrInfo(i) == NULL ? NULL : aoAttrInfos[i]->osAcronym.c_str(); }
+    { return GetAttrInfo(i) == nullptr ? nullptr : aoAttrInfos[i]->osAcronym.c_str(); }
     char        GetAttrType( int i )
-    { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chType; }
+    { return GetAttrInfo(i) == nullptr ? '\0' : aoAttrInfos[i]->chType; }
 #define SAT_ENUM        'E'
 #define SAT_LIST        'L'
 #define SAT_FLOAT       'F'
@@ -149,7 +149,7 @@ public:
 #define SAT_FREE_TEXT   'S'
 
     char        GetAttrClass( int i )
-    { return GetAttrInfo(i) == NULL ? '\0' : aoAttrInfos[i]->chClass; }
+    { return GetAttrInfo(i) == nullptr ? '\0' : aoAttrInfos[i]->chClass; }
     int         FindAttrByAcronym( const char * );
 };
 
@@ -184,7 +184,7 @@ class S57ClassContentExplorer
     const char *GetDescription() const;
     const char *GetAcronym() const;
 
-    char      **GetAttributeList( const char * = NULL );
+    char      **GetAttributeList( const char * = nullptr );
 
     char        GetClassCode() const;
     char      **GetPrimitives();
@@ -306,11 +306,11 @@ class CPL_DLL S57Reader
     void                AssembleAreaGeometry( DDFRecord *, OGRFeature * );
 
     bool                FetchPoint( int, int,
-                                    double *, double *, double * = NULL );
+                                    double *, double *, double * = nullptr );
     bool                FetchLine( DDFRecord *, int, int, OGRLineString * );
 
     OGRFeatureDefn     *FindFDefn( DDFRecord * );
-    int                 ParseName( DDFField *, int = 0, int * = NULL );
+    int                 ParseName( DDFField *, int = 0, int * = nullptr );
 
     // cppcheck-suppress functionStatic
     bool                ApplyRecordUpdate( DDFRecord *, DDFRecord * );
@@ -333,11 +333,11 @@ class CPL_DLL S57Reader
 
     bool                Ingest();
     bool                ApplyUpdates( DDFModule * );
-    bool                FindAndApplyUpdates( const char *pszPath=NULL );
+    bool                FindAndApplyUpdates( const char *pszPath=nullptr );
 
     void                Rewind();
-    OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
-    OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = NULL );
+    OGRFeature          *ReadNextFeature( OGRFeatureDefn * = nullptr );
+    OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = nullptr );
     OGRFeature          *ReadVector( int nFID, int nRCNM );
     OGRFeature          *ReadDSID();
 
@@ -374,14 +374,14 @@ public:
     bool                WriteCompleteFeature( OGRFeature *poFeature );
     bool                WriteDSID( int nEXPP = 1,
                                    int nINTU = 4,
-                                   const char *pszDSNM = NULL,
-                                   const char *pszEDTN = NULL,
-                                   const char *pszUPDN = NULL,
-                                   const char *pszUADT = NULL,
-                                   const char *pszISDT = NULL,
-                                   const char *pszSTED = NULL,
+                                   const char *pszDSNM = nullptr,
+                                   const char *pszEDTN = nullptr,
+                                   const char *pszUPDN = nullptr,
+                                   const char *pszUADT = nullptr,
+                                   const char *pszISDT = nullptr,
+                                   const char *pszSTED = nullptr,
                                    int nAGEN = 0,
-                                   const char *pszCOMT = NULL,
+                                   const char *pszCOMT = nullptr,
                                    int nNOMR = 0, int nNOGR = 0,
                                    int nNOLR = 0, int nNOIN = 0,
                                    int nNOCN = 0, int nNOED = 0 );

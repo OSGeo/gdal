@@ -73,7 +73,7 @@ OGRDWGLayer::OGRDWGLayer( OGRDWGDataSource *poDSIn )
         if( EQUAL(m_poBlock->getName(),"*Model_Space") )
             break;
         else
-            m_poBlock = NULL;
+            m_poBlock = nullptr;
     }
 
     ResetReading();
@@ -87,7 +87,7 @@ OGRDWGLayer::~OGRDWGLayer()
 
 {
     ClearPendingFeatures();
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "DWG", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -185,7 +185,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
     CPLString osSubClasses;
     OdRxClass *poClass = poEntity->isA();
 
-    while( poClass != NULL )
+    while( poClass != nullptr )
     {
         if( !osSubClasses.empty() )
             osSubClasses = ":" + osSubClasses;
@@ -206,7 +206,7 @@ void OGRDWGLayer::TranslateGenericProperties( OGRFeature *poFeature,
     OdResBuf *poResBuf = poResBufBase;
     CPLString osFullXData;
 
-    for ( ; poResBuf != NULL; poResBuf = poResBuf->next() )
+    for ( ; poResBuf != nullptr; poResBuf = poResBuf->next() )
     {
         CPLString osXDataItem;
 
@@ -326,7 +326,7 @@ void OGRDWGLayer::PrepareLineStyle( OGRFeature *poFeature )
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             nColor = atoi(pszValue);
     }
 
@@ -424,7 +424,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 /*      We need to escape double quotes with backslashes before they    */
 /*      can be inserted in the style string.                            */
 /* -------------------------------------------------------------------- */
-    if( strchr( osText, '"') != NULL )
+    if( strchr( osText, '"') != nullptr )
     {
         CPLString osEscaped;
         size_t iC;
@@ -452,7 +452,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
     {
         CPLString osLayer = poFeature->GetFieldAsString("Layer");
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             nColor = atoi(pszValue);
     }
 
@@ -465,7 +465,7 @@ OGRFeature *OGRDWGLayer::TranslateMTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma = NULL;
+    char* pszComma = nullptr;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
@@ -547,7 +547,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 /*      We need to escape double quotes with backslashes before they    */
 /*      can be inserted in the style string.                            */
 /* -------------------------------------------------------------------- */
-    if( strchr( osText, '"') != NULL )
+    if( strchr( osText, '"') != nullptr )
     {
         CPLString osEscaped;
         size_t iC;
@@ -582,7 +582,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
     if( nColor < 1 || nColor > 255 )
     {
         const char *pszValue = poDS->LookupLayerProperty( osLayer, "Color" );
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
             nColor = atoi(pszValue);
     }
 
@@ -597,7 +597,7 @@ OGRFeature *OGRDWGLayer::TranslateTEXT( OdDbEntityPtr poEntity )
 
     CPLString osStyle;
     char szBuffer[64];
-    char* pszComma = NULL;
+    char* pszComma = nullptr;
 
     osStyle.Printf("LABEL(f:\"Arial\",t:\"%s\"",osText.c_str());
 
@@ -685,7 +685,7 @@ OGRFeature *OGRDWGLayer::TranslateLWPOLYLINE( OdDbEntityPtr poEntity )
     if(oSmoothPolyline.IsEmpty())
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
     if( poPL->isClosed() )
@@ -1078,15 +1078,15 @@ public:
     double dfZScale;
     double dfAngle;
 
-    OGRSpatialReference *GetSourceCS() override { return NULL; }
-    OGRSpatialReference *GetTargetCS() override { return NULL; }
+    OGRSpatialReference *GetSourceCS() override { return nullptr; }
+    OGRSpatialReference *GetTargetCS() override { return nullptr; }
     int Transform( int nCount,
                    double *x, double *y, double *z ) override
-        { return TransformEx( nCount, x, y, z, NULL ); }
+        { return TransformEx( nCount, x, y, z, nullptr ); }
 
     int TransformEx( int nCount,
-                     double *x, double *y, double *z = NULL,
-                     int *pabSuccess = NULL ) override
+                     double *x, double *y, double *z = nullptr,
+                     int *pabSuccess = nullptr ) override
         {
             int i;
             for( i = 0; i < nCount; i++ )
@@ -1175,16 +1175,16 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 /* -------------------------------------------------------------------- */
     DWGBlockDefinition *poBlock = poDS->LookupBlock( osBlockName );
 
-    if( poBlock == NULL )
+    if( poBlock == nullptr )
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Transform the geometry.                                         */
 /* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry != NULL )
+    if( poBlock->poGeometry != nullptr )
     {
         OGRGeometry *poGeometry = poBlock->poGeometry->clone();
 
@@ -1208,7 +1208,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
         OGRFeature *poSubFeature = poBlock->apoFeatures[iSubFeat]->Clone();
         CPLString osCompEntityId;
 
-        if( poSubFeature->GetGeometryRef() != NULL )
+        if( poSubFeature->GetGeometryRef() != nullptr )
             poSubFeature->GetGeometryRef()->transform( &oTransformer );
 
         ACAdjustText( dfAngle, oScale.sx, oScale.sy, poSubFeature );
@@ -1248,10 +1248,10 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 /*      return NULL and let the machinery find the rest of the          */
 /*      features in the pending feature stack.                          */
 /* -------------------------------------------------------------------- */
-    if( poBlock->poGeometry == NULL )
+    if( poBlock->poGeometry == nullptr )
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -1266,7 +1266,7 @@ OGRFeature *OGRDWGLayer::TranslateINSERT( OdDbEntityPtr poEntity )
 OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
 
 {
-    OGRFeature *poFeature = NULL;
+    OGRFeature *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we have pending features, return one of them.                */
@@ -1283,14 +1283,14 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Fetch the next entity.                                          */
 /* -------------------------------------------------------------------- */
-    while( poFeature == NULL && !poEntIter->done() )
+    while( poFeature == nullptr && !poEntIter->done() )
     {
 
         OdDbObjectId oId = poEntIter->objectId();
         OdDbEntityPtr poEntity = OdDbEntity::cast( oId.openObject() );
 
         if (poEntity.isNull())
-            return NULL;
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      What is the class name for this entity?                         */
@@ -1361,7 +1361,7 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
         else if( EQUAL(pszEntityClassName,"AcDbBlockReference") )
         {
             poFeature = TranslateINSERT( poEntity );
-            if( poFeature == NULL && !apoPendingFeatures.empty() )
+            if( poFeature == nullptr && !apoPendingFeatures.empty() )
             {
                 poFeature = apoPendingFeatures.front();
                 apoPendingFeatures.pop();
@@ -1383,7 +1383,7 @@ OGRFeature *OGRDWGLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
 /*      Set FID.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
     {
         poFeature->SetFID( iNextFID++ );
         m_nFeaturesRead++;
@@ -1403,12 +1403,12 @@ OGRFeature *OGRDWGLayer::GetNextFeature()
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
             return poFeature;

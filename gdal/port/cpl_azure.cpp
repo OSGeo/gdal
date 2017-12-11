@@ -56,7 +56,7 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     if( osDate.empty() )
     {
         char szDate[64];
-        time_t nNow = time(NULL);
+        time_t nNow = time(nullptr);
         struct tm tm;
         CPLUnixTimeToYMDHMS(nNow, &tm);
         strftime(szDate, sizeof(szDate), "%a, %d %b %Y %H:%M:%S GMT", &tm);
@@ -132,7 +132,7 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
     CPLString osAuthorization("SharedKey " + osStorageAccount + ":" + pszB64Signature);
     CPLFree(pszB64Signature);
 
-    struct curl_slist *headers=NULL;
+    struct curl_slist *headers=nullptr;
     headers = curl_slist_append(
         headers, CPLSPrintf("x-ms-date: %s", osDate.c_str()));
     headers = curl_slist_append(
@@ -281,7 +281,7 @@ VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* ps
 
     if( !GetConfiguration(bUseHTTPS, osEndpoint, osStorageAccount, osStorageKey) )
     {
-        return NULL;
+        return nullptr;
     }
 
     // pszURI == bucket/object

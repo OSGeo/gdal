@@ -260,7 +260,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
     bool bProjAllocated = false;
 
-    if( padfPrjParams == NULL )
+    if( padfPrjParams == nullptr )
     {
         padfPrjParams = static_cast<double *>(CPLMalloc(8 * sizeof(double)));
         if( !padfPrjParams )
@@ -439,7 +439,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                  && iEllips < NUMBER_OF_ELLIPSOIDS
                  && aoEllips[iEllips] )
         {
-            char *pszName = NULL;
+            char *pszName = nullptr;
             double dfSemiMajor = 0.0;
             double dfInvFlattening = 0.0;
 
@@ -454,7 +454,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                    CPLString().Printf(
                        "Not specified (based on %s spheroid)", pszName ),
                    pszName, dfSemiMajor, dfInvFlattening,
-                   NULL, 0.0, NULL, 0.0 );
+                   nullptr, 0.0, nullptr, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iEllips] );
             }
             else
@@ -572,7 +572,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     {
         *piProjSys = PAN_PROJ_NONE;
     }
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",
@@ -768,7 +768,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
     const char *pszDatum = GetAttrValue( "DATUM" );
 
-    if( pszDatum == NULL )
+    if( pszDatum == nullptr )
     {
         *piDatum = PAN_DATUM_NONE;
         *piEllips = PAN_ELLIPSOID_NONE;
@@ -804,7 +804,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                 double dfSM = 0.0;
                 double dfIF = 1.0;
 
-                if( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
                                          &dfSM, &dfIF ) == OGRERR_NONE
                     && CPLIsEqual(dfSemiMajor, dfSM)
                     && CPLIsEqual(dfInvFlattening, dfIF) )

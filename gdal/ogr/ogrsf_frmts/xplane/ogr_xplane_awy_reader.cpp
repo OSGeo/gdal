@@ -44,8 +44,8 @@ OGRXPlaneReader* OGRXPlaneCreateAwyFileReader( OGRXPlaneDataSource* poDataSource
 /*                         OGRXPlaneAwyReader()                         */
 /************************************************************************/
 OGRXPlaneAwyReader::OGRXPlaneAwyReader() :
-    poAirwaySegmentLayer(NULL),
-    poAirwayIntersectionLayer(NULL)
+    poAirwaySegmentLayer(nullptr),
+    poAirwayIntersectionLayer(nullptr)
 {}
 
 /************************************************************************/
@@ -97,8 +97,8 @@ int OGRXPlaneAwyReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneAwyReader::Read()
 {
-    const char* pszLine = NULL;
-    while((pszLine = CPLReadLineL(fp)) != NULL)
+    const char* pszLine = nullptr;
+    while((pszLine = CPLReadLineL(fp)) != nullptr)
     {
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
@@ -108,27 +108,27 @@ void OGRXPlaneAwyReader::Read()
         if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             bEOF = true;
             return;
         }
         else if( nTokens == 0 || !assertMinCol(10) )
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             continue;
         }
 
         ParseRecord();
 
         CSLDestroy(papszTokens);
-        papszTokens = NULL;
+        papszTokens = nullptr;
 
         if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
-    papszTokens = NULL;
+    papszTokens = nullptr;
     bEOF = true;
 }
 
@@ -394,7 +394,7 @@ OGRFeature*
     poFeature->SetGeometryDirectly( new OGRPoint( dfLon, dfLat ) );
     poFeature->SetField( 0, pszIntersectionName );
 
-    if (CPLHashSetLookup(poSet, poFeature) == NULL)
+    if (CPLHashSetLookup(poSet, poFeature) == nullptr)
     {
         CPLHashSetInsert(poSet, poFeature->Clone());
         RegisterFeature(poFeature);
@@ -404,7 +404,7 @@ OGRFeature*
     else
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 }
 

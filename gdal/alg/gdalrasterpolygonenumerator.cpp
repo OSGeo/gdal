@@ -48,8 +48,8 @@ GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::GDALRasterPolygonEnumerator
     int nConnectednessIn )
 
 {
-    panPolyIdMap = NULL;
-    panPolyValue = NULL;
+    panPolyIdMap = nullptr;
+    panPolyValue = nullptr;
     nNextPolygonId = 0;
     nPolyAlloc = 0;
     nConnectedness = nConnectednessIn;
@@ -78,8 +78,8 @@ void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::Clear()
     CPLFree( panPolyIdMap );
     CPLFree( panPolyValue );
 
-    panPolyIdMap = NULL;
-    panPolyValue = NULL;
+    panPolyIdMap = nullptr;
+    panPolyValue = nullptr;
 
     nNextPolygonId = 0;
     nPolyAlloc = 0;
@@ -212,7 +212,7 @@ void GDALRasterPolygonEnumeratorT<DataType,EqualityTest>::ProcessLine(
 /* -------------------------------------------------------------------- */
 /*      Special case for the first line.                                */
 /* -------------------------------------------------------------------- */
-    if( panLastLineVal == NULL )
+    if( panLastLineVal == nullptr )
     {
         for( i=0; i < nXSize; i++ )
         {

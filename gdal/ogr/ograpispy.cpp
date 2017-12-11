@@ -46,10 +46,10 @@ CPL_CVSID("$Id$")
 #ifdef OGRAPISPY_ENABLED
 
 int bOGRAPISpyEnabled = FALSE;
-static CPLMutex* hMutex = NULL;
+static CPLMutex* hMutex = nullptr;
 static CPLString osSnapshotPath;
 static CPLString osSpyFile;
-static FILE* fpSpyFile = NULL;
+static FILE* fpSpyFile = nullptr;
 extern "C" int CPL_DLL GDALIsInGlobalDestructor(void);
 
 // Keep in sync with cpl_conv.cpp
@@ -87,7 +87,7 @@ class FeatureDefnDescription
     std::map<OGRFieldDefnH, int> oMapFieldDefn;
     std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn;
 
-    FeatureDefnDescription(): hFDefn(NULL), iUniqueNumber(-1) {}
+    FeatureDefnDescription(): hFDefn(nullptr), iUniqueNumber(-1) {}
     FeatureDefnDescription( OGRFeatureDefnH hFDefnIn, int iUniqueNumberIn ):
         hFDefn(hFDefnIn), iUniqueNumber(iUniqueNumberIn) {}
     void Free();
@@ -98,8 +98,8 @@ class FeatureDefnDescription
 static std::map<OGRDataSourceH, DatasetDescription> oMapDS;
 static std::set<int> oSetDSIndex;
 static std::map<OGRLayerH, CPLString> oGlobalMapLayer;
-static OGRLayerH hLayerGetNextFeature = NULL;
-static OGRLayerH hLayerGetLayerDefn = NULL;
+static OGRLayerH hLayerGetNextFeature = nullptr;
+static OGRLayerH hLayerGetLayerDefn = nullptr;
 static bool bDeferGetFieldCount = false;
 static int nGetNextFeatureCalls = 0;
 static std::set<CPLString> aoSetCreatedDS;
@@ -136,16 +136,16 @@ void OGRAPISpyDestroyMutex()
     if( hMutex )
     {
         CPLDestroyMutex(hMutex);
-        hMutex = NULL;
+        hMutex = nullptr;
     }
 }
 
 static void OGRAPISpyFileReopen()
 {
-    if( fpSpyFile == NULL )
+    if( fpSpyFile == nullptr )
     {
         fpSpyFile = fopen(osSpyFile, "ab");
-        if( fpSpyFile == NULL )
+        if( fpSpyFile == nullptr )
             fpSpyFile = stderr;
     }
 }
@@ -155,14 +155,14 @@ static void OGRAPISpyFileClose()
     if( fpSpyFile != stdout && fpSpyFile != stderr )
     {
         fclose(fpSpyFile);
-        fpSpyFile = NULL;
+        fpSpyFile = nullptr;
     }
 }
 
 static bool OGRAPISpyEnabled()
 {
-    const char* pszSpyFile = CPLGetConfigOption("OGR_API_SPY_FILE", NULL);
-    bOGRAPISpyEnabled = pszSpyFile != NULL;
+    const char* pszSpyFile = CPLGetConfigOption("OGR_API_SPY_FILE", nullptr);
+    bOGRAPISpyEnabled = pszSpyFile != nullptr;
     if( !bOGRAPISpyEnabled )
     {
         osSpyFile.resize(0);
@@ -191,7 +191,7 @@ static bool OGRAPISpyEnabled()
         fpSpyFile = stderr;
     else
         fpSpyFile = fopen(pszSpyFile, "wb");
-    if( fpSpyFile == NULL )
+    if( fpSpyFile == nullptr )
         fpSpyFile = stderr;
 
     fprintf(fpSpyFile,
@@ -211,13 +211,13 @@ static bool OGRAPISpyEnabled()
 
 static CPLString OGRAPISpyGetOptions( char** papszOptions )
 {
-    if( papszOptions == NULL )
+    if( papszOptions == nullptr )
     {
         return "[]";
     }
 
     CPLString options = "[";
-    for( char** papszIter = papszOptions; *papszIter != NULL; papszIter++ )
+    for( char** papszIter = papszOptions; *papszIter != nullptr; papszIter++ )
     {
         if( papszIter != papszOptions )
             options += ", ";
@@ -232,7 +232,7 @@ static CPLString OGRAPISpyGetOptions( char** papszOptions )
 
 static CPLString OGRAPISpyGetString( const char* pszStr )
 {
-    if( pszStr == NULL )
+    if( pszStr == nullptr )
         return "None";
     CPLString osRet = "'";
     while( *pszStr )
@@ -285,10 +285,10 @@ static CPLString OGRAPISpyGetAndRegisterLayerVar( OGRDataSourceH hDS,
 
 static CPLString OGRAPISpyGetSRS( OGRSpatialReferenceH hSpatialRef )
 {
-    if( hSpatialRef == NULL )
+    if( hSpatialRef == nullptr )
         return "None";
 
-    char* pszWKT = NULL;
+    char* pszWKT = nullptr;
     reinterpret_cast<OGRSpatialReference*>(hSpatialRef)->exportToWkt(&pszWKT);
     const char* pszRet =
         CPLSPrintf("osr.SpatialReference(\"\"\"%s\"\"\")", pszWKT);
@@ -298,10 +298,10 @@ static CPLString OGRAPISpyGetSRS( OGRSpatialReferenceH hSpatialRef )
 
 static CPLString OGRAPISpyGetGeom( OGRGeometryH hGeom )
 {
-    if( hGeom == NULL )
+    if( hGeom == nullptr )
         return "None";
 
-    char* pszWKT = NULL;
+    char* pszWKT = nullptr;
     reinterpret_cast<OGRGeometry *>(hGeom)->exportToWkt(&pszWKT);
     const char* pszRet = CPLSPrintf("ogr.CreateGeometryFromWkt('%s')", pszWKT);
     CPLFree(pszWKT);
@@ -437,7 +437,7 @@ static CPLString OGRAPISpyGetFeatureDefnVar( OGRFeatureDefnH hFDefn )
 static void OGRAPISpyFlushDefered()
 {
     OGRAPISpyFileReopen();
-    if( hLayerGetLayerDefn != NULL )
+    if( hLayerGetLayerDefn != nullptr )
     {
         OGRFeatureDefnH hDefn =
             reinterpret_cast<OGRFeatureDefnH>(
@@ -454,14 +454,14 @@ static void OGRAPISpyFlushDefered()
             bDeferGetFieldCount = false;
         }
 
-        hLayerGetLayerDefn = NULL;
+        hLayerGetLayerDefn = nullptr;
     }
 
     if( nGetNextFeatureCalls == 1)
     {
         fprintf(fpSpyFile, "%s.GetNextFeature()\n",
             OGRAPISpyGetLayerVar(hLayerGetNextFeature).c_str());
-        hLayerGetNextFeature = NULL;
+        hLayerGetNextFeature = nullptr;
         nGetNextFeatureCalls = 0;
     }
     else if( nGetNextFeatureCalls > 0)
@@ -469,7 +469,7 @@ static void OGRAPISpyFlushDefered()
         fprintf(fpSpyFile, "for i in range(%d):\n", nGetNextFeatureCalls);
         fprintf(fpSpyFile, "    %s.GetNextFeature()\n",
             OGRAPISpyGetLayerVar(hLayerGetNextFeature).c_str());
-        hLayerGetNextFeature = NULL;
+        hLayerGetNextFeature = nullptr;
         nGetNextFeatureCalls = 0;
     }
 }
@@ -485,7 +485,7 @@ int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
     if( VSIStatL( pszName, &sStat ) == 0 )
     {
         GDALDatasetH hDS =
-            GDALOpenEx(pszName, GDAL_OF_VECTOR, NULL, NULL, NULL);
+            GDALOpenEx(pszName, GDAL_OF_VECTOR, nullptr, nullptr, nullptr);
         if( hDS )
         {
             char** papszFileList =
@@ -501,15 +501,15 @@ int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
                 {
                     osBaseDir =
                         CPLFormFilename(osSnapshotPath,
-                                        CPLSPrintf("snapshot_%d", i), NULL );
+                                        CPLSPrintf("snapshot_%d", i), nullptr );
                     if( VSIStatL( osBaseDir, &sStat ) != 0 )
                         break;
                     i++;
                 }
                 VSIMkdir( osBaseDir, 0777 );
-                osSrcDir = CPLFormFilename( osBaseDir, "source", NULL );
+                osSrcDir = CPLFormFilename( osBaseDir, "source", nullptr );
                 VSIMkdir( osSrcDir, 0777 );
-                osWorkingDir = CPLFormFilename( osBaseDir, "working", NULL );
+                osWorkingDir = CPLFormFilename( osBaseDir, "working", nullptr );
                 VSIMkdir( osWorkingDir, 0777 );
 
                 OGRAPISpyFileReopen();
@@ -523,9 +523,9 @@ int OGRAPISpyOpenTakeSnapshot( const char* pszName, int bUpdate )
                 for( char** papszIter = papszFileList; *papszIter; papszIter++ )
                 {
                     CPLString osSnapshotSrcFile = CPLFormFilename(
-                            osSrcDir, CPLGetFilename(*papszIter), NULL);
+                            osSrcDir, CPLGetFilename(*papszIter), nullptr);
                     CPLString osSnapshotWorkingFile = CPLFormFilename(
-                            osWorkingDir, CPLGetFilename(*papszIter), NULL);
+                            osWorkingDir, CPLGetFilename(*papszIter), nullptr);
                     CPLCopyFile( osSnapshotSrcFile, *papszIter );
                     CPLCopyFile( osSnapshotWorkingFile, *papszIter );
                     fprintf(fpSpyFile, "shutil.copy('%s', '%s')\n",
@@ -552,22 +552,22 @@ void OGRAPISpyOpen( const char* pszName, int bUpdate, int iSnapshot,
     {
         CPLString osBaseDir =
             CPLFormFilename(osSnapshotPath,
-                            CPLSPrintf("snapshot_%d", iSnapshot), NULL );
-        CPLString osWorkingDir = CPLFormFilename( osBaseDir, "working", NULL );
-        osName = CPLFormFilename(osWorkingDir, CPLGetFilename(pszName), NULL);
+                            CPLSPrintf("snapshot_%d", iSnapshot), nullptr );
+        CPLString osWorkingDir = CPLFormFilename( osBaseDir, "working", nullptr );
+        osName = CPLFormFilename(osWorkingDir, CPLGetFilename(pszName), nullptr);
         pszName = osName.c_str();
 
-        if( *phDS != NULL )
+        if( *phDS != nullptr )
         {
             GDALClose( reinterpret_cast<GDALDatasetH>(*phDS) );
             *phDS = GDALOpenEx(pszName,
                                GDAL_OF_VECTOR | GDAL_OF_UPDATE,
-                               NULL, NULL, NULL);
+                               nullptr, nullptr, nullptr);
         }
     }
 
     OGRAPISpyFileReopen();
-    if( *phDS != NULL )
+    if( *phDS != nullptr )
         fprintf(fpSpyFile,
                 "%s = ",
                 OGRAPISpyGetDSVar(
@@ -621,14 +621,14 @@ void OGRAPISpyCreateDataSource( OGRSFDriverH hDriver, const char* pszName,
     if( !OGRAPISpyEnabled() ) return;
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    if( hDS != NULL )
+    if( hDS != nullptr )
         fprintf(fpSpyFile, "%s = ", OGRAPISpyGetDSVar(hDS).c_str());
     fprintf(fpSpyFile,
             "ogr.GetDriverByName('%s').CreateDataSource(%s, options = %s)\n",
             GDALGetDriverShortName(reinterpret_cast<GDALDriverH>(hDriver)),
             OGRAPISpyGetString(pszName).c_str(),
             OGRAPISpyGetOptions(papszOptions).c_str());
-    if( hDS != NULL )
+    if( hDS != nullptr )
     {
         aoSetCreatedDS.insert(pszName);
     }
@@ -651,7 +651,7 @@ void OGRAPISpy_DS_GetLayer( OGRDataSourceH hDS, int iLayer, OGRLayerH hLayer )
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    if( hLayer != NULL )
+    if( hLayer != nullptr )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
     fprintf(fpSpyFile, "%s.GetLayer(%d)\n",
@@ -673,7 +673,7 @@ void OGRAPISpy_DS_GetLayerByName( OGRDataSourceH hDS, const char* pszLayerName,
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    if( hLayer != NULL )
+    if( hLayer != nullptr )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
     fprintf(fpSpyFile, "%s.GetLayerByName(%s)\n",
@@ -690,7 +690,7 @@ void OGRAPISpy_DS_ExecuteSQL( OGRDataSourceH hDS,
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    if( hLayer != NULL )
+    if( hLayer != nullptr )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
     fprintf(fpSpyFile, "%s.ExecuteSQL(%s, %s, %s)\n",
@@ -725,7 +725,7 @@ void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
 {
     CPLMutexHolderD(&hMutex);
     OGRAPISpyFlushDefered();
-    if( hLayer != NULL )
+    if( hLayer != nullptr )
         fprintf(fpSpyFile, "%s = ",
             OGRAPISpyGetAndRegisterLayerVar(hDS, hLayer).c_str());
     fprintf(fpSpyFile,
@@ -886,7 +886,7 @@ static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
     for( int i = 0; i < poFeature->GetGeomFieldCount(); i++ )
     {
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(i);
-        if( poGeom != NULL )
+        if( poGeom != nullptr )
         {
             fprintf(fpSpyFile, "f.SetGeomField(%d, %s)\n",
                     i,
@@ -895,7 +895,7 @@ static void OGRAPISpyDumpFeature( OGRFeatureH hFeat )
         }
     }
     const char* pszStyleString = poFeature->GetStyleString();
-    if( pszStyleString != NULL )
+    if( pszStyleString != nullptr )
         fprintf(fpSpyFile, "f.SetStyleString(%s)\n",
                 OGRAPISpyGetString(pszStyleString).c_str() );
 }
@@ -937,7 +937,7 @@ static void OGRAPISpyDumpFieldDefn( OGRFieldDefn* poFieldDefn )
                 poFieldDefn->GetPrecision() );
     if( !poFieldDefn->IsNullable() )
         fprintf(fpSpyFile, "fd.SetNullable(0)\n");
-    if( poFieldDefn->GetDefault() != NULL )
+    if( poFieldDefn->GetDefault() != nullptr )
         fprintf(fpSpyFile, "fd.SetDefault(%s)\n",
                 OGRAPISpyGetString(poFieldDefn->GetDefault()).c_str());
 }
@@ -1012,7 +1012,7 @@ void OGRAPISpy_L_CreateGeomField( OGRLayerH hLayer, OGRGeomFieldDefnH hField,
     fprintf(fpSpyFile, "geom_fd = ogr.GeomFieldDefn(%s, %s)\n",
             OGRAPISpyGetString(poGeomFieldDefn->GetNameRef()).c_str(),
             OGRAPISpyGetGeomType(poGeomFieldDefn->GetType()).c_str());
-    if( poGeomFieldDefn->GetSpatialRef() != NULL )
+    if( poGeomFieldDefn->GetSpatialRef() != nullptr )
         fprintf(
             fpSpyFile, "geom_fd.SetSpatialRef(%s)\n",
             OGRAPISpyGetSRS(
@@ -1171,7 +1171,7 @@ void OGRAPISpy_FD_GetGeomType( OGRFeatureDefnH hDefn )
 void OGRAPISpy_FD_GetFieldCount( OGRFeatureDefnH hDefn )
 {
     CPLMutexHolderD(&hMutex);
-    if( hLayerGetLayerDefn != NULL &&
+    if( hLayerGetLayerDefn != nullptr &&
         reinterpret_cast<OGRFeatureDefnH>(
             reinterpret_cast<OGRLayer *>(
                 hLayerGetLayerDefn)->GetLayerDefn()) ==

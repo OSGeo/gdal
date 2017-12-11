@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRDXFDataSource::OGRDXFDataSource() :
-    fp(NULL),
+    fp(nullptr),
     iEntitiesSectionOffset(0),
     bInlineBlocks(false),
     bMergeBlockGeometries(false),
@@ -66,10 +66,10 @@ OGRDXFDataSource::~OGRDXFDataSource()
 /* -------------------------------------------------------------------- */
 /*      Close file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         VSIFCloseL( fp );
-        fp = NULL;
+        fp = nullptr;
     }
 }
 
@@ -90,7 +90,7 @@ OGRLayer *OGRDXFDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= (int) apoLayers.size() )
-        return NULL;
+        return nullptr;
     else
         return apoLayers[iLayer];
 }
@@ -121,7 +121,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenL( pszFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return FALSE;
 
     oReader.Initialize( fp );
@@ -445,13 +445,13 @@ const char *OGRDXFDataSource::LookupLayerProperty( const char *pszLayer,
                                                    const char *pszProperty )
 
 {
-    if( pszLayer == NULL )
-        return NULL;
+    if( pszLayer == nullptr )
+        return nullptr;
 
     try {
         return (oLayerTable[pszLayer])[pszProperty];
     } catch( ... ) {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -740,7 +740,7 @@ bool OGRDXFDataSource::LookupDimStyle( const char *pszDimStyle,
     std::map<CPLString,CPLString>& oDimStyleProperties )
 
 {
-    if( pszDimStyle == NULL || !oDimStyleTable.count(pszDimStyle) )
+    if( pszDimStyle == nullptr || !oDimStyleTable.count(pszDimStyle) )
     {
         PopulateDefaultDimStyleProperties(oDimStyleProperties);
         return false;
@@ -847,8 +847,8 @@ bool OGRDXFDataSource::ReadHeaderSection()
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
-    const char *pszEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
-    if( pszEncoding != NULL )
+    const char *pszEncoding = CPLGetConfigOption( "DXF_ENCODING", nullptr );
+    if( pszEncoding != nullptr )
         osEncoding = pszEncoding;
 
     if( osEncoding != CPL_ENC_ISO8859_1 )

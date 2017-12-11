@@ -47,7 +47,7 @@ class KRODataset : public RawDataset
     VSILFILE    *fpImage;  // image data file.
 
   public:
-                    KRODataset() : fpImage(NULL) {}
+                    KRODataset() : fpImage(nullptr) {}
                    ~KRODataset();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -72,7 +72,7 @@ KRODataset::~KRODataset()
 {
     FlushCache();
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
     {
         if( VSIFCloseL( fpImage ) != 0 )
         {
@@ -106,7 +106,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -122,10 +122,10 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
 
-    if( poDS->fpImage == NULL )
+    if( poDS->fpImage == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -154,7 +154,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
         !GDALCheckBandCount(nComp, FALSE) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = nXSize;
@@ -178,7 +178,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unhandled depth : %d", nDepth );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const int nDataTypeSize = nDepth / 8;
@@ -189,7 +189,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Too large width / number of bands" );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -212,7 +212,7 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -249,23 +249,23 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create KRO file with unsupported data type '%s'.",
                   GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
     if( nXSize == 0 || nYSize == 0 || nBands == 0 )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create file.                                             */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     size_t nRet = VSIFWriteL("KRO\01", 4, 1, fp);
@@ -303,11 +303,11 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
     if( VSIFCloseL(fp) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, "I/O error" );
-        return NULL;
+        return nullptr;
     }
 
     if( nRet != 6 )
-        return NULL;
+        return nullptr;
 
     return
         reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
@@ -320,7 +320,7 @@ GDALDataset *KRODataset::Create( const char * pszFilename,
 void GDALRegister_KRO()
 
 {
-    if( GDALGetDriverByName( "KRO" ) != NULL )
+    if( GDALGetDriverByName( "KRO" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

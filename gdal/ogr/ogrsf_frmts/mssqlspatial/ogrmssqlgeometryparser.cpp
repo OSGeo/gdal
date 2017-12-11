@@ -113,7 +113,7 @@ ShapeType (1 byte)
 OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 {
     nColType = nGeomColumnType;
-    pszData = NULL;
+    pszData = nullptr;
     chProps = 0;
     nPointSize = 0;
     nPointPos = 0;
@@ -153,7 +153,7 @@ OGRPoint* OGRMSSQLGeometryParser::ReadPoint(int iShape)
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -168,7 +168,7 @@ OGRMultiPoint* OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
 
     for (i = iShape + 1; i < nNumShapes; i++)
     {
-        poGeom = NULL;
+        poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
         {
             if  ( ShapeType(i) == ST_POINT )
@@ -231,7 +231,7 @@ OGRMultiLineString* OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 
     for (i = iShape + 1; i < nNumShapes; i++)
     {
-        poGeom = NULL;
+        poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
         {
             if  ( ShapeType(i) == ST_LINESTRING )
@@ -298,7 +298,7 @@ OGRMultiPolygon* OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
 
     for (i = iShape + 1; i < nNumShapes; i++)
     {
-        poGeom = NULL;
+        poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
         {
             if ( ShapeType(i) == ST_POLYGON )
@@ -323,7 +323,7 @@ OGRGeometryCollection* OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape
 
     for (i = iShape + 1; i < nNumShapes; i++)
     {
-        poGeom = NULL;
+        poGeom = nullptr;
         if (ParentOffset(i) == (unsigned int)iShape)
         {
             switch (ShapeType(i))

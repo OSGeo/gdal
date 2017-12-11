@@ -122,7 +122,7 @@ public:
      */
     void register_group(const std::string& name, group_base* gr)
     {
-        if (gr == 0)
+        if (gr == nullptr)
         {
             throw tut_error("group shall be non-null");
         }
@@ -150,7 +150,7 @@ public:
      */
     void insert_callback(callback* cb)
     {
-        if(cb != NULL)
+        if(cb != nullptr)
         {
             callbacks_.insert(cb);
         }

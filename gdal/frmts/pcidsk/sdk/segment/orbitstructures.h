@@ -624,9 +624,9 @@ namespace PCIDSK
             SPNCoeff = 0;
             bDescending = false;
             Type = OrbNone;
-            AttitudeSeg = NULL;
-            RadarSeg = NULL;
-            AvhrrSeg = NULL;
+            AttitudeSeg = nullptr;
+            RadarSeg = nullptr;
+            AvhrrSeg = nullptr;
         }
 
         /**
@@ -645,9 +645,9 @@ namespace PCIDSK
          */
         EphemerisSeg_t(const EphemerisSeg_t& oES)
         {
-            AttitudeSeg = NULL;
-            RadarSeg = NULL;
-            AvhrrSeg = NULL;
+            AttitudeSeg = nullptr;
+            RadarSeg = nullptr;
+            AvhrrSeg = nullptr;
             Copy(oES);
         }
 
@@ -674,9 +674,9 @@ namespace PCIDSK
             delete AttitudeSeg;
             delete RadarSeg;
             delete AvhrrSeg;
-            AttitudeSeg = NULL;
-            RadarSeg = NULL;
-            AvhrrSeg = NULL;
+            AttitudeSeg = nullptr;
+            RadarSeg = nullptr;
+            AvhrrSeg = nullptr;
             if(oES.AttitudeSeg)
                 AttitudeSeg = new AttitudeSeg_t(*oES.AttitudeSeg);
             if(oES.RadarSeg)

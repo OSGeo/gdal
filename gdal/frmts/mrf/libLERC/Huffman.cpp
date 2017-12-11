@@ -381,7 +381,7 @@ void Huffman::Clear()
     int n = 0;
     m_root->FreeTree(n);
     delete m_root;
-    m_root = NULL;
+    m_root = nullptr;
   }
 }
 

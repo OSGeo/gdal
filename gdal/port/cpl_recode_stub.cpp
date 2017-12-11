@@ -330,7 +330,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
                   "Stub recoding implementation does not support "
                   "CPLRecodeFromWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -362,7 +362,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     if( nDstLen >= nDstBufSize )
     {
         CPLAssert( false ); // too small!
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -420,8 +420,8 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
     {
         pszUTF8Source =
             CPLRecodeStub(pszSource, pszSrcEncoding, CPL_ENC_UTF8);
-        if( pszUTF8Source == NULL )
-            return NULL;
+        if( pszUTF8Source == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -439,7 +439,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
                   pszSrcEncoding, pszDstEncoding );
         if( pszUTF8Source != pszSource )
             CPLFree( pszUTF8Source );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1141,7 +1141,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
 
     // Compute the length in wide characters.
     int wlen = MultiByteToWideChar( src_code_page, MB_ERR_INVALID_CHARS, src,
-                                    -1, 0, 0 );
+                                    -1, nullptr, 0 );
     if( wlen == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION )
     {
         if( !bHaveWarned5 )
@@ -1154,7 +1154,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
         }
 
         // Retry now without MB_ERR_INVALID_CHARS flag.
-        wlen = MultiByteToWideChar( src_code_page, 0, src, -1, 0, 0 );
+        wlen = MultiByteToWideChar( src_code_page, 0, src, -1, nullptr, 0 );
     }
 
     // Do the actual conversion.
@@ -1169,9 +1169,9 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
     BOOL bUsedDefaultChar = FALSE;
     int len = 0;
     if( dst_code_page == CP_UTF7 || dst_code_page == CP_UTF8 )
-        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, NULL );
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, nullptr, 0, nullptr, nullptr );
     else
-        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0,
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, nullptr, 0, nullptr,
                                    &bUsedDefaultChar );
     if( bUsedDefaultChar )
     {
@@ -1187,7 +1187,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
 
     // Do the actual conversion.
     char* pszResult = static_cast<char *>(CPLCalloc(sizeof(char), len + 1));
-    WideCharToMultiByte(dst_code_page, 0, tbuf, -1, pszResult, len+1, 0, NULL);
+    WideCharToMultiByte(dst_code_page, 0, tbuf, -1, pszResult, len+1, nullptr, nullptr);
     pszResult[len] = 0;
 
     CPLFree(tbuf);

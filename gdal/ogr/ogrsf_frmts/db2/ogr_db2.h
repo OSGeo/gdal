@@ -173,7 +173,7 @@ public:
 
     int         CloseSession();
 
-    int         Failed( int, HSTMT = NULL );
+    int         Failed( int, HSTMT = nullptr );
     HDBC        GetConnection() { return m_hDBC; }
     HENV        GetEnvironment()  { return m_hEnv; }
 };
@@ -246,7 +246,7 @@ public:
     int            Appendf( const char *, ... ) CPL_PRINT_FUNC_FORMAT (2, 3);
     const char    *GetCommand() { return m_pszStatement; }
 
-    int            ExecuteSQL( const char * = NULL );
+    int            ExecuteSQL( const char * = nullptr );
 
     // Results fetching
     int            Fetch( int nOrientation = SQL_FETCH_NEXT,
@@ -263,21 +263,21 @@ public:
     const char    *GetColColumnDef( int );
 
     int            GetColId( const char * );
-    const char    *GetColData( int, const char * = NULL );
-    const char    *GetColData( const char *, const char * = NULL );
+    const char    *GetColData( int, const char * = nullptr );
+    const char    *GetColData( const char *, const char * = nullptr );
     int            GetColDataLength( int );
     int            GetRowCountAffected();
 
     // Fetch special metadata.
     int            GetColumns( const char *pszTable,
-                               const char *pszCatalog = NULL,
-                               const char *pszSchema = NULL );
+                               const char *pszCatalog = nullptr,
+                               const char *pszSchema = nullptr );
     int            GetPrimaryKeys( const char *pszTable,
-                                   const char *pszCatalog = NULL,
-                                   const char *pszSchema = NULL );
+                                   const char *pszCatalog = nullptr,
+                                   const char *pszSchema = nullptr );
 
-    int            GetTables( const char *pszCatalog = NULL,
-                              const char *pszSchema = NULL );
+    int            GetTables( const char *pszCatalog = nullptr,
+                              const char *pszSchema = nullptr );
 
     void           DumpResult( FILE *fp, int bShowSchema = FALSE );
 
@@ -720,10 +720,10 @@ class OGRDB2DataSource : public GDALPamDataset
 
     CPLErr                  ReadTile(const CPLString& osMemFileName,
                                      GByte* pabyTileData,
-                                     int* pbIsLossyFormat = NULL);
+                                     int* pbIsLossyFormat = nullptr);
     GByte*                  ReadTile(int nRow, int nCol);
     GByte*                  ReadTile(int nRow, int nCol, GByte* pabyData,
-                                     int* pbIsLossyFormat = NULL);
+                                     int* pbIsLossyFormat = nullptr);
 
     int                     m_bInWriteTile;
     CPLErr                  WriteTile();
@@ -754,7 +754,7 @@ public:
     virtual ~OGRDB2DataSource();
 //***************** For raster support
 
-    virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
+    virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" ) override;
     virtual char **     GetMetadataDomainList() override;
@@ -832,9 +832,9 @@ public:
 
     virtual int         DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,
-                                       OGRSpatialReference * = NULL,
+                                       OGRSpatialReference * = nullptr,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL ) override;
+                                       char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 

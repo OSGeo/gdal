@@ -66,7 +66,7 @@ static GDALDataset* OGRESRIJSONDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     GeoJSONSourceType nSrcType = ESRIJSONDriverGetSourceType(poOpenInfo);
     if( nSrcType == eGeoJSONSourceUnknown )
-        return NULL;
+        return nullptr;
     return OGRGeoJSONDriverOpenInternal(poOpenInfo, nSrcType, "ESRIJSON");
 }
 
@@ -79,7 +79,7 @@ void RegisterOGRESRIJSON()
     if( !GDAL_CHECK_VERSION("OGR/ESRIJSON driver") )
         return;
 
-    if( GDALGetDriverByName( "ESRIJSON" ) != NULL )
+    if( GDALGetDriverByName( "ESRIJSON" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

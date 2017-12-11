@@ -207,10 +207,10 @@ VSICurlFindStringSensitiveExceptEscapeSequences( char ** papszList,
                                                  const char * pszTarget )
 
 {
-    if( papszList == NULL )
+    if( papszList == nullptr )
         return -1;
 
-    for( int i = 0; papszList[i] != NULL; i++ )
+    for( int i = 0; papszList[i] != nullptr; i++ )
     {
         const char* pszIter1 = papszList[i];
         const char* pszIter2 = pszTarget;
@@ -378,7 +378,7 @@ public:
         if( pbIsDir )
         {
             *pbIsDir = oIter != cacheDirList.end() &&
-                       oIter->second->papszFileList != NULL;
+                       oIter->second->papszFileList != nullptr;
         }
         return oIter != cacheDirList.end();
     }
@@ -439,7 +439,7 @@ class VSICurlHandle : public VSIVirtualHandle
   protected:
     virtual struct curl_slist* GetCurlHeaders( const CPLString& /*osVerb*/,
                                 const struct curl_slist* /* psExistingHeaders */)
-        { return NULL; }
+        { return nullptr; }
     virtual bool AllowAutomaticRedirection() { return true; }
     virtual bool CanRestartOnError( const char*, const char*, bool ) { return false; }
     virtual bool UseLimitRangeGetInsteadOfHead() { return false; }
@@ -451,7 +451,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     VSICurlHandle( VSICurlFilesystemHandler* poFS,
                    const char* pszFilename,
-                   const char* pszURLIn = NULL );
+                   const char* pszURLIn = nullptr );
     virtual ~VSICurlHandle();
 
     virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
@@ -506,9 +506,9 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
         if( *pszFilename == '?' )
             pszFilename ++;
         char** papszTokens = CSLTokenizeString2( pszFilename, "&", 0 );
-        for( int i = 0; papszTokens[i] != NULL; i++ )
+        for( int i = 0; papszTokens[i] != nullptr; i++ )
         {
-            char* pszUnescaped = CPLUnescapeString( papszTokens[i], NULL,
+            char* pszUnescaped = CPLUnescapeString( papszTokens[i], nullptr,
                                                     CPLES_URL );
             CPLFree(papszTokens[i]);
             papszTokens[i] = pszUnescaped;
@@ -517,7 +517,7 @@ static CPLString VSICurlGetURLFromFilename(const char* pszFilename,
         CPLString osURL;
         for( int i = 0; papszTokens[i]; i++ )
         {
-            char* pszKey = NULL;
+            char* pszKey = nullptr;
             const char* pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
             if( pszKey && pszValue )
             {
@@ -611,8 +611,8 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
     lastDownloadedOffset(VSI_L_OFFSET_MAX),
     nBlocksToDownload(1),
     bEOF(false),
-    pfnReadCbk(NULL),
-    pReadCbkUserData(NULL),
+    pfnReadCbk(nullptr),
+    pReadCbkUserData(nullptr),
     bStopOnInterruptUntilUninstall(false),
     bInterrupted(false),
     m_bS3LikeRedirect(false),
@@ -636,7 +636,7 @@ VSICurlHandle::VSICurlHandle( VSICurlFilesystemHandler* poFSIn,
                                                        &m_nMaxRetry,
                                                        &m_dfRetryDelay,
                                                        &m_bUseHead,
-                                                       NULL, NULL,
+                                                       nullptr, nullptr,
                                                        &m_papszHTTPOptions));
     }
 
@@ -682,7 +682,7 @@ int VSICurlHandle::InstallReadCbk( VSICurlReadCbkFunc pfnReadCbkIn,
                                    void* pfnUserDataIn,
                                    int bStopOnInterruptUntilUninstallIn )
 {
-    if( pfnReadCbk != NULL )
+    if( pfnReadCbk != nullptr )
         return FALSE;
 
     pfnReadCbk = pfnReadCbkIn;
@@ -699,11 +699,11 @@ int VSICurlHandle::InstallReadCbk( VSICurlReadCbkFunc pfnReadCbkIn,
 
 int VSICurlHandle::UninstallReadCbk()
 {
-    if( pfnReadCbk == NULL )
+    if( pfnReadCbk == nullptr )
         return FALSE;
 
-    pfnReadCbk = NULL;
-    pReadCbkUserData = NULL;
+    pfnReadCbk = nullptr;
+    pReadCbkUserData = nullptr;
     bStopOnInterruptUntilUninstall = false;
     bInterrupted = false;
     return TRUE;
@@ -787,7 +787,7 @@ static void VSICURLInitWriteFuncStruct( WriteFuncStruct   *psStruct,
                                         VSICurlReadCbkFunc pfnReadCbk,
                                         void              *pReadCbkUserData )
 {
-    psStruct->pBuffer = NULL;
+    psStruct->pBuffer = nullptr;
     psStruct->nSize = 0;
     psStruct->bIsHTTP = false;
     psStruct->bIsInHeader = true;
@@ -934,10 +934,10 @@ static size_t VSICurlHandleWriteFunc( void *buffer, size_t count,
 static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
 {
     return
-        (strstr(pszURL, ".s3.amazonaws.com/") != NULL ||
-         strstr(pszURL, ".storage.googleapis.com/") != NULL) &&
-        (strstr(pszURL, "&Signature=") != NULL ||
-         strstr(pszURL, "?Signature=") != NULL);
+        (strstr(pszURL, ".s3.amazonaws.com/") != nullptr ||
+         strstr(pszURL, ".storage.googleapis.com/") != nullptr) &&
+        (strstr(pszURL, "&Signature=") != nullptr ||
+         strstr(pszURL, "?Signature=") != nullptr);
 }
 
 /************************************************************************/
@@ -947,9 +947,9 @@ static bool VSICurlIsS3LikeSignedURL( const char* pszURL )
 static GIntBig VSICurlGetExpiresFromS3LikeSignedURL( const char* pszURL )
 {
     const char* pszExpires = strstr(pszURL, "&Expires=");
-    if( pszExpires == NULL )
+    if( pszExpires == nullptr )
         pszExpires = strstr(pszURL, "?Expires=");
-    if( pszExpires == NULL )
+    if( pszExpires == nullptr )
         return 0;
     return CPLAtoGIntBig(pszExpires + strlen("&Expires="));
 }
@@ -968,7 +968,7 @@ static bool MultiPerformWait(CURLM* hCurlMultiHandle, int& repeats)
     // 7.28.0
 #if LIBCURL_VERSION_NUM >= 0x071C00
     int numfds = 0;
-    if( curl_multi_wait(hCurlMultiHandle, NULL, 0, 1000, &numfds) != CURLM_OK )
+    if( curl_multi_wait(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "curl_multi_wait() failed");
         return false;
@@ -1018,7 +1018,7 @@ static bool MultiPerformWait(CURLM* hCurlMultiHandle, int& repeats)
 /************************************************************************/
 
 static void MultiPerform(CURLM* hCurlMultiHandle,
-                         CURL* hEasyHandle = NULL)
+                         CURL* hEasyHandle = nullptr)
 {
     int repeats = 0;
 
@@ -1085,7 +1085,7 @@ retry:
             VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
 
     WriteFuncStruct sWriteFuncHeaderData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
 
     CPLString osVerb;
     CPLString osRange; // leave in this scope !
@@ -1107,7 +1107,7 @@ retry:
     // HEAD, as it is a redirect to AWS S3 signed URL, but those are only valid
     // for a given type of HTTP request, and thus GET. This is valid for any
     // signed URL for AWS S3.
-    else if( strstr(osURL, ".tiles.mapbox.com/") != NULL ||
+    else if( strstr(osURL, ".tiles.mapbox.com/") != nullptr ||
              VSICurlIsS3LikeSignedURL(osURL) ||
              !m_bUseHead )
     {
@@ -1134,7 +1134,7 @@ retry:
     // Bug with older curl versions (<=7.16.4) and FTP.
     // See http://curl.haxx.se/mail/lib-2007-08/0312.html
     WriteFuncStruct sWriteFuncData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -1150,7 +1150,7 @@ retry:
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    if( headers != NULL )
+    if( headers != nullptr )
         curl_slist_free_all(headers);
 
     eExists = EXIST_UNKNOWN;
@@ -1160,7 +1160,7 @@ retry:
 
     if( STARTS_WITH(osURL, "ftp") )
     {
-        if( sWriteFuncData.pBuffer != NULL )
+        if( sWriteFuncData.pBuffer != nullptr )
         {
             const char* pszContentLength = strstr(
                 const_cast<const char*>(sWriteFuncData.pBuffer), "Content-Length: ");
@@ -1186,14 +1186,14 @@ retry:
 
         CPLString osEffectiveURL;
         {
-            char *pszEffectiveURL = NULL;
+            char *pszEffectiveURL = nullptr;
             curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL,
                               &pszEffectiveURL);
             if( pszEffectiveURL )
                 osEffectiveURL = pszEffectiveURL;
         }
 
-        if( !osEffectiveURL.empty() && strstr(osEffectiveURL, osURL) == NULL )
+        if( !osEffectiveURL.empty() && strstr(osEffectiveURL, osURL) == nullptr )
         {
             CPLDebug("VSICURL", "Effective URL: %s", osEffectiveURL.c_str());
 
@@ -1240,7 +1240,7 @@ retry:
                 // As our local clock might not be in sync with server clock,
                 // figure out the expiration timestamp in local time
                 m_bS3LikeRedirect = true;
-                m_nExpireTimestampLocal = time(NULL) + nValidity;
+                m_nExpireTimestampLocal = time(nullptr) + nValidity;
                 m_osRedirectURL = osEffectiveURL;
                 CachedFileProp* cachedFileProp =
                     poFS->GetCachedFileProp(m_pszURL);
@@ -1266,12 +1266,12 @@ retry:
         {
             eExists = EXIST_NO;
             fileSize = 0;
-            if( sWriteFuncHeaderData.pBuffer != NULL )
+            if( sWriteFuncHeaderData.pBuffer != nullptr )
             {
                 const char* pszContentRange =
                     strstr(sWriteFuncHeaderData.pBuffer,
                            "Content-Range: bytes ");
-                if( pszContentRange == NULL )
+                if( pszContentRange == nullptr )
                     pszContentRange = strstr(sWriteFuncHeaderData.pBuffer,
                            "content-range: bytes ");
                 if( pszContentRange )
@@ -1284,7 +1284,7 @@ retry:
                 }
 
                 // Add first bytes to cache
-                if( sWriteFuncData.pBuffer != NULL )
+                if( sWriteFuncData.pBuffer != nullptr )
                 {
                     for( size_t nOffset = 0;
                          nOffset + DOWNLOAD_CHUNK_SIZE <= sWriteFuncData.nSize;
@@ -1334,7 +1334,7 @@ retry:
             }
 
             if( UseLimitRangeGetInsteadOfHead() &&
-                sWriteFuncData.pBuffer != NULL &&
+                sWriteFuncData.pBuffer != nullptr &&
                 CanRestartOnError(sWriteFuncData.pBuffer,
                                   sWriteFuncHeaderData.pBuffer,
                                   bSetError) )
@@ -1374,7 +1374,7 @@ retry:
             eExists = EXIST_NO;
             fileSize = 0;
         }
-        else if( sWriteFuncData.pBuffer != NULL )
+        else if( sWriteFuncData.pBuffer != nullptr )
         {
             ProcessGetFileSizeResult( (const char*)sWriteFuncData.pBuffer );
         }
@@ -1456,12 +1456,12 @@ CPLString VSICurlHandle::GetRedirectURLIfValid(CachedFileProp* cachedFileProp,
     CPLString osURL(m_pszURL);
     if( m_bS3LikeRedirect )
     {
-        if( time(NULL) + 1 < m_nExpireTimestampLocal )
+        if( time(nullptr) + 1 < m_nExpireTimestampLocal )
         {
             CPLDebug("VSICURL",
                      "Using redirect URL as it looks to be still valid "
                      "(%d seconds left)",
-                     static_cast<int>(m_nExpireTimestampLocal - time(NULL)));
+                     static_cast<int>(m_nExpireTimestampLocal - time(nullptr)));
             osURL = m_osRedirectURL;
         }
         else
@@ -1515,7 +1515,7 @@ retry:
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -1560,7 +1560,7 @@ retry:
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    if( headers != NULL )
+    if( headers != nullptr )
         curl_slist_free_all(headers);
 
     if( sWriteFuncData.bInterrupted )
@@ -1577,7 +1577,7 @@ retry:
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    char *content_type = NULL;
+    char *content_type = nullptr;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     long mtime = 0;
@@ -1604,14 +1604,14 @@ retry:
 
     CPLString osEffectiveURL;
     {
-        char *pszEffectiveURL = NULL;
+        char *pszEffectiveURL = nullptr;
         curl_easy_getinfo(hCurlHandle, CURLINFO_EFFECTIVE_URL, &pszEffectiveURL);
         if( pszEffectiveURL )
             osEffectiveURL = pszEffectiveURL;
     }
 
     if( !m_bS3LikeRedirect && !osEffectiveURL.empty() &&
-        strstr(osEffectiveURL, m_pszURL) == NULL )
+        strstr(osEffectiveURL, m_pszURL) == nullptr )
     {
         CPLDebug("VSICURL", "Effective URL: %s", osEffectiveURL.c_str());
         if( response_code >= 200 && response_code < 300 &&
@@ -1634,7 +1634,7 @@ retry:
                 // As our local clock might not be in sync with server clock,
                 // figure out the expiration timestamp in local time.
                 m_bS3LikeRedirect = true;
-                m_nExpireTimestampLocal = time(NULL) + nValidity;
+                m_nExpireTimestampLocal = time(nullptr) + nValidity;
                 m_osRedirectURL = osEffectiveURL;
                 cachedFileProp->bS3LikeRedirect = m_bS3LikeRedirect;
                 cachedFileProp->nExpireTimestampLocal = m_nExpireTimestampLocal;
@@ -1648,7 +1648,7 @@ retry:
          response_code != 426) ||
         sWriteFuncHeaderData.bError )
     {
-        if( sWriteFuncData.pBuffer != NULL &&
+        if( sWriteFuncData.pBuffer != nullptr &&
             CanRestartOnError((const char*)sWriteFuncData.pBuffer,
                               (const char*)sWriteFuncHeaderData.pBuffer, false) )
         {
@@ -1708,7 +1708,7 @@ retry:
         // if in the form: "Content-Range: bytes x-y/filesize".
         char* pszContentRange =
             strstr(sWriteFuncHeaderData.pBuffer, "Content-Range: bytes ");
-        if( pszContentRange == NULL )
+        if( pszContentRange == nullptr )
             pszContentRange = strstr(sWriteFuncHeaderData.pBuffer,
                                      "content-range: bytes ");
         if( pszContentRange )
@@ -1843,7 +1843,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
         }
 
         const CachedRegion* psRegion = poFS->GetRegion(m_pszURL, iterOffset);
-        if( psRegion == NULL )
+        if( psRegion == nullptr )
         {
             const vsi_l_offset nOffsetToDownload =
                 (iterOffset / DOWNLOAD_CHUNK_SIZE) * DOWNLOAD_CHUNK_SIZE;
@@ -1881,7 +1881,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             {
                 if( poFS->GetRegion(
                         m_pszURL,
-                        nOffsetToDownload + i * DOWNLOAD_CHUNK_SIZE) != NULL )
+                        nOffsetToDownload + i * DOWNLOAD_CHUNK_SIZE) != nullptr )
                 {
                     nBlocksToDownload = i;
                     break;
@@ -1899,7 +1899,7 @@ size_t VSICurlHandle::Read( void * const pBufferIn, size_t const nSize,
             }
             psRegion = poFS->GetRegion(m_pszURL, iterOffset);
         }
-        if( psRegion == NULL || psRegion->pData == NULL )
+        if( psRegion == nullptr || psRegion->pData == nullptr )
         {
             bEOF = true;
             return 0;
@@ -2029,7 +2029,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
                         VSICurlHandleWriteFunc);
 
         VSICURLInitWriteFuncStruct(&asWriteFuncHeaderData[iRequest],
-                                   NULL, NULL, NULL);
+                                   nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
                          &asWriteFuncHeaderData[iRequest]);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
@@ -2060,7 +2060,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         }
         else
         {
-            apszRanges.push_back(NULL);
+            apszRanges.push_back(nullptr);
             curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
         }
 
@@ -2228,7 +2228,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -2262,7 +2262,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    if( headers != NULL )
+    if( headers != nullptr )
         curl_slist_free_all(headers);
 
     if( sWriteFuncData.bInterrupted )
@@ -2279,7 +2279,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
 
-    char *content_type = NULL;
+    char *content_type = nullptr;
     curl_easy_getinfo(hCurlHandle, CURLINFO_CONTENT_TYPE, &content_type);
 
     if( (response_code != 200 && response_code != 206 &&
@@ -2319,10 +2319,10 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
     int nRet = -1;
     char* pszBoundary;
     CPLString osBoundary;
-    char *pszNext = NULL;
+    char *pszNext = nullptr;
     int iRange = 0;
     int iPart = 0;
-    char* pszEOL = NULL;
+    char* pszEOL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      No multipart if a single range has been requested               */
@@ -2350,7 +2350,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
 
     pszBoundary = strstr(sWriteFuncHeaderData.pBuffer,
                          "Content-Type: multipart/byteranges; boundary=");
-    if( pszBoundary == NULL )
+    if( pszBoundary == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Could not find '%s'",
                   "Content-Type: multipart/byteranges; boundary=" );
@@ -2382,7 +2382,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
     pszNext = strstr(pBuffer, osBoundary.c_str());
-    if( pszNext == NULL )
+    if( pszNext == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "No parts found." );
         goto end;
@@ -2410,7 +2410,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
         {
             pszEOL = strstr(pszNext, "\n");
 
-            if( pszEOL == NULL )
+            if( pszEOL == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Error while parsing multipart content (at line %d)",
@@ -2579,8 +2579,8 @@ int       VSICurlHandle::Close()
 
 VSICurlFilesystemHandler::VSICurlFilesystemHandler()
 {
-    hMutex = NULL;
-    papsRegions = NULL;
+    hMutex = nullptr;
+    papsRegions = nullptr;
     nRegions = 0;
     bUseCacheDisk =
         CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_CACHE", "NO"));
@@ -2594,9 +2594,9 @@ VSICurlFilesystemHandler::~VSICurlFilesystemHandler()
 {
     ClearCache();
 
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/
@@ -2688,7 +2688,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
                 }
                 else
                 {
-                    AddRegion(pszURL, nFileOffsetStart, 0, NULL);
+                    AddRegion(pszURL, nFileOffsetStart, 0, nullptr);
                 }
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
                 return GetRegion(pszURL, nFileOffsetStart);
@@ -2701,7 +2701,7 @@ VSICurlFilesystemHandler::GetRegionFromCacheDisk(const char* pszURL,
         }
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2792,7 +2792,7 @@ VSICurlFilesystemHandler::GetRegion( const char* pszURL,
     }
     if( bUseCacheDisk )
         return GetRegionFromCacheDisk(pszURL, nFileOffsetStart);
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2808,7 +2808,7 @@ void VSICurlFilesystemHandler::AddRegion( const char* pszURL,
 
     const unsigned long pszURLHash = CPLHashSetHashStr(pszURL);
 
-    CachedRegion* psRegion = NULL;
+    CachedRegion* psRegion = nullptr;
     if( nRegions == N_MAX_REGIONS )
     {
         psRegion = papsRegions[N_MAX_REGIONS-1];
@@ -2834,7 +2834,7 @@ void VSICurlFilesystemHandler::AddRegion( const char* pszURL,
     psRegion->pszURLHash = pszURLHash;
     psRegion->nFileOffsetStart = nFileOffsetStart;
     psRegion->nSize = nSize;
-    psRegion->pData = nSize ? static_cast<char *>(CPLMalloc(nSize)) : NULL;
+    psRegion->pData = nSize ? static_cast<char *>(CPLMalloc(nSize)) : nullptr;
     if( nSize )
         memcpy(psRegion->pData, pData, nSize);
 
@@ -2852,7 +2852,7 @@ VSICurlFilesystemHandler::GetCachedFileProp( const char* pszURL )
     CPLMutexHolder oHolder( &hMutex );
 
     CachedFileProp* cachedFileProp = cacheFileSize[pszURL];
-    if( cachedFileProp == NULL )
+    if( cachedFileProp == nullptr )
     {
         cachedFileProp = new CachedFileProp;
         cacheFileSize[pszURL] = cachedFileProp;
@@ -2915,7 +2915,7 @@ void VSICurlFilesystemHandler::ClearCache()
     }
     CPLFree(papsRegions);
     nRegions = 0;
-    papsRegions = NULL;
+    papsRegions = nullptr;
 
     std::map<CPLString, CachedFileProp*>::const_iterator iterCacheFileSize;
     for( iterCacheFileSize = cacheFileSize.begin();
@@ -2964,8 +2964,8 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(
 static bool IsAllowedFilename( const char* pszFilename )
 {
     const char* pszAllowedFilename =
-        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", NULL);
-    if( pszAllowedFilename != NULL )
+        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_FILENAME", nullptr);
+    if( pszAllowedFilename != nullptr )
     {
         return strcmp( pszFilename, pszAllowedFilename ) == 0;
     }
@@ -2978,20 +2978,20 @@ static bool IsAllowedFilename( const char* pszFilename )
     // For example:
     // gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
     const char* pszAllowedExtensions =
-        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
+        CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", nullptr);
     if( pszAllowedExtensions )
     {
         char** papszExtensions =
             CSLTokenizeString2( pszAllowedExtensions, ", ", 0 );
         const size_t nURLLen = strlen(pszFilename);
         bool bFound = false;
-        for( int i = 0; papszExtensions[i] != NULL; i++ )
+        for( int i = 0; papszExtensions[i] != nullptr; i++ )
         {
             const size_t nExtensionLen = strlen(papszExtensions[i]);
             if( EQUAL(papszExtensions[i], "{noext}") )
             {
                 const char* pszLastSlash = strrchr(pszFilename, '/');
-                if( pszLastSlash != NULL && strchr(pszLastSlash, '.') == NULL )
+                if( pszLastSlash != nullptr && strchr(pszLastSlash, '.') == nullptr )
                 {
                     bFound = true;
                     break;
@@ -3023,23 +3023,23 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
         !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr ||
+        strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Only read-only mode is supported for /vsicurl");
-        return NULL;
+        return nullptr;
     }
     if( !IsAllowedFilename( pszFilename ) )
-        return NULL;
+        return nullptr;
 
     bool bListDir = true;
     bool bEmptyDir = false;
     CPLString osURL(
-        VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir, NULL));
+        VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
+                                  &bListDir, &bEmptyDir, nullptr));
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
@@ -3052,8 +3052,8 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
     bool bForceExistsCheck = false;
     CachedFileProp* cachedFileProp =
         GetCachedFileProp(osFilename + strlen(GetFSPrefix()));
-    if( !(cachedFileProp != NULL && cachedFileProp->eExists == EXIST_YES) &&
-        strchr(CPLGetFilename(osFilename), '.') != NULL &&
+    if( !(cachedFileProp != nullptr && cachedFileProp->eExists == EXIST_YES) &&
+        strchr(CPLGetFilename(osFilename), '.') != nullptr &&
         !STARTS_WITH(CPLGetExtension(osFilename), "zip") && !bSkipReadDir)
     {
         char** papszFileList =
@@ -3076,7 +3076,7 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
             else
             {
                 CSLDestroy(papszFileList);
-                return NULL;
+                return nullptr;
             }
         }
         CSLDestroy(papszFileList);
@@ -3084,15 +3084,15 @@ VSIVirtualHandle* VSICurlFilesystemHandler::Open( const char *pszFilename,
 
     VSICurlHandle* poHandle =
         CreateFileHandle(osFilename);
-    if( poHandle == NULL )
-        return NULL;
+    if( poHandle == nullptr )
+        return nullptr;
     if( !bGotFileList || bForceExistsCheck )
     {
         // If we didn't get a filelist, check that the file really exists.
         if( !poHandle->Exists(bSetError) )
         {
             delete poHandle;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -3118,7 +3118,7 @@ static char *VSICurlParserFindEOL( char *pszData )
         pszData++;
 
     if( *pszData == '\0' )
-        return NULL;
+        return nullptr;
 
     return pszData;
 }
@@ -3293,10 +3293,10 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
 {
     *pbGotFileList = false;
 
-    CPLString osURL(VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                              NULL, NULL, NULL));
+    CPLString osURL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
+                                              nullptr, nullptr, nullptr));
     const char* pszDir = strchr(osURL.c_str(), '/');
-    if( pszDir == NULL )
+    if( pszDir == nullptr )
         pszDir = "";
 
     /* Apache */
@@ -3326,21 +3326,21 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
     CPLString osExpectedString_unescaped;
     if( strchr(pszDir, '%') )
     {
-        char* pszUnescapedDir = CPLUnescapeString(pszDir, NULL, CPLES_URL);
+        char* pszUnescapedDir = CPLUnescapeString(pszDir, nullptr, CPLES_URL);
         osExpectedString_unescaped = "<title>Index of ";
         osExpectedString_unescaped += pszUnescapedDir;
         osExpectedString_unescaped += "</title>";
         CPLFree(pszUnescapedDir);
     }
 
-    char* c = NULL;
+    char* c = nullptr;
     int nCount = 0;
     int nCountTable = 0;
     CPLStringList oFileList;
     char* pszLine = pszData;
     bool bIsHTMLDirList = false;
 
-    while( (c = VSICurlParserFindEOL( pszLine )) != NULL )
+    while( (c = VSICurlParserFindEOL( pszLine )) != nullptr )
     {
         *c = '\0';
 
@@ -3354,7 +3354,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
             if( nCountTable == 2 )
             {
                 *pbGotFileList = false;
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -3379,7 +3379,7 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
             // The annoying thing is that what is after ': ' is a subpart of
             // what is after http://server/
             char* pszSubDir = strstr(pszLine, ": ");
-            if( pszSubDir == NULL )
+            if( pszSubDir == nullptr )
                 // or <title>ortho.linz.govt.nz - /tifs/2005_06/</title>
                 pszSubDir = strstr(pszLine, "- ");
             if( pszSubDir )
@@ -3401,15 +3401,15 @@ char** VSICurlFilesystemHandler::ParseHTMLFileList( const char* pszFilename,
             }
         }
         else if( bIsHTMLDirList &&
-                 (strstr(pszLine, "<a href=\"") != NULL ||
-                  strstr(pszLine, "<A HREF=\"") != NULL) &&
+                 (strstr(pszLine, "<a href=\"") != nullptr ||
+                  strstr(pszLine, "<A HREF=\"") != nullptr) &&
                  // Exclude absolute links, like to subversion home.
-                 strstr(pszLine, "<a href=\"http://") == NULL &&
+                 strstr(pszLine, "<a href=\"http://") == nullptr &&
                  // exclude parent directory.
-                 strstr(pszLine, "Parent Directory") == NULL )
+                 strstr(pszLine, "Parent Directory") == nullptr )
         {
             char *beginFilename = strstr(pszLine, "<a href=\"");
-            if( beginFilename == NULL )
+            if( beginFilename == nullptr )
                 beginFilename = strstr(pszLine, "<A HREF=\"");
             beginFilename += strlen("<a href=\"");
             char *endQuote = strchr(beginFilename, '"');
@@ -3501,11 +3501,11 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
     osNextMarker = "";
     bIsTruncated = false;
     CPLXMLNode* psTree = CPLParseXMLString(pszXML);
-    if( psTree == NULL )
+    if( psTree == nullptr )
         return;
     CPLXMLNode* psListBucketResult = CPLGetXMLNode(psTree, "=ListBucketResult");
     CPLXMLNode* psListAllMyBucketsResultBuckets =
-        (psListBucketResult != NULL ) ? NULL :
+        (psListBucketResult != nullptr ) ? nullptr :
         CPLGetXMLNode(psTree, "=ListAllMyBucketsResult.Buckets");
 
     std::vector< std::pair<CPLString, CachedFileProp> > aoProps;
@@ -3518,14 +3518,14 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
         CPLString osPrefix = CPLGetXMLValue(psListBucketResult, "Prefix", "");
         CPLXMLNode* psIter = psListBucketResult->psChild;
         bool bNonEmpty = false;
-        for( ; psIter != NULL; psIter = psIter->psNext )
+        for( ; psIter != nullptr; psIter = psIter->psNext )
         {
             if( psIter->eType != CXT_Element )
                 continue;
             if( strcmp(psIter->pszValue, "Contents") == 0 )
             {
                 bNonEmpty = true;
-                const char* pszKey = CPLGetXMLValue(psIter, "Key", NULL);
+                const char* pszKey = CPLGetXMLValue(psIter, "Key", nullptr);
                 if( pszKey && strlen(pszKey) > osPrefix.size() )
                 {
                     CachedFileProp prop;
@@ -3567,7 +3567,7 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             }
             else if( strcmp(psIter->pszValue, "CommonPrefixes") == 0 )
             {
-                const char* pszKey = CPLGetXMLValue(psIter, "Prefix", NULL);
+                const char* pszKey = CPLGetXMLValue(psIter, "Prefix", nullptr);
                 if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0 )
                 {
                     CPLString osKey = pszKey;
@@ -3635,16 +3635,16 @@ void VSICurlFilesystemHandler::AnalyseS3FileList(
             osFileList.AddString(".");
         }
     }
-    else if( psListAllMyBucketsResultBuckets != NULL )
+    else if( psListAllMyBucketsResultBuckets != nullptr )
     {
         CPLXMLNode* psIter = psListAllMyBucketsResultBuckets->psChild;
-        for( ; psIter != NULL; psIter = psIter->psNext )
+        for( ; psIter != nullptr; psIter = psIter->psNext )
         {
             if( psIter->eType != CXT_Element )
                 continue;
             if( strcmp(psIter->pszValue, "Bucket") == 0 )
             {
-                const char* pszName = CPLGetXMLValue(psIter, "Name", NULL);
+                const char* pszName = CPLGetXMLValue(psIter, "Name", nullptr);
                 if( pszName )
                 {
                     CachedFileProp prop;
@@ -3694,7 +3694,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
     osNextMarker = "";
     bIsTruncated = false;
     CPLXMLNode* psTree = CPLParseXMLString(pszXML);
-    if( psTree == NULL )
+    if( psTree == nullptr )
         return;
     CPLXMLNode* psEnumerationResults = CPLGetXMLNode(psTree, "=EnumerationResults");
 
@@ -3708,21 +3708,21 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
         bool bNonEmpty = false;
         CPLString osPrefix = CPLGetXMLValue(psEnumerationResults, "Prefix", "");
         CPLXMLNode* psBlobs = CPLGetXMLNode(psEnumerationResults, "Blobs");
-        if( psBlobs == NULL )
+        if( psBlobs == nullptr )
         {
             psBlobs = CPLGetXMLNode(psEnumerationResults, "Containers");
-            if( psBlobs != NULL )
+            if( psBlobs != nullptr )
                 bNonEmpty = true;
         }
-        CPLXMLNode* psIter = psBlobs ? psBlobs->psChild : NULL;
-        for( ; psIter != NULL; psIter = psIter->psNext )
+        CPLXMLNode* psIter = psBlobs ? psBlobs->psChild : nullptr;
+        for( ; psIter != nullptr; psIter = psIter->psNext )
         {
             if( psIter->eType != CXT_Element )
                 continue;
             if( strcmp(psIter->pszValue, "Blob") == 0 )
             {
-                const char* pszKey = CPLGetXMLValue(psIter, "Name", NULL);
-                if( pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != NULL )
+                const char* pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
+                if( pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != nullptr )
                 {
                     bNonEmpty = true;
                 }
@@ -3747,8 +3747,8 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
                                                     &nHour,
                                                     &nMinute,
                                                     &nSecond,
-                                                    NULL,
-                                                    NULL ) )
+                                                    nullptr,
+                                                    nullptr ) )
                     {
                         struct tm brokendowntime;
                         brokendowntime.tm_year = nYear - 1900;
@@ -3773,7 +3773,7 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
             {
                 bNonEmpty = true;
 
-                const char* pszKey = CPLGetXMLValue(psIter, "Name", NULL);
+                const char* pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
                 if( pszKey && strncmp(pszKey, osPrefix, osPrefix.size()) == 0 )
                 {
                     CPLString osKey = pszKey;
@@ -3846,20 +3846,20 @@ void VSICurlFilesystemHandler::AnalyseAzureFileList(
 
 static char* VSICurlGetToken( char* pszCurPtr, char** ppszNextToken )
 {
-    if( pszCurPtr == NULL )
-        return NULL;
+    if( pszCurPtr == nullptr )
+        return nullptr;
 
     while( (*pszCurPtr) == ' ' )
         pszCurPtr++;
     if( *pszCurPtr == '\0' )
-        return NULL;
+        return nullptr;
 
     char* pszToken = pszCurPtr;
     while( (*pszCurPtr) != ' ' && (*pszCurPtr) != '\0' )
         pszCurPtr++;
     if( *pszCurPtr == '\0' )
     {
-        *ppszNextToken = NULL;
+        *ppszNextToken = nullptr;
     }
     else
     {
@@ -3893,18 +3893,18 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
 {
     char* pszNextToken = pszLine;
     char* pszPermissions = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if( pszPermissions == NULL || strlen(pszPermissions) != 10 )
+    if( pszPermissions == nullptr || strlen(pszPermissions) != 10 )
         return false;
     bIsDirectory = pszPermissions[0] == 'd';
 
     for( int i = 0; i < 3; i++ )
     {
-        if( VSICurlGetToken(pszNextToken, &pszNextToken) == NULL )
+        if( VSICurlGetToken(pszNextToken, &pszNextToken) == nullptr )
             return false;
     }
 
     char* pszSize = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if( pszSize == NULL )
+    if( pszSize == nullptr )
         return false;
 
     if( pszPermissions[0] == '-' )
@@ -3919,7 +3919,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
     bool bBrokenDownTimeValid = true;
 
     char* pszMonth = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if( pszMonth == NULL || strlen(pszMonth) != 3 )
+    if( pszMonth == nullptr || strlen(pszMonth) != 3 )
         return false;
 
     int i = 0;  // Used after for.
@@ -3934,7 +3934,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
         bBrokenDownTimeValid = false;
 
     char* pszDay = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if( pszDay == NULL || (strlen(pszDay) != 1 && strlen(pszDay) != 2) )
+    if( pszDay == nullptr || (strlen(pszDay) != 1 && strlen(pszDay) != 2) )
         return false;
     int nDay = atoi(pszDay);
     if( nDay >= 1 && nDay <= 31 )
@@ -3943,7 +3943,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
         bBrokenDownTimeValid = false;
 
     char* pszHourOrYear = VSICurlGetToken(pszNextToken, &pszNextToken);
-    if( pszHourOrYear == NULL ||
+    if( pszHourOrYear == nullptr ||
         (strlen(pszHourOrYear) != 4 && strlen(pszHourOrYear) != 5) )
         return false;
     if( strlen(pszHourOrYear) == 4 )
@@ -3967,7 +3967,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
     else
         nUnixTime = 0;
 
-    if( pszNextToken == NULL )
+    if( pszNextToken == nullptr )
         return false;
 
     pszFilename = pszNextToken;
@@ -3994,7 +3994,7 @@ static bool VSICurlParseFullFTPLine( char* pszLine,
 CPLString
 VSICurlFilesystemHandler::GetURLFromDirname( const CPLString& osDirname )
 {
-    return VSICurlGetURLFromFilename(osDirname, NULL, NULL, NULL, NULL, NULL, NULL);
+    return VSICurlGetURLFromFilename(osDirname, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -4013,29 +4013,29 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
     bool bListDir = true;
     bool bEmptyDir = false;
     CPLString osURL(
-        VSICurlGetURLFromFilename(pszDirname, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir, NULL));
+        VSICurlGetURLFromFilename(pszDirname, nullptr, nullptr, nullptr,
+                                  &bListDir, &bEmptyDir, nullptr));
     if( bEmptyDir )
     {
         *pbGotFileList = true;
-        return CSLAddString(NULL, ".");
+        return CSLAddString(nullptr, ".");
     }
     if( !bListDir )
-        return NULL;
+        return nullptr;
 
     // HACK (optimization in fact) for MBTiles driver.
-    if( strstr(pszDirname, ".tiles.mapbox.com") != NULL )
-        return NULL;
+    if( strstr(pszDirname, ".tiles.mapbox.com") != nullptr )
+        return nullptr;
 
     if( STARTS_WITH(osURL, "ftp://") )
     {
         WriteFuncStruct sWriteFuncData;
-        sWriteFuncData.pBuffer = NULL;
+        sWriteFuncData.pBuffer = nullptr;
 
         CPLString osDirname(osURL);
         osDirname += '/';
 
-        char** papszFileList = NULL;
+        char** papszFileList = nullptr;
 
         CURLM* hCurlMultiHandle = GetCurlMultiHandleFor(osDirname);
         CURL* hCurlHandle = curl_easy_init();
@@ -4043,7 +4043,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         for( int iTry = 0; iTry < 2; iTry++ )
         {
             struct curl_slist* headers =
-                VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
+                VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
             // On the first pass, we want to try fetching all the possible
             // information (filename, file/directory, size). If that does not
@@ -4058,7 +4058,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 #endif
             }
 
-            VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+            VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
             curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                              VSICurlHandleWriteFunc);
@@ -4070,17 +4070,17 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 
             MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-            if( headers != NULL )
+            if( headers != nullptr )
                 curl_slist_free_all(headers);
 
-            if( sWriteFuncData.pBuffer == NULL )
+            if( sWriteFuncData.pBuffer == nullptr )
             {
                 curl_easy_cleanup(hCurlHandle);
-                return NULL;
+                return nullptr;
             }
 
             char* pszLine = sWriteFuncData.pBuffer;
-            char* c = NULL;
+            char* c = nullptr;
             int nCount = 0;
 
             if( STARTS_WITH_CI(pszLine, "<!DOCTYPE HTML") ||
@@ -4097,13 +4097,13 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
                 CPLStringList oFileList;
                 *pbGotFileList = true;
 
-                while( (c = strchr(pszLine, '\n')) != NULL)
+                while( (c = strchr(pszLine, '\n')) != nullptr)
                 {
                     *c = 0;
                     if( c - pszLine > 0 && c[-1] == '\r' )
                         c[-1] = 0;
 
-                    char* pszFilename = NULL;
+                    char* pszFilename = nullptr;
                     bool bSizeValid = false;
                     GUIntBig nFileSize = 0;
                     bool bIsDirectory = false;
@@ -4156,7 +4156,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
                     pszLine = c + 1;
                 }
 
-                if( c == NULL )
+                if( c == nullptr )
                 {
                     papszFileList = oFileList.StealList();
                     break;
@@ -4167,7 +4167,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
                 CPLStringList oFileList;
                 *pbGotFileList = true;
 
-                while( (c = strchr(pszLine, '\n')) != NULL)
+                while( (c = strchr(pszLine, '\n')) != nullptr)
                 {
                     *c = 0;
                     if( c - pszLine > 0 && c[-1] == '\r' )
@@ -4190,7 +4190,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
             }
 
             CPLFree(sWriteFuncData.pBuffer);
-            sWriteFuncData.pBuffer = NULL;
+            sWriteFuncData.pBuffer = nullptr;
         }
 
         CPLFree(sWriteFuncData.pBuffer);
@@ -4211,12 +4211,12 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         CURL* hCurlHandle = curl_easy_init();
 
         struct curl_slist* headers =
-            VSICurlSetOptions(hCurlHandle, osDirname.c_str(), NULL);
+            VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
         WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -4228,18 +4228,18 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        if( headers != NULL )
+        if( headers != nullptr )
             curl_slist_free_all(headers);
 
-        if( sWriteFuncData.pBuffer == NULL )
+        if( sWriteFuncData.pBuffer == nullptr )
         {
             curl_easy_cleanup(hCurlHandle);
-            return NULL;
+            return nullptr;
         }
 
-        char** papszFileList = NULL;
+        char** papszFileList = nullptr;
         if( STARTS_WITH_CI(sWriteFuncData.pBuffer, "<?xml") &&
-            strstr(sWriteFuncData.pBuffer, "<ListBucketResult") != NULL )
+            strstr(sWriteFuncData.pBuffer, "<ListBucketResult") != nullptr )
         {
             CPLString osNextMarker;
             CPLStringList osFileList;
@@ -4272,7 +4272,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         return papszFileList;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -4296,8 +4296,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
     bool bListDir = true;
     bool bEmptyDir = false;
     CPLString osURL(
-        VSICurlGetURLFromFilename(pszFilename, NULL, NULL, NULL,
-                                  &bListDir, &bEmptyDir, NULL));
+        VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr, nullptr,
+                                  &bListDir, &bEmptyDir, nullptr));
 
     const char* pszOptionVal =
         CPLGetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "NO" );
@@ -4321,10 +4321,10 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
         }
         return -1;
     }
-    else if( strchr(CPLGetFilename(osFilename), '.') != NULL &&
+    else if( strchr(CPLGetFilename(osFilename), '.') != nullptr &&
              !STARTS_WITH_CI(CPLGetExtension(osFilename), "zip") &&
-             strstr(osFilename, ".zip.") != NULL &&
-             strstr(osFilename, ".ZIP.") != NULL &&
+             strstr(osFilename, ".zip.") != nullptr &&
+             strstr(osFilename, ".ZIP.") != nullptr &&
              !bSkipReadDir )
     {
         bool bGotFileList = false;
@@ -4342,7 +4342,7 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
 
     VSICurlHandle* poHandle =
         CreateFileHandle( osFilename );
-    if( poHandle == NULL )
+    if( poHandle == nullptr )
         return -1;
 
     if( poHandle->IsKnownFileSize() ||
@@ -4410,7 +4410,7 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
     CPLString osDirname(pszDirname);
 
     const char* pszUpDir = strstr(osDirname, "/..");
-    if( pszUpDir != NULL )
+    if( pszUpDir != nullptr )
     {
         int pos = static_cast<int>(pszUpDir - osDirname.c_str() - 1);
         while( pos >= 0 && osDirname[pos] != '/' )
@@ -4436,7 +4436,7 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
     {
         if( pbGotFileList )
             *pbGotFileList = true;
-        return NULL;
+        return nullptr;
     }
 
     CPLMutexHolder oHolder( &hMutex );
@@ -4455,19 +4455,19 @@ char** VSICurlFilesystemHandler::ReadDirInternal( const char *pszDirname,
             {
                 if( pbGotFileList )
                     *pbGotFileList = true;
-                return NULL;
+                return nullptr;
             }
         }
         else
         {
             if( pbGotFileList )
                 *pbGotFileList = true;
-            return NULL;
+            return nullptr;
         }
     }
 
     CachedDirList* psCachedDirList = cacheDirList[osDirname];
-    if( psCachedDirList == NULL )
+    if( psCachedDirList == nullptr )
     {
         psCachedDirList =
             static_cast<CachedDirList *>(CPLMalloc(sizeof(CachedDirList)));
@@ -4507,7 +4507,7 @@ void VSICurlFilesystemHandler::InvalidateDirContent( const char *pszDirname )
 char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
                                             int nMaxFiles )
 {
-    return ReadDirInternal(pszDirname, nMaxFiles, NULL);
+    return ReadDirInternal(pszDirname, nMaxFiles, nullptr);
 }
 
 /************************************************************************/
@@ -4590,13 +4590,13 @@ protected:
         virtual void ProcessGetFileSizeResult( const char* pszContent )
             override
         {
-            bIsDirectory = strstr(pszContent, "ListBucketResult") != NULL;
+            bIsDirectory = strstr(pszContent, "ListBucketResult") != nullptr;
         }
 
     public:
                 IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
                    const char* pszFilename,
-                   const char* pszURLIn = NULL ) :
+                   const char* pszURLIn = nullptr ) :
                    VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
         virtual ~IVSIS3LikeHandle() {}
 };
@@ -4688,7 +4688,7 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
         virtual int       Eof() override;
         virtual int       Close() override;
 
-        bool              IsOK() { return m_bUseChunked || m_pabyBuffer != NULL; }
+        bool              IsOK() { return m_bUseChunked || m_pabyBuffer != nullptr; }
 };
 
 /************************************************************************/
@@ -4707,13 +4707,13 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
         m_nBufferSize(0),
         m_nBufferOffReadCallback(0),
         m_bClosed(false),
-        m_pabyBuffer(NULL),
+        m_pabyBuffer(nullptr),
         m_nPartNumber(0),
         m_nOffsetInXML(0),
         m_bError(false),
-        m_hCurlMulti(NULL),
-        m_hCurl(NULL),
-        m_pBuffer(NULL),
+        m_hCurlMulti(nullptr),
+        m_hCurl(nullptr),
+        m_pBuffer(nullptr),
         m_nChunkedBufferOff(0),
         m_nChunkedBufferSize(0)
 {
@@ -4738,14 +4738,14 @@ VSIS3WriteHandle::VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
         // For testing only !
         const char* pszChunkSizeBytes =
             CPLGetConfigOption("VSIS3_CHUNK_SIZE_BYTES",
-                CPLGetConfigOption("VSIOSS_CHUNK_SIZE_BYTES", NULL));
+                CPLGetConfigOption("VSIOSS_CHUNK_SIZE_BYTES", nullptr));
         if( pszChunkSizeBytes )
             m_nBufferSize = atoi(pszChunkSizeBytes);
         if( m_nBufferSize <= 0 || m_nBufferSize > 1000 * 1024 * 1024 )
             m_nBufferSize = 50 * 1024 * 1024;
 
         m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
-        if( m_pabyBuffer == NULL )
+        if( m_pabyBuffer == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot allocate working buffer for %s",
@@ -4834,7 +4834,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, NULL));
+            CPLHTTPSetOptions(hCurlHandle, nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("POST", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -4842,13 +4842,13 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         m_poS3HandleHelper->ResetQueryParameters();
 
         WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
         WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -4861,9 +4861,9 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
 
         long response_code = 0;
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-        if( response_code != 200 || sWriteFuncData.pBuffer == NULL )
+        if( response_code != 200 || sWriteFuncData.pBuffer == nullptr )
         {
-            if( sWriteFuncData.pBuffer != NULL &&
+            if( sWriteFuncData.pBuffer != nullptr &&
                 m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
                                                       sWriteFuncHeaderData.pBuffer,
                                                       false) )
@@ -4971,7 +4971,7 @@ bool VSIS3WriteHandle::UploadPart()
     curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, NULL));
+        CPLHTTPSetOptions(hCurlHandle, nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                         m_pabyBuffer,
@@ -4981,13 +4981,13 @@ bool VSIS3WriteHandle::UploadPart()
     m_poS3HandleHelper->ResetQueryParameters();
 
     WriteFuncStruct sWriteFuncData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
 
     WriteFuncStruct sWriteFuncHeaderData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
     curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -5000,7 +5000,7 @@ bool VSIS3WriteHandle::UploadPart()
 
     long response_code = 0;
     curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
-    if( response_code != 200 || sWriteFuncHeaderData.pBuffer == NULL )
+    if( response_code != 200 || sWriteFuncHeaderData.pBuffer == nullptr )
     {
         CPLDebug(m_poFS->GetDebugKey(), "%s",
                  sWriteFuncData.pBuffer ? sWriteFuncData.pBuffer : "(null)");
@@ -5011,7 +5011,7 @@ bool VSIS3WriteHandle::UploadPart()
     else
     {
         const char* pszEtag = strstr(sWriteFuncHeaderData.pBuffer, "ETag: ");
-        if( pszEtag != NULL )
+        if( pszEtag != nullptr )
         {
             CPLString osEtag = pszEtag + strlen("ETag: ");
             const size_t nPos = osEtag.find("\r");
@@ -5074,8 +5074,8 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
 {
     const size_t nBytesToWrite = nSize * nMemb;
 
-    struct curl_slist* headers = NULL;
-    if( m_hCurlMulti == NULL )
+    struct curl_slist* headers = nullptr;
+    if( m_hCurlMulti == nullptr )
     {
         m_hCurlMulti = curl_multi_init();
         CURL* hCurlHandle = curl_easy_init();
@@ -5087,7 +5087,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
 
         headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, NULL));
+            CPLHTTPSetOptions(hCurlHandle, nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -5098,7 +5098,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
         curl_multi_add_handle(m_hCurlMulti, hCurlHandle);
         m_hCurl = hCurlHandle;
     }
-    else if( m_hCurl == NULL )
+    else if( m_hCurl == nullptr )
     {
         return 0; // An error occurred before
     }
@@ -5141,7 +5141,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
 
                         curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
                         curl_easy_cleanup(m_hCurl);
-                        m_hCurl = NULL;
+                        m_hCurl = nullptr;
 
                         if( headers )
                             curl_slist_free_all(headers);
@@ -5157,7 +5157,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
     if( headers )
         curl_slist_free_all(headers);
 
-    m_pBuffer = NULL;
+    m_pBuffer = nullptr;
 
     long response_code;
     curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);
@@ -5169,7 +5169,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
                     m_osCurlErrBuf.c_str());
         curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
         curl_easy_cleanup(m_hCurl);
-        m_hCurl = NULL;
+        m_hCurl = nullptr;
         return 0;
     }
 
@@ -5182,10 +5182,10 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
 
 int VSIS3WriteHandle::FinishChunkedTransfer()
 {
-    if( m_hCurl == NULL )
+    if( m_hCurl == nullptr )
         return -1;
 
-    m_pBuffer = NULL;
+    m_pBuffer = nullptr;
     m_nChunkedBufferOff = 0;
     m_nChunkedBufferSize = 0;
 
@@ -5304,7 +5304,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_setopt(hCurlHandle, CURLOPT_INFILESIZE, m_nBufferOff);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, NULL));
+            CPLHTTPSetOptions(hCurlHandle, nullptr));
         headers = VSICurlMergeHeaders(headers,
                         m_poS3HandleHelper->GetCurlHeaders("PUT", headers,
                                                            m_pabyBuffer,
@@ -5313,13 +5313,13 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
         WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -5334,7 +5334,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_getinfo(hCurlHandle, CURLINFO_HTTP_CODE, &response_code);
         if( response_code != 200 )
         {
-            if( sWriteFuncData.pBuffer != NULL &&
+            if( sWriteFuncData.pBuffer != nullptr &&
                 m_poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
                                                       sWriteFuncHeaderData.pBuffer,
                                                       false) )
@@ -5419,7 +5419,7 @@ bool VSIS3WriteHandle::CompleteMultipart()
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "POST");
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, NULL));
+        CPLHTTPSetOptions(hCurlHandle, nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("POST", headers,
                                                         m_osXML.c_str(),
@@ -5429,7 +5429,7 @@ bool VSIS3WriteHandle::CompleteMultipart()
     m_poS3HandleHelper->ResetQueryParameters();
 
     WriteFuncStruct sWriteFuncData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -5478,7 +5478,7 @@ bool VSIS3WriteHandle::AbortMultipart()
     curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
     struct curl_slist* headers = static_cast<struct curl_slist*>(
-        CPLHTTPSetOptions(hCurlHandle, NULL));
+        CPLHTTPSetOptions(hCurlHandle, nullptr));
     headers = VSICurlMergeHeaders(headers,
                     m_poS3HandleHelper->GetCurlHeaders("DELETE", headers));
     curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -5486,7 +5486,7 @@ bool VSIS3WriteHandle::AbortMultipart()
     m_poS3HandleHelper->ResetQueryParameters();
 
     WriteFuncStruct sWriteFuncData;
-    VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+    VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
     curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                      VSICurlHandleWriteFunc);
@@ -5526,7 +5526,7 @@ int VSIS3WriteHandle::Close()
     if( !m_bClosed )
     {
         m_bClosed = true;
-        if( m_bUseChunked && m_hCurlMulti != NULL )
+        if( m_bUseChunked && m_hCurlMulti != nullptr )
         {
             nRet = FinishChunkedTransfer();
         }
@@ -5560,9 +5560,9 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
                                         bool bSetError)
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
         /*if( strchr(pszAccess, '+') != NULL)
         {
@@ -5573,15 +5573,15 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
         VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str(), false);
-        if( poS3HandleHelper == NULL )
-            return NULL;
+        if( poS3HandleHelper == nullptr )
+            return nullptr;
         UpdateHandleFromMap(poS3HandleHelper);
         VSIS3WriteHandle* poHandle =
             new VSIS3WriteHandle(this, pszFilename, poS3HandleHelper, false);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         return poHandle;
     }
@@ -5635,7 +5635,7 @@ int IVSIS3LikeFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
     }
 
     VSILFILE* fp = VSIFOpenL(osDirname, "wb");
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         CPLErrorReset();
         VSIFCloseL(fp);
@@ -5675,8 +5675,8 @@ int IVSIS3LikeFSHandler::Rmdir( const char * pszDirname )
     }
 
     char** papszFileList = ReadDirEx(osDirname, 1);
-    bool bEmptyDir = (papszFileList != NULL && EQUAL(papszFileList[0], ".") &&
-                      papszFileList[1] == NULL);
+    bool bEmptyDir = (papszFileList != nullptr && EQUAL(papszFileList[0], ".") &&
+                      papszFileList[1] == nullptr);
     CSLDestroy(papszFileList);
     if( !bEmptyDir )
     {
@@ -5729,7 +5729,7 @@ VSICurlHandle* VSIS3FSHandler::CreateFileHandle(const char* pszFilename)
         UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3Handle(this, pszFilename, poS3HandleHelper);
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -5743,7 +5743,7 @@ CPLString VSIS3FSHandler::GetURLFromDirname( const CPLString& osDirname )
     VSIS3HandleHelper* poS3HandleHelper =
         VSIS3HandleHelper::BuildFromURI(osDirnameWithoutPrefix,
                                         GetFSPrefix().c_str(), true);
-    if( poS3HandleHelper == NULL )
+    if( poS3HandleHelper == nullptr )
     {
         return "";
     }
@@ -5810,7 +5810,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
     CPLString osNameWithoutPrefix = pszFilename + GetFSPrefix().size();
     IVSIS3LikeHandleHelper* poS3HandleHelper =
         CreateHandleHelper(osNameWithoutPrefix, false);
-    if( poS3HandleHelper == NULL )
+    if( poS3HandleHelper == nullptr )
     {
         return -1;
     }
@@ -5828,19 +5828,19 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         curl_easy_setopt(hCurlHandle, CURLOPT_CUSTOMREQUEST, "DELETE");
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, NULL));
+            CPLHTTPSetOptions(hCurlHandle, nullptr));
         headers = VSICurlMergeHeaders(headers,
                         poS3HandleHelper->GetCurlHeaders("DELETE", headers));
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
         WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -5856,7 +5856,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         // S3 and GS respond with 204. Azure with 202
         if( response_code != 204 && response_code != 202)
         {
-            if( sWriteFuncData.pBuffer != NULL &&
+            if( sWriteFuncData.pBuffer != nullptr &&
                 poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
                                                     sWriteFuncHeaderData.pBuffer,
                                                     false) )
@@ -5927,9 +5927,9 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
     IVSIS3LikeHandleHelper* poS3HandleHelper =
         CreateHandleHelper(osBucket, true);
-    if( poS3HandleHelper == NULL )
+    if( poS3HandleHelper == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
     UpdateHandleFromMap(poS3HandleHelper);
 
@@ -5965,19 +5965,19 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         }
 
         struct curl_slist* headers = 
-            VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), NULL);
+            VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
         // Disable automatic redirection
         curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
 
         WriteFuncStruct sWriteFuncHeaderData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, &sWriteFuncHeaderData);
         curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -5991,14 +5991,14 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        if( headers != NULL )
+        if( headers != nullptr )
             curl_slist_free_all(headers);
 
-        if( sWriteFuncData.pBuffer == NULL)
+        if( sWriteFuncData.pBuffer == nullptr)
         {
             delete poS3HandleHelper;
             curl_easy_cleanup(hCurlHandle);
-            return NULL;
+            return nullptr;
         }
 
         long response_code = 0;
@@ -6006,7 +6006,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         if( response_code != 200 )
         {
             bool bUpdateMap = true;
-            if( sWriteFuncData.pBuffer != NULL &&
+            if( sWriteFuncData.pBuffer != nullptr &&
                 poS3HandleHelper->CanRestartOnError(sWriteFuncData.pBuffer,
                                                     sWriteFuncHeaderData.pBuffer,
                                                     false, &bUpdateMap) )
@@ -6027,7 +6027,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
                 CPLFree(sWriteFuncHeaderData.pBuffer);
                 delete poS3HandleHelper;
                 curl_easy_cleanup(hCurlHandle);
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -6222,8 +6222,8 @@ VSICurlHandle* VSIGSFSHandler::CreateFileHandle(const char* pszFilename)
     VSIGSHandleHelper* poHandleHelper =
         VSIGSHandleHelper::BuildFromURI( pszFilename + GetFSPrefix().size(),
                                          GetFSPrefix() );
-    if( poHandleHelper == NULL )
-        return NULL;
+    if( poHandleHelper == nullptr )
+        return nullptr;
     return new VSIGSHandle(this, pszFilename, poHandleHelper);
 }
 
@@ -6236,21 +6236,21 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
                                         bool bSetError)
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
         VSIGSHandleHelper* poHandleHelper =
             VSIGSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str());
-        if( poHandleHelper == NULL )
-            return NULL;
+        if( poHandleHelper == nullptr )
+            return nullptr;
         VSIS3WriteHandle* poHandle =
             new VSIS3WriteHandle(this, pszFilename, poHandleHelper, true);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         return poHandle;
     }
@@ -6268,7 +6268,7 @@ CPLString VSIGSFSHandler::GetURLFromDirname( const CPLString& osDirname )
     CPLString osDirnameWithoutPrefix = osDirname.substr(GetFSPrefix().size());
     VSIGSHandleHelper* poHandleHelper =
         VSIGSHandleHelper::BuildFromURI( osDirnameWithoutPrefix, GetFSPrefix() );
-    if( poHandleHelper == NULL )
+    if( poHandleHelper == nullptr )
         return CPLString();
     CPLString osURL( poHandleHelper->GetURL() );
     delete poHandleHelper;
@@ -6395,8 +6395,8 @@ VSICurlHandle* VSIAzureFSHandler::CreateFileHandle(const char* pszFilename)
     VSIAzureBlobHandleHelper* poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI( pszFilename + GetFSPrefix().size(),
                                          GetFSPrefix() );
-    if( poHandleHelper == NULL )
-        return NULL;
+    if( poHandleHelper == nullptr )
+        return nullptr;
     return new VSIAzureHandle(this, pszFilename, poHandleHelper);
 }
 
@@ -6439,7 +6439,7 @@ class VSIAzureWriteHandle CPL_FINAL : public VSIVirtualHandle
         virtual int       Eof() override;
         virtual int       Close() override;
 
-        bool              IsOK() { return m_pabyBuffer != NULL; }
+        bool              IsOK() { return m_pabyBuffer != nullptr; }
 };
 
 /************************************************************************/
@@ -6457,7 +6457,7 @@ VSIAzureWriteHandle::VSIAzureWriteHandle( VSIAzureFSHandler* poFS,
         m_nBufferSize(0),
         m_nBufferOffReadCallback(0),
         m_bClosed(false),
-        m_pabyBuffer(NULL),
+        m_pabyBuffer(nullptr),
         m_bError(false)
 {
     int nChunkSizeMB = atoi(CPLGetConfigOption("VSIAZ_CHUNK_SIZE", "4"));
@@ -6468,14 +6468,14 @@ VSIAzureWriteHandle::VSIAzureWriteHandle( VSIAzureFSHandler* poFS,
 
     // For testing only !
     const char* pszChunkSizeBytes =
-        CPLGetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", NULL);
+        CPLGetConfigOption("VSIAZ_CHUNK_SIZE_BYTES", nullptr);
     if( pszChunkSizeBytes )
         m_nBufferSize = atoi(pszChunkSizeBytes);
     if( m_nBufferSize <= 0 || m_nBufferSize > 4 * 1024 * 1024 )
         m_nBufferSize = 4 * 1024 * 1024;
 
     m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
-    if( m_pabyBuffer == NULL )
+    if( m_pabyBuffer == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                 "Cannot allocate working buffer for /vsiaz");
@@ -6649,7 +6649,7 @@ bool VSIAzureWriteHandle::DoPUT(bool bBlockBob, bool bInitOnly)
         curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
 
         struct curl_slist* headers = static_cast<struct curl_slist*>(
-            CPLHTTPSetOptions(hCurlHandle, NULL));
+            CPLHTTPSetOptions(hCurlHandle, nullptr));
 
         CPLString osContentLength; // leave it in this scope
         if( bBlockBob )
@@ -6680,7 +6680,7 @@ bool VSIAzureWriteHandle::DoPUT(bool bBlockBob, bool bInitOnly)
         curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
         WriteFuncStruct sWriteFuncData;
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                             VSICurlHandleWriteFunc);
@@ -6769,9 +6769,9 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
                                         bool bSetError)
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
         /*if( strchr(pszAccess, '+') != NULL)
         {
@@ -6782,8 +6782,8 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
         VSIAzureBlobHandleHelper* poHandleHelper =
             VSIAzureBlobHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str());
-        if( poHandleHelper == NULL )
-            return NULL;
+        if( poHandleHelper == nullptr )
+            return nullptr;
         return new VSIAzureWriteHandle(this, pszFilename, poHandleHelper);
     }
 
@@ -6800,7 +6800,7 @@ CPLString VSIAzureFSHandler::GetURLFromDirname( const CPLString& osDirname )
     CPLString osDirnameWithoutPrefix = osDirname.substr(GetFSPrefix().size());
     VSIAzureBlobHandleHelper* poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI( osDirnameWithoutPrefix, GetFSPrefix() );
-    if( poHandleHelper == NULL )
+    if( poHandleHelper == nullptr )
         return CPLString();
     CPLString osURL( poHandleHelper->GetURL() );
     delete poHandleHelper;
@@ -6878,7 +6878,7 @@ int VSIAzureFSHandler::Mkdir( const char * pszDirname, long /* nMode */ )
 
     VSILFILE* fp = VSIFOpenL((osDirname + GDAL_MARKER_FOR_DIR).c_str(),
                              "wb");
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         CPLErrorReset();
         VSIFCloseL(fp);
@@ -6920,8 +6920,8 @@ int VSIAzureFSHandler::Rmdir( const char * pszDirname )
     }
 
     char** papszFileList = ReadDirEx(osDirname, 1);
-    bool bEmptyDir = (papszFileList != NULL && EQUAL(papszFileList[0], ".") &&
-                      papszFileList[1] == NULL);
+    bool bEmptyDir = (papszFileList != nullptr && EQUAL(papszFileList[0], ".") &&
+                      papszFileList[1] == nullptr);
     CSLDestroy(papszFileList);
     if( !bEmptyDir )
     {
@@ -6984,9 +6984,9 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 
     IVSIS3LikeHandleHelper* poHandleHelper =
         CreateHandleHelper(osBucket, true);
-    if( poHandleHelper == NULL )
+    if( poHandleHelper == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     WriteFuncStruct sWriteFuncData;
@@ -7026,11 +7026,11 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
         }
 
         struct curl_slist* headers = 
-            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), NULL);
+            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), nullptr);
 
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
 
-        VSICURLInitWriteFuncStruct(&sWriteFuncData, NULL, NULL, NULL);
+        VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                          VSICurlHandleWriteFunc);
@@ -7044,14 +7044,14 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        if( headers != NULL )
+        if( headers != nullptr )
             curl_slist_free_all(headers);
 
-        if( sWriteFuncData.pBuffer == NULL)
+        if( sWriteFuncData.pBuffer == nullptr)
         {
             delete poHandleHelper;
             curl_easy_cleanup(hCurlHandle);
-            return NULL;
+            return nullptr;
         }
 
         long response_code = 0;
@@ -7064,7 +7064,7 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
             CPLFree(sWriteFuncData.pBuffer);
             delete poHandleHelper;
             curl_easy_cleanup(hCurlHandle);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -7144,7 +7144,7 @@ bool VSIAzureHandle::IsDirectoryFromExists( const char* /*pszVerb*/,
     bool bGotFileList = false;
     char** papszDirContent = reinterpret_cast<VSIAzureFSHandler*>(poFS)
                         ->GetFileList( osDirname, 1, false, &bGotFileList );
-    bIsDir = papszDirContent != NULL && papszDirContent[0] != NULL;
+    bIsDir = papszDirContent != nullptr && papszDirContent[0] != nullptr;
     CSLDestroy(papszDirContent);
     return bIsDir;
 }
@@ -7212,9 +7212,9 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
                                         bool bSetError)
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL || strchr(pszAccess, 'a') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
         /*if( strchr(pszAccess, '+') != NULL)
         {
@@ -7225,15 +7225,15 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
         VSIOSSHandleHelper* poHandleHelper =
             VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
                                             GetFSPrefix().c_str(), false);
-        if( poHandleHelper == NULL )
-            return NULL;
+        if( poHandleHelper == nullptr )
+            return nullptr;
         UpdateHandleFromMap(poHandleHelper);
         VSIS3WriteHandle* poHandle =
             new VSIS3WriteHandle(this, pszFilename, poHandleHelper, false);
         if( !poHandle->IsOK() )
         {
             delete poHandle;
-            poHandle = NULL;
+            poHandle = nullptr;
         }
         return poHandle;
     }
@@ -7275,7 +7275,7 @@ VSICurlHandle* VSIOSSFSHandler::CreateFileHandle(const char* pszFilename)
         UpdateHandleFromMap(poHandleHelper);
         return new VSIOSSHandle(this, pszFilename, poHandleHelper);
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -7289,7 +7289,7 @@ CPLString VSIOSSFSHandler::GetURLFromDirname( const CPLString& osDirname )
     VSIOSSHandleHelper* poHandleHelper =
         VSIOSSHandleHelper::BuildFromURI(osDirnameWithoutPrefix,
                                         GetFSPrefix().c_str(), true);
-    if( poHandleHelper == NULL )
+    if( poHandleHelper == nullptr )
     {
         return "";
     }
@@ -7390,7 +7390,7 @@ bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg,
                                      const char* pszHeaders, bool bSetError)
 {
     if( m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
-                                            bSetError, NULL) )
+                                            bSetError, nullptr) )
     {
         static_cast<VSIOSSFSHandler *>(poFS)->
             UpdateMapFromHandle(m_poHandleHelper);
@@ -7464,7 +7464,7 @@ struct curl_slist* VSICurlMergeHeaders( struct curl_slist* poDest,
                                         struct curl_slist* poSrcToDestroy )
 {
     struct curl_slist* iter = poSrcToDestroy;
-    while( iter != NULL )
+    while( iter != nullptr )
     {
         poDest = curl_slist_append(poDest, iter->data);
         iter = iter->next;

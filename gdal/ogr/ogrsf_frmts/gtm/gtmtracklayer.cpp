@@ -35,22 +35,22 @@ GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
                               int /* bWriterIn */,
                               OGRGTMDataSource* poDSIn )
 {
-    poCT = NULL;
+    poCT = nullptr;
 
     /* We are implementing just WGS84, although GTM supports other datum
        formats. */
-    if( poSRSIn != NULL )
+    if( poSRSIn != nullptr )
     {
-        poSRS = new OGRSpatialReference(NULL);
+        poSRS = new OGRSpatialReference(nullptr);
         poSRS->SetWellKnownGeogCS( "WGS84" );
         if (!poSRS->IsSame(poSRSIn))
         {
             poCT = OGRCreateCoordinateTransformation( poSRSIn, poSRS );
-            if( poCT == NULL && poDSIn->isFirstCTError() )
+            if( poCT == nullptr && poDSIn->isFirstCTError() )
             {
                 /* If we can't create a transformation, issue a warning - but
                    continue the transformation*/
-                char *pszWKT = NULL;
+                char *pszWKT = nullptr;
 
                 poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
 
@@ -73,7 +73,7 @@ GTMTrackLayer::GTMTrackLayer( const char* pszNameIn,
     }
     else
     {
-        poSRS = NULL;
+        poSRS = nullptr;
     }
 
     poDS = poDSIn;
@@ -113,7 +113,7 @@ GTMTrackLayer::~GTMTrackLayer()
 /************************************************************************/
 void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
 {
-    char* psztrackname = NULL;
+    char* psztrackname = nullptr;
     int type = 1;
     unsigned int color = 0;
     for (int i = 0; i < poFeatureDefn->GetFieldCount(); ++i)
@@ -146,7 +146,7 @@ void GTMTrackLayer::WriteFeatureAttributes( OGRFeature *poFeature )
         }
     }
 
-    if (psztrackname == NULL)
+    if (psztrackname == nullptr)
         psztrackname = CPLStrdup( "" );
 
     const size_t trackNameLength = strlen(psztrackname);
@@ -221,15 +221,15 @@ inline void GTMTrackLayer::WriteTrackpoint( double lat, double lon,
 OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
 {
     VSILFILE* fpTmpTrackpoints = poDS->getTmpTrackpointsFP();
-    if (fpTmpTrackpoints == NULL)
+    if (fpTmpTrackpoints == nullptr)
         return OGRERR_FAILURE;
 
     VSILFILE* fpTmpTracks = poDS->getTmpTracksFP();
-    if (fpTmpTracks == NULL)
+    if (fpTmpTracks == nullptr)
         return OGRERR_FAILURE;
 
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    if ( poGeom == NULL )
+    if ( poGeom == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Features without geometry not supported by GTM writer in "
@@ -237,7 +237,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    if (NULL != poCT)
+    if (nullptr != poCT)
     {
         poGeom = poGeom->clone();
         poGeom->transform( poCT );
@@ -292,13 +292,13 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Geometry type of `%s' not supported for 'track' element.\n",
                   OGRGeometryTypeToName(poGeom->getGeometryType()) );
-        if (NULL != poCT)
+        if (nullptr != poCT)
             delete poGeom;
         return OGRERR_FAILURE;
     }
     }
 
-    if (NULL != poCT)
+    if (nullptr != poCT)
         delete poGeom;
 
     return OGRERR_NONE;
@@ -307,17 +307,17 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
 OGRFeature* GTMTrackLayer::GetNextFeature()
 {
     if( bError )
-        return NULL;
+        return nullptr;
 
     while (poDS->hasNextTrack())
     {
         Track* poTrack = poDS->fetchNextTrack();
-        if (poTrack == NULL)
+        if (poTrack == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not read track. File probably corrupted");
             bError = true;
-            return NULL;
+            return nullptr;
         }
         OGRFeature* poFeature = new OGRFeature( poFeatureDefn );
         OGRLineString* lineString = new OGRLineString ();
@@ -337,20 +337,20 @@ OGRFeature* GTMTrackLayer::GetNextFeature()
         delete poTrack;
 
         poFeature->SetGeometryDirectly(lineString);
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;
     }
-    return NULL;
+    return nullptr;
 }
 
 GIntBig GTMTrackLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom == NULL && m_poAttrQuery == NULL)
+    if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return poDS->getNTracks();
 
     return OGRLayer::GetFeatureCount(bForce);

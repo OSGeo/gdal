@@ -46,13 +46,13 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
 
     iNextShapeId = 0;
     nSRSId = -1;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
     pszBaseStatement = CPLStrdup( poStmtIn->GetCommand() );
 
     /* identify the geometry column */
-    pszGeomColumn = NULL;
+    pszGeomColumn = nullptr;
     int iImageCol = -1;
     for ( int iColumn = 0; iColumn < poStmt->GetColCount(); iColumn++ )
     {
@@ -63,12 +63,12 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
 
             SQLColAttribute(poStmt->GetStatement(), (SQLSMALLINT)(iColumn + 1), SQL_DESC_TABLE_NAME,
                                      szTableName, sizeof(szTableName),
-                                     &nTableNameLength, NULL);
+                                     &nTableNameLength, nullptr);
 
             if (nTableNameLength > 0)
             {
                 OGRLayer *poBaseLayer = poDS->GetLayerByName((const char*)szTableName);
-                if (poBaseLayer != NULL && EQUAL(poBaseLayer->GetGeometryColumn(), poStmt->GetColName(iColumn)))
+                if (poBaseLayer != nullptr && EQUAL(poBaseLayer->GetGeometryColumn(), poStmt->GetColName(iColumn)))
                 {
                     nGeomColumnType = MSSQLCOLTYPE_BINARY;
                     pszGeomColumn = CPLStrdup(poStmt->GetColName(iColumn));
@@ -118,7 +118,7 @@ OGRMSSQLSpatialSelectLayer::OGRMSSQLSpatialSelectLayer( OGRMSSQLSpatialDataSourc
         }
     }
 
-    if (pszGeomColumn == NULL && iImageCol >= 0)
+    if (pszGeomColumn == nullptr && iImageCol >= 0)
     {
         /* set the image col as geometry column as the last resort */
         nGeomColumnType = MSSQLCOLTYPE_BINARY;
@@ -149,10 +149,10 @@ OGRMSSQLSpatialSelectLayer::~OGRMSSQLSpatialSelectLayer()
 void OGRMSSQLSpatialSelectLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 }
 
@@ -163,7 +163,7 @@ void OGRMSSQLSpatialSelectLayer::ClearStatement()
 CPLODBCStatement *OGRMSSQLSpatialSelectLayer::GetStatement()
 
 {
-    if( poStmt == NULL )
+    if( poStmt == nullptr )
         ResetStatement();
 
     return poStmt;
@@ -189,7 +189,7 @@ OGRErr OGRMSSQLSpatialSelectLayer::ResetStatement()
     else
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }

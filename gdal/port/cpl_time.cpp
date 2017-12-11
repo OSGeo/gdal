@@ -323,7 +323,7 @@ int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
         *pnHour = hour;
     ++papszVal;
 
-    if( *papszVal == NULL )
+    if( *papszVal == nullptr )
     {
         CSLDestroy(papszTokens);
         return false;
@@ -338,7 +338,7 @@ int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
         *pnMinute = minute;
     ++papszVal;
 
-    if( *papszVal != NULL && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9' )
+    if( *papszVal != nullptr && (*papszVal)[0] >= '0' && (*papszVal)[0] <= '9' )
     {
         int second = atoi(*papszVal);
         if( second < 0 || second >= 61 )
@@ -354,7 +354,7 @@ int CPLParseRFC822DateTime( const char* pszRFC822DateTime,
         *pnSecond = -1;
 
     int TZ = 0;
-    if( *papszVal == NULL )
+    if( *papszVal == nullptr )
     {
     }
     else if( strlen(*papszVal) == 5 &&

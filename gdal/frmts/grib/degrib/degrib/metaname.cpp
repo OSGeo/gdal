@@ -337,7 +337,7 @@ const char *centerLookup (unsigned short int center)
          return Center[i].name;
       }
    }
-   return NULL;
+   return nullptr;
 }
 
 const char *subCenterLookup(unsigned short int center,
@@ -417,7 +417,7 @@ const char *subCenterLookup(unsigned short int center,
          return SubCenter[i].name;
       }
    }
-   return NULL;
+   return nullptr;
 }
 
 #ifdef unused_by_GDAL
@@ -1571,7 +1571,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
             case METEO_MOMENT_PROB:
             case METEO_MASS_PROB:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
             case METEO_AEROSOL:
                *tableLen = sizeof (MeteoAerosols) / sizeof (GRIB2ParmTable);
                return &MeteoAerosols[0];
@@ -1586,7 +1586,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &MeteoRadarImagery[0];
             case METEO_ELECTRO:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
             case METEO_NUCLEAR:
                *tableLen = sizeof (MeteoNuclear) / sizeof (GRIB2ParmTable);
                return &MeteoNuclear[0];
@@ -1605,7 +1605,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &MeteoMisc[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 1:          /* Hydro type. */
          switch (cat) {
@@ -1617,7 +1617,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &HydroProb[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 2:          /* Land type. */
          switch (cat) {
@@ -1629,7 +1629,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &LandSoil[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 3:          /* Space type. */
          switch (cat) {
@@ -1642,7 +1642,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &SpaceQuantitative[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 10:         /* ocean type. */
          switch (cat) {
@@ -1663,11 +1663,11 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &OceanMisc[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       default:
          *tableLen = 0;
-         return NULL;
+         return nullptr;
    }
 }
 
@@ -2329,14 +2329,14 @@ static const GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
                return &NDFD_LclTable[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 161:
          *tableLen = sizeof (MRMS_LclTable) / sizeof (GRIB2LocalTable);
          return &MRMS_LclTable[0];
       default:
          *tableLen = 0;
-         return NULL;
+         return nullptr;
    }
 }
 
@@ -2575,10 +2575,10 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          /* The NDFD over-rides for probability templates have already been
@@ -2686,7 +2686,7 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -2761,10 +2761,10 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          if (IsData_NDFD (center, subcenter) ||
@@ -2823,7 +2823,7 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -2981,10 +2981,10 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          if (IsData_MOS (center, subcenter)) {
@@ -3087,7 +3087,7 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -3145,9 +3145,9 @@ void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcen
                     sChar f_sndValue, double sndSurfValue)
 {
    char f_isNdfd = IsData_NDFD (center, subcenter);
-   myAssert (*name == NULL);
-   myAssert (*comment == NULL);
-   myAssert (*unit == NULL);
+   myAssert (*name == nullptr);
+   myAssert (*comment == nullptr);
+   myAssert (*unit == nullptr);
 
    /* Check if this is Probability data */
    if ((templat == GS4_PROBABIL_TIME) || (templat == GS4_PROBABIL_PNT)) {
@@ -3781,9 +3781,9 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
 
    /* Check if index is defined... 191 is undefined. */
    free (*shortLevelName);
-   *shortLevelName = NULL;
+   *shortLevelName = nullptr;
    free (*longLevelName);
-   *longLevelName = NULL;
+   *longLevelName = nullptr;
    snprintf (valBuff, sizeof(valBuff), "%f", value);
    strTrimRight (valBuff, '0');
    if (valBuff[strlen (valBuff) - 1] == '.') {

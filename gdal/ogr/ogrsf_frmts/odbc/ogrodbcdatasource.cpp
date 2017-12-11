@@ -37,13 +37,13 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRODBCDataSource::OGRODBCDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
+    pszName(nullptr),
     bDSUpdate(FALSE),
     nKnownSRID(0),
-    panSRID(NULL),
-    papoSRS(NULL)
+    panSRID(nullptr),
+    papoSRS(nullptr)
 {}
 
 /************************************************************************/
@@ -62,7 +62,7 @@ OGRODBCDataSource::~OGRODBCDataSource()
 
     for( int i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL )
+        if( papoSRS[i] != nullptr )
             papoSRS[i]->Release();
     }
     CPLFree( panSRID );
@@ -106,12 +106,12 @@ static int CheckDSNStringTemplate(const char* pszStr)
 int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 {
     const char* pszOptionName = "PGEO_DRIVER_TEMPLATE";
-    const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
-    if( pszDSNStringTemplate == NULL )
+    const char* pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
+    if( pszDSNStringTemplate == nullptr )
     {
         pszOptionName = "MDB_DRIVER_TEMPLATE";
-        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
-        if( pszDSNStringTemplate == NULL )
+        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
+        if( pszDSNStringTemplate == nullptr )
         {
             pszOptionName = "";
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
@@ -134,7 +134,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 /* -------------------------------------------------------------------- */
     CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
 
-    if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
+    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
     {
         int bError = TRUE;
         if( EQUAL(pszDSN, "") )
@@ -147,7 +147,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
                       strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
                       pszDSNStringTemplate,  pszNewName );
             CPLDebug( "ODBC", "EstablishSession(%s)", pszDSN );
-            if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
+            if( oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
             {
                 bError = FALSE;
             }
@@ -221,11 +221,11 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
         {
             const char *pszSchema = oTableList.GetColData(1);
             const char* pszTableName = oTableList.GetColData(2);
-            if( pszTableName != NULL )
+            if( pszTableName != nullptr )
             {
                 CPLString osLayerName;
 
-                if( pszSchema != NULL && strlen(pszSchema) > 0 )
+                if( pszSchema != nullptr && strlen(pszSchema) > 0 )
                 {
                     osLayerName = pszSchema;
                     osLayerName += ".";
@@ -233,7 +233,7 @@ int OGRODBCDataSource::OpenMDB( const char * pszNewName, int bUpdate )
 
                 osLayerName += pszTableName;
 
-                OpenTable( osLayerName, NULL, bUpdate );
+                OpenTable( osLayerName, nullptr, bUpdate );
             }
         }
 
@@ -261,26 +261,26 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      SRTEXT columns first.                                           */
 /* -------------------------------------------------------------------- */
     char *pszWrkName = CPLStrdup( pszNewName + 5 ); // Skip the 'ODBC:' part
-    char **papszTables = NULL;
-    char **papszGeomCol = NULL;
-    char *pszSRSTableName = NULL;
-    char *pszSRIDCol = NULL;
-    char *pszSRTextCol = NULL;
-    char *pszDelimiter = NULL;
+    char **papszTables = nullptr;
+    char **papszGeomCol = nullptr;
+    char *pszSRSTableName = nullptr;
+    char *pszSRIDCol = nullptr;
+    char *pszSRTextCol = nullptr;
+    char *pszDelimiter = nullptr;
 
-    if ( (pszDelimiter = strrchr( pszWrkName, ':' )) != NULL )
+    if ( (pszDelimiter = strrchr( pszWrkName, ':' )) != nullptr )
     {
         char *pszOBracket = strchr( pszDelimiter + 1, '(' );
 
-        if( strchr(pszDelimiter,'\\') != NULL
-            || strchr(pszDelimiter,'/') != NULL )
+        if( strchr(pszDelimiter,'\\') != nullptr
+            || strchr(pszDelimiter,'/') != nullptr )
         {
             /*
             ** if there are special tokens then this isn't really
             ** the srs table name, so avoid further processing.
             */
         }
-        else if( pszOBracket == NULL )
+        else if( pszOBracket == nullptr )
         {
             pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
             *pszDelimiter = '\0';
@@ -288,11 +288,11 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         else
         {
             char *pszCBracket = strchr( pszOBracket, ')' );
-            if( pszCBracket != NULL )
+            if( pszCBracket != nullptr )
                 *pszCBracket = '\0';
 
             char *pszComma = strchr( pszOBracket, ',' );
-            if( pszComma != NULL )
+            if( pszComma != nullptr )
             {
                 *pszComma = '\0';
                 pszSRIDCol = CPLStrdup( pszComma + 1 );
@@ -311,10 +311,10 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      from the end of the string first.  Also allow an optional       */
 /*      bracketed geometry column name after the table name.            */
 /* -------------------------------------------------------------------- */
-    while( (pszDelimiter = strrchr( pszWrkName, ',' )) != NULL )
+    while( (pszDelimiter = strrchr( pszWrkName, ',' )) != nullptr )
     {
         char *pszOBracket = strstr( pszDelimiter + 1, "(" );
-        if( pszOBracket == NULL )
+        if( pszOBracket == nullptr )
         {
             papszTables = CSLAddString( papszTables, pszDelimiter + 1 );
             papszGeomCol = CSLAddString( papszGeomCol, "" );
@@ -323,7 +323,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         {
             char *pszCBracket = strstr(pszOBracket,")");
 
-            if( pszCBracket != NULL )
+            if( pszCBracket != nullptr )
                 *pszCBracket = '\0';
 
             *pszOBracket = '\0';
@@ -338,11 +338,11 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      user/password@dsn.  But if there are no @ characters the        */
 /*      whole thing is assumed to be a DSN.                             */
 /* -------------------------------------------------------------------- */
-    char *pszUserid = NULL;
-    char *pszPassword = NULL;
-    char *pszDSN = NULL;
+    char *pszUserid = nullptr;
+    char *pszPassword = nullptr;
+    char *pszDSN = nullptr;
 
-    if( strstr(pszWrkName,"@") == NULL )
+    if( strstr(pszWrkName,"@") == nullptr )
     {
         pszDSN = CPLStrdup( pszWrkName );
     }
@@ -363,7 +363,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
             *pszTarget = '\0';
 
             pszTarget = strstr(pszUserid,"/");
-            if( pszTarget != NULL )
+            if( pszTarget != nullptr )
             {
                 *pszTarget = '\0';
                 pszPassword = CPLStrdup(pszTarget+1);
@@ -410,7 +410,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      If no explicit list of tables was given, check for a list in    */
 /*      a geometry_columns table.                                       */
 /* -------------------------------------------------------------------- */
-    if( papszTables == NULL )
+    if( papszTables == nullptr )
     {
         CPLODBCStatement oStmt( &oSession );
 
@@ -432,7 +432,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Otherwise our final resort is to return all tables as           */
 /*      non-spatial tables.                                             */
 /* -------------------------------------------------------------------- */
-    if( papszTables == NULL )
+    if( papszTables == nullptr )
     {
         CPLODBCStatement oTableList( &oSession );
 
@@ -443,7 +443,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                 const char *pszSchema = oTableList.GetColData(1);
                 CPLString osLayerName;
 
-                if( pszSchema != NULL && strlen(pszSchema) > 0 )
+                if( pszSchema != nullptr && strlen(pszSchema) > 0 )
                 {
                     osLayerName = pszSchema;
                     osLayerName += ".";
@@ -463,13 +463,13 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /*      (non-spatial).                                                  */
 /* -------------------------------------------------------------------- */
     for( int iTable = 0;
-         papszTables != NULL && papszTables[iTable] != NULL;
+         papszTables != nullptr && papszTables[iTable] != nullptr;
          iTable++ )
     {
         if( strlen(papszGeomCol[iTable]) > 0 )
             OpenTable( papszTables[iTable], papszGeomCol[iTable], bUpdate );
         else
-            OpenTable( papszTables[iTable], NULL, bUpdate );
+            OpenTable( papszTables[iTable], nullptr, bUpdate );
     }
 
     CSLDestroy( papszTables );
@@ -593,7 +593,7 @@ OGRLayer *OGRODBCDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -626,7 +626,7 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -636,18 +636,18 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStmt;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRODBCSelectLayer *poLayer = NULL;
+    OGRODBCSelectLayer *poLayer = nullptr;
 
     poLayer = new OGRODBCSelectLayer( this, poStmt );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;

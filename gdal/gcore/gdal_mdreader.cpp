@@ -79,7 +79,7 @@ static const char * const apszRPCTXTSingleValItems[] =
     RPC_LAT_SCALE,
     RPC_LONG_SCALE,
     RPC_HEIGHT_SCALE,
-    NULL
+    nullptr
 };
 
 static const char * const apszRPCTXT20ValItems[] =
@@ -88,14 +88,14 @@ static const char * const apszRPCTXT20ValItems[] =
     RPC_LINE_DEN_COEFF,
     RPC_SAMP_NUM_COEFF,
     RPC_SAMP_DEN_COEFF,
-    NULL
+    nullptr
 };
 
 /**
  * GDALMDReaderManager()
  */
 GDALMDReaderManager::GDALMDReaderManager() :
-    m_pReader(NULL)
+    m_pReader(nullptr)
 {}
 
 /**
@@ -103,7 +103,7 @@ GDALMDReaderManager::GDALMDReaderManager() :
  */
 GDALMDReaderManager::~GDALMDReaderManager()
 {
-   if( NULL != m_pReader )
+   if( nullptr != m_pReader )
    {
        delete m_pReader;
    }
@@ -124,7 +124,7 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
                                                  GUInt32 nType)
 {
     if( !GDALCanFileAcceptSidecarFile(pszPath) )
-        return NULL;
+        return nullptr;
 
     if(nType & MDR_DG)
     {
@@ -183,7 +183,7 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
         INIT_READER(GDALMDReaderALOS);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -191,10 +191,10 @@ GDALMDReaderBase* GDALMDReaderManager::GetReader(const char *pszPath,
  */
 GDALMDReaderBase::GDALMDReaderBase( const char * /* pszPath */,
                                     char ** /* papszSiblingFiles */ ) :
-    m_papszIMDMD(NULL),
-    m_papszRPCMD(NULL),
-    m_papszIMAGERYMD(NULL),
-    m_papszDEFAULTMD(NULL),
+    m_papszIMDMD(nullptr),
+    m_papszRPCMD(nullptr),
+    m_papszIMAGERYMD(nullptr),
+    m_papszDEFAULTMD(nullptr),
     m_bIsMetadataLoad(false)
 {}
 
@@ -223,7 +223,7 @@ char ** GDALMDReaderBase::GetMetadataDomain(const char *pszDomain)
         return m_papszRPCMD;
     else if(EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
         return m_papszIMAGERYMD;
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -242,7 +242,7 @@ void GDALMDReaderBase::LoadMetadata()
 time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
     const char* pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if(nullptr == pszDateTime)
         return 0;
 
     int iYear = 0;
@@ -274,7 +274,7 @@ time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
  * FillMetadata()
  */
 
-#define SETMETADATA(mdmd, md, domain) if(NULL != md) { \
+#define SETMETADATA(mdmd, md, domain) if(nullptr != md) { \
     char** papszCurrentMd = CSLDuplicate(mdmd->GetMetadata(domain)); \
     papszCurrentMd = CSLMerge(papszCurrentMd, md); \
     mdmd->SetMetadata(papszCurrentMd, domain); \
@@ -282,7 +282,7 @@ time_t GDALMDReaderBase::GetAcquisitionTimeFromString(
 
 bool GDALMDReaderBase::FillMetadata(GDALMultiDomainMetadata* poMDMD)
 {
-    if(NULL == poMDMD)
+    if(nullptr == poMDMD)
         return false;
 
     LoadMetadata();
@@ -311,7 +311,7 @@ char** GDALMDReaderBase::AddXMLNameValueToList(char** papszList,
 char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
                                           const char* pszName)
 {
-    if(NULL == psNode)
+    if(nullptr == psNode)
         return papszList;
 
     if (psNode->eType == CXT_Text)
@@ -324,13 +324,13 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
         int nAddIndex = 0;
         bool bReset = false;
-        for(CPLXMLNode* psChildNode = psNode->psChild; NULL != psChildNode;
+        for(CPLXMLNode* psChildNode = psNode->psChild; nullptr != psChildNode;
             psChildNode = psChildNode->psNext)
         {
             if (psChildNode->eType == CXT_Element)
             {
                 // check name duplicates
-                if(NULL != psChildNode->psNext)
+                if(nullptr != psChildNode->psNext)
                 {
                     if(bReset)
                     {
@@ -412,7 +412,7 @@ char** GDALMDReaderBase::ReadXMLToList(CPLXMLNode* psNode, char** papszList,
 
     // proceed next only on top level
 
-    if(NULL != psNode->psNext && EQUAL(pszName, ""))
+    if(nullptr != psNode->psNext && EQUAL(pszName, ""))
     {
          papszList = ReadXMLToList(psNode->psNext, papszList, pszName);
     }
@@ -431,7 +431,7 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
                          const char * pszTestString, int nBufferSize)
 {
     VSILFILE* fpL = VSIFOpenL( soFilePath, "r" );
-    if( fpL == NULL )
+    if( fpL == nullptr )
         return false;
     char *pBuffer = new char[nBufferSize + 1];
     const int nReadBytes = static_cast<int>(
@@ -444,7 +444,7 @@ bool GDALCheckFileHeader(const CPLString& soFilePath,
     }
     pBuffer[nReadBytes] = '\0';
 
-    const bool bResult = strstr(pBuffer, pszTestString) != NULL;
+    const bool bResult = strstr(pBuffer, pszTestString) != nullptr;
     delete [] pBuffer;
 
     return bResult;
@@ -503,26 +503,26 @@ static const char * const apszRPBMap[] = {
     apszRPCTXT20ValItems[1], "IMAGE.lineDenCoef",
     apszRPCTXT20ValItems[2], "IMAGE.sampNumCoef",
     apszRPCTXT20ValItems[3], "IMAGE.sampDenCoef",
-    NULL,             NULL };
+    nullptr,             nullptr };
 
 char **GDALLoadRPBFile( const CPLString& soFilePath )
 {
     if( soFilePath.empty() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( soFilePath, "r" );
 
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
 
     CPLKeywordParser oParser;
     if( !oParser.Ingest( fp ) )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-        return NULL;
+        return nullptr;
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -530,22 +530,22 @@ char **GDALLoadRPBFile( const CPLString& soFilePath )
 /* -------------------------------------------------------------------- */
 /*      Extract RPC information, in a GDAL "standard" metadata format.  */
 /* -------------------------------------------------------------------- */
-    char **papszMD = NULL;
-    for( int i = 0; apszRPBMap[i] != NULL; i += 2 )
+    char **papszMD = nullptr;
+    for( int i = 0; apszRPBMap[i] != nullptr; i += 2 )
     {
         const char *pszRPBVal = oParser.GetKeyword( apszRPBMap[i+1] );
         CPLString osAdjVal;
 
-        if( pszRPBVal == NULL )
+        if( pszRPBVal == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s file found, but missing %s field (and possibly others).",
                       soFilePath.c_str(), apszRPBMap[i+1] );
             CSLDestroy( papszMD );
-            return NULL;
+            return nullptr;
         }
 
-        if( strchr(pszRPBVal,',') == NULL )
+        if( strchr(pszRPBVal,',') == nullptr )
             osAdjVal = pszRPBVal;
         else
         {
@@ -585,7 +585,7 @@ char **GDALLoadRPBFile( const CPLString& soFilePath )
 char ** GDALLoadRPCFile( const CPLString& soFilePath )
 {
     if( soFilePath.empty() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
@@ -593,24 +593,24 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
     // 100 lines would be enough, but some .rpc files have CR CR LF end of
     // lines, which result in a blank line to be recognized, so accept up
     // to 200 lines (#6341)
-    char **papszLines = CSLLoad2( soFilePath, 200, 100, NULL );
+    char **papszLines = CSLLoad2( soFilePath, 200, 100, nullptr );
     if(!papszLines)
-        return NULL;
+        return nullptr;
 
-    char **papszMD = NULL;
+    char **papszMD = nullptr;
 
     /* From LINE_OFF to HEIGHT_SCALE */
     for(size_t i = 0; i < 19; i += 2 )
     {
         const char *pszRPBVal = CSLFetchNameValue(papszLines, apszRPBMap[i] );
-        if( pszRPBVal == NULL )
+        if( pszRPBVal == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                 "%s file found, but missing %s field (and possibly others).",
                 soFilePath.c_str(), apszRPBMap[i]);
             CSLDestroy( papszMD );
             CSLDestroy( papszLines );
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -621,7 +621,7 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
 
     /* For LINE_NUM_COEFF, LINE_DEN_COEFF, SAMP_NUM_COEFF, SAMP_DEN_COEFF */
     /* parameters that have 20 values each */
-    for(size_t i = 20; apszRPBMap[i] != NULL; i += 2 )
+    for(size_t i = 20; apszRPBMap[i] != nullptr; i += 2 )
     {
         CPLString soVal;
         for(int j = 1; j <= 20; j++)
@@ -630,14 +630,14 @@ char ** GDALLoadRPCFile( const CPLString& soFilePath )
             soRPBMapItem.Printf("%s_%d", apszRPBMap[i], j);
             const char *pszRPBVal =
                 CSLFetchNameValue(papszLines, soRPBMapItem.c_str() );
-            if( pszRPBVal == NULL )
+            if( pszRPBVal == nullptr )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                     "%s file found, but missing %s field (and possibly others).",
                     soFilePath.c_str(), soRPBMapItem.c_str() );
                 CSLDestroy( papszMD );
                 CSLDestroy( papszLines );
-                return NULL;
+                return nullptr;
             }
             else
             {
@@ -672,7 +672,7 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osRPCFilename, "w" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create %s for writing.\n%s",
@@ -684,10 +684,10 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
 /*      Write RPC values from our RPC metadata.                         */
 /* -------------------------------------------------------------------- */
     bool bOK = true;
-    for( int i = 0; apszRPCTXTSingleValItems[i] != NULL; i ++ )
+    for( int i = 0; apszRPCTXTSingleValItems[i] != nullptr; i ++ )
     {
         const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXTSingleValItems[i] );
-        if( pszRPCVal == NULL )
+        if( pszRPCVal == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
@@ -700,10 +700,10 @@ CPLErr GDALWriteRPCTXTFile( const char *pszFilename, char **papszMD )
         bOK &= VSIFPrintfL( fp, "%s: %s\n", apszRPCTXTSingleValItems[i], pszRPCVal ) > 0;
     }
 
-    for( int i = 0; apszRPCTXT20ValItems[i] != NULL; i ++ )
+    for( int i = 0; apszRPCTXT20ValItems[i] != nullptr; i ++ )
     {
         const char *pszRPCVal = CSLFetchNameValue( papszMD, apszRPCTXT20ValItems[i] );
-        if( pszRPCVal == NULL )
+        if( pszRPCVal == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
@@ -756,7 +756,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osRPBFilename, "w" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create %s for writing.\n%s",
@@ -777,12 +777,12 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Write RPC values from our RPC metadata.                         */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; apszRPBMap[i] != NULL; i += 2 )
+    for( int i = 0; apszRPBMap[i] != nullptr; i += 2 )
     {
         const char *pszRPBVal = CSLFetchNameValue( papszMD, apszRPBMap[i] );
         const char *pszRPBTag;
 
-        if( pszRPBVal == NULL )
+        if( pszRPBVal == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s field missing in metadata, %s file not written.",
@@ -796,7 +796,7 @@ CPLErr GDALWriteRPBFile( const char *pszFilename, char **papszMD )
         if( STARTS_WITH_CI(pszRPBTag, "IMAGE.") )
             pszRPBTag += 6;
 
-        if( strstr(apszRPBMap[i], "COEF" ) == NULL )
+        if( strstr(apszRPBMap[i], "COEF" ) == nullptr )
         {
             bOK &= VSIFPrintfL( fp, "\t%s = %s;\n", pszRPBTag, pszRPBVal ) > 0;
         }
@@ -860,7 +860,7 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
 /* -------------------------------------------------------------------- */
     const char *pszValue = CSLFetchNameValue( papszIMD, "version" );
 
-    if( pszValue == NULL )
+    if( pszValue == nullptr )
         return false;
 
     if( EQUAL(pszValue,"\"R\"") )
@@ -891,13 +891,13 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
         "scanDirection",
         "cloudCover",
         "productGSD",
-        NULL };
+        nullptr };
 
-    for( int iKey = 0; apszToRemove[iKey] != NULL; iKey++ )
+    for( int iKey = 0; apszToRemove[iKey] != nullptr; iKey++ )
     {
         int iTarget = CSLFindName( papszIMD, apszToRemove[iKey] );
         if( iTarget != -1 )
-            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, NULL );
+            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -913,20 +913,20 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
         "InTrackViewAngle",
         "CrossTrackViewAngle",
         "OffNadirViewAngle",
-        NULL };
+        nullptr };
 
-    for( int iKey = 0; keylist[iKey] != NULL; iKey++ )
+    for( int iKey = 0; keylist[iKey] != nullptr; iKey++ )
     {
         CPLString osTarget;
         osTarget.Printf( "IMAGE_1.min%s", keylist[iKey] );
         int iTarget = CSLFindName( papszIMD, osTarget );
         if( iTarget != -1 )
-            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, NULL );
+            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, nullptr );
 
         osTarget.Printf( "IMAGE_1.max%s", keylist[iKey] );
         iTarget = CSLFindName( papszIMD, osTarget );
         if( iTarget != -1 )
-            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, NULL );
+            papszIMD = CSLRemoveStrings( papszIMD, iTarget, 1, nullptr );
 
         osTarget.Printf( "IMAGE_1.mean%s", keylist[iKey] );
         iTarget = CSLFindName( papszIMD, osTarget );
@@ -956,7 +956,7 @@ static bool GDAL_IMD_AA2R( char ***ppapszIMD )
 char ** GDALLoadIMDFile( const CPLString& osFilePath )
 {
     if( osFilePath.empty() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read file and parse.                                            */
@@ -965,13 +965,13 @@ char ** GDALLoadIMDFile( const CPLString& osFilePath )
 
     VSILFILE *fp = VSIFOpenL( osFilePath, "r" );
 
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
 
     if( !oParser.Ingest( fp ) )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-        return NULL;
+        return nullptr;
     }
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -982,7 +982,7 @@ char ** GDALLoadIMDFile( const CPLString& osFilePath )
     char **papszIMD = CSLDuplicate( oParser.GetAllKeywords() );
     const char *pszVersion = CSLFetchNameValue( papszIMD, "version" );
 
-    if( pszVersion == NULL )
+    if( pszVersion == nullptr )
     {
         /* ? */;
     }
@@ -1033,7 +1033,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osRPBFilename, "w" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create %s for writing.\n%s",
@@ -1049,9 +1049,9 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
     CPLString osCurSection;
     bool bOK = true;
 
-    for( int iKey = 0; papszMD[iKey] != NULL; iKey++ )
+    for( int iKey = 0; papszMD[iKey] != nullptr; iKey++ )
     {
-        char *pszRawKey = NULL;
+        char *pszRawKey = nullptr;
         const char *pszValue = CPLParseNameValue( papszMD[iKey], &pszRawKey );
         CPLString osKeySection;
         CPLString osKeyItem;
@@ -1060,7 +1060,7 @@ CPLErr GDALWriteIMDFile( const char *pszFilename, char **papszMD )
 /* -------------------------------------------------------------------- */
 /*      Split stuff like BAND_P.ULLon into section and item.            */
 /* -------------------------------------------------------------------- */
-        if( pszDot == NULL )
+        if( pszDot == nullptr )
         {
             osKeyItem = pszRawKey;
         }

@@ -130,11 +130,11 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
                                             const char * pszDomain ) CPL_OVERRIDE;
         virtual CPLErr FlushCache() CPL_OVERRIDE;
         virtual char **GetCategoryNames() CPL_OVERRIDE;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
-        virtual double GetMinimum( int *pbSuccess = NULL ) CPL_OVERRIDE;
-        virtual double GetMaximum(int *pbSuccess = NULL ) CPL_OVERRIDE;
-        virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
-        virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) CPL_OVERRIDE;
+        virtual double GetMinimum( int *pbSuccess = nullptr ) CPL_OVERRIDE;
+        virtual double GetMaximum(int *pbSuccess = nullptr ) CPL_OVERRIDE;
+        virtual double GetOffset( int *pbSuccess = nullptr ) CPL_OVERRIDE;
+        virtual double GetScale( int *pbSuccess = nullptr ) CPL_OVERRIDE;
         virtual const char *GetUnitType() CPL_OVERRIDE;
         virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
         virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
@@ -236,9 +236,9 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
                             int nRasterXSize, int nRasterYSize,
                             GDALAccess eAccess = GA_ReadOnly,
                             int bShared = FALSE,
-                            const char * pszProjectionRef = NULL,
-                            double * padfGeoTransform = NULL,
-                            const char* pszOwner = NULL);
+                            const char * pszProjectionRef = nullptr,
+                            double * padfGeoTransform = nullptr,
+                            const char* pszOwner = nullptr);
         virtual ~GDALProxyPoolDataset();
 
         void         SetOpenOptions(char** papszOpenOptions);

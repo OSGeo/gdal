@@ -69,38 +69,38 @@ OGRLayer* OGRCloudantDataSource::OpenDatabase(const char* pszLayerName)
         if (pszLastSlash)
         {
             osEscapedName = pszLastSlash + 1;
-            char* l_pszName = CPLUnescapeString(osEscapedName, NULL, CPLES_URL);
+            char* l_pszName = CPLUnescapeString(osEscapedName, nullptr, CPLES_URL);
             osTableName = l_pszName;
             CPLFree(l_pszName);
             *pszLastSlash = 0;
         }
         osURL = pszURL;
         CPLFree(pszURL);
-        pszURL = NULL;
+        pszURL = nullptr;
 
-        if (pszLastSlash == NULL)
-            return NULL;
+        if (pszLastSlash == nullptr)
+            return nullptr;
     }
 
     CPLString osURI("/");
     osURI += osEscapedName;
 
     json_object* poAnswerObj = GET(osURI);
-    if (poAnswerObj == NULL)
-        return NULL;
+    if (poAnswerObj == nullptr)
+        return nullptr;
 
     if ( !json_object_is_type(poAnswerObj, json_type_object) ||
-            CPL_json_object_object_get(poAnswerObj, "db_name") == NULL )
+            CPL_json_object_object_get(poAnswerObj, "db_name") == nullptr )
     {
         IsError(poAnswerObj, "Database opening failed");
 
         json_object_put(poAnswerObj);
-        return NULL;
+        return nullptr;
     }
 
     OGRCloudantTableLayer* poLayer = new OGRCloudantTableLayer(this, osTableName);
 
-    if ( CPL_json_object_object_get(poAnswerObj, "update_seq") != NULL )
+    if ( CPL_json_object_object_get(poAnswerObj, "update_seq") != nullptr )
     {
         int nUpdateSeq = json_object_get_int(CPL_json_object_object_get(poAnswerObj, "update_seq"));
         poLayer->SetUpdateSeq(nUpdateSeq);
@@ -138,7 +138,7 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     if (!osURL.empty() && osURL.back() == '/')
         osURL.resize(osURL.size() - 1);
 
-    const char* pszUserPwd = CPLGetConfigOption("CLOUDANT_USERPWD", NULL);
+    const char* pszUserPwd = CPLGetConfigOption("CLOUDANT_USERPWD", nullptr);
     const char* pszSlash = "/";
 
     if (pszUserPwd)
@@ -147,23 +147,23 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
     if ((strstr(osURL, "/_design/") && strstr(osURL, "/_view/")) ||
         strstr(osURL, "/_all_docs"))
     {
-        return OpenView() != NULL;
+        return OpenView() != nullptr;
     }
 
     /* If passed with https://useraccount.cloudant.com[:port]/database, do not */
     /* try to issue /all_dbs, but directly open the database */
     const char* pszKnowProvider = strstr(osURL, ".cloudant.com/");
-    if (pszKnowProvider != NULL &&
-        strchr(pszKnowProvider + strlen(".cloudant.com/"), '/' ) == NULL)
+    if (pszKnowProvider != nullptr &&
+        strchr(pszKnowProvider + strlen(".cloudant.com/"), '/' ) == nullptr)
     {
-        return OpenDatabase() != NULL;
+        return OpenDatabase() != nullptr;
     }
 
     pszKnowProvider = strstr(osURL, "localhost");
-    if (pszKnowProvider != NULL &&
-        strstr(pszKnowProvider + strlen("localhost"), pszSlash ) != NULL)
+    if (pszKnowProvider != nullptr &&
+        strstr(pszKnowProvider + strlen("localhost"), pszSlash ) != nullptr)
     {
-        return OpenDatabase() != NULL;
+        return OpenDatabase() != nullptr;
     }
 
     /* Get list of tables */
@@ -183,14 +183,14 @@ int OGRCloudantDataSource::Open( const char * pszFilename, int bUpdateIn)
                 strcmp(pszReason, "missing") == 0)
             {
                 json_object_put(poAnswerObj);
-                poAnswerObj = NULL;
+                poAnswerObj = nullptr;
 
                 CPLErrorReset();
 
-                return OpenDatabase() != NULL;
+                return OpenDatabase() != nullptr;
             }
         }
-        if (poAnswerObj == NULL)
+        if (poAnswerObj == nullptr)
         {
             IsError(poAnswerObj, "Database listing failed");
 
@@ -233,7 +233,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     if (!IsReadWrite())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
-        return NULL;
+        return nullptr;
     }
 
     char *pszLayerName = CPLStrlwr(CPLStrdup(l_pszName));
@@ -248,7 +248,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     {
         if( EQUAL(osLayerName, papoLayers[iLayer]->GetName()) )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
                 DeleteLayer( osLayerName );
@@ -261,7 +261,7 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
                           osLayerName.c_str());
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -276,15 +276,15 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
     CPLString osURI;
     osURI = "/";
     osURI += osEscapedName;
-    json_object* poAnswerObj = PUT(osURI, NULL);
+    json_object* poAnswerObj = PUT(osURI, nullptr);
 
-    if (poAnswerObj == NULL)
-        return NULL;
+    if (poAnswerObj == nullptr)
+        return nullptr;
 
     if( !IsOK(poAnswerObj, "Layer creation failed") )
     {
         json_object_put(poAnswerObj);
-        return NULL;
+        return nullptr;
     }
 
     json_object_put(poAnswerObj);
@@ -303,31 +303,31 @@ OGRLayer   *OGRCloudantDataSource::ICreateLayer( const char *l_pszName,
         osURI += "/";
         osURI += designDoc;
 
-        if (poSpatialRef != NULL)
+        if (poSpatialRef != nullptr)
         {
             // epsg codes are supported in Cloudant
-            const char * pszEpsg = NULL;
-            const char * pszAuthName = NULL;
+            const char * pszEpsg = nullptr;
+            const char * pszAuthName = nullptr;
             if (poSpatialRef->IsProjected())
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("PROJCS");
-                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
+                if ((pszAuthName != nullptr) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("PROJCS");
             }
             else
             {
                 pszAuthName = poSpatialRef->GetAuthorityName("GEOGCS");
-                if ((pszAuthName != NULL) && (STARTS_WITH(pszAuthName, "EPSG")))
+                if ((pszAuthName != nullptr) && (STARTS_WITH(pszAuthName, "EPSG")))
                     pszEpsg = poSpatialRef->GetAuthorityCode("GEOGCS");
             }
 
-            if (pszEpsg != NULL)
+            if (pszEpsg != nullptr)
             {
                 if( snprintf(szSrid, sizeof(szSrid), "urn:ogc:def:crs:epsg::%s",
                              pszEpsg) >= (int)sizeof(szSrid) )
                 {
                     CPLError(CE_Failure, CPLE_AppDefined, "Unable to parse SRID");
-                    return NULL;
+                    return nullptr;
                 }
                 else
                     bSrid = true;

@@ -185,7 +185,7 @@ static const IlwisDatums iwDatums[] =
     { "WGS 1984", "WGS_1984", 4326 },
     { "Yacare", "Yacare", 4309 },
     { "Zanderij", "Zanderij", 4311 },
-    { NULL, NULL, 0 }
+    { nullptr, nullptr, 0 }
 };
 
 static const IlwisEllips iwEllips[] =
@@ -227,7 +227,7 @@ static const IlwisEllips iwEllips[] =
     // WGS 66
     { "WGS 72", 7020, 6378135.0, 298.259998590  },
     { "WGS 84", 7030, 6378137, 298.257223563 },
-    { NULL, 0, 0.0, 0.0 }
+    { nullptr, 0, 0.0, 0.0 }
 };
 
 #ifndef R2D
@@ -679,7 +679,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
                                     piwEllips->pszIlwisEllips,
                                     dfSemiMajor,
                                     piwEllips->invFlattening,
-                                    NULL, 0.0, NULL, 0.0 );
+                                    nullptr, 0.0, nullptr, 0.0 );
                     oSRS.SetAuthority( "SPHEROID", "EPSG", piwEllips->nEPSGCode );
 
                     break;
@@ -701,7 +701,7 @@ CPLErr ILWISDataset::ReadProjection( const std::string& csyFileName )
                                 "Not specified (based on custom ellipsoid)",
                                 "Custom ellipsoid",
                                 padfPrjParams[0], padfPrjParams[2],
-                                NULL, 0, NULL, 0 );
+                                nullptr, 0, nullptr, 0 );
             }
             else
             {
@@ -987,13 +987,13 @@ CPLErr ILWISDataset::WriteProjection()
 
 {
     OGRSpatialReference oSRS;
-    OGRSpatialReference *poGeogSRS = NULL;
+    OGRSpatialReference *poGeogSRS = nullptr;
     char                *pszP = pszProjection;
 
     std::string csFileName = CPLResetExtension(osFileName, "csy" );
     std::string pszBaseName = std::string(CPLGetBasename( osFileName ));
     //std::string pszPath = std::string(CPLGetPath( osFileName ));
-    bool bProjection = ((pszProjection != NULL) && (strlen(pszProjection)>0));
+    bool bProjection = ((pszProjection != nullptr) && (strlen(pszProjection)>0));
     bool bHaveSRS;
     if( bProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
     {
@@ -1059,19 +1059,19 @@ CPLErr ILWISDataset::WriteProjection()
 /* -------------------------------------------------------------------- */
 /*  Recognise various projections.                                      */
 /* -------------------------------------------------------------------- */
-    const char * pszProjName = NULL;
+    const char * pszProjName = nullptr;
 
     if( bHaveSRS )
         pszProjName = oSRS.GetAttrValue( "PROJCS|PROJECTION" );
 
-    if( pszProjName == NULL )
+    if( pszProjName == nullptr )
     {
         if( bHaveSRS && oSRS.IsGeographic() )
         {
             WriteElement("CoordSystem", "Type", csFileName, "LatLon");
         }
     }
-    else if( oSRS.GetUTMZone( NULL ) != 0 )
+    else if( oSRS.GetUTMZone( nullptr ) != 0 )
     {
         WriteUTM(csFileName, oSRS);
     }
@@ -1171,7 +1171,7 @@ CPLErr ILWISDataset::WriteProjection()
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if( poGeogSRS != NULL )
+    if( poGeogSRS != nullptr )
         delete poGeogSRS;
 
     return CE_None;

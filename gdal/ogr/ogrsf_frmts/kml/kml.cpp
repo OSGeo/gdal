@@ -40,21 +40,21 @@
 CPL_CVSID("$Id$")
 
 KML::KML() :
-    poTrunk_(NULL),
+    poTrunk_(nullptr),
     nNumLayers_(-1),
-    papoLayers_(NULL),
+    papoLayers_(nullptr),
     nDepth_(0),
     validity(KML_VALIDITY_UNKNOWN),
-    pKMLFile_(NULL),
-    poCurrent_(NULL),
-    oCurrentParser(NULL),
+    pKMLFile_(nullptr),
+    poCurrent_(nullptr),
+    oCurrentParser(nullptr),
     nDataHandlerCounter(0),
     nWithoutEventCounter(0)
 {}
 
 KML::~KML()
 {
-    if( NULL != pKMLFile_ )
+    if( nullptr != pKMLFile_ )
         VSIFCloseL(pKMLFile_);
     CPLFree(papoLayers_);
 
@@ -63,30 +63,30 @@ KML::~KML()
 
 bool KML::open(const char * pszFilename)
 {
-    if( NULL != pKMLFile_ )
+    if( nullptr != pKMLFile_ )
         VSIFCloseL( pKMLFile_ );
 
     pKMLFile_ = VSIFOpenL( pszFilename, "r" );
-    return pKMLFile_ != NULL;
+    return pKMLFile_ != nullptr;
 }
 
 bool KML::parse()
 {
-    if( NULL == pKMLFile_ )
+    if( nullptr == pKMLFile_ )
     {
         sError_ = "No file given";
         return false;
     }
 
-    if(poTrunk_ != NULL) {
+    if(poTrunk_ != nullptr) {
         delete poTrunk_;
-        poTrunk_ = NULL;
+        poTrunk_ = nullptr;
     }
 
-    if(poCurrent_ != NULL)
+    if(poCurrent_ != nullptr)
     {
         delete poCurrent_;
-        poCurrent_ = NULL;
+        poCurrent_ = nullptr;
     }
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
@@ -116,7 +116,7 @@ bool KML::parse()
             XML_ParserFree(oParser);
             VSIRewindL(pKMLFile_);
 
-            if( poCurrent_ != NULL )
+            if( poCurrent_ != nullptr )
             {
                 while( poCurrent_ )
                 {
@@ -133,7 +133,7 @@ bool KML::parse()
                 // first <kml> element
                 delete poTrunk_;
             }
-            poTrunk_ = NULL;
+            poTrunk_ = nullptr;
 
             return false;
         }
@@ -153,29 +153,29 @@ bool KML::parse()
             delete poCurrent_;
             poCurrent_ = poTemp;
         }
-        poTrunk_ = NULL;
+        poTrunk_ = nullptr;
         return false;
     }
 
-    poCurrent_ = NULL;
+    poCurrent_ = nullptr;
     return true;
 }
 
 void KML::checkValidity()
 {
-    if(poTrunk_ != NULL)
+    if(poTrunk_ != nullptr)
     {
         delete poTrunk_;
-        poTrunk_ = NULL;
+        poTrunk_ = nullptr;
     }
 
-    if(poCurrent_ != NULL)
+    if(poCurrent_ != nullptr)
     {
         delete poCurrent_;
-        poCurrent_ = NULL;
+        poCurrent_ = nullptr;
     }
 
-    if(pKMLFile_ == NULL)
+    if(pKMLFile_ == nullptr)
     {
         sError_ = "No file given";
         return;
@@ -183,7 +183,7 @@ void KML::checkValidity()
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
     XML_SetUserData(oParser, this);
-    XML_SetElementHandler(oParser, startElementValidate, NULL);
+    XML_SetElementHandler(oParser, startElementValidate, nullptr);
     XML_SetCharacterDataHandler(oParser, dataHandlerValidate);
     int nCount = 0;
 
@@ -230,13 +230,13 @@ void KML::checkValidity()
 
     XML_ParserFree(oParser);
     VSIRewindL(pKMLFile_);
-    poCurrent_ = NULL;
+    poCurrent_ = nullptr;
 }
 
 void XMLCALL KML::startElement( void* pUserData, const char* pszName,
                                 const char** ppszAttr )
 {
-    KMLNode* poMynew = NULL;
+    KMLNode* poMynew = nullptr;
 
     KML* poKML = static_cast<KML*>(pUserData);
 
@@ -246,8 +246,8 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
     if( pszColumn)
         pszName = pszColumn + 1;
 
-    if(poKML->poTrunk_ == NULL
-    || (poKML->poCurrent_ != NULL &&
+    if(poKML->poTrunk_ == nullptr
+    || (poKML->poCurrent_ != nullptr &&
         poKML->poCurrent_->getName().compare("description") != 0))
     {
         if (poKML->nDepth_ == 1024)
@@ -271,15 +271,15 @@ void XMLCALL KML::startElement( void* pUserData, const char* pszName,
             poMynew->addAttribute(poAtt);
         }
 
-        if(poKML->poTrunk_ == NULL)
+        if(poKML->poTrunk_ == nullptr)
             poKML->poTrunk_ = poMynew;
-        if(poKML->poCurrent_ != NULL)
+        if(poKML->poCurrent_ != nullptr)
             poMynew->setParent(poKML->poCurrent_);
         poKML->poCurrent_ = poMynew;
 
         poKML->nDepth_++;
     }
-    else if( poKML->poCurrent_ != NULL )
+    else if( poKML->poCurrent_ != nullptr )
     {
         std::string sNewContent = "<";
         sNewContent += pszName;
@@ -385,7 +385,7 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
     if( pszColumn)
         pszName = pszColumn + 1;
 
-    if(poKML->poCurrent_ != NULL &&
+    if(poKML->poCurrent_ != nullptr &&
        poKML->poCurrent_->getName().compare(pszName) == 0)
     {
         poKML->nDepth_--;
@@ -482,27 +482,27 @@ void XMLCALL KML::endElement(void* pUserData, const char* pszName)
             }
         }
 
-        if(poKML->poCurrent_->getParent() != NULL)
+        if(poKML->poCurrent_->getParent() != nullptr)
             poKML->poCurrent_ = poKML->poCurrent_->getParent();
         else
-            poKML->poCurrent_ = NULL;
+            poKML->poCurrent_ = nullptr;
 
         if(!poKML->isHandled(pszName))
         {
             CPLDebug("KML", "Not handled: %s", pszName);
             delete poTmp;
             if( poKML->poCurrent_ == poTmp )
-                poKML->poCurrent_ = NULL;
+                poKML->poCurrent_ = nullptr;
             if( poKML->poTrunk_ == poTmp )
-                poKML->poTrunk_ = NULL;
+                poKML->poTrunk_ = nullptr;
         }
         else
         {
-            if(poKML->poCurrent_ != NULL)
+            if(poKML->poCurrent_ != nullptr)
                 poKML->poCurrent_->addChildren(poTmp);
         }
     }
-    else if(poKML->poCurrent_ != NULL)
+    else if(poKML->poCurrent_ != nullptr)
     {
         std::string sNewContent = "</";
         sNewContent += pszName;
@@ -520,7 +520,7 @@ void XMLCALL KML::dataHandler(void* pUserData, const char* pszData, int nLen)
 
     poKML->nWithoutEventCounter = 0;
 
-    if(nLen < 1 || poKML->poCurrent_ == NULL)
+    if(nLen < 1 || poKML->poCurrent_ == nullptr)
         return;
 
     poKML->nDataHandlerCounter ++;
@@ -565,20 +565,20 @@ std::string KML::getError() const
 
 int KML::classifyNodes()
 {
-    if( poTrunk_ == NULL )
+    if( poTrunk_ == nullptr )
         return false;
     return poTrunk_->classify(this);
 }
 
 void KML::eliminateEmpty()
 {
-    if( poTrunk_ != NULL )
+    if( poTrunk_ != nullptr )
         poTrunk_->eliminateEmpty(this);
 }
 
 void KML::print(unsigned short nNum)
 {
-    if( poTrunk_ != NULL )
+    if( poTrunk_ != nullptr )
         poTrunk_->print(nNum);
 }
 
@@ -638,7 +638,7 @@ bool KML::selectLayer(int nNum) {
 std::string KML::getCurrentName() const
 {
     std::string tmp;
-    if( poCurrent_ != NULL )
+    if( poCurrent_ != nullptr )
     {
         tmp = poCurrent_->getNameElement();
     }
@@ -647,7 +647,7 @@ std::string KML::getCurrentName() const
 
 Nodetype KML::getCurrentType() const
 {
-    if(poCurrent_ != NULL)
+    if(poCurrent_ != nullptr)
         return poCurrent_->getType();
 
     return Unknown;
@@ -655,7 +655,7 @@ Nodetype KML::getCurrentType() const
 
 int KML::is25D() const
 {
-    if(poCurrent_ != NULL)
+    if(poCurrent_ != nullptr)
         return poCurrent_->is25D();
 
     return Unknown;
@@ -663,7 +663,7 @@ int KML::is25D() const
 
 int KML::getNumFeatures()
 {
-    if(poCurrent_ == NULL)
+    if(poCurrent_ == nullptr)
         return -1;
 
     return static_cast<int>(poCurrent_->getNumFeatures());
@@ -671,8 +671,8 @@ int KML::getNumFeatures()
 
 Feature* KML::getFeature(std::size_t nNum, int& nLastAsked, int &nLastCount)
 {
-    if(poCurrent_ == NULL)
-        return NULL;
+    if(poCurrent_ == nullptr)
+        return nullptr;
 
     return poCurrent_->getFeature(nNum, nLastAsked, nLastCount);
 }
