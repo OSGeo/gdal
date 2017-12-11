@@ -4,15 +4,9 @@ An [Emscripten](https://github.com/kripken/emscripten) port of [GDAL](http://www
 
 Developing
 -----------
-1. Install Emscripten and its dependencies following the instructions
-[here](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
-2. If you are on a Mac, you may need to run the following if you receive errors like this: `env:
-python2: No such file or directory`
-```
-./emsdk install sdk-incoming-64bit --build=Release
-./emsdk activate sdk-incoming-64bit
-```
-3. From the project directory, run `make gdal`
+1. Install Docker
+2. Run `./scripts/setup`, which will build the Docker container.
+3. Run `./scripts/make gdal`. The make script just calls `make` from inside the Docker container.
 
 Usage
 ---------------
