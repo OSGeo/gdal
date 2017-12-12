@@ -1683,6 +1683,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("Most likely they didn't complete bytes 38-44 of "
                            "Template 4.11\n");
                free (msg);
+               meta->pds2.sect4.numInterval = 0;
                return -1;
             }
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
@@ -1754,6 +1755,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("Most likely they didn't complete bytes 37-43 of "
                            "Template 4.12\n");
                free (msg);
+               meta->pds2.sect4.numInterval = 0;
                return -1;
             }
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
@@ -1815,6 +1817,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
                            "Template 4.8\n");
                free (msg);
+               meta->pds2.sect4.numInterval = 0;
                return -1;
             }
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
@@ -1883,6 +1886,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("Most likely they didn't complete bytes 35-41 of "
                            "Template 4.10\n");
                free (msg);
+               meta->pds2.sect4.numInterval = 0;
                return -1;
             }
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
@@ -1967,6 +1971,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
                errSprintf ("Most likely they didn't complete bytes 48-54 of "
                            "Template 4.9\n");
                free (msg);
+               meta->pds2.sect4.numInterval = 0;
                return -1;
             }
             printf ("Warning: in call to ParseTime from ParseSect4\n%s", msg);
