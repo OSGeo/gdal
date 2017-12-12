@@ -541,7 +541,7 @@ gtemplate *extpdstemplate(g2int number,g2int *list)
               }
            }
            else if ( number == 51 ) {
-              new->extlen=list[15]*11;
+              new->extlen=list[15]*6; /* GDAL fix */
               new->ext=(g2int *)malloc(sizeof(g2int)*new->extlen);
               for (i=0;i<list[15];i++) {
                  l=i*6;
