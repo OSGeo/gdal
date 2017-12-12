@@ -376,6 +376,7 @@ void RegisterOGRCSV()
                               "Integer Integer64 Real String Date DateTime "
                               "Time IntegerList Integer64List RealList "
                               "StringList");
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
 
     poDriver->pfnOpen = OGRCSVDriverOpen;
     poDriver->pfnIdentify = OGRCSVDriverIdentify;

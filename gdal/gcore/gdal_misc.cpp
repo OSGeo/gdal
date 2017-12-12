@@ -3094,6 +3094,9 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             if( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) )
                 printf( "  Creation Field Datatypes: %s\n",/*ok*/
                         CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATATYPES ) );
+            if ( CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATASUBTYPES ) )
+              printf( "  Creation Field Data Sub-types: %s\n",/*ok*/
+                      CSLFetchNameValue( papszMD, GDAL_DMD_CREATIONFIELDDATASUBTYPES ) );
             if( CPLFetchBool( papszMD, GDAL_DCAP_NOTNULL_FIELDS, false ) )
                 printf( "  Supports: Creating fields with NOT NULL constraint.\n" );/*ok*/
             if( CPLFetchBool( papszMD, GDAL_DCAP_DEFAULT_FIELDS, false ) )

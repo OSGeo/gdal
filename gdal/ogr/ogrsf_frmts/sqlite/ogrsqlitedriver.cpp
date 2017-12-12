@@ -355,6 +355,8 @@ void RegisterOGRSQLite()
                                "Integer Integer64 Real String Date DateTime "
                                "Time Binary IntegerList Integer64List "
                                "RealList StringList" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
+
 #ifdef HAVE_RASTERLITE2
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "
