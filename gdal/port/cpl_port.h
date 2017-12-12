@@ -588,7 +588,7 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 /*      function but no corresponding macro, but I can live with        */
 /*      that since it isn't that important a test.                      */
 /* -------------------------------------------------------------------- */
-#ifdef _MSC_VER
+#if defined(WIN64) || defined(_MSC_VER)
 #  include <float.h>
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
