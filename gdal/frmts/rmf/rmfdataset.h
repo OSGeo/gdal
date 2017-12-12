@@ -158,7 +158,9 @@ class RMFDataset : public GDALDataset
     static int      DEMDecompress( const GByte*, GUInt32, GByte*, GUInt32 );
     int             (*Decompress)( const GByte*, GUInt32, GByte*, GUInt32 );
 
-    std::vector<RMFDataset*>   poOvrDatasets;
+    std::vector<RMFDataset*>    poOvrDatasets;
+    vsi_l_offset                nHeaderOffset;
+    RMFDataset*                 poParentDS;
 
   public:
                 RMFDataset();
@@ -169,16 +171,26 @@ class RMFDataset : public GDALDataset
     static GDALDataset  *Open(GDALOpenInfo *, RMFDataset* poParentDS, vsi_l_offset nNextHeaderOffset );
     static GDALDataset  *Create( const char *, int, int, int,
                                  GDALDataType, char ** );
+    static GDALDataset  *Create( const char *, int, int, int,
+                                 GDALDataType, char **,
+                                 RMFDataset* poParentDS, double dfOvFactor );
     virtual void        FlushCache() override;
 
     virtual CPLErr      GetGeoTransform( double * padfTransform ) override;
     virtual CPLErr      SetGeoTransform( double * ) override;
     virtual const char  *GetProjectionRef() override;
     virtual CPLErr      SetProjection( const char * ) override;
+    virtual CPLErr      IBuildOverviews( const char * pszResampling,
+                                         int nOverviews, int * panOverviewList,
+                                         int nBandsIn, int * panBandList,
+                                         GDALProgressFunc pfnProgress,
+                                         void * pProgressData ) override;
 
-    vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset );
-    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset );
+    vsi_l_offset        GetFileOffset( GUInt32 iRMFOffset ) const;
+    GUInt32             GetRMFOffset( vsi_l_offset iFileOffset, vsi_l_offset* piNewFileOffset ) const;
     RMFDataset*         OpenOverview( RMFDataset* poParentDS, GDALOpenInfo* );
+    vsi_l_offset        GetLastOffset() const;
+    CPLErr              CleanOverviews();
 };
 
 /************************************************************************/
@@ -208,6 +220,7 @@ class RMFRasterBand : public GDALRasterBand
     virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual CPLErr          IWriteBlock( int, int, void * ) override;
     virtual double          GetNoDataValue(int *pbSuccess = nullptr) override;
+    virtual CPLErr          SetNoDataValue( double dfNoData ) override;
     virtual const char      *GetUnitType() override;
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable  *GetColorTable() override;
