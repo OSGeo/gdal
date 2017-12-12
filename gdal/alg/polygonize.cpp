@@ -293,14 +293,14 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
     {
         if( nThisId != -1 )
         {
-            if( papoPoly[nThisId] == NULL )
+            if( papoPoly[nThisId] == nullptr )
                 papoPoly[nThisId] = new RPolygon( panPolyValue[nThisId] );
 
             papoPoly[nThisId]->AddSegment( iXReal, iY, iXReal+1, iY );
         }
         if( nPreviousId != -1 )
         {
-            if( papoPoly[nPreviousId] == NULL )
+            if( papoPoly[nPreviousId] == nullptr )
                 papoPoly[nPreviousId] = new RPolygon(panPolyValue[nPreviousId]);
 
             papoPoly[nPreviousId]->AddSegment( iXReal, iY, iXReal+1, iY );
@@ -311,7 +311,7 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
     {
         if( nThisId != -1 )
         {
-            if( papoPoly[nThisId] == NULL )
+            if( papoPoly[nThisId] == nullptr )
                 papoPoly[nThisId] = new RPolygon(panPolyValue[nThisId]);
 
             papoPoly[nThisId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1 );
@@ -319,7 +319,7 @@ static void AddEdges( GInt32 *panThisLineId, GInt32 *panLastLineId,
 
         if( nRightId != -1 )
         {
-            if( papoPoly[nRightId] == NULL )
+            if( papoPoly[nRightId] == nullptr )
                 papoPoly[nRightId] = new RPolygon(panPolyValue[nRightId]);
 
             papoPoly[nRightId]->AddSegment( iXReal+1, iY, iXReal+1, iY+1 );
@@ -445,7 +445,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
     VALIDATE_POINTER1( hSrcBand, "GDALPolygonize", CE_Failure );
     VALIDATE_POINTER1( hOutLayer, "GDALPolygonize", CE_Failure );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     const int nConnectedness =
@@ -478,13 +478,13 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
         VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize + 2));
 
     GByte *pabyMaskLine =
-        hMaskBand != NULL
+        hMaskBand != nullptr
         ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
-        : NULL;
+        : nullptr;
 
-    if( panLastLineVal == NULL || panThisLineVal == NULL ||
-        panLastLineId == NULL || panThisLineId == NULL ||
-        (hMaskBand != NULL && pabyMaskLine == NULL) )
+    if( panLastLineVal == nullptr || panThisLineVal == nullptr ||
+        panLastLineId == nullptr || panThisLineId == nullptr ||
+        (hMaskBand != nullptr && pabyMaskLine == nullptr) )
     {
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
@@ -535,13 +535,13 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
             GF_Read, 0, iY, nXSize, 1,
             panThisLineVal, nXSize, 1, eDT, 0, 0 );
 
-        if( eErr == CE_None && hMaskBand != NULL )
+        if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
                                    panThisLineVal);
 
         if( iY == 0 )
             oFirstEnum.ProcessLine(
-                NULL, panThisLineVal, NULL, panThisLineId, nXSize );
+                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
         else
             oFirstEnum.ProcessLine(
                 panLastLineVal, panThisLineVal,
@@ -605,7 +605,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
             eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
                                  panThisLineVal, nXSize, 1, eDT, 0, 0 );
 
-            if( eErr == CE_None && hMaskBand != NULL )
+            if( eErr == CE_None && hMaskBand != nullptr )
                 eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
                                         panThisLineVal );
         }
@@ -625,7 +625,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
         else if( iY == 0 )
         {
             oSecondEnum.ProcessLine(
-                NULL, panThisLineVal, NULL, panThisLineId+1, nXSize );
+                nullptr, panThisLineVal, nullptr, panThisLineId+1, nXSize );
         }
         else
         {
@@ -664,7 +664,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
                                             papoPoly[iX], adfGeoTransform );
 
                     delete papoPoly[iX];
-                    papoPoly[iX] = NULL;
+                    papoPoly[iX] = nullptr;
                 }
             }
         }
@@ -700,7 +700,7 @@ GDALPolygonizeT( GDALRasterBandH hSrcBand,
                                        papoPoly[iX], adfGeoTransform );
 
             delete papoPoly[iX];
-            papoPoly[iX] = NULL;
+            papoPoly[iX] = nullptr;
         }
     }
 

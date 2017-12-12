@@ -138,7 +138,7 @@ static void OGRVDVParseAtrFrm(OGRFeatureDefn* poFeatureDefn,
 OGRIDFDataSource::OGRIDFDataSource(VSILFILE* fpLIn) :
     m_fpL(fpLIn),
     m_bHasParsed(false),
-    m_poMemDS(NULL)
+    m_poMemDS(nullptr)
 {}
 
 /************************************************************************/
@@ -160,10 +160,10 @@ void OGRIDFDataSource::Parse()
 {
     m_bHasParsed = true;
     GDALDriver* poMemDRV = (GDALDriver*)GDALGetDriverByName("MEMORY");
-    if( poMemDRV == NULL )
+    if( poMemDRV == nullptr )
         return;
-    m_poMemDS = poMemDRV->Create("", 0, 0, 0, GDT_Unknown, NULL);
-    OGRLayer* poCurLayer = NULL;
+    m_poMemDS = poMemDRV->Create("", 0, 0, 0, GDT_Unknown, nullptr);
+    OGRLayer* poCurLayer = nullptr;
     std::map<GIntBig, std::pair<double,double> > oMapNode; // map from NODE_ID to (X,Y)
     std::map<GIntBig, OGRLineString*> oMapLinkCoordinate; // map from LINK_ID to OGRLineString*
     CPLString osTablename, osAtr, osFrm;
@@ -181,7 +181,7 @@ void OGRIDFDataSource::Parse()
     while( true )
     {
         const char* pszLine = CPLReadLineL(m_fpL);
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
             break;
 
         if( strcmp(pszLine, "chs;ISO_LATIN_1") == 0)
@@ -191,7 +191,7 @@ void OGRIDFDataSource::Parse()
         }
         else if( STARTS_WITH(pszLine, "tbl;") )
         {
-            poCurLayer = NULL;
+            poCurLayer = nullptr;
             osTablename = pszLine + 4;
             osAtr = "";
             osFrm = "";
@@ -210,13 +210,13 @@ void OGRIDFDataSource::Parse()
         }
         else if( STARTS_WITH(pszLine, "rec;") )
         {
-            if( poCurLayer == NULL )
+            if( poCurLayer == nullptr )
             {
                 char** papszAtr = CSLTokenizeString2(osAtr,";",
                         CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
                 char** papszFrm = CSLTokenizeString2(osFrm,";",
                         CSLT_ALLOWEMPTYTOKENS|CSLT_STRIPLEADSPACES|CSLT_STRIPENDSPACES);
-                char* apszOptions[2] = { NULL, NULL };
+                char* apszOptions[2] = { nullptr, nullptr };
                 if( bAdvertizeUTF8 )
                     apszOptions[0] = (char*)"ADVERTIZE_UTF8=YES";
 
@@ -253,7 +253,7 @@ void OGRIDFDataSource::Parse()
                 }
                 else
                 {
-                    poCurLayer = m_poMemDS->CreateLayer(osTablename, NULL, wkbNone, apszOptions);
+                    poCurLayer = m_poMemDS->CreateLayer(osTablename, nullptr, wkbNone, apszOptions);
                 }
 
                 if( !osAtr.empty() && CSLCount(papszAtr) == CSLCount(papszFrm) )
@@ -271,7 +271,7 @@ void OGRIDFDataSource::Parse()
             char** papszTokens = CSLTokenizeStringComplex(pszLine + 4,";",TRUE,TRUE);
             OGRFeatureDefn* poFDefn = poCurLayer->GetLayerDefn();
             OGRFeature* poFeature = new OGRFeature(poFDefn);
-            for(int i=0; i < poFDefn->GetFieldCount() && papszTokens[i] != NULL ;i++)
+            for(int i=0; i < poFDefn->GetFieldCount() && papszTokens[i] != nullptr ;i++)
             {
                 if( papszTokens[i][0] )
                 {
@@ -361,14 +361,14 @@ void OGRIDFDataSource::Parse()
             poLinkLyr->ResetReading();
             OGRSpatialReference* poSRS =
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
-            OGRFeature* poFeat = NULL;
-            while( (poFeat = poLinkLyr->GetNextFeature()) != NULL )
+            OGRFeature* poFeat = nullptr;
+            while( (poFeat = poLinkLyr->GetNextFeature()) != nullptr )
             {
                 GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
                 std::map<GIntBig, OGRLineString*>::iterator
                     oMapLinkCoordinateIter = oMapLinkCoordinate.find(nLinkID);
                 OGRLineString* poLS = (OGRLineString*)poFeat->GetGeometryRef();
-                if( poLS != NULL && oMapLinkCoordinateIter != oMapLinkCoordinate.end() )
+                if( poLS != nullptr && oMapLinkCoordinateIter != oMapLinkCoordinate.end() )
                 {
                     OGRLineString* poLSIntermediate = oMapLinkCoordinateIter->second;
                     OGRLineString* poLSNew = new OGRLineString();
@@ -403,7 +403,7 @@ int OGRIDFDataSource::GetLayerCount()
 {
     if( !m_bHasParsed )
         Parse();
-    if( m_poMemDS == NULL )
+    if( m_poMemDS == nullptr )
         return 0;
     return m_poMemDS->GetLayerCount();
 }
@@ -415,9 +415,9 @@ int OGRIDFDataSource::GetLayerCount()
 OGRLayer* OGRIDFDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
-        return NULL;
-    if( m_poMemDS == NULL )
-        return NULL;
+        return nullptr;
+    if( m_poMemDS == nullptr )
+        return nullptr;
     return m_poMemDS->GetLayer(iLayer);
 }
 
@@ -435,10 +435,10 @@ OGRVDVDataSource::OGRVDVDataSource(const char* pszFilename,
     m_bUpdate(bUpdate),
     m_bSingleFile(bSingleFile),
     m_bNew(bNew),
-    m_bLayersDetected(bNew || fpL == NULL),
+    m_bLayersDetected(bNew || fpL == nullptr),
     m_nLayerCount(0),
-    m_papoLayers(NULL),
-    m_poCurrentWriterLayer(NULL),
+    m_papoLayers(nullptr),
+    m_poCurrentWriterLayer(nullptr),
     m_bMustWriteEof(false),
     m_bVDV452Loaded(false)
 {}
@@ -452,7 +452,7 @@ OGRVDVDataSource::~OGRVDVDataSource()
     if( m_poCurrentWriterLayer )
     {
         m_poCurrentWriterLayer->StopAsCurrentLayer();
-        m_poCurrentWriterLayer = NULL;
+        m_poCurrentWriterLayer = nullptr;
     }
 
     for(int i=0;i<m_nLayerCount;i++)
@@ -488,7 +488,7 @@ int OGRVDVDataSource::GetLayerCount()
 OGRLayer* OGRVDVDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= GetLayerCount() )
-        return NULL;
+        return nullptr;
     return m_papoLayers[iLayer];
 }
 
@@ -508,7 +508,7 @@ void OGRVDVDataSource::DetectLayers()
     CPLString osTableName;
     GIntBig nFeatureCount = 0;
     vsi_l_offset nStartOffset = 0;
-    OGRVDVLayer* poLayer = NULL;
+    OGRVDVLayer* poLayer = nullptr;
     bool bFirstBuffer = true;
     bool bRecodeFromLatin1 = false;
 
@@ -581,9 +581,9 @@ void OGRVDVDataSource::DetectLayers()
                     chNextExpected = ';';
                 else if( chNextExpected == ';' )
                 {
-                    if( poLayer != NULL )
+                    if( poLayer != nullptr )
                         poLayer->SetFeatureCount(nFeatureCount);
-                    poLayer = NULL;
+                    poLayer = nullptr;
                     nFeatureCount = 0;
                     nStartOffset = VSIFTellL(m_fpL) + i + 1 - nRead - 4;
                     bInTableName = true;
@@ -627,9 +627,9 @@ void OGRVDVDataSource::DetectLayers()
                     chNextExpected3 = ';';
                 else if( chNextExpected3 == ';' )
                 {
-                    if( poLayer != NULL )
+                    if( poLayer != nullptr )
                         poLayer->SetFeatureCount(nFeatureCount);
-                    poLayer = NULL;
+                    poLayer = nullptr;
                     chNextExpected3 = 0;
                 }
             }
@@ -639,7 +639,7 @@ void OGRVDVDataSource::DetectLayers()
         if( nRead < 1024 )
             break;
     }
-    if( poLayer != NULL )
+    if( poLayer != nullptr )
         poLayer->SetFeatureCount(nFeatureCount);
 }
 
@@ -676,7 +676,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString& osTableName,
     for(int i=0;i<20;i++)
     {
         const char* pszLine = CPLReadLineL(m_fpL);
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
             break;
         if( STARTS_WITH(pszLine, "chs;") )
         {
@@ -802,11 +802,11 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
     if( m_nFID == 0 )
         ResetReading();
     VSIFSeekL(m_fpL, m_nCurOffset, SEEK_SET);
-    OGRFeature* poFeature = NULL;
+    OGRFeature* poFeature = nullptr;
     while( !m_bEOF )
     {
         const char* pszLine = CPLReadLineL(m_fpL);
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
             break;
         if( strncmp(pszLine, "end;", 4) == 0 ||
             strncmp(pszLine, "tbl;", 4) == 0 )
@@ -822,7 +822,7 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
         poFeature = new OGRFeature(m_poFeatureDefn);
         poFeature->SetFID( m_nFID ++ );
         for(int i=0; i < m_poFeatureDefn->GetFieldCount() &&
-                     papszTokens[i] != NULL ;i++)
+                     papszTokens[i] != nullptr ;i++)
         {
             if( papszTokens[i][0] && !EQUAL(papszTokens[i], "NULL") )
             {
@@ -892,15 +892,15 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
             }
         }
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeomFieldRef(m_iGeomFieldFilter) ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             break;
         }
         delete poFeature;
-        poFeature = NULL;
+        poFeature = nullptr;
     }
     m_nCurOffset = VSIFTellL(m_fpL);
     return poFeature;
@@ -913,7 +913,7 @@ OGRFeature* OGRVDVLayer::GetNextFeature()
 int OGRVDVLayer::TestCapability(const char* pszCap)
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) &&  m_nTotalFeatureCount > 0 &&
-        m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+        m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
     {
         return TRUE;
     }
@@ -931,7 +931,7 @@ int OGRVDVLayer::TestCapability(const char* pszCap)
 GIntBig OGRVDVLayer::GetFeatureCount(int bForce)
 {
     if( m_nTotalFeatureCount == 0 ||
-        m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+        m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
     {
         return OGRLayer::GetFeatureCount(bForce);
     }
@@ -948,10 +948,10 @@ static int OGRVDVDriverIdentify( GDALOpenInfo* poOpenInfo )
     if( poOpenInfo->bIsDirectory )
         return -1; /* perhaps... */
     return (poOpenInfo->nHeaderBytes > 0 &&
-            (strstr((const char*)poOpenInfo->pabyHeader, "\ntbl;") != NULL ||
+            (strstr((const char*)poOpenInfo->pabyHeader, "\ntbl;") != nullptr ||
              strncmp((const char*)poOpenInfo->pabyHeader, "tbl;", 4) == 0) &&
-            strstr((const char*)poOpenInfo->pabyHeader, "\natr;") != NULL &&
-            strstr((const char*)poOpenInfo->pabyHeader, "\nfrm;") != NULL);
+            strstr((const char*)poOpenInfo->pabyHeader, "\natr;") != nullptr &&
+            strstr((const char*)poOpenInfo->pabyHeader, "\nfrm;") != nullptr);
 }
 
 /************************************************************************/
@@ -963,7 +963,7 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRVDVDriverIdentify(poOpenInfo) )
     {
-        return NULL;
+        return nullptr;
     }
     if( poOpenInfo->bIsDirectory )
     {
@@ -993,7 +993,7 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
             2 * oMapOtherExtensions[osMajorityExtension] < nFiles )
         {
             CSLDestroy(papszFiles);
-            return NULL;
+            return nullptr;
         }
 
         // And check that one of those files is a VDV one if it isn't .x10
@@ -1001,16 +1001,16 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
         {
             GDALOpenInfo oOpenInfo( CPLFormFilename(poOpenInfo->pszFilename,
                                                     osMajorityFile,
-                                                    NULL), GA_ReadOnly );
+                                                    nullptr), GA_ReadOnly );
             if( OGRVDVDriverIdentify(&oOpenInfo) != TRUE )
             {
                 CSLDestroy(papszFiles);
-                return NULL;
+                return nullptr;
             }
         }
 
         OGRVDVDataSource* poDS = new OGRVDVDataSource(poOpenInfo->pszFilename,
-                                                      NULL, /* fp */
+                                                      nullptr, /* fp */
                                                       poOpenInfo->eAccess == GA_Update,
                                                       false, /* single file */
                                                       false /* new */);
@@ -1022,8 +1022,8 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
                 continue;
             VSILFILE* fp = VSIFOpenL( CPLFormFilename(poOpenInfo->pszFilename,
                                                       *papszIter,
-                                                      NULL), "rb");
-            if( fp == NULL )
+                                                      nullptr), "rb");
+            if( fp == nullptr )
                 continue;
             poDS->m_papoLayers = static_cast<OGRLayer**>(CPLRealloc(
                 poDS->m_papoLayers, sizeof(OGRLayer*) * (poDS->m_nLayerCount + 1) ));
@@ -1040,20 +1040,20 @@ GDALDataset *OGRVDVDataSource::Open( GDALOpenInfo* poOpenInfo )
         if( poDS->m_nLayerCount == 0 )
         {
             delete poDS;
-            poDS = NULL;
+            poDS = nullptr;
         }
         return poDS;
     }
 
     VSILFILE* fpL = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
     const char* pszHeader = (const char*)poOpenInfo->pabyHeader;
-    if( strstr(pszHeader, "tbl;Node\r\natr;NODE_ID;") != NULL ||
-        strstr(pszHeader, "tbl;Node\natr;NODE_ID;") != NULL ||
-        strstr(pszHeader, "tbl;Link\r\natr;LINK_ID;") != NULL ||
-        strstr(pszHeader, "tbl;Link\natr;LINK_ID;") != NULL ||
-        strstr(pszHeader, "tbl;LinkCoordinate\r\natr;LINK_ID;") != NULL ||
-        strstr(pszHeader, "tbl;LinkCoordinate\natr;LINK_ID;") != NULL )
+    if( strstr(pszHeader, "tbl;Node\r\natr;NODE_ID;") != nullptr ||
+        strstr(pszHeader, "tbl;Node\natr;NODE_ID;") != nullptr ||
+        strstr(pszHeader, "tbl;Link\r\natr;LINK_ID;") != nullptr ||
+        strstr(pszHeader, "tbl;Link\natr;LINK_ID;") != nullptr ||
+        strstr(pszHeader, "tbl;LinkCoordinate\r\natr;LINK_ID;") != nullptr ||
+        strstr(pszHeader, "tbl;LinkCoordinate\natr;LINK_ID;") != nullptr )
     {
         return new OGRIDFDataSource(fpL);
     }
@@ -1127,7 +1127,7 @@ OGRFeature* OGRVDVWriterLayer::GetNextFeature()
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "GetNextFeature() not supported on write-only layer");
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1256,7 +1256,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
             }
         }
         else if( i == m_iLongitudeVDV452 &&
-                 poFeature->GetGeometryRef() != NULL &&
+                 poFeature->GetGeometryRef() != nullptr &&
                  poFeature->GetGeometryRef()->getGeometryType() == wkbPoint )
         {
             OGRPoint* poPoint = static_cast<OGRPoint*>(poFeature->GetGeometryRef());
@@ -1273,7 +1273,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
             bOK &= VSIFPrintfL(m_fpL, "%03d%02d%02d%03d", nDeg, nMin, nSec, nMS) > 0;
         }
         else if( i == m_iLatitudeVDV452 &&
-                 poFeature->GetGeometryRef() != NULL &&
+                 poFeature->GetGeometryRef() != nullptr &&
                  poFeature->GetGeometryRef()->getGeometryType() == wkbPoint )
         {
             OGRPoint* poPoint = static_cast<OGRPoint*>(poFeature->GetGeometryRef());
@@ -1325,7 +1325,7 @@ OGRErr OGRVDVWriterLayer::CreateField(OGRFieldDefn* poFieldDefn, int /* bApprox 
         return OGRERR_FAILURE;
     }
 
-    if( m_poVDV452Table != NULL )
+    if( m_poVDV452Table != nullptr )
     {
         bool bFound = false;
         for(size_t i=0;i<m_poVDV452Table->aosFields.size();i++)
@@ -1390,7 +1390,7 @@ void OGRVDVWriterLayer::StopAsCurrentLayer()
     if( m_bWritePossible )
     {
         m_bWritePossible = false;
-        if( m_fpL != NULL )
+        if( m_fpL != nullptr )
         {
             WriteSchemaIfNeeded();
             VSIFPrintfL(m_fpL, "end; " CPL_FRMT_GIB "\n", m_nFeatureCount);
@@ -1409,13 +1409,13 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
             CPLFetchBool(papszOptions, "STANDARD_HEADER", true);
 
     struct tm tm;
-    CPLUnixTimeToYMDHMS(time(NULL), &tm);
+    CPLUnixTimeToYMDHMS(time(nullptr), &tm);
     const char* pszSrc = CSLFetchNameValueDef(papszOptions, "HEADER_SRC",
-        (bStandardHeader ) ? "UNKNOWN" : NULL);
+        (bStandardHeader ) ? "UNKNOWN" : nullptr);
     const char* pszSrcDate = CSLFetchNameValueDef(papszOptions, "HEADER_SRC_DATE",
-        (pszSrc) ? CPLSPrintf("%02d.%02d.%04d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900) : NULL);
+        (pszSrc) ? CPLSPrintf("%02d.%02d.%04d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900) : nullptr);
     const char* pszSrcTime = CSLFetchNameValueDef(papszOptions, "HEADER_SRC_TIME",
-        (pszSrc) ? CPLSPrintf("%02d.%02d.%02d", tm.tm_hour, tm.tm_min, tm.tm_sec) : NULL);
+        (pszSrc) ? CPLSPrintf("%02d.%02d.%02d", tm.tm_hour, tm.tm_min, tm.tm_sec) : nullptr);
 
     if( pszSrc && pszSrcDate && pszSrcTime )
     {
@@ -1442,7 +1442,7 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
     }
 
     for(char** papszIter = papszOptions;
-               papszIter != NULL && *papszIter != NULL;
+               papszIter != nullptr && *papszIter != nullptr;
                papszIter++)
     {
         if( STARTS_WITH_CI(*papszIter, "HEADER_") &&
@@ -1454,7 +1454,7 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
               !EQUAL(*papszIter, "HEADER_DVE") &&
               !EQUAL(*papszIter, "HEADER_FFT"))) )
         {
-            char* pszKey = NULL;
+            char* pszKey = nullptr;
             const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
             if( pszKey && strlen(pszKey) > strlen("HEADER_") && pszValue )
             {
@@ -1476,22 +1476,22 @@ static bool OGRVDVWriteHeader(VSILFILE* fpL, char** papszOptions)
 static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables& oTables)
 {
     const char* pszXMLDescFilename = CPLFindFile("gdal", "vdv452.xml");
-    if (pszXMLDescFilename == NULL)
+    if (pszXMLDescFilename == nullptr)
     {
         CPLDebug("VDV", "Cannot find XML file : %s", "vdv452.xml");
         return false;
     }
 
     CPLXMLNode* psRoot = CPLParseXMLFile(pszXMLDescFilename);
-    if( psRoot == NULL)
+    if( psRoot == nullptr)
     {
         return false;
     }
     CPLXMLNode* psTables = CPLGetXMLNode(psRoot, "=Layers");
-    if( psTables != NULL )
+    if( psTables != nullptr )
     {
         for(CPLXMLNode* psTable = psTables->psChild;
-                        psTable != NULL; psTable = psTable->psNext )
+                        psTable != nullptr; psTable = psTable->psNext )
         {
             if( psTable->eType != CXT_Element || strcmp(psTable->pszValue, "Layer") != 0 )
                 continue;
@@ -1502,7 +1502,7 @@ static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables& oTables)
             oTables.oMapEnglish[poTable->osEnglishName] = poTable;
             oTables.oMapGerman[poTable->osGermanName] = poTable;
             for(CPLXMLNode* psField = psTable->psChild;
-                        psField != NULL; psField = psField->psNext )
+                        psField != nullptr; psField = psField->psNext )
             {
                 if( psField->eType != CXT_Element || strcmp(psField->pszValue, "Field") != 0 )
                     continue;
@@ -1531,7 +1531,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
                                 char ** papszOptions  )
 {
     if( !m_bUpdate )
-        return NULL;
+        return nullptr;
 
     const char* pszProfile = CSLFetchNameValueDef(papszOptions, "PROFILE", "GENERIC");
     if( STARTS_WITH_CI(pszProfile, "VDV-452") && !m_bVDV452Loaded )
@@ -1547,7 +1547,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
     CPLString osUpperLayerName(pszLayerName);
     osUpperLayerName.toupper();
 
-    OGRVDV452Table* poVDV452Table = NULL;
+    OGRVDV452Table* poVDV452Table = nullptr;
     CPLString osVDV452Lang;
     bool bOKTable = true;
     if( EQUAL(pszProfile, "VDV-452") )
@@ -1601,10 +1601,10 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
                  CPLE_AppDefined, "%s is not a VDV-452 table",
                  pszLayerName);
         if( bProfileStrict )
-            return NULL;
+            return nullptr;
     }
 
-    VSILFILE* fpL = NULL;
+    VSILFILE* fpL = nullptr;
     if( m_bSingleFile )
     {
         fpL = m_fpL;
@@ -1637,7 +1637,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
 
             // If it is "eof;..." then overwrite it with new content
             const char* pszLine = CPLReadLineL(fpL);
-            if( pszLine != NULL && STARTS_WITH(pszLine, "eof;") )
+            if( pszLine != nullptr && STARTS_WITH(pszLine, "eof;") )
             {
                 VSIFSeekL(fpL, nOffset, SEEK_SET);
                 VSIFTruncateL(fpL, VSIFTellL(fpL));
@@ -1663,11 +1663,11 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
         CPLString osFilename = CPLFormFilename(m_osFilename, pszLayerName,
                                                osExtension);
         fpL = VSIFOpenL(osFilename, "wb");
-        if( fpL == NULL )
+        if( fpL == nullptr )
         {
             CPLError( CE_Failure, CPLE_FileIO, "Cannot create %s",
                       osFilename.c_str() );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1679,7 +1679,7 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
         {
             if( !m_bSingleFile )
                 VSIFCloseL(fpL);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1697,13 +1697,13 @@ OGRVDVDataSource::ICreateLayer( const char *pszLayerName,
     m_papoLayers[m_nLayerCount] = poLayer;
     m_nLayerCount ++;
 
-    if( eGType == wkbPoint && poVDV452Table != NULL &&
+    if( eGType == wkbPoint && poVDV452Table != nullptr &&
         (EQUAL(pszLayerName, "STOP") || EQUAL(pszLayerName, "REC_ORT")) )
     {
         poLayer->GetLayerDefn()->SetGeomType(wkbPoint);
     }
 
-    if( bCreateAllFields && poVDV452Table != NULL )
+    if( bCreateAllFields && poVDV452Table != nullptr )
     {
         for(size_t i=0; i<poVDV452Table->aosFields.size();i++)
         {
@@ -1741,7 +1741,7 @@ void OGRVDVDataSource::SetCurrentWriterLayer(OGRVDVWriterLayer* poLayer)
 {
     if( !m_bSingleFile )
         return;
-    if( m_poCurrentWriterLayer != NULL && m_poCurrentWriterLayer != poLayer )
+    if( m_poCurrentWriterLayer != nullptr && m_poCurrentWriterLayer != poLayer )
     {
         m_poCurrentWriterLayer->StopAsCurrentLayer();
     }
@@ -1780,7 +1780,7 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
                   "It seems a file system object called '%s' already exists.",
                   pszName );
 
-        return NULL;
+        return nullptr;
     }
 
     const bool bSingleFile = CPLFetchBool(papszOptions, "SINGLE_FILE", true);
@@ -1791,18 +1791,18 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Failed to create directory %s:\n%s",
                       pszName, VSIStrerror( errno ) );
-            return NULL;
+            return nullptr;
         }
     }
 
-    VSILFILE* fpL = NULL;
+    VSILFILE* fpL = nullptr;
     if( bSingleFile )
     {
         fpL = VSIFOpenL(pszName, "wb");
-        if( fpL == NULL )
+        if( fpL == nullptr )
         {
             CPLError( CE_Failure, CPLE_FileIO, "Cannot create %s", pszName );
-            return NULL;
+            return nullptr;
         }
     }
     OGRVDVDataSource* poDS = new OGRVDVDataSource(pszName, fpL, true,
@@ -1818,7 +1818,7 @@ GDALDataset* OGRVDVDataSource::Create( const char * pszName,
 void RegisterOGRVDV()
 
 {
-    if( GDALGetDriverByName( "VDV" ) != NULL )
+    if( GDALGetDriverByName( "VDV" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -61,7 +61,7 @@ CPLGetOSSHeaders( const CPLString& osSecretAccessKey,
     if( osDate.empty() )
     {
         char szDate[64];
-        time_t nNow = time(NULL);
+        time_t nNow = time(nullptr);
         struct tm tm;
         CPLUnixTimeToYMDHMS(nNow, &tm);
         strftime(szDate, sizeof(szDate), "%a, %d %b %Y %H:%M:%S GMT", &tm);
@@ -106,7 +106,7 @@ CPLGetOSSHeaders( const CPLString& osSecretAccessKey,
     CPLDebug("OSS", "osAuthorization='%s'", osAuthorization.c_str());
 #endif
 
-    struct curl_slist *headers=NULL;
+    struct curl_slist *headers=nullptr;
     headers = curl_slist_append(
         headers, CPLSPrintf("Date: %s", osDate.c_str()));
     headers = curl_slist_append(
@@ -223,18 +223,18 @@ VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
     CPLString osAccessKeyId;
     if( !GetConfiguration(osSecretAccessKey, osAccessKeyId) )
     {
-        return NULL;
+        return nullptr;
     }
 
     const CPLString osEndpoint =
         CPLGetConfigOption("OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com");
     CPLString osBucket;
     CPLString osObjectKey;
-    if( pszURI != NULL && pszURI[0] != '\0' &&
+    if( pszURI != nullptr && pszURI[0] != '\0' &&
         !GetBucketAndObjectKey(pszURI, pszFSPrefix, bAllowNoObject,
                                osBucket, osObjectKey) )
     {
-        return NULL;
+        return nullptr;
     }
     const bool bUseHTTPS = CPLTestBool(CPLGetConfigOption("OSS_HTTPS", "YES"));
     const bool bIsValidNameForVirtualHosting =
@@ -289,7 +289,7 @@ bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
     CPLDebug("OSS", "%s", pszErrorMsg);
 #endif
 
-    if( pbUpdateMap != NULL )
+    if( pbUpdateMap != nullptr )
         *pbUpdateMap = true;
 
     if( !STARTS_WITH(pszErrorMsg, "<?xml") )
@@ -302,7 +302,7 @@ bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
     }
 
     CPLXMLNode* psTree = CPLParseXMLString(pszErrorMsg);
-    if( psTree == NULL )
+    if( psTree == nullptr )
     {
         if( bSetError )
         {
@@ -312,8 +312,8 @@ bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
         return false;
     }
 
-    const char* pszCode = CPLGetXMLValue(psTree, "=Error.Code", NULL);
-    if( pszCode == NULL )
+    const char* pszCode = CPLGetXMLValue(psTree, "=Error.Code", nullptr);
+    if( pszCode == nullptr )
     {
         CPLDestroyXMLNode(psTree);
         if( bSetError )
@@ -327,7 +327,7 @@ bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
     if( EQUAL(pszCode, "AccessDenied") )
     {
         const char* pszEndpoint =
-            CPLGetXMLValue(psTree, "=Error.Endpoint", NULL);
+            CPLGetXMLValue(psTree, "=Error.Endpoint", nullptr);
         if( pszEndpoint && pszEndpoint != m_osEndpoint )
         {
             SetEndpoint(pszEndpoint);
@@ -340,9 +340,9 @@ bool VSIOSSHandleHelper::CanRestartOnError( const char* pszErrorMsg,
     if( bSetError )
     {
         // Translate AWS errors into VSI errors.
-        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", NULL);
+        const char* pszMessage = CPLGetXMLValue(psTree, "=Error.Message", nullptr);
 
-        if( pszMessage == NULL ) {
+        if( pszMessage == nullptr ) {
             VSIError(VSIE_AWSError, "%s", pszErrorMsg);
         } else if( EQUAL(pszCode, "AccessDenied") ) {
             VSIError(VSIE_AWSAccessDenied, "%s", pszMessage);

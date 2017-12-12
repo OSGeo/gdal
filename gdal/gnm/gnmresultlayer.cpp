@@ -130,7 +130,7 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
     // add fields from input feature
     OGRFeatureDefn *poSrcDefn = poFeature->GetDefnRef();
     OGRFeatureDefn* poDstFDefn = GetLayerDefn();
-    if(NULL == poSrcDefn || NULL == poDstFDefn)
+    if(nullptr == poSrcDefn || nullptr == poDstFDefn)
         return OGRERR_INVALID_HANDLE;
 
     int nSrcFieldCount = poSrcDefn->GetFieldCount();
@@ -154,7 +154,7 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
             // TODO: by now skip fields with different types. In future shoul
             // cast types
             OGRFieldDefn *poDstField = poDstFDefn->GetFieldDefn(iDstField);
-            if(NULL != poDstField && oFieldDefn.GetType() == poDstField->GetType())
+            if(nullptr != poDstField && oFieldDefn.GetType() == poDstField->GetType())
                 panMap[iField] = iDstField;
         }
         else if (CreateField( &oFieldDefn ) == OGRERR_NONE)

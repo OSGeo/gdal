@@ -104,7 +104,7 @@ namespace PCIDSK
 
         // Essentially internal stuff.
         char                *GetData( int section, uint32 offset, 
-                                      int *bytes_available = NULL, 
+                                      int *bytes_available = nullptr, 
                                       int min_bytes = 0,
                                       bool update = false );
         uint32               ReadField( uint32 offset, 

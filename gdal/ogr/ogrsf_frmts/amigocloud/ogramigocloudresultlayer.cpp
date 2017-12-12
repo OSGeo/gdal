@@ -41,7 +41,7 @@ OGRAmigoCloudResultLayer::OGRAmigoCloudResultLayer(
 {
     osBaseSQL = pszRawQueryIn;
     SetDescription( "result" );
-    poFirstFeature = NULL;
+    poFirstFeature = nullptr;
 }
 
 /************************************************************************/
@@ -60,7 +60,7 @@ OGRAmigoCloudResultLayer::~OGRAmigoCloudResultLayer()
 
 OGRFeatureDefn * OGRAmigoCloudResultLayer::GetLayerDefnInternal(json_object* poObjIn)
 {
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         return poFeatureDefn;
 
     EstablishLayerDefn("result", poObjIn);
@@ -77,7 +77,7 @@ OGRFeature  *OGRAmigoCloudResultLayer::GetNextRawFeature()
     if( poFirstFeature )
     {
         OGRFeature* poRet = poFirstFeature;
-        poFirstFeature = NULL;
+        poFirstFeature = nullptr;
         return poRet;
     }
     else

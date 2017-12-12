@@ -66,9 +66,9 @@ class OGRGeoconceptDataSource : public OGRDataSource
     int            TestCapability( const char* pszCap ) override;
 
     OGRLayer*      ICreateLayer( const char* pszName,
-                                OGRSpatialReference* poSpatialRef = NULL,
+                                OGRSpatialReference* poSpatialRef = nullptr,
                                 OGRwkbGeometryType eGType = wkbUnknown,
-                                char** papszOptions = NULL ) override;
+                                char** papszOptions = nullptr ) override;
   private:
     int            LoadFile( const char * );
 };

@@ -90,11 +90,11 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
     void *pLibrary = dlopen(pszLibrary, RTLD_LAZY);
-    if( pLibrary == NULL )
+    if( pLibrary == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", dlerror() );
-        return NULL;
+        return nullptr;
     }
 
     void *pSymbol = dlsym( pLibrary, pszSymbolName );
@@ -112,13 +112,13 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     }
 #endif
 
-    if( pSymbol == NULL )
+    if( pSymbol == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", dlerror() );
         // Do not call dlclose here.  misc.py:misc_6() demonstrates the crash.
         // coverity[leaked_storage]
-        return NULL;
+        return nullptr;
     }
 
     // coverity[leaked_storage]  It is not safe to call dlclose.
@@ -143,8 +143,8 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 {
-    void *pLibrary = NULL;
-    void *pSymbol = NULL;
+    void *pLibrary = nullptr;
+    void *pSymbol = nullptr;
 
     // Avoid error boxes to pop up (#5211, #5525).
     UINT uOldErrorMode =
@@ -166,7 +166,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
     if( pLibrary <= (void*)HINSTANCE_ERROR )
     {
-        LPVOID lpMsgBuf = NULL;
+        LPVOID lpMsgBuf = nullptr;
         int nLastError = GetLastError();
 
         // Restore old error mode.
@@ -175,14 +175,14 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER
                        | FORMAT_MESSAGE_FROM_SYSTEM
                        | FORMAT_MESSAGE_IGNORE_INSERTS,
-                       NULL, nLastError,
+                       nullptr, nLastError,
                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                       (LPTSTR) &lpMsgBuf, 0, NULL );
+                       (LPTSTR) &lpMsgBuf, 0, nullptr );
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't load requested DLL: %s\n%d: %s",
                   pszLibrary, nLastError, (const char *) lpMsgBuf );
-        return NULL;
+        return nullptr;
     }
 
     // Restore old error mode.
@@ -190,11 +190,11 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
     pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
 
-    if( pSymbol == NULL )
+    if( pSymbol == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Can't find requested entry point: %s", pszSymbolName );
-        return NULL;
+        return nullptr;
     }
 
     return( pSymbol );
@@ -220,6 +220,6 @@ void *CPLGetSymbol(const char *pszLibrary, const char *pszEntryPoint)
     CPLDebug( "CPL",
               "CPLGetSymbol(%s,%s) called.  Failed as this is stub"
               " implementation.", pszLibrary, pszEntryPoint );
-    return NULL;
+    return nullptr;
 }
 #endif

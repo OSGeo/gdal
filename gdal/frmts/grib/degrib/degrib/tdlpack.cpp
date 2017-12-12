@@ -442,7 +442,7 @@ static void TDLP_ElemSurfUnit (pdsTDLPType * pds, char **element,
    (*element)[strlen (pds->Descriptor)] = '\0';
 
    ptr = strchr (*element, '(');
-   if (ptr != NULL) {
+   if (ptr != nullptr) {
       ptr2 = strchr (ptr, ')');
       *ptr2 = '\0';
       if (strcmp (ptr + 1, "unofficial id") == 0) {
@@ -532,7 +532,7 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
        return -1;
    }
    pds = (uChar *) malloc (sectLen * sizeof (uChar));
-   if( pds == NULL )
+   if( pds == nullptr )
    {
       errSprintf ("Ran out of memory in PDS (TDLP_Inventory)\n");
       return -1;
@@ -552,13 +552,13 @@ int TDLP_Inventory (DataSource &fp, sInt4 tdlpLen, inventoryType *inv)
    }
    free (pds);
 
-   inv->element = NULL;
-   inv->unitName = NULL;
-   inv->comment = NULL;
+   inv->element = nullptr;
+   inv->unitName = nullptr;
+   inv->comment = nullptr;
    free (inv->shortFstLevel);
-   inv->shortFstLevel = NULL;
+   inv->shortFstLevel = nullptr;
    free (inv->longFstLevel);
-   inv->longFstLevel = NULL;
+   inv->longFstLevel = nullptr;
    TDLP_ElemSurfUnit (&pdsMeta, &(inv->element), &(inv->unitName),
                       &(inv->comment), &(inv->shortFstLevel),
                       &(inv->longFstLevel));
@@ -1552,15 +1552,15 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
 
    /* Figure out some basic stuff about the grid. */
    free (meta->element);
-   meta->element = NULL;
+   meta->element = nullptr;
    free (meta->unitName);
-   meta->unitName = NULL;
+   meta->unitName = nullptr;
    free (meta->comment);
-   meta->comment = NULL;
+   meta->comment = nullptr;
    free (meta->shortFstLevel);
-   meta->shortFstLevel = NULL;
+   meta->shortFstLevel = nullptr;
    free (meta->longFstLevel);
-   meta->longFstLevel = NULL;
+   meta->longFstLevel = nullptr;
    TDLP_ElemSurfUnit (&(meta->pdsTdlp), &(meta->element), &(meta->unitName),
                       &(meta->comment), &(meta->shortFstLevel),
                       &(meta->longFstLevel));
@@ -1621,7 +1621,7 @@ int ReadTDLPRecord (DataSource &fp, double **TDLP_Data, uInt4 *tdlp_DataLen,
    if (f_bms) {
 /*      errSprintf ("Bitmap data is Not Supported\n");*/
       /* Need to allocate bitmap when this is implemented. */
-      bitmap = NULL;
+      bitmap = nullptr;
       ReadTDLPSect3 (c_ipack + curLoc, tdlpLen, &curLoc, bitmap,
                      meta->gds.numPts);
       return -1;

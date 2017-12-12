@@ -56,8 +56,8 @@ class DataSet
     DataSet( EnvisatFile & envfileIn , int indexIn ) :
         envfile(envfileIn), index(indexIn), nrec(0)
     {
-        EnvisatFile_GetDatasetInfo( &envfileIn, indexIn, NULL, NULL, NULL,
-                NULL , NULL, &nrec, NULL ) ;
+        EnvisatFile_GetDatasetInfo( &envfileIn, indexIn, nullptr, nullptr, nullptr,
+                nullptr , nullptr, &nrec, nullptr ) ;
     }
 
     TimeDelta getMJD( int ridx )

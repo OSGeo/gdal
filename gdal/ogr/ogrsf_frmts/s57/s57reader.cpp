@@ -71,7 +71,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
     if(needAallNallSetup==true)
     {
         OGRFeature *dsidFeature=ReadDSID();
-        if( dsidFeature == NULL )
+        if( dsidFeature == nullptr )
             return CPLStrdup(SourceString);
         Aall=dsidFeature->GetFieldAsInteger("DSSI_AALL");
         Nall=dsidFeature->GetFieldAsInteger("DSSI_NALL");
@@ -80,7 +80,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
         delete dsidFeature;
     }
 
-    char *RecodedString = NULL;
+    char *RecodedString = nullptr;
     if(!LookAtAALL_NALL)
     {
         // In case of international attributes, only ISO8859-1 code page is
@@ -138,7 +138,7 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
         }
     }
 
-    if( RecodedString == NULL )
+    if( RecodedString == nullptr )
         RecodedString = CPLStrdup(SourceString);
 
     return RecodedString;
@@ -149,13 +149,13 @@ char *S57Reader::RecodeByDSSI(const char *SourceString, bool LookAtAALL_NALL)
 /************************************************************************/
 
 S57Reader::S57Reader( const char * pszFilename ) :
-    poRegistrar(NULL),
-    poClassContentExplorer(NULL),
+    poRegistrar(nullptr),
+    poClassContentExplorer(nullptr),
     nFDefnCount(0),
-    papoFDefnList(NULL),
+    papoFDefnList(nullptr),
     pszModuleName(CPLStrdup( pszFilename )),
-    pszDSNM(NULL),
-    poModule(NULL),
+    pszDSNM(nullptr),
+    poModule(nullptr),
     nCOMF(1000000),
     nSOMF(10),
     bFileIngested(false),
@@ -165,12 +165,12 @@ S57Reader::S57Reader( const char * pszFilename ) :
     nNextVFIndex(0),
     nNextFEIndex(0),
     nNextDSIDIndex(0),
-    poDSIDRecord(NULL),
-    poDSPMRecord(NULL),
-    papszOptions(NULL),
+    poDSIDRecord(nullptr),
+    poDSPMRecord(nullptr),
+    papszOptions(nullptr),
     nOptionFlags(S57M_UPDATES),
     iPointOffset(0),
-    poMultiPoint(NULL),
+    poMultiPoint(nullptr),
     Aall(0),  // See RecodeByDSSI() function.
     Nall(0),  // See RecodeByDSSI() function.
     needAallNallSetup(true),  // See RecodeByDSSI() function.
@@ -202,7 +202,7 @@ S57Reader::~S57Reader()
 int S57Reader::Open( int bTestOpen )
 
 {
-    if( poModule != NULL )
+    if( poModule != nullptr )
     {
         Rewind();
         return TRUE;
@@ -213,12 +213,12 @@ int S57Reader::Open( int bTestOpen )
     {
         // notdef: test bTestOpen.
         delete poModule;
-        poModule = NULL;
+        poModule = nullptr;
         return FALSE;
     }
 
     // note that the following won't work for catalogs.
-    if( poModule->FindFieldDefn("DSID") == NULL )
+    if( poModule->FindFieldDefn("DSID") == nullptr )
     {
         if( !bTestOpen )
         {
@@ -227,13 +227,13 @@ int S57Reader::Open( int bTestOpen )
                       pszModuleName );
         }
         delete poModule;
-        poModule = NULL;
+        poModule = nullptr;
         return FALSE;
     }
 
     // Make sure the FSPT field is marked as repeating.
     DDFFieldDefn *poFSPT = poModule->FindFieldDefn( "FSPT" );
-    if( poFSPT != NULL && !poFSPT->IsRepeating() )
+    if( poFSPT != nullptr && !poFSPT->IsRepeating() )
     {
         CPLDebug( "S57", "Forcing FSPT field to be repeating." );
         poFSPT->SetRepeatingFlag( TRUE );
@@ -256,7 +256,7 @@ int S57Reader::Open( int bTestOpen )
 void S57Reader::Close()
 
 {
-    if( poModule != NULL )
+    if( poModule != nullptr )
     {
         oVI_Index.Clear();
         oVC_Index.Clear();
@@ -264,26 +264,26 @@ void S57Reader::Close()
         oVF_Index.Clear();
         oFE_Index.Clear();
 
-        if( poDSIDRecord != NULL )
+        if( poDSIDRecord != nullptr )
         {
             delete poDSIDRecord;
-            poDSIDRecord = NULL;
+            poDSIDRecord = nullptr;
         }
-        if( poDSPMRecord != NULL )
+        if( poDSPMRecord != nullptr )
         {
             delete poDSPMRecord;
-            poDSPMRecord = NULL;
+            poDSPMRecord = nullptr;
         }
 
         ClearPendingMultiPoint();
 
         delete poModule;
-        poModule = NULL;
+        poModule = nullptr;
 
         bFileIngested = false;
 
         CPLFree( pszDSNM );
-        pszDSNM = NULL;
+        pszDSNM = nullptr;
     }
 }
 
@@ -294,10 +294,10 @@ void S57Reader::Close()
 void S57Reader::ClearPendingMultiPoint()
 
 {
-    if( poMultiPoint != NULL )
+    if( poMultiPoint != nullptr )
     {
         delete poMultiPoint;
-        poMultiPoint = NULL;
+        poMultiPoint = nullptr;
     }
 }
 
@@ -308,7 +308,7 @@ void S57Reader::ClearPendingMultiPoint()
 OGRFeature *S57Reader::NextPendingMultiPoint()
 
 {
-    CPLAssert( poMultiPoint != NULL );
+    CPLAssert( poMultiPoint != nullptr );
     CPLAssert( wkbFlatten(poMultiPoint->GetGeometryRef()->getGeometryType())
                                                         == wkbMultiPoint );
 
@@ -326,7 +326,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
 
     OGRPoint *poSrcPoint
         = static_cast<OGRPoint *>( poMPGeom->getGeometryRef( iPointOffset++ ) );
-    CPLAssert( poSrcPoint != NULL );
+    CPLAssert( poSrcPoint != nullptr );
     poPoint->SetGeometry( poSrcPoint );
 
     if( (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
@@ -350,13 +350,13 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
 
     const char *pszOptionValue
         = CSLFetchNameValue( papszOptions, S57O_SPLIT_MULTIPOINT );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_SPLIT_MULTIPOINT;
     else
         nOptionFlags &= ~S57M_SPLIT_MULTIPOINT;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_ADD_SOUNDG_DEPTH );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_ADD_SOUNDG_DEPTH;
     else
         nOptionFlags &= ~S57M_ADD_SOUNDG_DEPTH;
@@ -371,46 +371,46 @@ bool S57Reader::SetOptions( char ** papszOptionsIn )
     }
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_LNAM_REFS );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_LNAM_REFS;
     else
         nOptionFlags &= ~S57M_LNAM_REFS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_UPDATES );
-    if( pszOptionValue == NULL )
+    if( pszOptionValue == nullptr )
         /* no change */;
-    else if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"APPLY") )
+    else if( pszOptionValue != nullptr && !EQUAL(pszOptionValue,"APPLY") )
         nOptionFlags &= ~S57M_UPDATES;
     else
         nOptionFlags |= S57M_UPDATES;
 
     pszOptionValue = CSLFetchNameValue(papszOptions,
                                        S57O_PRESERVE_EMPTY_NUMBERS);
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_PRESERVE_EMPTY_NUMBERS;
     else
         nOptionFlags &= ~S57M_PRESERVE_EMPTY_NUMBERS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_PRIMITIVES );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_PRIMITIVES;
     else
         nOptionFlags &= ~S57M_RETURN_PRIMITIVES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_LINKAGES );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_LINKAGES;
     else
         nOptionFlags &= ~S57M_RETURN_LINKAGES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_DSID );
-    if( pszOptionValue == NULL || CPLTestBool(pszOptionValue) )
+    if( pszOptionValue == nullptr || CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_DSID;
     else
         nOptionFlags &= ~S57M_RETURN_DSID;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RECODE_BY_DSSI );
-    if( pszOptionValue != NULL && CPLTestBool(pszOptionValue) )
+    if( pszOptionValue != nullptr && CPLTestBool(pszOptionValue) )
         nOptionFlags |= S57M_RECODE_BY_DSSI;
     else
         nOptionFlags &= ~S57M_RECODE_BY_DSSI;
@@ -456,7 +456,7 @@ void S57Reader::Rewind()
 bool S57Reader::Ingest()
 
 {
-    if( poModule == NULL || bFileIngested )
+    if( poModule == nullptr || bFileIngested )
         return true;
 
 /* -------------------------------------------------------------------- */
@@ -464,17 +464,17 @@ bool S57Reader::Ingest()
 /*      appropriate indexes.                                            */
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    DDFRecord *poRecord = NULL;
-    while( (poRecord = poModule->ReadRecord()) != NULL )
+    DDFRecord *poRecord = nullptr;
+    while( (poRecord = poModule->ReadRecord()) != nullptr )
     {
         DDFField *poKeyField = poRecord->GetField(1);
-        if (poKeyField == NULL)
+        if (poKeyField == nullptr)
             return false;
         DDFFieldDefn* poKeyFieldDefn = poKeyField->GetFieldDefn();
-        if( poKeyFieldDefn == NULL )
+        if( poKeyFieldDefn == nullptr )
             continue;
         const char* pszName = poKeyFieldDefn->GetName();
-        if( pszName == NULL )
+        if( pszName == nullptr )
             continue;
 
         if( EQUAL(pszName,"VRID") )
@@ -522,7 +522,7 @@ bool S57Reader::Ingest()
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {
-                if( poDSIDRecord != NULL )
+                if( poDSIDRecord != nullptr )
                     delete poDSIDRecord;
 
                 poDSIDRecord = poRecord->Clone();
@@ -536,7 +536,7 @@ bool S57Reader::Ingest()
 
             if( nOptionFlags & S57M_RETURN_DSID )
             {
-                if( poDSPMRecord != NULL )
+                if( poDSPMRecord != nullptr )
                     delete poDSPMRecord;
 
                 poDSPMRecord = poRecord->Clone();
@@ -620,14 +620,14 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 
 {
     if( !bFileIngested && !Ingest() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Special case for "in progress" multipoints being split up.      */
 /* -------------------------------------------------------------------- */
-    if( poMultiPoint != NULL )
+    if( poMultiPoint != nullptr )
     {
-        if( poTarget == NULL || poTarget == poMultiPoint->GetDefnRef() )
+        if( poTarget == nullptr || poTarget == poMultiPoint->GetDefnRef() )
         {
             return NextPendingMultiPoint();
         }
@@ -642,7 +642,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
 /* -------------------------------------------------------------------- */
     if( (nOptionFlags & S57M_RETURN_DSID)
         && nNextDSIDIndex == 0
-        && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
+        && (poTarget == nullptr || EQUAL(poTarget->GetName(),"DSID")) )
     {
         return ReadDSID();
     }
@@ -653,9 +653,9 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
     if( nOptionFlags & S57M_RETURN_PRIMITIVES )
     {
         int nRCNM = 0;
-        int *pnCounter = NULL;
+        int *pnCounter = nullptr;
 
-        if( poTarget == NULL )
+        if( poTarget == nullptr )
         {
             if( nNextVIIndex < oVI_Index.GetCount() )
             {
@@ -705,7 +705,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         if( nRCNM != 0 )
         {
             OGRFeature *poFeature = ReadVector( *pnCounter, nRCNM );
-            if( poFeature != NULL )
+            if( poFeature != nullptr )
             {
                 *pnCounter += 1;
                 return poFeature;
@@ -721,23 +721,23 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         OGRFeatureDefn *poFeatureDefn
           = static_cast<OGRFeatureDefn *>( oFE_Index.GetClientInfoByIndex( nNextFEIndex ) );
 
-        if( poFeatureDefn == NULL )
+        if( poFeatureDefn == nullptr )
         {
             poFeatureDefn = FindFDefn( oFE_Index.GetByIndex( nNextFEIndex ) );
             oFE_Index.SetClientInfoByIndex( nNextFEIndex, poFeatureDefn );
         }
 
-        if( poFeatureDefn != poTarget && poTarget != NULL )
+        if( poFeatureDefn != poTarget && poTarget != nullptr )
         {
             nNextFEIndex++;
             continue;
         }
 
         OGRFeature *poFeature = ReadFeature( nNextFEIndex++, poTarget );
-        if( poFeature != NULL )
+        if( poFeature != nullptr )
         {
             if( (nOptionFlags & S57M_SPLIT_MULTIPOINT)
-                && poFeature->GetGeometryRef() != NULL
+                && poFeature->GetGeometryRef() != nullptr
                 && wkbFlatten(poFeature->GetGeometryRef()->getGeometryType())
                                                         == wkbMultiPoint)
             {
@@ -750,7 +750,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -763,13 +763,13 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
 
 {
     if( nFeatureId < 0 || nFeatureId >= oFE_Index.GetCount() )
-        return NULL;
+        return nullptr;
 
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
     if( (nOptionFlags & S57M_RETURN_DSID)
         && nFeatureId == 0
-        && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
+        && (poTarget == nullptr || EQUAL(poTarget->GetName(),"DSID")) )
     {
         poFeature = ReadDSID();
     }
@@ -778,7 +778,7 @@ OGRFeature *S57Reader::ReadFeature( int nFeatureId, OGRFeatureDefn *poTarget )
         poFeature = AssembleFeature( oFE_Index.GetByIndex(nFeatureId),
                                     poTarget );
     }
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
         poFeature->SetFID( nFeatureId );
 
     return poFeature;
@@ -801,15 +801,15 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /*      others.                                                         */
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poFDefn = FindFDefn( poRecord );
-    if( poFDefn == NULL )
-        return NULL;
+    if( poFDefn == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Does this match our target feature definition?  If not skip     */
 /*      this feature.                                                   */
 /* -------------------------------------------------------------------- */
-    if( poTarget != NULL && poFDefn != poTarget )
-        return NULL;
+    if( poTarget != nullptr && poFDefn != poTarget )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the new feature object.                                  */
@@ -854,7 +854,7 @@ OGRFeature *S57Reader::AssembleFeature( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
 /*      Apply object class specific attributes, if supported.           */
 /* -------------------------------------------------------------------- */
-    if( poRegistrar != NULL )
+    if( poRegistrar != nullptr )
         ApplyObjectClassAttributes( poRecord, poFeature );
 
 /* -------------------------------------------------------------------- */
@@ -894,7 +894,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     DDFField    *poATTF = poRecord->FindField( "ATTF" );
 
-    if( poATTF == NULL )
+    if( poATTF == nullptr )
         return;
 
     int nAttrCount = poATTF->GetRepeatCount();
@@ -903,7 +903,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         const int nAttrId
             = poRecord->GetIntSubfield( "ATTF", 0, "ATTL", iAttr );
 
-        if( poRegistrar->GetAttrInfo(nAttrId) == NULL )
+        if( poRegistrar->GetAttrInfo(nAttrId) == nullptr )
         {
             if( !bAttrWarningIssued )
             {
@@ -924,11 +924,11 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         /* Fetch the attribute value */
         const char *pszValue =
             poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr);
-        if( pszValue == NULL )
+        if( pszValue == nullptr )
             return;
 
         //If needed, recode the string in UTF-8.
-        char* pszValueToFree = NULL;
+        char* pszValueToFree = nullptr;
         if(nOptionFlags & S57M_RECODE_BY_DSSI)
             pszValue = pszValueToFree = RecodeByDSSI(pszValue,false);
 
@@ -977,7 +977,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     DDFField    *poNATF = poRecord->FindField( "NATF" );
 
-    if( poNATF == NULL )
+    if( poNATF == nullptr )
         return;
 
     nAttrCount = poNATF->GetRepeatCount();
@@ -986,7 +986,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         const int nAttrId = poRecord->GetIntSubfield("NATF",0,"ATTL",iAttr);
         const char *pszAcronym = poRegistrar->GetAttrAcronym(nAttrId);
 
-        if( pszAcronym == NULL )
+        if( pszAcronym == nullptr )
         {
             if( !bAttrWarningIssued )
             {
@@ -1005,7 +1005,7 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
 
         //If needed, recode the string in UTF-8.
         const char *pszValue = poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr);
-        if( pszValue != NULL )
+        if( pszValue != nullptr )
         {
             if(nOptionFlags & S57M_RECODE_BY_DSSI)
             {
@@ -1042,7 +1042,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 /* -------------------------------------------------------------------- */
     DDFField *poFFPT = poRecord->FindField( "FFPT" );
 
-    if( poFFPT == NULL )
+    if( poFFPT == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1054,13 +1054,13 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
         = poFFPT->GetFieldDefn()->FindSubfieldDefn( "LNAM" );
     DDFSubfieldDefn *poRIND
         = poFFPT->GetFieldDefn()->FindSubfieldDefn( "RIND" );
-    if( poLNAM == NULL || poRIND == NULL )
+    if( poLNAM == nullptr || poRIND == nullptr )
     {
         return;
     }
 
     int *panRIND = static_cast<int *>( CPLMalloc(sizeof(int) * nRefCount) );
-    char **papszRefs = NULL;
+    char **papszRefs = nullptr;
 
     for( int iRef = 0; iRef < nRefCount; iRef++ )
     {
@@ -1069,7 +1069,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
         unsigned char *pabyData = reinterpret_cast<unsigned char *>(
             const_cast<char *>(
                 poFFPT->GetSubfieldData( poLNAM, &nMaxBytes, iRef ) ) );
-        if( pabyData == NULL || nMaxBytes < 8 )
+        if( pabyData == nullptr || nMaxBytes < 8 )
         {
             CSLDestroy( papszRefs );
             CPLFree( panRIND );
@@ -1085,7 +1085,7 @@ void S57Reader::GenerateLNAMAndRefs( DDFRecord * poRecord,
 
         pabyData = reinterpret_cast<unsigned char *>(const_cast<char *>(
             poFFPT->GetSubfieldData( poRIND, &nMaxBytes, iRef ) ) );
-        if( pabyData == NULL || nMaxBytes < 1 )
+        if( pabyData == nullptr || nMaxBytes < 1 )
         {
             CSLDestroy( papszRefs );
             CPLFree( panRIND );
@@ -1113,7 +1113,7 @@ void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
     DDFField *poFSPT = poRecord->FindField( "FSPT" );
-    if( poFSPT == NULL )
+    if( poFSPT == nullptr )
         return;
 
     const int nCount = poFSPT->GetRepeatCount();
@@ -1164,13 +1164,13 @@ void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
 OGRFeature *S57Reader::ReadDSID()
 
 {
-    if( poDSIDRecord == NULL && poDSPMRecord == NULL )
-        return NULL;
+    if( poDSIDRecord == nullptr && poDSPMRecord == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Find the feature definition to use.                             */
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poFDefn = NULL;
+    OGRFeatureDefn *poFDefn = nullptr;
 
     for( int i = 0; i < nFDefnCount; i++ )
     {
@@ -1181,10 +1181,10 @@ OGRFeature *S57Reader::ReadDSID()
         }
     }
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
     {
         // CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1195,7 +1195,7 @@ OGRFeature *S57Reader::ReadDSID()
 /* -------------------------------------------------------------------- */
 /*      Apply DSID values.                                              */
 /* -------------------------------------------------------------------- */
-    if( poDSIDRecord != NULL )
+    if( poDSIDRecord != nullptr )
     {
         poFeature->SetField( "DSID_EXPP",
                      poDSIDRecord->GetIntSubfield( "DSID", 0, "EXPP", 0 ));
@@ -1260,7 +1260,7 @@ OGRFeature *S57Reader::ReadDSID()
 /* -------------------------------------------------------------------- */
 /*      Apply DSPM record.                                              */
 /* -------------------------------------------------------------------- */
-    if( poDSPMRecord != NULL )
+    if( poDSPMRecord != nullptr )
     {
         poFeature->SetField( "DSPM_HDAT",
                       poDSPMRecord->GetIntSubfield( "DSPM", 0, "HDAT", 0 ));
@@ -1301,8 +1301,8 @@ OGRFeature *S57Reader::ReadDSID()
 OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
 {
-    DDFRecordIndex *poIndex = NULL;
-    const char *pszFDName = NULL;
+    DDFRecordIndex *poIndex = nullptr;
+    const char *pszFDName = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      What type of vector are we fetching.                            */
@@ -1331,18 +1331,18 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 
       default:
         CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
     if( nFeatureId < 0 || nFeatureId >= poIndex->GetCount() )
-        return NULL;
+        return nullptr;
 
     DDFRecord *poRecord = poIndex->GetByIndex( nFeatureId );
 
 /* -------------------------------------------------------------------- */
 /*      Find the feature definition to use.                             */
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poFDefn = NULL;
+    OGRFeatureDefn *poFDefn = nullptr;
 
     for( int i = 0; i < nFDefnCount; i++ )
     {
@@ -1353,10 +1353,10 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         }
     }
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
     {
         // CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1383,14 +1383,14 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         double dfX = 0.0;
         double dfY = 0.0;
 
-        if( poRecord->FindField( "SG2D" ) != NULL )
+        if( poRecord->FindField( "SG2D" ) != nullptr )
         {
             dfX = poRecord->GetIntSubfield("SG2D",0,"XCOO",0) / (double)nCOMF;
             dfY = poRecord->GetIntSubfield("SG2D",0,"YCOO",0) / (double)nCOMF;
             poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
         }
 
-        else if( poRecord->FindField( "SG3D" ) != NULL ) /* presume sounding*/
+        else if( poRecord->FindField( "SG3D" ) != nullptr ) /* presume sounding*/
         {
             double dfZ = 0.0;
             const int nVCount = poRecord->FindField("SG3D")->GetRepeatCount();
@@ -1459,10 +1459,10 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
 /*      Special edge fields.                                            */
 /*      Allow either 2 VRPT fields or one VRPT field with 2 rows        */
 /* -------------------------------------------------------------------- */
-    DDFField *poVRPT = NULL;
+    DDFField *poVRPT = nullptr;
 
     if( nRCNM == RCNM_VE
-        && (poVRPT = poRecord->FindField( "VRPT" )) != NULL )
+        && (poVRPT = poRecord->FindField( "VRPT" )) != nullptr )
     {
         poFeature->SetField( "NAME_RCNM_0", RCNM_VC );
         poFeature->SetField( "NAME_RCID_0", ParseName( poVRPT ) );
@@ -1478,13 +1478,13 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
         int iField = 0;
         int iSubField = 1;
 
-        if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
+        if( poVRPT != nullptr && poVRPT->GetRepeatCount() == 1 )
         {
             // Only one row, need a second VRPT field
             iField = 1;
             iSubField = 0;
 
-            if( (poVRPT = poRecord->FindField( "VRPT", iField )) == NULL )
+            if( (poVRPT = poRecord->FindField( "VRPT", iField )) == nullptr )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Unable to fetch last edge node.\n"
@@ -1522,7 +1522,7 @@ OGRFeature *S57Reader::ReadVector( int nFeatureId, int nRCNM )
     const int quaposField = poRegistrar->FindAttrByAcronym("QUAPOS");
 
     DDFField * poATTV = poRecord->FindField("ATTV");
-    if( poATTV != NULL )
+    if( poATTV != nullptr )
     {
         for( int j = 0; j < poATTV->GetRepeatCount(); j++ )
         {
@@ -1554,28 +1554,28 @@ bool S57Reader::FetchPoint( int nRCNM, int nRCID,
                             double *pdfX, double *pdfY, double *pdfZ )
 
 {
-    DDFRecord *poSRecord = NULL;
+    DDFRecord *poSRecord = nullptr;
 
     if( nRCNM == RCNM_VI )
         poSRecord = oVI_Index.FindRecord( nRCID );
     else
         poSRecord = oVC_Index.FindRecord( nRCID );
 
-    if( poSRecord == NULL )
+    if( poSRecord == nullptr )
         return false;
 
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
 
-    if( poSRecord->FindField( "SG2D" ) != NULL )
+    if( poSRecord->FindField( "SG2D" ) != nullptr )
     {
         dfX = poSRecord->GetIntSubfield("SG2D",0,"XCOO",0)
             / static_cast<double>( nCOMF );
         dfY = poSRecord->GetIntSubfield("SG2D",0,"YCOO",0)
             / static_cast<double>( nCOMF );
     }
-    else if( poSRecord->FindField( "SG3D" ) != NULL )
+    else if( poSRecord->FindField( "SG3D" ) != nullptr )
     {
         dfX = poSRecord->GetIntSubfield("SG3D",0,"XCOO",0)
             / static_cast<double>( nCOMF );
@@ -1587,11 +1587,11 @@ bool S57Reader::FetchPoint( int nRCNM, int nRCID,
     else
         return false;
 
-    if( pdfX != NULL )
+    if( pdfX != nullptr )
         *pdfX = dfX;
-    if( pdfY != NULL )
+    if( pdfY != nullptr )
         *pdfY = dfY;
-    if( pdfZ != NULL )
+    if( pdfZ != nullptr )
         *pdfZ = dfZ;
 
     return true;
@@ -1708,10 +1708,10 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
 
 {
     int             nPoints = 0;
-    DDFField        *poSG2D = NULL;
-    DDFField        *poAR2D = NULL;
-    DDFSubfieldDefn *poXCOO = NULL;
-    DDFSubfieldDefn *poYCOO = NULL;
+    DDFField        *poSG2D = nullptr;
+    DDFField        *poAR2D = nullptr;
+    DDFSubfieldDefn *poXCOO = nullptr;
+    DDFSubfieldDefn *poYCOO = nullptr;
     bool bStandardFormat = true;
 
 /* -------------------------------------------------------------------- */
@@ -1726,7 +1726,7 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
 
         if( EQUAL(poSG2D->GetFieldDefn()->GetName(), "SG2D") )
         {
-            poAR2D = NULL;
+            poAR2D = nullptr;
         }
         else if( EQUAL(poSG2D->GetFieldDefn()->GetName(), "AR2D") )
         {
@@ -1745,7 +1745,7 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
         poXCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("XCOO");
         poYCOO = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
 
-        if( poXCOO == NULL || poYCOO == NULL )
+        if( poXCOO == nullptr || poYCOO == nullptr )
         {
             CPLDebug( "S57", "XCOO or YCOO are NULL" );
             return false;
@@ -1842,13 +1842,13 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
                     = poSG2D->GetSubfieldData( poXCOO, &nBytesRemaining, i );
 
                 const double dfX
-                    = poXCOO->ExtractIntData( pachData, nBytesRemaining, NULL )
+                    = poXCOO->ExtractIntData( pachData, nBytesRemaining, nullptr )
                     / static_cast<double>( nCOMF );
 
                 pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
 
                 const double dfY
-                    = poXCOO->ExtractIntData( pachData, nBytesRemaining, NULL )
+                    = poXCOO->ExtractIntData( pachData, nBytesRemaining, nullptr )
                     / static_cast<double>( nCOMF );
 
                 poLine->setPoint( nVBase, dfX, dfY );
@@ -1861,7 +1861,7 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
 /*      If this is actually an arc, turn the start, end and center      */
 /*      of rotation into a "stroked" arc linestring.                    */
 /* -------------------------------------------------------------------- */
-        if( poAR2D != NULL && poLine->getNumPoints() >= 3 )
+        if( poAR2D != nullptr && poLine->getNumPoints() >= 3 )
         {
             int iLast = poLine->getNumPoints() - 1;
 
@@ -1871,7 +1871,7 @@ bool S57Reader::FetchLine( DDFRecord *poSRecord,
                 poLine->getX(iLast-2), poLine->getY(iLast-2),
                 30 );
 
-            if( poArc != NULL )
+            if( poArc != nullptr )
             {
                 for( int i = 0; i < poArc->getNumPoints(); i++ )
                     poLine->setPoint( iLast-2+i, poArc->getX(i),
@@ -1897,7 +1897,7 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
     DDFField *poFSPT = poFRecord->FindField( "FSPT" );
-    if( poFSPT == NULL )
+    if( poFSPT == nullptr )
         return;
 
     if( poFSPT->GetRepeatCount() != 1 )
@@ -1945,7 +1945,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
 /*      Feature the spatial record containing the point.                */
 /* -------------------------------------------------------------------- */
     DDFField *poFSPT = poFRecord->FindField( "FSPT" );
-    if( poFSPT == NULL )
+    if( poFSPT == nullptr )
         return;
 
     if( poFSPT->GetRepeatCount() != 1 )
@@ -1958,7 +1958,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
         ? oVI_Index.FindRecord( nRCID )
         : oVC_Index.FindRecord( nRCID );
 
-    if( poSRecord == NULL )
+    if( poSRecord == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1967,9 +1967,9 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
     OGRMultiPoint * const poMP = new OGRMultiPoint();
 
     DDFField *poField = poSRecord->FindField( "SG2D" );
-    if( poField == NULL )
+    if( poField == nullptr )
         poField = poSRecord->FindField( "SG3D" );
-    if( poField == NULL )
+    if( poField == nullptr )
     {
         delete poMP;
         return;
@@ -1979,7 +1979,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
         = poField->GetFieldDefn()->FindSubfieldDefn( "XCOO" );
     DDFSubfieldDefn *poYCOO
         = poField->GetFieldDefn()->FindSubfieldDefn( "YCOO" );
-    if( poXCOO == NULL || poYCOO == NULL )
+    if( poXCOO == nullptr || poYCOO == nullptr )
     {
         CPLDebug( "S57", "XCOO or YCOO are NULL" );
         delete poMP;
@@ -2010,7 +2010,7 @@ void S57Reader::AssembleSoundingGeometry( DDFRecord * poFRecord,
         pachData += nBytesConsumed;
 
         double dfZ = 0.0;
-        if( poVE3D != NULL )
+        if( poVE3D != nullptr )
         {
             dfZ = poYCOO->ExtractIntData( pachData, nBytesLeft,
                                           &nBytesConsumed )
@@ -2037,7 +2037,7 @@ GetIntSubfield( DDFField *poField,
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
 
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -2049,7 +2049,7 @@ GetIntSubfield( DDFField *poField,
                                 &nBytesRemaining,
                                 iSubfieldIndex );
 
-    return poSFDefn->ExtractIntData( pachData, nBytesRemaining, NULL );
+    return poSFDefn->ExtractIntData( pachData, nBytesRemaining, nullptr );
 }
 
 /************************************************************************/
@@ -2095,7 +2095,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             const int nRCID = ParseName( poFSPT, iEdge );
 
             DDFRecord *poSRecord = oVE_Index.FindRecord( nRCID );
-            if( poSRecord == NULL )
+            if( poSRecord == nullptr )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Couldn't find spatial record %d.\n"
@@ -2111,7 +2111,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
 /*      Get the first and last nodes                                    */
 /* -------------------------------------------------------------------- */
             DDFField *poVRPT = poSRecord->FindField( "VRPT" );
-            if( poVRPT == NULL )
+            if( poVRPT == nullptr )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Unable to fetch start node for RCID %d.\n"
@@ -2128,12 +2128,12 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             int nVC_RCID_firstnode = 0;
             int nVC_RCID_lastnode = 0;
 
-            if( poVRPT != NULL && poVRPT->GetRepeatCount() == 1 )
+            if( poVRPT != nullptr && poVRPT->GetRepeatCount() == 1 )
             {
                 nVC_RCID_firstnode = ParseName( poVRPT );
                 poVRPT = poSRecord->FindField( "VRPT", 1 );
 
-                if( poVRPT == NULL )
+                if( poVRPT == nullptr )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Unable to fetch end node for RCID %d.\n"
@@ -2224,7 +2224,7 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                     DDFSubfieldDefn *poYCOO
                         = poSG2D->GetFieldDefn()->FindSubfieldDefn("YCOO");
 
-                    if( poXCOO == NULL || poYCOO == NULL )
+                    if( poXCOO == nullptr || poYCOO == nullptr )
                     {
                         CPLDebug( "S57", "XCOO or YCOO are NULL" );
                         delete poLine;
@@ -2260,14 +2260,14 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
                               poXCOO, &nBytesRemaining, i );
 
                         dfX = poXCOO->ExtractIntData(
-                            pachData, nBytesRemaining, NULL )
+                            pachData, nBytesRemaining, nullptr )
                             / static_cast<double>( nCOMF );
 
                         pachData = poSG2D->GetSubfieldData(
                             poYCOO, &nBytesRemaining, i );
 
                         dfY = poXCOO->ExtractIntData(
-                            pachData, nBytesRemaining, NULL )
+                            pachData, nBytesRemaining, nullptr )
                             / static_cast<double>( nCOMF );
 
                         poLine->setPoint( nVBase++, dfX, dfY );
@@ -2360,7 +2360,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             const int nRCID = ParseName( poFSPT, iEdge );
 
             DDFRecord *poSRecord = oVE_Index.FindRecord( nRCID );
-            if( poSRecord == NULL )
+            if( poSRecord == nullptr )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Couldn't find spatial record %d.\n"
@@ -2381,7 +2381,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /*      Add the start node.                                             */
 /* -------------------------------------------------------------------- */
             DDFField *poVRPT = poSRecord->FindField( "VRPT" );
-            if( poVRPT != NULL )
+            if( poVRPT != nullptr )
             {
                 int nVC_RCID = ParseName( poVRPT );
                 double dfX = 0.0;
@@ -2404,7 +2404,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
 /*      Add the end node.                                               */
 /* -------------------------------------------------------------------- */
-            if( poVRPT != NULL && poVRPT->GetRepeatCount() > 1 )
+            if( poVRPT != nullptr && poVRPT->GetRepeatCount() > 1 )
             {
                 const int nVC_RCID = ParseName( poVRPT, 1 );
                 double dfX = 0.0;
@@ -2414,7 +2414,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
                     && FetchPoint( RCNM_VC, nVC_RCID, &dfX, &dfY ) )
                     poLine->addPoint( dfX, dfY );
             }
-            else if( (poVRPT = poSRecord->FindField( "VRPT", 1 )) != NULL )
+            else if( (poVRPT = poSRecord->FindField( "VRPT", 1 )) != nullptr )
             {
                 const int nVC_RCID = ParseName( poVRPT );
                 double dfX = 0.0;
@@ -2448,7 +2448,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 
     delete poLines;
 
-    if( poPolygon != NULL )
+    if( poPolygon != nullptr )
         poFeature->SetGeometryDirectly( poPolygon );
 }
 
@@ -2463,12 +2463,12 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 
 {
-    if( poRegistrar != NULL )
+    if( poRegistrar != nullptr )
     {
         const int nOBJL = poRecord->GetIntSubfield( "FRID", 0, "OBJL", 0 );
 
         if( nOBJL < static_cast<int>( apoFDefnByOBJL.size() )
-            && apoFDefnByOBJL[nOBJL] != NULL )
+            && apoFDefnByOBJL[nOBJL] != nullptr )
             return apoFDefnByOBJL[nOBJL];
 
         if( !poClassContentExplorer->SelectClass( nOBJL ) )
@@ -2478,19 +2478,19 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
                 if( EQUAL(papoFDefnList[i]->GetName(),"Generic") )
                     return papoFDefnList[i];
             }
-            return NULL;
+            return nullptr;
         }
 
         for( int i = 0; i < nFDefnCount; i++ )
         {
             const char* pszAcronym = poClassContentExplorer->GetAcronym();
-            if( pszAcronym != NULL &&
+            if( pszAcronym != nullptr &&
                 EQUAL(papoFDefnList[i]->GetName(),
                       pszAcronym) )
                 return papoFDefnList[i];
         }
 
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -2513,7 +2513,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2527,7 +2527,7 @@ OGRFeatureDefn * S57Reader::FindFDefn( DDFRecord * poRecord )
 int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
 
 {
-    if( poField == NULL )
+    if( poField == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing field in ParseName()." );
@@ -2536,17 +2536,17 @@ int S57Reader::ParseName( DDFField * poField, int nIndex, int * pnRCNM )
 
     DDFSubfieldDefn* poName
         = poField->GetFieldDefn()->FindSubfieldDefn( "NAME" );
-    if( poName == NULL )
+    if( poName == nullptr )
         return -1;
 
     int nMaxBytes = 0;
     unsigned char *pabyData = reinterpret_cast<unsigned char *>(
         const_cast<char *>(
             poField->GetSubfieldData( poName, &nMaxBytes, nIndex ) ) );
-    if( pabyData == NULL || nMaxBytes < 5 )
+    if( pabyData == nullptr || nMaxBytes < 5 )
         return -1;
 
-    if( pnRCNM != NULL )
+    if( pnRCNM != nullptr )
         *pnRCNM = pabyData[0];
 
     return CPL_LSBSINT32PTR(pabyData + 1);
@@ -2565,7 +2565,7 @@ void S57Reader::AddFeatureDefn( OGRFeatureDefn * poFDefn )
 
     papoFDefnList[nFDefnCount-1] = poFDefn;
 
-    if( poRegistrar != NULL )
+    if( poRegistrar != nullptr )
     {
         if( poClassContentExplorer->SelectClass( poFDefn->GetName() ) )
         {
@@ -2645,7 +2645,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
     DDFField *poKey = poTarget->FindField( pszKey );
 
-    if( poKey == NULL )
+    if( poKey == nullptr )
     {
         // CPLAssert( false );
         return false;
@@ -2653,11 +2653,11 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
     DDFSubfieldDefn *poRVER_SFD
         = poKey->GetFieldDefn()->FindSubfieldDefn( "RVER" );
-    if( poRVER_SFD == NULL )
+    if( poRVER_SFD == nullptr )
         return false;
 
     unsigned char *pnRVER
-        = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, NULL, 0 );
+        = (unsigned char *) poKey->GetSubfieldData( poRVER_SFD, nullptr, 0 );
 
     *pnRVER += 1;
 
@@ -2665,13 +2665,13 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /*      Check for, and apply record record to spatial record pointer    */
 /*      updates.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poUpdate->FindField( "FSPC" ) != NULL )
+    if( poUpdate->FindField( "FSPC" ) != nullptr )
     {
         const int nFSUI = poUpdate->GetIntSubfield( "FSPC", 0, "FSUI", 0 );
         DDFField *poSrcFSPT = poUpdate->FindField( "FSPT" );
         DDFField *poDstFSPT = poTarget->FindField( "FSPT" );
 
-        if( (poSrcFSPT == NULL && nFSUI != 2) || poDstFSPT == NULL )
+        if( (poSrcFSPT == nullptr && nFSUI != 2) || poDstFSPT == nullptr )
         {
             // CPLAssert( false );
             return false;
@@ -2729,7 +2729,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             /* Wipe each deleted coordinate */
             for( int i = nNSPT-1; i >= 0; i-- )
             {
-                poTarget->SetFieldRaw( poDstFSPT, i + nFSIX - 1, NULL, 0 );
+                poTarget->SetFieldRaw( poDstFSPT, i + nFSIX - 1, nullptr, 0 );
             }
         }
         else if( nFSUI == 3 ) /* MODIFY */
@@ -2755,13 +2755,13 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /*      Check for, and apply vector record to vector record pointer     */
 /*      updates.                                                        */
 /* -------------------------------------------------------------------- */
-    if( poUpdate->FindField( "VRPC" ) != NULL )
+    if( poUpdate->FindField( "VRPC" ) != nullptr )
     {
         const int nVPUI = poUpdate->GetIntSubfield( "VRPC", 0, "VPUI", 0 );
         DDFField *poSrcVRPT = poUpdate->FindField( "VRPT" );
         DDFField *poDstVRPT = poTarget->FindField( "VRPT" );
 
-        if( (poSrcVRPT == NULL && nVPUI != 2) || poDstVRPT == NULL )
+        if( (poSrcVRPT == nullptr && nVPUI != 2) || poDstVRPT == nullptr )
         {
             // CPLAssert( false );
             return false;
@@ -2817,7 +2817,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             /* Wipe each deleted coordinate */
             for( int i = nNVPT-1; i >= 0; i-- )
             {
-                poTarget->SetFieldRaw( poDstVRPT, i + nVPIX - 1, NULL, 0 );
+                poTarget->SetFieldRaw( poDstVRPT, i + nVPIX - 1, nullptr, 0 );
             }
         }
         else if( nVPUI == 3 ) /* MODIFY */
@@ -2844,16 +2844,16 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
 /*      Check for, and apply record update to coordinates.              */
 /* -------------------------------------------------------------------- */
-    if( poUpdate->FindField( "SGCC" ) != NULL )
+    if( poUpdate->FindField( "SGCC" ) != nullptr )
     {
         DDFField *poSrcSG2D = poUpdate->FindField( "SG2D" );
         DDFField *poDstSG2D = poTarget->FindField( "SG2D" );
 
         /* If we don't have SG2D, check for SG3D */
-        if( poDstSG2D == NULL )
+        if( poDstSG2D == nullptr )
         {
             poDstSG2D = poTarget->FindField( "SG3D" );
-            if (poDstSG2D != NULL)
+            if (poDstSG2D != nullptr)
             {
                 poSrcSG2D = poUpdate->FindField("SG3D");
             }
@@ -2861,24 +2861,24 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 
         const int nCCUI = poUpdate->GetIntSubfield( "SGCC", 0, "CCUI", 0 );
 
-        if( (poSrcSG2D == NULL && nCCUI != 2)
-            || (poDstSG2D == NULL && nCCUI != 1) )
+        if( (poSrcSG2D == nullptr && nCCUI != 2)
+            || (poDstSG2D == nullptr && nCCUI != 1) )
         {
             // CPLAssert( false );
             return false;
         }
 
-        if (poDstSG2D == NULL)
+        if (poDstSG2D == nullptr)
         {
             poTarget->AddField(poTarget->GetModule()->FindFieldDefn("SG2D"));
             poDstSG2D = poTarget->FindField("SG2D");
-            if (poDstSG2D == NULL) {
+            if (poDstSG2D == nullptr) {
                 // CPLAssert( false );
                 return false;
             }
 
             // Delete null default data that was created
-            poTarget->SetFieldRaw( poDstSG2D, 0, NULL, 0 );
+            poTarget->SetFieldRaw( poDstSG2D, 0, nullptr, 0 );
         }
 
         int nCoordSize = poDstSG2D->GetFieldDefn()->GetFixedWidth();
@@ -2933,7 +2933,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             /* Wipe each deleted coordinate */
             for( int i = nCCNC-1; i >= 0; i-- )
             {
-                poTarget->SetFieldRaw( poDstSG2D, i + nCCIX - 1, NULL, 0 );
+                poTarget->SetFieldRaw( poDstSG2D, i + nCCIX - 1, nullptr, 0 );
             }
         }
         else if( nCCUI == 3 ) /* MODIFY */
@@ -2961,14 +2961,14 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /*      Apply updates to Feature to Feature pointer fields.  Note       */
 /*      INSERT and DELETE are untested.  UPDATE tested per bug #5028.   */
 /* -------------------------------------------------------------------- */
-    if( poUpdate->FindField( "FFPC" ) != NULL )
+    if( poUpdate->FindField( "FFPC" ) != nullptr )
     {
         int     nFFUI = poUpdate->GetIntSubfield( "FFPC", 0, "FFUI", 0 );
         DDFField *poSrcFFPT = poUpdate->FindField( "FFPT" );
         DDFField *poDstFFPT = poTarget->FindField( "FFPT" );
 
-        if( (poSrcFFPT == NULL && nFFUI != 2)
-            || (poDstFFPT == NULL && nFFUI != 1) )
+        if( (poSrcFFPT == nullptr && nFFUI != 2)
+            || (poDstFFPT == nullptr && nFFUI != 1) )
         {
             CPLDebug( "S57", "Missing source or target FFPT applying update.");
             // CPLAssert( false );
@@ -2976,18 +2976,18 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
         }
 
         // Create FFPT field on target record, if it does not yet exist.
-        if (poDstFFPT == NULL)
+        if (poDstFFPT == nullptr)
         {
             // Untested!
             poTarget->AddField(poTarget->GetModule()->FindFieldDefn("FFPT"));
             poDstFFPT = poTarget->FindField("FFPT");
-            if (poDstFFPT == NULL) {
+            if (poDstFFPT == nullptr) {
                 // CPLAssert( false );
                 return false;
             }
 
             // Delete null default data that was created
-            poTarget->SetFieldRaw( poDstFFPT, 0, NULL, 0 );
+            poTarget->SetFieldRaw( poDstFFPT, 0, nullptr, 0 );
         }
 
         // FFPT includes COMT which is variable length which would
@@ -3052,7 +3052,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
             /* Wipe each deleted record */
             for( int i = nNFPT-1; i >= 0; i-- )
             {
-                poTarget->SetFieldRaw( poDstFFPT, i + nFFIX - 1, NULL, 0 );
+                poTarget->SetFieldRaw( poDstFFPT, i + nFFIX - 1, nullptr, 0 );
             }
         }
         else if( nFFUI == 3 ) /* UPDATE */
@@ -3079,11 +3079,11 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
 /* -------------------------------------------------------------------- */
 /*      Check for and apply changes to attribute lists.                 */
 /* -------------------------------------------------------------------- */
-    if( poUpdate->FindField( "ATTF" ) != NULL )
+    if( poUpdate->FindField( "ATTF" ) != nullptr )
     {
         DDFField *poDstATTF = poTarget->FindField( "ATTF" );
 
-        if( poDstATTF == NULL )
+        if( poDstATTF == nullptr )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Unable to apply ATTF change to target record without "
@@ -3114,7 +3114,7 @@ bool S57Reader::ApplyRecordUpdate( DDFRecord *poTarget, DDFRecord *poUpdate )
                 poSrcATTF->GetInstanceData( iAtt, &nDataBytes );
             if( pszRawData[2] == 0x7f /* delete marker */ )
             {
-                poTarget->SetFieldRaw( poDstATTF, iTAtt, NULL, 0 );
+                poTarget->SetFieldRaw( poDstATTF, iTAtt, nullptr, 0 );
             }
             else
             {
@@ -3148,12 +3148,12 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 /* -------------------------------------------------------------------- */
     CPLErrorReset();
 
-    DDFRecord *poRecord = NULL;
+    DDFRecord *poRecord = nullptr;
 
-    while( (poRecord = poUpdateModule->ReadRecord()) != NULL )
+    while( (poRecord = poUpdateModule->ReadRecord()) != nullptr )
     {
         DDFField *poKeyField = poRecord->GetField(1);
-        if( poKeyField == NULL )
+        if( poKeyField == nullptr )
             return false;
 
         const char *pszKey = poKeyField->GetFieldDefn()->GetName();
@@ -3164,7 +3164,7 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
             const int nRCID = poRecord->GetIntSubfield( pszKey,0, "RCID",0 );
             const int nRVER = poRecord->GetIntSubfield( pszKey,0, "RVER",0 );
             const int nRUIN = poRecord->GetIntSubfield( pszKey,0, "RUIN",0 );
-            DDFRecordIndex *poIndex = NULL;
+            DDFRecordIndex *poIndex = nullptr;
 
             if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"VRID") )
             {
@@ -3197,7 +3197,7 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                 poIndex = &oFE_Index;
             }
 
-            if( poIndex != NULL )
+            if( poIndex != nullptr )
             {
                 if( nRUIN == 1 )  /* insert */
                 {
@@ -3206,7 +3206,7 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                 else if( nRUIN == 2 ) /* delete */
                 {
                     DDFRecord *poTarget = poIndex->FindRecord( nRCID );
-                    if( poTarget == NULL )
+                    if( poTarget == nullptr )
                     {
                         CPLError( CE_Warning, CPLE_AppDefined,
                                   "Can't find RCNM=%d,RCID=%d for delete.\n",
@@ -3228,7 +3228,7 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
                 else if( nRUIN == 3 ) /* modify in place */
                 {
                     DDFRecord *poTarget = poIndex->FindRecord( nRCID );
-                    if( poTarget == NULL )
+                    if( poTarget == nullptr )
                     {
                         CPLError( CE_Warning, CPLE_AppDefined,
                                   "Can't find RCNM=%d,RCID=%d for update.\n",
@@ -3249,11 +3249,11 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 
         else if( EQUAL(pszKey,"DSID") )
         {
-            if( poDSIDRecord != NULL )
+            if( poDSIDRecord != nullptr )
             {
                 const char* pszUPDN
                     = poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 );
-                if( pszUPDN != NULL && strlen(pszUPDN) < sizeof(szUPDNUpdate) )
+                if( pszUPDN != nullptr && strlen(pszUPDN) < sizeof(szUPDNUpdate) )
                     strcpy( szUPDNUpdate, pszUPDN );
             }
         }
@@ -3279,7 +3279,7 @@ bool S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 bool S57Reader::FindAndApplyUpdates( const char * pszPath )
 
 {
-    if( pszPath == NULL )
+    if( pszPath == nullptr )
         pszPath = pszModuleName;
 
     if( !EQUAL(CPLGetExtension(pszPath),"000") )
@@ -3422,7 +3422,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
             DDFField *poSG3D = poRecord->FindField( "SG3D" );
             DDFField *poSG2D = poRecord->FindField( "SG2D" );
 
-            if( poSG3D != NULL )
+            if( poSG3D != nullptr )
             {
                 const int  nVCount = poSG3D->GetRepeatCount();
                 const GByte *pabyData = (const GByte*)poSG3D->GetData();
@@ -3452,7 +3452,7 @@ OGRErr S57Reader::GetExtent( OGREnvelope *psExtent, int bForce )
                     }
                 }
             }
-            else if( poSG2D != NULL )
+            else if( poSG2D != nullptr )
             {
                 const int nVCount = poSG2D->GetRepeatCount();
 

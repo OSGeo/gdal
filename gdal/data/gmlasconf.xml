@@ -119,6 +119,7 @@
             </Field>
         </URLSpecificResolution>
 -->
+        <ResolveInternalXLinks>true</ResolveInternalXLinks>
     </XLinkResolution>
 
     <IgnoredXPaths>

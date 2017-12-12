@@ -88,19 +88,19 @@ MAIN_START(argc, argv)
 {
     GDALDatasetH        hDataset, hOutDS;
     int                 i;
-    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = NULL;
+    const char          *pszSource=nullptr, *pszDest=nullptr, *pszFormat = nullptr;
     GDALDriverH         hDriver;
     GDALDataType        eOutputType = GDT_Unknown;
-    char                **papszCreateOptions = NULL;
+    char                **papszCreateOptions = nullptr;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 nLUTBins = 256;
     const char         *pszMethod = "minmax";
 //    double              dfStdDevMult = 0.0;
-    double             *padfScaleMin = NULL;
-    double             *padfScaleMax = NULL;
-    int               **papanLUTs = NULL;
+    double             *padfScaleMin = nullptr;
+    double             *padfScaleMax = nullptr;
+    int               **papanLUTs = nullptr;
     int                 iBand;
-    const char         *pszConfigFile = NULL;
+    const char         *pszConfigFile = nullptr;
 
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -136,7 +136,7 @@ MAIN_START(argc, argv)
 
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
                     && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
                              argv[i+1]) )
                 {
@@ -196,11 +196,11 @@ MAIN_START(argc, argv)
                     argv[i] );
             Usage();
         }
-        else if( pszSource == NULL )
+        else if( pszSource == nullptr )
         {
             pszSource = argv[i];
         }
-        else if( pszDest == NULL )
+        else if( pszDest == nullptr )
         {
             pszDest = argv[i];
         }
@@ -212,7 +212,7 @@ MAIN_START(argc, argv)
         }
     }
 
-    if( pszSource == NULL )
+    if( pszSource == nullptr )
     {
         Usage();
     }
@@ -223,7 +223,7 @@ MAIN_START(argc, argv)
 
     hDataset = GDALOpenShared( pszSource, GA_ReadOnly );
 
-    if( hDataset == NULL )
+    if( hDataset == nullptr )
     {
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
@@ -238,7 +238,7 @@ MAIN_START(argc, argv)
 /*      Find the output driver.                                         */
 /* -------------------------------------------------------------------- */
     CPLString osFormat;
-    if( pszFormat == NULL )
+    if( pszFormat == nullptr )
     {
         osFormat = GetOutputDriverForRaster(pszDest);
         if( osFormat.empty() )
@@ -253,7 +253,7 @@ MAIN_START(argc, argv)
     }
 
     hDriver = GDALGetDriverByName( osFormat );
-    if( hDriver == NULL )
+    if( hDriver == nullptr )
     {
         int iDr;
 
@@ -263,9 +263,9 @@ MAIN_START(argc, argv)
         {
             hDriver = GDALGetDriver(iDr);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, NULL) != NULL &&
-                (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
-                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) != NULL) )
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr) != nullptr &&
+                (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr
+                || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr) )
             {
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
@@ -290,7 +290,7 @@ MAIN_START(argc, argv)
 /*      If we have a config file, assume it is for input and read       */
 /*      it.                                                             */
 /* -------------------------------------------------------------------- */
-    else if( pszConfigFile != NULL )
+    else if( pszConfigFile != nullptr )
     {
         char **papszLines = CSLLoad( pszConfigFile );
         if( CSLCount(papszLines) == 0 )
@@ -328,7 +328,7 @@ MAIN_START(argc, argv)
                 continue;
 
             // process lut
-            if( papanLUTs == NULL )
+            if( papanLUTs == nullptr )
             {
                 nLUTBins = CSLCount(papszTokens) - 3;
                 papanLUTs =
@@ -349,7 +349,7 @@ MAIN_START(argc, argv)
 /*      If there is no destination, just report the scaling values      */
 /*      and luts.                                                       */
 /* -------------------------------------------------------------------- */
-    if( pszDest == NULL )
+    if( pszDest == nullptr )
     {
         FILE *fpConfig = stdout;
         if( pszConfigFile )
@@ -358,7 +358,7 @@ MAIN_START(argc, argv)
         for( iBand = 0; iBand < nBandCount; iBand++ )
         {
             fprintf( fpConfig, "%d:Band ", iBand+1 );
-            if( padfScaleMin != NULL )
+            if( padfScaleMin != nullptr )
                 fprintf( fpConfig, "%g:ScaleMin %g:ScaleMax ",
                          padfScaleMin[iBand], padfScaleMax[iBand] );
 
@@ -378,7 +378,7 @@ MAIN_START(argc, argv)
         exit( 0 );
     }
 
-    if (padfScaleMin == NULL || padfScaleMax == NULL)
+    if (padfScaleMin == nullptr || padfScaleMax == nullptr)
     {
         fprintf( stderr, "-equalize or -config filename command line options must be specified.\n");
         exit(1);
@@ -402,7 +402,7 @@ MAIN_START(argc, argv)
         double adfGeoTransform[6];
 
         const char *pszProjection = GDALGetProjectionRef(hDataset);
-        if( pszProjection != NULL && strlen(pszProjection) > 0 )
+        if( pszProjection != nullptr && strlen(pszProjection) > 0 )
             poVDS->SetProjection( pszProjection );
 
         if( GDALGetGeoTransform( hDataset, adfGeoTransform ) == CE_None )
@@ -436,7 +436,7 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Create this band.                                               */
 /* -------------------------------------------------------------------- */
-        poVDS->AddBand( eBandType, NULL );
+        poVDS->AddBand( eBandType, nullptr );
         poVRTBand = (VRTSourcedRasterBand *) poVDS->GetRasterBand( iBand+1 );
 
 /* -------------------------------------------------------------------- */
@@ -465,8 +465,8 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
     hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
                              FALSE, papszCreateOptions,
-                             pfnProgress, NULL );
-    if( hOutDS != NULL )
+                             pfnProgress, nullptr );
+    if( hOutDS != nullptr )
         GDALClose( hOutDS );
 
     GDALClose(poVDS);
@@ -502,7 +502,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
     int iBand;
     int nBandCount = GDALGetRasterCount(hDataset);
     int nHistSize = 0;
-    GUIntBig *panHistogram = NULL;
+    GUIntBig *panHistogram = nullptr;
 
     // For now we always compute min/max
     *ppadfScaleMin =
@@ -528,7 +528,7 @@ ComputeEqualizationLUTs( GDALDatasetH hDataset, int nLUTBins,
                                      *ppadfScaleMin + iBand,
                                      *ppadfScaleMax + iBand,
                                      &nHistSize, &panHistogram,
-                                     TRUE, pfnProgress, NULL );
+                                     TRUE, pfnProgress, nullptr );
 
         if( eErr != CE_None )
             return FALSE;
@@ -609,7 +609,7 @@ static CPLErr EnhancerCallback( void *hCBData,
 
     eErr = psEInfo->poSrcBand->
         RasterIO( GF_Read, nXOff, nYOff, nXSize, nYSize,
-                  pafSrcImage, nXSize, nYSize, GDT_Float32, 0, 0, NULL );
+                  pafSrcImage, nXSize, nYSize, GDT_Float32, 0, 0, nullptr );
 
     if( eErr != CE_None )
     {

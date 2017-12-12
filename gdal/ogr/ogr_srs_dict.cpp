@@ -74,20 +74,20 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
 /* -------------------------------------------------------------------- */
     OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
-    const char *pszLine = NULL;
+    const char *pszLine = nullptr;
 
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
 
     {
         if( pszLine[0] == '#' )
@@ -101,7 +101,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             continue;
         }
 
-        if( strstr(pszLine, ",") == NULL )
+        if( strstr(pszLine, ",") == nullptr )
             continue;
 
         if( EQUALN(pszLine, pszCode, strlen(pszCode))

@@ -376,9 +376,9 @@ static const TigerRecordInfo rtS_info =
 
 TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
                             const char * /* pszPrototypeModule */ ) :
-    psRTAInfo(NULL),
-    psRTSInfo(NULL),
-    fpRTS(NULL),
+    psRTAInfo(nullptr),
+    psRTSInfo(nullptr),
+    fpRTS(nullptr),
     bUsingRTS(true),
     nRTSRecLen(0)
 {
@@ -425,7 +425,7 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
 TigerPolygon::~TigerPolygon()
 
 {
-    if( fpRTS != NULL )
+    if( fpRTS != nullptr )
         VSIFCloseL( fpRTS );
 }
 
@@ -446,10 +446,10 @@ bool TigerPolygon::SetModule( const char * pszModuleIn )
 /* -------------------------------------------------------------------- */
     if( bUsingRTS )
     {
-        if( fpRTS != NULL )
+        if( fpRTS != nullptr )
         {
             VSIFCloseL( fpRTS );
-            fpRTS = NULL;
+            fpRTS = nullptr;
         }
 
         if( pszModuleIn )
@@ -481,20 +481,20 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Request for out-of-range feature %d of %sA",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the raw record data from the file.                         */
 /* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
+    if( fpPrimary == nullptr )
+        return nullptr;
 
     if( nRecordLength > static_cast<int>(sizeof(achRecord)) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Record length too large" );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
@@ -502,7 +502,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %sA",
                   nRecordId * nRecordLength, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFReadL( achRecord, nRecordLength, 1, fpPrimary ) != 1 )
@@ -510,7 +510,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sA",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -525,7 +525,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
     /*      Read RTS record, and apply fields.                              */
     /* -------------------------------------------------------------------- */
 
-    if( fpRTS != NULL )
+    if( fpRTS != nullptr )
     {
         char    achRTSRec[OGR_TIGER_RECBUF_LEN];
 
@@ -535,7 +535,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
                       "Failed to seek to %d of %sS",
                       nRecordId * nRTSRecLen, pszModule );
             delete poFeature;
-            return NULL;
+            return nullptr;
         }
 
         // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -546,7 +546,7 @@ OGRFeature *TigerPolygon::GetFeature( int nRecordId )
                       "Failed to read record %d of %sS",
                       nRecordId, pszModule );
             delete poFeature;
-            return NULL;
+            return nullptr;
         }
 
         SetFields( psRTSInfo, poFeature, achRTSRec );
@@ -573,10 +573,10 @@ bool TigerPolygon::SetWriteModule( const char *pszFileCode, int nRecLen,
 /* -------------------------------------------------------------------- */
     if( bUsingRTS )
     {
-        if( fpRTS != NULL )
+        if( fpRTS != nullptr )
         {
             VSIFCloseL( fpRTS );
-            fpRTS = NULL;
+            fpRTS = nullptr;
         }
 
         if( pszModule )

@@ -44,7 +44,7 @@ OGRXLSLayer::OGRXLSLayer( OGRXLSDataSource* poDSIn,
                           int nRowsIn,
                           unsigned short nColsIn ) :
     poDS(poDSIn),
-    poFeatureDefn(NULL),
+    poFeatureDefn(nullptr),
     pszName(CPLStrdup(pszSheetname)),
     iSheet(iSheetIn),
     bFirstLineIsHeaders(false),
@@ -74,7 +74,7 @@ OGRXLSLayer::~OGRXLSLayer()
 void OGRXLSLayer::ResetReading()
 
 {
-    if (poFeatureDefn != NULL)
+    if (poFeatureDefn != nullptr)
     {
         nNextFID = bFirstLineIsHeaders ? 1 : 0;
     }
@@ -203,7 +203,7 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
     poFeatureDefn->SetGeomType( wkbNone );
 
     const void* xlshandle = poDS->GetXLSHandle();
-    if (xlshandle == NULL)
+    if (xlshandle == nullptr)
         return poFeatureDefn;
 
     freexl_select_active_worksheet(xlshandle, (unsigned short)iSheet);
@@ -262,7 +262,7 @@ OGRFeatureDefn * OGRXLSLayer::GetLayerDefn()
 
 GIntBig OGRXLSLayer::GetFeatureCount( int bForce )
 {
-    if( m_poAttrQuery == NULL /* && m_poFilterGeom == NULL */ )
+    if( m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */ )
     {
         const char* pszXLSHeaders = CPLGetConfigOption("OGR_XLS_HEADERS", "");
         if(EQUAL(pszXLSHeaders, "DISABLE"))
@@ -286,12 +286,12 @@ OGRFeature *OGRXLSLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
         if(/*(m_poFilterGeom == NULL
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && */ (m_poAttrQuery == NULL
+        && */ (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -308,11 +308,11 @@ OGRFeature *OGRXLSLayer::GetNextFeature()
 OGRFeature *OGRXLSLayer::GetNextRawFeature()
 {
     if (nNextFID == nRows)
-        return NULL;
+        return nullptr;
 
     const void* xlshandle = poDS->GetXLSHandle();
-    if (xlshandle == NULL)
-        return NULL;
+    if (xlshandle == nullptr)
+        return nullptr;
 
     freexl_select_active_worksheet(xlshandle, (unsigned short)iSheet);
 
@@ -363,7 +363,7 @@ int OGRXLSLayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap, OLCFastFeatureCount) )
-        return m_poAttrQuery == NULL /* && m_poFilterGeom == NULL */;
+        return m_poAttrQuery == nullptr /* && m_poFilterGeom == NULL */;
 
     return FALSE;
 }

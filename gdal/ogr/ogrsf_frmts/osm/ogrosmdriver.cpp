@@ -42,10 +42,10 @@ CPL_CVSID("$Id$")
 static int OGROSMDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
+    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0 )
         return GDAL_IDENTIFY_FALSE;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "<osm") != NULL )
+    if( strstr((const char*)poOpenInfo->pabyHeader, "<osm") != nullptr )
     {
         return GDAL_IDENTIFY_TRUE;
     }
@@ -72,16 +72,16 @@ static GDALDataset *OGROSMDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
     if( OGROSMDriverIdentify(poOpenInfo) == FALSE )
-        return NULL;
+        return nullptr;
 
     OGROSMDataSource *poDS = new OGROSMDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->papszOpenOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -96,7 +96,7 @@ void RegisterOGROSM()
     if( !GDAL_CHECK_VERSION("OGR/OSM driver") )
         return;
 
-    if( GDALGetDriverByName( "OSM" ) != NULL )
+    if( GDALGetDriverByName( "OSM" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

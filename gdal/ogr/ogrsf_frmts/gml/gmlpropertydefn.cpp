@@ -47,9 +47,9 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     m_eType(GMLPT_Untyped),
     m_nWidth(0),
     m_nPrecision(0),
-    m_pszSrcElement(pszSrcElement ? CPLStrdup(pszSrcElement) : NULL),
+    m_pszSrcElement(pszSrcElement ? CPLStrdup(pszSrcElement) : nullptr),
     m_nSrcElementLen(pszSrcElement ? strlen(pszSrcElement) : 0),
-    m_pszCondition(NULL),
+    m_pszCondition(nullptr),
     m_bNullable(true)
 {}
 
@@ -73,7 +73,7 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 
 {
     CPLFree(m_pszSrcElement);
-    if( pszSrcElement != NULL )
+    if( pszSrcElement != nullptr )
     {
         m_nSrcElementLen = strlen(pszSrcElement);
         m_pszSrcElement = CPLStrdup(pszSrcElement);
@@ -81,7 +81,7 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
     else
     {
         m_nSrcElementLen = 0;
-        m_pszSrcElement = NULL;
+        m_pszSrcElement = nullptr;
     }
 }
 
@@ -92,7 +92,7 @@ void GMLPropertyDefn::SetSrcElement( const char *pszSrcElement )
 void GMLPropertyDefn::SetCondition( const char *pszCondition )
 {
     CPLFree(m_pszCondition);
-    m_pszCondition = pszCondition != NULL ? CPLStrdup(pszCondition) : NULL;
+    m_pszCondition = pszCondition != nullptr ? CPLStrdup(pszCondition) : nullptr;
 }
 
 /************************************************************************/
@@ -225,7 +225,7 @@ GMLGeometryPropertyDefn::GMLGeometryPropertyDefn( const char *pszName,
                                                   int nType,
                                                   int nAttributeIndex,
                                                   bool bNullable ) :
-    m_pszName((pszName == NULL || pszName[0] == '\0') ?
+    m_pszName((pszName == nullptr || pszName[0] == '\0') ?
               CPLStrdup(pszSrcElement) : CPLStrdup(pszName)),
     m_pszSrcElement(CPLStrdup(pszSrcElement)),
     m_nGeometryType(nType),

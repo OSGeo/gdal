@@ -112,7 +112,7 @@ public:
 /************************************************************************/
 
 ISIS2Dataset::ISIS2Dataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     bGotTransform(FALSE)
 {
     adfGeoTransform[0] = 0.0;
@@ -131,7 +131,7 @@ ISIS2Dataset::~ISIS2Dataset()
 
 {
     FlushCache();
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 }
 
@@ -185,10 +185,10 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
 
 int ISIS2Dataset::Identify( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->pabyHeader == NULL )
+    if( poOpenInfo->pabyHeader == nullptr )
         return FALSE;
 
-    if( strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == NULL )
+    if( strstr((const char *)poOpenInfo->pabyHeader,"^QUBE") == nullptr )
         return FALSE;
 
     return TRUE;
@@ -204,15 +204,15 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Does this look like a CUBE or an IMAGE Primary Data Object?     */
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file API.                         */
 /* -------------------------------------------------------------------- */
     VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
-    if( fpQube == NULL )
-        return NULL;
+    if( fpQube == nullptr )
+        return nullptr;
 
     ISIS2Dataset *poDS = new ISIS2Dataset();
 
@@ -220,7 +220,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     {
         VSIFCloseL( fpQube );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     VSIFCloseL( fpQube );
@@ -243,7 +243,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
         poDS->CleanString( osFilename );
-        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, nullptr );
         poDS->osExternalCube = osTargetFile;
     }
     else if( pszQube[0] == '(' )
@@ -251,17 +251,17 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         const CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
         CPLString osFilename = poDS->GetKeywordSub("^QUBE",1,"");
         poDS->CleanString( osFilename );
-        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, nullptr );
         poDS->osExternalCube = osTargetFile;
 
         nQube = atoi(poDS->GetKeywordSub("^QUBE",2,"1"));
-        if( strstr(poDS->GetKeywordSub("^QUBE",2,"1"),"<BYTES>") != NULL )
+        if( strstr(poDS->GetKeywordSub("^QUBE",2,"1"),"<BYTES>") != nullptr )
             bByteLocation = true;
     }
     else
     {
         nQube = atoi(pszQube);
-        if( strstr(pszQube,"<BYTES>") != NULL )
+        if( strstr(pszQube,"<BYTES>") != nullptr )
             bByteLocation = true;
     }
 
@@ -285,7 +285,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes\n"
                   "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /**************** end SUFFIX_ITEM check ***********************/
@@ -306,7 +306,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "%s layout not supported. Abort\n\n", value);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /***********   Grab samples lines band ************/
@@ -347,7 +347,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         bNoDataSet = true;
         break;
       case 2 :
-        if( strstr(osCoreItemType,"UNSIGNED") != NULL )
+        if( strstr(osCoreItemType,"UNSIGNED") != nullptr )
         {
             dfNoData = 0;
             eDataType = GDT_UInt16;
@@ -374,7 +374,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "Itype of %d is not supported in ISIS 2.",
                   itype);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /***********   Grab Cellsize ************/
@@ -573,7 +573,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
         // translate back into a projection string.
-        char *pszResult = NULL;
+        char *pszResult = nullptr;
         oSRS.exportToWkt( &pszResult );
         poDS->osProjection = pszResult;
         CPLFree( pszResult );
@@ -590,7 +590,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     if( nRows < 1 || nCols < 1 || nBands < 1 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -608,13 +608,13 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->fpImage = VSIFOpenL( osTargetFile, "r+b" );
 
-    if( poDS->fpImage == NULL )
+    if( poDS->fpImage == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to open %s with write permission.\n%s",
                   osTargetFile.c_str(), VSIStrerror( errno ) );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -632,7 +632,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( nPixelOffset > INT_MAX / nBands )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = nItemSize;
@@ -643,7 +643,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( nPixelOffset > INT_MAX / nCols )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
@@ -655,7 +655,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
             nPixelOffset * nBands > INT_MAX / nCols )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         nLineOffset = nItemSize * nBands * nCols;
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
@@ -698,7 +698,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
     VSILFILE *fp = VSIFOpenL( pszPrjFile, "r" );
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         VSIFCloseL( fp );
 
@@ -707,7 +707,7 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
         OGRSpatialReference oSRS2;
         if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
         {
-            char *pszResult = NULL;
+            char *pszResult = nullptr;
             oSRS2.exportToWkt( &pszResult );
             poDS->osProjection = pszResult;
             CPLFree( pszResult );
@@ -771,9 +771,9 @@ const char *ISIS2Dataset::GetKeywordSub( const char *pszPath,
                                          const char *pszDefault )
 
 {
-    const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
+    const char *pszResult = oKeywords.GetKeyword( pszPath, nullptr );
 
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
         return pszDefault;
 
     if( pszResult[0] != '(' )
@@ -845,7 +845,7 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The ISIS2 driver does not supporting creating files of type %s.",
                  GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
 
     /*  (SAMPLE, LINE, BAND) - Band Sequential (BSQ) - default choice
@@ -895,7 +895,7 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "IMAGE_EXTENSION (%s) cannot match LABEL file extension.",
                       sExtension.c_str() );
-            return NULL;
+            return nullptr;
         }
 
         osLabelFile = pszFilename;
@@ -931,7 +931,7 @@ GDALDataset *ISIS2Dataset::Create(const char* pszFilename,
     if( !ISIS2Dataset::WriteRaster(osRasterFile, bAttachedLabelingMethod,
                                    iRecords, iLabelRecords, eType,
                                    pszInterleaving) )
-        return NULL;
+        return nullptr;
 
     return reinterpret_cast<GDALDataset *>( GDALOpen( osOutFile, GA_Update ) );
 }
@@ -952,7 +952,7 @@ int ISIS2Dataset::WriteRaster(CPLString osFilename,
         pszAccess = "ab";
 
     VSILFILE *fpBin = VSIFOpenL( osFilename, pszAccess.c_str() );
-    if( fpBin == NULL ) {
+    if( fpBin == nullptr ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to create %s:\n%s",
                   osFilename.c_str(), VSIStrerror( errno ) );
@@ -1083,7 +1083,7 @@ int ISIS2Dataset::WriteLabel(
 
     VSILFILE *fpLabel = VSIFOpenL( osFilename, "w" );
 
-    if( fpLabel == NULL ){
+    if( fpLabel == nullptr ){
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to create %s:\n%s",
                   osFilename.c_str(), VSIStrerror( errno ) );
@@ -1168,7 +1168,7 @@ int ISIS2Dataset::WriteLabel(
 void GDALRegister_ISIS2()
 
 {
-    if( GDALGetDriverByName( "ISIS2" ) != NULL )
+    if( GDALGetDriverByName( "ISIS2" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

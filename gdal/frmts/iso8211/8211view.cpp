@@ -46,7 +46,7 @@ int main( int nArgc, char ** papszArgv )
 
 {
     DDFModule   oModule;
-    const char  *pszFilename = NULL;
+    const char  *pszFilename = nullptr;
     int         bFSPTHack = FALSE;
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
@@ -57,7 +57,7 @@ int main( int nArgc, char ** papszArgv )
             pszFilename = papszArgv[iArg];
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         printf( "Usage: 8211view filename\n" );
         exit( 1 );
@@ -76,7 +76,7 @@ int main( int nArgc, char ** papszArgv )
     {
         DDFFieldDefn *poFSPT = oModule.FindFieldDefn( "FSPT" );
 
-        if( poFSPT == NULL )
+        if( poFSPT == nullptr )
             fprintf( stderr,
                      "unable to find FSPT field to set repeating flag.\n" );
         else
@@ -86,10 +86,10 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Loop reading records till there are none left.                  */
 /* -------------------------------------------------------------------- */
-    DDFRecord *poRecord = NULL;
+    DDFRecord *poRecord = nullptr;
     int iRecord = 0;
 
-    while( (poRecord = oModule.ReadRecord()) != NULL )
+    while( (poRecord = oModule.ReadRecord()) != nullptr )
     {
         printf( "Record %d (%d bytes)\n",
                 ++iRecord, poRecord->GetDataSize() );

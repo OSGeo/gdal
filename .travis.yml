@@ -32,19 +32,7 @@ matrix:
       compiler: clang
       language: cpp
       sudo: required
-      dist: precise
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=mingw
-        - DETAILS="debug build, libtool"
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
@@ -104,18 +92,6 @@ matrix:
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=gcc48_stdcpp11
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
-      dist: precise
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
         - BUILD_NAME=gcc52_stdcpp14_sanitize
         - DETAILS=""
     - os: linux
@@ -134,13 +110,13 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      dist: precise
+      dist: trusty
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise_32bit
+        - BUILD_NAME=trusty_32bit
         - DETAILS=""
     - osx_image: xcode8
       language: objective-c

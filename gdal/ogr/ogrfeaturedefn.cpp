@@ -62,10 +62,10 @@ CPL_CVSID("$Id$")
 OGRFeatureDefn::OGRFeatureDefn( const char * pszName ) :
     nRefCount(0),
     nFieldCount(0),
-    papoFieldDefn(NULL),
+    papoFieldDefn(nullptr),
     nGeomFieldCount(1),
-    papoGeomFieldDefn(NULL),
-    pszFeatureClassName(NULL),
+    papoGeomFieldDefn(nullptr),
+    pszFeatureClassName(nullptr),
     bIgnoreStyle(FALSE)
 {
     pszFeatureClassName = CPLStrdup( pszName );
@@ -160,8 +160,6 @@ void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
 void OGRFeatureDefn::Release()
 
 {
-    CPLAssert( NULL != this );
-
     if( Dereference() <= 0 )
         delete this;
 }
@@ -336,7 +334,7 @@ OGRFieldDefn *OGRFeatureDefn::GetFieldDefn( int iField )
     if( iField < 0 || iField >= GetFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iField);
-        return NULL;
+        return nullptr;
     }
 
     return papoFieldDefn[iField];
@@ -463,7 +461,7 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
         return OGRERR_FAILURE;
 
     delete papoFieldDefn[iField];
-    papoFieldDefn[iField] = NULL;
+    papoFieldDefn[iField] = nullptr;
 
     if( iField < nFieldCount - 1 )
     {
@@ -651,7 +649,7 @@ OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn( int iGeomField )
     if( iGeomField < 0 || iGeomField >= GetGeomFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", iGeomField);
-        return NULL;
+        return nullptr;
     }
 
     return papoGeomFieldDefn[iGeomField];
@@ -793,7 +791,7 @@ OGRErr OGRFeatureDefn::DeleteGeomFieldDefn( int iGeomField )
         return OGRERR_FAILURE;
 
     delete papoGeomFieldDefn[iGeomField];
-    papoGeomFieldDefn[iGeomField] = NULL;
+    papoGeomFieldDefn[iGeomField] = nullptr;
 
     if( iGeomField < nGeomFieldCount - 1 )
     {
@@ -862,7 +860,7 @@ int OGRFeatureDefn::GetGeomFieldIndex( const char * pszGeomFieldName )
     for( int i = 0; i < nGeomFieldCount; i++ )
     {
         OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(i);
-        if( poGFldDefn != NULL && EQUAL(pszGeomFieldName,
+        if( poGFldDefn != nullptr && EQUAL(pszGeomFieldName,
                                         poGFldDefn->GetNameRef() ) )
             return i;
     }
@@ -928,7 +926,7 @@ OGRwkbGeometryType OGRFeatureDefn::GetGeomType()
     if( GetGeomFieldCount() == 0 )
         return wkbNone;
     OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
-    if( poGFldDefn == NULL )
+    if( poGFldDefn == nullptr )
         return wkbNone;
     OGRwkbGeometryType eType = poGFldDefn->GetType();
     if( eType == (wkbUnknown | wkb25DBitInternalUse) &&
@@ -1164,7 +1162,7 @@ int OGRFeatureDefn::GetFieldIndex( const char * pszFieldName )
     for( int i = 0; i < nFieldCount; i++ )
     {
         OGRFieldDefn* poFDefn = GetFieldDefn(i);
-        if( poFDefn != NULL && EQUAL(pszFieldName, poFDefn->GetNameRef() ) )
+        if( poFDefn != nullptr && EQUAL(pszFieldName, poFDefn->GetNameRef() ) )
             return i;
     }
 
@@ -1222,7 +1220,7 @@ int OGRFeatureDefn::IsGeometryIgnored()
     if( GetGeomFieldCount() == 0 )
         return FALSE;
     OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
-    if( poGFldDefn == NULL )
+    if( poGFldDefn == nullptr )
         return FALSE;
     return poGFldDefn->IsIgnored();
 }
@@ -1271,7 +1269,7 @@ void OGRFeatureDefn::SetGeometryIgnored( int bIgnore )
     if( GetGeomFieldCount() > 0 )
     {
         OGRGeomFieldDefn* poGFldDefn = GetGeomFieldDefn(0);
-        if( poGFldDefn != NULL )
+        if( poGFldDefn != nullptr )
             poGFldDefn->SetIgnored(bIgnore);
     }
 }

@@ -41,7 +41,7 @@ namespace PCIDSK
         MutexHolder( Mutex *mutexIn ) 
         { 
             this->mutex = mutexIn; 
-            if( mutex != NULL )
+            if( mutex != nullptr )
                 mutex->Acquire(); 
         }
         ~MutexHolder() 

@@ -192,7 +192,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
                    int transparent = 0 );
     virtual ~VSIGZipHandle();
 
-    bool              IsInitOK() const { return inbuf != NULL; }
+    bool              IsInitOK() const { return inbuf != nullptr; }
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
     virtual vsi_l_offset Tell() override;
@@ -255,7 +255,7 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
 {
     CPLAssert (m_offset == 0);
     CPLAssert (m_compressed_size != 0);
-    CPLAssert (m_pszBaseFileName != NULL);
+    CPLAssert (m_pszBaseFileName != nullptr);
 
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( m_pszBaseFileName );
@@ -263,8 +263,8 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
     VSIVirtualHandle* poNewBaseHandle =
         poFSHandler->Open( m_pszBaseFileName, "rb" );
 
-    if( poNewBaseHandle == NULL )
-        return NULL;
+    if( poNewBaseHandle == nullptr )
+        return nullptr;
 
     VSIGZipHandle* poHandle = new VSIGZipHandle(poNewBaseHandle,
                                                 m_pszBaseFileName,
@@ -274,7 +274,7 @@ VSIGZipHandle* VSIGZipHandle::Duplicate()
     if( !(poHandle->IsInitOK()) )
     {
         delete poHandle;
-        return NULL;
+        return nullptr;
     }
 
     poHandle->m_nLastReadOffset = m_nLastReadOffset;
@@ -308,7 +308,7 @@ bool VSIGZipHandle::CloseBaseHandle()
     bool bRet = true;
     if( m_poBaseHandle )
         bRet = VSIFCloseL((VSILFILE*)m_poBaseHandle) == 0;
-    m_poBaseHandle = NULL;
+    m_poBaseHandle = nullptr;
     return bRet;
 }
 
@@ -328,18 +328,18 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     m_offset(offset),
 #endif
     m_expected_crc(expected_crc),
-    m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : NULL),
+    m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : nullptr),
     m_bCanSaveInfo(true),
     z_err(Z_OK),
     z_eof(0),
-    outbuf(NULL),
-    crc(crc32(0L, NULL, 0)),
+    outbuf(nullptr),
+    crc(crc32(0L, nullptr, 0)),
     m_transparent(transparent),
     startOff(0),
     in(0),
     out(0),
     m_nLastReadOffset(0),
-    snapshots(NULL),
+    snapshots(nullptr),
     snapshot_byte_interval(0)
 {
     if( compressed_size || transparent )
@@ -359,11 +359,11 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     if( VSIFSeekL((VSILFILE*)poBaseHandle, offset, SEEK_SET) != 0 )
         CPLError(CE_Failure, CPLE_FileIO, "Seek() failed");
 
-    stream.zalloc = (alloc_func)NULL;
-    stream.zfree = (free_func)NULL;
-    stream.opaque = (voidpf)NULL;
-    stream.next_in = inbuf = NULL;
-    stream.next_out = outbuf = NULL;
+    stream.zalloc = (alloc_func)nullptr;
+    stream.zfree = (free_func)nullptr;
+    stream.opaque = (voidpf)nullptr;
+    stream.next_in = inbuf = nullptr;
+    stream.next_out = outbuf = nullptr;
     stream.avail_in = stream.avail_out = 0;
 
     inbuf = static_cast<Byte *>(ALLOC(Z_BUFSIZE));
@@ -375,11 +375,11 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     // after the compressed stream in order to complete decompression and
     // return Z_STREAM_END. Here the gzip CRC32 ensures that 4 bytes are
     // present after the compressed stream.
-    if( err != Z_OK || inbuf == NULL )
+    if( err != Z_OK || inbuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "inflateInit2 init failed");
         TRYFREE(inbuf);
-        inbuf = NULL;
+        inbuf = nullptr;
         return;
     }
     stream.avail_out = static_cast<uInt>(Z_BUFSIZE);
@@ -428,7 +428,7 @@ VSIGZipHandle::~VSIGZipHandle()
             SaveInfo(this);
     }
 
-    if( stream.state != NULL )
+    if( stream.state != nullptr )
     {
         inflateEnd(&(stream));
     }
@@ -436,7 +436,7 @@ VSIGZipHandle::~VSIGZipHandle()
     TRYFREE(inbuf);
     TRYFREE(outbuf);
 
-    if( snapshots != NULL )
+    if( snapshots != nullptr )
     {
         for( size_t i=0;
              i < m_compressed_size / snapshot_byte_interval + 1;
@@ -604,7 +604,7 @@ int VSIGZipHandle::gzrewind ()
     z_eof = 0;
     stream.avail_in = 0;
     stream.next_in = inbuf;
-    crc = crc32(0L, NULL, 0);
+    crc = crc32(0L, nullptr, 0);
     if( !m_transparent )
         CPL_IGNORE_RET_VAL(inflateReset(&stream));
     in = 0;
@@ -789,10 +789,10 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
     // Offset is now the number of bytes to skip.
 
-    if( offset != 0 && outbuf == NULL )
+    if( offset != 0 && outbuf == nullptr )
     {
         outbuf = static_cast<Byte*>(ALLOC(Z_BUFSIZE));
-        if( outbuf == NULL )
+        if( outbuf == nullptr )
         {
             CPL_VSIL_GZ_RETURN(-1);
             return -1L;
@@ -1098,7 +1098,7 @@ size_t VSIGZipHandle::Read( void * const buf, size_t const nSize,
                     if( z_err == Z_OK )
                     {
                         inflateReset(& (stream));
-                        crc = crc32(0L, NULL, 0);
+                        crc = crc32(0L, nullptr, 0);
                     }
                 }
             }
@@ -1235,15 +1235,15 @@ VSIGZipWriteHandle::VSIGZipWriteHandle( VSIVirtualHandle *poBaseHandle,
     pabyOutBuf(static_cast<Byte *>(CPLMalloc( Z_BUFSIZE ))),
     bCompressActive(false),
     nCurOffset(0),
-    nCRC(crc32(0L, NULL, 0)),
+    nCRC(crc32(0L, nullptr, 0)),
     bRegularZLib(bRegularZLibIn),
     bAutoCloseBaseHandle(bAutoCloseBaseHandleIn)
 {
-    sStream.zalloc = (alloc_func)NULL;
-    sStream.zfree = (free_func)NULL;
-    sStream.opaque = (voidpf)NULL;
-    sStream.next_in = NULL;
-    sStream.next_out = NULL;
+    sStream.zalloc = (alloc_func)nullptr;
+    sStream.zfree = (free_func)nullptr;
+    sStream.opaque = (voidpf)nullptr;
+    sStream.next_in = nullptr;
+    sStream.next_out = nullptr;
     sStream.avail_in = sStream.avail_out = 0;
 
     sStream.next_in = pabyInBuf;
@@ -1474,9 +1474,9 @@ vsi_l_offset VSIGZipWriteHandle::Tell()
 
 VSIGZipFilesystemHandler::VSIGZipFilesystemHandler()
 {
-    hMutex = NULL;
+    hMutex = nullptr;
 
-    poHandleLastGZipFile = NULL;
+    poHandleLastGZipFile = nullptr;
     m_bInSaveInfo = false;
 }
 
@@ -1492,9 +1492,9 @@ VSIGZipFilesystemHandler::~VSIGZipFilesystemHandler()
         delete poHandleLastGZipFile;
     }
 
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/
@@ -1514,22 +1514,22 @@ void VSIGZipFilesystemHandler::SaveInfo_unlocked( VSIGZipHandle* poHandle )
     m_bInSaveInfo = true;
 
     CPLAssert( poHandle != poHandleLastGZipFile );
-    CPLAssert(poHandle->GetBaseFileName() != NULL);
+    CPLAssert(poHandle->GetBaseFileName() != nullptr);
 
-    if( poHandleLastGZipFile == NULL ||
+    if( poHandleLastGZipFile == nullptr ||
         strcmp(poHandleLastGZipFile->GetBaseFileName(),
                poHandle->GetBaseFileName()) != 0 ||
         poHandle->GetLastReadOffset() >
             poHandleLastGZipFile->GetLastReadOffset() )
     {
         VSIGZipHandle* poTmp = poHandleLastGZipFile;
-        poHandleLastGZipFile = NULL;
+        poHandleLastGZipFile = nullptr;
         if( poTmp )
         {
             poTmp->UnsetCanSaveInfo();
             delete poTmp;
         }
-        CPLAssert(poHandleLastGZipFile == NULL);
+        CPLAssert(poHandleLastGZipFile == nullptr);
         poHandleLastGZipFile = poHandle->Duplicate();
         if( poHandleLastGZipFile )
             poHandleLastGZipFile->CloseBaseHandle();
@@ -1546,7 +1546,7 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
                                                   bool /* bSetError */ )
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsigzip/") )
-        return NULL;
+        return nullptr;
 
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename + strlen("/vsigzip/"));
@@ -1556,24 +1556,24 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
 /*      access?  If so, create a writable handle for the underlying     */
 /*      filename.                                                       */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszAccess, 'w') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr )
     {
-        if( strchr(pszAccess, '+') != NULL )
+        if( strchr(pszAccess, '+') != nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Write+update (w+) not supported for /vsigzip, "
                      "only read-only or write-only.");
-            return NULL;
+            return nullptr;
         }
 
         VSIVirtualHandle* poVirtualHandle =
             poFSHandler->Open( pszFilename + strlen("/vsigzip/"), "wb" );
 
-        if( poVirtualHandle == NULL )
-            return NULL;
+        if( poVirtualHandle == nullptr )
+            return nullptr;
 
         return new VSIGZipWriteHandle( poVirtualHandle,
-                                       strchr(pszAccess, 'z') != NULL,
+                                       strchr(pszAccess, 'z') != nullptr,
                                        TRUE );
     }
 
@@ -1588,7 +1588,7 @@ VSIVirtualHandle* VSIGZipFilesystemHandler::Open( const char *pszFilename,
         // seeks.
         return VSICreateBufferedReaderHandle(poGZIPHandle);
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1608,7 +1608,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
     // change very often
     // TODO: filename-based logic isn't enough. We should probably check
     // timestamp and/or file size.
-    if( poHandleLastGZipFile != NULL &&
+    if( poHandleLastGZipFile != nullptr &&
         strcmp(pszFilename + strlen("/vsigzip/"),
                poHandleLastGZipFile->GetBaseFileName()) == 0 &&
         EQUAL(pszAccess, "rb") )
@@ -1624,8 +1624,8 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
     VSIVirtualHandle* poVirtualHandle =
         poFSHandler->Open( pszFilename + strlen("/vsigzip/"), "rb" );
 
-    if( poVirtualHandle == NULL )
-        return NULL;
+    if( poVirtualHandle == nullptr )
+        return nullptr;
 
     unsigned char signature[2] = { '\0', '\0' };
     if( VSIFReadL(signature, 1, 2, (VSILFILE*)poVirtualHandle) != 2 ||
@@ -1633,14 +1633,14 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
     {
         poVirtualHandle->Close();
         delete poVirtualHandle;
-        return NULL;
+        return nullptr;
     }
 
     if( poHandleLastGZipFile )
     {
         poHandleLastGZipFile->UnsetCanSaveInfo();
         delete poHandleLastGZipFile;
-        poHandleLastGZipFile = NULL;
+        poHandleLastGZipFile = nullptr;
     }
 
     VSIGZipHandle* poHandle =
@@ -1648,7 +1648,7 @@ VSIGZipHandle* VSIGZipFilesystemHandler::OpenGZipReadOnly(
     if( !(poHandle->IsInitOK()) )
     {
         delete poHandle;
-        return NULL;
+        return nullptr;
     }
     return poHandle;
 }
@@ -1668,7 +1668,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    if( poHandleLastGZipFile != NULL &&
+    if( poHandleLastGZipFile != nullptr &&
         strcmp(pszFilename+strlen("/vsigzip/"),
                poHandleLastGZipFile->GetBaseFileName()) == 0 )
     {
@@ -1695,7 +1695,7 @@ int VSIGZipFilesystemHandler::Stat( const char *pszFilename,
             const char* pszLine;
             GUIntBig nCompressedSize = 0;
             GUIntBig nUncompressedSize = 0;
-            while( (pszLine = CPLReadLineL(fpCacheLength)) != NULL )
+            while( (pszLine = CPLReadLineL(fpCacheLength)) != nullptr )
             {
                 if( STARTS_WITH_CI(pszLine, "compressed_size=") )
                 {
@@ -1804,7 +1804,7 @@ int VSIGZipFilesystemHandler::Rmdir( const char * /* pszDirname */ )
 char** VSIGZipFilesystemHandler::ReadDirEx( const char * /*pszDirname*/,
                                             int /* nMaxFiles */ )
 {
-    return NULL;
+    return nullptr;
 }
 
 //! @endcond
@@ -1872,7 +1872,7 @@ class VSIZipReader CPL_FINAL : public VSIArchiveReader
         explicit VSIZipReader( const char* pszZipFileName );
         virtual ~VSIZipReader();
 
-        int IsValid() { return unzF != NULL; }
+        int IsValid() { return unzF != nullptr; }
 
         unzFile GetUnzFileHandle() { return unzF; }
 
@@ -1921,7 +1921,7 @@ bool VSIZipReader::SetInfo()
     if( UNZ_OK !=
         cpl_unzGetCurrentFileInfo(
             unzF, &file_info, fileName, sizeof(fileName) - 1,
-            NULL, 0, NULL, 0))
+            nullptr, 0, nullptr, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "cpl_unzGetCurrentFileInfo failed");
         cpl_unzGetFilePos(unzF, &file_pos);
@@ -2104,12 +2104,12 @@ std::vector<CPLString> VSIZipFilesystemHandler::GetExtensions()
     // listed in CPL_VSIL_ZIP_ALLOWED_EXTENSIONS config option.
     // The extensions are divided by commas.
     const char* pszAllowedExtensions =
-        CPLGetConfigOption("CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", NULL);
+        CPLGetConfigOption("CPL_VSIL_ZIP_ALLOWED_EXTENSIONS", nullptr);
     if( pszAllowedExtensions )
     {
         char** papszExtensions =
             CSLTokenizeString2(pszAllowedExtensions, ", ", 0);
-        for( int i = 0; papszExtensions[i] != NULL; i++ )
+        for( int i = 0; papszExtensions[i] != nullptr; i++ )
         {
             oList.push_back(papszExtensions[i]);
         }
@@ -2131,13 +2131,13 @@ VSIArchiveReader* VSIZipFilesystemHandler::CreateReader(
     if( !poReader->IsValid() )
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     if( !poReader->GotoFirstFile() )
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     return poReader;
@@ -2152,22 +2152,22 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
                                                  bool /* bSetError */ )
 {
 
-    if( strchr(pszAccess, 'w') != NULL )
+    if( strchr(pszAccess, 'w') != nullptr )
     {
         return OpenForWrite(pszFilename, pszAccess);
     }
 
-    if( strchr(pszAccess, '+') != NULL )
+    if( strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Read-write random access not supported for /vsizip");
-        return NULL;
+        return nullptr;
     }
 
     CPLString osZipInFileName;
     char* zipFilename = SplitFilename(pszFilename, osZipInFileName, TRUE);
-    if( zipFilename == NULL )
-        return NULL;
+    if( zipFilename == nullptr )
+        return nullptr;
 
     {
         CPLMutexHolder oHolder(&hMutex);
@@ -2176,15 +2176,15 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot read a zip file being written");
             CPLFree(zipFilename);
-            return NULL;
+            return nullptr;
         }
     }
 
     VSIArchiveReader* poReader = OpenArchiveFile(zipFilename, osZipInFileName);
-    if( poReader == NULL )
+    if( poReader == nullptr )
     {
         CPLFree(zipFilename);
-        return NULL;
+        return nullptr;
     }
 
     VSIFilesystemHandler *poFSHandler =
@@ -2194,12 +2194,12 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         poFSHandler->Open( zipFilename, "rb" );
 
     CPLFree(zipFilename);
-    zipFilename = NULL;
+    zipFilename = nullptr;
 
-    if( poVirtualHandle == NULL )
+    if( poVirtualHandle == nullptr )
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     unzFile unzF = reinterpret_cast<VSIZipReader*>(poReader)->
@@ -2210,20 +2210,20 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "cpl_unzOpenCurrentFile() failed");
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     uLong64 pos = cpl_unzGetCurrentFileZStreamPos(unzF);
 
     unz_file_info file_info;
-    if( cpl_unzGetCurrentFileInfo (unzF, &file_info, NULL, 0, NULL, 0, NULL, 0)
+    if( cpl_unzGetCurrentFileInfo (unzF, &file_info, nullptr, 0, nullptr, 0, nullptr, 0)
         != UNZ_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "cpl_unzGetCurrentFileInfo() failed");
         cpl_unzCloseCurrentFile(unzF);
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     cpl_unzCloseCurrentFile(unzF);
@@ -2232,7 +2232,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
 
     VSIGZipHandle* poGZIPHandle =
         new VSIGZipHandle(poVirtualHandle,
-                          NULL,
+                          nullptr,
                           pos,
                           file_info.compressed_size,
                           file_info.uncompressed_size,
@@ -2241,7 +2241,7 @@ VSIVirtualHandle* VSIZipFilesystemHandler::Open( const char *pszFilename,
     if( !(poGZIPHandle->IsInitOK()) )
     {
         delete poGZIPHandle;
-        return NULL;
+        return nullptr;
     }
 
     // Wrap the VSIGZipHandle inside a buffered reader that will
@@ -2261,7 +2261,7 @@ int VSIZipFilesystemHandler::Mkdir( const char *pszDirname,
     if( !osDirname.empty() && osDirname.back() != '/' )
         osDirname += "/";
     VSIVirtualHandle* poZIPHandle = OpenForWrite(osDirname, "wb");
-    if( poZIPHandle == NULL )
+    if( poZIPHandle == nullptr )
         return -1;
     delete poZIPHandle;
     return 0;
@@ -2276,8 +2276,8 @@ char **VSIZipFilesystemHandler::ReadDirEx( const char *pszDirname,
 {
     CPLString osInArchiveSubDir;
     char* zipFilename = SplitFilename(pszDirname, osInArchiveSubDir, TRUE);
-    if( zipFilename == NULL )
-        return NULL;
+    if( zipFilename == nullptr )
+        return nullptr;
 
     {
         CPLMutexHolder oHolder(&hMutex);
@@ -2287,7 +2287,7 @@ char **VSIZipFilesystemHandler::ReadDirEx( const char *pszDirname,
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Cannot read a zip file being written");
             CPLFree(zipFilename);
-            return NULL;
+            return nullptr;
         }
     }
     CPLFree(zipFilename);
@@ -2307,7 +2307,7 @@ int VSIZipFilesystemHandler::Stat( const char *pszFilename,
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
     char* zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, TRUE);
-    if( zipFilename == NULL )
+    if( zipFilename == nullptr )
         return -1;
 
     {
@@ -2366,11 +2366,11 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
     CPLString osZipInFileName;
 
     char* zipFilename = SplitFilename(pszFilename, osZipInFileName, FALSE);
-    if( zipFilename == NULL )
-        return NULL;
+    if( zipFilename == nullptr )
+        return nullptr;
     CPLString osZipFilename = zipFilename;
     CPLFree(zipFilename);
-    zipFilename = NULL;
+    zipFilename = nullptr;
 
     // Invalidate cached file list.
     std::map<CPLString,VSIArchiveContent*>::iterator iter =
@@ -2384,23 +2384,23 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
 
     if( oMapZipWriteHandles.find(osZipFilename) != oMapZipWriteHandles.end() )
     {
-        if( strchr(pszAccess, '+') != NULL )
+        if( strchr(pszAccess, '+') != nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "Random access not supported for writable file in /vsizip");
-            return NULL;
+            return nullptr;
         }
 
         VSIZipWriteHandle* poZIPHandle = oMapZipWriteHandles[osZipFilename];
 
-        if( poZIPHandle->GetChildInWriting() != NULL )
+        if( poZIPHandle->GetChildInWriting() != nullptr )
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "Cannot create %s while another file is being "
                 "written in the .zip",
                 osZipInFileName.c_str());
-            return NULL;
+            return nullptr;
         }
 
         poZIPHandle->StopCurrentFile();
@@ -2411,11 +2411,11 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
             osZipInFileName += chLastChar;
 
         if( CPLCreateFileInZip(poZIPHandle->GetHandle(),
-                               osZipInFileName, NULL) != CE_None )
-            return NULL;
+                               osZipInFileName, nullptr) != CE_None )
+            return nullptr;
 
         VSIZipWriteHandle* poChildHandle =
-            new VSIZipWriteHandle(this, NULL, poZIPHandle);
+            new VSIZipWriteHandle(this, nullptr, poZIPHandle);
 
         poZIPHandle->StartNewFile(poChildHandle);
 
@@ -2423,7 +2423,7 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
     }
     else
     {
-        char** papszOptions = NULL;
+        char** papszOptions = nullptr;
         if( (strchr(pszAccess, '+') && osZipInFileName.empty()) ||
              !osZipInFileName.empty() )
         {
@@ -2435,20 +2435,20 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked( const char *pszFilename,
         void* hZIP = CPLCreateZip(osZipFilename, papszOptions);
         CSLDestroy(papszOptions);
 
-        if( hZIP == NULL )
-            return NULL;
+        if( hZIP == nullptr )
+            return nullptr;
 
         oMapZipWriteHandles[osZipFilename] =
-            new VSIZipWriteHandle(this, hZIP, NULL);
+            new VSIZipWriteHandle(this, hZIP, nullptr);
 
         if( !osZipInFileName.empty() )
         {
             VSIZipWriteHandle* poRes = reinterpret_cast<VSIZipWriteHandle*>(
                 OpenForWrite_unlocked(pszFilename, pszAccess));
-            if( poRes == NULL )
+            if( poRes == nullptr )
             {
                 delete oMapZipWriteHandles[osZipFilename];
-                return NULL;
+                return nullptr;
             }
 
             poRes->SetAutoDeleteParent();
@@ -2469,7 +2469,7 @@ VSIZipWriteHandle::VSIZipWriteHandle( VSIZipFilesystemHandler* poFS,
                                       VSIZipWriteHandle* poParent ) :
     m_poFS(poFS),
     m_hZIP(hZIP),
-    poChildInWriting(NULL),
+    poChildInWriting(nullptr),
     m_poParent(poParent),
     bAutoDeleteParent(false),
     nCurOffset(0)
@@ -2529,7 +2529,7 @@ size_t VSIZipWriteHandle::Read( void * /* pBuffer */,
 size_t VSIZipWriteHandle::Write( const void *pBuffer, size_t nSize,
                                  size_t nMemb )
 {
-    if( m_poParent == NULL )
+    if( m_poParent == nullptr )
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
@@ -2578,20 +2578,20 @@ int VSIZipWriteHandle::Close()
     if( m_poParent )
     {
         CPLCloseFileInZip(m_poParent->m_hZIP);
-        m_poParent->poChildInWriting = NULL;
+        m_poParent->poChildInWriting = nullptr;
         if( bAutoDeleteParent )
             delete m_poParent;
-        m_poParent = NULL;
+        m_poParent = nullptr;
     }
     if( poChildInWriting )
     {
         poChildInWriting->Close();
-        poChildInWriting = NULL;
+        poChildInWriting = nullptr;
     }
     if( m_hZIP )
     {
         CPLCloseZip(m_hZIP);
-        m_hZIP = NULL;
+        m_hZIP = nullptr;
 
         m_poFS->RemoveFromMap(this);
     }
@@ -2607,7 +2607,7 @@ void VSIZipWriteHandle::StopCurrentFile()
 {
     if( poChildInWriting )
         poChildInWriting->Close();
-    poChildInWriting = NULL;
+    poChildInWriting = nullptr;
 }
 
 /************************************************************************/
@@ -2701,29 +2701,29 @@ void* CPLZLibDeflate( const void* ptr,
                       size_t* pnOutBytes )
 {
     z_stream strm;
-    strm.zalloc = NULL;
-    strm.zfree = NULL;
-    strm.opaque = NULL;
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
     int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
     if( ret != Z_OK )
     {
-        if( pnOutBytes != NULL )
+        if( pnOutBytes != nullptr )
             *pnOutBytes = 0;
-        return NULL;
+        return nullptr;
     }
 
     size_t nTmpSize = 0;
     void* pTmp;
-    if( outptr == NULL )
+    if( outptr == nullptr )
     {
         nTmpSize = 8 + nBytes * 2;
         pTmp = VSIMalloc(nTmpSize);
-        if( pTmp == NULL )
+        if( pTmp == nullptr )
         {
             deflateEnd(&strm);
-            if( pnOutBytes != NULL )
+            if( pnOutBytes != nullptr )
                 *pnOutBytes = 0;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -2741,11 +2741,11 @@ void* CPLZLibDeflate( const void* ptr,
     {
         if( pTmp != outptr )
             VSIFree(pTmp);
-        if( pnOutBytes != NULL )
+        if( pnOutBytes != nullptr )
             *pnOutBytes = 0;
-        return NULL;
+        return nullptr;
     }
-    if( pnOutBytes != NULL )
+    if( pnOutBytes != nullptr )
         *pnOutBytes = nTmpSize - strm.avail_out;
     deflateEnd(&strm);
     return pTmp;
@@ -2776,31 +2776,31 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
                       size_t* pnOutBytes )
 {
     z_stream strm;
-    strm.zalloc = NULL;
-    strm.zfree = NULL;
-    strm.opaque = NULL;
+    strm.zalloc = nullptr;
+    strm.zfree = nullptr;
+    strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = (Bytef*) ptr;
     int ret = inflateInit(&strm);
     if( ret != Z_OK )
     {
-        if( pnOutBytes != NULL )
+        if( pnOutBytes != nullptr )
             *pnOutBytes = 0;
-        return NULL;
+        return nullptr;
     }
 
     size_t nTmpSize = 0;
-    char* pszTmp = NULL;
-    if( outptr == NULL )
+    char* pszTmp = nullptr;
+    if( outptr == nullptr )
     {
         nTmpSize = 2 * nBytes;
         pszTmp = static_cast<char *>(VSIMalloc(nTmpSize + 1));
-        if( pszTmp == NULL )
+        if( pszTmp == nullptr )
         {
             inflateEnd(&strm);
-            if( pnOutBytes != NULL )
+            if( pnOutBytes != nullptr )
                 *pnOutBytes = 0;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -2820,22 +2820,22 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
             if( outptr == pszTmp )
             {
                 inflateEnd(&strm);
-                if( pnOutBytes != NULL )
+                if( pnOutBytes != nullptr )
                     *pnOutBytes = 0;
-                return NULL;
+                return nullptr;
             }
 
             size_t nAlreadyWritten = nTmpSize - strm.avail_out;
             nTmpSize = nTmpSize * 2;
             char* pszTmpNew =
                 static_cast<char *>(VSIRealloc(pszTmp, nTmpSize + 1));
-            if( pszTmpNew == NULL )
+            if( pszTmpNew == nullptr )
             {
                 VSIFree(pszTmp);
                 inflateEnd(&strm);
-                if( pnOutBytes != NULL )
+                if( pnOutBytes != nullptr )
                     *pnOutBytes = 0;
-                return NULL;
+                return nullptr;
             }
             pszTmp = pszTmpNew;
             strm.avail_out = static_cast<uInt>(nTmpSize - nAlreadyWritten);
@@ -2852,7 +2852,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
         if( outptr != pszTmp || nOutBytes < nTmpSize )
             pszTmp[nOutBytes] = '\0';
         inflateEnd(&strm);
-        if( pnOutBytes != NULL )
+        if( pnOutBytes != nullptr )
             *pnOutBytes = nOutBytes;
         return pszTmp;
     }
@@ -2861,8 +2861,8 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
         if( outptr != pszTmp )
             VSIFree(pszTmp);
         inflateEnd(&strm);
-        if( pnOutBytes != NULL )
+        if( pnOutBytes != nullptr )
             *pnOutBytes = 0;
-        return NULL;
+        return nullptr;
     }
 }

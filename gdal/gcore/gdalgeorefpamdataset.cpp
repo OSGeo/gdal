@@ -42,10 +42,10 @@
 
 GDALGeorefPamDataset::GDALGeorefPamDataset() :
     bGeoTransformValid(false),
-    pszProjection(NULL),
+    pszProjection(nullptr),
     nGCPCount(0),
-    pasGCPList(NULL),
-    m_papszRPC(NULL),
+    pasGCPList(nullptr),
+    m_papszRPC(nullptr),
     m_bPixelIsPoint(false),
     m_nGeoTransformGeorefSrcIndex(-1),
     m_nGCPGeorefSrcIndex(-1),
@@ -55,7 +55,7 @@ GDALGeorefPamDataset::GDALGeorefPamDataset() :
     m_bGotPAMGeorefSrcIndex(false),
     m_nPAMGeorefSrcIndex(0),
     m_bPAMLoaded(false),
-    m_papszMainMD(NULL)
+    m_papszMainMD(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -88,12 +88,12 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
 
 char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
 {
-    if( pszDomain != NULL && EQUAL(pszDomain, "RPC") )
+    if( pszDomain != nullptr && EQUAL(pszDomain, "RPC") )
     {
         const int nPAMIndex = GetPAMGeorefSrcIndex();
         if( nPAMIndex >= 0 &&
-            ((m_papszRPC != NULL && nPAMIndex < m_nRPCGeorefSrcIndex) ||
-            m_nRPCGeorefSrcIndex < 0 || m_papszRPC == NULL))
+            ((m_papszRPC != nullptr && nPAMIndex < m_nRPCGeorefSrcIndex) ||
+            m_nRPCGeorefSrcIndex < 0 || m_papszRPC == nullptr))
         {
             char** papszMD = GDALPamDataset::GetMetadata(pszDomain);
             if( papszMD )
@@ -102,7 +102,7 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
         return m_papszRPC;
     }
 
-    if( pszDomain == NULL || EQUAL(pszDomain, "") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
     {
         if( m_papszMainMD )
             return m_papszMainMD;
@@ -112,7 +112,7 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
             ((m_bPixelIsPoint && nPAMIndex < m_nPixelIsPointGeorefSrcIndex) ||
             m_nPixelIsPointGeorefSrcIndex < 0 || !m_bPixelIsPoint))
         {
-            if( CSLFetchNameValue(m_papszMainMD, GDALMD_AREA_OR_POINT) != NULL )
+            if( CSLFetchNameValue(m_papszMainMD, GDALMD_AREA_OR_POINT) != nullptr )
                 return m_papszMainMD;
         }
         if( m_bPixelIsPoint )
@@ -124,7 +124,7 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
         else
         {
             m_papszMainMD = CSLSetNameValue(m_papszMainMD,
-                                            GDALMD_AREA_OR_POINT, NULL);
+                                            GDALMD_AREA_OR_POINT, nullptr);
         }
         return m_papszMainMD;
     }
@@ -139,7 +139,7 @@ char      **GDALGeorefPamDataset::GetMetadata( const char * pszDomain )
 const char *GDALGeorefPamDataset::GetMetadataItem( const char * pszName,
                                                    const char * pszDomain )
 {
-    if( pszDomain == NULL || EQUAL(pszDomain, "") || EQUAL(pszDomain, "RPC") )
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") || EQUAL(pszDomain, "RPC") )
     {
         return CSLFetchNameValue( GetMetadata(pszDomain), pszName );
     }
@@ -155,7 +155,7 @@ CPLErr GDALGeorefPamDataset::TryLoadXML(char **papszSiblingFiles)
     m_bPAMLoaded = true;
     CPLErr eErr = GDALPamDataset::TryLoadXML(papszSiblingFiles);
     CSLDestroy(m_papszMainMD);
-    m_papszMainMD = NULL;
+    m_papszMainMD = nullptr;
     return eErr;
 }
 
@@ -166,7 +166,7 @@ CPLErr GDALGeorefPamDataset::TryLoadXML(char **papszSiblingFiles)
 CPLErr GDALGeorefPamDataset::SetMetadata( char ** papszMetadata,
                                            const char * pszDomain )
 {
-    if( m_bPAMLoaded && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    if( m_bPAMLoaded && (pszDomain == nullptr || EQUAL(pszDomain, "")) )
     {
         CSLDestroy(m_papszMainMD);
         m_papszMainMD = CSLDuplicate(papszMetadata);
@@ -182,7 +182,7 @@ CPLErr GDALGeorefPamDataset::SetMetadataItem( const char * pszName,
                                             const char * pszValue,
                                             const char * pszDomain )
 {
-    if( m_bPAMLoaded && (pszDomain == NULL || EQUAL(pszDomain, "")) )
+    if( m_bPAMLoaded && (pszDomain == nullptr || EQUAL(pszDomain, "")) )
     {
         m_papszMainMD = CSLSetNameValue( GetMetadata(), pszName, pszValue );
     }
@@ -224,15 +224,15 @@ const char *GDALGeorefPamDataset::GetGCPProjection()
 {
     const int nPAMIndex = GetPAMGeorefSrcIndex();
     if( nPAMIndex >= 0 &&
-        ((pszProjection != NULL && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
-         m_nProjectionGeorefSrcIndex < 0 || pszProjection == NULL) )
+        ((pszProjection != nullptr && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
+         m_nProjectionGeorefSrcIndex < 0 || pszProjection == nullptr) )
     {
         const char* pszPAMGCPProjection = GDALPamDataset::GetGCPProjection();
-        if( pszPAMGCPProjection != NULL && strlen(pszPAMGCPProjection) > 0 )
+        if( pszPAMGCPProjection != nullptr && strlen(pszPAMGCPProjection) > 0 )
             return pszPAMGCPProjection;
     }
 
-    if( pszProjection != NULL )
+    if( pszProjection != nullptr )
         return pszProjection;
 
     return "";
@@ -276,15 +276,15 @@ const char *GDALGeorefPamDataset::GetProjectionRef()
 
     const int nPAMIndex = GetPAMGeorefSrcIndex();
     if( nPAMIndex >= 0 &&
-        ((pszProjection != NULL && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
-         m_nProjectionGeorefSrcIndex < 0 || pszProjection == NULL) )
+        ((pszProjection != nullptr && nPAMIndex < m_nProjectionGeorefSrcIndex) ||
+         m_nProjectionGeorefSrcIndex < 0 || pszProjection == nullptr) )
     {
         const char* pszPAMProjection = GDALPamDataset::GetProjectionRef();
-        if( pszPAMProjection != NULL && strlen(pszPAMProjection) > 0 )
+        if( pszPAMProjection != nullptr && strlen(pszPAMProjection) > 0 )
             return pszPAMProjection;
     }
 
-    if( pszProjection != NULL )
+    if( pszProjection != nullptr )
         return pszProjection;
 
     return "";

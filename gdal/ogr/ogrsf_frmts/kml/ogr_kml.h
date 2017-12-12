@@ -115,9 +115,9 @@ class OGRKMLDataSource : public OGRDataSource
     int GetLayerCount() override { return nLayers_; }
     OGRLayer* GetLayer( int nLayer ) override;
     OGRLayer* ICreateLayer( const char* pszName,
-                           OGRSpatialReference* poSRS = NULL,
+                           OGRSpatialReference* poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
-                           char** papszOptions = NULL ) override;
+                           char** papszOptions = nullptr ) override;
     int TestCapability( const char* pszCap ) override;
 
     //

@@ -825,7 +825,7 @@ class TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0);
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0);
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0);
 
     int         GetBlockType();
@@ -833,9 +833,9 @@ class TABRawBinBlock
 
     GInt32      GetStartAddress() {return m_nFileOffset;}
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL);
+    virtual void Dump(FILE *fpOut = nullptr);
 #endif
-    static void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
+    static void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=nullptr);
 
     int         GotoByteRel(int nOffset);
     int         GotoByteInBlock(int nOffset);
@@ -902,7 +902,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0) override;
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
 
     virtual int GetBlockClass() override { return TABMAP_HEADER_BLOCK; }
@@ -925,7 +925,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
     int         SetProjInfo(TABProjInfo *psProjInfo);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override;
+    virtual void Dump(FILE *fpOut = nullptr) override;
 #endif
 
     // Instead of having over 30 get/set methods, we'll make all data
@@ -1012,7 +1012,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0) override;
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
@@ -1079,7 +1079,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
                                     GInt32 nNewEntryYMax,
                                     int &nSeed1, int &nSeed2);
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override;
+    virtual void Dump(FILE *fpOut = nullptr) override;
 #endif
 
 };
@@ -1120,7 +1120,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0) override;
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
 
     virtual int GetBlockClass() override { return TABMAP_OBJECT_BLOCK; }
@@ -1154,7 +1154,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
     TABGeomType GetCurObjectType() { return m_nCurObjectType; }
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override { Dump(fpOut, FALSE); }
+    virtual void Dump(FILE *fpOut = nullptr) override { Dump(fpOut, FALSE); }
     void Dump(FILE *fpOut, GBool bDetails);
 #endif
 };
@@ -1198,7 +1198,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0) override;
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
@@ -1235,7 +1235,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
                               GInt32 &nXMax, GInt32 &nYMax);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override;
+    virtual void Dump(FILE *fpOut = nullptr) override;
 #endif
 };
 
@@ -1264,7 +1264,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     virtual int InitBlockFromData(GByte *pabyBuf,
                                   int nBlockSize, int nSizeUsed,
                                   GBool bMakeCopy = TRUE,
-                                  VSILFILE *fpSrc = NULL, int nOffset = 0) override;
+                                  VSILFILE *fpSrc = nullptr, int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize, int nFileOffset=0) override;
     virtual int CommitToFile() override;
 
@@ -1282,7 +1282,7 @@ class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
     int         CheckAvailableSpace(int nToolType);
 
 #ifdef DEBUG
-    virtual void Dump(FILE *fpOut = NULL) override;
+    virtual void Dump(FILE *fpOut = nullptr) override;
 #endif
 };
 
@@ -1323,7 +1323,7 @@ class TABIDFile
     GInt32      GetMaxObjId();
 
 #ifdef DEBUG
-    void Dump(FILE *fpOut = NULL);
+    void Dump(FILE *fpOut = nullptr);
 #endif
 };
 
@@ -1466,7 +1466,7 @@ class TABMAPFile
     int         GetMinTABFileVersion();
 
 #ifdef DEBUG
-    void Dump(FILE *fpOut = NULL);
+    void Dump(FILE *fpOut = nullptr);
     void DumpSpatialIndexToMIF(TABMAPIndexBlock *poNode,
                                FILE *fpMIF, FILE *fpMID,
                                int nParentId=-1,
@@ -1516,7 +1516,7 @@ class TABINDNode
                             GBool bMakeNewEntryCurChild=FALSE);
     int         SetNodeBufferDirectly(int numEntries, GByte *pBuf,
                                       int nCurIndexEntry=0,
-                                      TABINDNode *poCurChild=NULL);
+                                      TABINDNode *poCurChild=nullptr);
 
    public:
     explicit TABINDNode(TABAccess eAccessMode = TABRead);
@@ -1524,8 +1524,8 @@ class TABINDNode
 
     int         InitNode(VSILFILE *fp, int nBlockPtr,
                          int nKeyLength, int nSubTreeDepth, GBool bUnique,
-                         TABBinBlockManager *poBlockMgr=NULL,
-                         TABINDNode *poParentNode=NULL,
+                         TABBinBlockManager *poBlockMgr=nullptr,
+                         TABINDNode *poParentNode=nullptr,
                          int nPrevNodePtr=0, int nNextNodePtr=0);
 
     int         SetFieldType(TABFieldType eType);
@@ -1562,7 +1562,7 @@ class TABINDNode
     int         SetNextNodePtr(GInt32 nNextNodePtr);
 
 #ifdef DEBUG
-    void Dump(FILE *fpOut = NULL);
+    void Dump(FILE *fpOut = nullptr);
 #endif
 };
 
@@ -1612,7 +1612,7 @@ class TABINDFile
     int         AddEntry(int nIndexNumber, GByte *pKeyValue, GInt32 nRecordNo);
 
 #ifdef DEBUG
-    void Dump(FILE *fpOut = NULL);
+    void Dump(FILE *fpOut = nullptr);
 #endif
 };
 
@@ -1736,7 +1736,7 @@ class TABDATFile
     void SetEncoding( const CPLString& );
 
 #ifdef DEBUG
-    void Dump(FILE *fpOut = NULL);
+    void Dump(FILE *fpOut = nullptr);
 #endif
 };
 
@@ -1804,7 +1804,7 @@ class TABRelation
     int         WriteFeature(TABFeature *poFeature, int nFeatureId=-1);
 
     int         SetFeatureDefn(OGRFeatureDefn *poFeatureDefn,
-                           TABFieldType *paeMapInfoNativeFieldTypes=NULL);
+                           TABFieldType *paeMapInfoNativeFieldTypes=nullptr);
     int         AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                int nWidth=0, int nPrecision=0,
                                GBool bIndexed=FALSE, GBool bUnique=FALSE, int bApproxOK=TRUE);

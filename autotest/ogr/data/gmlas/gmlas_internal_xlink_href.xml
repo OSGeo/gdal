@@ -1,0 +1,31 @@
+<FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns:xlink="http://fake_xlink"
+                   xsi:noNamespaceSchemaLocation="gmlas_internal_xlink_href.xsd">
+    <main_elt>
+        <link_to_second_or_third_elt xlink:href="#does_not_exist"/>
+    </main_elt>
+    <main_elt>
+        <link_to_second_or_third_elt xlink:href="#id2"/>
+    </main_elt>
+    <main_elt>
+        <link_to_second_or_third_elt xlink:href="#id3"/>
+    </main_elt>
+    <main_elt>
+        <link_to_second_or_third_elt xlink:href="#id4"/>
+    </main_elt>
+    <main_elt>
+        <link_to_third_elt xlink:href="#id4"/>
+    </main_elt>
+    <main_elt>
+        <link_to_second_or_third_elt>
+            <second_elt id="id1"/>
+        </link_to_second_or_third_elt>
+    </main_elt>
+
+    <second_elt id="id2"/>
+
+    <second_elt id="id3"/>
+
+    <third_elt id="id4"/>
+
+</FeatureCollection>

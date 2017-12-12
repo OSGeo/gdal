@@ -68,7 +68,7 @@ void featurestyle2kml(
     FeaturePtr poKmlFeature )
 {
     /***** get the style table *****/
-    OGRStyleTable *poOgrSTBL = NULL;
+    OGRStyleTable *poOgrSTBL = nullptr;
 
     const char *pszStyleString = poOgrFeat->GetStyleString();
 
@@ -82,8 +82,8 @@ void featurestyle2kml(
 
             /***** Is the name in the layer style table *****/
             OGRStyleTable *hSTBLLayer = poOgrLayer->GetStyleTable();
-            const char *pszTest = (hSTBLLayer != NULL) ?
-                hSTBLLayer->Find( pszStyleName ) : NULL;
+            const char *pszTest = (hSTBLLayer != nullptr) ?
+                hSTBLLayer->Find( pszStyleName ) : nullptr;
 
             if( pszTest )
             {
@@ -110,31 +110,31 @@ void featurestyle2kml(
         {
             /***** parse the style string *****/
             const StylePtr poKmlStyle =
-                addstylestring2kml( pszStyleString, NULL, poKmlFactory,
+                addstylestring2kml( pszStyleString, nullptr, poKmlFactory,
                                     poKmlFeature );
 
             /***** add the style to the placemark *****/
-            if( poKmlStyle != NULL )
+            if( poKmlStyle != nullptr )
                 poKmlFeature->set_styleselector( poKmlStyle );
         }
     }
     /***** get the style table *****/
-    else if( ( poOgrSTBL = poOgrFeat->GetStyleTable() ) != NULL )
+    else if( ( poOgrSTBL = poOgrFeat->GetStyleTable() ) != nullptr )
     {
         /***** parse the style table *****/
         poOgrSTBL->ResetStyleStringReading();
 
-        while( ( pszStyleString = poOgrSTBL->GetNextStyle() ) != NULL )
+        while( ( pszStyleString = poOgrSTBL->GetNextStyle() ) != nullptr )
         {
             if( *pszStyleString == '@' )
             {
                 const char* pszStyleName = pszStyleString + 1;
 
                 /***** is the name in the layer style table *****/
-                OGRStyleTable *poOgrSTBLLayer = NULL;
+                OGRStyleTable *poOgrSTBLLayer = nullptr;
 
                 if( ( poOgrSTBLLayer = poOgrLayer->GetStyleTable() )
-                    != NULL )
+                    != nullptr )
                 {
                     poOgrSTBLLayer->Find( pszStyleName );
                 }
@@ -154,9 +154,9 @@ void featurestyle2kml(
             {
                 /***** parse the style string *****/
                 const StylePtr poKmlStyle =
-                    addstylestring2kml( pszStyleString, NULL,
+                    addstylestring2kml( pszStyleString, nullptr,
                                      poKmlFactory, poKmlFeature );
-                if( poKmlStyle != NULL )
+                if( poKmlStyle != nullptr )
                 {
                     /***** Add the style to the placemark. *****/
                     poKmlFeature->set_styleselector( poKmlStyle );
@@ -184,12 +184,12 @@ void kml2featurestyle(
         /***** is the name in the layer style table *****/
         char *pszUrl = CPLStrdup( poKmlStyleUrl.c_str() );
 
-        OGRStyleTable *poOgrSTBLLayer = NULL;
-        const char *pszTest = NULL;
+        OGRStyleTable *poOgrSTBLLayer = nullptr;
+        const char *pszTest = nullptr;
 
         /***** is it a layer style ? *****/
         if( *pszUrl == '#' &&
-            ( poOgrSTBLLayer = poOgrLayer->GetStyleTable() ) != NULL )
+            ( poOgrSTBLLayer = poOgrLayer->GetStyleTable() ) != nullptr )
         {
              pszTest = poOgrSTBLLayer->Find( pszUrl + 1 );
         }
@@ -224,9 +224,9 @@ void kml2featurestyle(
                     CPLGetConfigOption( "LIBKML_RESOLVE_STYLE", "no" );
 
                 if( CPLTestBool(pszResolve) &&
-                    ( poOgrSTBLLayer = poOgrDS->GetStyleTable() ) != NULL &&
+                    ( poOgrSTBLLayer = poOgrDS->GetStyleTable() ) != nullptr &&
                     ( pszTest =
-                          poOgrSTBLLayer->Find(pszUrl + nPathLen + 1) ) != NULL
+                          poOgrSTBLLayer->Find(pszUrl + nPathLen + 1) ) != nullptr
                     )
                 {
                     poOgrFeat->SetStyleString( pszTest );
@@ -248,17 +248,17 @@ void kml2featurestyle(
                     /***** load up the style table *****/
                     char *pszUrlTmp = CPLStrdup(pszUrl);
                     char *pszPound = strchr(pszUrlTmp, '#');
-                    if( pszPound != NULL )
+                    if( pszPound != nullptr )
                     {
                         *pszPound = '\0';
                     }
 
                     /***** try it as a url then a file *****/
-                    VSILFILE *fp = NULL;
+                    VSILFILE *fp = nullptr;
                     if( (fp = VSIFOpenL(
-                             CPLFormFilename( "/vsicurl/", pszUrlTmp, NULL ),
-                              "r" )) != NULL ||
-                        (fp = VSIFOpenL( pszUrlTmp, "r" )) != NULL )
+                             CPLFormFilename( "/vsicurl/", pszUrlTmp, nullptr ),
+                              "r" )) != nullptr ||
+                        (fp = VSIFOpenL( pszUrlTmp, "r" )) != nullptr )
                     {
                         char szbuf[1025] = { '\0' };
                         std::string oStyle = "";
@@ -329,14 +329,14 @@ void kml2featurestyle(
             {
                 /***** if featyurestyle gets a name tool this needs
                        changed to the above *****/
-                poOgrSM->InitStyleString( NULL );
+                poOgrSM->InitStyleString( nullptr );
             }
 
             /***** read the style *****/
             kml2stylestring( poKmlStyle, poOgrSM );
 
             /***** add the style to the feature *****/
-            poOgrFeat->SetStyleString(poOgrSM->GetStyleString(NULL));
+            poOgrFeat->SetStyleString(poOgrSM->GetStyleString(nullptr));
 
             delete poOgrSM;
         }

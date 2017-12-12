@@ -150,7 +150,7 @@ OGRLinearRing *OGRPolygon::getExteriorRing()
     if( oCC.nCurveCount > 0 )
         return (OGRLinearRing*) oCC.papoCurves[0];
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -173,7 +173,7 @@ const OGRLinearRing *OGRPolygon::getExteriorRing() const
     if( oCC.nCurveCount > 0 )
         return (OGRLinearRing*) oCC.papoCurves[0];
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -218,7 +218,7 @@ OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
 
 {
     if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
-        return NULL;
+        return nullptr;
 
     return (OGRLinearRing*) oCC.papoCurves[iRing+1];
 }
@@ -243,7 +243,7 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
 
 {
     if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
-        return NULL;
+        return nullptr;
 
     return (OGRLinearRing*) oCC.papoCurves[iRing+1];
 }
@@ -265,9 +265,9 @@ const OGRLinearRing *OGRPolygon::getInteriorRing( int iRing ) const
 OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
 {
     if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
-        return NULL;
+        return nullptr;
     OGRLinearRing *poRet = (OGRLinearRing*) oCC.papoCurves[iRing+1];
-    oCC.papoCurves[iRing+1] = NULL;
+    oCC.papoCurves[iRing+1] = nullptr;
     return poRet;
 }
 
@@ -278,7 +278,7 @@ OGRLinearRing *OGRPolygon::stealInteriorRing( int iRing )
 
 int OGRPolygon::checkRing( OGRCurve * poNewRing ) const
 {
-    if( poNewRing == NULL ||
+    if( poNewRing == nullptr ||
         !(EQUAL(poNewRing->getGeometryName(), "LINEARRING")) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -460,9 +460,9 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
     if( bIsEmpty )
         return OGRERR_NONE;
 
-    OGRRawPoint *paoPoints = NULL;
+    OGRRawPoint *paoPoints = nullptr;
     int nMaxPoints = 0;
-    double *padfZ = NULL;
+    double *padfZ = nullptr;
 
     eErr = importFromWKTListOnly( ppszInput, bHasZ, bHasM,
                                   paoPoints, nMaxPoints, padfZ );
@@ -506,7 +506,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
 /*      allocate/deallocate overhead.                                   */
 /* ==================================================================== */
     int nMaxRings = 0;
-    double *padfM = NULL;
+    double *padfM = nullptr;
 
     do
     {
@@ -550,7 +550,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
         pszInput = OGRWktReadPointsM( pszInput, &paoPoints, &padfZ, &padfM,
                                       &flagsFromInput,
                                       &nMaxPoints, &nPoints );
-        if( pszInput == NULL || nPoints == 0 )
+        if( pszInput == nullptr || nPoints == 0 )
         {
             CPLFree(padfM);
             return OGRERR_CORRUPT_DATA;
@@ -630,7 +630,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 /* -------------------------------------------------------------------- */
 /*      If we have no valid exterior ring, return POLYGON EMPTY.        */
 /* -------------------------------------------------------------------- */
-    if( getExteriorRing() == NULL ||
+    if( getExteriorRing() == nullptr ||
         getExteriorRing()->IsEmpty() )
     {
         if( eWkbVariant == wkbVariantIso )
@@ -668,7 +668,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
         poLR->setMeasured(IsMeasured());
         if( poLR->getNumPoints() == 0 )
         {
-            papszRings[iRing] = NULL;
+            papszRings[iRing] = nullptr;
             continue;
         }
 
@@ -701,7 +701,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
     *ppszDstText = (char *) VSI_MALLOC_VERBOSE(
         nCumulativeLength + nNonEmptyRings + strlen(getGeometryName()) + strlen(" ZM ()") + 1);
 
-    if( *ppszDstText == NULL )
+    if( *ppszDstText == nullptr )
     {
         eErr = OGRERR_NOT_ENOUGH_MEMORY;
         goto error;
@@ -727,7 +727,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
 
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
-        if( papszRings[iRing] == NULL )
+        if( papszRings[iRing] == nullptr )
         {
             CPLDebug( "OGR",
                       "OGRPolygon::exportToWkt() - skipping empty ring.");
@@ -781,7 +781,7 @@ OGRErr OGRPolygon::PointOnSurface( OGRPoint *poPoint ) const
  */
 OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt ) const
 {
-    if( NULL == pt)
+    if( nullptr == pt)
         return FALSE;
 
     bool bOnSurface = false;
@@ -903,7 +903,7 @@ OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
     poCP->oCC.nCurveCount = poPoly->oCC.nCurveCount;
     poCP->oCC.papoCurves = poPoly->oCC.papoCurves;
     poPoly->oCC.nCurveCount = 0;
-    poPoly->oCC.papoCurves = NULL;
+    poPoly->oCC.papoCurves = nullptr;
 
     for( int iRing = 0; iRing < poCP->oCC.nCurveCount; iRing++ )
     {

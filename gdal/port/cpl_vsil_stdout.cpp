@@ -206,12 +206,12 @@ VSIStdoutFilesystemHandler::Open( const char * /* pszFilename */,
                                   const char *pszAccess,
                                   bool /* bSetError */ )
 {
-    if ( strchr(pszAccess, 'r') != NULL ||
-         strchr(pszAccess, '+') != NULL )
+    if ( strchr(pszAccess, 'r') != nullptr ||
+         strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Read or update mode not supported on /vsistdout");
-        return NULL;
+        return nullptr;
     }
 
 #ifdef WIN32
@@ -385,18 +385,18 @@ VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
                                           bool /* bSetError */ )
 
 {
-    if ( strchr(pszAccess, 'r') != NULL ||
-         strchr(pszAccess, '+') != NULL )
+    if ( strchr(pszAccess, 'r') != nullptr ||
+         strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Read or update mode not supported on /vsistdout_redirect");
-        return NULL;
+        return nullptr;
     }
 
     VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(
         VSIFOpenL(pszFilename + strlen("/vsistdout_redirect/"), pszAccess));
-    if (poHandle == NULL)
-        return NULL;
+    if (poHandle == nullptr)
+        return nullptr;
 
     return new VSIStdoutRedirectHandle(poHandle);
 }

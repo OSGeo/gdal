@@ -99,15 +99,15 @@ int OGRGFTResultLayer::FetchNextRows()
     CPLHTTPResult * psResult = poDS->RunSQL(osChangedSQL);
     CPLPopErrorHandler();
 
-    if (psResult == NULL)
+    if (psResult == nullptr)
     {
         bEOF = TRUE;
         return FALSE;
     }
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
-        psResult->pszErrBuf != NULL)
+    if (pszLine == nullptr ||
+        psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "RunSQL() failed");
         CPLHTTPDestroyResult(psResult);
@@ -116,7 +116,7 @@ int OGRGFTResultLayer::FetchNextRows()
     }
 
     pszLine = OGRGFTGotoNextLine(pszLine);
-    if (pszLine == NULL)
+    if (pszLine == nullptr)
     {
         CPLHTTPDestroyResult(psResult);
         bEOF = TRUE;
@@ -178,8 +178,8 @@ int OGRGFTResultLayer::RunSQL()
 {
     CPLString osChangedSQL(osSQL);
     int bHasSetLimit = FALSE;
-    OGRGFTTableLayer* poTableLayer = NULL;
-    OGRFeatureDefn* poTableDefn = NULL;
+    OGRGFTTableLayer* poTableLayer = nullptr;
+    OGRFeatureDefn* poTableDefn = nullptr;
     CPLString osTableId;
     if (STARTS_WITH_CI(osSQL.c_str(), "SELECT"))
     {
@@ -194,10 +194,10 @@ int OGRGFTResultLayer::RunSQL()
         osTableId = OGRGFTExtractTableID(osSQL.c_str() + nPosFROM, osReminder);
 
         poTableLayer = (OGRGFTTableLayer*) poDS->GetLayerByName(osTableId);
-        if (poTableLayer != NULL)
+        if (poTableLayer != nullptr)
             poTableDefn = poTableLayer->GetLayerDefn();
 
-        if (poTableLayer != NULL &&
+        if (poTableLayer != nullptr &&
             !poTableLayer->GetTableId().empty() &&
             !EQUAL(osTableId, poTableLayer->GetTableId()))
         {
@@ -228,12 +228,12 @@ int OGRGFTResultLayer::RunSQL()
 
     CPLHTTPResult * psResult = poDS->RunSQL(osChangedSQL);
 
-    if (psResult == NULL)
+    if (psResult == nullptr)
         return FALSE;
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
-        psResult->pszErrBuf != NULL)
+    if (pszLine == nullptr ||
+        psResult->pszErrBuf != nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "RunSQL() failed");
         CPLHTTPDestroyResult(psResult);

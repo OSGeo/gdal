@@ -102,7 +102,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
     void AddFeature( OGRFeature* poFeature );
     void DetectGeometryType();
     void IncFeatureCount() { nTotalFeatureCount_++; }
-    void UnsetReader() { poReader_ = NULL; }
+    void UnsetReader() { poReader_ = nullptr; }
     void InvalidateFeatureCount() { nTotalFeatureCount_ = -1; }
 
   private:
@@ -138,10 +138,10 @@ class OGRGeoJSONWriteLayer : public OGRLayer
     // OGRLayer Interface
     //
     OGRFeatureDefn* GetLayerDefn() override { return poFeatureDefn_; }
-    OGRSpatialReference* GetSpatialRef() override { return NULL; }
+    OGRSpatialReference* GetSpatialRef() override { return nullptr; }
 
     void ResetReading() override { }
-    OGRFeature* GetNextFeature() override { return NULL; }
+    OGRFeature* GetNextFeature() override { return nullptr; }
     OGRErr ICreateFeature( OGRFeature* poFeature ) override;
     OGRErr CreateField( OGRFieldDefn* poField, int bApproxOK ) override;
     int TestCapability( const char* pszCap ) override;
@@ -184,9 +184,9 @@ class OGRGeoJSONDataSource : public OGRDataSource
     int GetLayerCount() override;
     OGRLayer* GetLayer( int nLayer ) override;
     OGRLayer* ICreateLayer( const char* pszName,
-                            OGRSpatialReference* poSRS = NULL,
+                            OGRSpatialReference* poSRS = nullptr,
                             OGRwkbGeometryType eGType = wkbUnknown,
-                            char** papszOptions = NULL ) override;
+                            char** papszOptions = nullptr ) override;
     int TestCapability( const char* pszCap ) override;
 
     void AddLayer( OGRGeoJSONLayer* poLayer );

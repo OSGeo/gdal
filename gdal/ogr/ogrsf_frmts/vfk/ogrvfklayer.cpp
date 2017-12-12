@@ -46,17 +46,17 @@ OGRVFKLayer::OGRVFKLayer( const char *pszName,
                           OGRSpatialReference *poSRSIn,
                           OGRwkbGeometryType eReqType,
                           OGRVFKDataSource *poDSIn ) :
-    poSRS(poSRSIn == NULL ? new OGRSpatialReference() : poSRSIn->Clone()),
+    poSRS(poSRSIn == nullptr ? new OGRSpatialReference() : poSRSIn->Clone()),
     poFeatureDefn(new OGRFeatureDefn(pszName)),
     poDataBlock(poDSIn->GetReader()->GetDataBlock(pszName)),
     m_iNextFeature(0)
 {
-    if( poSRSIn == NULL ) {
+    if( poSRSIn == nullptr ) {
         // Default is S-JTSK (EPSG: 5514).
         if( poSRS->importFromEPSG(5514) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -154,7 +154,7 @@ OGRFeature *OGRVFKLayer::GetNextFeature()
     while( true ) {
         IVFKFeature* poVFKFeature = poDataBlock->GetNextFeature();
         if (!poVFKFeature)
-            return NULL;
+            return nullptr;
 
         /* skip feature with unknown geometry type */
         if (poVFKFeature->GetGeometryType() == wkbUnknown)
@@ -178,7 +178,7 @@ OGRFeature *OGRVFKLayer::GetFeature(GIntBig nFID)
     IVFKFeature *poVFKFeature = poDataBlock->GetFeature(nFID);
 
     if (!poVFKFeature)
-        return NULL;
+        return nullptr;
 
     CPLAssert(nFID == poVFKFeature->GetFID());
     CPLDebug("OGR-VFK", "OGRVFKLayer::GetFeature(): name=%s fid=" CPL_FRMT_GIB, GetName(), nFID);
@@ -195,16 +195,16 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
 {
     /* skip feature with unknown geometry type */
     if (poVFKFeature->GetGeometryType() == wkbUnknown)
-        return NULL;
+        return nullptr;
 
     /* get features geometry */
     OGRGeometry *poGeom = CreateGeometry(poVFKFeature);
-    if (poGeom != NULL)
+    if (poGeom != nullptr)
         poGeom->assignSpatialReference(poSRS);
 
     /* does it satisfy the spatial query, if there is one? */
-    if (m_poFilterGeom != NULL && poGeom && !FilterGeometry(poGeom)) {
-        return NULL;
+    if (m_poFilterGeom != nullptr && poGeom && !FilterGeometry(poGeom)) {
+        return nullptr;
     }
 
     /* convert the whole feature into an OGRFeature */
@@ -215,10 +215,10 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
     poVFKFeature->LoadProperties(poOGRFeature);
 
     /* test against the attribute query */
-    if (m_poAttrQuery != NULL &&
+    if (m_poAttrQuery != nullptr &&
         !m_poAttrQuery->Evaluate(poOGRFeature)) {
         delete poOGRFeature;
-        return NULL;
+        return nullptr;
     }
 
     if (poGeom)

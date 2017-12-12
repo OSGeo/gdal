@@ -906,6 +906,19 @@ def transformer_16():
 
     return 'success'
 
+
+###############################################################################
+# Test RPC DEM with unexisting RPC DEM file
+
+def transformer_17():
+
+    ds = gdal.Open('data/rpc.vrt')
+    with gdaltest.error_handler():
+        tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/i/dont/exist/dem.tif' ] )
+    if tr is not None:
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -922,7 +935,8 @@ gdaltest_list = [
     transformer_13,
     transformer_14,
     transformer_15,
-    transformer_16
+    transformer_16,
+    transformer_17
     ]
 
 disabled_gdaltest_list = [

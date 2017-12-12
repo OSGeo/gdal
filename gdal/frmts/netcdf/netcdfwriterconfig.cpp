@@ -33,9 +33,9 @@ CPL_CVSID("$Id$")
 bool netCDFWriterConfiguration::SetNameValue(
     CPLXMLNode *psNode, std::map<CPLString, CPLString> &oMap)
 {
-    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char *pszValue = CPLGetXMLValue(psNode, "value", NULL);
-    if( pszName != NULL && pszValue != NULL )
+    const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
+    const char *pszValue = CPLGetXMLValue(psNode, "value", nullptr);
+    if( pszName != nullptr && pszValue != nullptr )
     {
         oMap[pszName] = pszValue;
         return true;
@@ -50,11 +50,11 @@ bool netCDFWriterConfiguration::Parse(const char *pszFilename)
         STARTS_WITH(pszFilename, "<Configuration")
         ? CPLParseXMLString(pszFilename)
         : CPLParseXMLFile(pszFilename);
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return false;
     CPLXMLTreeCloser oCloser(psRoot);
 
-    for( CPLXMLNode *psIter = psRoot->psChild; psIter != NULL;
+    for( CPLXMLNode *psIter = psRoot->psChild; psIter != nullptr;
          psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )
@@ -101,8 +101,8 @@ bool netCDFWriterConfiguration::Parse(const char *pszFilename)
 
 bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
 {
-    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
-    const char *pszValue = CPLGetXMLValue(psNode, "value", NULL);
+    const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
+    const char *pszValue = CPLGetXMLValue(psNode, "value", nullptr);
     const char *pszType = CPLGetXMLValue(psNode, "type", "string");
     if( !EQUAL(pszType, "string") && !EQUAL(pszType, "integer") &&
         !EQUAL(pszType, "double") )
@@ -111,7 +111,7 @@ bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
                  pszType);
         return false;
     }
-    if( pszName == NULL || pszValue == NULL )
+    if( pszName == nullptr || pszValue == nullptr )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Missing name/value");
         return false;
@@ -124,23 +124,23 @@ bool netCDFWriterConfigAttribute::Parse(CPLXMLNode *psNode)
 
 bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
 {
-    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
-    const char *pszMainDim = CPLGetXMLValue(psNode, "main_dim", NULL);
-    if( pszName == NULL && pszNetCDFName == NULL )
+    const char *pszMainDim = CPLGetXMLValue(psNode, "main_dim", nullptr);
+    if( pszName == nullptr && pszNetCDFName == nullptr )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "Bot name and netcdf_name are missing");
         return false;
     }
-    if( pszName != NULL )
+    if( pszName != nullptr )
         m_osName = pszName;
-    if( pszNetCDFName != NULL )
+    if( pszNetCDFName != nullptr )
         m_osNetCDFName = pszNetCDFName;
-    if( pszMainDim != NULL )
+    if( pszMainDim != nullptr )
         m_osMainDim = pszMainDim;
 
-    for( CPLXMLNode *psIter = psNode->psChild; psIter != NULL;
+    for( CPLXMLNode *psIter = psNode->psChild; psIter != nullptr;
          psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )
@@ -162,18 +162,18 @@ bool netCDFWriterConfigField::Parse(CPLXMLNode *psNode)
 
 bool netCDFWriterConfigLayer::Parse(CPLXMLNode *psNode)
 {
-    const char *pszName = CPLGetXMLValue(psNode, "name", NULL);
+    const char *pszName = CPLGetXMLValue(psNode, "name", nullptr);
     const char *pszNetCDFName = CPLGetXMLValue(psNode, "netcdf_name", pszName);
-    if( pszName == NULL )
+    if( pszName == nullptr )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Missing name");
         return false;
     }
     m_osName = pszName;
-    if( pszNetCDFName != NULL )
+    if( pszNetCDFName != nullptr )
         m_osNetCDFName = pszNetCDFName;
 
-    for( CPLXMLNode *psIter = psNode->psChild; psIter != NULL;
+    for( CPLXMLNode *psIter = psNode->psChild; psIter != nullptr;
          psIter = psIter->psNext )
     {
         if( psIter->eType != CXT_Element )

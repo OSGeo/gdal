@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-XTRA_OPT =	-I. -DGDALDRIVER
+XTRA_OPT =	-DGDALDRIVER
 
 OBJ	=	blxdataset.o blx.o
 

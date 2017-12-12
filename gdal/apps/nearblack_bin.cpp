@@ -36,12 +36,12 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 {
     printf( "nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]\n"
             "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -86,7 +86,7 @@ MAIN_START(argc, argv)
 /*      Generic arg processing.                                         */
 /* -------------------------------------------------------------------- */
     GDALAllRegister();
-    if( CPLGetConfigOption("GDAL_CACHEMAX", NULL) == NULL )
+    if( CPLGetConfigOption("GDAL_CACHEMAX", nullptr) == nullptr )
         GDALSetCacheMax( 100000000 );
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
     if( argc < 1 )
@@ -111,33 +111,33 @@ MAIN_START(argc, argv)
     GDALNearblackOptions *psOptions = GDALNearblackOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALNearblackOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALNearblackOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszInFile == NULL )
+    if( psOptionsForBinary->pszInFile == nullptr )
         Usage("No input file specified.");
 
-    if( psOptionsForBinary->pszOutFile == NULL )
+    if( psOptionsForBinary->pszOutFile == nullptr )
         psOptionsForBinary->pszOutFile = CPLStrdup(psOptionsForBinary->pszInFile);
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hInDS, hOutDS = NULL;
+    GDALDatasetH hInDS, hOutDS = nullptr;
 
     if( strcmp(psOptionsForBinary->pszOutFile, psOptionsForBinary->pszInFile) == 0 )
         hInDS = hOutDS = GDALOpen( psOptionsForBinary->pszInFile, GA_Update );
     else
         hInDS = GDALOpen( psOptionsForBinary->pszInFile, GA_ReadOnly );
 
-    if( hInDS == NULL )
+    if( hInDS == nullptr )
         exit( 1 );
 
     int bUsageError = FALSE;

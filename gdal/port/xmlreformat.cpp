@@ -36,7 +36,7 @@ int main( int argc, char **argv )
 {
     // TODO(schwehr): Switch to using std::string.
     static char szXML[20000000] = {};
-    FILE *fp = NULL;
+    FILE *fp = nullptr;
 
     if( argc == 1 )
     {
@@ -50,7 +50,7 @@ int main( int argc, char **argv )
     else
     {
         fp = fopen( argv[1], "rt" );
-        if( fp == NULL )
+        if( fp == nullptr )
         {
             printf( "Failed to open file %s.\n", argv[1] );/*ok*/
             exit( 1 );
@@ -72,7 +72,7 @@ int main( int argc, char **argv )
     szXML[nLen] = '\0';
 
     CPLXMLNode *poTree = CPLParseXMLString( szXML );
-    if( poTree != NULL )
+    if( poTree != nullptr )
     {
         char *pszRawXML = CPLSerializeXMLTree( poTree );
         printf( "%s", pszRawXML );/*ok*/

@@ -62,7 +62,7 @@ CPCIDSKGCP2Segment::CPCIDSKGCP2Segment(PCIDSKFile *fileIn, int segmentIn, const 
     catch( const PCIDSKException& )
     {
         delete pimpl_;
-        pimpl_ = NULL;
+        pimpl_ = nullptr;
         throw;
     }
 }
@@ -187,7 +187,7 @@ unsigned int  CPCIDSKGCP2Segment::GetGCPCount(void) const
 
 void CPCIDSKGCP2Segment::Synchronize()
 {
-    if( pimpl_ != NULL )
+    if( pimpl_ != nullptr )
     {
         RebuildSegmentData();
     }

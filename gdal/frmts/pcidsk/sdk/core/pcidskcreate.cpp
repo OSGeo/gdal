@@ -77,7 +77,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /*      Use default interfaces if none are passed in.                   */
 /* -------------------------------------------------------------------- */
     PCIDSKInterfaces default_interfaces;
-    if( interfaces == NULL )
+    if( interfaces == nullptr )
         interfaces = &default_interfaces;
 
 /* -------------------------------------------------------------------- */
@@ -85,7 +85,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
     std::vector<eChanType> default_channel_types;
 
-    if( channel_types == NULL )
+    if( channel_types == nullptr )
     {
         default_channel_types.resize( channel_count+1, CHN_8U );
         channel_types = &(default_channel_types[0]);
@@ -94,7 +94,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
-    const char *interleaving = NULL;
+    const char *interleaving = nullptr;
     std::string compression = "NONE";
     /* bool nozero = false; */
     bool nocreate = false;
@@ -160,7 +160,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
     void *io_handle = interfaces->io->Open( filename, "w+" );
 
-    assert( io_handle != NULL );
+    assert( io_handle != nullptr );
     try
     {
 /* ==================================================================== */

@@ -70,7 +70,7 @@ class OGRXLSXLayer : public OGRMemLayer
 
     const char         *GetName() override { return OGRMemLayer::GetLayerDefn()->GetName(); }
     OGRwkbGeometryType  GetGeomType() override { return wkbNone; }
-    virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
+    virtual OGRSpatialReference *GetSpatialRef() override { return nullptr; }
 
     void                ResetReading() override
     { Init(); OGRMemLayer::ResetReading(); }

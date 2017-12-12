@@ -75,11 +75,11 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
                                            CPL_UNUSED const char* pszPathIn,
                                            WORD fRequest )
 {
-    CPLAssert( NULL != pszDriver );
+    CPLAssert( nullptr != pszDriver );
 
     // Try to install driver to system-wide location.
-    if( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
-                                     ODBC_FILENAME_MAX, NULL, fRequest,
+    if( FALSE == SQLInstallDriverEx( pszDriver, nullptr, m_szPathOut,
+                                     ODBC_FILENAME_MAX, nullptr, fRequest,
                                      &m_nUsageCount ) )
     {
         const WORD nErrorNum = 1;  // TODO - a function param?
@@ -88,14 +88,14 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         // Failure is likely related to no write permissions to
         // system-wide default location, so try to install to HOME.
 
-        static char* pszEnvIni = NULL;
-        if( pszEnvIni == NULL )
+        static char* pszEnvIni = nullptr;
+        if( pszEnvIni == nullptr )
         {
             // Read HOME location.
-            char* pszEnvHome = NULL;
+            char* pszEnvHome = nullptr;
             pszEnvHome = getenv("HOME");
 
-            CPLAssert( NULL != pszEnvHome );
+            CPLAssert( nullptr != pszEnvHome );
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
             // Set ODBCSYSINI variable pointing to HOME location.
@@ -112,12 +112,12 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         }
 
         // Try to install ODBC driver in new location.
-        if( FALSE == SQLInstallDriverEx(pszDriver, NULL, m_szPathOut,
-                                        ODBC_FILENAME_MAX, NULL, fRequest,
+        if( FALSE == SQLInstallDriverEx(pszDriver, nullptr, m_szPathOut,
+                                        ODBC_FILENAME_MAX, nullptr, fRequest,
                                         &m_nUsageCount) )
         {
             cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
-                            m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+                            m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
             CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
 
             // FAIL
@@ -136,7 +136,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName,
                                           int fRemoveDSN )
 {
-    CPLAssert( NULL != pszDriverName );
+    CPLAssert( nullptr != pszDriverName );
 
     if( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
     {
@@ -144,7 +144,7 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName,
 
         // Retrieve error code and message.
         SQLInstallerError( nErrorNum, &m_nErrorCode,
-                           m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+                           m_szError, SQL_MAX_MESSAGE_LENGTH, nullptr );
 
         return FALSE;
     }
@@ -159,8 +159,8 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName,
 
 /** Constructor */
 CPLODBCSession::CPLODBCSession() :
-    m_hEnv(NULL),
-    m_hDBC(NULL),
+    m_hEnv(nullptr),
+    m_hDBC(nullptr),
     m_bInTransaction(FALSE),
     m_bAutoCommit(TRUE)
 {
@@ -186,7 +186,7 @@ CPLODBCSession::~CPLODBCSession()
 int CPLODBCSession::CloseSession()
 
 {
-    if( m_hDBC!=NULL )
+    if( m_hDBC!=nullptr )
     {
         if( IsInTransaction() )
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -194,13 +194,13 @@ int CPLODBCSession::CloseSession()
         CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
-        m_hDBC = NULL;
+        m_hDBC = nullptr;
     }
 
-    if( m_hEnv!=NULL )
+    if( m_hEnv!=nullptr )
     {
         SQLFreeEnv( m_hEnv );
-        m_hEnv = NULL;
+        m_hEnv = nullptr;
     }
 
     return TRUE;
@@ -222,7 +222,7 @@ int CPLODBCSession::ClearTransaction()
     SQLUINTEGER bAutoCommit;
     // See if we already in manual commit mode.
     if( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit,
-                                   sizeof(SQLUINTEGER), NULL) ) )
+                                   sizeof(SQLUINTEGER), nullptr) ) )
         return FALSE;
 
     if( bAutoCommit == SQL_AUTOCOMMIT_OFF )
@@ -253,15 +253,22 @@ int CPLODBCSession::BeginTransaction()
     SQLUINTEGER bAutoCommit;
     // See if we already in manual commit mode.
     if( Failed( SQLGetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT, &bAutoCommit,
-                                   sizeof(SQLUINTEGER), NULL) ) )
+                                   sizeof(SQLUINTEGER), nullptr) ) )
         return FALSE;
 
     if( bAutoCommit == SQL_AUTOCOMMIT_ON )
     {
         // Switch the connection to manual commit mode.
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
         if( Failed( SQLSetConnectAttr( m_hDBC, SQL_ATTR_AUTOCOMMIT,
                                        (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0 ) ) )
             return FALSE;
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
     }
 
     m_bInTransaction = TRUE;
@@ -394,20 +401,20 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
 #pragma warning( pop )
 #endif
 
-    if( pszUserid == NULL )
+    if( pszUserid == nullptr )
         pszUserid = "";
-    if( pszPassword == NULL )
+    if( pszPassword == nullptr )
         pszPassword = "";
 
     bool bFailed = false;
-    if( strstr(pszDSN, "=") != NULL )
+    if( strstr(pszDSN, "=") != nullptr )
     {
         CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
         SQLCHAR szOutConnString[1024] = {};
         SQLSMALLINT nOutConnStringLen = 0;
 
         bFailed = CPL_TO_BOOL(Failed(
-            SQLDriverConnect( m_hDBC, NULL,
+            SQLDriverConnect( m_hDBC, nullptr,
                               (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN),
                               szOutConnString, sizeof(szOutConnString),
                               &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) ));
@@ -462,25 +469,25 @@ const char *CPLODBCSession::GetLastError()
 /** Constructor */
 CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession ) :
     m_poSession(poSession),
-    m_hStmt(NULL),
+    m_hStmt(nullptr),
     m_nColCount(0),
-    m_papszColNames(NULL),
-    m_panColType(NULL),
-    m_papszColTypeNames(NULL),
-    m_panColSize(NULL),
-    m_panColPrecision(NULL),
-    m_panColNullable(NULL),
-    m_papszColColumnDef(NULL),
-    m_papszColValues(NULL),
-    m_panColValueLengths(NULL),
-    m_pszStatement(NULL),
+    m_papszColNames(nullptr),
+    m_panColType(nullptr),
+    m_papszColTypeNames(nullptr),
+    m_panColSize(nullptr),
+    m_panColPrecision(nullptr),
+    m_panColNullable(nullptr),
+    m_papszColColumnDef(nullptr),
+    m_papszColValues(nullptr),
+    m_panColValueLengths(nullptr),
+    m_pszStatement(nullptr),
     m_nStatementMax(0),
     m_nStatementLen(0)
 {
 
     if( Failed(SQLAllocStmt(poSession->GetConnection(), &m_hStmt)) )
     {
-        m_hStmt = NULL;
+        m_hStmt = nullptr;
     }
 }
 
@@ -494,7 +501,7 @@ CPLODBCStatement::~CPLODBCStatement()
 {
     Clear();
 
-    if( m_hStmt != NULL )
+    if( m_hStmt != nullptr )
         SQLFreeStmt( m_hStmt, SQL_DROP );
 }
 
@@ -520,13 +527,13 @@ CPLODBCStatement::~CPLODBCStatement()
 int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 
 {
-    if( m_poSession == NULL || m_hStmt == NULL )
+    if( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // We should post an error.
         return FALSE;
     }
 
-    if( pszStatement != NULL )
+    if( pszStatement != nullptr )
     {
         Clear();
         Append( pszStatement );
@@ -559,7 +566,7 @@ int CPLODBCStatement::ExecuteSQL( const char *pszStatement )
 int CPLODBCStatement::CollectResultsInfo()
 
 {
-    if( m_poSession == NULL || m_hStmt == NULL )
+    if( m_poSession == nullptr || m_hStmt == nullptr )
     {
         // We should post an error.
         return FALSE;
@@ -615,7 +622,7 @@ int CPLODBCStatement::CollectResultsInfo()
         // In addition to above data we need data type name.
         if( Failed( SQLColAttribute(m_hStmt, iCol + 1, SQL_DESC_TYPE_NAME,
                                     szName, sizeof(szName),
-                                    &nNameLength, NULL) ) )
+                                    &nNameLength, nullptr) ) )
             return FALSE;
 
         szName[nNameLength] = '\0';  // Paranoid.
@@ -676,7 +683,7 @@ const char *CPLODBCStatement::GetColName( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
 
     return m_papszColNames[iCol];
 }
@@ -727,7 +734,7 @@ const char *CPLODBCStatement::GetColTypeName( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
 
     return m_papszColTypeNames[iCol];
 }
@@ -815,7 +822,7 @@ const char *CPLODBCStatement::GetColColumnDef( int iCol )
 
 {
     if( iCol < 0 || iCol >= m_nColCount )
-        return NULL;
+        return nullptr;
 
     return m_papszColColumnDef[iCol];
 }
@@ -849,7 +856,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 {
     ClearColumnData();
 
-    if( m_hStmt == NULL || m_nColCount < 1 )
+    if( m_hStmt == nullptr || m_nColCount < 1 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -925,7 +932,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
         if( cbDataLen == SQL_NULL_DATA )
         {
-            m_papszColValues[iCol] = NULL;
+            m_papszColValues[iCol] = nullptr;
             m_panColValueLengths[iCol] = 0;
         }
 
@@ -1010,7 +1017,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         }
 
         // Trim white space off end, if there is any.
-        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != NULL )
+        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != nullptr )
         {
             char *pszTarget = m_papszColValues[iCol];
             size_t iEnd = strlen(pszTarget);
@@ -1020,7 +1027,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         }
 
         // Convert WCHAR to UTF-8, assuming the WCHAR is UCS-2.
-        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != NULL
+        if( nFetchType == SQL_C_WCHAR && m_papszColValues[iCol] != nullptr
             && m_panColValueLengths[iCol] > 0 )
         {
             wchar_t *pwszSrc = (wchar_t *) m_papszColValues[iCol];
@@ -1061,7 +1068,7 @@ const char *CPLODBCStatement::GetColData( int iCol, const char *pszDefault )
 {
     if( iCol < 0 || iCol >= m_nColCount )
         return pszDefault;
-    else if( m_papszColValues[iCol] != NULL )
+    else if( m_papszColValues[iCol] != nullptr )
         return m_papszColValues[iCol];
     else
         return pszDefault;
@@ -1109,7 +1116,7 @@ int CPLODBCStatement::GetColDataLength( int iCol )
 {
     if( iCol < 0 || iCol >= m_nColCount )
         return 0;
-    else if( m_papszColValues[iCol] != NULL )
+    else if( m_papszColValues[iCol] != nullptr )
         return static_cast<int>(m_panColValueLengths[iCol]);
     else
         return 0;
@@ -1152,10 +1159,10 @@ void CPLODBCStatement::ClearColumnData()
     {
         for( int iCol = 0; iCol < m_nColCount; iCol++ )
         {
-            if( m_papszColValues[iCol] != NULL )
+            if( m_papszColValues[iCol] != nullptr )
             {
                 CPLFree( m_papszColValues[iCol] );
-                m_papszColValues[iCol] = NULL;
+                m_papszColValues[iCol] = nullptr;
             }
         }
     }
@@ -1169,7 +1176,7 @@ void CPLODBCStatement::ClearColumnData()
 int CPLODBCStatement::Failed( int nResultCode )
 
 {
-    if( m_poSession != NULL )
+    if( m_poSession != nullptr )
         return m_poSession->Failed( nResultCode, m_hStmt );
 
     return TRUE;
@@ -1195,7 +1202,7 @@ void CPLODBCStatement::Append( const char *pszText )
     if( m_nStatementMax < m_nStatementLen + nTextLen + 1 )
     {
         m_nStatementMax = (m_nStatementLen + nTextLen) * 2 + 100;
-        if( m_pszStatement == NULL )
+        if( m_pszStatement == nullptr )
         {
             m_pszStatement = static_cast<char *>(VSIMalloc(m_nStatementMax));
             m_pszStatement[0] = '\0';
@@ -1351,15 +1358,15 @@ void CPLODBCStatement::Clear()
 
 {
     /* Closing the cursor if opened */
-    if( m_hStmt != NULL )
+    if( m_hStmt != nullptr )
         SQLFreeStmt( m_hStmt, SQL_CLOSE );
 
     ClearColumnData();
 
-    if( m_pszStatement != NULL )
+    if( m_pszStatement != nullptr )
     {
         CPLFree( m_pszStatement );
-        m_pszStatement = NULL;
+        m_pszStatement = nullptr;
     }
 
     m_nStatementLen = 0;
@@ -1370,31 +1377,31 @@ void CPLODBCStatement::Clear()
     if( m_papszColNames )
     {
         CPLFree( m_panColType );
-        m_panColType = NULL;
+        m_panColType = nullptr;
 
         CSLDestroy( m_papszColTypeNames );
-        m_papszColTypeNames = NULL;
+        m_papszColTypeNames = nullptr;
 
         CPLFree( m_panColSize );
-        m_panColSize = NULL;
+        m_panColSize = nullptr;
 
         CPLFree( m_panColPrecision );
-        m_panColPrecision = NULL;
+        m_panColPrecision = nullptr;
 
         CPLFree( m_panColNullable );
-        m_panColNullable = NULL;
+        m_panColNullable = nullptr;
 
         CSLDestroy( m_papszColColumnDef );
-        m_papszColColumnDef = NULL;
+        m_papszColColumnDef = nullptr;
 
         CSLDestroy( m_papszColNames );
-        m_papszColNames = NULL;
+        m_papszColNames = nullptr;
 
         CPLFree( m_papszColValues );
-        m_papszColValues = NULL;
+        m_papszColValues = nullptr;
 
         CPLFree( m_panColValueLengths );
-        m_panColValueLengths = NULL;
+        m_panColValueLengths = nullptr;
     }
 }
 
@@ -1451,7 +1458,7 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
                             (SQLCHAR *) pszCatalog, SQL_NTS,
                             (SQLCHAR *) pszSchema, SQL_NTS,
                             (SQLCHAR *) pszTable, SQL_NTS,
-                            (SQLCHAR *) NULL /* "" */, SQL_NTS ) ) )
+                            (SQLCHAR *) nullptr /* "" */, SQL_NTS ) ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1569,9 +1576,9 @@ int CPLODBCStatement::GetPrimaryKeys( const char *pszTable,
                                       const char *pszSchema )
 
 {
-    if( pszCatalog == NULL )
+    if( pszCatalog == nullptr )
         pszCatalog = "";
-    if( pszSchema == NULL )
+    if( pszSchema == nullptr )
         pszSchema = "";
 
 #if (ODBCVER >= 0x0300)
@@ -1640,7 +1647,7 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
     if( Failed( SQLTables( m_hStmt,
                            (SQLCHAR *) pszCatalog, SQL_NTS,
                            (SQLCHAR *) pszSchema, SQL_NTS,
-                           (SQLCHAR *) NULL, SQL_NTS,
+                           (SQLCHAR *) nullptr, SQL_NTS,
                            (SQLCHAR *) "'TABLE','VIEW'", SQL_NTS ) ) )
         return FALSE;
 

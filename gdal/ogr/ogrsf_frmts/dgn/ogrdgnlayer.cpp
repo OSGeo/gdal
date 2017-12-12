@@ -207,7 +207,7 @@ void OGRDGNLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     if( !InstallFilter(poGeomIn) )
         return;
 
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
     {
         DGNSetSpatialFilter( hDGN,
                              m_sFilterEnvelope.MinX,
@@ -242,7 +242,7 @@ OGRFeature *OGRDGNLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( nFeatureId > INT_MAX || !DGNGotoElement( hDGN, (int)nFeatureId ) )
-        return NULL;
+        return nullptr;
 
     // We should likely clear the spatial search region as it affects
     // DGNReadElement(), but I will defer that for now.
@@ -251,13 +251,13 @@ OGRFeature *OGRDGNLayer::GetFeature( GIntBig nFeatureId )
     OGRFeature *poFeature = ElementToFeature( psElement, 0 );
     DGNFreeElement( hDGN, psElement );
 
-    if( poFeature == NULL )
-        return NULL;
+    if( poFeature == nullptr )
+        return nullptr;
 
     if( poFeature->GetFID() != nFeatureId )
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
     return poFeature;
@@ -329,12 +329,12 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int anMSLink[MAX_LINK];
     anMSLink[0] = 0;
 
-    unsigned char *pabyData = NULL;
+    unsigned char *pabyData = nullptr;
     int iLink = 0;
     int nLinkCount = 0;
 
-    pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
-                              anEntityNum + iLink, anMSLink + iLink, NULL );
+    pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
+                              anEntityNum + iLink, anMSLink + iLink, nullptr );
     while( pabyData )
     {
         iLink++;
@@ -351,9 +351,9 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
         anEntityNum[nLinkCount] = 0;
         anMSLink[nLinkCount] = 0;
 
-        pabyData = DGNGetLinkage( hDGN, psElement, iLink, NULL,
+        pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
                                   anEntityNum+nLinkCount, anMSLink+nLinkCount,
-                                  NULL );
+                                  nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -600,29 +600,29 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
           static const char * const papszFontList[] =
           { "STANDARD", "WORKING", "FANCY", "ENGINEERING", "NEWZERO",
             "STENCEL", // 0-5
-            "USTN_FANCY", "COMPRESSED", "STENCEQ", NULL, "hand", "ARCH", //6-11
-            "ARCHB", NULL, NULL, "IGES1001", "IGES1002", "IGES1003", //12-17
-            "CENTB", "MICROS", NULL, NULL, "ISOFRACTIONS", "ITALICS", //18-23
-            "ISO30", NULL, "GREEK", "ISOREC", "Isoeq", NULL, //24-29
+            "USTN_FANCY", "COMPRESSED", "STENCEQ", nullptr, "hand", "ARCH", //6-11
+            "ARCHB", nullptr, nullptr, "IGES1001", "IGES1002", "IGES1003", //12-17
+            "CENTB", "MICROS", nullptr, nullptr, "ISOFRACTIONS", "ITALICS", //18-23
+            "ISO30", nullptr, "GREEK", "ISOREC", "Isoeq", nullptr, //24-29
             "ISO_FONTLEFT", "ISO_FONTRIGHT", "INTL_ENGINEERING", "INTL_WORKING",
-            "ISOITEQ", NULL, // 30-35
-            "USTN FONT 26", NULL, NULL, NULL, NULL, "ARCHITECTURAL", //36-41
-            "BLOCK_OUTLINE", "LOW_RES_FILLED", NULL, NULL, NULL, NULL, //42-47
-            NULL, NULL, "UPPERCASE", NULL, NULL, NULL, //48-53
-            NULL, NULL, NULL, NULL, NULL, NULL, //54-49
+            "ISOITEQ", nullptr, // 30-35
+            "USTN FONT 26", nullptr, nullptr, nullptr, nullptr, "ARCHITECTURAL", //36-41
+            "BLOCK_OUTLINE", "LOW_RES_FILLED", nullptr, nullptr, nullptr, nullptr, //42-47
+            nullptr, nullptr, "UPPERCASE", nullptr, nullptr, nullptr, //48-53
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, //54-49
             "FONT060", "din", "dinit", "helvl", "HELVLIT", "helv", //60-65
-            "HELVIT", "cent", "CENTIT", "SCRIPT", NULL, NULL, //66-71
-            NULL, NULL, NULL, NULL, "MICROQ", "dotfont", //72-77
-            "DOTIT", NULL, NULL, NULL, NULL, NULL, //78-83
-            NULL, NULL, NULL, NULL, NULL, NULL, //84-89
-            NULL, NULL, "FONT092", NULL, "FONT094", NULL, //90-95
-            NULL, NULL, NULL, NULL, "ANSI_SYMBOLS",
+            "HELVIT", "cent", "CENTIT", "SCRIPT", nullptr, nullptr, //66-71
+            nullptr, nullptr, nullptr, nullptr, "MICROQ", "dotfont", //72-77
+            "DOTIT", nullptr, nullptr, nullptr, nullptr, nullptr, //78-83
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, //84-89
+            nullptr, nullptr, "FONT092", nullptr, "FONT094", nullptr, //90-95
+            nullptr, nullptr, nullptr, nullptr, "ANSI_SYMBOLS",
             "FEATURE_CONTROL_SYSMBOLS", // 96-101
-            "SYMB_FAST", NULL, NULL, "INTL_ISO", "INTL_ISO_EQUAL",
+            "SYMB_FAST", nullptr, nullptr, "INTL_ISO", "INTL_ISO_EQUAL",
             "INTL_ISO_ITALIC", // 102-107
             "INTL_ISO_ITALIC_EQUAL" }; //108
 
-          if(psText->font_id <= 108 && papszFontList[psText->font_id] != NULL )
+          if(psText->font_id <= 108 && papszFontList[psText->font_id] != nullptr )
           {
               snprintf( pszOgrFS+strlen(pszOgrFS),
                         nOgrFSLen-strlen(pszOgrFS), ",f:%s",
@@ -661,41 +661,41 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
           for( int iChild = 0; iChild < psHdr->numelems &&
                                nRecLevel < 20; iChild++ )
           {
-              OGRFeature *poChildFeature = NULL;
+              OGRFeature *poChildFeature = nullptr;
               DGNElemCore *psChildElement = DGNReadElement( hDGN );
               // should verify complex bit set, not another header.
 
-              if( psChildElement != NULL )
+              if( psChildElement != nullptr )
               {
                   poChildFeature = ElementToFeature( psChildElement,
                                                      nRecLevel + 1 );
                   DGNFreeElement( hDGN, psChildElement );
               }
 
-              if( poChildFeature != NULL
-                  && poChildFeature->GetGeometryRef() != NULL )
+              if( poChildFeature != nullptr
+                  && poChildFeature->GetGeometryRef() != nullptr )
               {
                   OGRGeometry *poGeom = poChildFeature->GetGeometryRef();
                   if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
                       oChildren.addGeometry( poGeom );
               }
 
-              if( poChildFeature != NULL )
+              if( poChildFeature != nullptr )
                   delete poChildFeature;
           }
 
           // Try to assemble into polygon geometry.
-          OGRGeometry *poGeom = NULL;
+          OGRGeometry *poGeom = nullptr;
 
           if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
               poGeom = reinterpret_cast<OGRPolygon *>(
                   OGRBuildPolygonFromEdges(
                       reinterpret_cast<OGRGeometryH>( &oChildren ),
-                      TRUE, TRUE, 100000, NULL ) );
+                      TRUE, TRUE, 100000, nullptr ) );
           else
               poGeom = oChildren.clone();
 
-          if( poGeom != NULL )
+          if( poGeom != nullptr )
               poFeature->SetGeometryDirectly( poGeom );
 
           ConsiderBrush( psElement, szPen, poFeature );
@@ -709,7 +709,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 /* -------------------------------------------------------------------- */
 /*      Fixup geometry dimension.                                       */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() != NULL )
+    if( poFeature->GetGeometryRef() != nullptr )
         poFeature->GetGeometryRef()->setCoordinateDimension(
             DGNGetDimension( hDGN ) );
 
@@ -723,10 +723,10 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
 OGRFeature *OGRDGNLayer::GetNextFeature()
 
 {
-    DGNGetElementIndex( hDGN, NULL );
+    DGNGetElementIndex( hDGN, nullptr );
 
-    DGNElemCore *psElement = NULL;
-    while( (psElement = DGNReadElement( hDGN )) != NULL )
+    DGNElemCore *psElement = nullptr;
+    while( (psElement = DGNReadElement( hDGN )) != nullptr )
     {
         if( psElement->deleted )
         {
@@ -737,16 +737,16 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
         OGRFeature *poFeature = ElementToFeature( psElement, 0 );
         DGNFreeElement( hDGN, psElement );
 
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             continue;
 
-        if( poFeature->GetGeometryRef() == NULL )
+        if( poFeature->GetGeometryRef() == nullptr )
         {
             delete poFeature;
             continue;
         }
 
-        if( (m_poAttrQuery == NULL
+        if( (m_poAttrQuery == nullptr
              || m_poAttrQuery->Evaluate( poFeature ))
             && FilterGeometry( poFeature->GetGeometryRef() ) )
             return poFeature;
@@ -754,7 +754,7 @@ OGRFeature *OGRDGNLayer::GetNextFeature()
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -773,7 +773,7 @@ int OGRDGNLayer::TestCapability( const char * pszCap )
         return FALSE; /* maybe later? */
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL || m_poAttrQuery == NULL;
+        return m_poFilterGeom == nullptr || m_poAttrQuery == nullptr;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
@@ -795,7 +795,7 @@ GIntBig OGRDGNLayer::GetFeatureCount( int bForce )
 /*      If any odd conditions are in effect collect the information     */
 /*      normally.                                                       */
 /* -------------------------------------------------------------------- */
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
         return OGRLayer::GetFeatureCount( bForce );
 
 /* -------------------------------------------------------------------- */
@@ -910,7 +910,7 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
 /*      We needed to make into a group.  Create the complex header      */
 /*      from the rest of the group.                                     */
 /* -------------------------------------------------------------------- */
-    if( papsGroup[0] == NULL )
+    if( papsGroup[0] == nullptr )
     {
         if( nGroupType == DGNT_SHAPE )
             nGroupType = DGNT_COMPLEX_SHAPE_HEADER;
@@ -942,21 +942,21 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
     oMgr.InitFromFeature( poFeature );
     OGRStyleLabel *poLabel
         = reinterpret_cast<OGRStyleLabel *>( oMgr.GetPart( 0 ) );
-    if( poLabel != NULL && poLabel->GetType() != OGRSTCLabel )
+    if( poLabel != nullptr && poLabel->GetType() != OGRSTCLabel )
     {
         delete poLabel;
-        poLabel = NULL;
+        poLabel = nullptr;
     }
 
     double dfRotation = 0.0;
     double dfCharHeight = 100.0;
     int nFontID = 1; // 1 is the default font for DGN. Not 0.
 
-    if( poLabel != NULL )
+    if( poLabel != nullptr )
     {
         GBool bDefault;
 
-        if( poLabel->TextString(bDefault) != NULL && !bDefault )
+        if( poLabel->TextString(bDefault) != nullptr && !bDefault )
             pszText = poLabel->TextString(bDefault);
         dfRotation = poLabel->Angle(bDefault);
 
@@ -982,16 +982,16 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
             "MICROQ=76", "dotfont=77", "DOTIT=78", "FONT092=92", "FONT094=94",
             "ANSI_SYMBOLS=100", "FEATURE_CONTROL_SYSMBOLS=101", "SYMB_FAST=102",
             "INTL_ISO=105", "INTL_ISO_EQUAL=106", "INTL_ISO_ITALIC=107",
-            "INTL_ISO_ITALIC_EQUAL=108", NULL };
+            "INTL_ISO_ITALIC_EQUAL=108", nullptr };
 
         const char *pszFontName = poLabel->FontName( bDefault );
-        if( !bDefault && pszFontName != NULL )
+        if( !bDefault && pszFontName != nullptr )
         {
             const char *pszFontNumber =
               CSLFetchNameValue( const_cast<char**>( papszFontNumbers ),
                                  pszFontName );
 
-            if( pszFontNumber != NULL )
+            if( pszFontNumber != nullptr )
             {
                 nFontID = atoi( pszFontNumber );
             }
@@ -1002,7 +1002,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
         = static_cast<DGNElemCore **>( CPLCalloc(sizeof(void*), 2) );
     papsGroup[0] =
         DGNCreateTextElem( hDGN, pszText, nFontID, DGNJ_LEFT_BOTTOM,
-                           dfCharHeight, dfCharHeight, dfRotation, NULL,
+                           dfCharHeight, dfCharHeight, dfRotation, nullptr,
                            poPoint->getX(),
                            poPoint->getY(),
                            poPoint->getZ() );
@@ -1029,7 +1029,7 @@ OGRErr OGRDGNLayer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( poFeature->GetGeometryRef() == NULL )
+    if( poFeature->GetGeometryRef() == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Features with empty, geometry collection geometries not\n"
@@ -1055,7 +1055,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Translate the geometry.                                         */
 /* -------------------------------------------------------------------- */
-    DGNElemCore **papsGroup = NULL;
+    DGNElemCore **papsGroup = nullptr;
     const char *pszStyle = poFeature->GetStyleString();
 
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
@@ -1063,8 +1063,8 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
         OGRPoint *poPoint = reinterpret_cast<OGRPoint *>( poGeom );
         const char *pszText = poFeature->GetFieldAsString("Text");
 
-        if( (pszText == NULL || strlen(pszText) == 0)
-            && (pszStyle == NULL || strstr(pszStyle,"LABEL") == NULL) )
+        if( (pszText == nullptr || strlen(pszText) == 0)
+            && (pszStyle == nullptr || strstr(pszStyle,"LABEL") == nullptr) )
         {
             // Treat a non text point as a degenerate line.
             DGNPoint asPoints[2] = {};
@@ -1102,7 +1102,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             CPLDebug("InnerRings", "there are %d inner rings", innerRingsCnt);
             std::list<DGNElemCore*> dgnElements;
 
-            for( int i = 0; papsGroupExt[i] != NULL; i++) {
+            for( int i = 0; papsGroupExt[i] != nullptr; i++) {
                 dgnElements.push_back(papsGroupExt[i]);
             }
             CPLFree(papsGroupExt);
@@ -1113,7 +1113,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
                         poPoly->getInteriorRing(iRing), DGNT_SHAPE);
                 papsGroupInner[0]->properties |= DGNPF_HOLE;
                 DGNUpdateElemCoreExtended(hDGN, papsGroupInner[0]);
-                for( int i = 0; papsGroupInner[i] != NULL; i++ ) {
+                for( int i = 0; papsGroupInner[i] != nullptr; i++ ) {
                     dgnElements.push_back(papsGroupInner[i]);
                 }
                 CPLFree(papsGroupInner);
@@ -1133,7 +1133,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
             //     papsGroup+1 );
             DGNPoint asPoints[1] = {};
             papsGroup[0] = DGNCreateCellHeaderFromGroup(
-                hDGN, "", 1, NULL,
+                hDGN, "", 1, nullptr,
                 static_cast<int>(dgnElements.size()), papsGroup + 1,
                 asPoints + 0, 1.0, 1.0, 0.0) ;
             DGNAddShapeFillInfo(hDGN, papsGroup[0], 6);
@@ -1189,7 +1189,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Write to file.                                                  */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; papsGroup[i] != NULL; i++ )
+    for( int i = 0; papsGroup[i] != nullptr; i++ )
     {
         DGNWriteElement( hDGN, papsGroup[i] );
 

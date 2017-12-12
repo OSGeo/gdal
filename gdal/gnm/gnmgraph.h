@@ -29,11 +29,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef GNMGRAPH_H
+#define GNMGRAPH_H
+
 #include "cpl_port.h"
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #include <map>
 #include <queue>
 #include <set>
 #include <vector>
+#endif
 
 // Alias for some big data type to store identificators.
 #define GNMGFID GIntBig
@@ -42,6 +47,7 @@
 #define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
 #define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 // Types declarations.
 typedef std::vector<GNMGFID> GNMVECTOR, *LPGNMVECTOR;
 typedef const std::vector<GNMGFID> GNMCONSTVECTOR;
@@ -240,3 +246,7 @@ protected:
     std::map<GNMGFID, GNMStdEdge>   m_mstEdges;
 //! @endcond
 };
+
+#endif // __cplusplus
+
+#endif /* GNMGRAPH_H */

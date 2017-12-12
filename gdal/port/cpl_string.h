@@ -379,14 +379,6 @@ public:
             static_cast<std::string::size_type>(i));
     }
 
-    // Note: This is standard in C++11.
-#ifndef HAVE_CXX11
-    /** Return last character (undefined behaviour if string is empty) */
-    const char& back() const { return operator[](size()-1); }
-    /** Return last character (undefined behaviour if string is empty) */
-    char& back() { return operator[](size()-1); }
-#endif
-
     /** Clear the string */
     void Clear() { resize(0); }
 
@@ -395,7 +387,7 @@ public:
      * string. */
     void Seize( char *pszValue )
     {
-        if (pszValue == NULL )
+        if (pszValue == nullptr )
             Clear();
         else
         {
@@ -412,7 +404,7 @@ public:
     CPLString &vPrintf(
         CPL_FORMAT_STRING(const char *pszFormat), va_list args )
         CPL_PRINT_FUNC_FORMAT(2, 0);
-    CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
+    CPLString &FormatC( double dfValue, const char *pszFormat = nullptr );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
     CPLString &replaceAll(

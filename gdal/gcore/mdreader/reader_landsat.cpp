@@ -68,7 +68,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
     const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                        szMetadataName, NULL );
+                                                        szMetadataName, nullptr );
     if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
     {
         m_osIMDSourceFilename = pszIMDSourceFilename;
@@ -76,7 +76,7 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     else
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, NULL );
+        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
         if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
         {
             m_osIMDSourceFilename = pszIMDSourceFilename;
@@ -111,7 +111,7 @@ bool GDALMDReaderLandsat::HasRequiredFiles() const
  */
 char** GDALMDReaderLandsat::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
 
@@ -142,7 +142,7 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
                             "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
@@ -151,7 +151,7 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                             "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         double fCC = CPLAtofM(pszCloudCover);
         if(fCC < 0)
@@ -174,22 +174,22 @@ void GDALMDReaderLandsat::LoadMetadata()
 
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                           "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
-    if(NULL == pszDate)
+    if(nullptr == pszDate)
     {
         pszDate = CSLFetchNameValue(m_papszIMDMD,
                              "L1_METADATA_FILE.PRODUCT_METADATA.DATE_ACQUIRED");
     }
 
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         const char* pszTime = CSLFetchNameValue(m_papszIMDMD,
                     "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
         {
             pszTime = CSLFetchNameValue(m_papszIMDMD,
                          "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME");
         }
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
             pszTime = "00:00:00.000000Z";
 
         char buffer[80];

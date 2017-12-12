@@ -52,7 +52,7 @@ static GDALDataset *OGRCartoDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRCartoDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRCARTODataSource   *poDS = new OGRCARTODataSource();
 
@@ -60,7 +60,7 @@ static GDALDataset *OGRCartoDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -80,12 +80,12 @@ static GDALDataset *OGRCartoDriverCreate( const char * pszName,
 {
     OGRCARTODataSource   *poDS = new OGRCARTODataSource();
 
-    if( !poDS->Open( pszName, NULL, TRUE ) )
+    if( !poDS->Open( pszName, nullptr, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Carto driver doesn't support database creation." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -98,7 +98,7 @@ static GDALDataset *OGRCartoDriverCreate( const char * pszName,
 void RegisterOGRCarto()
 
 {
-    if( GDALGetDriverByName( "Carto" ) != NULL )
+    if( GDALGetDriverByName( "Carto" ) != nullptr )
       return;
 
     GDALDriver* poDriver = new GDALDriver();

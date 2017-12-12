@@ -158,7 +158,7 @@ static void swab_buff(buf_mgr &src, const ILImage &img)
 */
 static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
     // The one we might need to allocate
-    void *dbuff = NULL;
+    void *dbuff = nullptr;
     buf_mgr dst;
     // The one we could use, after the packed data
     dst.buffer = src.buffer + src.size;
@@ -172,12 +172,12 @@ static void *DeflateBlock(buf_mgr &src, size_t extrasize, int flags) {
         dbuff = VSIMalloc(dst.size);
         dst.buffer = (char *)dbuff;
         if (!dst.buffer)
-            return NULL;
+            return nullptr;
     }
 
     if (!ZPack(src, dst, flags)) {
         CPLFree(dbuff); // Safe to call with NULL
-        return NULL;
+        return nullptr;
     }
 
     // source size is used to hold the output size
@@ -222,7 +222,7 @@ GDALMRFRasterBand::GDALMRFRasterBand( GDALMRFDataset *parent_dataset,
     else if( GetOptlist().FetchBoolean("RAWZ", FALSE) )
         deflate_flags |= ZFLAG_RAW;
     // And Pick up the ZLIB strategy, if any
-    const char *zstrategy = GetOptlist().FetchNameValueDef("Z_STRATEGY", NULL);
+    const char *zstrategy = GetOptlist().FetchNameValueDef("Z_STRATEGY", nullptr);
     if( zstrategy )
     {
         int zv = Z_DEFAULT_STRATEGY;
@@ -374,7 +374,7 @@ CPLErr GDALMRFRasterBand::FillBlock(int xblk, int yblk, void *buffer) {
         }
         else {
             GDALRasterBlock *poBlock = b->GetLockedBlockRef(xblk, yblk, 1);
-            if (poBlock == NULL) // Didn't get this block
+            if (poBlock == nullptr) // Didn't get this block
                 break;
             FillBlock(poBlock->GetDataRef());
             blocks.push_back(poBlock);
@@ -407,7 +407,7 @@ CPLErr GDALMRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer)
         if (b != this)
         {
             GDALRasterBlock *poBlock = b->GetLockedBlockRef(xblk, yblk, 1);
-            if( poBlock == NULL )
+            if( poBlock == nullptr )
                 break;
             ob = poBlock->GetDataRef();
             blocks.push_back(poBlock);
@@ -457,8 +457,8 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     ILSize req(xblk, yblk, 0, (nBand-1) / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
-    GDALDataset *poSrcDS = NULL;
-    if ( NULL == (poSrcDS = poDS->GetSrcDS())) {
+    GDALDataset *poSrcDS = nullptr;
+    if ( nullptr == (poSrcDS = poDS->GetSrcDS())) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MRF: Can't open source file %s", poDS->source.c_str());
         return CE_Failure;
@@ -499,12 +499,12 @@ CPLErr GDALMRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     // Use the dataset RasterIO to read one or all bands if interleaved
     CPLErr ret = poSrcDS->RasterIO(GF_Read, Xoff, Yoff, readszx, readszy,
         ob, pcount(readszx, int(scl)), pcount(readszy, int(scl)),
-        eDataType, cstride, (1 == cstride)? &nBand: NULL,
+        eDataType, cstride, (1 == cstride)? &nBand: nullptr,
         vsz * cstride,  // pixel, line, band stride
         vsz * cstride * img.pagesize.x,
         (cstride != 1) ? vsz : vsz * img.pagesize.x * img.pagesize.y
 #if GDAL_VERSION_MAJOR >= 2
-        ,NULL
+        ,nullptr
 #endif
         );
 
@@ -588,7 +588,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     assert(poDS->clonedSource);
 
     GDALMRFDataset *poSrc = static_cast<GDALMRFDataset *>(poDS->GetSrcDS());
-    if( NULL == poSrc )
+    if( nullptr == poSrc )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source file %s", poDS->source.c_str());
         return CE_Failure;
@@ -599,7 +599,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         GDALMRFRasterBand *b = static_cast<GDALMRFRasterBand *>(poSrc->GetRasterBand(nBand));
         if (b->GetOverviewCount() && m_l)
             b = static_cast<GDALMRFRasterBand *>(b->GetOverview(m_l-1));
-        if( b == NULL )
+        if( b == nullptr )
             return CE_Failure;
         return b->IReadBlock(xblk,yblk,buffer);
     }
@@ -626,7 +626,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
     }
 
     VSILFILE *srcfd = poSrc->DataFP();
-    if (NULL == srcfd) {
+    if (nullptr == srcfd) {
         CPLError( CE_Failure, CPLE_AppDefined, "MRF: Can't open source data file %s",
             poDS->source.c_str());
         return CE_Failure;
@@ -640,7 +640,7 @@ CPLErr GDALMRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
         return CE_Failure;
     }
     char *buf = static_cast<char *>(VSIMalloc(static_cast<size_t>(tinfo.size)));
-    if( buf == NULL )
+    if( buf == nullptr )
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate " CPL_FRMT_GIB " bytes",
                  tinfo.size);
@@ -740,11 +740,11 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
     VSILFILE *dfp = DataFP();
 
     // No data file to read from
-    if (dfp == NULL)
+    if (dfp == nullptr)
         return CE_Failure;
 
     void *data = VSIMalloc(static_cast<size_t>(tinfo.size + PADDING_BYTES));
-    if (data == NULL)
+    if (data == nullptr)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
             "Could not allocate memory for tile size: " CPL_FRMT_GIB, tinfo.size);
@@ -782,7 +782,7 @@ CPLErr GDALMRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
         }
         dst.size = img.pageSizeBytes + 1440; // in case the packed page is a bit larger than the raw one
         dst.buffer = (char *)VSIMalloc(dst.size);
-        if( dst.buffer == NULL )
+        if( dst.buffer == nullptr )
         {
             CPLFree(data);
             CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate %d bytes",
@@ -874,7 +874,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         double val = GetNoDataValue(&success);
         if (!success) val = 0.0;
         if (isAllVal(eDataType, buffer, img.pageSizeBytes, val))
-            return poDS->WriteTile(NULL, infooffset, 0);
+            return poDS->WriteTile(nullptr, infooffset, 0);
 
         // Use the pbuffer to hold the compressed page before writing it
         poDS->tile = ILSize(); // Mark it corrupt
@@ -919,8 +919,8 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // Get the other bands from the block cache
     for (int iBand=0; iBand < poDS->nBands; iBand++ )
     {
-        char *pabyThisImage = NULL;
-        GDALRasterBlock *poBlock = NULL;
+        char *pabyThisImage = nullptr;
+        GDALRasterBlock *poBlock = nullptr;
 
         if (iBand == nBand-1)
         {
@@ -931,7 +931,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
             // Pick the right overview
             if (m_l) band = band->GetOverview(m_l -1);
             poBlock = (reinterpret_cast<GDALMRFRasterBand *>(band))->TryGetLockedBlockRef(xblk, yblk);
-            if (NULL==poBlock) continue;
+            if (nullptr==poBlock) continue;
             // This is where the image data is for this band
 
             pabyThisImage = reinterpret_cast<char*>(poBlock->GetDataRef());
@@ -961,7 +961,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
             {
                 CPLError(CE_Failure,CPLE_AppDefined, "MRF: Write datatype of %d bytes "
                         "not implemented", GDALGetDataTypeSize(eDataType)/8);
-                if (poBlock != NULL)
+                if (poBlock != nullptr)
                 {
                     poBlock->MarkClean();
                     poBlock->DropLock();
@@ -971,7 +971,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
             }
         }
 
-        if (poBlock != NULL)
+        if (poBlock != nullptr)
         {
             poBlock->MarkClean();
             poBlock->DropLock();
@@ -984,7 +984,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     if (GIntBig(empties) == AllBandMask()) {
         CPLFree(tbuffer);
-        return poDS->WriteTile(NULL, infooffset, 0);
+        return poDS->WriteTile(nullptr, infooffset, 0);
     }
 
     if (poDS->bdirty != AllBandMask())
@@ -1006,7 +1006,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     if (ret != CE_None) {
         // Compress failed, write it as an empty tile
         CPLFree(tbuffer);
-        poDS->WriteTile(NULL, infooffset, 0);
+        poDS->WriteTile(nullptr, infooffset, 0);
         return CE_None; // Should report the error, but it triggers partial band attempts
     }
 
@@ -1020,7 +1020,7 @@ CPLErr GDALMRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         if (!usebuff) {
             CPLError(CE_Failure,CPLE_AppDefined, "MRF: Deflate error");
             CPLFree(tbuffer);
-            poDS->WriteTile(NULL, infooffset, 0);
+            poDS->WriteTile(nullptr, infooffset, 0);
             poDS->bdirty = 0;
             return CE_Failure;
         }

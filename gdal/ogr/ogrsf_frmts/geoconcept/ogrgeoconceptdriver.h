@@ -45,7 +45,7 @@ public:
     const char*    GetName( ) override;
     OGRDataSource* Open( const char* pszName, int bUpdate = FALSE ) override;
     int            TestCapability( const char* pszCap ) override;
-    OGRDataSource* CreateDataSource( const char* pszName, char** papszOptions = NULL ) override;
+    OGRDataSource* CreateDataSource( const char* pszName, char** papszOptions = nullptr ) override;
     OGRErr         DeleteDataSource( const char* pszName ) override;
 };
 

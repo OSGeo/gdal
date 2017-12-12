@@ -125,7 +125,7 @@ bool CRS2Projection(const CPLString &crs,
                     OGRSpatialReference *sr,
                     char **projection);
 
-bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection = NULL);
+bool CRSImpliesAxisOrderSwap(const CPLString &crs, bool &swap, char **projection = nullptr);
     
 std::vector<std::vector<int> > ParseGridEnvelope(CPLXMLNode *node,
                                                 bool swap_the_first_two = false);

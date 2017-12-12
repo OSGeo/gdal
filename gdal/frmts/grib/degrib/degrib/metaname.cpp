@@ -337,7 +337,7 @@ const char *centerLookup (unsigned short int center)
          return Center[i].name;
       }
    }
-   return NULL;
+   return nullptr;
 }
 
 const char *subCenterLookup(unsigned short int center,
@@ -417,7 +417,7 @@ const char *subCenterLookup(unsigned short int center,
          return SubCenter[i].name;
       }
    }
-   return NULL;
+   return nullptr;
 }
 
 #ifdef unused_by_GDAL
@@ -866,6 +866,194 @@ static const GRIB2ParmTable MeteoStability[] = {
 /* 10 */   {"LFTX", "Surface lifted index", "K", UC_NONE},
 /* 11 */   {"4LFTX", "Best (4-layer) lifted index", "K", UC_NONE},
 /* 12 */   {"RI", "Richardson number", "-", UC_NONE},
+/* 13 */   {"SHWINX", "Showalter Index", "K", UC_NONE},
+/* 14 */   {"-", "Reserved", "-", UC_NONE},
+/* 15 */   {"UPHL", "Updraft Helicity", "m^2/s^2", UC_NONE},
+/* 16 */   {"BLKRN", "Bulk Richardson Number", "Numeric", UC_NONE},
+/* 17 */   {"GRDRN", "Gradient Richardson Number", "Numeric", UC_NONE},
+/* 18 */   {"FLXRN", "Flux Richardson Number", "Numeric", UC_NONE},
+/* 19 */   {"CONAPES", "Convective Available Potential Energy Shear", "m^2/s^2", UC_NONE},
+/* 20 */   {"-", "Reserved", "-", UC_NONE},
+/* 21 */   {"-", "Reserved", "-", UC_NONE},
+/* 22 */   {"-", "Reserved", "-", UC_NONE},
+/* 23 */   {"-", "Reserved", "-", UC_NONE},
+/* 24 */   {"-", "Reserved", "-", UC_NONE},
+/* 25 */   {"-", "Reserved", "-", UC_NONE},
+/* 26 */   {"-", "Reserved", "-", UC_NONE},
+/* 27 */   {"-", "Reserved", "-", UC_NONE},
+/* 28 */   {"-", "Reserved", "-", UC_NONE},
+/* 29 */   {"-", "Reserved", "-", UC_NONE},
+/* 30 */   {"-", "Reserved", "-", UC_NONE},
+/* 31 */   {"-", "Reserved", "-", UC_NONE},
+/* 32 */   {"-", "Reserved", "-", UC_NONE},
+/* 33 */   {"-", "Reserved", "-", UC_NONE},
+/* 34 */   {"-", "Reserved", "-", UC_NONE},
+/* 35 */   {"-", "Reserved", "-", UC_NONE},
+/* 36 */   {"-", "Reserved", "-", UC_NONE},
+/* 37 */   {"-", "Reserved", "-", UC_NONE},
+/* 38 */   {"-", "Reserved", "-", UC_NONE},
+/* 39 */   {"-", "Reserved", "-", UC_NONE},
+/* 40 */   {"-", "Reserved", "-", UC_NONE},
+/* 41 */   {"-", "Reserved", "-", UC_NONE},
+/* 42 */   {"-", "Reserved", "-", UC_NONE},
+/* 43 */   {"-", "Reserved", "-", UC_NONE},
+/* 44 */   {"-", "Reserved", "-", UC_NONE},
+/* 45 */   {"-", "Reserved", "-", UC_NONE},
+/* 46 */   {"-", "Reserved", "-", UC_NONE},
+/* 47 */   {"-", "Reserved", "-", UC_NONE},
+/* 48 */   {"-", "Reserved", "-", UC_NONE},
+/* 49 */   {"-", "Reserved", "-", UC_NONE},
+/* 50 */   {"-", "Reserved", "-", UC_NONE},
+/* 51 */   {"-", "Reserved", "-", UC_NONE},
+/* 52 */   {"-", "Reserved", "-", UC_NONE},
+/* 53 */   {"-", "Reserved", "-", UC_NONE},
+/* 54 */   {"-", "Reserved", "-", UC_NONE},
+/* 55 */   {"-", "Reserved", "-", UC_NONE},
+/* 56 */   {"-", "Reserved", "-", UC_NONE},
+/* 57 */   {"-", "Reserved", "-", UC_NONE},
+/* 58 */   {"-", "Reserved", "-", UC_NONE},
+/* 59 */   {"-", "Reserved", "-", UC_NONE},
+/* 60 */   {"-", "Reserved", "-", UC_NONE},
+/* 61 */   {"-", "Reserved", "-", UC_NONE},
+/* 62 */   {"-", "Reserved", "-", UC_NONE},
+/* 63 */   {"-", "Reserved", "-", UC_NONE},
+/* 64 */   {"-", "Reserved", "-", UC_NONE},
+/* 65 */   {"-", "Reserved", "-", UC_NONE},
+/* 66 */   {"-", "Reserved", "-", UC_NONE},
+/* 67 */   {"-", "Reserved", "-", UC_NONE},
+/* 68 */   {"-", "Reserved", "-", UC_NONE},
+/* 69 */   {"-", "Reserved", "-", UC_NONE},
+/* 70 */   {"-", "Reserved", "-", UC_NONE},
+/* 71 */   {"-", "Reserved", "-", UC_NONE},
+/* 72 */   {"-", "Reserved", "-", UC_NONE},
+/* 73 */   {"-", "Reserved", "-", UC_NONE},
+/* 74 */   {"-", "Reserved", "-", UC_NONE},
+/* 75 */   {"-", "Reserved", "-", UC_NONE},
+/* 76 */   {"-", "Reserved", "-", UC_NONE},
+/* 77 */   {"-", "Reserved", "-", UC_NONE},
+/* 78 */   {"-", "Reserved", "-", UC_NONE},
+/* 79 */   {"-", "Reserved", "-", UC_NONE},
+/* 80 */   {"-", "Reserved", "-", UC_NONE},
+/* 81 */   {"-", "Reserved", "-", UC_NONE},
+/* 82 */   {"-", "Reserved", "-", UC_NONE},
+/* 83 */   {"-", "Reserved", "-", UC_NONE},
+/* 84 */   {"-", "Reserved", "-", UC_NONE},
+/* 85 */   {"-", "Reserved", "-", UC_NONE},
+/* 86 */   {"-", "Reserved", "-", UC_NONE},
+/* 87 */   {"-", "Reserved", "-", UC_NONE},
+/* 88 */   {"-", "Reserved", "-", UC_NONE},
+/* 89 */   {"-", "Reserved", "-", UC_NONE},
+/* 90 */   {"-", "Reserved", "-", UC_NONE},
+/* 91 */   {"-", "Reserved", "-", UC_NONE},
+/* 92 */   {"-", "Reserved", "-", UC_NONE},
+/* 93 */   {"-", "Reserved", "-", UC_NONE},
+/* 94 */   {"-", "Reserved", "-", UC_NONE},
+/* 95 */   {"-", "Reserved", "-", UC_NONE},
+/* 96 */   {"-", "Reserved", "-", UC_NONE},
+/* 97 */   {"-", "Reserved", "-", UC_NONE},
+/* 98 */   {"-", "Reserved", "-", UC_NONE},
+/* 99 */   {"-", "Reserved", "-", UC_NONE},
+/* 100 */  {"-", "Reserved", "-", UC_NONE},
+/* 101 */  {"-", "Reserved", "-", UC_NONE},
+/* 102 */  {"-", "Reserved", "-", UC_NONE},
+/* 103 */  {"-", "Reserved", "-", UC_NONE},
+/* 104 */  {"-", "Reserved", "-", UC_NONE},
+/* 105 */  {"-", "Reserved", "-", UC_NONE},
+/* 106 */  {"-", "Reserved", "-", UC_NONE},
+/* 107 */  {"-", "Reserved", "-", UC_NONE},
+/* 108 */  {"-", "Reserved", "-", UC_NONE},
+/* 109 */  {"-", "Reserved", "-", UC_NONE},
+/* 110 */  {"-", "Reserved", "-", UC_NONE},
+/* 111 */  {"-", "Reserved", "-", UC_NONE},
+/* 112 */  {"-", "Reserved", "-", UC_NONE},
+/* 113 */  {"-", "Reserved", "-", UC_NONE},
+/* 114 */  {"-", "Reserved", "-", UC_NONE},
+/* 115 */  {"-", "Reserved", "-", UC_NONE},
+/* 116 */  {"-", "Reserved", "-", UC_NONE},
+/* 117 */  {"-", "Reserved", "-", UC_NONE},
+/* 118 */  {"-", "Reserved", "-", UC_NONE},
+/* 119 */  {"-", "Reserved", "-", UC_NONE},
+/* 120 */  {"-", "Reserved", "-", UC_NONE},
+/* 121 */  {"-", "Reserved", "-", UC_NONE},
+/* 122 */  {"-", "Reserved", "-", UC_NONE},
+/* 123 */  {"-", "Reserved", "-", UC_NONE},
+/* 124 */  {"-", "Reserved", "-", UC_NONE},
+/* 125 */  {"-", "Reserved", "-", UC_NONE},
+/* 126 */  {"-", "Reserved", "-", UC_NONE},
+/* 127 */  {"-", "Reserved", "-", UC_NONE},
+/* 128 */  {"-", "Reserved", "-", UC_NONE},
+/* 129 */  {"-", "Reserved", "-", UC_NONE},
+/* 130 */  {"-", "Reserved", "-", UC_NONE},
+/* 131 */  {"-", "Reserved", "-", UC_NONE},
+/* 132 */  {"-", "Reserved", "-", UC_NONE},
+/* 133 */  {"-", "Reserved", "-", UC_NONE},
+/* 134 */  {"-", "Reserved", "-", UC_NONE},
+/* 135 */  {"-", "Reserved", "-", UC_NONE},
+/* 136 */  {"-", "Reserved", "-", UC_NONE},
+/* 137 */  {"-", "Reserved", "-", UC_NONE},
+/* 138 */  {"-", "Reserved", "-", UC_NONE},
+/* 139 */  {"-", "Reserved", "-", UC_NONE},
+/* 140 */  {"-", "Reserved", "-", UC_NONE},
+/* 141 */  {"-", "Reserved", "-", UC_NONE},
+/* 142 */  {"-", "Reserved", "-", UC_NONE},
+/* 143 */  {"-", "Reserved", "-", UC_NONE},
+/* 144 */  {"-", "Reserved", "-", UC_NONE},
+/* 145 */  {"-", "Reserved", "-", UC_NONE},
+/* 146 */  {"-", "Reserved", "-", UC_NONE},
+/* 147 */  {"-", "Reserved", "-", UC_NONE},
+/* 148 */  {"-", "Reserved", "-", UC_NONE},
+/* 149 */  {"-", "Reserved", "-", UC_NONE},
+/* 150 */  {"-", "Reserved", "-", UC_NONE},
+/* 151 */  {"-", "Reserved", "-", UC_NONE},
+/* 152 */  {"-", "Reserved", "-", UC_NONE},
+/* 153 */  {"-", "Reserved", "-", UC_NONE},
+/* 154 */  {"-", "Reserved", "-", UC_NONE},
+/* 155 */  {"-", "Reserved", "-", UC_NONE},
+/* 156 */  {"-", "Reserved", "-", UC_NONE},
+/* 157 */  {"-", "Reserved", "-", UC_NONE},
+/* 158 */  {"-", "Reserved", "-", UC_NONE},
+/* 159 */  {"-", "Reserved", "-", UC_NONE},
+/* 160 */  {"-", "Reserved", "-", UC_NONE},
+/* 161 */  {"-", "Reserved", "-", UC_NONE},
+/* 162 */  {"-", "Reserved", "-", UC_NONE},
+/* 163 */  {"-", "Reserved", "-", UC_NONE},
+/* 164 */  {"-", "Reserved", "-", UC_NONE},
+/* 165 */  {"-", "Reserved", "-", UC_NONE},
+/* 166 */  {"-", "Reserved", "-", UC_NONE},
+/* 167 */  {"-", "Reserved", "-", UC_NONE},
+/* 168 */  {"-", "Reserved", "-", UC_NONE},
+/* 169 */  {"-", "Reserved", "-", UC_NONE},
+/* 170 */  {"-", "Reserved", "-", UC_NONE},
+/* 171 */  {"-", "Reserved", "-", UC_NONE},
+/* 172 */  {"-", "Reserved", "-", UC_NONE},
+/* 173 */  {"-", "Reserved", "-", UC_NONE},
+/* 174 */  {"-", "Reserved", "-", UC_NONE},
+/* 175 */  {"-", "Reserved", "-", UC_NONE},
+/* 176 */  {"-", "Reserved", "-", UC_NONE},
+/* 177 */  {"-", "Reserved", "-", UC_NONE},
+/* 178 */  {"-", "Reserved", "-", UC_NONE},
+/* 179 */  {"-", "Reserved", "-", UC_NONE},
+/* 180 */  {"-", "Reserved", "-", UC_NONE},
+/* 181 */  {"-", "Reserved", "-", UC_NONE},
+/* 182 */  {"-", "Reserved", "-", UC_NONE},
+/* 183 */  {"-", "Reserved", "-", UC_NONE},
+/* 184 */  {"-", "Reserved", "-", UC_NONE},
+/* 185 */  {"-", "Reserved", "-", UC_NONE},
+/* 186 */  {"-", "Reserved", "-", UC_NONE},
+/* 187 */  {"-", "Reserved", "-", UC_NONE},
+/* 188 */  {"-", "Reserved", "-", UC_NONE},
+/* 189 */  {"-", "Reserved", "-", UC_NONE},
+/* 190 */  {"-", "Reserved", "-", UC_NONE},
+/* 191 */  {"-", "Reserved", "-", UC_NONE},
+/* 192 */  {"LFTX", "Surface Lifted Index", "K", UC_NONE},
+/* 193 */  {"4LFTX", "Best (4 layer) Lifted Index", "K", UC_NONE},
+/* 194 */  {"RI", "Richardson Number", "Numeric", UC_NONE},
+/* 195 */  {"CWDI", "Convective Weather Detection Index", "-", UC_NONE},
+/* 196 */  {"UVI", "Ultra Violet Index", "W/m^2", UC_NONE},
+/* 197 */  {"UPHL", "Updraft Helicity", "m^2/s^2", UC_NONE},
+/* 198 */  {"LAI", "Leaf Area Index", "Numeric", UC_NONE},
+/* 199 */  {"MXUPHL", "Hourly Maximum of Updraft Helicity over Layer 2km to 5 km AGL", "m^2/s^2", UC_NONE},
+/* 200 */  {"MNUPHL", "Hourly Minimum of Updraft Helicity", "m^2/s^2", UC_NONE},
 };
 
 /* GRIB2 Code table 4.2 : 0.13 */
@@ -1383,7 +1571,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
             case METEO_MOMENT_PROB:
             case METEO_MASS_PROB:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
             case METEO_AEROSOL:
                *tableLen = sizeof (MeteoAerosols) / sizeof (GRIB2ParmTable);
                return &MeteoAerosols[0];
@@ -1398,7 +1586,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &MeteoRadarImagery[0];
             case METEO_ELECTRO:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
             case METEO_NUCLEAR:
                *tableLen = sizeof (MeteoNuclear) / sizeof (GRIB2ParmTable);
                return &MeteoNuclear[0];
@@ -1417,7 +1605,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &MeteoMisc[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 1:          /* Hydro type. */
          switch (cat) {
@@ -1429,7 +1617,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &HydroProb[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 2:          /* Land type. */
          switch (cat) {
@@ -1441,7 +1629,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &LandSoil[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 3:          /* Space type. */
          switch (cat) {
@@ -1454,7 +1642,7 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &SpaceQuantitative[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 10:         /* ocean type. */
          switch (cat) {
@@ -1475,11 +1663,11 @@ static const GRIB2ParmTable *Choose_GRIB2ParmTable (int prodType, int cat,
                return &OceanMisc[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       default:
          *tableLen = 0;
-         return NULL;
+         return nullptr;
    }
 }
 
@@ -2141,14 +2329,14 @@ static const GRIB2LocalTable *Choose_LocalParmTable (unsigned short int center,
                return &NDFD_LclTable[0];
             default:
                *tableLen = 0;
-               return NULL;
+               return nullptr;
          }
       case 161:
          *tableLen = sizeof (MRMS_LclTable) / sizeof (GRIB2LocalTable);
          return &MRMS_LclTable[0];
       default:
          *tableLen = 0;
-         return NULL;
+         return nullptr;
    }
 }
 
@@ -2387,10 +2575,10 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          /* The NDFD over-rides for probability templates have already been
@@ -2498,7 +2686,7 @@ static void ElemNameProb (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -2573,10 +2761,10 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          if (IsData_NDFD (center, subcenter) ||
@@ -2635,7 +2823,7 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -2793,10 +2981,10 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
    if (mstrVersion != 255) {
       table = Choose_GRIB2ParmTable (prodType, cat, &tableLen);
    } else {
-      table = NULL;
+      table = nullptr;
    }
    
-   if (table != NULL) {
+   if (table != nullptr) {
       if (subcat < tableLen) {
          /* Check for NDFD over-rides. */
          if (IsData_MOS (center, subcenter)) {
@@ -2899,7 +3087,7 @@ static void ElemNameNorm (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
 
    /* Local use tables. */
    local = Choose_LocalParmTable (center, subcenter, &tableLen);
-   if (local != NULL) {
+   if (local != nullptr) {
       for (i = 0; i < tableLen; i++) {
          if ((prodType == local[i].prodType) && (cat == local[i].cat) &&
              (subcat == local[i].subcat)) {
@@ -2957,9 +3145,9 @@ void ParseElemName (CPL_UNUSED uChar mstrVersion, uShort2 center, uShort2 subcen
                     sChar f_sndValue, double sndSurfValue)
 {
    char f_isNdfd = IsData_NDFD (center, subcenter);
-   myAssert (*name == NULL);
-   myAssert (*comment == NULL);
-   myAssert (*unit == NULL);
+   myAssert (*name == nullptr);
+   myAssert (*comment == nullptr);
+   myAssert (*unit == nullptr);
 
    /* Check if this is Probability data */
    if ((templat == GS4_PROBABIL_TIME) || (templat == GS4_PROBABIL_PNT)) {
@@ -3593,9 +3781,9 @@ void ParseLevelName (unsigned short int center, unsigned short int subcenter,
 
    /* Check if index is defined... 191 is undefined. */
    free (*shortLevelName);
-   *shortLevelName = NULL;
+   *shortLevelName = nullptr;
    free (*longLevelName);
-   *longLevelName = NULL;
+   *longLevelName = nullptr;
    snprintf (valBuff, sizeof(valBuff), "%f", value);
    strTrimRight (valBuff, '0');
    if (valBuff[strlen (valBuff) - 1] == '.') {

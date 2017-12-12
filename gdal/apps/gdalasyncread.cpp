@@ -57,9 +57,9 @@ static void Usage()
     {
         GDALDriverH hDriver = GDALGetDriver(iDr);
 
-        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL
+        if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr
             || GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY,
-                                    NULL ) != NULL )
+                                    nullptr ) != nullptr )
         {
             printf( "  %s: %s\n",
                     GDALGetDriverShortName( hDriver ),
@@ -76,23 +76,23 @@ int main( int argc, char ** argv )
 
 {
     GDALDatasetH        hSrcDS, hDstDS;
-    GDALDataset *       poSrcDS, *poDstDS = NULL;
+    GDALDataset *       poSrcDS, *poDstDS = nullptr;
     int                 i;
     int                 nRasterXSize, nRasterYSize;
-    const char          *pszSource=NULL, *pszDest=NULL, *pszFormat = "GTiff";
+    const char          *pszSource=nullptr, *pszDest=nullptr, *pszFormat = "GTiff";
     GDALDriverH         hDriver;
-    int                 *panBandList = NULL, nBandCount = 0, bDefBands = TRUE;
+    int                 *panBandList = nullptr, nBandCount = 0, bDefBands = TRUE;
     GDALDataType        eOutputType = GDT_Unknown;
     int                 nOXSize = 0, nOYSize = 0;
-    char                **papszCreateOptions = NULL;
-    char                **papszAsyncOptions = NULL;
+    char                **papszCreateOptions = nullptr;
+    char                **papszAsyncOptions = nullptr;
     int                 anSrcWin[4];
     int                 bQuiet = FALSE;
     GDALProgressFunc    pfnProgress = GDALTermProgress;
     int                 iSrcFileArg = -1, iDstFileArg = -1;
     int                 bMulti = FALSE;
     double              dfTimeout = -1.0;
-    const char          *pszOXSize = NULL, *pszOYSize = NULL;
+    const char          *pszOXSize = nullptr, *pszOYSize = nullptr;
 
     anSrcWin[0] = 0;
     anSrcWin[1] = 0;
@@ -136,7 +136,7 @@ int main( int argc, char ** argv )
         {
             for( int iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
                     && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
                              argv[i+1]) )
                 {
@@ -213,12 +213,12 @@ int main( int argc, char ** argv )
             GDALDestroyDriverManager();
             exit( 2 );
         }
-        else if( pszSource == NULL )
+        else if( pszSource == nullptr )
         {
             iSrcFileArg = i;
             pszSource = argv[i];
         }
-        else if( pszDest == NULL )
+        else if( pszDest == nullptr )
         {
             pszDest = argv[i];
             iDstFileArg = i;
@@ -233,7 +233,7 @@ int main( int argc, char ** argv )
         }
     }
 
-    if( pszDest == NULL )
+    if( pszDest == nullptr )
     {
         Usage();
         GDALDestroyDriverManager();
@@ -254,7 +254,7 @@ int main( int argc, char ** argv )
     hSrcDS = GDALOpenShared( pszSource, GA_ReadOnly );
     poSrcDS = (GDALDataset *) hSrcDS;
 
-    if( hSrcDS == NULL )
+    if( hSrcDS == nullptr )
     {
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
@@ -281,7 +281,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Establish output size.                                          */
 /* -------------------------------------------------------------------- */
-    if( pszOXSize == NULL )
+    if( pszOXSize == nullptr )
     {
         nOXSize = anSrcWin[2];
         nOYSize = anSrcWin[3];
@@ -354,25 +354,25 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName( pszFormat );
 
-    if( hDriver == NULL )
+    if( hDriver == nullptr )
     {
         printf( "Output driver `%s' not recognised.\n", pszFormat );
     }
-    else if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL )
+    else if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) == nullptr )
     {
         printf( "Output driver '%s' does not support direct creation.\n",
                 pszFormat );
-        hDriver = NULL;
+        hDriver = nullptr;
     }
 
-    if( hDriver == NULL )
+    if( hDriver == nullptr )
     {
         printf( "The following format drivers are configured and support output:\n" );
         for( int iDr = 0; iDr < GDALGetDriverCount(); iDr++ )
         {
             GDALDriverH hDriver = GDALGetDriver(iDr);
 
-            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) != NULL )
+            if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr )
             {
                 printf( "  %s: %s\n",
                         GDALGetDriverShortName( hDriver  ),
@@ -404,7 +404,7 @@ int main( int argc, char ** argv )
         nBandCount * GDALGetDataTypeSizeBytes(eOutputType);
     void *pImage = VSIMalloc3(nOXSize, nOYSize, nBytesPerPixel);
 
-    if( pImage == NULL )
+    if( pImage == nullptr )
     {
         printf( "Unable to allocate %dx%dx%d byte window buffer.\n",
                 nOXSize, nOYSize, nBytesPerPixel );
@@ -425,7 +425,7 @@ int main( int argc, char ** argv )
         nBandCount, panBandList,
         nPixelSpace, nLineSpace, nBandSpace, papszAsyncOptions );
 
-    if( poAsyncReq == NULL )
+    if( poAsyncReq == nullptr )
         exit( 1 );
 
 /* -------------------------------------------------------------------- */
@@ -435,14 +435,14 @@ int main( int argc, char ** argv )
     CPLErr eErr = CE_None;
     int iMultiCounter = 0;
 
-    hDstDS = NULL;
+    hDstDS = nullptr;
 
     do
     {
 /* ==================================================================== */
 /*      Create the output file, and initialize if needed.               */
 /* ==================================================================== */
-        if( hDstDS == NULL )
+        if( hDstDS == nullptr )
         {
             CPLString osOutFilename = pszDest;
 
@@ -452,7 +452,7 @@ int main( int argc, char ** argv )
             hDstDS = GDALCreate( hDriver, osOutFilename, nOXSize, nOYSize,
                                  nBandCount, eOutputType,
                                  papszCreateOptions );
-            if (hDstDS == NULL)
+            if (hDstDS == nullptr)
             {
                 exit(1);
             }
@@ -516,8 +516,8 @@ int main( int argc, char ** argv )
                                + nUpXOff * nPixelSpace
                                + nUpYOff * nLineSpace,
                                nUpXSize, nUpYSize, eOutputType,
-                               nBandCount, NULL,
-                               nPixelSpace, nLineSpace, nBandSpace, NULL );
+                               nBandCount, nullptr,
+                               nPixelSpace, nLineSpace, nBandSpace, nullptr );
         poAsyncReq->UnlockBuffer();
 
 /* -------------------------------------------------------------------- */
@@ -527,7 +527,7 @@ int main( int argc, char ** argv )
         if( bMulti )
         {
             GDALClose( hDstDS );
-            hDstDS = NULL;
+            hDstDS = nullptr;
         }
         else
         {

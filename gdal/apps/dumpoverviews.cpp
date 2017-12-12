@@ -63,7 +63,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      Process arguments.                                              */
 /* -------------------------------------------------------------------- */
-    const char *pszSrcFilename = NULL;
+    const char *pszSrcFilename = nullptr;
     int anReqOverviews[1000] = {};
     int nReqOverviewCount = 0;
     bool bMasks = false;
@@ -74,7 +74,7 @@ int main( int argc, char ** argv )
         {
             bMasks = true;
         }
-        else if( pszSrcFilename == NULL )
+        else if( pszSrcFilename == nullptr )
         {
             pszSrcFilename = argv[iArg];
         }
@@ -88,7 +88,7 @@ int main( int argc, char ** argv )
         }
     }
 
-    if( pszSrcFilename == NULL )
+    if( pszSrcFilename == nullptr )
         Usage();
 
 /* -------------------------------------------------------------------- */
@@ -96,7 +96,7 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
 
-    if( hSrcDS == NULL )
+    if( hSrcDS == nullptr )
         exit( 1 );
 
 /* ==================================================================== */
@@ -117,7 +117,7 @@ int main( int argc, char ** argv )
         {
             GDALRasterBandH hSrcOver = GDALGetOverview( hBaseBand, iOverview );
 
-            if( hSrcOver == NULL )
+            if( hSrcOver == nullptr )
             {
                 fprintf(stderr, "skipping overview %d as being null\n",
                         iOverview);
@@ -207,9 +207,9 @@ static void DumpBand( GDALDatasetH hBaseDS, GDALRasterBandH hSrcOver,
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
 
     GDALDatasetH hDstDS = GDALCreate( hDriver, pszName, nXSize, nYSize,
-                                      1, eDT, NULL );
+                                      1, eDT, nullptr );
 
-    if( hDstDS == NULL )
+    if( hDstDS == nullptr )
         exit( 1 );
 
 /* -------------------------------------------------------------------- */

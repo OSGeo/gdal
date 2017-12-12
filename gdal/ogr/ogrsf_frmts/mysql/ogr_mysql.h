@@ -246,9 +246,9 @@ class OGRMySQLDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 
@@ -259,7 +259,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
     // nonstandard
 
-    void                ReportError( const char * = NULL );
+    void                ReportError( const char * = nullptr );
 
     char               *LaunderName( const char * );
 

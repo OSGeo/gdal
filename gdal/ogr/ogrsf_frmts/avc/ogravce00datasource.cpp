@@ -40,9 +40,9 @@ CPL_CVSID("$Id$")
 
 OGRAVCE00DataSource::OGRAVCE00DataSource() :
     nLayers(0),
-    pszName(NULL),
-    psE00(NULL),
-    papoLayers(NULL)
+    pszName(nullptr),
+    psE00(nullptr),
+    papoLayers(nullptr)
 {}
 
 /************************************************************************/
@@ -55,7 +55,7 @@ OGRAVCE00DataSource::~OGRAVCE00DataSource()
     if( psE00 )
     {
         AVCE00ReadCloseE00( psE00 );
-        psE00 = NULL;
+        psE00 = nullptr;
     }
 
     CPLFree( pszName );
@@ -85,7 +85,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
     psE00 = AVCE00ReadOpenE00(pszNewName);
 
     if( CPLGetLastErrorNo() == CPLE_OpenFailed
-        && strstr(CPLGetLastErrorMsg(), "compressed E00") != NULL )
+        && strstr(CPLGetLastErrorMsg(), "compressed E00") != nullptr )
     {
         bCompressed = true;
     }
@@ -96,7 +96,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
         CPLErrorReset();
     }
 
-    if( psE00 == NULL )
+    if( psE00 == nullptr )
     {
         if( bCompressed )
         {
@@ -206,7 +206,7 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -216,10 +216,10 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 /************************************************************************/
 OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
 {
-    if (poSRS != NULL)
+    if (poSRS != nullptr)
         return poSRS;
-    if (psE00 == NULL)
-        return NULL;
+    if (psE00 == nullptr)
+        return nullptr;
 
     for( int iSection = 0; iSection < psE00->numSections; iSection++ )
     {
@@ -235,7 +235,7 @@ OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to parse PRJ section, ignoring." );
                 delete poSRS;
-                poSRS = NULL;
+                poSRS = nullptr;
             }
             break;
         }

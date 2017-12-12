@@ -263,7 +263,7 @@ int CPCIDSKBitmap::ReadBlock( int block_index, void *buffer,
         }
 
         wrk_buffer = (uint8 *) malloc((size_t) block_size);
-        if( wrk_buffer == NULL )
+        if( wrk_buffer == nullptr )
             return ThrowPCIDSKException(0, "Out of memory allocating %d bytes in CPCIDSKBitmap::ReadBlock()", 
                                   (int) block_size );
     }

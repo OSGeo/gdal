@@ -42,7 +42,7 @@ PostGISRasterTileRasterBand::PostGISRasterTileRasterBand(
     PostGISRasterTileDataset * poRTDSIn, int nBandIn,
     GDALDataType eDataTypeIn, GBool bIsOfflineIn) :
     bIsOffline(bIsOfflineIn),
-    poSource(NULL)
+    poSource(nullptr)
 {
     // Basic properties.
     poDS = poRTDSIn;
@@ -77,7 +77,7 @@ PostGISRasterTileRasterBand::~PostGISRasterTileRasterBand()
 GBool PostGISRasterTileRasterBand::IsCached()
 {
     GDALRasterBlock * poBlock = TryGetLockedBlockRef(0, 0);
-    if (poBlock != NULL) {
+    if (poBlock != nullptr) {
         poBlock->DropLock();
         return true;
     }
@@ -93,7 +93,7 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                                                void * pImage)
 {
     CPLString osCommand;
-    PGresult * poResult = NULL;
+    PGresult * poResult = nullptr;
     int nWKBLength = 0;
 
     int nPixelSize = GDALGetDataTypeSize(eDataType)/8;
@@ -127,7 +127,7 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
              osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
 #endif
 
-    if (poResult == NULL ||
+    if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
         PQntuples(poResult) <= 0) {
 

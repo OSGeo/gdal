@@ -43,7 +43,7 @@ DDFRecordIndex::DDFRecordIndex() :
     nRecordMax(0),
     nLastObjlPos(0),
     nLastObjl(0),
-    pasRecords(NULL)
+    pasRecords(nullptr)
 {}
 
 /************************************************************************/
@@ -83,7 +83,7 @@ void DDFRecordIndex::Clear()
     nLastObjl = 0;
 
     CPLFree( pasRecords );
-    pasRecords = NULL;
+    pasRecords = nullptr;
 }
 
 /************************************************************************/
@@ -109,7 +109,7 @@ void DDFRecordIndex::AddRecord( int nKey, DDFRecord * poRecord )
 
     pasRecords[nRecordCount].nKey = nKey;
     pasRecords[nRecordCount].poRecord = poRecord;
-    pasRecords[nRecordCount].pClientData = NULL;
+    pasRecords[nRecordCount].pClientData = nullptr;
 
     nRecordCount++;
 }
@@ -146,7 +146,7 @@ DDFRecord * DDFRecordIndex::FindRecord( int nKey )
             return pasRecords[nTestIndex].poRecord;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -183,7 +183,7 @@ DDFRecord * DDFRecordIndex::FindRecordByObjl( int nObjl )
     nLastObjlPos=0;
     nLastObjl=0;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -283,7 +283,7 @@ DDFRecord * DDFRecordIndex::GetByIndex( int nIndex )
         Sort();
 
     if( nIndex < 0 || nIndex >= nRecordCount )
-        return NULL;
+        return nullptr;
 
     return pasRecords[nIndex].poRecord;
 }
@@ -299,7 +299,7 @@ void * DDFRecordIndex::GetClientInfoByIndex( int nIndex )
         Sort();
 
     if( nIndex < 0 || nIndex >= nRecordCount )
-        return NULL;
+        return nullptr;
 
     return pasRecords[nIndex].pClientData;
 }

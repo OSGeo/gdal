@@ -84,7 +84,7 @@ class CPL_DLL GMLPropertyDefn
 
 public:
 
-        GMLPropertyDefn( const char *pszName, const char *pszSrcElement=NULL );
+        GMLPropertyDefn( const char *pszName, const char *pszSrcElement=nullptr );
        ~GMLPropertyDefn();
 
     const char *GetName() const { return m_pszName; }
@@ -257,7 +257,7 @@ public:
 
     void            SetPropertyDirectly( int i, char *pszValue );
 
-    const GMLProperty*GetProperty( int i ) const { return (i >= 0 && i < m_nPropertyCount) ? &m_pasProperties[i] : NULL; }
+    const GMLProperty*GetProperty( int i ) const { return (i >= 0 && i < m_nPropertyCount) ? &m_pasProperties[i] : nullptr; }
 
     const char      *GetFID() const { return m_pszFID; }
     void             SetFID( const char *pszFID );
@@ -295,12 +295,12 @@ class CPL_DLL IGMLReader
     virtual GMLFeature *NextFeature() = 0;
     virtual void       ResetReading() = 0;
 
-    virtual bool LoadClasses( const char *pszFile = NULL ) = 0;
-    virtual bool SaveClasses( const char *pszFile = NULL ) = 0;
+    virtual bool LoadClasses( const char *pszFile = nullptr ) = 0;
+    virtual bool SaveClasses( const char *pszFile = nullptr ) = 0;
 
     virtual bool ResolveXlinks( const char *pszFile,
                                 bool* pbOutIsTempFile,
-                                char **papszSkip = NULL,
+                                char **papszSkip = nullptr,
                                 const bool bStrict = false ) = 0;
 
     virtual bool HugeFileResolver( const char *pszFile,

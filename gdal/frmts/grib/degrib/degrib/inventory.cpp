@@ -26,7 +26,9 @@
 #include "tendian.h"
 #include "degrib2.h"
 #include "degrib1.h"
+#ifdef ENABLE_TDLPACK
 #include "tdlpack.h"
+#endif
 #include "myerror.h"
 #include "myutil.h"
 #include "myassert.h"
@@ -77,15 +79,15 @@ typedef union {
 void GRIB2InventoryFree (inventoryType *inv)
 {
    free (inv->element);
-   inv->element = NULL;
+   inv->element = nullptr;
    free (inv->comment);
-   inv->comment = NULL;
+   inv->comment = nullptr;
    free (inv->unitName);
-   inv->unitName = NULL;
+   inv->unitName = nullptr;
    free (inv->shortFstLevel);
-   inv->shortFstLevel = NULL;
+   inv->shortFstLevel = nullptr;
    free (inv->longFstLevel);
-   inv->longFstLevel = NULL;
+   inv->longFstLevel = nullptr;
 }
 
 /*****************************************************************************
@@ -132,7 +134,7 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       Clock_Print (validTime, 25, Inv[i].validTime, "%m/%d/%Y %H:%M", 0);
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
-      if (Inv[i].comment == NULL) {
+      if (Inv[i].comment == nullptr) {
          printf ("%u.%u, %d, %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
@@ -288,7 +290,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
           }
       }
       char* buffnew = (char *) realloc ((void *) *buff, *secLen * sizeof (char));
-      if( buffnew == NULL )
+      if( buffnew == nullptr )
       {
            errSprintf ("ERROR: Ran out of memory in GRIB2SectToBuffer\n");
            return -1;
@@ -965,7 +967,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
    char *buff;          /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
-   char *buffer = NULL; /* Holds a given section. */
+   char *buffer = nullptr; /* Holds a given section. */
    uInt4 bufferLen = 0; /* Size of buffer. */
    inventoryType *inv;  /* Local ptr to Inv to reduce ptr confusion. */
    inventoryType *lastInv; /* Used to point to last inventory record when
@@ -1007,7 +1009,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
 	 */
    msgNum = *MsgNum;
 
-   buff = NULL;
+   buff = nullptr;
    buffLen = 0;
    while ((c = fp.DataSourceFgetc()) != EOF) {
 		 fp.DataSourceUngetc(c);
@@ -1040,7 +1042,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             return -2;
          } else {
             /* Handle case where there are trailing bytes. */
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             printf ("Warning: Inside GRIB2Inventory, Message # %d\n",
                     msgNum);
             printf ("%s", msg);
@@ -1073,11 +1075,11 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       inv->msgNum = msgNum;
       inv->subgNum = 0;
       inv->start = offset;
-      inv->element = NULL;
-      inv->comment = NULL;
-      inv->unitName = NULL;
-      inv->shortFstLevel = NULL;
-      inv->longFstLevel = NULL;
+      inv->element = nullptr;
+      inv->comment = nullptr;
+      inv->unitName = nullptr;
+      inv->shortFstLevel = nullptr;
+      inv->longFstLevel = nullptr;
 
       if (version == 1) {
          if (GRIB1_Inventory (fp, gribLen, inv) != 0) {
@@ -1087,6 +1089,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             //fclose (fp);
             return -12;
          }
+#ifdef ENABLE_TDLPACK
       } else if (version == -1) {
          if (TDLP_Inventory (fp, gribLen, inv) != 0) {
             preErrSprintf ("Inside GRIB2Inventory \n");
@@ -1095,6 +1098,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
             //fclose (fp);
             return -13;
          }
+#endif
       } else {
          word.li = sect0[1];
          prodType = word.buffer[2];
@@ -1185,11 +1189,11 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
                inv->msgNum = msgNum;
                inv->subgNum = lastInv->subgNum + 1;
                inv->start = offset;
-               inv->element = NULL;
-               inv->comment = NULL;
-               inv->unitName = NULL;
-               inv->shortFstLevel = NULL;
-               inv->longFstLevel = NULL;
+               inv->element = nullptr;
+               inv->comment = nullptr;
+               inv->unitName = nullptr;
+               inv->shortFstLevel = nullptr;
+               inv->longFstLevel = nullptr;
 
                word.li = sect0[1];
                prodType = word.buffer[2];
@@ -1205,6 +1209,7 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
       {
       uInt4 increment;
       /* Continue on to the next GRIB2 message. */
+#ifdef ENABLE_TDLPACK
       if (version == -1) {
          /* TDLPack uses 4 bytes for FORTRAN record size, then another 8
           * bytes for the size of the record (so FORTRAN can see it), then
@@ -1213,7 +1218,9 @@ int GRIB2Inventory (DataSource &fp, inventoryType **Inv, uInt4 *LenInv,
           * in_ the gribLen the non-rounded amount, so we need to take care
           * of the rounding, and the trailing 4 bytes here. */
          increment = buffLen + ((uInt4) ceil (gribLen / 8.0)) * 8 + 4;
-      } else {
+      } else
+#endif
+      {
          increment = buffLen + gribLen;
       }
       if( increment < buffLen || increment > (uInt4)(INT_MAX - offset) )
@@ -1240,7 +1247,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
    char *buff;          /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
-   char *buffer = NULL; /* Holds a given section. */
+   char *buffer = nullptr; /* Holds a given section. */
    uInt4 bufferLen = 0; /* Size of buffer. */
    /* wordType word; */       /* Used to parse the prodType out of Sect 0. */
    int ans;             /* The return error code of ReadSect0. */
@@ -1266,7 +1273,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
       //}
 		  //fp = DataSource(filename);
       ptr = strrchr (filename, '.');
-      if (ptr != NULL) {
+      if (ptr != nullptr) {
          if (strcmp (ptr, ".tar") == 0) {
             grib_limit = 5000;
          }
@@ -1276,7 +1283,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
    //}
    msgNum = 0;
 
-   buff = NULL;
+   buff = nullptr;
    buffLen = 0;
    while ((c = fp.DataSourceFgetc()) != EOF) {
 		 fp.DataSourceUngetc(c);
@@ -1300,7 +1307,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             return -2;
          } else {
             /* Handle case where there are trailing bytes. */
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             printf ("Warning: Inside GRIB2RefTime, Message # %d\n", msgNum);
             printf ("%s", msg);
             free (msg);
@@ -1327,6 +1334,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             //fclose (fp);
             return -12;
          }
+#ifdef ENABLE_TDLPACK
       } else if (version == -1) {
          if (TDLP_RefTime (fp, gribLen, &(refTime1)) != 0) {
             preErrSprintf ("Inside TDLP_RefTime\n");
@@ -1335,6 +1343,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             //fclose (fp);
             return -13;
          }
+#endif
       } else {
           /* word.li = sect0[1]; */
          /* prodType = word.buffer[2]; */

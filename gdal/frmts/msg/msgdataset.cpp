@@ -65,7 +65,7 @@ const char *MSGDataset::metadataDomain = "msg"; // the metadata domain
 MSGDataset::MSGDataset()
 
 {
-  poTransform = NULL;
+  poTransform = nullptr;
   pszProjection = CPLStrdup("");
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -82,7 +82,7 @@ MSGDataset::MSGDataset()
 MSGDataset::~MSGDataset()
 
 {
-  if( poTransform != NULL )
+  if( poTransform != nullptr )
     delete poTransform;
 
   CPLFree( pszProjection );
@@ -131,8 +131,8 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*     Does this look like a MSG file                                   */
 /* -------------------------------------------------------------------- */
-    //if( poOpenInfo->fp == NULL)
-    //  return NULL;
+    //if( poOpenInfo->fp == nullptr)
+    //  return nullptr;
     // Do not touch the fp .. it will close by itself if not null after we return (whether it is recognized as HRIT or not)
 
     std::string command_line (poOpenInfo->pszFilename);
@@ -143,7 +143,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (sErr.compare("-") != 0) // this driver does not recognize this format .. be silent and return false so that another driver can try
           CPLError( CE_Failure, CPLE_AppDefined, "%s", (sErr+"\n").c_str() );
-        return FALSE;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -188,7 +188,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         std::string l_sErr = "The prologue of the data set could not be found at the location specified:\n" + sPrologueFileName + "\n";
         CPLError( CE_Failure, CPLE_AppDefined, "%s",
                   l_sErr.c_str() );
-        return FALSE;
+        return nullptr;
     }
 
 // We're confident the string is formatted as an MSG command_line
@@ -281,7 +281,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*   Create a transformer to LatLon (only for Reflectance calculation)  */
 /* -------------------------------------------------------------------- */
 
-    char *pszLLTemp = NULL;
+    char *pszLLTemp = nullptr;
 
     (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
     char *pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
@@ -315,7 +315,7 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The MSG driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -557,7 +557,7 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
           }
 
           unsigned char* ibuf = new (std::nothrow) unsigned char[nb_ibytes];
-          if (ibuf == NULL )
+          if (ibuf == nullptr )
           {
              CPLError( CE_Failure, CPLE_AppDefined,
                   "Not enough memory to perform wavelet decompression\n");
@@ -740,7 +740,7 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
                 {
       double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // X, in "geos" meters
       double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // Y, in "geos" meters
-      if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
+      if ((poGDS->poTransform != nullptr) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
               return m_rc->rGetReflectance(rRadiance, rLat, rLon);
                         else
                                 return 0;
@@ -765,7 +765,7 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 void GDALRegister_MSG()
 
 {
-    if( GDALGetDriverByName( "MSG" ) != NULL )
+    if( GDALGetDriverByName( "MSG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

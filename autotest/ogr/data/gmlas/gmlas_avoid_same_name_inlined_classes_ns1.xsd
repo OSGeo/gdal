@@ -1,0 +1,14 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:ns1="http://ns1"
+              targetNamespace="http://ns1"
+              elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:element name="dt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="val" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

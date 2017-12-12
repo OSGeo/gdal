@@ -216,15 +216,15 @@ public:
     explicit TerragenRasterBand(TerragenDataset*);
     virtual ~TerragenRasterBand()
     {
-        if(m_pvLine != NULL)
+        if(m_pvLine != nullptr)
             CPLFree(m_pvLine);
     }
 
     // Geomeasure support.
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual const char* GetUnitType() override;
-    virtual double GetOffset(int* pbSuccess = NULL) override;
-    virtual double GetScale(int* pbSuccess = NULL) override;
+    virtual double GetOffset(int* pbSuccess = nullptr) override;
+    virtual double GetScale(int* pbSuccess = nullptr) override;
 
     virtual CPLErr IWriteBlock( int, int, void * ) override;
     virtual CPLErr SetUnitType( const char* ) override;
@@ -259,7 +259,7 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     //CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
+    CPLAssert( pImage != nullptr );
 
     TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
 
@@ -321,7 +321,7 @@ const char *TerragenRasterBand::GetUnitType()
 double TerragenRasterBand::GetScale(int* pbSuccess)
 {
     const TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
     return ds.m_dScale;
@@ -334,7 +334,7 @@ double TerragenRasterBand::GetScale(int* pbSuccess)
 double TerragenRasterBand::GetOffset(int* pbSuccess)
 {
     const TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
     return ds.m_dOffset;
@@ -352,8 +352,8 @@ CPLErr TerragenRasterBand::IWriteBlock
 )
 {
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
-    CPLAssert( m_pvLine != NULL );
+    CPLAssert( pImage != nullptr );
+    CPLAssert( m_pvLine != nullptr );
 
     const size_t pixelsize = sizeof(GInt16);
 
@@ -429,12 +429,12 @@ TerragenDataset::TerragenDataset() :
     m_dGroundScale(0.0),
     m_dMetersPerGroundUnit(1.0),
     m_dMetersPerElevUnit(1.0),
-    m_fp(NULL),
+    m_fp(nullptr),
     m_nDataOffset(0),
     m_nHeightScale(0),
     m_nBaseHeight(0),
-    m_pszFilename(NULL),
-    m_pszProjection(NULL),
+    m_pszFilename(nullptr),
+    m_pszProjection(nullptr),
     m_bIsGeo(false)
 {
     m_dLogSpan[0] = 0.0;
@@ -465,7 +465,7 @@ TerragenDataset::~TerragenDataset()
     CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);
 
-    if( m_fp != NULL )
+    if( m_fp != nullptr )
         VSIFCloseL( m_fp );
 }
 
@@ -884,7 +884,7 @@ CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
 
 const char* TerragenDataset::GetProjectionRef(void)
 {
-    if(m_pszProjection == NULL )
+    if(m_pszProjection == nullptr )
         return "";
 
     return m_pszProjection;
@@ -935,11 +935,11 @@ GDALDataset* TerragenDataset::Create
     //      Verify input options.
     // --------------------------------------------------------------------
     const char* pszValue = CSLFetchNameValue( papszOptions,"MINUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[0] = CPLAtof( pszValue );
 
     pszValue = CSLFetchNameValue( papszOptions,"MAXUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
     if( poDS->m_dLogSpan[1] <= poDS->m_dLogSpan[0] )
@@ -948,7 +948,7 @@ GDALDataset* TerragenDataset::Create
               "Inverted, flat, or unspecified span for Terragen file." );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( eType != GDT_Float32 )
@@ -959,7 +959,7 @@ GDALDataset* TerragenDataset::Create
                   GDALGetDataTypeName(eType) );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( nBands != 1 )
@@ -969,7 +969,7 @@ GDALDataset* TerragenDataset::Create
                   nBands );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 // --------------------------------------------------------------------
@@ -978,13 +978,13 @@ GDALDataset* TerragenDataset::Create
 
     poDS->m_fp = VSIFOpenL( pszFilename, "wb+" );
 
-    if( poDS->m_fp == NULL )
+    if( poDS->m_fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = nXSize;
@@ -1015,11 +1015,11 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     // The file should have at least 32 header bytes
     if( poOpenInfo->nHeaderBytes < 32 )
-        return NULL;
+        return nullptr;
 
     if( !EQUALN(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ),
                 "TERRAGENTERRAIN ", 16) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1032,13 +1032,13 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
-    if( poDS->m_fp == NULL )
+    if( poDS->m_fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to re-open %s within Terragen driver.\n",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -1048,7 +1048,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->LoadFromFile() )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1079,7 +1079,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_Terragen()
 
 {
-    if( GDALGetDriverByName( "Terragen" ) != NULL )
+    if( GDALGetDriverByName( "Terragen" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

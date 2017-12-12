@@ -1,0 +1,28 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:other_ns="http://other_ns"
+           xmlns:gml="http://fake_gml"
+           targetNamespace="http://other_ns"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+<xs:import namespace="http://fake_gml" schemaLocation="gmlas_test_targetelement_fake_gml.xsd"/>
+
+<xs:element name="target_elt_with_required_id" substitutionGroup="gml:_Feature">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="attr" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="target_elt_with_optional_id" substitutionGroup="gml:_Feature">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="attr" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

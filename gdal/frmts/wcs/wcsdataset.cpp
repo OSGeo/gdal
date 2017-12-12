@@ -51,14 +51,14 @@ using namespace WCSUtils;
 WCSDataset::WCSDataset(int version, const char *cache_dir) :
     m_cache_dir(cache_dir),
     bServiceDirty(false),
-    psService(NULL),
-    papszSDSModifiers(NULL),
+    psService(nullptr),
+    papszSDSModifiers(nullptr),
     m_Version(version),
-    pszProjection(NULL),
+    pszProjection(nullptr),
     native_crs(true),
     axis_order_swap(false),
-    pabySavedDataBuffer(NULL),
-    papszHttpOptions(NULL),
+    pabySavedDataBuffer(nullptr),
+    papszHttpOptions(nullptr),
     nMaxCols(-1),
     nMaxRows(-1)
 {
@@ -69,8 +69,8 @@ WCSDataset::WCSDataset(int version, const char *cache_dir) :
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
-    apszCoverageOfferingMD[0] = NULL;
-    apszCoverageOfferingMD[1] = NULL;
+    apszCoverageOfferingMD[0] = nullptr;
+    apszCoverageOfferingMD[1] = nullptr;
 }
 
 /************************************************************************/
@@ -90,7 +90,7 @@ WCSDataset::~WCSDataset()
     CPLDestroyXMLNode( psService );
 
     CPLFree( pszProjection );
-    pszProjection = NULL;
+    pszProjection = nullptr;
 
     CSLDestroy( papszHttpOptions );
     CSLDestroy( papszSDSModifiers );
@@ -250,7 +250,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
         band_count = 0;
     }
 
-    CPLHTTPResult *psResult = NULL;
+    CPLHTTPResult *psResult = nullptr;
     CPLErr eErr =
         GetCoverage( nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                      band_count, panBandMap, &psResult );
@@ -263,7 +263,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     GDALDataset *poTileDS = GDALOpenResult( psResult );
 
-    if( poTileDS == NULL )
+    if( poTileDS == nullptr )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -303,7 +303,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
          iBand < nBandCount && eErr == CE_None;
          iBand++ )
     {
-        GDALRasterBand *poTileBand = NULL;
+        GDALRasterBand *poTileBand = nullptr;
 
         if( !osBandIdentifier.empty() )
             poTileBand = poTileDS->GetRasterBand( iBand + 1 );
@@ -314,7 +314,7 @@ WCSDataset::DirectRasterIO( CPL_UNUSED GDALRWFlag eRWFlag,
                                      0, 0, nBufXSize, nBufYSize,
                                      ((GByte *) pData) +
                                      iBand * nBandSpace, nBufXSize, nBufYSize,
-                                     eBufType, nPixelSpace, nLineSpace, NULL );
+                                     eBufType, nPixelSpace, nLineSpace, nullptr );
     }
 
 /* -------------------------------------------------------------------- */
@@ -351,7 +351,7 @@ CPLErr WCSDataset::GetCoverage( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
     CPLString osBandList;
 
-    if( !osBandIdentifier.empty() && nBandCount > 0 && panBandList != NULL )
+    if( !osBandIdentifier.empty() && nBandCount > 0 && panBandList != nullptr )
     {
         int iBand;
 
@@ -400,7 +400,7 @@ int WCSDataset::DescribeCoverage()
 /*      Fetch coverage description for this coverage.                   */
 /* -------------------------------------------------------------------- */
 
-    CPLXMLNode *psDC = NULL;
+    CPLXMLNode *psDC = nullptr;
 
     // if it is in cache, get it from there
     CPLString dc_filename = this->GetDescription(); // the WCS_GDAL file (<basename>.xml)
@@ -424,7 +424,7 @@ int WCSDataset::DescribeCoverage()
         psDC = CPLParseXMLString( (const char *) psResult->pabyData );
         CPLHTTPDestroyResult( psResult );
 
-        if( psDC == NULL ) {
+        if( psDC == nullptr ) {
             return FALSE;
         }
 
@@ -434,7 +434,7 @@ int WCSDataset::DescribeCoverage()
         }
     }
 
-    CPLStripXMLNamespace( psDC, NULL, TRUE );
+    CPLStripXMLNamespace( psDC, nullptr, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Did we get a CoverageOffering?                                  */
@@ -455,7 +455,7 @@ int WCSDataset::DescribeCoverage()
 /*      Duplicate the coverage offering, and insert into                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psNext = psCO->psNext;
-    psCO->psNext = NULL;
+    psCO->psNext = nullptr;
 
     CPLAddXMLChild( psService, CPLCloneXMLTree( psCO ) );
     bServiceDirty = true;
@@ -481,7 +481,7 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      There isn't much we can do in this case.  Hopefully an error    */
 /*      was already issued by CPLHTTPFetch()                            */
 /* -------------------------------------------------------------------- */
-    if( psResult == NULL || psResult->nDataLen == 0 )
+    if( psResult == nullptr || psResult->nDataLen == 0 )
     {
         CPLHTTPDestroyResult( psResult );
         return TRUE;
@@ -492,8 +492,8 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
 /*      message and report it verbatim up to a certain size limit.      */
 /* -------------------------------------------------------------------- */
 
-    if( psResult->pszContentType != NULL
-        && strstr(psResult->pszContentType, "html") != NULL )
+    if( psResult->pszContentType != nullptr
+        && strstr(psResult->pszContentType, "html") != nullptr )
     {
         CPLString osErrorMsg = (char *) psResult->pabyData;
 
@@ -518,9 +518,9 @@ int WCSDataset::ProcessError( CPLHTTPResult *psResult )
         CPLXMLNode *psTree = CPLParseXMLString( (const char *)
                                                 psResult->pabyData );
 
-        CPLStripXMLNamespace( psTree, NULL, TRUE );
+        CPLStripXMLNamespace( psTree, nullptr, TRUE );
 
-        const char *pszMsg = CPLGetXMLValue(psTree, this->ExceptionNodeName(), NULL);
+        const char *pszMsg = CPLGetXMLValue(psTree, this->ExceptionNodeName(), nullptr);
 
         if( pszMsg )
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -557,8 +557,8 @@ int WCSDataset::EstablishRasterDetails()
 {
     CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
 
-    const char* pszCols = CPLGetXMLValue( psCO, "dimensionLimit.columns", NULL );
-    const char* pszRows = CPLGetXMLValue( psCO, "dimensionLimit.rows", NULL );
+    const char* pszCols = CPLGetXMLValue( psCO, "dimensionLimit.columns", nullptr );
+    const char* pszRows = CPLGetXMLValue( psCO, "dimensionLimit.rows", nullptr );
     if( pszCols && pszRows )
     {
         nMaxCols = atoi(pszCols);
@@ -570,17 +570,17 @@ int WCSDataset::EstablishRasterDetails()
 /* -------------------------------------------------------------------- */
 /*      Do we already have bandcount and pixel type settings?           */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "BandCount", NULL ) != NULL
-        && CPLGetXMLValue( psService, "BandType", NULL ) != NULL )
+    if( CPLGetXMLValue( psService, "BandCount", nullptr ) != nullptr
+        && CPLGetXMLValue( psService, "BandType", nullptr ) != nullptr )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a small block of raster data.                             */
 /* -------------------------------------------------------------------- */
-    CPLHTTPResult *psResult = NULL;
+    CPLHTTPResult *psResult = nullptr;
     CPLErr eErr;
 
-    eErr = GetCoverage( 0, 0, 2, 2, 2, 2, 0, NULL, &psResult );
+    eErr = GetCoverage( 0, 0, 2, 2, 2, 2, 0, nullptr, &psResult );
     if( eErr != CE_None )
         return false;
 
@@ -589,7 +589,7 @@ int WCSDataset::EstablishRasterDetails()
 /* -------------------------------------------------------------------- */
     GDALDataset *poDS = GDALOpenResult( psResult );
 
-    if( poDS == NULL )
+    if( poDS == nullptr )
         return false;
 
     const char* pszPrj = poDS->GetProjectionRef();
@@ -610,7 +610,7 @@ int WCSDataset::EstablishRasterDetails()
         return false;
     }
 
-    if( CPLGetXMLValue(psService,"BandCount",NULL) == NULL )
+    if( CPLGetXMLValue(psService,"BandCount",nullptr) == nullptr )
         CPLCreateXMLElementAndValue(
             psService, "BandCount",
             CPLString().Printf("%d",poDS->GetRasterCount()));
@@ -649,7 +649,7 @@ void WCSDataset::FlushMemoryResult()
     if( pabySavedDataBuffer )
     {
         CPLFree( pabySavedDataBuffer );
-        pabySavedDataBuffer = NULL;
+        pabySavedDataBuffer = nullptr;
     }
 }
 
@@ -716,10 +716,10 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
     VSILFILE *fp = VSIFileFromMemBuffer( osResultFilename, pabyData, nDataLen,
                                      FALSE );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     VSIFCloseL( fp );
@@ -734,7 +734,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /*      If opening it in memory didn't work, perhaps we need to         */
 /*      write to a temp file on disk?                                   */
 /* -------------------------------------------------------------------- */
-    if( poDS == NULL )
+    if( poDS == nullptr )
     {
         CPLString osTempFilename;
         VSILFILE *fpTemp;
@@ -742,7 +742,7 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
         osTempFilename.Printf( "/tmp/%p_wcs.dat", this );
 
         fpTemp = VSIFOpenL( osTempFilename, "wb" );
-        if( fpTemp == NULL )
+        if( fpTemp == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to create temporary file:%s",
@@ -776,9 +776,9 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
     pabySavedDataBuffer = psResult->pabyData;
 
-    psResult->pabyData = NULL;
+    psResult->pabyData = nullptr;
 
-    if( poDS == NULL )
+    if( poDS == nullptr )
         FlushMemoryResult();
 
     CPLHTTPDestroyResult(psResult);
@@ -880,7 +880,7 @@ static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLStrin
             url = CPLURLAddKVP(url, pair[0], pair[1]);
         }
     }
-    char **options = NULL;
+    char **options = nullptr;
     const char *keys[] = {
         WCS_HTTP_OPTIONS
     };
@@ -892,13 +892,13 @@ static bool FetchCapabilities(GDALOpenInfo * poOpenInfo, CPLString url, CPLStrin
     }
     CPLHTTPResult *psResult = CPLHTTPFetch(url.c_str(), options);
     CSLDestroy(options);
-    if (psResult == NULL || psResult->nDataLen == 0) {
+    if (psResult == nullptr || psResult->nDataLen == 0) {
         CPLHTTPDestroyResult(psResult);
         return false;
     }
     CPLXMLTreeCloser doc(CPLParseXMLString((const char*)psResult->pabyData));
     CPLHTTPDestroyResult(psResult);
-    if (doc.get() == NULL) {
+    if (doc.get() == nullptr) {
         return false;
     }
     CPLXMLNode *capabilities = doc.get();
@@ -915,12 +915,12 @@ WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
                                                CPLString url)
 {
     CPLXMLTreeCloser doc(CPLParseXMLFile(path));
-    if (doc.get() == NULL) {
-        return NULL;
+    if (doc.get() == nullptr) {
+        return nullptr;
     }
     CPLXMLNode *capabilities = doc.getDocumentElement();
-    if (capabilities == NULL) {
-        return NULL;
+    if (capabilities == nullptr) {
+        return nullptr;
     }
     // get version, this version will overwrite the user's request
     int version_from_server = WCSParseVersion(CPLGetXMLValue(capabilities, "version", ""));
@@ -938,7 +938,7 @@ WCSDataset *WCSDataset::CreateFromCapabilities(CPLString cache,
     }
     if (poDS->ParseCapabilities(capabilities, url) != CE_None) {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->SetDescription(RemoveExt(path));
     poDS->TrySaveXML();
@@ -955,8 +955,8 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
     if (FileIsReadable(path)) {
         CPLXMLTreeCloser doc(CPLParseXMLFile((path).c_str()));
         CPLXMLNode *metadata = doc.get();
-        if (metadata == NULL) {
-            return NULL;
+        if (metadata == nullptr) {
+            return nullptr;
         }
         int version_from_metadata =
             WCSParseVersion(
@@ -964,7 +964,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
                     SearchChildWithValue(
                         SearchChildWithValue(metadata, "domain", ""),
                         "key", "WCS_GLOBAL#version"),
-                    NULL, ""));
+                    nullptr, ""));
         if (version_from_metadata == 201) {
             poDS = new WCSDataset201(cache);
         } else if (version_from_metadata/10 == 11) {
@@ -973,7 +973,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
             poDS = new WCSDataset100(cache);
         } else {
             CPLError(CE_Failure, CPLE_AppDefined, "The metadata does not contain version. RECREATE_META?");
-            return NULL;
+            return nullptr;
         }
         path = RemoveExt(RemoveExt(path));
         poDS->SetDescription(path);
@@ -982,10 +982,10 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
         // obviously there was an error
         // processing the Capabilities file
         // so we show it to the user
-        GByte *pabyOut = NULL;
+        GByte *pabyOut = nullptr;
         path = RemoveExt(RemoveExt(path)) + ".xml";
-        if( !VSIIngestFile( NULL, path, &pabyOut, NULL, -1 ) )
-            return NULL;
+        if( !VSIIngestFile( nullptr, path, &pabyOut, nullptr, -1 ) )
+            return nullptr;
         CPLString error = reinterpret_cast<char *>(pabyOut);
         if( error.size() > 2048 ) {
             error.resize( 2048 );
@@ -994,7 +994,7 @@ WCSDataset *WCSDataset::CreateFromMetadata(const CPLString &cache, CPLString pat
                   "Error:\n%s",
                   error.c_str() );
         CPLFree(pabyOut);
-        return NULL;
+        return nullptr;
     }
     return poDS;
 }
@@ -1010,17 +1010,17 @@ static WCSDataset *BootstrapGlobal(GDALOpenInfo * poOpenInfo, const CPLString &c
     // we should lock the cache for our use in case we need to add an entry
     bool cached;
     if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
-        return NULL; // error in cache
+        return nullptr; // error in cache
     }
     if (!cached) {
         filename = "XXXXX";
         if (AddEntryToCache(cache, url, filename, ".xml") != CE_None) {
             // release the cache lock
-            return NULL; // error in cache
+            return nullptr; // error in cache
         }
         if (!FetchCapabilities(poOpenInfo, url, filename)) {
             // release the cache lock
-            return NULL;
+            return nullptr;
         }
         // release the cache lock
         return WCSDataset::CreateFromCapabilities(cache, filename, url);
@@ -1050,10 +1050,10 @@ static void CreateServiceMetadata(const CPLString &coverage,
     // remove other subdatasets than the current
     int subdataset = 0;
     CPLXMLNode *domain = SearchChildWithValue(metadata, "domain", "SUBDATASETS");
-    if (domain == NULL) {
+    if (domain == nullptr) {
         return;
     }
-    for (CPLXMLNode *node = domain->psChild; node != NULL; node = node->psNext) {
+    for (CPLXMLNode *node = domain->psChild; node != nullptr; node = node->psNext) {
         if (node->eType != CXT_Element) {
             continue;
         }
@@ -1061,7 +1061,7 @@ static void CreateServiceMetadata(const CPLString &coverage,
         if (!STARTS_WITH(key, "SUBDATASET_")) {
             continue;
         }
-        CPLString value = CPLGetXMLValue(node, NULL, "");
+        CPLString value = CPLGetXMLValue(node, nullptr, "");
         if (value.find(coverage) != std::string::npos) {
             key.erase(0, 11); // SUBDATASET_
             key.erase(key.find("_"), std::string::npos);
@@ -1070,8 +1070,8 @@ static void CreateServiceMetadata(const CPLString &coverage,
         }
     }
     if (subdataset > 0) {
-        CPLXMLNode *next = NULL;
-        for (CPLXMLNode *node = domain->psChild; node != NULL; node = next) {
+        CPLXMLNode *next = nullptr;
+        for (CPLXMLNode *node = domain->psChild; node != nullptr; node = next) {
             next = node->psNext;
             if (node->eType != CXT_Element) {
                 continue;
@@ -1139,7 +1139,7 @@ static bool UpdateService(CPLXMLNode *service, GDALOpenInfo * poOpenInfo)
             value = "TRUE";
         } else {
             value = CSLFetchNameValue(poOpenInfo->papszOpenOptions, keys[i]);
-            if (value == NULL) {
+            if (value == nullptr) {
                 continue;
             }
         }
@@ -1156,9 +1156,9 @@ static WCSDataset *CreateFromCache(const CPLString &cache)
 {
     WCSDataset *ds = new WCSDataset201(cache);
     if (!ds) {
-        return NULL;
+        return nullptr;
     }
-    char **metadata = NULL;
+    char **metadata = nullptr;
     std::vector<CPLString> contents = ReadCache(cache);
     CPLString path = "SUBDATASET_";
     unsigned int index = 1;
@@ -1217,10 +1217,10 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!SetupCache(cache,
                     CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
     {
-        return NULL;
+        return nullptr;
     }
-    CPLXMLNode *service = NULL;
-    char **papszModifiers = NULL;
+    CPLXMLNode *service = nullptr;
+    char **papszModifiers = nullptr;
 
     if( poOpenInfo->nHeaderBytes == 0
         && STARTS_WITH_CI((const char *) poOpenInfo->pszFilename, "WCS:") )
@@ -1231,7 +1231,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString url = (const char *)(poOpenInfo->pszFilename + 4);
 
         const char *del = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DELETE_FROM_CACHE");
-        if (del != NULL) {
+        if (del != nullptr) {
             int k = atoi(del);
             std::vector<CPLString> contents = ReadCache(cache);
             if (k > 0 && k <= (int)contents.size()) {
@@ -1258,7 +1258,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLString filename;
         bool cached;
         if (SearchCache(cache, url, filename, ".xml", cached) != CE_None) {
-            return NULL; // error in cache
+            return nullptr; // error in cache
         }
 
         CPLString full_url = url, version, coverage, parameters;
@@ -1286,7 +1286,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
             url2 += "&" + parameters;
             WCSDataset *global = BootstrapGlobal(poOpenInfo, cache, url2);
             if (!global) {
-                return NULL;
+                return nullptr;
             }
             if (coverage == "") {
                 return global;
@@ -1302,7 +1302,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             filename = "XXXXX";
             if (AddEntryToCache(cache, full_url, filename, ".xml") != CE_None) {
-                return NULL; // error in cache
+                return nullptr; // error in cache
             }
             CreateServiceMetadata(coverage, global_meta, filename + ".aux.xml");
             CPLSetXMLValue(service, "Parameters", parameters);
@@ -1345,17 +1345,17 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             service = CPLParseXMLFile( papszModifiers[iLast] );
             CPLFree( papszModifiers[iLast] );
-            papszModifiers[iLast] = NULL;
+            papszModifiers[iLast] = nullptr;
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Success so far?                                                 */
 /* -------------------------------------------------------------------- */
-    if( service == NULL )
+    if( service == nullptr )
     {
         CSLDestroy( papszModifiers );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1368,14 +1368,14 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The WCS driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Check for required minimum fields.                              */
 /* -------------------------------------------------------------------- */
-    if( !CPLGetXMLValue( service, "ServiceURL", NULL )
-        || !CPLGetXMLValue( service, "CoverageName", NULL ) )
+    if( !CPLGetXMLValue( service, "ServiceURL", nullptr )
+        || !CPLGetXMLValue( service, "CoverageName", nullptr ) )
     {
         CSLDestroy( papszModifiers );
         CPLError( CE_Failure, CPLE_OpenFailed,
@@ -1383,7 +1383,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                   "See WCS driver documentation for details on service description file format." );
 
         CPLDestroyXMLNode( service );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1397,7 +1397,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CSLDestroy( papszModifiers );
         CPLDestroyXMLNode( service );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1429,13 +1429,13 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
                         "TIMEOUT",
                         CPLGetXMLValue( service, "Timeout", "30" ) );
 
-    pszParm = CPLGetXMLValue( service, "HTTPAUTH", NULL );
+    pszParm = CPLGetXMLValue( service, "HTTPAUTH", nullptr );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
                              "HTTPAUTH", pszParm );
 
-    pszParm = CPLGetXMLValue( service, "USERPWD", NULL );
+    pszParm = CPLGetXMLValue( service, "USERPWD", nullptr );
     if( pszParm )
         poDS->papszHttpOptions =
             CSLSetNameValue( poDS->papszHttpOptions,
@@ -1445,13 +1445,13 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If we don't have the DescribeCoverage result for this           */
 /*      coverage, fetch it now.                                         */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( service, "CoverageOffering" ) == NULL
-        && CPLGetXMLNode( service, "CoverageDescription" ) == NULL )
+    if( CPLGetXMLNode( service, "CoverageOffering" ) == nullptr
+        && CPLGetXMLNode( service, "CoverageDescription" ) == nullptr )
     {
         if( !poDS->DescribeCoverage() )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1462,7 +1462,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( !poDS->ExtractGridInfo() ) {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1486,7 +1486,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->EstablishRasterDetails() ) // todo: do this only if missing info
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1507,16 +1507,16 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckBandCount(nBandCount, FALSE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     for( iBand = 0; iBand < nBandCount; iBand++ ) {
         WCSRasterBand *band = new WCSRasterBand(poDS, iBand+1, -1);
         // copy band specific metadata to the band
         char **md_from = poDS->GetMetadata("SUBDATASETS");
-        char **md_to = NULL;
+        char **md_to = nullptr;
         CPLString our_key = CPLString().Printf("FIELD_%d_", iBand + 1);
-        for (char **from = md_from; *from != NULL; ++from) {
+        for (char **from = md_from; *from != nullptr; ++from) {
             std::vector<CPLString> kv = Split(*from, "=");
             if (kv.size() > 1 && STARTS_WITH(kv[0], our_key)) {
                 CPLString key = kv[0];
@@ -1555,7 +1555,7 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "<WCS_GDAL>")
         && !poDS->aosTimePositions.empty() )
     {
-        char **papszSubdatasets = NULL;
+        char **papszSubdatasets = nullptr;
         int iTime;
 
         for( iTime = 0; iTime < (int)poDS->aosTimePositions.size(); iTime++ )
@@ -1665,22 +1665,22 @@ char **WCSDataset::GetMetadataDomainList()
 char **WCSDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain == NULL
+    if( pszDomain == nullptr
         || !EQUAL(pszDomain,"xml:CoverageOffering") )
         return GDALPamDataset::GetMetadata( pszDomain );
 
     CPLXMLNode *psNode = CPLGetXMLNode( psService, "CoverageOffering" );
 
-    if( psNode == NULL )
+    if( psNode == nullptr )
         psNode = CPLGetXMLNode( psService, "CoverageDescription" );
 
-    if( psNode == NULL )
-        return NULL;
+    if( psNode == nullptr )
+        return nullptr;
 
-    if( apszCoverageOfferingMD[0] == NULL )
+    if( apszCoverageOfferingMD[0] == nullptr )
     {
         CPLXMLNode *psNext = psNode->psNext;
-        psNode->psNext = NULL;
+        psNode->psNext = nullptr;
 
         apszCoverageOfferingMD[0] = CPLSerializeXMLTree( psNode );
 
@@ -1697,7 +1697,7 @@ char **WCSDataset::GetMetadata( const char *pszDomain )
 void GDALRegister_WCS()
 
 {
-    if( GDALGetDriverByName( "WCS" ) != NULL )
+    if( GDALGetDriverByName( "WCS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

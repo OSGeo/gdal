@@ -68,17 +68,17 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
     int nFirstSourceDataset = -1;
     bool bLayersWildcarded = true;
-    const char *pszFormat = NULL;
+    const char *pszFormat = nullptr;
     const char *pszTileIndexField = "LOCATION";
-    const char *pszOutputName = NULL;
+    const char *pszOutputName = nullptr;
     bool write_absolute_path = false;
     bool skip_different_projection = false;
-    char* current_path = NULL;
+    char* current_path = nullptr;
     bool accept_different_schemas = false;
     bool bFirstWarningForNonMatchingAttributes = true;
     const char *pszTargetSRS = "";
     bool bSetTargetSRS = false;
-    const char* pszSrcSRSName = NULL;
+    const char* pszSrcSRSName = nullptr;
     int i_SrcSRSName = -1;
     bool bSrcSRSFormatSpecified = false;
     SrcSRSFormat eSrcSRSFormat = FORMAT_AUTO;
@@ -145,16 +145,16 @@ MAIN_START(nArgc, papszArgv)
         }
         else if( papszArgv[iArg][0] == '-' )
             Usage();
-        else if( pszOutputName == NULL )
+        else if( pszOutputName == nullptr )
             pszOutputName = papszArgv[iArg];
         else if( nFirstSourceDataset == -1 )
             nFirstSourceDataset = iArg;
     }
 
-    if( pszOutputName == NULL || nFirstSourceDataset == -1 )
+    if( pszOutputName == nullptr || nFirstSourceDataset == -1 )
         Usage();
 
-    if( bSrcSRSFormatSpecified && pszSrcSRSName == NULL )
+    if( bSrcSRSFormatSpecified && pszSrcSRSName == nullptr )
     {
         fprintf( stderr,"-src_srs_name must be specified when -src_srs_format is "
                 "specified.\n" );
@@ -164,7 +164,7 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
 /*      Create and validate target SRS if given.                        */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference* poTargetSRS = NULL;
+    OGRSpatialReference* poTargetSRS = nullptr;
     if( bSetTargetSRS )
     {
         if( skip_different_projection )
@@ -187,18 +187,18 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
 /*      Try to open as an existing dataset for update access.           */
 /* -------------------------------------------------------------------- */
-    OGRLayer *poDstLayer = NULL;
+    OGRLayer *poDstLayer = nullptr;
 
     GDALDataset *poDstDS = reinterpret_cast<GDALDataset*>(
-        OGROpen( pszOutputName, TRUE, NULL ) );
+        OGROpen( pszOutputName, TRUE, nullptr ) );
 
 /* -------------------------------------------------------------------- */
 /*      If that failed, find the driver so we can create the tile index.*/
 /* -------------------------------------------------------------------- */
-    if( poDstDS == NULL )
+    if( poDstDS == nullptr )
     {
         CPLString osFormat;
-        if( pszFormat == NULL )
+        if( pszFormat == nullptr )
         {
             std::vector<CPLString> aoDrivers =
                 GetOutputDriversFor(pszOutputName, GDAL_OF_VECTOR);
@@ -228,7 +228,7 @@ MAIN_START(nArgc, papszArgv)
 
 
         GDALDriverH hDriver = GDALGetDriverByName( osFormat.c_str() );
-        if( hDriver == NULL )
+        if( hDriver == nullptr )
         {
             GDALDriverManager *poDM = GetGDALDriverManager();
             for( int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
@@ -247,7 +247,7 @@ MAIN_START(nArgc, papszArgv)
             exit( 1 );
         }
 
-        if( !CPLTestBool( CSLFetchNameValueDef( GDALGetMetadata(hDriver, NULL),
+        if( !CPLTestBool( CSLFetchNameValueDef( GDALGetMetadata(hDriver, nullptr),
                             GDAL_DCAP_CREATE, "FALSE" ) ) )
         {
             fprintf( stderr,
@@ -261,8 +261,8 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
 
         poDstDS = reinterpret_cast<GDALDataset*>(
-            GDALCreate( hDriver, pszOutputName, 0, 0, 0, GDT_Unknown, NULL ));
-        if( poDstDS == NULL )
+            GDALCreate( hDriver, pszOutputName, 0, 0, 0, GDT_Unknown, nullptr ));
+        if( poDstDS == nullptr )
         {
             fprintf( stderr, "%s driver failed to create %s\n",
                     osFormat.c_str(), pszOutputName );
@@ -277,7 +277,7 @@ MAIN_START(nArgc, papszArgv)
                 nFirstSourceDataset++;
             }
 
-            OGRSpatialReference* poSrcSpatialRef = NULL;
+            OGRSpatialReference* poSrcSpatialRef = nullptr;
             if( bSetTargetSRS )
             {
             // Fetches the SRS from target SRS (if set), or from the SRS of
@@ -288,8 +288,8 @@ MAIN_START(nArgc, papszArgv)
             else if( nFirstSourceDataset < nArgc )
             {
                 GDALDataset* poDS = reinterpret_cast<GDALDataset*>(
-                    OGROpen(papszArgv[nFirstSourceDataset], FALSE, NULL));
-                if( poDS != NULL )
+                    OGROpen(papszArgv[nFirstSourceDataset], FALSE, nullptr));
+                if( poDS != nullptr )
                 {
                     for( int iLayer = 0;
                          iLayer < poDS->GetLayerCount();
@@ -327,7 +327,7 @@ MAIN_START(nArgc, papszArgv)
             oLocation.SetWidth( 200 );
             poDstLayer->CreateField( &oLocation );
 
-            if( pszSrcSRSName != NULL )
+            if( pszSrcSRSName != nullptr )
             {
                 OGRFieldDefn oSrcSRSNameField( pszSrcSRSName, OFTString );
                 poDstLayer->CreateField( &oSrcSRSNameField );
@@ -343,7 +343,7 @@ MAIN_START(nArgc, papszArgv)
 /* -------------------------------------------------------------------- */
 
     poDstLayer = poDstDS->GetLayer(0);
-    if( poDstLayer == NULL )
+    if( poDstLayer == nullptr )
     {
         fprintf( stderr, "Can't find any layer in output tileindex!\n" );
         exit( 1 );
@@ -358,14 +358,14 @@ MAIN_START(nArgc, papszArgv)
         exit( 1 );
     }
 
-    if( pszSrcSRSName != NULL )
+    if( pszSrcSRSName != nullptr )
         i_SrcSRSName = poDstLayer->GetLayerDefn()->GetFieldIndex( pszSrcSRSName );
 
-    OGRFeatureDefn* poFeatureDefn = NULL;
+    OGRFeatureDefn* poFeatureDefn = nullptr;
 
     // Load in memory existing file names in SHP.
-    char **existingLayersTab = NULL;
-    OGRSpatialReference* alreadyExistingSpatialRef = NULL;
+    char **existingLayersTab = nullptr;
+    OGRSpatialReference* alreadyExistingSpatialRef = nullptr;
     bool alreadyExistingSpatialRefValid = false;
     const int nExistingLayers = static_cast<int>(poDstLayer->GetFeatureCount());
     if( nExistingLayers )
@@ -387,14 +387,14 @@ MAIN_START(nArgc, papszArgv)
                     if( filename[j] == ',' )
                         break;
                 }
-                GDALDataset *poDS = NULL;
+                GDALDataset *poDS = nullptr;
                 if( j >= 0 )
                 {
                     const int iLayer = atoi(filename + j + 1);
                     filename[j] = 0;
                     poDS = reinterpret_cast<GDALDataset *>(
-                        OGROpen(filename, FALSE, NULL));
-                    if( poDS != NULL )
+                        OGROpen(filename, FALSE, nullptr));
+                    if( poDS != nullptr )
                     {
                         OGRLayer *poLayer = poDS->GetLayer(iLayer);
                         if( poLayer )
@@ -402,9 +402,9 @@ MAIN_START(nArgc, papszArgv)
                             alreadyExistingSpatialRefValid = true;
                             alreadyExistingSpatialRef =
                                 poLayer->GetSpatialRef() ?
-                                poLayer->GetSpatialRef()->Clone() : NULL;
+                                poLayer->GetSpatialRef()->Clone() : nullptr;
 
-                            if( poFeatureDefn == NULL )
+                            if( poFeatureDefn == nullptr )
                                 poFeatureDefn = poLayer->GetLayerDefn()->Clone();
                         }
                         GDALClose( poDS );
@@ -417,7 +417,7 @@ MAIN_START(nArgc, papszArgv)
     if( write_absolute_path )
     {
         current_path = CPLGetCurrentDir();
-        if( current_path == NULL )
+        if( current_path == nullptr )
         {
             fprintf( stderr,
                      "This system does not support the CPLGetCurrentDir call. "
@@ -436,7 +436,7 @@ MAIN_START(nArgc, papszArgv)
             continue;
         }
 
-        char* fileNameToWrite = NULL;
+        char* fileNameToWrite = nullptr;
         VSIStatBuf sStatBuf;
 
         if( write_absolute_path &&
@@ -453,9 +453,9 @@ MAIN_START(nArgc, papszArgv)
         }
 
         GDALDataset *poDS = reinterpret_cast<GDALDataset*>(
-            OGROpen( papszArgv[nFirstSourceDataset], FALSE, NULL ) );
+            OGROpen( papszArgv[nFirstSourceDataset], FALSE, nullptr ) );
 
-        if( poDS == NULL )
+        if( poDS == nullptr )
         {
             fprintf( stderr, "Failed to open dataset %s, skipping.\n",
                      papszArgv[nFirstSourceDataset] );
@@ -512,10 +512,10 @@ MAIN_START(nArgc, papszArgv)
             {
                 if( alreadyExistingSpatialRefValid )
                 {
-                    if( (spatialRef != NULL && alreadyExistingSpatialRef != NULL &&
+                    if( (spatialRef != nullptr && alreadyExistingSpatialRef != nullptr &&
                         spatialRef->IsSame(alreadyExistingSpatialRef) == FALSE) ||
-                        ((spatialRef != NULL) !=
-                        (alreadyExistingSpatialRef != NULL)) )
+                        ((spatialRef != nullptr) !=
+                        (alreadyExistingSpatialRef != nullptr)) )
                     {
                         fprintf(
                             stderr,
@@ -535,21 +535,21 @@ MAIN_START(nArgc, papszArgv)
                 {
                     alreadyExistingSpatialRefValid = true;
                     alreadyExistingSpatialRef =
-                        spatialRef ? spatialRef->Clone() : NULL;
+                        spatialRef ? spatialRef->Clone() : nullptr;
                 }
             }
 
 /* -------------------------------------------------------------------- */
 /*      Check if all layers in dataset have the same attributes schema. */
 /* -------------------------------------------------------------------- */
-            if( poFeatureDefn == NULL )
+            if( poFeatureDefn == nullptr )
             {
                 poFeatureDefn = poLayer->GetLayerDefn()->Clone();
             }
             else if( !accept_different_schemas )
             {
                 OGRFeatureDefn* poFeatureDefnCur = poLayer->GetLayerDefn();
-                assert(NULL != poFeatureDefnCur);
+                assert(nullptr != poFeatureDefnCur);
 
                 const int fieldCount = poFeatureDefnCur->GetFieldCount();
 
@@ -579,8 +579,8 @@ MAIN_START(nArgc, papszArgv)
                         poFeatureDefnCur->GetFieldDefn(fn);
 
                     // XXX - Should those pointers be checked against NULL?
-                    assert(NULL != poField);
-                    assert(NULL != poFieldCur);
+                    assert(nullptr != poField);
+                    assert(nullptr != poFieldCur);
 
                     if( poField->GetType() != poFieldCur->GetType()
                         || poField->GetWidth() != poFieldCur->GetWidth()
@@ -637,15 +637,15 @@ MAIN_START(nArgc, papszArgv)
             oRegion.addRing( &oRing );
 
             // If set target srs, do the forward transformation of all points.
-            if( bSetTargetSRS && spatialRef != NULL )
+            if( bSetTargetSRS && spatialRef != nullptr )
             {
-                OGRCoordinateTransformation* poCT = NULL;
+                OGRCoordinateTransformation* poCT = nullptr;
                 if( !spatialRef->IsSame( poTargetSRS ) )
                 {
                     poCT = OGRCreateCoordinateTransformation( spatialRef, poTargetSRS );
-                    if( poCT == NULL || oRegion.transform(poCT) == OGRERR_FAILURE )
+                    if( poCT == nullptr || oRegion.transform(poCT) == OGRERR_FAILURE )
                     {
-                        char* pszSourceWKT = NULL;
+                        char* pszSourceWKT = nullptr;
                         spatialRef->exportToWkt(&pszSourceWKT);
                         fprintf(
                             stderr,
@@ -672,17 +672,17 @@ MAIN_START(nArgc, papszArgv)
             oTileFeat.SetGeometry( &oRegion );
             oTileFeat.SetField( iTileIndexField, szLocation );
 
-            if( i_SrcSRSName >= 0 && spatialRef != NULL )
+            if( i_SrcSRSName >= 0 && spatialRef != nullptr )
             {
                 const char* pszAuthorityCode =
-                    spatialRef->GetAuthorityCode(NULL);
+                    spatialRef->GetAuthorityCode(nullptr);
                 const char* pszAuthorityName =
-                    spatialRef->GetAuthorityName(NULL);
-                char* pszWKT = NULL;
+                    spatialRef->GetAuthorityName(nullptr);
+                char* pszWKT = nullptr;
                 spatialRef->exportToWkt(&pszWKT);
                 if( eSrcSRSFormat == FORMAT_AUTO )
                 {
-                    if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
+                    if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
                     {
                         oTileFeat.SetField(i_SrcSRSName,
                             CPLSPrintf("%s:%s",
@@ -695,7 +695,7 @@ MAIN_START(nArgc, papszArgv)
                     }
                     else
                     {
-                        char* pszProj4 = NULL;
+                        char* pszProj4 = nullptr;
                         if( spatialRef->exportToProj4(&pszProj4) == OGRERR_NONE )
                         {
                             oTileFeat.SetField(i_SrcSRSName, pszProj4 );
@@ -723,7 +723,7 @@ MAIN_START(nArgc, papszArgv)
                 }
                 else if( eSrcSRSFormat == FORMAT_PROJ )
                 {
-                    char* pszProj4 = NULL;
+                    char* pszProj4 = nullptr;
                     if( spatialRef->exportToProj4(&pszProj4) == OGRERR_NONE )
                     {
                         oTileFeat.SetField(i_SrcSRSName, pszProj4 );
@@ -732,7 +732,7 @@ MAIN_START(nArgc, papszArgv)
                 }
                 else if( eSrcSRSFormat == FORMAT_EPSG )
                 {
-                    if( pszAuthorityName != NULL && pszAuthorityCode != NULL )
+                    if( pszAuthorityName != nullptr && pszAuthorityCode != nullptr )
                         oTileFeat.SetField(i_SrcSRSName,
                             CPLSPrintf("%s:%s",
                                     pszAuthorityName, pszAuthorityCode) );
@@ -762,7 +762,7 @@ MAIN_START(nArgc, papszArgv)
     GDALClose( poDstDS );
     OGRFeatureDefn::DestroyFeatureDefn( poFeatureDefn );
 
-    if( alreadyExistingSpatialRef != NULL )
+    if( alreadyExistingSpatialRef != nullptr )
         alreadyExistingSpatialRef->Release();
     delete poTargetSRS;
 

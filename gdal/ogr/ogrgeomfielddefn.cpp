@@ -119,7 +119,7 @@ void OGRGeomFieldDefn::Initialize( const char * pszNameIn,
 {
     pszName = CPLStrdup( pszNameIn );
     eGeomType = eTypeIn;
-    poSRS = NULL;
+    poSRS = nullptr;
     bIgnore = FALSE;
     bNullable = TRUE;
 }
@@ -134,7 +134,7 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 {
     CPLFree( pszName );
 
-    if( NULL != poSRS )
+    if( nullptr != poSRS )
         poSRS->Release();
 }
 
@@ -456,7 +456,7 @@ OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef()
 
 OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
 {
-    VALIDATE_POINTER1( hDefn, "OGR_GFld_GetSpatialRef", NULL );
+    VALIDATE_POINTER1( hDefn, "OGR_GFld_GetSpatialRef", nullptr );
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
@@ -485,10 +485,10 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
  */
 void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReference* poSRSIn)
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
     poSRS = poSRSIn;
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Reference();
 }
 
@@ -542,7 +542,7 @@ int OGRGeomFieldDefn::IsSame( OGRGeomFieldDefn * poOtherFieldDefn )
     OGRSpatialReference* poMySRS = GetSpatialRef();
     OGRSpatialReference* poOtherSRS = poOtherFieldDefn->GetSpatialRef();
     return ((poMySRS == poOtherSRS) ||
-            (poMySRS != NULL && poOtherSRS != NULL &&
+            (poMySRS != nullptr && poOtherSRS != nullptr &&
              poMySRS->IsSame(poOtherSRS)));
 }
 

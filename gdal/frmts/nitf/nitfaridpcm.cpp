@@ -166,14 +166,14 @@ static const int delta_075_level_3_bc_2[16] =
 static const int delta_075_level_3_bc_3[16] =
 {-117,-72, -50, -36, -25, -17, -10, -5,-1, 3, 7,14,25,45,82,166};
 static const int *const delta_075_level_3[4] =
-{ NULL, delta_075_level_3_bc_1,
+{ nullptr, delta_075_level_3_bc_1,
   delta_075_level_3_bc_2, delta_075_level_3_bc_3 };
 
 static const int delta_075_level_4_bc_3[4] = {-47,-8,4,43};
-static const int *const delta_075_level_4[4] = { NULL, NULL, NULL, delta_075_level_4_bc_3 };
+static const int *const delta_075_level_4[4] = { nullptr, nullptr, nullptr, delta_075_level_4_bc_3 };
 
 static const int *const * const delta_075_by_level_by_bc[4] =
-{ NULL, delta_075_level_2, delta_075_level_3, delta_075_level_4 };
+{ nullptr, delta_075_level_2, delta_075_level_3, delta_075_level_4 };
 
 /************************************************************************/
 /*                              get_bits()                              */
@@ -247,10 +247,10 @@ get_delta( unsigned char *srcdata,
        (i, j) = (0, 0). That cannot happen as we are never called with those
        values
     */
-    CPLAssert( delta_075_by_level_by_bc[level_index] != NULL );
+    CPLAssert( delta_075_by_level_by_bc[level_index] != nullptr );
     const int *lookup_table = delta_075_by_level_by_bc[level_index][busy_code];
 
-    CPLAssert( lookup_table != NULL );
+    CPLAssert( lookup_table != nullptr );
     int delta = lookup_table[delta_raw];
 
     return delta;

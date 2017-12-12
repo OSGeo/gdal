@@ -79,7 +79,7 @@ VFKProperty::VFKProperty( const char *pszValue ) :
     m_bIsNull(false),
     m_iValue(0),
     m_dValue(0.0),
-    m_strValue(NULL != pszValue ? pszValue : "")
+    m_strValue(nullptr != pszValue ? pszValue : "")
 {}
 
 /*!

@@ -55,7 +55,7 @@ class WCSRasterBand : public GDALPamRasterBand
                    WCSRasterBand( WCSDataset *, int nBand, int iOverview );
     virtual ~WCSRasterBand();
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;

@@ -660,7 +660,7 @@ int main(int /* argc */, char* /* argv */ [])
             }
         }
     }
-    CPLSetConfigOption("GDAL_USE_SSSE3", NULL);
+    CPLSetConfigOption("GDAL_USE_SSSE3", nullptr);
 
     memset(pIn, 0xff, 256);
     GInt16* pInShort = (GInt16*)pIn;

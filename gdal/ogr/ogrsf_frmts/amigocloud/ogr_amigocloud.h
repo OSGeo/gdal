@@ -267,9 +267,9 @@ class OGRAmigoCloudDataSource : public OGRDataSource
         virtual int         TestCapability( const char * ) override;
 
         virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                         OGRSpatialReference *poSpatialRef = NULL,
+                                         OGRSpatialReference *poSpatialRef = nullptr,
                                          OGRwkbGeometryType eGType = wkbUnknown,
-                                         char ** papszOptions = NULL ) override;
+                                         char ** papszOptions = nullptr ) override;
         virtual OGRErr      DeleteLayer(int) override;
 
         virtual OGRLayer   *ExecuteSQL( const char *pszSQLCommand,
@@ -296,8 +296,8 @@ class OGRAmigoCloudDataSource : public OGRDataSource
 
         OGRLayer *                  ExecuteSQLInternal(
             const char *pszSQLCommand,
-            OGRGeometry *poSpatialFilter = NULL,
-            const char *pszDialect = NULL,
+            OGRGeometry *poSpatialFilter = nullptr,
+            const char *pszDialect = nullptr,
             bool bRunDeferredActions = false );
 
         bool ListDatasets();

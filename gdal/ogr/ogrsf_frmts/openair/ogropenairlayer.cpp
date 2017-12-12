@@ -71,7 +71,7 @@ OGROpenAirLayer::OGROpenAirLayer( VSILFILE* fp ) :
 OGROpenAirLayer::~OGROpenAirLayer()
 
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
     poFeatureDefn->Release();
@@ -108,12 +108,12 @@ OGRFeature *OGROpenAirLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -130,7 +130,7 @@ OGRFeature *OGROpenAirLayer::GetNextFeature()
 OGRFeature *OGROpenAirLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     CPLString osCLASS;
     CPLString osNAME;
@@ -150,7 +150,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = NULL;
+        const char* pszLine = nullptr;
         if( bFirst && bHasLastLine )
         {
             pszLine = osLastLine.c_str();
@@ -158,12 +158,12 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else
         {
-            pszLine = CPLReadLine2L(fpOpenAir, 1024, NULL);
-            if (pszLine == NULL)
+            pszLine = CPLReadLine2L(fpOpenAir, 1024, nullptr);
+            if (pszLine == nullptr)
             {
                 bEOF = true;
                 if (oLR.getNumPoints() == 0)
-                    return NULL;
+                    return nullptr;
 
                 if (!osCLASS.empty() &&
                     oStyleMap.find(osCLASS) != oStyleMap.end())
@@ -187,7 +187,7 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
                 {
                     if (oLR.getNumPoints() == 0)
                     {
-                        OpenAirStyle* psStyle = NULL;
+                        OpenAirStyle* psStyle = nullptr;
                         if (oStyleMap.find(osCLASS) == oStyleMap.end())
                         {
                             psStyle = (OpenAirStyle*)CPLMalloc(
@@ -379,12 +379,12 @@ OGRFeature *OGROpenAirLayer::GetNextRawFeature()
         }
         else if ((STARTS_WITH_CI(pszLine, "DC ") ||
                   STARTS_WITH_CI(pszLine, "DC=")) &&
-                 (bHasCenter || strstr(pszLine, "V X=") != NULL))
+                 (bHasCenter || strstr(pszLine, "V X=") != nullptr))
         {
             if (!bHasCenter)
             {
                 const char* pszVX = strstr(pszLine, "V X=");
-                if( pszVX != NULL )
+                if( pszVX != nullptr )
                     bHasCenter =
                         OGROpenAirGetLatLon(pszVX, dfCenterLat, dfCenterLon);
             }

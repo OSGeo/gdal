@@ -2514,6 +2514,79 @@ def ogr_mitab_48():
     return 'success'
 
 ###############################################################################
+# Test creating an indexed field
+
+def ogr_mitab_tab_field_index_creation():
+
+    layername = 'ogr_mitab_tab_field_index_creation'
+    filename = '/vsimem/' + layername + '.tab'
+    ds = ogr.GetDriverByName('MapInfo File').CreateDataSource(filename)
+    lyr = ds.CreateLayer(layername)
+    lyr.CreateField( ogr.FieldDefn('id', ogr.OFTInteger) )
+    lyr.CreateField( ogr.FieldDefn('other_field', ogr.OFTInteger) )
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('CREATE INDEX ON foo USING id')
+        ds.ExecuteSQL('CREATE INDEX ON ' + layername + ' USING foo')
+    ds.ExecuteSQL('CREATE INDEX ON ' + layername + ' USING id')
+    ds.ExecuteSQL('CREATE INDEX ON ' + layername + ' USING id')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 100)
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 200)
+    lyr.CreateFeature(f)
+    ds = None
+
+    if gdal.VSIStatL('/vsimem/' + layername + '.ind') is None:
+        gdaltest.post_reason('no ind file')
+        return 'fail'
+
+    ds = ogr.Open(filename)
+    with gdaltest.error_handler():
+        ds.ExecuteSQL('CREATE INDEX ON ' + layername + ' USING other_field')
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter('id = 200')
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('bad feature count')
+        return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('MapInfo File').DeleteDataSource(filename)
+
+    return 'success'
+
+###############################################################################
+# Test reading a tab_view file
+
+def ogr_mitab_tab_view():
+
+    ds = ogr.Open('data/mitab/view_first_table_second_table.tab')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('bad field count')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['ID'] != 100 or f['foo'] != 'foo':
+        gdaltest.post_reason('bad feature')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    ds = ogr.Open('data/mitab/view_select_all_first_table_second_table.tab')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 3:
+        gdaltest.post_reason('bad field count')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['joint_field'] != 1 or f['ID'] != 100 or f['foo'] != 'foo':
+        gdaltest.post_reason('bad feature')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_mitab_cleanup():
@@ -2579,6 +2652,8 @@ gdaltest_list = [
     ogr_mitab_46,
     ogr_mitab_47,
     ogr_mitab_48,
+    ogr_mitab_tab_field_index_creation,
+    ogr_mitab_tab_view,
     ogr_mitab_cleanup
     ]
 

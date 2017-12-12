@@ -79,8 +79,8 @@ class GDALPamProxyDB
 };
 
 static bool bProxyDBInitialized = FALSE;
-static GDALPamProxyDB *poProxyDB = NULL;
-static CPLMutex *hProxyDBLock = NULL;
+static GDALPamProxyDB *poProxyDB = nullptr;
+static CPLMutex *hProxyDBLock = nullptr;
 
 /************************************************************************/
 /*                            CheckLoadDB()                             */
@@ -114,7 +114,7 @@ void GDALPamProxyDB::LoadDB()
     VSILFILE *fpDB = VSIFOpenL( osDBName, "r" );
 
     nUpdateCounter = 0;
-    if( fpDB == NULL )
+    if( fpDB == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -208,7 +208,7 @@ void GDALPamProxyDB::SaveDB()
     void *hLock = CPLLockFile( osDBName, 1.0 );
 
     // proceed even if lock fails - we need CPLBreakLockFile()!
-    if( hLock == NULL )
+    if( hLock == nullptr )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "GDALPamProxyDB::SaveDB() - "
@@ -217,7 +217,7 @@ void GDALPamProxyDB::SaveDB()
     }
 
     VSILFILE *fpDB = VSIFOpenL( osDBName, "w" );
-    if( fpDB == NULL )
+    if( fpDB == nullptr )
     {
         if( hLock )
             CPLUnlockFile( hLock );
@@ -303,7 +303,7 @@ static void InitProxyDB()
         if( !bProxyDBInitialized )
         {
             const char *pszProxyDir =
-                CPLGetConfigOption( "GDAL_PAM_PROXY_DIR", NULL );
+                CPLGetConfigOption( "GDAL_PAM_PROXY_DIR", nullptr );
 
             if( pszProxyDir )
             {
@@ -329,11 +329,11 @@ void PamCleanProxyDB()
         bProxyDBInitialized = false;
 
         delete poProxyDB;
-        poProxyDB = NULL;
+        poProxyDB = nullptr;
     }
 
     CPLDestroyMutex( hProxyDBLock );
-    hProxyDBLock = NULL;
+    hProxyDBLock = nullptr;
 }
 
 /************************************************************************/
@@ -345,8 +345,8 @@ const char *PamGetProxy( const char *pszOriginal )
 {
     InitProxyDB();
 
-    if( poProxyDB == NULL )
-        return NULL;
+    if( poProxyDB == nullptr )
+        return nullptr;
 
     CPLMutexHolderD( &hProxyDBLock );
 
@@ -358,7 +358,7 @@ const char *PamGetProxy( const char *pszOriginal )
             return poProxyDB->aosProxyFiles[i];
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -370,8 +370,8 @@ const char *PamAllocateProxy( const char *pszOriginal )
 {
     InitProxyDB();
 
-    if( poProxyDB == NULL )
-        return NULL;
+    if( poProxyDB == nullptr )
+        return nullptr;
 
     CPLMutexHolderD( &hProxyDBLock );
 

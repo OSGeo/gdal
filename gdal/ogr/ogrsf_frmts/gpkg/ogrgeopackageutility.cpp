@@ -204,7 +204,7 @@ const char* GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
 GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
                            size_t *pnWkbLen)
 {
-    CPLAssert( poGeometry != NULL );
+    CPLAssert( poGeometry != nullptr );
 
     GByte byFlags = 0;
     GByte byEnv = 1;
@@ -305,7 +305,7 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
     if ( err != OGRERR_NONE )
     {
         CPLFree(pabyWkb);
-        return NULL;
+        return nullptr;
     }
 
     return pabyWkb;
@@ -313,8 +313,8 @@ GByte* GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
 
 OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poHeader)
 {
-    CPLAssert( pabyGpkg != NULL );
-    CPLAssert( poHeader != NULL );
+    CPLAssert( pabyGpkg != nullptr );
+    CPLAssert( poHeader != nullptr );
 
     /* Magic (match required) */
     if ( nGpkgLen < 8 ||
@@ -435,25 +435,25 @@ OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen, GPkgHeader *poH
 
 OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatialReference *poSrs)
 {
-    CPLAssert( pabyGpkg != NULL );
+    CPLAssert( pabyGpkg != nullptr );
 
     GPkgHeader oHeader;
 
     /* Read header */
     OGRErr err = GPkgHeaderFromWKB(pabyGpkg, nGpkgLen, &oHeader);
     if ( err != OGRERR_NONE )
-        return NULL;
+        return nullptr;
 
     /* WKB pointer */
     const GByte *pabyWkb = pabyGpkg + oHeader.nHeaderLen;
     size_t nWkbLen = nGpkgLen - oHeader.nHeaderLen;
 
     /* Parse WKB */
-    OGRGeometry *poGeom = NULL;
+    OGRGeometry *poGeom = nullptr;
     err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
                                             static_cast<int>(nWkbLen));
     if ( err != OGRERR_NONE )
-        return NULL;
+        return nullptr;
 
     return poGeom;
 }

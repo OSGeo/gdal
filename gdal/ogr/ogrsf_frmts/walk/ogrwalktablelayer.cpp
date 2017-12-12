@@ -36,12 +36,12 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRWalkTableLayer::OGRWalkTableLayer( OGRWalkDataSource *poDSIn ) :
-    pszQuery(NULL)
+    pszQuery(nullptr)
 {
     poDS = poDSIn;
 
     iNextShapeId = 0;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 }
 
 /************************************************************************/
@@ -73,7 +73,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
     CPLODBCSession *poSession = poDS->GetSession();
 
     CPLFree( pszFIDColumn );
-    pszFIDColumn = NULL;
+    pszFIDColumn = nullptr;
 
     sExtent.MinX = minE;
     sExtent.MaxX = maxE;
@@ -98,7 +98,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
     CPLODBCStatement oGetKey( poSession );
 
-    if( oGetKey.GetPrimaryKeys( pszFeatureTableName, NULL, NULL )
+    if( oGetKey.GetPrimaryKeys( pszFeatureTableName, nullptr, nullptr )
         && oGetKey.Fetch() )
     {
         pszFIDColumn = CPLStrdup(oGetKey.GetColData( 3 ));
@@ -106,7 +106,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
         if( oGetKey.Fetch() ) // more than one field in key!
         {
             CPLFree( pszFIDColumn );
-            pszFIDColumn = NULL;
+            pszFIDColumn = nullptr;
 
             CPLDebug( "Walk", "Table %s has multiple primary key fields, "
                       "ignoring them all.", pszFeatureTableName );
@@ -117,8 +117,8 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /*      Have we been provided a geometry column?                        */
 /* -------------------------------------------------------------------- */
     CPLFree( pszGeomColumn );
-    if( pszGeomCol == NULL )
-        pszGeomColumn = NULL;
+    if( pszGeomCol == nullptr )
+        pszGeomColumn = nullptr;
     else
         pszGeomColumn = CPLStrdup( pszGeomCol );
 
@@ -128,7 +128,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
     CPLODBCStatement oGetCol( poSession );
     CPLErr eErr;
 
-    if( !oGetCol.GetColumns( pszFeatureTableName, NULL, NULL ) )
+    if( !oGetCol.GetColumns( pszFeatureTableName, nullptr, nullptr ) )
     {
         CPLFree( pszFeatureTableName );
         return CE_Failure;
@@ -153,7 +153,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      If we got a geometry column, does it exist?  Is it binary?      */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
     {
         int iColumn = oGetCol.GetColId( pszGeomColumn );
         if( iColumn < 0 )
@@ -162,7 +162,7 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
                       "Column %s requested for geometry, but it does not exist.",
                       pszGeomColumn );
             CPLFree( pszGeomColumn );
-            pszGeomColumn = NULL;
+            pszGeomColumn = nullptr;
         }
         else
         {
@@ -184,10 +184,10 @@ CPLErr OGRWalkTableLayer::Initialize( const char *pszLayerName,
 void OGRWalkTableLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 }
 
@@ -198,7 +198,7 @@ void OGRWalkTableLayer::ClearStatement()
 CPLODBCStatement *OGRWalkTableLayer::GetStatement()
 
 {
-    if( poStmt == NULL )
+    if( poStmt == nullptr )
         ResetStatement();
 
     return poStmt;
@@ -221,7 +221,7 @@ OGRErr OGRWalkTableLayer::ResetStatement()
     poStmt->Append( "Features" );
 
     /* Append attribute query if we have it */
-    if( (pszQuery != NULL) && strcmp(pszQuery, "") )
+    if( (pszQuery != nullptr) && strcmp(pszQuery, "") )
         poStmt->Appendf( " WHERE %s", pszQuery );
 
     CPLDebug( "Walk", "ExecuteSQL(%s)", poStmt->GetCommand() );
@@ -230,7 +230,7 @@ OGRErr OGRWalkTableLayer::ResetStatement()
     else
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }
@@ -253,7 +253,7 @@ void OGRWalkTableLayer::ResetReading()
 OGRFeature *OGRWalkTableLayer::GetFeature( GIntBig nFeatureId )
 
 {
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
         return OGRWalkLayer::GetFeature( nFeatureId );
 
     ClearStatement();
@@ -269,8 +269,8 @@ OGRFeature *OGRWalkTableLayer::GetFeature( GIntBig nFeatureId )
     if( !poStmt->ExecuteSQL() )
     {
         delete poStmt;
-        poStmt = NULL;
-        return NULL;
+        poStmt = nullptr;
+        return nullptr;
     }
 
     return GetNextRawFeature();
@@ -284,15 +284,15 @@ OGRErr OGRWalkTableLayer::SetAttributeFilter( const char *pszQueryIn )
 
 {
     CPLFree(m_pszAttrQueryString);
-    m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : NULL;
+    m_pszAttrQueryString = pszQueryIn ? CPLStrdup(pszQueryIn) : nullptr;
 
-    if( (pszQueryIn == NULL && pszQuery == NULL)
-        || (pszQueryIn != NULL && pszQuery != NULL
+    if( (pszQueryIn == nullptr && pszQuery == nullptr)
+        || (pszQueryIn != nullptr && pszQuery != nullptr
             && EQUAL(pszQueryIn, pszQuery)) )
         return OGRERR_NONE;
 
     CPLFree( pszQuery );
-    pszQuery = pszQueryIn != NULL ? CPLStrdup( pszQueryIn ) : NULL;
+    pszQuery = pszQueryIn != nullptr ? CPLStrdup( pszQueryIn ) : nullptr;
 
     ClearStatement();
 
@@ -324,7 +324,7 @@ int OGRWalkTableLayer::TestCapability( const char * pszCap )
 GIntBig OGRWalkTableLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
         return OGRWalkLayer::GetFeatureCount( bForce );
 
     CPLODBCStatement oStmt( poDS->GetSession() );
@@ -332,7 +332,7 @@ GIntBig OGRWalkTableLayer::GetFeatureCount( int bForce )
     oStmt.Append( poFeatureDefn->GetName() );
     oStmt.Append( "Features" );
 
-    if( (pszQuery != NULL) && strcmp(pszQuery, "") )
+    if( (pszQuery != nullptr) && strcmp(pszQuery, "") )
         oStmt.Appendf( " WHERE %s", pszQuery );
 
     if( !oStmt.ExecuteSQL() || !oStmt.Fetch() )

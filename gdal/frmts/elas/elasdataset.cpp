@@ -253,7 +253,7 @@ CPLErr ELASRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 ELASDataset::ELASDataset() :
-    fp(NULL),
+    fp(nullptr),
     bHeaderModified(0),
     eRasterDataType(GDT_Unknown),
     nLineOffset(0),
@@ -276,7 +276,7 @@ ELASDataset::~ELASDataset()
 {
     FlushCache();
 
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     }
@@ -332,7 +332,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -342,13 +342,13 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     ELASDataset *poDS = new ELASDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, pszAccess );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to open `%s' with access `%s' failed.\n",
                   poOpenInfo->pszFilename, pszAccess );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -363,7 +363,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Attempt to read 1024 byte header filed on file %s\n",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -377,7 +377,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nDiff <= 0 || nDiff > INT_MAX )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->nRasterYSize = static_cast<int>(nDiff);
 
@@ -387,7 +387,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nDiff <= 0 || nDiff > INT_MAX )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->nRasterXSize = static_cast<int>(nDiff);
 
@@ -397,7 +397,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         !GDALCheckBandCount(poDS->nBands, FALSE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const int nELASDataType = (poDS->sHeader.IH19[2] & 0x7e) >> 2;
@@ -417,7 +417,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unrecognized image data type %d, with BytesPerSample=%d.\n",
                   nELASDataType, nBytesPerSample );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -428,7 +428,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
                                     (INT_MAX - 256) / poDS->nRasterXSize )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->nBandOffset =
         (poDS->nRasterXSize * GDALGetDataTypeSizeBytes(poDS->eRasterDataType));
@@ -440,7 +440,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError(CE_Failure, CPLE_FileIO, "File too short");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -525,7 +525,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "ELAS driver does not support %d bands.\n", nBands);
-        return NULL;
+        return nullptr;
     }
 
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_Float64 )
@@ -535,7 +535,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
                   "data type (%d).\n",
                   eType );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -543,12 +543,12 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
 /* -------------------------------------------------------------------- */
     FILE *fp = VSIFOpen( pszFilename, "w" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -613,7 +613,7 @@ GDALDataset *ELASDataset::Create( const char * pszFilename,
                       " disk space.\n" );
             VSIFClose( fp );
             CPLFree( pabyLine );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -702,7 +702,7 @@ CPLErr ELASDataset::SetGeoTransform( double * padfTransform )
 void GDALRegister_ELAS()
 
 {
-    if( GDALGetDriverByName( "ELAS" ) != NULL )
+    if( GDALGetDriverByName( "ELAS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

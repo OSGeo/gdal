@@ -67,7 +67,7 @@ TABMAPCoordBlock::TABMAPCoordBlock( TABAccess eAccessMode /*= TABRead*/ ) :
     m_nMinY(1000000000),
     m_nMaxX(-1000000000),
     m_nMaxY(-1000000000),
-    m_poBlockManagerRef(NULL),
+    m_poBlockManagerRef(nullptr),
     m_nTotalDataSize(0),
     m_nFeatureDataSize(0),
     m_nFeatureXMin(1000000000),
@@ -119,7 +119,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_COORD_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -134,7 +134,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                  "TABMAPCoordBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
                  m_numDataBytes, nBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -170,7 +170,7 @@ int     TABMAPCoordBlock::CommitToFile()
 
     CPLErrorReset();
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitToFile(): Block has not been initialized yet!");
@@ -880,11 +880,11 @@ void TABMAPCoordBlock::GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin,
 
 void TABMAPCoordBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPCoordBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }

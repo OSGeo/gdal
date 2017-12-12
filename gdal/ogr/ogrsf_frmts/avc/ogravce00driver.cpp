@@ -38,11 +38,11 @@ static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
     if( !poOpenInfo->bStatOK )
-        return NULL;
+        return nullptr;
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00") )
-        return NULL;
+        return nullptr;
 
     OGRAVCE00DataSource *poDSE00 = new OGRAVCE00DataSource();
 
@@ -53,7 +53,7 @@ static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
     }
     delete poDSE00;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -63,7 +63,7 @@ static GDALDataset *OGRAVCE00DriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAVCE00()
 
 {
-    if( GDALGetDriverByName( "AVCE00" ) != NULL )
+    if( GDALGetDriverByName( "AVCE00" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

@@ -49,6 +49,10 @@
 
 #ifdef HAVE_SQLITE
 #include <sqlite3.h>
+
+#undef SQLITE_STATIC
+#define SQLITE_STATIC      ((sqlite3_destructor_type)nullptr)
+
 #endif
 
 CPL_CVSID("$Id$")
@@ -114,16 +118,16 @@ class huge_helper
 {
   public:
     huge_helper() :
-        hDB(NULL),
-        hNodes(NULL),
-        hEdges(NULL),
-        nodeSrs(NULL),
-        pFirst(NULL),
-        pLast(NULL),
-        pFirstHref(NULL),
-        pLastHref(NULL),
-        pFirstParent(NULL),
-        pLastParent(NULL)
+        hDB(nullptr),
+        hNodes(nullptr),
+        hEdges(nullptr),
+        nodeSrs(nullptr),
+        pFirst(nullptr),
+        pLast(nullptr),
+        pFirstHref(nullptr),
+        pLastHref(nullptr),
+        pFirstParent(nullptr),
+        pLastParent(nullptr)
     {}
     sqlite3             *hDB;
     sqlite3_stmt        *hNodes;
@@ -140,7 +144,7 @@ class huge_helper
 static bool gmlHugeFileSQLiteInit( huge_helper *helper )
 {
     // Attempting to create SQLite tables.
-    char *pszErrMsg = NULL;
+    char *pszErrMsg = nullptr;
     sqlite3 *hDB = helper->hDB;
 
     // DB table: NODES.
@@ -151,7 +155,7 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
             "     x DOUBLE, "
             "     y DOUBLE, "
             "     z DOUBLE)";
-        const int rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
+        const int rc = sqlite3_exec(hDB, osCommand, nullptr, nullptr, &pszErrMsg);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -177,7 +181,7 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
             "     node_to_x DOUBLE, "
             "     node_to_y DOUBLE, "
             "     node_to_z DOUBLE)";
-        const int rc = sqlite3_exec(hDB, osCommand, NULL, NULL, &pszErrMsg);
+        const int rc = sqlite3_exec(hDB, osCommand, nullptr, nullptr, &pszErrMsg);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -192,8 +196,8 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
     {
         const char osCommand[] =
             "INSERT OR IGNORE INTO nodes (gml_id, x, y, z) VALUES (?, ?, ?, ?)";
-        sqlite3_stmt *hStmt = NULL;
-        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
+        sqlite3_stmt *hStmt = nullptr;
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, nullptr);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -212,8 +216,8 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
             "node_from_z, node_to_id, node_to_x, "
             "node_to_y, node_to_z) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        sqlite3_stmt *hStmt = NULL;
-        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, NULL);
+        sqlite3_stmt *hStmt = nullptr;
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmt, nullptr);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -224,7 +228,7 @@ static bool gmlHugeFileSQLiteInit( huge_helper *helper )
     }
 
     // Starting a TRANSACTION.
-    const int rc = sqlite3_exec(hDB, "BEGIN", NULL, NULL, &pszErrMsg);
+    const int rc = sqlite3_exec(hDB, "BEGIN", nullptr, nullptr, &pszErrMsg);
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -247,25 +251,25 @@ static bool gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
     }
 
     // Resolves an Edge definition.
-    CPLXMLNode *psDirNode_1 = NULL;
-    CPLXMLNode *psDirNode_2 = NULL;
-    CPLXMLNode *psOldNode_1 = NULL;
-    CPLXMLNode *psOldNode_2 = NULL;
-    CPLXMLNode *psNewNode_1 = NULL;
-    CPLXMLNode *psNewNode_2 = NULL;
+    CPLXMLNode *psDirNode_1 = nullptr;
+    CPLXMLNode *psDirNode_2 = nullptr;
+    CPLXMLNode *psOldNode_1 = nullptr;
+    CPLXMLNode *psOldNode_2 = nullptr;
+    CPLXMLNode *psNewNode_1 = nullptr;
+    CPLXMLNode *psNewNode_2 = nullptr;
     int iToBeReplaced = 0;
     int iReplaced = 0;
 
     CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         if( psChild->eType == CXT_Element &&
             EQUAL(psChild->pszValue, "directedNode") )
         {
             char cOrientation = '+';
-            CPLXMLNode *psOldNode = NULL;
+            CPLXMLNode *psOldNode = nullptr;
             CPLXMLNode *psAttr = psChild->psChild;
-            while( psAttr != NULL )
+            while( psAttr != nullptr )
             {
                 if( psAttr->eType == CXT_Attribute &&
                     EQUAL(psAttr->pszValue, "xlink:href") )
@@ -274,7 +278,7 @@ static bool gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
                     EQUAL(psAttr->pszValue, "orientation") )
                 {
                     const CPLXMLNode *psOrientation = psAttr->psChild;
-                    if( psOrientation != NULL )
+                    if( psOrientation != nullptr )
                     {
                         if( psOrientation->eType == CXT_Text )
                             cOrientation = *(psOrientation->pszValue);
@@ -282,10 +286,10 @@ static bool gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
                 }
                 psAttr = psAttr->psNext;
             }
-            if( psOldNode != NULL )
+            if( psOldNode != nullptr )
             {
                 CPLXMLNode *psNewNode =
-                    CPLCreateXMLNode(NULL, CXT_Element, "Node");
+                    CPLCreateXMLNode(nullptr, CXT_Element, "Node");
                 CPLXMLNode *psGMLIdNode =
                     CPLCreateXMLNode(psNewNode, CXT_Attribute, "gml:id");
                 if( cOrientation == '-' )
@@ -311,26 +315,26 @@ static bool gmlHugeResolveEdgeNodes( const CPLXMLNode *psNode,
     }
 
     // Rewriting the Edge GML definition.
-    if( psDirNode_1 != NULL)
+    if( psDirNode_1 != nullptr)
     {
-        if( psOldNode_1 != NULL )
+        if( psOldNode_1 != nullptr )
         {
             CPLRemoveXMLChild(psDirNode_1, psOldNode_1);
             CPLDestroyXMLNode(psOldNode_1);
-            if( psNewNode_1 != NULL )
+            if( psNewNode_1 != nullptr )
             {
                 CPLAddXMLChild(psDirNode_1, psNewNode_1);
                 iReplaced++;
             }
         }
     }
-    if( psDirNode_2 != NULL)
+    if( psDirNode_2 != nullptr)
     {
-        if( psOldNode_2 != NULL )
+        if( psOldNode_2 != nullptr )
         {
             CPLRemoveXMLChild(psDirNode_2, psOldNode_2);
             CPLDestroyXMLNode(psOldNode_2);
-            if( psNewNode_2 != NULL )
+            if( psNewNode_2 != nullptr )
             {
                 CPLAddXMLChild(psDirNode_2, psNewNode_2);
                 iReplaced++;
@@ -347,7 +351,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     sqlite3 *hDB = helper->hDB;
 
     // Query cursor.
-    sqlite3_stmt *hQueryStmt = NULL;
+    sqlite3_stmt *hQueryStmt = nullptr;
     {
         const char osCommand[] =
             "SELECT e.gml_id, e.gml_string, e.node_from_id, "
@@ -358,7 +362,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             "FROM gml_edges AS e "
             "LEFT JOIN nodes AS n1 ON (n1.gml_id = e.node_from_id) "
             "LEFT JOIN nodes AS n2 ON (n2.gml_id = e.node_to_id)";
-        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hQueryStmt, NULL);
+        const int rc = sqlite3_prepare_v2(hDB, osCommand, -1, &hQueryStmt, nullptr);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -368,7 +372,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     }
 
     // Update cursor.
-    sqlite3_stmt *hUpdateStmt = NULL;
+    sqlite3_stmt *hUpdateStmt = nullptr;
     {
         const char osCommand[] =
             "UPDATE gml_edges "
@@ -376,7 +380,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
             "gml_string = NULL "
             "WHERE gml_id = ?";
         const int rc =
-            sqlite3_prepare_v2(hDB, osCommand, -1, &hUpdateStmt, NULL);
+            sqlite3_prepare_v2(hDB, osCommand, -1, &hUpdateStmt, nullptr);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -387,9 +391,9 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     }
 
     // Starting a TRANSACTION.
-    char *pszErrMsg = NULL;
+    char *pszErrMsg = nullptr;
     {
-        const int rc = sqlite3_exec( hDB, "BEGIN", NULL, NULL, &pszErrMsg );
+        const int rc = sqlite3_exec( hDB, "BEGIN", nullptr, nullptr, &pszErrMsg );
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -407,10 +411,10 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     // Looping on the QUERY result-set.
     while( true )
     {
-        const char *pszGmlId = NULL;
-        const char *pszGmlString = NULL;
+        const char *pszGmlId = nullptr;
+        const char *pszGmlString = nullptr;
         bool bIsGmlStringNull = false;
-        const char *pszFromId = NULL;
+        const char *pszFromId = nullptr;
         bool bIsFromIdNull = false;
         double xFrom = 0.0;
         bool bIsXFromNull = false;
@@ -426,7 +430,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
         bool bIsYNodeFromNull = false;
         double zNodeFrom = 0.0;
         bool bIsZNodeFromNull = false;
-        const char *pszToId = NULL;
+        const char *pszToId = nullptr;
         bool bIsToIdNull = false;
         double xTo = 0.0;
         bool bIsXToNull = false;
@@ -735,7 +739,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                 bIsFromIdNull == false && bIsToIdNull == false )
             {
                 CPLXMLNode *psNode = CPLParseXMLString(pszGmlString);
-                if( psNode != NULL )
+                if( psNode != nullptr )
                 {
                     if( gmlHugeResolveEdgeNodes(psNode, pszFromId, pszToId) )
                     {
@@ -763,7 +767,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                         {
                             // Committing the current TRANSACTION.
                             const int rc3 = sqlite3_exec(
-                                hDB, "COMMIT", NULL, NULL, &pszErrMsg);
+                                hDB, "COMMIT", nullptr, nullptr, &pszErrMsg);
                             if( rc3 != SQLITE_OK )
                             {
                                 CPLError(
@@ -775,7 +779,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
                             }
                             // Restarting a new TRANSACTION.
                             const int rc4 = sqlite3_exec(
-                                hDB, "BEGIN", NULL, NULL, &pszErrMsg);
+                                hDB, "BEGIN", nullptr, nullptr, &pszErrMsg);
                             if( rc4 != SQLITE_OK )
                             {
                                 CPLError(
@@ -807,7 +811,7 @@ static bool gmlHugeFileResolveEdges( huge_helper *helper )
     sqlite3_finalize(hUpdateStmt);
 
     // Committing the current TRANSACTION.
-    const int rc = sqlite3_exec(hDB, "COMMIT", NULL, NULL, &pszErrMsg);
+    const int rc = sqlite3_exec(hDB, "COMMIT", nullptr, nullptr, &pszErrMsg);
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -826,11 +830,11 @@ static bool gmlHugeFileSQLiteInsert( huge_helper *helper )
 
     // Looping on GML tags.
     struct huge_tag *pItem = helper->pFirst;
-    while ( pItem != NULL )
+    while ( pItem != nullptr )
     {
         if( pItem->bHasCoords )
         {
-            if( pItem->gmlNodeFrom != NULL )
+            if( pItem->gmlNodeFrom != nullptr )
             {
                 sqlite3_reset(helper->hNodes);
                 sqlite3_clear_bindings(helper->hNodes);
@@ -852,7 +856,7 @@ static bool gmlHugeFileSQLiteInsert( huge_helper *helper )
                     return false;
                 }
             }
-            if( pItem->gmlNodeTo != NULL )
+            if( pItem->gmlNodeTo != nullptr )
             {
                 sqlite3_reset(helper->hNodes);
                 sqlite3_clear_bindings(helper->hNodes);
@@ -896,7 +900,7 @@ static bool gmlHugeFileSQLiteInsert( huge_helper *helper )
                 SQLITE_STATIC);
             sqlite3_bind_null(helper->hEdges, 3);
         }
-        if( pItem->gmlNodeFrom != NULL )
+        if( pItem->gmlNodeFrom != nullptr )
             sqlite3_bind_text(helper->hEdges, 4, pItem->gmlNodeFrom->c_str(),
                               -1, SQLITE_STATIC);
         else
@@ -916,7 +920,7 @@ static bool gmlHugeFileSQLiteInsert( huge_helper *helper )
             sqlite3_bind_null(helper->hEdges, 6);
             sqlite3_bind_null(helper->hEdges, 7);
         }
-        if( pItem->gmlNodeTo != NULL )
+        if( pItem->gmlNodeTo != nullptr )
             sqlite3_bind_text(helper->hEdges, 8, pItem->gmlNodeTo->c_str(), -1,
                               SQLITE_STATIC);
         else
@@ -955,22 +959,22 @@ static void gmlHugeFileReset( huge_helper *helper )
     struct huge_tag *p = helper->pFirst;
 
     // Cleaning any previous item.
-    while( p != NULL )
+    while( p != nullptr )
     {
         struct huge_tag *pNext = p->pNext;
-        if( p->gmlTagValue != NULL )
+        if( p->gmlTagValue != nullptr )
             delete p->gmlTagValue;
-        if( p->gmlId != NULL )
+        if( p->gmlId != nullptr )
             delete p->gmlId;
-        if( p->gmlNodeFrom != NULL )
+        if( p->gmlNodeFrom != nullptr )
             delete p->gmlNodeFrom;
-        if( p->gmlNodeTo != NULL )
+        if( p->gmlNodeTo != nullptr )
             delete p->gmlNodeTo;
         delete p;
         p = pNext;
     }
-    helper->pFirst = NULL;
-    helper->pLast = NULL;
+    helper->pFirst = nullptr;
+    helper->pLast = nullptr;
 }
 
 static void gmlHugeFileHrefReset( huge_helper *helper )
@@ -979,18 +983,18 @@ static void gmlHugeFileHrefReset( huge_helper *helper )
     struct huge_href *p = helper->pFirstHref;
 
     // Cleaning any previous item.
-    while( p != NULL )
+    while( p != nullptr )
     {
         struct huge_href *pNext = p->pNext;
-        if( p->gmlId != NULL )
+        if( p->gmlId != nullptr )
             delete p->gmlId;
-        if( p->gmlText != NULL )
+        if( p->gmlText != nullptr )
             delete p->gmlText;
         delete p;
         p = pNext;
     }
-    helper->pFirstHref = NULL;
-    helper->pLastHref = NULL;
+    helper->pFirstHref = nullptr;
+    helper->pLastHref = nullptr;
 }
 
 static int gmlHugeFileHrefCheck( huge_helper *helper )
@@ -998,9 +1002,9 @@ static int gmlHugeFileHrefCheck( huge_helper *helper )
     // Testing for unresolved items.
     bool bError = false;
     struct huge_href *p = helper->pFirstHref;
-    while( p != NULL )
+    while( p != nullptr )
     {
-        if( p->gmlText == NULL)
+        if( p->gmlText == nullptr)
         {
             bError = true;
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1019,11 +1023,11 @@ static void gmlHugeFileRewiterReset( huge_helper *helper )
     struct huge_parent *p = helper->pFirstParent;
 
     // Cleaning any previous item.
-    while( p != NULL )
+    while( p != nullptr )
     {
         struct huge_parent *pNext = p->pNext;
         struct huge_child *pChild = p->pFirst;
-        while( pChild != NULL )
+        while( pChild != nullptr )
         {
             struct huge_child *pChildNext = pChild->pNext;
             delete pChild;
@@ -1032,8 +1036,8 @@ static void gmlHugeFileRewiterReset( huge_helper *helper )
         delete p;
         p = pNext;
     }
-    helper->pFirstParent = NULL;
-    helper->pLastParent = NULL;
+    helper->pFirstParent = nullptr;
+    helper->pLastParent = nullptr;
 }
 
 static struct huge_tag *gmlHugeAddToHelper( huge_helper *helper,
@@ -1044,28 +1048,28 @@ static struct huge_tag *gmlHugeAddToHelper( huge_helper *helper,
 
     // Checking against duplicates.
     struct huge_tag *pItem = helper->pFirst;
-    while( pItem != NULL )
+    while( pItem != nullptr )
     {
         if( EQUAL(pItem->gmlId->c_str(), gmlId->c_str()) )
-            return NULL;
+            return nullptr;
         pItem = pItem->pNext;
     }
 
     pItem = new struct huge_tag;
     pItem->gmlId = gmlId;
     pItem->gmlTagValue = gmlFragment;
-    pItem->gmlNodeFrom = NULL;
-    pItem->gmlNodeTo = NULL;
+    pItem->gmlNodeFrom = nullptr;
+    pItem->gmlNodeTo = nullptr;
     pItem->bIsNodeFromHref = false;
     pItem->bIsNodeToHref = false;
     pItem->bHasCoords = false;
     pItem->bHasZ = false;
-    pItem->pNext = NULL;
+    pItem->pNext = nullptr;
 
     // Appending the item to the linked list.
-    if ( helper->pFirst == NULL )
+    if ( helper->pFirst == nullptr )
         helper->pFirst = pItem;
-    if ( helper->pLast != NULL )
+    if ( helper->pLast != nullptr )
         helper->pLast->pNext = pItem;
     helper->pLast = pItem;
     return pItem;
@@ -1082,7 +1086,7 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
 
     // Checking against duplicates.
     struct huge_href *pItem = helper->pFirstHref;
-    while( pItem != NULL )
+    while( pItem != nullptr )
     {
         if( EQUAL(pItem->gmlId->c_str(), gmlId->c_str()) &&
             pItem->psParent == psParent  &&
@@ -1098,17 +1102,17 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
 
     pItem = new struct huge_href;
     pItem->gmlId = gmlId;
-    pItem->gmlText = NULL;
+    pItem->gmlText = nullptr;
     pItem->psParent = psParent;
     pItem->psNode = psNode;
     pItem->bIsDirectedEdge = bIsDirectedEdge;
     pItem->cOrientation = cOrientation;
-    pItem->pNext = NULL;
+    pItem->pNext = nullptr;
 
     // Appending the item to the linked list.
-    if ( helper->pFirstHref == NULL )
+    if ( helper->pFirstHref == nullptr )
         helper->pFirstHref = pItem;
-    if ( helper->pLastHref != NULL )
+    if ( helper->pLastHref != nullptr )
         helper->pLastHref->pNext = pItem;
     helper->pLastHref = pItem;
 }
@@ -1116,15 +1120,15 @@ static void gmlHugeAddPendingToHelper( huge_helper *helper,
 static int gmlHugeFindGmlId( const CPLXMLNode *psNode, CPLString **gmlId )
 {
     // Attempting to identify a gml:id value.
-    *gmlId = NULL;
+    *gmlId = nullptr;
     const CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         if( psChild->eType == CXT_Attribute &&
             EQUAL(psChild->pszValue, "gml:id") )
         {
             const CPLXMLNode *psIdValue = psChild->psChild;
-            if( psIdValue != NULL )
+            if( psIdValue != nullptr )
             {
                 if( psIdValue->eType == CXT_Text )
                 {
@@ -1146,7 +1150,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
     // when required (an <Edge> is expected to be processed).
 
     // Attempting to fetch Node coordinates.
-    CPLXMLNode *psTopoCurve = CPLCreateXMLNode(NULL, CXT_Element, "TopoCurve");
+    CPLXMLNode *psTopoCurve = CPLCreateXMLNode(nullptr, CXT_Element, "TopoCurve");
     CPLXMLNode *psDirEdge =
         CPLCreateXMLNode(psTopoCurve, CXT_Element, "directedEdge");
     CPLXMLNode *psEdge = CPLCloneXMLTree((CPLXMLNode *)psNode);
@@ -1154,7 +1158,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
     OGRGeometryCollection *poColl = static_cast<OGRGeometryCollection *>(
         GML2OGRGeometry_XMLNode(psTopoCurve, FALSE));
     CPLDestroyXMLNode(psTopoCurve);
-    if( poColl != NULL )
+    if( poColl != nullptr )
     {
         const int iCount = poColl->getNumGeometries();
         if( iCount == 1 )
@@ -1190,22 +1194,22 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
 
     // Searching the <directedNode> sub-tags.
     const CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         if( psChild->eType == CXT_Element &&
             EQUAL(psChild->pszValue, "directedNode") )
         {
             char cOrientation = '+';
-            const char *pszGmlId = NULL;
+            const char *pszGmlId = nullptr;
             bool bIsHref = false;
             const CPLXMLNode *psAttr = psChild->psChild;
-            while( psAttr != NULL )
+            while( psAttr != nullptr )
             {
                 if( psAttr->eType == CXT_Attribute &&
                     EQUAL( psAttr->pszValue, "xlink:href" ) )
                 {
                     const CPLXMLNode *psHref = psAttr->psChild;
-                    if( psHref != NULL )
+                    if( psHref != nullptr )
                     {
                         if( psHref->eType == CXT_Text )
                         {
@@ -1218,7 +1222,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                     EQUAL(psAttr->pszValue, "orientation") )
                 {
                     const CPLXMLNode *psOrientation = psAttr->psChild;
-                    if( psOrientation != NULL )
+                    if( psOrientation != nullptr )
                     {
                         if( psOrientation->eType == CXT_Text )
                         {
@@ -1230,13 +1234,13 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                     EQUAL(psAttr->pszValue, "Node") )
                 {
                     const CPLXMLNode *psId = psAttr->psChild;
-                    while( psId != NULL )
+                    while( psId != nullptr )
                     {
                         if( psId->eType == CXT_Attribute &&
                             EQUAL(psId->pszValue, "gml:id") )
                         {
                             const CPLXMLNode *psIdGml = psId->psChild;
-                            if( psIdGml != NULL )
+                            if( psIdGml != nullptr )
                             {
                                 if( psIdGml->eType == CXT_Text )
                                 {
@@ -1250,9 +1254,9 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                 }
                 psAttr = psAttr->psNext;
             }
-            if( pszGmlId != NULL )
+            if( pszGmlId != nullptr )
             {
-                CPLString *posNode = NULL;
+                CPLString *posNode = nullptr;
                 if( bIsHref )
                 {
                     if (pszGmlId[0] != '#')
@@ -1296,7 +1300,7 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
     {
         if( EQUAL(psNode->pszValue, "Edge") )
         {
-            CPLString *gmlId = NULL;
+            CPLString *gmlId = nullptr;
             if( gmlHugeFindGmlId(psNode, &gmlId) )
             {
                 char *gmlText = CPLSerializeXMLTree(psNode);
@@ -1304,7 +1308,7 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
                 CPLFree(gmlText);
                 struct huge_tag *pItem =
                     gmlHugeAddToHelper(helper, gmlId, gmlValue);
-                if( pItem != NULL )
+                if( pItem != nullptr )
                 {
                     gmlHugeFileNodeCoords(pItem, psNode, &(helper->nodeSrs));
                 }
@@ -1319,7 +1323,7 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
 
     // Recursively scanning each Child GML node.
     const CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         if( psChild->eType == CXT_Element )
         {
@@ -1331,16 +1335,16 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
             if( EQUAL(psChild->pszValue, "directedFace") )
             {
                 const CPLXMLNode *psFace = psChild->psChild;
-                if( psFace != NULL )
+                if( psFace != nullptr )
                 {
                     if( psFace->eType == CXT_Element &&
                         EQUAL(psFace->pszValue, "Face") )
                     {
                         const CPLXMLNode *psDirEdge = psFace->psChild;
-                        while (psDirEdge != NULL)
+                        while (psDirEdge != nullptr)
                         {
                             const CPLXMLNode *psEdge = psDirEdge->psChild;
-                            while( psEdge != NULL)
+                            while( psEdge != nullptr)
                             {
                                 if( psEdge->eType == CXT_Element &&
                                     EQUAL(psEdge->pszValue, "Edge") )
@@ -1358,7 +1362,7 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
 
     // Recursively scanning each GML of the same level.
     const CPLXMLNode *psNext = psNode->psNext;
-    while( psNext != NULL )
+    while( psNext != nullptr )
     {
         if( psNext->eType == CXT_Element )
         {
@@ -1375,13 +1379,13 @@ static void gmlHugeFileCheckXrefs( huge_helper *helper,
 static void gmlHugeFileCleanUp ( huge_helper *helper )
 {
     // Cleaning up any SQLite handle.
-    if( helper->hNodes != NULL )
+    if( helper->hNodes != nullptr )
         sqlite3_finalize(helper->hNodes);
-    if( helper->hEdges != NULL )
+    if( helper->hEdges != nullptr )
         sqlite3_finalize(helper->hEdges);
-    if( helper->hDB != NULL )
+    if( helper->hDB != nullptr )
         sqlite3_close(helper->hDB);
-    if( helper->nodeSrs != NULL )
+    if( helper->nodeSrs != nullptr )
         delete helper->nodeSrs;
 }
 
@@ -1396,13 +1400,13 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
         {
             char cOrientation = '+';
             CPLXMLNode *psAttr = psNode->psChild;
-            while( psAttr != NULL )
+            while( psAttr != nullptr )
             {
                 if( psAttr->eType == CXT_Attribute &&
                     EQUAL(psAttr->pszValue, "orientation") )
                 {
                     const CPLXMLNode *psOrientation = psAttr->psChild;
-                    if( psOrientation != NULL )
+                    if( psOrientation != nullptr )
                     {
                         if( psOrientation->eType == CXT_Text )
                             cOrientation = *(psOrientation->pszValue);
@@ -1411,13 +1415,13 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
                 psAttr = psAttr->psNext;
             }
             psAttr = psNode->psChild;
-            while( psAttr != NULL )
+            while( psAttr != nullptr )
             {
                 if( psAttr->eType == CXT_Attribute &&
                     EQUAL(psAttr->pszValue, "xlink:href") )
                 {
                     const CPLXMLNode *pszHref = psAttr->psChild;
-                    if( pszHref != NULL )
+                    if( pszHref != nullptr )
                     {
                         if( pszHref->eType == CXT_Text )
                         {
@@ -1445,7 +1449,7 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
 
     // Recursively scanning each Child GML node.
     const CPLXMLNode *psChild = psNode->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         if( psChild->eType == CXT_Element )
         {
@@ -1461,7 +1465,7 @@ static void gmlHugeFileCheckPendingHrefs( huge_helper *helper,
 
     // Recursively scanning each GML of the same level.
     const CPLXMLNode *psNext = psNode->psNext;
-    while( psNext != NULL )
+    while( psNext != nullptr )
     {
         if( psNext->eType == CXT_Element )
         {
@@ -1480,11 +1484,11 @@ static void gmlHugeSetHrefGmlText( huge_helper *helper,
 {
     // Setting the GML text for the corresponding gml:id.
     struct huge_href *pItem = helper->pFirstHref;
-    while( pItem != NULL )
+    while( pItem != nullptr )
     {
         if( EQUAL(pItem->gmlId->c_str(), pszGmlId) )
         {
-            if( pItem->gmlText != NULL)
+            if( pItem->gmlText != nullptr)
                 delete pItem->gmlText;
             pItem->gmlText = new CPLString(pszGmlText);
             return;
@@ -1500,7 +1504,7 @@ static struct huge_parent *gmlHugeFindParent( huge_helper *helper,
     struct huge_parent *pItem = helper->pFirstParent;
 
     // Checking if already exists.
-    while( pItem != NULL )
+    while( pItem != nullptr )
     {
         if( pItem->psParent == psParent )
             return pItem;
@@ -1510,26 +1514,26 @@ static struct huge_parent *gmlHugeFindParent( huge_helper *helper,
     // Creating a new Parent Node.
     pItem = new struct huge_parent;
     pItem->psParent = psParent;
-    pItem->pFirst = NULL;
-    pItem->pLast = NULL;
-    pItem->pNext = NULL;
-    if( helper->pFirstParent == NULL )
+    pItem->pFirst = nullptr;
+    pItem->pLast = nullptr;
+    pItem->pNext = nullptr;
+    if( helper->pFirstParent == nullptr )
         helper->pFirstParent = pItem;
-    if( helper->pLastParent != NULL )
+    if( helper->pLastParent != nullptr )
         helper->pLastParent->pNext = pItem;
     helper->pLastParent = pItem;
 
     // Inserting any Child node into the Parent.
     CPLXMLNode *psChild = psParent->psChild;
-    while( psChild != NULL )
+    while( psChild != nullptr )
     {
         struct huge_child *pChildItem = new struct huge_child;
         pChildItem->psChild = psChild;
-        pChildItem->pItem = NULL;
-        pChildItem->pNext = NULL;
-        if( pItem->pFirst == NULL )
+        pChildItem->pItem = nullptr;
+        pChildItem->pNext = nullptr;
+        if( pItem->pFirst == nullptr )
             pItem->pFirst = pChildItem;
-        if( pItem->pLast != NULL )
+        if( pItem->pLast != nullptr )
             pItem->pLast->pNext = pChildItem;
         pItem->pLast = pChildItem;
         psChild = psChild->psNext;
@@ -1542,7 +1546,7 @@ static int gmlHugeSetChild( struct huge_parent *pParent,
 {
     // Setting a Child Node to be rewritten.
     struct huge_child *pChild = pParent->pFirst;
-    while( pChild != NULL )
+    while( pChild != nullptr )
     {
         if( pChild->psChild == pItem->psNode )
         {
@@ -1568,7 +1572,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
                 "FROM gml_edges "
                 "WHERE gml_id IN (";
     struct huge_href *pItem = helper->pFirstHref;
-    while( pItem != NULL )
+    while( pItem != nullptr )
     {
         if( bIsComma )
             osCommand += ", ";
@@ -1580,10 +1584,10 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
         pItem = pItem->pNext;
     }
     osCommand += ")";
-    sqlite3_stmt *hStmtEdges = NULL;
+    sqlite3_stmt *hStmtEdges = nullptr;
     {
         const int rc =
-            sqlite3_prepare_v2(hDB, osCommand.c_str(), -1, &hStmtEdges, NULL);
+            sqlite3_prepare_v2(hDB, osCommand.c_str(), -1, &hStmtEdges, nullptr);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1622,11 +1626,11 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
 
     // Identifying any GML node to be rewritten.
     pItem = helper->pFirstHref;
-    struct huge_parent *pParent = NULL;
-    while( pItem != NULL )
+    struct huge_parent *pParent = nullptr;
+    while( pItem != nullptr )
     {
-        if( pItem->gmlText == NULL || pItem->psParent == NULL ||
-            pItem->psNode == NULL )
+        if( pItem->gmlText == nullptr || pItem->psParent == nullptr ||
+            pItem->psNode == nullptr )
         {
             bError = true;
             break;
@@ -1645,26 +1649,26 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
     {
         // Rewriting GML nodes.
         pParent = helper->pFirstParent;
-        while( pParent != NULL )
+        while( pParent != nullptr )
         {
 
             // Removing any Child node from the Parent.
             struct huge_child *pChild = pParent->pFirst;
-            while( pChild != NULL )
+            while( pChild != nullptr )
             {
                 CPLRemoveXMLChild(pParent->psParent, pChild->psChild);
 
                 // Destroying any Child Node to be rewritten.
-                if( pChild->pItem != NULL )
+                if( pChild->pItem != nullptr )
                     CPLDestroyXMLNode(pChild->psChild);
                 pChild = pChild->pNext;
             }
 
             // Rewriting the Parent Node.
             pChild = pParent->pFirst;
-            while( pChild != NULL )
+            while( pChild != nullptr )
             {
-                if( pChild->pItem == NULL )
+                if( pChild->pItem == nullptr )
                 {
                     // Reinserting any untouched Child Node.
                     CPLAddXMLChild(pParent->psParent, pChild->psChild);
@@ -1673,7 +1677,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
                 {
                     // Rewriting a Child Node.
                     CPLXMLNode *psNewNode =
-                        CPLCreateXMLNode(NULL, CXT_Element, "directedEdge");
+                        CPLCreateXMLNode(nullptr, CXT_Element, "directedEdge");
                     if( pChild->pItem->cOrientation == '-' )
                     {
                         CPLXMLNode *psOrientationNode = CPLCreateXMLNode(
@@ -1682,7 +1686,7 @@ static int gmlHugeResolveEdges( CPL_UNUSED huge_helper *helper,
                     }
                     CPLXMLNode *psEdge =
                         CPLParseXMLString(pChild->pItem->gmlText->c_str());
-                    if( psEdge != NULL )
+                    if( psEdge != nullptr )
                         CPLAddXMLChild(psNewNode, psEdge);
                     CPLAddXMLChild(pParent->psParent, psNewNode);
                 }
@@ -1705,7 +1709,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
 {
     // Open the resolved GML file for writing.
     VSILFILE *fp = VSIFOpenL(pszOutputFilename, "w");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open %.500s to write.",
                  pszOutputFilename);
@@ -1716,8 +1720,8 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
 
     // Query cursor [Nodes].
     const char *osCommand = "SELECT gml_id, x, y, z FROM nodes";
-    sqlite3_stmt *hStmtNodes = NULL;
-    const int rc1 = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmtNodes, NULL);
+    sqlite3_stmt *hStmtNodes = nullptr;
+    const int rc1 = sqlite3_prepare_v2(hDB, osCommand, -1, &hStmtNodes, nullptr);
     if( rc1 != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1762,7 +1766,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
             VSIFPrintfL(fp, "      <NodeGmlId>%s</NodeGmlId>\n", pszEscaped);
             CPLFree(pszEscaped);
             VSIFPrintfL(fp, "      <ResolvedGeometry> \n");
-            if( helper->nodeSrs == NULL )
+            if( helper->nodeSrs == nullptr )
             {
                 VSIFPrintfL(fp, "        <gml:Point srsDimension=\"%d\">",
                             bHasZ ? 3 : 2);
@@ -1801,10 +1805,10 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
     sqlite3_finalize(hStmtNodes);
 
     // Processing GML features.
-    GMLFeature *poFeature = NULL;
+    GMLFeature *poFeature = nullptr;
     bool bError = false;
 
-    while( (poFeature = pReader->NextFeature()) != NULL )
+    while( (poFeature = pReader->NextFeature()) != nullptr )
     {
         GMLFeatureClass *poClass = poFeature->GetClass();
         const CPLXMLNode *const *papsGeomList = poFeature->GetGeometryList();
@@ -1819,7 +1823,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
             const char *pszPropName = poPropDefn->GetName();
             const GMLProperty *poProp = poFeature->GetProperty(iProp);
 
-            if( poProp != NULL )
+            if( poProp != nullptr )
             {
                 for( int iSub = 0; iSub < poProp->nSubProperties; iSub++ )
                 {
@@ -1832,13 +1836,13 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
             }
         }
 
-        if( papsGeomList != NULL )
+        if( papsGeomList != nullptr )
         {
             int i = 0;
             const CPLXMLNode *psNode = papsGeomList[i];
-            while( psNode != NULL )
+            while( psNode != nullptr )
             {
-                char *pszResolved = NULL;
+                char *pszResolved = nullptr;
                 bool bNotToBeResolved = false;
                 if( psNode->eType != CXT_Element )
                 {
@@ -1862,7 +1866,7 @@ static bool gmlHugeFileWriteResolved( huge_helper *helper,
                 else
                 {
                     gmlHugeFileCheckPendingHrefs(helper, psNode, psNode);
-                    if( helper->pFirstHref == NULL )
+                    if( helper->pFirstHref == nullptr )
                     {
                         VSIFPrintfL(fp, "      <ResolvedGeometry> \n");
                         pszResolved = CPLSerializeXMLTree(psNode);
@@ -1943,7 +1947,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
         return false;
     }
 
-    sqlite3 *hDB = NULL;
+    sqlite3 *hDB = nullptr;
     {
         const int rc = sqlite3_open(pszSQLiteFilename, &hDB);
         if( rc != SQLITE_OK )
@@ -1958,14 +1962,14 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     huge_helper helper;
     helper.hDB = hDB;
 
-    char *pszErrMsg = NULL;
+    char *pszErrMsg = nullptr;
 
     // Setting SQLite for max speed; this is intrinsically unsafe.
     // The DB file could be potentially damaged.
     // But, this is a temporary file, so there is no real risk.
     {
         const int rc =
-            sqlite3_exec(hDB, "PRAGMA synchronous = OFF", NULL, NULL,
+            sqlite3_exec(hDB, "PRAGMA synchronous = OFF", nullptr, nullptr,
                          &pszErrMsg);
         if( rc != SQLITE_OK )
         {
@@ -1977,7 +1981,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     }
     {
         const int rc =
-            sqlite3_exec(hDB, "PRAGMA journal_mode = OFF", NULL, NULL,
+            sqlite3_exec(hDB, "PRAGMA journal_mode = OFF", nullptr, nullptr,
                          &pszErrMsg);
         if( rc != SQLITE_OK )
         {
@@ -1989,7 +1993,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     }
     {
         const int rc =
-            sqlite3_exec(hDB, "PRAGMA locking_mode = EXCLUSIVE", NULL, NULL,
+            sqlite3_exec(hDB, "PRAGMA locking_mode = EXCLUSIVE", nullptr, nullptr,
                          &pszErrMsg);
         if( rc != SQLITE_OK )
         {
@@ -2009,7 +2013,7 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
         char sqlPragma[64] = {};
         snprintf(sqlPragma, sizeof(sqlPragma), "PRAGMA cache_size = %d",
                  cache_size);
-        const int rc = sqlite3_exec(hDB, sqlPragma, NULL, NULL, &pszErrMsg);
+        const int rc = sqlite3_exec(hDB, sqlPragma, nullptr, nullptr, &pszErrMsg);
         if( rc != SQLITE_OK )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2032,11 +2036,11 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     }
 
     // Processing GML features.
-    GMLFeature *poFeature = NULL;
-    while( (poFeature = NextFeature()) != NULL )
+    GMLFeature *poFeature = nullptr;
+    while( (poFeature = NextFeature()) != nullptr )
     {
         const CPLXMLNode *const *papsGeomList = poFeature->GetGeometryList();
-        if (papsGeomList != NULL)
+        if (papsGeomList != nullptr)
         {
             int i = 0;
             const CPLXMLNode *psNode = papsGeomList[i];
@@ -2055,15 +2059,15 @@ bool GMLReader::ParseXMLHugeFile( const char *pszOutputFilename,
     }
 
     // Finalizing any SQLite Insert cursor.
-    if( helper.hNodes != NULL )
+    if( helper.hNodes != nullptr )
         sqlite3_finalize(helper.hNodes);
-    helper.hNodes = NULL;
-    if( helper.hEdges != NULL )
+    helper.hNodes = nullptr;
+    if( helper.hEdges != nullptr )
         sqlite3_finalize(helper.hEdges);
-    helper.hEdges = NULL;
+    helper.hEdges = nullptr;
 
     // Confirming the still pending TRANSACTION.
-    const int rc = sqlite3_exec(hDB, "COMMIT", NULL, NULL, &pszErrMsg);
+    const int rc = sqlite3_exec(hDB, "COMMIT", nullptr, nullptr, &pszErrMsg);
     if( rc != SQLITE_OK )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2112,7 +2116,7 @@ bool GMLReader::HugeFileResolver( const char *pszFile,
 
 {
     // Check if the original source file is set.
-    if( m_pszFilename == NULL )
+    if( m_pszFilename == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GML source file needs to be set first with "
@@ -2126,7 +2130,7 @@ bool GMLReader::HugeFileResolver( const char *pszFile,
     CleanupParser();
     if (fpGML)
         VSIFCloseL(fpGML);
-    fpGML = NULL;
+    fpGML = nullptr;
     CPLFree(m_pszFilename);
     m_pszFilename = CPLStrdup(pszFile);
     return true;

@@ -36,7 +36,7 @@ CPL_CVSID("$Id$")
 /*                            OGRDWGDriver()                            */
 /************************************************************************/
 
-OGRDWGDriver::OGRDWGDriver() : poServices(NULL)
+OGRDWGDriver::OGRDWGDriver() : poServices(nullptr)
 
 {
 }
@@ -69,23 +69,23 @@ OGRDataSource *OGRDWGDriver::Open( const char * pszFilename, int /*bUpdate*/ )
 
 {
     if( !EQUAL(CPLGetExtension(pszFilename),"dwg") )
-        return NULL;
+        return nullptr;
 
     // Check that this is a real file since the driver doesn't support
     // VSI*L API
     VSIStatBuf sStat;
     if( VSIStat(pszFilename, &sStat) != 0 )
-        return NULL;
+        return nullptr;
 
     if( !OGRTEIGHAInitialize() )
-        return NULL;
+        return nullptr;
 
     OGRDWGDataSource   *poDS = new OGRDWGDataSource();
 
     if( !poDS->Open( OGRDWGGetServices(), pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;

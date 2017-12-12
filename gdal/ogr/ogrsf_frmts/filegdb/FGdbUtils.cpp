@@ -429,7 +429,7 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
                               OGRSpatialReference* pOGRSR, OGRGeometry** ppOutGeometry)
 {
 
-    OGRGeometry* pOGRGeometry = NULL;
+    OGRGeometry* pOGRGeometry = nullptr;
 
     OGRErr eErr = OGRCreateFromShapeBin( pGdbGeometry->shapeBuffer,
                                 &pOGRGeometry,
@@ -443,7 +443,7 @@ bool GDBGeometryToOGRGeometry(bool forceMulti, FileGDBAPI::ShapeBuffer* pGdbGeom
         return false;
     }
 
-    if( pOGRGeometry != NULL )
+    if( pOGRGeometry != nullptr )
     {
         // force geometries to multi if requested
 
@@ -507,9 +507,9 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
         if( CPLTestBool(CPLGetConfigOption("USE_OSR_FIND_MATCHES", "YES")) )
         {
             int nEntries = 0;
-            int* panConfidence = NULL;
+            int* panConfidence = nullptr;
             OGRSpatialReferenceH* pahSRS =
-                (*ppSR)->FindMatches(NULL, &nEntries, &panConfidence);
+                (*ppSR)->FindMatches(nullptr, &nEntries, &panConfidence);
             if( nEntries == 1 && panConfidence[0] == 100 )
             {
                 (*ppSR)->Release();
@@ -532,7 +532,7 @@ bool GDBToOGRSpatialReference(const string & wkt, OGRSpatialReference** ppSR)
     else
     {
         delete *ppSR;
-        *ppSR = NULL;
+        *ppSR = nullptr;
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed morphing from ESRI Geometry: %s", wkt.c_str());
@@ -588,9 +588,9 @@ std::string FGDBEscapeUnsupportedPrefixes(const std::string& className)
     std::string newName = className;
     // From ESRI docs
     // Feature classes starting with these strings are unsupported.
-    static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", NULL};
+    static const char* const UNSUPPORTED_PREFIXES[] = {"sde_", "gdb_", "delta_", nullptr};
 
-    for (int i = 0; UNSUPPORTED_PREFIXES[i] != NULL; i++)
+    for (int i = 0; UNSUPPORTED_PREFIXES[i] != nullptr; i++)
     {
         // cppcheck-suppress stlIfStrFind
         if (newName.find(UNSUPPORTED_PREFIXES[i]) == 0)
@@ -618,11 +618,11 @@ std::string FGDBEscapeReservedKeywords(const std::string& name)
                                     "BY", "COLUMN", "CREATE", "DATE", "DELETE", "DESC",
                                     "DROP", "EXISTS", "FOR", "FROM", "IN", "INSERT", "INTO",
                                     "IS", "LIKE", "NOT", "NULL", "OR", "ORDER", "SELECT",
-                                    "SET", "TABLE", "UPDATE", "VALUES", "WHERE", NULL};
+                                    "SET", "TABLE", "UPDATE", "VALUES", "WHERE", nullptr};
 
     // Append an underscore to any FGDB reserved words used as field names
     // This is the same behaviour ArcCatalog follows.
-    for (int i = 0; RESERVED_WORDS[i] != NULL; i++)
+    for (int i = 0; RESERVED_WORDS[i] != nullptr; i++)
     {
         const char* w = RESERVED_WORDS[i];
         if (upperName == w)

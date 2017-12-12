@@ -68,8 +68,8 @@ public:
         GDALDataType eType = GDT_Unknown);
     virtual ~IntergraphRasterBand();
 
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double GetMaximum( int *pbSuccess = nullptr ) override;
     virtual GDALColorTable *GetColorTable() override;
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;

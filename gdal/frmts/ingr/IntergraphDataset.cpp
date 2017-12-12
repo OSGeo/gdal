@@ -47,8 +47,8 @@ CPL_CVSID("$Id$")
 //  ----------------------------------------------------------------------------
 
 IntergraphDataset::IntergraphDataset() :
-    fp(NULL),
-    pszFilename(NULL)
+    fp(nullptr),
+    pszFilename(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -57,9 +57,9 @@ IntergraphDataset::IntergraphDataset() :
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
-    hVirtual.poDS = NULL;
-    hVirtual.poBand = NULL;
-    hVirtual.pszFileName = NULL;
+    hVirtual.poDS = nullptr;
+    hVirtual.poBand = nullptr;
+    hVirtual.pszFileName = nullptr;
 
     memset(&hHeaderOne, 0, sizeof(hHeaderOne));
     memset(&hHeaderTwo, 0, sizeof(hHeaderTwo));
@@ -75,7 +75,7 @@ IntergraphDataset::~IntergraphDataset()
 
     CPLFree( pszFilename );
 
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         VSIFCloseL( fp );
     }
@@ -89,7 +89,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     if( poOpenInfo->nHeaderBytes < 1024 )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -106,7 +106,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( hHeaderOne.HeaderType.Version != INGR_HEADER_VERSION )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -116,7 +116,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     if( ( hHeaderOne.HeaderType.Is2Dor3D != INGR_HEADER_2D ) &&
         ( hHeaderOne.HeaderType.Is2Dor3D != INGR_HEADER_3D ) )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -125,7 +125,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( hHeaderOne.HeaderType.Type != INGR_HEADER_TYPE )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -136,7 +136,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         hHeaderOne.GridFileVersion != 2 &&
         hHeaderOne.GridFileVersion != 3 )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -145,7 +145,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( hHeaderOne.WordsToFollow < 254 )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -156,7 +156,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( ( fHeaderBlocks - (int) fHeaderBlocks ) != 0.0 )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -169,7 +169,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // We need to scan around the file, so we open it now.
     // --------------------------------------------------------------------
 
-    VSILFILE *fp = NULL;
+    VSILFILE *fp = nullptr;
 
     if( poOpenInfo->eAccess == GA_ReadOnly  )
     {
@@ -180,10 +180,10 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
     }
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, "%s", VSIStrerror( errno ) );
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -204,7 +204,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
             VSIFCloseL( fp );
             CPLError( CE_Failure, CPLE_AppDefined,
                 "Error reading tiles header" );
-            return NULL;
+            return nullptr;
         }
 
         INGR_TileHeaderDiskToMem( &hTileDir, abyBuffer );
@@ -219,7 +219,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
             CPLError( CE_Failure, CPLE_AppDefined,
                 "Cannot recognize tiles header info");
             VSIFCloseL( fp );
-            return NULL;
+            return nullptr;
         }
 
         eFormat = (INGR_Format) hTileDir.DataTypeCode;
@@ -261,7 +261,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
             "Intergraph Raster Format %d ( \"%s\" ) not supported",
             hHeaderOne.DataTypeCode, INGR_GetFormatName( (uint16) eFormat ) );
         VSIFCloseL( fp );
-        return NULL;
+        return nullptr;
     }
 
     // -----------------------------------------------------------------
@@ -291,7 +291,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
                   "Invalid dimensions : %d x %d",
                   poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -332,7 +332,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Not all bands have same dimensions");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         if( VSIFReadL( abyBuf, 1, SIZEOF_HDR2_A, poDS->fp ) != SIZEOF_HDR2_A )
@@ -345,44 +345,44 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         case JPEGRGB:
         case JPEGCMYK:
         {
-            IntergraphBitmapBand* poBand = NULL;
+            IntergraphBitmapBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphBitmapBand( poDS, nBands, nBandOffset, 1 ));
-            if (poBand->pabyBMPBlock == NULL)
+            if (poBand->pabyBMPBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphBitmapBand( poDS, nBands, nBandOffset, 2 ));
-            if (poBand->pabyBMPBlock == NULL)
+            if (poBand->pabyBMPBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphBitmapBand( poDS, nBands, nBandOffset, 3 ));
-            if (poBand->pabyBMPBlock == NULL)
+            if (poBand->pabyBMPBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             break;
         }
         case JPEGGRAY:
         case CCITTGroup4:
         {
-            IntergraphBitmapBand* poBand = NULL;
+            IntergraphBitmapBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphBitmapBand( poDS, nBands, nBandOffset ));
-            if (poBand->pabyBMPBlock == NULL)
+            if (poBand->pabyBMPBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             break;
         }
@@ -390,86 +390,86 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         case RunLengthEncodedC:
         case AdaptiveGrayScale:
         {
-            IntergraphRLEBand* poBand = NULL;
+            IntergraphRLEBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRLEBand( poDS, nBands, nBandOffset ));
-            if (poBand->pabyBlockBuf == NULL || poBand->pabyRLEBlock == NULL)
+            if (poBand->pabyBlockBuf == nullptr || poBand->pabyRLEBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             break;
         }
         case AdaptiveRGB:
         case ContinuousTone:
         {
-            IntergraphRLEBand* poBand = NULL;
+            IntergraphRLEBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRLEBand( poDS, nBands, nBandOffset, 1 ));
-            if (poBand->pabyBlockBuf == NULL || poBand->pabyRLEBlock == NULL)
+            if (poBand->pabyBlockBuf == nullptr || poBand->pabyRLEBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRLEBand( poDS, nBands, nBandOffset, 2 ));
-            if (poBand->pabyBlockBuf == NULL || poBand->pabyRLEBlock == NULL)
+            if (poBand->pabyBlockBuf == nullptr || poBand->pabyRLEBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRLEBand( poDS, nBands, nBandOffset, 3 ));
-            if (poBand->pabyBlockBuf == NULL || poBand->pabyRLEBlock == NULL)
+            if (poBand->pabyBlockBuf == nullptr || poBand->pabyRLEBlock == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             break;
         }
         case Uncompressed24bit:
         {
-            IntergraphRGBBand* poBand = NULL;
+            IntergraphRGBBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRGBBand( poDS, nBands, nBandOffset, 1 ));
-            if (poBand->pabyBlockBuf == NULL)
+            if (poBand->pabyBlockBuf == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRGBBand( poDS, nBands, nBandOffset, 2 ));
-            if (poBand->pabyBlockBuf == NULL)
+            if (poBand->pabyBlockBuf == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRGBBand( poDS, nBands, nBandOffset, 3 ));
-            if (poBand->pabyBlockBuf == NULL)
+            if (poBand->pabyBlockBuf == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
             break;
         }
         default:
         {
-            IntergraphRasterBand* poBand = NULL;
+            IntergraphRasterBand* poBand = nullptr;
             nBands++;
             poDS->SetBand( nBands,
                 poBand = new IntergraphRasterBand( poDS, nBands, nBandOffset ));
-            if (poBand->pabyBlockBuf == NULL)
+            if (poBand->pabyBlockBuf == nullptr)
             {
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
         }
         }
@@ -514,11 +514,11 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     int nDeviceResolution = 1;
 
     const char *pszValue = CSLFetchNameValue(papszOptions, "RESOLUTION");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         nDeviceResolution = -atoi( pszValue );
 
     char *pszExtension = CPLStrlwr(CPLStrdup(CPLGetExtension(pszFilename)));
-    const char *pszCompression = NULL;
+    const char *pszCompression = nullptr;
     if ( EQUAL( pszExtension, "rle" ) )
         pszCompression = INGR_GetFormatName(RunLengthEncoded);
     CPLFree(pszExtension);
@@ -533,7 +533,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Data type not supported (%s)",
             GDALGetDataTypeName( eType ) );
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -551,7 +551,7 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
     hHdr1.HeaderType.Version    = INGR_HEADER_VERSION;
     hHdr1.HeaderType.Type       = INGR_HEADER_TYPE;
     hHdr1.HeaderType.Is2Dor3D   = INGR_HEADER_2D;
-    hHdr1.DataTypeCode          = (uint16) INGR_GetFormat( eType, (pszCompression!=NULL)?pszCompression:"None" );
+    hHdr1.DataTypeCode          = (uint16) INGR_GetFormat( eType, (pszCompression!=nullptr)?pszCompression:"None" );
     hHdr1.WordsToFollow         = ( ( SIZEOF_HDR1 * 3 ) / 2 ) - 2;
     hHdr1.ApplicationType       = GenericRasterImageFile;
     hHdr1.XViewOrigin           = 0.0;
@@ -614,11 +614,11 @@ GDALDataset *IntergraphDataset::Create( const char *pszFilename,
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "wb+" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
             "Attempt to create file %s' failed.\n", pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     GByte abyBuf[MAX(SIZEOF_HDR1,SIZEOF_CTAB)];
@@ -667,12 +667,12 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Intergraph driver does not support source dataset with zero band.\n");
-        return NULL;
+        return nullptr;
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -687,7 +687,7 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
     char **papszCreateOptions = CSLDuplicate( papszOptions );
     const char  *pszValue = CSLFetchNameValue(papszCreateOptions, "RESOLUTION");
-    if( pszValue == NULL )
+    if( pszValue == nullptr )
     {
         const char *value = poSrcDS->GetMetadataItem("RESOLUTION");
         if (value)
@@ -711,9 +711,9 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
 
     CSLDestroy( papszCreateOptions );
 
-    if( poDstDS == NULL )
+    if( poDstDS == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     // --------------------------------------------------------------------
@@ -803,32 +803,32 @@ GDALDataset *IntergraphDataset::CreateCopy( const char *pszFilename,
                     iXOffset, iYOffset,
                     nBlockXSize, nBlockYSize,
                     pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0, NULL );
+                    eType, 0, 0, nullptr );
                 if( eErr != CE_None )
                 {
                     CPLFree( pData );
                     delete poDstDS;
-                    return NULL;
+                    return nullptr;
                 }
                 eErr = poDstBand->RasterIO( GF_Write,
                     iXOffset, iYOffset,
                     nBlockXSize, nBlockYSize,
                     pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0, NULL );
+                    eType, 0, 0, nullptr );
                 if( eErr != CE_None )
                 {
                     CPLFree( pData );
                     delete poDstDS;
-                    return NULL;
+                    return nullptr;
                 }
             }
             if( ( eErr == CE_None ) && ( ! pfnProgress(
-                ( iYOffset + 1 ) / ( double ) nYSize, NULL, pProgressData ) ) )
+                ( iYOffset + 1 ) / ( double ) nYSize, nullptr, pProgressData ) ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
                 CPLFree( pData );
                 delete poDstDS;
-                return NULL;
+                return nullptr;
             }
         }
         CPLFree( pData );
@@ -888,7 +888,7 @@ CPLErr IntergraphDataset::SetProjection( const char * /* pszProjString */ )
 
 void GDALRegister_INGR()
 {
-    if( GDALGetDriverByName( "INGR" ) != NULL )
+    if( GDALGetDriverByName( "INGR" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

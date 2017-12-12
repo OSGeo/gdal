@@ -227,9 +227,9 @@ class OGRGFTDataSource : public OGRDataSource
     virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
     virtual OGRErr      DeleteLayer(int) override;
 
     virtual OGRLayer*  ExecuteSQL( const char *pszSQLCommand,
@@ -240,7 +240,7 @@ class OGRGFTDataSource : public OGRDataSource
     const CPLString&            GetAccessToken() const { return osAccessToken;}
     const char*                 GetAPIURL() const;
     int                         IsReadWrite() const { return bReadWrite; }
-    char**                      AddHTTPOptions(char** papszOptions = NULL);
+    char**                      AddHTTPOptions(char** papszOptions = nullptr);
     CPLHTTPResult*              RunSQL(const char* pszUnescapedSQL);
 };
 

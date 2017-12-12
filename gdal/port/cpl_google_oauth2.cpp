@@ -223,16 +223,16 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
         CPLHTTPFetch(CPLGetConfigOption("GOA2_AUTH_URL_TOKEN",
                                         GOOGLE_AUTH_URL "/token"), oOptions);
 
-    if( psResult == NULL )
-        return NULL;
+    if( psResult == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      One common mistake is to try and reuse the auth token.          */
 /*      After the first use it will return invalid_grant.               */
 /* -------------------------------------------------------------------- */
-    if( psResult->pabyData != NULL &&
+    if( psResult->pabyData != nullptr &&
         strstr(reinterpret_cast<char *>(psResult->pabyData), "invalid_grant")
-        != NULL )
+        != nullptr )
     {
         CPLString osURL;
         osURL.Seize(GOA2GetAuthorizationURL(pszScope));
@@ -241,21 +241,21 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
                  "Request a fresh authorization token at %s.",
                  osURL.c_str());
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
-    if( psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL )
+    if( psResult->pabyData == nullptr ||
+        psResult->pszErrBuf != nullptr )
     {
-        if( psResult->pszErrBuf != NULL )
+        if( psResult->pszErrBuf != nullptr )
             CPLDebug("GOA2", "%s", psResult->pszErrBuf);
-        if( psResult->pabyData != NULL )
+        if( psResult->pabyData != nullptr )
             CPLDebug("GOA2", "%s", psResult->pabyData);
 
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Fetching OAuth2 access code from auth code failed.");
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug("GOA2", "Access Token Response:\n%s",
@@ -285,7 +285,7 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to identify a refresh token in the OAuth2 response.");
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -303,21 +303,21 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 static char** GOA2ProcessResponse(CPLHTTPResult *psResult)
 {
 
-    if( psResult == NULL )
-        return NULL;
+    if( psResult == nullptr )
+        return nullptr;
 
-    if( psResult->pabyData == NULL ||
-        psResult->pszErrBuf != NULL )
+    if( psResult->pabyData == nullptr ||
+        psResult->pszErrBuf != nullptr )
     {
-        if( psResult->pszErrBuf != NULL )
+        if( psResult->pszErrBuf != nullptr )
             CPLDebug("GOA2", "%s", psResult->pszErrBuf);
-        if( psResult->pabyData != NULL )
+        if( psResult->pabyData != nullptr )
             CPLDebug("GOA2", "%s", psResult->pabyData);
 
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Fetching OAuth2 access code from auth code failed.");
         CPLHTTPDestroyResult(psResult);
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug("GOA2", "Refresh Token Response:\n%s",
@@ -345,7 +345,7 @@ static char** GOA2ProcessResponse(CPLHTTPResult *psResult)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to identify an access token in the OAuth2 response.");
-        return NULL;
+        return nullptr;
     }
 
     return oResponse.StealList();
@@ -417,10 +417,10 @@ static char** GOA2GetAccessTokenEx(const char *pszRefreshToken,
 char *GOA2GetAccessToken( const char *pszRefreshToken,
                           CPL_UNUSED const char * pszScope )
 {
-    char** papszRet = GOA2GetAccessTokenEx(pszRefreshToken, NULL, NULL, NULL);
+    char** papszRet = GOA2GetAccessTokenEx(pszRefreshToken, nullptr, nullptr, nullptr);
     const char* pszAccessToken = CSLFetchNameValue(papszRet,
                                                    "access_token");
-    char* pszRet = pszAccessToken ? CPLStrdup(pszAccessToken) : NULL;
+    char* pszRet = pszAccessToken ? CPLStrdup(pszAccessToken) : nullptr;
     CSLDestroy(papszRet);
     return pszRet;
 }
@@ -531,14 +531,14 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "PEM header not found");
         }
-        return NULL;
+        return nullptr;
     }
 
     pos2 = osRSAPrivKey.find(FOOTER, pos1+1);
     if(pos2 == std::string::npos)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "PEM footer not found");
-        return NULL;
+        return nullptr;
     }
 
     // Strip header and footer to get the base64-only portion
@@ -562,7 +562,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Exception while decoding private key: %s", e.what());
-        return NULL;
+        return nullptr;
     }
 
     // Check that we have consumed all bytes.
@@ -570,7 +570,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid private key: extraneous trailing bytes");
-        return NULL;
+        return nullptr;
     }
 
     CryptoPP::AutoSeededRandomPool prng;
@@ -579,7 +579,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid private key: validation failed");
-        return NULL;
+        return nullptr;
     }
 
     std::string signature;
@@ -601,7 +601,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Exception while signing: %s", e.what());
-        return NULL;
+        return nullptr;
     }
 
     *pnSignatureLen = static_cast<unsigned int>(signature.size());
@@ -615,32 +615,32 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
   if( EQUAL(CPLGetConfigOption("CPL_RSA_SHA256_Sign", "OPENSSL"), "OPENSSL") )
   {
     const EVP_MD* digest = EVP_sha256();
-    if( digest == NULL )
+    if( digest == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "EVP_sha256() failed");
-        return NULL;
+        return nullptr;
     }
 
     // Old versions expect a void*, newer a const void*
     BIO* bio = BIO_new_mem_buf(const_cast<void*>(static_cast<const void*>(pszPrivateKey)),
                                static_cast<int>(strlen(pszPrivateKey)));
-    if( bio == NULL )
+    if( bio == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "BIO_new_mem_buf() failed");
-        return NULL;
+        return nullptr;
     }
-    EVP_PKEY* pkey = PEM_read_bio_PrivateKey(bio, NULL,
+    EVP_PKEY* pkey = PEM_read_bio_PrivateKey(bio, nullptr,
                                              CPLOpenSSLNullPassphraseCallback,
-                                             NULL);
+                                             nullptr);
     BIO_free(bio);
-    if( pkey == NULL )
+    if( pkey == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "PEM_read_bio_PrivateKey() failed");
-        return NULL;
+        return nullptr;
     }
     EVP_MD_CTX* md_ctx = EVP_MD_CTX_create();
-    CPLAssert(md_ctx != NULL);
+    CPLAssert(md_ctx != nullptr);
     int ret = EVP_SignInit(md_ctx, digest);
     CPLAssert(ret == 1);
     ret = EVP_SignUpdate(md_ctx, pabyData, nDataLen);
@@ -655,7 +655,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
         EVP_MD_CTX_destroy(md_ctx);
         EVP_PKEY_free(pkey);
         CPLFree(abyBuffer);
-        return NULL;
+        return nullptr;
     }
 
     EVP_MD_CTX_destroy(md_ctx);
@@ -671,7 +671,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLRSASHA256Sign() not implemented: "
              "GDAL must be built against libcrypto++ or libcrypto (openssl)");
-    return NULL;
+    return nullptr;
 }
 
 
@@ -720,8 +720,8 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
     osClaim += "\", \"aud\": \"";
     osClaim += pszAud;
     osClaim += "\", \"iat\": ";
-    GIntBig now = static_cast<GIntBig>(time(NULL));
-    const char* pszNow = CPLGetConfigOption("GOA2_NOW", NULL);
+    GIntBig now = static_cast<GIntBig>(time(nullptr));
+    const char* pszNow = CPLGetConfigOption("GOA2_NOW", nullptr);
     if( pszNow )
         now = CPLAtoGIntBig(pszNow);
     osClaim += CPLSPrintf(CPL_FRMT_GIB, now);
@@ -731,7 +731,7 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
     for( char** papszIter = papszAdditionalClaims;
                     papszIter && *papszIter; ++papszIter )
     {
-        char* pszKey = NULL;
+        char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(*papszIter, &pszKey);
         if( pszKey && pszValue )
         {
@@ -760,9 +760,9 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
                                     osToSign.c_str(),
                                     static_cast<int>(osToSign.size()),
                                     &nSignatureLen);
-    if( pabySignature == NULL )
+    if( pabySignature == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
     char* pszB64Signature = CPLBase64Encode(nSignatureLen, pabySignature);
     CPLFree(pabySignature);
@@ -779,7 +779,7 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
     osAssertionEncoded.replaceAll("+", "%2B");
     osPostData += osAssertionEncoded;
 
-    char** papszHTTPOptions = NULL;
+    char** papszHTTPOptions = nullptr;
     papszHTTPOptions = CSLSetNameValue(papszHTTPOptions, "POSTFIELDS", osPostData);
     CPLHTTPResult* psResult = CPLHTTPFetch(pszAud, papszHTTPOptions);
     CSLDestroy(papszHTTPOptions);
@@ -841,7 +841,7 @@ bool GOA2Manager::SetAuthFromRefreshToken( const char* pszRefreshToken,
                                            const char* pszClientSecret,
                                            char** papszOptions )
 {
-    if( pszRefreshToken == NULL )
+    if( pszRefreshToken == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Refresh token should be set");
@@ -878,19 +878,19 @@ bool GOA2Manager::SetAuthFromServiceAccount(const char* pszPrivateKey,
                                             char** papszAdditionalClaims,
                                             char** papszOptions )
 {
-    if( pszPrivateKey == NULL || EQUAL(pszPrivateKey, "") )
+    if( pszPrivateKey == nullptr || EQUAL(pszPrivateKey, "") )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Private key should be set");
         return false;
     }
-    if( pszClientEmail == NULL || EQUAL(pszClientEmail, "") )
+    if( pszClientEmail == nullptr || EQUAL(pszClientEmail, "") )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Client email should be set");
         return false;
     }
-    if( pszScope == NULL || EQUAL(pszScope, "") )
+    if( pszScope == nullptr || EQUAL(pszScope, "") )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Scope should be set");
@@ -920,11 +920,11 @@ bool GOA2Manager::SetAuthFromServiceAccount(const char* pszPrivateKey,
  */
 const char* GOA2Manager::GetBearer() const
 {
-    time_t nCurTime = time(NULL);
+    time_t nCurTime = time(nullptr);
     if( nCurTime < m_nExpirationTime - 5 )
         return m_osCurrentBearer.c_str();
 
-    char** papszRet = NULL;
+    char** papszRet = nullptr;
     if( m_eMethod == GCE )
     {
         papszRet = GOA2GetAccessTokenFromCloudEngineVM(m_aosOptions.List());
@@ -948,10 +948,10 @@ const char* GOA2Manager::GetBearer() const
     m_nExpirationTime = 0;
     m_osCurrentBearer.clear();
     const char* pszAccessToken = CSLFetchNameValue(papszRet, "access_token");
-    if( pszAccessToken == NULL )
+    if( pszAccessToken == nullptr )
     {
         CSLDestroy(papszRet);
-        return NULL;
+        return nullptr;
     }
     const char* pszExpires = CSLFetchNameValue(papszRet, "expires_in");
     if( pszExpires )

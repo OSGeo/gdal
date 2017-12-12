@@ -78,7 +78,7 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
     VALIDATE_POINTER1( hXBand, "GDALTransformGeolocations", CE_Failure );
     VALIDATE_POINTER1( hYBand, "GDALTransformGeolocations", CE_Failure );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
@@ -92,8 +92,8 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
 
     if( nXSize != poYBand->GetXSize()
         || nYSize != poYBand->GetYSize()
-        || (poZBand != NULL && nXSize != poZBand->GetXSize())
-        || (poZBand != NULL && nYSize != poZBand->GetYSize()) )
+        || (poZBand != nullptr && nXSize != poZBand->GetXSize())
+        || (poZBand != nullptr && nYSize != poZBand->GetYSize()) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Size of X, Y and/or Z bands do not match." );
@@ -113,15 +113,15 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
     for( int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++ )
     {
         eErr = poXBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
-                                  padfX, nXSize, 1, GDT_Float64, 0, 0, NULL );
+                                  padfX, nXSize, 1, GDT_Float64, 0, 0, nullptr );
         if( eErr == CE_None )
             eErr = poYBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                       padfY, nXSize, 1, GDT_Float64,
-                                      0, 0, NULL );
-        if( eErr == CE_None && poZBand != NULL )
+                                      0, 0, nullptr );
+        if( eErr == CE_None && poZBand != nullptr )
             eErr = poZBand->RasterIO( GF_Read, 0, iLine, nXSize, 1,
                                       padfZ, nXSize, 1, GDT_Float64,
-                                      0, 0, NULL );
+                                      0, 0, nullptr );
         else
             memset( padfZ, 0, sizeof(double) * nXSize);
 
@@ -134,15 +134,15 @@ GDALTransformGeolocations( GDALRasterBandH hXBand,
         if( eErr == CE_None )
             eErr = poXBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
                                       padfX, nXSize, 1, GDT_Float64,
-                                      0, 0, NULL );
+                                      0, 0, nullptr );
         if( eErr == CE_None )
             eErr = poYBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
                                       padfY, nXSize, 1, GDT_Float64,
-                                      0, 0, NULL );
-        if( eErr == CE_None && poZBand != NULL )
+                                      0, 0, nullptr );
+        if( eErr == CE_None && poZBand != nullptr )
             eErr = poZBand->RasterIO( GF_Write, 0, iLine, nXSize, 1,
                                       padfZ, nXSize, 1, GDT_Float64,
-                                      0, 0, NULL );
+                                      0, 0, nullptr );
 
         if( eErr == CE_None )
             pfnProgress( (iLine+1) /

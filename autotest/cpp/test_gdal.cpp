@@ -67,9 +67,9 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        GDALDriverManager* drv_mgr = NULL;
+        GDALDriverManager* drv_mgr = nullptr;
         drv_mgr = GetGDALDriverManager();
-        ensure("GetGDALDriverManager() is NULL", NULL != drv_mgr);
+        ensure("GetGDALDriverManager() is NULL", nullptr != drv_mgr);
     }
 
     // Test number of registered GDAL drivers
@@ -185,7 +185,7 @@ namespace tut
     {
         int bClamped, bRounded;
 
-        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,NULL,NULL) == 255.0);
+        ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,nullptr,nullptr) == 255.0);
         ensure( GDALAdjustValueToDataType(GDT_Byte,255.0,&bClamped,&bRounded) == 255.0 && !bClamped && !bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Byte,254.4,&bClamped,&bRounded) == 254.0 && !bClamped && bRounded);
         ensure( GDALAdjustValueToDataType(GDT_Byte,-1,&bClamped,&bRounded) == 0.0 && bClamped && !bRounded);
@@ -289,16 +289,16 @@ namespace tut
         poDriver->SetDescription("DatasetWithErrorInFlushCache");
         poDriver->pfnCreateCopy = DatasetWithErrorInFlushCache::CreateCopy;
         GetGDALDriverManager()->RegisterDriver( poDriver );
-        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
-        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew((char**)args, NULL);
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", nullptr };
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew((char**)args, nullptr);
         GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, NULL);
+        GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, nullptr);
         CPLPopErrorHandler();
         GDALClose(hSrcDS);
         GDALTranslateOptionsFree(psOptions);
-        ensure(hOutDS == NULL);
+        ensure(hOutDS == nullptr);
         ensure(CPLGetLastErrorType() != CE_None);
         GetGDALDriverManager()->DeregisterDriver( poDriver );
         delete poDriver;
@@ -311,16 +311,16 @@ namespace tut
         poDriver->SetDescription("DatasetWithErrorInFlushCache");
         poDriver->pfnCreate = DatasetWithErrorInFlushCache::Create;
         GetGDALDriverManager()->RegisterDriver( poDriver );
-        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", NULL };
-        GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew((char**)args, NULL);
+        const char* args[] = { "-of", "DatasetWithErrorInFlushCache", nullptr };
+        GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew((char**)args, nullptr);
         GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GDALDatasetH hOutDS = GDALWarp("/", NULL, 1, &hSrcDS, psOptions, NULL);
+        GDALDatasetH hOutDS = GDALWarp("/", nullptr, 1, &hSrcDS, psOptions, nullptr);
         CPLPopErrorHandler();
         GDALClose(hSrcDS);
         GDALWarpAppOptionsFree(psOptions);
-        ensure(hOutDS == NULL);
+        ensure(hOutDS == nullptr);
         ensure(CPLGetLastErrorType() != CE_None);
         GetGDALDriverManager()->DeregisterDriver( poDriver );
         delete poDriver;

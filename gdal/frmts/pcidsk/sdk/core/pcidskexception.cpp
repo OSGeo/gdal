@@ -191,7 +191,7 @@ void PCIDSKException::vPrintf( const char *fmt, std::va_list args )
 #else
             wrk_args = args;
 #endif
-            if( pszWorkBufferNew == NULL )
+            if( pszWorkBufferNew == nullptr )
             {
                 strcpy( pszWorkBuffer, "(message too large)" );
                 break;

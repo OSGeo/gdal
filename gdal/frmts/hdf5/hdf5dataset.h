@@ -101,7 +101,7 @@ protected:
    * @return CPLErr CE_None in case of success, CE_Failure in case of failure
    */
     CPLErr HDF5ReadDoubleAttr(const char *pszAttrName, double **pdfValues,
-                              int *nLen = NULL);
+                              int *nLen = nullptr);
 
   public:
 

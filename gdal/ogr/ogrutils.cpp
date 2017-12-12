@@ -249,15 +249,15 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
     {
         OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
                          fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
-            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
+            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
         {
             strcat(szX, ".0");
         }
         OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
                          fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
-            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
+            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
         {
             strcat(szY, ".0");
         }
@@ -351,15 +351,15 @@ void OGRMakeWktCoordinateM( char *pszTarget,
     {
         OGRFormatDouble( szX, bufSize, x, chDecimalSep, nPrecision,
                          fabs(x) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(x) && strchr(szX, '.') == NULL &&
-            strchr(szX, 'e') == NULL && strlen(szX) < bufSize - 2 )
+        if( CPLIsFinite(x) && strchr(szX, '.') == nullptr &&
+            strchr(szX, 'e') == nullptr && strlen(szX) < bufSize - 2 )
         {
             strcat(szX, ".0");
         }
         OGRFormatDouble( szY, bufSize, y, chDecimalSep, nPrecision,
                          fabs(y) < 1 ? 'f' : 'g' );
-        if( CPLIsFinite(y) && strchr(szY, '.') == NULL &&
-            strchr(szY, 'e') == NULL && strlen(szY) < bufSize - 2 )
+        if( CPLIsFinite(y) && strchr(szY, '.') == nullptr &&
+            strchr(szY, 'e') == nullptr && strlen(szY) < bufSize - 2 )
         {
             strcat(szY, ".0");
         }
@@ -447,8 +447,8 @@ void OGRMakeWktCoordinateM( char *pszTarget,
 const char *OGRWktReadToken( const char * pszInput, char * pszToken )
 
 {
-    if( pszInput == NULL )
-        return NULL;
+    if( pszInput == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Swallow pre-white space.                                        */
@@ -514,8 +514,8 @@ const char * OGRWktReadPoints( const char * pszInput,
     const char *pszOrigInput = pszInput;
     *pnPointsRead = 0;
 
-    if( pszInput == NULL )
-        return NULL;
+    if( pszInput == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Eat any leading white space.                                    */
@@ -557,7 +557,7 @@ const char * OGRWktReadPoints( const char * pszInput,
         if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-' && szTokenX[0] != '.' )
             || (!isdigit(szTokenY[0]) && szTokenY[0] != '-' &&
                 szTokenY[0] != '.') )
-            return NULL;
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to grow the point list to hold this point?           */
@@ -568,7 +568,7 @@ const char * OGRWktReadPoints( const char * pszInput,
             *ppaoPoints = static_cast<OGRRawPoint *>(
                 CPLRealloc(*ppaoPoints, sizeof(OGRRawPoint) * *pnMaxPoints) );
 
-            if( *ppadfZ != NULL )
+            if( *ppadfZ != nullptr )
             {
                 *ppadfZ = static_cast<double *>(
                     CPLRealloc(*ppadfZ, sizeof(double) * *pnMaxPoints) );
@@ -588,7 +588,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 
         if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
         {
-            if( *ppadfZ == NULL )
+            if( *ppadfZ == nullptr )
             {
                 *ppadfZ = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints) );
@@ -598,7 +598,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 
             pszInput = OGRWktReadToken( pszInput, szDelim );
         }
-        else if( *ppadfZ != NULL )
+        else if( *ppadfZ != nullptr )
         {
             (*ppadfZ)[*pnPointsRead] = 0.0;
         }
@@ -624,7 +624,7 @@ const char * OGRWktReadPoints( const char * pszInput,
                       "Corrupt input in OGRWktReadPoints().  "
                       "Got `%s' when expecting `,' or `)', near `%s' in %s.",
                       szDelim, pszInput, pszOrigInput );
-            return NULL;
+            return nullptr;
         }
     } while( szDelim[0] == ',' );
 
@@ -652,8 +652,8 @@ const char * OGRWktReadPointsM( const char * pszInput,
         !(*flags & OGRGeometry::OGR_G_MEASURED);
     *pnPointsRead = 0;
 
-    if( pszInput == NULL )
-        return NULL;
+    if( pszInput == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Eat any leading white space.                                    */
@@ -695,7 +695,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
         if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-' && szTokenX[0] != '.' )
             || (!isdigit(szTokenY[0]) && szTokenY[0] != '-' &&
                 szTokenY[0] != '.') )
-            return NULL;
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to grow the point list to hold this point?           */
@@ -706,13 +706,13 @@ const char * OGRWktReadPointsM( const char * pszInput,
             *ppaoPoints = static_cast<OGRRawPoint *>(
                 CPLRealloc(*ppaoPoints, sizeof(OGRRawPoint) * *pnMaxPoints) );
 
-            if( *ppadfZ != NULL )
+            if( *ppadfZ != nullptr )
             {
                 *ppadfZ = static_cast<double *>(
                     CPLRealloc(*ppadfZ, sizeof(double) * *pnMaxPoints) );
             }
 
-            if( *ppadfM != NULL )
+            if( *ppadfM != nullptr )
             {
                 *ppadfM = static_cast<double *>(
                     CPLRealloc(*ppadfM, sizeof(double) * *pnMaxPoints) );
@@ -748,7 +748,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 
         if( *flags & OGRGeometry::OGR_G_3D )
         {
-            if( *ppadfZ == NULL )
+            if( *ppadfZ == nullptr )
             {
                 *ppadfZ = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints) );
@@ -763,7 +763,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
                 (*ppadfZ)[*pnPointsRead] = 0.0;
             }
         }
-        else if( *ppadfZ != NULL )
+        else if( *ppadfZ != nullptr )
         {
             (*ppadfZ)[*pnPointsRead] = 0.0;
         }
@@ -794,7 +794,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
 
         if( *flags & OGRGeometry::OGR_G_MEASURED )
         {
-            if( *ppadfM == NULL )
+            if( *ppadfM == nullptr )
             {
                 *ppadfM = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints) );
@@ -809,7 +809,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
                 (*ppadfM)[*pnPointsRead] = 0.0;
             }
         }
-        else if( *ppadfM != NULL )
+        else if( *ppadfM != nullptr )
         {
             (*ppadfM)[*pnPointsRead] = 0.0;
         }
@@ -824,7 +824,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
             (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.') )
         {
             *flags |= OGRGeometry::OGR_G_3D;
-            if( *ppadfZ == NULL )
+            if( *ppadfZ == nullptr )
             {
                 *ppadfZ = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints) );
@@ -848,7 +848,7 @@ const char * OGRWktReadPointsM( const char * pszInput,
                       "Corrupt input in OGRWktReadPointsM()  "
                       "Got `%s' when expecting `,' or `)', near `%s' in %s.",
                       szDelim, pszInput, pszOrigInput );
-            return NULL;
+            return nullptr;
         }
     } while( szDelim[0] == ',' );
 
@@ -1006,7 +1006,7 @@ int OGRParseDate( const char *pszInput,
         ++pszInput;
 
     bool bGotSomething = false;
-    if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
+    if( strstr(pszInput,"-") != nullptr || strstr(pszInput,"/") != nullptr )
     {
         if( !(*pszInput == '-' || *pszInput == '+' ||
               (*pszInput >= '0' && *pszInput <= '9')) )
@@ -1078,7 +1078,7 @@ int OGRParseDate( const char *pszInput,
     while( *pszInput == ' ' )
         ++pszInput;
 
-    if( strstr(pszInput, ":") != NULL )
+    if( strstr(pszInput, ":") != nullptr )
     {
         if( !(*pszInput >= '0' && *pszInput <= '9') )
             return FALSE;
@@ -1276,7 +1276,7 @@ int OGRParseRFC822DateTime( const char* pszRFC822DateTime, OGRField* psField )
                                     &nMinute,
                                     &nSecond,
                                     &nTZFlag,
-                                    NULL ) )
+                                    nullptr ) )
     {
         return false;
     }
@@ -1329,7 +1329,7 @@ int OGRGetDayOfWeek( int day, int month, int year )
 
 char* OGRGetRFC822DateTime( const OGRField* psField )
 {
-    char* pszTZ = NULL;
+    char* pszTZ = nullptr;
     const char* aszDayOfWeek[] =
         { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
@@ -1376,7 +1376,7 @@ char* OGRGetXMLDateTime(const OGRField* psField)
     const float second = psField->Date.Second;
     const int TZFlag = psField->Date.TZFlag;
 
-    char* pszRet = NULL;
+    char* pszRet = nullptr;
 
     if( TZFlag == 0 || TZFlag == 100 )
     {
@@ -1415,7 +1415,7 @@ char* OGRGetXMLDateTime(const OGRField* psField)
 
 char* OGRGetXML_UTF8_EscapedString(const char* pszString)
 {
-    char *pszEscaped = NULL;
+    char *pszEscaped = nullptr;
     if( !CPLIsUTF8(pszString, -1) &&
          CPLTestBool(CPLGetConfigOption("OGR_FORCE_ASCII", "YES")) )
     {

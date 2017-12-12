@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 
 OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
     fp(fpIn),
-    poFeatureDefn(NULL),  // TODO(schwehr): Can I move the new here?
+    poFeatureDefn(nullptr),  // TODO(schwehr): Can I move the new here?
     poDS(poDSIn)
 {
     nNextAutoID = 1;
@@ -227,7 +227,7 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 /*      "0" - if there is no layer property on the source features.     */
 /* -------------------------------------------------------------------- */
     const char *pszLayer = poFeature->GetFieldAsString( "Layer" );
-    if( pszLayer == NULL || strlen(pszLayer) == 0 )
+    if( pszLayer == nullptr || strlen(pszLayer) == 0 )
     {
         WriteValue( 8, "0" );
     }
@@ -250,7 +250,7 @@ OGRErr OGRDXFWriterLayer::WriteCore( OGRFeature *poFeature )
 
         const char *pszExists =
             poDS->oHeaderDS.LookupLayerProperty( osSanitizedLayer, "Exists" );
-        if( (pszExists == NULL || strlen(pszExists) == 0)
+        if( (pszExists == nullptr || strlen(pszExists) == 0)
             && CSLFindString( poDS->papszLayersToCreate, osSanitizedLayer ) == -1 )
         {
             poDS->papszLayersToCreate =
@@ -277,9 +277,9 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     WriteValue( 2, poFeature->GetFieldAsString("BlockName") );
 
     // Write style symbol color
-    OGRStyleTool *poTool = NULL;
+    OGRStyleTool *poTool = nullptr;
     OGRStyleMgr oSM;
-    if( poFeature->GetStyleString() != NULL )
+    if( poFeature->GetStyleString() != nullptr )
     {
         oSM.InitFromFeature( poFeature );
 
@@ -291,7 +291,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
         OGRStyleSymbol *poSymbol = (OGRStyleSymbol *) poTool;
         GBool bDefault;
 
-        if( poSymbol->Color(bDefault) != NULL && !bDefault )
+        if( poSymbol->Color(bDefault) != nullptr && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poSymbol->Color(bDefault) ) );
     }
     delete poTool;
@@ -381,9 +381,9 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
     WriteValue( 100, "AcDbPoint" );
 
     // Write style pen color
-    OGRStyleTool *poTool = NULL;
+    OGRStyleTool *poTool = nullptr;
     OGRStyleMgr oSM;
-    if( poFeature->GetStyleString() != NULL )
+    if( poFeature->GetStyleString() != nullptr )
     {
         oSM.InitFromFeature( poFeature );
 
@@ -395,7 +395,7 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
         OGRStylePen *poPen = (OGRStylePen *) poTool;
         GBool  bDefault;
 
-        if( poPen->Color(bDefault) != NULL && !bDefault )
+        if( poPen->Color(bDefault) != nullptr && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
     }
     delete poTool;
@@ -486,10 +486,10 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Do we have styling information?                                 */
 /* -------------------------------------------------------------------- */
-    OGRStyleTool *poTool = NULL;
+    OGRStyleTool *poTool = nullptr;
     OGRStyleMgr oSM;
 
-    if( poFeature->GetStyleString() != NULL )
+    if( poFeature->GetStyleString() != nullptr )
     {
         oSM.InitFromFeature( poFeature );
 
@@ -508,7 +508,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Color                                                           */
 /* -------------------------------------------------------------------- */
-        if( poLabel->ForeColor(bDefault) != NULL && !bDefault )
+        if( poLabel->ForeColor(bDefault) != nullptr && !bDefault )
             WriteValue( 62, ColorStringToDXFColor(
                             poLabel->ForeColor(bDefault) ) );
 
@@ -551,7 +551,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
         const char *pszText = poLabel->TextString( bDefault );
 
-        if( pszText != NULL && !bDefault )
+        if( pszText != nullptr && !bDefault )
         {
             CPLString osEscaped = TextEscape( pszText );
             WriteValue( 1, osEscaped );
@@ -602,7 +602,7 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
     double dfTotalLength = 0;
     CPLString osDef;
 
-    for( int i = 0; papszTokens != NULL && papszTokens[i] != NULL; i++ )
+    for( int i = 0; papszTokens != nullptr && papszTokens[i] != nullptr; i++ )
     {
         const char *pszToken = papszTokens[i];
         CPLString osAmount;
@@ -611,7 +611,7 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
         // Split amount and unit.
         const char *pszUnit = pszToken;  // Used after for.
         for( ;
-             strchr( "0123456789.", *pszUnit) != NULL;
+             strchr( "0123456789.", *pszUnit) != nullptr;
              pszUnit++ ) {}
 
         osAmount.assign(pszToken,(int) (pszUnit-pszToken));
@@ -658,7 +658,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /*      For now we handle multilinestrings by writing a series of       */
 /*      entities.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poGeom == NULL )
+    if( poGeom == nullptr )
         poGeom = poFeature->GetGeometryRef();
 
     if ( poGeom->IsEmpty() )
@@ -752,10 +752,10 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Do we have styling information?                                 */
 /* -------------------------------------------------------------------- */
-    OGRStyleTool *poTool = NULL;
+    OGRStyleTool *poTool = nullptr;
     OGRStyleMgr oSM;
 
-    if( poFeature->GetStyleString() != NULL )
+    if( poFeature->GetStyleString() != nullptr )
     {
         oSM.InitFromFeature( poFeature );
 
@@ -772,7 +772,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         OGRStylePen *poPen = (OGRStylePen *) poTool;
         GBool bDefault;
 
-        if( poPen->Color(bDefault) != NULL && !bDefault )
+        if( poPen->Color(bDefault) != nullptr && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poPen->Color(bDefault) ) );
 
         // we want to fetch the width in ground units.
@@ -795,7 +795,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
         // Already define -> just reference it.
         WriteValue( 6, osLineType );
     }
-    else if( poTool != NULL && poTool->GetType() == OGRSTCPen )
+    else if( poTool != nullptr && poTool->GetType() == OGRSTCPen )
     {
         CPLString osDefinition = PrepareLineTypeDefinition( poFeature,
                                                             poTool );
@@ -927,7 +927,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /*      For now we handle multipolygons by writing a series of          */
 /*      entities.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poGeom == NULL )
+    if( poGeom == nullptr )
         poGeom = poFeature->GetGeometryRef();
 
     if ( poGeom->IsEmpty() )
@@ -981,10 +981,10 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Do we have styling information?                                 */
 /* -------------------------------------------------------------------- */
-    OGRStyleTool *poTool = NULL;
+    OGRStyleTool *poTool = nullptr;
     OGRStyleMgr oSM;
 
-    if( poFeature->GetStyleString() != NULL )
+    if( poFeature->GetStyleString() != nullptr )
     {
         oSM.InitFromFeature( poFeature );
 
@@ -997,7 +997,7 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
         OGRStyleBrush *poBrush = (OGRStyleBrush *) poTool;
         GBool  bDefault;
 
-        if( poBrush->ForeColor(bDefault) != NULL && !bDefault )
+        if( poBrush->ForeColor(bDefault) != nullptr && !bDefault )
             WriteValue( 62, ColorStringToDXFColor( poBrush->ForeColor(bDefault) ) );
     }
     delete poTool;
@@ -1154,7 +1154,7 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
     OGRwkbGeometryType eGType = wkbNone;
 
-    if( poGeom != NULL )
+    if( poGeom != nullptr )
     {
         if( !poGeom->IsEmpty() )
         {
@@ -1171,17 +1171,17 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
 
         // We don't want to treat as a blocks ref if the block is not defined
         if( pszBlockName
-            && poDS->oHeaderDS.LookupBlock(pszBlockName) == NULL )
+            && poDS->oHeaderDS.LookupBlock(pszBlockName) == nullptr )
         {
-            if( poDS->poBlocksLayer == NULL
-                || poDS->poBlocksLayer->FindBlock(pszBlockName) == NULL )
-                pszBlockName = NULL;
+            if( poDS->poBlocksLayer == nullptr
+                || poDS->poBlocksLayer->FindBlock(pszBlockName) == nullptr )
+                pszBlockName = nullptr;
         }
 
-        if( pszBlockName != NULL )
+        if( pszBlockName != nullptr )
             return WriteINSERT( poFeature );
 
-        else if( poFeature->GetStyleString() != NULL
+        else if( poFeature->GetStyleString() != nullptr
             && STARTS_WITH_CI(poFeature->GetStyleString(), "LABEL") )
             return WriteTEXT( poFeature );
         else
@@ -1238,7 +1238,7 @@ int OGRDXFWriterLayer::ColorStringToDXFColor( const char *pszRGB )
 /* -------------------------------------------------------------------- */
 /*      Parse the RGB string.                                           */
 /* -------------------------------------------------------------------- */
-    if( pszRGB == NULL )
+    if( pszRGB == nullptr )
         return -1;
 
     unsigned int nRed = 0;

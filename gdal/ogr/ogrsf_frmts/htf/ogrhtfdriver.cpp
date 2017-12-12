@@ -40,19 +40,19 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL )
-        return NULL;
+        poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( !STARTS_WITH( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                       "HTF HEADER") )
-        return NULL;
+        return nullptr;
 
     OGRHTFDataSource *poDS = new OGRHTFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -65,7 +65,7 @@ static GDALDataset *OGRHTFDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRHTF()
 
 {
-    if( GDALGetDriverByName( "HTF" ) != NULL )
+    if( GDALGetDriverByName( "HTF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

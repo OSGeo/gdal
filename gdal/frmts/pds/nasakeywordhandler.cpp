@@ -69,9 +69,9 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 NASAKeywordHandler::NASAKeywordHandler() :
-    papszKeywordList(NULL),
-    pszHeaderNext(NULL),
-    poJSon(NULL),
+    papszKeywordList(nullptr),
+    pszHeaderNext(nullptr),
+    poJSon(nullptr),
     m_bStripSurroundingQuotes(false)
 {}
 
@@ -83,7 +83,7 @@ NASAKeywordHandler::~NASAKeywordHandler()
 
 {
     CSLDestroy( papszKeywordList );
-    papszKeywordList = NULL;
+    papszKeywordList = nullptr;
     if( poJSon )
         json_object_put(poJSon);
 }
@@ -113,16 +113,16 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
         if( nBytesRead < 512 )
             break;
 
-        const char *pszCheck = NULL;
+        const char *pszCheck = nullptr;
         if( osHeaderText.size() > 520 )
             pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
         else
             pszCheck = szChunk;
 
-        if( strstr(pszCheck,"\r\nEND\r\n") != NULL
-            || strstr(pszCheck,"\nEND\n") != NULL
-            || strstr(pszCheck,"\r\nEnd\r\n") != NULL
-            || strstr(pszCheck,"\nEnd\n") != NULL )
+        if( strstr(pszCheck,"\r\nEND\r\n") != nullptr
+            || strstr(pszCheck,"\nEND\n") != nullptr
+            || strstr(pszCheck,"\r\nEnd\r\n") != nullptr
+            || strstr(pszCheck,"\nEnd\n") != nullptr )
             break;
     }
 
@@ -161,9 +161,9 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur
                 json_object_put(poNewGroup);
                 return FALSE;
             }
-            json_object* poName = NULL;
+            json_object* poName = nullptr;
             if( (osValue == "Table" || osValue == "Field") &&
-                (poName = CPL_json_object_object_get(poNewGroup, "Name")) != NULL &&
+                (poName = CPL_json_object_object_get(poNewGroup, "Name")) != nullptr &&
                 json_object_get_type(poName) == json_type_string )
             {
                 json_object_object_add(poCur,
@@ -172,11 +172,11 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur
                 json_object_object_add(poNewGroup, "_container_name",
                                        json_object_new_string(osValue));
             }
-            else if( CPL_json_object_object_get(poCur, osValue) != NULL )
+            else if( CPL_json_object_object_get(poCur, osValue) != nullptr )
             {
                 int nIter = 2;
                 while( CPL_json_object_object_get(poCur,
-                        (osValue + CPLSPrintf("_%d", nIter)).c_str()) != NULL )
+                        (osValue + CPLSPrintf("_%d", nIter)).c_str()) != nullptr )
                 {
                     nIter ++;
                 }
@@ -247,7 +247,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
 
     // Handle value lists like:
     // Name   = (Red, Red) or  {Red, Red} or even ({Red, Red}, {Red, Red})
-    json_object* poArray = NULL;
+    json_object* poArray = nullptr;
     if( *pszHeaderNext == '(' || *pszHeaderNext == '{' )
     {
         std::vector<char> oStackArrayBeginChar;
@@ -617,7 +617,7 @@ const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
 {
     const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
 
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
         return pszDefault;
 
     return pszResult;
@@ -639,6 +639,6 @@ char **NASAKeywordHandler::GetKeywordList()
 json_object* NASAKeywordHandler::StealJSon()
 {
     json_object* poTmp = poJSon;
-    poJSon = NULL;
+    poJSon = nullptr;
     return poTmp;
 }

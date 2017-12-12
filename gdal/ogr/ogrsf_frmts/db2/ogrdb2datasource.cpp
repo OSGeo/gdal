@@ -114,21 +114,21 @@ OGRDB2DataSource::OGRDB2DataSource()
 
 {
     clock1 = clock();
-    time1 = time(NULL);
+    time1 = time(nullptr);
     m_bIsVector = TRUE;
-    m_papszTableNames = NULL;
-    m_papszSchemaNames = NULL;
-    m_papszGeomColumnNames = NULL;
-    m_papszCoordDimensions = NULL;
-    m_papszSRIds = NULL;
-    m_papszSRTexts = NULL;
-    m_pszName = NULL;
-    m_pszCatalog = NULL;
+    m_papszTableNames = nullptr;
+    m_papszSchemaNames = nullptr;
+    m_papszGeomColumnNames = nullptr;
+    m_papszCoordDimensions = nullptr;
+    m_papszSRIds = nullptr;
+    m_papszSRTexts = nullptr;
+    m_pszName = nullptr;
+    m_pszCatalog = nullptr;
 
     m_bHasMetadataTables = FALSE;
     m_nKnownSRID = 0;
-    m_panSRID = NULL;
-    m_papoSRS = NULL;
+    m_panSRID = nullptr;
+    m_papoSRS = nullptr;
 
     bUseGeometryColumns = CPLTestBool(CPLGetConfigOption(
             "DB2SPATIAL_USE_GEOMETRY_COLUMNS",
@@ -139,15 +139,15 @@ OGRDB2DataSource::OGRDB2DataSource()
 // from GPKG
     m_bUpdate = FALSE;
     m_bNew = FALSE;
-    m_papoLayers = NULL;
+    m_papoLayers = nullptr;
     m_nLayers = 0;
     m_bUtf8 = FALSE;
     m_bIdentifierAsCO = FALSE;
     m_bDescriptionAsCO = FALSE;
     m_bHasReadMetadataFromStorage = FALSE;
     m_bMetadataDirty = FALSE;
-    m_papszSubDatasets = NULL;
-    m_pszProjection = NULL;
+    m_papszSubDatasets = nullptr;
+    m_pszProjection = nullptr;
     m_bRecordInsertedInGPKGContent = FALSE;
     m_bGeoTransformValid = FALSE;
     m_nSRID = -1; /* unknown cartesian */
@@ -158,7 +158,7 @@ OGRDB2DataSource::OGRDB2DataSource()
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
     m_nZoomLevel = -1;
-    m_pabyCachedTiles = NULL;
+    m_pabyCachedTiles = nullptr;
     for(int i=0; i<4; i++)
     {
         m_asCachedTilesDesc[i].nRow = -1;
@@ -179,13 +179,13 @@ OGRDB2DataSource::OGRDB2DataSource()
     m_nZLevel = 6;
     m_nQuality = 75;
     m_bDither = FALSE;
-    m_poParentDS = NULL;
+    m_poParentDS = nullptr;
     m_nOverviewCount = 0;
-    m_papoOverviewDS = NULL;
+    m_papoOverviewDS = nullptr;
     m_bZoomOther = FALSE;
     m_bTriedEstablishingCT = FALSE;
-    m_pabyHugeColorArray = NULL;
-    m_poCT = NULL;
+    m_pabyHugeColorArray = nullptr;
+    m_poCT = nullptr;
     m_bInWriteTile = FALSE;
     //m_hTempDB = NULL;
     m_bInFlushCache = FALSE;
@@ -214,7 +214,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
 
     if (!m_bIsVector)
     {
-        if( m_poParentDS == NULL && !m_osRasterTable.empty() &&
+        if( m_poParentDS == nullptr && !m_osRasterTable.empty() &&
                 !m_bGeoTransformValid )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -234,7 +234,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
 
     for( i = 0; i < m_nKnownSRID; i++ )
     {
-        if( m_papoSRS[i] != NULL )
+        if( m_papoSRS[i] != nullptr )
             CPLDebug("OGRDB2DataSource::~OGRDB2DataSource","m_papoSRS[%d] is not null", i);
 //LATER            m_papoSRS[i]->Release(); //fails for some reason
     }
@@ -252,7 +252,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
 double OGRDB2DataSource::getDTime()
 {
     clock2 = clock();
-    time2 = time(NULL);
+    time2 = time(nullptr);
     dclock = (clock2 - clock1) / CLOCKS_PER_SEC;
     dtime  = (double)(time2  - time1 );
 
@@ -288,7 +288,7 @@ OGRLayer *OGRDB2DataSource::GetLayer( int iLayer )
 {
     CPLDebug("OGR_DB2DataSource::GetLayer", "pszLayer %d", iLayer);
     if( iLayer < 0 || iLayer >= m_nLayers )
-        return NULL;
+        return nullptr;
     else
         return m_papoLayers[iLayer];
 }
@@ -301,16 +301,16 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
 
 {
     if (!pszLayerName)
-        return NULL;
-    char *pszTableName = NULL;
-    char *pszSchemaName = NULL;
-    OGRLayer *poLayer = NULL;
-    char *pszLayerNameUpper = NULL;
+        return nullptr;
+    char *pszTableName = nullptr;
+    char *pszSchemaName = nullptr;
+    OGRLayer *poLayer = nullptr;
+    char *pszLayerNameUpper = nullptr;
     CPLDebug("OGR_DB2DataSource::GetLayerByName", "pszLayerName: '%s'",
              pszLayerName);
     pszLayerNameUpper = ToUpper(pszLayerName);
     const char* pszDotPos = strstr(pszLayerNameUpper,".");
-    if ( pszDotPos != NULL )
+    if ( pszDotPos != nullptr )
     {
         int length = static_cast<int>(pszDotPos - pszLayerNameUpper);
         pszSchemaName = (char*)CPLMalloc(length+1);
@@ -326,7 +326,7 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
     for( int iLayer = 0; iLayer < m_nLayers; iLayer++ )
     {
         if( EQUAL(pszTableName,m_papoLayers[iLayer]->GetTableName()) &&
-                (pszSchemaName == NULL ||
+                (pszSchemaName == nullptr ||
                  EQUAL(pszSchemaName,m_papoLayers[iLayer]->GetSchemaName())))
         {
             CPLDebug("OGR_DB2DataSource::GetLayerByName",
@@ -352,7 +352,7 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
 int OGRDB2DataSource::DeleteLayer( OGRDB2TableLayer * poLayer )
 {
     int iLayer = 0;
-    if( poLayer == NULL )
+    if( poLayer == nullptr )
         return OGRERR_FAILURE;
 
     /* -------------------------------------------------------------------- */
@@ -421,9 +421,9 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
         char ** papszOptions )
 
 {
-    char                *pszTableName = NULL;
-    char                *pszSchemaName = NULL;
-    const char          *pszGeomColumn = NULL;
+    char                *pszTableName = nullptr;
+    char                *pszSchemaName = nullptr;
+    const char          *pszGeomColumn = nullptr;
     int                 nCoordDimension = 3;
     CPLDebug("OGR_DB2DataSource::ICreateLayer",
              "layer name: %s",pszLayerName);
@@ -432,7 +432,7 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     if( eType == wkbFlatten(eType) )
         nCoordDimension = 2;
 
-    if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
+    if( CSLFetchNameValue( papszOptions, "DIM") != nullptr )
         nCoordDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
 
     /* DB2 Schema handling:
@@ -441,7 +441,7 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
        specified
     */
     const char* pszDotPos = strstr(pszLayerName,".");
-    if ( pszDotPos != NULL )
+    if ( pszDotPos != nullptr )
     {
         int length = static_cast<int>(pszDotPos - pszLayerName);
         pszSchemaName = (char*)CPLMalloc(length+1);
@@ -453,12 +453,12 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     }
     else
     {
-        pszSchemaName = NULL;
+        pszSchemaName = nullptr;
         /* For now, always convert layer name to uppercase table name*/
         pszTableName = ToUpper( pszLayerName );
     }
 
-    if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != NULL )
+    if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != nullptr )
     {
         CPLFree(pszSchemaName);
         pszSchemaName = CPLStrdup(CSLFetchNameValue(papszOptions, "SCHEMA"));
@@ -478,13 +478,13 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
                  m_papoLayers[iLayer]->GetTableName());
 
         if( EQUAL(pszTableName,m_papoLayers[iLayer]->GetTableName()) &&
-                (pszSchemaName == NULL ||
+                (pszSchemaName == nullptr ||
                  EQUAL(pszSchemaName,m_papoLayers[iLayer]->GetSchemaName())) )
         {
             CPLDebug("OGR_DB2DataSource::ICreateLayer",
                      "Found match, schema: '%s'; table: '%s'"   ,
                      pszSchemaName, pszTableName);
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
                     && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),
                               "NO"))
             {
@@ -504,7 +504,7 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
 
                 CPLFree( pszSchemaName );
                 CPLFree( pszTableName );
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -520,15 +520,15 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     /* -------------------------------------------------------------------- */
     int nSRSId = 0;
 
-    if( CSLFetchNameValue( papszOptions, "SRID") != NULL )
+    if( CSLFetchNameValue( papszOptions, "SRID") != nullptr )
         nSRSId = atoi(CSLFetchNameValue( papszOptions, "SRID"));
 
-    if( nSRSId == 0 && poSRS != NULL )
+    if( nSRSId == 0 && poSRS != nullptr )
         nSRSId = FetchSRSId( poSRS );
 
     OGRDB2Statement oStatement( &m_oSession );
 
-    if (pszSchemaName != NULL)
+    if (pszSchemaName != nullptr)
         oStatement.Appendf("CREATE TABLE %s.%s ",
                            pszSchemaName, pszTableName);
     else
@@ -548,14 +548,14 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
                   "Error creating layer: %s", GetSession()->GetLastError() );
         CPLDebug("OGR_DB2DataSource::ICreateLayer", "create failed");
 
-        return NULL;
+        return nullptr;
     }
 
     m_oSession.CommitTransaction();
 
     // If we didn't have a schema name when the table was created,
     // get the schema that was created by implicit
-    if (pszSchemaName == NULL) {
+    if (pszSchemaName == nullptr) {
         oStatement.Clear();
         oStatement.Appendf( "SELECT table_schema FROM db2gse.st_geometry_columns "
                             "WHERE table_name = '%s'",
@@ -577,11 +577,11 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
     poLayer->SetPrecisionFlag(
         CPLFetchBool(papszOptions, "PRECISION", true));
 
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
     if( poSRS && poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
     {
         CPLFree(pszWKT);
-        pszWKT = NULL;
+        pszWKT = nullptr;
     }
     CPLDebug("OGR_DB2DataSource::ICreateLayer", "srs wkt: %s",pszWKT);
     if (poLayer->Initialize(pszSchemaName, pszTableName, pszGeomColumn,
@@ -591,7 +591,7 @@ OGRLayer * OGRDB2DataSource::ICreateLayer( const char * pszLayerName,
         CPLFree( pszSchemaName );
         CPLFree( pszTableName );
         CPLFree( pszWKT );
-        return NULL;
+        return nullptr;
     }
 
     CPLFree( pszSchemaName );
@@ -663,7 +663,7 @@ int OGRDB2DataSource::ParseValue(char** pszValue, char* pszSource,
                                  int nTerm, int bRemove)
 {
     int nLen = static_cast<int>(strlen(pszKey));
-    if ((*pszValue) == NULL && nStart + nLen < nNext &&
+    if ((*pszValue) == nullptr && nStart + nLen < nNext &&
             EQUALN(pszSource + nStart, pszKey, nLen))
     {
         const int nSize = nNext - nStart - nLen;
@@ -764,11 +764,11 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         m_osRasterTable = CSLFetchNameValueDef(papszOptions,
                                                "RASTER_TABLE", "RASTERTABLE");
         m_bIdentifierAsCO = CSLFetchNameValue(papszOptions,
-                                              "RASTER_IDENTIFIER" ) != NULL;
+                                              "RASTER_IDENTIFIER" ) != nullptr;
         m_osIdentifier = CSLFetchNameValueDef(papszOptions,
                                               "RASTER_IDENTIFIER", m_osRasterTable);
         m_bDescriptionAsCO = CSLFetchNameValue(papszOptions,
-                                               "RASTER_DESCRIPTION" ) != NULL;
+                                               "RASTER_DESCRIPTION" ) != nullptr;
         m_osDescription = CSLFetchNameValueDef(papszOptions,
                                                "RASTER_DESCRIPTION", "");
         CPLDebug("OGR_DB2DataSource::Create", "m_osRasterTable: '%s'",
@@ -837,7 +837,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
         }
 
         m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
-        if( m_pabyCachedTiles == NULL )
+        if( m_pabyCachedTiles == nullptr )
         {
             return FALSE;
         }
@@ -888,7 +888,7 @@ int OGRDB2DataSource::Create( const char * pszFilename,
                     OGRSpatialReference oSRS;
                     if( oSRS.importFromEPSG(asTilingShemes[iScheme].nEPSGCode) != OGRERR_NONE )
                         return FALSE;
-                    char* pszWKT = NULL;
+                    char* pszWKT = nullptr;
                     oSRS.exportToWkt(&pszWKT);
                     SetProjection(pszWKT);
                     CPLFree(pszWKT);
@@ -980,8 +980,8 @@ int OGRDB2DataSource::Open( GDALOpenInfo* poOpenInfo )
             const char* pszTMSMinY = oStatement.GetColData(9);
             const char* pszTMSMaxX = oStatement.GetColData(10);
             const char* pszTMSMaxY = oStatement.GetColData(11);
-            if( pszTableName != NULL && pszTMSMinX != NULL && pszTMSMinY != NULL &&
-                    pszTMSMaxX != NULL && pszTMSMaxY != NULL )
+            if( pszTableName != nullptr && pszTMSMinX != nullptr && pszTMSMinY != nullptr &&
+                    pszTMSMaxX != nullptr && pszTMSMaxY != nullptr )
             {
                 eAccess = GA_Update; //LATER - where should this be set?
                 bRet = OpenRaster( pszTableName, pszIdentifier, pszDescription,
@@ -1023,9 +1023,9 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
     }
 
     /* Determine if the connection string contains specific values */
-    char* pszTableSpec = NULL;
+    char* pszTableSpec = nullptr;
     char* pszConnectionName = CPLStrdup(pszNewName + strlen(DB2ODBC_PREFIX));
-    char* pszDriver = NULL;
+    char* pszDriver = nullptr;
     int nCurrent, nNext, nTerm;
     nCurrent = nNext = nTerm = static_cast<int>(strlen(pszConnectionName));
 
@@ -1057,7 +1057,7 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
               pszConnectionName);
 
     /* Determine if the connection string contains the database portion */
-    if( m_pszCatalog == NULL )
+    if( m_pszCatalog == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "'%s' does not contain the 'database' portion\n",
@@ -1071,7 +1071,7 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
     m_pszName = CPLStrdup(pszNewName);
 
     // if the table parameter was specified, pull out the table names
-    if( pszTableSpec != NULL )
+    if( pszTableSpec != nullptr )
     {
         char          **papszTableList;
         int             i;
@@ -1089,10 +1089,10 @@ int OGRDB2DataSource::InitializeSession( const char * pszNewName,
             /* Find the geometry column name if specified */
             if( CSLCount( papszQualifiedParts ) >= 1 )
             {
-                char* pszGeomColumnName = NULL;
+                char* pszGeomColumnName = nullptr;
                 char* pos = strchr(papszQualifiedParts[
                                        CSLCount( papszQualifiedParts ) - 1], '(');
-                if (pos != NULL)
+                if (pos != nullptr)
                 {
                     *pos = '\0';
                     pszGeomColumnName = pos+1;
@@ -1191,14 +1191,14 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                   "Session initialization failed");
         return FALSE;
     }
-    char** papszTypes = NULL;
+    char** papszTypes = nullptr;
 
     /* read metadata for the specified tables */
-    if (m_papszTableNames != NULL)
+    if (m_papszTableNames != nullptr)
     {
 
         for( int iTable = 0;
-                m_papszTableNames != NULL && m_papszTableNames[iTable] != NULL;
+                m_papszTableNames != nullptr && m_papszTableNames[iTable] != nullptr;
                 iTable++ )
         {
             int found = FALSE;
@@ -1228,7 +1228,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                         m_papszSchemaNames[iTable] = CPLStrdup(
                                                          oStatement.GetColData(0) );
                     }
-                    if (m_papszGeomColumnNames == NULL)
+                    if (m_papszGeomColumnNames == nullptr)
                         m_papszGeomColumnNames = CSLAddString(
                                                      m_papszGeomColumnNames,
                                                      oStatement.GetColData(1) );
@@ -1268,7 +1268,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
     }
 
     /* Determine the available tables if not specified. */
-    if (m_papszTableNames == NULL)
+    if (m_papszTableNames == nullptr)
     {
         OGRDB2Statement oStatement( &m_oSession );
 
@@ -1317,16 +1317,16 @@ int OGRDB2DataSource::Open( const char * pszNewName,
     */
 
     int nSRId, nCoordDimension;
-    char * pszSRText = NULL;
+    char * pszSRText = nullptr;
     OGRwkbGeometryType eType;
 
     for( int iTable = 0;
-            m_papszTableNames != NULL && m_papszTableNames[iTable] != NULL;
+            m_papszTableNames != nullptr && m_papszTableNames[iTable] != nullptr;
             iTable++ )
     {
-        pszSRText = NULL;
+        pszSRText = nullptr;
         nSRId = -1;
-        if (m_papszSRIds != NULL) {
+        if (m_papszSRIds != nullptr) {
             nSRId = atoi(m_papszSRIds[iTable]);
             CPLDebug("OGR_DB2DataSource::Open", "iTable: %d; schema: %s; "
                      "table: %s; geomCol: %s; geomType: %s; srid: '%s'",
@@ -1372,12 +1372,12 @@ int OGRDB2DataSource::Open( const char * pszNewName,
         }
         CPLDebug("OGR_DB2DataSource::Open", "nSRId: %d; srText: %s",
                  nSRId, pszSRText);
-        if (m_papszCoordDimensions != NULL)
+        if (m_papszCoordDimensions != nullptr)
             nCoordDimension = atoi(m_papszCoordDimensions[iTable]);
         else
             nCoordDimension = 2;
 
-        if (papszTypes != NULL)
+        if (papszTypes != nullptr)
             eType = OGRFromOGCGeomType(papszTypes[iTable]);
         else
             eType = wkbUnknown;
@@ -1388,7 +1388,7 @@ int OGRDB2DataSource::Open( const char * pszNewName,
                        nCoordDimension, nSRId, pszSRText, eType);
         else
             OpenTable( m_papszSchemaNames[iTable], m_papszTableNames[iTable],
-                       NULL,
+                       nullptr,
                        nCoordDimension, nSRId, pszSRText, wkbNone);
     }
 
@@ -1437,7 +1437,7 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
                 break;
             }
         }
-        return NULL;
+        return nullptr;
     }
 
     CPLDebug( "OGRDB2DataSource::ExecuteSQL", "ExecuteSQL(%s) called.",
@@ -1452,7 +1452,7 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", m_oSession.GetLastError() );
         delete poStatement;
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1462,7 +1462,7 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStatement;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1470,11 +1470,11 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
     /*      statement.                                                      */
     /* -------------------------------------------------------------------- */
 
-    OGRDB2SelectLayer *poLayer = NULL;
+    OGRDB2SelectLayer *poLayer = nullptr;
 
     poLayer = new OGRDB2SelectLayer( this, poStatement );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;
@@ -1559,7 +1559,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
 {
     CPLDebug("OGRDB2DataSource::FetchSRS", "nId: %d", nId);
     if( nId <= 0 )
-        return NULL;
+        return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
@@ -1572,7 +1572,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
             return m_papoSRS[i];
     }
 
-    OGRSpatialReference *poSRS = NULL;
+    OGRSpatialReference *poSRS = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Try looking up in spatial_ref_sys table                         */
@@ -1594,7 +1594,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
                 if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
                 {
                     delete poSRS;
-                    poSRS = NULL;
+                    poSRS = nullptr;
                 }
             }
         }
@@ -1609,7 +1609,7 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
         if( poSRS->importFromEPSG( nId ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -1640,37 +1640,37 @@ OGRSpatialReference *OGRDB2DataSource::FetchSRS( int nId )
 int OGRDB2DataSource::FetchSRSId( OGRSpatialReference * poSRS)
 
 {
-    char                *pszWKT = NULL;
+    char                *pszWKT = nullptr;
     int                 nSRSId = 0;
     const char*         pszAuthorityName;
 
-    if( poSRS == NULL )
+    if( poSRS == nullptr )
         return 0;
 
     OGRSpatialReference oSRS(*poSRS);
     // cppcheck-suppress uselessAssignmentPtrArg
-    poSRS = NULL;
+    poSRS = nullptr;
 
-    pszAuthorityName = oSRS.GetAuthorityName(NULL);
+    pszAuthorityName = oSRS.GetAuthorityName(nullptr);
     CPLDebug("OGRDB2DataSource::FetchSRSId",
         "pszAuthorityName: '%s'", pszAuthorityName);
-    if( pszAuthorityName == NULL || strlen(pszAuthorityName) == 0 )
+    if( pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0 )
     {
         /* -----------------------------------------------------------------*/
         /*      Try to identify an EPSG code                                */
         /* -----------------------------------------------------------------*/
         oSRS.AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(NULL);
-        if (pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG"))
+        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char* pszAuthorityCode = oSRS.GetAuthorityCode(NULL);
-            if ( pszAuthorityCode != NULL && strlen(pszAuthorityCode) > 0 )
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            if ( pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0 )
             {
                 /* Import 'clean' SRS */
                 oSRS.importFromEPSG( atoi(pszAuthorityCode) );
 
-                pszAuthorityName = oSRS.GetAuthorityName(NULL);
+                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
             }
         }
     }
@@ -1679,12 +1679,12 @@ int OGRDB2DataSource::FetchSRSId( OGRSpatialReference * poSRS)
     /*      SRS ID.                                                         */
     /* -------------------------------------------------------------------- */
     int  nAuthorityCode = 0;
-    if( pszAuthorityName != NULL && EQUAL( pszAuthorityName, "EPSG" ) )
+    if( pszAuthorityName != nullptr && EQUAL( pszAuthorityName, "EPSG" ) )
     {
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi( oSRS.GetAuthorityCode(NULL) );
+        nAuthorityCode = atoi( oSRS.GetAuthorityCode(nullptr) );
 
         OGRDB2Statement oStatement( &m_oSession );
         oStatement.Appendf("SELECT srs_id "
@@ -1888,7 +1888,7 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
                            "WHERE zoom_level = tm.zoom_level FETCH FIRST ROW ONLY)",
                            pszTableName);
     }
-    else if( pszZoomLevel == NULL )
+    else if( pszZoomLevel == nullptr )
     {
         oStatement.Appendf(" AND zoom_level <= (SELECT MAX(zoom_level) FROM %s)",
                            pszTableName);
@@ -1914,8 +1914,8 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
     }
 
     if( !bGotRow &&
-            pszContentsMinX != NULL && pszContentsMinY != NULL &&
-            pszContentsMaxX != NULL && pszContentsMaxY != NULL )
+            pszContentsMinX != nullptr && pszContentsMinY != nullptr &&
+            pszContentsMaxX != nullptr && pszContentsMaxY != nullptr )
     {
         oStatement.Clear();
         oStatement.Append(pszSQL);
@@ -1988,7 +1988,7 @@ int OGRDB2DataSource::OpenRaster( const char* pszTableName,
         pszContentsMaxY = osContentsMaxY.c_str();
     }
 
-    if(! InitRaster ( NULL, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
+    if(! InitRaster ( nullptr, pszTableName, dfMinX, dfMinY, dfMaxX, dfMaxY,
                       pszContentsMinX, pszContentsMinY, pszContentsMaxX, pszContentsMaxY,
                       papszOpenOptionsIn, &oStatement, 0) )
     {
@@ -2100,8 +2100,8 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     pszContentsMinY = CSLFetchNameValueDef(papszOpenOptionsIn, "MINY", pszContentsMinY);
     pszContentsMaxX = CSLFetchNameValueDef(papszOpenOptionsIn, "MAXX", pszContentsMaxX);
     pszContentsMaxY = CSLFetchNameValueDef(papszOpenOptionsIn, "MAXY", pszContentsMaxY);
-    if( pszContentsMinX != NULL && pszContentsMinY != NULL &&
-            pszContentsMaxX != NULL && pszContentsMaxY != NULL )
+    if( pszContentsMinX != nullptr && pszContentsMinY != nullptr &&
+            pszContentsMaxX != nullptr && pszContentsMaxY != nullptr )
     {
         dfGDALMinX = CPLAtof(pszContentsMinX);
         dfGDALMinY = CPLAtof(pszContentsMinY);
@@ -2165,7 +2165,7 @@ int OGRDB2DataSource::InitRaster ( OGRDB2DataSource* poParentDS,
     nRasterYSize = (int)dfRasterYSize;
 
     m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
-    if( m_pabyCachedTiles == NULL )
+    if( m_pabyCachedTiles == nullptr )
     {
         return FALSE;
     }
@@ -2525,10 +2525,10 @@ static const WarpResamplingAlg asResamplingAlg[] =
 
 static void DumpStringList(char **papszStrList)
 {
-    if (papszStrList == NULL)
+    if (papszStrList == nullptr)
         return ;
 
-    while( *papszStrList != NULL )
+    while( *papszStrList != nullptr )
     {
         CPLDebug("DumpStringList",": '%s'", *papszStrList);
         ++papszStrList;
@@ -2549,7 +2549,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
     DumpStringList(papszOptions);
     char** papszUpdatedOptions = CSLDuplicate(papszOptions);
-    if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == NULL )
+    if( CSLFetchNameValue(papszOptions, "RASTER_TABLE") == nullptr )
     {
         papszUpdatedOptions = CSLSetNameValue(papszUpdatedOptions,
                                               "RASTER_TABLE",
@@ -2562,7 +2562,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         if( !poThisDriver )
         {
             CSLDestroy(papszUpdatedOptions);
-            return NULL;
+            return nullptr;
         }
         CPLDebug("OGRDB2DataSource::CreateCopy","calling DefaultCreateCopy");
 
@@ -2580,7 +2580,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or 4 (RGBA) band dataset supported");
         CSLDestroy(papszUpdatedOptions);
-        return NULL;
+        return nullptr;
     }
 
     int nEPSGCode = 0;
@@ -2600,26 +2600,26 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
     if( iScheme == nTilingSchemeCount )
     {
         CSLDestroy(papszUpdatedOptions);
-        return NULL;
+        return nullptr;
     }
 
     OGRSpatialReference oSRS;
     if( oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE )
     {
         CSLDestroy(papszUpdatedOptions);
-        return NULL;
+        return nullptr;
     }
-    char* pszWKT = NULL;
+    char* pszWKT = nullptr;
     oSRS.exportToWkt(&pszWKT);
-    char** papszTO = CSLSetNameValue( NULL, "DST_SRS", pszWKT );
+    char** papszTO = CSLSetNameValue( nullptr, "DST_SRS", pszWKT );
     void* hTransformArg =
-        GDALCreateGenImgProjTransformer2( poSrcDS, NULL, papszTO );
-    if( hTransformArg == NULL )
+        GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, papszTO );
+    if( hTransformArg == nullptr )
     {
         CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
-        return NULL;
+        return nullptr;
     }
 
     GDALTransformerInfo* psInfo = (GDALTransformerInfo*)hTransformArg;
@@ -2637,11 +2637,11 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         GDALDestroyGenImgProjTransformer( hTransformArg );
-        return NULL;
+        return nullptr;
     }
 
     GDALDestroyGenImgProjTransformer( hTransformArg );
-    hTransformArg = NULL;
+    hTransformArg = nullptr;
 
     int nZoomLevel;
     double dfComputedRes = adfGeoTransform[1];
@@ -2660,7 +2660,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
-        return NULL;
+        return nullptr;
     }
 
     const char* pszZoomLevelStrategy = CSLFetchNameValueDef(papszOptions,
@@ -2699,14 +2699,14 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
     int nTargetBands = nBands;
     /* For grey level or RGB, if there's reprojection involved, add an alpha */
     /* channel */
-    if( (nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() == NULL) ||
+    if( (nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() == nullptr) ||
             nBands == 3 )
     {
         OGRSpatialReference oSrcSRS;
         oSrcSRS.SetFromUserInput(poSrcDS->GetProjectionRef());
         oSrcSRS.AutoIdentifyEPSG();
-        if( oSrcSRS.GetAuthorityCode(NULL) == NULL ||
-                atoi(oSrcSRS.GetAuthorityCode(NULL)) != nEPSGCode )
+        if( oSrcSRS.GetAuthorityCode(nullptr) == nullptr ||
+                atoi(oSrcSRS.GetAuthorityCode(nullptr)) != nEPSGCode )
         {
             nTargetBands ++;
         }
@@ -2720,22 +2720,22 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
         CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
-        return NULL;
+        return nullptr;
     }
     CSLDestroy(papszUpdatedOptions);
-    papszUpdatedOptions = NULL;
+    papszUpdatedOptions = nullptr;
     poDS->SetGeoTransform(adfGeoTransform);
     poDS->SetProjection(pszWKT);
     CPLFree(pszWKT);
-    pszWKT = NULL;
+    pszWKT = nullptr;
 
     hTransformArg =
         GDALCreateGenImgProjTransformer2( poSrcDS, poDS, papszTO );
     CSLDestroy(papszTO);
-    if( hTransformArg == NULL )
+    if( hTransformArg == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -2751,7 +2751,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
     /* -------------------------------------------------------------------- */
     GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
-    psWO->papszWarpOptions = NULL;
+    psWO->papszWarpOptions = nullptr;
     psWO->eWorkingDataType = GDT_Byte;
 
     GDALResampleAlg eResampleAlg = GRA_Bilinear;
@@ -2821,7 +2821,7 @@ GDALDataset* OGRDB2DataSource::CreateCopy( const char *pszFilename,
     if (eErr != CE_None)
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     GDALDestroyTransformer( hTransformArg );
@@ -2861,7 +2861,7 @@ CPLErr OGRDB2DataSource::SetProjection( const char* pszProjection )
     }
 
     int nSRID;
-    if( pszProjection == NULL || pszProjection[0] == '\0' )
+    if( pszProjection == nullptr || pszProjection[0] == '\0' )
     {
         nSRID = -1;
     }
@@ -3217,7 +3217,7 @@ CPLErr OGRDB2DataSource::IBuildOverviews(
                  "Overview building not supported on a database opened in read-only mode");
         return CE_Failure;
     }
-    if( m_poParentDS != NULL )
+    if( m_poParentDS != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Overview building not supported on overview dataset");

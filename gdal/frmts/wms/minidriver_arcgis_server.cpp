@@ -51,7 +51,7 @@ static double GetBBoxCoord(const GDALWMSImageRequestInfo &iri, char what)
 }
 
 char **WMSMiniDriver_AGS::GetMetadataDomainList(void) {
-    return CSLAddString(NULL, "LocationInfo");
+    return CSLAddString(nullptr, "LocationInfo");
 }
 
 CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papszOpenOptions)
@@ -77,7 +77,7 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
 
     const char* irs = CPLGetXMLValue(config, "SRS", "102100");
 
-    if (irs != NULL)
+    if (irs != nullptr)
     {
         if (STARTS_WITH_CI(irs, "EPSG:")) //if we have EPSG code just convert it to WKT
         {

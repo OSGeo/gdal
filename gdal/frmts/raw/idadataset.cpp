@@ -183,11 +183,11 @@ class IDARasterBand : public RawRasterBand
     virtual GDALRasterAttributeTable *GetDefaultRAT() override;
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable *GetColorTable() override;
-    virtual double GetOffset( int *pbSuccess = NULL ) override;
+    virtual double GetOffset( int *pbSuccess = nullptr ) override;
     virtual CPLErr SetOffset( double dfNewValue ) override;
-    virtual double GetScale( int *pbSuccess = NULL ) override;
+    virtual double GetScale( int *pbSuccess = nullptr ) override;
     virtual CPLErr SetScale( double dfNewValue ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -198,8 +198,8 @@ IDARasterBand::IDARasterBand( IDADataset *poDSIn,
                               VSILFILE *fpRawIn, int nXSize ) :
     RawRasterBand( poDSIn, 1, fpRawIn, 512, 1, nXSize,
                    GDT_Byte, FALSE, TRUE ),
-    poRAT(NULL),
-    poColorTable(NULL)
+    poRAT(nullptr),
+    poColorTable(nullptr)
 {}
 
 /************************************************************************/
@@ -222,7 +222,7 @@ IDARasterBand::~IDARasterBand()
 double IDARasterBand::GetNoDataValue( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
     return reinterpret_cast<IDADataset *>( poDS )->nMissing;
 }
@@ -234,7 +234,7 @@ double IDARasterBand::GetNoDataValue( int *pbSuccess )
 double IDARasterBand::GetOffset( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
     return reinterpret_cast<IDADataset *>( poDS )->dfB;
 }
@@ -272,7 +272,7 @@ CPLErr IDARasterBand::SetOffset( double dfNewValue )
 double IDARasterBand::GetScale( int *pbSuccess )
 
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
     return reinterpret_cast<IDADataset *>( poDS )->dfM;
 }
@@ -366,8 +366,8 @@ IDADataset::IDADataset() :
     nMissing(0),
     dfM(0.0),
     dfB(0.0),
-    fpRaw(NULL),
-    pszProjection(NULL),
+    fpRaw(nullptr),
+    pszProjection(nullptr),
     bHeaderDirty(false)
 {
     memset( szTitle, 0, sizeof(szTitle) );
@@ -389,7 +389,7 @@ IDADataset::~IDADataset()
 {
     FlushCache();
 
-    if( fpRaw != NULL )
+    if( fpRaw != nullptr )
     {
         if( VSIFCloseL( fpRaw ) != 0 )
         {
@@ -441,10 +441,10 @@ void IDADataset::ProcessGeoref()
                         6370997.0, 0.0 );
     }
 
-    if( oSRS.GetRoot() != NULL )
+    if( oSRS.GetRoot() != nullptr )
     {
         CPLFree( pszProjection );
-        pszProjection = NULL;
+        pszProjection = nullptr;
 
         oSRS.exportToWkt( &pszProjection );
     }
@@ -583,7 +583,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 /* -------------------------------------------------------------------- */
     const char *l_pszProjection = oSRS.GetAttrValue( "PROJECTION" );
 
-    if( l_pszProjection == NULL )
+    if( l_pszProjection == nullptr )
     {
         /* do nothing - presumably geographic  */;
     }
@@ -648,13 +648,13 @@ void IDADataset::ReadColorTable()
         osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
 
     VSILFILE *fp = VSIFOpenL( osCLRFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         osCLRFilename = CPLResetExtension(osCLRFilename, "CLR" );
         fp = VSIFOpenL( osCLRFilename, "r" );
     }
 
-    if( fp == NULL )
+    if( fp == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -680,7 +680,7 @@ void IDADataset::ReadColorTable()
     const char *pszLine = CPLReadLineL( fp );
     int iRow = 0;
 
-    while( pszLine != NULL )
+    while( pszLine != nullptr )
     {
         char **papszTokens =
             CSLTokenizeStringComplex( pszLine, " \t", FALSE, FALSE );
@@ -763,22 +763,22 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is this an IDA file?                                            */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( poOpenInfo->nHeaderBytes < 512 )
-        return NULL;
+        return nullptr;
 
     // Projection legal?
     if( poOpenInfo->pabyHeader[23] > 10 )
-        return NULL;
+        return nullptr;
 
     // Image type legal?
     if( (poOpenInfo->pabyHeader[22] > 14
          && poOpenInfo->pabyHeader[22] < 100)
         || (poOpenInfo->pabyHeader[22] > 114
             && poOpenInfo->pabyHeader[22] != 200 ) )
-        return NULL;
+        return nullptr;
 
     const int nXSize
         = poOpenInfo->pabyHeader[30] + poOpenInfo->pabyHeader[31] * 256;
@@ -786,7 +786,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
         = poOpenInfo->pabyHeader[32] + poOpenInfo->pabyHeader[33] * 256;
 
     if( nXSize == 0 || nYSize == 0 )
-        return NULL;
+        return nullptr;
 
     // The file just be exactly the image size + header size in length.
     const vsi_l_offset nExpectedFileSize =
@@ -797,7 +797,7 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     VSIRewindL( poOpenInfo->fpL );
 
     if( nActualFileSize != nExpectedFileSize )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -962,18 +962,18 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->eAccess == GA_ReadOnly )
     {
         poDS->fpRaw = poOpenInfo->fpL;
-        poOpenInfo->fpL = NULL;
+        poOpenInfo->fpL = nullptr;
     }
     else
     {
         poDS->fpRaw = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
         poDS->eAccess = GA_Update;
-        if( poDS->fpRaw == NULL )
+        if( poDS->fpRaw == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to open %s for write access.",
                       poOpenInfo->pszFilename );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1017,19 +1017,19 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Only 1 band, Byte datasets supported for IDA format." );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
     FILE *fp = VSIFOpen( pszFilename, "wb" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1059,7 +1059,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
                   "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
         CPL_IGNORE_RET_VAL(VSIFClose( fp ));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1074,7 +1074,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
                   "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
         VSIFClose( fp );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFClose( fp ) != 0 )
@@ -1082,7 +1082,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "IO error writing %s.\n%s",
                   pszFilename, VSIStrerror( errno ) );
-        return NULL;
+        return nullptr;
     }
 
     return static_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
@@ -1095,7 +1095,7 @@ GDALDataset *IDADataset::Create( const char * pszFilename,
 void GDALRegister_IDA()
 
 {
-    if( GDALGetDriverByName( "IDA" ) != NULL )
+    if( GDALGetDriverByName( "IDA" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

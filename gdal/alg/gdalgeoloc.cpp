@@ -134,8 +134,8 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
     psTransform->padfGeoLocX = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double), nXSize, nYSize));
 
-    if( psTransform->padfGeoLocX == NULL ||
-        psTransform->padfGeoLocY == NULL )
+    if( psTransform->padfGeoLocX == nullptr ||
+        psTransform->padfGeoLocY == nullptr )
     {
         return false;
     }
@@ -150,7 +150,7 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
             VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
         double* padfTempY = static_cast<double *>(
             VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
-        if( padfTempX == NULL || padfTempY == NULL )
+        if( padfTempX == nullptr || padfTempY == nullptr )
         {
             CPLFree(padfTempX);
             CPLFree(padfTempY);
@@ -304,10 +304,10 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     float *wgtsBackMap = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
 
-    if( pabyValidFlag == NULL ||
-        psTransform->pafBackMapX == NULL ||
-        psTransform->pafBackMapY == NULL ||
-        wgtsBackMap == NULL)
+    if( pabyValidFlag == nullptr ||
+        psTransform->pafBackMapX == nullptr ||
+        psTransform->pafBackMapY == nullptr ||
+        wgtsBackMap == nullptr)
     {
         CPLFree( pabyValidFlag );
         CPLFree( wgtsBackMap );
@@ -614,7 +614,7 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg,
                                           double dfRatioX, double dfRatioY )
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarGeoLocTransformer",
-                      NULL);
+                      nullptr);
 
     GDALGeoLocTransformInfo *psInfo =
         static_cast<GDALGeoLocTransformInfo *>(hTransformArg);
@@ -633,7 +633,7 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg,
 
     psInfo = static_cast<GDALGeoLocTransformInfo*>(
         GDALCreateGeoLocTransformer(
-            NULL, papszGeolocationInfo, psInfo->bReversed));
+            nullptr, papszGeolocationInfo, psInfo->bReversed));
 
     CSLDestroy(papszGeolocationInfo);
 
@@ -651,17 +651,17 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 
 {
 
-    if( CSLFetchNameValue(papszGeolocationInfo, "PIXEL_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "LINE_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "PIXEL_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "LINE_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "X_BAND") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "Y_BAND") == NULL )
+    if( CSLFetchNameValue(papszGeolocationInfo, "PIXEL_OFFSET") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_OFFSET") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "PIXEL_STEP") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_STEP") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "X_BAND") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "Y_BAND") == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing some geolocation fields in "
                   "GDALCreateGeoLocTransformer()" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -701,7 +701,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 /* -------------------------------------------------------------------- */
     const char *pszDSName = CSLFetchNameValue( papszGeolocationInfo,
                                                "X_DATASET" );
-    if( pszDSName != NULL )
+    if( pszDSName != nullptr )
     {
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
         psTransform->hDS_X = GDALOpenShared( pszDSName, GA_ReadOnly );
@@ -720,7 +720,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     }
 
     pszDSName = CSLFetchNameValue( papszGeolocationInfo, "Y_DATASET" );
-    if( pszDSName != NULL )
+    if( pszDSName != nullptr )
     {
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
         psTransform->hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
@@ -738,11 +738,11 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         }
     }
 
-    if( psTransform->hDS_X == NULL ||
-        psTransform->hDS_Y == NULL )
+    if( psTransform->hDS_X == nullptr ||
+        psTransform->hDS_Y == nullptr )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -756,11 +756,11 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         std::max(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
     psTransform->hBand_Y = GDALGetRasterBand( psTransform->hDS_Y, nYBand );
 
-    if( psTransform->hBand_X == NULL ||
-        psTransform->hBand_Y == NULL )
+    if( psTransform->hBand_X == nullptr ||
+        psTransform->hBand_Y == nullptr )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -777,7 +777,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "X_BAND and Y_BAND should have both nYSize == 1");
             GDALDestroyGeoLocTransformer( psTransform );
-            return NULL;
+            return nullptr;
         }
     }
     else if( nXSize_XBand != nXSize_YBand ||
@@ -786,7 +786,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "X_BAND and Y_BAND do not have the same dimensions");
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
     if( nXSize_XBand > INT_MAX / nYSize_XBand )
@@ -794,7 +794,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
                  nXSize_XBand, nYSize_XBand);
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -804,7 +804,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         || !GeoLocGenerateBackMap( psTransform ) )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
     return psTransform;
@@ -818,7 +818,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
 {
-    if( pTransformAlg == NULL )
+    if( pTransformAlg == nullptr )
         return;
 
     GDALGeoLocTransformInfo *psTransform =
@@ -830,11 +830,11 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
     CPLFree( psTransform->padfGeoLocX );
     CPLFree( psTransform->padfGeoLocY );
 
-    if( psTransform->hDS_X != NULL
+    if( psTransform->hDS_X != nullptr
         && GDALDereferenceDataset( psTransform->hDS_X ) == 0 )
             GDALClose( psTransform->hDS_X );
 
-    if( psTransform->hDS_Y != NULL
+    if( psTransform->hDS_Y != nullptr
         && GDALDereferenceDataset( psTransform->hDS_Y ) == 0 )
             GDALClose( psTransform->hDS_Y );
 
@@ -1049,13 +1049,13 @@ int GDALGeoLocTransform( void *pTransformArg,
 CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGeoLocTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGeoLocTransformer", nullptr );
 
     GDALGeoLocTransformInfo *psInfo =
         static_cast<GDALGeoLocTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
-        CPLCreateXMLNode( NULL, CXT_Element, "GeoLocTransformer" );
+        CPLCreateXMLNode( nullptr, CXT_Element, "GeoLocTransformer" );
 
 /* -------------------------------------------------------------------- */
 /*      Serialize bReversed.                                            */
@@ -1070,9 +1070,9 @@ CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
     char **papszMD = psInfo->papszGeolocationInfo;
     CPLXMLNode *psMD= CPLCreateXMLNode( psTree, CXT_Element, "Metadata" );
 
-    for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
+    for( int i = 0; papszMD != nullptr && papszMD[i] != nullptr; i++ )
     {
-        char *pszKey = NULL;
+        char *pszKey = nullptr;
         const char *pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
 
         CPLXMLNode *psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
@@ -1097,23 +1097,23 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMetadata = CPLGetXMLNode( psTree, "Metadata" );
 
-    if( psMetadata == NULL ||
+    if( psMetadata == nullptr ||
         psMetadata->eType != CXT_Element
         || !EQUAL(psMetadata->pszValue, "Metadata") )
-        return NULL;
+        return nullptr;
 
-    char **papszMD = NULL;
+    char **papszMD = nullptr;
 
     for( CPLXMLNode *psMDI = psMetadata->psChild;
-         psMDI != NULL;
+         psMDI != nullptr;
          psMDI = psMDI->psNext )
     {
         if( !EQUAL(psMDI->pszValue, "MDI")
             || psMDI->eType != CXT_Element
-            || psMDI->psChild == NULL
-            || psMDI->psChild->psNext == NULL
+            || psMDI->psChild == nullptr
+            || psMDI->psChild->psNext == nullptr
             || psMDI->psChild->eType != CXT_Attribute
-            || psMDI->psChild->psChild == NULL )
+            || psMDI->psChild->psChild == nullptr )
             continue;
 
         papszMD =
@@ -1130,7 +1130,7 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
 /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateGeoLocTransformer( NULL, papszMD, bReversed );
+    void *pResult = GDALCreateGeoLocTransformer( nullptr, papszMD, bReversed );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup GCP copy.                                               */

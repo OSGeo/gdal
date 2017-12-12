@@ -52,7 +52,7 @@ class OGRDWGServices;
 class DWGBlockDefinition
 {
 public:
-    DWGBlockDefinition() : poGeometry(NULL) {}
+    DWGBlockDefinition() : poGeometry(nullptr) {}
     ~DWGBlockDefinition();
 
     OGRGeometry                *poGeometry;
@@ -216,7 +216,7 @@ class OGRDWGDataSource : public OGRDataSource
     // Header variables.
     void                ReadHeaderSection();
     const char         *GetVariable(const char *pszName,
-                                    const char *pszDefault=NULL );
+                                    const char *pszDefault=nullptr );
 
     const char         *GetEncoding() { return osEncoding; }
 };

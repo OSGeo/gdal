@@ -42,13 +42,13 @@ CPL_CVSID("$Id$")
 static int OGRKMLDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
         return FALSE;
 
     return strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-                  "<kml") != NULL ||
+                  "<kml") != nullptr ||
            strstr(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-                  "<kml:kml") != NULL;
+                  "<kml:kml") != nullptr;
 }
 
 /************************************************************************/
@@ -59,10 +59,10 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
     if( !OGRKMLDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
 #ifdef HAVE_EXPAT
     OGRKMLDataSource* poDS = new OGRKMLDataSource();
@@ -76,19 +76,19 @@ static GDALDataset *OGRKMLDriverOpen( GDALOpenInfo* poOpenInfo )
                 "No layers in KML file: %s.", poOpenInfo->pszFilename );
 
             delete poDS;
-            poDS = NULL;
+            poDS = nullptr;
         }
 #endif
     }
     else
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 
@@ -103,7 +103,7 @@ static GDALDataset *OGRKMLDriverCreate( const char * pszName,
                                         GDALDataType /* eDT */,
                                         char **papszOptions )
 {
-    CPLAssert( NULL != pszName );
+    CPLAssert( nullptr != pszName );
     CPLDebug( "KML", "Attempt to create: %s", pszName );
 
     OGRKMLDataSource *poDS = new OGRKMLDataSource();
@@ -111,7 +111,7 @@ static GDALDataset *OGRKMLDriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -123,7 +123,7 @@ static GDALDataset *OGRKMLDriverCreate( const char * pszName,
 
 void RegisterOGRKML()
 {
-    if( GDALGetDriverByName( "KML" ) != NULL )
+    if( GDALGetDriverByName( "KML" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

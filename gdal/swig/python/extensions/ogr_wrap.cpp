@@ -3146,9 +3146,10 @@ typedef char retStringAndCPLFree;
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "gdal.h"
 #include "ogr_api.h"
-#include "ogr_p.h"
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -5411,7 +5412,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
         return NULL;
 
     nResArgCount =
-      OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, GDAL_OF_VECTOR | nOptions );
 
     if( nResArgCount <= 0 )
         return NULL;

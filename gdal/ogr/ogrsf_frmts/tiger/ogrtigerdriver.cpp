@@ -39,12 +39,12 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !poOpenInfo->bStatOK )
-        return NULL;
+        return nullptr;
     char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-    if( papszSiblingFiles != NULL )
+    if( papszSiblingFiles != nullptr )
     {
         bool bFoundCompatibleFile = false;
-        for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
+        for( int i = 0; papszSiblingFiles[i] != nullptr; i++ )
         {
             int nLen = (int)strlen(papszSiblingFiles[i]);
             if( nLen > 4 &&
@@ -56,7 +56,7 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
             }
         }
         if( !bFoundCompatibleFile )
-            return NULL;
+            return nullptr;
     }
 
     OGRTigerDataSource  *poDS = new OGRTigerDataSource;
@@ -64,15 +64,15 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    if( poDS != nullptr && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Tiger Driver doesn't support update." );
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -96,7 +96,7 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
     else
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -107,7 +107,7 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
 void RegisterOGRTiger()
 
 {
-    if( GDALGetDriverByName( "TIGER" ) != NULL )
+    if( GDALGetDriverByName( "TIGER" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

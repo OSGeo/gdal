@@ -70,14 +70,14 @@ void OGRDWGDataSource::ReadBlocksSection()
         // We aggregate the geometries of the features into a multi-geometry,
         // but throw away other stuff attached to the features.
 
-        OGRFeature *poFeature = NULL;
+        OGRFeature *poFeature = nullptr;
         OGRGeometryCollection *poColl = new OGRGeometryCollection();
         std::vector<OGRFeature*> apoFeatures;
 
-        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
+        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != nullptr )
         {
-            if( (poFeature->GetStyleString() != NULL
-                 && strstr(poFeature->GetStyleString(),"LABEL") != NULL)
+            if( (poFeature->GetStyleString() != nullptr
+                 && strstr(poFeature->GetStyleString(),"LABEL") != nullptr)
                 || !bMergeBlockGeometries )
             {
                 apoFeatures.push_back( poFeature );
@@ -148,7 +148,7 @@ DWGBlockDefinition *OGRDWGDataSource::LookupBlock( const char *pszName )
     CPLString osName = pszName;
 
     if( oBlockMap.count( osName ) == 0 )
-        return NULL;
+        return nullptr;
     else
         return &(oBlockMap[osName]);
 }

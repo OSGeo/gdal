@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 static int OGRDGNDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    return poOpenInfo->fpL != NULL &&
+    return poOpenInfo->fpL != nullptr &&
            poOpenInfo->nHeaderBytes >= 512 &&
            DGNTestOpen(poOpenInfo->pabyHeader, poOpenInfo->nHeaderBytes);
 }
@@ -51,7 +51,7 @@ static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRDGNDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRDGNDataSource *poDS = new OGRDGNDataSource();
 
@@ -60,7 +60,7 @@ static GDALDataset *OGRDGNDriverOpen( GDALOpenInfo* poOpenInfo )
         || poDS->GetLayerCount() == 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -80,14 +80,14 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRDGNDataSource    *poDS = NULL;
+    OGRDGNDataSource    *poDS = nullptr;
 
     poDS = new OGRDGNDataSource();
 
     if( !poDS->PreCreate( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -100,7 +100,7 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
 void RegisterOGRDGN()
 
 {
-    if( GDALGetDriverByName( "DGN" ) != NULL )
+    if( GDALGetDriverByName( "DGN" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

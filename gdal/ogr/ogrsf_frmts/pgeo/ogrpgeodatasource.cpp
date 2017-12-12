@@ -39,9 +39,9 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRPGeoDataSource::OGRPGeoDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
+    pszName(nullptr),
     bDSUpdate(FALSE)
 {}
 
@@ -105,16 +105,16 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /*      get the DSN.                                                    */
 /*                                                                      */
 /* -------------------------------------------------------------------- */
-    char *pszDSN = NULL;
+    char *pszDSN = nullptr;
     const char* pszOptionName = "";
-    const char* pszDSNStringTemplate = NULL;
+    const char* pszDSNStringTemplate = nullptr;
     if( STARTS_WITH_CI(pszNewName, "PGEO:") )
         pszDSN = CPLStrdup( pszNewName + 5 );
     else
     {
         pszOptionName = "PGEO_DRIVER_TEMPLATE";
-        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, NULL );
-        if( pszDSNStringTemplate == NULL )
+        pszDSNStringTemplate = CPLGetConfigOption( pszOptionName, nullptr );
+        if( pszDSNStringTemplate == nullptr )
         {
             pszDSNStringTemplate = "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s";
         }
@@ -136,7 +136,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
     CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
 
-    if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
+    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
     {
         int bError = TRUE;
         if( !STARTS_WITH_CI(pszNewName, "PGEO:") )
@@ -149,7 +149,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
                      strlen(pszNewName)+strlen(pszDSNStringTemplate)+100,
                      pszDSNStringTemplate,  pszNewName );
             CPLDebug( "PGeo", "EstablishSession(%s)", pszDSN );
-            if( oSession.EstablishSession( pszDSN, NULL, NULL ) )
+            if( oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
             {
                 bError = FALSE;
             }
@@ -190,7 +190,7 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     while( oStmt.Fetch() )
     {
         int i, iNew = static_cast<int>(apapszGeomColumns.size());
-        char **papszRecord = NULL;
+        char **papszRecord = nullptr;
         for( i = 0; i < 9; i++ )
             papszRecord = CSLAddString( papszRecord,
                                         oStmt.GetColData(i) );
@@ -250,7 +250,7 @@ OGRLayer *OGRPGeoDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -283,7 +283,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -293,18 +293,18 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStmt;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRPGeoSelectLayer *poLayer = NULL;
+    OGRPGeoSelectLayer *poLayer = nullptr;
 
     poLayer = new OGRPGeoSelectLayer( this, poStmt );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;

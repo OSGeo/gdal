@@ -173,9 +173,9 @@ static linkedlist_datablock_internal* allocate_new_datablock()
     linkedlist_datablock_internal* ldi;
     ldi = (linkedlist_datablock_internal*)
                  ALLOC(sizeof(linkedlist_datablock_internal));
-    if (ldi!=NULL)
+    if (ldi!=nullptr)
     {
-        ldi->next_datablock = NULL;
+        ldi->next_datablock = nullptr;
         ldi->filled_in_this_block = 0;
         ldi->avail_in_this_block = SIZEDATA_INDATABLOCK;
     }
@@ -184,7 +184,7 @@ static linkedlist_datablock_internal* allocate_new_datablock()
 
 static void free_datablock(linkedlist_datablock_internal*ldi)
 {
-    while (ldi!=NULL)
+    while (ldi!=nullptr)
     {
         linkedlist_datablock_internal* ldinext = ldi->next_datablock;
         TRYFREE(ldi);
@@ -194,7 +194,7 @@ static void free_datablock(linkedlist_datablock_internal*ldi)
 
 static void init_linkedlist(linkedlist_data*ll)
 {
-    ll->first_block = ll->last_block = NULL;
+    ll->first_block = ll->last_block = nullptr;
 }
 
 static int add_data_in_datablock(linkedlist_data*ll,
@@ -203,13 +203,13 @@ static int add_data_in_datablock(linkedlist_data*ll,
     linkedlist_datablock_internal* ldi;
     const unsigned char* from_copy;
 
-    if (ll==NULL)
+    if (ll==nullptr)
         return ZIP_INTERNALERROR;
 
-    if (ll->last_block == NULL)
+    if (ll->last_block == nullptr)
     {
         ll->first_block = ll->last_block = allocate_new_datablock();
-        if (ll->first_block == NULL)
+        if (ll->first_block == nullptr)
             return ZIP_INTERNALERROR;
     }
 
@@ -225,7 +225,7 @@ static int add_data_in_datablock(linkedlist_data*ll,
         if (ldi->avail_in_this_block==0)
         {
             ldi->next_datablock = allocate_new_datablock();
-            if (ldi->next_datablock == NULL)
+            if (ldi->next_datablock == nullptr)
                 return ZIP_INTERNALERROR;
             ldi = ldi->next_datablock;
             ll->last_block = ldi;
@@ -406,7 +406,7 @@ static uLong ziplocal_SearchCentralDir(
         uMaxBack = uSizeFile;
 
     unsigned char* buf = (unsigned char*)ALLOC(BUFREADCOMMENT+4);
-    if (buf==NULL)
+    if (buf==nullptr)
         return 0;
 
     uLong uBackRead = 4;
@@ -452,7 +452,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
 {
     zip_internal ziinit;
 
-    if (pzlib_filefunc_def==NULL)
+    if (pzlib_filefunc_def==nullptr)
         cpl_fill_fopen_filefunc(&ziinit.z_filefunc);
     else
         ziinit.z_filefunc = *pzlib_filefunc_def;
@@ -464,8 +464,8 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
                   (ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_WRITE | ZLIB_FILEFUNC_MODE_CREATE) :
                     (ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_WRITE | ZLIB_FILEFUNC_MODE_EXISTING));
 
-    if (ziinit.filestream == NULL)
-        return NULL;
+    if (ziinit.filestream == nullptr)
+        return nullptr;
     ziinit.begin_pos = (uLong) ZTELL(ziinit.z_filefunc,ziinit.filestream);
     ziinit.in_opened_file_inzip = 0;
     ziinit.ci.stream_initialised = 0;
@@ -474,15 +474,15 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
     init_linkedlist(&(ziinit.central_dir));
 
     zip_internal* zi = (zip_internal*)ALLOC(sizeof(zip_internal));
-    if (zi==NULL)
+    if (zi==nullptr)
     {
         ZCLOSE(ziinit.z_filefunc,ziinit.filestream);
-        return NULL;
+        return nullptr;
     }
 
     /* now we add file in a zipfile */
 #    ifndef NO_ADDFILEINEXISTINGZIP
-    ziinit.globalcomment = NULL;
+    ziinit.globalcomment = nullptr;
 
     int err=ZIP_OK;
     if (append == APPEND_STATUS_ADDINZIP)
@@ -557,7 +557,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
         {
             ZCLOSE(ziinit.z_filefunc, ziinit.filestream);
             TRYFREE(zi);
-            return NULL;
+            return nullptr;
         }
 
         if (size_comment>0)
@@ -618,7 +618,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
         TRYFREE(ziinit.globalcomment);
 #    endif /* !NO_ADDFILEINEXISTINGZIP*/
         TRYFREE(zi);
-        return NULL;
+        return nullptr;
     }
     else
     {
@@ -629,7 +629,7 @@ extern zipFile ZEXPORT cpl_zipOpen2 (
 
 extern zipFile ZEXPORT cpl_zipOpen (const char *pathname, int append)
 {
-    return cpl_zipOpen2(pathname,append,NULL,NULL);
+    return cpl_zipOpen2(pathname,append,nullptr,nullptr);
 }
 
 extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
@@ -662,11 +662,11 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     int err = ZIP_OK;
 
 #    ifdef NOCRYPT
-    if (password != NULL)
+    if (password != nullptr)
         return ZIP_PARAMERROR;
 #    endif
 
-    if (file == NULL)
+    if (file == nullptr)
         return ZIP_PARAMERROR;
     if ((method!=0) && (method!=Z_DEFLATED))
         return ZIP_PARAMERROR;
@@ -680,17 +680,17 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
             return err;
     }
 
-    if (filename==NULL)
+    if (filename==nullptr)
         filename="-";
 
-    if (comment==NULL)
+    if (comment==nullptr)
         size_comment = 0;
     else
         size_comment = (uInt)strlen(comment);
 
     size_filename = (uInt)strlen(filename);
 
-    if (zipfi == NULL)
+    if (zipfi == nullptr)
         zi->ci.dosDate = 0;
     else
     {
@@ -737,12 +737,12 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     ziplocal_putValue_inmemory(zi->ci.central_header+32,(uLong)size_comment,2);
     ziplocal_putValue_inmemory(zi->ci.central_header+34,(uLong)0,2); /*disk nm start*/
 
-    if (zipfi==NULL)
+    if (zipfi==nullptr)
         ziplocal_putValue_inmemory(zi->ci.central_header+36,(uLong)0,2);
     else
         ziplocal_putValue_inmemory(zi->ci.central_header+36,(uLong)zipfi->internal_fa,2);
 
-    if (zipfi==NULL)
+    if (zipfi==nullptr)
         ziplocal_putValue_inmemory(zi->ci.central_header+38,(uLong)0,4);
     else
         ziplocal_putValue_inmemory(zi->ci.central_header+38,(uLong)zipfi->external_fa,4);
@@ -759,7 +759,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     for (i=0;i<size_comment;i++)
         *(zi->ci.central_header+SIZECENTRALHEADER+size_filename+
               size_extrafield_global+i) = *(comment+i);
-    if (zi->ci.central_header == NULL)
+    if (zi->ci.central_header == nullptr)
         return ZIP_INTERNALERROR;
 
     /* write the local header */
@@ -806,9 +806,9 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
 
     if ((err==ZIP_OK) && (zi->ci.method == Z_DEFLATED) && (!zi->ci.raw))
     {
-        zi->ci.stream.zalloc = (alloc_func)NULL;
-        zi->ci.stream.zfree = (free_func)NULL;
-        zi->ci.stream.opaque = (voidpf)NULL;
+        zi->ci.stream.zalloc = (alloc_func)nullptr;
+        zi->ci.stream.zfree = (free_func)nullptr;
+        zi->ci.stream.opaque = (voidpf)nullptr;
 
         if (windowBits>0)
             windowBits = -windowBits;
@@ -860,7 +860,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip2(
                                  extrafield_global, size_extrafield_global,
                                  comment, method, level, raw,
                                  -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY,
-                                 NULL, 0);
+                                 nullptr, 0);
 }
 
 extern int ZEXPORT cpl_zipOpenNewFileInZip (
@@ -907,7 +907,7 @@ extern int ZEXPORT cpl_zipWriteInFileInZip (
     const void* buf,
     unsigned len )
 {
-    if (file == NULL)
+    if (file == nullptr)
         return ZIP_PARAMERROR;
 
     zip_internal* zi = (zip_internal*)file;
@@ -969,7 +969,7 @@ extern int ZEXPORT cpl_zipCloseFileInZipRaw (
     uLong uncompressed_size,
     uLong crc32 )
 {
-    if (file == NULL)
+    if (file == nullptr)
         return ZIP_PARAMERROR;
 
     zip_internal* zi = (zip_internal*)file;
@@ -1077,7 +1077,7 @@ extern int ZEXPORT cpl_zipClose (
     uLong centraldir_pos_inzip;
     uInt size_global_comment;
 
-    if (file == NULL)
+    if (file == nullptr)
         return ZIP_PARAMERROR;
 
     zip_internal* zi = (zip_internal*)file;
@@ -1088,10 +1088,10 @@ extern int ZEXPORT cpl_zipClose (
     }
 
 #ifndef NO_ADDFILEINEXISTINGZIP
-    if (global_comment==NULL)
+    if (global_comment==nullptr)
         global_comment = zi->globalcomment;
 #endif
-    if (global_comment==NULL)
+    if (global_comment==nullptr)
         size_global_comment = 0;
     else
         size_global_comment = (uInt)strlen(global_comment);
@@ -1100,7 +1100,7 @@ extern int ZEXPORT cpl_zipClose (
     if (err==ZIP_OK)
     {
         linkedlist_datablock_internal* ldi = zi->central_dir.first_block;
-        while (ldi!=NULL)
+        while (ldi!=nullptr)
         {
             if ((err==ZIP_OK) && (ldi->filled_in_this_block>0))
                 if (ZWRITE(zi->z_filefunc,zi->filestream,
@@ -1182,12 +1182,12 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
 {
     const bool bAppend =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND", "FALSE"));
-    char** papszFilenames = NULL;
+    char** papszFilenames = nullptr;
 
     if( bAppend )
     {
         zipFile unzF = cpl_unzOpen(pszZipFilename);
-        if( unzF != NULL )
+        if( unzF != nullptr )
         {
             if( cpl_unzGoToFirstFile(unzF) == UNZ_OK )
             {
@@ -1196,7 +1196,7 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
                     char fileName[8193];
                     unz_file_info file_info;
                     cpl_unzGetCurrentFileInfo (unzF, &file_info, fileName,
-                                            sizeof(fileName) - 1, NULL, 0, NULL, 0);
+                                            sizeof(fileName) - 1, nullptr, 0, nullptr, 0);
                     fileName[sizeof(fileName) - 1] = '\0';
                     papszFilenames = CSLAddString(papszFilenames, fileName);
                 }
@@ -1207,10 +1207,10 @@ void *CPLCreateZip( const char *pszZipFilename, char **papszOptions )
     }
 
     zipFile hZip = cpl_zipOpen( pszZipFilename, bAppend ? APPEND_STATUS_ADDINZIP : APPEND_STATUS_CREATE);
-    if( hZip == NULL )
+    if( hZip == nullptr )
     {
         CSLDestroy(papszFilenames);
-        return NULL;
+        return nullptr;
     }
 
     CPLZip* psZip = static_cast<CPLZip *>(CPLMalloc(sizeof(CPLZip)));
@@ -1228,7 +1228,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
                            char **papszOptions )
 
 {
-    if( hZip == NULL )
+    if( hZip == nullptr )
         return CE_Failure;
 
     CPLZip* psZip = (CPLZip*)hZip;
@@ -1254,9 +1254,9 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
         }
     }
 
-    char* pszCPFilename = NULL;
+    char* pszCPFilename = nullptr;
     unsigned int nExtraLength = 0;
-    GByte* pabyExtra = NULL;
+    GByte* pabyExtra = nullptr;
     if( !bIsAscii )
     {
         const char* pszDestEncoding = CPLGetConfigOption("CPL_ZIP_ENCODING",
@@ -1294,8 +1294,8 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 
     const int nErr =
         cpl_zipOpenNewFileInZip(
-            psZip->hZip, pszCPFilename, NULL,
-            NULL, 0, pabyExtra, nExtraLength, "",
+            psZip->hZip, pszCPFilename, nullptr,
+            nullptr, 0, pabyExtra, nExtraLength, "",
             bCompressed ? Z_DEFLATED : 0,
             bCompressed ? Z_DEFAULT_COMPRESSION : 0 );
 
@@ -1317,7 +1317,7 @@ CPLErr CPLCreateFileInZip( void *hZip, const char *pszFilename,
 CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 
 {
-    if( hZip == NULL )
+    if( hZip == nullptr )
         return CE_Failure;
 
     CPLZip* psZip = (CPLZip*)hZip;
@@ -1339,7 +1339,7 @@ CPLErr CPLWriteFileInZip( void *hZip, const void *pBuffer, int nBufferSize )
 CPLErr CPLCloseFileInZip( void *hZip )
 
 {
-    if( hZip == NULL )
+    if( hZip == nullptr )
         return CE_Failure;
 
     CPLZip* psZip = (CPLZip*)hZip;
@@ -1360,16 +1360,16 @@ CPLErr CPLCloseFileInZip( void *hZip )
 CPLErr CPLCloseZip( void *hZip )
 
 {
-    if( hZip == NULL )
+    if( hZip == nullptr )
         return CE_Failure;
 
     CPLZip* psZip = (CPLZip*)hZip;
 
-    int nErr = cpl_zipClose(psZip->hZip, NULL);
+    int nErr = cpl_zipClose(psZip->hZip, nullptr);
 
-    psZip->hZip = NULL;
+    psZip->hZip = nullptr;
     CSLDestroy(psZip->papszFilenames);
-    psZip->papszFilenames = NULL;
+    psZip->papszFilenames = nullptr;
     CPLFree(psZip);
 
     if( nErr != ZIP_OK )

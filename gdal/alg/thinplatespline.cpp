@@ -566,7 +566,7 @@ int VizGeorefSpline2D::solve()
     double* _Ainv = static_cast< double *>(
         VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
 
-    if( _AA == NULL || _Ainv == NULL )
+    if( _AA == nullptr || _Ainv == nullptr )
     {
         VSIFree(_AA);
         VSIFree(_Ainv);
@@ -817,7 +817,7 @@ static int matrixInvert( int N, double input[], double output[] )
     const int tempSize = 2 * N * N;
     double* temp = new double[tempSize];
 
-    if( temp == NULL )
+    if( temp == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "matrixInvert(): ERROR - memory allocation failed.");

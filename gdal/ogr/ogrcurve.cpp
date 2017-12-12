@@ -330,7 +330,7 @@ OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
     {
         delete poCC;
         delete poCurve;
-        return NULL;
+        return nullptr;
     }
     poCC->assignSpatialReference(poCurve->getSpatialReference());
     return poCC;

@@ -72,18 +72,18 @@ ElementPtr geom2kml(
 {
     if( !poOgrGeom )
     {
-        return NULL;
+        return nullptr;
     }
 
     /***** ogr geom vars *****/
-    OGRPoint *poOgrPoint = NULL;
-    OGRLineString *poOgrLineString = NULL;
+    OGRPoint *poOgrPoint = nullptr;
+    OGRLineString *poOgrLineString = nullptr;
 
     /***** libkml geom vars *****/
-    CoordinatesPtr coordinates = NULL;
+    CoordinatesPtr coordinates = nullptr;
 
     // This will be the return value.
-    ElementPtr poKmlGeometry = NULL;
+    ElementPtr poKmlGeometry = nullptr;
 
     /***** Other vars *****/
     int numpoints = 0;
@@ -94,7 +94,7 @@ ElementPtr geom2kml(
     case wkbPoint:
     {
         poOgrPoint = ( OGRPoint * ) poOgrGeom;
-        PointPtr poKmlPoint = NULL;
+        PointPtr poKmlPoint = nullptr;
         if( poOgrPoint->getCoordinateDimension() == 0 )
         {
             poKmlPoint = poKmlFactory->CreatePoint();
@@ -153,7 +153,7 @@ ElementPtr geom2kml(
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "A linearring should have at least 4 points");
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -164,7 +164,7 @@ ElementPtr geom2kml(
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "A linestring should have at least 2 points");
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -239,7 +239,7 @@ ElementPtr geom2kml(
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "A linearring should have at least 4 points");
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -250,7 +250,7 @@ ElementPtr geom2kml(
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "A linestring should have at least 2 points");
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -315,7 +315,7 @@ ElementPtr geom2kml(
              CPLGetLastErrorType() != CE_None) )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
-            return NULL;
+            return nullptr;
         }
 
         PolygonPtr poKmlPolygon = poKmlFactory->CreatePolygon();
@@ -348,7 +348,7 @@ ElementPtr geom2kml(
              CPLGetLastErrorType() != CE_None) )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Invalid polygon");
-            return NULL;
+            return nullptr;
         }
 
         PolygonPtr poKmlPolygon = poKmlFactory->CreatePolygon();
@@ -445,13 +445,13 @@ static OGRGeometry *kml2geom_rec(
     OGRSpatialReference *poOgrSRS )
 {
     /***** ogr geom vars *****/
-    OGRPoint *poOgrPoint = NULL;
-    OGRLineString *poOgrLineString = NULL;
-    OGRLinearRing *poOgrLinearRing = NULL;
-    OGRPolygon *poOgrPolygon = NULL;
-    OGRGeometryCollection *poOgrMultiGeometry = NULL;
-    OGRGeometry *poOgrGeometry = NULL;
-    OGRGeometry *poOgrTmpGeometry = NULL;
+    OGRPoint *poOgrPoint = nullptr;
+    OGRLineString *poOgrLineString = nullptr;
+    OGRLinearRing *poOgrLinearRing = nullptr;
+    OGRPolygon *poOgrPolygon = nullptr;
+    OGRGeometryCollection *poOgrMultiGeometry = nullptr;
+    OGRGeometry *poOgrGeometry = nullptr;
+    OGRGeometry *poOgrTmpGeometry = nullptr;
 
     switch( poKmlGeometry->Type() )
     {
@@ -702,7 +702,7 @@ OGRGeometry *kml2geom_latlonbox_int(
         !poKmlLatLonBox->has_east() ||
         !poKmlLatLonBox->has_west() )
     {
-        return NULL;
+        return nullptr;
     }
     const double north = poKmlLatLonBox->get_north();
     const double south = poKmlLatLonBox->get_south();
@@ -730,7 +730,7 @@ OGRGeometry *kml2geom_latlonquad_int(
     OGRSpatialReference *poOgrSRS )
 {
     if( !poKmlLatLonQuad->has_coordinates() )
-        return NULL;
+        return nullptr;
 
     const CoordinatesPtr& poKmlCoordinates =
         poKmlLatLonQuad->get_coordinates();
@@ -785,12 +785,12 @@ OGRGeometry *kml2geom(
     if( !CPLTestBool(pszWrap) )
         return poOgrGeometry;
 
-    char **papszTransformOptions = CSLAddString( NULL, "WRAPDATELINE=YES");
+    char **papszTransformOptions = CSLAddString( nullptr, "WRAPDATELINE=YES");
 
     /***** Transform *****/
     OGRGeometry *poOgrDstGeometry =
         OGRGeometryFactory::transformWithOptions(poOgrGeometry,
-                                                    NULL,
+                                                    nullptr,
                                                     papszTransformOptions);
 
     /***** Replace the original geom *****/
@@ -820,12 +820,12 @@ OGRGeometry *kml2geom_latlonbox(
     if( !CPLTestBool(pszWrap) )
         return poOgrGeometry;
 
-    char **papszTransformOptions = CSLAddString( NULL, "WRAPDATELINE=YES" );
+    char **papszTransformOptions = CSLAddString( nullptr, "WRAPDATELINE=YES" );
 
     /***** Transform *****/
     OGRGeometry *poOgrDstGeometry =
         OGRGeometryFactory::transformWithOptions(poOgrGeometry,
-                                                 NULL,
+                                                 nullptr,
                                                  papszTransformOptions);
 
     /***** Replace the original geom *****/
@@ -853,12 +853,12 @@ OGRGeometry *kml2geom_latlonquad(
     if( !CPLTestBool(pszWrap) )
         return poOgrGeometry;
 
-    char **papszTransformOptions = CSLAddString( NULL, "WRAPDATELINE=YES");
+    char **papszTransformOptions = CSLAddString( nullptr, "WRAPDATELINE=YES");
 
     /***** Transform *****/
     OGRGeometry *poOgrDstGeometry =
         OGRGeometryFactory::transformWithOptions(poOgrGeometry,
-                                                 NULL,
+                                                 nullptr,
                                                  papszTransformOptions);
 
     /***** Replace the original geom *****/

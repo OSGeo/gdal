@@ -81,7 +81,7 @@ static const char * const papszParameters[] =
     SRS_PP_PEG_POINT_LONGITUDE,  // For SCH.
     SRS_PP_PEG_POINT_HEADING,    // For SCH.
     SRS_PP_PEG_POINT_HEIGHT,     // For SCH.
-    NULL
+    nullptr
 };
 
 // The following projection lists are incomplete.  They will likely
@@ -146,14 +146,14 @@ static const char * const papszProjectionSupported[] =
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
     SRS_PT_GOODE_HOMOLOSINE,
     SRS_PT_IGH,
-    NULL
+    nullptr
 };
 
 static const char * const papszProjectionUnsupported[] =
 {
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PT_TUNISIA_MINING_GRID,
-    NULL
+    nullptr
 };
 
 // List of supported projections with the PARAMETERS[] acceptable for each.
@@ -165,7 +165,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -173,14 +173,14 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_TUNISIA_MINING_GRID,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ALBERS_CONIC_EQUAL_AREA,
     SRS_PP_LATITUDE_OF_CENTER,
@@ -189,35 +189,35 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_STANDARD_PARALLEL_2,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_AZIMUTHAL_EQUIDISTANT,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_BONNE,
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_CYLINDRICAL_EQUAL_AREA,
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_CASSINI_SOLDNER,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_EQUIDISTANT_CONIC,
     SRS_PP_STANDARD_PARALLEL_1,
@@ -226,43 +226,43 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_I,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_II,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_III,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_IV,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_V,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ECKERT_VI,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_EQUIRECTANGULAR,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -270,20 +270,20 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_STANDARD_PARALLEL_1,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_GALL_STEREOGRAPHIC,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_GNOMONIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_HOTINE_OBLIQUE_MERCATOR,
     SRS_PP_LATITUDE_OF_CENTER,
@@ -293,7 +293,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_HOTINE_OBLIQUE_MERCATOR_AZIMUTH_CENTER,
     SRS_PP_LATITUDE_OF_CENTER,
@@ -303,7 +303,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN,
     SRS_PP_LATITUDE_OF_CENTER,
@@ -314,14 +314,14 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP,
     SRS_PP_STANDARD_PARALLEL_1,
@@ -330,7 +330,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -338,7 +338,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM,
     SRS_PP_STANDARD_PARALLEL_1,
@@ -347,14 +347,14 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_MILLER_CYLINDRICAL,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_MERCATOR_1SP,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -362,7 +362,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_MERCATOR_2SP,
     SRS_PP_STANDARD_PARALLEL_1,
@@ -370,34 +370,34 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_MOLLWEIDE,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_NEW_ZEALAND_MAP_GRID,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ORTHOGRAPHIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_POLYCONIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_POLAR_STEREOGRAPHIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -405,19 +405,19 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_ROBINSON,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_SINUSOIDAL,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_STEREOGRAPHIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -425,14 +425,14 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_SWISS_OBLIQUE_CYLINDRICAL,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_OBLIQUE_STEREOGRAPHIC,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -440,20 +440,20 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_VANDERGRINTEN,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_GEOSTATIONARY_SATELLITE,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_SATELLITE_HEIGHT,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_KROVAK,
     SRS_PP_LATITUDE_OF_CENTER,
@@ -463,7 +463,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_TWO_POINT_EQUIDISTANT,
     SRS_PP_LATITUDE_OF_1ST_POINT,
@@ -472,7 +472,7 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_LONGITUDE_OF_2ND_POINT,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_IMW_POLYCONIC,
     SRS_PP_LATITUDE_OF_1ST_POINT,
@@ -480,55 +480,55 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_I,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_II,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_III,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_IV,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_V,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_VI,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_WAGNER_VII,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_QSC,
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_CENTRAL_MERIDIAN,
-    NULL,
+    nullptr,
 
     SRS_PT_SCH,
     SRS_PP_PEG_POINT_LATITUDE,
     SRS_PP_PEG_POINT_LONGITUDE,
     SRS_PP_PEG_POINT_HEADING,
     SRS_PP_PEG_POINT_HEIGHT,
-    NULL,
+    nullptr,
 
     SRS_PT_GAUSSSCHREIBERTMERCATOR,
     SRS_PP_LATITUDE_OF_ORIGIN,
@@ -536,29 +536,29 @@ static const char * const papszProjWithParms[] = {
     SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_GOODE_HOMOLOSINE,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
-    NULL,
+    nullptr,
 
     SRS_PT_IGH,
-    NULL,
+    nullptr,
 
-    NULL
+    nullptr
 };
 
 static const char * const papszAliasGroupList[] = {
     SRS_PP_LATITUDE_OF_ORIGIN,
     SRS_PP_LATITUDE_OF_CENTER,
-    NULL,
+    nullptr,
     SRS_PP_CENTRAL_MERIDIAN,
     SRS_PP_LONGITUDE_OF_CENTER,
     SRS_PP_LONGITUDE_OF_ORIGIN,
-    NULL,
-    NULL
+    nullptr,
+    nullptr
 };
 
 /************************************************************************/
@@ -585,7 +585,7 @@ OGRErr OGRSpatialReference::Validate()
 /* -------------------------------------------------------------------- */
 /*      Validate root node.                                             */
 /* -------------------------------------------------------------------- */
-    if( poRoot == NULL )
+    if( poRoot == nullptr )
     {
         CPLDebug( "OGRSpatialReference::Validate", "No root pointer." );
         return OGRERR_CORRUPT_DATA;
@@ -602,7 +602,7 @@ OGRErr OGRSpatialReference::Validate()
 
     if( eErr == OGRERR_NONE && bUseCTGrammar )
     {
-        char* pszWKT = NULL;
+        char* pszWKT = nullptr;
         exportToWkt(&pszWKT);
 
         osr_cs_wkt_parse_context sContext;
@@ -979,7 +979,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poGEOGCS = poRoot->GetNode( "GEOGCS" );
 
-    if( poGEOGCS != NULL )
+    if( poGEOGCS != nullptr )
     {
         for( int i = 1; i < poGEOGCS->GetChildCount(); i++ )
         {
@@ -1035,7 +1035,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
             }
         }
 
-        if( poGEOGCS->GetNode("DATUM") == NULL )
+        if( poGEOGCS->GetNode("DATUM") == nullptr )
         {
             CPLDebug( "OGRSpatialReference::Validate",
                       "No DATUM child in GEOGCS." );
@@ -1049,7 +1049,7 @@ OGRErr OGRSpatialReference::Validate(OGR_SRSNode *poRoot)
 /* -------------------------------------------------------------------- */
     OGR_SRSNode *poDATUM = poRoot->GetNode( "DATUM" );
 
-    if( poDATUM != NULL )
+    if( poDATUM != nullptr )
     {
         if( poDATUM->GetChildCount() == 0 )
         {
@@ -1179,17 +1179,17 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 /*      Look for a group containing pszParm1.                           */
 /* -------------------------------------------------------------------- */
     int iGroup = 0;  // Used after for.
-    for( ; papszAliasGroupList[iGroup] != NULL; iGroup++ )
+    for( ; papszAliasGroupList[iGroup] != nullptr; iGroup++ )
     {
         int i = iGroup;  // Used after for.
 
-        for( ; papszAliasGroupList[i] != NULL; i++ )
+        for( ; papszAliasGroupList[i] != nullptr; i++ )
         {
             if( EQUAL(pszParm1, papszAliasGroupList[i]) )
                 break;
         }
 
-        if( papszAliasGroupList[i] == NULL )
+        if( papszAliasGroupList[i] == nullptr )
             iGroup = i;
         else
             break;
@@ -1198,7 +1198,7 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 /* -------------------------------------------------------------------- */
 /*      Does this group also contain pszParm2?                          */
 /* -------------------------------------------------------------------- */
-    while( papszAliasGroupList[iGroup] != NULL )
+    while( papszAliasGroupList[iGroup] != nullptr )
     {
         if( EQUAL(papszAliasGroupList[iGroup++], pszParm2) )
             return TRUE;
@@ -1221,10 +1221,10 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 {
     OGR_SRSNode *poPROJCS = poRoot->GetNode( "PROJCS" );
 
-    if( poPROJCS == NULL )
+    if( poPROJCS == nullptr )
         return OGRERR_NONE;
 
-    if( poPROJCS->GetNode( "PROJECTION" ) == NULL )
+    if( poPROJCS->GetNode( "PROJECTION" ) == nullptr )
     {
         CPLDebug( "OGRSpatialReference::Validate",
                   "PROJCS does not have PROJECTION subnode." );
@@ -1239,15 +1239,15 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
 
     int iOffset = 0;  // Used after for.
     for( ;
-         papszProjWithParms[iOffset] != NULL
+         papszProjWithParms[iOffset] != nullptr
              && !EQUAL(papszProjWithParms[iOffset], pszProjection); )
     {
-        while( papszProjWithParms[iOffset] != NULL )
+        while( papszProjWithParms[iOffset] != nullptr )
             iOffset++;
         iOffset++;
     }
 
-    if( papszProjWithParms[iOffset] == NULL )
+    if( papszProjWithParms[iOffset] == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
     iOffset++;
@@ -1264,7 +1264,7 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
             continue;
 
         OGR_SRSNode *poParmNameNode = poParm->GetChild(0);
-        if( poParmNameNode == NULL )
+        if( poParmNameNode == nullptr )
         {
             CPLDebug( "OGRSpatialReference::Validate",
                       "Parameter name for PROJECTION %s is corrupt.",
@@ -1274,22 +1274,22 @@ OGRErr OGRSpatialReference::ValidateProjection(OGR_SRSNode *poRoot)
         const char *pszParmName = poParmNameNode->GetValue();
 
         int i = iOffset;  // Used after for.
-        for( ; papszProjWithParms[i] != NULL; i++ )
+        for( ; papszProjWithParms[i] != nullptr; i++ )
         {
             if( EQUAL(papszProjWithParms[i], pszParmName) )
                 break;
         }
 
         // This parameter is not an exact match, is it an alias?
-        if( papszProjWithParms[i] == NULL )
+        if( papszProjWithParms[i] == nullptr )
         {
-            for( i = iOffset; papszProjWithParms[i] != NULL; i++ )
+            for( i = iOffset; papszProjWithParms[i] != nullptr; i++ )
             {
                 if( IsAliasFor(papszProjWithParms[i], pszParmName) )
                     break;
             }
 
-            if( papszProjWithParms[i] == NULL )
+            if( papszProjWithParms[i] == nullptr )
             {
                 CPLDebug( "OGRSpatialReference::Validate",
                           "PARAMETER %s for PROJECTION %s is not permitted.",

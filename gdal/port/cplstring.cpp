@@ -173,7 +173,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
 {
-    if( pszFormat == NULL )
+    if( pszFormat == nullptr )
         pszFormat = "%g";
 
     // presumably long enough for any number.
@@ -228,9 +228,9 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
 {
-    if( pszSrcEncoding == NULL )
+    if( pszSrcEncoding == nullptr )
         pszSrcEncoding = CPL_ENC_UTF8;
-    if( pszDstEncoding == NULL )
+    if( pszDstEncoding == nullptr )
         pszDstEncoding = CPL_ENC_UTF8;
 
     if( strcmp(pszSrcEncoding, pszDstEncoding) == 0 )
@@ -240,7 +240,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                                   pszSrcEncoding,
                                   pszDstEncoding );
 
-    if( pszRecoded == NULL )
+    if( pszRecoded == nullptr )
         return *this;
 
     assign( pszRecoded );
@@ -439,7 +439,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
                        const char* pszValue)
 {
     CPLString osURL(pszURL);
-    if( strchr(osURL, '?') == NULL )
+    if( strchr(osURL, '?') == nullptr )
         osURL += "?";
     pszURL = osURL.c_str();
 

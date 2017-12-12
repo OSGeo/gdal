@@ -40,8 +40,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRJMLDataset::OGRJMLDataset() :
-    poLayer(NULL),
-    fp(NULL),
+    poLayer(nullptr),
+    fp(nullptr),
     bWriteMode(false)
 {}
 
@@ -54,7 +54,7 @@ OGRJMLDataset::~OGRJMLDataset()
 {
     delete poLayer;
 
-    if ( fp != NULL )
+    if ( fp != nullptr )
         VSIFCloseL( fp);
 }
 
@@ -66,7 +66,7 @@ int OGRJMLDataset::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,ODsCCreateLayer) )
-        return bWriteMode && poLayer == NULL;
+        return bWriteMode && poLayer == nullptr;
 
     return FALSE;
 }
@@ -79,7 +79,7 @@ OGRLayer *OGRJMLDataset::GetLayer( int iLayer )
 
 {
     if( iLayer != 0 )
-        return NULL;
+        return nullptr;
 
     return poLayer;
 }
@@ -92,7 +92,7 @@ int OGRJMLDataset::Identify( GDALOpenInfo* poOpenInfo )
 {
     return poOpenInfo->nHeaderBytes != 0 &&
       strstr(reinterpret_cast<char*>(poOpenInfo->pabyHeader),
-             "<JCSDataFile") != NULL;
+             "<JCSDataFile") != nullptr;
 }
 
 /************************************************************************/
@@ -102,21 +102,21 @@ int OGRJMLDataset::Identify( GDALOpenInfo* poOpenInfo )
 GDALDataset* OGRJMLDataset::Open( GDALOpenInfo* poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) || poOpenInfo->fpL == NULL ||
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr ||
         poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
 #ifndef HAVE_EXPAT
     CPLError( CE_Failure, CPLE_NotSupported,
               "OGR/JML driver has not been built with read support. "
               "Expat library required" );
-    return NULL;
+    return nullptr;
 #else
     OGRJMLDataset* poDS = new OGRJMLDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );
 
     poDS->fp = poOpenInfo->fpL;
-    poOpenInfo->fpL = NULL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->poLayer = new OGRJMLLayer(
         CPLGetBasename(poOpenInfo->pszFilename), poDS, poDS->fp );
@@ -150,7 +150,7 @@ GDALDataset* OGRJMLDataset::Create( const char *pszFilename,
                   "You have to delete %s before being able to create it "
                   "with the JML driver",
                   pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     OGRJMLDataset* poDS = new OGRJMLDataset();
@@ -162,13 +162,13 @@ GDALDataset* OGRJMLDataset::Create( const char *pszFilename,
     poDS->SetDescription( pszFilename );
 
     poDS->fp = VSIFOpenL( pszFilename, "w" );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create JML file %s.",
                   pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -183,8 +183,8 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
                                         OGRwkbGeometryType /* eType */,
                                         char ** papszOptions )
 {
-    if (!bWriteMode || poLayer != NULL)
-        return NULL;
+    if (!bWriteMode || poLayer != nullptr)
+        return nullptr;
 
     bool bAddRGBField = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CREATE_R_G_B_FIELD", "YES"));
@@ -205,7 +205,7 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
 
 void RegisterOGRJML()
 {
-    if( GDALGetDriverByName( "JML" ) != NULL )
+    if( GDALGetDriverByName( "JML" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

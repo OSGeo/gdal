@@ -54,7 +54,7 @@ OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
 OGRDXFBlocksLayer::~OGRDXFBlocksLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "DXF", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -94,7 +94,7 @@ void OGRDXFBlocksLayer::ResetReading()
 OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
 
 {
-    OGRDXFFeature *poFeature = NULL;
+    OGRDXFFeature *poFeature = nullptr;
     
 /* -------------------------------------------------------------------- */
 /*      If we have pending features, return one of them.                */
@@ -159,7 +159,7 @@ OGRDXFFeature *OGRDXFBlocksLayer::GetNextUnfilteredFeature()
     }
 
     // No more blocks left.
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -173,12 +173,12 @@ OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
     {
         OGRFeature *poFeature = GetNextUnfilteredFeature();
 
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
             return poFeature;

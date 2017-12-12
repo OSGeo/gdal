@@ -90,7 +90,7 @@ class CPL_DLL MEMDataset : public GDALDataset
                             const char *pszGCPProjection ) CPL_OVERRIDE;
 
     virtual CPLErr        AddBand( GDALDataType eType,
-                                   char **papszOptions=NULL ) CPL_OVERRIDE;
+                                   char **papszOptions=nullptr ) CPL_OVERRIDE;
     virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
@@ -151,7 +151,7 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
                                   GByte *pabyData, GDALDataType eType,
                                   GSpacing nPixelOffset, GSpacing nLineOffset,
                                   int bAssumeOwnership,
-                                  const char * pszPixelType = NULL );
+                                  const char * pszPixelType = nullptr );
     virtual        ~MEMRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
@@ -163,7 +163,7 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
                                   GSpacing nPixelSpaceBuf,
                                   GSpacing nLineSpaceBuf,
                                   GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
     virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
 
@@ -179,9 +179,9 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     virtual char **GetCategoryNames() CPL_OVERRIDE;
     virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
 
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetOffset( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetOffset( double ) CPL_OVERRIDE;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
+    virtual double GetScale( int *pbSuccess = nullptr ) CPL_OVERRIDE;
     CPLErr SetScale( double ) CPL_OVERRIDE;
 
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,

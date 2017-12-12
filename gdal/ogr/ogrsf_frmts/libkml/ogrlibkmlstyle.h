@@ -77,7 +77,7 @@ void styletable2kml (
     OGRStyleTable * poOgrStyleTable,
     kmldom::KmlFactory * poKmlFactory,
     kmldom::ContainerPtr poKmlContainer,
-    char** papszOptions = NULL );
+    char** papszOptions = nullptr );
 
 /******************************************************************************
  Function to add a ListStyle and select it to a container.

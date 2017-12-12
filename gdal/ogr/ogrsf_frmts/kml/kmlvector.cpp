@@ -78,7 +78,7 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
     bool bEmpty = true;
 
     // Start with the trunk
-    if( NULL == poNode )
+    if( nullptr == poNode )
     {
         nNumLayers_ = 0;
         poNode = poTrunk_;
@@ -138,7 +138,7 @@ void KMLVector::findLayers(KMLNode* poNode, int bKeepEmptyContainers)
     {
         CPLDebug( "KML",
                   "There is something wrong!  Define KML_DEBUG to see details");
-        if( CPLGetConfigOption("KML_DEBUG", NULL) != NULL )
+        if( CPLGetConfigOption("KML_DEBUG", nullptr) != nullptr )
             print();
     }
 }

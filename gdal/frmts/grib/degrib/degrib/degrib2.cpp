@@ -29,7 +29,9 @@
 //#include "write.h"
 #include "degrib2.h"
 #include "degrib1.h"
+#ifdef ENABLE_TDLPACK
 #include "tdlpack.h"
+#endif
 #include "grib2api.h"
 //#include "mymapf.h"
 #include "clock.h"
@@ -122,7 +124,9 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    } wordType;
 
    uChar gribMatch = 0; /* Counts how many letters in GRIB we've matched. */
+#ifdef ENABLE_TDLPACK
    uChar tdlpMatch = 0; /* Counts how many letters in TDLP we've matched. */
+#endif
    wordType word;       /* Used to check that the edition is correct. */
    uInt4 curLen;        /* Where we currently are in buff. */
    uInt4 i;             /* Used to loop over the first few char's */
@@ -149,7 +153,11 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
       limit = (limit > recLen + 32) ? limit : recLen + 32;
    }
 */
-   while ((tdlpMatch != 4) && (gribMatch != 4)) {
+   while (
+#ifdef ENABLE_TDLPACK
+          (tdlpMatch != 4) && 
+#endif
+          (gribMatch != 4)) {
       for (i = curLen - 8; i + 7 < curLen; i++) {
          if ((*buff)[i] == 'G') {
             if (((*buff)[i + 1] == 'R') && ((*buff)[i + 2] == 'I') &&
@@ -160,13 +168,16 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
                   break;
                }
             }
-         } else if ((*buff)[i] == 'T') {
+         }
+#ifdef ENABLE_TDLPACK
+         else if ((*buff)[i] == 'T') {
             if (((*buff)[i + 1] == 'D') && ((*buff)[i + 2] == 'L') &&
                 ((*buff)[i + 3] == 'P')) {
                tdlpMatch = 4;
                break;
             }
          }
+#endif
       }
       stillNeed = i - (curLen - 8);
       /* Read enough of message to have the first 8 bytes (including ID). */
@@ -212,6 +223,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
    *buffLen = curLen;
 
    word.li = sect0[1];
+#ifdef ENABLE_TDLPACK
    if (tdlpMatch == 4) {
       if (word.buffer[3] != 0) {
          errSprintf ("ERROR: unexpected version of TDLP in SECT0\n");
@@ -226,7 +238,9 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
          errSprintf ("TDLP length %ld was < 59?\n", *gribLen);
          return -5;
       }
-   } else if (word.buffer[3] == 1) {
+   } else
+#endif
+   if (word.buffer[3] == 1) {
       *version = 1;
       /* Find out the GRIB Message Length */
       *gribLen = GRIB_UNSIGN_INT3 (word.buffer[0], word.buffer[1],
@@ -300,7 +314,7 @@ int ReadSECT0 (DataSource &fp, char **buff, uInt4 *buffLen, sInt4 limit,
 int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
 {
    int cnt;             /* The current message we are looking at. */
-   char *buff = NULL;   /* Holds the info between records. */
+   char *buff = nullptr;   /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
@@ -309,7 +323,7 @@ int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
    sInt4 jump;          /* How far to jump to get to past GRIB message. */
 
    cnt = *curMsg + 1;
-   buff = NULL;
+   buff = nullptr;
    buffLen = 0;
    while ((c = fp.DataSourceFgetc()) != EOF) {
       fp.DataSourceUngetc(c);
@@ -663,17 +677,17 @@ void IS_Init (IS_dataType *is)
    }
    /* Allocate grid memory. */
    is->nd2x3 = 0;
-   is->iain = NULL;
-   is->ib = NULL;
+   is->iain = nullptr;
+   is->ib = nullptr;
    /* Allocate section 2 int memory. */
    is->nidat = 0;
-   is->idat = NULL;
+   is->idat = nullptr;
    /* Allocate section 2 float memory. */
    is->nrdat = 0;
-   is->rdat = NULL;
+   is->rdat = nullptr;
    /* Allocate storage for ipack. */
    is->ipackLen = 0;
-   is->ipack = NULL;
+   is->ipack = nullptr;
 }
 
 /*****************************************************************************
@@ -706,26 +720,26 @@ void IS_Free (IS_dataType *is)
    int i;               /* A simple loop counter. */
    for (i = 0; i < 8; i++) {
       free (is->is[i]);
-      is->is[i] = NULL;
+      is->is[i] = nullptr;
       is->ns[i] = 0;
    }
    /* Free grid memory. */
    free (is->iain);
-   is->iain = NULL;
+   is->iain = nullptr;
    free (is->ib);
-   is->ib = NULL;
+   is->ib = nullptr;
    is->nd2x3 = 0;
    /* Free section 2 int memory. */
    free (is->idat);
-   is->idat = NULL;
+   is->idat = nullptr;
    is->nidat = 0;
    /* Free section 2 float memory. */
    free (is->rdat);
-   is->rdat = NULL;
+   is->rdat = nullptr;
    is->nrdat = 0;
    /* Free storage for ipack. */
    free (is->ipack);
-   is->ipack = NULL;
+   is->ipack = nullptr;
    is->ipackLen = 0;
 }
 
@@ -847,14 +861,14 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
    sInt4 l3264b;        /* Number of bits in a sInt4.  Needed by FORTRAN
                          * unpack library to determine if system has a 4
                          * byte_ sInt4 or an 8 byte sInt4. */
-   char *buff = NULL;   /* Holds the info between records. */
+   char *buff = nullptr;   /* Holds the info between records. */
    uInt4 buffLen;       /* Length of info between records. */
    sInt4 sect0[SECT0LEN_WORD]; /* Holds the current Section 0. */
    uInt4 gribLen;       /* Length of the current GRIB message. */
    sInt4 nd5;           /* Size of grib message rounded up to the nearest
                          * sInt4. */
    /* A char ptr to the message stored in IS->ipack */
-   unsigned char *c_ipack = NULL;
+   unsigned char *c_ipack = nullptr;
    sInt4 local_ns[8];   /* Local copy of section lengths. */
    sInt4 nd2x3;         /* Total number of grid points. */
    short int table50;   /* Type of packing used. (See code table 5.0)
@@ -921,7 +935,9 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          *f_endMsg = 1;
          free (buff);
          return 0;
-      } else if (version == -1) {
+      }
+#ifdef ENABLE_TDLPACK
+      else if (version == -1) {
          if (ReadTDLPRecord (fp, Grib_Data, grib_DataLen, meta, IS,
                              sect0, gribLen, majEarth, minEarth) != 0) {
             preErrSprintf ("Problems with ReadGrib1Record called by "
@@ -932,6 +948,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          free (buff);
          return 0;
       }
+#endif
 
       /*
        * Make room for entire message, and read it in.
@@ -960,7 +977,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
          }
          sInt4* ipackNew = (sInt4 *) realloc ((void *) (IS->ipack),
                                               nd5 * sizeof (sInt4));
-         if( ipackNew == NULL )
+         if( ipackNew == nullptr )
          {
             errSprintf("Out of memory");
             free (buff);
@@ -1066,7 +1083,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
             if (nd5 > IS->ipackLen) {
                sInt4* ipackNew = (sInt4 *) realloc ((void *) (IS->ipack),
                                                     nd5 * sizeof (sInt4));
-               if( ipackNew == NULL )
+               if( ipackNew == nullptr )
                {
                    errSprintf("Out of memory");
                    free (buff);
@@ -1173,7 +1190,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
        != 0) {
 #ifdef DEBUG
       FILE *l_fp;
-      if ((l_fp = fopen ("dump.is0", "wt")) != NULL) {
+      if ((l_fp = fopen ("dump.is0", "wt")) != nullptr) {
          for (i = 0; i < 8; i++) {
             fprintf (l_fp, "---Section %d---\n", (int) i);
             for (j = 1; j <= IS->ns[i]; j++) {
@@ -1267,7 +1284,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
       if (strcmp (meta->element, "WWA") != 0) {
          ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
                     meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 0,
-                    0, NULL, f_subGrid, x1, y1, x2, y2);
+                    0, nullptr, f_subGrid, x1, y1, x2, y2);
       } else {
          ParseGrid (fp, &(meta->gridAttrib), Grib_Data, grib_DataLen, Nx, Ny,
                     meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
@@ -1296,7 +1313,7 @@ int ReadGrib2Record (DataSource &fp, sChar f_unit, double **Grib_Data,
                  meta->gds.scan, IS->nd2x3, IS->iain, ibitmap, IS->ib, unitM, unitB, 1,
                  meta->pds2.sect2.wx.dataLen, meta->pds2.sect2.wx.f_valid, f_subGrid, x1, y1,
                  x2, y2);
-      if( *Grib_Data == NULL )
+      if( *Grib_Data == nullptr )
           return -1;
 
       /* compact the table to only those which are actually used. */

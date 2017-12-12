@@ -184,7 +184,7 @@ bool GDALMDReaderALOS::HasRequiredFiles() const
  */
 char** GDALMDReaderALOS::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
     if(!m_osHDRSourceFilename.empty())
@@ -210,7 +210,7 @@ void GDALMDReaderALOS::LoadMetadata()
 
     if(!m_osHDRSourceFilename.empty())
     {
-        if(NULL == m_papszIMDMD)
+        if(nullptr == m_papszIMDMD)
         {
             m_papszIMDMD = CSLLoad(m_osHDRSourceFilename);
         }
@@ -230,19 +230,19 @@ void GDALMDReaderALOS::LoadMetadata()
 
     const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Satellite");
     const char* pszSatId2 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Sensor");
-    if(NULL != pszSatId1 && NULL != pszSatId2)
+    if(nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                            MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
                            CPLStripQuotes(pszSatId1).c_str(),
                            CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(NULL != pszSatId1 && NULL == pszSatId2)
+    else if(nullptr != pszSatId1 && nullptr == pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
     }
-    else if(NULL == pszSatId1 && NULL != pszSatId2)
+    else if(nullptr == pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
@@ -250,7 +250,7 @@ void GDALMDReaderALOS::LoadMetadata()
 
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                                  "Img_CloudQuantityOfAllImage");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         int nCC = atoi(pszCloudCover);
         if(nCC >= 99)
@@ -268,7 +268,7 @@ void GDALMDReaderALOS::LoadMetadata()
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                                                      "Img_SceneCenterDateTime");
 
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         char buffer[80];
         time_t timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
@@ -279,7 +279,7 @@ void GDALMDReaderALOS::LoadMetadata()
     else
     {
         pszDate = CSLFetchNameValue(m_papszIMDMD, "Lbi_ObservationDate");
-        if(NULL != pszDate)
+        if(nullptr != pszDate)
         {
             const char* pszTime = "00:00:00.000";
 
@@ -300,7 +300,7 @@ static const char * const apszRPCTXT20ValItems[] =
     RPC_LINE_DEN_COEFF,
     RPC_SAMP_NUM_COEFF,
     RPC_SAMP_DEN_COEFF,
-    NULL
+    nullptr
 };
 
 /**
@@ -309,15 +309,15 @@ static const char * const apszRPCTXT20ValItems[] =
 char** GDALMDReaderALOS::LoadRPCTxtFile()
 {
     if(m_osRPBSourceFilename.empty())
-        return NULL;
+        return nullptr;
 
     char** papszLines = CSLLoad(m_osRPBSourceFilename);
-    if(NULL == papszLines)
-        return NULL;
+    if(nullptr == papszLines)
+        return nullptr;
 
     const char* pszFirstRow = papszLines[0];
-    char** papszRPB = NULL;
-    if(NULL != pszFirstRow)
+    char** papszRPB = nullptr;
+    if(nullptr != pszFirstRow)
     {
         char buff[50] = {0};
         int nOffset = 0;
@@ -362,7 +362,7 @@ char** GDALMDReaderALOS::LoadRPCTxtFile()
         papszRPB = CSLAddNameValue(papszRPB, RPC_HEIGHT_SCALE, buff);
 
         int i, j;
-        for( i = 0; apszRPCTXT20ValItems[i] != NULL; i++ )
+        for( i = 0; apszRPCTXT20ValItems[i] != nullptr; i++ )
         {
             CPLString value;
             for( j = 1; j < 21; j++ )
@@ -386,7 +386,7 @@ char** GDALMDReaderALOS::LoadRPCTxtFile()
 time_t GDALMDReaderALOS::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if(nullptr == pszDateTime)
         return 0;
 
     int iYear;

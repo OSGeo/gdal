@@ -188,7 +188,7 @@ class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
 {
     public:
-        explicit OGRSQLiteFeatureDefn( const char * pszName = NULL ) :
+        explicit OGRSQLiteFeatureDefn( const char * pszName = nullptr ) :
             OGRFeatureDefn(pszName)
         {
             SetGeomType(wkbNone);

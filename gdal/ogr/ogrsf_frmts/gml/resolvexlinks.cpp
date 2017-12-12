@@ -52,11 +52,11 @@ CPL_CVSID("$Id$")
 static const char *GetID( CPLXMLNode *psNode )
 
 {
-    if( psNode == NULL )
-        return NULL;
+    if( psNode == nullptr )
+        return nullptr;
 
     for( CPLXMLNode *psChild = psNode->psChild;
-         psChild != NULL;
+         psChild != nullptr;
          psChild = psChild->psNext )
     {
         if( psChild->eType == CXT_Attribute &&
@@ -65,7 +65,7 @@ static const char *GetID( CPLXMLNode *psNode )
             return psChild->psChild->pszValue;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -119,36 +119,36 @@ static std::vector<CPLXMLNode*> BuildIDIndex( CPLXMLNode* psNode,
 static CPLXMLNode *FindElementByID( CPLXMLNode *psRoot, const char *pszID )
 
 {
-    if( psRoot == NULL )
-        return NULL;
+    if( psRoot == nullptr )
+        return nullptr;
 
     // Check for id attribute.
     for( CPLXMLNode *psSibling = psRoot;
-         psSibling != NULL;
+         psSibling != nullptr;
          psSibling = psSibling->psNext )
     {
         if( psSibling->eType == CXT_Element )
         {
             // check that sibling for id value
             const char *pszIDOfSibling = GetID(psSibling);
-            if( pszIDOfSibling != NULL && EQUAL( pszIDOfSibling, pszID) )
+            if( pszIDOfSibling != nullptr && EQUAL( pszIDOfSibling, pszID) )
                 return psSibling;
         }
     }
 
     // Search the child elements of all the psRoot's siblings.
     for( CPLXMLNode *psSibling = psRoot;
-         psSibling != NULL;
+         psSibling != nullptr;
          psSibling = psSibling->psNext )
     {
         if( psSibling->eType == CXT_Element )
         {
             CPLXMLNode *psReturn = FindElementByID(psSibling->psChild, pszID);
-            if( psReturn != NULL )
+            if( psReturn != nullptr )
                 return psReturn;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -160,13 +160,13 @@ static CPLXMLNode *FindElementByID( CPLXMLNode *psRoot, const char *pszID )
 static void RemoveIDs( CPLXMLNode *psRoot )
 
 {
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return;
 
     CPLXMLNode *psChild = psRoot->psChild;
 
     // Check for id attribute.
-    while( psChild != NULL &&
+    while( psChild != nullptr &&
            !(psChild->eType == CXT_Attribute &&
              EQUAL(psChild->pszValue, "gml:id")) )
         psChild = psChild->psNext;
@@ -174,7 +174,7 @@ static void RemoveIDs( CPLXMLNode *psRoot )
     CPLDestroyXMLNode(psChild);
 
     // Search the child elements of psRoot.
-    for( psChild = psRoot->psChild; psChild != NULL; psChild = psChild->psNext )
+    for( psChild = psRoot->psChild; psChild != nullptr; psChild = psChild->psNext )
         if( psChild->eType == CXT_Element )
             RemoveIDs(psChild);
 }
@@ -189,23 +189,23 @@ static void RemoveIDs( CPLXMLNode *psRoot )
 static bool TrimTree( CPLXMLNode *psRoot )
 
 {
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return false;
 
     CPLXMLNode *psChild = psRoot->psChild;
 
     // Check for id attribute.
-    while( psChild != NULL &&
+    while( psChild != nullptr &&
            !(psChild->eType == CXT_Attribute &&
              EQUAL(psChild->pszValue, "gml:id")) )
         psChild = psChild->psNext;
 
-    if( psChild != NULL )
+    if( psChild != nullptr )
         return true;
 
     // Search the child elements of psRoot.
     bool bReturn = false;
-    for( psChild = psRoot->psChild; psChild != NULL;)
+    for( psChild = psRoot->psChild; psChild != nullptr;)
     {
         CPLXMLNode *psNextChild = psChild->psNext;
         if( psChild->eType == CXT_Element )
@@ -241,7 +241,7 @@ static bool TrimTree( CPLXMLNode *psRoot )
 static void CorrectURLs( CPLXMLNode *psRoot, const char *pszURL )
 
 {
-    if( psRoot == NULL || pszURL == NULL )
+    if( psRoot == nullptr || pszURL == nullptr )
         return;
     if( pszURL[0] == '\0' )
         return;
@@ -249,12 +249,12 @@ static void CorrectURLs( CPLXMLNode *psRoot, const char *pszURL )
     CPLXMLNode *psChild = psRoot->psChild;
 
     // Check for xlink:href attribute.
-    while( psChild != NULL &&
+    while( psChild != nullptr &&
            !((psChild->eType == CXT_Attribute) &&
              (EQUAL(psChild->pszValue, "xlink:href"))) )
         psChild = psChild->psNext;
 
-    if( psChild != NULL &&
+    if( psChild != nullptr &&
         !(strstr(psChild->psChild->pszValue, pszURL) ==
               psChild->psChild->pszValue &&
           psChild->psChild->pszValue[strlen(pszURL)] == '#') )
@@ -283,7 +283,7 @@ static void CorrectURLs( CPLXMLNode *psRoot, const char *pszURL )
                 {}
 
             const char *pszDash = strchr(psChild->psChild->pszValue, '#');
-            if( pszDash != NULL &&
+            if( pszDash != nullptr &&
                 strncmp(pszURL, psChild->psChild->pszValue, nPathLen) != 0 )
             {
                 // Different path.
@@ -295,7 +295,7 @@ static void CorrectURLs( CPLXMLNode *psRoot, const char *pszURL )
                 pszURLWithoutID[nURLLen] = '\0';
 
                 if( CPLIsFilenameRelative(pszURLWithoutID) &&
-                    strstr(pszURLWithoutID, ":") == NULL )
+                    strstr(pszURLWithoutID, ":") == nullptr )
                 {
                     // Relative URL: prepend the path of pszURL.
                     const size_t nLen =
@@ -316,7 +316,7 @@ static void CorrectURLs( CPLXMLNode *psRoot, const char *pszURL )
     }
 
     // Search the child elements of psRoot.
-    for( psChild = psRoot->psChild; psChild != NULL; psChild = psChild->psNext)
+    for( psChild = psRoot->psChild; psChild != nullptr; psChild = psChild->psNext)
         if( psChild->eType == CXT_Element )
             CorrectURLs(psChild, pszURL);
 }
@@ -333,8 +333,8 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
                                   const char *pszURL )
 
 {
-    if( *ppapsRoot == NULL || ppapszResourceHREF == NULL )
-        return NULL;
+    if( *ppapsRoot == nullptr || ppapszResourceHREF == nullptr )
+        return nullptr;
 
     // If found in ppapszResourceHREF.
     const int i = CSLFindString(*ppapszResourceHREF, pszURL);
@@ -344,10 +344,10 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
         return (*ppapsRoot)[i];
     }
 
-    CPLXMLNode *psSrcTree = NULL;
+    CPLXMLNode *psSrcTree = nullptr;
     char *pszLocation = CPLStrdup(pszURL);
     // If it is part of filesystem.
-    if( CPLCheckForFile( pszLocation, NULL) )
+    if( CPLCheckForFile( pszLocation, nullptr) )
     {
         // Filesystem.
         psSrcTree = CPLParseXMLFile(pszURL);
@@ -356,8 +356,8 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
     {
         // Web resource.
         CPLErrorReset();
-        CPLHTTPResult *psResult = CPLHTTPFetch(pszURL, NULL);
-        if( psResult != NULL )
+        CPLHTTPResult *psResult = CPLHTTPFetch(pszURL, nullptr);
+        if( psResult != nullptr )
         {
             if( psResult->nDataLen > 0 && CPLGetLastErrorNo() == 0)
                 psSrcTree = CPLParseXMLString(reinterpret_cast<const char*>(psResult->pabyData));
@@ -366,7 +366,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
     }
 
     // Report error in case the resource cannot be retrieved.
-    if( psSrcTree == NULL )
+    if( psSrcTree == nullptr )
         CPLError(CE_Failure, CPLE_NotSupported, "Could not access %s",
                  pszLocation);
 
@@ -377,7 +377,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
 /*      identified by a "gml:id". So trim them.                         */
 /************************************************************************/
     CPLXMLNode *psSibling = psSrcTree;
-    while( psSibling != NULL )
+    while( psSibling != nullptr )
     {
         TrimTree(psSibling);
         psSibling = psSibling->psNext;
@@ -389,7 +389,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
     *ppapsRoot = static_cast<CPLXMLNode **>(
         CPLRealloc(*ppapsRoot, (nItems + 2) * sizeof(CPLXMLNode *)));
     (*ppapsRoot)[nItems] = psSrcTree;
-    (*ppapsRoot)[nItems + 1] = NULL;
+    (*ppapsRoot)[nItems + 1] = nullptr;
 
     // Return the tree.
     return (*ppapsRoot)[nItems];
@@ -414,24 +414,24 @@ static CPLErr Resolve( CPLXMLNode *psNode,
 
 {
     // For each sibling.
-    CPLXMLNode *psSibling = NULL;
-    CPLXMLNode *psResource = NULL;
-    CPLXMLNode *psTarget = NULL;
+    CPLXMLNode *psSibling = nullptr;
+    CPLXMLNode *psResource = nullptr;
+    CPLXMLNode *psTarget = nullptr;
     CPLErr eReturn = CE_None, eReturned;
 
-    for( psSibling = psNode; psSibling != NULL; psSibling = psSibling->psNext )
+    for( psSibling = psNode; psSibling != nullptr; psSibling = psSibling->psNext )
     {
         if( psSibling->eType != CXT_Element )
             continue;
 
         CPLXMLNode *psChild = psSibling->psChild;
-        while( psChild != NULL &&
+        while( psChild != nullptr &&
                !( psChild->eType == CXT_Attribute &&
                   EQUAL(psChild->pszValue, "xlink:href") ) )
             psChild = psChild->psNext;
 
         // If a child has a "xlink:href" attribute.
-        if( psChild != NULL && psChild->psChild != NULL )
+        if( psChild != nullptr && psChild->psChild != nullptr )
         {
             if( CSLFindString(papszSkip, psSibling->pszValue) >= 0 )
             {
@@ -471,7 +471,7 @@ static CPLErr Resolve( CPLXMLNode *psNode,
             // Look for the resource with that URL.
             psResource =
                 FindTreeByURL(ppapsRoot, ppapszResourceHREF, papszTokens[0]);
-            if( psResource == NULL )
+            if( psResource == nullptr )
             {
                 CSLDestroy(papszTokens);
                 if( bStrict )
@@ -482,7 +482,7 @@ static CPLErr Resolve( CPLXMLNode *psNode,
 
             // Look for the element with the ID.
             psTarget = FindElementByID(psResource, papszTokens[1]);
-            if( psTarget != NULL )
+            if( psTarget != nullptr )
             {
                 // Remove the xlink:href attribute.
                 CPLRemoveXMLChild(psSibling, psChild);
@@ -490,7 +490,7 @@ static CPLErr Resolve( CPLXMLNode *psNode,
 
                 // Make a copy of psTarget.
                 CPLXMLNode *psCopy =
-                    CPLCreateXMLNode(NULL, CXT_Element, psTarget->pszValue);
+                    CPLCreateXMLNode(nullptr, CXT_Element, psTarget->pszValue);
                 psCopy->psChild = CPLCloneXMLTree(psTarget->psChild);
                 RemoveIDs(psCopy);
                 // Correct empty URLs in URL#id pairs.
@@ -547,7 +547,7 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
     *pbOutIsTempFile = false;
 
     // Check if the original source file is set.
-    if( m_pszFilename == NULL )
+    if( m_pszFilename == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GML source file needs to be set first with "
@@ -562,20 +562,20 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
         static_cast<CPLXMLNode **>(CPLCalloc(2, sizeof(CPLXMLNode *)));
     papsSrcTree[0] = CPLParseXMLFile(m_pszFilename);
 
-    if( papsSrcTree[0] == NULL )
+    if( papsSrcTree[0] == nullptr )
     {
         CPLFree(papsSrcTree);
         return false;
     }
 
     // Make all the URLs absolute.
-    CPLXMLNode *psSibling = NULL;
-    for( psSibling = papsSrcTree[0]; psSibling != NULL;
+    CPLXMLNode *psSibling = nullptr;
+    for( psSibling = papsSrcTree[0]; psSibling != nullptr;
          psSibling = psSibling->psNext )
         CorrectURLs(psSibling, m_pszFilename);
 
     // Setup resource data structure.
-    char **papszResourceHREF = NULL;
+    char **papszResourceHREF = nullptr;
     // "" is the href of the original source file.
     papszResourceHREF = CSLAddString(papszResourceHREF, m_pszFilename);
 
@@ -586,7 +586,7 @@ bool GMLReader::ResolveXlinks( const char *pszFile,
     bool bReturn = true;
     if( eReturned != CE_Failure )
     {
-        char *pszTmpName = NULL;
+        char *pszTmpName = nullptr;
         bool bTryWithTempFile = false;
         if( STARTS_WITH_CI(pszFile, "/vsitar/") ||
             STARTS_WITH_CI(pszFile, "/vsigzip/") ||

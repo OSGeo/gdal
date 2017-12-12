@@ -39,8 +39,8 @@ namespace tut
 void ensure_equal_geometries(OGRGeometryH lhs, OGRGeometryH rhs, double tolerance)
 {
     // Test raw pointers
-    ensure("First geometry is NULL", NULL != lhs);
-    ensure("Second geometry is NULL", NULL != rhs);
+    ensure("First geometry is NULL", nullptr != lhs);
+    ensure("Second geometry is NULL", nullptr != rhs);
     ensure("Passed the same pointers to geometry", lhs != rhs);
 
     // Test basic properties

@@ -68,7 +68,7 @@ typedef struct
  * reprocess the whole list to properly set all datum ids and accelerate
  * bounds lookups
  *----------------------------------------------------------------*/
-static MapInfoRemapProjInfo *gpasExtBoundsList = NULL;
+static MapInfoRemapProjInfo *gpasExtBoundsList = nullptr;
 static int nExtBoundsListCount = -1;
 static const MapInfoBoundsInfo gasBoundsList[] = {
 {{1, 0xff, 0xff, {0,0,0,0,0,0}, 0,0,0,0, {0,0,0,0,0}, 0,0,0,0,0,0,0,0}, -1000, -1000, 1000, 1000},  /* Lat/Lon */
@@ -1065,8 +1065,8 @@ bool MITABLookupCoordSysBounds( TABProjInfo *psCS,
 
     // Try to load the user defined table if not loaded yet.
     const char *pszMitabBoundsFile =
-        CPLGetConfigOption("MITAB_BOUNDS_FILE", NULL);
-    if (pszMitabBoundsFile != NULL && pszMitabBoundsFile[0] != '\0' )
+        CPLGetConfigOption("MITAB_BOUNDS_FILE", nullptr);
+    if (pszMitabBoundsFile != nullptr && pszMitabBoundsFile[0] != '\0' )
     {
         if( strcmp(pszMitabBoundsFile, szPreviousMitabBoundsFile) != 0)
         {
@@ -1218,7 +1218,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
     int iLine = 0;
 
     VSILFILE *fp = VSIFOpenL(pszFname, "rt");
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         int iEntry = 0;
         int numEntries = 100;
@@ -1226,8 +1226,8 @@ int MITABLoadCoordSysTable(const char *pszFname)
         gpasExtBoundsList = static_cast<MapInfoRemapProjInfo *>(
             CPLMalloc(numEntries * sizeof(MapInfoRemapProjInfo)));
 
-        const char *pszLine = NULL;
-        while( (pszLine = CPLReadLineL(fp)) != NULL)
+        const char *pszLine = nullptr;
+        while( (pszLine = CPLReadLineL(fp)) != nullptr)
         {
             iLine++;
 
@@ -1253,7 +1253,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
                 {
                     break;  // Abort and return
                 }
-                if( strstr(pszLine, "Bounds") != NULL )
+                if( strstr(pszLine, "Bounds") != nullptr )
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg,
                              "Unexpected Bounds parameter at line %d",
@@ -1263,9 +1263,9 @@ int MITABLoadCoordSysTable(const char *pszFname)
 
                 iLine++;
                 pszLine = CPLReadLineL(fp);
-                if( pszLine == NULL ||
+                if( pszLine == nullptr ||
                     !STARTS_WITH_CI(pszLine, "Destination") ||
-                    (pszEqual = strchr(pszLine, '=')) == NULL )
+                    (pszEqual = strchr(pszLine, '=')) == nullptr )
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg,
                              "Invalid format at line %d", iLine);
@@ -1329,7 +1329,7 @@ int MITABLoadCoordSysTable(const char *pszFname)
 void MITABFreeCoordSysTable()
 {
     CPLFree(gpasExtBoundsList);
-    gpasExtBoundsList = NULL;
+    gpasExtBoundsList = nullptr;
     nExtBoundsListCount = -1;
 }
 

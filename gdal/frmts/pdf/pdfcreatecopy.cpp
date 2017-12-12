@@ -150,7 +150,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     if (nRead < 9)
         return FALSE;
 
-    const char* pszStartXRef = NULL;
+    const char* pszStartXRef = nullptr;
     int i;
     for(i = nRead - 9; i>= 0; i --)
     {
@@ -160,7 +160,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
             break;
         }
     }
-    if (pszStartXRef == NULL)
+    if (pszStartXRef == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find startxref");
         return FALSE;
@@ -180,14 +180,14 @@ int GDALPDFWriter::ParseTrailerAndXRef()
     VSIFSeekL(fp, nLastStartXRef, SEEK_SET);
 
     /* And skip to trailer */
-    const char* pszLine = NULL;
-    while( (pszLine = CPLReadLineL(fp)) != NULL)
+    const char* pszLine = nullptr;
+    while( (pszLine = CPLReadLineL(fp)) != nullptr)
     {
         if (STARTS_WITH(pszLine, "trailer"))
             break;
     }
 
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer");
         return FALSE;
@@ -199,7 +199,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
 
     /* Find XRef size */
     const char* pszSize = strstr(szBuf, "/Size");
-    if (pszSize == NULL)
+    if (pszSize == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer /Size");
         return FALSE;
@@ -211,7 +211,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
 
     /* Find Root object */
     const char* pszRoot = strstr(szBuf, "/Root");
-    if (pszRoot == NULL)
+    if (pszRoot == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot find trailer /Root");
         return FALSE;
@@ -228,7 +228,7 @@ int GDALPDFWriter::ParseTrailerAndXRef()
 
     /* Find Info object */
     const char* pszInfo = strstr(szBuf, "/Info");
-    if (pszInfo != NULL)
+    if (pszInfo != nullptr)
     {
         pszInfo += 5;
         while(*pszInfo == ' ')
@@ -267,7 +267,7 @@ void GDALPDFWriter::Close()
         }
         VSIFCloseL(fp);
     }
-    fp = NULL;
+    fp = nullptr;
 }
 
 /************************************************************************/
@@ -287,15 +287,15 @@ void GDALPDFWriter::UpdateProj(GDALDataset* poSrcDS,
     int nLGIDictId = 0;
 
     CPLAssert(nPageNum != 0);
-    CPLAssert(poPageDict != NULL);
+    CPLAssert(poPageDict != nullptr);
 
     PDFMargins sMargins = {0, 0, 0, 0};
 
     const char* pszGEO_ENCODING = CPLGetConfigOption("GDAL_PDF_GEO_ENCODING", "ISO32000");
     if (EQUAL(pszGEO_ENCODING, "ISO32000") || EQUAL(pszGEO_ENCODING, "BOTH"))
-        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI * USER_UNIT_IN_INCH, NULL, &sMargins, TRUE);
+        nViewportId = WriteSRS_ISO32000(poSrcDS, dfDPI * USER_UNIT_IN_INCH, nullptr, &sMargins, TRUE);
     if (EQUAL(pszGEO_ENCODING, "OGC_BP") || EQUAL(pszGEO_ENCODING, "BOTH"))
-        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI * USER_UNIT_IN_INCH, NULL, &sMargins);
+        nLGIDictId = WriteSRS_OGC_BP(poSrcDS, dfDPI * USER_UNIT_IN_INCH, nullptr, &sMargins);
 
 #ifdef invalidate_xref_entry
     GDALPDFObject* poVP = poPageDict->Get("VP");
@@ -343,7 +343,7 @@ void GDALPDFWriter::UpdateInfo(GDALDataset* poSrcDS)
     if ((int)asXRefEntries.size() < nLastXRefSize - 1)
         asXRefEntries.resize(nLastXRefSize - 1);
 
-    int nNewInfoId = SetInfo(poSrcDS, NULL);
+    int nNewInfoId = SetInfo(poSrcDS, nullptr);
     /* Write empty info, because podofo driver will find the dangling info instead */
     if (nNewInfoId == 0 && nInfoId != 0)
     {
@@ -370,7 +370,7 @@ void GDALPDFWriter::UpdateXMP(GDALDataset* poSrcDS,
         asXRefEntries.resize(nLastXRefSize - 1);
 
     CPLAssert(nCatalogId != 0);
-    CPLAssert(poCatalogDict != NULL);
+    CPLAssert(poCatalogDict != nullptr);
 
     GDALPDFObject* poMetadata = poCatalogDict->Get("Metadata");
     if (poMetadata)
@@ -380,7 +380,7 @@ void GDALPDFWriter::UpdateXMP(GDALDataset* poSrcDS,
     }
 
     poCatalogDict->Remove("Metadata");
-    int nNewXMPId = SetXMP(poSrcDS, NULL);
+    int nNewXMPId = SetXMP(poSrcDS, nullptr);
 
     /* Write empty metadata, because podofo driver will find the dangling info instead */
     if (nNewXMPId == 0 && nXMPId != 0)
@@ -568,14 +568,14 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     double adfGeoTransform[6];
 
     int bHasGT = (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None);
-    const GDAL_GCP* pasGCPList = (poSrcDS->GetGCPCount() == 4) ? poSrcDS->GetGCPs() : NULL;
-    if (pasGCPList != NULL)
+    const GDAL_GCP* pasGCPList = (poSrcDS->GetGCPCount() == 4) ? poSrcDS->GetGCPs() : nullptr;
+    if (pasGCPList != nullptr)
         pszWKT = poSrcDS->GetGCPProjection();
 
-    if( !bHasGT && pasGCPList == NULL )
+    if( !bHasGT && pasGCPList == nullptr )
         return 0;
 
-    if( pszWKT == NULL || EQUAL(pszWKT, "") )
+    if( pszWKT == nullptr || EQUAL(pszWKT, "") )
         return 0;
 
     double adfGPTS[8];
@@ -586,17 +586,17 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     double dfLRLine = nHeight;
 
     GDAL_GCP asNeatLineGCPs[4];
-    if (pszNEATLINE == NULL)
+    if (pszNEATLINE == nullptr)
         pszNEATLINE = poSrcDS->GetMetadataItem("NEATLINE");
-    if( bHasGT && pszNEATLINE != NULL && pszNEATLINE[0] != '\0' )
+    if( bHasGT && pszNEATLINE != nullptr && pszNEATLINE[0] != '\0' )
     {
-        OGRGeometry* poGeom = NULL;
-        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, NULL, &poGeom );
-        if ( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+        OGRGeometry* poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
+        if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
             OGRLineString* poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
             double adfGeoTransformInv[6];
-            if( poLS != NULL && poLS->getNumPoints() == 5 &&
+            if( poLS != nullptr && poLS->getNumPoints() == 5 &&
                 GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv) )
             {
                 for(int i=0;i<4;i++)
@@ -707,16 +707,16 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     }
 
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
-    if( hSRS == NULL )
+    if( hSRS == nullptr )
         return 0;
     OGRSpatialReferenceH hSRSGeog = OSRCloneGeogCS(hSRS);
-    if( hSRSGeog == NULL )
+    if( hSRSGeog == nullptr )
     {
         OSRDestroySpatialReference(hSRS);
         return 0;
     }
     OGRCoordinateTransformationH hCT = OCTNewCoordinateTransformation( hSRS, hSRSGeog);
-    if( hCT == NULL )
+    if( hCT == nullptr )
     {
         OSRDestroySpatialReference(hSRS);
         OSRDestroySpatialReference(hSRSGeog);
@@ -725,10 +725,10 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
 
     int bSuccess = TRUE;
 
-    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 0, adfGPTS + 1, NULL ) == 1);
-    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 2, adfGPTS + 3, NULL ) == 1);
-    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 4, adfGPTS + 5, NULL ) == 1);
-    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 6, adfGPTS + 7, NULL ) == 1);
+    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 0, adfGPTS + 1, nullptr ) == 1);
+    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 2, adfGPTS + 3, nullptr ) == 1);
+    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 4, adfGPTS + 5, nullptr ) == 1);
+    bSuccess &= (OCTTransform( hCT, 1, adfGPTS + 6, adfGPTS + 7, nullptr ) == 1);
 
     if (!bSuccess)
     {
@@ -738,27 +738,27 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
         return 0;
     }
 
-    const char * pszAuthorityCode = OSRGetAuthorityCode( hSRS, NULL );
-    const char * pszAuthorityName = OSRGetAuthorityName( hSRS, NULL );
+    const char * pszAuthorityCode = OSRGetAuthorityCode( hSRS, nullptr );
+    const char * pszAuthorityName = OSRGetAuthorityName( hSRS, nullptr );
     int nEPSGCode = 0;
-    if( pszAuthorityName != NULL && EQUAL(pszAuthorityName, "EPSG") &&
-        pszAuthorityCode != NULL )
+    if( pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG") &&
+        pszAuthorityCode != nullptr )
         nEPSGCode = atoi(pszAuthorityCode);
 
     int bIsGeographic = OSRIsGeographic(hSRS);
 
     OSRMorphToESRI(hSRS);
-    char* pszESRIWKT = NULL;
+    char* pszESRIWKT = nullptr;
     OSRExportToWkt(hSRS, &pszESRIWKT);
 
     OSRDestroySpatialReference(hSRS);
     OSRDestroySpatialReference(hSRSGeog);
     OCTDestroyCoordinateTransformation(hCT);
-    hSRS = NULL;
-    hSRSGeog = NULL;
-    hCT = NULL;
+    hSRS = nullptr;
+    hSRSGeog = nullptr;
+    hCT = nullptr;
 
-    if (pszESRIWKT == NULL)
+    if (pszESRIWKT == nullptr)
         return 0;
 
     int nViewportId = (bWriteViewport) ? AllocNewObject() : 0;
@@ -825,11 +825,11 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
 static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
 {
     const OGR_SRSNode* poDatumNode = poSRS->GetAttrNode("DATUM");
-    const char* pszDatumDescription = NULL;
+    const char* pszDatumDescription = nullptr;
     if (poDatumNode && poDatumNode->GetChildCount() > 0)
         pszDatumDescription = poDatumNode->GetChild(0)->GetValue();
 
-    GDALPDFObjectRW* poPDFDatum = NULL;
+    GDALPDFObjectRW* poPDFDatum = nullptr;
 
     if (pszDatumDescription)
     {
@@ -837,7 +837,7 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
         double dfInvFlattening = poSRS->GetInvFlattening();
         int nEPSGDatum = -1;
         const char *pszAuthority = poSRS->GetAuthorityName( "DATUM" );
-        if( pszAuthority != NULL && EQUAL(pszAuthority,"EPSG") )
+        if( pszAuthority != nullptr && EQUAL(pszAuthority,"EPSG") )
             nEPSGDatum = atoi(poSRS->GetAuthorityCode( "DATUM" ));
 
         if( EQUAL(pszDatumDescription,SRS_DN_WGS84) || nEPSGDatum == 6326 )
@@ -981,7 +981,7 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
                 }
 
                 const OGR_SRSNode *poTOWGS84 = poSRS->GetAttrNode( "TOWGS84" );
-                if( poTOWGS84 != NULL
+                if( poTOWGS84 != nullptr
                     && poTOWGS84->GetChildCount() >= 3
                     && (poTOWGS84->GetChildCount() < 7
                     || (EQUAL(poTOWGS84->GetChild(3)->GetValue(),"")
@@ -995,7 +995,7 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
                          .Add("dy", poTOWGS84->GetChild(1)->GetValue())
                          .Add("dz", poTOWGS84->GetChild(2)->GetValue())) );
                 }
-                else if( poTOWGS84 != NULL && poTOWGS84->GetChildCount() >= 7)
+                else if( poTOWGS84 != nullptr && poTOWGS84->GetChildCount() >= 7)
                 {
                     poPDFDatumDict->Add("ToWGS84",
                         &((new GDALPDFDictionaryRW())
@@ -1016,7 +1016,7 @@ static GDALPDFObject* GDALPDFBuildOGC_BP_Datum(const OGRSpatialReference* poSRS)
                  "No datum name. Defaulting to WGS84.");
     }
 
-    if (poPDFDatum == NULL)
+    if (poPDFDatum == nullptr)
         poPDFDatum = GDALPDFObjectRW::CreateString("WGE");
 
     return poPDFDatum;
@@ -1036,7 +1036,7 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
     poProjectionDict->Add("Type", GDALPDFObjectRW::CreateName("Projection"));
     poProjectionDict->Add("Datum", GDALPDFBuildOGC_BP_Datum(poSRS));
 
-    if( pszProjection == NULL )
+    if( pszProjection == nullptr )
     {
         if( poSRS->IsGeographic() )
             pszProjectionOGCBP = "GEOGRAPHIC";
@@ -1046,7 +1046,7 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
         {
             CPLError(CE_Warning, CPLE_NotSupported, "Unsupported SRS type");
             delete poProjectionDict;
-            return NULL;
+            return nullptr;
         }
     }
     else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
@@ -1164,7 +1164,7 @@ static GDALPDFDictionaryRW* GDALPDFBuildOGC_BP_Projection(const OGRSpatialRefere
 
     if( poSRS->IsProjected() )
     {
-        char* pszUnitName = NULL;
+        char* pszUnitName = nullptr;
         double dfLinearUnits = poSRS->GetLinearUnits(&pszUnitName);
         if (dfLinearUnits == 1.0)
             poProjectionDict->Add("Units", "M");
@@ -1191,14 +1191,14 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
 
     int bHasGT = (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None);
     int nGCPCount = poSrcDS->GetGCPCount();
-    const GDAL_GCP* pasGCPList = (nGCPCount >= 4) ? poSrcDS->GetGCPs() : NULL;
-    if (pasGCPList != NULL)
+    const GDAL_GCP* pasGCPList = (nGCPCount >= 4) ? poSrcDS->GetGCPs() : nullptr;
+    if (pasGCPList != nullptr)
         pszWKT = poSrcDS->GetGCPProjection();
 
-    if( !bHasGT && pasGCPList == NULL )
+    if( !bHasGT && pasGCPList == nullptr )
         return 0;
 
-    if( pszWKT == NULL || EQUAL(pszWKT, "") )
+    if( pszWKT == nullptr || EQUAL(pszWKT, "") )
         return 0;
 
     if( !bHasGT )
@@ -1215,30 +1215,30 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     }
 
     OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
-    if( hSRS == NULL )
+    if( hSRS == nullptr )
         return 0;
 
     const OGRSpatialReference* poSRS = (const OGRSpatialReference*)hSRS;
     GDALPDFDictionaryRW* poProjectionDict = GDALPDFBuildOGC_BP_Projection(poSRS);
-    if (poProjectionDict == NULL)
+    if (poProjectionDict == nullptr)
     {
         OSRDestroySpatialReference(hSRS);
         return 0;
     }
 
-    GDALPDFArrayRW* poNeatLineArray = NULL;
+    GDALPDFArrayRW* poNeatLineArray = nullptr;
 
-    if (pszNEATLINE == NULL)
+    if (pszNEATLINE == nullptr)
         pszNEATLINE = poSrcDS->GetMetadataItem("NEATLINE");
-    if( bHasGT && pszNEATLINE != NULL && !EQUAL(pszNEATLINE, "NO") && pszNEATLINE[0] != '\0' )
+    if( bHasGT && pszNEATLINE != nullptr && !EQUAL(pszNEATLINE, "NO") && pszNEATLINE[0] != '\0' )
     {
-        OGRGeometry* poGeom = NULL;
-        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, NULL, &poGeom );
-        if ( poGeom != NULL && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
+        OGRGeometry* poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
+        if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
             OGRLineString* poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
             double adfGeoTransformInv[6];
-            if( poLS != NULL && poLS->getNumPoints() >= 5 &&
+            if( poLS != nullptr && poLS->getNumPoints() >= 5 &&
                 GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv) )
             {
                 poNeatLineArray = new GDALPDFArrayRW();
@@ -1258,11 +1258,11 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         delete poGeom;
     }
 
-    if( pszNEATLINE != NULL && EQUAL(pszNEATLINE, "NO") )
+    if( pszNEATLINE != nullptr && EQUAL(pszNEATLINE, "NO") )
     {
         // Do nothing
     }
-    else if( pasGCPList && poNeatLineArray == NULL)
+    else if( pasGCPList && poNeatLineArray == nullptr)
     {
         if (nGCPCount == 4)
         {
@@ -1299,7 +1299,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
             }
         }
     }
-    else if (poNeatLineArray == NULL)
+    else if (poNeatLineArray == nullptr)
     {
         poNeatLineArray = new GDALPDFArrayRW();
 
@@ -1357,10 +1357,10 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     }
 
     const OGR_SRSNode* poNode = poSRS->GetRoot();
-    if( poNode != NULL )
+    if( poNode != nullptr )
         poNode = poNode->GetChild(0);
-    const char* pszDescription = NULL;
-    if( poNode != NULL )
+    const char* pszDescription = nullptr;
+    if( poNode != nullptr )
         pszDescription = poNode->GetValue();
     if( pszDescription )
     {
@@ -1390,10 +1390,10 @@ static const char* GDALPDFGetValueFromDSOrOption(GDALDataset* poSrcDS,
                                                  const char* pszKey)
 {
     const char* pszValue = CSLFetchNameValue(papszOptions, pszKey);
-    if (pszValue == NULL)
+    if (pszValue == nullptr)
         pszValue = poSrcDS->GetMetadataItem(pszKey);
-    if (pszValue != NULL && pszValue[0] == '\0')
-        return NULL;
+    if (pszValue != nullptr && pszValue[0] == '\0')
+        return nullptr;
     else
         return pszValue;
 }
@@ -1413,27 +1413,27 @@ int GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
     const char* pszTITLE = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "TITLE");
     const char* pszKEYWORDS = GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "KEYWORDS");
 
-    if (pszAUTHOR == NULL && pszPRODUCER == NULL && pszCREATOR == NULL && pszCREATION_DATE == NULL &&
-        pszSUBJECT == NULL && pszTITLE == NULL && pszKEYWORDS == NULL)
+    if (pszAUTHOR == nullptr && pszPRODUCER == nullptr && pszCREATOR == nullptr && pszCREATION_DATE == nullptr &&
+        pszSUBJECT == nullptr && pszTITLE == nullptr && pszKEYWORDS == nullptr)
         return 0;
 
     if (nInfoId == 0)
         nInfoId = AllocNewObject();
     StartObj(nInfoId, nInfoGen);
     GDALPDFDictionaryRW oDict;
-    if (pszAUTHOR != NULL)
+    if (pszAUTHOR != nullptr)
         oDict.Add("Author", pszAUTHOR);
-    if (pszPRODUCER != NULL)
+    if (pszPRODUCER != nullptr)
         oDict.Add("Producer", pszPRODUCER);
-    if (pszCREATOR != NULL)
+    if (pszCREATOR != nullptr)
         oDict.Add("Creator", pszCREATOR);
-    if (pszCREATION_DATE != NULL)
+    if (pszCREATION_DATE != nullptr)
         oDict.Add("CreationDate", pszCREATION_DATE);
-    if (pszSUBJECT != NULL)
+    if (pszSUBJECT != nullptr)
         oDict.Add("Subject", pszSUBJECT);
-    if (pszTITLE != NULL)
+    if (pszTITLE != nullptr)
         oDict.Add("Title", pszTITLE);
-    if (pszKEYWORDS != NULL)
+    if (pszKEYWORDS != nullptr)
         oDict.Add("Keywords", pszKEYWORDS);
     VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
     EndObj();
@@ -1448,20 +1448,20 @@ int GDALPDFWriter::SetInfo(GDALDataset* poSrcDS,
 int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
                            const char* pszXMP)
 {
-    if (pszXMP != NULL && STARTS_WITH_CI(pszXMP, "NO"))
+    if (pszXMP != nullptr && STARTS_WITH_CI(pszXMP, "NO"))
         return 0;
-    if (pszXMP != NULL && pszXMP[0] == '\0')
+    if (pszXMP != nullptr && pszXMP[0] == '\0')
         return 0;
 
     char** papszXMP = poSrcDS->GetMetadata("xml:XMP");
-    if (pszXMP == NULL && papszXMP != NULL && papszXMP[0] != NULL)
+    if (pszXMP == nullptr && papszXMP != nullptr && papszXMP[0] != nullptr)
         pszXMP = papszXMP[0];
 
-    if (pszXMP == NULL)
+    if (pszXMP == nullptr)
         return 0;
 
     CPLXMLNode* psNode = CPLParseXMLString(pszXMP);
-    if (psNode == NULL)
+    if (psNode == nullptr)
         return 0;
     CPLDestroyXMLNode(psNode);
 
@@ -1486,7 +1486,7 @@ int  GDALPDFWriter::SetXMP(GDALDataset* poSrcDS,
 
 int GDALPDFWriter::WriteOCG(const char* pszLayerName, int nParentId)
 {
-    if (pszLayerName == NULL || pszLayerName[0] == '\0')
+    if (pszLayerName == nullptr || pszLayerName[0] == '\0')
         return 0;
 
     int nOGCId = AllocNewObject();
@@ -1607,11 +1607,11 @@ int GDALPDFWriter::StartPage(GDALDataset* poClippingDS,
 int GDALPDFWriter::WriteColorTable(GDALDataset* poSrcDS)
 {
     /* Does the source image has a color table ? */
-    GDALColorTable* poCT = NULL;
+    GDALColorTable* poCT = nullptr;
     if (poSrcDS->GetRasterCount() > 0)
         poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
     int nColorTableId = 0;
-    if (poCT != NULL && poCT->GetColorEntryCount() <= 256)
+    if (poCT != nullptr && poCT->GetColorEntryCount() <= 256)
     {
         int nColors = poCT->GetColorEntryCount();
         nColorTableId = AllocNewObject();
@@ -1675,7 +1675,7 @@ int GDALPDFWriter::WriteImagery(GDALDataset* poDS,
 
     GDALPDFRasterDesc oRasterDesc;
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     oRasterDesc.nOCGRasterId = WriteOCG(pszLayerName);
@@ -1790,7 +1790,7 @@ int GDALPDFWriter::WriteClippedImagery(
         dfRasterMaxY = dfTmp;
     }
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     oRasterDesc.nOCGRasterId = WriteOCG(pszLayerName);
@@ -1926,8 +1926,8 @@ int GDALPDFWriter::WriteOGRDataSource(const char* pszOGRDataSource,
     if (OGRGetDriverCount() == 0)
         OGRRegisterAll();
 
-    OGRDataSourceH hDS = OGROpen(pszOGRDataSource, 0, NULL);
-    if (hDS == NULL)
+    OGRDataSourceH hDS = OGROpen(pszOGRDataSource, 0, nullptr);
+    if (hDS == nullptr)
         return FALSE;
 
     int iObj = 0;
@@ -2035,28 +2035,28 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
     OGRLayerH hLyr = OGR_DS_GetLayer(hDS, iLayer);
 
     const char* pszWKT = poClippingDS->GetProjectionRef();
-    OGRSpatialReferenceH hGDAL_SRS = NULL;
+    OGRSpatialReferenceH hGDAL_SRS = nullptr;
     if( pszWKT && pszWKT[0] != '\0' )
         hGDAL_SRS = OSRNewSpatialReference(pszWKT);
     OGRSpatialReferenceH hOGR_SRS = OGR_L_GetSpatialRef(hLyr);
-    OGRCoordinateTransformationH hCT = NULL;
+    OGRCoordinateTransformationH hCT = nullptr;
 
-    if( hGDAL_SRS == NULL && hOGR_SRS != NULL )
+    if( hGDAL_SRS == nullptr && hOGR_SRS != nullptr )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Vector layer has a SRS set, but Raster layer has no SRS set. Assuming they are the same.");
     }
-    else if( hGDAL_SRS != NULL && hOGR_SRS == NULL )
+    else if( hGDAL_SRS != nullptr && hOGR_SRS == nullptr )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Vector layer has no SRS set, but Raster layer has a SRS set. Assuming they are the same.");
     }
-    else if( hGDAL_SRS != NULL && hOGR_SRS != NULL )
+    else if( hGDAL_SRS != nullptr && hOGR_SRS != nullptr )
     {
         if (!OSRIsSame(hGDAL_SRS, hOGR_SRS))
         {
             hCT = OCTNewCoordinateTransformation( hOGR_SRS, hGDAL_SRS );
-            if( hCT == NULL )
+            if( hCT == nullptr )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cannot compute coordinate transformation from vector SRS to raster SRS");
@@ -2064,7 +2064,7 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
         }
     }
 
-    if( hCT == NULL )
+    if( hCT == nullptr )
     {
         double dfXMin = adfGeoTransform[0];
         double dfYMin = adfGeoTransform[3] + poClippingDS->GetRasterYSize() * adfGeoTransform[5];
@@ -2076,7 +2076,7 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
     OGRFeatureH hFeat;
     int iObjLayer = 0;
 
-    while( (hFeat = OGR_L_GetNextFeature(hLyr)) != NULL)
+    while( (hFeat = OGR_L_GetNextFeature(hLyr)) != nullptr)
     {
         WriteOGRFeature(osVectorDesc,
                         hFeat,
@@ -2092,9 +2092,9 @@ int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS,
 
     EndOGRLayer(osVectorDesc);
 
-    if( hCT != NULL )
+    if( hCT != nullptr )
         OCTDestroyCoordinateTransformation(hCT);
-    if( hGDAL_SRS != NULL )
+    if( hGDAL_SRS != nullptr )
         OSRDestroySpatialReference(hGDAL_SRS);
 
     return TRUE;
@@ -2190,14 +2190,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     adfMatrix[3] = 1.0 / (-adfGeoTransform[5] * dfUserUnit);
 
     OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
-    if (hGeom == NULL)
+    if (hGeom == nullptr)
     {
         return TRUE;
     }
 
     OGREnvelope sEnvelope;
 
-    if( hCT != NULL )
+    if( hCT != nullptr )
     {
         /* Reproject */
         if( OGR_G_Transform(hGeom, hCT) != OGRERR_NONE )
@@ -2258,12 +2258,12 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     int nImageWidth = 0;
     int nImageHeight = 0;
 
-    OGRStyleMgrH hSM = OGR_SM_Create(NULL);
+    OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
     OGR_SM_InitFromFeature(hSM, hFeat);
-    int nCount = OGR_SM_GetPartCount(hSM, NULL);
+    int nCount = OGR_SM_GetPartCount(hSM, nullptr);
     for(int iPart = 0; iPart < nCount; iPart++)
     {
-        OGRStyleToolH hTool = OGR_SM_GetPart(hSM, iPart, NULL);
+        OGRStyleToolH hTool = OGR_SM_GetPart(hSM, iPart, nullptr);
         if (hTool)
         {
             if (OGR_ST_GetType(hTool) == OGRSTCPen)
@@ -2402,14 +2402,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 {
                     osSymbolId = pszSymbolId;
 
-                    if (strstr(pszSymbolId, "ogr-sym-") == NULL)
+                    if (strstr(pszSymbolId, "ogr-sym-") == nullptr)
                     {
                         if (oMapSymbolFilenameToDesc.find(osSymbolId) == oMapSymbolFilenameToDesc.end())
                         {
                             CPLPushErrorHandler(CPLQuietErrorHandler);
                             GDALDatasetH hImageDS = GDALOpen(osSymbolId, GA_ReadOnly);
                             CPLPopErrorHandler();
-                            if (hImageDS != NULL)
+                            if (hImageDS != nullptr)
                             {
                                 nImageWidth = GDALGetRasterXSize(hImageDS);
                                 nImageHeight = GDALGetRasterYSize(hImageDS);
@@ -2422,9 +2422,9 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                                                         COMPRESS_DEFAULT,
                                                         0,
                                                         -1,
-                                                        NULL,
-                                                        NULL,
-                                                        NULL);
+                                                        nullptr,
+                                                        nullptr,
+                                                        nullptr);
                                 GDALClose(hImageDS);
                             }
 
@@ -2528,8 +2528,8 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     }
 
     int iField = -1;
-    const char* pszLinkVal = NULL;
-    if (pszOGRLinkField != NULL &&
+    const char* pszLinkVal = nullptr;
+    if (pszOGRLinkField != nullptr &&
         (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRLinkField)) >= 0 &&
         OGR_F_IsFieldSetAndNotNull(hFeat, iField) &&
         strcmp((pszLinkVal = OGR_F_GetFieldAsString(hFeat, iField)), "") != 0)
@@ -2638,7 +2638,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpGZip = nullptr;
     VSILFILE* fpBack = fp;
     if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
     {
@@ -2871,7 +2871,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
         nStreamStart = VSIFTellL(fp);
 
-        fpGZip = NULL;
+        fpGZip = nullptr;
         fpBack = fp;
         if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
         {
@@ -3043,7 +3043,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             double dfX = CPLAtof(papszExtraImagesTokens[i+1]);
             double dfY = CPLAtof(papszExtraImagesTokens[i+2]);
             double dfScale = CPLAtof(papszExtraImagesTokens[i+3]);
-            const char* pszLinkVal = NULL;
+            const char* pszLinkVal = nullptr;
             i += 4;
             if( i < nCount && STARTS_WITH_CI(papszExtraImagesTokens[i], "link=") )
             {
@@ -3061,9 +3061,9 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
                                             COMPRESS_DEFAULT,
                                             0,
                                             -1,
-                                            NULL,
-                                            NULL,
-                                            NULL );
+                                            nullptr,
+                                            nullptr,
+                                            nullptr );
 
                 if (nImageId)
                 {
@@ -3076,7 +3076,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
 
                     asExtraImageDesc.push_back(oImageDesc);
 
-                    if( pszLinkVal != NULL )
+                    if( pszLinkVal != nullptr )
                     {
                         int nAnnotId = AllocNewObject();
                         oPageContext.anAnnotationsId.push_back(nAnnotId);
@@ -3134,7 +3134,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpGZip = nullptr;
     VSILFILE* fpBack = fp;
     if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
     {
@@ -3377,7 +3377,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             }
         }
 
-        GDALPDFDictionaryRW* poDictFTimesRoman = NULL;
+        GDALPDFDictionaryRW* poDictFTimesRoman = nullptr;
         if (bHasTimesRoman)
         {
             poDictFTimesRoman = new GDALPDFDictionaryRW();
@@ -3387,7 +3387,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
         }
 
-        GDALPDFDictionaryRW* poDictFTimesBold = NULL;
+        GDALPDFDictionaryRW* poDictFTimesBold = nullptr;
         if (bHasTimesBold)
         {
             poDictFTimesBold = new GDALPDFDictionaryRW();
@@ -3397,7 +3397,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             poDictFTimesBold->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
         }
 
-        if (poDictFTimesRoman != NULL || poDictFTimesBold != NULL)
+        if (poDictFTimesRoman != nullptr || poDictFTimesBold != nullptr)
         {
             GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
             if (poDictFTimesRoman)
@@ -3447,7 +3447,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
 {
     int nMaskSize = nReqXSize * nReqYSize;
     GByte* pabyMask = (GByte*)VSIMalloc(nMaskSize);
-    if (pabyMask == NULL)
+    if (pabyMask == nullptr)
         return 0;
 
     CPLErr eErr;
@@ -3456,7 +3456,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
             nXOff, nYOff,
             nReqXSize, nReqYSize,
             pabyMask, nReqXSize, nReqYSize, GDT_Byte,
-            0, 0, NULL);
+            0, 0, nullptr);
     if (eErr != CE_None)
     {
         VSIFree(pabyMask);
@@ -3495,7 +3495,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
         /* Translate to 1 bit */
         int nReqXSize1 = (nReqXSize + 7) / 8;
         GByte* pabyMask1 = (GByte*)VSICalloc(nReqXSize1, nReqYSize);
-        if (pabyMask1 == NULL)
+        if (pabyMask1 == nullptr)
         {
             CPLFree(pabyMask);
             return 0;
@@ -3533,7 +3533,7 @@ int GDALPDFWriter::WriteMask(GDALDataset* poSrcDS,
     VSIFPrintfL(fp, "stream\n");
     vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-    VSILFILE* fpGZip = NULL;
+    VSILFILE* fpGZip = nullptr;
     VSILFILE* fpBack = fp;
     if( eCompressMethod != COMPRESS_NONE )
     {
@@ -3585,9 +3585,9 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
         nColorTableId = WriteColorTable(poSrcDS);
 
     CPLErr eErr = CE_None;
-    GDALDataset* poBlockSrcDS = NULL;
-    GDALDatasetH hMemDS = NULL;
-    GByte* pabyMEMDSBuffer = NULL;
+    GDALDataset* poBlockSrcDS = nullptr;
+    GDALDatasetH hMemDS = nullptr;
+    GByte* pabyMEMDSBuffer = nullptr;
 
     if (eCompressMethod == COMPRESS_DEFAULT)
     {
@@ -3595,15 +3595,15 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 
         /* Test if we can directly copy original JPEG content */
         /* if available */
-        if (poSrcDS->GetDriver() != NULL &&
+        if (poSrcDS->GetDriver() != nullptr &&
             poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
         {
             VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
             poSrcDSToTest = poVRTDS->GetSingleSimpleSource();
         }
 
-        if (poSrcDSToTest != NULL &&
-            poSrcDSToTest->GetDriver() != NULL &&
+        if (poSrcDSToTest != nullptr &&
+            poSrcDSToTest->GetDriver() != nullptr &&
             EQUAL(poSrcDSToTest->GetDriver()->GetDescription(), "JPEG") &&
             nXOff == 0 && nYOff == 0 &&
             nReqXSize == poSrcDSToTest->GetRasterXSize() &&
@@ -3611,7 +3611,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             nJPEGQuality < 0)
         {
             VSILFILE* fpSrc = VSIFOpenL(poSrcDSToTest->GetDescription(), "rb");
-            if (fpSrc != NULL)
+            if (fpSrc != nullptr)
             {
                 CPLDebug("PDF", "Copying directly original JPEG file");
 
@@ -3647,9 +3647,9 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                         break;
                     }
 
-                    if( eErr == CE_None && pfnProgress != NULL
+                    if( eErr == CE_None && pfnProgress != nullptr
                         && !pfnProgress( (i + nRead) / (double)nLength,
-                                        NULL, pProgressData ) )
+                                        nullptr, pProgressData ) )
                     {
                         CPLError( CE_Failure, CPLE_UserInterrupt,
                                 "User terminated CreateCopy()" );
@@ -3691,18 +3691,18 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             nBands = 3;
 
         GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-        if( hMemDriver == NULL )
+        if( hMemDriver == nullptr )
             return 0;
 
         hMemDS = GDALCreate(hMemDriver, "MEM:::",
                             nReqXSize, nReqYSize, 0,
-                            GDT_Byte, NULL);
-        if (hMemDS == NULL)
+                            GDT_Byte, nullptr);
+        if (hMemDS == nullptr)
             return 0;
 
         pabyMEMDSBuffer =
             (GByte*)VSIMalloc3(nReqXSize, nReqYSize, nBands);
-        if (pabyMEMDSBuffer == NULL)
+        if (pabyMEMDSBuffer == nullptr)
         {
             GDALClose(hMemDS);
             return 0;
@@ -3712,8 +3712,8 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                                 nXOff, nYOff,
                                 nReqXSize, nReqYSize,
                                 pabyMEMDSBuffer, nReqXSize, nReqYSize,
-                                GDT_Byte, nBands, NULL,
-                                0, 0, 0, NULL);
+                                GDT_Byte, nBands, nullptr,
+                                0, 0, 0, nullptr);
 
         if( eErr != CE_None )
         {
@@ -3725,7 +3725,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
         int iBand;
         for(iBand = 0; iBand < nBands; iBand ++)
         {
-            char** papszMEMDSOptions = NULL;
+            char** papszMEMDSOptions = nullptr;
             char szTmp[64];
             memset(szTmp, 0, sizeof(szTmp));
             CPLPrintPointer(szTmp,
@@ -3747,7 +3747,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
         nReqYSize == poSrcDS->GetRasterYSize() )
     {
         PDFMargins sMargins = {0, 0, 0, 0};
-        nMeasureId = WriteSRS_ISO32000(poSrcDS, 1, NULL, &sMargins, FALSE);
+        nMeasureId = WriteSRS_ISO32000(poSrcDS, 1, nullptr, &sMargins, FALSE);
     }
 
     StartObj(nImageId);
@@ -3799,30 +3799,30 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     if( eCompressMethod == COMPRESS_JPEG ||
         eCompressMethod == COMPRESS_JPEG2000 )
     {
-        GDALDriver* poJPEGDriver = NULL;
+        GDALDriver* poJPEGDriver = nullptr;
         char szTmp[64];
-        char** papszOptions = NULL;
+        char** papszOptions = nullptr;
 
         if( eCompressMethod == COMPRESS_JPEG )
         {
             poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JPEG");
-            if (poJPEGDriver != NULL && nJPEGQuality > 0)
+            if (poJPEGDriver != nullptr && nJPEGQuality > 0)
                 papszOptions = CSLAddString(papszOptions, CPLSPrintf("QUALITY=%d", nJPEGQuality));
             snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jpg", this);
         }
         else
         {
-            if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JP2KAK"))
+            if (pszJPEG2000_DRIVER == nullptr || EQUAL(pszJPEG2000_DRIVER, "JP2KAK"))
                 poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JP2KAK");
-            if (poJPEGDriver == NULL)
+            if (poJPEGDriver == nullptr)
             {
-                if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JP2ECW"))
+                if (pszJPEG2000_DRIVER == nullptr || EQUAL(pszJPEG2000_DRIVER, "JP2ECW"))
                 {
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JP2ECW");
                     if( poJPEGDriver &&
-                        poJPEGDriver->GetMetadataItem(GDAL_DMD_CREATIONDATATYPES) == NULL )
+                        poJPEGDriver->GetMetadataItem(GDAL_DMD_CREATIONDATATYPES) == nullptr )
                     {
-                        poJPEGDriver = NULL;
+                        poJPEGDriver = nullptr;
                     }
                 }
                 if (poJPEGDriver)
@@ -3833,9 +3833,9 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                     papszOptions = CSLAddString(papszOptions, "GMLJP2=OFF");
                 }
             }
-            if (poJPEGDriver == NULL)
+            if (poJPEGDriver == nullptr)
             {
-                if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JP2OpenJPEG"))
+                if (pszJPEG2000_DRIVER == nullptr || EQUAL(pszJPEG2000_DRIVER, "JP2OpenJPEG"))
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JP2OpenJPEG");
                 if (poJPEGDriver)
                 {
@@ -3843,15 +3843,15 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                     papszOptions = CSLAddString(papszOptions, "GMLJP2=OFF");
                 }
             }
-            if (poJPEGDriver == NULL)
+            if (poJPEGDriver == nullptr)
             {
-                if (pszJPEG2000_DRIVER == NULL || EQUAL(pszJPEG2000_DRIVER, "JPEG2000"))
+                if (pszJPEG2000_DRIVER == nullptr || EQUAL(pszJPEG2000_DRIVER, "JPEG2000"))
                     poJPEGDriver = (GDALDriver*) GDALGetDriverByName("JPEG2000");
             }
             snprintf(szTmp, sizeof(szTmp), "/vsimem/pdftemp/%p.jp2", this);
         }
 
-        if( poJPEGDriver == NULL )
+        if( poJPEGDriver == nullptr )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "No %s driver found",
@@ -3860,14 +3860,14 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             goto end;
         }
 
-        GDALDataset* poJPEGDS = NULL;
+        GDALDataset* poJPEGDS = nullptr;
 
         poJPEGDS = poJPEGDriver->CreateCopy(szTmp, poBlockSrcDS,
                                             FALSE, papszOptions,
                                             pfnProgress, pProgressData);
 
         CSLDestroy(papszOptions);
-        if( poJPEGDS == NULL )
+        if( poJPEGDS == nullptr )
         {
             eErr = CE_Failure;
             goto end;
@@ -3882,7 +3882,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
     }
     else
     {
-        VSILFILE* fpGZip = NULL;
+        VSILFILE* fpGZip = nullptr;
         VSILFILE* fpBack = fp;
         if( eCompressMethod == COMPRESS_DEFLATE )
         {
@@ -3897,7 +3897,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             eErr = poBlockSrcDS->RasterIO(GF_Read,
                                           0, iLine, nReqXSize, 1,
                                           pabyLine, nReqXSize, 1, GDT_Byte,
-                                          nBands, NULL, nBands, 0, 1, NULL);
+                                          nBands, nullptr, nBands, 0, 1, nullptr);
             if( eErr != CE_None )
                 break;
 
@@ -3940,9 +3940,9 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
                 break;
             }
 
-            if( eErr == CE_None && pfnProgress != NULL
+            if( eErr == CE_None && pfnProgress != nullptr
                 && !pfnProgress( (iLine+1) / (double)nReqYSize,
-                                NULL, pProgressData ) )
+                                nullptr, pProgressData ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                         "User terminated CreateCopy()" );
@@ -3960,11 +3960,11 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
 
 end:
     CPLFree(pabyMEMDSBuffer);
-    pabyMEMDSBuffer = NULL;
-    if( hMemDS != NULL )
+    pabyMEMDSBuffer = nullptr;
+    if( hMemDS != nullptr )
     {
         GDALClose(hMemDS);
-        hMemDS = NULL;
+        hMemDS = nullptr;
     }
 
     vsi_l_offset nStreamEnd = VSIFTellL(fp);
@@ -4060,7 +4060,7 @@ int GDALPDFWriter::WriteJavascriptFile(const char* pszJavascriptFile)
     int nRet = 0;
     char* pszJavascriptToFree = (char*)CPLMalloc(65536);
     VSILFILE* fpJS = VSIFOpenL(pszJavascriptFile, "rb");
-    if( fpJS != NULL )
+    if( fpJS != nullptr )
     {
         int nRead = (int)VSIFReadL(pszJavascriptToFree, 1, 65536, fpJS);
         if( nRead < 65536 )
@@ -4129,7 +4129,7 @@ void GDALPDFWriter::WritePages()
             {
                 GDALPDFArrayRW* poArrayOFF = new GDALPDFArrayRW();
                 char** papszTokens = CSLTokenizeString2(osOffLayers, ",", 0);
-                for(int i=0; papszTokens[i] != NULL; i++)
+                for(int i=0; papszTokens[i] != nullptr; i++)
                 {
                     size_t j;
                     int bFound = FALSE;
@@ -4162,7 +4162,7 @@ void GDALPDFWriter::WritePages()
             {
                 GDALPDFArrayRW* poArrayRBGroups = new GDALPDFArrayRW();
                 char** papszTokens = CSLTokenizeString2(osExclusiveLayers, ",", 0);
-                for(int i=0; papszTokens[i] != NULL; i++)
+                for(int i=0; papszTokens[i] != nullptr; i++)
                 {
                     size_t j;
                     int bFound = FALSE;
@@ -4228,7 +4228,7 @@ static int GDALPDFGetJPEGQuality(char** papszOptions)
 {
     int nJpegQuality = -1;
     const char* pszValue = CSLFetchNameValue( papszOptions, "JPEG_QUALITY" );
-    if( pszValue  != NULL )
+    if( pszValue  != nullptr )
     {
         nJpegQuality = atoi( pszValue );
         if (!(nJpegQuality >= 1 && nJpegQuality <= 100))
@@ -4293,8 +4293,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     int  nWidth = poSrcDS->GetRasterXSize();
     int  nHeight = poSrcDS->GetRasterYSize();
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
@@ -4305,7 +4305,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                   "PDF driver doesn't support %d bands.  Must be 1 (grey or with color table), "
                   "3 (RGB) or 4 bands.\n", nBands );
 
-        return NULL;
+        return nullptr;
     }
 
     GDALDataType eDT = poSrcDS->GetRasterBand(1)->GetRasterDataType();
@@ -4318,7 +4318,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                       poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
 
         if (bStrict)
-            return NULL;
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -4342,7 +4342,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                     "Unsupported value for COMPRESS.");
 
             if (bStrict)
-                return NULL;
+                return nullptr;
         }
     }
 
@@ -4360,12 +4360,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                     "Unsupported value for STREAM_COMPRESS.");
 
             if (bStrict)
-                return NULL;
+                return nullptr;
         }
     }
 
     if (nBands == 1 &&
-        poSrcDS->GetRasterBand(1)->GetColorTable() != NULL &&
+        poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr &&
         (eCompressMethod == COMPRESS_JPEG || eCompressMethod == COMPRESS_JPEG2000))
     {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -4384,7 +4384,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     }
 
     const char* pszValue = CSLFetchNameValue(papszOptions, "BLOCKXSIZE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
     {
         nBlockXSize = atoi( pszValue );
         if (nBlockXSize < 0 || nBlockXSize >= nWidth)
@@ -4392,7 +4392,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     }
 
     pszValue = CSLFetchNameValue(papszOptions, "BLOCKYSIZE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
     {
         nBlockYSize = atoi( pszValue );
         if (nBlockYSize < 0 || nBlockYSize >= nHeight)
@@ -4456,15 +4456,15 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 
     const char* pszDPI = CSLFetchNameValue(papszOptions, "DPI");
     double dfDPI = DEFAULT_DPI;
-    if( pszDPI != NULL )
+    if( pszDPI != nullptr )
         dfDPI = CPLAtof(pszDPI);
 
     const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
     bool bWriteUserUnit;
-    if( pszWriteUserUnit != NULL )
+    if( pszWriteUserUnit != nullptr )
         bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
     else
-        bWriteUserUnit = ( pszDPI == NULL );
+        bWriteUserUnit = ( pszDPI == nullptr );
 
     double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
     double dfWidthInUserUnit = nWidth / dfUserUnit + sMargins.nLeft + sMargins.nRight;
@@ -4472,7 +4472,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if( dfWidthInUserUnit > MAXIMUM_SIZE_IN_UNITS ||
         dfHeightInUserUnit > MAXIMUM_SIZE_IN_UNITS )
     {
-        if( pszDPI == NULL )
+        if( pszDPI == nullptr )
         {
             if( sMargins.nLeft + sMargins.nRight >= MAXIMUM_SIZE_IN_UNITS ||
                 sMargins.nBottom + sMargins.nTop >= MAXIMUM_SIZE_IN_UNITS )
@@ -4515,7 +4515,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     const char* pszClippingExtent = CSLFetchNameValue(papszOptions, "CLIPPING_EXTENT");
     int bUseClippingExtent = FALSE;
     double adfClippingExtent[4] = { 0.0, 0.0, 0.0, 0.0 };
-    if( pszClippingExtent != NULL )
+    if( pszClippingExtent != nullptr )
     {
         char** papszTokens = CSLTokenizeString2(pszClippingExtent, ",", 0);
         if( CSLCount(papszTokens) == 4 )
@@ -4582,12 +4582,12 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(pszFilename, "wb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create PDF file %s.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     GDALPDFWriter oWriter(fp);
@@ -4607,7 +4607,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                       pszNEATLINE,
                       &sMargins,
                       eStreamCompressMethod,
-                      pszOGRDataSource != NULL && bWriteOGRAttributes);
+                      pszOGRDataSource != nullptr && bWriteOGRAttributes);
 
     int bRet;
 
@@ -4662,7 +4662,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             bUseExtraRasters = FALSE;
         }
         if( bUseExtraRasters &&
-            (pszClippingProjectionRef == NULL ||
+            (pszClippingProjectionRef == nullptr ||
              pszClippingProjectionRef[0] == '\0') )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -4671,10 +4671,10 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
         }
     }
 
-    for(int i=0; bRet && bUseExtraRasters && papszExtraRasters[i] != NULL; i++)
+    for(int i=0; bRet && bUseExtraRasters && papszExtraRasters[i] != nullptr; i++)
     {
         GDALDataset* poDS = (GDALDataset*)GDALOpen(papszExtraRasters[i], GA_ReadOnly);
-        if( poDS != NULL )
+        if( poDS != nullptr )
         {
             double adfGeoTransform[6];
             int bUseRaster = TRUE;
@@ -4697,7 +4697,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             }
             const char* pszProjectionRef = poDS->GetProjectionRef();
             if( bUseRaster &&
-                (pszProjectionRef == NULL || pszProjectionRef[0] == '\0')  )
+                (pszProjectionRef == nullptr || pszProjectionRef[0] == '\0')  )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cannot use %s because it has no projection",
@@ -4706,8 +4706,8 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             }
             if( bUseRaster )
             {
-                if( pszClippingProjectionRef != NULL &&
-                    pszProjectionRef != NULL &&
+                if( pszClippingProjectionRef != nullptr &&
+                    pszProjectionRef != nullptr &&
                     !EQUAL(pszClippingProjectionRef, pszProjectionRef) )
                 {
                     OGRSpatialReferenceH hClippingSRS =
@@ -4729,13 +4729,13 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
             {
                 bRet = oWriter.WriteClippedImagery(poDS,
                                     bUseExtraRastersLayerName ?
-                                        papszExtraRastersLayerName[i] : NULL,
+                                        papszExtraRastersLayerName[i] : nullptr,
                                     eCompressMethod,
                                     nPredictor,
                                     nJPEGQuality,
                                     pszJPEG2000_DRIVER,
                                     nBlockXSize, nBlockYSize,
-                                    NULL, NULL);
+                                    nullptr, nullptr);
             }
 
             GDALClose(poDS);
@@ -4745,7 +4745,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     CSLDestroy(papszExtraRasters);
     CSLDestroy(papszExtraRastersLayerName);
 
-    if (bRet && pszOGRDataSource != NULL)
+    if (bRet && pszOGRDataSource != nullptr)
         oWriter.WriteOGRDataSource(pszOGRDataSource,
                                    pszOGRDisplayField,
                                    pszOGRDisplayLayerNames,
@@ -4772,19 +4772,19 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
     if (!bRet)
     {
         VSIUnlink(pszFilename);
-        return NULL;
+        return nullptr;
     }
     else
     {
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
         GDALDataset* poDS = GDALPDFOpen(pszFilename, GA_ReadOnly);
-        if( poDS == NULL )
-            return NULL;
+        if( poDS == nullptr )
+            return nullptr;
         char** papszMD = CSLDuplicate( poSrcDS->GetMetadata() );
         papszMD = CSLMerge( papszMD, poDS->GetMetadata() );
         const char* pszAOP = CSLFetchNameValue(papszMD, GDALMD_AREA_OR_POINT);
-        if( pszAOP != NULL && EQUAL(pszAOP, GDALMD_AOP_AREA) )
-            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, NULL);
+        if( pszAOP != nullptr && EQUAL(pszAOP, GDALMD_AOP_AREA) )
+            papszMD = CSLSetNameValue(papszMD, GDALMD_AREA_OR_POINT, nullptr);
         poDS->SetMetadata( papszMD );
         if( EQUAL(pszGEO_ENCODING, "NONE") )
         {
@@ -4794,7 +4794,7 @@ GDALDataset *GDALPDFCreateCopy( const char * pszFilename,
                 poDS->SetGeoTransform( adfGeoTransform );
             }
             const char* pszProjectionRef = poSrcDS->GetProjectionRef();
-            if( pszProjectionRef != NULL && pszProjectionRef[0] != '\0' )
+            if( pszProjectionRef != nullptr && pszProjectionRef[0] != '\0' )
             {
                 poDS->SetProjection( pszProjectionRef );
             }

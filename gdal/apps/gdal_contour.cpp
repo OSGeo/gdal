@@ -51,7 +51,7 @@ static bool ArgIsNumeric( const char *pszArg )
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
@@ -62,7 +62,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "                    [-nln <outlayername>] [-q]\n"
         "                    <src_filename> <dst_filename>\n" );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -87,17 +87,17 @@ MAIN_START(argc, argv)
     double dfInterval = 0.0;
     double dfNoData = 0.0;
     double dfOffset = 0.0;
-    const char *pszSrcFilename = NULL;
-    const char *pszDstFilename = NULL;
-    const char *pszElevAttrib = NULL;
-    const char *pszFormat = NULL;
-    char **papszDSCO = NULL;
-    char **papszLCO = NULL;
+    const char *pszSrcFilename = nullptr;
+    const char *pszDstFilename = nullptr;
+    const char *pszElevAttrib = nullptr;
+    const char *pszFormat = nullptr;
+    char **papszDSCO = nullptr;
+    char **papszLCO = nullptr;
     double adfFixedLevels[1000];
     int nFixedLevelCount = 0;
     const char *pszNewLayerName = "contour";
     bool bQuiet = false;
-    GDALProgressFunc pfnProgress = NULL;
+    GDALProgressFunc pfnProgress = nullptr;
 
     // Check that we are running against at least GDAL 1.4.
     // Note to developers: if we use newer API, please change the requirement.
@@ -199,11 +199,11 @@ MAIN_START(argc, argv)
         {
             bQuiet = TRUE;
         }
-        else if( pszSrcFilename == NULL )
+        else if( pszSrcFilename == nullptr )
         {
             pszSrcFilename = argv[i];
         }
-        else if( pszDstFilename == NULL )
+        else if( pszDstFilename == nullptr )
         {
             pszDstFilename = argv[i];
         }
@@ -216,12 +216,12 @@ MAIN_START(argc, argv)
         Usage("Neither -i nor -fl are specified.");
     }
 
-    if (pszSrcFilename == NULL)
+    if (pszSrcFilename == nullptr)
     {
         Usage("Missing source filename.");
     }
 
-    if (pszDstFilename == NULL)
+    if (pszDstFilename == nullptr)
     {
         Usage("Missing destination filename.");
     }
@@ -233,11 +233,11 @@ MAIN_START(argc, argv)
 /*      Open source raster file.                                        */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
-    if( hSrcDS == NULL )
+    if( hSrcDS == nullptr )
         exit( 2 );
 
     GDALRasterBandH hBand = GDALGetRasterBand( hSrcDS, nBandIn );
-    if( hBand == NULL )
+    if( hBand == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Band %d does not exist on dataset.",
@@ -251,18 +251,18 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Try to get a coordinate system from the raster.                 */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH hSRS = NULL;
+    OGRSpatialReferenceH hSRS = nullptr;
 
     const char *pszWKT = GDALGetProjectionRef( hSrcDS );
 
-    if( pszWKT != NULL && strlen(pszWKT) != 0 )
+    if( pszWKT != nullptr && strlen(pszWKT) != 0 )
         hSRS = OSRNewSpatialReference( pszWKT );
 
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     CPLString osFormat;
-    if( pszFormat == NULL )
+    if( pszFormat == nullptr )
     {
         std::vector<CPLString> aoDrivers =
             GetOutputDriversFor(pszDstFilename, GDAL_OF_VECTOR);
@@ -290,7 +290,7 @@ MAIN_START(argc, argv)
 
     OGRSFDriverH hDriver = OGRGetDriverByName( osFormat.c_str() );
 
-    if( hDriver == NULL )
+    if( hDriver == nullptr )
     {
         fprintf( stderr, "Unable to find format driver named %s.\n",
                  osFormat.c_str() );
@@ -299,14 +299,14 @@ MAIN_START(argc, argv)
 
     OGRDataSourceH hDS =
         OGR_Dr_CreateDataSource(hDriver, pszDstFilename, papszDSCO);
-    if( hDS == NULL )
+    if( hDS == nullptr )
         exit(1);
 
     OGRLayerH hLayer =
         OGR_DS_CreateLayer(hDS, pszNewLayerName, hSRS,
                            b3D ? wkbLineString25D : wkbLineString,
                            papszLCO);
-    if( hLayer == NULL )
+    if( hLayer == nullptr )
         exit( 1 );
 
     OGRFieldDefnH hFld = OGR_Fld_Create("ID", OFTInteger);
@@ -335,10 +335,10 @@ MAIN_START(argc, argv)
                          bNoDataSet, dfNoData, hLayer,
                          OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
                                                "ID" ),
-                         (pszElevAttrib == NULL) ? -1 :
+                         (pszElevAttrib == nullptr) ? -1 :
                          OGR_FD_GetFieldIndex( OGR_L_GetLayerDefn( hLayer ),
                                                pszElevAttrib ),
-                         pfnProgress, NULL );
+                         pfnProgress, nullptr );
 
     OGR_DS_Destroy( hDS );
     GDALClose( hSrcDS );

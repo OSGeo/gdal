@@ -34,14 +34,14 @@ CPL_CVSID("$Id$")
 /* Runs a SQL command and ignores the result (good for INSERT/UPDATE/CREATE) */
 OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
 {
-    CPLAssert( poDb != NULL );
-    CPLAssert( pszSQL != NULL );
+    CPLAssert( poDb != nullptr );
+    CPLAssert( pszSQL != nullptr );
 
-    char *pszErrMsg = NULL;
+    char *pszErrMsg = nullptr;
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "exec(%s)", pszSQL);
 #endif
-    int rc = sqlite3_exec(poDb, pszSQL, NULL, NULL, &pszErrMsg);
+    int rc = sqlite3_exec(poDb, pszSQL, nullptr, nullptr, &pszErrMsg);
 
     if ( rc != SQLITE_OK )
     {
@@ -57,8 +57,8 @@ OGRErr SQLCommand(sqlite3 * poDb, const char * pszSQL)
 
 OGRErr SQLResultInit(SQLResult * poResult)
 {
-    poResult->papszResult = NULL;
-    poResult->pszErrMsg = NULL;
+    poResult->papszResult = nullptr;
+    poResult->pszErrMsg = nullptr;
     poResult->nRowCount = 0;
     poResult->nColCount = 0;
     poResult->rc = 0;
@@ -67,9 +67,9 @@ OGRErr SQLResultInit(SQLResult * poResult)
 
 OGRErr SQLQuery(sqlite3 * poDb, const char * pszSQL, SQLResult * poResult)
 {
-    CPLAssert( poDb != NULL );
-    CPLAssert( pszSQL != NULL );
-    CPLAssert( poResult != NULL );
+    CPLAssert( poDb != nullptr );
+    CPLAssert( pszSQL != nullptr );
+    CPLAssert( poResult != nullptr );
 
     SQLResultInit(poResult);
 
@@ -106,7 +106,7 @@ OGRErr SQLResultFree(SQLResult * poResult)
 
 const char* SQLResultGetValue(const SQLResult * poResult, int iColNum, int iRowNum)
 {
-    CPLAssert( poResult != NULL );
+    CPLAssert( poResult != nullptr );
 
     const int nCols = poResult->nColCount;
 #ifdef DEBUG
@@ -130,15 +130,15 @@ int SQLResultGetValueAsInteger(const SQLResult * poResult, int iColNum, int iRow
 /* Returns the first row of first column of SQL as integer */
 GIntBig SQLGetInteger64(sqlite3 * poDb, const char * pszSQL, OGRErr *err)
 {
-    CPLAssert( poDb != NULL );
+    CPLAssert( poDb != nullptr );
 
-    sqlite3_stmt *poStmt = NULL;
+    sqlite3_stmt *poStmt = nullptr;
 
     /* Prepare the SQL */
 #ifdef DEBUG_VERBOSE
     CPLDebug("GPKG", "get(%s)", pszSQL);
 #endif
-    int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, NULL);
+    int rc = sqlite3_prepare_v2(poDb, pszSQL, -1, &poStmt, nullptr);
     if ( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "sqlite3_prepare_v2(%s) failed: %s",
@@ -257,7 +257,7 @@ CPLString SQLEscapeName(const char* pszName)
 
 char** SQLTokenize( const char* pszStr )
 {
-    char** papszTokens = NULL;
+    char** papszTokens = nullptr;
     bool bInQuote = false;
     char chQuoteChar = '\0';
     bool bInSpace = true;

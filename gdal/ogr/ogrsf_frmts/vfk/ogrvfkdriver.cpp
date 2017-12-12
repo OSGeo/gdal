@@ -36,7 +36,7 @@ CPL_CVSID("$Id$")
 
 static int OGRVFKDriverIdentify(GDALOpenInfo* poOpenInfo)
 {
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
         return FALSE;
 
     if( poOpenInfo->nHeaderBytes >= 2 &&
@@ -67,7 +67,7 @@ static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
 {
     if( poOpenInfo->eAccess == GA_Update ||
         !OGRVFKDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRVFKDataSource *poDS = new OGRVFKDataSource();
 
@@ -75,7 +75,7 @@ static GDALDataset *OGRVFKDriverOpen(GDALOpenInfo* poOpenInfo)
         poDS->GetLayerCount() == 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -89,7 +89,7 @@ void RegisterOGRVFK()
     if( !GDAL_CHECK_VERSION("OGR/VFK driver") )
         return;
 
-    if( GDALGetDriverByName( "VFK" ) != NULL )
+    if( GDALGetDriverByName( "VFK" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

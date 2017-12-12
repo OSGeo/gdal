@@ -64,10 +64,10 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
 
     VSILFILE* fpL = VSIFOpenL(osFilename, "w+");
-    if( fpL == NULL )
+    if( fpL == nullptr )
         return FALSE;
     TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+", fpL );
-    if (hTIFF == NULL)
+    if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
@@ -99,7 +99,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     bool bResult = true;
 
     hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
-    if (hTIFF == NULL)
+    if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;

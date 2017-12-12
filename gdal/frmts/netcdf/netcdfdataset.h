@@ -228,22 +228,22 @@ __FILE__, __FUNCTION__, __LINE__ ); }
 /* -------------------------------------------------------------------- */
 /*         CF-1 Coordinate Type Naming (Chapter 4.  Coordinate Types )  */
 /* -------------------------------------------------------------------- */
-static const char* const papszCFLongitudeVarNames[] = { CF_LONGITUDE_VAR_NAME, "longitude", NULL };
-static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, NULL };
-static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_LONGITUDE_STD_NAME, "X", NULL };
-static const char* const papszCFLatitudeVarNames[] = { CF_LATITUDE_VAR_NAME, "latitude", NULL };
-static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, NULL };
-static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_LATITUDE_STD_NAME, "Y", NULL };
+static const char* const papszCFLongitudeVarNames[] = { CF_LONGITUDE_VAR_NAME, "longitude", nullptr };
+static const char* const papszCFLongitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, nullptr };
+static const char* const papszCFLongitudeAttribValues[] = { CF_DEGREES_EAST, CF_LONGITUDE_STD_NAME, "X", nullptr };
+static const char* const papszCFLatitudeVarNames[] = { CF_LATITUDE_VAR_NAME, "latitude", nullptr };
+static const char* const papszCFLatitudeAttribNames[] = { CF_UNITS, CF_STD_NAME, CF_AXIS, nullptr };
+static const char* const papszCFLatitudeAttribValues[] = { CF_DEGREES_NORTH, CF_LATITUDE_STD_NAME, "Y", nullptr };
 
-static const char* const papszCFProjectionXVarNames[] = { CF_PROJ_X_VAR_NAME, "xc", NULL };
-static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, NULL };
-static const char* const papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, NULL };
-static const char* const papszCFProjectionYVarNames[] = { CF_PROJ_Y_VAR_NAME, "yc", NULL };
-static const char* const papszCFProjectionYAttribNames[] = { CF_STD_NAME, NULL };
-static const char* const papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, NULL };
+static const char* const papszCFProjectionXVarNames[] = { CF_PROJ_X_VAR_NAME, "xc", nullptr };
+static const char* const papszCFProjectionXAttribNames[] = { CF_STD_NAME, nullptr };
+static const char* const papszCFProjectionXAttribValues[] = { CF_PROJ_X_COORD, nullptr };
+static const char* const papszCFProjectionYVarNames[] = { CF_PROJ_Y_VAR_NAME, "yc", nullptr };
+static const char* const papszCFProjectionYAttribNames[] = { CF_STD_NAME, nullptr };
+static const char* const papszCFProjectionYAttribValues[] = { CF_PROJ_Y_COORD, nullptr };
 
-static const char* const papszCFVerticalAttribNames[] = { CF_AXIS, "positive", "positive", NULL };
-static const char* const papszCFVerticalAttribValues[] = { "Z", "up", "down", NULL };
+static const char* const papszCFVerticalAttribNames[] = { CF_AXIS, "positive", "positive", nullptr };
+static const char* const papszCFVerticalAttribValues[] = { "Z", "up", "down", nullptr };
 static const char* const papszCFVerticalUnitsValues[] = {
     /* units of pressure */
     "bar", "bars", "millibar", "millibars", "decibar", "decibars",
@@ -252,7 +252,7 @@ static const char* const papszCFVerticalUnitsValues[] = {
     "meter", "meters", "m", "kilometer", "kilometers", "km",
     /* dimensionless vertical coordinates */
     "level", "layer", "sigma_level",
-    NULL };
+    nullptr };
 /* dimensionless vertical coordinates */
 static const char* const papszCFVerticalStandardNameValues[] = {
     "atmosphere_ln_pressure_coordinate", "atmosphere_sigma_coordinate",
@@ -266,16 +266,16 @@ static const char* const papszCFVerticalStandardNameValues[] = {
     "atmosphere_hybrid_height_coordinate",
     "atmosphere_sleve_coordinate", "ocean_sigma_coordinate",
     "ocean_s_coordinate", "ocean_sigma_z_coordinate",
-    "ocean_double_sigma_coordinate", NULL };
+    "ocean_double_sigma_coordinate", nullptr };
 
-static const char* const papszCFTimeAttribNames[] = { CF_AXIS, NULL };
-static const char* const papszCFTimeAttribValues[] = { "T", NULL };
+static const char* const papszCFTimeAttribNames[] = { CF_AXIS, nullptr };
+static const char* const papszCFTimeAttribValues[] = { "T", nullptr };
 static const char* const papszCFTimeUnitsValues[] = {
     "days since", "day since", "d since",
     "hours since", "hour since", "h since", "hr since",
     "minutes since", "minute since", "min since",
     "seconds since", "second since", "sec since", "s since",
-    NULL };
+    nullptr };
 
 /* -------------------------------------------------------------------- */
 /*         CF-1 to GDAL mappings                                        */
@@ -316,7 +316,7 @@ static const oNetcdfSRS_PP poGenericMappings[] = {
     {CF_PP_LAT_PROJ_ORIGIN, SRS_PP_LATITUDE_OF_CENTER },
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL },
+    {nullptr, nullptr },
 };
 
 // Albers equal area
@@ -340,7 +340,7 @@ static const oNetcdfSRS_PP poAEAMappings[] = {
     {CF_PP_LONG_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Azimuthal equidistant
@@ -360,7 +360,7 @@ static const oNetcdfSRS_PP poAEMappings[] = {
     {CF_PP_LON_PROJ_ORIGIN, SRS_PP_LONGITUDE_OF_CENTER},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Lambert azimuthal equal area
@@ -380,7 +380,7 @@ static const oNetcdfSRS_PP poLAEAMappings[] = {
     {CF_PP_LON_PROJ_ORIGIN, SRS_PP_LONGITUDE_OF_CENTER},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Lambert conformal
@@ -413,7 +413,7 @@ static const oNetcdfSRS_PP poLCC1SPMappings[] = {
     {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR}, /* special case */
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Lambert conformal conic - 2SP
@@ -424,7 +424,7 @@ static const oNetcdfSRS_PP poLCC2SPMappings[] = {
     {CF_PP_LONG_CENTRAL_MERIDIAN, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Lambert cylindrical equal area
@@ -449,7 +449,7 @@ static const oNetcdfSRS_PP poLCEAMappings[] = {
     {CF_PP_LONG_CENTRAL_MERIDIAN, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Latitude-Longitude
@@ -481,7 +481,7 @@ static const oNetcdfSRS_PP poM1SPMappings[] = {
     {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Mercator 2 Standard Parallel
@@ -493,7 +493,7 @@ static const oNetcdfSRS_PP poM2SPMappings[] = {
     // {CF_PP_STD_PARALLEL_2, SRS_PP_LATITUDE_OF_ORIGIN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Orthographic
@@ -512,7 +512,7 @@ static const oNetcdfSRS_PP poOrthoMappings[] = {
     {CF_PP_LON_PROJ_ORIGIN, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
  };
 
 // Polar stereographic
@@ -551,7 +551,7 @@ static const oNetcdfSRS_PP poPSmappings[] = {
     {CF_PP_VERT_LONG_FROM_POLE, SRS_PP_CENTRAL_MERIDIAN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
 };
 
 // Rotated Pole
@@ -588,7 +588,7 @@ static const oNetcdfSRS_PP poStMappings[] = {
     {CF_PP_SCALE_FACTOR_ORIGIN, SRS_PP_SCALE_FACTOR},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
   };
 
 // Transverse Mercator
@@ -610,7 +610,7 @@ static const oNetcdfSRS_PP poTMMappings[] = {
     {CF_PP_LAT_PROJ_ORIGIN, SRS_PP_LATITUDE_OF_ORIGIN},
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
-    {NULL, NULL}
+    {nullptr, nullptr}
   };
 
 // Vertical perspective
@@ -634,7 +634,7 @@ static const oNetcdfSRS_PP poGEOSMappings[] = {
     {CF_PP_FALSE_EASTING, SRS_PP_FALSE_EASTING },
     {CF_PP_FALSE_NORTHING, SRS_PP_FALSE_NORTHING },
     /* { CF_PP_SWEEP_ANGLE_AXIS, .... } handled as a proj.4 extension */
-    {NULL, NULL}
+    {nullptr, nullptr}
   };
 
 /* Mappings for various projections, including netcdf and GDAL projection names
@@ -650,41 +650,41 @@ typedef struct {
 static const oNetcdfSRS_PT poNetcdfSRS_PT[] = {
     {CF_PT_AEA, SRS_PT_ALBERS_CONIC_EQUAL_AREA, poAEAMappings },
     {CF_PT_AE, SRS_PT_AZIMUTHAL_EQUIDISTANT, poAEMappings },
-    {"cassini_soldner", SRS_PT_CASSINI_SOLDNER, NULL },
+    {"cassini_soldner", SRS_PT_CASSINI_SOLDNER, nullptr },
     {CF_PT_LCEA, SRS_PT_CYLINDRICAL_EQUAL_AREA, poLCEAMappings },
-    {"eckert_iv", SRS_PT_ECKERT_IV, NULL },
-    {"eckert_vi", SRS_PT_ECKERT_VI, NULL },
-    {"equidistant_conic", SRS_PT_EQUIDISTANT_CONIC, NULL },
-    {"equirectangular", SRS_PT_EQUIRECTANGULAR, NULL },
-    {"gall_stereographic", SRS_PT_GALL_STEREOGRAPHIC, NULL },
+    {"eckert_iv", SRS_PT_ECKERT_IV, nullptr },
+    {"eckert_vi", SRS_PT_ECKERT_VI, nullptr },
+    {"equidistant_conic", SRS_PT_EQUIDISTANT_CONIC, nullptr },
+    {"equirectangular", SRS_PT_EQUIRECTANGULAR, nullptr },
+    {"gall_stereographic", SRS_PT_GALL_STEREOGRAPHIC, nullptr },
     {CF_PT_GEOS, SRS_PT_GEOSTATIONARY_SATELLITE, poGEOSMappings },
-    {"goode_homolosine", SRS_PT_GOODE_HOMOLOSINE, NULL },
-    {"gnomonic", SRS_PT_GNOMONIC, NULL },
-    {"hotine_oblique_mercator", SRS_PT_HOTINE_OBLIQUE_MERCATOR, NULL },
+    {"goode_homolosine", SRS_PT_GOODE_HOMOLOSINE, nullptr },
+    {"gnomonic", SRS_PT_GNOMONIC, nullptr },
+    {"hotine_oblique_mercator", SRS_PT_HOTINE_OBLIQUE_MERCATOR, nullptr },
     {"hotine_oblique_mercator_2P",
-     SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN, NULL },
-    {"laborde_oblique_mercator", SRS_PT_LABORDE_OBLIQUE_MERCATOR, NULL },
+     SRS_PT_HOTINE_OBLIQUE_MERCATOR_TWO_POINT_NATURAL_ORIGIN, nullptr },
+    {"laborde_oblique_mercator", SRS_PT_LABORDE_OBLIQUE_MERCATOR, nullptr },
     {CF_PT_LCC, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP, poLCC1SPMappings },
     {CF_PT_LCC, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP, poLCC2SPMappings },
     {CF_PT_LAEA, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA, poLAEAMappings },
     {CF_PT_MERCATOR, SRS_PT_MERCATOR_1SP, poM1SPMappings },
     {CF_PT_MERCATOR, SRS_PT_MERCATOR_2SP, poM2SPMappings },
-    {"miller_cylindrical", SRS_PT_MILLER_CYLINDRICAL, NULL },
-    {"mollweide", SRS_PT_MOLLWEIDE, NULL },
-    {"new_zealand_map_grid", SRS_PT_NEW_ZEALAND_MAP_GRID, NULL },
+    {"miller_cylindrical", SRS_PT_MILLER_CYLINDRICAL, nullptr },
+    {"mollweide", SRS_PT_MOLLWEIDE, nullptr },
+    {"new_zealand_map_grid", SRS_PT_NEW_ZEALAND_MAP_GRID, nullptr },
     /* for now map to STEREO, see bug #4267 */
-    {"oblique_stereographic", SRS_PT_OBLIQUE_STEREOGRAPHIC, NULL },
+    {"oblique_stereographic", SRS_PT_OBLIQUE_STEREOGRAPHIC, nullptr },
     /* {STEREO, SRS_PT_OBLIQUE_STEREOGRAPHIC, poStMappings },  */
     {CF_PT_ORTHOGRAPHIC, SRS_PT_ORTHOGRAPHIC, poOrthoMappings },
     {CF_PT_POLAR_STEREO, SRS_PT_POLAR_STEREOGRAPHIC, poPSmappings },
-    {"polyconic", SRS_PT_POLYCONIC, NULL },
-    {"robinson", SRS_PT_ROBINSON, NULL },
-    {"sinusoidal", SRS_PT_SINUSOIDAL, NULL },
+    {"polyconic", SRS_PT_POLYCONIC, nullptr },
+    {"robinson", SRS_PT_ROBINSON, nullptr },
+    {"sinusoidal", SRS_PT_SINUSOIDAL, nullptr },
     {CF_PT_STEREO, SRS_PT_STEREOGRAPHIC, poStMappings },
-    {"swiss_oblique_cylindrical", SRS_PT_SWISS_OBLIQUE_CYLINDRICAL, NULL },
+    {"swiss_oblique_cylindrical", SRS_PT_SWISS_OBLIQUE_CYLINDRICAL, nullptr },
     {CF_PT_TM, SRS_PT_TRANSVERSE_MERCATOR, poTMMappings },
-    {"TM_south_oriented", SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED, NULL },
-    {NULL, NULL, NULL },
+    {"TM_south_oriented", SRS_PT_TRANSVERSE_MERCATOR_SOUTH_ORIENTED, nullptr },
+    {nullptr, nullptr, nullptr },
 };
 
 /************************************************************************/
@@ -822,7 +822,7 @@ class netCDFDataset : public GDALPamDataset
     void ProcessCreationOptions( );
     int DefVarDeflate( int nVarId, bool bChunkingArg=true );
     CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress,
-                              void * pProgressData=NULL );
+                              void * pProgressData=nullptr );
     void AddGridMappingRef();
 
     bool GetDefineMode() { return bDefineMode; }

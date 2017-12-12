@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 
 SDTSFeature::SDTSFeature() :
     nAttributes(0),
-    paoATID(NULL)
+    paoATID(nullptr)
 {}
 
 /************************************************************************/
@@ -51,7 +51,7 @@ void SDTSFeature::ApplyATID( DDFField * poField )
 {
     DDFSubfieldDefn *poMODN
         = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
-    if( poMODN == NULL )
+    if( poMODN == nullptr )
     {
         // CPLAssert( false );
         return;
@@ -70,8 +70,8 @@ void SDTSFeature::ApplyATID( DDFField * poField )
         if( bUsualFormat )
         {
             const char * pabyData
-                = poField->GetSubfieldData( poMODN, NULL, iRepeat );
-            if( pabyData == NULL || strlen(pabyData) < 5 )
+                = poField->GetSubfieldData( poMODN, nullptr, iRepeat );
+            if( pabyData == nullptr || strlen(pabyData) < 5 )
                 return;
 
             memcpy( poModId->szModule, pabyData, 4 );
@@ -96,7 +96,7 @@ SDTSFeature::~SDTSFeature()
 
 {
     CPLFree( paoATID );
-    paoATID = NULL;
+    paoATID = nullptr;
 }
 
 /************************************************************************/
@@ -127,36 +127,36 @@ int SDTSModId::Set( DDFField *poField )
     {
         DDFSubfieldDefn *poSF
             = poField->GetFieldDefn()->FindSubfieldDefn( "MODN" );
-        if( poSF == NULL )
+        if( poSF == nullptr )
             return FALSE;
         int nBytesRemaining;
         pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
-        if( pachData == NULL )
+        if( pachData == nullptr )
             return FALSE;
         snprintf( szModule, sizeof(szModule), "%s",
-                 poSF->ExtractStringData( pachData, nBytesRemaining, NULL) );
+                 poSF->ExtractStringData( pachData, nBytesRemaining, nullptr) );
 
         poSF = poField->GetFieldDefn()->FindSubfieldDefn( "RCID" );
-        if( poSF != NULL )
+        if( poSF != nullptr )
         {
             pachData = poField->GetSubfieldData(poSF, &nBytesRemaining);
-            if( pachData != NULL )
-                nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, NULL);
+            if( pachData != nullptr )
+                nRecord = poSF->ExtractIntData( pachData, nBytesRemaining, nullptr);
         }
     }
 
     if( poDefn->GetSubfieldCount() == 3 )
     {
         DDFSubfieldDefn *poSF = poField->GetFieldDefn()->FindSubfieldDefn( "OBRP" );
-        if( poSF != NULL )
+        if( poSF != nullptr )
         {
             int nBytesRemaining;
             pachData
                 = poField->GetSubfieldData(poSF, &nBytesRemaining);
-            if( pachData != NULL )
+            if( pachData != nullptr )
             {
                 snprintf( szOBRP, sizeof(szOBRP), "%s",
-                        poSF->ExtractStringData( pachData, nBytesRemaining, NULL) );
+                        poSF->ExtractStringData( pachData, nBytesRemaining, nullptr) );
             }
         }
     }
@@ -192,21 +192,21 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
 /* -------------------------------------------------------------------- */
     DDFFieldDefn *poIDField = poModule->FindFieldDefn( pszFName );
 
-    if( poIDField == NULL )
-        return NULL;
+    if( poIDField == nullptr )
+        return nullptr;
 
     DDFSubfieldDefn *poMODN = poIDField->FindSubfieldDefn( "MODN" );
-    if( poMODN == NULL )
-        return NULL;
+    if( poMODN == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Scan the file.                                                  */
 /* -------------------------------------------------------------------- */
     poModule->Rewind();
 
-    DDFRecord *poRecord = NULL;
-    char **papszModnList = NULL;
-    while( (poRecord = poModule->ReadRecord()) != NULL )
+    DDFRecord *poRecord = nullptr;
+    char **papszModnList = nullptr;
+    while( (poRecord = poModule->ReadRecord()) != nullptr )
     {
         for( int iField = 0; iField < poRecord->GetFieldCount(); iField++ )
         {
@@ -217,9 +217,9 @@ char **SDTSScanModuleReferences( DDFModule * poModule, const char * pszFName )
                 for( int i = 0; i < poField->GetRepeatCount(); i++ )
                 {
                     const char *pszModName
-                        = poField->GetSubfieldData(poMODN, NULL, i);
+                        = poField->GetSubfieldData(poMODN, nullptr, i);
 
-                    if( pszModName == NULL || strlen(pszModName) < 4 )
+                    if( pszModName == nullptr || strlen(pszModName) < 4 )
                         continue;
 
                     char szName[5];

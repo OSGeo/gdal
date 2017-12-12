@@ -53,29 +53,29 @@
  */
 void MetaInit (grib_MetaData *meta)
 {
-   meta->element = NULL;
-   meta->comment = NULL;
-   meta->unitName = NULL;
+   meta->element = nullptr;
+   meta->comment = nullptr;
+   meta->unitName = nullptr;
    meta->convert = 0;
-   meta->shortFstLevel = NULL;
-   meta->longFstLevel = NULL;
+   meta->shortFstLevel = nullptr;
+   meta->longFstLevel = nullptr;
    meta->pds2.sect2.ptrType = GS2_NONE;
 
-   meta->pds2.sect2.wx.data = NULL;
+   meta->pds2.sect2.wx.data = nullptr;
    meta->pds2.sect2.wx.dataLen = 0;
    meta->pds2.sect2.wx.maxLen = 0;
-   meta->pds2.sect2.wx.ugly = NULL;
-   meta->pds2.sect2.unknown.data = NULL;
+   meta->pds2.sect2.wx.ugly = nullptr;
+   meta->pds2.sect2.unknown.data = nullptr;
    meta->pds2.sect2.unknown.dataLen = 0;
-   meta->pds2.sect2.hazard.data = NULL;
+   meta->pds2.sect2.hazard.data = nullptr;
    meta->pds2.sect2.hazard.dataLen = 0;
    meta->pds2.sect2.hazard.maxLen = 0;
-   meta->pds2.sect2.hazard.haz = NULL;
+   meta->pds2.sect2.hazard.haz = nullptr;
 
    meta->pds2.sect4.numInterval = 0;
-   meta->pds2.sect4.Interval = NULL;
+   meta->pds2.sect4.Interval = nullptr;
    meta->pds2.sect4.numBands = 0;
-   meta->pds2.sect4.bands = NULL;
+   meta->pds2.sect4.bands = nullptr;
    return;
 }
 
@@ -111,11 +111,11 @@ void MetaSect2Free (grib_MetaData *meta)
          FreeUglyString (&(meta->pds2.sect2.wx.ugly[i]));
       }
       free (meta->pds2.sect2.wx.ugly);
-      meta->pds2.sect2.wx.ugly = NULL;
+      meta->pds2.sect2.wx.ugly = nullptr;
       free (meta->pds2.sect2.wx.data);
-      meta->pds2.sect2.wx.data = NULL;
+      meta->pds2.sect2.wx.data = nullptr;
       free (meta->pds2.sect2.wx.f_valid);
-      meta->pds2.sect2.wx.f_valid = NULL;
+      meta->pds2.sect2.wx.f_valid = nullptr;
       meta->pds2.sect2.wx.dataLen = 0;
       meta->pds2.sect2.wx.maxLen = 0;
    } else if (meta->pds2.sect2.ptrType == GS2_HAZARD) {
@@ -124,16 +124,16 @@ void MetaSect2Free (grib_MetaData *meta)
          FreeHazardString (&(meta->pds2.sect2.hazard.haz[i]));
       }
       free (meta->pds2.sect2.hazard.haz);
-      meta->pds2.sect2.hazard.haz = NULL;
+      meta->pds2.sect2.hazard.haz = nullptr;
       free (meta->pds2.sect2.hazard.data);
-      meta->pds2.sect2.hazard.data = NULL;
+      meta->pds2.sect2.hazard.data = nullptr;
       free (meta->pds2.sect2.hazard.f_valid);
-      meta->pds2.sect2.hazard.f_valid = NULL;
+      meta->pds2.sect2.hazard.f_valid = nullptr;
       meta->pds2.sect2.hazard.dataLen = 0;
       meta->pds2.sect2.hazard.maxLen = 0;
    } else {
       free (meta->pds2.sect2.unknown.data);
-      meta->pds2.sect2.unknown.data = NULL;
+      meta->pds2.sect2.unknown.data = nullptr;
       meta->pds2.sect2.unknown.dataLen = 0;
    }
    meta->pds2.sect2.ptrType = GS2_NONE;
@@ -163,23 +163,23 @@ void MetaSect2Free (grib_MetaData *meta)
 void MetaFree (grib_MetaData *meta)
 {
    free (meta->pds2.sect4.bands);
-   meta->pds2.sect4.bands = NULL;
+   meta->pds2.sect4.bands = nullptr;
    meta->pds2.sect4.numBands = 0;
    free (meta->pds2.sect4.Interval);
-   meta->pds2.sect4.Interval = NULL;
+   meta->pds2.sect4.Interval = nullptr;
    meta->pds2.sect4.numInterval = 0;
    MetaSect2Free (meta);
    free (meta->unitName);
-   meta->unitName = NULL;
+   meta->unitName = nullptr;
    meta->convert = 0;
    free (meta->comment);
-   meta->comment = NULL;
+   meta->comment = nullptr;
    free (meta->element);
-   meta->element = NULL;
+   meta->element = nullptr;
    free (meta->shortFstLevel);
-   meta->shortFstLevel = NULL;
+   meta->shortFstLevel = nullptr;
    free (meta->longFstLevel);
-   meta->longFstLevel = NULL;
+   meta->longFstLevel = nullptr;
 }
 
 /*****************************************************************************
@@ -436,7 +436,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
       return -2;
    }
    Wx->dataLen = 0;
-   Wx->data = NULL;
+   Wx->data = nullptr;
    Wx->maxLen = 0;
    for (i = 0; i < NUM_UGLY_WORD; i++) {
       Wx->maxEng[i] = 0;
@@ -525,7 +525,7 @@ static int ParseSect2_Wx (float *rdat, sInt4 nrdat, sInt4 *idat,
    for (i = 0; i < NUM_UGLY_WORD; i++) {
       /* Assert: Already initialized Wx->maxEng[i]. */
       for (j = 0; j < Wx->dataLen; j++) {
-         if (Wx->ugly[j].english[i] != NULL) {
+         if (Wx->ugly[j].english[i] != nullptr) {
             len = static_cast<int>(strlen (Wx->ugly[j].english[i]));
             if (len > Wx->maxEng[i]) {
                Wx->maxEng[i] = len;
@@ -561,7 +561,7 @@ static int ParseSect2_Hazard (float *rdat, sInt4 nrdat, sInt4 *idat,
       return -2;
    }
    Hazard->dataLen = 0;
-   Hazard->data = NULL;
+   Hazard->data = nullptr;
    Hazard->maxLen = 0;
    for (j = 0; j < NUM_HAZARD_WORD; j++) {
       Hazard->maxEng[j] = 0;
@@ -654,7 +654,7 @@ static int ParseSect2_Hazard (float *rdat, sInt4 nrdat, sInt4 *idat,
    for (i = 0; i < NUM_HAZARD_WORD; i++) {
       /* Assert: Already initialized Hazard->maxEng[i]. */
       for (j = 0; j < Hazard->dataLen; j++) {
-         if (Hazard->haz[j].english[i] != NULL) {
+         if (Hazard->haz[j].english[i] != nullptr) {
             len = static_cast<int>(strlen (Hazard->haz[j].english[i]));
             if (len > Hazard->maxEng[i]) {
                Hazard->maxEng[i] = len;
@@ -706,7 +706,7 @@ static int ParseSect2_Unknown (float *rdat, sInt4 nrdat, sInt4 *idat,
    int j;               /* Counter over the length of the current group. */
 
    meta->pds2.sect2.unknown.dataLen = 0;
-   meta->pds2.sect2.unknown.data = NULL;
+   meta->pds2.sect2.unknown.data = nullptr;
    ansLoc = 0;
 
    /* Work with rdat data. */
@@ -1675,7 +1675,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.numberFcsts = (uChar) is4[36];
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[37], is4[39],
                         is4[40], is4[41], is4[42], is4[43]) != 0) {
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             meta->pds2.sect4.numInterval = (uChar) is4[44];
             if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
@@ -1701,7 +1701,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             temp_ptr = realloc ((void *) meta->pds2.sect4.Interval,
                                 meta->pds2.sect4.numInterval *
                                 sizeof (sect4_IntervalType));
-            if (temp_ptr == NULL) {
+            if (temp_ptr == nullptr) {
                printf ("Ran out of memory.\n");
                return -6;
             }
@@ -1746,7 +1746,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
 
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[36], is4[38],
                         is4[39], is4[40], is4[41], is4[42]) != 0) {
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             meta->pds2.sect4.numInterval = (uChar) is4[43];
             if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
@@ -1772,7 +1772,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             temp_ptr = realloc ((void *) meta->pds2.sect4.Interval,
                                 meta->pds2.sect4.numInterval *
                                 sizeof (sect4_IntervalType));
-            if (temp_ptr == NULL) {
+            if (temp_ptr == nullptr) {
                printf ("Ran out of memory.\n");
                return -6;
             }
@@ -1807,7 +1807,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          }
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[34], is4[36],
                         is4[37], is4[38], is4[39], is4[40]) != 0) {
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             meta->pds2.sect4.numInterval = (uChar) is4[41];
             if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
@@ -1833,7 +1833,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             temp_ptr = realloc ((void *) meta->pds2.sect4.Interval,
                                 meta->pds2.sect4.numInterval *
                                 sizeof (sect4_IntervalType));
-            if (temp_ptr == NULL) {
+            if (temp_ptr == nullptr) {
                printf ("Ran out of memory.\n");
                return -6;
             }
@@ -1875,7 +1875,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.percentile = is4[34];
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[35], is4[37],
                         is4[38], is4[39], is4[40], is4[41]) != 0) {
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             meta->pds2.sect4.numInterval = (uChar) is4[42];
             if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
@@ -1901,7 +1901,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
             temp_ptr = realloc ((void *) meta->pds2.sect4.Interval,
                                 meta->pds2.sect4.numInterval *
                                 sizeof (sect4_IntervalType));
-            if (temp_ptr == NULL) {
+            if (temp_ptr == nullptr) {
                printf ("Ran out of memory.\n");
                return -6;
             }
@@ -1959,7 +1959,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          meta->pds2.sect4.upperLimit.value = sbit_2Comp_fourByte(is4[43]);
          if (ParseTime (&(meta->pds2.sect4.validTime), is4[47], is4[49],
                         is4[50], is4[51], is4[52], is4[53]) != 0) {
-            msg = errSprintf (NULL);
+            msg = errSprintf (nullptr);
             meta->pds2.sect4.numInterval = (uChar) is4[54];
             if (meta->pds2.sect4.numInterval != 1) {
                errSprintf ("ERROR: in call to ParseTime from ParseSect4\n%s",
@@ -1981,7 +1981,7 @@ static int ParseSect4 (sInt4 *is4, sInt4 ns4, grib_MetaData *meta)
          temp_ptr = realloc ((void *) meta->pds2.sect4.Interval,
                              meta->pds2.sect4.numInterval *
                              sizeof (sect4_IntervalType));
-         if (temp_ptr == NULL) {
+         if (temp_ptr == nullptr) {
             printf ("Ran out of memory.\n");
             return -6;
          }
@@ -2224,15 +2224,15 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    /* Compute ElementName. */
    if (meta->element) {
       free (meta->element);
-      meta->element = NULL;
+      meta->element = nullptr;
    }
    if (meta->unitName) {
       free (meta->unitName);
-      meta->unitName = NULL;
+      meta->unitName = nullptr;
    }
    if (meta->comment) {
       free (meta->comment);
-      meta->comment = NULL;
+      meta->comment = nullptr;
    }
 
    if ((meta->pds2.sect4.templat == GS4_PROBABIL_TIME) ||
@@ -2483,8 +2483,8 @@ static void ParseGridNoMiss (gridAttribType *attrib, double *grib_Data,
    double value;        /* The data in the new units. */
    uChar f_maxmin = 0;  /* Flag if max/min is valid yet. */
    uInt4 index;         /* Current index into Wx table. */
-   sInt4 *itemp = NULL;
-   float *ftemp = NULL;
+   sInt4 *itemp = nullptr;
+   float *ftemp = nullptr;
 
    /* Resolve possibility that the data is an integer or a float and find
     * max/min values. (see note 1) */
@@ -2606,8 +2606,8 @@ static void ParseGridPrimMiss (gridAttribType *attrib, double *grib_Data,
    double value;        /* The data in the new units. */
    uChar f_maxmin = 0;  /* Flag if max/min is valid yet. */
    uInt4 index;         /* Current index into Wx table. */
-   sInt4 *itemp = NULL;
-   float *ftemp = NULL;
+   sInt4 *itemp = nullptr;
+   float *ftemp = nullptr;
 /*   float *ain = (float *) iain;*/
 
    /* Resolve possibility that the data is an integer or a float and find
@@ -2736,8 +2736,8 @@ static void ParseGridSecMiss (gridAttribType *attrib, double *grib_Data,
    double value;        /* The data in the new units. */
    uChar f_maxmin = 0;  /* Flag if max/min is valid yet. */
    uInt4 index;         /* Current index into Wx table. */
-   sInt4 *itemp = NULL;
-   float *ftemp = NULL;
+   sInt4 *itemp = nullptr;
+   float *ftemp = nullptr;
 /*   float *ain = (float *) iain;*/
 
    /* Resolve possibility that the data is an integer or a float and find
@@ -2884,7 +2884,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    sInt4 newIndex;      /* x,y in a 1 dimensional array. */
    double value;        /* The data in the new units. */
    /* A pointer to Grib_Data for ease of manipulation. */
-   double *grib_Data = NULL;
+   double *grib_Data = nullptr;
    sInt4 missCnt = 0;   /* Number of detected missing values. */
    uInt4 index;         /* Current index into Wx table. */
    float *ain = (float *) iain;
@@ -2901,7 +2901,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
    {
        errSprintf ("Too large raster");
        *grib_DataLen = 0;
-       *Grib_Data = NULL;
+       *Grib_Data = nullptr;
        return;
    }
    
@@ -2918,7 +2918,7 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
           {
             errSprintf ("ERROR: File too short\n");
             *grib_DataLen = 0;
-            *Grib_Data = NULL;
+            *Grib_Data = nullptr;
             return;
           }
       }
@@ -2926,11 +2926,11 @@ void ParseGrid (DataSource &fp, gridAttribType *attrib, double **Grib_Data,
       *grib_DataLen = subNx * subNy;
       double* newData = (double *) realloc ((void *) (*Grib_Data),
                                        (*grib_DataLen) * sizeof (double));
-      if( newData == NULL )
+      if( newData == nullptr )
       {
           errSprintf ("Memory allocation failed");
           free(*Grib_Data);
-          *Grib_Data = NULL;
+          *Grib_Data = nullptr;
           *grib_DataLen = 0;
           return;
       }

@@ -148,7 +148,7 @@ GDALDitherRGB2PCT( GDALRasterBandH hRed,
 
 {
     return GDALDitherRGB2PCTInternal( hRed, hGreen, hBlue, hTarget,
-                                      hColorTable, 5, NULL, TRUE,
+                                      hColorTable, 5, nullptr, TRUE,
                                       pfnProgress, pProgressArg );
 }
 
@@ -198,7 +198,7 @@ int GDALDitherRGB2PCTInternal(
         return CE_Failure;
     }
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
@@ -262,7 +262,7 @@ int GDALDitherRGB2PCTInternal(
 /*      Setup various variables.                                        */
 /* -------------------------------------------------------------------- */
     int nCLevels = 1 << nBits;
-    ColorIndex* psColorIndexMap = NULL;
+    ColorIndex* psColorIndexMap = nullptr;
 
     GByte *pabyRed = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
     GByte *pabyGreen = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
@@ -273,11 +273,11 @@ int GDALDitherRGB2PCTInternal(
     int *panError = static_cast<int *>(
         VSI_CALLOC_VERBOSE(sizeof(int), (nXSize + 2) * 3));
 
-    if( pabyRed == NULL ||
-        pabyGreen == NULL ||
-        pabyBlue == NULL ||
-        pabyIndex == NULL ||
-        panError == NULL )
+    if( pabyRed == nullptr ||
+        pabyGreen == nullptr ||
+        pabyBlue == nullptr ||
+        pabyIndex == nullptr ||
+        panError == nullptr )
     {
         CPLFree( pabyRed );
         CPLFree( pabyGreen );
@@ -288,8 +288,8 @@ int GDALDitherRGB2PCTInternal(
         return  CE_Failure;
     }
 
-    GByte *pabyColorMap = NULL;
-    if( pasDynamicColorMap == NULL )
+    GByte *pabyColorMap = nullptr;
+    if( pasDynamicColorMap == nullptr )
     {
 /* -------------------------------------------------------------------- */
 /*      Build a 24bit to 8 bit color mapping.                           */
@@ -297,7 +297,7 @@ int GDALDitherRGB2PCTInternal(
 
         pabyColorMap = static_cast<GByte *>(
             VSI_MALLOC_VERBOSE(nCLevels * nCLevels * nCLevels * sizeof(GByte)));
-        if( pabyColorMap == NULL )
+        if( pabyColorMap == nullptr )
         {
             CPLFree( pabyRed );
             CPLFree( pabyGreen );
@@ -313,7 +313,7 @@ int GDALDitherRGB2PCTInternal(
     }
     else
     {
-        pabyColorMap = NULL;
+        pabyColorMap = nullptr;
         if( nBits == 8 && static_cast<GIntBig>(nXSize) * nYSize <= 65536 )
         {
             // If the image is small enough, then the number of colors
@@ -339,7 +339,7 @@ int GDALDitherRGB2PCTInternal(
 /*      Report progress                                                 */
 /* -------------------------------------------------------------------- */
         if( !pfnProgress( iScanline / static_cast<double>(nYSize),
-                          NULL, pProgressArg ) )
+                          nullptr, pProgressArg ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt, "User Terminated" );
             CPLFree( pabyRed );
@@ -485,7 +485,7 @@ int GDALDitherRGB2PCTInternal(
                            psColorIndexMap[nIdx].nColorCode3 != nColorCode );
                 }
             }
-            else if( pasDynamicColorMap == NULL )
+            else if( pasDynamicColorMap == nullptr )
             {
                 const int iRed   = nRedValue *   nCLevels / 256;
                 const int iGreen = nGreenValue * nCLevels / 256;
@@ -564,7 +564,7 @@ int GDALDitherRGB2PCTInternal(
             break;
     }
 
-    pfnProgress( 1.0, NULL, pProgressArg );
+    pfnProgress( 1.0, nullptr, pProgressArg );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */

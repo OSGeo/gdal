@@ -43,10 +43,10 @@ static GDALDataset *OGRAeronavFAADriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if (poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL ||
+        poOpenInfo->fpL == nullptr ||
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "dat") )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRAeronavFAADataSource   *poDS = new OGRAeronavFAADataSource();
@@ -54,7 +54,7 @@ static GDALDataset *OGRAeronavFAADriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -67,7 +67,7 @@ static GDALDataset *OGRAeronavFAADriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRAeronavFAA()
 
 {
-    if( GDALGetDriverByName( "AeronavFAA" ) != NULL )
+    if( GDALGetDriverByName( "AeronavFAA" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

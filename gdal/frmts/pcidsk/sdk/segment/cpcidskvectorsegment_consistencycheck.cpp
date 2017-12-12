@@ -289,8 +289,8 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
             uint32 vertex_size;
             uint32 vert_off = shape_index_vertex_off[toff];
 
-            memcpy( &vertex_size, GetData( sec_vert, vert_off, NULL, 4 ), 4 );
-            memcpy( &vertex_count, GetData( sec_vert, vert_off+4, NULL, 4 ), 4 );
+            memcpy( &vertex_size, GetData( sec_vert, vert_off, nullptr, 4 ), 4 );
+            memcpy( &vertex_count, GetData( sec_vert, vert_off+4, nullptr, 4 ), 4 );
             if( needs_swap )
             {
                 SwapData( &vertex_count, 4, 1 );
@@ -320,7 +320,7 @@ std::string CPCIDSKVectorSegment::ConsistencyCheck_ShapeIndices()
             uint32 record_size, i;
             ShapeField wfld;
 
-            memcpy( &record_size, GetData( sec_record, rec_off, NULL, 4 ), 4 );
+            memcpy( &record_size, GetData( sec_record, rec_off, nullptr, 4 ), 4 );
             if( needs_swap )
                 SwapData( &record_size, 4, 1 );
 

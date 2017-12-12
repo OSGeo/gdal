@@ -160,7 +160,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
             // Skip braces, which are used for grouping
         }
         else if( pszInput[0] == '\\'
-                 && strchr( "WTAHFfCcQp", pszInput[1] ) != NULL )
+                 && strchr( "WTAHFfCcQp", pszInput[1] ) != nullptr )
         {
             // eg. \W1.073172x;\T1.099;Bonneuil de Verrines
             // See data/dwg/EP/42002.dwg
@@ -173,7 +173,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
                 break;
         }
         else if( pszInput[0] == '\\'
-                && strchr( "KkLlOo", pszInput[1] ) != NULL )
+                && strchr( "KkLlOo", pszInput[1] ) != nullptr )
         {
             // Inline formatting codes that don't take an argument
 
@@ -187,14 +187,14 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
             while( *pszInput != ';' && *pszInput != '\0' )
             {
                 if( pszInput[0] == '\\' &&
-                    strchr( "^/#~", pszInput[1] ) != NULL )
+                    strchr( "^/#~", pszInput[1] ) != nullptr )
                 {
                     osMtextResult += pszInput[1];
                     pszInput++;
                     if( pszInput[0] == '\0' )
                         break;
                 }
-                else if( strchr( "^/#~", pszInput[0] ) == NULL )
+                else if( strchr( "^/#~", pszInput[0] ) == nullptr )
                 {
                     osMtextResult += pszInput[0];
                 }
@@ -206,7 +206,7 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
                 break;
         }
         else if( pszInput[0] == '\\'
-                 && strchr( "\\{}", pszInput[1] ) != NULL )
+                 && strchr( "\\{}", pszInput[1] ) != nullptr )
         {
             // MTEXT character escapes
 
@@ -533,7 +533,7 @@ const char *ACGetDimStylePropertyName( const int iDimStyleCode )
         case 147: return "DIMGAP";
         case 271: return "DIMDEC";
         case 341: return "DIMLDRBLK";
-        default: return NULL;
+        default: return nullptr;
     }
 }
 
@@ -579,7 +579,7 @@ void ACAdjustText( const double dfAngle, const double dfScaleX,
 /* -------------------------------------------------------------------- */
 /*      We only try to alter text elements (LABEL styles).              */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetStyleString() == NULL )
+    if( poFeature->GetStyleString() == nullptr )
         return;
 
     CPLString osOldStyle = poFeature->GetStyleString();

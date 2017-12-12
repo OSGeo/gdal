@@ -5,7 +5,7 @@ set -e
 cd gdal
 export CCACHE_CPP2=yes
 
-CC="ccache gcc" CXX="ccache g++" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python=/usr/bin/python3 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-mongocxx=/usr/local
+CC="ccache gcc-4.8" CXX="ccache g++-4.8" ./configure --prefix=/usr --without-libtool --enable-debug --with-jpeg12 --with-python=/usr/bin/python3 --with-poppler --with-podofo --with-spatialite --with-mysql --with-liblzma --with-webp --with-java --with-mdb --with-jvm-lib-add-rpath --with-epsilon --with-ecw=/usr/local --with-mrsid=/usr/local --with-mrsid-lidar=/usr/local --with-fgdb=/usr/local --with-libkml --with-mongocxx=/usr/local
 #  --with-gta
 make USER_DEFS="-Wextra -Werror" -j3
 cd apps

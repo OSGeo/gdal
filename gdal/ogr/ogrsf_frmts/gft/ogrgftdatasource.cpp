@@ -38,8 +38,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGFTDataSource::OGRGFTDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
     bReadWrite(FALSE),
     bUseHTTPS(FALSE),
@@ -59,7 +59,7 @@ OGRGFTDataSource::~OGRGFTDataSource()
 
     if (bMustCleanPersistent)
     {
-        char** papszOptions = NULL;
+        char** papszOptions = nullptr;
         papszOptions = CSLSetNameValue(papszOptions, "CLOSE_PERSISTENT", CPLSPrintf("GFT:%p", this));
         CPLHTTPDestroyResult( CPLHTTPFetch( GetAPIURL(), papszOptions) );
         CSLDestroy(papszOptions);
@@ -91,7 +91,7 @@ OGRLayer *OGRGFTDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -106,10 +106,10 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     if (poLayer)
         return poLayer;
 
-    char* pszGeomColumnName = NULL;
+    char* pszGeomColumnName = nullptr;
     char* l_pszName = CPLStrdup(pszLayerName);
     char *pszLeftParenthesis = strchr(l_pszName, '(');
-    if( pszLeftParenthesis != NULL )
+    if( pszLeftParenthesis != nullptr )
     {
         *pszLeftParenthesis = '\0';
         pszGeomColumnName = CPLStrdup(pszLeftParenthesis+1);
@@ -135,7 +135,7 @@ OGRLayer *OGRGFTDataSource::GetLayerByName(const char * pszLayerName)
     if (poLayer->GetLayerDefn()->GetFieldCount() == 0)
     {
         delete poLayer;
-        return NULL;
+        return nullptr;
     }
     papoLayers = (OGRLayer**) CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*));
     papoLayers[nLayers ++] = poLayer;
@@ -230,12 +230,12 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     /* Get list of tables */
     CPLHTTPResult * psResult = RunSQL("SHOW TABLES");
 
-    if (psResult == NULL)
+    if (psResult == nullptr)
         return FALSE;
 
     char* pszLine = (char*) psResult->pabyData;
-    if (pszLine == NULL ||
-        psResult->pszErrBuf != NULL ||
+    if (pszLine == nullptr ||
+        psResult->pszErrBuf != nullptr ||
         !STARTS_WITH(pszLine, "table id,name"))
     {
         CPLHTTPDestroyResult(psResult);
@@ -243,7 +243,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
     }
 
     pszLine = OGRGFTGotoNextLine(pszLine);
-    while(pszLine != NULL && *pszLine != 0)
+    while(pszLine != nullptr && *pszLine != 0)
     {
         char* pszNextLine = OGRGFTGotoNextLine(pszLine);
         if (pszNextLine)
@@ -283,7 +283,7 @@ int OGRGFTDataSource::Open( const char * pszFilename, int bUpdateIn)
 
 const char*  OGRGFTDataSource::GetAPIURL() const
 {
-    const char* pszAPIURL = CPLGetConfigOption("GFT_API_URL", NULL);
+    const char* pszAPIURL = CPLGetConfigOption("GFT_API_URL", nullptr);
     if (pszAPIURL)
         return pszAPIURL;
     else if (bUseHTTPS)
@@ -304,13 +304,13 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
     if (!bReadWrite)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in read-only mode");
-        return NULL;
+        return nullptr;
     }
 
     if (osAccessToken.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Operation not available in unauthenticated mode");
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -322,7 +322,7 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
     {
         if( EQUAL(pszNameIn,papoLayers[iLayer]->GetName()) )
         {
-            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
                 DeleteLayer( pszNameIn );
@@ -335,7 +335,7 @@ OGRLayer   *OGRGFTDataSource::ICreateLayer( const char *pszNameIn,
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
                           pszNameIn );
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -426,7 +426,7 @@ OGRErr OGRGFTDataSource::DeleteLayer(int iLayer)
 
     CPLHTTPResult* psResult = RunSQL( osSQL );
 
-    if (psResult == NULL || psResult->nStatus != 0)
+    if (psResult == nullptr || psResult->nStatus != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Table deletion failed (1)");
         CPLHTTPDestroyResult(psResult);
@@ -502,9 +502,9 @@ CPLHTTPResult * OGRGFTDataSource::RunSQL(const char* pszUnescapedSQL)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "HTML error page returned by server");
         CPLHTTPDestroyResult(psResult);
-        psResult = NULL;
+        psResult = nullptr;
     }
-    if (psResult && psResult->pszErrBuf != NULL)
+    if (psResult && psResult->pszErrBuf != nullptr)
     {
         CPLDebug( "GFT", "RunSQL Error Message:%s", psResult->pszErrBuf );
     }
@@ -544,23 +544,23 @@ OGRLayer * OGRGFTDataSource::ExecuteSQL( const char *pszSQLCommand,
             pszLayerName++;
 
         DeleteLayer( pszLayerName );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRGFTResultLayer *poLayer = NULL;
+    OGRGFTResultLayer *poLayer = nullptr;
 
     CPLString osSQL = pszSQLCommand;
     poLayer = new OGRGFTResultLayer( this, osSQL );
     if (!poLayer->RunSQL())
     {
         delete poLayer;
-        return NULL;
+        return nullptr;
     }
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;
@@ -585,5 +585,5 @@ char* OGRGFTGotoNextLine(char* pszData)
     char* pszNextLine = strchr(pszData, '\n');
     if (pszNextLine)
         return pszNextLine + 1;
-    return NULL;
+    return nullptr;
 }

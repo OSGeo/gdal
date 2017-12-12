@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
@@ -51,7 +51,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "             CInt16/CInt32/CFloat32/CFloat64}] [-optim {[AUTO]/VECTOR/RASTER}] [-q]\n"
         "       <src_datasource> <dst_filename>\n" );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
     exit(1);
 }
@@ -73,7 +73,7 @@ static GDALRasterizeOptionsForBinary *GDALRasterizeOptionsForBinaryNew(void)
 static void GDALRasterizeOptionsForBinaryFree(
     GDALRasterizeOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary == NULL )
+    if( psOptionsForBinary == nullptr )
         return;
 
     CPLFree(psOptionsForBinary->pszSource);
@@ -123,20 +123,20 @@ MAIN_START(argc, argv)
         GDALRasterizeOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy(argv);
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALRasterizeOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALRasterizeOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == NULL )
+    if( psOptionsForBinary->pszSource == nullptr )
         Usage("No input file specified.");
 
-    if( psOptionsForBinary->pszDest == NULL )
+    if( psOptionsForBinary->pszDest == nullptr )
         Usage("No output file specified.");
 
 /* -------------------------------------------------------------------- */
@@ -144,33 +144,33 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
     GDALDatasetH hInDS = GDALOpenEx(
         psOptionsForBinary->pszSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-        NULL, NULL, NULL);
+        nullptr, nullptr, nullptr);
 
-    if( hInDS == NULL )
+    if( hInDS == nullptr )
         exit(1);
 
 /* -------------------------------------------------------------------- */
 /*      Open output file if it exists.                                  */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS = NULL;
+    GDALDatasetH hDstDS = nullptr;
     if( !(psOptionsForBinary->bCreateOutput) )
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         hDstDS = GDALOpenEx(
             psOptionsForBinary->pszDest,
             GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-            NULL, NULL, NULL );
+            nullptr, nullptr, nullptr );
         CPLPopErrorHandler();
     }
 
-    if( psOptionsForBinary->pszFormat != NULL &&
-        (psOptionsForBinary->bCreateOutput || hDstDS == NULL) )
+    if( psOptionsForBinary->pszFormat != nullptr &&
+        (psOptionsForBinary->bCreateOutput || hDstDS == nullptr) )
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
         GDALDriver *poDriver =
             poDM->GetDriverByName(psOptionsForBinary->pszFormat);
-        char** papszDriverMD = (poDriver) ? poDriver->GetMetadata(): NULL;
-        if( poDriver == NULL ||
+        char** papszDriverMD = (poDriver) ? poDriver->GetMetadata(): nullptr;
+        if( poDriver == nullptr ||
             !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_RASTER,
                                               "FALSE")) ||
             !CPLTestBool(CSLFetchNameValueDef(papszDriverMD, GDAL_DCAP_CREATE,

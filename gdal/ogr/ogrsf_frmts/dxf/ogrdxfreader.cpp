@@ -39,7 +39,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRDXFReader::OGRDXFReader() :
-    fp(NULL),
+    fp(nullptr),
     iSrcBufferOffset(0),
     nSrcBufferBytes(0),
     iSrcBufferFileOffset(0),

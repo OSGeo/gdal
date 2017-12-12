@@ -118,11 +118,11 @@ public:
 /************************************************************************/
 
 OGRMILayerAttrIndex::OGRMILayerAttrIndex() :
-    poINDFile(NULL),
+    poINDFile(nullptr),
     nIndexCount(0),
-    papoIndexList(NULL),
-    pszMetadataFilename(NULL),
-    pszMIINDFilename(NULL),
+    papoIndexList(nullptr),
+    pszMetadataFilename(nullptr),
+    pszMIINDFilename(nullptr),
     bINDAsReadOnly(TRUE),
     bUnlinkINDFile(FALSE)
 {}
@@ -134,11 +134,11 @@ OGRMILayerAttrIndex::OGRMILayerAttrIndex() :
 OGRMILayerAttrIndex::~OGRMILayerAttrIndex()
 
 {
-    if( poINDFile != NULL )
+    if( poINDFile != nullptr )
     {
         poINDFile->Close();
         delete poINDFile;
-        poINDFile = NULL;
+        poINDFile = nullptr;
     }
 
     if (bUnlinkINDFile)
@@ -207,7 +207,7 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psRoot = CPLParseXMLString( pszRawXML );
 
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
@@ -215,10 +215,10 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 /* -------------------------------------------------------------------- */
     poINDFile = new TABINDFile();
 
-    if (pszMIINDFilename == NULL)
+    if (pszMIINDFilename == nullptr)
         pszMIINDFilename = CPLStrdup(CPLGetXMLValue(psRoot,"MIIDFilename",""));
 
-    if( pszMIINDFilename == NULL )
+    if( pszMIINDFilename == nullptr )
         return OGRERR_FAILURE;
 
     /* NOTE: Replaced r+ with r according to explanation in Ticket #1620.
@@ -237,7 +237,7 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 /*      Process each attrindex.                                         */
 /* -------------------------------------------------------------------- */
     for( CPLXMLNode *psAttrIndex = psRoot->psChild;
-         psAttrIndex != NULL;
+         psAttrIndex != nullptr;
          psAttrIndex = psAttrIndex->psNext )
     {
         if( psAttrIndex->eType != CXT_Element
@@ -269,13 +269,13 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML(const char* pszRawXML)
 
 OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
 {
-    CPLAssert( poINDFile == NULL );
+    CPLAssert( poINDFile == nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Read the XML file.                                              */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszMetadataFilename, "rb" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return OGRERR_FAILURE;
 
     if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
@@ -321,7 +321,7 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
 /*      Create the XML tree corresponding to this layer.                */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psRoot =
-        CPLCreateXMLNode( NULL, CXT_Element, "OGRMILayerAttrIndex" );
+        CPLCreateXMLNode( nullptr, CXT_Element, "OGRMILayerAttrIndex" );
 
     CPLCreateXMLElementAndValue( psRoot, "MIIDFilename",
                                  CPLGetFilename( pszMIINDFilename ) );
@@ -350,7 +350,7 @@ OGRErr OGRMILayerAttrIndex::SaveConfigToXML()
     CPLDestroyXMLNode( psRoot );
 
     FILE *fp = VSIFOpen( pszMetadataFilename, "wb" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to pen `%s' for write.",
@@ -376,8 +376,8 @@ OGRErr OGRMILayerAttrIndex::IndexAllFeatures( int iField )
 {
     poLayer->ResetReading();
 
-    OGRFeature *poFeature = NULL;
-    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    OGRFeature *poFeature = nullptr;
+    while( (poFeature = poLayer->GetNextFeature()) != nullptr )
     {
         const OGRErr eErr = AddToIndex( poFeature, iField );
 
@@ -405,13 +405,13 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 /* -------------------------------------------------------------------- */
 /*      Do we have an open .ID file yet?  If not, create it now.        */
 /* -------------------------------------------------------------------- */
-    if( poINDFile == NULL )
+    if( poINDFile == nullptr )
     {
         poINDFile = new TABINDFile();
         if( poINDFile->Open( pszMIINDFilename, "w+" ) != 0 )
         {
             delete poINDFile;
-            poINDFile = NULL;
+            poINDFile = nullptr;
 
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Failed to create %s.",
@@ -434,7 +434,7 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
                       "Cannot re-open %s as read-only.",
                       pszMIINDFilename );
                 delete poINDFile;
-                poINDFile = NULL;
+                poINDFile = nullptr;
             }
 
             return OGRERR_FAILURE;
@@ -602,7 +602,7 @@ OGRAttrIndex *OGRMILayerAttrIndex::GetFieldIndex( int iField )
             return papoIndexList[i];
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -696,7 +696,7 @@ OGRMIAttrIndex::~OGRMIAttrIndex()
 OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, GIntBig nFID )
 
 {
-    if( psKey == NULL )
+    if( psKey == nullptr )
         return OGRERR_FAILURE;
 
     if( nFID >= INT_MAX )
@@ -704,7 +704,7 @@ OGRErr OGRMIAttrIndex::AddEntry( OGRField *psKey, GIntBig nFID )
 
     GByte *pabyKey = BuildKey( psKey );
 
-    if( pabyKey == NULL )
+    if( pabyKey == nullptr )
         return OGRERR_FAILURE;
 
     if( poINDFile->AddEntry( iIndex, pabyKey, (int)nFID+1 ) != 0 )
@@ -730,7 +730,7 @@ OGRErr OGRMIAttrIndex::RemoveEntry( OGRField * /*psKey*/, GIntBig /*nFID*/ )
 GByte *OGRMIAttrIndex::BuildKey( OGRField *psKey )
 
 {
-    GByte* ret = NULL;
+    GByte* ret = nullptr;
     switch( poFldDefn->GetType() )
     {
       case OFTInteger:
@@ -786,7 +786,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
 {
     GByte *pabyKey = BuildKey( psKey );
 
-    if (panFIDList == NULL)
+    if (panFIDList == nullptr)
     {
         panFIDList = (GIntBig *) CPLMalloc(sizeof(GIntBig) * 2);
         *nFIDCount = 0;
@@ -814,7 +814,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey, GIntBig* panFIDList, in
 GIntBig *OGRMIAttrIndex::GetAllMatches( OGRField *psKey )
 {
     int nFIDCount, nLength;
-    return GetAllMatches( psKey, NULL, &nFIDCount, &nLength );
+    return GetAllMatches( psKey, nullptr, &nFIDCount, &nLength );
 }
 
 /************************************************************************/

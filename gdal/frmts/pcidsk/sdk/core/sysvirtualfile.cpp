@@ -63,8 +63,8 @@ SysVirtualFile::SysVirtualFile( CPCIDSKFile *fileIn, int start_block,
                                 int image_indexIn )
 
 {
-    io_handle = NULL;
-    io_mutex = NULL;
+    io_handle = nullptr;
+    io_mutex = nullptr;
 
     file_length = image_length;
     this->file = fileIn;
@@ -224,7 +224,7 @@ SysVirtualFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 {
     uint64 buffer_offset = 0;
 
-    if(io_handle == NULL || io_mutex == NULL)
+    if(io_handle == nullptr || io_mutex == nullptr)
         file->GetIODetails( &io_handle, &io_mutex );
 
     MutexHolder oMutex(*io_mutex);
@@ -272,7 +272,7 @@ SysVirtualFile::WriteToFile( const void *buffer, uint64 offset, uint64 size )
 void SysVirtualFile::ReadFromFile( void *buffer, uint64 offset, uint64 size )
 
 {
-    if(io_handle == NULL || io_mutex == NULL)
+    if(io_handle == nullptr || io_mutex == nullptr)
         file->GetIODetails( &io_handle, &io_mutex );
 
     MutexHolder oMutex(*io_mutex);
@@ -350,7 +350,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
     LoadBMEntriesTo( requested_block );
     PCIDSKSegment *data_seg_obj =
         file->GetSegment( GetBlockSegment( requested_block ) );
-    if( data_seg_obj == NULL )
+    if( data_seg_obj == nullptr )
         return ThrowPCIDSKException( "SysVirtualFile::LoadBlock(%d) - no segment found",
                                      requested_block );
 
@@ -371,7 +371,7 @@ void SysVirtualFile::LoadBlock( int requested_block )
 void SysVirtualFile::FlushDirtyBlock(void)
 {
     if (loaded_block_dirty) {
-        if(io_handle == NULL || io_mutex == NULL)
+        if(io_handle == nullptr || io_mutex == nullptr)
             file->GetIODetails( &io_handle, &io_mutex );
 
         MutexHolder oMutex(*io_mutex);
@@ -395,7 +395,7 @@ void SysVirtualFile::GrowVirtualFile(std::ptrdiff_t requested_block)
 
     if( requested_block == blocks_loaded )
     {
-        if(io_handle == NULL || io_mutex == NULL)
+        if(io_handle == nullptr || io_mutex == nullptr)
             file->GetIODetails( &io_handle, &io_mutex );
 
         MutexHolder oMutex(*io_mutex);
@@ -422,7 +422,7 @@ void SysVirtualFile::WriteBlocks(int first_block,
                                  int block_count,
                                  void* const buffer)
 {
-    if(io_handle == NULL || io_mutex == NULL)
+    if(io_handle == nullptr || io_mutex == nullptr)
         file->GetIODetails( &io_handle, &io_mutex );
 
     MutexHolder oMutex(*io_mutex);
@@ -492,7 +492,7 @@ void SysVirtualFile::LoadBlocks(int requested_block_start,
                                 int requested_block_count,
                                 void* const buffer)
 {
-    if(io_handle == NULL || io_mutex == NULL)
+    if(io_handle == nullptr || io_mutex == nullptr)
         file->GetIODetails( &io_handle, &io_mutex );
 
     MutexHolder oMutex(*io_mutex);

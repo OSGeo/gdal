@@ -1,0 +1,24 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              xmlns:ns1="http://ns1"
+              xmlns:ns2="http://ns2"
+              elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://ns1" schemaLocation="gmlas_avoid_same_name_inlined_classes_ns1.xsd"/>
+<xs:import namespace="http://ns2" schemaLocation="gmlas_avoid_same_name_inlined_classes_ns2.xsd"/>
+
+<xs:group name="mygroup">
+    <xs:sequence>
+        <xs:element ref="ns2:dt" minOccurs="0" maxOccurs="2"/>
+    </xs:sequence>
+</xs:group>
+
+<xs:element name="myFeature">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element ref="ns1:dt" minOccurs="0" maxOccurs="2"/>
+            <xs:group ref="mygroup"/>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

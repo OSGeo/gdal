@@ -43,8 +43,8 @@ ods_formula_node::ods_formula_node() :
     field_type(ODS_FIELD_TYPE_EMPTY),
     eOp(ODS_INVALID),
     nSubExprCount(0),
-    papoSubExpr(NULL),
-    string_value(NULL),
+    papoSubExpr(nullptr),
+    string_value(nullptr),
     int_value(0),
     float_value(0)
 {}
@@ -58,8 +58,8 @@ ods_formula_node::ods_formula_node( int nValueIn ) :
     field_type(ODS_FIELD_TYPE_INTEGER),
     eOp(ODS_INVALID),
     nSubExprCount(0),
-    papoSubExpr(NULL),
-    string_value(NULL),
+    papoSubExpr(nullptr),
+    string_value(nullptr),
     int_value(nValueIn),
     float_value(0)
 {}
@@ -73,8 +73,8 @@ ods_formula_node::ods_formula_node( double dfValueIn ) :
     field_type(ODS_FIELD_TYPE_FLOAT),
     eOp(ODS_INVALID),
     nSubExprCount(0),
-    papoSubExpr(NULL),
-    string_value(NULL),
+    papoSubExpr(nullptr),
+    string_value(nullptr),
     int_value(0),
     float_value(dfValueIn)
 {}
@@ -89,7 +89,7 @@ ods_formula_node::ods_formula_node( const char *pszValueIn,
     field_type(field_type_in),
     eOp(ODS_INVALID),
     nSubExprCount(0),
-    papoSubExpr(NULL),
+    papoSubExpr(nullptr),
     string_value(CPLStrdup( pszValueIn ? pszValueIn : "" )),
     int_value(0),
     float_value(0)
@@ -104,8 +104,8 @@ ods_formula_node::ods_formula_node( ods_formula_op eOpIn ) :
     field_type(ODS_FIELD_TYPE_EMPTY),
     eOp(eOpIn),
     nSubExprCount(0),
-    papoSubExpr(NULL),
-    string_value(NULL),
+    papoSubExpr(nullptr),
+    string_value(nullptr),
     int_value(0),
     float_value(0)
 {}
@@ -119,8 +119,8 @@ ods_formula_node::ods_formula_node( const ods_formula_node& other ) :
     field_type(other.field_type),
     eOp(other.eOp),
     nSubExprCount(other.nSubExprCount),
-    papoSubExpr(NULL),
-    string_value(other.string_value ? CPLStrdup(other.string_value) : NULL),
+    papoSubExpr(nullptr),
+    string_value(other.string_value ? CPLStrdup(other.string_value) : nullptr),
     int_value(other.int_value),
     float_value(other.float_value)
 {
@@ -223,7 +223,7 @@ static const char* ODSGetOperatorName( ods_formula_op eOp )
         default:
         {
             const SingleOpStruct* psSingleOp = ODSGetSingleOpEntry(eOp);
-            if (psSingleOp != NULL)
+            if (psSingleOp != nullptr)
                 return psSingleOp->pszName;
             return "*unknown*";
         }
@@ -274,7 +274,7 @@ void  ods_formula_node::FreeSubExpr()
     CPLFree( papoSubExpr );
 
     nSubExprCount = 0;
-    papoSubExpr = NULL;
+    papoSubExpr = nullptr;
 }
 
 /************************************************************************/
@@ -533,7 +533,7 @@ bool ods_formula_node::EvaluateIF( IODSCellEvaluator* poEvaluator )
         else if (field_type == ODS_FIELD_TYPE_STRING)
         {
             string_value = papoSubExpr[1]->string_value;
-            papoSubExpr[1]->string_value = NULL;
+            papoSubExpr[1]->string_value = nullptr;
         }
     }
     else if (nSubExprCount == 3)
@@ -547,7 +547,7 @@ bool ods_formula_node::EvaluateIF( IODSCellEvaluator* poEvaluator )
         else if (field_type == ODS_FIELD_TYPE_STRING)
         {
             string_value = papoSubExpr[2]->string_value;
-            papoSubExpr[2]->string_value = NULL;
+            papoSubExpr[2]->string_value = nullptr;
         }
     }
     else
@@ -604,10 +604,10 @@ bool ods_formula_node::EvaluateEQ( IODSCellEvaluator* poEvaluator )
         }
     }
     else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
-             papoSubExpr[0]->string_value != NULL)
+             papoSubExpr[0]->string_value != nullptr)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
-            papoSubExpr[1]->string_value != NULL)
+            papoSubExpr[1]->string_value != nullptr)
         {
             bVal = (strcmp(papoSubExpr[0]->string_value,
                            papoSubExpr[1]->string_value) == 0);
@@ -730,10 +730,10 @@ bool ods_formula_node::EvaluateLE( IODSCellEvaluator* poEvaluator )
             bVal = true;
     }
     else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
-             papoSubExpr[0]->string_value != NULL)
+             papoSubExpr[0]->string_value != nullptr)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
-            papoSubExpr[1]->string_value != NULL)
+            papoSubExpr[1]->string_value != nullptr)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -802,10 +802,10 @@ bool ods_formula_node::EvaluateGE( IODSCellEvaluator* poEvaluator )
         }
     }
     else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
-             papoSubExpr[0]->string_value != NULL)
+             papoSubExpr[0]->string_value != nullptr)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
-            papoSubExpr[1]->string_value != NULL)
+            papoSubExpr[1]->string_value != nullptr)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -880,10 +880,10 @@ bool ods_formula_node::EvaluateLT( IODSCellEvaluator* poEvaluator )
             bVal = true;
     }
     else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
-             papoSubExpr[0]->string_value != NULL)
+             papoSubExpr[0]->string_value != nullptr)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
-            papoSubExpr[1]->string_value != NULL)
+            papoSubExpr[1]->string_value != nullptr)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -952,10 +952,10 @@ bool ods_formula_node::EvaluateGT( IODSCellEvaluator* poEvaluator )
         }
     }
     else if (papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING &&
-             papoSubExpr[0]->string_value != NULL)
+             papoSubExpr[0]->string_value != nullptr)
     {
         if (papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING &&
-            papoSubExpr[1]->string_value != NULL)
+            papoSubExpr[1]->string_value != nullptr)
         {
             if (GetCase(papoSubExpr[0]->string_value) ==
                 GetCase(papoSubExpr[1]->string_value))
@@ -1322,7 +1322,7 @@ bool ods_formula_node::EvaluateListArgOp( IODSCellEvaluator* poEvaluator )
             CPLAssert (papoSubExpr[0]->papoSubExpr[i]->papoSubExpr[1]->eNodeType == SNT_CONSTANT);
             CPLAssert (papoSubExpr[0]->papoSubExpr[i]->papoSubExpr[1]->field_type == ODS_FIELD_TYPE_STRING);
 
-            if (poEvaluator == NULL)
+            if (poEvaluator == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "No cell evaluator provided");
                 return false;
@@ -1488,7 +1488,7 @@ bool ods_formula_node::EvaluateCELL( IODSCellEvaluator* poEvaluator )
     CPLAssert(papoSubExpr[0]->eNodeType == SNT_CONSTANT );
     CPLAssert(papoSubExpr[0]->field_type == ODS_FIELD_TYPE_STRING );
 
-    if (poEvaluator == NULL)
+    if (poEvaluator == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "No cell evaluator provided");
         return false;
@@ -1512,7 +1512,7 @@ bool ods_formula_node::EvaluateCELL( IODSCellEvaluator* poEvaluator )
             int_value = aoOutValues[0].int_value;
             float_value = aoOutValues[0].float_value;
             string_value = aoOutValues[0].string_value ?
-                CPLStrdup(aoOutValues[0].string_value) : NULL;
+                CPLStrdup(aoOutValues[0].string_value) : nullptr;
 
             return true;
         }

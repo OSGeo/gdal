@@ -35,4 +35,8 @@
 
 #include <json.h>
 
+#undef json_object_object_foreachC
+#define json_object_object_foreachC(obj,iter) \
+ for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : nullptr) != nullptr; iter.entry = iter.entry->next)
+
 #endif /* OGR_JSON_HEADER_H */

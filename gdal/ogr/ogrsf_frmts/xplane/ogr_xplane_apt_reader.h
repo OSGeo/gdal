@@ -53,7 +53,7 @@ class OGRXPlaneAPTLayer : public OGRXPlaneLayer
                                    double dfLon = 0,
                                    bool bHasTower = false,
                                    double dfHeightTower = 0,
-                                   const char* pszTowerName = NULL);
+                                   const char* pszTowerName = nullptr);
 };
 
 /************************************************************************/

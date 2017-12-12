@@ -50,9 +50,9 @@ CPL_CVSID("$Id$")
 /*                           GDALWMSDataset()                           */
 /************************************************************************/
 GDALWMSDataset::GDALWMSDataset() :
-    m_mini_driver(NULL),
-    m_cache(NULL),
-    m_poColorTable(NULL),
+    m_mini_driver(nullptr),
+    m_cache(nullptr),
+    m_poColorTable(nullptr),
     m_data_type(GDT_Byte),
     m_block_size_x(0),
     m_block_size_y(0),
@@ -61,8 +61,8 @@ GDALWMSDataset::GDALWMSDataset() :
     m_offline_mode(0),
     m_http_max_conn(0),
     m_http_timeout(0),
-    m_http_options(NULL),
-    m_tileOO(NULL),
+    m_http_options(nullptr),
+    m_tileOO(nullptr),
     m_clamp_requests(true),
     m_unsafeSsl(false),
     m_zeroblock_on_serverexceptions(0),
@@ -230,11 +230,11 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
 
     if (ret == CE_None) {
         CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
-        if (cache_node != NULL) {
+        if (cache_node != nullptr) {
             m_cache = new GDALWMSCache();
             if (m_cache->Initialize(cache_node) != CE_None) {
                 delete m_cache;
-                m_cache = NULL;
+                m_cache = nullptr;
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "GDALWMS: Failed to initialize cache.");
                 ret = CE_Failure;
@@ -256,7 +256,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
 
     // Initialize the minidriver, which can set parameters for the dataset using member functions
     CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
-    if (service_node == NULL) {
+    if (service_node == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "GDALWMS: No Service specified.");
         return CE_Failure;
@@ -270,7 +270,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     m_mini_driver = NewWMSMiniDriver(service_name);
-    if (m_mini_driver == NULL) {
+    if (m_mini_driver == nullptr) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "GDALWMS: No mini-driver registered for '%s'.", service_name.c_str());
         return CE_Failure;
@@ -282,7 +282,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Failed to initialize minidriver.");
         delete m_mini_driver;
-        m_mini_driver = NULL;
+        m_mini_driver = nullptr;
         ret = CE_Failure;
     }
     else
@@ -334,7 +334,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         if (ret == CE_None)
         {
             CPLXMLNode *data_window_node = CPLGetXMLNode(config, "DataWindow");
-            if (data_window_node == NULL && m_bNeedsDataWindow)
+            if (data_window_node == nullptr && m_bNeedsDataWindow)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: DataWindow missing.");
                 ret = CE_Failure;
@@ -551,20 +551,20 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     if (ret == CE_None) {
         // Data values are attributes, they include NoData Min and Max
         // TODO: document those options
-        if (NULL!=CPLGetXMLNode(config,"DataValues")) {
-            const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",NULL);
-            if (nodata!=NULL) WMSSetNoDataValue(nodata);
-            const char *min=CPLGetXMLValue(config,"DataValues.min",NULL);
-            if (min!=NULL) WMSSetMinValue(min);
-            const char *max=CPLGetXMLValue(config,"DataValues.max",NULL);
-            if (max!=NULL) WMSSetMaxValue(max);
+        if (nullptr!=CPLGetXMLNode(config,"DataValues")) {
+            const char *nodata=CPLGetXMLValue(config,"DataValues.NoData",nullptr);
+            if (nodata!=nullptr) WMSSetNoDataValue(nodata);
+            const char *min=CPLGetXMLValue(config,"DataValues.min",nullptr);
+            if (min!=nullptr) WMSSetMinValue(min);
+            const char *max=CPLGetXMLValue(config,"DataValues.max",nullptr);
+            if (max!=nullptr) WMSSetMaxValue(max);
         }
     }
 
     if (ret == CE_None) {
         if (!m_projection.size()) {
             const char *proj = m_mini_driver->GetProjectionInWKT();
-            if (proj != NULL) {
+            if (proj != nullptr) {
                 m_projection = proj;
             }
         }
@@ -589,7 +589,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
     CPLErr ret;
 
     if (rw != GF_Read) return CE_Failure;
-    if (buffer == NULL) return CE_Failure;
+    if (buffer == nullptr) return CE_Failure;
     if ((sx == 0) || (sy == 0) || (bsx == 0) || (bsy == 0) || (band_count == 0)) return CE_None;
 
     m_hint.m_x0 = x0;
@@ -662,10 +662,10 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0,
                                   char **options) {
 //    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
     if (m_offline_mode || !m_use_advise_read) return CE_None;
-    if (m_cache == NULL) return CE_Failure;
+    if (m_cache == nullptr) return CE_Failure;
 
     GDALRasterBand *band = GetRasterBand(1);
-    if (band == NULL) return CE_Failure;
+    if (band == nullptr) return CE_Failure;
     return band->AdviseRead(x0, y0, sx, sy, bsx, bsy, bdt, options);
 }
 
@@ -686,10 +686,10 @@ char **GDALWMSDataset::GetMetadataDomainList()
 const char *GDALWMSDataset::GetMetadataItem( const char * pszName,
                                              const char * pszDomain )
 {
-    if( pszName != NULL && EQUAL(pszName, "XML") &&
-        pszDomain != NULL && EQUAL(pszDomain, "WMS") )
+    if( pszName != nullptr && EQUAL(pszName, "XML") &&
+        pszDomain != nullptr && EQUAL(pszDomain, "WMS") )
     {
-        return (m_osXML.size()) ? m_osXML.c_str() : NULL;
+        return (m_osXML.size()) ? m_osXML.c_str() : nullptr;
     }
 
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
@@ -698,10 +698,10 @@ const char *GDALWMSDataset::GetMetadataItem( const char * pszName,
 // Builds a CSL of options or returns the previous one
 const char * const * GDALWMSDataset::GetHTTPRequestOpts()
 {
-    if (m_http_options != NULL)
+    if (m_http_options != nullptr)
         return m_http_options;
 
-    char **opts = NULL;
+    char **opts = nullptr;
     if (m_http_timeout != -1)
         opts = CSLAddString(opts, CPLOPrintf("TIMEOUT=%d", m_http_timeout));
 

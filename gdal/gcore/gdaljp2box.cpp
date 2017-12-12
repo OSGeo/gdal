@@ -61,7 +61,7 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
     nBoxOffset(-1),
     nBoxLength(0),
     nDataOffset(-1),
-    pabyData(NULL)
+    pabyData(nullptr)
 {
 #if !HAVE_CXX11
     std::fill_n(szBoxType, CPL_ARRAYSIZE(szBoxType), '\0');
@@ -118,7 +118,7 @@ int GDALJP2Box::ReadNext()
 int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 
 {
-    if( poSuperBox == NULL )
+    if( poSuperBox == nullptr )
         return ReadFirst();
 
     szBoxType[0] = '\0';
@@ -135,7 +135,7 @@ int GDALJP2Box::ReadFirstChild( GDALJP2Box *poSuperBox )
 int GDALJP2Box::ReadNextChild( GDALJP2Box *poSuperBox )
 
 {
-    if( poSuperBox == NULL )
+    if( poSuperBox == nullptr )
         return ReadNext();
 
     if( !ReadNext() )
@@ -259,16 +259,16 @@ GByte *GDALJP2Box::ReadBoxData()
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Too big box : " CPL_FRMT_GIB " bytes",
                   nDataLength );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFSeekL( fpVSIL, nDataOffset, SEEK_SET ) != 0 )
-        return NULL;
+        return nullptr;
 
     char *pszData = static_cast<char *>(
         VSI_MALLOC_VERBOSE( static_cast<int>(nDataLength) + 1) );
-    if( pszData == NULL )
-        return NULL;
+    if( pszData == nullptr )
+        return nullptr;
 
     if( static_cast<GIntBig>( VSIFReadL(
            pszData, 1, static_cast<int>(nDataLength), fpVSIL ) )
@@ -276,7 +276,7 @@ GByte *GDALJP2Box::ReadBoxData()
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot read box content");
         CPLFree( pszData );
-        return NULL;
+        return nullptr;
     }
 
     pszData[nDataLength] = '\0';
@@ -300,7 +300,7 @@ GIntBig GDALJP2Box::GetDataLength()
 int GDALJP2Box::DumpReadable( FILE *fpOut, int nIndentLevel )
 
 {
-    if( fpOut == NULL )
+    if( fpOut == nullptr )
         fpOut = stdout;
 
     for( int i=0; i < nIndentLevel; ++i)
@@ -393,7 +393,7 @@ void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
 void GDALJP2Box::AppendWritableData( int nLength, const void *pabyDataIn )
 
 {
-    if( pabyData == NULL )
+    if( pabyData == nullptr )
     {
         nBoxOffset = -9; // Virtual offsets for data length computation.
         nDataOffset = -1;

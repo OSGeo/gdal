@@ -82,17 +82,17 @@ static VSIErrorContext *VSIGetErrorContext()
         reinterpret_cast<VSIErrorContext *>(
             CPLGetTLSEx( CTLS_VSIERRORCONTEXT, &bError ) );
     if( bError )
-        return NULL;
+        return nullptr;
 
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
     {
         psCtx = static_cast<VSIErrorContext *>(
             VSICalloc( sizeof(VSIErrorContext), 1) );
-        if( psCtx == NULL )
+        if( psCtx == nullptr )
         {
             fprintf(stderr, /*ok*/
                     "Out of memory attempting to record a VSI error.\n");
-            return NULL;
+            return nullptr;
         }
         psCtx->nLastErrNo = VSIE_None;
         psCtx->nLastErrMsgMax = sizeof(psCtx->szLastErrMsg);
@@ -109,7 +109,7 @@ static VSIErrorContext *VSIGetErrorContext()
 static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
       return;
 
 /* -------------------------------------------------------------------- */
@@ -199,7 +199,7 @@ void VSIError( VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ... )
 void CPL_STDCALL VSIErrorReset()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return;
 
     psCtx->nLastErrNo = VSIE_None;
@@ -224,7 +224,7 @@ void CPL_STDCALL VSIErrorReset()
 VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return 0;
 
     return psCtx->nLastErrNo;
@@ -248,7 +248,7 @@ VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
 const char* CPL_STDCALL VSIGetLastErrorMsg()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return "";
 
     return psCtx->szLastErrMsg;

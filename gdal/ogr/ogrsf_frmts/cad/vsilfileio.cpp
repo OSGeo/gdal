@@ -66,7 +66,7 @@ bool VSILFileIO::Open(int mode)
 
     m_oFileStream = VSIFOpenL( m_soFilePath.c_str(), sOpenMode.c_str() );
 
-    if( m_oFileStream != NULL )
+    if( m_oFileStream != nullptr )
         m_bIsOpened = true;
 
     return m_bIsOpened;
@@ -100,7 +100,7 @@ int VSILFileIO::Seek(long offset, CADFileIO::SeekOrigin origin)
 
 long int VSILFileIO::Tell()
 {
-    return VSIFTellL( m_oFileStream );
+    return static_cast<long>(VSIFTellL( m_oFileStream ));
 }
 
 size_t VSILFileIO::Read(void* ptr, size_t size)

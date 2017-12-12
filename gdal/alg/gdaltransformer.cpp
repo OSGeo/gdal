@@ -388,16 +388,16 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     // enough memory, back off and try with just 20 steps?
  retry:
     int nSampleMax = (nSteps + 1)*(nSteps + 1);
-    int *pabSuccess = NULL;
+    int *pabSuccess = nullptr;
 
     double dfRatio = 0.0;
     double dfStep = 1.0 / nSteps;
-    double *padfX = NULL;
-    double *padfY = NULL;
-    double *padfZ = NULL;
-    double *padfXRevert = NULL;
-    double *padfYRevert = NULL;
-    double *padfZRevert = NULL;
+    double *padfX = nullptr;
+    double *padfY = nullptr;
+    double *padfZ = nullptr;
+    double *padfXRevert = nullptr;
+    double *padfYRevert = nullptr;
+    double *padfZRevert = nullptr;
 
     pabSuccess = static_cast<int *>(
         VSI_MALLOC3_VERBOSE(sizeof(int), nSteps + 1, nSteps + 1));
@@ -405,7 +405,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
     padfXRevert = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
-    if( pabSuccess == NULL || padfX == NULL || padfXRevert == NULL )
+    if( pabSuccess == nullptr || padfX == nullptr || padfXRevert == nullptr )
     {
         CPLFree( padfX );
         CPLFree( padfXRevert );
@@ -906,7 +906,7 @@ GDALCreateSimilarGenImgProjTransformer( void *hTransformArg,
                                         double dfRatioX, double dfRatioY )
 {
     VALIDATE_POINTER1( hTransformArg,
-                       "GDALCreateSimilarGenImgProjTransformer", NULL );
+                       "GDALCreateSimilarGenImgProjTransformer", nullptr );
 
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
@@ -943,7 +943,7 @@ GDALCreateSimilarGenImgProjTransformer( void *hTransformArg,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
             GDALDestroyGenImgProjTransformer( psClonedInfo );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1013,11 +1013,11 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  CPL_UNUSED double dfGCPErrorThreshold,
                                  int nOrder )
 {
-    char **papszOptions = NULL;
+    char **papszOptions = nullptr;
 
-    if( pszSrcWKT != NULL )
+    if( pszSrcWKT != nullptr )
         papszOptions = CSLSetNameValue( papszOptions, "SRC_SRS", pszSrcWKT );
-    if( pszDstWKT != NULL )
+    if( pszDstWKT != nullptr )
         papszOptions = CSLSetNameValue( papszOptions, "DST_SRS", pszDstWKT );
     if( !bGCPUseOK )
         papszOptions = CSLSetNameValue( papszOptions, "GCPS_OK", "FALSE" );
@@ -1045,7 +1045,7 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
     if( !STARTS_WITH_CI(osWKT.c_str(), "GEOGCS[") )
         return osWKT;
 
-    if( strstr(osWKT, "EXTENSION[\"CENTER_LONG") != NULL )
+    if( strstr(osWKT, "EXTENSION[\"CENTER_LONG") != nullptr )
         return osWKT;
 
 /* -------------------------------------------------------------------- */
@@ -1100,7 +1100,7 @@ static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
 /* -------------------------------------------------------------------- */
 /*      Convert back to wkt.                                            */
 /* -------------------------------------------------------------------- */
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
     oSRS.exportToWkt( &pszWKT );
 
     osWKT = pszWKT;
@@ -1242,10 +1242,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                   char **papszOptions )
 
 {
-    char **papszMD = NULL;
+    char **papszMD = nullptr;
     GDALRPCInfo sRPCInfo;
     const char *pszMethod = CSLFetchNameValue( papszOptions, "SRC_METHOD" );
-    if( pszMethod == NULL )
+    if( pszMethod == nullptr )
         pszMethod = CSLFetchNameValue( papszOptions, "METHOD" );
     const char *pszSrcWKT = CSLFetchNameValue( papszOptions, "SRC_SRS" );
     const char *pszDstWKT = CSLFetchNameValue( papszOptions, "DST_SRS" );
@@ -1261,7 +1261,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const int nMinimumGcps =  pszValue ? atoi(pszValue) : -1;
 
     pszValue = CSLFetchNameValue( papszOptions, "REFINE_TOLERANCE" );
-    const bool bRefine = pszValue != NULL;
+    const bool bRefine = pszValue != nullptr;
     const double dfTolerance = pszValue ? CPLAtof(pszValue) : 0.0;
 
 /* -------------------------------------------------------------------- */
@@ -1273,8 +1273,8 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
-    if( hSrcDS == NULL ||
-        (pszMethod != NULL && EQUAL(pszMethod, "NO_GEOTRANSFORM")) )
+    if( hSrcDS == nullptr ||
+        (pszMethod != nullptr && EQUAL(pszMethod, "NO_GEOTRANSFORM")) )
     {
         psInfo->adfSrcGeoTransform[0] = 0.0;
         psInfo->adfSrcGeoTransform[1] = 1.0;
@@ -1285,7 +1285,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         memcpy( psInfo->adfSrcInvGeoTransform, psInfo->adfSrcGeoTransform,
                 sizeof(double) * 6 );
     }
-    else if( (pszMethod == NULL || EQUAL(pszMethod, "GEOTRANSFORM"))
+    else if( (pszMethod == nullptr || EQUAL(pszMethod, "GEOTRANSFORM"))
              && GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform )
              == CE_None
              && (psInfo->adfSrcGeoTransform[0] != 0.0
@@ -1300,13 +1300,13 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
-        if( pszSrcWKT == NULL )
+        if( pszSrcWKT == nullptr )
             pszSrcWKT = GDALGetProjectionRef( hSrcDS );
     }
     else if( bGCPUseOK
-             && (pszMethod == NULL || EQUAL(pszMethod, "GCP_POLYNOMIAL") )
+             && (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL") )
              && GDALGetGCPCount( hSrcDS ) > 0 && nOrder >= 0 )
     {
         if( bRefine )
@@ -1325,70 +1325,70 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                           FALSE );
         }
 
-        if( psInfo->pSrcTransformArg == NULL )
+        if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pSrcTransformer = GDALGCPTransform;
 
-        if( pszSrcWKT == NULL )
+        if( pszSrcWKT == nullptr )
             pszSrcWKT = GDALGetGCPProjection( hSrcDS );
     }
 
     else if( bGCPUseOK
              && GDALGetGCPCount( hSrcDS ) > 0
              && nOrder <= 0
-             && (pszMethod == NULL || EQUAL(pszMethod, "GCP_TPS")) )
+             && (pszMethod == nullptr || EQUAL(pszMethod, "GCP_TPS")) )
     {
         psInfo->pSrcTransformArg =
             GDALCreateTPSTransformerInt( GDALGetGCPCount( hSrcDS ),
                                          GDALGetGCPs( hSrcDS ), FALSE,
                                          papszOptions);
-        if( psInfo->pSrcTransformArg == NULL )
+        if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pSrcTransformer = GDALTPSTransform;
 
-        if( pszSrcWKT == NULL )
+        if( pszSrcWKT == nullptr )
             pszSrcWKT = GDALGetGCPProjection( hSrcDS );
     }
 
-    else if( (pszMethod == NULL || EQUAL(pszMethod, "RPC"))
-             && (papszMD = GDALGetMetadata( hSrcDS, "RPC" )) != NULL
+    else if( (pszMethod == nullptr || EQUAL(pszMethod, "RPC"))
+             && (papszMD = GDALGetMetadata( hSrcDS, "RPC" )) != nullptr
              && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
     {
         psInfo->pSrcTransformArg =
             GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
-        if( psInfo->pSrcTransformArg == NULL )
+        if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pSrcTransformer = GDALRPCTransform;
-        if( pszSrcWKT == NULL )
+        if( pszSrcWKT == nullptr )
             pszSrcWKT = SRS_WKT_WGS84;
     }
 
-    else if( (pszMethod == NULL || EQUAL(pszMethod, "GEOLOC_ARRAY"))
-             && (papszMD = GDALGetMetadata( hSrcDS, "GEOLOCATION" )) != NULL )
+    else if( (pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY"))
+             && (papszMD = GDALGetMetadata( hSrcDS, "GEOLOCATION" )) != nullptr )
     {
         psInfo->pSrcTransformArg =
             GDALCreateGeoLocTransformer( hSrcDS, papszMD, FALSE );
 
-        if( psInfo->pSrcTransformArg == NULL )
+        if( psInfo->pSrcTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pSrcTransformer = GDALGeoLocTransform;
-        if( pszSrcWKT == NULL )
+        if( pszSrcWKT == nullptr )
             pszSrcWKT = CSLFetchNameValue( papszMD, "SRS" );
     }
 
-    else if( pszMethod != NULL )
+    else if( pszMethod != nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to compute a %s based transformation between "
@@ -1396,7 +1396,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                  pszMethod, GDALGetDescription(hSrcDS));
 
         GDALDestroyGenImgProjTransformer( psInfo );
-        return NULL;
+        return nullptr;
     }
 
     else
@@ -1411,7 +1411,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                  GDALGetDescription(hSrcDS));
 
         GDALDestroyGenImgProjTransformer( psInfo );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1429,10 +1429,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                             psInfo->pSrcTransformArg,
                                             CPLAtof(pszSrcApproxErrorFwd),
                                             CPLAtof(pszSrcApproxErrorReverse) );
-            if( pArg == NULL )
+            if( pArg == nullptr )
             {
                 GDALDestroyGenImgProjTransformer( psInfo );
-                return NULL;
+                return nullptr;
             }
             psInfo->pSrcTransformArg = pArg;
             psInfo->pSrcTransformer = GDALApproxTransform;
@@ -1447,7 +1447,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
     const char *pszDstMethod = CSLFetchNameValue( papszOptions, "DST_METHOD" );
 
-    if( !hDstDS || (pszDstMethod != NULL &&
+    if( !hDstDS || (pszDstMethod != nullptr &&
                     EQUAL(pszDstMethod, "NO_GEOTRANSFORM"))  )
     {
         psInfo->adfDstGeoTransform[0] = 0.0;
@@ -1459,10 +1459,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         memcpy( psInfo->adfDstInvGeoTransform, psInfo->adfDstGeoTransform,
                 sizeof(double) * 6 );
     }
-    else if( (pszDstMethod == NULL || EQUAL(pszDstMethod, "GEOTRANSFORM"))
+    else if( (pszDstMethod == nullptr || EQUAL(pszDstMethod, "GEOTRANSFORM"))
         && GDALGetGeoTransform( hDstDS, psInfo->adfDstGeoTransform ) == CE_None)
     {
-        if( pszDstWKT == NULL )
+        if( pszDstWKT == nullptr )
             pszDstWKT = GDALGetProjectionRef( hDstDS );
 
         if( !GDALInvGeoTransform( psInfo->adfDstGeoTransform,
@@ -1470,11 +1470,11 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
     }
     else if( bGCPUseOK
-             && (pszDstMethod == NULL || EQUAL(pszDstMethod, "GCP_POLYNOMIAL") )
+             && (pszDstMethod == nullptr || EQUAL(pszDstMethod, "GCP_POLYNOMIAL") )
              && GDALGetGCPCount( hDstDS ) > 0 && nOrder >= 0 )
     {
         if( bRefine )
@@ -1493,48 +1493,48 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                           FALSE );
         }
 
-        if( psInfo->pDstTransformArg == NULL )
+        if( psInfo->pDstTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pDstTransformer = GDALGCPTransform;
 
-        if( pszDstWKT == NULL )
+        if( pszDstWKT == nullptr )
             pszDstWKT = GDALGetGCPProjection( hDstDS );
     }
     else if( bGCPUseOK
              && GDALGetGCPCount( hDstDS ) > 0
              && nOrder <= 0
-             && (pszDstMethod == NULL || EQUAL(pszDstMethod, "GCP_TPS")) )
+             && (pszDstMethod == nullptr || EQUAL(pszDstMethod, "GCP_TPS")) )
     {
         psInfo->pDstTransformArg =
             GDALCreateTPSTransformerInt( GDALGetGCPCount( hDstDS ),
                                          GDALGetGCPs( hDstDS ), FALSE,
                                          papszOptions );
-        if( psInfo->pDstTransformArg == NULL )
+        if( psInfo->pDstTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pDstTransformer = GDALTPSTransform;
 
-        if( pszDstWKT == NULL )
+        if( pszDstWKT == nullptr )
             pszDstWKT = GDALGetGCPProjection( hDstDS );
     }
-    else if( (pszDstMethod == NULL || EQUAL(pszDstMethod, "RPC"))
-             && (papszMD = GDALGetMetadata( hDstDS, "RPC" )) != NULL
+    else if( (pszDstMethod == nullptr || EQUAL(pszDstMethod, "RPC"))
+             && (papszMD = GDALGetMetadata( hDstDS, "RPC" )) != nullptr
              && GDALExtractRPCInfo( papszMD, &sRPCInfo ) )
     {
         psInfo->pDstTransformArg =
             GDALCreateRPCTransformer( &sRPCInfo, FALSE, 0, papszOptions );
-        if( psInfo->pDstTransformArg == NULL )
+        if( psInfo->pDstTransformArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pDstTransformer = GDALRPCTransform;
-        if( pszDstWKT == NULL )
+        if( pszDstWKT == nullptr )
             pszDstWKT = SRS_WKT_WGS84;
     }
 
@@ -1549,7 +1549,7 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                  GDALGetDescription(hDstDS));
 
         GDALDestroyGenImgProjTransformer( psInfo );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1567,10 +1567,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                             psInfo->pDstTransformArg,
                                             CPLAtof(pszDstApproxErrorFwd),
                                             CPLAtof(pszDstApproxErrorReverse) );
-            if( pArg == NULL )
+            if( pArg == nullptr )
             {
                 GDALDestroyGenImgProjTransformer( psInfo );
-                return NULL;
+                return nullptr;
             }
             psInfo->pDstTransformArg = pArg;
             psInfo->pDstTransformer = GDALApproxTransform;
@@ -1594,9 +1594,9 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             if( oSRS.IsCompound() )
             {
                 OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
-                if( poNode != NULL )
+                if( poNode != nullptr )
                 {
-                    char* pszWKT = NULL;
+                    char* pszWKT = nullptr;
                     poNode->exportToWkt(&pszWKT);
                     osSrcWKT = pszWKT;
                     CPLFree(pszWKT);
@@ -1607,9 +1607,9 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             if( oSRS.IsCompound() )
             {
                 OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
-                if( poNode != NULL )
+                if( poNode != nullptr )
                 {
-                    char* pszWKT = NULL;
+                    char* pszWKT = nullptr;
                     poNode->exportToWkt(&pszWKT);
                     osDstWKT = pszWKT;
                     CPLFree(pszWKT);
@@ -1627,10 +1627,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 
         psInfo->pReprojectArg =
             GDALCreateReprojectionTransformer( osSrcWKT, osDstWKT );
-        if( psInfo->pReprojectArg == NULL )
+        if( psInfo->pReprojectArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pReproject = GDALReprojectionTransform;
 
@@ -1647,10 +1647,10 @@ GDALCreateGenImgProjTransformer2( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                                 psInfo->pReprojectArg,
                                                 CPLAtof(psApproxErrorFwd),
                                                 CPLAtof(psApproxErrorReverse) );
-            if( pArg == NULL )
+            if( pArg == nullptr )
             {
                 GDALDestroyGenImgProjTransformer( psInfo );
-                return NULL;
+                return nullptr;
             }
             psInfo->pReprojectArg = pArg;
             psInfo->pReproject = GDALApproxTransform;
@@ -1751,7 +1751,7 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -1769,16 +1769,16 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
 /* -------------------------------------------------------------------- */
-    if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0
-        && pszDstWKT != NULL && strlen(pszDstWKT) > 0
+    if( pszSrcWKT != nullptr && strlen(pszSrcWKT) > 0
+        && pszDstWKT != nullptr && strlen(pszDstWKT) > 0
         && !EQUAL(pszSrcWKT, pszDstWKT) )
     {
         psInfo->pReprojectArg =
             GDALCreateReprojectionTransformer( pszSrcWKT, pszDstWKT );
-        if( psInfo->pReprojectArg == NULL )
+        if( psInfo->pReprojectArg == nullptr )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
         psInfo->pReproject = GDALReprojectionTransform;
     }
@@ -1796,7 +1796,7 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot invert geotransform");
             GDALDestroyGenImgProjTransformer( psInfo );
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -1868,19 +1868,19 @@ void GDALSetGenImgProjTransformerDstGeoTransform(
 void GDALDestroyGenImgProjTransformer( void *hTransformArg )
 
 {
-    if( hTransformArg == NULL )
+    if( hTransformArg == nullptr )
         return;
 
     GDALGenImgProjTransformInfo *psInfo =
         static_cast<GDALGenImgProjTransformInfo *>(hTransformArg);
 
-    if( psInfo->pSrcTransformArg != NULL )
+    if( psInfo->pSrcTransformArg != nullptr )
         GDALDestroyTransformer( psInfo->pSrcTransformArg );
 
-    if( psInfo->pDstTransformArg != NULL )
+    if( psInfo->pDstTransformArg != nullptr )
         GDALDestroyTransformer( psInfo->pDstTransformArg );
 
-    if( psInfo->pReprojectArg != NULL )
+    if( psInfo->pReprojectArg != nullptr )
         GDALDestroyTransformer( psInfo->pReprojectArg );
 
     CPLFree( psInfo );
@@ -1925,9 +1925,9 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
 /*      Convert from src (dst) pixel/line to src (dst)                  */
 /*      georeferenced coordinates.                                      */
 /* -------------------------------------------------------------------- */
-    double *padfGeoTransform = NULL;
-    void *pTransformArg = NULL;
-    GDALTransformerFunc pTransformer = NULL;
+    double *padfGeoTransform = nullptr;
+    void *pTransformArg = nullptr;
+    GDALTransformerFunc pTransformer = nullptr;
     if( bDstToSrc )
     {
         padfGeoTransform = psInfo->adfDstGeoTransform;
@@ -1941,7 +1941,7 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
         pTransformer = psInfo->pSrcTransformer;
     }
 
-    if( pTransformArg != NULL )
+    if( pTransformArg != nullptr )
     {
         if( !pTransformer( pTransformArg, FALSE,
                            nPointCount, padfX, padfY, padfZ,
@@ -1995,7 +1995,7 @@ int GDALGenImgProjTransform( void *pTransformArgIn, int bDstToSrc,
     }
 
 
-    if( pTransformArg != NULL )
+    if( pTransformArg != nullptr )
     {
         if( !pTransformer( pTransformArg, TRUE,
                            nPointCount, padfX, padfY, padfZ,
@@ -2036,19 +2036,19 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
         static_cast<GDALGenImgProjTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
-        CPLCreateXMLNode( NULL, CXT_Element, "GenImgProjTransformer" );
+        CPLCreateXMLNode( nullptr, CXT_Element, "GenImgProjTransformer" );
 
     char szWork[200] = {};
 
 /* -------------------------------------------------------------------- */
 /*      Handle source transformation.                                   */
 /* -------------------------------------------------------------------- */
-    if( psInfo->pSrcTransformArg != NULL )
+    if( psInfo->pSrcTransformArg != nullptr )
     {
         CPLXMLNode *psTransformer =
             GDALSerializeTransformer( psInfo->pSrcTransformer,
                                       psInfo->pSrcTransformArg);
-        if( psTransformer != NULL )
+        if( psTransformer != nullptr )
         {
             CPLXMLNode *psTransformerContainer =
                 CPLCreateXMLNode( psTree, CXT_Element,
@@ -2088,12 +2088,12 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Handle dest transformation.                                     */
 /* -------------------------------------------------------------------- */
-    if( psInfo->pDstTransformArg != NULL )
+    if( psInfo->pDstTransformArg != nullptr )
     {
         CPLXMLNode *psTransformer =
             GDALSerializeTransformer( psInfo->pDstTransformer,
                                       psInfo->pDstTransformArg);
-        if( psTransformer != NULL )
+        if( psTransformer != nullptr )
         {
             CPLXMLNode *psTransformerContainer =
                 CPLCreateXMLNode( psTree, CXT_Element,
@@ -2132,7 +2132,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
 /* -------------------------------------------------------------------- */
 /*      Do we have a reprojection transformer?                          */
 /* -------------------------------------------------------------------- */
-    if( psInfo->pReprojectArg != NULL )
+    if( psInfo->pReprojectArg != nullptr )
     {
 
         CPLXMLNode *psTransformerContainer
@@ -2141,7 +2141,7 @@ GDALSerializeGenImgProjTransformer( void *pTransformArg )
         CPLXMLNode *psTransformer
             = GDALSerializeTransformer( psInfo->pReproject,
                                         psInfo->pReprojectArg );
-        if( psTransformer != NULL )
+        if( psTransformer != nullptr )
             CPLAddXMLChild( psTransformerContainer, psTransformer );
     }
 
@@ -2180,13 +2180,13 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      SrcGeotransform                                                 */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psTree, "SrcGeoTransform" ) != NULL )
+    if( CPLGetXMLNode( psTree, "SrcGeoTransform" ) != nullptr )
     {
         GDALDeserializeGeoTransform(
             CPLGetXMLValue( psTree, "SrcGeoTransform", "" ),
             psInfo->adfSrcGeoTransform );
 
-        if( CPLGetXMLNode( psTree, "SrcInvGeoTransform" ) != NULL )
+        if( CPLGetXMLNode( psTree, "SrcInvGeoTransform" ) != nullptr )
         {
             GDALDeserializeGeoTransform(
                 CPLGetXMLValue( psTree, "SrcInvGeoTransform", "" ),
@@ -2208,7 +2208,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     else
     {
-        for( CPLXMLNode* psIter = psTree->psChild; psIter != NULL;
+        for( CPLXMLNode* psIter = psTree->psChild; psIter != nullptr;
                                                    psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -2225,13 +2225,13 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      DstGeotransform                                                 */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLNode( psTree, "DstGeoTransform" ) != NULL )
+    if( CPLGetXMLNode( psTree, "DstGeoTransform" ) != nullptr )
     {
         GDALDeserializeGeoTransform(
             CPLGetXMLValue( psTree, "DstGeoTransform", "" ),
             psInfo->adfDstGeoTransform);
 
-        if( CPLGetXMLNode( psTree, "DstInvGeoTransform" ) != NULL )
+        if( CPLGetXMLNode( psTree, "DstInvGeoTransform" ) != nullptr )
         {
             GDALDeserializeGeoTransform(
                 CPLGetXMLValue( psTree, "DstInvGeoTransform", "" ),
@@ -2253,7 +2253,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     else
     {
-        for( CPLXMLNode* psIter = psTree->psChild; psIter != NULL;
+        for( CPLXMLNode* psIter = psTree->psChild; psIter != nullptr;
                                                    psIter = psIter->psNext )
         {
             if( psIter->eType == CXT_Element &&
@@ -2271,7 +2271,7 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
 /*      Reproject transformer                                           */
 /* -------------------------------------------------------------------- */
     CPLXMLNode* psSubtree = CPLGetXMLNode( psTree, "ReprojectTransformer" );
-    if( psSubtree != NULL && psSubtree->psChild != NULL )
+    if( psSubtree != nullptr && psSubtree->psChild != nullptr )
     {
         GDALDeserializeTransformer( psSubtree->psChild,
                                     &psInfo->pReproject,
@@ -2330,7 +2330,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",
                   pszSrcWKT );
-        return NULL;
+        return nullptr;
     }
 
     OGRSpatialReference oDstSRS;
@@ -2339,7 +2339,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",
                   pszSrcWKT );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2348,9 +2348,9 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
     OGRCoordinateTransformation *poForwardTransform =
         OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
 
-    if( poForwardTransform == NULL )
+    if( poForwardTransform == nullptr )
         // OGRCreateCoordinateTransformation() will report errors on its own.
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a structure to hold the transform info, and also         */
@@ -2390,7 +2390,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 void GDALDestroyReprojectionTransformer( void *pTransformArg )
 
 {
-    if( pTransformArg == NULL )
+    if( pTransformArg == nullptr )
         return;
 
     GDALReprojectionTransformInfo *psInfo =
@@ -2450,13 +2450,13 @@ GDALSerializeReprojectionTransformer( void *pTransformArg )
     GDALReprojectionTransformInfo *psInfo =
         (GDALReprojectionTransformInfo *) pTransformArg;
 
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "ReprojectionTransformer" );
+    psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ReprojectionTransformer" );
 
 /* -------------------------------------------------------------------- */
 /*      Handle SourceCS.                                                */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference *poSRS;
-    char *pszWKT = NULL;
+    char *pszWKT = nullptr;
 
     poSRS = psInfo->poForwardTransform->GetSourceCS();
     poSRS->exportToWkt( &pszWKT );
@@ -2482,12 +2482,12 @@ static void *
 GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
 
 {
-    const char *pszSourceSRS = CPLGetXMLValue( psTree, "SourceSRS", NULL );
-    const char *pszTargetSRS = CPLGetXMLValue( psTree, "TargetSRS", NULL );
-    char *pszSourceWKT = NULL, *pszTargetWKT = NULL;
-    void *pResult = NULL;
+    const char *pszSourceSRS = CPLGetXMLValue( psTree, "SourceSRS", nullptr );
+    const char *pszTargetSRS = CPLGetXMLValue( psTree, "TargetSRS", nullptr );
+    char *pszSourceWKT = nullptr, *pszTargetWKT = nullptr;
+    void *pResult = nullptr;
 
-    if( pszSourceSRS != NULL )
+    if( pszSourceSRS != nullptr )
     {
         OGRSpatialReference oSRS;
 
@@ -2495,7 +2495,7 @@ GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
             oSRS.exportToWkt( &pszSourceWKT );
     }
 
-    if( pszTargetSRS != NULL )
+    if( pszTargetSRS != nullptr )
     {
         OGRSpatialReference oSRS;
 
@@ -2503,7 +2503,7 @@ GDALDeserializeReprojectionTransformer( CPLXMLNode *psTree )
             oSRS.exportToWkt( &pszTargetWKT );
     }
 
-    if( pszSourceWKT != NULL && pszTargetWKT != NULL )
+    if( pszSourceWKT != nullptr && pszTargetWKT != nullptr )
     {
         pResult = GDALCreateReprojectionTransformer( pszSourceWKT,
                                                      pszTargetWKT );
@@ -2548,7 +2548,7 @@ GDALCreateSimilarApproxTransformer( void *hTransformArg,
                                     double dfSrcRatioX, double dfSrcRatioY )
 {
     VALIDATE_POINTER1( hTransformArg,
-                       "GDALCreateSimilarApproxTransformer", NULL );
+                       "GDALCreateSimilarApproxTransformer", nullptr );
 
     ApproxTransformInfo *psInfo =
       static_cast<ApproxTransformInfo *>(hTransformArg);
@@ -2563,10 +2563,10 @@ GDALCreateSimilarApproxTransformer( void *hTransformArg,
             GDALCreateSimilarTransformer( psInfo->pBaseCBData,
                                           dfSrcRatioX,
                                           dfSrcRatioY );
-        if( psClonedInfo->pBaseCBData == NULL )
+        if( psClonedInfo->pBaseCBData == nullptr )
         {
             CPLFree(psClonedInfo);
-            return NULL;
+            return nullptr;
         }
     }
     psClonedInfo->bOwnSubtransformer = TRUE;
@@ -2585,7 +2585,7 @@ GDALSerializeApproxTransformer( void *pTransformArg )
     CPLXMLNode *psTree;
     ApproxTransformInfo *psInfo = (ApproxTransformInfo *) pTransformArg;
 
-    psTree = CPLCreateXMLNode( NULL, CXT_Element, "ApproxTransformer" );
+    psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ApproxTransformer" );
 
 /* -------------------------------------------------------------------- */
 /*      Attach max error.                                               */
@@ -2612,7 +2612,7 @@ GDALSerializeApproxTransformer( void *pTransformArg )
     CPLXMLNode *psTransformer =
         GDALSerializeTransformer( psInfo->pfnBaseTransformer,
                                   psInfo->pBaseCBData );
-    if( psTransformer != NULL )
+    if( psTransformer != nullptr )
         CPLAddXMLChild( psTransformerContainer, psTransformer );
 
     return psTree;
@@ -2727,7 +2727,7 @@ void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
 void GDALDestroyApproxTransformer( void * pCBData )
 
 {
-    if( pCBData == NULL)
+    if( pCBData == nullptr)
         return;
 
     ApproxTransformInfo *psATInfo = static_cast<ApproxTransformInfo *>(pCBData);
@@ -3119,42 +3119,42 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
 {
     double dfMaxErrorForward = 0.25;
     double dfMaxErrorReverse = 0.25;
-    const char* pszMaxError = CPLGetXMLValue( psTree, "MaxError", NULL);
-    if( pszMaxError != NULL )
+    const char* pszMaxError = CPLGetXMLValue( psTree, "MaxError", nullptr);
+    if( pszMaxError != nullptr )
     {
         dfMaxErrorForward = CPLAtof(pszMaxError);
         dfMaxErrorReverse = dfMaxErrorForward;
     }
     const char* pszMaxErrorForward =
-                    CPLGetXMLValue( psTree, "MaxErrorForward", NULL);
-    if( pszMaxErrorForward != NULL )
+                    CPLGetXMLValue( psTree, "MaxErrorForward", nullptr);
+    if( pszMaxErrorForward != nullptr )
     {
         dfMaxErrorForward = CPLAtof(pszMaxErrorForward);
     }
     const char* pszMaxErrorReverse =
-                    CPLGetXMLValue( psTree, "MaxErrorReverse", NULL);
-    if( pszMaxErrorReverse != NULL )
+                    CPLGetXMLValue( psTree, "MaxErrorReverse", nullptr);
+    if( pszMaxErrorReverse != nullptr )
     {
         dfMaxErrorReverse = CPLAtof(pszMaxErrorReverse);
     }
 
-    GDALTransformerFunc pfnBaseTransform = NULL;
-    void *pBaseCBData = NULL;
+    GDALTransformerFunc pfnBaseTransform = nullptr;
+    void *pBaseCBData = nullptr;
 
     CPLXMLNode *psContainer = CPLGetXMLNode( psTree, "BaseTransformer" );
 
-    if( psContainer != NULL && psContainer->psChild != NULL )
+    if( psContainer != nullptr && psContainer->psChild != nullptr )
     {
         GDALDeserializeTransformer( psContainer->psChild,
                                     &pfnBaseTransform,
                                     &pBaseCBData );
     }
 
-    if( pfnBaseTransform == NULL )
+    if( pfnBaseTransform == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Cannot get base transform for approx transformer." );
-        return NULL;
+        return nullptr;
     }
 
     void *pApproxCBData = GDALCreateApproxTransformer2( pfnBaseTransform,
@@ -3272,25 +3272,25 @@ int CPL_STDCALL GDALInvGeoTransform( double *gt_in, double *gt_out )
 CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc /* pfnFunc */,
                                       void *pTransformArg )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTransformer", nullptr );
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
-    if( psInfo == NULL ||
+    if( psInfo == nullptr ||
         memcmp(psInfo->abySignature,
                GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to serialize non-GTI2 transformer." );
-        return NULL;
+        return nullptr;
     }
-    else if( psInfo->pfnSerialize == NULL )
+    else if( psInfo->pfnSerialize == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No serialization function available for this transformer." );
-        return NULL;
+        return nullptr;
     }
 
     return psInfo->pfnSerialize( pTransformArg );
@@ -3300,8 +3300,8 @@ CPLXMLNode *GDALSerializeTransformer( GDALTransformerFunc /* pfnFunc */,
 /*                  GDALRegisterTransformDeserializer()                 */
 /************************************************************************/
 
-static CPLList* psListDeserializer = NULL;
-static CPLMutex* hDeserializerMutex = NULL;
+static CPLList* psListDeserializer = nullptr;
+static CPLMutex* hDeserializerMutex = nullptr;
 
 typedef struct
 {
@@ -3337,7 +3337,7 @@ void GDALUnregisterTransformDeserializer( void* pData )
 {
     CPLMutexHolderD(&hDeserializerMutex);
     CPLList* psList = psListDeserializer;
-    CPLList* psLast = NULL;
+    CPLList* psLast = nullptr;
     while( psList )
     {
         if( psList->pData == pData )
@@ -3349,7 +3349,7 @@ void GDALUnregisterTransformDeserializer( void* pData )
             if( psLast )
                 psLast->psNext = psList->psNext;
             else
-                psListDeserializer = NULL;
+                psListDeserializer = nullptr;
             CPLFree(psList);
             break;
         }
@@ -3364,10 +3364,10 @@ void GDALUnregisterTransformDeserializer( void* pData )
 
 void GDALCleanupTransformDeserializerMutex()
 {
-    if( hDeserializerMutex != NULL )
+    if( hDeserializerMutex != nullptr )
     {
         CPLDestroyMutex(hDeserializerMutex);
-        hDeserializerMutex = NULL;
+        hDeserializerMutex = nullptr;
     }
 }
 
@@ -3380,12 +3380,12 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
                                    void **ppTransformArg )
 
 {
-    *ppfnFunc = NULL;
-    *ppTransformArg = NULL;
+    *ppfnFunc = nullptr;
+    *ppTransformArg = nullptr;
 
     CPLErrorReset();
 
-    if( psTree == NULL || psTree->eType != CXT_Element )
+    if( psTree == nullptr || psTree->eType != CXT_Element )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Malformed element in GDALDeserializeTransformer" );
     else if( EQUAL(psTree->pszValue, "GenImgProjTransformer") )
@@ -3425,7 +3425,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
     }
     else
     {
-        GDALTransformDeserializeFunc pfnDeserializeFunc = NULL;
+        GDALTransformDeserializeFunc pfnDeserializeFunc = nullptr;
         {
             CPLMutexHolderD(&hDeserializerMutex);
             CPLList* psList = psListDeserializer;
@@ -3443,7 +3443,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
             }
         }
 
-        if( pfnDeserializeFunc != NULL )
+        if( pfnDeserializeFunc != nullptr )
         {
             *ppTransformArg = pfnDeserializeFunc( psTree );
         }
@@ -3465,7 +3465,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
 void GDALDestroyTransformer( void *pTransformArg )
 
 {
-    if( pTransformArg == NULL )
+    if( pTransformArg == nullptr )
         return;
 
     GDALTransformerInfo *psInfo =
@@ -3495,7 +3495,7 @@ int GDALUseTransformer( void *pTransformArg,
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
-    if( psInfo == NULL ||
+    if( psInfo == nullptr ||
         memcmp(psInfo->abySignature,
                GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0 )
@@ -3515,45 +3515,45 @@ int GDALUseTransformer( void *pTransformArg,
 
 void *GDALCloneTransformer( void *pTransformArg )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALCloneTransformer", nullptr );
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
-    if( psInfo == NULL ||
+    if( psInfo == nullptr ||
         memcmp(psInfo->abySignature,
                GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to clone non-GTI2 transformer." );
-        return NULL;
+        return nullptr;
     }
 
-    if( psInfo->pfnCreateSimilar != NULL )
+    if( psInfo->pfnCreateSimilar != nullptr )
     {
         return psInfo->pfnCreateSimilar(psInfo, 1.0, 1.0);
     }
 
-    if( psInfo->pfnSerialize == NULL )
+    if( psInfo->pfnSerialize == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "No serialization function available for this transformer." );
-        return NULL;
+        return nullptr;
     }
 
     CPLXMLNode* pSerialized = psInfo->pfnSerialize( pTransformArg );
-    if( pSerialized == NULL )
-        return NULL;
-    GDALTransformerFunc pfnTransformer = NULL;
-    void *pClonedTransformArg = NULL;
+    if( pSerialized == nullptr )
+        return nullptr;
+    GDALTransformerFunc pfnTransformer = nullptr;
+    void *pClonedTransformArg = nullptr;
     if( GDALDeserializeTransformer( pSerialized, &pfnTransformer,
                                     &pClonedTransformArg ) !=
         CE_None )
     {
         CPLDestroyXMLNode(pSerialized);
         CPLFree(pClonedTransformArg);
-        return NULL;
+        return nullptr;
     }
 
     CPLDestroyXMLNode(pSerialized);
@@ -3567,26 +3567,26 @@ void *GDALCloneTransformer( void *pTransformArg )
 void* GDALCreateSimilarTransformer( void* pTransformArg,
                                     double dfRatioX, double dfRatioY )
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALCreateSimilarTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALCreateSimilarTransformer", nullptr );
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
-    if( psInfo == NULL ||
+    if( psInfo == nullptr ||
         memcmp(psInfo->abySignature,
                GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to call CreateSimilar on a non-GTI2 transformer." );
-        return NULL;
+        return nullptr;
     }
 
-    if( psInfo->pfnCreateSimilar == NULL )
+    if( psInfo->pfnCreateSimilar == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "No CreateSimilar function available for this transformer.");
-        return NULL;
+        return nullptr;
     }
 
     return psInfo->pfnCreateSimilar(psInfo, dfRatioX, dfRatioY);
@@ -3602,7 +3602,7 @@ static GDALTransformerInfo* GetGenImgProjTransformInfo( const char* pszFunc,
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(pTransformArg);
 
-    if( psInfo == NULL ||
+    if( psInfo == nullptr ||
         memcmp(psInfo->abySignature,
                GDAL_GTI2_SIGNATURE,
                strlen(GDAL_GTI2_SIGNATURE)) != 0 )
@@ -3610,7 +3610,7 @@ static GDALTransformerInfo* GetGenImgProjTransformInfo( const char* pszFunc,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to call %s on "
                  "a non-GTI2 transformer.", pszFunc);
-        return NULL;
+        return nullptr;
     }
 
     if( EQUAL(psInfo->pszClassName, "GDALApproxTransformer") )
@@ -3619,7 +3619,7 @@ static GDALTransformerInfo* GetGenImgProjTransformInfo( const char* pszFunc,
             static_cast<ApproxTransformInfo *>(pTransformArg);
         psInfo = static_cast<GDALTransformerInfo *>(psATInfo->pBaseCBData);
 
-        if( psInfo == NULL ||
+        if( psInfo == nullptr ||
             memcmp(psInfo->abySignature,
                    GDAL_GTI2_SIGNATURE,
                    strlen(GDAL_GTI2_SIGNATURE)) != 0 )
@@ -3627,7 +3627,7 @@ static GDALTransformerInfo* GetGenImgProjTransformInfo( const char* pszFunc,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Attempt to call %s on "
                      "a non-GTI2 transformer.", pszFunc);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -3636,7 +3636,7 @@ static GDALTransformerInfo* GetGenImgProjTransformInfo( const char* pszFunc,
         return psInfo;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

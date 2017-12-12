@@ -97,7 +97,7 @@ CPCIDSKRPCModelSegment::CPCIDSKRPCModelSegment(PCIDSKFile *fileIn, int segmentIn
     catch( const PCIDSKException& )
     {
         delete pimpl_;
-        pimpl_ = NULL;
+        pimpl_ = nullptr;
         throw;
     }
 }

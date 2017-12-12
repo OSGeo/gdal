@@ -34,7 +34,7 @@ static void thread_func(void* ptr)
     int num = *(int*)ptr;
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
     GDALDataset* poDSRef = (GDALDataset*)GDALOpen("/vsimem/test_ref", GA_ReadOnly);
-    GDALDataset* poDS = poDriver->Create(CPLSPrintf("/vsimem/test%d", num), 100, 2000, 1, GDT_Byte, NULL);
+    GDALDataset* poDS = poDriver->Create(CPLSPrintf("/vsimem/test%d", num), 100, 2000, 1, GDT_Byte, nullptr);
     GDALRasterBand* poBand = poDS->GetRasterBand(1);
     GDALRasterBand* poBandRef = poDSRef->GetRasterBand(1);
     for(int i=0; i<2000; i++)
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
     int one = 1;
     int two = 2;
     GDALDriver* poDriver = (GDALDriver*)GDALGetDriverByName("ENVI");
-    GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, NULL);
+    GDALDataset* poDS = poDriver->Create("/vsimem/test_ref", 100, 2000, 1, GDT_Byte, nullptr);
     GDALClose(poDS);
 
     int counter = 0;

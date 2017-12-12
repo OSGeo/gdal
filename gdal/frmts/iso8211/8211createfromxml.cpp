@@ -37,44 +37,44 @@ CPL_CVSID("$Id$")
 
 int main(int nArgc, char* papszArgv[])
 {
-    const char *pszFilename = NULL;
-    const char *pszOutFilename = NULL;
+    const char *pszFilename = nullptr;
+    const char *pszOutFilename = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Check arguments.                                                */
 /* -------------------------------------------------------------------- */
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( pszFilename == NULL )
+        if( pszFilename == nullptr )
         {
             pszFilename = papszArgv[iArg];
         }
-        else if( pszOutFilename == NULL )
+        else if( pszOutFilename == nullptr )
         {
             pszOutFilename = papszArgv[iArg];
         }
         else
         {
-            pszFilename = NULL;
+            pszFilename = nullptr;
             break;
         }
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
     {
         printf( "Usage: 8211createfromxml filename.xml outfilename\n" );
         exit( 1 );
     }
 
     CPLXMLNode* poRoot = CPLParseXMLFile( pszFilename );
-    if( poRoot == NULL )
+    if( poRoot == nullptr )
     {
         fprintf(stderr, "Cannot parse XML file '%s'\n", pszFilename);
         exit( 1 );
     }
 
     CPLXMLNode* poXMLDDFModule = CPLSearchXMLNode(poRoot, "=DDFModule");
-    if( poXMLDDFModule == NULL )
+    if( poXMLDDFModule == nullptr )
     {
         fprintf(stderr, "Cannot find DDFModule node in XML file '%s'\n",
                 pszFilename);
@@ -84,7 +84,7 @@ int main(int nArgc, char* papszArgv[])
     /* Compute the size of the DDFField tag */
     CPLXMLNode* psIter = poXMLDDFModule->psChild;
     int nSizeFieldTag = 0;
-    while( psIter != NULL )
+    while( psIter != nullptr )
     {
         if( psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "DDFFieldDefn") == 0 )
@@ -158,7 +158,7 @@ int main(int nArgc, char* papszArgv[])
 
     // Create DDFFieldDefn and DDFRecord elements.
     psIter = poXMLDDFModule->psChild;
-    while( psIter != NULL )
+    while( psIter != nullptr )
     {
         if( psIter->eType == CXT_Element &&
             strcmp(psIter->pszValue, "DDFFieldDefn") == 0 )
@@ -196,9 +196,9 @@ int main(int nArgc, char* papszArgv[])
                 eTypeCode = dtc_mixed_data_type;
 
             const char* pszFormatControls =
-                CPLGetXMLValue(psIter, "formatControls", NULL);
+                CPLGetXMLValue(psIter, "formatControls", nullptr);
             if( eStructCode != dsc_elementary )
-                pszFormatControls = NULL;
+                pszFormatControls = nullptr;
 
             const char* pszArrayDescr =
                 CPLGetXMLValue(psIter, "arrayDescr", "");
@@ -214,7 +214,7 @@ int main(int nArgc, char* papszArgv[])
                              pszFormatControls );
 
             CPLXMLNode* psSubIter = psIter->psChild;
-            while( psSubIter != NULL )
+            while( psSubIter != nullptr )
             {
                 if( psSubIter->eType == CXT_Element &&
                     strcmp(psSubIter->pszValue, "DDFSubfieldDefn") == 0 )
@@ -226,7 +226,7 @@ int main(int nArgc, char* papszArgv[])
                 psSubIter = psSubIter->psNext;
             }
 
-            pszFormatControls = CPLGetXMLValue(psIter, "formatControls", NULL);
+            pszFormatControls = CPLGetXMLValue(psIter, "formatControls", nullptr);
             if( pszFormatControls )
                 poFDefn->SetFormatControls(pszFormatControls);
 
@@ -260,7 +260,7 @@ int main(int nArgc, char* papszArgv[])
                                CPLSPrintf("%d", poRec->GetSizeFieldTag()))));
 
             CPLXMLNode* psSubIter = psIter->psChild;
-            while( psSubIter != NULL )
+            while( psSubIter != nullptr )
             {
                 if( psSubIter->eType == CXT_Element &&
                     strcmp(psSubIter->pszValue, "DDFField") == 0 )
@@ -269,7 +269,7 @@ int main(int nArgc, char* papszArgv[])
                         CPLGetXMLValue(psSubIter, "name", "");
                     DDFFieldDefn* poFieldDefn =
                         oModule.FindFieldDefn( pszFieldName );
-                    if( poFieldDefn == NULL )
+                    if( poFieldDefn == nullptr )
                     {
                         fprintf(stderr, "Can't find field '%s'\n",
                                 pszFieldName );
@@ -281,8 +281,8 @@ int main(int nArgc, char* papszArgv[])
 
                     DDFField *poField = poRec->AddField( poFieldDefn );
                     const char* pszValue =
-                        CPLGetXMLValue(psSubIter, "value", NULL);
-                    if( pszValue != NULL && STARTS_WITH(pszValue, "0x") )
+                        CPLGetXMLValue(psSubIter, "value", nullptr);
+                    if( pszValue != nullptr && STARTS_WITH(pszValue, "0x") )
                     {
                         pszValue += 2;
                         int nDataLen = (int)strlen(pszValue) / 2;
@@ -311,7 +311,7 @@ int main(int nArgc, char* papszArgv[])
                     {
                         CPLXMLNode* psSubfieldIter = psSubIter->psChild;
                         std::map<std::string, int> oMapSubfield;
-                        while( psSubfieldIter != NULL )
+                        while( psSubfieldIter != nullptr )
                         {
                             if( psSubfieldIter->eType == CXT_Element &&
                                 strcmp(psSubfieldIter->pszValue,
@@ -322,7 +322,7 @@ int main(int nArgc, char* papszArgv[])
                                 const char* pszSubfieldType =
                                     CPLGetXMLValue(psSubfieldIter, "type", "");
                                 const char* pszSubfieldValue =
-                                    CPLGetXMLValue(psSubfieldIter, NULL, "");
+                                    CPLGetXMLValue(psSubfieldIter, nullptr, "");
                                 int nOcc = oMapSubfield[pszSubfieldName];
                                 oMapSubfield[pszSubfieldName] ++ ;
                                 if( strcmp(pszSubfieldType, "float") == 0 )

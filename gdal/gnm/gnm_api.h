@@ -92,6 +92,10 @@ CPLErr CPL_DLL CPL_STDCALL GNMChangeBlockState (GNMGenericNetworkH hNet,
 CPLErr CPL_DLL CPL_STDCALL GNMChangeAllBlockState (GNMGenericNetworkH hNet,
                                                    int bIsBlock);
 
+GNMNetworkH CPL_DLL CPL_STDCALL GNMCastToNetwork(GDALMajorObjectH hBase);
+
+GNMGenericNetworkH CPL_DLL CPL_STDCALL GNMCastToGenericNetwork(GDALMajorObjectH hBase);
+
 CPL_C_END
 
 #endif // GNM_API

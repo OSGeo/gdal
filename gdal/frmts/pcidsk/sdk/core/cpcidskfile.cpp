@@ -74,8 +74,8 @@ using namespace PCIDSK;
 CPCIDSKFile::CPCIDSKFile( std::string filename )
 
 {
-    io_handle = NULL;
-    io_mutex = NULL;
+    io_handle = nullptr;
+    io_mutex = nullptr;
     updatable = false;
     base_filename = filename;
     width = 0;
@@ -94,8 +94,8 @@ CPCIDSKFile::CPCIDSKFile( std::string filename )
     last_block_dirty = false;
     last_block_xoff = 0;
     last_block_xsize = 0;
-    last_block_data = NULL;
-    last_block_mutex = NULL;
+    last_block_data = nullptr;
+    last_block_mutex = nullptr;
     file_size = 0;
 
 /* -------------------------------------------------------------------- */
@@ -124,11 +124,11 @@ CPCIDSKFile::~CPCIDSKFile()
 /* -------------------------------------------------------------------- */
 /*      Cleanup last block buffer.                                      */
 /* -------------------------------------------------------------------- */
-    if( last_block_data != NULL )
+    if( last_block_data != nullptr )
     {
         last_block_index = -1;
         free( last_block_data );
-        last_block_data = NULL;
+        last_block_data = nullptr;
         delete last_block_mutex;
     }
 
@@ -139,13 +139,13 @@ CPCIDSKFile::~CPCIDSKFile()
     for( i = 0; i < channels.size(); i++ )
     {
         delete channels[i];
-        channels[i] = NULL;
+        channels[i] = nullptr;
     }
     
     for( i = 0; i < segments.size(); i++ )
     {
         delete segments[i];
-        segments[i] = NULL;
+        segments[i] = nullptr;
     }
     
 /* -------------------------------------------------------------------- */
@@ -157,7 +157,7 @@ CPCIDSKFile::~CPCIDSKFile()
         if( io_handle )
         {
             interfaces.io->Close( io_handle );
-            io_handle = NULL;
+            io_handle = nullptr;
         }
     }
 
@@ -166,19 +166,19 @@ CPCIDSKFile::~CPCIDSKFile()
     for( i_file=0; i_file < file_list.size(); i_file++ )
     {
         delete file_list[i_file].io_mutex;
-        file_list[i_file].io_mutex = NULL;
+        file_list[i_file].io_mutex = nullptr;
 
         interfaces.io->Close( file_list[i_file].io_handle );
-        file_list[i_file].io_handle = NULL;
+        file_list[i_file].io_handle = nullptr;
     }
 
     for( i_file=0; i_file < edb_file_list.size(); i_file++ )
     {
         delete edb_file_list[i_file].io_mutex;
-        edb_file_list[i_file].io_mutex = NULL;
+        edb_file_list[i_file].io_mutex = nullptr;
 
         delete edb_file_list[i_file].file;
-        edb_file_list[i_file].file = NULL;
+        edb_file_list[i_file].file = nullptr;
     }
 
     delete io_mutex;
@@ -211,7 +211,7 @@ void CPCIDSKFile::Synchronize()
 /* -------------------------------------------------------------------- */
     for( i = 0; i < segments.size(); i++ )
     {
-        if( segments[i] != NULL )
+        if( segments[i] != nullptr )
             segments[i]->Synchronize();
     }
 
@@ -248,23 +248,23 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
 /*      Is this a valid segment?                                        */
 /* -------------------------------------------------------------------- */
     if( segment < 1 || segment > segment_count )
-        return NULL;
+        return nullptr;
 
     const char *segment_pointer = segment_pointers.buffer + (segment-1) * 32;
     if( segment_pointer[0] != 'A' && segment_pointer[0] != 'L' )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have a corresponding object?                      */
 /* -------------------------------------------------------------------- */
-    if( segments[segment] != NULL )
+    if( segments[segment] != nullptr )
         return segments[segment];
 
 /* -------------------------------------------------------------------- */
 /*      Instantiate per the type.                                       */
 /* -------------------------------------------------------------------- */
     int segment_type = segment_pointers.GetInt((segment-1)*32+1,3);
-    PCIDSKSegment *segobj = NULL;
+    PCIDSKSegment *segobj = nullptr;
 
     switch( segment_type )
     {
@@ -348,7 +348,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int segment )
         break;
     }
     
-    if (segobj == NULL)
+    if (segobj == nullptr)
         segobj = new CPCIDSKSegment( this, segment, segment_pointer );
         
     segments[segment] = segobj;
@@ -393,7 +393,7 @@ PCIDSK::PCIDSKSegment *CPCIDSKFile::GetSegment( int type, std::string name,
         return GetSegment(i+1);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -471,8 +471,8 @@ void CPCIDSKFile::InitializeFromHeader()
     block_size = 0;
     last_block_index = -1;
     last_block_dirty = false;
-    last_block_data = NULL;
-    last_block_mutex = NULL;
+    last_block_data = nullptr;
+    last_block_mutex = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Load the segment pointers into a PCIDSKBuffer.  For now we      */
@@ -534,7 +534,7 @@ void CPCIDSKFile::InitializeFromHeader()
         CheckFileBigEnough(block_size);
 
         last_block_data = malloc(static_cast<size_t>(block_size));
-        if( last_block_data == NULL )
+        if( last_block_data == nullptr )
         {
              return ThrowPCIDSKException( 
                 "Allocating " PCIDSK_FRMT_UINT64 " bytes for scanline "
@@ -553,7 +553,7 @@ void CPCIDSKFile::InitializeFromHeader()
     for( channelnum = 1; channelnum <= channel_count; channelnum++ )
     {
         PCIDSKBuffer ih(1024);
-        PCIDSKChannel *channel = NULL;
+        PCIDSKChannel *channel = nullptr;
         uint64  ih_offset = (ih_start_block-1)*512 + (channelnum-1)*1024;
         
         ReadFromFile( ih.buffer, ih_offset, 1024 );
@@ -681,7 +681,7 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
                                      int win_xoff, int win_xsize )
 
 {
-    if( last_block_data == NULL )
+    if( last_block_data == nullptr )
         return ThrowPCIDSKExceptionPtr( "ReadAndLockBlock() called on a file that is not pixel interleaved." );
 
 /* -------------------------------------------------------------------- */
@@ -735,7 +735,7 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 void CPCIDSKFile::UnlockBlock( bool mark_dirty )
 
 {
-    if( last_block_mutex == NULL )
+    if( last_block_mutex == nullptr )
         return;
 
     last_block_dirty |= mark_dirty;
@@ -752,7 +752,7 @@ void CPCIDSKFile::WriteBlock( int block_index, void *buffer )
     if( !GetUpdatable() )
         return ThrowPCIDSKException( "File not open for update in WriteBlock()" );
 
-    if( last_block_data == NULL )
+    if( last_block_data == nullptr )
         return ThrowPCIDSKException( "WriteBlock() called on a file that is not pixel interleaved." );
 
     WriteToFile( buffer,
@@ -788,8 +788,8 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
                                      std::string filename )
 
 {
-    *file_p = NULL;
-    *io_mutex_p = NULL;
+    *file_p = nullptr;
+    *io_mutex_p = nullptr;
     
 /* -------------------------------------------------------------------- */
 /*      Does the file exist already in our file list?                   */
@@ -812,7 +812,7 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 /* -------------------------------------------------------------------- */
     ProtectedEDBFile new_file;
 
-    new_file.file = NULL;
+    new_file.file = nullptr;
     new_file.writable = false;
 
     if( GetUpdatable() )
@@ -825,10 +825,10 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
         catch( const std::exception& ) {}
     }
 
-    if( new_file.file == NULL )
+    if( new_file.file == nullptr )
         new_file.file = interfaces.OpenEDB( filename, "r" );
 
-    if( new_file.file == NULL )
+    if( new_file.file == nullptr )
         return ThrowPCIDSKException( 0, "Unable to open file '%s'.", 
                               filename.c_str() ) != 0;
 
@@ -857,8 +857,8 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
                                 bool writable )
 
 {
-    *io_handle_pp = NULL;
-    *io_mutex_pp = NULL;
+    *io_handle_pp = nullptr;
+    *io_mutex_pp = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Does this reference the PCIDSK file itself?                     */
@@ -897,7 +897,7 @@ void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
     else
         new_file.io_handle = interfaces.io->Open( filename, "r" );
         
-    if( new_file.io_handle == NULL )
+    if( new_file.io_handle == nullptr )
         return ThrowPCIDSKException( "Unable to open file '%s'.", 
                               filename.c_str() );
 
@@ -927,7 +927,7 @@ void CPCIDSKFile::DeleteSegment( int segment )
 /* -------------------------------------------------------------------- */
     PCIDSKSegment *poSeg = GetSegment( segment );
 
-    if( poSeg == NULL )
+    if( poSeg == nullptr )
         return ThrowPCIDSKException( "DeleteSegment(%d) failed, segment does not exist.", segment );
 
 /* -------------------------------------------------------------------- */
@@ -944,7 +944,7 @@ void CPCIDSKFile::DeleteSegment( int segment )
 /*      hope the application is not retaining any references to this    */
 /*      segment!                                                        */
 /* -------------------------------------------------------------------- */
-    segments[segment] = NULL;
+    segments[segment] = nullptr;
     delete poSeg;
 
 /* -------------------------------------------------------------------- */
@@ -1258,7 +1258,7 @@ void CPCIDSKFile::MoveSegmentToEOF( int segment )
                  32 );
     
     // Update the segments own information.
-    if( segments[segment] != NULL )
+    if( segments[segment] != nullptr )
     {
         CPCIDSKSegment *seg = 
             dynamic_cast<CPCIDSKSegment *>( segments[segment] );
@@ -1320,7 +1320,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
     PCIDSKSegment *bm_seg = GetSegment( SEG_SYS, "SysBMDir" );
     SysBlockMap *bm;
 
-    if( bm_seg == NULL )
+    if( bm_seg == nullptr )
     {
         CreateSegment( "SysBMDir", 
                        "System Block Map Directory - Do not modify.",
@@ -1357,7 +1357,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
             }
         }
 
-        if (overview_exists == false && bm != NULL)
+        if (overview_exists == false && bm != nullptr)
         {
 /* -------------------------------------------------------------------- */
 /*      Create the overview as a tiled image layer.                     */

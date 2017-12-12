@@ -36,8 +36,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRWalkDataSource::OGRWalkDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0)
 {}
 
@@ -52,7 +52,7 @@ OGRWalkDataSource::~OGRWalkDataSource()
 
     for( int i = 0; i < nLayers; i++ )
     {
-        CPLAssert( NULL != papoLayers[i] );
+        CPLAssert( nullptr != papoLayers[i] );
         delete papoLayers[i];
     }
 
@@ -70,7 +70,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 /*      appropriate connection string.  Otherwise clip of WALK: to      */
 /*      get the DSN.                                                    */
 /* -------------------------------------------------------------------- */
-    char *pszDSN = NULL;
+    char *pszDSN = nullptr;
 
     if( STARTS_WITH_CI(pszNewName, "WALK:") )
     {
@@ -91,7 +91,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
 /* -------------------------------------------------------------------- */
     CPLDebug( "Walk", "EstablishSession(%s)", pszDSN );
 
-    if( !oSession.EstablishSession( pszDSN, NULL, NULL ) )
+    if( !oSession.EstablishSession( pszDSN, nullptr, nullptr ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
@@ -123,7 +123,7 @@ int OGRWalkDataSource::Open( const char * pszNewName, int /* bUpdate */ )
     while( oStmt.Fetch() )
     {
         int i, iNew = static_cast<int>(apapszGeomColumns.size());
-        char **papszRecord = NULL;
+        char **papszRecord = nullptr;
 
         for( i = 1; i < 7; i++ )
             papszRecord = CSLAddString( papszRecord, oStmt.GetColData(i) ); //Add LayerName, Extent and Memo
@@ -172,7 +172,7 @@ OGRLayer *OGRWalkDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -208,7 +208,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", oSession.GetLastError() );
         delete poStmt;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -218,18 +218,18 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
     {
         delete poStmt;
         CPLErrorReset();
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRWalkSelectLayer *poLayer = NULL;
+    OGRWalkSelectLayer *poLayer = nullptr;
 
     poLayer = new OGRWalkSelectLayer( this, poStmt );
 
-    if( poSpatialFilter != NULL )
+    if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );
 
     return poLayer;

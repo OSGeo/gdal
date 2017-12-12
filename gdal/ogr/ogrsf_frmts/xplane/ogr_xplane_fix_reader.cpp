@@ -44,7 +44,7 @@ OGRXPlaneReader* OGRXPlaneCreateFixFileReader( OGRXPlaneDataSource* poDataSource
 /*                         OGRXPlaneFixReader()                         */
 /************************************************************************/
 OGRXPlaneFixReader::OGRXPlaneFixReader() :
-    poFIXLayer(NULL)
+    poFIXLayer(nullptr)
 {}
 
 /************************************************************************/
@@ -93,8 +93,8 @@ int OGRXPlaneFixReader::IsRecognizedVersion( const char* pszVersionString)
 
 void OGRXPlaneFixReader::Read()
 {
-    const char* pszLine = NULL;
-    while((pszLine = CPLReadLineL(fp)) != NULL)
+    const char* pszLine = nullptr;
+    while((pszLine = CPLReadLineL(fp)) != nullptr)
     {
         papszTokens = CSLTokenizeString(pszLine);
         nTokens = CSLCount(papszTokens);
@@ -104,27 +104,27 @@ void OGRXPlaneFixReader::Read()
         if (nTokens == 1 && strcmp(papszTokens[0], "99") == 0)
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             bEOF = true;
             return;
         }
         else if( nTokens == 0 || !assertMinCol(3) )
         {
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
             continue;
         }
 
         ParseRecord();
 
         CSLDestroy(papszTokens);
-        papszTokens = NULL;
+        papszTokens = nullptr;
 
         if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
     }
 
-    papszTokens = NULL;
+    papszTokens = nullptr;
     bEOF = true;
 }
 

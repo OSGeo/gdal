@@ -103,7 +103,7 @@ static const PCIDatums asDatums[] =
     { "D188", 4311 },   // Zanderij (Suriname)
     { "D401", 4124 },   // RT90 (Sweden)
     { "D501", 4312 },   // MGI (Hermannskogel, Austria)
-    { NULL, 0 }
+    { nullptr, 0 }
 };
 
 static const PCIDatums asEllips[] =
@@ -131,7 +131,7 @@ static const PCIDatums asEllips[] =
     { "E904", 7020 },     // Helmert, 1906
     { "E907", 7036 },     // South American, 1969
     { "E910", 7041 },     // ATS77
-    { NULL, 0 }
+    { nullptr, 0 }
 };
 
 /************************************************************************/
@@ -209,7 +209,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 {
     Clear();
 
-    if( pszProj == NULL ||
+    if( pszProj == nullptr ||
         CPLStrnlen(pszProj, knProjSize) < static_cast<size_t>(knProjSize) )
     {
         return OGRERR_CORRUPT_DATA;
@@ -222,7 +222,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
     bool bProjAllocated = false;
 
-    if( padfPrjParams == NULL )
+    if( padfPrjParams == nullptr )
     {
         padfPrjParams = static_cast<double *>(CPLMalloc( 17 * sizeof(double) ));
         if( !padfPrjParams )
@@ -506,7 +506,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      We have an earthmodel string, look it up in the datum list.     */
 /* -------------------------------------------------------------------- */
     if( strlen(szEarthModel) > 0
-        && (poRoot == NULL || IsProjected() || IsGeographic()) )
+        && (poRoot == nullptr || IsProjected() || IsGeographic()) )
     {
         const PCIDatums *pasDatum = asDatums;
 
@@ -528,18 +528,18 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /*      lookup table, then try fetching from the pci_datum.txt          */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
-        char **papszDatumDefn = NULL;
+        char **papszDatumDefn = nullptr;
 
         if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'D' )
         {
             const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
-            VSILFILE *fp = pszDatumCSV ? VSIFOpenL( pszDatumCSV, "r" ) : NULL;
+            VSILFILE *fp = pszDatumCSV ? VSIFOpenL( pszDatumCSV, "r" ) : nullptr;
 
-            if( fp != NULL )
+            if( fp != nullptr )
             {
-                char **papszLineItems = NULL;
+                char **papszLineItems = nullptr;
 
-                while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
+                while( (papszLineItems = CSVReadParseLineL( fp )) != nullptr )
                 {
                     if( CSLCount(papszLineItems) > 3
                         && EQUALN(papszLineItems[0], szEarthModel,
@@ -562,7 +562,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
         if( !pasDatum->pszPCIDatum )  // No matching; search for ellipsoids.
         {
-            char *pszName = NULL;
+            char *pszName = nullptr;
             double dfSemiMajor = 0.0;
             double dfInvFlattening = 0.0;
             int nEPSGCode = 0;
@@ -589,13 +589,13 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             if( !pasDatum->pszPCIDatum && szEarthModel[0] == 'E' )
             {
                 const char *pszCSV = CSVFilename( "pci_ellips.txt" );
-                VSILFILE *fp = pszCSV ? VSIFOpenL( pszCSV, "r" ) : NULL;
+                VSILFILE *fp = pszCSV ? VSIFOpenL( pszCSV, "r" ) : nullptr;
 
-                if( fp != NULL )
+                if( fp != nullptr )
                 {
-                    char **papszLineItems = NULL;
+                    char **papszLineItems = nullptr;
 
-                    while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
+                    while( (papszLineItems = CSVReadParseLineL( fp )) != nullptr )
                     {
                         if( CSLCount(papszLineItems) > 3
                             && EQUALN(papszLineItems[0], szEarthModel, 4) )
@@ -663,7 +663,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                 SetAuthority( "SPHEROID", "EPSG", nEPSGCode );
 
             // Do we have 7 datum shift parameters?
-            if( papszDatumDefn != NULL &&
+            if( papszDatumDefn != nullptr &&
                 CSLCount(papszDatumDefn) >= 15
                 && CPLAtof(papszDatumDefn[14]) != 0.0 )
             {
@@ -684,7 +684,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             }
 
             // Do we have 7 datum shift parameters?
-            else if( papszDatumDefn != NULL &&
+            else if( papszDatumDefn != nullptr &&
                      CSLCount(papszDatumDefn) == 11
                      && (CPLAtof(papszDatumDefn[3]) != 0.0
                          || CPLAtof(papszDatumDefn[4]) != 0.0
@@ -735,9 +735,9 @@ OGRErr OSRExportToPCI( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToPCI", OGRERR_FAILURE );
 
-    *ppszProj = NULL;
-    *ppszUnits = NULL;
-    *ppadfPrjParams = NULL;
+    *ppszProj = nullptr;
+    *ppszUnits = nullptr;
+    *ppadfPrjParams = nullptr;
 
     return ((OGRSpatialReference *) hSRS)->exportToPCI( ppszProj, ppszUnits,
                                                         ppadfPrjParams );
@@ -812,7 +812,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
         else
             CPLPrintStringFill( szProj, "METER", knProjSize );
     }
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
         CPLPrintStringFill( szProj, "LONG/LAT", knProjSize );
     }
@@ -1073,7 +1073,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
     const char *pszDatum = GetAttrValue( "DATUM" );
     char szEarthModel[5] = {};
 
-    if( pszDatum == NULL || strlen(pszDatum) == 0 )
+    if( pszDatum == nullptr || strlen(pszDatum) == 0 )
     {
         // Do nothing.
     }
@@ -1130,7 +1130,7 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
             double dfSM = 0.0;
             double dfIF = 0.0;
 
-            if( OSRGetEllipsoidInfo( pasDatum->nEPSGCode, NULL,
+            if( OSRGetEllipsoidInfo( pasDatum->nEPSGCode, nullptr,
                                      &dfSM, &dfIF ) == OGRERR_NONE
                 && CPLIsEqual( dfSemiMajor, dfSM )
                 && CPLIsEqual( dfInvFlattening, dfIF ) )
@@ -1149,13 +1149,13 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
             const double dfSemiMinor =
                 OSRCalcSemiMinorFromInvFlattening(dfSemiMajor, dfInvFlattening);
 
-            VSILFILE *fp = pszCSV ? VSIFOpenL( pszCSV, "r" ) : NULL;
+            VSILFILE *fp = pszCSV ? VSIFOpenL( pszCSV, "r" ) : nullptr;
 
-            if( fp != NULL )
+            if( fp != nullptr )
             {
-                char **papszLineItems = NULL;
+                char **papszLineItems = nullptr;
 
-                while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
+                while( (papszLineItems = CSVReadParseLineL( fp )) != nullptr )
                 {
                     if( CSLCount(papszLineItems) >= 4
                         && CPLIsEqual(dfSemiMajor, CPLAtof(papszLineItems[2]))
@@ -1190,19 +1190,19 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
     if( szEarthModel[0] == 'E'
         && !EQUAL(szEarthModel, "E999")
-        && pszDatum != NULL )
+        && pszDatum != nullptr )
     {
         const char *pszDatumCSV = CSVFilename( "pci_datum.txt" );
         double adfTOWGS84[7] = {};
         const bool bHaveTOWGS84 = GetTOWGS84(adfTOWGS84, 7) == OGRERR_NONE;
 
-        VSILFILE *fp = pszDatumCSV ? VSIFOpenL( pszDatumCSV, "r" ) : NULL;
+        VSILFILE *fp = pszDatumCSV ? VSIFOpenL( pszDatumCSV, "r" ) : nullptr;
 
-        if( fp != NULL )
+        if( fp != nullptr )
         {
-            char **papszLineItems = NULL;
+            char **papszLineItems = nullptr;
 
-            while( (papszLineItems = CSVReadParseLineL( fp )) != NULL )
+            while( (papszLineItems = CSVReadParseLineL( fp )) != nullptr )
             {
                 // Compare based on datum name.  This is mostly for
                 // PCI round-tripping.  We won't usually get exact matches

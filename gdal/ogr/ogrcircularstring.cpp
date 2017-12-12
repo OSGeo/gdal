@@ -741,7 +741,7 @@ static OGRLineString* CasterToLineString(OGRCurve* poGeom)
     CPLError(CE_Failure, CPLE_AppDefined,
              "%s found. Conversion impossible", poGeom->getGeometryName());
     delete poGeom;
-    return NULL;
+    return nullptr;
 }
 
 OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const {
@@ -757,7 +757,7 @@ static OGRLinearRing* CasterToLinearRing(OGRCurve* poGeom)
     CPLError(CE_Failure, CPLE_AppDefined,
              "%s found. Conversion impossible", poGeom->getGeometryName());
     delete poGeom;
-    return NULL;
+    return nullptr;
 }
 
 OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const {

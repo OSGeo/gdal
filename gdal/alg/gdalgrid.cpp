@@ -293,7 +293,7 @@ GDALGridInverseDistanceToAPowerNearestNeighbor(
     const double dfPowerDiv2 = psExtraParams->dfPowerDiv2PreComp;
 
     std::multimap<double, double> oMapDistanceToZValues;
-    if( phQuadTree != NULL )
+    if( phQuadTree != nullptr )
     {
         const double dfSearchRadius = dfRadius;
         CPLRectObj sAoi;
@@ -668,7 +668,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
     GUInt32 i = 0;
 
     double dfSearchRadius = psExtraParams->dfInitialSearchRadius;
-    if( hQuadTree != NULL && dfRadius1 == dfRadius2 && dfSearchRadius > 0 )
+    if( hQuadTree != nullptr && dfRadius1 == dfRadius2 && dfSearchRadius > 0 )
     {
         if( dfRadius1 > 0 )
             dfSearchRadius = poOptions->dfRadius1;
@@ -1596,10 +1596,10 @@ static void GDALGridJobProcess( void* user_data )
     /* -------------------------------------------------------------------- */
     double *padfValues =
         static_cast<double *>(VSI_MALLOC2_VERBOSE( sizeof(double), nXSize ));
-    if( padfValues == NULL )
+    if( padfValues == nullptr )
     {
         *(psJob->pbStop) = TRUE;
-        if( pfnProgress != NULL )
+        if( pfnProgress != nullptr )
             pfnProgress(psJob);  // To notify the main thread.
         return;
     }
@@ -1645,7 +1645,7 @@ static void GDALGridJobProcess( void* user_data )
                           static_cast<long unsigned int>(nXPoint),
                           static_cast<long unsigned int>(nYPoint) );
                 *psJob->pbStop = TRUE;
-                if( pfnProgress != NULL )
+                if( pfnProgress != nullptr )
                     pfnProgress(psJob);  // To notify the main thread.
                 break;
             }
@@ -1655,7 +1655,7 @@ static void GDALGridJobProcess( void* user_data )
                        pabyData + nYPoint * nLineSpace, eType, nDataTypeSize,
                        nXSize );
 
-        if( *psJob->pbStop || (pfnProgress != NULL && pfnProgress(psJob)) )
+        if( *psJob->pbStop || (pfnProgress != nullptr && pfnProgress(psJob)) )
             break;
     }
 
@@ -1742,13 +1742,13 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     bool bCreateQuadTree = false;
 
     // Starting address aligned on 32-byte boundary for AVX.
-    float* pafXAligned = NULL;
-    float* pafYAligned = NULL;
-    float* pafZAligned = NULL;
+    float* pafXAligned = nullptr;
+    float* pafYAligned = nullptr;
+    float* pafZAligned = nullptr;
 
-    void *poOptionsNew = NULL;
+    void *poOptionsNew = nullptr;
 
-    GDALGridFunction pfnGDALGridMethod = NULL;
+    GDALGridFunction pfnGDALGridMethod = nullptr;
 
     switch( eAlgorithm )
     {
@@ -1785,8 +1785,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         pafZAligned = static_cast<float *>(
                             VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
                                 sizeof(float) * nPoints) );
-                        if( pafXAligned != NULL && pafYAligned != NULL &&
-                            pafZAligned != NULL )
+                        if( pafXAligned != nullptr && pafYAligned != nullptr &&
+                            pafZAligned != nullptr )
                         {
                             CPLDebug("GDAL_GRID",
                                      "Using AVX optimized version");
@@ -1804,16 +1804,16 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             VSIFree(pafXAligned);
                             VSIFree(pafYAligned);
                             VSIFree(pafZAligned);
-                            pafXAligned = NULL;
-                            pafYAligned = NULL;
-                            pafZAligned = NULL;
+                            pafXAligned = nullptr;
+                            pafYAligned = nullptr;
+                            pafZAligned = nullptr;
                         }
                     }
 #endif
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 
-                    if( pafXAligned == NULL &&
+                    if( pafXAligned == nullptr &&
                         CPLTestBool(
                             CPLGetConfigOption("GDAL_USE_SSE", "YES")) &&
                         CPLHaveRuntimeSSE() )
@@ -1827,8 +1827,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                         pafZAligned = static_cast<float *>(
                             VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
                                 sizeof(float) * nPoints) );
-                        if( pafXAligned != NULL && pafYAligned != NULL &&
-                            pafZAligned != NULL )
+                        if( pafXAligned != nullptr && pafYAligned != nullptr &&
+                            pafZAligned != nullptr )
                         {
                             CPLDebug("GDAL_GRID",
                                      "Using SSE optimized version");
@@ -1846,9 +1846,9 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
                             VSIFree(pafXAligned);
                             VSIFree(pafYAligned);
                             VSIFree(pafZAligned);
-                            pafXAligned = NULL;
-                            pafYAligned = NULL;
-                            pafZAligned = NULL;
+                            pafXAligned = nullptr;
+                            pafYAligned = nullptr;
+                            pafZAligned = nullptr;
                         }
                     }
 #endif // HAVE_SSE_AT_COMPILE_TIME
@@ -1953,10 +1953,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         default:
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "GDAL does not support gridding method %d", eAlgorithm );
-            return NULL;
+            return nullptr;
     }
 
-    if( pafXAligned == NULL && !bCallerWillKeepPointArraysAlive )
+    if( pafXAligned == nullptr && !bCallerWillKeepPointArraysAlive )
     {
         double* padfXNew =
             static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
@@ -1964,13 +1964,13 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
             static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
         double* padfZNew =
             static_cast<double *>(VSI_MALLOC2_VERBOSE(nPoints, sizeof(double)));
-        if( padfXNew == NULL || padfYNew == NULL || padfZNew == NULL )
+        if( padfXNew == nullptr || padfYNew == nullptr || padfZNew == nullptr )
         {
             VSIFree(padfXNew);
             VSIFree(padfYNew);
             VSIFree(padfZNew);
             CPLFree(poOptionsNew);
-            return NULL;
+            return nullptr;
         }
         memcpy(padfXNew, padfX, nPoints * sizeof(double));
         memcpy(padfYNew, padfY, nPoints * sizeof(double));
@@ -1985,19 +1985,19 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     psContext->poOptions = poOptionsNew;
     psContext->pfnGDALGridMethod = pfnGDALGridMethod;
     psContext->nPoints = nPoints;
-    psContext->pasGridPoints = NULL;
+    psContext->pasGridPoints = nullptr;
     psContext->sXYArrays.padfX = padfX;
     psContext->sXYArrays.padfY = padfY;
-    psContext->sExtraParameters.hQuadTree = NULL;
+    psContext->sExtraParameters.hQuadTree = nullptr;
     psContext->sExtraParameters.dfInitialSearchRadius = 0.0;
     psContext->sExtraParameters.pafX = pafXAligned;
     psContext->sExtraParameters.pafY = pafYAligned;
     psContext->sExtraParameters.pafZ = pafZAligned;
-    psContext->sExtraParameters.psTriangulation = NULL;
+    psContext->sExtraParameters.psTriangulation = nullptr;
     psContext->sExtraParameters.nInitialFacetIdx = 0;
-    psContext->padfX = pafXAligned ? NULL : const_cast<double *>(padfX);
-    psContext->padfY = pafXAligned ? NULL : const_cast<double *>(padfY);
-    psContext->padfZ = pafXAligned ? NULL : const_cast<double *>(padfZ);
+    psContext->padfX = pafXAligned ? nullptr : const_cast<double *>(padfX);
+    psContext->padfY = pafXAligned ? nullptr : const_cast<double *>(padfY);
+    psContext->padfZ = pafXAligned ? nullptr : const_cast<double *>(padfZ);
     psContext->bFreePadfXYZArrays =
         pafXAligned ? false : !bCallerWillKeepPointArraysAlive;
 
@@ -2028,10 +2028,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     {
         psContext->sExtraParameters.psTriangulation =
                 GDALTriangulationCreateDelaunay(nPoints, padfX, padfY);
-        if( psContext->sExtraParameters.psTriangulation == NULL )
+        if( psContext->sExtraParameters.psTriangulation == nullptr )
         {
             GDALGridContextFree(psContext);
-            return NULL;
+            return nullptr;
         }
         GDALTriangulationComputeBarycentricCoefficients(
             psContext->sExtraParameters.psTriangulation, padfX, padfY );
@@ -2051,10 +2051,10 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     if( nThreads > 1 )
     {
         psContext->poWorkerThreadPool = new CPLWorkerThreadPool();
-        if( !psContext->poWorkerThreadPool->Setup(nThreads, NULL, NULL) )
+        if( !psContext->poWorkerThreadPool->Setup(nThreads, nullptr, nullptr) )
         {
             delete psContext->poWorkerThreadPool;
-            psContext->poWorkerThreadPool = NULL;
+            psContext->poWorkerThreadPool = nullptr;
         }
         else
         {
@@ -2062,7 +2062,7 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
         }
     }
     else
-        psContext->poWorkerThreadPool = NULL;
+        psContext->poWorkerThreadPool = nullptr;
 
     return psContext;
 }
@@ -2076,7 +2076,7 @@ void GDALGridContextCreateQuadTree( GDALGridContext* psContext )
     const GUInt32 nPoints = psContext->nPoints;
     psContext->pasGridPoints = static_cast<GDALGridPoint *>(
             VSI_MALLOC2_VERBOSE(nPoints, sizeof(GDALGridPoint)) );
-    if( psContext->pasGridPoints != NULL )
+    if( psContext->pasGridPoints != nullptr )
     {
         const double * const padfX = psContext->padfX;
         const double * const padfY = psContext->padfY;
@@ -2131,7 +2131,7 @@ void GDALGridContextFree( GDALGridContext* psContext )
     {
         CPLFree( psContext->poOptions );
         CPLFree( psContext->pasGridPoints );
-        if( psContext->sExtraParameters.hQuadTree != NULL )
+        if( psContext->sExtraParameters.hQuadTree != nullptr )
             CPLQuadTreeDestroy( psContext->sExtraParameters.hQuadTree );
         if( psContext->bFreePadfXYZArrays )
         {
@@ -2202,7 +2202,7 @@ CPLErr GDALGridContextProcess(
     // by sampling along the edges.  If all points on edges are within
     // triangles, then interior points will also be.
     if( psContext->eAlgorithm == GGA_Linear &&
-        psContext->sExtraParameters.hQuadTree == NULL )
+        psContext->sExtraParameters.hQuadTree == nullptr )
     {
         bool bNeedNearest = false;
         int nStartLeft = 0;
@@ -2283,18 +2283,18 @@ CPLErr GDALGridContextProcess(
     sJob.poOptions = psContext->poOptions;
     sJob.pfnGDALGridMethod = psContext->pfnGDALGridMethod;
     sJob.psExtraParameters = &psContext->sExtraParameters;
-    sJob.pfnProgress = NULL;
+    sJob.pfnProgress = nullptr;
     sJob.eType = eType;
     sJob.pfnRealProgress = pfnProgress;
     sJob.pRealProgressArg = pProgressArg;
     sJob.pnCounter = &nCounter;
     sJob.pbStop = &bStop;
-    sJob.hCond = NULL;
-    sJob.hCondMutex = NULL;
+    sJob.hCond = nullptr;
+    sJob.hCondMutex = nullptr;
 
-    if( psContext->poWorkerThreadPool == NULL )
+    if( psContext->poWorkerThreadPool == nullptr )
     {
-        if( sJob.pfnRealProgress != NULL &&
+        if( sJob.pfnRealProgress != nullptr &&
             sJob.pfnRealProgress != GDALDummyProgress )
         {
             sJob.pfnProgress = GDALGridProgressMonoThread;
@@ -2334,7 +2334,7 @@ CPLErr GDALGridContextProcess(
             int nLocalCounter = nCounter;
             CPLReleaseMutex(sJob.hCondMutex);
 
-            if( pfnProgress != NULL &&
+            if( pfnProgress != nullptr &&
                 !pfnProgress( nLocalCounter / static_cast<double>(nYSize),
                               "", pProgressArg ) )
             {
@@ -2457,7 +2457,7 @@ CPLErr ParseAlgorithmAndOptions( const char *pszAlgorithm,
     CPLAssert( peAlgorithm );
     CPLAssert( ppOptions );
 
-    *ppOptions = NULL;
+    *ppOptions = nullptr;
 
     char **papszParms = CSLTokenizeString2( pszAlgorithm, ":", FALSE );
 

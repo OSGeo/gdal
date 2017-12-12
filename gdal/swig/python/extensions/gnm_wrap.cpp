@@ -3133,9 +3133,10 @@ namespace swig {
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "gdal.h"
 #include "ogr_api.h"
-#include "ogr_p.h"
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -3453,12 +3454,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 
   GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
-      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
+      return (GNMNetworkShadow*)GNMCastToNetwork((GDALMajorObjectH)base);
   }
 
 
   GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
-      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
+      return (GNMGenericNetworkShadow*)GNMCastToGenericNetwork((GDALMajorObjectH)base);
   }
 
 SWIGINTERN void delete_GNMNetworkShadow(GNMNetworkShadow *self){

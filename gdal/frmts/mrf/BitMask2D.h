@@ -90,7 +90,7 @@ public:
         // Defaults to all set
         init(~(T)0);
 #if defined(PACKER)
-        _packer = NULL;
+        _packer = nullptr;
 #endif
     }
 

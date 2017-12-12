@@ -118,11 +118,11 @@ namespace PCIDSK
       public:
         //! Simple constructor.
         ShapeField() 
-            { v.string_val = NULL; type = FieldTypeNone; }
+            { v.string_val = nullptr; type = FieldTypeNone; }
 
         //! Copy constructor.
         ShapeField( const ShapeField &src )
-            { v.string_val = NULL; type = FieldTypeNone; *this = src; }
+            { v.string_val = nullptr; type = FieldTypeNone; *this = src; }
 
         ~ShapeField() 
             { Clear(); }
@@ -183,10 +183,10 @@ namespace PCIDSK
         void Clear()
             { 
                 if( (type == FieldTypeString || type == FieldTypeCountedInt)
-                    && v.string_val != NULL ) 
+                    && v.string_val != nullptr ) 
                 {
                     free( v.string_val );
-                    v.string_val = NULL;
+                    v.string_val = nullptr;
                 }
                 type = FieldTypeNone;
             }

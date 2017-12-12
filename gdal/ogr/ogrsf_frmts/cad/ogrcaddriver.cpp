@@ -65,7 +65,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         if( nTokens < 4 )
         {
             CSLDestroy(papszTokens);
-            return NULL;
+            return nullptr;
         }
 
         CPLString osFilename;
@@ -90,7 +90,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
     if ( IdentifyCADFile( pFileIO, false ) == FALSE )
     {
         delete pFileIO;
-        return NULL;
+        return nullptr;
     }
 
 
@@ -103,14 +103,14 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
                   "The CAD driver does not support update access to existing"
                   " datasets.\n" );
         delete pFileIO;
-        return NULL;
+        return nullptr;
     }
 
     GDALCADDataset *poDS = new GDALCADDataset();
     if( !poDS->Open( poOpenInfo, pFileIO, nSubRasterLayer, nSubRasterFID ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -124,7 +124,7 @@ void RegisterOGRCAD()
 {
     GDALDriver  *poDriver;
 
-    if ( GDALGetDriverByName( "CAD" ) == NULL )
+    if ( GDALGetDriverByName( "CAD" ) == nullptr )
     {
         poDriver = new GDALDriver();
         poDriver->SetDescription( "CAD" );

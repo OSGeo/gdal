@@ -63,14 +63,14 @@ OGRDataSource *OGRGFTDriver::Open( const char * pszFilename, int bUpdate )
 
 {
     if (!STARTS_WITH_CI(pszFilename, "GFT:"))
-        return NULL;
+        return nullptr;
 
     OGRGFTDataSource   *poDS = new OGRGFTDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -88,7 +88,7 @@ OGRDataSource *OGRGFTDriver::CreateDataSource( const char * pszName,
     if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;

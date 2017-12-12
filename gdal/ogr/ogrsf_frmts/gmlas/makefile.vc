@@ -2,7 +2,7 @@
 OBJ	=	ogrgmlasdriver.obj ogrgmlasdatasource.obj ogrgmlaslayer.obj \
         ogrgmlasreader.obj ogrgmlasschemaanalyzer.obj ogrgmlasfeatureclass.obj \
         ogrgmlasxsdcache.obj ogrgmlasconf.obj ogrgmlasxpatchmatcher.obj \
-        ogrgmlasxlinkresolver.obj ogrgmlaswriter.obj
+        ogrgmlasxlinkresolver.obj ogrgmlaswriter.obj ogrgmlasutils.obj
 
 GDAL_ROOT	=	..\..\..
 

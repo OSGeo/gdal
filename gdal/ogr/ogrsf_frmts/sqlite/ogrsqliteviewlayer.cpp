@@ -42,15 +42,15 @@ OGRSQLiteViewLayer::OGRSQLiteViewLayer( OGRSQLiteDataSource *poDSIn ) :
     bHasCheckedSpatialIndexTable(FALSE),
     eGeomFormat(OSGF_None),
     bHasSpatialIndex(FALSE),
-    pszViewName(NULL),
-    pszEscapedTableName(NULL),
-    pszEscapedUnderlyingTableName(NULL),
+    pszViewName(nullptr),
+    pszEscapedTableName(nullptr),
+    pszEscapedUnderlyingTableName(nullptr),
     bLayerDefnError(FALSE),
-    poUnderlyingLayer(NULL)
+    poUnderlyingLayer(nullptr)
 {
     poDS = poDSIn;
     iNextShapeId = 0;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 }
 
 /************************************************************************/
@@ -88,7 +88,7 @@ CPLErr OGRSQLiteViewLayer::Initialize( const char *pszViewNameIn,
 
     osUnderlyingTableName = pszUnderlyingTableName;
     osUnderlyingGeometryColumn = pszUnderlyingGeometryColumn;
-    poUnderlyingLayer = NULL;
+    poUnderlyingLayer = nullptr;
 
     pszEscapedTableName = CPLStrdup(SQLEscapeLiteral(pszViewName));
     pszEscapedUnderlyingTableName = CPLStrdup(SQLEscapeLiteral(pszUnderlyingTableName));
@@ -107,7 +107,7 @@ OGRFeatureDefn* OGRSQLiteViewLayer::GetLayerDefn()
 
     EstablishFeatureDefn();
 
-    if (poFeatureDefn == NULL)
+    if (poFeatureDefn == nullptr)
     {
         bLayerDefnError = TRUE;
 
@@ -124,9 +124,9 @@ OGRFeatureDefn* OGRSQLiteViewLayer::GetLayerDefn()
 
 OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
 {
-    if( poUnderlyingLayer == NULL )
+    if( poUnderlyingLayer == nullptr )
     {
-        if( strchr(osUnderlyingTableName, '(') == NULL )
+        if( strchr(osUnderlyingTableName, '(') == nullptr )
         {
             CPLString osNewUnderlyingTableName;
             osNewUnderlyingTableName.Printf("%s(%s)",
@@ -135,7 +135,7 @@ OGRSQLiteLayer* OGRSQLiteViewLayer::GetUnderlyingLayer()
             poUnderlyingLayer =
                 (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osNewUnderlyingTableName);
         }
-        if( poUnderlyingLayer == NULL )
+        if( poUnderlyingLayer == nullptr )
             poUnderlyingLayer =
                 (OGRSQLiteLayer*) poDS->GetLayerByNameNotVisible(osUnderlyingTableName);
     }
@@ -165,10 +165,10 @@ OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType()
 CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 {
     sqlite3 *hDB = poDS->GetDB();
-    sqlite3_stmt *hColStmt = NULL;
+    sqlite3_stmt *hColStmt = nullptr;
 
     OGRSQLiteLayer* l_poUnderlyingLayer = GetUnderlyingLayer();
-    if (l_poUnderlyingLayer == NULL)
+    if (l_poUnderlyingLayer == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find underlying layer %s for view %s",
@@ -200,13 +200,13 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
-    hColStmt = NULL;
+    hColStmt = nullptr;
     const char *pszSQL =
         CPLSPrintf( "SELECT \"%s\", * FROM '%s' LIMIT 1",
                     SQLEscapeName(pszFIDColumn).c_str(),
                     pszEscapedTableName );
 
-    int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, NULL );
+    int rc = sqlite3_prepare_v2( hDB, pszSQL, -1, &hColStmt, nullptr );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -274,7 +274,7 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
 
     const int rc =
         sqlite3_prepare_v2( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
-                         &hStmt, NULL );
+                         &hStmt, nullptr );
 
     if( rc == SQLITE_OK )
     {
@@ -284,7 +284,7 @@ OGRErr OGRSQLiteViewLayer::ResetStatement()
     CPLError( CE_Failure, CPLE_AppDefined,
               "In ResetStatement(): sqlite3_prepare_v2(%s):\n  %s",
               osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
-    hStmt = NULL;
+    hStmt = nullptr;
     return OGRERR_FAILURE;
 }
 
@@ -296,7 +296,7 @@ OGRFeature *OGRSQLiteViewLayer::GetNextFeature()
 
 {
     if (HasLayerDefnError())
-        return NULL;
+        return nullptr;
 
     return OGRSQLiteLayer::GetNextFeature();
 }
@@ -309,13 +309,13 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if (HasLayerDefnError())
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have an explicit FID column, just read through      */
 /*      the result set iteratively to find our target.                  */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn == NULL )
+    if( pszFIDColumn == nullptr )
         return OGRSQLiteLayer::GetFeature( nFeatureId );
 
 /* -------------------------------------------------------------------- */
@@ -337,19 +337,19 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 
     const int rc =
         sqlite3_prepare_v2( poDS->GetDB(), osSQL, static_cast<int>(osSQL.size()),
-                         &hStmt, NULL );
+                         &hStmt, nullptr );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "In GetFeature(): sqlite3_prepare_v2(%s):\n  %s",
                   osSQL.c_str(), sqlite3_errmsg(poDS->GetDB()) );
 
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Get the feature if possible.                                    */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = NULL;
+    OGRFeature *poFeature = nullptr;
 
     poFeature = GetNextRawFeature();
 
@@ -365,7 +365,7 @@ OGRFeature *OGRSQLiteViewLayer::GetFeature( GIntBig nFeatureId )
 OGRErr OGRSQLiteViewLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    if( pszQuery == NULL )
+    if( pszQuery == nullptr )
         osQuery = "";
     else
         osQuery = pszQuery;
@@ -399,11 +399,11 @@ void OGRSQLiteViewLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
                                               OGRGeometry* poFilterGeom)
 {
-    if (HasLayerDefnError() || poFeatureDefn == NULL ||
+    if (HasLayerDefnError() || poFeatureDefn == nullptr ||
         iGeomCol < 0 || iGeomCol >= poFeatureDefn->GetGeomFieldCount())
         return "";
 
-    if( poFilterGeom != NULL && bHasSpatialIndex )
+    if( poFilterGeom != nullptr && bHasSpatialIndex )
     {
         OGREnvelope  sEnvelope;
 
@@ -413,10 +413,10 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
         if (!bHasCheckedSpatialIndexTable)
         {
             bHasCheckedSpatialIndexTable = TRUE;
-            char **papszResult = NULL;
+            char **papszResult = nullptr;
             int nRowCount = 0;
             int nColCount = 0;
-            char *pszErrMsg = NULL;
+            char *pszErrMsg = nullptr;
 
             CPLString osSQL;
             osSQL.Printf("SELECT name FROM sqlite_master "
@@ -460,7 +460,7 @@ CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,
         }
     }
 
-    if( poFilterGeom != NULL && poDS->IsSpatialiteLoaded() )
+    if( poFilterGeom != nullptr && poDS->IsSpatialiteLoaded() )
     {
         return FormatSpatialFilterFromMBR(poFilterGeom,
             SQLEscapeName(poFeatureDefn->GetGeomFieldDefn(iGeomCol)->GetNameRef()).c_str());
@@ -516,7 +516,7 @@ int OGRSQLiteViewLayer::TestCapability( const char * pszCap )
         return FALSE;
 
     if (EQUAL(pszCap,OLCFastFeatureCount))
-        return m_poFilterGeom == NULL || osGeomColumn.empty() ||
+        return m_poFilterGeom == nullptr || osGeomColumn.empty() ||
                bHasSpatialIndex;
 
     else if (EQUAL(pszCap,OLCFastSpatialFilter))

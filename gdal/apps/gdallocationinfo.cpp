@@ -190,9 +190,9 @@ static char *SanitizeSRS( const char *pszUserInput )
 {
     CPLErrorReset();
 
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference( NULL );
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference( nullptr );
 
-    char *pszResult = NULL;
+    char *pszResult = nullptr;
     if( OSRSetFromUserInput( hSRS, pszUserInput ) == OGRERR_NONE )
         OSRExportToWkt( hSRS, &pszResult );
     else
@@ -215,14 +215,14 @@ static char *SanitizeSRS( const char *pszUserInput )
 MAIN_START(argc, argv)
 
 {
-    const char         *pszLocX = NULL, *pszLocY = NULL;
-    const char         *pszSrcFilename = NULL;
-    char               *pszSourceSRS = NULL;
+    const char         *pszLocX = nullptr, *pszLocY = nullptr;
+    const char         *pszSrcFilename = nullptr;
+    char               *pszSourceSRS = nullptr;
     std::vector<int>   anBandList;
     bool               bAsXML = false, bLIFOnly = false;
     bool               bQuiet = false, bValOnly = false;
     int                nOverview = -1;
-    char             **papszOpenOptions = NULL;
+    char             **papszOpenOptions = nullptr;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
@@ -287,44 +287,44 @@ MAIN_START(argc, argv)
         else if( argv[i][0] == '-' && !isdigit(argv[i][1]) )
             Usage();
 
-        else if( pszSrcFilename == NULL )
+        else if( pszSrcFilename == nullptr )
             pszSrcFilename = argv[i];
 
-        else if( pszLocX == NULL )
+        else if( pszLocX == nullptr )
             pszLocX = argv[i];
 
-        else if( pszLocY == NULL )
+        else if( pszLocY == nullptr )
             pszLocY = argv[i];
 
         else
             Usage();
     }
 
-    if( pszSrcFilename == NULL || (pszLocX != NULL && pszLocY == NULL) )
+    if( pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr) )
         Usage();
 
 /* -------------------------------------------------------------------- */
 /*      Open source file.                                               */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS
-        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER, NULL,
-                      (const char* const* )papszOpenOptions, NULL );
-    if( hSrcDS == NULL )
+        = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER, nullptr,
+                      (const char* const* )papszOpenOptions, nullptr );
+    if( hSrcDS == nullptr )
         exit( 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Setup coordinate transformation, if required                    */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReferenceH hSrcSRS = NULL, hTrgSRS = NULL;
-    OGRCoordinateTransformationH hCT = NULL;
-    if( pszSourceSRS != NULL && !EQUAL(pszSourceSRS,"-geoloc") )
+    OGRSpatialReferenceH hSrcSRS = nullptr, hTrgSRS = nullptr;
+    OGRCoordinateTransformationH hCT = nullptr;
+    if( pszSourceSRS != nullptr && !EQUAL(pszSourceSRS,"-geoloc") )
     {
 
         hSrcSRS = OSRNewSpatialReference( pszSourceSRS );
         hTrgSRS = OSRNewSpatialReference( GDALGetProjectionRef( hSrcDS ) );
 
         hCT = OCTNewCoordinateTransformation( hSrcSRS, hTrgSRS );
-        if( hCT == NULL )
+        if( hCT == nullptr )
             exit( 1 );
     }
 
@@ -345,7 +345,7 @@ MAIN_START(argc, argv)
     double dfGeoY;
     CPLString osXML;
 
-    if( pszLocX == NULL && pszLocY == NULL )
+    if( pszLocX == nullptr && pszLocY == nullptr )
     {
         if (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2)
         {
@@ -364,11 +364,11 @@ MAIN_START(argc, argv)
 
         if (hCT)
         {
-            if( !OCTTransform( hCT, 1, &dfGeoX, &dfGeoY, NULL ) )
+            if( !OCTTransform( hCT, 1, &dfGeoX, &dfGeoY, nullptr ) )
                 exit( 1 );
         }
 
-        if( pszSourceSRS != NULL )
+        if( pszSourceSRS != nullptr )
         {
             double adfGeoTransform[6] = {};
             if( GDALGetGeoTransform( hSrcDS, adfGeoTransform ) != CE_None )
@@ -442,10 +442,10 @@ MAIN_START(argc, argv)
             int iPixelToQuery = iPixel;
             int iLineToQuery = iLine;
 
-            if (nOverview >= 0 && hBand != NULL)
+            if (nOverview >= 0 && hBand != nullptr)
             {
                 GDALRasterBandH hOvrBand = GDALGetOverview(hBand, nOverview);
-                if (hOvrBand != NULL)
+                if (hOvrBand != nullptr)
                 {
                     int nOvrXSize = GDALGetRasterBandXSize(hOvrBand);
                     int nOvrYSize = GDALGetRasterBandYSize(hOvrBand);
@@ -469,7 +469,7 @@ MAIN_START(argc, argv)
                 hBand = hOvrBand;
             }
 
-            if (hBand == NULL)
+            if (hBand == nullptr)
                 continue;
 
             if( bAsXML )
@@ -492,7 +492,7 @@ MAIN_START(argc, argv)
 
             const char *pszLI = GDALGetMetadataItem( hBand, osItem, "LocationInfo");
 
-            if( pszLI != NULL )
+            if( pszLI != nullptr )
             {
                 if( bAsXML )
                     osXML += pszLI;
@@ -504,21 +504,21 @@ MAIN_START(argc, argv)
 
                     CPLXMLNode *psRoot = CPLParseXMLString( pszLI );
 
-                    if( psRoot != NULL
-                        && psRoot->psChild != NULL
+                    if( psRoot != nullptr
+                        && psRoot->psChild != nullptr
                         && psRoot->eType == CXT_Element
                         && EQUAL(psRoot->pszValue,"LocationInfo") )
                     {
                         for( CPLXMLNode *psNode = psRoot->psChild;
-                             psNode != NULL;
+                             psNode != nullptr;
                              psNode = psNode->psNext )
                         {
                             if( psNode->eType == CXT_Element
                                 && EQUAL(psNode->pszValue,"File")
-                                && psNode->psChild != NULL )
+                                && psNode->psChild != nullptr )
                             {
                                 char* pszUnescaped = CPLUnescapeString(
-                                    psNode->psChild->pszValue, NULL, CPLES_XML);
+                                    psNode->psChild->pszValue, nullptr, CPLES_XML);
                                 printf( "%s\n", pszUnescaped );
                                 CPLFree(pszUnescaped);
                             }
@@ -603,7 +603,7 @@ MAIN_START(argc, argv)
 
         osXML += "</Report>";
 
-        if( (pszLocX != NULL && pszLocY != NULL)  ||
+        if( (pszLocX != nullptr && pszLocY != nullptr)  ||
             (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2) )
         {
             inputAvailable = 0;

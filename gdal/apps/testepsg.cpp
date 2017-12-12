@@ -105,7 +105,7 @@ MAIN_START(nArgc, papszArgv)
                 z_orig = z = 0;
             }
 
-            if( poCT == NULL || !poCT->Transform( 1, &x, &y, &z ) )
+            if( poCT == nullptr || !poCT->Transform( 1, &x, &y, &z ) )
                 printf( "Transformation failed.\n" );
             else
                 printf( "(%f,%f,%f) -> (%f,%f,%f)\n",
@@ -125,7 +125,7 @@ MAIN_START(nArgc, papszArgv)
                           papszArgv[i] );
             else
             {
-                char  *pszWKT = NULL;
+                char  *pszWKT = nullptr;
 
                 if( oSRS.Validate() != OGRERR_NONE )
                     printf( "Validate Fails.\n" );
@@ -171,7 +171,7 @@ MAIN_START(nArgc, papszArgv)
 
                 if( bReportXML )
                 {
-                    char *pszRawXML = NULL;
+                    char *pszRawXML = nullptr;
                     if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
                     {
                         printf( "XML[%s] =\n%s\n",

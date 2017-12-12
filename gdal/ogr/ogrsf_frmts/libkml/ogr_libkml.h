@@ -231,9 +231,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
     OGRErr                    DeleteLayer( int ) override;
 
     OGRLayer                 *ICreateLayer( const char *pszName,
-                                            OGRSpatialReference * poSpatialRef = NULL,
+                                            OGRSpatialReference * poSpatialRef = nullptr,
                                             OGRwkbGeometryType eGType = wkbUnknown,
-                                            char **papszOptions = NULL ) override;
+                                            char **papszOptions = nullptr ) override;
 
     OGRStyleTable            *GetStyleTable() override;
     void                      SetStyleTableDirectly( OGRStyleTable * poStyleTable ) override;

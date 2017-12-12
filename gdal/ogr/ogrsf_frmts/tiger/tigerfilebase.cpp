@@ -41,11 +41,11 @@ CPL_CVSID("$Id$")
 
 TigerFileBase::TigerFileBase( const TigerRecordInfo *psRTInfoIn,
                               const char *m_pszFileCodeIn ) :
-    poDS(NULL),
-    pszModule(NULL),
-    pszShortModule(NULL),
-    fpPrimary(NULL),
-    poFeatureDefn(NULL),
+    poDS(nullptr),
+    pszModule(nullptr),
+    pszShortModule(nullptr),
+    fpPrimary(nullptr),
+    poFeatureDefn(nullptr),
     nFeatures(0),
     nRecordLength(0),
     nVersionCode(0),
@@ -64,16 +64,16 @@ TigerFileBase::~TigerFileBase()
     CPLFree( pszModule );
     CPLFree( pszShortModule );
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
     {
         poFeatureDefn->Release();
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
     }
 
-    if( fpPrimary != NULL )
+    if( fpPrimary != nullptr )
     {
       VSIFCloseL( fpPrimary );
-        fpPrimary = NULL;
+        fpPrimary = nullptr;
     }
 }
 
@@ -87,17 +87,17 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 {
 
     CPLFree( pszModule );
-    pszModule = NULL;
+    pszModule = nullptr;
     CPLFree( pszShortModule );
-    pszShortModule = NULL;
+    pszShortModule = nullptr;
 
-    if( fpPrimary != NULL )
+    if( fpPrimary != nullptr )
     {
         VSIFCloseL( fpPrimary );
-        fpPrimary = NULL;
+        fpPrimary = nullptr;
     }
 
-    if( pszModuleToOpen == NULL )
+    if( pszModuleToOpen == nullptr )
         return TRUE;
 
     char *pszFilename = poDS->BuildFilename( pszModuleToOpen, pszExtension );
@@ -106,7 +106,7 @@ int TigerFileBase::OpenFile( const char * pszModuleToOpen,
 
     CPLFree( pszFilename );
 
-    if( fpPrimary == NULL )
+    if( fpPrimary == nullptr )
         return FALSE;
 
     pszModule = CPLStrdup(pszModuleToOpen);
@@ -147,7 +147,7 @@ void TigerFileBase::SetupVersion()
 int TigerFileBase::EstablishRecordLength( VSILFILE * fp )
 
 {
-    if( fp == NULL || VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
+    if( fp == nullptr || VSIFSeekL( fp, 0, SEEK_SET ) != 0 )
         return -1;
 
 /* -------------------------------------------------------------------- */
@@ -194,7 +194,7 @@ int TigerFileBase::EstablishRecordLength( VSILFILE * fp )
 void TigerFileBase::EstablishFeatureCount()
 
 {
-    if( fpPrimary == NULL )
+    if( fpPrimary == nullptr )
         return;
 
     nRecordLength = EstablishRecordLength( fpPrimary );
@@ -358,7 +358,7 @@ bool TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
                                  const char *pszType, VSILFILE * fp )
 
 {
-    if( fp == NULL )
+    if( fp == nullptr )
         fp = fpPrimary;
 
     pachRecord[0] = *pszType;
@@ -400,7 +400,7 @@ bool TigerFileBase::SetWriteModule( const char *pszExtension,
     /* TODO/notdef: eventually more logic based on FILE and STATE/COUNTY can
        be inserted here. */
 
-    if( pszTargetModule == NULL )
+    if( pszTargetModule == nullptr )
         return false;
 
     char szFullModule[30];
@@ -409,22 +409,22 @@ bool TigerFileBase::SetWriteModule( const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      Is this our current module?                                     */
 /* -------------------------------------------------------------------- */
-    if( pszModule != NULL && EQUAL(szFullModule,pszModule) )
+    if( pszModule != nullptr && EQUAL(szFullModule,pszModule) )
         return true;
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup the previous file, if any.                              */
 /* -------------------------------------------------------------------- */
-    if( fpPrimary != NULL )
+    if( fpPrimary != nullptr )
     {
         VSIFCloseL( fpPrimary );
-        fpPrimary = NULL;
+        fpPrimary = nullptr;
     }
 
-    if( pszModule != NULL )
+    if( pszModule != nullptr )
     {
         CPLFree( pszModule );
-        pszModule = NULL;
+        pszModule = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -444,7 +444,7 @@ bool TigerFileBase::SetWriteModule( const char *pszExtension,
 
     fpPrimary = VSIFOpenL( pszFilename, "ab" );
     CPLFree(pszFilename);
-    if( fpPrimary == NULL )
+    if( fpPrimary == nullptr )
         return false;
 
     pszModule = CPLStrdup( szFullModule );
@@ -528,7 +528,7 @@ void TigerFileBase::WriteFields(const TigerRecordInfo *psRTInfoIn,
 bool TigerFileBase::SetModule( const char * pszModuleIn )
 
 {
-    if( m_pszFileCode == NULL )
+    if( m_pszFileCode == nullptr )
         return false;
 
     if( !OpenFile( pszModuleIn, m_pszFileCode ) )
@@ -548,29 +548,29 @@ OGRFeature *TigerFileBase::GetFeature( int nRecordId )
 {
     char        achRecord[OGR_TIGER_RECBUF_LEN];
 
-    if (psRTInfo == NULL)
-        return NULL;
+    if (psRTInfo == nullptr)
+        return nullptr;
 
     if( nRecordId < 0 || nRecordId >= nFeatures )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Request for out-of-range feature %d of %s",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the raw record data from the file.                         */
 /* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
+    if( fpPrimary == nullptr )
+        return nullptr;
 
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %s",
                   nRecordId * nRecordLength, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -580,7 +580,7 @@ OGRFeature *TigerFileBase::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -602,7 +602,7 @@ OGRErr TigerFileBase::CreateFeature( OGRFeature *poFeature )
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
 
-    if (psRTInfo == NULL)
+    if (psRTInfo == nullptr)
         return OGRERR_FAILURE;
 
     if( !SetWriteModule( m_pszFileCode, psRTInfo->nRecordLength+2, poFeature ) )

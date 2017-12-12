@@ -41,14 +41,14 @@
 class vsil_target : public kdu_compressed_target {
 
 public:
-    vsil_target() { file = NULL; }
+    vsil_target() { file = nullptr; }
     ~vsil_target() { close(); }
 
     void open(const char *fname, const char *access )
         {
             close();
             file = VSIFOpenL( fname, access );
-            if( file == NULL )
+            if( file == nullptr )
             {
                 kdu_error e;
                 e << "Unable to open compressed data file, \"" <<
@@ -59,7 +59,7 @@ public:
 
     bool write(const kdu_byte *buf, int num_bytes) override
         {
-            if( file == NULL )
+            if( file == nullptr )
                 return false;
 
             if( (int) VSIFWriteL( buf, 1, num_bytes, file ) != num_bytes )
@@ -70,7 +70,7 @@ public:
 
     bool start_rewrite(kdu_long backtrack) override
         {
-            if( file == NULL )
+            if( file == nullptr )
                 return false;
 
             if( VSIFSeekL( file, VSIFTellL(file)-backtrack, SEEK_SET ) != 0 )
@@ -81,7 +81,7 @@ public:
 
     bool end_rewrite() override
         {
-            if( file == NULL )
+            if( file == nullptr )
                 return false;
 
             if( VSIFSeekL( file, 0, SEEK_END ) != 0 )
@@ -92,9 +92,9 @@ public:
 
     bool close() override
         {
-            if (file != NULL)
+            if (file != nullptr)
                 VSIFCloseL( file );
-            file = NULL;
+            file = nullptr;
             return true;
         }
 

@@ -173,7 +173,7 @@ double NWT_GRDRasterBand::GetNoDataValue(int *pbSuccess) {
     NWT_GRDDataset *poGDS = reinterpret_cast<NWT_GRDDataset *>(poDS);
     double dRetval;
     if ((nBand == 4) || (poGDS->nBands == 1)) {
-        if (pbSuccess != NULL)
+        if (pbSuccess != nullptr)
             *pbSuccess = TRUE;
         if (dfNoData != 0.0) {
             dRetval = dfNoData;
@@ -184,7 +184,7 @@ double NWT_GRDRasterBand::GetNoDataValue(int *pbSuccess) {
         return dRetval;
     }
 
-    if (pbSuccess != NULL)
+    if (pbSuccess != nullptr)
         *pbSuccess = FALSE;
 
     return 0;
@@ -246,7 +246,7 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     // Initialise output array
     GByte *pabyRecord = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
                     nRecordSize));
-    if (pabyRecord == NULL)
+    if (pabyRecord == nullptr)
     return CE_Failure;
 
     // We only ever write to band 4; RGB bands are basically 'virtual'
@@ -319,7 +319,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     GByte *pabyRecord = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
                     nRecordSize));
-    if (pabyRecord == NULL)
+    if (pabyRecord == nullptr)
     return CE_Failure;
 
     // Read the data
@@ -385,8 +385,8 @@ CPLErr NWT_GRDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 NWT_GRDDataset::NWT_GRDDataset() :
-    fp(NULL),
-    pGrd(NULL),
+    fp(nullptr),
+    pGrd(nullptr),
     bUpdateHeader(false)
 {
     //poCT = NULL;
@@ -409,10 +409,10 @@ NWT_GRDDataset::~NWT_GRDDataset() {
     if (eAccess == GA_Update) {
         FlushCache();
     }
-    pGrd->fp = NULL;       // this prevents nwtCloseGrid from closing the fp
+    pGrd->fp = nullptr;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid(pGrd);
 
-    if (fp != NULL)
+    if (fp != nullptr)
         VSIFCloseL(fp);
 }
 
@@ -488,7 +488,7 @@ const char *NWT_GRDDataset::GetProjectionRef() {
             MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
         if( poSpatialRef )
         {
-            char* pszProjectionTmp = NULL;
+            char* pszProjectionTmp = nullptr;
             poSpatialRef->exportToWkt( &pszProjectionTmp );
             poSpatialRef->Release();
             if( pszProjectionTmp )
@@ -547,7 +547,7 @@ int NWT_GRDDataset::Identify(GDALOpenInfo * poOpenInfo) {
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
     if (!Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
@@ -566,12 +566,12 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for BAND_COUNT");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
-    if (poDS->fp == NULL) {
+    if (poDS->fp == nullptr) {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -589,7 +589,7 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
             || !GDALCheckDatasetDimensions(poDS->pGrd->nXSide,
                     poDS->pGrd->nYSide)) {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = poDS->pGrd->nXSide;
@@ -732,7 +732,7 @@ int NWT_GRDDataset::WriteTab() {
     const std::string sTabFile(CPLResetExtension(pGrd->szFileName, "tab"));
 
     VSILFILE *tabfp = VSIFOpenL(sTabFile.c_str(), "wt");
-    if( tabfp == NULL)
+    if( tabfp == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed to create file `%s'", sTabFile.c_str());
@@ -829,12 +829,12 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     if (nBands != 1) {
         CPLError(CE_Failure, CPLE_FileIO,
                 "Only single band datasets are supported for writing");
-        return NULL;
+        return nullptr;
     }
     if (eType != GDT_Float32) {
         CPLError(CE_Failure, CPLE_FileIO,
                 "Float32 is the only supported data type");
-        return NULL;
+        return nullptr;
     }
     NWT_GRDDataset *poDS = new NWT_GRDDataset();
     poDS->eAccess = GA_Update;
@@ -863,13 +863,13 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
 
     float fZMin, fZMax;
     // See if the user passed the min/max values
-    if (CSLFetchNameValue(papszParmList, "ZMIN") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "ZMIN") == nullptr) {
         fZMin = (float) -2E+37;
     } else {
         fZMin = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParmList, "ZMIN")));
     }
 
-    if (CSLFetchNameValue(papszParmList, "ZMAX") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "ZMAX") == nullptr) {
         fZMax = (float) 2E+38;
     } else {
         fZMax = static_cast<float>(CPLAtof(CSLFetchNameValue(papszParmList, "ZMAX")));
@@ -915,28 +915,28 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     poDS->pGrd->fHillShadeAngle = 0;
 
     // Set the raster style settings. These aren't used anywhere other than to write the TAB file
-    if (CSLFetchNameValue(papszParmList, "BRIGHTNESS") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "BRIGHTNESS") == nullptr) {
         poDS->pGrd->style.iBrightness = 50;
     } else {
         poDS->pGrd->style.iBrightness = atoi(
                 CSLFetchNameValue(papszParmList, "BRIGHTNESS"));
     }
 
-    if (CSLFetchNameValue(papszParmList, "CONTRAST") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "CONTRAST") == nullptr) {
         poDS->pGrd->style.iContrast = 50;
     } else {
         poDS->pGrd->style.iContrast = atoi(
                 CSLFetchNameValue(papszParmList, "CONTRAST"));
     }
 
-    if (CSLFetchNameValue(papszParmList, "TRANSCOLOR") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "TRANSCOLOR") == nullptr) {
         poDS->pGrd->style.iTransColour = 0;
     } else {
         poDS->pGrd->style.iTransColour = atoi(
                 CSLFetchNameValue(papszParmList, "TRANSCOLOR"));
     }
 
-    if (CSLFetchNameValue(papszParmList, "TRANSLUCENCY") == NULL) {
+    if (CSLFetchNameValue(papszParmList, "TRANSLUCENCY") == nullptr) {
         poDS->pGrd->style.iTranslucency = 0;
     } else {
         poDS->pGrd->style.iTranslucency = atoi(
@@ -950,10 +950,10 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
 
     // Open the grid file
     poDS->fp = VSIFOpenL(pszFilename, "wb");
-    if (poDS->fp == NULL) {
+    if (poDS->fp == nullptr) {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->pGrd->fp = poDS->fp;
@@ -966,7 +966,7 @@ GDALDataset *NWT_GRDDataset::Create(const char * pszFilename, int nXSize,
     if (poDS->UpdateHeader() != 0) {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -992,7 +992,7 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     {
         CPLError(CE_Failure, CPLE_FileIO,
                 "Only single band datasets are supported for writing");
-        return NULL;
+        return nullptr;
     }
 
     char **tmpOptions = CSLDuplicate(papszOptions);
@@ -1008,17 +1008,17 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
     char sMax[10] = {};
     char sMin[10] = {};
 
-    if ((CSLFetchNameValue(papszOptions, "ZMAX") == NULL)
-            || (CSLFetchNameValue(papszOptions, "ZMIN") == NULL)) {
+    if ((CSLFetchNameValue(papszOptions, "ZMAX") == nullptr)
+            || (CSLFetchNameValue(papszOptions, "ZMIN") == nullptr)) {
         CPL_IGNORE_RET_VAL(pBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, &dfMean,
                 &dfStdDev));
     }
 
-    if (CSLFetchNameValue(papszOptions, "ZMAX") == NULL) {
+    if (CSLFetchNameValue(papszOptions, "ZMAX") == nullptr) {
         CPLsnprintf(sMax, sizeof(sMax), "%f", dfMax);
         tmpOptions = CSLSetNameValue(tmpOptions, "ZMAX", sMax);
     }
-    if (CSLFetchNameValue(papszOptions, "ZMIN") == NULL) {
+    if (CSLFetchNameValue(papszOptions, "ZMIN") == nullptr) {
         CPLsnprintf(sMin, sizeof(sMin), "%f", dfMin);
         tmpOptions = CSLSetNameValue(tmpOptions, "ZMIN", sMin);
     }
@@ -1036,7 +1036,7 @@ GDALDataset * NWT_GRDDataset::CreateCopy(const char * pszFilename,
 /*                          GDALRegister_GRD()                          */
 /************************************************************************/
 void GDALRegister_NWT_GRD() {
-    if (GDALGetDriverByName("NWT_GRD") != NULL)
+    if (GDALGetDriverByName("NWT_GRD") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();

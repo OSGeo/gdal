@@ -330,7 +330,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     eDataType, // Requested type
                     pixel_size, 2 * line_size
 #if GDAL_VERSION_MAJOR >= 2
-                    ,NULL
+                    ,nullptr
 #endif
                     ); // Pixel and line space
                 if( eErr != CE_None )
@@ -414,7 +414,7 @@ CPLErr GDALMRFDataset::PatchOverview(int BlockX,int BlockY,
                     eDataType, // Requested type
                     pixel_size, line_size
 #if GDAL_VERSION_MAJOR >= 2
-                    ,NULL
+                    ,nullptr
 #endif
                 ); // Pixel and line space
                 if( eErr != CE_None )

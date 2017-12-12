@@ -105,7 +105,7 @@ class GDALNullLayer : public OGRLayer
     virtual void        ResetReading() override {}
     virtual int         TestCapability( const char * ) override;
 
-    virtual OGRFeature *GetNextFeature() override { return NULL; }
+    virtual OGRFeature *GetNextFeature() override { return nullptr; }
 
     virtual OGRErr      ICreateFeature( OGRFeature * ) override { return OGRERR_NONE; }
 
@@ -192,7 +192,7 @@ CPLErr GDALNullRasterBand::IWriteBlock(int, int, void*)
 
 GDALNullDataset::GDALNullDataset() :
     m_nLayers(0),
-    m_papoLayers(NULL)
+    m_papoLayers(nullptr)
 {
     eAccess = GA_Update;
 }
@@ -246,7 +246,7 @@ OGRLayer *GDALNullDataset::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= m_nLayers )
-        return NULL;
+        return nullptr;
     else
         return m_papoLayers[iLayer];
 }
@@ -278,7 +278,7 @@ CPLErr GDALNullDataset::SetGeoTransform(double *)
 GDALDataset* GDALNullDataset::Open(GDALOpenInfo* poOpenInfo)
 {
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "NULL:") )
-        return NULL;
+        return nullptr;
 
     const char* pszStr = poOpenInfo->pszFilename + strlen("NULL:");
     char** papszTokens = CSLTokenizeString2(pszStr, ",", 0);
@@ -289,7 +289,7 @@ GDALDataset* GDALNullDataset::Open(GDALOpenInfo* poOpenInfo)
     GDALDataType eDT = GDT_Byte;
     for( int iType = 1; iType < GDT_TypeCount; iType++ )
     {
-        if( GDALGetDataTypeName((GDALDataType)iType) != NULL
+        if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
             && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
                         pszDTName) )
         {
@@ -299,7 +299,7 @@ GDALDataset* GDALNullDataset::Open(GDALOpenInfo* poOpenInfo)
     }
     CSLDestroy(papszTokens);
 
-    return Create("", nXSize, nYSize, nBands, eDT, NULL);
+    return Create("", nXSize, nYSize, nBands, eDT, nullptr);
 }
 
 /************************************************************************/
@@ -379,7 +379,7 @@ OGRErr GDALNullLayer::CreateField( OGRFieldDefn *poField, int )
 void GDALRegister_NULL()
 
 {
-    if( GDALGetDriverByName( "NULL" ) != NULL )
+    if( GDALGetDriverByName( "NULL" ) != nullptr )
         return;
 
     GDALDriver  *poDriver;

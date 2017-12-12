@@ -42,7 +42,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
         return TRUE;
 
     /* Check that the filename exists and is a file */
-    if( poOpenInfo->fpL == NULL)
+    if( poOpenInfo->fpL == nullptr)
         return FALSE;
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
@@ -54,7 +54,7 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo, bool bEmitWarn
 #endif
 
     if ( poOpenInfo->nHeaderBytes < 100 ||
-         poOpenInfo->pabyHeader == NULL ||
+         poOpenInfo->pabyHeader == nullptr ||
          !STARTS_WITH((const char*)poOpenInfo->pabyHeader, "SQLite format 3") )
     {
         return FALSE;
@@ -227,14 +227,14 @@ static int OGRGeoPackageDriverIdentify( GDALOpenInfo* poOpenInfo )
 static GDALDataset *OGRGeoPackageDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( !OGRGeoPackageDriverIdentify(poOpenInfo, true) )
-        return NULL;
+        return nullptr;
 
     GDALGeoPackageDataset   *poDS = new GDALGeoPackageDataset();
 
     if( !poDS->Open( poOpenInfo ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -267,7 +267,7 @@ static GDALDataset* OGRGeoPackageDriverCreate( const char * pszFilename,
                        nBands, eDT, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -292,7 +292,7 @@ static CPLErr OGRGeoPackageDriverDelete( const char *pszFilename )
 
 void RegisterOGRGeoPackage()
 {
-    if( GDALGetDriverByName( "GPKG" ) != NULL )
+    if( GDALGetDriverByName( "GPKG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -403,6 +403,7 @@ COMPRESSION_OPTIONS
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
                                "Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );

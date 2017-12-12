@@ -48,17 +48,17 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 DDFFieldDefn::DDFFieldDefn() :
-    poModule(NULL),
-    pszTag(NULL),
-    _fieldName(NULL),
-    _arrayDescr(NULL),
-    _formatControls(NULL),
+    poModule(nullptr),
+    pszTag(nullptr),
+    _fieldName(nullptr),
+    _arrayDescr(nullptr),
+    _formatControls(nullptr),
     bRepeatingSubfields(FALSE),
     nFixedWidth(0),
     _data_struct_code(dsc_elementary),
     _data_type_code(dtc_char_string),
     nSubfieldCount(0),
-    papoSubfields(NULL)
+    papoSubfields(nullptr)
 {}
 
 /************************************************************************/
@@ -113,7 +113,7 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 /*      Add this format to the format list.  We don't bother            */
 /*      aggregating formats here.                                       */
 /* -------------------------------------------------------------------- */
-    if( _formatControls == NULL || strlen(_formatControls) == 0 )
+    if( _formatControls == nullptr || strlen(_formatControls) == 0 )
     {
         CPLFree( _formatControls );
         _formatControls = CPLStrdup( "()" );
@@ -138,7 +138,7 @@ void DDFFieldDefn::AddSubfield( DDFSubfieldDefn *poNewSFDefn,
 /* -------------------------------------------------------------------- */
 /*      Add the subfield name to the list.                              */
 /* -------------------------------------------------------------------- */
-    if( _arrayDescr == NULL )
+    if( _arrayDescr == nullptr )
         _arrayDescr = CPLStrdup("");
 
     _arrayDescr = (char *)
@@ -164,8 +164,8 @@ int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName,
                           const char *pszFormat )
 
 {
-    CPLAssert( pszTag == NULL );
-    poModule = NULL;
+    CPLAssert( pszTag == nullptr );
+    poModule = nullptr;
     pszTag = CPLStrdup( pszTagIn );
     _fieldName = CPLStrdup( pszFieldName );
     _arrayDescr = CPLStrdup( pszDescription );
@@ -173,12 +173,12 @@ int DDFFieldDefn::Create( const char *pszTagIn, const char *pszFieldName,
     _data_struct_code = eDataStructCode;
     _data_type_code = eDataTypeCode;
 
-    if( pszFormat != NULL )
+    if( pszFormat != nullptr )
         _formatControls = CPLStrdup( pszFormat );
     else
         _formatControls = CPLStrdup( "" );
 
-    if( pszDescription != NULL && *pszDescription == '*' )
+    if( pszDescription != nullptr && *pszDescription == '*' )
         bRepeatingSubfields = TRUE;
 
     return TRUE;
@@ -213,7 +213,7 @@ int DDFFieldDefn::GenerateDDREntry( DDFModule * poModuleIn, char **ppachData,
     if( strlen(_formatControls) == 0 )
         *pnLength -= 1;
 
-    if( ppachData == NULL )
+    if( ppachData == nullptr )
         return TRUE;
 
     *ppachData = static_cast<char *>(CPLMalloc(*pnLength + 1));
@@ -512,7 +512,7 @@ int DDFFieldDefn::BuildSubfields()
 /*      We accomplish this by ignoring everything before the last       */
 /*      '*' in the subfield list.                                       */
 /* -------------------------------------------------------------------- */
-    if( strrchr(pszSublist, '*') != NULL )
+    if( strrchr(pszSublist, '*') != nullptr )
         pszSublist = strrchr(pszSublist, '*');
 
 /* -------------------------------------------------------------------- */
@@ -578,13 +578,13 @@ char *DDFFieldDefn::ExtractSubstring( const char * pszSrc )
         {
             nBracket--;
             if( nBracket < 0 )
-                return NULL;
+                return nullptr;
         }
     }
     if( nBracket > 0 )
-        return NULL;
+        return nullptr;
 
-    char *pszReturn = NULL;
+    char *pszReturn = nullptr;
     if( pszSrc[0] == '(' )
     {
         CPLAssert( i >= 2 );
@@ -624,7 +624,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
         if( (iSrc == 0 || pszSrc[iSrc-1] == ',') && pszSrc[iSrc] == '(' )
         {
             char *pszContents = ExtractSubstring( pszSrc+iSrc );
-            if( pszContents == NULL )
+            if( pszContents == nullptr )
             {
                 pszDest[0] = '\0';
                 return pszDest;
@@ -680,7 +680,7 @@ char *DDFFieldDefn::ExpandFormat( const char * pszSrc )
                 iSrc++;
 
             char *pszContents = ExtractSubstring( pszNext );
-            if( pszContents == NULL )
+            if( pszContents == nullptr )
             {
                 pszDest[0] = '\0';
                 return pszDest;
@@ -799,7 +799,7 @@ int DDFFieldDefn::ApplyFormats()
     int iFormatItem = 0;  // Used after for.
 
     for( ;
-         papszFormatItems[iFormatItem] != NULL;
+         papszFormatItems[iFormatItem] != nullptr;
          iFormatItem++ )
     {
         const char *pszPastPrefix = papszFormatItems[iFormatItem];
@@ -890,7 +890,7 @@ DDFSubfieldDefn *DDFFieldDefn::FindSubfieldDefn( const char * pszMnemonic )
             return papoSubfields[i];
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -913,7 +913,7 @@ DDFSubfieldDefn *DDFFieldDefn::GetSubfield( int i )
     if( i < 0 || i >= nSubfieldCount )
     {
         CPLAssert( false );
-        return NULL;
+        return nullptr;
     }
 
     return papoSubfields[i];
@@ -939,9 +939,9 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
     {
         int nSubfieldSize = 0;
 
-        if( !papoSubfields[iSubfield]->GetDefaultValue( NULL, 0,
+        if( !papoSubfields[iSubfield]->GetDefaultValue( nullptr, 0,
                                                         &nSubfieldSize ) )
-            return NULL;
+            return nullptr;
         nTotalSize += nSubfieldSize;
     }
 
@@ -950,7 +950,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
 /* -------------------------------------------------------------------- */
     char *pachData = static_cast<char *>(CPLMalloc( nTotalSize ));
 
-    if( pnSize != NULL )
+    if( pnSize != nullptr )
         *pnSize = nTotalSize;
 
 /* -------------------------------------------------------------------- */
@@ -965,7 +965,7 @@ char *DDFFieldDefn::GetDefaultValue( int *pnSize )
                 pachData + nOffset, nTotalSize - nOffset, &nSubfieldSize ) )
         {
             CPLAssert( false );
-            return NULL;
+            return nullptr;
         }
 
         nOffset += nSubfieldSize;

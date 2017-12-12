@@ -207,14 +207,14 @@ bool WCSDataset100::ExtractGridInfo()
 {
     CPLXMLNode * psCO = CPLGetXMLNode( psService, "CoverageOffering" );
 
-    if( psCO == NULL )
+    if( psCO == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      We need to strip off name spaces so it is easier to             */
 /*      searchfor plain gml names.                                      */
 /* -------------------------------------------------------------------- */
-    CPLStripXMLNamespace( psCO, NULL, TRUE );
+    CPLStripXMLNamespace( psCO, nullptr, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Verify we have a Rectified Grid.                                */
@@ -222,7 +222,7 @@ bool WCSDataset100::ExtractGridInfo()
     CPLXMLNode *psRG =
         CPLGetXMLNode( psCO, "domainSet.spatialDomain.RectifiedGrid" );
 
-    if( psRG == NULL )
+    if( psRG == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find RectifiedGrid in CoverageOffering,\n"
@@ -250,22 +250,22 @@ bool WCSDataset100::ExtractGridInfo()
 /*      Fallback to nativeCRSs declaration.                             */
 /* -------------------------------------------------------------------- */
     const char *pszNativeCRSs =
-        CPLGetXMLValue( psCO, "supportedCRSs.nativeCRSs", NULL );
+        CPLGetXMLValue( psCO, "supportedCRSs.nativeCRSs", nullptr );
 
-    if( pszNativeCRSs == NULL )
+    if( pszNativeCRSs == nullptr )
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestResponseCRSs", NULL );
+            CPLGetXMLValue( psCO, "supportedCRSs.requestResponseCRSs", nullptr );
 
-    if( pszNativeCRSs == NULL )
+    if( pszNativeCRSs == nullptr )
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.requestCRSs", NULL );
+            CPLGetXMLValue( psCO, "supportedCRSs.requestCRSs", nullptr );
 
-    if( pszNativeCRSs == NULL )
+    if( pszNativeCRSs == nullptr )
         pszNativeCRSs =
-            CPLGetXMLValue( psCO, "supportedCRSs.responseCRSs", NULL );
+            CPLGetXMLValue( psCO, "supportedCRSs.responseCRSs", nullptr );
 
-    if( pszNativeCRSs != NULL
-        && (pszProjection == NULL || strlen(pszProjection) == 0) )
+    if( pszNativeCRSs != nullptr
+        && (pszProjection == nullptr || strlen(pszProjection) == 0) )
     {
         OGRSpatialReference oSRS;
 
@@ -281,7 +281,7 @@ bool WCSDataset100::ExtractGridInfo()
     }
 
     // We should try to use the services name for the CRS if possible.
-    if( pszNativeCRSs != NULL
+    if( pszNativeCRSs != nullptr
         && ( STARTS_WITH_CI(pszNativeCRSs, "EPSG:")
              || STARTS_WITH_CI(pszNativeCRSs, "AUTO:")
              || STARTS_WITH_CI(pszNativeCRSs, "Image ")
@@ -299,7 +299,7 @@ bool WCSDataset100::ExtractGridInfo()
 /* -------------------------------------------------------------------- */
 /*      Do we have a coordinate system override?                        */
 /* -------------------------------------------------------------------- */
-    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", NULL );
+    const char *pszProjOverride = CPLGetXMLValue( psService, "SRS", nullptr );
 
     if( pszProjOverride )
     {
@@ -332,11 +332,11 @@ bool WCSDataset100::ExtractGridInfo()
     if( pszProjection && strlen(pszProjection) > 0 && osCRS == "" )
     {
         oSRS.SetFromUserInput( pszProjection );
-        const char *pszAuth = oSRS.GetAuthorityName(NULL);
+        const char *pszAuth = oSRS.GetAuthorityName(nullptr);
 
-        if( pszAuth != NULL && EQUAL(pszAuth,"EPSG") )
+        if( pszAuth != nullptr && EQUAL(pszAuth,"EPSG") )
         {
-            pszAuth = oSRS.GetAuthorityCode(NULL);
+            pszAuth = oSRS.GetAuthorityCode(nullptr);
             if( pszAuth )
             {
                 osCRS = "EPSG:";
@@ -358,15 +358,15 @@ bool WCSDataset100::ExtractGridInfo()
 /*      falling back to the first supported format.  Should we          */
 /*      consider preferring the nativeFormat if available?              */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "PreferredFormat", NULL ) == NULL )
+    if( CPLGetXMLValue( psService, "PreferredFormat", nullptr ) == nullptr )
     {
         CPLXMLNode *psSF = CPLGetXMLNode( psCO, "supportedFormats" );
         CPLXMLNode *psNode;
-        char **papszFormatList = NULL;
+        char **papszFormatList = nullptr;
         CPLString osPreferredFormat;
         int iFormat;
 
-        if( psSF == NULL )
+        if( psSF == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "No <PreferredFormat> tag in service definition file, and no\n"
@@ -374,21 +374,21 @@ bool WCSDataset100::ExtractGridInfo()
             return FALSE;
         }
 
-        for( psNode = psSF->psChild; psNode != NULL; psNode = psNode->psNext )
+        for( psNode = psSF->psChild; psNode != nullptr; psNode = psNode->psNext )
         {
             if( psNode->eType == CXT_Element
                 && EQUAL(psNode->pszValue,"formats")
-                && psNode->psChild != NULL
+                && psNode->psChild != nullptr
                 && psNode->psChild->eType == CXT_Text )
             {
                 // This check is looking for deprecated WCS 1.0 capabilities
                 // with multiple formats space delimited in a single <formats>
                 // element per GDAL ticket 1748 (done by MapServer 4.10 and
                 // earlier for instance).
-                if( papszFormatList == NULL
-                    && psNode->psNext == NULL
-                    && strstr(psNode->psChild->pszValue," ") != NULL
-                    && strstr(psNode->psChild->pszValue,";") == NULL )
+                if( papszFormatList == nullptr
+                    && psNode->psNext == nullptr
+                    && strstr(psNode->psChild->pszValue," ") != nullptr
+                    && strstr(psNode->psChild->pszValue,";") == nullptr )
                 {
                     char **papszSubList =
                         CSLTokenizeString( psNode->psChild->pszValue );
@@ -405,15 +405,15 @@ bool WCSDataset100::ExtractGridInfo()
         }
 
         for( iFormat = 0;
-             papszFormatList != NULL && papszFormatList[iFormat] != NULL;
+             papszFormatList != nullptr && papszFormatList[iFormat] != nullptr;
              iFormat++ )
         {
             if( osPreferredFormat.empty() )
                 osPreferredFormat = papszFormatList[iFormat];
 
-            if( strstr(papszFormatList[iFormat],"tiff") != NULL
-                    || strstr(papszFormatList[iFormat],"TIFF") != NULL
-                    || strstr(papszFormatList[iFormat],"Tiff") != NULL )
+            if( strstr(papszFormatList[iFormat],"tiff") != nullptr
+                    || strstr(papszFormatList[iFormat],"TIFF") != nullptr
+                    || strstr(papszFormatList[iFormat],"Tiff") != nullptr )
             {
                 osPreferredFormat = papszFormatList[iFormat];
                 break;
@@ -434,11 +434,11 @@ bool WCSDataset100::ExtractGridInfo()
 /*      Try to identify a nodata value.  For now we only support the    */
 /*      singleValue mechanism.                                          */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psService, "NoDataValue", NULL ) == NULL )
+    if( CPLGetXMLValue( psService, "NoDataValue", nullptr ) == nullptr )
     {
-        const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", NULL );
+        const char *pszSV = CPLGetXMLValue( psCO, "rangeSet.RangeSet.nullValues.singleValue", nullptr );
 
-        if( pszSV != NULL && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
+        if( pszSV != nullptr && (CPLAtof(pszSV) != 0.0 || *pszSV == DIGIT_ZERO) )
         {
             bServiceDirty = true;
             CPLCreateXMLElementAndValue( psService, "NoDataValue",
@@ -457,10 +457,10 @@ bool WCSDataset100::ExtractGridInfo()
     CPLXMLNode *psValues;
 
     if( osBandIdentifier.empty()
-        && psAD != NULL
+        && psAD != nullptr
         && (EQUAL(CPLGetXMLValue(psAD,"name",""),"Band")
             || EQUAL(CPLGetXMLValue(psAD,"name",""),"Bands"))
-        && ( (psValues = CPLGetXMLNode( psAD, "values" )) != NULL ) )
+        && ( (psValues = CPLGetXMLNode( psAD, "values" )) != nullptr ) )
     {
         CPLXMLNode *psSV;
         int iBand;
@@ -468,12 +468,12 @@ bool WCSDataset100::ExtractGridInfo()
         osBandIdentifier = CPLGetXMLValue(psAD,"name","");
 
         for( psSV = psValues->psChild, iBand = 1;
-             psSV != NULL;
+             psSV != nullptr;
              psSV = psSV->psNext, iBand++ )
         {
             if( psSV->eType != CXT_Element
                 || !EQUAL(psSV->pszValue,"singleValue")
-                || psSV->psChild == NULL
+                || psSV->psChild == nullptr
                 || psSV->psChild->eType != CXT_Text
                 || atoi(psSV->psChild->pszValue) != iBand )
             {
@@ -500,17 +500,17 @@ bool WCSDataset100::ExtractGridInfo()
     CPLString osServiceURL = CPLGetXMLValue( psService, "ServiceURL", "" );
     CPLString osCoverageExtra = CPLGetXMLValue( psService, "GetCoverageExtra", "" );
 
-    if( psTD != NULL )
+    if( psTD != nullptr )
     {
         CPLXMLNode *psTime;
 
         // collect all the allowed time positions.
 
-        for( psTime = psTD->psChild; psTime != NULL; psTime = psTime->psNext )
+        for( psTime = psTD->psChild; psTime != nullptr; psTime = psTime->psNext )
         {
             if( psTime->eType == CXT_Element
                 && EQUAL(psTime->pszValue,"timePosition")
-                && psTime->psChild != NULL
+                && psTime->psChild != nullptr
                 && psTime->psChild->eType == CXT_Text )
                 aosTimePositions.push_back( psTime->psChild->pszValue );
         }
@@ -539,25 +539,25 @@ bool WCSDataset100::ExtractGridInfo()
 CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED CPLString url )
 {
 
-    CPLStripXMLNamespace(Capabilities, NULL, TRUE);
+    CPLStripXMLNamespace(Capabilities, nullptr, TRUE);
 
     if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0) {
         return CE_Failure;
     }
 
-    char **metadata = NULL;
+    char **metadata = nullptr;
     CPLString path = "WCS_GLOBAL#";
 
     CPLString key = path + "version";
     metadata = CSLSetNameValue(metadata, key, Version());
 
-    for( CPLXMLNode *node = Capabilities->psChild; node != NULL; node = node->psNext)
+    for( CPLXMLNode *node = Capabilities->psChild; node != nullptr; node = node->psNext)
     {
         const char *attr = node->pszValue;
         if( node->eType == CXT_Attribute && EQUAL(attr, "updateSequence") )
         {
             key = path + "updateSequence";
-            CPLString value = CPLGetXMLValue(node, NULL, "");
+            CPLString value = CPLGetXMLValue(node, nullptr, "");
             metadata = CSLSetNameValue(metadata, key, value);
         }
     }
@@ -612,17 +612,17 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                     CPLSearchXMLNode(Capabilities, "DescribeCoverage"),
                     "Get"),
                 "OnlineResource"),
-            "href"), NULL, "");
+            "href"), nullptr, "");
     // if DescribeCoverageURL looks wrong (i.e. has localhost) should we change it?
 
     this->SetMetadata( metadata, "" );
     CSLDestroy( metadata );
-    metadata = NULL;
+    metadata = nullptr;
 
     if( CPLXMLNode *contents = CPLGetXMLNode(Capabilities, "ContentMetadata") )
     {
         int index = 1;
-        for( CPLXMLNode *summary = contents->psChild; summary != NULL; summary = summary->psNext)
+        for( CPLXMLNode *summary = contents->psChild; summary != nullptr; summary = summary->psNext)
         {
             if( summary->eType != CXT_Element
                 || !EQUAL(summary->pszValue, "CoverageOfferingBrief") )
@@ -638,7 +638,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
                 CPLString value = DescribeCoverageURL;
                 value = CPLURLAddKVP(value, "SERVICE", "WCS");
                 value = CPLURLAddKVP(value, "VERSION", this->Version());
-                value = CPLURLAddKVP(value, "COVERAGE", CPLGetXMLValue(node, NULL, ""));
+                value = CPLURLAddKVP(value, "COVERAGE", CPLGetXMLValue(node, nullptr, ""));
                 // GDAL Data Model:
                 // The value of the _NAME is a string that can be passed to GDALOpen() to access the file.
                 metadata = CSLSetNameValue(metadata, name, value);
@@ -647,7 +647,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             node = CPLGetXMLNode(summary, "label");
             if (node) {
                 CPLString name = path3 + "LABEL";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
+                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
             }
 
             node = CPLGetXMLNode(summary, "lonlatEnvelope");
@@ -674,7 +674,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             node = CPLGetXMLNode(summary, "description");
             if (node) {
                 CPLString name = path3 + "description";
-                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, NULL, ""));
+                metadata = CSLSetNameValue(metadata, name, CPLGetXMLValue(node, nullptr, ""));
             }
 
             index++;

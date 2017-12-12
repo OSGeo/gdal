@@ -78,10 +78,10 @@ int SDTS_IREF::Read( const char * pszFilename )
 /*      Read the first record, and verify that this is an IREF record.  */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRecord = oIREFFile.ReadRecord();
-    if( poRecord == NULL )
+    if( poRecord == nullptr )
         return FALSE;
 
-    if( poRecord->GetStringSubfield( "IREF", 0, "MODN", 0 ) == NULL )
+    if( poRecord->GetStringSubfield( "IREF", 0, "MODN", 0 ) == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

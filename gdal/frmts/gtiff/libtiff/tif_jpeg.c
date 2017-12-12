@@ -1,5 +1,3 @@
-/* $Id: tif_jpeg.c,v 1.134 2017-10-17 19:04:47 erouault Exp $ */
-
 /*
  * Copyright (c) 1994-1997 Sam Leffler
  * Copyright (c) 1994-1997 Silicon Graphics, Inc.
@@ -27,9 +25,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
+#include "tiffiop.h"
 #include <stdlib.h>
 
-#include "tiffiop.h"
 #ifdef JPEG_SUPPORT
 
 /*

@@ -40,19 +40,19 @@ CPL_CVSID("$Id$")
 OGROCILayer::OGROCILayer()
 
 {
-    poFeatureDefn = NULL;
-    poDS = NULL;
-    poStatement = NULL;
+    poFeatureDefn = nullptr;
+    poDS = nullptr;
+    poStatement = nullptr;
 
-    pszQueryStatement = NULL;
+    pszQueryStatement = nullptr;
     nResultOffset = 0;
-    pszGeomName = NULL;
+    pszGeomName = nullptr;
     iGeomColumn = -1;
-    pszFIDName = NULL;
+    pszFIDName = nullptr;
     iFIDColumn = -1;
 
-    hLastGeom = NULL;
-    hLastGeomInd = NULL;
+    hLastGeom = nullptr;
+    hLastGeomInd = nullptr;
 
     iNextShapeId = 0;
 }
@@ -64,7 +64,7 @@ OGROCILayer::OGROCILayer()
 OGROCILayer::~OGROCILayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "OCI", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -74,15 +74,15 @@ OGROCILayer::~OGROCILayer()
     ResetReading();
 
     CPLFree( pszGeomName );
-    pszGeomName = NULL;
+    pszGeomName = nullptr;
 
     CPLFree( pszFIDName );
-    pszFIDName = NULL;
+    pszFIDName = nullptr;
 
     CPLFree( pszQueryStatement );
-    pszQueryStatement = NULL;
+    pszQueryStatement = nullptr;
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         poFeatureDefn->Release();
 }
 
@@ -93,9 +93,9 @@ OGROCILayer::~OGROCILayer()
 void OGROCILayer::ResetReading()
 
 {
-    if( poStatement != NULL )
+    if( poStatement != nullptr )
         delete poStatement;
-    poStatement = NULL;
+    poStatement = nullptr;
 
     iNextShapeId = 0;
 }
@@ -119,12 +119,12 @@ OGRFeature *OGROCILayer::GetNextFeature()
         OGRFeature      *poFeature;
 
         poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
@@ -142,32 +142,32 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
 /* -------------------------------------------------------------------- */
-    if( iNextShapeId == 0 && poStatement == NULL )
+    if( iNextShapeId == 0 && poStatement == nullptr )
     {
         if( !ExecuteQuery(pszQueryStatement) )
-            return NULL;
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Have we run out of query results, such that we have no          */
 /*      statement left?                                                 */
 /* -------------------------------------------------------------------- */
-    if( poStatement == NULL )
-        return NULL;
+    if( poStatement == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Are we in some sort of error condition?                         */
 /* -------------------------------------------------------------------- */
-    hLastGeom = NULL;
+    hLastGeom = nullptr;
 
     char **papszResult = poStatement->SimpleFetchRow();
 
-    if( papszResult == NULL )
+    if( papszResult == nullptr )
     {
         iNextShapeId = MAX(1,iNextShapeId);
         delete poStatement;
-        poStatement = NULL;
-        return NULL;
+        poStatement = nullptr;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -180,12 +180,12 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
     iNextShapeId++;
     m_nFeaturesRead++;
 
-    if( iFIDColumn != -1 && papszResult[iFIDColumn] != NULL )
+    if( iFIDColumn != -1 && papszResult[iFIDColumn] != nullptr )
         poFeature->SetFID( atoi(papszResult[iFIDColumn]) );
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        if( papszResult[iField] != NULL )
+        if( papszResult[iField] != nullptr )
             poFeature->SetField( iField, papszResult[iField] );
         else
             poFeature->SetFieldNull( iField );
@@ -200,14 +200,14 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
 
         OGROCISession      *poSession = poDS->GetSession();
 
-        if( poFeature->GetGeometryRef() != NULL && hLastGeom != NULL )
+        if( poFeature->GetGeometryRef() != nullptr && hLastGeom != nullptr )
             poSession->Failed(
                 OCIObjectFree(poSession->hEnv, poSession->hError,
                               (dvoid *) hLastGeom,
                               (ub2)OCI_OBJECTFREE_FORCE) );
 
-        hLastGeom = NULL;
-        hLastGeomInd = NULL;
+        hLastGeom = nullptr;
+        hLastGeomInd = nullptr;
     }
 
     nResultOffset++;
@@ -228,8 +228,8 @@ int OGROCILayer::ExecuteQuery( const char *pszReqQuery )
 {
     OGROCISession      *poSession = poDS->GetSession();
 
-    CPLAssert( pszReqQuery != NULL );
-    CPLAssert( poStatement == NULL );
+    CPLAssert( pszReqQuery != nullptr );
+    CPLAssert( poStatement == nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the query.                                              */
@@ -238,7 +238,7 @@ int OGROCILayer::ExecuteQuery( const char *pszReqQuery )
     if( poStatement->Execute( pszReqQuery ) != CE_None )
     {
         delete poStatement;
-        poStatement = NULL;
+        poStatement = nullptr;
         return FALSE;
     }
     nResultOffset = 0;
@@ -248,21 +248,21 @@ int OGROCILayer::ExecuteQuery( const char *pszReqQuery )
 /* -------------------------------------------------------------------- */
     if( iGeomColumn != -1 )
     {
-        OCIDefine *hGDefine = NULL;
+        OCIDefine *hGDefine = nullptr;
 
         if( poSession->Failed(
             OCIDefineByPos(poStatement->GetStatement(), &hGDefine,
                            poSession->hError,
-                           (ub4) iGeomColumn+1, (dvoid *)0, (sb4)0, SQLT_NTY,
-                           (dvoid *)0, (ub2 *)0, (ub2 *)0, (ub4)OCI_DEFAULT),
+                           (ub4) iGeomColumn+1, (dvoid *)nullptr, (sb4)0, SQLT_NTY,
+                           (dvoid *)nullptr, (ub2 *)nullptr, (ub2 *)nullptr, (ub4)OCI_DEFAULT),
             "OCIDefineByPos(geometry)") )
             return FALSE;
 
         if( poSession->Failed(
             OCIDefineObject(hGDefine, poSession->hError,
                             poSession->hGeometryTDO,
-                            (dvoid **) &hLastGeom, (ub4 *)0,
-                            (dvoid **) &hLastGeomInd, (ub4 *)0 ),
+                            (dvoid **) &hLastGeom, (ub4 *)nullptr,
+                            (dvoid **) &hLastGeomInd, (ub4 *)nullptr ),
             "OCIDefineObject") )
             return FALSE;
     }
@@ -282,9 +282,9 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 /* -------------------------------------------------------------------- */
 /*      Is the geometry NULL?                                           */
 /* -------------------------------------------------------------------- */
-    if( hLastGeom == NULL || hLastGeomInd == NULL
+    if( hLastGeom == nullptr || hLastGeomInd == nullptr
         || hLastGeomInd->_atomic == OCI_IND_NULL )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Get the size of the sdo_elem_info and sdo_ordinates arrays.     */
@@ -295,13 +295,13 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         OCICollSize( poSession->hEnv, poSession->hError,
                      (OCIColl *)(hLastGeom->sdo_elem_info), &nElemCount),
         "OCICollSize(sdo_elem_info)" ) )
-        return NULL;
+        return nullptr;
 
     if( poSession->Failed(
         OCICollSize( poSession->hEnv, poSession->hError,
                      (OCIColl *)(hLastGeom->sdo_ordinates), &nOrdCount),
         "OCICollSize(sdo_ordinates)" ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Get the GType.                                                  */
@@ -313,7 +313,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                        (uword)sizeof(int), OCI_NUMBER_SIGNED,
                        (dvoid *)&nGType),
         "OCINumberToInt(GType)" ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the dimension.                                        */
@@ -348,8 +348,8 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
 /*      If this is a sort of container geometry, create the             */
 /*      container now.                                                  */
 /* -------------------------------------------------------------------- */
-    OGRGeometryCollection *poCollection = NULL;
-    OGRPolygon *poPolygon = NULL;
+    OGRGeometryCollection *poCollection = nullptr;
+    OGRPolygon *poPolygon = nullptr;
 
     if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POLYGON) )
         poPolygon = new OGRPolygon();
@@ -383,8 +383,8 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                                            nEType, nInterpretation,
                                            nStartOrdinal - 1, nElemOrdCount );
 
-        if( poGeom == NULL )
-            return NULL;
+        if( poGeom == nullptr )
+            return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Based on GType do what is appropriate.                          */
@@ -408,7 +408,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         }
         else
         {
-            CPLAssert( poCollection != NULL );
+            CPLAssert( poCollection != nullptr );
             if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
             {
                 int  i;
@@ -423,21 +423,21 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                 /* its one poly ring, create new poly or add to existing */
                 if( nEType == 1003 )
                 {
-                    if( poPolygon != NULL
-                        && poPolygon->getExteriorRing() != NULL )
+                    if( poPolygon != nullptr
+                        && poPolygon->getExteriorRing() != nullptr )
                     {
                         poCollection->addGeometryDirectly( poPolygon );
-                        poPolygon = NULL;
+                        poPolygon = nullptr;
                     }
 
                     poPolygon = new OGRPolygon();
                 }
 
-                if( poPolygon != NULL )
+                if( poPolygon != nullptr )
                     poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
                 else
                 {
-                    CPLAssert( poPolygon != NULL );
+                    CPLAssert( poPolygon != nullptr );
                 }
             }
             else
@@ -445,14 +445,14 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         }
     }
 
-    if( poCollection != NULL
-        && poPolygon != NULL )
+    if( poCollection != nullptr
+        && poPolygon != nullptr )
         poCollection->addGeometryDirectly( poPolygon );
 
 /* -------------------------------------------------------------------- */
 /*      Return resulting collection geometry.                           */
 /* -------------------------------------------------------------------- */
-    if( poCollection == NULL )
+    if( poCollection == nullptr )
         return poPolygon;
     else
         return poCollection;
@@ -480,21 +480,21 @@ OGROCILayer::LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
     OCICollGetElem(poSession->hEnv, poSession->hError,
                    (OCIColl *)(hLastGeom->sdo_elem_info),
                    (sb4)(iElement+0), (boolean *)&bExists,
-                   (dvoid **)&hNumber, NULL );
+                   (dvoid **)&hNumber, nullptr );
     OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4),
                    OCI_NUMBER_UNSIGNED, (dvoid *) pnStartOrdinal );
 
     OCICollGetElem(poSession->hEnv, poSession->hError,
                    (OCIColl *)(hLastGeom->sdo_elem_info),
                    (sb4)(iElement+1), (boolean *)&bExists,
-                   (dvoid **)&hNumber, NULL );
+                   (dvoid **)&hNumber, nullptr );
     OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4),
                    OCI_NUMBER_UNSIGNED, (dvoid *) pnEType );
 
     OCICollGetElem(poSession->hEnv, poSession->hError,
                    (OCIColl *)(hLastGeom->sdo_elem_info),
                    (sb4)(iElement+2), (boolean *)&bExists,
-                   (dvoid **)&hNumber, NULL );
+                   (dvoid **)&hNumber, nullptr );
     OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4),
                    OCI_NUMBER_UNSIGNED, (dvoid *) pnInterpretation );
 
@@ -505,7 +505,7 @@ OGROCILayer::LoadElementInfo( int iElement, int nElemCount, int nTotalOrdCount,
         OCICollGetElem(poSession->hEnv, poSession->hError,
                        (OCIColl *)(hLastGeom->sdo_elem_info),
                        (sb4)(iElement+3), (boolean *)&bExists,
-                       (dvoid **)&hNumber,NULL);
+                       (dvoid **)&hNumber,nullptr);
         OCINumberToInt(poSession->hError, hNumber, (uword)sizeof(ub4),
                        OCI_NUMBER_UNSIGNED, (dvoid *) &nNextStartOrdinal );
 
@@ -574,7 +574,7 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
     else if( nEType == 1 && nInterpretation == 0 )
     {
         CPLDebug( "OCI", "Ignoring orientations for oriented points." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -755,13 +755,13 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
             OCICollSize( poSession->hEnv, poSession->hError,
                          (OCIColl *)(hLastGeom->sdo_elem_info), &nElemCount),
             "OCICollSize(sdo_elem_info)" ) )
-            return NULL;
+            return nullptr;
 
         if( poSession->Failed(
             OCICollSize( poSession->hEnv, poSession->hError,
                          (OCIColl*)(hLastGeom->sdo_ordinates),&nTotalOrdCount),
             "OCICollSize(sdo_ordinates)" ) )
-            return NULL;
+            return nullptr;
 
         if( nEType == 4 )
             poLS = new OGRLineString();
@@ -816,7 +816,7 @@ OGROCILayer::TranslateGeometryElement( int *piElement,
                   nEType, nInterpretation );
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -834,13 +834,13 @@ int OGROCILayer::GetOrdinalPoint( int iOrdinal, int nDimension,
     OCICollGetElem( poSession->hEnv, poSession->hError,
                     (OCIColl *)(hLastGeom->sdo_ordinates),
                     (sb4)iOrdinal+0, (boolean *)&bExists,
-                    (dvoid **)&hNumber, NULL );
+                    (dvoid **)&hNumber, nullptr );
     OCINumberToReal(poSession->hError, hNumber,
                     (uword)sizeof(double), (dvoid *)pdfX);
     OCICollGetElem( poSession->hEnv, poSession->hError,
                     (OCIColl *)(hLastGeom->sdo_ordinates),
                     (sb4)iOrdinal + 1, (boolean *)&bExists,
-                    (dvoid **)&hNumber, NULL );
+                    (dvoid **)&hNumber, nullptr );
     OCINumberToReal(poSession->hError, hNumber,
                     (uword)sizeof(double), (dvoid *)pdfY);
     if( nDimension == 3 )
@@ -848,7 +848,7 @@ int OGROCILayer::GetOrdinalPoint( int iOrdinal, int nDimension,
         OCICollGetElem( poSession->hEnv, poSession->hError,
                         (OCIColl *)(hLastGeom->sdo_ordinates),
                         (sb4)iOrdinal + 2, (boolean *)&bExists,
-                        (dvoid **)&hNumber, NULL );
+                        (dvoid **)&hNumber, nullptr );
         OCINumberToReal(poSession->hError, hNumber,
                         (uword)sizeof(double), (dvoid *)pdfZ);
     }
@@ -867,7 +867,7 @@ int OGROCILayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL;
+        return m_poFilterGeom == nullptr;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return TRUE;
@@ -893,16 +893,16 @@ int OGROCILayer::LookupTableSRID()
 /*      If we don't have a geometry column, there isn't much point      */
 /*      in trying.                                                      */
 /* -------------------------------------------------------------------- */
-    if( pszGeomName == NULL )
+    if( pszGeomName == nullptr )
         return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Split out the owner if available.                               */
 /* -------------------------------------------------------------------- */
     const char *pszTableName = GetLayerDefn()->GetName();
-    char *pszOwner = NULL;
+    char *pszOwner = nullptr;
 
-    if( strstr(pszTableName,".") != NULL )
+    if( strstr(pszTableName,".") != nullptr )
     {
         pszOwner = CPLStrdup(pszTableName);
         pszTableName = strstr(pszTableName,".") + 1;
@@ -918,7 +918,7 @@ int OGROCILayer::LookupTableSRID()
     oCommand.Append( "SELECT SRID FROM ALL_SDO_GEOM_METADATA "
                       "WHERE TABLE_NAME = UPPER(:table_name) AND COLUMN_NAME = UPPER(:geometry_name)" );
 
-    if( pszOwner != NULL )
+    if( pszOwner != nullptr )
     {
         oCommand.Append( " AND OWNER = :owner");
     }
@@ -934,17 +934,17 @@ int OGROCILayer::LookupTableSRID()
     
     oGetTables.BindString(":table_name", pszTableName);
     oGetTables.BindString(":geometry_name", pszGeomName);
-    if( pszOwner != NULL )
+    if( pszOwner != nullptr )
     {
         oGetTables.BindString(":owner", pszOwner);
         CPLFree( pszOwner );
     }
 
-    if( oGetTables.Execute( NULL ) == CE_None )
+    if( oGetTables.Execute( nullptr ) == CE_None )
     {
         char **papszRow = oGetTables.SimpleFetchRow();
 
-        if( papszRow != NULL && papszRow[0] != NULL )
+        if( papszRow != nullptr && papszRow[0] != nullptr )
             nSRID = atoi( papszRow[0] );
     }
 
@@ -958,7 +958,7 @@ int OGROCILayer::LookupTableSRID()
 const char *OGROCILayer::GetFIDColumn()
 
 {
-    if( pszFIDName != NULL )
+    if( pszFIDName != nullptr )
         return pszFIDName;
     else
         return "";
@@ -971,7 +971,7 @@ const char *OGROCILayer::GetFIDColumn()
 const char *OGROCILayer::GetGeometryColumn()
 
 {
-    if( pszGeomName != NULL )
+    if( pszGeomName != nullptr )
         return pszGeomName;
     else
         return "";

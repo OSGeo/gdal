@@ -344,7 +344,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
     strcat( access, "b" );
 
     if( VSIFSeekL(fpL, 0, SEEK_SET) < 0 )
-        return NULL;
+        return nullptr;
 
     GDALTiffHandle* psGTH = static_cast<GDALTiffHandle *>(
         CPLCalloc(1, sizeof(GDALTiffHandle)) );
@@ -367,7 +367,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
     }
 
     psGTH->abyWriteBuffer =
-        bAllocBuffer ? static_cast<GByte *>( VSIMalloc(BUFFER_SIZE) ) : NULL;
+        bAllocBuffer ? static_cast<GByte *>( VSIMalloc(BUFFER_SIZE) ) : nullptr;
     psGTH->nWriteBufferSize = 0;
 
 
@@ -377,7 +377,7 @@ TIFF* VSI_TIFFOpen( const char* name, const char* mode,
                          _tiffReadProc, _tiffWriteProc,
                          _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
                          _tiffMapProc, _tiffUnmapProc );
-    if( tif == NULL )
+    if( tif == nullptr )
         CPLFree(psGTH);
 
     return tif;

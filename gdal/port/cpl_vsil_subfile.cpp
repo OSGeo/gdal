@@ -58,7 +58,7 @@ class VSISubFileHandle : public VSIVirtualHandle
     vsi_l_offset  nSubregionSize;
     bool          bAtEOF;
 
-                      VSISubFileHandle() : fp(NULL), nSubregionOffset(0),
+                      VSISubFileHandle() : fp(nullptr), nSubregionOffset(0),
                                            nSubregionSize(0), bAtEOF(false) {}
 
     virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
@@ -113,7 +113,7 @@ int VSISubFileHandle::Close()
 
 {
     int nRet = VSIFCloseL( fp );
-    fp = NULL;
+    fp = nullptr;
 
     return nRet;
 }
@@ -336,7 +336,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 
 {
     if( !STARTS_WITH_CI(pszFilename, "/vsisubfile/") )
-        return NULL;
+        return nullptr;
 
     CPLString osSubFilePath;
     vsi_l_offset nOff = 0;
@@ -345,11 +345,11 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     if( !DecomposePath( pszFilename, osSubFilePath, nOff, nSize ) )
     {
         errno = ENOENT;
-        return NULL;
+        return nullptr;
     }
     if( nOff + nSize < nOff )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -364,8 +364,8 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osSubFilePath, pszAccess );
 
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Setup the file handle on this file.                             */
@@ -377,13 +377,13 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     poHandle->nSubregionSize = nSize;
 
     // In read-only mode validate (offset, size) against underlying file size
-    if( strchr(pszAccess, 'r') != NULL && strchr(pszAccess, '+') == NULL )
+    if( strchr(pszAccess, 'r') != nullptr && strchr(pszAccess, '+') == nullptr )
     {
         if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
         {
             poHandle->Close();
             delete poHandle;
-            return NULL;
+            return nullptr;
         }
         vsi_l_offset nFpSize = VSIFTellL(fp);
         // For a directory, the size will be max(vsi_l_offset) / 2
@@ -391,7 +391,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
         {
             poHandle->Close();
             delete poHandle;
-            return NULL;
+            return nullptr;
         }
         if( nOff + nSize > nFpSize )
         {
@@ -404,7 +404,7 @@ VSISubFileFilesystemHandler::Open( const char *pszFilename,
     {
         poHandle->Close();
         delete poHandle;
-        poHandle = NULL;
+        poHandle = nullptr;
     }
 
     return poHandle;
@@ -486,7 +486,7 @@ int VSISubFileFilesystemHandler::Rmdir( const char * /* pszPathname */ )
 char **VSISubFileFilesystemHandler::ReadDir( const char * /* pszPath */ )
 {
     errno = EACCES;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/

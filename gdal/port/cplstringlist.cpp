@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 CPLStringList::CPLStringList() :
-    papszList(NULL),
+    papszList(nullptr),
     nCount(0),
     nAllocation(0),
     bOwnList(false),
@@ -119,7 +119,7 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 void CPLStringList::Initialize()
 
 {
-    papszList = NULL;
+    papszList = nullptr;
     nCount = 0;
     nAllocation = 0;
     bOwnList = false;
@@ -149,7 +149,7 @@ CPLStringList &CPLStringList::Clear()
     if( bOwnList )
     {
         CSLDestroy( papszList );
-        papszList = NULL;
+        papszList = nullptr;
 
         bOwnList = FALSE;
         nAllocation = 0;
@@ -182,7 +182,7 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
     papszList = papszListIn;
     bOwnList = CPL_TO_BOOL(bTakeOwnership);
 
-    if( papszList == NULL || *papszList == NULL )
+    if( papszList == nullptr || *papszList == nullptr )
         nCount = 0;
     else
         nCount = -1;      // unknown
@@ -206,7 +206,7 @@ int CPLStringList::Count() const
 {
     if( nCount == -1 )
     {
-        if( papszList == NULL )
+        if( papszList == nullptr )
         {
             nCount = 0;
             nAllocation = 0;
@@ -234,7 +234,7 @@ void CPLStringList::MakeOurOwnCopy()
     if( bOwnList )
         return;
 
-    if( papszList == NULL )
+    if( papszList == nullptr )
         return;
 
     Count();
@@ -260,7 +260,7 @@ void CPLStringList::EnsureAllocation( int nMaxList )
     if( nAllocation <= nMaxList )
     {
         nAllocation = std::max(nAllocation * 2 + 20, nMaxList + 1);
-        if( papszList == NULL )
+        if( papszList == nullptr )
         {
             papszList = static_cast<char **>(
                 CPLCalloc(nAllocation, sizeof(char*)) );
@@ -297,7 +297,7 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
     EnsureAllocation( nCount+1 );
 
     papszList[nCount++] = pszNewString;
-    papszList[nCount] = NULL;
+    papszList[nCount] = nullptr;
 
     bIsSorted = false;
 
@@ -340,7 +340,7 @@ CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
                                             const char *pszValue )
 
 {
-    if( pszKey == NULL || pszValue==NULL )
+    if( pszKey == nullptr || pszValue==nullptr )
         return *this;
 
     MakeOurOwnCopy();
@@ -398,7 +398,7 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
     MakeOurOwnCopy();
 
     CPLFree( papszList[iKey] );
-    if( pszValue == NULL ) // delete entry
+    if( pszValue == nullptr ) // delete entry
     {
 
         // shift everything down by one.
@@ -406,7 +406,7 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
         {
             papszList[iKey] = papszList[iKey+1];
         }
-        while( papszList[iKey++] != NULL );
+        while( papszList[iKey++] != nullptr );
 
         nCount--;
     }
@@ -443,7 +443,7 @@ char *CPLStringList::operator[]( int i )
         Count();
 
     if( i < 0 || i >= nCount )
-        return NULL;
+        return nullptr;
 
     return papszList[i];
 }
@@ -455,7 +455,7 @@ const char *CPLStringList::operator[]( int i ) const
         Count();
 
     if( i < 0 || i >= nCount )
-        return NULL;
+        return nullptr;
 
     return papszList[i];
 }
@@ -478,7 +478,7 @@ char **CPLStringList::StealList()
     char **papszRetList = papszList;
 
     bOwnList = false;
-    papszList = NULL;
+    papszList = nullptr;
     nCount = 0;
     nAllocation = 0;
 
@@ -629,7 +629,7 @@ bool CPLStringList::FetchBool( const char *pszKey, bool bDefault ) const
 {
     const char *pszValue = FetchNameValue( pszKey );
 
-    if( pszValue == NULL )
+    if( pszValue == nullptr )
         return bDefault;
 
     return CPLTestBool( pszValue );
@@ -684,7 +684,7 @@ const char *CPLStringList::FetchNameValue( const char *pszName ) const
     const int iKey = FindName( pszName );
 
     if( iKey == -1 )
-        return NULL;
+        return nullptr;
 
     CPLAssert( papszList[iKey][strlen(pszName)] == '='
                || papszList[iKey][strlen(pszName)] == ':' );
@@ -713,7 +713,7 @@ const char *CPLStringList::FetchNameValueDef( const char *pszName,
 
 {
     const char *pszValue = FetchNameValue( pszName );
-    if( pszValue == NULL )
+    if( pszValue == nullptr )
         return pszDefault;
 
     return pszValue;
@@ -776,7 +776,7 @@ CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo,
         papszList[i] = papszList[i-1];
 
     papszList[nInsertAtLineNo] = pszNewLine;
-    papszList[++nCount] = NULL;
+    papszList[++nCount] = nullptr;
 
     return *this;
 }

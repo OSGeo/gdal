@@ -80,9 +80,9 @@ class SNODASRasterBand : public RawRasterBand
             SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
     virtual ~SNODASRasterBand() {}
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum(int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double GetMaximum(int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -242,12 +242,12 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     int nRows = -1;
@@ -286,8 +286,8 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     int nStopMinute = -1;
     int nStopSecond = -1;
 
-    const char *pszLine = NULL;
-    while( (pszLine = CPLReadLine2L( fp, 256, NULL )) != NULL )
+    const char *pszLine = nullptr;
+    while( (pszLine = CPLReadLine2L( fp, 256, nullptr )) != nullptr )
     {
         char** papszTokens =
             CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );
@@ -410,27 +410,27 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
     if( nRows == -1 || nCols == -1 || !bIsInteger || !bIs2Bytes )
-        return NULL;
+        return nullptr;
 
     if( !bNotProjected || !bIsWGS84 )
-        return NULL;
+        return nullptr;
 
     if( osDataFilename.empty() )
-        return NULL;
+        return nullptr;
 
     if( !GDALCheckDatasetDimensions(nCols, nRows) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Open target binary file.                                        */
 /* -------------------------------------------------------------------- */
     const char* pszPath = CPLGetPath(poOpenInfo->pszFilename);
-    osDataFilename = CPLFormFilename(pszPath, osDataFilename, NULL);
+    osDataFilename = CPLFormFilename(pszPath, osDataFilename, nullptr);
 
     VSILFILE* fpRaw = VSIFOpenL( osDataFilename, "rb" );
 
-    if( fpRaw == NULL )
-        return NULL;
+    if( fpRaw == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -500,7 +500,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_SNODAS()
 
 {
-    if( GDALGetDriverByName( "SNODAS" ) != NULL )
+    if( GDALGetDriverByName( "SNODAS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

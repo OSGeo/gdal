@@ -1,0 +1,137 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           targetNamespace="http://www.opengis.net/swe/2.0"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+<xs:import namespace="http://www.w3.org/1999/xlink" schemaLocation="gmlas_swe_datarecord_xlink.xsd"/>
+
+<xs:element name="AbstractDataComponent" abstract="true" type="swe:AbstractDataComponentType"/>
+
+<xs:complexType name="AbstractDataComponentType"/>
+
+<xs:attributeGroup name="AssociationAttributeGroup">
+    <xs:attributeGroup ref="xlink:simpleAttrs"/>
+</xs:attributeGroup>
+
+<xs:complexType name="Reference">
+    <xs:attributeGroup ref="swe:AssociationAttributeGroup"/>
+</xs:complexType>
+
+<xs:element name="Time" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Category" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="identifier" type="xs:string" minOccurs="0"/>
+            <xs:element name="codeSpace" type="swe:Reference" minOccurs="0"/>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Quantity" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+        <!-- attribute optional is ignored in the default configuration -->
+        <xs:attribute name="optional" type="xs:boolean" default="false" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Count" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:int"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Text" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:string"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="Boolean" substitutionGroup="swe:AbstractDataComponent">
+  <xs:complexType>
+    <xs:complexContent>
+      <xs:extension base="swe:AbstractDataComponentType">
+        <xs:sequence>
+            <xs:element name="value" type="xs:boolean"/>
+        </xs:sequence>
+        <xs:attribute name="definition" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+</xs:element>
+
+<xs:complexType name="AbstractDataComponentPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:AbstractDataComponent"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:element name="DataRecord" substitutionGroup="swe:AbstractDataComponent" type="swe:DataRecordType">
+</xs:element>
+
+<xs:complexType name="DataRecordType">
+    <xs:complexContent>
+        <xs:extension base="swe:AbstractDataComponentType">
+            <xs:sequence>
+              <xs:element name="field" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:complexContent>
+                        <xs:extension base="swe:AbstractDataComponentPropertyType">
+                            <xs:attribute name="name" type="xs:NCName" use="required"/>
+                        </xs:extension>
+                    </xs:complexContent>
+                </xs:complexType>
+              </xs:element>
+           </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+  </xs:complexType>
+
+
+<xs:complexType name="DataRecordPropertyType">
+    <xs:sequence minOccurs="0">
+        <xs:element ref="swe:DataRecord"/>
+    </xs:sequence>
+</xs:complexType>
+
+</xs:schema>

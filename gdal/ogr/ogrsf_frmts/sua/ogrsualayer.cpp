@@ -71,7 +71,7 @@ OGRSUALayer::OGRSUALayer( VSILFILE* fp ) :
 OGRSUALayer::~OGRSUALayer()
 
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
     poFeatureDefn->Release();
@@ -101,12 +101,12 @@ OGRFeature *OGRSUALayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -169,7 +169,7 @@ static bool GetLatLon( const char* pszStr, double& dfLat, double& dfLon )
 OGRFeature *OGRSUALayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     CPLString osTYPE;
     CPLString osCLASS;
@@ -183,7 +183,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = NULL;
+        const char* pszLine = nullptr;
         if( bFirst && bHasLastLine )
         {
             pszLine = osLastLine.c_str();
@@ -191,12 +191,12 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
         }
         else
         {
-            pszLine = CPLReadLine2L(fpSUA, 1024, NULL);
-            if (pszLine == NULL)
+            pszLine = CPLReadLine2L(fpSUA, 1024, nullptr);
+            if (pszLine == nullptr)
             {
                 bEOF = true;
                 if (oLR.getNumPoints() == 0)
-                    return NULL;
+                    return nullptr;
                 break;
             }
             osLastLine = pszLine;
@@ -256,7 +256,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
             double dfRADIUS = CPLAtof(pszRADIUS + 7) * 1852;*/
 
             const char* pszCENTRE = strstr(pszLine, "CENTRE=");
-            if (pszCENTRE == NULL)
+            if (pszCENTRE == nullptr)
                 continue;
             pszCENTRE += 7;
             if (strlen(pszCENTRE) < 17 || pszCENTRE[16] != ' ')
@@ -267,7 +267,7 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
                 continue;
 
             const char* pszTO = strstr(pszLine, "TO=");
-            if (pszTO == NULL)
+            if (pszTO == nullptr)
                 continue;
             pszTO += 3;
             if (strlen(pszTO) != 16)
@@ -311,12 +311,12 @@ OGRFeature *OGRSUALayer::GetNextRawFeature()
         else if (STARTS_WITH_CI(pszLine, "CIRCLE"))
         {
             const char* pszRADIUS = strstr(pszLine, "RADIUS=");
-            if (pszRADIUS == NULL)
+            if (pszRADIUS == nullptr)
                 continue;
             double dfRADIUS = CPLAtof(pszRADIUS + 7) * 1852;
 
             const char* pszCENTRE = strstr(pszLine, "CENTRE=");
-            if (pszCENTRE == NULL)
+            if (pszCENTRE == nullptr)
                 continue;
             pszCENTRE += 7;
             if (strlen(pszCENTRE) != 16)

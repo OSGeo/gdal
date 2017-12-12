@@ -143,7 +143,7 @@ class PNGDataset : public GDALPamDataset
 
     virtual char  **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = NULL ) override;
+                                         const char * pszDomain = nullptr ) override;
 
     virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
                                    void *, int, int, GDALDataType,
@@ -201,7 +201,7 @@ class PNGRasterBand : public GDALPamRasterBand
     virtual GDALColorInterp GetColorInterpretation() override;
     virtual GDALColorTable *GetColorTable() override;
     CPLErr SetNoDataValue( double dfNewValue ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     int         bHaveNoData;
     double      dfNoDataValue;

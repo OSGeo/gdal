@@ -85,7 +85,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
         double* padfLineData = static_cast<double *>(
             VSI_MALLOC2_VERBOSE(nXSize,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
-        if( padfLineData == NULL )
+        if( padfLineData == nullptr )
         {
             return 0;
         }
@@ -145,7 +145,7 @@ GDALChecksumImage( GDALRasterBandH hBand,
         int *panLineData = static_cast<GInt32 *>(
             VSI_MALLOC2_VERBOSE(nXSize,
                                 GDALGetDataTypeSizeBytes(eDstDataType)));
-        if( panLineData == NULL )
+        if( panLineData == nullptr )
         {
             return 0;
         }

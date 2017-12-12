@@ -78,7 +78,7 @@ public:
     CPLErr SetMetadata(char **papszMetadata, const char *pszDomain="") override;
 
     // virtual method for adding new image bands
-    CPLErr AddBand(GDALDataType eType, char **papszOptions = NULL) override;
+    CPLErr AddBand(GDALDataType eType, char **papszOptions = nullptr) override;
 
     // GCPs
     int GetGCPCount() override;

@@ -47,8 +47,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 VICARKeywordHandler::VICARKeywordHandler() :
-    papszKeywordList(NULL),
-    pszHeaderNext(NULL),
+    papszKeywordList(nullptr),
+    pszHeaderNext(nullptr),
     LabelSize(0)
 {}
 
@@ -83,12 +83,12 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)pabyHeader);
 
     const char *pch1 = strstr(reinterpret_cast<char *>( pabyHeader + nOffset ), "=");
-    if( pch1 == NULL )
+    if( pch1 == nullptr )
         return FALSE;
 
     ++pch1;
     const char *pch2 = strstr(pch1, " ");
-    if( pch2 == NULL )
+    if( pch2 == nullptr )
         return FALSE;
 
     char keyval[100];
@@ -101,7 +101,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
 
     char* pszChunk = reinterpret_cast<char *>(  VSIMalloc( LabelSize + 1 ) );
-    if( pszChunk == NULL )
+    if( pszChunk == nullptr )
         return FALSE;
     int nBytesRead = static_cast<int>(VSIFReadL( pszChunk, 1, LabelSize, fp ));
     pszChunk[nBytesRead] = '\0';
@@ -121,7 +121,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
 /* -------------------------------------------------------------------- */
     const char *pszResult = CSLFetchNameValue( papszKeywordList, "EOL" );
 
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT DEFINED!");
         return FALSE;
@@ -166,7 +166,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     }
     char* pszEOLHeader = static_cast<char*>(VSIMalloc(32));
-    if( pszEOLHeader == NULL )
+    if( pszEOLHeader == nullptr )
         return FALSE;
     nBytesRead = static_cast<int>(VSIFReadL( pszEOLHeader, 1, 31, fp ));
     pszEOLHeader[nBytesRead] = '\0';
@@ -175,7 +175,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     if (pszLBLSIZE)
         nOffset = static_cast<int>(pszLBLSIZE - (const char *)pszEOLHeader);
     pch1 = strstr( reinterpret_cast<char *>( pszEOLHeader + nOffset ), "=" );
-    if( pch1 == NULL || *pch1 == '\0' )
+    if( pch1 == nullptr || *pch1 == '\0' )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
@@ -183,7 +183,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
     }
     pch1 ++;
     pch2 = strstr( pch1, " " );
-    if( pch2 == NULL )
+    if( pch2 == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "END-OF-DATASET LABEL NOT FOUND!");
         VSIFree(pszEOLHeader);
@@ -203,7 +203,7 @@ int VICARKeywordHandler::Ingest( VSILFILE *fp, GByte *pabyHeader )
         return FALSE;
     }
     char* pszChunkEOL = (char*) VSIMalloc(EOLabelSize+1);
-    if( pszChunkEOL == NULL )
+    if( pszChunkEOL == nullptr )
         return FALSE;
     nBytesRead = static_cast<int>(VSIFReadL( pszChunkEOL, 1, EOLabelSize, fp ));
     pszChunkEOL[nBytesRead] = '\0';
@@ -385,7 +385,7 @@ const char *VICARKeywordHandler::GetKeyword( const char *pszPath, const char *ps
 {
     const char *pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
 
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
         return pszDefault;
 
     return pszResult;

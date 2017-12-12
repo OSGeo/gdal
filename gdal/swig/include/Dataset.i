@@ -668,7 +668,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
     if (hAsyncReader)
     {
-        return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
+        return (GDALAsyncReaderShadow*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
     }
     else
     {

@@ -161,16 +161,16 @@ OGRFeature* OGRGeoJSONLayer::GetNextFeature()
         while ( true )
         {
             OGRFeature* poFeature = poReader_->GetNextFeature(this);
-            if( poFeature == NULL )
-                return NULL;
+            if( poFeature == nullptr )
+                return nullptr;
             if( poFeature->GetFID() == OGRNullFID )
             {
                 poFeature->SetFID(nNextFID_);
                 nNextFID_ ++;
             }
-            if( (m_poFilterGeom == NULL ||
+            if( (m_poFilterGeom == nullptr ||
                 FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter)) )
-                && (m_poAttrQuery == NULL ||
+                && (m_poAttrQuery == nullptr ||
                     m_poAttrQuery->Evaluate(poFeature)) )
             {
                 return poFeature;
@@ -192,7 +192,7 @@ GIntBig OGRGeoJSONLayer::GetFeatureCount(int bForce)
 {
     if( poReader_ )
     {
-        if( m_poFilterGeom == NULL && m_poAttrQuery == NULL &&
+        if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr &&
             nTotalFeatureCount_ >= 0 )
         {
             return nTotalFeatureCount_;
@@ -232,7 +232,7 @@ bool OGRGeoJSONLayer::IngestAll()
         TerminateAppendSession();
 
         OGRGeoJSONReader* poReader = poReader_;
-        poReader_ = NULL;
+        poReader_ = nullptr;
 
         nNextFID_ = 0;
         nTotalFeatureCount_ = -1;
@@ -472,8 +472,8 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
     if( -1 == nFID )
     {
         nFID = GetFeatureCount(FALSE);
-        OGRFeature* poTryFeature = NULL;
-        while( (poTryFeature = GetFeature(nFID) ) != NULL )
+        OGRFeature* poTryFeature = nullptr;
+        while( (poTryFeature = GetFeature(nFID) ) != nullptr )
         {
             nFID++;
             delete poTryFeature;
@@ -481,8 +481,8 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
     }
     else
     {
-        OGRFeature* poTryFeature = NULL;
-        if( (poTryFeature = GetFeature(nFID) ) != NULL )
+        OGRFeature* poTryFeature = nullptr;
+        if( (poTryFeature = GetFeature(nFID) ) != nullptr )
         {
             if( !bOriginalIdModified_ )
             {
@@ -496,7 +496,7 @@ void OGRGeoJSONLayer::AddFeature( OGRFeature* poFeature )
             }
             delete poTryFeature;
             nFID = GetFeatureCount(FALSE);
-            while( (poTryFeature = GetFeature(nFID) ) != NULL )
+            while( (poTryFeature = GetFeature(nFID) ) != nullptr )
             {
                 nFID++;
                 delete poTryFeature;
@@ -526,11 +526,11 @@ void OGRGeoJSONLayer::DetectGeometryType()
     ResetReading();
     bool bFirstGeometry = true;
     OGRwkbGeometryType eLayerGeomType = wkbUnknown;
-    OGRFeature* poFeature = NULL;
-    while( (poFeature = GetNextFeature()) != NULL )
+    OGRFeature* poFeature = nullptr;
+    while( (poFeature = GetNextFeature()) != nullptr )
     {
         OGRGeometry* poGeometry = poFeature->GetGeometryRef();
-        if( NULL != poGeometry )
+        if( nullptr != poGeometry )
         {
             OGRwkbGeometryType eGeomType = poGeometry->getGeometryType();
             if( bFirstGeometry )

@@ -63,7 +63,7 @@ static CPLString ToUTF8(const OdString& str)
 
 static CPLString EscapeDoubleQuote(const char* pszStr)
 {
-    if( strchr( pszStr, '"') != NULL )
+    if( strchr( pszStr, '"') != nullptr )
     {
         CPLString osEscaped;
 
@@ -89,9 +89,9 @@ static CPLString EscapeDoubleQuote(const char* pszStr)
 OGRDGNV8Layer::OGRDGNV8Layer( OGRDGNV8DataSource* poDS,
                               OdDgModelPtr pModel ) :
     m_poDS(poDS),
-    m_poFeatureDefn(NULL),
+    m_poFeatureDefn(nullptr),
     m_pModel(pModel),
-    m_pIterator(static_cast<OdDgElementIterator*>(NULL)),
+    m_pIterator(static_cast<OdDgElementIterator*>(nullptr)),
     m_nIdxInPendingFeatures(0)
 {
     const char* pszName;
@@ -624,7 +624,7 @@ bool IsContiguous( const std::vector<tPairFeatureHoleFlag>& oVectorSubElts,
     for( size_t i = 0; i < oVectorSubElts.size(); i++ )
     {
         OGRGeometry* poGeom = oVectorSubElts[i].first->GetGeometryRef();
-        if( poGeom != NULL )
+        if( poGeom != nullptr )
         {
             OGRwkbGeometryType eType =
                                 wkbFlatten(poGeom->getGeometryType());
@@ -807,13 +807,13 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
             int nCountMain = 0;
             bool bHasHole = false;
             bool bHasCurve = false;
-            OGRGeometry* poExterior = NULL;
+            OGRGeometry* poExterior = nullptr;
             for( size_t i = 0; i < oVector.size(); i++ )
             {
                 OGRFeature* poFeat = oVector[i].first;
                 CPLAssert( poFeat );
                 OGRGeometry* poGeom = poFeat->GetGeometryRef();
-                if( poGeom == NULL )
+                if( poGeom == nullptr )
                 {
                     nCountMain = 0;
                     break;
@@ -869,7 +869,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
         if( bDestroyFeature )
         {
             delete poFeature;
-            poFeature = NULL;
+            poFeature = nullptr;
         }
     }
     else if( EQUAL(pszEntityClassName, "OdDgText2d") )
@@ -905,7 +905,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
             oVector = CollectSubElements(iterator, level + 1 );
         }
         delete poFeature;
-        poFeature = NULL;
+        poFeature = nullptr;
     }
     else if( EQUAL(pszEntityClassName, "OdDgLine2d") )
     {
@@ -1119,7 +1119,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 {
                     OGRGeometry* poGeom =
                             oVectorSubElts[i].first->GetGeometryRef();
-                    if( poGeom != NULL )
+                    if( poGeom != nullptr )
                     {
                         OGRwkbGeometryType eType =
                                         wkbFlatten(poGeom->getGeometryType());
@@ -1147,7 +1147,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 {
                     OGRGeometry* poGeom =
                                     oVectorSubElts[i].first->GetGeometryRef();
-                    if( poGeom != NULL )
+                    if( poGeom != nullptr )
                     {
                         OGRwkbGeometryType eType =
                                         wkbFlatten(poGeom->getGeometryType());
@@ -1187,8 +1187,8 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
             if( bIsContiguous && bIsClosed )
             {
                 OGRCurvePolygon* poCP;
-                OGRCompoundCurve* poCC = NULL;
-                OGRLinearRing* poLR = NULL;
+                OGRCompoundCurve* poCC = nullptr;
+                OGRLinearRing* poLR = nullptr;
 
                 if( bHasCurves )
                 {
@@ -1206,11 +1206,11 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 {
                     OGRGeometry* poGeom =
                             oVectorSubElts[i].first->GetGeometryRef();
-                    if( poGeom != NULL )
+                    if( poGeom != nullptr )
                     {
                         OGRwkbGeometryType eType =
                                     wkbFlatten(poGeom->getGeometryType());
-                        if( poCC != NULL )
+                        if( poCC != nullptr )
                         {
                             poCC->addCurve( static_cast<OGRCurve*>(poGeom),
                                             CONTIGUITY_TOLERANCE );
@@ -1238,7 +1238,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 {
                     OGRGeometry* poGeom =
                                     oVectorSubElts[i].first->StealGeometry();
-                    if( poGeom != NULL )
+                    if( poGeom != nullptr )
                     {
                         OGRwkbGeometryType eType =
                                         wkbFlatten(poGeom->getGeometryType());
@@ -1263,7 +1263,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 OGRGeometry* poGeom = reinterpret_cast<OGRGeometry *>(
                     OGRBuildPolygonFromEdges(
                       reinterpret_cast<OGRGeometryH>( &oGC ),
-                      TRUE, TRUE, CONTIGUITY_TOLERANCE, NULL ) );
+                      TRUE, TRUE, CONTIGUITY_TOLERANCE, nullptr ) );
                 poGeom->setCoordinateDimension( oGC.getCoordinateDimension() );
                 poFeature->SetGeometryDirectly( poGeom );
 
@@ -1294,7 +1294,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
         }
     }
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
         oVector.push_back( tPairFeatureHoleFlag(poFeature, bHoleFlag) );
 
     return oVector;
@@ -1313,18 +1313,18 @@ OGRFeature *OGRDGNV8Layer::GetNextUnfilteredFeature()
         {
             OGRFeature* poFeature =
                 m_aoPendingFeatures[m_nIdxInPendingFeatures].first;
-            m_aoPendingFeatures[m_nIdxInPendingFeatures].first = NULL;
+            m_aoPendingFeatures[m_nIdxInPendingFeatures].first = nullptr;
             m_nIdxInPendingFeatures ++;
             return poFeature;
         }
 
         if( m_pIterator.isNull() )
-            return NULL;
+            return nullptr;
 
         while( true )
         {
             if( m_pIterator->done() )
-                return NULL;
+                return nullptr;
             OdRxObjectPtr object = m_pIterator->item().openObject();
             m_pIterator->step();
             OdDgGraphicsElementPtr element =
@@ -1350,22 +1350,22 @@ OGRFeature *OGRDGNV8Layer::GetNextFeature()
     while( true )
     {
         OGRFeature* poFeature = GetNextUnfilteredFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
-        if( poFeature->GetGeometryRef() == NULL )
+        if( poFeature->GetGeometryRef() == nullptr )
         {
             delete poFeature;
             continue;
         }
 
-        if( (m_poAttrQuery == NULL
+        if( (m_poAttrQuery == nullptr
              || m_poAttrQuery->Evaluate( poFeature ))
             && FilterGeometry( poFeature->GetGeometryRef() ) )
             return poFeature;
 
         delete poFeature;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1394,16 +1394,16 @@ OGRFeature *OGRDGNV8Layer::GetFeature(GIntBig nFID)
 {
     OdDgGraphicsElementPtr element = GetFeatureInternal(nFID, OdDg::kForRead);
     if( element.isNull() )
-        return NULL;
+        return nullptr;
     std::vector<tPairFeatureHoleFlag> oVector = ProcessElement(element);
     // Only return a feature if and only if we have a single element
     if( oVector.empty() )
-        return NULL;
+        return nullptr;
     if( oVector.size() > 1 )
     {
         for( size_t i = 0; i < oVector.size(); i++ )
             delete oVector[i].first;
-        return NULL;
+        return nullptr;
     }
     return oVector[0].first;
 }
@@ -1546,7 +1546,7 @@ OGRErr OGRDGNV8Layer::ICreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;
     }
 
-    if( poFeature->GetGeometryRef() == NULL )
+    if( poFeature->GetGeometryRef() == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Features with empty, geometry collection geometries not "
@@ -1601,7 +1601,7 @@ static OGRStyleTool* GetTool( OGRFeature* poFeature, OGRSTClassId eClassId )
     for( int i=0; i<oMgr.GetPartCount(); i++)
     {
         OGRStyleTool* poTool = oMgr.GetPart( i );
-        if( poTool == NULL || poTool->GetType() != eClassId)
+        if( poTool == nullptr || poTool->GetType() != eClassId)
         {
             delete poTool;
         }
@@ -1610,7 +1610,7 @@ static OGRStyleTool* GetTool( OGRFeature* poFeature, OGRSTClassId eClassId )
             return poTool;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1633,11 +1633,11 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::TranslateLabel(
     text->setOrigin(point);
 
     double dfHeightMultiplier = 1.0;
-    if( poLabel != NULL )
+    if( poLabel != nullptr )
     {
         GBool bDefault;
 
-        if( poLabel->TextString(bDefault) != NULL && !bDefault )
+        if( poLabel->TextString(bDefault) != nullptr && !bDefault )
             pszText = poLabel->TextString(bDefault);
 
         const double dfRotation = poLabel->Angle(bDefault);
@@ -1650,7 +1650,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::TranslateLabel(
 
         /* get font id */
         const char *pszFontName = poLabel->FontName( bDefault );
-        if( !bDefault && pszFontName != NULL )
+        if( !bDefault && pszFontName != nullptr )
         {
             OdDgFontTablePtr pFontTable =
                 m_pModel->database()->getFontTable(OdDg::kForRead);
@@ -1710,11 +1710,11 @@ void OGRDGNV8Layer::AttachFillLinkage( OGRFeature* poFeature,
                                        OdDgGraphicsElementPtr element )
 {
     const char* pszStyle = poFeature->GetStyleString();
-    if( pszStyle != NULL && strstr(pszStyle, "BRUSH") != NULL )
+    if( pszStyle != nullptr && strstr(pszStyle, "BRUSH") != nullptr )
     {
         OGRStyleBrush* poBrush = static_cast<OGRStyleBrush*>(
                                             GetTool(poFeature, OGRSTCBrush));
-        if( poBrush != NULL )
+        if( poBrush != nullptr )
         {
             GBool bDefault;
             const char* pszColor = poBrush->ForeColor(bDefault);
@@ -1760,11 +1760,11 @@ void OGRDGNV8Layer::AttachCommonAttributes( OGRFeature *poFeature,
     else
     {
         const char* pszStyle = poFeature->GetStyleString();
-        if( pszStyle != NULL && strstr(pszStyle, "PEN") != NULL )
+        if( pszStyle != nullptr && strstr(pszStyle, "PEN") != nullptr )
         {
             OGRStylePen* poPen = static_cast<OGRStylePen*>(
                                             GetTool(poFeature, OGRSTCPen));
-            if( poPen != NULL )
+            if( poPen != nullptr )
             {
                 GBool bDefault;
                 const char* pszColor = poPen->Color(bDefault);
@@ -1779,11 +1779,11 @@ void OGRDGNV8Layer::AttachCommonAttributes( OGRFeature *poFeature,
                 delete poPen;
             }
         }
-        else if( pszStyle != NULL && strstr(pszStyle, "LABEL") != NULL )
+        else if( pszStyle != nullptr && strstr(pszStyle, "LABEL") != nullptr )
         {
             OGRStyleLabel *poLabel = static_cast<OGRStyleLabel*>(
                                             GetTool(poFeature, OGRSTCLabel));
-            if( poLabel != NULL )
+            if( poLabel != nullptr )
             {
                 GBool bDefault;
                 const char* pszColor = poLabel->ForeColor(bDefault);
@@ -2032,8 +2032,8 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
         const char *pszText = poFeature->GetFieldAsString("Text");
         const char *pszStyle = poFeature->GetStyleString();
 
-        if( (pszText == NULL || pszText[0] == 0)
-            && (pszStyle == NULL || strstr(pszStyle,"LABEL") == NULL) )
+        if( (pszText == nullptr || pszText[0] == 0)
+            && (pszStyle == nullptr || strstr(pszStyle,"LABEL") == nullptr) )
         {
             if( OGR_GT_HasZ(eType) )
             {
@@ -2201,7 +2201,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
     {
         OGRCurvePolygon* poPoly = static_cast<OGRCurvePolygon*>(poGeom);
         if( poPoly->getNumInteriorRings() == 0 &&
-            poPoly->getExteriorRingCurve() == NULL )
+            poPoly->getExteriorRingCurve() == nullptr )
         {
             if( OGR_GT_HasZ(eType) )
             {

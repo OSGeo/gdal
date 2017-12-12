@@ -101,7 +101,7 @@ bool GDALMDReaderOrbView::HasRequiredFiles() const
  */
 char** GDALMDReaderOrbView::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
     if(!m_osRPBSourceFilename.empty())
@@ -132,7 +132,7 @@ void GDALMDReaderOrbView::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
-    if(NULL == m_papszIMDMD)
+    if(nullptr == m_papszIMDMD)
     {
         return;
     }
@@ -140,7 +140,7 @@ void GDALMDReaderOrbView::LoadMetadata()
     //extract imagery metadata
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
                                              "sensorInfo.satelliteName");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_SATELLITE,
@@ -149,7 +149,7 @@ void GDALMDReaderOrbView::LoadMetadata()
 
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                    "productInfo.productCloudCoverPercentage");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_CLOUDCOVER, pszCloudCover);
@@ -158,7 +158,7 @@ void GDALMDReaderOrbView::LoadMetadata()
     const char* pszDateTime = CSLFetchNameValue(m_papszIMDMD,
                                  "inputImageInfo.firstLineAcquisitionDateTime");
 
-    if(NULL != pszDateTime)
+    if(nullptr != pszDateTime)
     {
         char buffer[80];
         time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
