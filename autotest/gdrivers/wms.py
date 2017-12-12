@@ -34,6 +34,7 @@ import os
 import sys
 from osgeo import gdal
 import shutil
+from time import sleep
 
 sys.path.append( '../pymod' )
 
@@ -283,30 +284,104 @@ def wms_8():
     if gdaltest.wms_drv is None:
         return 'skip'
 
-    if gdaltest.metacarta_tms is not True:
-        return 'skip'
+    # server_url = 'http://tilecache.osgeo.org/wms-c/Basic.py'
+    # wmstms_version = '/1.0.0/basic'
+    # zero_tile = wmstms_version + '/0/0/0.png'
+    # server_url_mask = server_url
+    # ovr_upper_level = 18
+#     tms = """<GDAL_WMS>
+#     <Service name="TMS">
+#         <ServerUrl>%s</ServerUrl>
+#         <Layer>basic</Layer>
+#         <Format>png</Format>
+#     </Service>
+#     <DataWindow>
+#         <UpperLeftX>-180.0</UpperLeftX>
+#         <UpperLeftY>90.0</UpperLeftY>
+#         <LowerRightX>180.0</LowerRightX>
+#         <LowerRightY>-90.0</LowerRightY>
+#         <TileLevel>19</TileLevel>
+#         <TileCountX>2</TileCountX>
+#         <TileCountY>1</TileCountY>
+#     </DataWindow>
+#     <Projection>EPSG:4326</Projection>
+#     <BlockSizeX>256</BlockSizeX>
+#     <BlockSizeY>256</BlockSizeY>
+#     <BandsCount>3</BandsCount>
+#     <Cache><Path>./tmp/gdalwmscache</Path></Cache>
+# </GDAL_WMS>""" % server_url_mask
 
+#     tms_nocache = """<GDAL_WMS>
+#     <Service name="TMS">
+#         <ServerUrl>%s</ServerUrl>
+#         <Layer>basic</Layer>
+#         <Format>png</Format>
+#     </Service>
+#     <DataWindow>
+#         <UpperLeftX>-180.0</UpperLeftX>
+#         <UpperLeftY>90.0</UpperLeftY>
+#         <LowerRightX>180.0</LowerRightX>
+#         <LowerRightY>-90.0</LowerRightY>
+#         <TileLevel>19</TileLevel>
+#         <TileCountX>2</TileCountX>
+#         <TileCountY>1</TileCountY>
+#     </DataWindow>
+#     <Projection>EPSG:4326</Projection>
+#     <BlockSizeX>256</BlockSizeX>
+#     <BlockSizeY>256</BlockSizeY>
+#     <BandsCount>3</BandsCount>
+#     <Cache/> <!-- this is needed for GDAL_DEFAULT_WMS_CACHE_PATH to be triggered -->
+# </GDAL_WMS>""" % server_url_mask
+
+    server_url = 'http://tile.openstreetmap.org'
+    wmstms_version = ''
+    zero_tile = '/0/0/0.png'
+    server_url_mask = server_url + '/${z}/${x}/${y}.png'
+    ovr_upper_level = 16
     tms = """<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
-        <Layer>basic</Layer>
-        <Format>png</Format>
+        <ServerUrl>%s</ServerUrl>
     </Service>
     <DataWindow>
-        <UpperLeftX>-180.0</UpperLeftX>
-        <UpperLeftY>90.0</UpperLeftY>
-        <LowerRightX>180.0</LowerRightX>
-        <LowerRightY>-90.0</LowerRightY>
-        <TileLevel>19</TileLevel>
-        <TileCountX>2</TileCountX>
+        <UpperLeftX>-20037508.34</UpperLeftX>
+        <UpperLeftY>20037508.34</UpperLeftY>
+        <LowerRightX>20037508.34</LowerRightX>
+        <LowerRightY>-20037508.34</LowerRightY>
+        <TileLevel>18</TileLevel>
+        <TileCountX>1</TileCountX>
         <TileCountY>1</TileCountY>
+        <YOrigin>top</YOrigin>
     </DataWindow>
-    <Projection>EPSG:4326</Projection>
+    <Projection>EPSG:3857</Projection>
     <BlockSizeX>256</BlockSizeX>
     <BlockSizeY>256</BlockSizeY>
     <BandsCount>3</BandsCount>
     <Cache><Path>./tmp/gdalwmscache</Path></Cache>
-</GDAL_WMS>"""
+</GDAL_WMS>""" % server_url_mask
+
+    tms_nocache = """<GDAL_WMS>
+    <Service name="TMS">
+        <ServerUrl>%s</ServerUrl>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-20037508.34</UpperLeftX>
+        <UpperLeftY>20037508.34</UpperLeftY>
+        <LowerRightX>20037508.34</LowerRightX>
+        <LowerRightY>-20037508.34</LowerRightY>
+        <TileLevel>18</TileLevel>
+        <TileCountX>1</TileCountX>
+        <TileCountY>1</TileCountY>
+        <YOrigin>top</YOrigin>
+    </DataWindow>
+    <Projection>EPSG:3857</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache/> <!-- this is needed for GDAL_DEFAULT_WMS_CACHE_PATH to be triggered -->
+</GDAL_WMS>""" % server_url_mask
+
+    if gdaltest.gdalurlopen(server_url) is None:
+        return 'skip'
 
     try:
         shutil.rmtree('tmp/gdalwmscache')
@@ -319,16 +394,31 @@ def wms_8():
         gdaltest.post_reason( 'open failed.' )
         return 'fail'
 
+    # Check cache metadata item
+    cache_path = ds.GetMetadataItem("CACHE_PATH")
+    if len(cache_path) == 0:
+        gdaltest.post_reason( 'did not get expected cache path metadata item' )
+        return 'fail'
+
+    cache_subfolder = gdal.MD5String(server_url_mask)
+
     gdal.ErrorReset()
-    data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
     if gdal.GetLastErrorMsg() != '':
-        if gdaltest.gdalurlopen('http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/basic/0/0/0.png') is None:
+        if gdaltest.gdalurlopen(server_url + zero_tile) is None:
             return 'skip'
 
     ds = None
 
-    expected_files = [ 'tmp/gdalwmscache/d/b/dbbfe17f22c9d54f2c45ec7dc5042bc8',
-                       'tmp/gdalwmscache/5/4/548f0e98b56a8c104cfe2df9f7ef8685' ]
+    file1 = gdal.MD5String(server_url + wmstms_version + '/1/0/0.png')
+    file2 = gdal.MD5String(server_url + wmstms_version + '/1/1/0.png')
+    file3 = gdal.MD5String(server_url + wmstms_version + '/1/0/1.png')
+    file4 = gdal.MD5String(server_url + wmstms_version + '/1/1/1.png')
+
+    expected_files = [ 'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file1[0], file1[1], file1),
+                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file2[0], file2[1], file2),
+                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file3[0], file3[1], file3),
+                       'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file4[0], file4[1], file4)]
     for expected_file in expected_files:
         try:
             os.stat(expected_file)
@@ -338,7 +428,7 @@ def wms_8():
 
     # Now, we should read from the cache
     ds = gdal.Open( tms )
-    cached_data = ds.GetRasterBand(1).GetOverview(18).ReadRaster(0, 0, 512, 256)
+    cached_data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
     ds = None
 
     if data != cached_data:
@@ -357,44 +447,59 @@ def wms_8():
 
     # Read again from the cache, and check that it is actually used
     ds = gdal.Open( tms )
-    cs = ds.GetRasterBand(1).GetOverview(18).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(ovr_upper_level).Checksum()
     ds = None
     if cs != 0:
         gdaltest.post_reason( 'cs != 0' )
         return 'fail'
 
     # Test with GDAL_DEFAULT_WMS_CACHE_PATH
-    tms_nocache = """<GDAL_WMS>
-    <Service name="TMS">
-        <ServerUrl>http://tilecache.osgeo.org/wms-c/Basic.py</ServerUrl>
-        <Layer>basic</Layer>
-        <Format>png</Format>
-    </Service>
-    <DataWindow>
-        <UpperLeftX>-180.0</UpperLeftX>
-        <UpperLeftY>90.0</UpperLeftY>
-        <LowerRightX>180.0</LowerRightX>
-        <LowerRightY>-90.0</LowerRightY>
-        <TileLevel>19</TileLevel>
-        <TileCountX>2</TileCountX>
-        <TileCountY>1</TileCountY>
-    </DataWindow>
-    <Projection>EPSG:4326</Projection>
-    <BlockSizeX>256</BlockSizeX>
-    <BlockSizeY>256</BlockSizeY>
-    <BandsCount>3</BandsCount>
-    <Cache/> <!-- this is needed for GDAL_DEFAULT_WMS_CACHE_PATH to be triggered -->
-</GDAL_WMS>"""
-
     # Now, we should read from the cache
     gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", "./tmp/gdalwmscache")
     ds = gdal.Open( tms_nocache )
-    cs = ds.GetRasterBand(1).GetOverview(18).Checksum()
+    cs = ds.GetRasterBand(1).GetOverview(ovr_upper_level).Checksum()
     ds = None
     gdal.SetConfigOption("GDAL_DEFAULT_WMS_CACHE_PATH", None)
     if cs != 0:
         gdaltest.post_reason( 'cs != 0' )
         return 'fail'
+
+    # Check maxsize and expired tags
+    tms_expires = """<GDAL_WMS>
+    <Service name="TMS">
+        <ServerUrl>%s</ServerUrl>
+    </Service>
+    <DataWindow>
+        <UpperLeftX>-20037508.34</UpperLeftX>
+        <UpperLeftY>20037508.34</UpperLeftY>
+        <LowerRightX>20037508.34</LowerRightX>
+        <LowerRightY>-20037508.34</LowerRightY>
+        <TileLevel>18</TileLevel>
+        <TileCountX>1</TileCountX>
+        <TileCountY>1</TileCountY>
+        <YOrigin>top</YOrigin>
+    </DataWindow>
+    <Projection>EPSG:3857</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <Cache><Path>./tmp/gdalwmscache</Path><Expires>1</Expires></Cache>
+</GDAL_WMS>""" % server_url_mask
+
+    mod_time = 0
+    for expected_file in expected_files:
+        tm = os.path.getmtime(expected_file)
+        if tm > mod_time:
+            mod_time = tm
+
+    ds = gdal.Open( tms_expires )
+    sleep(1.05)
+    data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
+
+    # tiles should be overwritten by new ones
+    for expected_file in expected_files:
+        if os.path.getmtime(expected_file) <= mod_time:
+            return 'fail'
 
     return 'success'
 
@@ -912,4 +1017,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
