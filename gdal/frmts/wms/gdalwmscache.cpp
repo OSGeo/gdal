@@ -138,7 +138,7 @@ public:
 
         if( nSize > m_nMaxSize )
         {
-            CPLDebug( "WMS", "Delete %ld items from cache", toDelete.size());
+            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(toDelete.size()) );
             for( size_t i = 0; i < toDelete.size(); ++i )
             {
                 const char* pszPath = CPLFormFilename( m_soPath,

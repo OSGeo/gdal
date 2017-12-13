@@ -229,7 +229,7 @@ enum GDALWMSCacheItemStatus {
 class GDALWMSCacheImpl
 {
 public:
-    GDALWMSCacheImpl(const CPLString& soPath, CPLXMLNode */*pConfig*/) :
+    GDALWMSCacheImpl(const CPLString& soPath, CPLXMLNode * /*pConfig*/) :
         m_soPath(soPath) {}
     virtual ~GDALWMSCacheImpl() {}
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) = 0;
