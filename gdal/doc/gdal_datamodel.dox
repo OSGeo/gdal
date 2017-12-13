@@ -177,8 +177,8 @@ honoured by GDAL drivers, algorithms or utilities at this time.
     <li>  MSP: Resurs DK-1 imagery metadata
     <li>  ODL: Landsat imagery metadata
     </ul>
-</ul>
 <li> CACHE_PATH: A cache directory path. Now this metadata item sets only by WMS driver. This is useful when dataset deletes with cached data or when external program need to put tiles in cache for some are of interest.
+</ul>
 
 \subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
 

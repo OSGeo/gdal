@@ -69,7 +69,7 @@ public:
         }
         const char *pszCacheMaxSize = CPLGetXMLValue( pConfig, "MaxSize", nullptr );
         if( pszCacheMaxSize != nullptr )
-            m_nMaxSize = atoi( pszCacheMaxSize );
+            m_nMaxSize = atol( pszCacheMaxSize );
     }
 
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) CPL_OVERRIDE
@@ -90,7 +90,7 @@ public:
         VSIStatBufL  sStatBuf;
         if( VSIStatL( GetFilePath(pszKey), &sStatBuf ) == 0 )
         {
-            long seconds = time( nullptr ) - sStatBuf.st_mtime;
+            long seconds = static_cast<long>( time( nullptr ) - sStatBuf.st_mtime );
             return seconds < m_nExpires ? CACHE_ITEM_OK : CACHE_ITEM_EXPIRED;
         }
         return  CACHE_ITEM_NOT_FOUND;
@@ -114,8 +114,8 @@ public:
 
         int counter = 0;
         std::vector<int> toDelete;
-        off_t nSize = 0;
-        long nTime = time( nullptr );
+        long nSize = 0;
+        time_t nTime = time( nullptr );
         while( papszList[counter] != nullptr )
         {
             const char* pszPath = CPLFormFilename( m_soPath, papszList[counter], nullptr );
@@ -124,13 +124,13 @@ public:
             {
                 if( !VSI_ISDIR( sStatBuf.st_mode ) )
                 {
-                    long seconds = nTime - sStatBuf.st_mtime;
+                    long seconds = static_cast<long>( nTime - sStatBuf.st_mtime );
                     if(seconds > m_nExpires)
                     {
                         toDelete.push_back(counter);
                     }
 
-                    nSize += sStatBuf.st_size;
+                    nSize += static_cast<long>( sStatBuf.st_size );
                 }
             }
             counter++;
@@ -138,7 +138,7 @@ public:
 
         if( nSize > m_nMaxSize )
         {
-            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(oDelete.size()) );
+            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(toDelete.size()) );
             for( size_t i = 0; i < toDelete.size(); ++i )
             {
                 const char* pszPath = CPLFormFilename( m_soPath,
@@ -198,7 +198,7 @@ private:
     CPLString m_osPostfix;
     int m_nDepth;
     int m_nExpires;
-    int m_nMaxSize;
+    long m_nMaxSize;
 };
 
 //------------------------------------------------------------------------------
