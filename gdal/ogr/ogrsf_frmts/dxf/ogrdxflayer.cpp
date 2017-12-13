@@ -7,6 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1877,27 +1878,21 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 {
     char szLineBuf[257];
     int nCode;
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
+
+    std::vector<double> adfControlPoints( 1, 0.0 );
+    std::vector<double> adfKnots( 1, 0.0 );
+    std::vector<double> adfWeights( 1, 0.0 );
     int nDegree = -1;
-    int nOrder = -1;
-    int i;
     int nControlPoints = -1;
     int nKnots = -1;
-    bool bResult = false;
-    bool bCalculateKnots = false;
-    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
-    std::vector<double> adfControlPoints;
-    std::vector<double> adfKnots;
-    std::vector<double> adfWeights;
-
-    adfControlPoints.push_back(0.0);
-    adfKnots.push_back(0.0);
-    adfWeights.push_back(0.0);
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
 /* -------------------------------------------------------------------- */
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
+        bool bStop = false;
         switch( nCode )
         {
           case 10:
@@ -1953,10 +1948,19 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
             }
             break;
 
+          case 100:
+            if( EQUAL(szLineBuf, "AcDbHelix") )
+                bStop = true;
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+
+        if( bStop )
+            break;
     }
     if( nCode < 0 )
     {
@@ -1969,11 +1973,44 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         poDS->UnreadValue();
 
 /* -------------------------------------------------------------------- */
+/*      Use the helper function to check the input data and insert      */
+/*      the spline.                                                     */
+/* -------------------------------------------------------------------- */
+    OGRLineString *poLS = InsertSplineWithChecks( nDegree,
+        adfControlPoints, nControlPoints, adfKnots, nKnots, adfWeights );
+
+    if( !poLS )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return NULL;
+    }
+
+    poFeature->SetGeometryDirectly( poLS );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                       InsertSplineWithChecks()                       */
+/*                                                                      */
+/*     Inserts a spline based on unchecked DXF input.  The arrays are   */
+/*     one-based.                                                       */
+/************************************************************************/
+
+OGRLineString *OGRDXFLayer::InsertSplineWithChecks( const int nDegree,
+    std::vector<double>& adfControlPoints, int nControlPoints,
+    std::vector<double>& adfKnots, int nKnots,
+    std::vector<double>& adfWeights )
+{
+/* -------------------------------------------------------------------- */
 /*      Sanity checks                                                   */
 /* -------------------------------------------------------------------- */
-    nOrder = nDegree + 1;
+    const int nOrder = nDegree + 1;
 
-    bResult = ( nOrder >= 2 );
+    bool bResult = ( nOrder >= 2 );
     if( bResult == true )
     {
         // Check whether nctrlpts value matches number of vertices read
@@ -1987,6 +2024,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         bResult = ( nControlPoints >= nOrder && nControlPoints == nCheck);
     }
 
+    bool bCalculateKnots = false;
     if( bResult == true )
     {
         int nCheck = static_cast<int>(adfKnots.size()) - 1;
@@ -1998,7 +2036,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         if( nCheck == 0 )
         {
             bCalculateKnots = true;
-            for( i = 0; i < (nControlPoints + nOrder); i++ )
+            for( int i = 0; i < (nControlPoints + nOrder); i++ )
                 adfKnots.push_back( 0.0 );
 
             nCheck = static_cast<int>(adfKnots.size()) - 1;
@@ -2019,7 +2057,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 
         if( nWeights == 0 )
         {
-            for( i = 0; i < nControlPoints; i++ )
+            for( int i = 0; i < nControlPoints; i++ )
                 adfWeights.push_back( 1.0 );
 
             nWeights = static_cast<int>(adfWeights.size()) - 1;
@@ -2030,11 +2068,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     }
 
     if( bResult == false )
-    {
-        DXF_LAYER_READER_ERROR();
-        delete poFeature;
         return nullptr;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Interpolate spline                                              */
@@ -2043,7 +2077,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     std::vector<double> p;
 
     p.push_back( 0.0 );
-    for( i = 0; i < 3*p1; i++ )
+    for( int i = 0; i < 3*p1; i++ )
         p.push_back( 0.0 );
 
     rbspline2( nControlPoints, nOrder, p1, &(adfControlPoints[0]),
@@ -2055,14 +2089,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     OGRLineString *poLS = new OGRLineString();
 
     poLS->setNumPoints( p1 );
-    for( i = 0; i < p1; i++ )
+    for( int i = 0; i < p1; i++ )
         poLS->setPoint( i, p[i*3+1], p[i*3+2] );
 
-    poFeature->SetGeometryDirectly( poLS );
-
-    PrepareLineStyle( poFeature );
-
-    return poFeature;
+    return poLS;
 }
 
 /************************************************************************/
@@ -3014,7 +3044,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateARC();
         }
-        else if( EQUAL(szLineBuf,"SPLINE") )
+        else if( EQUAL(szLineBuf,"SPLINE") ||
+            EQUAL(szLineBuf,"HELIX") )
         {
             poFeature = TranslateSPLINE();
         }
@@ -3034,7 +3065,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateHATCH();
         }
-        else if( EQUAL(szLineBuf,"SOLID") )
+        else if( EQUAL(szLineBuf,"SOLID") ||
+            EQUAL(szLineBuf,"TRACE") )
         {
             poFeature = TranslateSOLID();
         }

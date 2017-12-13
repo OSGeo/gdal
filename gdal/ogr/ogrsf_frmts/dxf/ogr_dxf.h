@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2009,  Frank Warmerdam
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -278,6 +279,12 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateLEADER();
     OGRDXFFeature *     TranslateMLEADER();
 
+    OGRLineString *     InsertSplineWithChecks( const int nDegree,
+                                                std::vector<double>& adfControlPoints,
+                                                int nControlPoints,
+                                                std::vector<double>& adfKnots,
+                                                int nKnots,
+                                                std::vector<double>& adfWeights );
     static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
     OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
                                            OGRDXFInsertTransformer oTransformer,
