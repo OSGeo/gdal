@@ -541,9 +541,8 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
 {
     std::stringstream url;
     url << std::string(GetAPIURL()) << "/me/jobs/" << std::string(jobId);
-    bool done = false;
     int count = 0;
-    while (!done && count<5) {
+    while (count<5) {
         count++;
         json_object *result = RunGET(url.str().c_str());
         if (result == nullptr) {
