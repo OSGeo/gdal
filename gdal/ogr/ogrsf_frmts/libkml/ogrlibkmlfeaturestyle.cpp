@@ -114,7 +114,7 @@ void featurestyle2kml(
                                     poKmlFeature );
 
             /***** add the style to the placemark *****/
-            if( poKmlStyle != nullptr )
+            if( poKmlStyle )
                 poKmlFeature->set_styleselector( poKmlStyle );
         }
     }
@@ -156,7 +156,7 @@ void featurestyle2kml(
                 const StylePtr poKmlStyle =
                     addstylestring2kml( pszStyleString, nullptr,
                                      poKmlFactory, poKmlFeature );
-                if( poKmlStyle != nullptr )
+                if( poKmlStyle )
                 {
                     /***** Add the style to the placemark. *****/
                     poKmlFeature->set_styleselector( poKmlStyle );
