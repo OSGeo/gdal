@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2010, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -217,7 +218,7 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
         const int ET_LINE = 1;
         const int ET_CIRCULAR_ARC = 2;
         const int ET_ELLIPTIC_ARC = 3;
-        // const int ET_SPLINE = 4;
+        const int ET_SPLINE = 4;
 
         nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
         if( nCode != 72 )
@@ -448,6 +449,97 @@ OGRErr OGRDXFLayer::CollectBoundaryPath( OGRGeometryCollection *poGC,
                 // TODO: emit error ?
             }
         }
+
+/* -------------------------------------------------------------------- */
+/*      Process an elliptical arc.                                      */
+/* -------------------------------------------------------------------- */
+        else if( nEdgeType == ET_SPLINE )
+        {
+            int nDegree = 3;
+
+            if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 94 )
+                nDegree = atoi(szLineBuf);
+            else
+                break;
+
+            // Skip a few things we don't care about
+            if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) != 73 )
+                break;
+            if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) != 74 )
+                break;
+
+            int nKnots = 0;
+
+            if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 95 )
+                nKnots = atoi(szLineBuf);
+            else
+                break;
+
+            int nControlPoints = 0;
+
+            if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 96 )
+                nControlPoints = atoi(szLineBuf);
+            else
+                break;
+
+            std::vector<double> adfKnots( 1, 0.0 );
+
+            nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            if( nCode != 40 )
+                break;
+
+            while( nCode == 40 )
+            {
+                adfKnots.push_back( CPLAtof(szLineBuf) );
+                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            }
+
+            std::vector<double> adfControlPoints( 1, 0.0 );
+
+            if( nCode != 10 )
+                break;
+
+            while( nCode == 10 )
+            {
+                adfControlPoints.push_back( CPLAtof(szLineBuf) );
+
+                if( (nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) == 20 )
+                    adfControlPoints.push_back( CPLAtof(szLineBuf) );
+                else
+                    break;
+
+                adfControlPoints.push_back( 0.0 ); // Z coordinate
+                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            }
+
+            std::vector<double> adfWeights( 1, 0.0 );
+
+            // 42 (weights) are optional
+            while( nCode == 42 )
+            {
+                adfWeights.push_back( CPLAtof(szLineBuf) );
+                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            }
+
+            // Eat the rest of this section, if present
+            while( nCode > 0 && nCode != 72 )
+                nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf));
+            if( nCode > 0 )
+                poDS->UnreadValue();
+
+            OGRLineString *poLS = InsertSplineWithChecks( nDegree,
+                adfControlPoints, nControlPoints, adfKnots, nKnots,
+                adfWeights );
+
+            if( !poLS )
+            {
+                DXF_LAYER_READER_ERROR();
+                return OGRERR_FAILURE;
+            }
+
+            poGC->addGeometryDirectly( poLS );
+        }
+
         else
         {
             CPLDebug( "DXF", "Unsupported HATCH boundary line type:%d",
