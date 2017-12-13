@@ -260,7 +260,8 @@ protected:
 
 protected:
     CPLString m_osCachePath;
-    CPLJoinableThread *m_hCleanThread;
+    bool m_bIsCleanThreadRunning;
+    time_t m_nCleanThreadLastRunTime;
 
 private:
     GDALWMSCacheImpl* m_poCache;

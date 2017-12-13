@@ -41,17 +41,17 @@ static void CleanCacheThread( void *pData )
 }
 
 //------------------------------------------------------------------------------
-// FileCache
+// GDALWMSFileCache
 //------------------------------------------------------------------------------
-class FileCache : public GDALWMSCacheImpl
+class GDALWMSFileCache : public GDALWMSCacheImpl
 {
 public:
-    FileCache(const CPLString& soPath, CPLXMLNode *pConfig) :
+    GDALWMSFileCache(const CPLString& soPath, CPLXMLNode *pConfig) :
         GDALWMSCacheImpl(soPath, pConfig),
         m_osPostfix(""),
         m_nDepth(2),
-        m_nExpires(604800),
-        m_nMaxSize(67108864)
+        m_nExpires(604800),   // 7 days
+        m_nMaxSize(67108864)  // 64 Mb
     {
         const char *pszCacheDepth = CPLGetXMLValue( pConfig, "Depth", "2" );
         if( pszCacheDepth != nullptr )
@@ -72,7 +72,7 @@ public:
             m_nMaxSize = atol( pszCacheMaxSize );
     }
 
-    virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) CPL_OVERRIDE
+    virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) override
     {
         // Warns if it fails to write, but returns success
         CPLString soFilePath = GetFilePath( pszKey );
@@ -85,7 +85,7 @@ public:
         return CE_None;
     }
 
-    virtual enum GDALWMSCacheItemStatus GetItemStatus(const char *pszKey) const CPL_OVERRIDE
+    virtual enum GDALWMSCacheItemStatus GetItemStatus(const char *pszKey) const override
     {
         VSIStatBufL  sStatBuf;
         if( VSIStatL( GetFilePath(pszKey), &sStatBuf ) == 0 )
@@ -96,7 +96,7 @@ public:
         return  CACHE_ITEM_NOT_FOUND;
     }
 
-    virtual GDALDataset* GetDataset(const char *pszKey, char **papszOpenOptions) const CPL_OVERRIDE
+    virtual GDALDataset* GetDataset(const char *pszKey, char **papszOpenOptions) const override
     {
         return reinterpret_cast<GDALDataset*>(
                     GDALOpenEx( GetFilePath( pszKey ), GDAL_OF_RASTER |
@@ -104,7 +104,7 @@ public:
                                papszOpenOptions, nullptr ) );
     }
 
-    virtual void Clean() CPL_OVERRIDE
+    virtual void Clean() override
     {
         char **papszList = VSIReadDirRecursive( m_soPath );
         if( papszList == nullptr )
@@ -138,7 +138,8 @@ public:
 
         if( nSize > m_nMaxSize )
         {
-            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(toDelete.size()) );
+            CPLDebug( "WMS", "Delete %u items from cache",
+                                    static_cast<unsigned int>(toDelete.size()) );
             for( size_t i = 0; i < toDelete.size(); ++i )
             {
                 const char* pszPath = CPLFormFilename( m_soPath,
@@ -149,9 +150,6 @@ public:
         }
 
         CSLDestroy(papszList);
-
-        // Prevent very frequently execution
-        CPLSleep(15);
     }
 
 private:
@@ -204,10 +202,12 @@ private:
 //------------------------------------------------------------------------------
 // GDALWMSCache
 //------------------------------------------------------------------------------
+#define CLEAN_THREAD_RUN_TIMEOUT 120 // 3 min
 
 GDALWMSCache::GDALWMSCache() :
     m_osCachePath("./gdalwmscache"),
-    m_hCleanThread(nullptr),
+    m_bIsCleanThreadRunning(false),
+    m_nCleanThreadLastRunTime(0),
     m_poCache(nullptr)
 {
 
@@ -215,10 +215,6 @@ GDALWMSCache::GDALWMSCache() :
 
 GDALWMSCache::~GDALWMSCache()
 {
-    if( m_hCleanThread != nullptr )
-    {
-        CPLJoinThread( m_hCleanThread );
-    }
 }
 
 CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
@@ -244,7 +240,7 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
     const char *pszType = CPLGetXMLValue( pConfig, "Type", "file" );
     if( EQUAL(pszType, "file") )
     {
-        m_poCache = new FileCache(m_osCachePath, pConfig);
+        m_poCache = new GDALWMSFileCache(m_osCachePath, pConfig);
     }
 
     return CE_None;
@@ -259,9 +255,10 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         if( result == CE_None )
         {
             // Start clean thread
-            if( m_hCleanThread == nullptr )
+            if( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > CLEAN_THREAD_RUN_TIMEOUT)
             {
-                m_hCleanThread = CPLCreateJoinableThread(CleanCacheThread, this);
+                m_bIsCleanThreadRunning = true;
+                CPLCreateThread(CleanCacheThread, this);
             }
         }
         return result;
@@ -297,5 +294,6 @@ void GDALWMSCache::Clean()
         m_poCache->Clean();
     }
 
-    m_hCleanThread = nullptr;
+    m_nCleanThreadLastRunTime = time( nullptr );
+    m_bIsCleanThreadRunning = false;
 }
