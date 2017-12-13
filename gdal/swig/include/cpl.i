@@ -173,6 +173,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (file_from_mem_buffer) wrapper_VSIFileFromMemBuffer;
 %rename (unlink) VSIUnlink;
 %rename (has_thread_support) wrapper_HasThreadSupport;
+%rename (md5_string) wrapper_CPLMD5String;
 #else
 %rename (PushErrorHandler) CPLPushErrorHandler;
 %rename (PopErrorHandler) CPLPopErrorHandler;
@@ -197,6 +198,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
+%rename (MD5String) wrapper_CPLMD5String;
 #endif
 
 retStringAndCPLFree*
@@ -360,6 +362,14 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 }
 }
 %clear const char * pszKey;
+
+%inline {
+const char *wrapper_CPLMD5String( const char * pszText )
+{
+    return CPLMD5String( pszText );
+}
+}
+%clear const char * pszText;
 
 /* Provide hooks to hex encoding methods */
 #if defined(SWIGJAVA) || defined(SWIGPERL)
