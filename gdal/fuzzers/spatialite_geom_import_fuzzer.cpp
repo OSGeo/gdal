@@ -44,7 +44,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
     OGRSQLiteLayer::ImportSpatiaLiteGeometry(
         const_cast<unsigned char*>(buf), static_cast<int>(len), &poGeom );

@@ -61,7 +61,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    char** papszArgv = NULL;
+    char** papszArgv = nullptr;
 
     // Prevent generating too big output raster. Make sure they are set at
     // the beginning to avoid being accidentally eaten by invalid arguments
@@ -70,10 +70,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     papszArgv = CSLAddString(papszArgv, "1000000");
 
     fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
-    if( fp != NULL )
+    if( fp != nullptr )
     {
-        const char* pszLine = NULL;
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        const char* pszLine = nullptr;
+        while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             if( !EQUAL(pszLine, "-limit_outsize") )
                 papszArgv = CSLAddString(papszArgv, pszLine);
@@ -86,7 +86,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     bool bXDimPct = false;
     bool bYDimPct = false;
     bool bNonNearestResampling = false;
-    if( papszArgv != NULL )
+    if( papszArgv != nullptr )
     {
         int nCount = CSLCount(papszArgv);
         for( int i = 0; i < nCount; i++ )
@@ -107,13 +107,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
     }
 
-    if( papszArgv != NULL )
+    if( papszArgv != nullptr )
     {
-        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, NULL);
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, nullptr);
         if( psOptions )
         {
             GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
-            if( hSrcDS != NULL )
+            if( hSrcDS != nullptr )
             {
                 // Also check that reading the source doesn't involve too
                 // much memory
@@ -153,7 +153,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     if( nSize < 10 * 1024 * 1024 && bOKForResampling )
                     {
                         GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
-                                                            psOptions, NULL);
+                                                            psOptions, nullptr);
                         if( hOutDS )
                             GDALClose(hOutDS);
                     }

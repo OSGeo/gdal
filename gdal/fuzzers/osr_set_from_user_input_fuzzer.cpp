@@ -46,7 +46,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(NULL);
+    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
 
     char* pszStr = static_cast<char*>(CPLMalloc( len + 1 ));
     memcpy(pszStr, buf, len);
