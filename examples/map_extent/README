@@ -1,0 +1,15 @@
+This shows an example of how to use the GDAL API from within a web browser to
+display the bounds of a GeoTIFF on a Leaflet map as a polygon. The edges of the
+polygon aren't projected, so they will always appear straight even if in
+actuality they would be curved. This also doesn't take into account the NODATA
+value or masking of the GeoTIFF.
+
+To use, first make sure that `gdal.js` and `gdal.js.mem` are available in this
+directory. There are some symlinks provided that will do this automatically if
+you build the project from source. Alternatively, you can
+[download a release](https://github.com/ddohler/gdal-js/releases)
+and place the files in this directory manually.
+
+Next, start up an HTTP server to serve this folder. For example,
+`python -m SimpleHTTPServer`. Navigate to whatever port your server is listening
+at, and follow the instructions on the page.

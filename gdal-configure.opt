@@ -4,7 +4,7 @@ A = --enable-static
 A += --enable-pdf-plugin=no
 A += --without-libtool
 A += --without-ld-shared
-A += --with-threads=no
+A += --without-threads
 A += --with-libz=internal
 A += --without-libiconv-prefix
 A += --without-liblzma
@@ -77,6 +77,6 @@ A += --without-mdb
 A += --without-rasdaman
 A += --without-armadillo
 A += --without-cryptopp
-A += --with-static-proj4=$(CURDIR)/../proj4
+A += --with-static-proj4=$(CURDIR)/proj4
 
 GDAL_CONFIG_OPTIONS := $(A)
