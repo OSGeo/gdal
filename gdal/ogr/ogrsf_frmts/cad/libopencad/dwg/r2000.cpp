@@ -74,14 +74,8 @@ using namespace std;
 
 int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 {
-<<<<<<< HEAD
-    char buffer[255];
-    char * pabyBuf;
-    size_t dHeaderVarsSectionLength = 0;
-=======
     char bufferPre[255];
     unsigned dHeaderVarsSectionLength = 0;
->>>>>>> upstream/trunk
     const size_t dSizeOfSectionSize = 4;
 
     pFileIO->Seek( sectionLocatorRecords[0].dSeeker, CADFileIO::SeekOrigin::BEG );
@@ -102,11 +96,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
-<<<<<<< HEAD
-    pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
-=======
     readSize = pFileIO->Read( &dHeaderVarsSectionLength, dSizeOfSectionSize );
->>>>>>> upstream/trunk
         DebugMsg( "Header variables section length: %d\n",
                   static_cast<int>(dHeaderVarsSectionLength) );
     if(readSize != dSizeOfSectionSize || dHeaderVarsSectionLength > 65536) //NOTE: maybe header section may be bigger
@@ -115,13 +105,6 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
 
-<<<<<<< HEAD
-    pabyBuf = new char[dHeaderVarsSectionLength + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-    memcpy (pabyBuf, &dHeaderVarsSectionLength, dSizeOfSectionSize);
-    memset (pabyBuf + dSizeOfSectionSize, 0, dHeaderVarsSectionLength + 10);
-    pFileIO->Read( pabyBuf + dSizeOfSectionSize, dHeaderVarsSectionLength + 2 );
-    size_t nBitOffsetFromStart = dSizeOfSectionSize * 8;
-=======
     CADBuffer buffer(dHeaderVarsSectionLength + dSizeOfSectionSize + 10);
     buffer.WriteRAW(&dHeaderVarsSectionLength, dSizeOfSectionSize);
     readSize = pFileIO->Read(buffer.GetRawBuffer(), dHeaderVarsSectionLength + 2 );
@@ -132,7 +115,6 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
                   static_cast<int>(readSize) );
         return CADErrorCodes::HEADER_SECTION_READ_FAILED;
     }
->>>>>>> upstream/trunk
 
     if( eOptions == OpenOptions::READ_ALL )
     {
@@ -286,11 +268,7 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
 
     oHeader.addValue( CADHeader::CECOLOR, buffer.ReadBITSHORT() );
 
-<<<<<<< HEAD
-    oHeader.addValue( CADHeader::HANDSEED, ReadHANDLE8BLENGTH( pabyBuf, nBitOffsetFromStart ) ); // TODO: Check this case.
-=======
     oHeader.addValue( CADHeader::HANDSEED, buffer.ReadHANDLE8BLENGTH() ); // TODO: Check this case.
->>>>>>> upstream/trunk
 
     oHeader.addValue( CADHeader::CLAYER, buffer.ReadHANDLE() );
     oHeader.addValue( CADHeader::TEXTSTYLE, buffer.ReadHANDLE() );
@@ -675,23 +653,6 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     }
 
     int returnCode = CADErrorCodes::SUCCESS;
-<<<<<<< HEAD
-    unsigned short dSectionCRC = validateEntityCRC( pabyBuf,
-        static_cast<unsigned int>(dHeaderVarsSectionLength + dSizeOfSectionSize),
-        nBitOffsetFromStart, "HEADERVARS" );
-
-    if(dSectionCRC == 0)
-    {
-        delete[] pabyBuf;
-        std::cerr << "File is corrupted (HEADERVARS section CRC doesn't match.)\n";
-        return CADErrorCodes::HEADER_SECTION_READ_FAILED;
-    }
-
-    pFileIO->Read( pabyBuf, DWGConstants::SentinelLength );
-    if( memcmp( pabyBuf, DWGConstants::HeaderVariablesEnd,
-                         DWGConstants::SentinelLength ) )
-    {
-=======
     unsigned short dSectionCRC = validateEntityCRC( buffer,
         static_cast<unsigned int>(dHeaderVarsSectionLength + dSizeOfSectionSize), "HEADERVARS" );
 
@@ -705,7 +666,6 @@ int DWGFileR2000::ReadHeader( OpenOptions eOptions )
     if( memcmp( bufferPre, DWGConstants::HeaderVariablesEnd,
                          DWGConstants::SentinelLength ) )
     {
->>>>>>> upstream/trunk
         std::cerr << "File is corrupted (HEADERVARS section ending sentinel "
                           "doesn't match.)\n";
         returnCode = CADErrorCodes::HEADER_SECTION_READ_FAILED;
@@ -718,11 +678,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
 {
     if( eOptions == OpenOptions::READ_ALL || eOptions == OpenOptions::READ_FAST )
     {
-<<<<<<< HEAD
-        char   buffer[255];
-=======
         char   bufferPre[255];
->>>>>>> upstream/trunk
         size_t dSectionSize = 0;
         const size_t dSizeOfSectionSize = 4;
 
@@ -739,11 +695,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
         }
 
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
-<<<<<<< HEAD
-        DebugMsg( "Classes section length: %d\n",
-=======
         DebugMsg("Classes section length: %d\n",
->>>>>>> upstream/trunk
                   static_cast<int>(dSectionSize) );
         if(dSectionSize > 65535) {
             DebugMsg("File is corrupted (CLASSES section is too large: %d\n",
@@ -752,31 +704,6 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             return CADErrorCodes::CLASSES_SECTION_READ_FAILED;
         }
 
-<<<<<<< HEAD
-        char * pabySectionContent = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-        memcpy (pabySectionContent, &dSectionSize, dSizeOfSectionSize);
-        memset (pabySectionContent + dSizeOfSectionSize, 0, dSectionSize + 10);
-        pFileIO->Read( pabySectionContent + dSizeOfSectionSize, dSectionSize + 2 );
-        size_t dBitOffsetFromStart = dSizeOfSectionSize * 8;
-        size_t dSectionBitSize = (dSectionSize + dSizeOfSectionSize) * 8;
-        while( dBitOffsetFromStart < dSectionBitSize - 8)
-        {
-            CADClass stClass;
-            stClass.dClassNum        = ReadBITSHORT( pabySectionContent,
-                                                     dBitOffsetFromStart );
-            stClass.dProxyCapFlag    = ReadBITSHORT( pabySectionContent,
-                                                     dBitOffsetFromStart );
-            stClass.sApplicationName = ReadTV( pabySectionContent,
-                                               dBitOffsetFromStart );
-            stClass.sCppClassName    = ReadTV( pabySectionContent,
-                                               dBitOffsetFromStart );
-            stClass.sDXFRecordName   = ReadTV( pabySectionContent,
-                                               dBitOffsetFromStart );
-            stClass.bWasZombie       = ReadBIT( pabySectionContent,
-                                                dBitOffsetFromStart );
-            stClass.bIsEntity        = ReadBITSHORT( pabySectionContent,
-                                                     dBitOffsetFromStart ) == 0x1F2;
-=======
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
         buffer.WriteRAW(&dSectionSize, dSizeOfSectionSize);
         size_t readSize = pFileIO->Read( buffer.GetRawBuffer(), dSectionSize + 2 );
@@ -799,24 +726,14 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             stClass.sDXFRecordName   = buffer.ReadTV();
             stClass.bWasZombie       = buffer.ReadBIT();
             stClass.bIsEntity        = buffer.ReadBITSHORT() == 0x1F2;
->>>>>>> upstream/trunk
 
             oClasses.addClass( stClass );
         }
 
-<<<<<<< HEAD
-        dBitOffsetFromStart = dSectionBitSize;
-        unsigned short dSectionCRC = validateEntityCRC( pabySectionContent,
-                    static_cast<unsigned int>(dSectionSize + dSizeOfSectionSize),
-                    dBitOffsetFromStart, "CLASSES" );
-        delete[] pabySectionContent;
-
-=======
         buffer.Seek(dSectionBitSize, CADBuffer::BEG);
         unsigned short dSectionCRC = validateEntityCRC( buffer,
                     static_cast<unsigned int>(dSectionSize + dSizeOfSectionSize),
                                                         "CLASSES" );
->>>>>>> upstream/trunk
         if(dSectionCRC == 0)
         {
             std::cerr << "File is corrupted (CLASSES section CRC doesn't match.)\n";
@@ -854,11 +771,7 @@ int DWGFileR2000::CreateFileMap()
         unsigned short dSectionSize = 0;
 
         // read section size
-<<<<<<< HEAD
-        const size_t dSizeOfSectionSize = 2;
-=======
 
->>>>>>> upstream/trunk
         pFileIO->Read( &dSectionSize, dSizeOfSectionSize );
         unsigned short dSectionSizeOriginal = dSectionSize;
         SwapEndianness( dSectionSize, sizeof( dSectionSize ) );
@@ -869,17 +782,6 @@ int DWGFileR2000::CreateFileMap()
         if( dSectionSize == dSizeOfSectionSize )
             break; // last section is empty.
 
-<<<<<<< HEAD
-        char * pabySectionContent  = new char[dSectionSize + dSizeOfSectionSize + 10]; // Add extra 10 bytes
-        memcpy(pabySectionContent, &dSectionSizeOriginal, dSizeOfSectionSize);
-        memset (pabySectionContent + dSizeOfSectionSize, 0, dSectionSize + 10);
-        size_t nRecordsInSection   = 0;
-
-        // read section datsa
-        pFileIO->Read( pabySectionContent + dSizeOfSectionSize, dSectionSize );
-        unsigned int dSectionBitSize = dSectionSize * 8;
-        size_t nBitOffsetFromStart = dSizeOfSectionSize * 8; // Skip section size from start
-=======
         CADBuffer buffer(dSectionSize + dSizeOfSectionSize + 10);
         buffer.WriteRAW(&dSectionSizeOriginal, dSizeOfSectionSize);
         size_t nRecordsInSection   = 0;
@@ -894,7 +796,6 @@ int DWGFileR2000::CreateFileMap()
             return CADErrorCodes::OBJECTS_SECTION_READ_FAILED;
         }
         unsigned int dSectionBitSize = dSectionSize * 8;
->>>>>>> upstream/trunk
 
         while( buffer.PositionBit() < dSectionBitSize )
         {
@@ -918,15 +819,8 @@ int DWGFileR2000::CreateFileMap()
             ++nRecordsInSection;
         }
 
-<<<<<<< HEAD
-        unsigned short dSectionCRC = validateEntityCRC( pabySectionContent,
-                    static_cast<unsigned int>(dSectionSize),
-                    nBitOffsetFromStart, "OBJECTMAP", true );
-        delete[] pabySectionContent;
-=======
         unsigned short dSectionCRC = validateEntityCRC( buffer,
                     static_cast<unsigned int>(dSectionSize), "OBJECTMAP", true );
->>>>>>> upstream/trunk
 
         if(dSectionCRC == 0)
         {
@@ -950,23 +844,8 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
     if( dObjectSize > 65536 )
         return nullptr;
 
-    // FIXME: Limit object size to 64kB
-    if( dObjectSize > 65536 )
-        return nullptr;
-
     // And read whole data chunk into memory for future parsing.
     // + nBitOffsetFromStart/8 + 2 is because dObjectSize doesn't cover CRC and itself.
-<<<<<<< HEAD
-    dObjectSize += static_cast<unsigned int>(nBitOffsetFromStart / 8 + 2);
-    unique_ptr<char[]> sectionContentPtr( new char[dObjectSize + 64] ); // 64 is extra buffer size
-    char * pabySectionContent = sectionContentPtr.get();
-    pFileIO->Seek( mapObjects[dHandle], CADFileIO::SeekOrigin::BEG );
-    pFileIO->Read( pabySectionContent, static_cast<size_t>(dObjectSize) );
-
-    nBitOffsetFromStart = 0;
-    /* Unused dObjectSize = */ ReadMSHORT( pabySectionContent, nBitOffsetFromStart );
-    short dObjectType = ReadBITSHORT( pabySectionContent, nBitOffsetFromStart );
-=======
     dObjectSize += static_cast<unsigned int>(buffer.PositionBit() / 8 + 2);
 
     CADBuffer objectBuffer(dObjectSize + 64);
@@ -984,7 +863,6 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
     /* Unused dObjectSize = */ objectBuffer.ReadMSHORT();
     short dObjectType = objectBuffer.ReadBITSHORT();
->>>>>>> upstream/trunk
     if( dObjectType >= 500 )
     {
         CADClass cadClass = oClasses.getClassByNum( dObjectType );
@@ -1126,19 +1004,11 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
             case CADObject::VERTEX_PFACE:
                 return getVertexPFace( dObjectSize, stCommonEntityData,
-<<<<<<< HEAD
-                                       pabySectionContent, nBitOffsetFromStart );
-
-            case CADObject::MTEXT:
-                return getMText( dObjectSize, stCommonEntityData,
-                                 pabySectionContent, nBitOffsetFromStart );
-=======
                                        objectBuffer);
 
             case CADObject::MTEXT:
                 return getMText( dObjectSize, stCommonEntityData,
                                  objectBuffer);
->>>>>>> upstream/trunk
 
             case CADObject::DIMENSION_RADIUS:
             case CADObject::DIMENSION_DIAMETER:
@@ -1148,17 +1018,6 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
             case CADObject::DIMENSION_ORDINATE:
             case CADObject::DIMENSION_LINEAR:
                 return getDimension( dObjectType, dObjectSize, stCommonEntityData,
-<<<<<<< HEAD
-                                     pabySectionContent, nBitOffsetFromStart );
-
-            case CADObject::INSERT:
-                return getInsert( dObjectType, dObjectSize, stCommonEntityData,
-                                  pabySectionContent,  nBitOffsetFromStart );
-
-            default:
-                return getEntity( dObjectType, dObjectSize, stCommonEntityData,
-                                  pabySectionContent, nBitOffsetFromStart );
-=======
                                      objectBuffer);
 
             case CADObject::INSERT:
@@ -1168,7 +1027,6 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
             default:
                 return getEntity( dObjectType, dObjectSize, stCommonEntityData,
                                   objectBuffer);
->>>>>>> upstream/trunk
         }
     }
     else
@@ -1176,46 +1034,6 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         switch( dObjectType )
         {
             case CADObject::DICTIONARY:
-<<<<<<< HEAD
-                return getDictionary( dObjectSize, pabySectionContent,
-                                      nBitOffsetFromStart );
-
-            case CADObject::LAYER:
-                return getLayerObject( dObjectSize, pabySectionContent,
-                                       nBitOffsetFromStart );
-
-            case CADObject::LAYER_CONTROL_OBJ:
-                return getLayerControl( dObjectSize, pabySectionContent,
-                                        nBitOffsetFromStart );
-
-            case CADObject::BLOCK_CONTROL_OBJ:
-                return getBlockControl( dObjectSize, pabySectionContent,
-                                        nBitOffsetFromStart );
-
-            case CADObject::BLOCK_HEADER:
-                return getBlockHeader( dObjectSize, pabySectionContent,
-                                       nBitOffsetFromStart );
-
-            case CADObject::LTYPE_CONTROL_OBJ:
-                return getLineTypeControl( dObjectSize, pabySectionContent,
-                                           nBitOffsetFromStart );
-
-            case CADObject::LTYPE1:
-                return getLineType1( dObjectSize, pabySectionContent,
-                                     nBitOffsetFromStart );
-
-            case CADObject::IMAGEDEF:
-                return getImageDef( dObjectSize, pabySectionContent,
-                                    nBitOffsetFromStart );
-
-            case CADObject::IMAGEDEFREACTOR:
-                return getImageDefReactor( dObjectSize, pabySectionContent,
-                                           nBitOffsetFromStart );
-
-            case CADObject::XRECORD:
-                return getXRecord( dObjectSize, pabySectionContent,
-                                   nBitOffsetFromStart );
-=======
                 return getDictionary( dObjectSize, objectBuffer);
 
             case CADObject::LAYER:
@@ -1244,7 +1062,6 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 
             case CADObject::XRECORD:
                 return getXRecord( dObjectSize, objectBuffer);
->>>>>>> upstream/trunk
         }
     }
 
@@ -1868,14 +1685,9 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
     return poGeometry;
 }
 
-<<<<<<< HEAD
-CADBlockObject * DWGFileR2000::getBlock(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                         const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
 CADBlockObject * DWGFileR2000::getBlock(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADBlockObject * pBlock = new CADBlockObject();
 
@@ -1884,27 +1696,17 @@ CADBlockObject * DWGFileR2000::getBlock(unsigned int dObjectSize,
 
     pBlock->sBlockName = buffer.ReadTV();
 
-<<<<<<< HEAD
-    pBlock->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "BLOCK" ) );
-=======
     fillCommonEntityHandleData( pBlock, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     pBlock->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "BLOCK" ) );
->>>>>>> upstream/trunk
 
     return pBlock;
 }
 
 CADEllipseObject * DWGFileR2000::getEllipse(unsigned int dObjectSize,
                                             const CADCommonED& stCommonEntityData,
-<<<<<<< HEAD
-                                            const char * pabyInput,
-                                            size_t& nBitOffsetFromStart )
-=======
                                             CADBuffer& buffer)
->>>>>>> upstream/trunk
 {
     CADEllipseObject * ellipse = new CADEllipseObject();
 
@@ -1927,27 +1729,17 @@ CADEllipseObject * DWGFileR2000::getEllipse(unsigned int dObjectSize,
     ellipse->dfBegAngle  = buffer.ReadBITDOUBLE();
     ellipse->dfEndAngle  = buffer.ReadBITDOUBLE();
 
-<<<<<<< HEAD
-    ellipse->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                        nBitOffsetFromStart, "ELLIPSE" ) );
-=======
     fillCommonEntityHandleData(ellipse, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     ellipse->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "ELLIPSE" ) );
->>>>>>> upstream/trunk
 
     return ellipse;
 }
 
-<<<<<<< HEAD
-CADSolidObject * DWGFileR2000::getSolid(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart )
-=======
 CADSolidObject * DWGFileR2000::getSolid(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADSolidObject * solid = new CADSolidObject();
 
@@ -1979,25 +1771,15 @@ CADSolidObject * DWGFileR2000::getSolid(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( solid, buffer);
 
-<<<<<<< HEAD
-    solid->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "SOLID" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     solid->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "SOLID" ) );
->>>>>>> upstream/trunk
 
     return solid;
 }
 
-<<<<<<< HEAD
-CADPointObject * DWGFileR2000::getPoint(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart )
-=======
 CADPointObject * DWGFileR2000::getPoint(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer& buffer)
->>>>>>> upstream/trunk
 {
     CADPointObject * point = new CADPointObject();
 
@@ -2024,25 +1806,15 @@ CADPointObject * DWGFileR2000::getPoint(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( point, buffer);
 
-<<<<<<< HEAD
-    point->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "POINT" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     point->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "POINT" ) );
->>>>>>> upstream/trunk
 
     return point;
 }
 
-<<<<<<< HEAD
-CADPolyline3DObject * DWGFileR2000::getPolyLine3D(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                   const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
 CADPolyline3DObject * DWGFileR2000::getPolyLine3D(unsigned int dObjectSize,
                                                   const CADCommonED& stCommonEntityData,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADPolyline3DObject * polyline = new CADPolyline3DObject();
 
@@ -2057,28 +1829,17 @@ CADPolyline3DObject * DWGFileR2000::getPolyLine3D(unsigned int dObjectSize,
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                         nBitOffsetFromStart, "POLYLINE" ) );
-=======
     polyline->hSeqend = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     polyline->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "POLYLINE" ) );
->>>>>>> upstream/trunk
 
     return polyline;
 }
 
-<<<<<<< HEAD
-CADRayObject * DWGFileR2000::getRay(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                     size_t& nBitOffsetFromStart )
-=======
 CADRayObject * DWGFileR2000::getRay(unsigned int dObjectSize,
                                     const CADCommonED& stCommonEntityData,
                                     CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADRayObject * ray = new CADRayObject();
 
@@ -2092,29 +1853,17 @@ CADRayObject * DWGFileR2000::getRay(unsigned int dObjectSize,
     CADVector vectVector = buffer.ReadVector();
     ray->vectVector = vectVector;
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( ray, pabyInput, nBitOffsetFromStart );
-
-    ray->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                    nBitOffsetFromStart, "RAY" ) );
-=======
     fillCommonEntityHandleData( ray, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     ray->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "RAY" ) );
->>>>>>> upstream/trunk
 
     return ray;
 }
 
-<<<<<<< HEAD
-CADXLineObject * DWGFileR2000::getXLine(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart )
-=======
 CADXLineObject * DWGFileR2000::getXLine(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADXLineObject * xline = new CADXLineObject();
 
@@ -2128,29 +1877,17 @@ CADXLineObject * DWGFileR2000::getXLine(unsigned int dObjectSize,
     CADVector vectVector = buffer.ReadVector();
     xline->vectVector = vectVector;
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( xline, pabyInput, nBitOffsetFromStart );
-
-    xline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "XLINE" ) );
-=======
     fillCommonEntityHandleData( xline, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     xline->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "XLINE" ) );
->>>>>>> upstream/trunk
 
     return xline;
 }
 
-<<<<<<< HEAD
-CADLineObject * DWGFileR2000::getLine(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                       size_t& nBitOffsetFromStart )
-=======
 CADLineObject * DWGFileR2000::getLine(unsigned int dObjectSize,
                                       const CADCommonED& stCommonEntityData,
                                       CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLineObject * line = new CADLineObject();
 
@@ -2187,16 +1924,6 @@ CADLineObject * DWGFileR2000::getLine(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( line, buffer);
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    line->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                     nBitOffsetFromStart, "LINE" ) );
-    return line;
-}
-
-CADTextObject * DWGFileR2000::getText(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                       size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     line->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LINE" ) );
     return line;
@@ -2205,7 +1932,6 @@ CADTextObject * DWGFileR2000::getText(unsigned int dObjectSize, const CADCommonE
 CADTextObject * DWGFileR2000::getText(unsigned int dObjectSize,
                                       const CADCommonED& stCommonEntityData,
                                       CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADTextObject * text = new CADTextObject();
 
@@ -2265,27 +1991,17 @@ CADTextObject * DWGFileR2000::getText(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( text, buffer);
 
-<<<<<<< HEAD
-    text->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                     nBitOffsetFromStart, "TEXT" ) );
-=======
     text->hStyle = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     text->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "TEXT" ) );
->>>>>>> upstream/trunk
 
     return text;
 }
 
-<<<<<<< HEAD
-CADVertex3DObject * DWGFileR2000::getVertex3D(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                               size_t& nBitOffsetFromStart )
-=======
 CADVertex3DObject * DWGFileR2000::getVertex3D(unsigned int dObjectSize,
                                               const CADCommonED& stCommonEntityData,
                                               CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADVertex3DObject * vertex = new CADVertex3DObject();
 
@@ -2299,16 +2015,6 @@ CADVertex3DObject * DWGFileR2000::getVertex3D(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( vertex, buffer);
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "VERTEX" ) );
-    return vertex;
-}
-
-CADCircleObject * DWGFileR2000::getCircle(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                           size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     vertex->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "VERTEX" ) );
     return vertex;
@@ -2317,7 +2023,6 @@ CADCircleObject * DWGFileR2000::getCircle(unsigned int dObjectSize, const CADCom
 CADCircleObject * DWGFileR2000::getCircle(unsigned int dObjectSize,
                                           const CADCommonED& stCommonEntityData,
                                           CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADCircleObject * circle = new CADCircleObject();
 
@@ -2339,18 +2044,6 @@ CADCircleObject * DWGFileR2000::getCircle(unsigned int dObjectSize,
         circle->vectExtrusion = vectExtrusion;
     }
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( circle, pabyInput, nBitOffsetFromStart );
-
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    circle->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "CIRCLE" ) );
-    return circle;
-}
-
-CADEndblkObject * DWGFileR2000::getEndBlock(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                             size_t& nBitOffsetFromStart )
-=======
     fillCommonEntityHandleData( circle, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -2361,24 +2054,12 @@ CADEndblkObject * DWGFileR2000::getEndBlock(unsigned int dObjectSize, const CADC
 CADEndblkObject * DWGFileR2000::getEndBlock(unsigned int dObjectSize,
                                             const CADCommonED& stCommonEntityData,
                                             CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADEndblkObject * endblk = new CADEndblkObject();
 
     endblk->setSize( dObjectSize );
     endblk->stCed = stCommonEntityData;
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( endblk, pabyInput, nBitOffsetFromStart );
-
-    endblk->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "ENDBLK" ) );
-    return endblk;
-}
-
-CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                   const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     fillCommonEntityHandleData( endblk, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -2389,7 +2070,6 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize, cons
 CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize,
                                                   const CADCommonED& stCommonEntityData,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADPolyline2DObject * polyline = new CADPolyline2DObject();
 
@@ -2421,15 +2101,6 @@ CADPolyline2DObject * DWGFileR2000::getPolyline2D(unsigned int dObjectSize,
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
 
-<<<<<<< HEAD
-    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                         nBitOffsetFromStart, "POLYLINE" ) );
-    return polyline;
-}
-
-CADAttribObject * DWGFileR2000::getAttributes(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                               size_t& nBitOffsetFromStart )
-=======
     polyline->hSeqend = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -2440,7 +2111,6 @@ CADAttribObject * DWGFileR2000::getAttributes(unsigned int dObjectSize, const CA
 CADAttribObject * DWGFileR2000::getAttributes(unsigned int dObjectSize,
                                               const CADCommonED& stCommonEntityData,
                                               CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADAttribObject * attrib = new CADAttribObject();
 
@@ -2499,15 +2169,6 @@ CADAttribObject * DWGFileR2000::getAttributes(unsigned int dObjectSize,
 
     attrib->hStyle = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-    attrib->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "ATTRIB" ) );
-    return attrib;
-}
-
-CADAttdefObject * DWGFileR2000::getAttributesDefn(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                   const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     attrib->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "ATTRIB" ) );
     return attrib;
@@ -2516,7 +2177,6 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn(unsigned int dObjectSize, cons
 CADAttdefObject * DWGFileR2000::getAttributesDefn(unsigned int dObjectSize,
                                                   const CADCommonED& stCommonEntityData,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADAttdefObject * attdef = new CADAttdefObject();
 
@@ -2576,15 +2236,6 @@ CADAttdefObject * DWGFileR2000::getAttributesDefn(unsigned int dObjectSize,
 
     attdef->hStyle = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-    attdef->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "ATTRDEF" ) );
-    return attdef;
-}
-
-CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                   const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     attdef->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "ATTRDEF" ) );
     return attdef;
@@ -2593,7 +2244,6 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize, cons
 CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
                                                   const CADCommonED& stCommonEntityData,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLWPolylineObject * polyline = new CADLWPolylineObject();
     polyline->setSize( dObjectSize );
@@ -2614,31 +2264,19 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
         polyline->vectExtrusion = vectExtrusion;
     }
 
-<<<<<<< HEAD
-    vertixesCount = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-=======
     vertixesCount = buffer.ReadBITLONG();
->>>>>>> upstream/trunk
     polyline->avertVertexes.reserve( static_cast<size_t>(vertixesCount) );
 
     if( dataFlag & 16 )
     {
-<<<<<<< HEAD
-        nBulges = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-=======
         nBulges = buffer.ReadBITLONG();
->>>>>>> upstream/trunk
         polyline->adfBulges.reserve( static_cast<size_t>(nBulges) );
     }
 
     // TODO: tell ODA that R2000 contains nNumWidths flag
     if( dataFlag & 32 )
     {
-<<<<<<< HEAD
-        nNumWidths = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-=======
         nNumWidths = buffer.ReadBITLONG();
->>>>>>> upstream/trunk
         polyline->astWidths.reserve( static_cast<size_t>(nNumWidths) );
     }
 
@@ -2658,15 +2296,8 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     for( int i       = 1; i < vertixesCount; ++i )
     {
         prev = size_t( i - 1 );
-<<<<<<< HEAD
-        x    = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart,
-                                polyline->avertVertexes[prev].getX() );
-        y    = ReadBITDOUBLEWD( pabyInput, nBitOffsetFromStart,
-                                polyline->avertVertexes[prev].getY() );
-=======
         x    = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getX() );
         y    = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getY() );
->>>>>>> upstream/trunk
         vertex.setX( x );
         vertex.setY( y );
         polyline->avertVertexes.push_back( vertex );
@@ -2687,24 +2318,14 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( polyline, buffer);
 
-<<<<<<< HEAD
-    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                         nBitOffsetFromStart, "WPOLYLINE" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     polyline->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "WPOLYLINE" ) );
->>>>>>> upstream/trunk
     return polyline;
 }
 
 CADArcObject * DWGFileR2000::getArc(unsigned int dObjectSize,
                                     const CADCommonED& stCommonEntityData,
-<<<<<<< HEAD
-                                    const char * pabyInput,
-                                    size_t& nBitOffsetFromStart )
-=======
                                     CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADArcObject * arc = new CADArcObject();
 
@@ -2730,15 +2351,6 @@ CADArcObject * DWGFileR2000::getArc(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( arc, buffer);
 
-<<<<<<< HEAD
-    arc->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                    nBitOffsetFromStart, "ARC" ) );
-    return arc;
-}
-
-CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                           size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     arc->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "ARC" ) );
     return arc;
@@ -2747,7 +2359,6 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize, const CADCom
 CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
                                           const CADCommonED& stCommonEntityData,
                                           CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADSplineObject * spline = new CADSplineObject();
     spline->setSize( dObjectSize );
@@ -2763,11 +2374,7 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         CADVector vectEndTangDir = buffer.ReadVector();
         spline->vectEndTangDir = vectEndTangDir;
 
-<<<<<<< HEAD
-        spline->nNumFitPts = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-=======
         spline->nNumFitPts = buffer.ReadBITLONG();
->>>>>>> upstream/trunk
         spline->averFitPoints.reserve( static_cast<size_t>(spline->nNumFitPts) );
     } else if( spline->dScenario == 1 )
     {
@@ -2777,17 +2384,10 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->dfKnotTol = buffer.ReadBITDOUBLE();
         spline->dfCtrlTol = buffer.ReadBITDOUBLE();
 
-<<<<<<< HEAD
-        spline->nNumKnots = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-        spline->adfKnots.reserve( static_cast<size_t>(spline->nNumKnots) );
-
-        spline->nNumCtrlPts = ReadBITLONG( pabyInput, nBitOffsetFromStart );
-=======
         spline->nNumKnots = buffer.ReadBITLONG();
         spline->adfKnots.reserve( static_cast<size_t>(spline->nNumKnots) );
 
         spline->nNumCtrlPts = buffer.ReadBITLONG();
->>>>>>> upstream/trunk
         spline->avertCtrlPoints.reserve( static_cast<size_t>(spline->nNumCtrlPts) );
         if( spline->bWeight )
             spline->adfCtrlPointsWeight.reserve( static_cast<size_t>(spline->nNumCtrlPts) );
@@ -2815,17 +2415,6 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->averFitPoints.push_back( vertex );
     }
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( spline, pabyInput, nBitOffsetFromStart );
-
-    spline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "SPLINE" ) );
-    return spline;
-}
-
-CADEntityObject * DWGFileR2000::getEntity(int dObjectType, unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                           const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     fillCommonEntityHandleData( spline, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -2837,7 +2426,6 @@ CADEntityObject * DWGFileR2000::getEntity(int dObjectType,
                                           unsigned int dObjectSize,
                                           const CADCommonED& stCommonEntityData,
                                           CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADEntityObject * entity = new CADEntityObject(
                     static_cast<CADObject::ObjectType>(dObjectType) );
@@ -2850,16 +2438,6 @@ CADEntityObject * DWGFileR2000::getEntity(int dObjectType,
 
     fillCommonEntityHandleData( entity, buffer );
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    entity->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "ENTITY" ) );
-    return entity;
-}
-
-CADInsertObject * DWGFileR2000::getInsert(int dObjectType, unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                           const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     entity->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "ENTITY" ) );
     return entity;
@@ -2869,7 +2447,6 @@ CADInsertObject * DWGFileR2000::getInsert(int dObjectType,
                                           unsigned int dObjectSize,
                                           const CADCommonED& stCommonEntityData,
                                           CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADInsertObject * insert = new CADInsertObject(
                             static_cast<CADObject::ObjectType>(dObjectType) );
@@ -2912,24 +2489,14 @@ CADInsertObject * DWGFileR2000::getInsert(int dObjectType,
         insert->hSeqend = buffer.ReadHANDLE();
     }
 
-<<<<<<< HEAD
-    insert->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "INSERT" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     insert->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "INSERT" ) );
->>>>>>> upstream/trunk
 
     return insert;
 }
 
-<<<<<<< HEAD
-CADDictionaryObject * DWGFileR2000::getDictionary(unsigned int dObjectSize, const char * pabyInput,
-                                                   size_t& nBitOffsetFromStart )
-=======
 CADDictionaryObject * DWGFileR2000::getDictionary(unsigned int dObjectSize,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     /*
      * FIXME: ODA has a lot of mistypes in spec. for this objects,
@@ -2974,24 +2541,14 @@ CADDictionaryObject * DWGFileR2000::getDictionary(unsigned int dObjectSize,
     for( long i = 0; i < dictionary->nNumItems; ++i )
         dictionary->hItemHandles.push_back( buffer.ReadHANDLE() );
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    dictionary->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                           nBitOffsetFromStart, "DICT" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     dictionary->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DICT" ) );
->>>>>>> upstream/trunk
 
     return dictionary;
 }
 
-<<<<<<< HEAD
-CADLayerObject * DWGFileR2000::getLayerObject(unsigned int dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
 CADLayerObject * DWGFileR2000::getLayerObject(unsigned int dObjectSize,
                                               CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLayerObject * layer = new CADLayerObject();
 
@@ -3044,15 +2601,6 @@ CADLayerObject * DWGFileR2000::getLayerObject(unsigned int dObjectSize,
      */
 // layer->hUnknownHandle = ReadHANDLE (pabySectionContent, nBitOffsetFromStart);
 
-<<<<<<< HEAD
-    layer->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "LAYER" ) );
-    return layer;
-}
-
-CADLayerControlObject * DWGFileR2000::getLayerControl(unsigned int dObjectSize, const char * pabyInput,
-                                                       size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     layer->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LAYER" ) );
     return layer;
@@ -3060,7 +2608,6 @@ CADLayerControlObject * DWGFileR2000::getLayerControl(unsigned int dObjectSize, 
 
 CADLayerControlObject * DWGFileR2000::getLayerControl(unsigned int dObjectSize,
                                                       CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLayerControlObject * layerControl = new CADLayerControlObject();
 
@@ -3091,15 +2638,6 @@ CADLayerControlObject * DWGFileR2000::getLayerControl(unsigned int dObjectSize,
     for( long i = 0; i < layerControl->nNumEntries; ++i )
         layerControl->hLayers.push_back( buffer.ReadHANDLE() );
 
-<<<<<<< HEAD
-    layerControl->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                             nBitOffsetFromStart, "LAYERCONTROL" ) );
-    return layerControl;
-}
-
-CADBlockControlObject * DWGFileR2000::getBlockControl(unsigned int dObjectSize, const char * pabyInput,
-                                                       size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     layerControl->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LAYERCONTROL" ) );
     return layerControl;
@@ -3107,7 +2645,6 @@ CADBlockControlObject * DWGFileR2000::getBlockControl(unsigned int dObjectSize, 
 
 CADBlockControlObject * DWGFileR2000::getBlockControl(unsigned int dObjectSize,
                                                       CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADBlockControlObject * blockControl = new CADBlockControlObject();
 
@@ -3141,15 +2678,6 @@ CADBlockControlObject * DWGFileR2000::getBlockControl(unsigned int dObjectSize,
         blockControl->hBlocks.push_back( buffer.ReadHANDLE() );
     }
 
-<<<<<<< HEAD
-    blockControl->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                             nBitOffsetFromStart, "BLOCKCONTROL" ) );
-    return blockControl;
-}
-
-CADBlockHeaderObject * DWGFileR2000::getBlockHeader(unsigned int dObjectSize, const char * pabyInput,
-                                                     size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     blockControl->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "BLOCKCONTROL" ) );
     return blockControl;
@@ -3157,7 +2685,6 @@ CADBlockHeaderObject * DWGFileR2000::getBlockHeader(unsigned int dObjectSize, co
 
 CADBlockHeaderObject * DWGFileR2000::getBlockHeader(unsigned int dObjectSize,
                                                     CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADBlockHeaderObject * blockHeader = new CADBlockHeaderObject();
 
@@ -3223,16 +2750,6 @@ CADBlockHeaderObject * DWGFileR2000::getBlockHeader(unsigned int dObjectSize,
         blockHeader->hInsertHandles.push_back( buffer.ReadHANDLE() );
     blockHeader->hLayout = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    blockHeader->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                            nBitOffsetFromStart, "BLOCKHEADER" ) );
-    return blockHeader;
-}
-
-CADLineTypeControlObject * DWGFileR2000::getLineTypeControl(unsigned int dObjectSize, const char * pabyInput,
-                                                             size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     blockHeader->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "BLOCKHEADER" ) );
     return blockHeader;
@@ -3240,7 +2757,6 @@ CADLineTypeControlObject * DWGFileR2000::getLineTypeControl(unsigned int dObject
 
 CADLineTypeControlObject * DWGFileR2000::getLineTypeControl(unsigned int dObjectSize,
                                                             CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLineTypeControlObject * ltypeControl = new CADLineTypeControlObject();
     ltypeControl->setSize( dObjectSize );
@@ -3270,16 +2786,6 @@ CADLineTypeControlObject * DWGFileR2000::getLineTypeControl(unsigned int dObject
 
     // hLTypes ends with BYLAYER and BYBLOCK
     for( long i = 0; i < ltypeControl->nNumEntries + 2; ++i )
-<<<<<<< HEAD
-        ltypeControl->hLTypes.push_back( ReadHANDLE( pabyInput, nBitOffsetFromStart ) );
-
-    ltypeControl->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                             nBitOffsetFromStart, "LINETYPECTRL" ) );
-    return ltypeControl;
-}
-
-CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
         ltypeControl->hLTypes.push_back( buffer.ReadHANDLE() );
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -3288,7 +2794,6 @@ CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, const c
 }
 
 CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADLineTypeObject * ltype = new CADLineTypeObject();
 
@@ -3347,15 +2852,6 @@ CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, CADBuff
 
     // TODO: shapefile for dash/shape (1 each). Does it mean that we have nNumDashes * 2 handles, or what?
 
-<<<<<<< HEAD
-    ltype->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "LINETYPE" ) );
-    return ltype;
-}
-
-CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart )
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     ltype->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LINETYPE" ) );
     return ltype;
@@ -3364,7 +2860,6 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize, const CADCommo
 CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADMLineObject * mline = new CADMLineObject();
 
@@ -3429,17 +2924,6 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
         mline->stChed.hLType = buffer.ReadHANDLE();
 
     if( mline->stCed.bbPlotStyleFlags == 0x03 )
-<<<<<<< HEAD
-        mline->stChed.hPlotStyle = ReadHANDLE( pabyInput, nBitOffsetFromStart );
-
-    mline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "MLINE" ) );
-    return mline;
-}
-
-CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                         const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
         mline->stChed.hPlotStyle = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -3450,7 +2934,6 @@ CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace(unsigned int dObjectSize
 CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace(unsigned int dObjectSize,
                                                         const CADCommonED& stCommonEntityData,
                                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADPolylinePFaceObject * polyline = new CADPolylinePFaceObject();
 
@@ -3465,15 +2948,6 @@ CADPolylinePFaceObject * DWGFileR2000::getPolylinePFace(unsigned int dObjectSize
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // 1st vertex
     polyline->hVertexes.push_back( buffer.ReadHANDLE() ); // last vertex
 
-<<<<<<< HEAD
-    polyline->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                         nBitOffsetFromStart, "POLYLINEPFACE" ) );
-    return polyline;
-}
-
-CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                         size_t& nBitOffsetFromStart )
-=======
     polyline->hSeqend = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -3484,7 +2958,6 @@ CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize, const CADCommo
 CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADImageObject * image = new CADImageObject();
 
@@ -3532,28 +3005,18 @@ CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( image, buffer);
 
-<<<<<<< HEAD
-    image->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                      nBitOffsetFromStart, "IMAGE" ) );
-=======
     image->hImageDef        = buffer.ReadHANDLE();
     image->hImageDefReactor = buffer.ReadHANDLE();
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     image->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "IMAGE" ) );
->>>>>>> upstream/trunk
 
     return image;
 }
 
-<<<<<<< HEAD
-CAD3DFaceObject * DWGFileR2000::get3DFace(unsigned int dObjectSize, const CADCommonED& stCommonEntityData, const char * pabyInput,
-                                           size_t& nBitOffsetFromStart )
-=======
 CAD3DFaceObject * DWGFileR2000::get3DFace(unsigned int dObjectSize,
                                           const CADCommonED& stCommonEntityData,
                                           CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CAD3DFaceObject * face = new CAD3DFaceObject();
 
@@ -3585,15 +3048,6 @@ CAD3DFaceObject * DWGFileR2000::get3DFace(unsigned int dObjectSize,
     if( !face->bHasNoFlagInd )
         face->dInvisFlags = buffer.ReadBITSHORT();
 
-<<<<<<< HEAD
-    face->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                     nBitOffsetFromStart, "3DFACE" ) );
-    return face;
-}
-
-CADVertexMeshObject * DWGFileR2000::getVertexMesh(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                   const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     fillCommonEntityHandleData( face, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -3604,7 +3058,6 @@ CADVertexMeshObject * DWGFileR2000::getVertexMesh(unsigned int dObjectSize, cons
 CADVertexMeshObject * DWGFileR2000::getVertexMesh(unsigned int dObjectSize,
                                                   const CADCommonED& stCommonEntityData,
                                                   CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADVertexMeshObject * vertex = new CADVertexMeshObject();
 
@@ -3615,17 +3068,6 @@ CADVertexMeshObject * DWGFileR2000::getVertexMesh(unsigned int dObjectSize,
     CADVector vertPosition = buffer.ReadVector();
     vertex->vertPosition = vertPosition;
 
-<<<<<<< HEAD
-    fillCommonEntityHandleData( vertex, pabyInput, nBitOffsetFromStart );
-
-    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "VERTEXMESH" ) );
-    return vertex;
-}
-
-CADVertexPFaceObject * DWGFileR2000::getVertexPFace(unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                     const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     fillCommonEntityHandleData( vertex, buffer);
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -3636,7 +3078,6 @@ CADVertexPFaceObject * DWGFileR2000::getVertexPFace(unsigned int dObjectSize, co
 CADVertexPFaceObject * DWGFileR2000::getVertexPFace(unsigned int dObjectSize,
                                                     const CADCommonED& stCommonEntityData,
                                                     CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADVertexPFaceObject * vertex = new CADVertexPFaceObject();
 
@@ -3649,24 +3090,14 @@ CADVertexPFaceObject * DWGFileR2000::getVertexPFace(unsigned int dObjectSize,
 
     fillCommonEntityHandleData( vertex, buffer);
 
-<<<<<<< HEAD
-    vertex->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                       nBitOffsetFromStart, "VERTEXPFACE" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     vertex->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "VERTEXPFACE" ) );
->>>>>>> upstream/trunk
     return vertex;
 }
 
 CADMTextObject * DWGFileR2000::getMText(unsigned int dObjectSize,
                                         const CADCommonED& stCommonEntityData,
-<<<<<<< HEAD
-                                        const char * pabyInput,
-                                        size_t& nBitOffsetFromStart )
-=======
                                         CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADMTextObject * text = new CADMTextObject();
 
@@ -3682,28 +3113,6 @@ CADMTextObject * DWGFileR2000::getMText(unsigned int dObjectSize,
     CADVector vectXAxisDir = buffer.ReadVector();
     text->vectXAxisDir = vectXAxisDir;
 
-<<<<<<< HEAD
-    text->dfRectWidth        = ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
-    text->dfTextHeight       = ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
-    text->dAttachment        = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    text->dDrawingDir        = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    text->dfExtents          = ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
-    text->dfExtentsWidth     = ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
-    text->sTextValue         = ReadTV( pabyInput, nBitOffsetFromStart );
-    text->dLineSpacingStyle  = ReadBITSHORT( pabyInput, nBitOffsetFromStart );
-    text->dLineSpacingFactor = ReadBITDOUBLE( pabyInput, nBitOffsetFromStart );
-    text->bUnknownBit        = ReadBIT( pabyInput, nBitOffsetFromStart );
-
-    fillCommonEntityHandleData( text, pabyInput, nBitOffsetFromStart );
-
-    text->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                     nBitOffsetFromStart, "MTEXT" ) );
-    return text;
-}
-
-CADDimensionObject * DWGFileR2000::getDimension(short dObjectType, unsigned int dObjectSize, const CADCommonED& stCommonEntityData,
-                                                 const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
     text->dfRectWidth        = buffer.ReadBITDOUBLE();
     text->dfTextHeight       = buffer.ReadBITDOUBLE();
     text->dAttachment        = buffer.ReadBITSHORT();
@@ -3726,7 +3135,6 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
                                                 unsigned int dObjectSize,
                                                 const CADCommonED& stCommonEntityData,
                                                 CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADCommonDimensionData stCDD;
 
@@ -3782,13 +3190,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3817,13 +3220,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3851,13 +3249,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3886,13 +3279,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3924,13 +3312,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3955,13 +3338,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
 
@@ -3986,13 +3364,8 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
             dimension->hDimstyle       = buffer.ReadHANDLE();
             dimension->hAnonymousBlock = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-            dimension->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                  nBitOffsetFromStart, "DIM" ) );
-=======
             buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
             dimension->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DIM" ) );
->>>>>>> upstream/trunk
             return dimension;
         }
     }
@@ -4000,12 +3373,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 }
 
 CADImageDefObject * DWGFileR2000::getImageDef(unsigned int dObjectSize,
-<<<<<<< HEAD
-                                              const char * pabyInput,
-                                              size_t& nBitOffsetFromStart )
-=======
                                               CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADImageDefObject * imagedef = new CADImageDefObject();
 
@@ -4049,23 +3417,13 @@ CADImageDefObject * DWGFileR2000::getImageDef(unsigned int dObjectSize,
 
     imagedef->hXDictionary = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-    imagedef->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                         nBitOffsetFromStart, "IMAGEDEF" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     imagedef->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "IMAGEDEF" ) );
->>>>>>> upstream/trunk
 
     return imagedef;
 }
 
-<<<<<<< HEAD
-CADImageDefReactorObject * DWGFileR2000::getImageDefReactor(unsigned int dObjectSize, const char * pabyInput,
-                                                             size_t& nBitOffsetFromStart )
-=======
 CADImageDefReactorObject * DWGFileR2000::getImageDefReactor(unsigned int dObjectSize, CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADImageDefReactorObject * imagedefreactor = new CADImageDefReactorObject();
 
@@ -4098,22 +3456,13 @@ CADImageDefReactorObject * DWGFileR2000::getImageDefReactor(unsigned int dObject
 
     imagedefreactor->hXDictionary = buffer.ReadHANDLE();
 
-<<<<<<< HEAD
-    imagedefreactor->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                                nBitOffsetFromStart, "IMAGEDEFREFACTOR" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     imagedefreactor->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "IMAGEDEFREFACTOR" ) );
->>>>>>> upstream/trunk
 
     return imagedefreactor;
 }
 
-<<<<<<< HEAD
-CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, const char * pabyInput, size_t& nBitOffsetFromStart )
-=======
 CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, CADBuffer &buffer)
->>>>>>> upstream/trunk
 {
     CADXRecordObject * xrecord = new CADXRecordObject();
 
@@ -4184,14 +3533,8 @@ CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, CADBuffer 
         xrecord->hObjIdHandles.push_back( buffer.ReadHANDLE() );
     }
 
-<<<<<<< HEAD
-    nBitOffsetFromStart = (dObjectSize - 2) * 8;
-    xrecord->setCRC( validateEntityCRC( pabyInput, dObjectSize - 2,
-                                        nBitOffsetFromStart, "XRECORD" ) );
-=======
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     xrecord->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "XRECORD" ) );
->>>>>>> upstream/trunk
 
     return xrecord;
 }
@@ -4319,20 +3662,6 @@ CADDictionary DWGFileR2000::GetNOD()
     return stNOD;
 }
 
-<<<<<<< HEAD
-unsigned short DWGFileR2000::validateEntityCRC(const char * pabyInput,
-        unsigned int dObjectSize, size_t & nBitOffsetFromStart,
-        const char * entityName, bool bSwapEndianness )
-{
-    const unsigned short CRC = static_cast<unsigned short>(ReadRAWSHORT(
-                                            pabyInput, nBitOffsetFromStart ));
-    if(bSwapEndianness)
-        SwapEndianness (CRC, sizeof (CRC));
-
-    const unsigned short initial = 0xC0C1;
-    const unsigned short calculated = CalculateCRC8( initial, pabyInput,
-                                                     static_cast<int>(dObjectSize) );
-=======
 unsigned short DWGFileR2000::validateEntityCRC(CADBuffer& buffer,
                                                unsigned int dObjectSize,
                                                const char * entityName,
@@ -4349,7 +3678,6 @@ unsigned short DWGFileR2000::validateEntityCRC(CADBuffer& buffer,
     const unsigned short calculated =
             CalculateCRC8(initial, static_cast<const char*>(buffer.GetRawBuffer()),
                           static_cast<int>(dObjectSize) );
->>>>>>> upstream/trunk
     if( CRC != calculated )
     {
         DebugMsg( "Invalid CRC for %s object\nCRC read:0x%X calculated:0x%X\n",
