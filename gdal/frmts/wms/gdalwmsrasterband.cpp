@@ -177,7 +177,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
         WMSHTTPRequest &request = requests[i];
         void *p = ((request.x == x) && (request.y == y)) ? buffer : nullptr;
         if (ret == CE_None) {
-            int success = (request.nStatus == 200) || 
+            int success = (request.nStatus == 200) ||
                           (!request.Range.empty() && request.nStatus == 206);
             if (success && (request.pabyData != nullptr) && (request.nDataLen > 0)) {
                 CPLString file_name(BufferToVSIFile(request.pabyData, request.nDataLen));
@@ -190,7 +190,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                         || STARTS_WITH_CI(download_data, "<!DOCTYPE ")
                         || STARTS_WITH_CI(download_data, "<ServiceException")) {
                             if (ReportWMSException(file_name) != CE_None) {
-                                CPLError(CE_Failure, CPLE_AppDefined, 
+                                CPLError(CE_Failure, CPLE_AppDefined,
                                         "GDALWMS: The server returned unknown exception.");
                             }
                             wms_exception = true;
@@ -208,7 +208,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                 if (cache != nullptr)
                                     cache->Insert(request.URL, file_name);
                             } else {
-                                CPLError(ret, CPLE_AppDefined, 
+                                CPLError(ret, CPLE_AppDefined,
                                         "GDALWMS: ReadBlockFromFile (%s) failed.",
                                          request.URL.c_str());
                             }
@@ -224,10 +224,12 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
             } else { // HTTP error
                 // One more try to get cached block. For example if no web access
                 // available
+                CPLDebug("WMS", "ReadBlockFromCache");
                 ret = ReadBlockFromCache(request.URL, request.x,
                                          request.y, nBand, p, advise_read);
                 if( ret != CE_None )
                 {
+                    CPLDebug("WMS", "After ReadBlockFromCache");
                     if (m_parent_dataset->m_http_zeroblock_codes.find(request.nStatus)
                         != m_parent_dataset->m_http_zeroblock_codes.end())
                     {
@@ -854,6 +856,11 @@ CPLErr GDALWMSRasterBand::ReadBlockFromCache(const char* pszKey, int x, int y,
                                             int advise_read)
 {
     GDALWMSCache *cache = m_parent_dataset->m_cache;
+    if( nullptr == cache )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");
+        return CE_Failure;
+    }
     GDALDataset *ds = cache->GetDataset( pszKey, m_parent_dataset->m_tileOO );
     if( ds == nullptr )
     {
