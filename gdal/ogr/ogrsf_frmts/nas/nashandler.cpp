@@ -658,10 +658,13 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
                         poState->m_poFeature->SetGeometryDirectly( psNode );
 
                     else
+                    {
                         CPLError( CE_Warning, CPLE_AppDefined, "NAS: Unexpected geometry skipped (class:%s path:%s geom:%s)",
                                   poState->m_poFeature->GetClass()->GetName(),
                                   poState->osPath.c_str(),
                                   m_pszGeometry );
+                        CPLDestroyXMLNode( psNode );
+                    }
                 }
                 else
                     CPLError( CE_Warning, CPLE_AppDefined, "NAS: Invalid geometry skipped" );
