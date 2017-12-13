@@ -1983,7 +1983,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     {
         DXF_LAYER_READER_ERROR();
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
     poFeature->SetGeometryDirectly( poLS );
