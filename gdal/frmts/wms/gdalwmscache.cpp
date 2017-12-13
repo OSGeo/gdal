@@ -138,7 +138,7 @@ public:
 
         if( nSize > m_nMaxSize )
         {
-            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(toDelete.size()) );
+            CPLDebug( "WMS", "Delete %u items from cache", static_cast<unsigned int>(oDelete.size()) );
             for( size_t i = 0; i < toDelete.size(); ++i )
             {
                 const char* pszPath = CPLFormFilename( m_soPath,
@@ -215,7 +215,10 @@ GDALWMSCache::GDALWMSCache() :
 
 GDALWMSCache::~GDALWMSCache()
 {
-
+    if( m_hCleanThread != nullptr )
+    {
+        CPLJoinThread( m_hCleanThread );
+    }
 }
 
 CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
@@ -232,7 +235,10 @@ CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
     }
 
     // Separate folder for each unique dataset url
-    m_osCachePath = CPLFormFilename( m_osCachePath, CPLMD5String( pszUrl ), nullptr );
+    if( CPLTestBool( CPLGetXMLValue( pConfig, "Unique", "True" ) ) )
+    {
+        m_osCachePath = CPLFormFilename( m_osCachePath, CPLMD5String( pszUrl ), nullptr );
+    }
 
     // TODO: Add sqlite db cache type
     const char *pszType = CPLGetXMLValue( pConfig, "Type", "file" );
@@ -253,7 +259,7 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
         if( result == CE_None )
         {
             // Start clean thread
-            if( m_hCleanThread == nullptr)
+            if( m_hCleanThread == nullptr )
             {
                 m_hCleanThread = CPLCreateJoinableThread(CleanCacheThread, this);
             }
