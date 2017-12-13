@@ -95,9 +95,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
-    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, NULL );
+    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, nullptr );
 #else
-    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, NULL );
+    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, nullptr );
 #endif
     if( hDS )
     {
@@ -111,7 +111,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
             for( int j = 0; j < 1000 &&
-                    (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL; j++ )
+                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr; j++ )
             {
                 OGR_F_Destroy(hFeature);
             }
