@@ -97,12 +97,9 @@ VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler()
 VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler()
 
 {
-    for( std::map<CPLString, VSIArchiveContent*>::const_iterator iter =
-             oFileList.begin();
-         iter != oFileList.end();
-         ++iter )
+    for( const auto& iter : oFileList )
     {
-        delete iter->second;
+        delete iter.second;
     }
 
     if( hMutex != nullptr )

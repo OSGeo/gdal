@@ -475,13 +475,10 @@ VSIMemFilesystemHandler::VSIMemFilesystemHandler() :
 VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
 {
-    for( std::map<CPLString, VSIMemFile*>::const_iterator iter =
-             oFileList.begin();
-         iter != oFileList.end();
-         ++iter )
+    for( const auto &iter : oFileList )
     {
-        CPLAtomicDec(&(iter->second->nRefCount));
-        delete iter->second;
+        CPLAtomicDec(&iter.second->nRefCount);
+        delete iter.second;
     }
 
     if( hMutex != nullptr )
@@ -724,12 +721,9 @@ char **VSIMemFilesystemHandler::ReadDirEx( const char *pszPath,
     int nItems = 0;
     int nAllocatedItems = 0;
 
-    for( std::map<CPLString, VSIMemFile*>::const_iterator iter =
-             oFileList.begin();
-         iter != oFileList.end();
-         ++iter )
+    for( const auto& iter : oFileList )
     {
-        const char *pszFilePath = iter->second->osFilename.c_str();
+        const char *pszFilePath = iter.second->osFilename.c_str();
         if( EQUALN(osPath, pszFilePath, nPathLen)
             && pszFilePath[nPathLen] == '/'
             && strstr(pszFilePath+nPathLen+1, "/") == nullptr )
