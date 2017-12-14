@@ -38,25 +38,25 @@ CPL_CVSID("$Id$")
 OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
                             const char *pszTargetIn,
                             AttrTable *poOGRLayerInfoIn ) :
-    poFeatureDefn(NULL),
-    poSRS(NULL),
+    poFeatureDefn(nullptr),
+    poSRS(nullptr),
     iNextShapeId(0),
     poDS(poDSIn),
-    pszQuery(NULL),
-    pszFIDColumn (NULL),
+    pszQuery(nullptr),
+    pszFIDColumn (nullptr),
     pszTarget(CPLStrdup( pszTargetIn )),
-    papoFields(NULL),
+    papoFields(nullptr),
     bDataLoaded(false),
-    poConnection(NULL),
+    poConnection(nullptr),
     poDataDDS(new DataDDS( poDSIn->poBTF )),
-    poTargetVar(NULL),
+    poTargetVar(nullptr),
     poOGRLayerInfo(poOGRLayerInfoIn),
     bKnowExtent(false)
 {
 /* ==================================================================== */
 /*      Harvest some metadata if available.                             */
 /* ==================================================================== */
-    if( poOGRLayerInfo != NULL )
+    if( poOGRLayerInfo != nullptr )
     {
         string oMValue;
 
@@ -73,7 +73,7 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
                           "Ignoring unrecognized SRS '%s'",
                           oMValue.c_str() );
                 delete poSRS;
-                poSRS = NULL;
+                poSRS = nullptr;
             }
         }
 
@@ -81,7 +81,7 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 /*      Layer extents.                                                  */
 /* -------------------------------------------------------------------- */
         AttrTable *poLayerExt=poOGRLayerInfo->find_container("layer_extents");
-        if( poLayerExt != NULL )
+        if( poLayerExt != nullptr )
         {
             bKnowExtent = true;
             sExtent.MinX = CPLAtof(poLayerExt->get_attr("x_min").c_str());
@@ -105,14 +105,14 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 OGRDODSLayer::~OGRDODSLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "DODS", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
-    if( papoFields != NULL && poFeatureDefn != NULL )
+    if( papoFields != nullptr && poFeatureDefn != nullptr )
     {
         int iField;
 
@@ -122,19 +122,19 @@ OGRDODSLayer::~OGRDODSLayer()
         CPLFree( papoFields );
     }
 
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         poFeatureDefn->Release();
 
     CPLFree( pszFIDColumn );
-    pszFIDColumn = NULL;
+    pszFIDColumn = nullptr;
 
     CPLFree( pszTarget );
-    pszTarget = NULL;
+    pszTarget = nullptr;
 
-    if( poConnection != NULL )
+    if( poConnection != nullptr )
         delete poConnection;
 
     delete poDataDDS;
@@ -158,18 +158,18 @@ OGRFeature *OGRDODSLayer::GetNextFeature()
 
 {
     for( OGRFeature *poFeature = GetFeature( iNextShapeId++ );
-         poFeature != NULL;
+         poFeature != nullptr;
          poFeature = GetFeature( iNextShapeId++ ) )
     {
         if( FilterGeometry( poFeature->GetGeometryRef() )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -200,7 +200,7 @@ bool OGRDODSLayer::ProvideDataDDS()
 
 {
     if( bDataLoaded )
-        return poTargetVar != NULL;
+        return poTargetVar != nullptr;
 
     bDataLoaded = true;
     try
@@ -224,7 +224,7 @@ bool OGRDODSLayer::ProvideDataDDS()
 
     poTargetVar = poDataDDS->var( pszTarget );
 
-    return poTargetVar != NULL;
+    return poTargetVar != nullptr;
 }
 
 /************************************************************************/

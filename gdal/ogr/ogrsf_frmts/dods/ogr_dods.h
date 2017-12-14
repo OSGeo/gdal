@@ -54,9 +54,9 @@ public:
     ~OGRDODSFieldDefn();
 
     bool Initialize( AttrTable *,
-                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
+                     BaseType *poTarget = nullptr, BaseType *poSuperSeq = nullptr );
     bool Initialize( const char *, const char * = "das",
-                     BaseType *poTarget = NULL, BaseType *poSuperSeq = NULL );
+                     BaseType *poTarget = nullptr, BaseType *poSuperSeq = nullptr );
 
     bool bValid;
     char *pszFieldName;
@@ -182,13 +182,13 @@ class OGRDODSDim
 {
 public:
     OGRDODSDim() {
-        pszDimName = NULL;
+        pszDimName = nullptr;
         nDimStart = 0;
         nDimEnd = 0;
         nDimStride = 0;
         nDimEntries = 0;
-        poMap = NULL;
-        pRawData = NULL;
+        poMap = nullptr;
+        pRawData = nullptr;
         iLastValue = 0;
     }
     ~OGRDODSDim() {
@@ -210,10 +210,10 @@ class OGRDODSArrayRef
 {
 public:
     OGRDODSArrayRef() {
-        pszName = NULL;
+        pszName = nullptr;
         iFieldIndex = -1;
-        poArray = NULL;
-        pRawData = NULL;
+        poArray = nullptr;
+        pRawData = nullptr;
             }
     ~OGRDODSArrayRef() {
         CPLFree( pszName );
