@@ -60,8 +60,8 @@ class PAuxDataset : public RawDataset
     char       *pszProjection;
 
   public:
-                PAuxDataset();
-    virtual ~PAuxDataset();
+    PAuxDataset();
+    ~PAuxDataset() override;
 
     // TODO(schwehr): Why are these public?
     char        *pszAuxFilename;
