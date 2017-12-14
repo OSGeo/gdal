@@ -1369,7 +1369,7 @@ do {                                                                    \
                          poParentDS->sHeader.bySignature,
                          RMF_SIGNATURE_SIZE ) )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
+            CPLError( CE_Warning, CPLE_IllegalArg,
                       "Invalid subheader signature." );
             delete poDS;
             return nullptr;
@@ -2164,7 +2164,7 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
         if( poParent->GetFileOffset( poParent->sHeader.nOvrOffset ) ==
             nSubOffset )
         {
-            CPLError( CE_Failure, CPLE_IllegalArg,
+            CPLError( CE_Warning, CPLE_IllegalArg,
                       "Recursive subdataset list is detected. "
                       "Overview open failed." );
             return nullptr;
@@ -2179,7 +2179,7 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
             if( poOvr->GetFileOffset( poOvr->sHeader.nOvrOffset ) ==
                 nSubOffset )
             {
-                CPLError( CE_Failure, CPLE_IllegalArg,
+                CPLError( CE_Warning, CPLE_IllegalArg,
                           "Recursive subdataset list is detected. "
                           "Overview open failed." );
                 return nullptr;
@@ -2193,7 +2193,7 @@ RMFDataset* RMFDataset::OpenOverview(RMFDataset* poParent, GDALOpenInfo* poOpenI
                                                      nHeaderSize + 1) );
     if( pabyNewHeader == nullptr )
     {
-        CPLError( CE_Failure, CPLE_OutOfMemory,
+        CPLError( CE_Warning, CPLE_OutOfMemory,
                   "Can't allocate buffer for overview header" );
         return nullptr;
     }
