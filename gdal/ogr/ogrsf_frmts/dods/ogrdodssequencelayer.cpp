@@ -43,7 +43,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
     OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
     pszSubSeqPath("profile"), // hardcode for now.
     iLastSuperSeq(-1),
-    panSubSeqSize(NULL)
+    panSubSeqSize(nullptr)
 {
 /* -------------------------------------------------------------------- */
 /*      What is the layer name?                                         */
@@ -51,7 +51,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
     string oLayerName;
     const char *pszLayerName = pszTargetIn;
 
-    if( poOGRLayerInfo != NULL )
+    if( poOGRLayerInfo != nullptr )
     {
         oLayerName = poOGRLayerInfo->get_attr( "layer_name" );
         if( strlen(oLayerName.c_str()) > 0 )
@@ -72,18 +72,18 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      X/Y/Z fields.                                                   */
 /* -------------------------------------------------------------------- */
-    if( poOGRLayerInfo != NULL )
+    if( poOGRLayerInfo != nullptr )
     {
         AttrTable *poField = poOGRLayerInfo->find_container("x_field");
-        if( poField != NULL )
+        if( poField != nullptr )
             oXField.Initialize( poField, poTargetVar, poSuperSeq );
 
         poField = poOGRLayerInfo->find_container("y_field");
-        if( poField != NULL )
+        if( poField != nullptr )
             oYField.Initialize( poField, poTargetVar, poSuperSeq );
 
         poField = poOGRLayerInfo->find_container("z_field");
-        if( poField != NULL )
+        if( poField != nullptr )
             oZField.Initialize( poField, poTargetVar, poSuperSeq );
     }
 
@@ -97,21 +97,21 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         string oSSTargName;
         string x, y;
 
-        if( poSuperSeq != NULL )
+        if( poSuperSeq != nullptr )
             oSSTargName = OGRDODSGetVarPath( poSuperSeq );
         else
             oSSTargName = "impossiblexxx";
 
-        if( poDS->poDDS->var( oTargName + ".lon" ) != NULL
-            && poDS->poDDS->var( oTargName + ".lat" ) != NULL )
+        if( poDS->poDDS->var( oTargName + ".lon" ) != nullptr
+            && poDS->poDDS->var( oTargName + ".lat" ) != nullptr )
         {
             oXField.Initialize( (oTargName + ".lon").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
             oYField.Initialize( (oTargName + ".lat").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
         }
-        else if( poDS->poDDS->var( oSSTargName + ".lon" ) != NULL
-                 && poDS->poDDS->var( oSSTargName + ".lat" ) != NULL )
+        else if( poDS->poDDS->var( oSSTargName + ".lon" ) != nullptr
+                 && poDS->poDDS->var( oSSTargName + ".lat" ) != nullptr )
         {
             oXField.Initialize( (oSSTargName + ".lon").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
@@ -126,18 +126,18 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
     Sequence::Vars_iter v_i;
 
     for( v_i = seq->var_begin(); v_i != seq->var_end(); v_i++ )
-        BuildFields( *v_i, NULL, NULL );
+        BuildFields( *v_i, nullptr, nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Add fields for the contents of the super-sequence if we have    */
 /*      one.                                                            */
 /* -------------------------------------------------------------------- */
-    if( poSuperSeq != NULL )
+    if( poSuperSeq != nullptr )
     {
         for( v_i = poSuperSeq->var_begin();
              v_i != poSuperSeq->var_end();
              v_i++ )
-            BuildFields( *v_i, NULL, NULL );
+            BuildFields( *v_i, nullptr, nullptr );
     }
 }
 
@@ -160,7 +160,7 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 
 {
     for( BaseType *poParent = poChild->get_parent();
-         poParent != NULL;
+         poParent != nullptr;
          poParent = poParent->get_parent() )
     {
         if( poParent->type() == dods_sequence_c )
@@ -169,7 +169,7 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -189,7 +189,7 @@ bool OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
 /* -------------------------------------------------------------------- */
 /*      Setup field name, including path if non-local.                  */
 /* -------------------------------------------------------------------- */
-    if( pszPathToVar == NULL )
+    if( pszPathToVar == nullptr )
         oField.SetName( poFieldVar->name().c_str() );
     else
         oField.SetName( CPLSPrintf( "%s.%s", pszPathToVar,
@@ -233,7 +233,7 @@ bool OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,
           Sequence::Vars_iter v_i;
 
           // We don't support a 3rd level of sequence nesting.
-          if( pszPathToSequence != NULL )
+          if( pszPathToSequence != nullptr )
               return false;
 
           // We don't explore down into the target sequence if we
@@ -283,11 +283,11 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
                                                Sequence *seq )
 
 {
-    if( seq == NULL )
+    if( seq == nullptr )
         seq = dynamic_cast<Sequence *>(poTargetVar);
 
     if( !poFDefn->bValid )
-        return NULL;
+        return nullptr;
 
 /* ==================================================================== */
 /*      Fetch the actual value.                                         */
@@ -310,7 +310,7 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
 /* -------------------------------------------------------------------- */
     if( poFDefn->bRelativeToSequence )
         return seq->var_value( nFeatureId, poFDefn->pszFieldName );
-    else if( poSuperSeq != NULL && poFDefn->bRelativeToSuperSequence )
+    else if( poSuperSeq != nullptr && poFDefn->bRelativeToSuperSequence )
         return poSuperSeq->var_value( iLastSuperSeq, poFDefn->pszFieldName );
     else
         return poDataDDS->var( poFDefn->pszFieldName );
@@ -384,7 +384,7 @@ double OGRDODSSequenceLayer::BaseTypeToDouble( BaseType *poBT )
       case dods_str_c:
       case dods_url_c:
       {
-          string *poStrVal = NULL;
+          string *poStrVal = nullptr;
           double dfResult;
 
           poBT->buf2val( (void **) &poStrVal );
@@ -410,8 +410,8 @@ double OGRDODSSequenceLayer::GetFieldValueAsDouble( OGRDODSFieldDefn *poFDefn,
                                                     int nFeatureId )
 
 {
-    BaseType *poBT = GetFieldValue( poFDefn, nFeatureId, NULL );
-    if( poBT == NULL )
+    BaseType *poBT = GetFieldValue( poFDefn, nFeatureId, nullptr );
+    if( poBT == nullptr )
         return 0.0;
 
     return BaseTypeToDouble( poBT );
@@ -428,7 +428,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /*      Ensure we have the dataset.                                     */
 /* -------------------------------------------------------------------- */
     if( !ProvideDataDDS() )
-        return NULL;
+        return nullptr;
 
     Sequence *seq = dynamic_cast<Sequence *>(poTargetVar);
 
@@ -440,9 +440,9 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
     int iSubSeq = -1;
 
     if( nFeatureId < 0 || nFeatureId >= nRecordCount )
-        return NULL;
+        return nullptr;
 
-    if( poSuperSeq == NULL )
+    if( poSuperSeq == nullptr )
         iSubSeq = static_cast<int>(nFeatureId);
     else
     {
@@ -494,9 +494,9 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             continue;
 
         BaseType *poFieldVar = GetFieldValue( papoFields[iField], iSubSeq,
-                                              NULL );
+                                              nullptr );
 
-        if( poFieldVar == NULL )
+        if( poFieldVar == nullptr )
             continue;
 
         switch( poFieldVar->type() )
@@ -564,7 +564,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
           case dods_str_c:
           case dods_url_c:
           {
-              string *poStrVal = NULL;
+              string *poStrVal = nullptr;
               poFieldVar->buf2val( (void **) &poStrVal );
               poFeature->SetField( iField, poStrVal->c_str() );
               delete poStrVal;
@@ -583,15 +583,15 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
     {
         OGRDODSFieldDefn *poFD = papoFields[iField];
 
-        if( poFD->pszPathToSequence == NULL )
+        if( poFD->pszPathToSequence == nullptr )
             continue;
 
         CPLAssert( strlen(poFD->pszPathToSequence)
                    < strlen(poFD->pszFieldName)-1 );
 
-        const char *pszPathFromSubSeq = NULL;
+        const char *pszPathFromSubSeq = nullptr;
 
-        if( strstr(poFD->pszFieldName,poFD->pszPathToSequence) != NULL )
+        if( strstr(poFD->pszFieldName,poFD->pszPathToSequence) != nullptr )
             pszPathFromSubSeq =
                 strstr(poFD->pszFieldName,poFD->pszPathToSequence)
                 + strlen(poFD->pszPathToSequence) + 1;
@@ -605,11 +605,11 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
                                                poFD->pszPathToSequence );
         int nSubSeqCount;
 
-        if( poFieldVar == NULL )
+        if( poFieldVar == nullptr )
             continue;
 
         Sequence *poSubSeq = dynamic_cast<Sequence *>( poFieldVar );
-        if( poSubSeq == NULL )
+        if( poSubSeq == nullptr )
             continue;
 
         nSubSeqCount = poSubSeq->number_of_rows();
@@ -618,9 +618,9 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
 /*      Allocate array to put values into.                              */
 /* -------------------------------------------------------------------- */
         OGRFieldDefn *poOFD = poFeature->GetFieldDefnRef( iField );
-        int *panIntList = NULL;
-        double *padfDblList = NULL;
-        char **papszStrList = NULL;
+        int *panIntList = nullptr;
+        double *padfDblList = nullptr;
+        char **papszStrList = nullptr;
 
         if( poOFD->GetType() == OFTIntegerList )
         {
@@ -645,7 +645,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
         {
             poFieldVar = poSubSeq->var_value( iSubIndex, pszPathFromSubSeq );
 
-            if( poFieldVar == NULL )
+            if( poFieldVar == nullptr )
                 continue;
 
             switch( poFieldVar->type() )
@@ -720,7 +720,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
               case dods_str_c:
               case dods_url_c:
               {
-                  string *poStrVal = NULL;
+                  string *poStrVal = nullptr;
                   poFieldVar->buf2val( (void **) &poStrVal );
                   if( papszStrList )
                     papszStrList[iSubIndex] = CPLStrdup( poStrVal->c_str() );
@@ -794,7 +794,7 @@ OGRFeature *OGRDODSSequenceLayer::GetFeature( GIntBig nFeatureId )
             const double *padfZ =
                 iZField != -1
                 ? poFeature->GetFieldAsDoubleList(iZField, &nPointCount)
-                : NULL;
+                : nullptr;
 
             poLS->setPoints( nPointCount, (double *) padfX, (double *) padfY,
                              (double *) padfZ );
@@ -869,7 +869,7 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
 
 {
     if( bDataLoaded )
-        return poTargetVar != NULL;
+        return poTargetVar != nullptr;
 
     int bResult = OGRDODSLayer::ProvideDataDDS();
 
@@ -887,10 +887,10 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
 /*      For simple sequences without a supersequence just return the    */
 /*      count of elements.                                              */
 /* -------------------------------------------------------------------- */
-    if( poSuperSeq == NULL )
+    if( poSuperSeq == nullptr )
     {
         Sequence* poSeq = dynamic_cast<Sequence *>(poTargetVar);
-        if( poSeq == NULL )
+        if( poSeq == nullptr )
             return false;
         nRecordCount = poSeq->number_of_rows();
     }
@@ -916,7 +916,7 @@ bool OGRDODSSequenceLayer::ProvideDataDDS()
         }
     }
 
-    return poTargetVar != NULL;
+    return poTargetVar != nullptr;
 }
 
 /* IEEE Constants:
