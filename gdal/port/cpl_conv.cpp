@@ -340,8 +340,8 @@ char *CPLStrlwr( char *pszString )
 /************************************************************************/
 
 // ASCII characters.
-static const char knLF = 10;
-static const char knCR = 13;
+constexpr char knLF = 10;
+constexpr char knCR = 13;
 
 /**
  * Reads in at most one less than nBufferSize characters from the fp
@@ -666,7 +666,7 @@ const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
     char *pszRLBuffer = nullptr;
-    const size_t nChunkSize = 40;
+    constexpr size_t nChunkSize = 40;
     char szChunk[nChunkSize] = {};
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
@@ -1984,8 +1984,8 @@ static double proj_strtod(char *nptr, char **endptr)
 /*                            CPLDMSToDec()                             */
 /************************************************************************/
 
-static const char *sym = "NnEeSsWw";
-static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
+constexpr char sym[] = "NnEeSsWw";
+constexpr double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 
 /** CPLDMSToDec */
 double CPLDMSToDec( const char *is )
@@ -2605,7 +2605,7 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /* -------------------------------------------------------------------- */
 /*      Prepare buffer.                                                 */
 /* -------------------------------------------------------------------- */
-    const size_t nBufferSize = 1024 * 1024;
+    constexpr size_t nBufferSize = 1024 * 1024;
     GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nBufferSize));
     if( pabyBuffer == nullptr )
     {
