@@ -36,11 +36,15 @@
  *
  * Interface for read and write JSON documents
  */
+
+/*! @cond Doxygen_Suppress */
 typedef void *JSONObjectH;
 
 CPL_C_START
 
 class CPLJSONArray;
+/*! @endcond */
+
 /**
  * @brief The CPLJSONArray class holds JSON object from CPLJSONDocument
  */
@@ -61,6 +65,7 @@ public:
     };
 
 public:
+/*! @cond Doxygen_Suppress */
     CPLJSONObject();
     explicit CPLJSONObject(const char *pszName, const CPLJSONObject& oParent);
     ~CPLJSONObject();
@@ -69,6 +74,7 @@ public:
 
 private:
     explicit CPLJSONObject(const CPLString& soName, JSONObjectH poJsonObject);
+/*! @endcond */
 
 public:
     // setters
@@ -87,13 +93,15 @@ public:
     void Set(const char *pszName, long nValue);
     void Set(const char *pszName, bool bValue);
 
+/*! @cond Doxygen_Suppress */
     JSONObjectH GetInternalHandle() const { return m_poJsonObject; }
+/*! @endcond */
 
     // getters
     const char *GetString(const char *pszName, const char *pszDefault) const;
     double GetDouble(const char *pszName, double dfDefault) const;
     int GetInteger(const char *pszName, int nDefault) const;
-    long GetLong(const char *pszName, long nDdefault) const;
+    long GetLong(const char *pszName, long nDefault) const;
     bool GetBool(const char *pszName, bool bDefault) const;
     const char *GetString(const char *pszDefault) const;
     double GetDouble(double dfDefault) const;
@@ -106,14 +114,19 @@ public:
     CPLJSONArray GetArray(const char *pszName) const;
     CPLJSONObject GetObject(const char *pszName) const;
     enum Type GetType() const;
+/*! @cond Doxygen_Suppress */
     const char *GetName() const { return m_soKey; }
+/*! @endcond */
+
     CPLJSONObject **GetChildren() const;
     bool IsValid() const;
 
     static void DestroyJSONObjectList(CPLJSONObject **papsoList);
 
 protected:
+/*! @cond Doxygen_Suppress */
     CPLJSONObject GetObjectByPath(const char *pszPath, char *pszName) const;
+/*! @endcond */
 
 private:
     JSONObjectH m_poJsonObject;
@@ -128,10 +141,12 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     friend class CPLJSONObject;
     friend class CPLJSONDocument;
 public:
+/*! @cond Doxygen_Suppress */
     CPLJSONArray();
     CPLJSONArray(const CPLString& soName);
 private:
     explicit CPLJSONArray(const CPLString& soName, JSONObjectH poJsonObject);
+/*! @endcond */
 public:
     int Size() const;
     void Add(const CPLJSONObject& oValue);
@@ -145,10 +160,12 @@ public:
 class CPL_DLL CPLJSONDocument
 {
 public:
+/*! @cond Doxygen_Suppress */
     CPLJSONDocument();
     ~CPLJSONDocument();
     CPLJSONDocument(const CPLJSONDocument& other);
     CPLJSONDocument& operator=(const CPLJSONDocument& other);
+/*! @endcond */  
 
     bool Save(const char *pszPath);
     CPLJSONObject GetRoot();

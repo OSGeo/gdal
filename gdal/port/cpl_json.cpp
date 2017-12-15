@@ -57,7 +57,7 @@ static const unsigned short JSON_NAME_MAX_SIZE = 255;
 //------------------------------------------------------------------------------
 // JSONDocument
 //------------------------------------------------------------------------------
-
+/*! @cond Doxygen_Suppress */
 CPLJSONDocument::CPLJSONDocument() : m_poRootJsonObject(nullptr)
 {
 
@@ -81,6 +81,7 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
         m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
     return *this;
 }
+/*! @endcond */
 
 /**
  * Save json document at specified path
@@ -259,6 +260,7 @@ bool CPLJSONDocument::LoadChunks(const char *pszPath, size_t nChunkSize,
     return bSuccess;
 }
 
+/*! @cond Doxygen_Suppress */
 #ifdef HAVE_CURL
 
 typedef struct {
@@ -328,6 +330,7 @@ static size_t HeaderWriteFunction( void *buffer, size_t size, size_t nmemb,
     return nLength;
 }
 #endif // HAVE_CURL
+/*! @endcond */
 
 /**
  * Load json document from web.
@@ -532,7 +535,7 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
 //------------------------------------------------------------------------------
 // JSONObject
 //------------------------------------------------------------------------------
-
+/*! @cond Doxygen_Suppress */
 CPLJSONObject::CPLJSONObject()
 {
     m_poJsonObject = json_object_new_object();
@@ -571,6 +574,7 @@ CPLJSONObject& CPLJSONObject::operator=(const CPLJSONObject& other)
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
     return *this;
 }
+/*! @endcond */
 
 /**
  * Add new key - value pair to json object.
@@ -973,12 +977,12 @@ int CPLJSONObject::GetInteger(int nDefault) const
  *
  * @since GDAL 2.3
  */
-long CPLJSONObject::GetLong(const char *pszName, long nDdefault) const
+long CPLJSONObject::GetLong(const char *pszName, long nDefault) const
 {
     if( nullptr == pszName )
-        return nDdefault;
+        return nDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetLong( nDdefault );
+    return object.GetLong( nDefault );
 }
 
 /**
@@ -992,7 +996,8 @@ long CPLJSONObject::GetLong(long nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
-        return json_object_get_int64( TO_JSONOBJ(m_poJsonObject) );
+        return static_cast<long>( json_object_get_int64(
+                                                  TO_JSONOBJ(m_poJsonObject) ) );
     return nDefault;
 }
 
@@ -1152,7 +1157,7 @@ void CPLJSONObject::DestroyJSONObjectList(CPLJSONObject **papsoList)
 //------------------------------------------------------------------------------
 // JSONArray
 //------------------------------------------------------------------------------
-
+/*! @cond Doxygen_Suppress */
 CPLJSONArray::CPLJSONArray()
 {
     m_poJsonObject = json_object_new_array();
@@ -1169,6 +1174,7 @@ CPLJSONArray::CPLJSONArray(const CPLString &soName, JSONObjectH poJsonObject) :
 {
 
 }
+/*! @endcond */
 
 /**
  * Get array size.
