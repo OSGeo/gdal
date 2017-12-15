@@ -31,7 +31,15 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-#include "json.h"
+#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
+#pragma GCC system_header
+#endif
+
+#include <json.h>
+
+#undef json_object_object_foreachC
+#define json_object_object_foreachC(obj,iter) \
+ for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : nullptr) != nullptr; iter.entry = iter.entry->next)
 
 #ifdef HAVE_CURL
 #include "cpl_http.h"
@@ -255,6 +263,8 @@ bool CPLJSONDocument::LoadChunks(const char *pszPath, size_t nChunkSize,
     return bSuccess;
 }
 
+#ifdef HAVE_CURL
+
 typedef struct {
     json_object *pObject;
     json_tokener *pTokener;
@@ -277,8 +287,6 @@ static size_t WriteFunction(char *pBuffer, size_t nSize, size_t nMemb,
         return 0; /* error: interrupt the transfer */
     }
 }
-
-#ifdef HAVE_CURL
 
 typedef struct {
     GDALProgressFunc pfnProgress;
@@ -335,9 +343,16 @@ static size_t HeaderWriteFunction( void *buffer, size_t size, size_t nmemb,
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::LoadUrl(const char* pszUrl, char **papszOptions,
+
+#ifdef HAVE_CURL
+bool CPLJSONDocument::LoadUrl(const char *pszUrl, char **papszOptions,
                               GDALProgressFunc pfnProgress,
                               void *pProgressArg)
+#else
+bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
+                              GDALProgressFunc /*pfnProgress*/,
+                              void * /*pProgressArg*/)
+#endif // HAVE_CURL
 {
 #ifdef HAVE_CURL
     CURL *http_handle = curl_easy_init();
@@ -1018,8 +1033,12 @@ CPLJSONObject **CPLJSONObject::GetChildren() const
     }
     CPLJSONObject **papoChildren = nullptr;
     size_t nChildrenCount = 0;
-    json_object_object_foreach( TO_JSONOBJ(m_poJsonObject), key, val ) {
-        CPLJSONObject *child = new CPLJSONObject(key, val);
+    json_object_iter it;
+    it.key = nullptr;
+    it.val = nullptr;
+    it.entry = nullptr;
+    json_object_object_foreachC( TO_JSONOBJ(m_poJsonObject), it ) {
+        CPLJSONObject *child = new CPLJSONObject(it.key, it.val);
         papoChildren = reinterpret_cast<CPLJSONObject **>(
             CPLRealloc( papoChildren,  sizeof(CPLJSONObject *) *
                         (nChildrenCount + 1) ) );
