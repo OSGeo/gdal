@@ -82,7 +82,7 @@ public:
     void Add(const char *pszName, const char *pszValue);
     void Add(const char *pszName, double dfValue);
     void Add(const char *pszName, int nValue);
-    void Add(const char *pszName, long nValue);
+    void Add(const char *pszName, int64_t nValue);
     void Add(const char *pszName, const CPLJSONArray& oValue);
     void Add(const char *pszName, const CPLJSONObject& oValue);
     void Add(const char *pszName, bool bValue);
@@ -90,7 +90,7 @@ public:
     void Set(const char *pszName, const char *pszValue);
     void Set(const char *pszName, double dfValue);
     void Set(const char *pszName, int nValue);
-    void Set(const char *pszName, long nValue);
+    void Set(const char *pszName, int64_t nValue);
     void Set(const char *pszName, bool bValue);
 
 /*! @cond Doxygen_Suppress */
@@ -126,7 +126,6 @@ public:
 protected:
 /*! @cond Doxygen_Suppress */
     CPLJSONObject GetObjectByPath(const char *pszPath, char *pszName) const;
-    static CPLJSONObject GetInvalid() { return CPLJSONObject( "", nullptr ); }
 /*! @endcond */
 
 private:

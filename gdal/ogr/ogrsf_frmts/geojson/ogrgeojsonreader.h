@@ -30,11 +30,11 @@
 #ifndef OGR_GEOJSONREADER_H_INCLUDED
 #define OGR_GEOJSONREADER_H_INCLUDED
 
+#include "cpl_json_header.h"
 #include "cpl_string.h"
 #include <ogr_core.h>
 #include "ogrsf_frmts.h"
 
-#include "ogr_json_header.h"
 #include "ogrgeojsonutils.h"
 
 #include <set>

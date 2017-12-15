@@ -31,9 +31,9 @@
 #define OGR_COUCHDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "cpl_http.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
+#include "cpl_http.h"
 
 #include <vector>
 #include <map>

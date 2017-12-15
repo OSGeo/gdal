@@ -632,7 +632,7 @@ void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
  * Starting with GDAL 2.0, curve polygons or closed curves will be changed to
  * polygons.  The passed in geometry is consumed and a new one returned (or
  * potentially the same one).
- * 
+ *
  * Note: the resulting polygon may break the Simple Features rules for polygons,
  * for example when converting from a multi-part multipolygon.
  *
@@ -4538,7 +4538,7 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
  *
  * Angles are return in radians, with trigonometic convention (counter clock
  * wise)
- * 
+ *
  * @param x0 x of first point
  * @param y0 y of first point
  * @param x1 x of intermediate point
@@ -5710,7 +5710,7 @@ OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
     CPLJSONDocument oDocument;
     if( !oDocument.Load(reinterpret_cast<const GByte*>(pszJsonString), -1) )
     {
-        return NULL;
+        return nullptr;
     }
 
     return createFromGeoJson( oDocument.GetRoot() );
@@ -5730,7 +5730,7 @@ OGRGeometry* OGRGeometryFactory::createFromGeoJson( const CPLJSONObject &oJsonOb
 {
     if( !oJsonObject.IsValid() )
     {
-        return NULL;
+        return nullptr;
     }
 
     // TODO: Move from GeoJSON driver functions create geometry here, and replace

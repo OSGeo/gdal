@@ -29,13 +29,8 @@
 
 
 #include "cpl_error.h"
+#include "cpl_json_header.h"
 #include "cpl_vsi.h"
-
-#include "json.h"
-
-#undef json_object_object_foreachC
-#define json_object_object_foreachC(obj,iter) \
- for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : nullptr) != nullptr; iter.entry = iter.entry->next)
 
 #ifdef HAVE_CURL
 #include "cpl_http.h"
@@ -843,7 +838,7 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
 CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
 {
     if( nullptr == pszName )
-        return CPLJSONObject::GetInvalid();
+        return CPLJSONObject( "", nullptr );
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if(object.IsValid())
@@ -855,7 +850,7 @@ CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
             return CPLJSONObject( objectName, poVal );
         }
     }
-    return CPLJSONObject::GetInvalid();
+    return CPLJSONObject( "", nullptr );
 }
 
 /**
@@ -1075,7 +1070,7 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
                                                     0 ) );
     int portionsCount = pathPortions.size();
     if( 0 == portionsCount )
-        return CPLJSONObject::GetInvalid();
+        return CPLJSONObject( "", nullptr );
     CPLJSONObject object = *this;
     for( int i = 0; i < portionsCount - 1; ++i ) {
         // TODO: check array index in path - i.e. settings/catalog/root/id:1/name
