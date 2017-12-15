@@ -335,15 +335,15 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
 // JSONObject
 //------------------------------------------------------------------------------
 /*! @cond Doxygen_Suppress */
-CPLJSONObject::CPLJSONObject()
+CPLJSONObject::CPLJSONObject() : m_poJsonObject(json_object_new_object())
 {
-    m_poJsonObject = json_object_new_object();
+
 }
 
 CPLJSONObject::CPLJSONObject(const char *pszName, const CPLJSONObject &oParent) :
+    m_poJsonObject(json_object_get(json_object_new_object())),
     m_soKey(pszName)
 {
-    m_poJsonObject = json_object_get(json_object_new_object());
     json_object_object_add( TO_JSONOBJ(oParent.m_poJsonObject), pszName,
                             TO_JSONOBJ(m_poJsonObject) );
 }
@@ -361,10 +361,10 @@ CPLJSONObject::~CPLJSONObject()
     json_object_put( TO_JSONOBJ(m_poJsonObject) );
 }
 
-CPLJSONObject::CPLJSONObject(const CPLJSONObject &other)
+CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
+    m_poJsonObject(json_object_get( TO_JSONOBJ(other.m_poJsonObject) )),
+    m_soKey(other.m_soKey)
 {
-    m_soKey = other.m_soKey;
-    m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
 }
 
 CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)

@@ -149,7 +149,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
 public:
 /*! @cond Doxygen_Suppress */
     CPLJSONArray();
-    CPLJSONArray(const CPLString &soName);
+    explicit CPLJSONArray(const CPLString &soName);
 
 #if !_MSC_VER
 private:
