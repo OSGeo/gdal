@@ -1951,7 +1951,7 @@ namespace tut
 
             CPLJSONObject oHasChildren = oJsonRoot.GetObject("resource/children");
             ensure( oHasChildren.IsValid() );
-            ensure_equals( oHasChildren.GetBool(false), true );
+            ensure_equals( oHasChildren.ToBool(), true );
 
             ensure_equals( oJsonResource.GetBool( "children", false ), true );
 

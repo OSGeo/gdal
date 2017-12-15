@@ -103,16 +103,16 @@ public:
 /*! @endcond */
 
     // getters
-    const char *GetString(const char *pszName, const char *pszDefault) const;
-    double GetDouble(const char *pszName, double dfDefault) const;
-    int GetInteger(const char *pszName, int nDefault) const;
-    GInt64 GetLong(const char *pszName, GInt64 nDefault) const;
-    bool GetBool(const char *pszName, bool bDefault) const;
-    const char *GetString(const char *pszDefault) const;
-    double GetDouble(double dfDefault) const;
-    int GetInteger(int nDefault) const;
-    GInt64 GetLong(GInt64 nDefault) const;
-    bool GetBool(bool bDefault) const;
+    const char *GetString(const char *pszName, const char *pszDefault = nullptr) const;
+    double GetDouble(const char *pszName, double dfDefault = 0.0) const;
+    int GetInteger(const char *pszName, int nDefault = 0) const;
+    GInt64 GetLong(const char *pszName, GInt64 nDefault = 0) const;
+    bool GetBool(const char *pszName, bool bDefault = false) const;
+    const char *ToString(const char *pszDefault = nullptr) const;
+    double ToDouble(double dfDefault = 0.0) const;
+    int ToInteger(int nDefault = 0) const;
+    GInt64 ToLong(GInt64 nDefault = 0) const;
+    bool ToBool(bool bDefault = false) const;
 
     //
     void Delete(const char* pszName);

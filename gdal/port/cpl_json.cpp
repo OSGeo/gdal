@@ -58,13 +58,21 @@ CPLJSONDocument::~CPLJSONDocument()
 CPLJSONDocument::CPLJSONDocument(const CPLJSONDocument& other)
 {
     if( other.m_poRootJsonObject )
+    {
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
         m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
+    }
 }
 
 CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 {
     if( other.m_poRootJsonObject )
+    {
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
         m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
+    }
     return *this;
 }
 /*! @endcond */
@@ -255,7 +263,7 @@ typedef struct {
     int nDataLen;
 } JsonContext, *JsonContextL;
 
-static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
+static size_t CPL_STDCALL CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
                                            void *pUserData)
 {
     size_t nLength = nSize * nMemb;
@@ -358,7 +366,8 @@ CPLJSONObject::CPLJSONObject(const CPLString &soName, JSONObjectH poJsonObject) 
 CPLJSONObject::~CPLJSONObject()
 {
     // Should delete m_poJsonObject only if CPLJSONObject has no parent
-    json_object_put( TO_JSONOBJ(m_poJsonObject) );
+    if( m_poJsonObject )
+        json_object_put( TO_JSONOBJ(m_poJsonObject) );
 }
 
 CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
@@ -370,6 +379,8 @@ CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
 CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
 {
     m_soKey = other.m_soKey;
+    if( m_poJsonObject )
+        json_object_put( TO_JSONOBJ(m_poJsonObject) );
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
     return *this;
 }
@@ -700,17 +711,17 @@ const char *CPLJSONObject::GetString(const char *pszName, const char* pszDefault
     if( nullptr == pszName )
         return pszDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetString( pszDefault );
+    return object.ToString( pszDefault );
 }
 
 /**
- * Get value by key.
+ * Get value.
  * @param  pszDefault Default value.
  * @return            String value.
  *
  * @since GDAL 2.3
  */
-const char* CPLJSONObject::GetString(const char* pszDefault) const
+const char* CPLJSONObject::ToString(const char* pszDefault) const
 {
     if( m_poJsonObject && json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_string )
@@ -731,17 +742,17 @@ double CPLJSONObject::GetDouble(const char *pszName, double dfDefault) const
     if( nullptr == pszName )
         return dfDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetDouble( dfDefault );
+    return object.ToDouble( dfDefault );
 }
 
 /**
- * Get value by key.
+ * Get value
  * @param  dfDefault  Default value.
  * @return            Double value.
  *
  * @since GDAL 2.3
  */
-double CPLJSONObject::GetDouble(double dfDefault) const
+double CPLJSONObject::ToDouble(double dfDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_double*/ )
@@ -762,17 +773,17 @@ int CPLJSONObject::GetInteger(const char *pszName, int nDefault) const
     if( nullptr == pszName )
         return nDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetInteger( nDefault );
+    return object.ToInteger( nDefault );
 }
 
 /**
- * Get value by key.
+ * Get value.
  * @param  nDefault   Default value.
  * @return            Integer value.
  *
  * @since GDAL 2.3
  */
-int CPLJSONObject::GetInteger(int nDefault) const
+int CPLJSONObject::ToInteger(int nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
@@ -793,17 +804,17 @@ GInt64 CPLJSONObject::GetLong(const char *pszName, GInt64 nDefault) const
     if( nullptr == pszName )
         return nDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetLong( nDefault );
+    return object.ToLong( nDefault );
 }
 
 /**
- * Get value by key.
+ * Get value.
  * @param  nDefault   Default value.
  * @return            Long value.
  *
  * @since GDAL 2.3
  */
-GInt64 CPLJSONObject::GetLong(GInt64 nDefault) const
+GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
@@ -824,7 +835,7 @@ bool CPLJSONObject::GetBool(const char *pszName, bool bDefault) const
     if( nullptr == pszName )
         return bDefault;
     CPLJSONObject object = GetObject( pszName );
-    return object.GetBool( bDefault );
+    return object.ToBool( bDefault );
 }
 
 /**
@@ -865,13 +876,13 @@ CPLJSONObject **CPLJSONObject::GetChildren() const
 }
 
 /**
- * Get value by key.
+ * Get value.
  * @param  bDefault   Default value.
  * @return            Boolean value.
  *
  * @since GDAL 2.3
  */
-bool CPLJSONObject::GetBool(bool bDefault) const
+bool CPLJSONObject::ToBool(bool bDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_boolean*/ )
