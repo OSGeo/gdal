@@ -103,25 +103,25 @@ class ENVIDataset : public RawDataset
     static int GetEnviType(GDALDataType eType);
 
   public:
-            ENVIDataset();
-    virtual ~ENVIDataset();
+    ENVIDataset();
+    ~ENVIDataset() override;
 
-    virtual void    FlushCache() override;
-    virtual CPLErr  GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr  SetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr  SetProjection( const char * ) override;
-    virtual char  **GetFileList(void) override;
+    void    FlushCache() override;
+    CPLErr  GetGeoTransform( double *padfTransform ) override;
+    CPLErr  SetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr  SetProjection( const char * ) override;
+    char  **GetFileList() override;
 
-    virtual void        SetDescription( const char * ) override;
+    void SetDescription( const char * ) override;
 
-    virtual CPLErr      SetMetadata( char **papszMetadata,
-                                     const char *pszDomain = "" ) override;
-    virtual CPLErr      SetMetadataItem( const char *pszName,
-                                         const char *pszValue,
-                                         const char *pszDomain = "" ) override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
+    CPLErr SetMetadata( char **papszMetadata,
+                        const char *pszDomain = "" ) override;
+    CPLErr SetMetadataItem( const char *pszName,
+                            const char *pszValue,
+                            const char *pszDomain = "" ) override;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char *pszFilename,
@@ -137,17 +137,17 @@ class ENVIDataset : public RawDataset
 
 class ENVIRasterBand : public RawRasterBand
 {
-    public:
-                ENVIRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
-    virtual ~ENVIRasterBand() {}
+  public:
+    ENVIRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
+                    vsi_l_offset nImgOffset, int nPixelOffset,
+                    int nLineOffset,
+                    GDALDataType eDataType, int bNativeOrder,
+                    int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+    ~ENVIRasterBand() override {}
 
-    virtual void        SetDescription( const char * ) override;
+    void SetDescription( const char * ) override;
 
-    virtual CPLErr SetCategoryNames( char ** ) override;
+    CPLErr SetCategoryNames( char ** ) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_ENVIDATASET_H_INCLUDED
