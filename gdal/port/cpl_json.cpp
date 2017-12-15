@@ -310,9 +310,14 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
 #ifdef HAVE_CURL
     int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "10") );
     JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
+
+    // Fix error C2440: This conversion requires a reinterpret_cast, a C-style 
+    // cast or function-style cast.
+    CPLHTTPFetchWriteFunc pWriteFunc =
+                   reinterpret_cast<CPLHTTPFetchWriteFunc>(CPLJSONWriteFunction);
     CPLHTTPResult *psResult = CPLHTTPFetchEx( pszUrl, papszOptions,
                                               pfnProgress, pProgressArg,
-                                              CPLJSONWriteFunction, &ctx );
+                                              pWriteFunc, &ctx );
 
     bool bResult = true;
     if( psResult->nStatus != 0 /*CURLE_OK*/ )
