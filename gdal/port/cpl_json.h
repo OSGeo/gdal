@@ -70,26 +70,26 @@ public:
 public:
 /*! @cond Doxygen_Suppress */
     CPLJSONObject();
-    explicit CPLJSONObject(const char *pszName, const CPLJSONObject& oParent);
+    explicit CPLJSONObject(const char *pszName, const CPLJSONObject &oParent);
     ~CPLJSONObject();
-    CPLJSONObject(const CPLJSONObject& other);
-    CPLJSONObject& operator=(const CPLJSONObject& other);
+    CPLJSONObject(const CPLJSONObject &other);
+    CPLJSONObject &operator=(const CPLJSONObject &other);
 
 #if !_MSC_VER
 private:
 #endif // ! _MSC_VER
-    explicit CPLJSONObject(const CPLString& soName, JSONObjectH poJsonObject);
+    explicit CPLJSONObject(const CPLString &soName, JSONObjectH poJsonObject);
 /*! @endcond */
 
 public:
     // setters
-    void Add(const char *pszName, const CPLString& soValue);
+    void Add(const char *pszName, const CPLString &soValue);
     void Add(const char *pszName, const char *pszValue);
     void Add(const char *pszName, double dfValue);
     void Add(const char *pszName, int nValue);
     void Add(const char *pszName, int64_t nValue);
-    void Add(const char *pszName, const CPLJSONArray& oValue);
-    void Add(const char *pszName, const CPLJSONObject& oValue);
+    void Add(const char *pszName, const CPLJSONArray &oValue);
+    void Add(const char *pszName, const CPLJSONObject &oValue);
     void Add(const char *pszName, bool bValue);
 
     void Set(const char *pszName, const char *pszValue);
@@ -118,6 +118,7 @@ public:
     void Delete(const char* pszName);
     CPLJSONArray GetArray(const char *pszName) const;
     CPLJSONObject GetObject(const char *pszName) const;
+    CPLJSONObject operator[](const char *pszName) const;
     enum Type GetType() const;
 /*! @cond Doxygen_Suppress */
     const char *GetName() const { return m_soKey; }
@@ -148,18 +149,18 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
 public:
 /*! @cond Doxygen_Suppress */
     CPLJSONArray();
-    CPLJSONArray(const CPLString& soName);
+    CPLJSONArray(const CPLString &soName);
 
 #if !_MSC_VER
 private:
 #endif // ! _MSC_VER
-    explicit CPLJSONArray(const CPLString& soName, JSONObjectH poJsonObject);
+    explicit CPLJSONArray(const CPLString &soName, JSONObjectH poJsonObject);
 /*! @endcond */
 public:
     int Size() const;
-    void Add(const CPLJSONObject& oValue);
-    CPLJSONObject operator[](int nKey);
-    const CPLJSONObject operator[](int nKey) const;
+    void Add(const CPLJSONObject &oValue);
+    CPLJSONObject operator[](int nIndex);
+    const CPLJSONObject operator[](int nIndex) const;
 };
 
 /**
@@ -171,8 +172,8 @@ public:
 /*! @cond Doxygen_Suppress */
     CPLJSONDocument();
     ~CPLJSONDocument();
-    CPLJSONDocument(const CPLJSONDocument& other);
-    CPLJSONDocument& operator=(const CPLJSONDocument& other);
+    CPLJSONDocument(const CPLJSONDocument &other);
+    CPLJSONDocument& operator=(const CPLJSONDocument &other);
 /*! @endcond */
 
     bool Save(const char *pszPath);

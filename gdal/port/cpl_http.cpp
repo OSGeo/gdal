@@ -394,10 +394,6 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only. Whereas
  *     "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
  * </ul>
- * @param pfnProgress   Callback for reporting algorithm progress matching the GDALProgressFunc() semantics. May be NULL.
- * @param pProgressArg  Callback argument passed to pfnProgress.
- * @param pfnWrite      Write function pointer matching the CPLHTTPWriteFunc() semantics. May be NULL.
- * @param pWriteArg     Argument which will pass to a write function.
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
@@ -412,7 +408,23 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
-CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions,
+CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
+{
+    return CPLHTTPFetchEx( pszURL, papszOptions, nullptr, nullptr, nullptr, nullptr);
+}
+
+/**
+ * Fetch a document from an url and return in a string.
+ * @param  pszURL       Url to fetch document from web.
+ * @param  papszOptions Option list as a NULL-terminated array of strings. Available keys see in CPLHTTPFetch.
+ * @param  pfnProgress  Callback for reporting algorithm progress matching the GDALProgressFunc() semantics. May be NULL.
+ * @param  pProgressArg Callback argument passed to pfnProgress.
+ * @param  pfnWrite     Write function pointer matching the CPLHTTPWriteFunc() semantics. May be NULL.
+ * @param  pWriteArg    Argument which will pass to a write function.
+ * @return              A CPLHTTPResult* structure that must be freed by
+ * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled.
+ */
+CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
                              GDALProgressFunc pfnProgress, void *pProgressArg,
                              CPLHTTPWriteFunc pfnWrite, void *pWriteArg )
 

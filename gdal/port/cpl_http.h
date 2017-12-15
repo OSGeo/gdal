@@ -92,11 +92,12 @@ typedef size_t (CPL_STDCALL *CPLHTTPWriteFunc)(void *pBuffer, size_t nSize, size
 /*! @endcond */
 
 int CPL_DLL   CPLHTTPEnabled( void );
-CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions,
-                                     GDALProgressFunc pfnProgress = nullptr,
-                                     void *pProgressArg = nullptr,
-                                     CPLHTTPWriteFunc pfnWrite = nullptr,
-                                     void *pWriteArg = nullptr );
+CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
+CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressArg,
+                                       CPLHTTPWriteFunc pfnWrite,
+                                       void *pWriteArg);
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );

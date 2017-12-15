@@ -1955,6 +1955,8 @@ namespace tut
 
             ensure_equals( oJsonResource.GetBool( "children", false ), true );
 
+            CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
+            ensure( oJsonId.IsValid() );
         }
     }
 } // namespace tut

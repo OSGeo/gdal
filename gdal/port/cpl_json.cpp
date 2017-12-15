@@ -148,7 +148,7 @@ bool CPLJSONDocument::Load(const char *pszPath)
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::Load(const GByte* pabyData, int nLength)
+bool CPLJSONDocument::Load(const GByte *pabyData, int nLength)
 {
     if(nullptr == pabyData)
     {
@@ -302,9 +302,9 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
 #ifdef HAVE_CURL
     int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "10") );
     JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
-    CPLHTTPResult *psResult = CPLHTTPFetch( pszUrl, papszOptions,
-                                            pfnProgress, pProgressArg,
-                                            CPLJSONWriteFunction, &ctx );
+    CPLHTTPResult *psResult = CPLHTTPFetchEx( pszUrl, papszOptions,
+                                              pfnProgress, pProgressArg,
+                                              CPLJSONWriteFunction, &ctx );
 
     bool bResult = true;
     if( psResult->nStatus != 0 /*CURLE_OK*/ )
@@ -361,13 +361,13 @@ CPLJSONObject::~CPLJSONObject()
     json_object_put( TO_JSONOBJ(m_poJsonObject) );
 }
 
-CPLJSONObject::CPLJSONObject(const CPLJSONObject& other)
+CPLJSONObject::CPLJSONObject(const CPLJSONObject &other)
 {
     m_soKey = other.m_soKey;
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
 }
 
-CPLJSONObject& CPLJSONObject::operator=(const CPLJSONObject& other)
+CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
 {
     m_soKey = other.m_soKey;
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
@@ -382,7 +382,7 @@ CPLJSONObject& CPLJSONObject::operator=(const CPLJSONObject& other)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, const CPLString& soValue)
+void CPLJSONObject::Add(const char *pszName, const CPLString &soValue)
 {
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
@@ -655,6 +655,18 @@ CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
         }
     }
     return CPLJSONObject( "", nullptr );
+}
+
+/**
+ * Get value by key.
+ * @param  pszName Key name.
+ * @return         Json object.
+ *
+ * @since GDAL 2.3
+ */
+CPLJSONObject CPLJSONObject::operator[](const char *pszName) const
+{
+    return GetObject(pszName);
 }
 
 /**
@@ -963,7 +975,7 @@ CPLJSONArray::CPLJSONArray()
     m_poJsonObject = json_object_new_array();
 }
 
-CPLJSONArray::CPLJSONArray(const CPLString& soName) :
+CPLJSONArray::CPLJSONArray(const CPLString &soName) :
     CPLJSONObject( soName, json_object_new_array() )
 {
 
@@ -1000,24 +1012,24 @@ void CPLJSONArray::Add(const CPLJSONObject &oValue)
 
 /**
  * Get array item by index.
- * @param  nKey Item index.
- * @return      Json object.
+ * @param  nIndex Item index.
+ * @return        Json object.
  */
-CPLJSONObject CPLJSONArray::operator[](int nKey)
+CPLJSONObject CPLJSONArray::operator[](int nIndex)
 {
-    return CPLJSONObject( CPLSPrintf("id:%d", nKey),
+    return CPLJSONObject( CPLSPrintf("id:%d", nIndex),
                           json_object_array_get_idx( TO_JSONOBJ(m_poJsonObject),
-                                                     nKey ) );
+                                                     nIndex ) );
 }
 
 /**
  * Get array const item by index.
- * @param  nKey Item index.
- * @return      Json object.
+ * @param  nIndex Item index.
+ * @return        Json object.
  */
-const CPLJSONObject CPLJSONArray::operator[](int nKey) const
+const CPLJSONObject CPLJSONArray::operator[](int nIndex) const
 {
-    return CPLJSONObject( CPLSPrintf("id:%d", nKey),
+    return CPLJSONObject( CPLSPrintf("id:%d", nIndex),
                           json_object_array_get_idx( TO_JSONOBJ(m_poJsonObject),
-                                                     nKey ) );
+                                                     nIndex ) );
 }
