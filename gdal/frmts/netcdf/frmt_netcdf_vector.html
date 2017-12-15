@@ -77,7 +77,7 @@ On reading, the mapping is the following :
 
 <p>
 Generally a single netCDF file is viewed as a single OGR layer, provided that
-it contains only mon-dimensional variables, indexed by the same dimension (or
+it contains only mono-dimensional variables, indexed by the same dimension (or
 bi-dimensional variables of type char). For netCDF v4 files with multiple groups,
 each group may be seen as a separate OGR layer.</p>
 
@@ -177,14 +177,14 @@ creation is used as the directory, and the layer name is used as the basename of
 file. SEPARATE_GROUPS may be used when FORMAT=NC4 to put each OGR layer in a separate
 netCDF group, inside the same file.</li>
 <li><b>CONFIG_FILE</b>=string. Path to a <a href="#XML_config">XML configuration file</a>
-(or its content inlined) for precise control of the output</li>
+(or its content inlined) for precise control of the output.</li>
 </ul>
 
 <h2>Layer creation options</h2>
 
 <ul>
 <li><b>RECORD_DIM_NAME</b>=string. Name of the unlimited dimension that index features.
-Defaults to "record"</li>
+Defaults to "record".</li>
 <li><b>STRING_DEFAULT_WIDTH</b>=int. Default width of strings (when using
 bi-dimensional char variables). Default is 10 in autogrow mode, 80 otherwise.</li>
 <li><b>USE_STRING_IN_NC4</b>=YES/NO. Whether to use NetCDF string type for strings
