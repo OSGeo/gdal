@@ -464,7 +464,7 @@ void CPLJSONObject::Add(const char *pszName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, int64_t nValue)
+void CPLJSONObject::Add(const char *pszName, GInt64 nValue)
 {
     if( nullptr == pszName )
         return;
@@ -472,7 +472,7 @@ void CPLJSONObject::Add(const char *pszName, int64_t nValue)
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if( object.IsValid() )
     {
-        json_object *poVal = json_object_new_int64( nValue );
+        json_object *poVal = json_object_new_int64( static_cast<int64_t>(nValue) );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
@@ -585,7 +585,7 @@ void CPLJSONObject::Set(const char *pszName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, int64_t nValue)
+void CPLJSONObject::Set(const char *pszName, GInt64 nValue)
 {
     Delete( pszName );
     Add( pszName, nValue );
@@ -788,7 +788,7 @@ int CPLJSONObject::GetInteger(int nDefault) const
  *
  * @since GDAL 2.3
  */
-int64_t CPLJSONObject::GetLong(const char *pszName, int64_t nDefault) const
+GInt64 CPLJSONObject::GetLong(const char *pszName, GInt64 nDefault) const
 {
     if( nullptr == pszName )
         return nDefault;
@@ -803,11 +803,11 @@ int64_t CPLJSONObject::GetLong(const char *pszName, int64_t nDefault) const
  *
  * @since GDAL 2.3
  */
-int64_t CPLJSONObject::GetLong(int64_t nDefault) const
+GInt64 CPLJSONObject::GetLong(GInt64 nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
-        return json_object_get_int64( TO_JSONOBJ(m_poJsonObject) );
+        return static_cast<GInt64>( json_object_get_int64( TO_JSONOBJ(m_poJsonObject) ) );
     return nDefault;
 }
 

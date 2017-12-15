@@ -87,7 +87,7 @@ public:
     void Add(const char *pszName, const char *pszValue);
     void Add(const char *pszName, double dfValue);
     void Add(const char *pszName, int nValue);
-    void Add(const char *pszName, int64_t nValue);
+    void Add(const char *pszName, GInt64 nValue);
     void Add(const char *pszName, const CPLJSONArray &oValue);
     void Add(const char *pszName, const CPLJSONObject &oValue);
     void Add(const char *pszName, bool bValue);
@@ -95,7 +95,7 @@ public:
     void Set(const char *pszName, const char *pszValue);
     void Set(const char *pszName, double dfValue);
     void Set(const char *pszName, int nValue);
-    void Set(const char *pszName, int64_t nValue);
+    void Set(const char *pszName, GInt64 nValue);
     void Set(const char *pszName, bool bValue);
 
 /*! @cond Doxygen_Suppress */
@@ -106,12 +106,12 @@ public:
     const char *GetString(const char *pszName, const char *pszDefault) const;
     double GetDouble(const char *pszName, double dfDefault) const;
     int GetInteger(const char *pszName, int nDefault) const;
-    int64_t GetLong(const char *pszName, int64_t nDefault) const;
+    GInt64 GetLong(const char *pszName, GInt64 nDefault) const;
     bool GetBool(const char *pszName, bool bDefault) const;
     const char *GetString(const char *pszDefault) const;
     double GetDouble(double dfDefault) const;
     int GetInteger(int nDefault) const;
-    int64_t GetLong(int64_t nDefault) const;
+    GInt64 GetLong(GInt64 nDefault) const;
     bool GetBool(bool bDefault) const;
 
     //
