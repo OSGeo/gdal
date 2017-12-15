@@ -49,16 +49,16 @@ class RRASTERDataset : public RawDataset
     CPLString   m_osProjection;
 
   public:
-                RRASTERDataset();
-       virtual ~RRASTERDataset();
+    RRASTERDataset();
+    ~RRASTERDataset() override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * ) override;
+  const char *GetProjectionRef() override;
 };
 
 /************************************************************************/
@@ -80,16 +80,16 @@ class RRASTERRasterBand: public RawRasterBand
                     GDALDataType eDataType, int bNativeOrder );
 
       void SetMinMax( double dfMin, double dfMax );
-      virtual double GetMinimum( int *pbSuccess = nullptr ) override;
-      virtual double GetMaximum(int *pbSuccess = nullptr ) override;
+      double GetMinimum( int *pbSuccess = nullptr ) override;
+      double GetMaximum( int *pbSuccess = nullptr ) override;
 
 #ifdef UPDATE_SUPPORTED
   protected:
-      virtual CPLErr  IWriteBlock( int, int, void * );
-      virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg );
+      CPLErr IWriteBlock( int, int, void * ) override;
+      CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                        void *, int, int, GDALDataType,
+                        GSpacing nPixelSpace, GSpacing nLineSpace,
+                        GDALRasterIOExtraArg* psExtraArg ) override;
 #endif
 };
 

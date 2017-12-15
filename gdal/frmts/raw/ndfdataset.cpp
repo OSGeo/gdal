@@ -51,12 +51,12 @@ class NDFDataset : public RawDataset
     const char  *Get( const char *pszKey, const char *pszDefault);
 
   public:
-                NDFDataset();
-    virtual ~NDFDataset();
+    NDFDataset();
+    ~NDFDataset() override;
 
-    virtual CPLErr  GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual char **GetFileList(void) override;
+    CPLErr  GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef(void) override;
+    char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

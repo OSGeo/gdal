@@ -68,15 +68,15 @@ class PAuxDataset : public RawDataset
     char        **papszAuxLines;
     int         bAuxUpdated;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int    GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -94,20 +94,20 @@ class PAuxRasterBand : public RawRasterBand
 {
   public:
 
-                 PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
-                                 vsi_l_offset nImgOffset, int nPixelOffset,
-                                 int nLineOffset,
-                                 GDALDataType eDataType, int bNativeOrder );
+    PAuxRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
+                    vsi_l_offset nImgOffset, int nPixelOffset,
+                    int nLineOffset,
+                    GDALDataType eDataType, int bNativeOrder );
 
-    virtual ~PAuxRasterBand();
+    ~PAuxRasterBand() override;
 
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    CPLErr SetNoDataValue( double ) override;
 
-    virtual GDALColorTable *GetColorTable() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
 
-    virtual void SetDescription( const char *pszNewDescription ) override;
+    void SetDescription( const char *pszNewDescription ) override;
 };
 
 /************************************************************************/

@@ -68,21 +68,21 @@ class MFFDataset : public RawDataset
     void        ScanForProjectionInfo();
 
   public:
-                MFFDataset();
-    virtual ~MFFDataset();
+    MFFDataset();
+    ~MFFDataset() override;
 
     char        **papszHdrLines;
 
     VSILFILE        **pafpBandFiles;
 
-    virtual char** GetFileList() override;
+    char** GetFileList() override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -109,12 +109,11 @@ class MFFTiledBand : public GDALRasterBand
     bool           bNative;
 
   public:
+    MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
+                  GDALDataType, int );
+    ~MFFTiledBand() override;
 
-                   MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
-                                 GDALDataType, int );
-    virtual ~MFFTiledBand();
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

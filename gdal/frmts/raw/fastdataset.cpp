@@ -118,8 +118,8 @@ class FASTDataset : public GDALPamDataset
     int         OpenChannel( const char *pszFilename, int iBand );
 
   public:
-                FASTDataset();
-    virtual ~FASTDataset();
+    FASTDataset();
+    ~FASTDataset() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 
@@ -128,7 +128,7 @@ class FASTDataset : public GDALPamDataset
     VSILFILE    *FOpenChannel( const char *, int iBand, int iFASTBand );
     void        TryEuromap_IRS_1C_1D_ChannelNameConvention();
 
-    virtual  char** GetFileList() override;
+    char** GetFileList() override;
 };
 
 /************************************************************************/

@@ -54,13 +54,13 @@ class HKVRasterBand : public RawRasterBand
     friend class HKVDataset;
 
   public:
-                HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
-                               unsigned int nImgOffset, int nPixelOffset,
-                               int nLineOffset,
-                               GDALDataType eDataType, int bNativeOrder );
-    virtual     ~HKVRasterBand() {}
+    HKVRasterBand( HKVDataset *poDS, int nBand, VSILFILE * fpRaw,
+                   unsigned int nImgOffset, int nPixelOffset,
+                   int nLineOffset,
+                   GDALDataType eDataType, int bNativeOrder );
+    ~HKVRasterBand() override {}
 
-    virtual CPLErr SetNoDataValue( double ) override;
+    CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/
@@ -196,18 +196,18 @@ class HKVDataset : public RawDataset
     double      dfNoDataValue;
 
   public:
-                HKVDataset();
-    virtual     ~HKVDataset();
+    HKVDataset();
+    ~HKVDataset() override;
 
-    virtual int GetGCPCount() override /* const */ { return nGCPCount; }
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override /* const */ { return nGCPCount; }
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * ) override;
 
-    virtual CPLErr SetGeoTransform( double * ) override;
-    virtual CPLErr SetProjection( const char * ) override;
+    CPLErr SetGeoTransform( double * ) override;
+    CPLErr SetProjection( const char * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
