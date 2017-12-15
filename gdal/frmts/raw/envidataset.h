@@ -138,11 +138,11 @@ class ENVIDataset : public RawDataset
 class ENVIRasterBand : public RawRasterBand
 {
   public:
-    ENVIRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
-                    vsi_l_offset nImgOffset, int nPixelOffset,
-                    int nLineOffset,
-                    GDALDataType eDataType, int bNativeOrder,
-                    int bIsVSIL = FALSE, int bOwnsFP = FALSE );
+    ENVIRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
+                    vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                    int nLineOffsetIn, GDALDataType eDataTypeIn,
+                    int bNativeOrderIn, int bIsVSILIn = FALSE,
+                    int bOwnsFPIn = FALSE );
     ~ENVIRasterBand() override {}
 
     void SetDescription( const char * ) override;
