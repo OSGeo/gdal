@@ -1805,6 +1805,7 @@ namespace tut
         {
             CPLJSonStreamingParserDump oParser;
             const char sText[] = "{ \"x\", ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
             ensure( !oParser.GetException().empty() );
         }
         {
