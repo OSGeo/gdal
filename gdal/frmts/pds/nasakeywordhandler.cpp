@@ -50,10 +50,11 @@
  *
  ****************************************************************************/
 
+#include "cpl_json_header.h"
 #include "cpl_string.h"
 #include "nasakeywordhandler.h"
 #include "ogrgeojsonreader.h"
-#include "ogr_json_header.h"
+
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -269,7 +270,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
             // instead of flattening when there are (( )) or ({ }) constructs
             if( bIsString )
             {
-                if( !(osWord.empty() && (*pszHeaderNext == '(' || 
+                if( !(osWord.empty() && (*pszHeaderNext == '(' ||
                       *pszHeaderNext == '{' || *pszHeaderNext == ')' ||
                       *pszHeaderNext == '}')) )
                 {

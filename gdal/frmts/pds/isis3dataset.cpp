@@ -34,6 +34,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_json_header.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi_error.h"
@@ -41,7 +42,6 @@
 #include "gdal_proxy.h"
 #include "nasakeywordhandler.h"
 #include "ogrgeojsonreader.h"
-#include "ogr_json_header.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
@@ -1192,7 +1192,7 @@ CPLErr ISIS3RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         if( !poGDS->m_bIsLabelWritten )
             poGDS->WriteLabel();
     }
-    if( eRWFlag == GF_Write && 
+    if( eRWFlag == GF_Write &&
         poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -1545,7 +1545,7 @@ CPLErr ISIS3WrapperRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     {
         InitFile();
     }
-    if( eRWFlag == GF_Write && 
+    if( eRWFlag == GF_Write &&
         poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -2117,7 +2117,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     int tileSizeX = 0;
     int tileSizeY = 0;
 
-    if (EQUAL(osFormat,"Tile") ) 
+    if (EQUAL(osFormat,"Tile") )
     {
        poDS->m_bIsTiled = true;
        /******* Get Tile Sizes *********/
@@ -2435,7 +2435,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( poDS->m_poExternalDS->GetRasterXSize() != poDS->nRasterXSize ||
             poDS->m_poExternalDS->GetRasterYSize() != poDS->nRasterYSize ||
             poDS->m_poExternalDS->GetRasterCount() != nBands ||
-            poDS->m_poExternalDS->GetRasterBand(1)->GetRasterDataType() != 
+            poDS->m_poExternalDS->GetRasterBand(1)->GetRasterDataType() !=
                                                                     eDataType )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -2475,7 +2475,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
                 if( poTIF_DS->GetRasterXSize() != poDS->nRasterXSize ||
                     poTIF_DS->GetRasterYSize() != poDS->nRasterYSize ||
                     poTIF_DS->GetRasterCount() != nBands ||
-                    poTIF_DS->GetRasterBand(1)->GetRasterDataType() != 
+                    poTIF_DS->GetRasterBand(1)->GetRasterDataType() !=
                                                                 eDataType ||
                     poTIF_DS->GetMetadataItem("COMPRESSION",
                                               "IMAGE_STRUCTURE") != nullptr )
@@ -3391,7 +3391,7 @@ void ISIS3Dataset::BuildHistory()
                                                     oHistory["^History"];
                     if( oHistoryFilename.getType() == CPLJsonObject::STRING )
                     {
-                        osHistoryFilename = 
+                        osHistoryFilename =
                             CPLFormFilename( CPLGetPath(osSrcFilename),
                                              oHistoryFilename.getString(),
                                              nullptr );
@@ -3661,7 +3661,7 @@ void ISIS3Dataset::WriteLabel()
         const double dfNoData = GetRasterBand(1)->GetNoDataValue();
         if( dfNoData == 0.0 )
         {
-            VSIFTruncateL( m_fpImage, VSIFTellL(m_fpImage) + 
+            VSIFTruncateL( m_fpImage, VSIFTellL(m_fpImage) +
                                                 nImagePixels * nDTSize );
         }
         else if( nDTSize != 0 ) // to make Coverity not warn about div by 0
@@ -3708,7 +3708,7 @@ void ISIS3Dataset::WriteLabel()
         {
             CPLString osFilename(CPLGetBasename(GetDescription()));
             osFilename += ".History.IsisCube";
-            osFilename = 
+            osFilename =
               CPLFormFilename(CPLGetPath(GetDescription()), osFilename, nullptr);
             VSILFILE* fp = VSIFOpenL(osFilename, "wb");
             if( fp )
@@ -3866,7 +3866,7 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
         {
             if(json_object_get_type(it.val) == json_type_string )
             {
-                VSIFPrintfL(fp, "#%s\n", 
+                VSIFPrintfL(fp, "#%s\n",
                             json_object_get_string(it.val));
             }
             continue;
@@ -4347,7 +4347,7 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
         {
             const int nPixelOffset = GDALGetDataTypeSizeBytes(eType);
             const int nLineOffset = nPixelOffset * nXSize;
-            const vsi_l_offset nBandOffset = 
+            const vsi_l_offset nBandOffset =
                 static_cast<vsi_l_offset>(nLineOffset) * nYSize;
             ISIS3RawRasterBand* poISISBand =
                 new ISIS3RawRasterBand( poDS, i+1, poDS->m_fpImage,

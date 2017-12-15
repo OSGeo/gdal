@@ -53,7 +53,7 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
 
 CPL_CVSID("$Id$")
 

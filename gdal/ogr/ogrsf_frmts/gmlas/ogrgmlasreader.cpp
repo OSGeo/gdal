@@ -33,7 +33,7 @@
 
 #include "ogr_p.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
 
 CPL_CVSID("$Id$")
 
@@ -1418,7 +1418,7 @@ void GMLASReader::startElement(
                 // matching regular fields
                 // Practical case  the <any processContents="lax" minOccurs="0" maxOccurs="unbounded">
                 // declaratin of
-                // http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd 
+                // http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd
                 // http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
                 // FIXME: currently we will thus ignore those extra content
                 // See ogr_gmlas_any_field_at_end_of_declaration test case
@@ -2065,7 +2065,7 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
             m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
                 GMLASField::MakePKIDFieldXPathFromXLinkHrefXPath(
                                                     osAttrXPath));
-        if( nAttrIdx2 >= 0 ) 
+        if( nAttrIdx2 >= 0 )
         {
             SetField( m_oCurCtxt.m_poFeature,
                         m_oCurCtxt.m_poLayer,
