@@ -3182,6 +3182,7 @@ void OGRDXFLayer::TranslateINSERTCore(
         {
             // Block doesn't exist
             delete poFeature;
+            return;
         }
 
         if( poFeature )
