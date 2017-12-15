@@ -88,7 +88,7 @@ typedef struct {
 } CPLHTTPResult;
 
 /*! @cond Doxygen_Suppress */
-typedef size_t (CPL_STDCALL *CPLHTTPWriteFunc)(void *pBuffer, size_t nSize, size_t nMemb, void *pWriteArg);
+typedef size_t (CPL_STDCALL *CPLHTTPFetchWriteFunc)(void *pBuffer, size_t nSize, size_t nMemb, void *pWriteArg);
 /*! @endcond */
 
 int CPL_DLL   CPLHTTPEnabled( void );
@@ -96,7 +96,7 @@ CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
 CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressArg,
-                                       CPLHTTPWriteFunc pfnWrite,
+                                       CPLHTTPFetchWriteFunc pfnWrite,
                                        void *pWriteArg);
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );

@@ -426,7 +426,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
  */
 CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
                              GDALProgressFunc pfnProgress, void *pProgressArg,
-                             CPLHTTPWriteFunc pfnWrite, void *pWriteArg )
+                             CPLHTTPFetchWriteFunc pfnWrite, void *pWriteArg )
 
 {
     if( STARTS_WITH(pszURL, "/vsimem/") &&
