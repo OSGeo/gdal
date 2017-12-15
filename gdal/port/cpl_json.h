@@ -75,7 +75,9 @@ public:
     CPLJSONObject(const CPLJSONObject& other);
     CPLJSONObject& operator=(const CPLJSONObject& other);
 
+#if !_MSC_VER
 private:
+#endif // ! _MSC_VER
     explicit CPLJSONObject(const CPLString& soName, JSONObjectH poJsonObject);
 /*! @endcond */
 
@@ -147,7 +149,10 @@ public:
 /*! @cond Doxygen_Suppress */
     CPLJSONArray();
     CPLJSONArray(const CPLString& soName);
+
+#if !_MSC_VER
 private:
+#endif // ! _MSC_VER
     explicit CPLJSONArray(const CPLString& soName, JSONObjectH poJsonObject);
 /*! @endcond */
 public:
