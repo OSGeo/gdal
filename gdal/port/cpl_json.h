@@ -101,12 +101,12 @@ public:
     const char *GetString(const char *pszName, const char *pszDefault) const;
     double GetDouble(const char *pszName, double dfDefault) const;
     int GetInteger(const char *pszName, int nDefault) const;
-    long GetLong(const char *pszName, long nDefault) const;
+    int64_t GetLong(const char *pszName, int64_t nDefault) const;
     bool GetBool(const char *pszName, bool bDefault) const;
     const char *GetString(const char *pszDefault) const;
     double GetDouble(double dfDefault) const;
     int GetInteger(int nDefault) const;
-    long GetLong(long nDefault) const;
+    int64_t GetLong(int64_t nDefault) const;
     bool GetBool(bool bDefault) const;
 
     //
@@ -126,6 +126,7 @@ public:
 protected:
 /*! @cond Doxygen_Suppress */
     CPLJSONObject GetObjectByPath(const char *pszPath, char *pszName) const;
+    static CPLJSONObject GetInvalid() { return CPLJSONObject( "", nullptr ); }
 /*! @endcond */
 
 private:
@@ -165,7 +166,7 @@ public:
     ~CPLJSONDocument();
     CPLJSONDocument(const CPLJSONDocument& other);
     CPLJSONDocument& operator=(const CPLJSONDocument& other);
-/*! @endcond */  
+/*! @endcond */
 
     bool Save(const char *pszPath);
     CPLJSONObject GetRoot();

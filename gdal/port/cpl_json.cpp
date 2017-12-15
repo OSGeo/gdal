@@ -665,7 +665,7 @@ void CPLJSONObject::Add(const char *pszName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, long nValue)
+void CPLJSONObject::Add(const char *pszName, int64_t nValue)
 {
     if( nullptr == pszName )
         return;
@@ -786,7 +786,7 @@ void CPLJSONObject::Set(const char *pszName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, long nValue)
+void CPLJSONObject::Set(const char *pszName, int64_t nValue)
 {
     Delete( pszName );
     Add( pszName, nValue );
@@ -843,7 +843,7 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
 CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
 {
     if( nullptr == pszName )
-        return CPLJSONObject( "", nullptr );
+        return CPLJSONObject::GetInvalid();
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if(object.IsValid())
@@ -855,7 +855,7 @@ CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
             return CPLJSONObject( objectName, poVal );
         }
     }
-    return CPLJSONObject( "", nullptr );
+    return CPLJSONObject::GetInvalid();
 }
 
 /**
@@ -977,7 +977,7 @@ int CPLJSONObject::GetInteger(int nDefault) const
  *
  * @since GDAL 2.3
  */
-long CPLJSONObject::GetLong(const char *pszName, long nDefault) const
+int64_t CPLJSONObject::GetLong(const char *pszName, int64_t nDefault) const
 {
     if( nullptr == pszName )
         return nDefault;
@@ -992,12 +992,11 @@ long CPLJSONObject::GetLong(const char *pszName, long nDefault) const
  *
  * @since GDAL 2.3
  */
-long CPLJSONObject::GetLong(long nDefault) const
+int64_t CPLJSONObject::GetLong(int64_t nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
-        return static_cast<long>( json_object_get_int64(
-                                                  TO_JSONOBJ(m_poJsonObject) ) );
+        return json_object_get_int64( TO_JSONOBJ(m_poJsonObject) );
     return nDefault;
 }
 
@@ -1076,7 +1075,7 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
                                                     0 ) );
     int portionsCount = pathPortions.size();
     if( 0 == portionsCount )
-        return CPLJSONObject( "", nullptr );
+        return CPLJSONObject::GetInvalid();
     CPLJSONObject object = *this;
     for( int i = 0; i < portionsCount - 1; ++i ) {
         // TODO: check array index in path - i.e. settings/catalog/root/id:1/name
