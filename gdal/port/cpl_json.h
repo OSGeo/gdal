@@ -53,6 +53,9 @@ class CPL_DLL CPLJSONObject
     friend class CPLJSONArray;
     friend class CPLJSONDocument;
 public:
+    /**
+     * Json object types
+     */
     enum Type {
         Null,
         Object,

@@ -245,6 +245,34 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     return nmemb;
 }
 
+typedef struct {
+    GDALProgressFunc pfnProgress;
+    void *pProgressArg;
+} CurlProcessData, *CurlProcessDataL;
+
+static int NewProcessFunction(void *p,
+                              curl_off_t dltotal, curl_off_t dlnow,
+                              curl_off_t /*ultotal*/, curl_off_t /*ulnow*/)
+{
+    CurlProcessDataL pData = static_cast<CurlProcessDataL>(p);
+    if(pData->pfnProgress) {
+        double dfDone = double(dlnow) / dltotal;
+        return pData->pfnProgress(dfDone, "Downloading ...",
+                                  pData->pProgressArg) == TRUE ? 0 : 1;
+    }
+
+    return 0;
+}
+
+static int ProcessFunction(void *p, double dltotal, double dlnow,
+                                     double ultotal, double ulnow)
+{
+    return NewProcessFunction(p, static_cast<curl_off_t>(dltotal),
+                              static_cast<curl_off_t>(dlnow),
+                              static_cast<curl_off_t>(ultotal),
+                              static_cast<curl_off_t>(ulnow));
+}
+
 #endif /* def HAVE_CURL */
 
 /************************************************************************/
@@ -366,6 +394,10 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only. Whereas
  *     "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
  * </ul>
+ * @param pfnProgress   Callback for reporting algorithm progress matching the GDALProgressFunc() semantics. May be NULL.
+ * @param pProgressArg  Callback argument passed to pfnProgress.
+ * @param pfnWrite      Write function pointer matching the CPLHTTPWriteFunc() semantics. May be NULL.
+ * @param pWriteArg     Argument which will pass to a write function.
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
@@ -380,7 +412,9 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
-CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
+CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions,
+                             GDALProgressFunc pfnProgress, void *pProgressArg,
+                             CPLHTTPWriteFunc pfnWrite, void *pWriteArg )
 
 {
     if( STARTS_WITH(pszURL, "/vsimem/") &&
@@ -583,20 +617,39 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
     CPLHTTPResultWithLimit sResultWithLimit;
-    sResultWithLimit.psResult = psResult;
-    sResultWithLimit.nMaxFileSize = 0;
-    const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
-                                                   "MAX_FILE_SIZE");
-    if( pszMaxFileSize != nullptr )
+    if( nullptr == pfnWrite )
     {
-        sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
-        // Only useful if size is returned by server before actual download.
-        curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
-                         sResultWithLimit.nMaxFileSize);
+        pfnWrite = CPLWriteFct;
+
+        sResultWithLimit.psResult = psResult;
+        sResultWithLimit.nMaxFileSize = 0;
+        const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
+                                                       "MAX_FILE_SIZE");
+        if( pszMaxFileSize != nullptr )
+        {
+            sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
+            // Only useful if size is returned by server before actual download.
+            curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+                             sResultWithLimit.nMaxFileSize);
+        }
+        pWriteArg = &sResultWithLimit;
     }
 
-    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &sResultWithLimit );
-    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
+    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, pWriteArg );
+    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, pfnWrite );
+
+    if( nullptr != pfnProgress)
+    {
+        CurlProcessData stProcessData = { pfnProgress, pProgressArg };
+        curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION, ProcessFunction);
+        curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA, &stProcessData);
+
+    #if LIBCURL_VERSION_NUM >= 0x072000
+        curl_easy_setopt(http_handle, CURLOPT_XFERINFOFUNCTION, NewProcessFunction);
+        curl_easy_setopt(http_handle, CURLOPT_XFERINFODATA, &stProcessData);
+    #endif
+        curl_easy_setopt(http_handle, CURLOPT_NOPROGRESS, 0L);
+    }
 
     szCurlErrBuf[0] = '\0';
 
@@ -788,7 +841,7 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 // has completed, and we must be careful not to set short lived strings
 // with curl_easy_setopt(), as long as we need to support curl < 7.17
 // see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
-// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS 
+// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS
 
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {

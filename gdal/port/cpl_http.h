@@ -33,6 +33,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_progress.h"
 #include "cpl_vsi.h"
 
 /**
@@ -86,8 +87,16 @@ typedef struct {
 
 } CPLHTTPResult;
 
+/*! @cond Doxygen_Suppress */
+typedef size_t (CPL_STDCALL *CPLHTTPWriteFunc)(void *pBuffer, size_t nSize, size_t nMemb, void *pWriteArg);
+/*! @endcond */
+
 int CPL_DLL   CPLHTTPEnabled( void );
-CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
+CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions,
+                                     GDALProgressFunc pfnProgress = nullptr,
+                                     void *pProgressArg = nullptr,
+                                     CPLHTTPWriteFunc pfnWrite = nullptr,
+                                     void *pWriteArg = nullptr );
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
@@ -131,7 +140,7 @@ bool CPLIsMachinePotentiallyGCEInstance();
 bool CPLIsMachineForSureGCEInstance();
 
 /** Manager of Google OAuth2 authentication.
- * 
+ *
  * This class handles different authentication methods and handles renewal
  * of access token.
  *
