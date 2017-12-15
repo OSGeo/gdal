@@ -79,17 +79,17 @@ class CPGDataset : public RawDataset
   CPLErr LoadStokesLine( int iLine, int bNativeOrder );
 
   public:
-                CPGDataset();
-    virtual ~CPGDataset();
+    CPGDataset();
+    ~CPGDataset() override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -168,10 +168,10 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
     friend class CPGDataset;
 
   public:
-                   SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
-    virtual ~SIRC_QSLCRasterBand() {}
+    SIRC_QSLCRasterBand( CPGDataset *, int, GDALDataType );
+    ~SIRC_QSLCRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 static const int M11 = 0;
@@ -204,12 +204,12 @@ class CPG_STOKESRasterBand : public GDALRasterBand
     int bNativeOrder;
 
   public:
-                   CPG_STOKESRasterBand( GDALDataset *poDS,
-                                         GDALDataType eType,
-                                         int bNativeOrder );
-    virtual ~CPG_STOKESRasterBand() {}
+    CPG_STOKESRasterBand( GDALDataset *poDS,
+                          GDALDataType eType,
+                          int bNativeOrder );
+    ~CPG_STOKESRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

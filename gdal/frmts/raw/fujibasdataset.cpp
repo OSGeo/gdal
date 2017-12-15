@@ -50,7 +50,7 @@ class FujiBASDataset : public RawDataset
                 FujiBASDataset();
                 ~FujiBASDataset();
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };

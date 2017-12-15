@@ -93,14 +93,14 @@ class EHdrDataset : public RawDataset
 
   public:
     EHdrDataset();
-    virtual ~EHdrDataset();
+    ~EHdrDataset() override;
 
-    virtual CPLErr GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
+    CPLErr GetGeoTransform( double *padfTransform ) override;
+    CPLErr SetGeoTransform( double *padfTransform ) override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection( const char * ) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char *pszFilename,
@@ -138,11 +138,11 @@ class EHdrRasterBand : public RawRasterBand
 
     int            minmaxmeanstddev;
 
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace,
-                              GSpacing nLineSpace,
-                              GDALRasterIOExtraArg *psExtraArg ) override;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      GSpacing nPixelSpace,
+                      GSpacing nLineSpace,
+                      GDALRasterIOExtraArg *psExtraArg ) override;
 
   public:
     EHdrRasterBand( GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
@@ -150,20 +150,20 @@ class EHdrRasterBand : public RawRasterBand
                     int nLineOffset,
                     GDALDataType eDataType, int bNativeOrder,
                     int nBits);
-    virtual ~EHdrRasterBand() {}
+    ~EHdrRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr ) override;
-    virtual CPLErr GetStatistics( int bApproxOK, int bForce,
-                                  double *pdfMin, double *pdfMax,
-                                  double *pdfMean, double *pdfStdDev ) override;
-    virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                  double dfMean, double dfStdDev ) override;
-    virtual CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetMinimum( int *pbSuccess = nullptr ) override;
+    double GetMaximum(int *pbSuccess = nullptr ) override;
+    CPLErr GetStatistics( int bApproxOK, int bForce,
+                          double *pdfMin, double *pdfMax,
+                          double *pdfMean, double *pdfStdDev ) override;
+    CPLErr SetStatistics( double dfMin, double dfMax,
+                          double dfMean, double dfStdDev ) override;
+    CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_EHDRDATASET_H_INCLUDED

@@ -73,19 +73,19 @@ class GTXDataset : public RawDataset
     double      adfGeoTransform[6];
 
   public:
-                GTXDataset() : fpImage(nullptr) {
-                      adfGeoTransform[0] = 0.0;
-                      adfGeoTransform[1] = 1.0;
-                      adfGeoTransform[2] = 0.0;
-                      adfGeoTransform[3] = 0.0;
-                      adfGeoTransform[4] = 0.0;
-                      adfGeoTransform[5] = 1.0;
-                }
-    virtual ~GTXDataset();
+    GTXDataset() : fpImage(nullptr) {
+        adfGeoTransform[0] = 0.0;
+        adfGeoTransform[1] = 1.0;
+        adfGeoTransform[2] = 0.0;
+        adfGeoTransform[3] = 0.0;
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = 1.0;
+    }
+    ~GTXDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -103,15 +103,14 @@ class GTXDataset : public RawDataset
 class GTXRasterBand : public RawRasterBand
 {
   public:
+    GTXRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
+                   vsi_l_offset nImgOffset, int nPixelOffset,
+                   int nLineOffset,
+                   GDALDataType eDataType, int bNativeOrder );
 
-                 GTXRasterBand( GDALDataset *poDS, int nBand, VSILFILE * fpRaw,
-                                 vsi_l_offset nImgOffset, int nPixelOffset,
-                                 int nLineOffset,
-                                 GDALDataType eDataType, int bNativeOrder );
+    ~GTXRasterBand() override;
 
-    virtual ~GTXRasterBand();
-
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 
