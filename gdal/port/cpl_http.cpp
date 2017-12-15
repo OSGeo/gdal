@@ -496,6 +496,10 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
 #ifndef HAVE_CURL
     (void) papszOptions;
     (void) pszURL;
+    (void) pfnProgress;
+    (void) pProgressArg;
+    (void) pfnWrite;
+    (void) pWriteArg;
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "GDAL/OGR not compiled with libcurl support, "
