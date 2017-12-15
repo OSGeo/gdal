@@ -31,11 +31,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) && !defined(_MSC_VER))
-#pragma GCC system_header
-#endif
-
-#include <json.h>
+#include "json.h"
 
 #undef json_object_object_foreachC
 #define json_object_object_foreachC(obj,iter) \
@@ -590,7 +586,7 @@ void CPLJSONObject::Add(const char *pszName, const CPLString& soValue)
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_string( soValue.c_str() );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -611,7 +607,7 @@ void CPLJSONObject::Add(const char *pszName, const char *pszValue)
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_string( pszValue );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -632,7 +628,7 @@ void CPLJSONObject::Add(const char *pszName, double dfValue)
     if(object.IsValid())
     {
         json_object *poVal = json_object_new_double( dfValue );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -653,7 +649,7 @@ void CPLJSONObject::Add(const char *pszName, int nValue)
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_int( nValue );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -674,7 +670,7 @@ void CPLJSONObject::Add(const char *pszName, long nValue)
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_int64( nValue );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -694,8 +690,8 @@ void CPLJSONObject::Add(const char *pszName, const CPLJSONArray &oValue)
     CPLJSONObject object = GetObjectByPath(pszName, &objectName[0]);
     if( object.IsValid() )
     {
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
-                                json_object_get( TO_JSONOBJ(oValue.m_poJsonObject) ) );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
+                                json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
     }
 }
 
@@ -714,8 +710,8 @@ void CPLJSONObject::Add(const char *pszName, const CPLJSONObject &oValue)
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if( object.IsValid() )
     {
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
-                                json_object_get( TO_JSONOBJ(oValue.m_poJsonObject) ) );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
+                                json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
     }
 }
 
@@ -735,7 +731,7 @@ void CPLJSONObject::Add(const char *pszName, bool bValue)
     if(object.IsValid())
     {
         json_object *poVal = json_object_new_boolean( bValue );
-        json_object_object_add( TO_JSONOBJ(object.m_poJsonObject), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
                                 poVal );
     }
 }
@@ -821,7 +817,7 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
     if( object.IsValid() )
     {
         json_object *poVal = nullptr;
-        if( json_object_object_get_ex( TO_JSONOBJ(object.m_poJsonObject),
+        if( json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
                                        objectName, &poVal ) )
         {
             if( poVal && json_object_get_type( poVal ) == json_type_array )
@@ -843,13 +839,13 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
 CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
 {
     if( nullptr == pszName )
-        return CPLJSONArray( "", nullptr );
+        return CPLJSONObject( "", nullptr );
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if(object.IsValid())
     {
         json_object* poVal = nullptr;
-        if(json_object_object_get_ex( TO_JSONOBJ(object.m_poJsonObject),
+        if(json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
                                       objectName, &poVal ) )
         {
             return CPLJSONObject( objectName, poVal );
@@ -872,7 +868,7 @@ void CPLJSONObject::Delete(const char *pszName)
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if(object.IsValid())
     {
-        json_object_object_del( TO_JSONOBJ(object.m_poJsonObject), objectName );
+        json_object_object_del( TO_JSONOBJ(object.GetInternalHandle()), objectName );
     }
 }
 
@@ -1064,7 +1060,7 @@ bool CPLJSONObject::GetBool(bool bDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_boolean*/ )
-        return json_object_get_boolean( TO_JSONOBJ(m_poJsonObject) );
+        return json_object_get_boolean( TO_JSONOBJ(m_poJsonObject) ) == 1;
     return bDefault;
 }
 
@@ -1080,7 +1076,7 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
     for( int i = 0; i < portionsCount - 1; ++i ) {
         // TODO: check array index in path - i.e. settings/catalog/root/id:1/name
         // if EQUALN(pathPortions[i+1], "id:", 3) -> getArray
-        if( json_object_object_get_ex( TO_JSONOBJ(object.m_poJsonObject),
+        if( json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
                                        pathPortions[i], &poVal ) )
         {
             object = CPLJSONObject( pathPortions[i], poVal );
