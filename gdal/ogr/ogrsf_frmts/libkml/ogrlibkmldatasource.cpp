@@ -78,7 +78,7 @@ static ElementPtr OGRLIBKMLParse(std::string oKml, std::string *posError)
     // issues reading gx: elements. So use ParseNS only when we have errors
     // with Parse. This is not completely satisfactory...
     ElementPtr element = kmldom::Parse(oKml, posError);
-    if( element == nullptr )
+    if( !element )
         element = kmldom::ParseNS(oKml, posError);
     return element;
 }
@@ -354,7 +354,7 @@ void OGRLIBKMLDataSource::WriteKmz()
             m_poKmlDocKmlRoot =
                 OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
 
-            if( m_poKmlDocKml != nullptr )
+            if( m_poKmlDocKml )
             {
                 AsKml( m_poKmlDocKmlRoot )->set_feature( m_poKmlDocKml );
             }
@@ -375,7 +375,7 @@ void OGRLIBKMLDataSource::WriteKmz()
     }
 
     /***** loop though the layers and write them *****/
-    for( int iLayer = 0; iLayer < nLayers && m_poKmlUpdate == nullptr; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers && !m_poKmlUpdate; iLayer++ )
     {
         ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer();
 
@@ -472,7 +472,7 @@ void OGRLIBKMLDataSource::WriteDir()
         {
             m_poKmlDocKmlRoot =
                 OGRLIBKMLCreateOGCKml22(m_poKmlFactory, m_papszOptions);
-            if( m_poKmlDocKml != nullptr )
+            if( m_poKmlDocKml )
                 AsKml( m_poKmlDocKmlRoot )->set_feature( m_poKmlDocKml );
 
             ParseDocumentOptions(
@@ -498,7 +498,7 @@ void OGRLIBKMLDataSource::WriteDir()
     }
 
     /***** loop though the layers and write them *****/
-    for( int iLayer = 0; iLayer < nLayers && m_poKmlUpdate == nullptr; iLayer++ )
+    for( int iLayer = 0; iLayer < nLayers && !m_poKmlUpdate; iLayer++ )
     {
         ContainerPtr poKmlContainer = papoLayers[iLayer]->GetKmlLayer();
 
@@ -1554,7 +1554,7 @@ void OGRLIBKMLDataSource::SetCommonOptions( ContainerPtr poKmlContainer,
 void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
                                                 DocumentPtr poKmlDocument )
 {
-    if( poKmlDocument != nullptr )
+    if( poKmlDocument )
     {
         const char* pszDocumentId =
             CSLFetchNameValueDef(m_papszOptions, "DOCUMENT_ID", "root_doc");
@@ -1646,9 +1646,9 @@ void OGRLIBKMLDataSource::ParseDocumentOptions( KmlPtr poKml,
                             osListStyleIconHref );
     }
 
-    if( poKml != nullptr )
+    if( poKml )
     {
-        if( m_poKmlUpdate != nullptr )
+        if( m_poKmlUpdate )
         {
             NetworkLinkControlPtr nlc = m_poKmlFactory->CreateNetworkLinkControl();
             poKml->set_networklinkcontrol( nlc );
@@ -2098,7 +2098,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 {
     ContainerPtr poKmlLayerContainer = nullptr;
 
-    if( m_poKmlDSContainer != nullptr )
+    if( m_poKmlDSContainer )
     {
         if( CPLFetchBool( papszOptions, "FOLDER", false ) )
             poKmlLayerContainer = m_poKmlFactory->CreateFolder();
@@ -2115,7 +2115,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
                   nullptr, poKmlLayerContainer, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
-    if( poKmlLayerContainer != nullptr )
+    if( poKmlLayerContainer )
         poKmlLayerContainer->set_name( pszLayerName );
     else if(  CPLFetchBool( papszOptions, "FOLDER", false ) )
     {
@@ -2145,7 +2145,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
 {
     DocumentPtr poKmlDocument = nullptr;
 
-    if( m_poKmlUpdate == nullptr )
+    if( !m_poKmlUpdate )
     {
         /***** add a network link to doc.kml *****/
         const char *pszUseDocKml =
@@ -2182,7 +2182,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
                   TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
-    if( m_poKmlUpdate == nullptr )
+    if( !m_poKmlUpdate )
     {
         poKmlDocument->set_name( pszLayerName );
     }
@@ -2363,7 +2363,7 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(
         poOgrLayer->SetListStyle(pszListStyleType, pszListStyleIconHref);
     }
 
-    if( poOgrLayer != nullptr && poOgrLayer->GetKmlLayer() != nullptr )
+    if( poOgrLayer != nullptr && poOgrLayer->GetKmlLayer() )
     {
         SetCommonOptions(poOgrLayer->GetKmlLayer(), papszOptions);
     }
@@ -2401,7 +2401,7 @@ OGRStyleTable *OGRLIBKMLDataSource::GetStyleTable()
 
 void OGRLIBKMLDataSource::SetStyleTable2Kml( OGRStyleTable * poStyleTable )
 {
-    if( m_poKmlDSContainer == nullptr )
+    if( !m_poKmlDSContainer )
         return;
 
     /***** delete all the styles *****/
@@ -2431,7 +2431,7 @@ void OGRLIBKMLDataSource::SetStyleTable2Kml( OGRStyleTable * poStyleTable )
 
 void OGRLIBKMLDataSource::SetStyleTable2Kmz( OGRStyleTable * poStyleTable )
 {
-    if( m_poKmlStyleKml != nullptr || poStyleTable != nullptr )
+    if( m_poKmlStyleKml || poStyleTable != nullptr )
     {
         /***** replace the style document with a new one *****/
 

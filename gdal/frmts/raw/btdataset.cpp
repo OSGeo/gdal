@@ -61,15 +61,15 @@ class BTDataset : public GDALPamDataset
     float        m_fVscale;
 
   public:
-             BTDataset();
-    virtual ~BTDataset();
+    BTDataset();
+    ~BTDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    const char *GetProjectionRef(void) override;
+    CPLErr SetProjection( const char * ) override;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
-    virtual void   FlushCache() override;
+    void FlushCache() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -90,15 +90,15 @@ class BTRasterBand : public GDALPamRasterBand
   public:
                    BTRasterBand( GDALDataset * poDS, VSILFILE * fp,
                                  GDALDataType eType );
-    virtual ~BTRasterBand() {}
+    ~BTRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual const char* GetUnitType() override;
-    virtual CPLErr SetUnitType(const char*) override;
-    virtual double GetNoDataValue( int* = nullptr ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
+    const char* GetUnitType() override;
+    CPLErr SetUnitType(const char*) override;
+    double GetNoDataValue( int* = nullptr ) override;
+    CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/
@@ -266,7 +266,7 @@ double BTRasterBand::GetNoDataValue( int* pbSuccess /*= NULL */ )
 
     return -32768;
 }
- 
+
 CPLErr BTRasterBand::SetNoDataValue( double dfNoDataValue )
 
 {

@@ -27,11 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define JSON_C_VER_013 (13 << 8)
+
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
-#include "libjson/json_object_private.h" // just for sizeof(struct json_object)
+
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
+#include <json_object_private.h> // just for sizeof(struct json_object)
+#endif
+
 #include "cpl_json_streaming_parser.h"
 #include <ogr_api.h>
 
@@ -42,7 +48,15 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
                                      OGRSpatialReference* poParentSRS );
 
 const size_t MAX_OBJECT_SIZE = 100 * 1024 * 1024;
+
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
 const size_t ESTIMATE_BASE_OBJECT_SIZE = sizeof(struct json_object);
+#elif JSON_C_VERSION_NUM == JSON_C_VER_013 // no way to get the size
+const size_t ESTIMATE_BASE_OBJECT_SIZE = 96;
+#elif JSON_C_VERSION_NUM > JSON_C_VER_013 // we have json_c_object_sizeof()
+const size_t ESTIMATE_BASE_OBJECT_SIZE = json_c_object_sizeof();
+#endif
+
 const size_t ESTIMATE_ARRAY_SIZE = ESTIMATE_BASE_OBJECT_SIZE +
                                    sizeof(struct array_list);
 const size_t ESTIMATE_ARRAY_ELT_SIZE = sizeof(void*);

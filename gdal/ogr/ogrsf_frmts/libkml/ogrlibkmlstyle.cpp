@@ -310,7 +310,7 @@ StylePtr addstylestring2kml(
                 if( !nullcheck &&
                     poStyleLabel->GetRGBFromString( pszcolor, nR, nG, nB, nA ) )
                 {
-                    if( poKmlLabelStyle == nullptr )
+                    if( !poKmlLabelStyle )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
                     poKmlLabelStyle->set_color(
                         Color32 ( static_cast<GByte>(nA),
@@ -325,7 +325,7 @@ StylePtr addstylestring2kml(
                 if( !nullcheck )
                 {
                     dfScale /= 100.0;
-                    if( poKmlLabelStyle == nullptr )
+                    if( !poKmlLabelStyle )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
                     poKmlLabelStyle->set_scale( dfScale );
                 }
@@ -372,7 +372,7 @@ StylePtr addstylestring2kml(
                 const char * const pszText =
                     poStyleLabel->TextString( nullcheck );
 
-                if( !nullcheck && poKmlFeature != nullptr )
+                if( !nullcheck && poKmlFeature )
                 {
                         poKmlFeature->set_name( pszText );
                 }
@@ -391,7 +391,7 @@ StylePtr addstylestring2kml(
 
     if( poKmlLineStyle || poKmlPolyStyle || poKmlIconStyle || poKmlLabelStyle )
     {
-        if( poKmlStyle == nullptr )
+        if( !poKmlStyle )
             poKmlStyle = poKmlFactory->CreateStyle();
 
         if( poKmlLineStyle )
@@ -1038,7 +1038,7 @@ void ParseStyles(
         char *pszStyleMapId = CPLStrdup( poKmlStyle->get_id().c_str() );
         poKmlStyle =
             StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
-        if( poKmlStyle == nullptr )
+        if( !poKmlStyle )
         {
             CPLFree(pszStyleMapId);
             continue;

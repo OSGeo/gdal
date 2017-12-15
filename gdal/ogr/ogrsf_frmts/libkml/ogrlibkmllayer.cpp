@@ -230,7 +230,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer( const char *pszLayerName,
         }
 
         /***** the schema is somewhere else *****/
-        if( m_poKmlSchema == nullptr )
+        if( !m_poKmlSchema )
         {
             /***** try to find the correct schema *****/
             bool bHasHeading = false;
@@ -406,7 +406,7 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
 {
     OGRFeature *poOgrFeature = nullptr;
 
-    if( m_poKmlLayer == nullptr )
+    if( !m_poKmlLayer )
         return nullptr;
 
     /***** loop over the kml features to find the next placemark *****/
@@ -481,7 +481,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
         feat2kml( m_poOgrDS, this, poOgrFeat, m_poOgrDS->GetKmlFactory(),
                   m_bUseSimpleField );
 
-    if( m_poKmlLayer != nullptr )
+    if( m_poKmlLayer )
     {
         m_poKmlLayer->add_feature( poKmlFeature );
     }
@@ -502,7 +502,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
     }
 
     /***** update the layer class count of features  *****/
-    if( m_poKmlLayer != nullptr )
+    if( m_poKmlLayer )
     {
         nFeatures++;
 
@@ -560,7 +560,7 @@ OGRErr OGRLIBKMLLayer::ICreateFeature( OGRFeature * poOgrFeat )
 
 OGRErr OGRLIBKMLLayer::ISetFeature( OGRFeature * poOgrFeat )
 {
-    if( !bUpdate || m_poKmlUpdate == nullptr )
+    if( !bUpdate || !m_poKmlUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
     if( poOgrFeat->GetFID() == OGRNullFID )
         return OGRERR_FAILURE;
@@ -599,7 +599,7 @@ OGRErr OGRLIBKMLLayer::ISetFeature( OGRFeature * poOgrFeat )
 
 OGRErr OGRLIBKMLLayer::DeleteFeature( GIntBig nFIDIn )
 {
-    if( !bUpdate || m_poKmlUpdate == nullptr )
+    if( !bUpdate || !m_poKmlUpdate )
         return OGRERR_UNSUPPORTED_OPERATION;
 
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory();
@@ -638,7 +638,7 @@ GIntBig OGRLIBKMLLayer::GetFeatureCount( int bForce )
         return static_cast<int>(OGRLayer::GetFeatureCount( bForce ));
     }
 
-    if( m_poKmlLayer == nullptr )
+    if( !m_poKmlLayer )
       return 0;
 
     int count = 0;
@@ -685,7 +685,7 @@ OGRErr OGRLIBKMLLayer::GetExtent( OGREnvelope * psExtent, int bForce )
 {
     Bbox oKmlBbox;
 
-    if( m_poKmlLayer != nullptr &&
+    if( m_poKmlLayer &&
         kmlengine::GetFeatureBounds( AsFeature( m_poKmlLayer ), &oKmlBbox ) )
     {
         psExtent->MinX = oKmlBbox.get_west();
@@ -722,9 +722,9 @@ OGRErr OGRLIBKMLLayer::CreateField(
         SimpleFieldPtr poKmlSimpleField = nullptr;
 
         if( (poKmlSimpleField =
-                 FieldDef2kml( poField, m_poOgrDS->GetKmlFactory() )) != nullptr )
+                 FieldDef2kml( poField, m_poOgrDS->GetKmlFactory() )) )
         {
-            if( m_poKmlSchema == nullptr )
+            if( !m_poKmlSchema )
             {
                 /***** Create a new schema *****/
                 KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory();
@@ -792,7 +792,7 @@ OGRStyleTable *OGRLIBKMLLayer::GetStyleTable()
 
 void OGRLIBKMLLayer::SetStyleTableDirectly( OGRStyleTable * poStyleTable )
 {
-    if( !bUpdate || m_poKmlLayer == nullptr )
+    if( !bUpdate || !m_poKmlLayer )
         return;
 
     KmlFactory *poKmlFactory = m_poOgrDS->GetKmlFactory();
@@ -837,7 +837,7 @@ void OGRLIBKMLLayer::SetStyleTableDirectly( OGRStyleTable * poStyleTable )
 
 void OGRLIBKMLLayer::SetStyleTable( OGRStyleTable * poStyleTable )
 {
-    if( !bUpdate || m_poKmlLayer == nullptr )
+    if( !bUpdate || !m_poKmlLayer )
         return;
 
     if( poStyleTable )

@@ -85,12 +85,12 @@ class DIPExDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
   public:
-                 DIPExDataset();
-    virtual ~DIPExDataset();
+    DIPExDataset();
+    ~DIPExDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef( void ) override;
+    const char *GetProjectionRef( void ) override;
     static GDALDataset *Open( GDALOpenInfo * );
 };
 

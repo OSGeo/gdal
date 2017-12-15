@@ -43,9 +43,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRGeometryH hGeom = NULL;
+    OGRGeometryH hGeom = nullptr;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGR_G_CreateFromWkb( const_cast<unsigned char*>(buf), NULL, &hGeom,
+    OGR_G_CreateFromWkb( const_cast<unsigned char*>(buf), nullptr, &hGeom,
                          static_cast<int>(len) );
     CPLPopErrorHandler();
     OGR_G_DestroyGeometry(hGeom);

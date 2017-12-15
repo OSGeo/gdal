@@ -830,7 +830,7 @@ void field2kml(
         }
         else if( poKmlData )
         {
-            if( poKmlExtendedData == nullptr )
+            if( !poKmlExtendedData )
                 poKmlExtendedData = poKmlFactory->CreateExtendedData();
             poKmlExtendedData->add_data( poKmlData );
         }
@@ -842,7 +842,7 @@ void field2kml(
         poKmlExtendedData = poKmlFactory->CreateExtendedData();
         poKmlExtendedData->add_schemadata( poKmlSchemaData );
     }
-    if( poKmlExtendedData != nullptr )
+    if( poKmlExtendedData )
     {
         poKmlFeature->set_extendeddata( poKmlExtendedData );
     }
@@ -1204,7 +1204,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
             // Probably a libkml bug: AsTimeStamp should really return not NULL
             // on a gx:TimeStamp.
             TimeStampPtr poKmlTimeStamp = AsTimeStamp( poKmlTimePrimitive );
-            if( poKmlTimeStamp == nullptr )
+            if( !poKmlTimeStamp )
                 poKmlTimeStamp = AsGxTimeStamp( poKmlTimePrimitive );
 
             if( poKmlTimeStamp && poKmlTimeStamp->has_when() )
@@ -1221,7 +1221,7 @@ void kml2field( OGRFeature * poOgrFeat, FeaturePtr poKmlFeature )
             // Probably a libkml bug: AsTimeSpan should really return not NULL
             // on a gx:TimeSpan.
             TimeSpanPtr poKmlTimeSpan = AsTimeSpan( poKmlTimePrimitive );
-            if( poKmlTimeSpan == nullptr )
+            if( !poKmlTimeSpan )
                 poKmlTimeSpan = AsGxTimeSpan( poKmlTimePrimitive );
 
             /***** begin *****/

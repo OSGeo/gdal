@@ -231,25 +231,17 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     VSIFSeekL(poDS->fp,54,SEEK_SET);
     VSIFReadL(&(poDS->nEndianness),2,1,poDS->fp);
 
-    const bool bSwap =
-#if defined(CPL_LSB)
-    false
-#else
-    true
-#endif
-        ;
-
     VSIFSeekL(poDS->fp,8,SEEK_SET);
     VSIFReadL(&poDS->nVersionMinor,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMinor);
+    CPL_LSBPTR16(&poDS->nVersionMinor);
     VSIFReadL(&poDS->nVersionMajor,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMajor);
+    CPL_LSBPTR16(&poDS->nVersionMajor);
     VSIFReadL(&poDS->nLength,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nLength);
+    CPL_LSBPTR32(&poDS->nLength);
 
     unsigned short nCreatorLength = 0;
     VSIFReadL(&nCreatorLength,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&nCreatorLength);
+    CPL_LSBPTR16(&nCreatorLength);
     /* Hack for now... I should properly load the date metadata, for
      * example
      */
@@ -266,18 +258,18 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     else*/
     {
         VSIFReadL(&poDS->nBPP,4,1,poDS->fp);
-        if (bSwap) CPL_SWAP32PTR(&poDS->nBPP);
+        CPL_LSBPTR32(&poDS->nBPP);
     }
     VSIFReadL(&poDS->nFrameCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nFrameCnt);
+    CPL_LSBPTR32(&poDS->nFrameCnt);
     VSIFReadL(&poDS->nImageType,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nImageType);
+    CPL_LSBPTR32(&poDS->nImageType);
     VSIFReadL(&poDS->nRowMajor,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nRowMajor);
+    CPL_LSBPTR32(&poDS->nRowMajor);
     VSIFReadL(&poDS->nRgCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nRgCnt);
+    CPL_LSBPTR32(&poDS->nRgCnt);
     VSIFReadL(&poDS->nAzCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nAzCnt);
+    CPL_LSBPTR32(&poDS->nAzCnt);
 
     /* We now have enough information to determine the number format */
     switch (poDS->nImageType) {
