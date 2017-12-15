@@ -44,6 +44,7 @@
 #ifdef HAVE_GEOS
 #include "geos_c.h"
 #endif
+#include "ogrgeojsonreader.h"
 
 #include <climits>
 #include <cmath>
@@ -5692,4 +5693,48 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
     return poRet;
+}
+
+/************************************************************************/
+/*                   createFromGeoJson( const char* )                   */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param pszJsonString The GeoJSON fragment for the geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
+{
+    CPLJSONDocument oDocument;
+    if( !oDocument.Load(reinterpret_cast<const GByte*>(pszJsonString), -1) )
+    {
+        return NULL;
+    }
+
+    return createFromGeoJson( oDocument.GetRoot() );
+}
+
+/************************************************************************/
+/*              createFromGeoJson( const CPLJSONObject& )               */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param oJsonObject The JSONObject class describes the GeoJSON geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const CPLJSONObject &oJsonObject )
+{
+    if( !oJsonObject.IsValid() )
+    {
+        return NULL;
+    }
+
+    // TODO: Move from GeoJSON driver functions create geometry here, and replace
+    // json-c specific json_object to CPLJSONObject
+    return OGRGeoJSONReadGeometry(static_cast<json_object*>(
+                                      oJsonObject.GetInternalHandle()));
 }
