@@ -1414,11 +1414,11 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
     if( !pszBuffer )
         return 0;
 
-    const int double_buffer_size = 64;
-    char szTemp[double_buffer_size] = {};
+    const int knDoubleBufferSize = 64;
+    char szTemp[knDoubleBufferSize] = {};
 
-    CPLsnprintf(szTemp, double_buffer_size, pszFormat, dfValue);
-    szTemp[double_buffer_size - 1] = '\0';
+    CPLsnprintf(szTemp, knDoubleBufferSize, pszFormat, dfValue);
+    szTemp[knDoubleBufferSize - 1] = '\0';
 
     for( int i = 0; szTemp[i] != '\0'; i++ )
     {
