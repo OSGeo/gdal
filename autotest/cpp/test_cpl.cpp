@@ -1256,9 +1256,9 @@ namespace tut
         int year, month, day, hour, min, sec, tz, weekday;
         ensure( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
 
-        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr) );
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr), TRUE );
 
-        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
         ensure_equals( year, 2017 );
         ensure_equals( month, 1 );
         ensure_equals( day, 15 );
@@ -1268,7 +1268,7 @@ namespace tut
         ensure_equals( tz, 101 );
         ensure_equals( weekday, 4 );
 
-        ensure( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
         ensure_equals( year, 2017 );
         ensure_equals( month, 1 );
         ensure_equals( day, 15 );
@@ -1279,7 +1279,7 @@ namespace tut
         ensure_equals( weekday, 4 );
 
         // Without day of week, second and timezone
-        ensure( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
         ensure_equals( year, 2017 );
         ensure_equals( month, 1 );
         ensure_equals( day, 15 );
@@ -1289,7 +1289,7 @@ namespace tut
         ensure_equals( tz, 0 );
         ensure_equals( weekday, 0 );
 
-        ensure( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+        ensure_equals( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
         ensure_equals( weekday, 0 );
 
         ensure( !CPLParseRFC822DateTime("Sun, 01 Jan 2017 12", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
