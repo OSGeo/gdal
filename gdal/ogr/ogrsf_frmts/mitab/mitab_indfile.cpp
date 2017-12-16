@@ -1249,7 +1249,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                         m_nCurIndexEntry++;
 
                     int nChildNodePtr = ReadIndexEntry(m_nCurIndexEntry, nullptr);
-                    if (nChildNodePtr == 0)
+                    if (nChildNodePtr <= 0)
                     {
                         /* Invalid child node??? */
                         nRetValue = 0;
