@@ -604,7 +604,7 @@ namespace tut
 
         ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
 
-        ensure( oPoly.IsPointOnSurface(&oPoint) );
+        ensure_equals( oPoly.IsPointOnSurface(&oPoint), TRUE );
 
         oPoint.setX(5);
         oPoint.setY(5);
