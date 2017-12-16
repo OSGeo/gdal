@@ -101,7 +101,7 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
     VSICachedFile( VSIVirtualHandle *poBaseHandle,
                    size_t nChunkSize,
                    size_t nCacheSize );
-    virtual ~VSICachedFile() { Close(); }
+    ~VSICachedFile() override { Close(); }
 
     void          FlushLRU();
     int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
@@ -125,20 +125,20 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
 
     bool           bEOF;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual int          ReadMultiRange( int nRanges, void ** ppData,
-                                         const vsi_l_offset* panOffsets,
-                                         const size_t* panSizes ) override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize,
+                 size_t nMemb ) override;
+    int ReadMultiRange( int nRanges, void ** ppData,
+                        const vsi_l_offset* panOffsets,
+                        const size_t* panSizes ) override;
 
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
-    virtual void     *GetNativeFileDescriptor() override
+    size_t Write( const void *pBuffer, size_t nSize,
+                  size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
+    void *GetNativeFileDescriptor() override
         { return poBase->GetNativeFileDescriptor(); }
 };
 
