@@ -51,6 +51,14 @@ DXF_TRANSLATE_ESCAPE_SEQUENCES to FALSE.
 polylines (those with their vertices' budge attributes set) will be tessellated.
 Single-vertex polylines are translated to POINT.
 
+<li> MLINE: <p>
+<ul>
+<li>(GDAL &gt;= 2.3.x) Translated as a MULTILINESTRING. Only the geometry is
+reconstructed; styling applied to individual line elements within the MLINE is
+ignored. Fill colors and start/end caps are also omitted.
+<li>(GDAL &lt;= 2.2.x) No support.
+</ul>
+
 <li> CIRCLE, ELLIPSE, ARC, SPLINE, (GDAL &gt;= 2.3.x) HELIX: Translated as a
 LINESTRING, tessellating the curve into line segments.
 

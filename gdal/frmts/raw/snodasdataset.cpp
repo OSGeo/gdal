@@ -56,13 +56,13 @@ class SNODASDataset : public RawDataset
     friend class SNODASRasterBand;
 
   public:
-                    SNODASDataset();
-    virtual ~SNODASDataset();
+    SNODASDataset();
+    ~SNODASDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -77,12 +77,12 @@ class SNODASDataset : public RawDataset
 class SNODASRasterBand : public RawRasterBand
 {
   public:
-            SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
-    virtual ~SNODASRasterBand() {}
+    SNODASRasterBand( VSILFILE* fpRaw, int nXSize, int nYSize );
+    ~SNODASRasterBand() override {}
 
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
-    virtual double GetMaximum(int *pbSuccess = nullptr ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetMinimum( int *pbSuccess = nullptr ) override;
+    double GetMaximum( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/

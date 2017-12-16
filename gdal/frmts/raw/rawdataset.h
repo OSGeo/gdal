@@ -50,12 +50,12 @@ class CPL_DLL RawDataset : public GDALPamDataset
     friend class RawRasterBand;
 
   protected:
-    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
-                                   void *, int, int, GDALDataType,
-                                   int, int *,
-                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                   GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      int, int *,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      GSpacing nBandSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
   public:
                  RawDataset();
          virtual ~RawDataset() = 0;
@@ -111,10 +111,10 @@ protected:
     int         IsSignificantNumberOfLinesLoaded( int nLineOff, int nLines );
     void        Initialize();
 
-    virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
 
     int         CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,
                                GDALDataType eBufType);
@@ -135,25 +135,23 @@ public:
 
     virtual ~RawRasterBand() /* = 0 */ ;
 
-    // should CPL_OVERRIDE RasterIO eventually.
+    CPLErr  IReadBlock( int, int, void * ) override;
+    CPLErr  IWriteBlock( int, int, void * ) override;
 
-    virtual CPLErr  IReadBlock( int, int, void * ) CPL_OVERRIDE;
-    virtual CPLErr  IWriteBlock( int, int, void * ) CPL_OVERRIDE;
+    GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorTable( GDALColorTable * ) override;
+    CPLErr SetColorInterpretation( GDALColorInterp ) override;
 
-    virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
-    virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
-    virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_OVERRIDE;
+    char **GetCategoryNames() override;
+    CPLErr SetCategoryNames( char ** ) override;
 
-    virtual char **GetCategoryNames() CPL_OVERRIDE;
-    virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
+    CPLErr FlushCache() override;
 
-    virtual CPLErr  FlushCache() CPL_OVERRIDE;
-
-    virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
-                                               int *pnPixelSpace,
-                                               GIntBig *pnLineSpace,
-                                               char **papszOptions ) CPL_OVERRIDE;
+    CPLVirtualMem *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                      int *pnPixelSpace,
+                                      GIntBig *pnLineSpace,
+                                      char **papszOptions ) override;
 
     CPLErr          AccessLine( int iLine );
 

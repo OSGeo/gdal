@@ -146,15 +146,15 @@ class IDADataset : public RawDataset
     void        ReadColorTable();
 
   public:
-                IDADataset();
-    virtual ~IDADataset();
+    IDADataset();
+    ~IDADataset() override;
 
-    virtual void FlushCache() override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
+    void FlushCache() override;
+    const char *GetProjectionRef(void) override;
+    CPLErr SetProjection( const char * ) override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -177,17 +177,17 @@ class IDARasterBand : public RawRasterBand
     GDALColorTable       *poColorTable;
 
   public:
-                 IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
-    virtual     ~IDARasterBand();
+    IDARasterBand( IDADataset *poDSIn, VSILFILE *fpRaw, int nXSize );
+    ~IDARasterBand() override;
 
-    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual double GetOffset( int *pbSuccess = nullptr ) override;
-    virtual CPLErr SetOffset( double dfNewValue ) override;
-    virtual double GetScale( int *pbSuccess = nullptr ) override;
-    virtual CPLErr SetScale( double dfNewValue ) override;
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    GDALRasterAttributeTable *GetDefaultRAT() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    double GetOffset( int *pbSuccess = nullptr ) override;
+    CPLErr SetOffset( double dfNewValue ) override;
+    double GetScale( int *pbSuccess = nullptr ) override;
+    CPLErr SetScale( double dfNewValue ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/

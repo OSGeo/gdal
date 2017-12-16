@@ -85,11 +85,11 @@ class ISCEDataset : public RawDataset
     enum Scheme eScheme;
 
   public:
-                ISCEDataset();
-    virtual ~ISCEDataset();
+    ISCEDataset();
+    ~ISCEDataset() override;
 
-    virtual void        FlushCache() override;
-    virtual char      **GetFileList() override;
+    void FlushCache() override;
+    char **GetFileList() override;
 
     static int          Identify( GDALOpenInfo *poOpenInfo );
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );

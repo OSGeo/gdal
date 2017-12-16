@@ -205,12 +205,12 @@ class GenBinDataset : public RawDataset
 
   public:
     GenBinDataset();
-    virtual ~GenBinDataset();
+    ~GenBinDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef(void) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -227,9 +227,9 @@ class GenBinBitRasterBand : public GDALPamRasterBand
 
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
-    virtual ~GenBinBitRasterBand() {}
+    ~GenBinBitRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

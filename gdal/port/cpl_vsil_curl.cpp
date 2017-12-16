@@ -323,30 +323,28 @@ protected:
 
 public:
     VSICurlFilesystemHandler();
-    virtual ~VSICurlFilesystemHandler();
+    ~VSICurlFilesystemHandler() override;
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
-    virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Rename( const char *oldpath, const char *newpath )
-        override;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-    virtual int      Rmdir( const char *pszDirname ) override;
-    virtual char   **ReadDir( const char *pszDirname ) override
-                      { return ReadDirEx(pszDirname, 0); }
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles )
-        override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    char **ReadDir( const char *pszDirname ) override
+        { return ReadDirEx(pszDirname, 0); }
+    char **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
-    virtual int      HasOptimizedReadMultiRange(const char* /* pszPath */)
+    int HasOptimizedReadMultiRange( const char* /* pszPath */ )
         override { return true; }
 
-            char   **ReadDirInternal( const char *pszDirname, int nMaxFiles,
-                                      bool* pbGotFileList );
-            void     InvalidateDirContent( const char *pszDirname );
+    char **ReadDirInternal( const char *pszDirname, int nMaxFiles,
+                            bool* pbGotFileList );
+    void InvalidateDirContent( const char *pszDirname );
 
     virtual CPLString GetFSPrefix() { return "/vsicurl/"; }
     virtual bool      AllowCachedDataFor(const char* pszFilename);
@@ -452,23 +450,20 @@ class VSICurlHandle : public VSIVirtualHandle
     VSICurlHandle( VSICurlFilesystemHandler* poFS,
                    const char* pszFilename,
                    const char* pszURLIn = nullptr );
-    virtual ~VSICurlHandle();
+    ~VSICurlHandle() override;
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t       Read( void *pBuffer, size_t nSize, size_t nMemb )
-        override;
-    virtual int          ReadMultiRange( int nRanges, void ** ppData,
-                                         const vsi_l_offset* panOffsets,
-                                         const size_t* panSizes ) override;
-    virtual size_t       Write( const void *pBuffer, size_t nSize,
-                                size_t nMemb ) override;
-    virtual int          Eof() override;
-    virtual int          Flush() override;
-    virtual int          Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int ReadMultiRange( int nRanges, void ** ppData,
+                        const vsi_l_offset* panOffsets,
+                        const size_t* panSizes ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 
-    bool                 IsKnownFileSize() const
-        { return bHasComputedFileSize; }
+    bool IsKnownFileSize() const { return bHasComputedFileSize; }
     vsi_l_offset         GetFileSize() { return GetFileSize(false); }
     vsi_l_offset         GetFileSize( bool bSetError );
     bool                 Exists( bool bSetError );
@@ -4517,26 +4512,26 @@ char** VSICurlFilesystemHandler::ReadDirEx( const char *pszDirname,
 class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 {
   protected:
-        virtual char** GetFileList( const char *pszFilename,
-                                    int nMaxFiles,
-                                    bool* pbGotFileList ) override;
+    char** GetFileList( const char *pszFilename,
+                        int nMaxFiles,
+                        bool* pbGotFileList ) override;
 
-        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
-                const char* pszURI, bool bAllowNoObject) = 0;
+    virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
+            const char* pszURI, bool bAllowNoObject) = 0;
 
-    public:
-        virtual int      Unlink( const char *pszFilename ) override;
-        virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-        virtual int      Rmdir( const char *pszDirname ) override;
-        virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                               int nFlags ) override;
+  public:
+    int Unlink( const char *pszFilename ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 
-        virtual int      DeleteObject( const char *pszFilename );
+    virtual int      DeleteObject( const char *pszFilename );
 
-        virtual const char* GetDebugKey() const = 0;
+    virtual const char* GetDebugKey() const = 0;
 
-        virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
-        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
+    virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper*) {}
+    virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * ) {}
 };
 
 /************************************************************************/
@@ -4547,29 +4542,31 @@ class VSIS3FSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
-protected:
-        virtual VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
-        virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+  protected:
+    VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
+    CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
-        virtual const char* GetDebugKey() const override { return "S3"; }
+    const char* GetDebugKey() const override { return "S3"; }
 
-        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
-                const char* pszURI, bool bAllowNoObject) override;
+    IVSIS3LikeHandleHelper* CreateHandleHelper(
+    const char* pszURI, bool bAllowNoObject) override;
 
-        virtual CPLString GetFSPrefix() override { return "/vsis3/"; }
+    CPLString GetFSPrefix() override { return "/vsis3/"; }
 
-        virtual void        ClearCache() override;
+    void ClearCache() override;
 
-public:
-        VSIS3FSHandler() {}
-        virtual ~VSIS3FSHandler();
+  public:
+    VSIS3FSHandler() {}
+    ~VSIS3FSHandler() override;
 
-        virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                        const char *pszAccess,
-                                        bool bSetError ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
 
-        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poS3HandleHelper ) override;
-        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poS3HandleHelper ) override;
+    void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poS3HandleHelper )
+        override;
+    void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poS3HandleHelper )
+        override;
 };
 
 /************************************************************************/
@@ -4578,27 +4575,26 @@ public:
 
 class IVSIS3LikeHandle:  public VSICurlHandle
 {
-protected:
-        virtual bool UseLimitRangeGetInsteadOfHead() override { return true; }
-        virtual bool IsDirectoryFromExists( const char* pszVerb,
-                                            int response_code ) override
+  protected:
+    bool UseLimitRangeGetInsteadOfHead() override { return true; }
+    bool IsDirectoryFromExists( const char* pszVerb,
+                                int response_code ) override
         {
             // A bit dirty, but on S3, a GET on a existing directory returns a 416 
             return response_code == 416 && EQUAL(pszVerb, "GET") &&
                    CPLString(m_pszURL).back() == '/';
         }
-        virtual void ProcessGetFileSizeResult( const char* pszContent )
-            override
+    void ProcessGetFileSizeResult( const char* pszContent ) override
         {
             bIsDirectory = strstr(pszContent, "ListBucketResult") != nullptr;
         }
 
-    public:
-                IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
-                   const char* pszFilename,
-                   const char* pszURLIn = nullptr ) :
-                   VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
-        virtual ~IVSIS3LikeHandle() {}
+  public:
+    IVSIS3LikeHandle( VSICurlFilesystemHandler* poFSIn,
+                      const char* pszFilename,
+                      const char* pszURLIn = nullptr ) :
+        VSICurlHandle(poFSIn, pszFilename, pszURLIn) {}
+    ~IVSIS3LikeHandle() override {}
 };
 
 /************************************************************************/
@@ -4610,17 +4606,18 @@ class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
     VSIS3HandleHelper* m_poS3HandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                    const struct curl_slist* psExistingHeaders ) override;
-        virtual bool CanRestartOnError( const char*, const char*, bool ) override;
-        virtual bool AllowAutomaticRedirection() override
-            { return m_poS3HandleHelper->AllowAutomaticRedirection(); }
+    struct curl_slist* GetCurlHeaders(
+        const CPLString& osVerb,
+        const struct curl_slist* psExistingHeaders ) override;
+    bool CanRestartOnError( const char*, const char*, bool ) override;
+    bool AllowAutomaticRedirection() override
+        { return m_poS3HandleHelper->AllowAutomaticRedirection(); }
 
-    public:
-        VSIS3Handle( VSIS3FSHandler* poFS,
-                     const char* pszFilename,
-                     VSIS3HandleHelper* poS3HandleHelper );
-        virtual ~VSIS3Handle();
+  public:
+    VSIS3Handle( VSIS3FSHandler* poFS,
+                 const char* pszFilename,
+                 VSIS3HandleHelper* poS3HandleHelper );
+    ~VSIS3Handle() override;
 };
 
 /************************************************************************/
@@ -4673,22 +4670,20 @@ class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
     void                InvalidateParentDirectory();
 
     public:
-        VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
-                          const char* pszFilename,
-                          IVSIS3LikeHandleHelper* poS3HandleHelper,
-                          bool bUseChunked );
-        virtual ~VSIS3WriteHandle();
+      VSIS3WriteHandle( IVSIS3LikeFSHandler* poFS,
+                        const char* pszFilename,
+                        IVSIS3LikeHandleHelper* poS3HandleHelper,
+                        bool bUseChunked );
+      ~VSIS3WriteHandle() override;
 
-        virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-        virtual vsi_l_offset Tell() override;
-        virtual size_t    Read( void *pBuffer, size_t nSize,
-                                size_t nMemb ) override;
-        virtual size_t    Write( const void *pBuffer, size_t nSize,
-                                 size_t nMemb ) override;
-        virtual int       Eof() override;
-        virtual int       Close() override;
+      int Seek( vsi_l_offset nOffset, int nWhence ) override;
+      vsi_l_offset Tell() override;
+      size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+      size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+      int Eof() override;
+      int Close() override;
 
-        bool              IsOK() { return m_bUseChunked || m_pabyBuffer != nullptr; }
+      bool IsOK() { return m_bUseChunked || m_pabyBuffer != nullptr; }
 };
 
 /************************************************************************/
@@ -6154,25 +6149,25 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg,
 
 class VSIGSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 {
-protected:
-        virtual VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
-        virtual const char* GetDebugKey() const override { return "GS"; }
+  protected:
+    VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
+    const char* GetDebugKey() const override { return "GS"; }
 
-        virtual CPLString GetFSPrefix() override { return "/vsigs/"; }
-        virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+    CPLString GetFSPrefix() override { return "/vsigs/"; }
+    CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
-        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
-                const char* pszURI, bool bAllowNoObject) override;
+    IVSIS3LikeHandleHelper* CreateHandleHelper(
+        const char* pszURI, bool bAllowNoObject) override;
 
-        virtual void        ClearCache() override;
+    void ClearCache() override;
 
-public:
-        VSIGSFSHandler() {}
-       ~VSIGSFSHandler();
+  public:
+    VSIGSFSHandler() {}
+    ~VSIGSFSHandler() override;
 
-        virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                        const char *pszAccess,
-                                        bool bSetError ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
 };
 
 /************************************************************************/
@@ -6184,13 +6179,13 @@ class VSIGSHandle CPL_FINAL : public IVSIS3LikeHandle
     VSIGSHandleHelper* m_poHandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                    const struct curl_slist* psExistingHeaders ) override;
+    struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
+        const struct curl_slist* psExistingHeaders ) override;
 
-    public:
-        VSIGSHandle( VSIGSFSHandler* poFS, const char* pszFilename,
-                     VSIGSHandleHelper* poHandleHelper);
-        virtual ~VSIGSHandle();
+  public:
+    VSIGSHandle( VSIGSFSHandler* poFS, const char* pszFilename,
+                 VSIGSHandleHelper* poHandleHelper);
+    ~VSIGSHandle() override;
 };
 
 /************************************************************************/
@@ -6324,38 +6319,38 @@ struct curl_slist* VSIGSHandle::GetCurlHeaders( const CPLString& osVerb,
 
 class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 {
-protected:
-        virtual VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
-        virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+  protected:
+    VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
+    CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
-        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
-                const char* pszURI, bool bAllowNoObject) override;
+    IVSIS3LikeHandleHelper* CreateHandleHelper(
+        const char* pszURI, bool bAllowNoObject) override;
 
-        virtual char** GetFileList(const char *pszFilename,
-                                int nMaxFiles,
-                                bool* pbGotFileList) override;
+    char** GetFileList( const char *pszFilename,
+                        int nMaxFiles,
+                        bool* pbGotFileList ) override;
 
-        void    InvalidateRecursive( const CPLString& osDirnameIn );
+    void InvalidateRecursive( const CPLString& osDirnameIn );
 
-public:
-        VSIAzureFSHandler() {}
-       ~VSIAzureFSHandler();
+  public:
+    VSIAzureFSHandler() {}
+    ~VSIAzureFSHandler() override;
 
-        virtual CPLString GetFSPrefix() override { return "/vsiaz/"; }
-        virtual const char* GetDebugKey() const override { return "AZURE"; }
+    CPLString GetFSPrefix() override { return "/vsiaz/"; }
+    const char* GetDebugKey() const override { return "AZURE"; }
 
-        virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                        const char *pszAccess,
-                                        bool bSetError ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
 
-        virtual int      Unlink( const char *pszFilename ) override;
-        virtual int      Mkdir( const char *, long  ) override;
-        virtual int      Rmdir( const char * ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Mkdir( const char *, long  ) override;
+    int Rmdir( const char * ) override;
 
-        char** GetFileList(const char *pszFilename,
-                           int nMaxFiles,
-                           bool bCacheResults,
-                           bool* pbGotFileList);
+    char** GetFileList( const char *pszFilename,
+                        int nMaxFiles,
+                        bool bCacheResults,
+                        bool* pbGotFileList );
 };
 
 /************************************************************************/

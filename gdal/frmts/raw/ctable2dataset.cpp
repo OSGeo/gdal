@@ -48,13 +48,13 @@ class CTable2Dataset : public RawDataset
     double      adfGeoTransform[6];
 
   public:
-                CTable2Dataset();
-    virtual ~CTable2Dataset();
+    CTable2Dataset();
+    ~CTable2Dataset() override;
 
-    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef() override;
-    virtual void   FlushCache(void) override;
+    CPLErr SetGeoTransform( double * padfTransform ) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
+    void   FlushCache(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

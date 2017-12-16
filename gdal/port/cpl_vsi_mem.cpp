@@ -105,8 +105,8 @@ public:
 
     time_t        mTime;
 
-                  VSIMemFile();
-    virtual       ~VSIMemFile();
+    VSIMemFile();
+    virtual ~VSIMemFile();
 
     bool          SetLength( vsi_l_offset nNewSize );
 };
@@ -132,17 +132,17 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
         bUpdate(false),
         bEOF(false),
         bExtendFileAtNextWrite(false) {}
-    virtual ~VSIMemHandle() {}
+    ~VSIMemHandle() override {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
-    virtual int       Truncate( vsi_l_offset nNewSize ) override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize,
+                    size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize,
+                     size_t nMemb ) override;
+    int Eof() override;
+    int Close() override;
+    int Truncate( vsi_l_offset nNewSize ) override;
 };
 
 /************************************************************************/
@@ -157,25 +157,25 @@ class VSIMemFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
     std::map<CPLString, VSIMemFile*> oFileList;
     CPLMutex        *hMutex;
 
-                     VSIMemFilesystemHandler();
-    virtual          ~VSIMemFilesystemHandler();
+    VSIMemFilesystemHandler();
+    ~VSIMemFilesystemHandler() override;
 
     // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.
     using VSIFilesystemHandler::Open;
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
-    virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-    virtual int      Rmdir( const char *pszDirname ) override;
-    virtual char   **ReadDirEx( const char *pszDirname,
-                                int nMaxFiles ) override;
-    virtual int      Rename( const char *oldpath,
-                             const char *newpath ) override;
-    virtual GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    char **ReadDirEx( const char *pszDirname,
+                      int nMaxFiles ) override;
+    int Rename( const char *oldpath,
+                const char *newpath ) override;
+    GIntBig  GetDiskFreeSpace( const char* pszDirname ) override;
 
     static  void     NormalizePath( CPLString & );
 

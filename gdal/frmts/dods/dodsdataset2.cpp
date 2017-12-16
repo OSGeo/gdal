@@ -94,7 +94,7 @@ get_variable(DDS &dds, const string &n)
             poBT = dds.var(www2id(leaf));
         }
         catch (const std::exception &e) {
-            poBT = 0;
+            poBT = nullptr;
         }
     }
 
@@ -117,7 +117,7 @@ static string StripQuotes( string oInput )
     oInput = oInput.substr(1,oInput.length()-2);
 
     char *pszResult =
-        CPLUnescapeString( oInput.c_str(), NULL,
+        CPLUnescapeString( oInput.c_str(), nullptr,
                            CPLES_BackslashQuotable );
 
     oInput = pszResult;
@@ -146,7 +146,7 @@ static int GetDimension( string oCE, const char *pszDimName,
     int iCount = 0, i;
     const char *pszCE = oCE.c_str();
 
-    if( pnDirection != NULL )
+    if( pnDirection != nullptr )
         *pnDirection = 1;
 
     for( i = 0; pszCE[i] != '\0'; i++ )
@@ -158,7 +158,7 @@ static int GetDimension( string oCE, const char *pszDimName,
                  && pszCE[i+1] == '-'
                  && pszCE[i+2] == pszDimName[0] )
         {
-            if( pnDirection != NULL )
+            if( pnDirection != nullptr )
                 *pnDirection = -1;
 
             return iCount;
@@ -280,7 +280,7 @@ public:
 /************************************************************************/
 
 DODSDataset::DODSDataset() :
-    poConnect(NULL),
+    poConnect(nullptr),
     bGotGeoTransform(FALSE),
     poBaseTypeFactory(new BaseTypeFactory())
 {
@@ -328,8 +328,8 @@ DODSDataset::connect_to_server() /*throw(Error)*/
 /*      the putenv() if there isn't already a DODS_CONF in the          */
 /*      environment.                                                    */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL
-        && getenv("DODS_CONF") == NULL )
+    if( CPLGetConfigOption( "DODS_CONF", nullptr ) != nullptr
+        && getenv("DODS_CONF") == nullptr )
     {
         static char szDODS_CONF[1000];
 
@@ -341,7 +341,7 @@ DODSDataset::connect_to_server() /*throw(Error)*/
 /* -------------------------------------------------------------------- */
 /*      If we have a overriding AIS file location, apply it now.       */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
+    if( CPLGetConfigOption( "DODS_AIS_FILE", nullptr ) != nullptr )
     {
         string oAISFile = CPLGetConfigOption( "DODS_AIS_FILE", "" );
         RCReader::instance()->set_ais_database( oAISFile );
@@ -435,7 +435,7 @@ char **DODSDataset::CollectBandsFromDDS()
 
 {
     DDS::Vars_iter v_i;
-    char **papszResultList = NULL;
+    char **papszResultList = nullptr;
 
     for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
     {
@@ -461,19 +461,19 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
                                             char **papszResultList )
 
 {
-    Array *poArray = NULL;
-    Grid *poGrid = NULL;
+    Array *poArray = nullptr;
+    Grid *poGrid = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Is this a grid or array?                                        */
 /* -------------------------------------------------------------------- */
     BaseType *poVar = get_variable( GetDDS(), oVarName );
 
-    if( poVar == NULL )
+    if( poVar == nullptr )
         return papszResultList;
     if( poVar->type() == dods_array_c )
     {
-        poGrid = NULL;
+        poGrid = nullptr;
         poArray = dynamic_cast<Array *>( poVar );
     }
     else if( poVar->type() == dods_grid_c )
@@ -488,7 +488,7 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 /*      Eventually we will want to support arrays with more than two    */
 /*      dimensions ... but not quite yet.                               */
 /* -------------------------------------------------------------------- */
-    if( poArray == NULL || poArray->dimensions() != 2 )
+    if( poArray == nullptr || poArray->dimensions() != 2 )
         return papszResultList;
 
 /* -------------------------------------------------------------------- */
@@ -582,11 +582,11 @@ char **DODSDataset::CollectBandsFromDDSVar( string oVarName,
 char **DODSDataset::ParseBandsFromURL( string oVarList )
 
 {
-    char **papszResultList = NULL;
+    char **papszResultList = nullptr;
     char **papszVars = CSLTokenizeString2( oVarList.c_str(), ",", 0 );
     int i;
 
-    for( i = 0; papszVars != NULL && papszVars[i] != NULL; i++ )
+    for( i = 0; papszVars != nullptr && papszVars[i] != nullptr; i++ )
     {
         string oVarName;
         string oCE;
@@ -599,7 +599,7 @@ char **DODSDataset::ParseBandsFromURL( string oVarList )
         // If we have no constraints we will have to try to guess
         // reasonable values from the DDS.  In fact, we might end up
         // deriving multiple bands from one variable in this case.
-        if( pszCEStart == NULL )
+        if( pszCEStart == nullptr )
         {
             oVarName = papszVars[i];
 
@@ -639,7 +639,7 @@ void DODSDataset::HarvestMetadata( GDALMajorObject *poTarget,
                                    AttrTable *poSrcTable )
 
 {
-    if( poSrcTable == NULL )
+    if( poSrcTable == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -647,7 +647,7 @@ void DODSDataset::HarvestMetadata( GDALMajorObject *poTarget,
 /* -------------------------------------------------------------------- */
     AttrTable *poMDTable = poSrcTable->find_container("Metadata");
 
-    if( poMDTable == NULL )
+    if( poMDTable == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -679,15 +679,15 @@ void DODSDataset::HarvestDAS()
 #ifdef LIBDAP_39
     AttrTable *poFileInfo = oDAS.get_table( "GLOBAL" );
 
-    if( poFileInfo == NULL )
+    if( poFileInfo == nullptr )
     {
         poFileInfo = oDAS.get_table( "NC_GLOBAL" );
 
-        if( poFileInfo == NULL )
+        if( poFileInfo == nullptr )
         {
             poFileInfo = oDAS.get_table( "HDF_GLOBAL" );
 
-            if( poFileInfo == NULL )
+            if( poFileInfo == nullptr )
             {
                 CPLDebug( "DODS", "No GLOBAL DAS info." );
                 return;
@@ -697,15 +697,15 @@ void DODSDataset::HarvestDAS()
 #else
     AttrTable *poFileInfo = oDAS.find_container( "GLOBAL" );
 
-    if( poFileInfo == NULL )
+    if( poFileInfo == nullptr )
     {
         poFileInfo = oDAS.find_container( "NC_GLOBAL" );
 
-        if( poFileInfo == NULL )
+        if( poFileInfo == nullptr )
         {
             poFileInfo = oDAS.find_container( "HDF_GLOBAL" );
 
-            if( poFileInfo == NULL )
+            if( poFileInfo == nullptr )
             {
                 CPLDebug( "DODS", "No GLOBAL DAS info." );
                 return;
@@ -792,7 +792,7 @@ void DODSDataset::HarvestDAS()
         }
         else
         {
-            char *pszProcessedWKT = NULL;
+            char *pszProcessedWKT = nullptr;
             oSRS.exportToWkt( &pszProcessedWKT );
             oWKT = pszProcessedWKT;
             CPLFree( pszProcessedWKT );
@@ -813,22 +813,22 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 
 {
     BaseType *poDDSDef = get_variable( GetDDS(), oVarName );
-    if( poDDSDef == NULL || poDDSDef->type() != dods_grid_c )
+    if( poDDSDef == nullptr || poDDSDef->type() != dods_grid_c )
         return;
 
 /* -------------------------------------------------------------------- */
 /*      Get the grid.                                                   */
 /* -------------------------------------------------------------------- */
-    Grid  *poGrid = NULL;
+    Grid  *poGrid = nullptr;
     poGrid = dynamic_cast<Grid *>( poDDSDef );
 
 /* -------------------------------------------------------------------- */
 /*      Get the map arrays for x and y.                                 */
 /* -------------------------------------------------------------------- */
-    Array *poXMap = NULL;
-    Array *poYMap = NULL;
-    int iXDim = GetDimension( oCE, "x", NULL );
-    int iYDim = GetDimension( oCE, "y", NULL );
+    Array *poXMap = nullptr;
+    Array *poYMap = nullptr;
+    int iXDim = GetDimension( oCE, "x", nullptr );
+    int iYDim = GetDimension( oCE, "y", nullptr );
     int iMap;
     Grid::Map_iter iterMap;
 
@@ -842,7 +842,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
             poYMap = dynamic_cast<Array *>(*iterMap);
     }
 
-    if( poXMap == NULL || poYMap == NULL )
+    if( poXMap == nullptr || poYMap == nullptr )
         return;
 
     if( poXMap->var()->type() != dods_float64_c
@@ -948,10 +948,10 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     if( !STARTS_WITH_CI(poOpenInfo->pszFilename, "http://")
         && !STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") )
-        return NULL;
+        return nullptr;
 
     DODSDataset *poDS = new DODSDataset();
-    char **papszVarConstraintList = NULL;
+    char **papszVarConstraintList = nullptr;
 
     poDS->nRasterXSize = 0;
     poDS->nRasterYSize = 0;
@@ -1003,7 +1003,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLDebug( "DODS", "No apparent raster grids or arrays found in DDS.");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
 /* -------------------------------------------------------------------- */
@@ -1020,7 +1020,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 
         poDS->SetBand(1, poBaseBand );
 
-        for( int iBand = 1; papszVarConstraintList[iBand*2] != NULL; iBand++ )
+        for( int iBand = 1; papszVarConstraintList[iBand*2] != nullptr; iBand++ )
         {
             poDS->SetBand( iBand+1,
                            new DODSRasterBand(poDS,
@@ -1052,7 +1052,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         msg += e.get_error_message();
         CPLError(CE_Failure, CPLE_AppDefined, "%s", msg.c_str());
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     CSLDestroy(papszVarConstraintList);
@@ -1060,13 +1060,13 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
 /* -------------------------------------------------------------------- */
-    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    if( poDS != nullptr && poOpenInfo->eAccess == GA_Update )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The DODS driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -1109,9 +1109,9 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
     oVarName(oVarNameIn),
     oCE(oCEIn),
     eColorInterp(GCI_Undefined),
-    poCT(NULL),
+    poCT(nullptr),
     nOverviewCount(0),
-    papoOverviewBand(NULL),
+    papoOverviewBand(nullptr),
     nOverviewFactor(nOverviewFactorIn),
     bTranspose(FALSE),
     bFlipX(FALSE),
@@ -1125,7 +1125,7 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
 /*      Fetch the DDS definition, and isolate the Array.                */
 /* -------------------------------------------------------------------- */
     BaseType *poDDSDef = get_variable( poDSIn->GetDDS(), oVarNameIn );
-    if( poDDSDef == NULL )
+    if( poDDSDef == nullptr )
     {
         throw InternalErr(
             CPLSPrintf( "Could not find DDS definition for variable %s.",
@@ -1134,8 +1134,8 @@ DODSRasterBand::DODSRasterBand( DODSDataset *poDSIn, string oVarNameIn,
         return;
     }
 
-    Array *poArray = NULL;
-    Grid  *poGrid = NULL;
+    Array *poArray = nullptr;
+    Grid  *poGrid = nullptr;
 
     if( poDDSDef->type() == dods_grid_c )
     {
@@ -1291,7 +1291,7 @@ void DODSRasterBand::HarvestDAS()
 
 {
     DODSDataset *poDODS = dynamic_cast<DODSDataset *>(poDS);
-    if( poDODS == NULL )
+    if( poDODS == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -1303,7 +1303,7 @@ void DODSRasterBand::HarvestDAS()
     AttrTable *poBandInfo = poDODS->GetDAS().find_container( oVarName );
 #endif
 
-    if( poBandInfo == NULL )
+    if( poBandInfo == nullptr )
     {
         CPLDebug( "DODS", "No band DAS info for %s.", oVarName.c_str() );
         return;
@@ -1357,7 +1357,7 @@ void DODSRasterBand::HarvestDAS()
 /*      Collect color table                                             */
 /* -------------------------------------------------------------------- */
     AttrTable *poCTable = poBandInfo->find_container("Colormap");
-    if( poCTable != NULL )
+    if( poCTable != nullptr )
     {
         AttrTable::Attr_iter dv_i;
 
@@ -1373,7 +1373,7 @@ void DODSRasterBand::HarvestDAS()
             AttrTable *poColor = poCTable->get_attr_table( dv_i );
             GDALColorEntry sEntry;
 
-            if( poColor == NULL )
+            if( poColor == nullptr )
                 continue;
 
             sEntry.c1 = atoi(poColor->get_attr( "red" ).c_str());
@@ -1637,7 +1637,7 @@ GDALRasterBand *DODSRasterBand::GetOverview( int iOverview )
 
 {
     if( iOverview < 0 || iOverview >= nOverviewCount )
-        return NULL;
+        return nullptr;
     else
         return papoOverviewBand[iOverview];
 }
@@ -1698,7 +1698,7 @@ void GDALRegister_DODS()
     if( !GDAL_CHECK_VERSION("GDAL/DODS driver") )
         return;
 
-    if( GDALGetDriverByName( "DODS" ) != NULL )
+    if( GDALGetDriverByName( "DODS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
