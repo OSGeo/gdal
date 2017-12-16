@@ -1603,7 +1603,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
     std::vector<std::unique_ptr<OGRLineString>> apoCurrentLines( nNumElements );
 
     // For use when bIsClosed is true
-    std::vector<std::unique_ptr<OGRPoint>> apoInitialVertices( nNumElements );
+    std::vector<DXFTriple> aoInitialVertices( nNumElements );
 
 #define EXPECT_CODE(code) \
     if( poDS->ReadValue( szLineBuf, sizeof(szLineBuf) ) != (code) ) \
@@ -1660,9 +1660,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
 
                 if( bIsClosed && iVertex == 0 )
                 {
-                    apoInitialVertices[iElement] = std::unique_ptr<OGRPoint>(
-                        new OGRPoint( dfStartSegmentX, dfStartSegmentY,
-                        dfStartSegmentZ ) );
+                    aoInitialVertices[iElement] = DXFTriple( dfStartSegmentX,
+                        dfStartSegmentY, dfStartSegmentZ );
                 }
 
                 // If we have an unfinished line for this element, we need
@@ -1733,7 +1732,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
             if( apoCurrentLines[iElement] )
             {
                 apoCurrentLines[iElement]->addPoint(
-                    apoInitialVertices[iElement].release() );
+                    aoInitialVertices[iElement].dfX,
+                    aoInitialVertices[iElement].dfY,
+                    aoInitialVertices[iElement].dfZ );
                 poMLS->addGeometryDirectly(
                     apoCurrentLines[iElement].release() );
             }
