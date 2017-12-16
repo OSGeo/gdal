@@ -1912,7 +1912,6 @@ namespace tut
               "RETRY_DELAY=1",
               nullptr
             };
-#if defined(__GNUC__) || (defined(_MSC_VER) && (_MSC_VER > 1800))
 
             ensure( oDocument.LoadUrl("http://demo.nextgis.com/api/component/pyramid/pkg_version",
                                       const_cast<char**>(options) ) );
@@ -1921,12 +1920,10 @@ namespace tut
 
             CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
             ensure_not( EQUAL(soVersion, "0") );
-#endif
         }
         {
             // Test Json document LoadChunks
             CPLJSONDocument oDocument;
-#if defined(__GNUC__) || (defined(_MSC_VER) && (_MSC_VER > 1800))
             ensure( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
 
             CPLJSONObject oJsonRoot = oDocument.GetRoot();
@@ -1960,7 +1957,6 @@ namespace tut
 
             CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
             ensure( oJsonId.IsValid() );
-#endif
         }
     }
 } // namespace tut

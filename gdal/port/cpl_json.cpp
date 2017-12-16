@@ -57,22 +57,20 @@ CPLJSONDocument::~CPLJSONDocument()
 
 CPLJSONDocument::CPLJSONDocument(const CPLJSONDocument& other)
 {
-    if( other.m_poRootJsonObject )
-    {
-        if( m_poRootJsonObject )
-            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
-        m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
-    }
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
 }
 
 CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 {
-    if( other.m_poRootJsonObject )
-    {
-        if( m_poRootJsonObject )
-            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
-        m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
-    }
+    if( this == &other )
+        return *this;
+
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+    m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
+
     return *this;
 }
 /*! @endcond */
@@ -263,7 +261,7 @@ typedef struct {
     int nDataLen;
 } JsonContext, *JsonContextL;
 
-static size_t CPL_STDCALL CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
+static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
                                            void *pUserData)
 {
     size_t nLength = nSize * nMemb;
@@ -311,10 +309,9 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
     int nDepth = atoi( CSLFetchNameValueDef( papszOptions, "JSON_DEPTH", "10") );
     JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
 
-    // Fix error C2440: This conversion requires a reinterpret_cast, a C-style 
+    // Fix error C2440: This conversion requires a reinterpret_cast, a C-style
     // cast or function-style cast.
-    CPLHTTPFetchWriteFunc pWriteFunc =
-                   reinterpret_cast<CPLHTTPFetchWriteFunc>(CPLJSONWriteFunction);
+    CPLHTTPFetchWriteFunc pWriteFunc = CPLJSONWriteFunction;
     CPLHTTPResult *psResult = CPLHTTPFetchEx( pszUrl, papszOptions,
                                               pfnProgress, pProgressArg,
                                               pWriteFunc, &ctx );
@@ -383,6 +380,9 @@ CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
 
 CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
 {
+    if( this == &other )
+        return *this;
+
     m_soKey = other.m_soKey;
     if( m_poJsonObject )
         json_object_put( TO_JSONOBJ(m_poJsonObject) );

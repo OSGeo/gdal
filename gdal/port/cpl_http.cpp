@@ -635,9 +635,9 @@ CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
     CPLHTTPResultWithLimit sResultWithLimit;
     if( nullptr == pfnWrite )
     {
-        // Fix error C2440: This conversion requires a reinterpret_cast, a C-style 
+        // Fix error C2440: This conversion requires a reinterpret_cast, a C-style
         // cast or function-style cast.
-        pfnWrite = reinterpret_cast<CPLHTTPFetchWriteFunc>(CPLWriteFct);
+        pfnWrite = CPLWriteFct;
 
         sResultWithLimit.psResult = psResult;
         sResultWithLimit.nMaxFileSize = 0;
