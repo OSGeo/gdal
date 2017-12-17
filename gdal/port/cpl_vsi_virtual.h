@@ -205,12 +205,13 @@ public:
     VSIArchiveFilesystemHandler();
     virtual ~VSIArchiveFilesystemHandler();
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) CPL_OVERRIDE;
-    virtual int      Unlink( const char *pszFilename ) CPL_OVERRIDE;
-    virtual int      Rename( const char *oldpath, const char *newpath ) CPL_OVERRIDE;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) CPL_OVERRIDE;
-    virtual int      Rmdir( const char *pszDirname ) CPL_OVERRIDE;
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) CPL_OVERRIDE;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
     virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = nullptr);
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
