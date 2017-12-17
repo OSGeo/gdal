@@ -126,12 +126,11 @@ void    IEEE2DGNDouble(void * dbl)
 
 {
     double64_t dt;
-    GByte  *src = nullptr;
-    GByte *dest = nullptr;
 
 #ifdef CPL_LSB
-    src  = (GByte *) dbl;
-    dest = (GByte *) &dt;
+    {
+    GByte* src  = (GByte *) dbl;
+    GByte* dest = (GByte *) &dt;
 
     dest[0] = src[4];
     dest[1] = src[5];
@@ -141,6 +140,7 @@ void    IEEE2DGNDouble(void * dbl)
     dest[5] = src[1];
     dest[6] = src[2];
     dest[7] = src[3];
+    }
 #else
     memcpy( &dt, dbl, 8 );
 #endif
@@ -160,7 +160,7 @@ void    IEEE2DGNDouble(void * dbl)
 /* -------------------------------------------------------------------- */
     if (exponent > 255)
     {
-        dest = (GByte *) dbl;
+        GByte* dest = (GByte *) dbl;
 
         if (sign)
             dest[1] = 0xff;
@@ -184,7 +184,7 @@ void    IEEE2DGNDouble(void * dbl)
     else if ((exponent < 0 ) ||
              (exponent == 0 && sign == 0))
     {
-        dest = (GByte *) dbl;
+        GByte* dest = (GByte *) dbl;
 
         dest[0] = 0x00;
         dest[1] = 0x00;
@@ -213,8 +213,8 @@ void    IEEE2DGNDouble(void * dbl)
 /* -------------------------------------------------------------------- */
 /*      Convert the double back to VAX format                           */
 /* -------------------------------------------------------------------- */
-    src = (GByte *) &dt;
-    dest = (GByte *) dbl;
+    GByte* src = (GByte *) &dt;
+    GByte* dest = (GByte *) dbl;
 
 #ifdef CPL_LSB
     memcpy(dest + 2, src + 0, 2);

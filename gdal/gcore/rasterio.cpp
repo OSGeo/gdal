@@ -4350,9 +4350,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
 /*      interleaved fashion?                                            */
 /* -------------------------------------------------------------------- */
     bool bInterleave = false;
-    const char *pszInterleave = nullptr;
-
-    pszInterleave = poSrcDS->GetMetadataItem( "INTERLEAVE", "IMAGE_STRUCTURE");
+    const char *pszInterleave = poSrcDS->GetMetadataItem(
+                                            "INTERLEAVE", "IMAGE_STRUCTURE");
     if( pszInterleave != nullptr
         && (EQUAL(pszInterleave,"PIXEL") || EQUAL(pszInterleave,"LINE")) )
         bInterleave = true;

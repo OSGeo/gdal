@@ -1007,13 +1007,11 @@ CPLErr MEMDataset::AddBand( GDALDataType eType, char **papszOptions )
     if( CSLFetchNameValue( papszOptions, "DATAPOINTER" ) == nullptr )
     {
         const GSpacing nTmp = nPixelSize * GetRasterXSize();
-        GByte *pData = nullptr;
+        GByte* pData = 
 #if SIZEOF_VOIDP == 4
-        if( nTmp > INT_MAX )
-            pData = nullptr;
-        else
+            ( nTmp > INT_MAX ) ? nullptr :
 #endif
-            pData = reinterpret_cast<GByte *>(
+            reinterpret_cast<GByte *>(
                 VSI_CALLOC_VERBOSE((size_t)nTmp, GetRasterYSize() ) );
 
         if( pData == nullptr )

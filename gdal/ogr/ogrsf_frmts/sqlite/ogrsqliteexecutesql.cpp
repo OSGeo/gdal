@@ -1039,9 +1039,8 @@ OGRLayer * OGRSQLiteExecuteSQL( GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteSelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRSQLiteExecuteSQLLayer( pszTmpDBName,
+    OGRSQLiteSelectLayer *poLayer = new OGRSQLiteExecuteSQLLayer(
+                                            pszTmpDBName,
                                             poSQLiteDS, pszStatement, hSQLStmt,
                                             bUseStatementForGetNextFeature, bEmptyLayer );
 

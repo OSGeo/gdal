@@ -677,9 +677,8 @@ OGRLayer * OGRMySQLDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      layer for it.                                                   */
 /* -------------------------------------------------------------------- */
 
-    OGRMySQLResultLayer *poLayer = nullptr;
-
-    poLayer = new OGRMySQLResultLayer( this, pszSQLCommand, hResultSet );
+    OGRMySQLResultLayer *poLayer =
+        new OGRMySQLResultLayer( this, pszSQLCommand, hResultSet );
 
     return poLayer;
 }

@@ -589,7 +589,6 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                                             int to_buffer_band, void *buffer, int advise_read)
 {
     CPLErr ret = CE_None;
-    GDALDataset *ds = nullptr;
     GByte *color_table = nullptr;
     int i;
 
@@ -605,7 +604,7 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(int x, int y, const char *file_name,
                  nRasterYSize) - std::min(std::max(0, y * nBlockYSize),
                                           nRasterYSize);
 
-    ds = reinterpret_cast<GDALDataset*>(GDALOpenEx(file_name,
+    GDALDataset* ds = reinterpret_cast<GDALDataset*>(GDALOpenEx(file_name,
                                                     GDAL_OF_RASTER 
                                                     | GDAL_OF_READONLY 
                                                     | GDAL_OF_VERBOSE_ERROR,

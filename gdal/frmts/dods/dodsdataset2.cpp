@@ -819,8 +819,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /* -------------------------------------------------------------------- */
 /*      Get the grid.                                                   */
 /* -------------------------------------------------------------------- */
-    Grid  *poGrid = nullptr;
-    poGrid = dynamic_cast<Grid *>( poDDSDef );
+    Grid* poGrid = dynamic_cast<Grid *>( poDDSDef );
 
 /* -------------------------------------------------------------------- */
 /*      Get the map arrays for x and y.                                 */

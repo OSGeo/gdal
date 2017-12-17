@@ -192,7 +192,6 @@ GIntBig OGRPGResultLayer::GetFeatureCount( int bForce )
         return OGRPGLayer::GetFeatureCount( bForce );
 
     PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult = nullptr;
     CPLString           osCommand;
     int                 nCount = 0;
 
@@ -200,7 +199,7 @@ GIntBig OGRPGResultLayer::GetFeatureCount( int bForce )
         "SELECT count(*) FROM (%s) AS ogrpgcount",
         pszQueryStatement );
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand);
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( hResult != nullptr && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else

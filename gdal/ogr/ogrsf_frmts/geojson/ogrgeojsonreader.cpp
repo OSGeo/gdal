@@ -2043,8 +2043,7 @@ bool OGRGeoJSONReader::AddFeature( OGRGeoJSONLayer* poLayer,
 
     if( nullptr != poGeometry )
     {
-        OGRFeature* poFeature = nullptr;
-        poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        OGRFeature* poFeature = new OGRFeature( poLayer->GetLayerDefn() );
         poFeature->SetGeometryDirectly( poGeometry );
 
         bAdded = AddFeature( poLayer, poFeature );
@@ -2090,8 +2089,7 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj,
         if( !bGeometryPreserve_
             && wkbGeometryCollection != poGeometry->getGeometryType() )
         {
-            OGRGeometryCollection* poMetaGeometry = nullptr;
-            poMetaGeometry = new OGRGeometryCollection();
+            OGRGeometryCollection* poMetaGeometry = new OGRGeometryCollection();
             poMetaGeometry->addGeometryDirectly( poGeometry );
             return poMetaGeometry;
         }
@@ -2295,8 +2293,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer,
 {
     CPLAssert( nullptr != poObj );
 
-    OGRFeature* poFeature = nullptr;
-    poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature* poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     if( bStoreNativeData_ )
     {
@@ -2801,8 +2798,8 @@ OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj )
 
         for( int i = 0; i < nPoints; ++i)
         {
-            json_object* poObjCoords = nullptr;
-            poObjCoords = json_object_array_get_idx( poObjPoints, i );
+            json_object* poObjCoords =
+                json_object_array_get_idx( poObjPoints, i );
 
             OGRPoint pt;
             if( poObjCoords != nullptr &&
@@ -2916,10 +2913,9 @@ OGRMultiLineString* OGRGeoJSONReadMultiLineString( json_object* poObj )
 
         for( int i = 0; i < nLines; ++i)
         {
-            json_object* poObjLine = nullptr;
-            poObjLine = json_object_array_get_idx( poObjLines, i );
+            json_object* poObjLine = json_object_array_get_idx( poObjLines, i );
 
-            OGRLineString* poLine = nullptr;
+            OGRLineString* poLine;
             if( poObjLine != nullptr )
                 poLine = OGRGeoJSONReadLineString( poObjLine , true );
             else
@@ -3062,8 +3058,8 @@ OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj )
 {
     CPLAssert( nullptr != poObj );
 
-    json_object* poObjPolys = nullptr;
-    poObjPolys = OGRGeoJSONFindMemberByName( poObj, "coordinates" );
+    json_object* poObjPolys =
+        OGRGeoJSONFindMemberByName( poObj, "coordinates" );
     if( nullptr == poObjPolys )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

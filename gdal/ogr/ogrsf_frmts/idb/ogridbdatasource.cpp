@@ -320,9 +320,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRIDBSelectLayer *poLayer = NULL;
-
-    poLayer = new OGRIDBSelectLayer( this, poCurr );
+    OGRIDBSelectLayer* poLayer = new OGRIDBSelectLayer( this, poCurr );
 
     if( poSpatialFilter != NULL )
         poLayer->SetSpatialFilter( poSpatialFilter );

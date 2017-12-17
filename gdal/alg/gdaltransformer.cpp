@@ -388,22 +388,19 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     // enough memory, back off and try with just 20 steps?
  retry:
     int nSampleMax = (nSteps + 1)*(nSteps + 1);
-    int *pabSuccess = nullptr;
 
     double dfRatio = 0.0;
     double dfStep = 1.0 / nSteps;
-    double *padfX = nullptr;
     double *padfY = nullptr;
     double *padfZ = nullptr;
-    double *padfXRevert = nullptr;
     double *padfYRevert = nullptr;
     double *padfZRevert = nullptr;
 
-    pabSuccess = static_cast<int *>(
+    int* pabSuccess = static_cast<int *>(
         VSI_MALLOC3_VERBOSE(sizeof(int), nSteps + 1, nSteps + 1));
-    padfX = static_cast<double *>(
+    double* padfX = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
-    padfXRevert = static_cast<double *>(
+    double* padfXRevert = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double) * 3, nSteps + 1, nSteps + 1));
     if( pabSuccess == nullptr || padfX == nullptr || padfXRevert == nullptr )
     {

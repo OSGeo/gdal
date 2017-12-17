@@ -390,8 +390,8 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
              || wkbFlatten(poGeometry->getGeometryType()) ==
                 wkbGeometryCollection )
     {
-        OGRGeometryCollection* poGC = nullptr;
-        poGC = static_cast<OGRGeometryCollection*>(poGeometry);
+        OGRGeometryCollection* poGC =
+            static_cast<OGRGeometryCollection*>(poGeometry);
 
         AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
 

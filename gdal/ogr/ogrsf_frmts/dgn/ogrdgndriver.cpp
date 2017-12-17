@@ -80,9 +80,7 @@ static GDALDataset *OGRDGNDriverCreate( const char * pszName,
 /* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
-    OGRDGNDataSource    *poDS = nullptr;
-
-    poDS = new OGRDGNDataSource();
+    OGRDGNDataSource* poDS = new OGRDGNDataSource();
 
     if( !poDS->PreCreate( pszName, papszOptions ) )
     {

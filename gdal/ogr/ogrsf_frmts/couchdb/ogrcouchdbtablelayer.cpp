@@ -1116,9 +1116,7 @@ static json_object* OGRCouchDBWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
 /*      Write feature attributes to GeoJSON "properties" object.        */
 /* -------------------------------------------------------------------- */
-    json_object* poObjProps = nullptr;
-
-    poObjProps = OGRGeoJSONWriteAttributes( poFeature );
+    json_object* poObjProps = OGRGeoJSONWriteAttributes( poFeature );
     if (poObjProps)
     {
         json_object_object_del(poObjProps, "_id");

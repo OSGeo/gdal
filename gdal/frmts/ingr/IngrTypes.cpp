@@ -1432,9 +1432,9 @@ void CPL_STDCALL INGR_HeaderOneDiskToMem(INGR_HeaderOne* pHeaderOne, const GByte
 void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderOne* pLSBHeaderOne = nullptr;
+
 #if defined(CPL_MSB)
-    pLSBHeaderOne = (INGR_HeaderOne* )CPLMalloc(sizeof(INGR_HeaderOne));
+    INGR_HeaderOne* pLSBHeaderOne = (INGR_HeaderOne* )CPLMalloc(sizeof(INGR_HeaderOne));
     memcpy(pLSBHeaderOne, pHeaderOne, sizeof(INGR_HeaderOne));
 
     switch (INGR_GetDataType(pLSBHeaderOne->DataTypeCode))
@@ -1481,7 +1481,7 @@ void CPL_STDCALL INGR_HeaderOneMemToDisk(const INGR_HeaderOne* pHeaderOne, GByte
         }
     }
 #else
-    pLSBHeaderOne = (INGR_HeaderOne* )pHeaderOne;
+    INGR_HeaderOne* pLSBHeaderOne = (INGR_HeaderOne* )pHeaderOne;
 #endif
 
     STRC2BUF( pabyBuf, n, pLSBHeaderOne->HeaderType );
@@ -1550,9 +1550,9 @@ void CPL_STDCALL INGR_HeaderTwoADiskToMem(INGR_HeaderTwoA* pHeaderTwo, const GBy
 void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GByte *pabyBuf)
 {
     unsigned int n = 0;
-    INGR_HeaderTwoA* pLSBHeaderTwo = nullptr;
+
 #if defined(CPL_MSB)
-    pLSBHeaderTwo = (INGR_HeaderTwoA* )CPLMalloc(sizeof(INGR_HeaderTwoA));
+    INGR_HeaderTwoA* pLSBHeaderTwo = (INGR_HeaderTwoA* )CPLMalloc(sizeof(INGR_HeaderTwoA));
     memcpy(pLSBHeaderTwo, pHeaderTwo, sizeof(INGR_HeaderTwoA));
 
     CPL_LSBPTR64(&pLSBHeaderTwo->AspectRatio);
@@ -1562,7 +1562,7 @@ void CPL_STDCALL INGR_HeaderTwoAMemToDisk(const INGR_HeaderTwoA* pHeaderTwo, GBy
     CPL_LSBPTR32(&pLSBHeaderTwo->ApplicationPacketPointer);
     CPL_LSBPTR32(&pLSBHeaderTwo->ApplicationPacketLength);
 #else
-    pLSBHeaderTwo = (INGR_HeaderTwoA* )pHeaderTwo;
+    INGR_HeaderTwoA* pLSBHeaderTwo = (INGR_HeaderTwoA* )pHeaderTwo;
 #endif
 
     STRC2BUF( pabyBuf, n, pLSBHeaderTwo->Gain );

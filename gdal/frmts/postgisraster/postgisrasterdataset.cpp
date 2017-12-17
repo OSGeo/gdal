@@ -582,7 +582,6 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
 {
     PROverview * poOV = nullptr;
     CPLString osCommand;
-    PGresult * poResult = nullptr;
 
     osCommand.Printf("SELECT o_table_name, overview_factor, "
             "o_raster_column, o_table_schema FROM raster_overviews "
@@ -596,7 +595,7 @@ PROverview * PostGISRasterDataset::GetOverviewTables(int * pnOverviews)
         osCommand.c_str());
 #endif
 
-    poResult = PQexec(poConn, osCommand.c_str());
+    PGresult* poResult = PQexec(poConn, osCommand.c_str());
 
     if (poResult == nullptr ||
         PQresultStatus(poResult) != PGRES_TUPLES_OK ||
@@ -1782,6 +1781,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
     /*******************************************************************
      * Finally, add complex sources and create a quadtree index for them
      ******************************************************************/
+    // cppcheck-suppress knownConditionTrueFalse
     if (bNeedToConstructSourcesHolders) {
 #ifdef DEBUG_VERBOSE
         CPLDebug("PostGIS_Raster",

@@ -254,6 +254,7 @@ class GDALPansharpenOperation
                                                      int nBandValues,
                                                      T nMaxValue) const;
 
+        // cppcheck-suppress unusedPrivateFunction
         template<class T> void WeightedBroveyGByteOrUInt16(
                                                      const T* pPanBuffer,
                                                      const T* pUpsampledSpectralBuffer,

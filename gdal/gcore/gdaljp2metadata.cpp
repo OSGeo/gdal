@@ -990,13 +990,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
 /*      Extract offset(s)                                               */
 /* -------------------------------------------------------------------- */
-    char **papszOffset1Tokens = nullptr;
-    char **papszOffset2Tokens = nullptr;
     bool bSuccess = false;
 
-    papszOffset1Tokens =
+    char** papszOffset1Tokens =
         CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens =
+    char** papszOffset2Tokens =
         CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
 
     if( CSLCount(papszOffset1Tokens) >= 2
@@ -1928,11 +1926,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 }
 */
 
-        json_tokener* jstok = nullptr;
-        json_object* poObj = nullptr;
-
-        jstok = json_tokener_new();
-        poObj = json_tokener_parse_ex(jstok, pabyContent ? (const char*) pabyContent : pszDefFilename, -1);
+        json_tokener* jstok = json_tokener_new();
+        json_object* poObj = json_tokener_parse_ex(jstok, pabyContent ? (const char*) pabyContent : pszDefFilename, -1);
         CPLFree(pabyContent);
         if( jstok->err != json_tokener_success)
         {

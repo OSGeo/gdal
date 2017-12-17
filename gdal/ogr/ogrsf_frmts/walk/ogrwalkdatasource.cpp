@@ -225,9 +225,7 @@ OGRLayer * OGRWalkDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRWalkSelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRWalkSelectLayer( this, poStmt );
+    OGRWalkSelectLayer *poLayer = new OGRWalkSelectLayer( this, poStmt );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

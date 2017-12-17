@@ -94,10 +94,9 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
  * The returned list must be freed with CSLDestroy when no longer needed
  **********************************************************************/
 char** ParseConnectionString(const char * pszConnectionString) {
-    char * pszEscapedConnectionString = nullptr;
 
     /* Escape string following SQL scheme */
-    pszEscapedConnectionString =
+    char* pszEscapedConnectionString =
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */

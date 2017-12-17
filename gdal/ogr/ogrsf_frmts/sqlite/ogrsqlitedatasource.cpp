@@ -2370,11 +2370,11 @@ OGRLayer * OGRSQLiteDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRSQLiteSelectLayer *poLayer = nullptr;
 
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRSQLiteSelectLayer( this, osSQL, hSQLStmt,
-                                        bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
+    OGRSQLiteSelectLayer* poLayer = new OGRSQLiteSelectLayer(
+        this, osSQL, hSQLStmt,
+        bUseStatementForGetNextFeature, bEmptyLayer, TRUE );
 
     if( poSpatialFilter != nullptr && poLayer->GetLayerDefn()->GetGeomFieldCount() > 0 )
         poLayer->SetSpatialFilter( 0, poSpatialFilter );
