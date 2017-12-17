@@ -329,11 +329,10 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
     int anMSLink[MAX_LINK];
     anMSLink[0] = 0;
 
-    unsigned char *pabyData = nullptr;
     int iLink = 0;
     int nLinkCount = 0;
 
-    pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
+    unsigned char *pabyData = DGNGetLinkage( hDGN, psElement, iLink, nullptr,
                               anEntityNum + iLink, anMSLink + iLink, nullptr );
     while( pabyData )
     {

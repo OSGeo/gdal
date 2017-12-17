@@ -746,9 +746,8 @@ OGRLayer * OGRIngresDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      layer for it.                                                   */
 /* -------------------------------------------------------------------- */
 
-    OGRIngresResultLayer *poLayer = NULL;
-
-    poLayer = new OGRIngresResultLayer( this, pszSQLCommand, poStatement );
+    OGRIngresResultLayer* poLayer =
+        new OGRIngresResultLayer( this, pszSQLCommand, poStatement );
     EstablishActiveLayer( poLayer );
 
     return poLayer;

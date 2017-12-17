@@ -3428,6 +3428,7 @@ void ECWInitialize()
 /*      options.  Setting the location turns things on.                 */
 /* -------------------------------------------------------------------- */
     const char *pszOpt = nullptr;
+    CPL_IGNORE_RET_VAL(pszOpt);
 
 #if ECWSDK_VERSION >= 40
     pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );

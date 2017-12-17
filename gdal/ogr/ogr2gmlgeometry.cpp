@@ -177,8 +177,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
     szAttributes[0] = 0;
 
-    const OGRSpatialReference* poSRS = nullptr;
-    poSRS = poGeometry->getSpatialReference();
+    const OGRSpatialReference* poSRS = poGeometry->getSpatialReference();
 
     if( pszNamespaceDecl != nullptr )
     {

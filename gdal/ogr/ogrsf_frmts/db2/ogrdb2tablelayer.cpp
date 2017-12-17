@@ -1312,8 +1312,7 @@ OGRErr OGRDB2TableLayer::BindFieldValue(OGRDB2Statement * /*poStatement*/,
     int nParameterType = 0;
 
     if( nOGRFieldType == OFTString ) {
-        const char *stringValue = nullptr;
-        stringValue = poFeature->GetFieldAsString(i);
+        const char* stringValue = poFeature->GetFieldAsString(i);
         papBindBuffer[nBindNum] = nullptr; // Don't free
         nLen = (int) strlen(stringValue);
         pValuePointer = (void *) stringValue;

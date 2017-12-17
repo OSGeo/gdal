@@ -15856,9 +15856,7 @@ static bool GTIFFQuantizationTablesEqual( const GByte* paby1, int nLen1,
             GTIFFFindNextTable(paby2, 0xDB, nLen2, &nLenTable2);
         if( paby1New == nullptr && paby2New == nullptr )
             return bFound;
-        if( paby1New == nullptr && paby2New != nullptr )
-            return false;
-        if( paby1New != nullptr && paby2New == nullptr )
+        if( paby1New == nullptr || paby2New == nullptr )
             return false;
         if( nLenTable1 != nLenTable2 )
             return false;
@@ -18402,8 +18400,6 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 static void
 GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 {
-    char *pszModFmt = nullptr;
-
 #if SIZEOF_VOIDP == 4
     // Case of one-strip file where the strip size is > 2GB (#5403).
     if( strcmp(module, "TIFFStripSize") == 0 &&
@@ -18437,7 +18433,7 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
     }
 #endif
 
-    pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    char* pszModFmt = PrepareTIFFErrorFormat( module, fmt );
     CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
     CPLFree( pszModFmt );
 }
@@ -18629,8 +18625,6 @@ void GDALRegister_GTiff()
     char szCreateOptions[5000] = { '\0' };
     char szOptionalCompressItems[500] = { '\0' };
     bool bHasJPEG = false;
-    bool bHasLZW = false;
-    bool bHasDEFLATE = false;
     bool bHasLZMA = false;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -18648,9 +18642,11 @@ void GDALRegister_GTiff()
             "       <Value>JPEG</Value>"
             "       <Value>LZW</Value>"
             "       <Value>DEFLATE</Value>" );
-    bHasLZW = true;
-    bHasDEFLATE = true;
+    bool bHasLZW = true;
+    bool bHasDEFLATE = true;
 #else
+    bool bHasLZW = false;
+    bool bHasDEFLATE = false;
     TIFFCodec *codecs = TIFFGetConfiguredCODECs();
 
     for( TIFFCodec *c = codecs; c->name; ++c )

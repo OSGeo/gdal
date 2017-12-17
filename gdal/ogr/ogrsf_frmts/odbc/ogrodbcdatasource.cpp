@@ -643,9 +643,8 @@ OGRLayer * OGRODBCDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRODBCSelectLayer *poLayer = nullptr;
 
-    poLayer = new OGRODBCSelectLayer( this, poStmt );
+    OGRODBCSelectLayer* poLayer = new OGRODBCSelectLayer( this, poStmt );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

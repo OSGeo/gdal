@@ -248,8 +248,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             // we check for just a regular double
             // without a width and precision specified
 
-            char ** papszTokens=nullptr;
-            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            char ** papszTokens = CSLTokenizeString2(pszType,"(),",0);
             if (CSLCount(papszTokens) >= 3)
             {
                 /* width is the second and precision is the third */

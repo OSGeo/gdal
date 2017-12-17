@@ -260,10 +260,10 @@ GeoRasterWrapper* GeoRasterWrapper::Open( const char* pszStringId, bool bUpdate 
          * dataset, the caller must pass the with_context as an
          * string metadata item OCI_CONTEXT_PTR to the driver. */ 
 
-        const char*        pszContext   = nullptr;
         OCIExtProcContext* with_context = nullptr;
 
-        pszContext = GDALGetMetadataItem( GDALGetDriverByName("GEORASTER"), 
+        const char* pszContext = GDALGetMetadataItem(
+                                           GDALGetDriverByName("GEORASTER"), 
                                           "OCI_CONTEXT_PTR", nullptr );
 
         if( pszContext )
@@ -1204,20 +1204,15 @@ void GeoRasterWrapper::GetRasterInfo( void )
     //  Get dimensions
     //  -------------------------------------------------------------------
 
-    int nCount  = 0;
-
-    CPLXMLNode* phDimSize   = nullptr;
-    const char* pszType     = nullptr;
-
-    nCount      = atoi( CPLGetXMLValue( phMetadata,
+    int nCount      = atoi( CPLGetXMLValue( phMetadata,
                   "rasterInfo.totalDimensions", "0" ) );
-    phDimSize   = CPLGetXMLNode( phMetadata, "rasterInfo.dimensionSize" );
+    CPLXMLNode* phDimSize   = CPLGetXMLNode( phMetadata, "rasterInfo.dimensionSize" );
 
     int i = 0;
 
     for( i = 0; i < nCount; i++ )
     {
-        pszType = CPLGetXMLValue( phDimSize, "type", "0" );
+        const char* pszType = CPLGetXMLValue( phDimSize, "type", "0" );
 
         if( EQUAL( pszType, "ROW" ) )
         {
@@ -2857,9 +2852,7 @@ void GeoRasterWrapper::SetRPC()
     }
     else
     {
-        CPLXMLNode* phNode = nullptr;
-
-        phNode = CPLGetXMLNode( phSRSInfo, "isReferenced" );
+        CPLXMLNode* phNode = CPLGetXMLNode( phSRSInfo, "isReferenced" );
         if( phNode )
         {
             CPLRemoveXMLChild( phSRSInfo, phNode );
@@ -3324,11 +3317,10 @@ bool GeoRasterWrapper::FlushMetadata()
     //  --------------------------------------------------------------------
 
     CPLXMLNode* psOInfo = CPLGetXMLNode( phMetadata, "objectInfo" );
-    CPLXMLNode* psNode  = nullptr;
 
     CPLSetXMLValue( psOInfo,  "isBlank", "false" );
 
-    psNode  = CPLGetXMLNode( psOInfo, "blankCellValue" );
+    CPLXMLNode* psNode  = CPLGetXMLNode( psOInfo, "blankCellValue" );
 
     if( psNode != nullptr )
     {
@@ -3685,9 +3677,7 @@ bool GeoRasterWrapper::GeneratePyramid( int nLevels,
     //  Create rows for pyramid levels
     //  -----------------------------------------------------------
 
-    OWStatement* poStmt = nullptr;
-
-    poStmt = poConnection->CreateStatement(
+    OWStatement* poStmt = poConnection->CreateStatement(
         "DECLARE\n"
         "  SCL  NUMBER         := 0;\n"
         "  RC   NUMBER         := 0;\n"
@@ -3813,9 +3803,7 @@ bool GeoRasterWrapper::InitializeMask( int nLevel,
     //  Create rows for the bitmap mask
     //  -----------------------------------------------------------
 
-    OWStatement* poStmt = nullptr;
-
-    poStmt = poConnection->CreateStatement(
+    OWStatement* poStmt = poConnection->CreateStatement(
         "DECLARE\n"
         "  W    NUMBER          := :1;\n"
         "  H    NUMBER          := :2;\n"

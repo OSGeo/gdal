@@ -3860,9 +3860,7 @@ int GDALPDFWriter::WriteBlock(GDALDataset* poSrcDS,
             goto end;
         }
 
-        GDALDataset* poJPEGDS = nullptr;
-
-        poJPEGDS = poJPEGDriver->CreateCopy(szTmp, poBlockSrcDS,
+        GDALDataset* poJPEGDS = poJPEGDriver->CreateCopy(szTmp, poBlockSrcDS,
                                             FALSE, papszOptions,
                                             pfnProgress, pProgressData);
 

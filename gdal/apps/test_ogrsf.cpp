@@ -3046,8 +3046,6 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
 {
     int bRet = TRUE;
-    OGRLayer* poSQLLyr = nullptr;
-    OGRFeature* poLayerFeat = nullptr;
     OGRFeature* poSQLFeat = nullptr;
     int bGotFeature = FALSE;
 
@@ -3055,7 +3053,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
 
     /* Test consistency between result layer and traditional layer */
     LOG_ACTION(poLayer->ResetReading());
-    poLayerFeat = LOG_ACTION(poLayer->GetNextFeature());
+    OGRFeature* poLayerFeat = LOG_ACTION(poLayer->GetNextFeature());
 
     /* Reset to avoid potentially a statement to be active which cause */
     /* issue in the transaction test of the second layer, when testing */
@@ -3063,7 +3061,7 @@ static int TestLayerSQL( GDALDataset* poDS, OGRLayer * poLayer )
     LOG_ACTION(poLayer->ResetReading());
 
     osSQL.Printf("SELECT * FROM %s", GetLayerNameForSQL(poDS, poLayer->GetName()));
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
+    OGRLayer* poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr));
     if( poSQLLyr == nullptr )
     {
         printf( "ERROR: ExecuteSQL(%s) failed.\n", osSQL.c_str() );
@@ -3380,7 +3378,6 @@ static int TestOGRLayer( GDALDataset* poDS, OGRLayer * poLayer, int bIsSQLLayer 
 static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLayersIn )
 {
     int bRet = TRUE;
-    GDALDataset* poDS = nullptr;
     GDALDataset* poDS2 = nullptr;
     OGRLayer* poLayer1 = nullptr;
     OGRLayer* poLayer2 = nullptr;
@@ -3394,7 +3391,7 @@ static int TestInterleavedReading( const char* pszDataSourceIn, char** papszLaye
     OGRFeature* poFeature22 = nullptr;
 
     /* Check that we have 2 layers with at least 2 features */
-    poDS = LOG_ACTION((GDALDataset*) GDALOpenEx( pszDataSourceIn,
+    GDALDataset* poDS = LOG_ACTION((GDALDataset*) GDALOpenEx( pszDataSourceIn,
                             GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr ));
     if (poDS == nullptr)
     {

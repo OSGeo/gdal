@@ -1040,7 +1040,7 @@ bool LevellerDataset::locate_data(vsi_l_offset& offset, size_t& len, VSILFILE* f
         if(1 != VSIFReadL(&datalen, sizeof(datalen), 1, fp))
             return false;
 
-        datalen = CPL_LSBWORD32(datalen);
+        CPL_LSBPTR32(&datalen);
         descriptor[descriptorLen] = 0;
         if(str_equal(descriptor, pszTag))
         {

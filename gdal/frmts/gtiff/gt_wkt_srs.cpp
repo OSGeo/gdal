@@ -2624,12 +2624,10 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     if( poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) != nullptr )
     {
-        const char *pszValue = nullptr;
-
         GTIFKeySet( psGTIF, VerticalCitationGeoKey, TYPE_ASCII, 0,
                     poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) );
 
-        pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
+        const char *pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
         if( pszValue && atoi(pszValue) )
             GTIFKeySet( psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1,
                         atoi(pszValue) );

@@ -2213,15 +2213,16 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                         !EQUAL(CPLGetExtension(pszFilename), "jpc") &&
                         !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
                         !(pszCodec != NULL && EQUAL(pszCodec, "J2K"));
-#else
-    const bool bIsJPX = false;
 #endif
 
     kdu_compressed_target *poOutputFile = nullptr;
     jp2_target jp2_out;
     const char* pszCodec = CSLFetchNameValueDef(papszOptions, "CODEC", nullptr);
     const bool bIsJP2 = (!EQUAL(CPLGetExtension(pszFilename), "jpc") &&
-                         !EQUAL(CPLGetExtension(pszFilename), "j2k") && !bIsJPX &&
+                         !EQUAL(CPLGetExtension(pszFilename), "j2k") &&
+#ifdef KAKADU_JPX
+                         !bIsJPX &&
+#endif
                          !(pszCodec != nullptr && EQUAL(pszCodec, "J2K")) ) ||
                         (pszCodec != nullptr && EQUAL(pszCodec, "JP2"));
     kdu_codestream oCodeStream;

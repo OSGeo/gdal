@@ -5213,10 +5213,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRLayer *poLayer = nullptr;
 
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRGeoPackageSelectLayer(
+    OGRLayer* poLayer = new OGRGeoPackageSelectLayer(
         this, osSQL, hSQLStmt,
         bUseStatementForGetNextFeature, bEmptyLayer );
 

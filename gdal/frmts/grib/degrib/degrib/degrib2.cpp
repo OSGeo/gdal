@@ -323,7 +323,6 @@ int FindGRIBMsg (DataSource &fp, int msgNum, sInt4 *offset, int *curMsg)
    sInt4 jump;          /* How far to jump to get to past GRIB message. */
 
    cnt = *curMsg + 1;
-   buff = nullptr;
    buffLen = 0;
    while ((c = fp.DataSourceFgetc()) != EOF) {
       fp.DataSourceUngetc(c);

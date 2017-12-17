@@ -1075,9 +1075,8 @@ OGRLayer * OGRMSSQLSpatialDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
 
-    OGRMSSQLSpatialSelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRMSSQLSpatialSelectLayer( this, poStmt );
+    OGRMSSQLSpatialSelectLayer* poLayer =
+        new OGRMSSQLSpatialSelectLayer( this, poStmt );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

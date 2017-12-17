@@ -204,9 +204,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters( OGRFeature *poFeature,
         OGRGeometry* poGeom = poFeature->GetGeomFieldRef(0);
         if ( poGeom )
         {
-            GByte *pabyWkb = nullptr;
             size_t szWkb = 0;
-            pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
+            GByte* pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
             err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
                                     static_cast<int>(szWkb), CPLFree);
             MY_CPLAssert( err == SQLITE_OK );
