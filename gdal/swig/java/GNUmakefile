@@ -100,7 +100,7 @@ test:
 	${JAVA_RUN} OSRTest
 
 $(JAVA_MODULES): $(JAVA_OBJECTS)
-	$(LINK) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
+	$(LINK) $(LDFLAGS) $^ $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
 
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
