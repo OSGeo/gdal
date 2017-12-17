@@ -84,7 +84,7 @@ static const char* Log(const char* pszMsg, int nLineNumber)
 }
 
 #define LOG_STR(str) (Log((str), __LINE__))
-#define LOG_ACTION(action) (Log(#action, __LINE__), (action))
+#define LOG_ACTION(action) ((void)Log(#action, __LINE__), (action))
 
 /************************************************************************/
 /*                      DestroyFeatureAndNullify()                      */

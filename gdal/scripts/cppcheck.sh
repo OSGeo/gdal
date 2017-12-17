@@ -29,6 +29,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DDEBUG_PROXY_POOL \
         -Doverride= \
         -DUNDER_CPPCHECK \
+        -DOCAD_EXTERN= \
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
@@ -451,6 +452,13 @@ for whitelisted_dir in alg/ port/; do
         ret_code=1
     fi
 done
+
+grep "AssignmentAddressToInteger" ${LOG_FILE}
+if [[ $? -eq 0 ]] ; then
+    echo "AssignmentAddressToInteger check failed"
+    ret_code=1
+fi
+
 
 # Check any remaining errors
 grep "error," ${LOG_FILE} | grep -v "uninitvar" | \
