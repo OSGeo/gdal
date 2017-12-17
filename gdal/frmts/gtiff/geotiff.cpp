@@ -16957,13 +16957,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 #endif
 
+#if defined(HAVE_LIBJPEG) && !defined(BIGTIFF_SUPPORT)
+    else
+#endif
+
 #if !defined(BIGTIFF_SUPPORT)
     /* -------------------------------------------------------------------- */
     /*      If we are writing jpeg compression we need to write some        */
     /*      imagery to force the jpegtables to get created.  This is,       */
     /*      likely only needed with libtiff >= 3.9.3 (#3633)                */
     /* -------------------------------------------------------------------- */
-    else if( l_nCompression == COMPRESSION_JPEG
+    if( l_nCompression == COMPRESSION_JPEG
             && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
     {
         CPLDebug( "GDAL",
